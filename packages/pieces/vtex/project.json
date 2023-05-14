@@ -6,29 +6,21 @@
   "targets": {
     "build": {
       "executor": "@nrwl/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/vtex",
         "tsConfig": "packages/pieces/vtex/tsconfig.lib.json",
         "packageJson": "packages/pieces/vtex/package.json",
         "main": "packages/pieces/vtex/src/index.ts",
-        "assets": [
-          "packages/pieces/vtex/*.md"
-        ],
+        "assets": ["packages/pieces/vtex/*.md"],
         "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {
       "executor": "@nrwl/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": [
-          "packages/pieces/vtex/**/*.ts"
-        ]
+        "lintFilePatterns": ["packages/pieces/vtex/**/*.ts"]
       }
     }
   },

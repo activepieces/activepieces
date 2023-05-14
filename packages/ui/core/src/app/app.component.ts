@@ -19,7 +19,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { FlagService, CommonActions } from '@activepieces/ui/common';
 import { compareVersions } from 'compare-versions';
 import { ApFlagId } from '@activepieces/shared';
-import { TelemetryService } from './modules/common/service/telemetry.service';
+import { TelemetryService } from '@activepieces/ui/common';
 import { AuthenticationService, fadeInUp400ms } from '@activepieces/ui/common';
 import { MatDialog } from '@angular/material/dialog';
 import { SwitchFlowDialogComponent } from '@activepieces/ui/feature-command-bar';

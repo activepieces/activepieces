@@ -1,0 +1,8 @@
+<ng-content></ng-content>
+<ng-container *ngIf="loadingComponent$| async">
+    <div class="ap-absolute ap-left-0 ap-z-50 ap-h-full ap-w-full  ap-bg-white ">
+        <div class="ap-flex ap-h-full ap-w-full ap-items-center ap-justify-center">
+            <ap-loading-icon height="50px" width="51px" [outlineLoader]="true" [whiteLoader]="false"> </ap-loading-icon>
+        </div>
+    </div>
+</ng-container>

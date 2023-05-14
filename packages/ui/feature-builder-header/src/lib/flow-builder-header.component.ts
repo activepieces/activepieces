@@ -1,23 +1,28 @@
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import {
+  AfterViewInit,
+  Component,
+  EventEmitter,
+  OnInit,
+  Output,
+} from '@angular/core';
+import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { map, Observable, tap } from 'rxjs';
+import { map, Observable, switchMap, take, tap } from 'rxjs';
 import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
+  FlagService,
   FlowService,
   fadeIn400ms,
   initialiseBeamer,
 } from '@activepieces/ui/common';
-import { MagicWandDialogComponent } from './magic-wand-dialog/magic-flow-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import {
   BuilderSelectors,
   CollectionBuilderService,
   FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
-import { Flow, FlowInstance } from '@activepieces/shared';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { ApEdition, Flow, FlowInstance } from '@activepieces/shared';
 
 @Component({
   selector: 'app-flow-builder-header',
@@ -25,23 +30,30 @@ import { MatSnackBar } from '@angular/material/snack-bar';
   styleUrls: ['./flow-builder-header.component.scss'],
   animations: [fadeIn400ms],
 })
-export class FlowBuilderHeaderComponent implements OnInit {
+export class FlowBuilderHeaderComponent implements OnInit, AfterViewInit {
   viewMode$: Observable<boolean>;
-  magicWandEnabled$: Observable<boolean>;
+  isGeneratingFlowComponentOpen$: Observable<boolean>;
   instance$: Observable<FlowInstance | undefined>;
   flow$: Observable<Flow>;
   editingFlowName = false;
   deleteFlowDialogClosed$: Observable<void>;
   folderDisplayName$: Observable<string>;
+  duplicateFlow$: Observable<void>;
+  showGuessFlowBtn$: Observable<boolean>;
+  @Output()
+  showAiHelper = new EventEmitter<boolean>();
   constructor(
     public dialogService: MatDialog,
     private store: Store,
     private router: Router,
     public collectionBuilderService: CollectionBuilderService,
-    private route: ActivatedRoute,
-    private snackbar: MatSnackBar,
-    private flowService: FlowService
-  ) {}
+    private flowService: FlowService,
+    private flagsService: FlagService
+  ) {
+    this.isGeneratingFlowComponentOpen$ = this.store.select(
+      BuilderSelectors.selectIsGeneratingFlowComponentOpen
+    );
+  }
 
   ngOnInit(): void {
     initialiseBeamer();
@@ -51,19 +63,19 @@ export class FlowBuilderHeaderComponent implements OnInit {
     this.folderDisplayName$ = this.store.select(
       BuilderSelectors.selectCurrentFlowFolderName
     );
-    this.magicWandEnabled$ = this.route.queryParams.pipe(
-      map((params) => {
-        return !!params['magicWand'];
-      })
-    );
+    this.showGuessFlowBtn$ = this.flagsService
+      .getEdition()
+      .pipe(map((ed) => ed === ApEdition.ENTERPRISE));
   }
   changeEditValue(event: boolean) {
     this.editingFlowName = event;
   }
-  guessAi() {
-    this.dialogService.open(MagicWandDialogComponent);
+  ngAfterViewInit(): void {
+    if (localStorage.getItem('SHOW_AI_AFTER_CREATING_FLOW')) {
+      this.guessFlowButtonClicked();
+      localStorage.removeItem('SHOW_AI_AFTER_CREATING_FLOW');
+    }
   }
-
   redirectHome(newWindow: boolean) {
     if (newWindow) {
       const url = this.router.serializeUrl(this.router.createUrlTree([``]));
@@ -78,10 +90,19 @@ export class FlowBuilderHeaderComponent implements OnInit {
   saveFlowName(flowName: string) {
     this.store.dispatch(FlowsActions.changeName({ displayName: flowName }));
   }
-  copyId(id: string) {
-    this.snackbar.open(`ID copied`);
-    navigator.clipboard.writeText(id);
+
+  duplicate() {
+    this.duplicateFlow$ = this.store
+      .select(BuilderSelectors.selectCurrentFlow)
+      .pipe(
+        take(1),
+        switchMap((currentFlow) => {
+          return this.flowService.duplicate(currentFlow);
+        }),
+        map(() => void 0)
+      );
   }
+
   deleteFlow(flow: Flow) {
     const dialogData: DeleteEntityDialogData = {
       deleteEntity$: this.flowService.delete(flow.id),
@@ -102,5 +123,9 @@ export class FlowBuilderHeaderComponent implements OnInit {
         return void 0;
       })
     );
+  }
+  guessFlowButtonClicked() {
+    this.store.dispatch(FlowsActions.openGenerateFlowComponent());
+    this.showAiHelper.emit(true);
   }
 }

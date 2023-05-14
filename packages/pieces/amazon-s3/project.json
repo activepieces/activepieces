@@ -6,29 +6,21 @@
   "targets": {
     "build": {
       "executor": "@nrwl/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/amazon-s3",
         "tsConfig": "packages/pieces/amazon-s3/tsconfig.lib.json",
         "packageJson": "packages/pieces/amazon-s3/package.json",
         "main": "packages/pieces/amazon-s3/src/index.ts",
-        "assets": [
-          "packages/pieces/amazon-s3/*.md"
-        ],
+        "assets": ["packages/pieces/amazon-s3/*.md"],
         "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {
       "executor": "@nrwl/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": [
-          "packages/pieces/amazon-s3/**/*.ts"
-        ]
+        "lintFilePatterns": ["packages/pieces/amazon-s3/**/*.ts"]
       }
     }
   },

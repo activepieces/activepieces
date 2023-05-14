@@ -1,6 +1,6 @@
 <div class="box">
   <div class="header">
-    <app-flow-builder-header></app-flow-builder-header>
+    <app-flow-builder-header (showAiHelper)="guessFlow.showComponent()"></app-flow-builder-header>
   </div>
   <div class="content">
     <div class="drawer-container">
@@ -22,13 +22,15 @@
           </div>
         </mat-drawer>
         <mat-drawer-content [class.no-transition]="rightSidebarDragging || leftSidebarDragging">
-          <div class="box">
-            <div class="header">
-              <app-flow-builder-tabs></app-flow-builder-tabs>
-            </div>
+          <div class="box ap-relative">
+            <app-guess-flow-container #guessFlow></app-guess-flow-container>
             <div class="content canvas" #canvasWrapper appCanvasPanner [style.cursor]="cursorStyle$ | async">
-              <app-canvas-utils class="ap-absolute ap-right-[15px] ap-bottom-[15px]"></app-canvas-utils>
+              <app-canvas-utils class="ap-absolute ap-right-[15px] ap-bottom-[30px] ap-z-40"></app-canvas-utils>
               <app-flow-item-tree></app-flow-item-tree>
+              <div
+                class="ap-absolute ap-left-[15px] ap-bottom-[15px] ap-bg-white ap-rounded-lg ap-z-40 ap-shadow-portal-ds">
+                <ng-template [cdkPortalOutlet]="builderService.componentToShowInsidePortal$ | async"> </ng-template>
+              </div>
             </div>
           </div>
         </mat-drawer-content>
@@ -50,3 +52,4 @@
   </div>
 </div>
 <ng-container *ngIf="loadInitialData$ | async"></ng-container>
+<ng-container *ngIf="graphChanged$ | async"></ng-container>

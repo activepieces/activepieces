@@ -33,13 +33,30 @@ export enum FlowsActionType {
   EXIT_RUN = '[FLOWS] EXIT_RUN',
   SELECT_STEP_BY_NAME = '[FLOWS] SELECT_STEP_BY_NAME',
   SELECT_FIRST_INVALID_STEP = '[FLOWS] SELECT_FIRST_INVALID_STEP',
+  GENERATE_FLOW_SUCCESSFUL = '[FLOWS] GENERATE_FLOW_SUCCESSFUL',
+  GENERATE_FLOW = '[FLOWS] GENERATE_FLOW',
+  OPEN_GENERATE_FLOW_COMPONENT = '[FLOWS] OPEN_GENERATE_FLOW_COMPONENT',
+  CLOSE_GENERATE_FLOW_COMPONENT = '[FLOWS] CLOSE_GENERATE_FLOW_COMPONENT',
 }
 
 const updateTrigger = createAction(
   FlowsActionType.UPDATE_TRIGGER,
   props<{ operation: UpdateTriggerRequest }>()
 );
-
+const openGenerateFlowComponent = createAction(
+  FlowsActionType.OPEN_GENERATE_FLOW_COMPONENT
+);
+const closeGenerateFlowComponent = createAction(
+  FlowsActionType.CLOSE_GENERATE_FLOW_COMPONENT
+);
+const generateFlow = createAction(
+  FlowsActionType.GENERATE_FLOW,
+  props<{ prompt: string }>()
+);
+const generateFlowSuccessful = createAction(
+  FlowsActionType.GENERATE_FLOW_SUCCESSFUL,
+  props<{ flow: Flow }>()
+);
 const selectFirstInvalidStep = createAction(
   FlowsActionType.SELECT_FIRST_INVALID_STEP
 );
@@ -51,7 +68,7 @@ const addAction = createAction(
 
 const updateAction = createAction(
   FlowsActionType.UPDATE_ACTION,
-  props<{ operation: UpdateActionRequest }>()
+  props<{ operation: UpdateActionRequest; updatingMissingStep?: boolean }>()
 );
 
 const deleteAction = createAction(
@@ -110,6 +127,7 @@ const setRightSidebar = createAction(
           stepName: string;
         }
       | typeof NO_PROPS;
+    deselectCurrentStep: boolean;
   }>()
 );
 
@@ -130,6 +148,10 @@ export const FlowsActions = {
   exitRun,
   selectStepByName,
   selectFirstInvalidStep,
+  generateFlowSuccessful,
+  generateFlow,
+  openGenerateFlowComponent,
+  closeGenerateFlowComponent,
 };
 
 export const SingleFlowModifyingState = [

@@ -1,6 +1,5 @@
-import { Action } from "./actions/action";
 import {
-    CodeActionSchema, BranchActionSchema, LoopOnItemsActionSchema, PieceActionSchema,
+    CodeActionSchema, BranchActionSchema, LoopOnItemsActionSchema, PieceActionSchema, MissingActionSchema, Action,
 } from "./actions/action";
 import { EmptyTrigger, PieceTrigger, WebhookTrigger } from "./triggers/trigger";
 import { Static, Type } from "@sinclair/typebox";
@@ -8,8 +7,9 @@ import { Static, Type } from "@sinclair/typebox";
 
 export enum FlowOperationType {
     CHANGE_FOLDER = "CHANGE_FOLDER",
+    IMPORT_FLOW = 'IMPORT_FLOW',
     CHANGE_NAME = "CHANGE_NAME",
-    IMPORT_FLOW = "IMPORT_FLOW",
+    GENERATE_FLOW = "GENERATE_FLOW",
     UPDATE_TRIGGER = "UPDATE_TRIGGER",
     ADD_ACTION = "ADD_ACTION",
     UPDATE_ACTION = "UPDATE_ACTION",
@@ -23,9 +23,11 @@ export enum StepLocationRelativeToParent {
     INSIDE_LOOP = "INSIDE_LOOP"
 }
 
+const optionalNextAction =Type.Object({ nextAction: Type.Optional(Action) });
+
 export const ImportFlowRequest = Type.Object({
     displayName: Type.String({}),
-    trigger: Type.Union([Type.Composite([WebhookTrigger, Type.Object({ nextAction: Action })]), Type.Composite([PieceTrigger, Type.Object({ nextAction: Action })])]),
+    trigger: Type.Union([Type.Composite([WebhookTrigger, optionalNextAction]), Type.Composite([PieceTrigger, optionalNextAction]), Type.Composite([EmptyTrigger, optionalNextAction])]),
 })
 
 export type ImportFlowRequest = Static<typeof ImportFlowRequest>;
@@ -35,6 +37,13 @@ export const ChangeFolderRequest = Type.Object({
 });
 
 export type ChangeFolderRequest = Static<typeof ChangeFolderRequest>;
+
+
+export const GenerateFlowRequest = Type.Object({
+    prompt: Type.String({}),
+});
+
+export type GenerateFlowRequest = Static<typeof GenerateFlowRequest>;
 
 
 export const ChangeNameRequest = Type.Object({
@@ -49,7 +58,7 @@ export const DeleteActionRequest = Type.Object({
 
 export type DeleteActionRequest = Static<typeof DeleteActionRequest>;
 
-export const UpdateActionRequest = Type.Union([CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema, BranchActionSchema]);
+export const UpdateActionRequest = Type.Union([CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema, BranchActionSchema, MissingActionSchema]);
 export type UpdateActionRequest = Static<typeof UpdateActionRequest>;
 
 export const AddActionRequest = Type.Object({
@@ -63,6 +72,10 @@ export const UpdateTriggerRequest = Type.Union([EmptyTrigger, PieceTrigger, Webh
 export type UpdateTriggerRequest = Static<typeof UpdateTriggerRequest>;
 
 export const FlowOperationRequest = Type.Union([
+    Type.Object({
+        type: Type.Literal(FlowOperationType.GENERATE_FLOW),
+        request: GenerateFlowRequest
+    }),
     Type.Object({
         type: Type.Literal(FlowOperationType.IMPORT_FLOW),
         request: ImportFlowRequest
