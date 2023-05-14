@@ -1,6 +1,6 @@
 import { Action, MissingActionSchema } from "./actions/action";
 import {
-    CodeActionSchema, BranchActionSchema, LoopOnItemsActionSchema, PieceActionSchema,
+    CodeActionSchema, BranchActionSchema, LoopOnItemsActionSchema, PieceActionSchema, Action,
 } from "./actions/action";
 import { EmptyTrigger, PieceTrigger, WebhookTrigger } from "./triggers/trigger";
 import { Static, Type } from "@sinclair/typebox";
@@ -24,9 +24,11 @@ export enum StepLocationRelativeToParent {
     INSIDE_LOOP = "INSIDE_LOOP"
 }
 
+const optionalNextAction =Type.Object({ nextAction: Type.Optional(Action) });
+
 export const ImportFlowRequest = Type.Object({
     displayName: Type.String({}),
-    trigger: Type.Union([Type.Composite([WebhookTrigger, Type.Object({ nextAction: Action })]), Type.Composite([PieceTrigger, Type.Object({ nextAction: Action })])]),
+    trigger: Type.Union([Type.Composite([WebhookTrigger, optionalNextAction]), Type.Composite([PieceTrigger, optionalNextAction]), Type.Composite([EmptyTrigger, optionalNextAction])]),
 })
 
 export type ImportFlowRequest = Static<typeof ImportFlowRequest>;

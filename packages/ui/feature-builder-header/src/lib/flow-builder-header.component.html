@@ -27,7 +27,7 @@
       </div>
       <mat-menu #menu="matMenu">
         <button mat-menu-item (click)="editingFlowName = true">Rename</button>
-        <button mat-menu-item *ngIf="flow$ | async as flow" (click)="copyId(flow.id)"> Copy flow ID</button>
+        <button mat-menu-item *ngIf="flow$ | async as flow" (click)="duplicate()">Duplicate</button>
         <button mat-menu-item *ngIf="flow$ | async as flow" (click)="deleteFlow(flow)">
           <div class="ap-text-danger">
             Delete
@@ -63,4 +63,5 @@
   </div>
 </nav>
 <ng-container *ngIf="deleteFlowDialogClosed$|async"></ng-container>
+<ng-container *ngIf="duplicateFlow$|async"></ng-container> 
 <div class="ap-hidden" id="beamerButton"></div>

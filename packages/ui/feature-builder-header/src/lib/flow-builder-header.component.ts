@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { map, Observable, tap } from 'rxjs';
+import { map, Observable, switchMap, take, tap } from 'rxjs';
 import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
@@ -22,6 +22,7 @@ import {
   CollectionBuilderService,
   FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
+import { Flow, FlowInstance } from '@activepieces/shared';
 import { ApEdition, Flow, FlowInstance } from '@activepieces/shared';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
@@ -39,6 +40,7 @@ export class FlowBuilderHeaderComponent implements OnInit, AfterViewInit {
   editingFlowName = false;
   deleteFlowDialogClosed$: Observable<void>;
   folderDisplayName$: Observable<string>;
+  duplicateFlow$: Observable<void>;
   showGuessFlowBtn$: Observable<boolean>;
   @Output()
   showAiHelper = new EventEmitter<boolean>();
@@ -91,10 +93,19 @@ export class FlowBuilderHeaderComponent implements OnInit, AfterViewInit {
   saveFlowName(flowName: string) {
     this.store.dispatch(FlowsActions.changeName({ displayName: flowName }));
   }
-  copyId(id: string) {
-    this.snackbar.open(`ID copied`);
-    navigator.clipboard.writeText(id);
+
+  duplicate() {
+    this.duplicateFlow$ = this.store
+      .select(BuilderSelectors.selectCurrentFlow)
+      .pipe(
+        take(1),
+        switchMap((currentFlow) => {
+          return this.flowService.duplicate(currentFlow);
+        }),
+        map(() => void 0)
+      );
   }
+
   deleteFlow(flow: Flow) {
     const dialogData: DeleteEntityDialogData = {
       deleteEntity$: this.flowService.delete(flow.id),

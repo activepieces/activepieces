@@ -33,7 +33,7 @@ export class StepMentionsTreeComponent implements OnInit {
   @Input() stepOutputObjectChildNodes: MentionTreeNode[] = [];
   @Input() stepDisplayName: string;
   @Output() mentionClicked: EventEmitter<MentionListItem> = new EventEmitter();
-  @Input() markedNodesToShow: Map<string, boolean>;
+  @Input() markedNodesToShow: Map<string, boolean> | undefined;
   treeControl = new NestedTreeControl<MentionTreeNode>((node) => node.children);
   dataSource = new MatTreeNestedDataSource<MentionTreeNode>();
   searchContainsStepDisplayName$: Observable<boolean>;
@@ -62,7 +62,7 @@ export class StepMentionsTreeComponent implements OnInit {
     );
   };
   nodeMarkedToShow = (_: number, node: MentionTreeNode) => {
-    return this.markedNodesToShow.get(node.propertyPath);
+    return this.markedNodesToShow?.get(node.propertyPath);
   };
   ngOnInit() {
     this.dataSource.data = this.stepOutputObjectChildNodes;
