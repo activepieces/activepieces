@@ -1,0 +1,36 @@
+{
+  "name": "pieces-stability-ai",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/stability-ai/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/stability-ai",
+        "tsConfig": "packages/pieces/stability-ai/tsconfig.lib.json",
+        "packageJson": "packages/pieces/stability-ai/package.json",
+        "main": "packages/pieces/stability-ai/src/index.ts",
+        "assets": [
+          "packages/pieces/stability-ai/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/stability-ai/**/*.ts"
+        ]
+      }
+    }
+  },
+  "tags": []
+}

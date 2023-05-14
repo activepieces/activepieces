@@ -9,6 +9,8 @@ export enum ActionType {
   PIECE = 'PIECE',
   LOOP_ON_ITEMS = 'LOOP_ON_ITEMS',
   BRANCH = 'BRANCH',
+  // Missing action is used when the action is not found by AI
+  MISSING = 'MISSING'
 }
 
 const commonActionProps = {
@@ -44,6 +46,12 @@ export const PieceActionSettings = Type.Object({
   actionName: Type.Optional(Type.String({})),
   input: Type.Record(Type.String({}), Type.Any()),
   inputUiInfo: SampleDataSettingsObject,
+});
+
+export const MissingActionSchema = Type.Object({
+  ...commonActionProps,
+  type: Type.Literal(ActionType.MISSING),
+  settings: Type.Object({}),
 });
 
 export type PieceActionSettings = Static<typeof PieceActionSettings>;
@@ -138,6 +146,9 @@ export const BranchActionSchema = Type.Object({
 // Union of all actions
 
 export const Action = Type.Recursive(action => Type.Union([
+  Type.Intersect([MissingActionSchema, Type.Object({
+    nextAction: Type.Optional(action),
+  })]),
   Type.Intersect([CodeActionSchema, Type.Object({
     nextAction: Type.Optional(action),
   })]),
@@ -164,6 +175,8 @@ export type LoopOnItemsAction = Static<typeof LoopOnItemsActionSchema> & { nextA
 export type PieceAction = Static<typeof PieceActionSchema> & { nextAction?: Action };
 
 export type CodeAction = Static<typeof CodeActionSchema> & { nextAction?: Action };
+
+export type MissingAction = Static<typeof MissingActionSchema> & { nextAction?: Action };
 
 export  type StepSettings =
   | CodeActionSettings

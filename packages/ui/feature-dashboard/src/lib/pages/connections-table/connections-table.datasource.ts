@@ -8,14 +8,19 @@ import {
   catchError,
   of,
   take,
+  BehaviorSubject,
 } from 'rxjs';
 import { AppConnection, FlowRun } from '@activepieces/shared';
 import {
   AppConnectionsService,
   ApPaginatorComponent,
   ProjectSelectors,
+  DEFAULT_PAGE_SIZE,
+  LIMIT_QUERY_PARAM,
+  CURSOR_QUERY_PARAM,
 } from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
+import { Params } from '@angular/router';
 
 /**
  * Data source for the LogsTable view. This class should
@@ -24,9 +29,9 @@ import { Store } from '@ngrx/store';
  */
 export class ConnectionsTableDataSource extends DataSource<FlowRun> {
   data: AppConnection[] = [];
+  isLoading$: BehaviorSubject<boolean> = new BehaviorSubject(true);
   constructor(
-    private pageSize$: Observable<number>,
-    private pageCursor$: Observable<string>,
+    private queryParams$: Observable<Params>,
     private paginator: ApPaginatorComponent,
     private store: Store,
     private connectionsService: AppConnectionsService,
@@ -42,15 +47,17 @@ export class ConnectionsTableDataSource extends DataSource<FlowRun> {
    */
   connect(): Observable<any[]> {
     return combineLatest({
-      pageCursor: this.pageCursor$,
-      pageSize: this.pageSize$,
+      queryParams: this.queryParams$,
       project: this.store.select(ProjectSelectors.selectProject).pipe(take(1)),
       refresh: this.refresh$,
     }).pipe(
+      tap(() => {
+        this.isLoading$.next(true);
+      }),
       switchMap((res) => {
         return this.connectionsService.list({
-          limit: res.pageSize,
-          cursor: res.pageCursor,
+          limit: res.queryParams[LIMIT_QUERY_PARAM] || DEFAULT_PAGE_SIZE,
+          cursor: res.queryParams[CURSOR_QUERY_PARAM],
         });
       }),
       catchError((err) => {
@@ -62,6 +69,7 @@ export class ConnectionsTableDataSource extends DataSource<FlowRun> {
         });
       }),
       tap((res) => {
+        this.isLoading$.next(false);
         this.paginator.next = res.next;
         this.paginator.previous = res.previous;
         this.data = res.data;

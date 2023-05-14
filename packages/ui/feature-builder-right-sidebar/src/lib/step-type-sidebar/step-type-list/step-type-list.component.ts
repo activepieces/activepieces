@@ -20,7 +20,7 @@ export class StepTypeListComponent {
   @Input() typesList: FlowItemDetails[];
   @Output() typeSelected: EventEmitter<FlowItemDetails> = new EventEmitter();
   @Input() emptyListText: string;
-
+  @Input() takeFullHeightOfSidebar = true;
   constructor(private authenticationService: AuthenticationService) {}
   openFeedbackPopover() {
     this.authenticationService.openFeedbackPopover$.next();

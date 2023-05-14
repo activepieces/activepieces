@@ -16,7 +16,6 @@ import { distinctUntilChanged, map, Observable, switchMap, tap } from 'rxjs';
 import { RunsTableDataSource } from './runs-table.datasource';
 import {
   InstanceRunService,
-  DEFAULT_PAGE_SIZE,
   ApPaginatorComponent,
   FlagService,
   ProjectSelectors,
@@ -74,10 +73,7 @@ export class RunsTableComponent implements OnInit {
         )
       );
     this.dataSource = new RunsTableDataSource(
-      this.activatedRoute.queryParams.pipe(
-        map((res) => res['limit'] || DEFAULT_PAGE_SIZE)
-      ),
-      this.activatedRoute.queryParams.pipe(map((res) => res['cursor'])),
+      this.activatedRoute.queryParams,
       this.paginator,
       this.store,
       this.instanceRunService

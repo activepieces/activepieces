@@ -7,7 +7,6 @@ import { BrowserModule } from '@angular/platform-browser';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { FlowBuilderModule } from './modules/flow-builder/flow-builder.module';
 import { HttpClientModule } from '@angular/common/http';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { UiCommonModule, environment } from '@activepieces/ui/common';
@@ -20,21 +19,24 @@ import { AngularSvgIconModule } from 'angular-svg-icon';
 import { CommonModule } from '@angular/common';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 import { CommonLayoutModule } from './modules/common/common-layout.module';
-import { FirebaseAuthLayoutModule } from '../../../../ee/firebase-auth/frontend/firebase-auth.module';
 import { Route, Router } from '@angular/router';
 import { FlagService } from '@activepieces/ui/common';
 import { ApEdition } from '@activepieces/shared';
-import { FirebaseAuthContainerComponent } from '@ee/firebase-auth/frontend/auth-container/firebase-auth-container.component';
 import { UserLoggedIn } from './guards/user-logged-in.guard';
-import { DashboardContainerComponent } from '@activepieces/ui/feature-dashboard';
 import { FeatureCommandBarModule } from '@activepieces/ui/feature-command-bar';
-import { AuthLayoutComponent } from '@activepieces/ui/feature-authentication';
 import { ImportFlowComponent } from './modules/import-flow/import-flow.component';
 
+import { LottieCacheModule, LottieModule } from 'ngx-lottie';
+import player from 'lottie-web';
+import { FirebaseAuthLayoutModule } from '../../../../ee/firebase-auth/frontend/firebase-auth.module';
 export function tokenGetter() {
   const jwtToken: any = localStorage.getItem(environment.jwtTokenName);
-
   return jwtToken;
+}
+// Note we need a separate function as it's required
+// by the AOT compiler.
+export function playerFactory() {
+  return player;
 }
 
 @NgModule({
@@ -47,7 +49,6 @@ export function tokenGetter() {
   imports: [
     CommonModule,
     BrowserModule,
-    FlowBuilderModule,
     AppRoutingModule,
     BrowserAnimationsModule,
     FeatureCommandBarModule,
@@ -65,10 +66,12 @@ export function tokenGetter() {
         allowedDomains: [extractHostname(environment.apiUrl)],
       },
     }),
-    ...dynamicModules(),
-    AngularSvgIconModule,
+    AngularSvgIconModule.forRoot(),
     CommonLayoutModule,
     UiCommonModule,
+    LottieModule.forRoot({ player: playerFactory }),
+    LottieCacheModule.forRoot(),
+    FirebaseAuthLayoutModule,
   ],
   providers: [
     {
@@ -102,7 +105,6 @@ function dynamicRoutes(edition: string) {
   const coreRoutes: Route[] = [
     {
       path: '',
-      component: DashboardContainerComponent,
       canActivate: [UserLoggedIn],
       children: [
         {
@@ -149,7 +151,6 @@ function dynamicRoutes(edition: string) {
       editionRoutes = [
         {
           path: '',
-          component: FirebaseAuthContainerComponent,
           children: [
             {
               path: '',
@@ -166,7 +167,6 @@ function dynamicRoutes(edition: string) {
       editionRoutes = [
         {
           path: '',
-          component: AuthLayoutComponent,
           children: [
             {
               path: '',
@@ -181,10 +181,6 @@ function dynamicRoutes(edition: string) {
       break;
   }
   return [...coreRoutes, ...editionRoutes, ...suffixRoutes];
-}
-
-function dynamicModules() {
-  return [FirebaseAuthLayoutModule];
 }
 
 function extractHostname(url: string): string {

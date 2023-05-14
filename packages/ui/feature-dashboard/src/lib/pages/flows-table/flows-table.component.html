@@ -60,6 +60,13 @@
                     <span>Move to...</span>
                   </div>
                 </button>
+                <button mat-menu-item (click)="duplicate(flow)">
+                  <div class="ap-flex ap-gap-3 ap-items-center">
+                    <svg-icon src="assets/img/custom/duplicate.svg" class="ap-w-[20px] ap-h-[20px]"
+                      [applyClass]="true"></svg-icon>
+                    <span>Duplicate</span>
+                  </div>
+                </button>
                 <button (click)="deleteFlow(flow)" mat-menu-item>
                   <div class="ap-flex ap-gap-3 ap-items-center">
                     <svg-icon src="assets/img/custom/trash.svg" class="ap-fill-danger ap-w-[20px] ap-h-[20px]"
@@ -72,7 +79,7 @@
           </ng-container>
 
           <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-          <tr class="ap-cursor-pointer hover:!ap-bg-hover" (click)="openBuilder(row)" mat-row
+          <tr class="ap-cursor-pointer hover:!ap-bg-hover" (click)="openBuilder(row, $event)" mat-row
             [class.ap-hidden]="dataSource.isLoading$ | async" *matRowDef="let row; columns: displayedColumns"></tr>
         </table>
         <ng-container *ngIf="dataSource.data.length===0 && (dataSource.isLoading$ | async) === false">
@@ -108,3 +115,4 @@
 </ng-container>
 
 <ng-container *ngIf="showAllFlows$ | async"></ng-container>
+<ng-container *ngIf="duplicateFlow$ | async"></ng-container>

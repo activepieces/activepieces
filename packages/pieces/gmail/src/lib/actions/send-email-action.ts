@@ -8,7 +8,7 @@ export const gmailSendEmailAction = createAction({
 	displayName: 'Send Email',
 	props: {
 		authentication: GmailProps.authentication,
-		receiver: Property.ShortText({
+		receiver: Property.Array({
 			displayName: 'Receiver Email (To)',
 			description: undefined,
 			required: true,
@@ -33,7 +33,7 @@ export const gmailSendEmailAction = createAction({
 	async run(configValue) {
 		const headers = [
 			"subject: " + configValue.propsValue['subject'],
-			"to: " + configValue.propsValue['receiver'],
+            "to: " + configValue.propsValue['receiver'].join(', '), // Join all email addresses with a comma
 			"mime-version: 1.0",
 			"content-type: text/html"
 		];

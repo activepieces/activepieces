@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../environments/environment';
-import { map, Observable, of, switchMap } from 'rxjs';
+import { map, Observable, of, switchMap, tap } from 'rxjs';
 import {
   CountFlowsRequest,
   CreateFlowRequest,
@@ -12,9 +12,9 @@ import {
   Flow,
   FlowId,
   FlowOperationRequest,
+  FlowOperationType,
   FlowRun,
   FlowVersionId,
-  GuessFlowRequest,
   ListFlowsRequest,
   SeekPage,
 } from '@activepieces/shared';
@@ -58,6 +58,27 @@ export class FlowService {
     return this.http.get<Flow>(environment.apiUrl + '/flows/' + flowId, {
       params: params,
     });
+  }
+
+  duplicate(flow: Flow): Observable<void> {
+    return this.create({
+      displayName: flow.version.displayName,
+    }).pipe(
+      switchMap((clonedFlow) => {
+        return this.update(clonedFlow.id, {
+          type: FlowOperationType.IMPORT_FLOW,
+          request: {
+            displayName: flow.version.displayName,
+            trigger: flow.version.trigger,
+          },
+        }).pipe(
+          tap((clonedFlow: Flow) => {
+            window.open(`/flows/${clonedFlow.id}`, '_blank');
+          })
+        );
+      }),
+      map(() => void 0)
+    );
   }
 
   delete(flowId: FlowId): Observable<void> {
@@ -108,14 +129,6 @@ export class FlowService {
     return this.http.get<ExecutionState>(
       environment.apiUrl + `/files/${fileId}`
     );
-  }
-
-  guessFlow(prompt: string, newFlowName: string) {
-    const request: GuessFlowRequest = {
-      displayName: newFlowName,
-      prompt: prompt,
-    };
-    return this.http.post<Flow>(environment.apiUrl + '/flows/guess', request);
   }
 
   count(req: CountFlowsRequest) {

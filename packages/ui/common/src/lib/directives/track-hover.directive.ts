@@ -1,7 +1,7 @@
 import { Directive, HostListener } from '@angular/core';
 
 @Directive({
-  selector: '[appTrackHover]',
+  selector: '[apTrackHover]',
   exportAs: 'hoverTrackerDirective',
 })
 export class TrackHoverDirective {

@@ -54,9 +54,15 @@
         </ng-container>
 
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        <tr mat-row [class.ap-hidden]="dataSource.isLoading$ | async" *matRowDef="let row; columns: displayedColumns">
+        </tr>
       </table>
-      <ng-container *ngIf="dataSource.data.length===0">
+      <ng-container *ngIf="(dataSource.isLoading$ | async) === true">
+        <div class="ap-flex ap-items-center ap-justify-center ap-flex-grow ap-h-[500px]">
+          <ap-loading-icon height="50px" width="51px" [outlineLoader]="true" [whiteLoader]="false"> </ap-loading-icon>
+        </div>
+      </ng-container>
+      <ng-container *ngIf="dataSource.data.length===0 && (dataSource.isLoading$ | async) === false">
         <div class="ap-flex ap-items-center ap-justify-center  ap-h-full ap-h-[500px]">
           No connnections created yet
         </div>

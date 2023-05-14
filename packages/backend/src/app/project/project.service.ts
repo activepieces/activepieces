@@ -7,7 +7,11 @@ const projectRepo = databaseConnection.getRepository<Project>(ProjectEntity)
 
 export const projectService = {
     async create(request: { ownerId: UserId, displayName: string }): Promise<Project> {
-        return await projectRepo.save({ id: apId(), ...request, notifications: NotificationStatus.ALWAYS })
+        return await projectRepo.save<Partial<Project>>({
+            id: apId(),
+            ...request,
+            notifyStatus: NotificationStatus.ALWAYS,
+        })
     },
     async update(projectId: ProjectId, request: UpdateProjectRequest): Promise<Project | null> {
         const project = await projectRepo.findOneBy({

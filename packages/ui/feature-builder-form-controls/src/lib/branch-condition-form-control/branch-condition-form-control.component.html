@@ -19,12 +19,12 @@
 
 
 
-    <div class="ap-relative" appTrackHover #valueInput="hoverTrackerDirective">
+    <div class="ap-relative" apTrackHover #valueInput="hoverTrackerDirective">
         <ap-icon-button *ngIf="form.enabled && !(isLastAndOnlyCondition && isInLastAndOnlyGroup)" [width]="9"
             [height]="9" iconFilename="delete.svg"
             [tooltipText]=" !deleteButton.isHovered && !valueInput.isHovered ?'' :'Remove Condition'"
             class="delete-btn ap-z-40" [class.opacity-0]="!deleteButton.isHovered  && !valueInput.isHovered"
-            (buttonClicked)="removeConditionButtonClicked()" appTrackHover
+            (buttonClicked)="removeConditionButtonClicked()" apTrackHover
             #deleteButton="hoverTrackerDirective"></ap-icon-button>
 
         <mat-form-field class="ap-w-full" appearance="outline">
