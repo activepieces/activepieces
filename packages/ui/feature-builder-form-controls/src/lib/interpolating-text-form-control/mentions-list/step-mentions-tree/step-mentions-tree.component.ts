@@ -69,7 +69,7 @@ export class StepMentionsTreeComponent implements OnInit {
   }
   mentionTreeNodeClicked(node: MentionTreeNode) {
     const mentionListItem = {
-      value: `\${${node.propertyPath}}`,
+      value: `{{${node.propertyPath}}}`,
       label: replaceArrayNotationsWithSpaces(
         replaceDotsWithSpaces(
           this.replaceStepNameWithDisplayNameInPath(

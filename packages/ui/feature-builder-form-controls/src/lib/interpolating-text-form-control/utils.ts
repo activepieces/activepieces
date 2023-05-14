@@ -47,7 +47,7 @@ export function fromTextToOps(
   ops: (TextInsertOperation | InsertMentionOperation)[];
 } {
   try {
-    const regex = /(\$\{.*?\})/;
+    const regex = /(\{\{.*?\}\})/;
     const matched = text.split(regex).filter((el) => el);
     const ops: (TextInsertOperation | InsertMentionOperation)[] = matched.map(
       (item) => {

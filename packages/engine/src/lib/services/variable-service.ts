@@ -1,29 +1,11 @@
-import { get } from 'lodash';
-import { isString } from 'lodash';
+import { get, isString } from 'lodash';
 import { ExecutionState } from '@activepieces/shared';
 import { connectionService } from './connections.service';
-import replaceAsync from "string-replace-async";
 
 export class VariableService {
-  private VARIABLE_TOKEN = RegExp('\\$\\{(.*?)\\}', 'g');
-  private static CONFIGS = 'configs';
+  private VARIABLE_TOKEN = RegExp('\\{\\{(.*?)\\}\\}', 'g');
   private static CONNECTIONS = 'connections';
-  private static STEPS = 'steps';
-
-  private findPath(path: string) {
-    const paths = path.split('.');
-    if (
-      paths.length > 0 &&
-      paths[0] !== VariableService.CONFIGS &&
-      paths[0] !== VariableService.CONNECTIONS
-    ) {
-      paths.splice(0, 0, VariableService.STEPS);
-    }
-    return paths.join('.');
-  }
-
-  private async resolveInput(input: string, valuesMap: any, censorConnections: boolean): Promise<any> {
-
+  private async resolveInput(input: string, valuesMap: Record<string, unknown>, censorConnections: boolean): Promise<any> {
     // If input contains only a variable token, return the value of the variable while maintaining the variable type.
     const matchedTokens = input.match(this.VARIABLE_TOKEN);
     if (
@@ -31,51 +13,39 @@ export class VariableService {
       matchedTokens.length === 1 &&
       matchedTokens[0] === input
     ) {
-      const resolvedInput = await this.handleTypeAndResolving(
-        valuesMap,
-        this.findPath(input.substring(2, input.length - 1)),
-        censorConnections
-      )
-      return resolvedInput;
-    }
-    // If input contains other text, replace the variable with its value as a string.
-    return await replaceAsync(input, this.VARIABLE_TOKEN, async (_, matchedKey) => {
-      const resolvedInput = await this.handleTypeAndResolving(
-        valuesMap,
-        this.findPath(matchedKey),
-        censorConnections
-      );
-      if (resolvedInput === undefined) {
-        return '';
-      } else if (isString(resolvedInput)) {
-        return resolvedInput;
-      } else {
-        return JSON.stringify(resolvedInput);
+      const variableName = input.substring(2, input.length - 2);
+      if (variableName.startsWith(VariableService.CONNECTIONS)) {
+        return this.handleTypeAndResolving(variableName, censorConnections);
       }
+      return this.evalInScope(variableName, valuesMap);
+    }
+    return input.replace(this.VARIABLE_TOKEN, (_match, variable) => {
+      const result = this.evalInScope(variable, valuesMap);
+      if (!isString(result)) {
+        return JSON.stringify(result);
+      }
+      return result;
     });
   }
 
-  private async handleTypeAndResolving(valuesMap: any, path: string, censorConnections: boolean): Promise<any> {
+  private async handleTypeAndResolving(path: string, censorConnections: boolean): Promise<any> {
     const paths = path.split(".");
-    if (paths[0] === VariableService.CONNECTIONS) {
-      // Invalid naming return nothing
-      if (paths.length < 2) {
-        return '';
-      }
-      if (censorConnections) {
-        return "**CENSORED**";
-      }
-      // Need to be resolved dynamically
-      const connectioName = paths[1];
-      paths.splice(0, 2);
-      const newPath = paths.join(".");
-      const connection = (await connectionService.obtain(connectioName));
-      if (paths.length === 0) {
-        return connection;
-      }
-      return VariableService.copyFromMap(connection, newPath);
+    // Invalid naming return nothing
+    if (paths.length < 2) {
+      return '';
     }
-    return VariableService.copyFromMap(valuesMap, path);
+    if (censorConnections) {
+      return "**CENSORED**";
+    }
+    // Need to be resolved dynamically
+    const connectioName = paths[1];
+    paths.splice(0, 2);
+    const newPath = paths.join(".");
+    const connection = (await connectionService.obtain(connectioName));
+    if (paths.length === 0) {
+      return connection;
+    }
+    return VariableService.copyFromMap(connection, newPath);
   }
 
   private static copyFromMap(valuesMap: any, path: string) {
@@ -86,11 +56,26 @@ export class VariableService {
     return value;
   }
 
+
+  private evalInScope(js: string, contextAsScope: Record<string, unknown>) {
+    try {
+      const keys = Object.keys(contextAsScope);
+      const values = Object.values(contextAsScope);
+      const functionBody = `return (${js})`;
+      const evaluatedFn = new Function(...keys, functionBody);
+      const result = evaluatedFn(...values);
+      return result ?? "";
+    } catch (exception) {
+      console.warn('Error evaluating expression', exception);
+      return "";
+    }
+  }
+
   private async resolveInternally(unresolvedInput: any, valuesMap: any, censorConnections: boolean): Promise<any> {
     if (unresolvedInput === undefined || unresolvedInput === null) {
       return unresolvedInput;
     } else if (isString(unresolvedInput)) {
-      return this.resolveInput(unresolvedInput, valuesMap,censorConnections);
+      return this.resolveInput(unresolvedInput, valuesMap, censorConnections);
     } else if (Array.isArray(unresolvedInput)) {
       for (let i = 0; i < unresolvedInput.length; ++i) {
         unresolvedInput[i] = await this.resolveInternally(unresolvedInput[i], valuesMap, censorConnections);
@@ -105,16 +90,11 @@ export class VariableService {
     return unresolvedInput;
   }
 
-  private getExecutionStateObject(executionState: ExecutionState): object {
-    type ValuesMap = {
-      configs: { [key: string]: unknown };
-      steps: { [key: string]: unknown };
-    };
-    const valuesMap: ValuesMap = { configs: {}, steps: {} };
+  private getExecutionStateObject(executionState: ExecutionState): Record<string, unknown> {
+    const valuesMap: Record<string, unknown> = {}
     Object.entries(executionState.lastStepState).forEach(([key, value]) => {
-      valuesMap.steps[key] = value;
+      valuesMap[key] = value;
     });
-
     return valuesMap;
   }
 

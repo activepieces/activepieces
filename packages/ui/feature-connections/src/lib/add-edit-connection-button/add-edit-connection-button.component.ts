@@ -94,7 +94,7 @@ export class AddEditConnectionButtonComponent {
   @Output()
   connectionPropertyValueChanged: EventEmitter<{
     propertyKey: string;
-    value: `\${connections.${string}}`;
+    value: `{{connections.${string}}}`;
   }> = new EventEmitter();
   updateOrAddConnectionDialogClosed$: Observable<void>;
   cloudAuthCheck$: Observable<void>;
@@ -154,7 +154,7 @@ export class AddEditConnectionButtonComponent {
   }
 
   private emitNewConnection(result: AppConnection) {
-    const authConfigOptionValue: `\${connections.${string}}` = `\${connections.${result.name}}`;
+    const authConfigOptionValue: `{{connections.${string}}}` = `{{connections.${result.name}}}`;
     this.connectionPropertyValueChanged.emit({
       propertyKey: this.propertyKey,
       value: authConfigOptionValue,
@@ -484,8 +484,8 @@ export class AddEditConnectionButtonComponent {
   }
 
   getConnectionNameFromInterpolatedString(interpolatedString: string) {
-    //eg. ${connections.google}
-    const result = interpolatedString.split('${connections.')[1];
-    return result.slice(0, result.length - 1);
+    //eg. {{connections.google}}
+    const result = interpolatedString.split('{{connections.')[1];
+    return result.slice(0, result.length - 2);
   }
 }
