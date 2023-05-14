@@ -18,7 +18,7 @@ and you want to use "firstName" and "lastName" to create "name" in a new object,
 
 ```json
 {
-    "name": "${step_1.firstName} ${step_1.lastName}"
+    "name": "{{step_1.firstName}} {{step_1.lastName}}"
 }
 ```
 
@@ -30,7 +30,7 @@ This would be resolved to:
 }
 ```
 <Warning>If you pass in an object it will be resolved to an object even though it is passed as 
-a string like "\$\{step_1}".
+a string like "\{\{step_1}\}".
 If there is any string next to it, the object will be stringified and concatenated.</Warning>
 
 ---
