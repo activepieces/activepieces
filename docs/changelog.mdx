@@ -11,6 +11,42 @@ Semantic versioning is a standardized way of versioning software projects. It us
 
 <Note>You will only see Version X.Y here as all Patch changes (Z) are added under their minor versions.</Note>
 
+### 05/15/2023
+
+**Pieces:**
+- Salesforce: Run Query Action by @abuaboud.
+- Gotify: Notification Action sending supported by @MyWay.
+- Pushover: Notification Action sending supported by @MyWay.
+- Ntfy:  Notification Action sending supported by @MyWay.
+- StabilityAI (Text to Image) developed by @Willianwg.
+- Gmail: Multiple recipients support for email sending in Gmail by @abuaboud.
+- OpenAI roles supported by @Willianwg.
+
+**Features:**
+- Ability to Duplicate flow
+- Ability to open flows in a new tab when pressing Ctrl and clicking in the dashboard.
+- Enhanced complete settings experience and addition of notification settings.
+- Added inline functions support in the backend. You can use JS in variable syntax, for example, {{1 + step_name.property}}.
+- (Cloud only) Billing alerts.
+- (Cloud only) Flow AI Builder.
+
+**Bug Fixes:**
+- Saving loader now shows up again in the publish button.
+- Run Status Snackbar now shows on timeout and internal error.
+- Fixed "(or groups) was being calculated after every condition within an (and group)". That should be fixed now.
+- Added loader in the connections and runs table.
+- Scroll to the latest folder when creating a new folder.
+
+**Chores:**
+- Added playwright test.
+- Fixed project notify status not null.
+
+**Contributors:**
+- @MyWay contributed Gotify/Pushover/Ntfy.
+- @Willianwg contributed StabilityAI and enhanced OpenAI.
+
+**Full Changelog**: [https://github.com/activepieces/activepieces/compare/0.3.13...0.3.14](https://github.com/activepieces/activepieces/compare/0.3.13...0.3.14)
+
 ### 05/02/2023
 
 **Bug Fixes:**

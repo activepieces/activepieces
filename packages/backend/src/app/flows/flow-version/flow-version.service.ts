@@ -412,6 +412,8 @@ function buildSchema(props: PiecePropertyMap): TSchema {
             case PropertyType.DROPDOWN:
                 propsSchema[name] = nonNullableUnknownPropType
                 break
+            case PropertyType.BASIC_AUTH:
+            case PropertyType.SECRET_TEXT:
             case PropertyType.OAUTH2:
                 // Only accepts connections variable.
                 propsSchema[name] = Type.Union([Type.RegEx(RegExp('{{1}{connections.(.*?)}{1}}')), Type.String()])

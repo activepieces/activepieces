@@ -71,6 +71,21 @@ export class AppComponent implements OnDestroy, AfterViewInit {
 
   //SDK function
   @Input()
+  public getConnection = ({ appName }: connectedParam) => {
+      parametersValidator(
+        { appName },
+        Object.keys(connectedParamValidationObject)
+      );
+      this.checkAuthRequest();
+      const projectId = getLocal(StorageName.PROJECT_ID);
+      const token = getLocal(StorageName.TOKEN);
+      const cred$ = this.connectionService
+        .get({ projectId, appName, token: token });
+      return lastValueFrom(cred$);
+  };
+
+  //SDK function
+  @Input()
   public isConnected = ({ appName }: connectedParam) => {
     parametersValidator(
       { appName },

@@ -299,7 +299,7 @@ function cleanAction(step: Action | undefined, count: number): Action | undefine
         return undefined
     }
     const basicStep = {
-        name: 'step-' + count,
+        name: 'step_' + count,
         displayName: step.displayName ?? 'Untitled Step',
         type: step.type,
         valid: false,
