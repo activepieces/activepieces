@@ -35,13 +35,41 @@ type InstallPieceParams = {
     pieceVersion: string
 }
 
-const log = logger.child({ file: 'EngineHelper' })
+type GetSandboxParams = {
+    pieceName: string
+    pieceVersion: string
+}
+
+type GenerateWorkerTokenParams = {
+    projectId: ProjectId
+}
+
+export type EngineHelperFlowResult = ExecutionOutput
+
+export type EngineHelperTriggerResult<T extends TriggerHookType = TriggerHookType> = ExecuteTriggerResponse<T>
+
+export type EngineHelperPropResult = DropdownState<unknown> | Record<string, DynamicPropsValue>
+
+export type EngineHelperActionResult = ExecuteActionResponse
+
+export type EngineHelperResult =
+    | EngineHelperFlowResult
+    | EngineHelperTriggerResult
+    | EngineHelperPropResult
+    | EngineHelperActionResult
+
+export type EngineHelperResponse<Result extends EngineHelperResult> = {
+    status: EngineResponseStatus
+    result: Result
+}
+
 
 const nodeExecutablePath = system.getOrThrow(SystemProp.NODE_EXECUTABLE_PATH)
 const engineExecutablePath = system.getOrThrow(SystemProp.ENGINE_EXECUTABLE_PATH)
 
+
 const installPiece = async (params: InstallPieceParams) => {
-    log.debug(params, '[InstallPiece] params')
+    logger.debug(params, '[InstallPiece] params')
 
     const { path, pieceName, pieceVersion } = params
 
@@ -56,94 +84,7 @@ const installPiece = async (params: InstallPieceParams) => {
     })
 }
 
-export const engineHelper = {
-    async executeFlow(sandbox: Sandbox, operation: ExecuteFlowOperation): Promise<ExecutionOutput> {
-        const result = await execute<ExecutionOutput>(EngineOperationType.EXECUTE_FLOW, sandbox, {
-            ...operation,
-            workerToken: await workerToken({ projectId: operation.projectId }),
-        })
-        return result
-    },
-    async executeTrigger<T extends TriggerHookType>(operation: ExecuteTriggerOperation<T>): Promise<ExecuteTriggerResponse<T>> {
-        const { pieceName, pieceVersion } = (operation.flowVersion.trigger as PieceTrigger).settings
-        const sandbox = await getSandbox({
-            pieceName,
-            pieceVersion,
-        })
-
-        try {
-            const result = await execute<ExecuteTriggerResponse<T>>(EngineOperationType.EXECUTE_TRIGGER_HOOK, sandbox, {
-                ...operation,
-                edition: await getEdition(),
-                appWebhookUrl: await appEventRoutingService.getAppWebhookUrl({ appName: pieceName }),
-                webhookSecret: await getWebhookSecret(operation.flowVersion),
-                workerToken: await workerToken({
-                    projectId: operation.projectId,
-                }),
-            })
-            return result
-        }
-        finally {
-            await sandboxManager.returnSandbox(sandbox.boxId)
-        }
-    },
-
-    async executeProp(operation: ExecutePropsOptions): Promise<DropdownState<unknown> | Record<string, DynamicPropsValue>> {
-        log.debug(operation, '[EngineHelper#executeProp] operation')
-
-        const { pieceName, pieceVersion } = operation
-
-        const sandbox = await getSandbox({
-            pieceName,
-            pieceVersion,
-        })
-
-        try {
-            const result = await execute<DropdownState<unknown> | Record<string, DynamicPropsValue>>(
-                EngineOperationType.EXECUTE_PROPERTY,
-                sandbox,
-                {
-                    ...operation,
-                    workerToken: await workerToken({
-                        projectId: operation.projectId,
-                    }),
-                },
-            )
-
-            return result
-        }
-        finally {
-            await sandboxManager.returnSandbox(sandbox.boxId)
-        }
-    },
-
-    async executeAction(operation: ExecuteActionOperation): Promise<ExecuteActionResponse> {
-        logger.debug(operation, '[EngineHelper#executeAction] operation')
-
-        const { pieceName, pieceVersion } = operation
-
-        const sandbox = await getSandbox({
-            pieceName,
-            pieceVersion,
-        })
-
-        try {
-            const result = await execute<ExecuteActionResponse>(EngineOperationType.EXECUTE_ACTION, sandbox, {
-                ...operation,
-                workerToken: await workerToken({
-                    projectId: operation.projectId,
-                }),
-            })
-
-            return result
-        }
-        finally {
-            await sandboxManager.returnSandbox(sandbox.boxId)
-        }
-    },
-}
-
-function workerToken(request: { projectId: ProjectId }): Promise<string> {
+const generateWorkerToken = (request: GenerateWorkerTokenParams): Promise<string> => {
     return tokenUtils.encode({
         type: PrincipalType.WORKER,
         id: apId(),
@@ -151,13 +92,11 @@ function workerToken(request: { projectId: ProjectId }): Promise<string> {
     })
 }
 
-async function getSandbox({ pieceName, pieceVersion }: {
-    pieceName: string
-    pieceVersion: string
-}): Promise<Sandbox> {
+const getSandbox = async ({ pieceName, pieceVersion }: GetSandboxParams): Promise<Sandbox> => {
     const sandbox = await sandboxManager.obtainSandbox(`${pieceName}:${pieceVersion}`)
+
     if (sandbox.cached) {
-        logger.info(`Resuing sandox number ${sandbox.boxId} for ${pieceName}:${pieceVersion}`)
+        logger.info(`Reusing sandbox number ${sandbox.boxId} for ${pieceName}:${pieceVersion}`)
         await sandbox.clean()
     }
     else {
@@ -171,11 +110,16 @@ async function getSandbox({ pieceName, pieceVersion }: {
             pieceVersion,
         })
     }
+
     return sandbox
 }
 
-async function execute<T>(operation: EngineOperationType, sandbox: Sandbox, input: EngineOperation): Promise<T> {
-    log.info(`Executing ${operation} inside sandbox number ${sandbox.boxId}`)
+const execute = async <Result extends EngineHelperResult>(
+    operation: EngineOperationType,
+    sandbox: Sandbox,
+    input: EngineOperation,
+): Promise<EngineHelperResponse<Result>> => {
+    logger.info(`Executing ${operation} inside sandbox number ${sandbox.boxId}`)
 
     const sandboxPath = sandbox.getSandboxFolderPath()
 
@@ -186,21 +130,138 @@ async function execute<T>(operation: EngineOperationType, sandbox: Sandbox, inpu
         apiUrl: 'http://127.0.0.1:3000',
     }))
 
-    const result = await sandbox.runCommandLine(`${nodeExecutablePath} activepieces-engine.js ${operation}`)
+    const sandboxResponse = await sandbox.runCommandLine(`${nodeExecutablePath} activepieces-engine.js ${operation}`)
 
-    result.standardOutput.split('\n').forEach(f => {
-        if (f.trim().length > 0) log.info({}, chalk.yellow(f))
+    sandboxResponse.standardOutput.split('\n').forEach(f => {
+        if (f.trim().length > 0) logger.info({}, chalk.yellow(f))
     })
 
-    result.standardError.split('\n').forEach(f => {
-        if (f.trim().length > 0) log.error({}, chalk.red(f))
+    sandboxResponse.standardError.split('\n').forEach(f => {
+        if (f.trim().length > 0) logger.error({}, chalk.red(f))
     })
-    if(result.verdict === EngineResponseStatus.TIMEOUT){
+
+    if(sandboxResponse.verdict === EngineResponseStatus.TIMEOUT){
         throw new ActivepiecesError({
             code: ErrorCode.EXECUTION_TIMEOUT,
             params: {},
         })
     }
 
-    return result.output as T
+    const result: Result = typeof sandboxResponse.output === 'string'
+        ? JSON.parse(sandboxResponse.output)
+        : sandboxResponse.output
+
+    const response = {
+        status: sandboxResponse.verdict,
+        result,
+    }
+
+    logger.debug(response, '[EngineHelper#response] response')
+
+    return response
+}
+
+
+export const engineHelper = {
+    async executeFlow(
+        sandbox: Sandbox,
+        operation: ExecuteFlowOperation,
+    ): Promise<EngineHelperResponse<EngineHelperFlowResult>> {
+        const input = {
+            ...operation,
+            workerToken: await generateWorkerToken({ projectId: operation.projectId }),
+        }
+
+        return await execute(
+            EngineOperationType.EXECUTE_FLOW,
+            sandbox,
+            input,
+        )
+    },
+
+    async executeTrigger<T extends TriggerHookType>(
+        operation: ExecuteTriggerOperation<T>,
+    ): Promise<EngineHelperResponse<EngineHelperTriggerResult<T>>> {
+        const { pieceName, pieceVersion } = (operation.flowVersion.trigger as PieceTrigger).settings
+
+        const sandbox = await getSandbox({
+            pieceName,
+            pieceVersion,
+        })
+
+        const input ={
+            ...operation,
+            edition: await getEdition(),
+            appWebhookUrl: await appEventRoutingService.getAppWebhookUrl({ appName: pieceName }),
+            webhookSecret: await getWebhookSecret(operation.flowVersion),
+            workerToken: await generateWorkerToken({ projectId: operation.projectId }),
+        }
+
+        try {
+            return await execute(
+                EngineOperationType.EXECUTE_TRIGGER_HOOK,
+                sandbox,
+                input,
+            )
+        }
+        finally {
+            await sandboxManager.returnSandbox(sandbox.boxId)
+        }
+    },
+
+    async executeProp(
+        operation: ExecutePropsOptions,
+    ): Promise<EngineHelperResponse<EngineHelperPropResult>> {
+        logger.debug(operation, '[EngineHelper#executeProp] operation')
+
+        const { pieceName, pieceVersion } = operation
+
+        const sandbox = await getSandbox({
+            pieceName,
+            pieceVersion,
+        })
+
+        const input = {
+            ...operation,
+            workerToken: await generateWorkerToken({ projectId: operation.projectId }),
+        }
+
+        try {
+            return await execute(
+                EngineOperationType.EXECUTE_PROPERTY,
+                sandbox,
+                input,
+            )
+        }
+        finally {
+            await sandboxManager.returnSandbox(sandbox.boxId)
+        }
+    },
+
+    async executeAction(operation: ExecuteActionOperation): Promise<EngineHelperResponse<EngineHelperActionResult>> {
+        logger.debug(operation, '[EngineHelper#executeAction] operation')
+
+        const { pieceName, pieceVersion } = operation
+
+        const sandbox = await getSandbox({
+            pieceName,
+            pieceVersion,
+        })
+
+        const input = {
+            ...operation,
+            workerToken: await generateWorkerToken({ projectId: operation.projectId }),
+        }
+
+        try {
+            return await execute(
+                EngineOperationType.EXECUTE_ACTION,
+                sandbox,
+                input,
+            )
+        }
+        finally {
+            await sandboxManager.returnSandbox(sandbox.boxId)
+        }
+    },
 }

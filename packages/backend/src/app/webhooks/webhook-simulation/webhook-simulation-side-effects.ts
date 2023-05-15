@@ -1,32 +1,66 @@
-import { Flow, WebhookSimulation } from '@activepieces/shared'
+import { ActivepiecesError, EngineResponseStatus, ErrorCode, Flow, FlowId, ProjectId } from '@activepieces/shared'
 import { flowService } from '../../flows/flow/flow.service'
 import { triggerUtils } from '../../helper/trigger-utils'
+import { isNil } from 'lodash'
 
-const getFlowOrThrow = async (webhookSimulation: WebhookSimulation): Promise<Flow> => {
+type BaseParams = {
+    projectId: ProjectId
+    flowId: FlowId
+}
+
+type GetFlowParams = BaseParams
+type PreCreateParams = BaseParams
+type PreDeleteParams = BaseParams
+
+const getFlowOrThrow = async ({ projectId, flowId }: GetFlowParams): Promise<Flow> => {
     return await flowService.getOneOrThrow({
-        id: webhookSimulation.flowId,
-        projectId: webhookSimulation.projectId,
+        id: flowId,
+        projectId,
     })
 }
 
 export const webhookSideEffects = {
-    async onCreate(webhookSimulation: WebhookSimulation): Promise<void> {
-        const { projectId, version: flowVersion } = await getFlowOrThrow(webhookSimulation)
+    async preCreate({ projectId, flowId }: PreCreateParams): Promise<void> {
+        const { version: flowVersion } = await getFlowOrThrow({
+            flowId,
+            projectId,
+        })
 
-        await triggerUtils.enable({
+        const response = await triggerUtils.enable({
             projectId,
             flowVersion,
             simulate: true,
         })
+
+        if (isNil(response) || response.status !== EngineResponseStatus.OK) {
+            throw new ActivepiecesError({
+                code: ErrorCode.TRIGGER_ENABLE,
+                params: {
+                    flowVersionId: flowVersion.id,
+                },
+            })
+        }
     },
 
-    async onDelete(webhookSimulation: WebhookSimulation): Promise<void> {
-        const { projectId, version: flowVersion } = await getFlowOrThrow(webhookSimulation)
+    async preDelete({ projectId, flowId }: PreDeleteParams): Promise<void> {
+        const { version: flowVersion } = await getFlowOrThrow({
+            flowId,
+            projectId,
+        })
 
-        await triggerUtils.disable({
+        const response = await triggerUtils.disable({
             projectId,
             flowVersion,
             simulate: true,
         })
+
+        if (isNil(response) || response.status !== EngineResponseStatus.OK) {
+            throw new ActivepiecesError({
+                code: ErrorCode.TRIGGER_DISABLE,
+                params: {
+                    flowVersionId: flowVersion.id,
+                },
+            })
+        }
     },
 }

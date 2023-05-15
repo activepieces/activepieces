@@ -17,7 +17,7 @@ export const piecesController: FastifyPluginAsync = async (app) => {
                 Body: PieceOptionRequest
             }>,
         ) => {
-            return engineHelper.executeProp({
+            const engineHelperResponse = await engineHelper.executeProp({
                 pieceName: request.params.pieceName,
                 pieceVersion: request.body.pieceVersion,
                 propertyName: request.body.propertyName,
@@ -25,6 +25,10 @@ export const piecesController: FastifyPluginAsync = async (app) => {
                 input: request.body.input,
                 projectId: request.principal.projectId,
             })
+
+            return {
+                ...engineHelperResponse.result,
+            }
         },
     )
 

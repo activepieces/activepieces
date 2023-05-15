@@ -97,7 +97,7 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
             await sandbox.clean()
             logger.info(`[${jobData.runId}] Reusing sandbox ${sandbox.boxId} took ${Date.now() - startTime}ms`)
         }
-        const executionOutput = await engineHelper.executeFlow(sandbox, {
+        const { result: executionOutput } = await engineHelper.executeFlow(sandbox, {
             flowVersionId: flowVersion.id,
             projectId: jobData.projectId,
             triggerPayload: {
