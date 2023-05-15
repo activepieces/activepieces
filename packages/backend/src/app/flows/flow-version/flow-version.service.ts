@@ -32,7 +32,6 @@ import { flowVersionSideEffects } from './flow-version-side-effects'
 import { pieceMetadataLoader } from '../../pieces/piece-metadata-loader'
 import { FlowViewMode, DEFAULT_SAMPLE_DATA_SETTINGS } from '@activepieces/shared'
 import { isNil } from 'lodash'
-import { generateFlow } from '@ee/magic-wand/openai'
 
 const branchSetttingsValidaotr = TypeCompiler.Compile(BranchActionSettingsWithValidation)
 const loopSettingsValidator = TypeCompiler.Compile(LoopOnItemsActionSettingsWithValidation)
@@ -48,7 +47,6 @@ export const flowVersionService = {
     async applyOperation(projectId: ProjectId, flowVersion: FlowVersion, userOperation: FlowOperationRequest): Promise<FlowVersion | null> {
         let operations: FlowOperationRequest[] = []
         switch (userOperation.type) {
-            case FlowOperationType.GENERATE_FLOW:
             case FlowOperationType.IMPORT_FLOW:
             {
                 const actionsToRemove = flowHelper.getAllSteps(flowVersion).filter(step => flowHelper.isAction(step.type))
@@ -60,7 +58,7 @@ export const flowVersionService = {
                         },
                     })
                 }
-                const trigger = (userOperation.type === FlowOperationType.GENERATE_FLOW) ? await generateFlow(userOperation.request.prompt) : userOperation.request.trigger
+                const trigger = userOperation.request.trigger
                 if (trigger) {
                     operations.push({
                         type: FlowOperationType.UPDATE_TRIGGER,
