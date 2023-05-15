@@ -18,6 +18,7 @@
     "baseUrl": ".",
     "paths": {
       "@activepieces/ee/billing/ui": ["packages/ee/billing/ui/src/index.ts"],
+      "@activepieces/ee/guess-flow": ["packages/ee/guess-flow/src/index.ts"],
       "@activepieces/ee/shared": ["packages/ee/shared/src/index.ts"],
       "@activepieces/engine": ["packages/engine/src/main.ts"],
       "@activepieces/piece-airtable": ["packages/pieces/airtable/src/index.ts"],
@@ -104,6 +105,7 @@
       ],
       "@activepieces/piece-postgres": ["packages/pieces/postgres/src/index.ts"],
       "@activepieces/piece-posthog": ["packages/pieces/posthog/src/index.ts"],
+      "@activepieces/piece-pushover": ["packages/pieces/pushover/src/index.ts"],
       "@activepieces/piece-rss": ["packages/pieces/rss/src/index.ts"],
       "@activepieces/piece-salesforce": [
         "packages/pieces/salesforce/src/index.ts"

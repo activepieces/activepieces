@@ -1,0 +1,22 @@
+<div class="ap-flex ap-w-[130px] ap-justify-end" apTrackHover #iconsColumn="hoverTrackerDirective">
+    <ng-container *ngIf="!isHovered">
+        <div *ngFor="let url of prompt.urls; let isFirst=first"
+            class="ap-rounded-full ap-border ap-border-solid ap-border-dividers ap-h-[40px] ap-w-[40px] ap-flex ap-items-center ap-justify-center ap-bg-white"
+            [style.marginLeft]="isFirst? '0px': '-10px'">
+            <img [src]="url" class="ap-w-[20px] ap-h-[20px] ap-object-contain">
+        </div>
+
+        <div *ngIf="prompt.more && prompt.more > 0"
+            class="ap-rounded-full ap-border ap-border-solid ap-border-dividers ap-h-[40px] ap-w-[40px] ap-flex ap-items-center ap-justify-center -ap-ml-[10px] ap-bg-white">
+            <img class="ap-w-[20px] ap-h-[20px] ap-object-contain ap-invisible ">
+            <div class="ap-absolute ap-text-description">
+                +{{prompt.more}}
+            </div>
+        </div>
+    </ng-container>
+    <ng-container *ngIf="isHovered">
+        <ap-button btnColor="primary" btnSize="default" btnStyle="stroked" @fadeInUp>
+            Select
+        </ap-button>
+    </ng-container>
+</div>

@@ -47,6 +47,7 @@ export class FlowsTableComponent implements OnInit {
   areThereFlows$: Observable<boolean>;
   flowsUpdateStatusRequest$: Record<string, Observable<void> | null> = {};
   showAllFlows$: Observable<boolean>;
+  duplicateFlow$: Observable<void>;
 
   constructor(
     private activatedRoute: ActivatedRoute,
@@ -98,9 +99,15 @@ export class FlowsTableComponent implements OnInit {
     );
   }
 
-  openBuilder(flow: Flow) {
+  openBuilder(flow: Flow, event: MouseEvent) {
     const link = '/flows/' + flow.id;
-    this.router.navigate([link]);
+    if (event.ctrlKey) {
+      // Open in new tab
+      window.open(link, '_blank');
+    } else {
+      // Open in the same tab
+      this.router.navigateByUrl(link);
+    }
   }
 
   deleteFlow(flow: Flow) {
@@ -150,6 +157,10 @@ export class FlowsTableComponent implements OnInit {
         );
     }
   }
+  duplicate(flow: Flow) {
+    this.duplicateFlow$ = this.flowService.duplicate(flow);
+  }
+
   moveFlow(flow: Flow) {
     const dialogData: MoveFlowToFolderDialogData = {
       flowId: flow.id,

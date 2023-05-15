@@ -37,6 +37,7 @@ export class BuilderAutocompleteMentionsDropdownComponent {
   @Input() left = 'unset';
   @Input() marginTop = '0px';
   @Input() focusSearch = false;
+  @Input() mouseWithin = false;
   calculatedMarginTop = '0px';
   id = new UUID();
   @Input() container: HTMLElement;
@@ -72,7 +73,8 @@ export class BuilderAutocompleteMentionsDropdownComponent {
     this.focusChecker = setInterval(() => {
       if (
         !this.container.matches(':focus-within') &&
-        this.matDialog.openDialogs.length === 0
+        this.matDialog.openDialogs.length === 0 &&
+        !this.mouseWithin
       ) {
         clearInterval(this.focusChecker);
         this.close();

@@ -19,6 +19,7 @@ export interface BuilderState {
   focusedStep: FlowItem | undefined;
   selectedRun: FlowRun | undefined;
   selectedStepName: string;
+  isGeneratingFlowComponentOpen: boolean;
 }
 
 export interface StepTypeSideBarProps {

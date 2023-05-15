@@ -1,4 +1,5 @@
-<div class="ap-flex-grow list-container ap-mx-5 ap-my-1.5" *ngIf="typesList.length > 0">
+<div class="ap-flex-grow list-container ap-mx-5 ap-my-1.5" *ngIf="typesList.length > 0"
+  [class.full-height-of-sidebar]="takeFullHeightOfSidebar">
   <div class="list-item" *ngFor="let flowItemDetails of typesList">
     <app-step-type-item [flowItemDetails]="flowItemDetails" (click)="typeSelected.emit(flowItemDetails)">
     </app-step-type-item>

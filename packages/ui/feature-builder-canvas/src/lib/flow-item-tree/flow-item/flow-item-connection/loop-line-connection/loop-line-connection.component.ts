@@ -262,6 +262,7 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
             StepLocationRelativeToParent.INSIDE_LOOP,
           stepName: this.flowItem.name,
         },
+        deselectCurrentStep: true,
       })
     );
   }
@@ -274,6 +275,7 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
           stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
           stepName: this.flowItem.name,
         },
+        deselectCurrentStep: true,
       })
     );
   }
