@@ -250,8 +250,25 @@ async function refreshWithCredentials(appConnection: OAuth2ConnectionValueWithAp
             },
         )
     ).data
-    return { ...appConnection, ...formatOAuth2Response({ ...response }) }
+    const mergedObject = mergeNonNull(appConnection, formatOAuth2Response({ ...response }))
+    return mergedObject
 }
+
+/*
+When the refresh token is null or undefined, it indicates that the original connection's refresh token is also null or undefined.
+Therefore, we only need to merge non-null values to avoid overwriting the original refresh token with a null or undefined value.
+*/
+function mergeNonNull(appConnection: OAuth2ConnectionValueWithApp, oAuth2Response: BaseOAuth2ConnectionValue): OAuth2ConnectionValueWithApp {
+    const formattedOAuth2Response: Partial<BaseOAuth2ConnectionValue> = Object.entries(oAuth2Response)
+        .filter(([, value]) => value !== null && value !== undefined)
+        .reduce<Partial<BaseOAuth2ConnectionValue>>((obj, [key, value]) => {
+        obj[key as keyof BaseOAuth2ConnectionValue] = value
+        return obj
+    }, {})
+  
+    return { ...appConnection, ...formattedOAuth2Response } as OAuth2ConnectionValueWithApp
+}
+  
 
 async function claim(request: {
     clientSecret: string
