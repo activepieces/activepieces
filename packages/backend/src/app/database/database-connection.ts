@@ -15,8 +15,6 @@ import { FlowAndFileProjectId1674788714498 } from './migration/1674788714498-Flo
 import { initializeSchema1676238396411 } from './migration/1676238396411-initialize-schema'
 import { removeStoreAction1676649852890 } from './migration/1676649852890-remove-store-action'
 import { encryptCredentials1676505294811 } from './migration/1676505294811-encrypt-credentials'
-import { ProjectPlanEntity } from '@ee/billing/backend/plan.entity'
-import { ProjectUsageEntity } from '@ee/billing/backend/usage.entity'
 import { billing1677286751592 } from './migration/1677286751592-billing'
 import { addVersionToPieceSteps1677521257188 } from './migration/1677521257188-add-version-to-piece-steps'
 import { AppEventRoutingEntity } from '../app-event-routing/app-event-routing.entity'
@@ -117,8 +115,6 @@ export const databaseConnection = new DataSource({
         StoreEntryEntity,
         UserEntity,
         AppConnectionEntity,
-        ProjectPlanEntity,
-        ProjectUsageEntity,
         WebhookSimulationEntity,
         FolderEntity,
     ],

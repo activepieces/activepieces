@@ -22,7 +22,6 @@ import { SystemProp } from './app/helper/system/system-prop'
 import swagger from '@fastify/swagger'
 import { databaseConnection } from './app/database/database-connection'
 import { initilizeSentry, logger } from './app/helper/logger'
-import { billingModule } from '@ee/billing/backend/billing.module'
 import { getEdition } from './app/helper/secret-helper'
 import { ApEdition } from '@activepieces/shared'
 import { appEventRoutingModule } from './app/app-event-routing/app-event-routing.module'
@@ -133,7 +132,6 @@ const start = async () => {
         const edition = await getEdition()
         logger.info('Activepieces ' + (edition == ApEdition.ENTERPRISE ? 'Enterprise' : 'Community') + ' Edition')
         if (edition === ApEdition.ENTERPRISE) {
-            app.register(billingModule)
             app.register(appCredentialModule)
             app.register(connectionKeyModule)
             initilizeSentry()
