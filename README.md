@@ -6,11 +6,13 @@
 </p>
 
 ## Activepieces is an open-source business automation tool
-* Built for no-code users and citizen developers
-* Self-host with a simple Docker command
-* An alternative to Zapier, Make.com and Tray
+
+- Built for no-code users and citizen developers
+- Self-host with a simple Docker command
+- An alternative to Zapier, Make.com and Tray
 
 ## Quicklinks
+
 - Website: https://www.activepieces.com
 - Discord: https://discord.gg/2jUXBKDdP8
 - Docs: https://www.activepieces.com/docs
@@ -70,13 +72,14 @@ Visit https://www.activepieces.com/docs/install/overview
 </table>
 
 ## Repo Activity
-![Alt](https://repobeats.axiom.co/api/embed/f3afe14b092263a6c76408043fd4fc2f72ed4cf3.svg "Repobeats analytics image")
+
+![Alt](https://repobeats.axiom.co/api/embed/f3afe14b092263a6c76408043fd4fc2f72ed4cf3.svg 'Repobeats analytics image')
 
 ## Connectors
+
 We're building no-code connectors to make flow building a frictionless process for non developers. Go to the [Pieces](https://www.activepieces.com/docs/pieces) section of our docs to browse all available pieces.
 
 > :warning: The list of connectors will keep changing as we hear from our users, [request piece](https://github.com/activepieces/activepieces/issues/new/choose) if you can't find it on the [connectors roadmap](https://github.com/orgs/activepieces/projects/5).
-
 
 ## Open-source and Enterprise
 
@@ -90,18 +93,22 @@ We welcome contributions big or small and in different directions. The best way 
 
 ## Contributors 🦫
 
-### Legendary Beavers Club 🔥 
+### Legendary Beavers Club 🔥
+
 This section is dedicated to individuals who have contributed to 10 or more actions/triggers.
 <br><br>
 <a href="https://github.com/kanarelo"><img src="https://avatars.githubusercontent.com/u/393261?v=4?s=100" width="100px;" alt="Mukewa Wekalao"/></a>
 <a href="https://github.com/AbdulTheActivePiecer"><img src="https://avatars.githubusercontent.com/u/106555838?v=4?s=100" width="100px;" alt="AbdulTheActivePiecer"/> </a>
 <a href="https://github.com/abuaboud"><img src="https://avatars.githubusercontent.com/u/1812998?v=4?s=100" width="100px;" alt="Mohammed Abu Aboud"/></a>
+<a href="https://github.com/Willianwg"><img src="https://avatars.githubusercontent.com/u/51550522?v=4?s=100" width="100px;" alt="Willian Guedes"/></a>
 
 ### Busy Beavers Club 🦸
+
 This section is dedicated to individuals who have contributed to 5 or more actions/triggers.
 <br><br>
 <a href="https://github.com/khaledmashaly"><img src="https://avatars.githubusercontent.com/u/61781545?v=4?s=100" width="100px;" alt="khaledmashaly"/></a>
 <a href="https://shaypunter.co.uk"><img src="https://avatars.githubusercontent.com/u/18310437?v=4?s=100" width="100px;" alt="Shay Punter"/></a>
+
 ### Builder Beavers Club 🏗️
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
@@ -152,7 +159,6 @@ This section is dedicated to individuals who have contributed to 5 or more actio
 <!-- prettier-ignore-end -->
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->
-
 
 This project follows the [all-contributors](https://allcontributors.org) specification.
 Contributions of any kind are welcome!

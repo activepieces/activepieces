@@ -19,6 +19,7 @@ jobs:
       parallel-commands-on-agents: |
         npx nx affected --target=lint --parallel=3
         npx nx affected --target=build --parallel=3
+        npx nx test engine
 
   agents:
     name: Nx Cloud - Agents

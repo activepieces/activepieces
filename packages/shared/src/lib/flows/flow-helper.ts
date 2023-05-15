@@ -254,6 +254,12 @@ function createAction(
         settings: request.settings,
       };
       break;
+    case ActionType.MISSING:
+      action = {
+        ...baseProperties,
+        type: ActionType.MISSING,
+        settings: request.settings,
+      };
   }
   action.valid = (request.valid ?? true) && actionSchemaValidator.Check(action);
   return action;

@@ -59,6 +59,10 @@ export class FlowItemContentComponent implements OnInit {
   readonly$: Observable<boolean>;
   logoTooltipText = '';
   isOverflown = isOverflown;
+  StepOutputStatus = StepOutputStatus;
+  ExecutionOutputStatus = ExecutionOutputStatus;
+  TriggerType = TriggerType;
+  ActionType = ActionType;
   @Input() selected: boolean;
   @Input() trigger = false;
   @Input() viewMode: boolean;
@@ -162,23 +166,12 @@ export class FlowItemContentComponent implements OnInit {
     this.dialogService.open(DeleteStepDialogComponent, { data: stepName });
   }
 
-  get actionStatusEnum() {
-    return StepOutputStatus;
-  }
-
-  get executionOutputstatus() {
-    return ExecutionOutputStatus;
-  }
-
-  get triggerType() {
-    return TriggerType;
-  }
-
   changeTrigger() {
     this.store.dispatch(
       FlowsActions.setRightSidebar({
         sidebarType: RightSideBarType.TRIGGER_TYPE,
         props: NO_PROPS,
+        deselectCurrentStep: false,
       })
     );
   }
@@ -198,6 +191,8 @@ export class FlowItemContentComponent implements OnInit {
     switch (this._flowItem.type) {
       case ActionType.BRANCH:
         return 'Branch';
+      case ActionType.MISSING:
+        return 'Missing';
       case ActionType.CODE:
         return 'Code';
       case ActionType.LOOP_ON_ITEMS:

@@ -7,7 +7,9 @@
     "test": {
       "executor": "nx:run-commands",
       "options": {
-        "commands": ["npx playwright test ./packages/tests-e2e/tests/ --project=chrome"]
+        "commands": [
+          "npx playwright test ./packages/tests-e2e/tests/ --project=chrome"
+        ]
       }
     },
     "lint": {

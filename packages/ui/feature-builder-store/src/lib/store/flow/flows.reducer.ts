@@ -51,6 +51,7 @@ const initialState: FlowState = {
     },
     focusedStep: undefined,
     selectedStepName: 'initialVal',
+    isGeneratingFlowComponentOpen: false,
   },
   savingStatus: BuilderSavingStatusEnum.NONE,
   lastSaveId: '161f8c09-dea1-470e-8a90-5666a8f17bd4',
@@ -73,6 +74,7 @@ const _flowsReducer = createReducer(
         },
         focusedStep: undefined,
         selectedStepName: 'initialVal',
+        isGeneratingFlowComponentOpen: false,
       },
       savingStatus: BuilderSavingStatusEnum.NONE,
       lastSaveId: '161f8c09-dea1-470e-8a90-5666a8f17bd4',
@@ -232,6 +234,45 @@ const _flowsReducer = createReducer(
     clonedState.savingStatus =
       BuilderSavingStatusEnum.FAILED_SAVING_OR_PUBLISHING;
     return clonedState;
+  }),
+  on(FlowsActions.generateFlowSuccessful, (state, action) => {
+    const clonedState: FlowState = JSON.parse(JSON.stringify(state));
+    return {
+      ...clonedState,
+      builderState: {
+        ...clonedState.builderState,
+        isGeneratingFlowComponentOpen: false,
+      },
+      flow: action.flow,
+    };
+  }),
+  on(FlowsActions.openGenerateFlowComponent, (state) => {
+    const clonedState: FlowState = JSON.parse(JSON.stringify(state));
+    return {
+      ...clonedState,
+      builderState: {
+        ...clonedState.builderState,
+        leftSidebar: {
+          type: LeftSideBarType.NONE,
+        },
+        rightSidebar: {
+          type: RightSideBarType.NONE,
+          props: 'NO_PROPS',
+        },
+        isGeneratingFlowComponentOpen: true,
+        selectedRun: undefined,
+      },
+    };
+  }),
+  on(FlowsActions.closeGenerateFlowComponent, (state) => {
+    const clonedState: FlowState = JSON.parse(JSON.stringify(state));
+    return {
+      ...clonedState,
+      builderState: {
+        ...clonedState.builderState,
+        isGeneratingFlowComponentOpen: false,
+      },
+    };
   })
 );
 export function flowsReducer(state: FlowState | undefined, action: Action) {

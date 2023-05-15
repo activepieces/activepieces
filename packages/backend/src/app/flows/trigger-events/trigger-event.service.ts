@@ -44,7 +44,7 @@ export const triggerEventService = {
             case TriggerType.WEBHOOK:
                 throw new Error('Cannot be tested')
             case TriggerType.PIECE: {
-                const testResult = (await engineHelper.executeTrigger({
+                const { result: testResult } = await engineHelper.executeTrigger({
                     hookType: TriggerHookType.TEST,
                     flowVersion: flow.version,
                     webhookUrl: await webhookService.getWebhookUrl({
@@ -52,7 +52,7 @@ export const triggerEventService = {
                         simulate: true,
                     }),
                     projectId: projectId,
-                }))
+                })
                 await triggerEventRepo.delete({
                     projectId,
                     flowId: flow.id,
@@ -65,7 +65,7 @@ export const triggerEventService = {
                         },
                     })
                 }
-               
+
                 for (let i = 0; i < testResult.output.length; i++) {
 
                     await triggerEventService.saveEvent({

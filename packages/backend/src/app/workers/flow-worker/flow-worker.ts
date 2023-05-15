@@ -48,8 +48,6 @@ type FinishExecutionParams = {
     executionOutput: ExecutionOutput
 }
 
-const log = logger.child({ file: 'FlowWorker' })
-
 const extractFlowPieces = (flowVersion: FlowVersion): FlowPiece[] => {
     const pieces: FlowPiece[] = []
     const steps = flowHelper.getAllSteps(flowVersion)
@@ -170,7 +168,7 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
 
         const input = await generateInput(jobData)
 
-        const executionOutput = await engineHelper.executeFlow(sandbox, input)
+        const { result: executionOutput } = await engineHelper.executeFlow(sandbox, input)
 
         const debugInfo = {
             status: executionOutput.status,
@@ -194,14 +192,14 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
             executionOutput,
         })
 
-        log.info(`[FlowWorker#executeFlow] flowRunId=${jobData.runId} executionOutputStats=${executionOutput.status} sandboxId=${sandbox.boxId} duration=${Date.now() - startTime} ms`)
+        logger.info(`[FlowWorker#executeFlow] flowRunId=${jobData.runId} executionOutputStats=${executionOutput.status} sandboxId=${sandbox.boxId} duration=${Date.now() - startTime} ms`)
     }
     catch (e: unknown) {
         if (e instanceof ActivepiecesError && (e as ActivepiecesError).error.code === ErrorCode.EXECUTION_TIMEOUT) {
             await flowRunService.finish(jobData.runId, ExecutionOutputStatus.TIMEOUT, null, 1)
         }
         else {
-            log.error(e, `[${jobData.runId}] Error executing flow`)
+            logger.error(e, `[${jobData.runId}] Error executing flow`)
             captureException(e as Error)
             await flowRunService.finish(jobData.runId, ExecutionOutputStatus.INTERNAL_ERROR, null, 0)
         }
@@ -217,7 +215,7 @@ async function downloadFiles(
     projectId: ProjectId,
     flowVersion: FlowVersion,
 ): Promise<void> {
-    log.info(`[${flowVersion.id}] Acquiring flow lock to build codes`)
+    logger.info(`[${flowVersion.id}] Acquiring flow lock to build codes`)
     const flowLock = await acquireLock({
         key: flowVersion.id,
         timeout: 60000,
@@ -238,7 +236,7 @@ async function downloadFiles(
 
     }
     finally {
-        log.info(`[${flowVersion.id}] Releasing flow lock`)
+        logger.info(`[${flowVersion.id}] Releasing flow lock`)
         await flowLock.release()
     }
 
@@ -263,7 +261,7 @@ async function buildCodes(projectId: ProjectId, flowVersion: FlowVersion): Promi
 
 const getArtifactFile = async (projectId: ProjectId, codeActionSettings: CodeActionSettings): Promise<File> => {
     if (codeActionSettings.artifactPackagedId === undefined) {
-        log.info(`Building package for file id ${codeActionSettings.artifactSourceId}`)
+        logger.info(`Building package for file id ${codeActionSettings.artifactSourceId}`)
 
         const sourceId = codeActionSettings.artifactSourceId
 

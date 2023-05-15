@@ -93,6 +93,7 @@
         "pieces/apps/google-forms",
         "pieces/apps/google-sheets",
         "pieces/apps/google-tasks",
+        "pieces/apps/gotify",
         "pieces/apps/hackernews",
         "pieces/apps/http",
         "pieces/apps/hubspot",
@@ -105,6 +106,7 @@
         "pieces/apps/mindee",
         "pieces/apps/monday",
         "pieces/apps/notion",
+        "pieces/apps/ntfy",
         "pieces/apps/openai",
         "pieces/apps/pipedrive",
         "pieces/apps/postgres",
@@ -153,7 +155,6 @@
       "pages": [
         "install/overview",
         "install/docker",
-        "install/digitalocean",
         "install/easypanel",
         "install/configurations",
         "install/breaking-changes"

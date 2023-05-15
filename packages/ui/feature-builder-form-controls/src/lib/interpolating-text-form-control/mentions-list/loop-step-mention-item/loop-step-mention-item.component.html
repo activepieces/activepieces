@@ -1,5 +1,5 @@
 <button mat-menu-item (click)="expandLoopCollapse = !expandLoopCollapse" class="!ap-px-[9px]">
-    <div appTrackHover #hoverTracker="hoverTrackerDirective"
+    <div apTrackHover #hoverTracker="hoverTrackerDirective"
         class="ap-flex ap-flex-grow ap-min-h-[27px] ap-items-center">
         <mat-icon class="mat-icon-rtl-mirror !ap-mr-[5px]">
             {{expandLoopCollapse ? 'expand_less' : 'expand_more'}}
@@ -17,7 +17,7 @@
 
 <ng-container *ngIf="expandLoopCollapse">
     <ng-container *ngIf="mentionItemsToShow$ | async as result">
-        <div #indexMentionListItem="hoverTrackerDirective" appTrackHover
+        <div #indexMentionListItem="hoverTrackerDirective" apTrackHover
             *ngIf="result.markedNodesToShow[childrenNodes[0].propertyPath]" (click)="emitIndexMention()"
             (keyup.enter)="emitIndexMention()"
             class="mat-tree-node ap-min-w-[0] ap-min-h-[27px] ap-relative  ap-flex ap-items-center ap-typography-body-2"
@@ -25,7 +25,7 @@
             Index
         </div>
         <div #ItemMentionListItem="hoverTrackerDirective"
-            *ngIf="result.markedNodesToShow[childrenNodes[1].propertyPath]" appTrackHover (click)="openPathDialog()"
+            *ngIf="result.markedNodesToShow[childrenNodes[1].propertyPath]" apTrackHover (click)="openPathDialog()"
             (keyup.enter)="openPathDialog()"
             class="mat-tree-node ap-min-w-[0] ap-min-h-[27px] ap-relative  ap-flex ap-items-center ap-typography-body-2"
             [style.padding-left]="FIRST_LEVEL_PADDING_IN_MENTIONS_LIST + 'px'" mat-menu-item>

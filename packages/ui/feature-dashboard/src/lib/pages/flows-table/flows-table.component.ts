@@ -47,6 +47,7 @@ export class FlowsTableComponent implements OnInit {
   areThereFlows$: Observable<boolean>;
   flowsUpdateStatusRequest$: Record<string, Observable<void> | null> = {};
   showAllFlows$: Observable<boolean>;
+  duplicateFlow$: Observable<void>;
 
   constructor(
     private activatedRoute: ActivatedRoute,
@@ -57,21 +58,29 @@ export class FlowsTableComponent implements OnInit {
     private instanceService: FlowInstanceService,
     private store: Store
   ) {
+    this.listenToShowAllFolders();
+  }
+
+  private listenToShowAllFolders() {
     this.showAllFlows$ = this.store
       .select(FoldersSelectors.selectDisplayAllFlows)
       .pipe(
         tap((displayAllFlows) => {
-          const folderColumnIndex = this.displayedColumns.findIndex(
-            (c) => c === 'folderName'
-          );
-          if (displayAllFlows && folderColumnIndex == -1) {
-            this.displayedColumns.splice(2, 0, 'folderName');
-          } else if (!displayAllFlows && folderColumnIndex !== -1) {
-            this.displayedColumns.splice(folderColumnIndex, 1);
-          }
+          this.hideOrShowFolderColumn(displayAllFlows);
         }),
         shareReplay(1)
       );
+  }
+
+  private hideOrShowFolderColumn(displayAllFlows: boolean) {
+    const folderColumnIndex = this.displayedColumns.findIndex(
+      (c) => c === 'folderName'
+    );
+    if (displayAllFlows && folderColumnIndex == -1) {
+      this.displayedColumns.splice(2, 0, 'folderName');
+    } else if (!displayAllFlows && folderColumnIndex !== -1) {
+      this.displayedColumns.splice(folderColumnIndex, 1);
+    }
   }
 
   ngOnInit(): void {
@@ -90,9 +99,15 @@ export class FlowsTableComponent implements OnInit {
     );
   }
 
-  openBuilder(flow: Flow) {
+  openBuilder(flow: Flow, event: MouseEvent) {
     const link = '/flows/' + flow.id;
-    this.router.navigate([link]);
+    if (event.ctrlKey) {
+      // Open in new tab
+      window.open(link, '_blank');
+    } else {
+      // Open in the same tab
+      this.router.navigateByUrl(link);
+    }
   }
 
   deleteFlow(flow: Flow) {
@@ -142,6 +157,10 @@ export class FlowsTableComponent implements OnInit {
         );
     }
   }
+  duplicate(flow: Flow) {
+    this.duplicateFlow$ = this.flowService.duplicate(flow);
+  }
+
   moveFlow(flow: Flow) {
     const dialogData: MoveFlowToFolderDialogData = {
       flowId: flow.id,

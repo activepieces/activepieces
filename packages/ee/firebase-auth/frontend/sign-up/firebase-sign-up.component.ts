@@ -6,6 +6,7 @@ import {
 	containsLowercaseCharacter,
 	containsNumber,
 	containsSpecialCharacter,
+	fadeInUp400ms,
 } from '@activepieces/ui/common';
 import * as auth from 'firebase/auth';
 import { FirebaseAuthService } from '../firebase-auth.service';
@@ -22,6 +23,7 @@ export interface UserInfo {
 @Component({
 	templateUrl: './firebase-sign-up.component.html',
 	styleUrls: ['./firebase-sign-up.component.scss'],
+	animations: [fadeInUp400ms],
 })
 export class FirebaseSignUpComponent {
 	registrationForm: FormGroup<UserInfo>;

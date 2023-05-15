@@ -16,6 +16,8 @@ export function createAction(
     jsonData['nextAction']
   );
   switch (currentAction.type) {
+    case ActionType.MISSING:
+      throw new Error('Missing action, this should not happen');
     case ActionType.CODE:
       return new CodeActionHandler(currentAction, nextAction);
     case ActionType.PIECE:

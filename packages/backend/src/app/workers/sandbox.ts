@@ -106,7 +106,7 @@ export class Sandbox {
                     ' --env=AP_ENVIRONMENT ' +
                     commandLine,
                 )
-                const engineResponse = (await this.parseFunctionOutput())
+                const engineResponse = await this.parseFunctionOutput()
                 output = engineResponse.response
                 verdict = engineResponse.status
                 const metaResult = await this.parseMetaFile()

@@ -4,7 +4,7 @@
     This padding value depends on the mat-icon-button width. -->
 
 
-  <mat-tree-node appTrackHover #treeNodeHoverTracker="hoverTrackerDirective"
+  <mat-tree-node apTrackHover #treeNodeHoverTracker="hoverTrackerDirective"
     [style.display]="markedNodesToShow?.get(node.propertyPath) || (searchContainsStepDisplayName$|async) ? '':'none'"
     #treeNode="matTreeNode" *matTreeNodeDef="let node; ">
 
@@ -28,7 +28,7 @@
   <!-- This is the tree node template for expandable nodes -->
   <mat-nested-tree-node *matTreeNodeDef="let node; when: hasChild" #nestedTreeNode="matNestedTreeNode"
     [style.display]="markedNodesToShow?.get(node.propertyPath) || (searchContainsStepDisplayName$|async) ? '':'none'">
-    <div matTreeNodeToggle appTrackHover #nestedTreeNodeHoverTracker="hoverTrackerDirective"
+    <div matTreeNodeToggle apTrackHover #nestedTreeNodeHoverTracker="hoverTrackerDirective"
       (keyup.enter)="treeControl.isExpanded(node)? treeControl.collapse(node): treeControl.expand(node)"
       class="mat-tree-node ap-min-w-[0] ap-min-h-[27px] ap-relative  ap-flex ap-items-center ap-typography-body-2"
       [style.padding-left]="nestedTreeNode.level === 0? FIRST_LEVEL_PADDING_IN_MENTIONS_LIST + 'px': (nestedTreeNode.level * CHEVRON_SPACE_IN_MENTIONS_LIST + FIRST_LEVEL_PADDING_IN_MENTIONS_LIST)+'px'"

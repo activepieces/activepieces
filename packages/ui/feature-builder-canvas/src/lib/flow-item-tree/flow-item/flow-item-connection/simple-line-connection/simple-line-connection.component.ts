@@ -114,6 +114,7 @@ export class SimpleLineConnectionComponent
           stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
           stepName: this.flowItem.name,
         },
+        deselectCurrentStep: true,
       })
     );
   }
