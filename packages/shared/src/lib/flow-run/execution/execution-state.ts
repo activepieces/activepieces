@@ -1,12 +1,14 @@
 import {LoopOnItemsStepOutput, StepOutput} from './step-output';
 
 export class ExecutionState {
-  steps: Record<string, StepOutput>;
-  lastStepState: Record<string, unknown>;
+  steps: Record<string, StepOutput> = {};
+  lastStepState: Record<string, unknown> = {};
 
-  constructor() {
-    this.steps = {};
-    this.lastStepState = {};
+  constructor(executionState?: ExecutionState) {
+    if (executionState) {
+      this.steps = executionState.steps
+      this.lastStepState = executionState.lastStepState
+    }
   }
 
   insertStep(

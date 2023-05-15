@@ -5,19 +5,45 @@ export enum ExecutionOutputStatus {
   INTERNAL_ERROR = 'INTERNAL_ERROR',
   RUNNING = "RUNNING",
   SUCCEEDED = 'SUCCEEDED',
-  SUSPENDED = 'SUSPENDED',
-  TIMEOUT = "TIMEOUT",
+  PAUSED = 'PAUSED',
+  TIMEOUT = 'TIMEOUT',
 }
 
-export interface ExecutionOutput {
-  status: ExecutionOutputStatus;
+export type ExecutionError = {
+  stepName: string;
+  errorMessage: string;
+}
+
+type BaseExecutionOutput<T extends ExecutionOutputStatus> = {
+  status: T;
   executionState: ExecutionState;
   duration: number;
   tasks: number;
   errorMessage?: ExecutionError;
 }
 
-export interface ExecutionError {
-  stepName: string;
-  errorMessage: string;
+
+export enum PauseType {
+  DELAY = 'DELAY',
 }
+
+type BasePauseMetadata<T extends PauseType> = {
+  type: T;
+  resumeStepName: string;
+  executionState: ExecutionState;
+}
+
+export type DelayPauseMetadata = BasePauseMetadata<PauseType.DELAY> & {
+  resumeDateTime: string;
+}
+
+export type PauseMetadata = DelayPauseMetadata
+
+
+export type PauseExecutionOutput = BaseExecutionOutput<ExecutionOutputStatus.PAUSED> & {
+  pauseMetadata: PauseMetadata
+}
+
+export type FinishExecutionOutput = BaseExecutionOutput<Exclude<ExecutionOutputStatus, ExecutionOutputStatus.PAUSED>>
+
+export type ExecutionOutput = FinishExecutionOutput | PauseExecutionOutput

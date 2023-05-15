@@ -5,9 +5,14 @@ import {
     apId,
     CodeActionSettings,
     ErrorCode,
+    ExecuteFlowOperation,
+    ExecutionOutput,
     ExecutionOutputStatus,
+    ExecutionType,
     File,
+    FileId,
     flowHelper,
+    FlowRunId,
     FlowVersion,
     FlowVersionState,
     ProjectId,
@@ -35,6 +40,12 @@ type FlowPiece = {
 type InstallPiecesParams = {
     path: string
     flowVersion: FlowVersion
+}
+
+type FinishExecutionParams = {
+    flowRunId: FlowRunId
+    logFileId: FileId
+    executionOutput: ExecutionOutput
 }
 
 const log = logger.child({ file: 'FlowWorker' })
@@ -66,7 +77,66 @@ const installPieces = async (params: InstallPiecesParams): Promise<void> => {
     })
 }
 
+const finishExecution = async (params: FinishExecutionParams): Promise<void> => {
+    logger.debug(params, '[FlowWorker#finishExecution] params')
+
+    const { flowRunId, logFileId, executionOutput } = params
+
+    if (executionOutput.status === ExecutionOutputStatus.PAUSED) {
+        await flowRunService.pause({
+            flowRunId,
+            pauseMetadata: executionOutput.pauseMetadata,
+        })
+    }
+    else {
+        await flowRunService.finish(flowRunId, executionOutput.status, logFileId, executionOutput.tasks)
+    }
+}
+
+const generateInput = async (jobData: OneTimeJobData): Promise<ExecuteFlowOperation> => {
+    const baseInput = {
+        flowVersionId: jobData.flowVersionId,
+        projectId: jobData.projectId,
+        triggerPayload: {
+            duration: 0,
+            input: {},
+            output: jobData.payload,
+            status: StepOutputStatus.SUCCEEDED,
+        },
+    }
+
+    if (jobData.executionType === ExecutionType.BEGIN) {
+        return {
+            ...baseInput,
+            executionType: ExecutionType.BEGIN,
+        }
+    }
+
+    const flowRun = await flowRunService.getOneOrThrow({
+        id: jobData.runId,
+        projectId: jobData.projectId,
+    })
+
+    if (isNil(flowRun.pauseMetadata)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: `flowrun.pauseMetadata is undefined flowRunId=${jobData.runId}`,
+            },
+        })
+    }
+
+    return {
+        ...baseInput,
+        executionType: ExecutionType.RESUME,
+        executionState: flowRun.pauseMetadata.executionState,
+        resumeStepName: flowRun.pauseMetadata.resumeStepName,
+    }
+}
+
 async function executeFlow(jobData: OneTimeJobData): Promise<void> {
+    logger.warn(`[FlowWorker#executeFlow] executionType=${jobData.executionType} flowRunId=${jobData.runId}`)
+
     const flowVersion = await flowVersionService.getOneOrThrow(jobData.flowVersionId)
 
     await usageService.limit({
@@ -97,18 +167,34 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
             await sandbox.clean()
             logger.info(`[${jobData.runId}] Reusing sandbox ${sandbox.boxId} took ${Date.now() - startTime}ms`)
         }
-        const executionOutput = await engineHelper.executeFlow(sandbox, {
-            flowVersionId: flowVersion.id,
-            projectId: jobData.projectId,
-            triggerPayload: {
-                duration: 0,
-                input: {},
-                output: jobData.payload,
-                status: StepOutputStatus.SUCCEEDED,
-            },
+
+        const input = await generateInput(jobData)
+
+        const executionOutput = await engineHelper.executeFlow(sandbox, input)
+
+        const debugInfo = {
+            status: executionOutput.status,
+            pauseMetadata: executionOutput.status === ExecutionOutputStatus.PAUSED
+                ? {
+                    ...executionOutput.pauseMetadata,
+                    executionState: undefined,
+                }: undefined,
+        }
+
+        logger.warn(debugInfo, '[FlowWorker#executeFlow] executionOutput')
+
+        const logsFile = await fileService.save(
+            jobData.projectId,
+            Buffer.from(JSON.stringify(executionOutput)),
+        )
+
+        await finishExecution({
+            flowRunId: jobData.runId,
+            logFileId: logsFile.id,
+            executionOutput,
         })
-        const logsFile = await fileService.save(jobData.projectId, Buffer.from(JSON.stringify(executionOutput)))
-        await flowRunService.finish(jobData.runId, executionOutput.status, logsFile.id, executionOutput.tasks)
+
+        log.info(`[FlowWorker#executeFlow] flowRunId=${jobData.runId} executionOutputStats=${executionOutput.status} sandboxId=${sandbox.boxId} duration=${Date.now() - startTime} ms`)
     }
     catch (e: unknown) {
         if (e instanceof ActivepiecesError && (e as ActivepiecesError).error.code === ErrorCode.EXECUTION_TIMEOUT) {
@@ -124,7 +210,6 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
     finally {
         await sandboxManager.returnSandbox(sandbox.boxId)
     }
-    log.info(`[${jobData.runId}] Finished executing flow ${flowVersion.id} in sandbox ${sandbox.boxId} in ${Date.now() - startTime}ms`)
 }
 
 async function downloadFiles(

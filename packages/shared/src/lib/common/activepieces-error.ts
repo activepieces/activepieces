@@ -121,8 +121,8 @@ export type ExistingUserErrorParams = BaseErrorParams<
 export type StepNotFoundErrorParams = BaseErrorParams<
   ErrorCode.STEP_NOT_FOUND,
   {
-    pieceName: string;
-    pieceVersion: string;
+    pieceName?: string;
+    pieceVersion?: string;
     stepName: string;
   }
 >

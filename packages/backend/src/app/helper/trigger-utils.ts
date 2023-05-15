@@ -1,5 +1,6 @@
 import { TriggerBase, TriggerStrategy } from '@activepieces/pieces-framework'
 import {
+    ExecutionType,
     FlowVersion,
     PieceTrigger,
     ProjectId,
@@ -39,7 +40,7 @@ export const triggerUtils = {
 
                 if (result.success && Array.isArray(result.output)) {
                     payloads = result.output
-                } 
+                }
                 else {
                     const error = new ActivepiecesError({
                         code: ErrorCode.TRIGGER_FAILED,
@@ -114,7 +115,7 @@ const disablePieceTrigger = async (params: EnableOrDisableParams): Promise<void>
         case TriggerStrategy.WEBHOOK:
             break
         case TriggerStrategy.POLLING:
-            await flowQueue.removeRepeatableJob({
+            await flowQueue.removeRepeatingJob({
                 id: flowVersion.id,
             })
             break
@@ -159,12 +160,13 @@ const enablePieceTrigger = async (params: EnableOrDisableParams): Promise<void> 
             const scheduleOptions = response.scheduleOptions
             await flowQueue.add({
                 id: flowVersion.id,
-                type: JobType.REPEATABLE,
+                type: JobType.REPEATING,
                 data: {
                     projectId,
                     environment: RunEnvironment.PRODUCTION,
                     flowVersion,
                     triggerType: TriggerType.PIECE,
+                    executionType: ExecutionType.BEGIN,
                 },
                 scheduleOptions: scheduleOptions,
             })

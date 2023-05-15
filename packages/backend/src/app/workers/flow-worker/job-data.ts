@@ -1,19 +1,27 @@
-import { FlowRunId, FlowVersion, FlowVersionId, ProjectId, RunEnvironment, TriggerType } from '@activepieces/shared'
+import { ExecutionType, FlowRunId, FlowVersion, FlowVersionId, ProjectId, RunEnvironment, TriggerType } from '@activepieces/shared'
 
 type BaseJobData = {
-    environment: RunEnvironment
     projectId: ProjectId
+    environment: RunEnvironment
+    executionType: ExecutionType
 }
 
-export type RepeatableJobData = {
+export type RepeatingJobData = BaseJobData & {
     flowVersion: FlowVersion
     triggerType: TriggerType
-} & BaseJobData
+}
 
-export type OneTimeJobData = {
+export type DelayedJobData = BaseJobData & {
+    flowVersionId: FlowVersionId
+    runId: FlowRunId
+}
+
+export type ScheduledJobData = RepeatingJobData | DelayedJobData
+
+export type OneTimeJobData = BaseJobData & {
     flowVersionId: FlowVersionId
     runId: FlowRunId
     payload: unknown
-} & BaseJobData
+}
 
-export type JobData = RepeatableJobData | OneTimeJobData
+export type JobData = ScheduledJobData | OneTimeJobData

@@ -9,6 +9,7 @@ export * from "./lib/engine/engine-operation";
 export * from "./lib/flag/flag";
 export * from "./lib/flow-run/dto/list-flow-runs-request";
 export * from "./lib/flow-run/execution/execution-output";
+export * from "./lib/flow-run/execution/execution-type";
 export * from "./lib/flow-run/execution/step-output";
 export * from "./lib/flows/flow-operations";
 export * from "./lib/flows/step-run";

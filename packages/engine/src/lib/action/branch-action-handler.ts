@@ -45,7 +45,7 @@ export class BranchActionHandler extends BaseActionHandler<BranchAction> {
         condition: condition,
       };
       executionState.insertStep(stepOutput, this.action.name, ancestors);
-      const executor = new FlowExecutor(executionState);
+      const executor = new FlowExecutor({ executionState });
       if (condition) {
         if (this.onSuccessAction) {
           await executor.iterateFlow(

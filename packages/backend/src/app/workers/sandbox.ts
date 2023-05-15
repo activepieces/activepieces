@@ -127,7 +127,7 @@ export class Sandbox {
                 standardError: await fs.readFile(this.getSandboxFilePath('_standardError.txt'), { encoding: 'utf-8' }),
             }
 
-            logger.debug(result, '[Sandbox#runCommandLine] result')
+            logger.trace(result, '[Sandbox#runCommandLine] result')
 
             return result
         }
@@ -155,7 +155,7 @@ export class Sandbox {
         }
         const output = JSON.parse(await fs.readFile(outputFile, { encoding: 'utf-8' }))
 
-        logger.debug(output, '[Sandbox#parseFunctionOutput] output')
+        logger.trace(output, '[Sandbox#parseFunctionOutput] output')
 
         return output
     }

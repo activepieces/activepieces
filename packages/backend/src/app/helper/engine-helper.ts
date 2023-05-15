@@ -58,6 +58,8 @@ const installPiece = async (params: InstallPieceParams) => {
 
 export const engineHelper = {
     async executeFlow(sandbox: Sandbox, operation: ExecuteFlowOperation): Promise<ExecutionOutput> {
+        logger.warn({ ...operation, triggerPayload: undefined, executionState: undefined }, '[EngineHelper#executeFlow] operation')
+
         const result = await execute<ExecutionOutput>(EngineOperationType.EXECUTE_FLOW, sandbox, {
             ...operation,
             workerToken: await workerToken({ projectId: operation.projectId }),
