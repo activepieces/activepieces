@@ -1,0 +1,35 @@
+@import "./variables.scss";
+.add-button {
+    position: absolute;
+    height: 17px;
+    width: 16px;
+    z-index:40;
+    cursor:pointer;
+  }
+  .drop-point-container {
+    position: absolute;
+    left: 50px;
+    top:  3px;
+    &.false-branch{
+        left:265px;
+        top:100px;
+    }
+    &.true-branch{
+        left:-165px;
+        top:100px;
+    }
+    &.first-loop-drop{
+        left: 256px;
+        top: 88px;
+    }
+  }
+  .drop-point-border {
+    height: $drop-point-height;
+    width: $drop-point-width;
+    transform: scale(0);
+    border: 2px $border dashed;
+    border-radius: 5px;
+    transition-timing-function: cubic-bezier(0.42, 0, 0.58, 1);
+    transition-duration: 250ms;
+    transition-property: all;
+  }

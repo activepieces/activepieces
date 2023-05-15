@@ -11,7 +11,7 @@ import { Point } from '../model/point';
 })
 export class FlowRendererService {
   debuggerNewDropPointSubject = new Subject<{ x: number; y: number }>();
-  draggingSubject = new Subject<boolean>();
+  draggingSubject = new BehaviorSubject<boolean>(false);
   public structureChanged: BehaviorSubject<FlowItem | undefined> =
     new BehaviorSubject<FlowItem | undefined>(undefined);
   public addButtonsWithStepNamesContainers: AddButtonAndFlowItemNameContainer[] =

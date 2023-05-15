@@ -12,8 +12,9 @@ import { CanvasUtilsComponent } from './canvas-utils/canvas-utils.component';
 import { CanvasPannerDirective } from './canvas-utils/panning/panner.directive';
 import { DeleteStepDialogComponent } from './flow-item-tree/flow-item/flow-item-content/delete-step-dialog/delete-step-dialog.component';
 import { IncompleteStepsWidgetComponent } from './incomplete-steps-widget/incomplete-steps-widget.component';
+import { DragAndDropModule } from 'angular-draggable-droppable';
 @NgModule({
-  imports: [CommonModule, UiCommonModule],
+  imports: [CommonModule, UiCommonModule, DragAndDropModule],
   declarations: [
     BranchLineConnectionComponent,
     LoopLineConnectionComponent,

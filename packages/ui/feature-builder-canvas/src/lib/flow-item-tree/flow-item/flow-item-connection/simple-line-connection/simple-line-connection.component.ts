@@ -143,4 +143,7 @@ export class SimpleLineConnectionComponent
       this.flowItem.nextAction !== null
     );
   }
+  drop($event: unknown) {
+    console.log($event);
+  }
 }

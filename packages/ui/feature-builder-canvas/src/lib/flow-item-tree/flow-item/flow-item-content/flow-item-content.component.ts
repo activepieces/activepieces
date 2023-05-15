@@ -35,6 +35,7 @@ import {
 import {
   BuilderSelectors,
   FlowItem,
+  FlowRendererService,
   FlowsActions,
   NO_PROPS,
   RightSideBarType,
@@ -72,17 +73,19 @@ export class FlowItemContentComponent implements OnInit {
     this.flowItemChanged$.next(true);
     this.fetchFlowItemDetailsAndLoadLogo();
   }
-
+  isDragging$: Observable<boolean>;
   stepResult: StepOutput | undefined;
   flowItemDetails$: Observable<FlowItemDetails | null | undefined>;
   constructor(
     private store: Store,
     private cd: ChangeDetectorRef,
     private runDetailsService: RunDetailsService,
-    private dialogService: MatDialog
+    private dialogService: MatDialog,
+    private flowRendererService: FlowRendererService
   ) {}
 
   ngOnInit(): void {
+    this.isDragging$ = this.flowRendererService.draggingSubject.asObservable();
     this.readonly$ = this.store.select(BuilderSelectors.selectReadOnly);
     this.selectedRun$ = this.store.select(
       BuilderSelectors.selectCurrentFlowRun

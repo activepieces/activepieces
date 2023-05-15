@@ -25,21 +25,19 @@
 
   <div class="add-button ap-z-50 ap-cursor-pointer" (click)="addTrueBranchItem()" [style.top]="addButtonTop"
     [style.left]="addButtonTrueBranchLeftStyleProperty" *ngIf="flowItem.onSuccessAction && !viewMode" #addButton>
-    <div class="drop-point-container" *ngIf="showDropArea$ | async as showDropArea">
-      <div class="drop-point-border" [class.scale-1]="showDropArea"></div>
-    </div>
     <svg-icon src="./assets/img/custom/add-button.svg" [style]="addButtonSize"></svg-icon>
   </div>
+  <div class="drop-point-container true-branch">
 
+    <div class="drop-point-border" [class.scale-1]="showDropArea$ | async"></div>
+  </div>
   <div class="add-button ap-cursor-pointer  ap-z-50" (click)="add()" *ngIf="!viewMode"
     [style.top]="afterBranchAddButtonTop" [style.left]="afterBranchAddButtonLeft" #afterBranchAddButton>
-    <div class="drop-point-container" *ngIf="showDropArea$ | async as showDropArea">
-      <div class="drop-point-border" [class.scale-1]="showDropArea"></div>
-    </div>
-
     <svg-icon src="./assets/img/custom/add-button.svg" [style]="addButtonSize"></svg-icon>
   </div>
-
+  <div class="drop-point-container" [style.top]="'calc( '+ afterBranchAddButtonTop + ' - 25px )'">
+    <div class="drop-point-border" [class.scale-1]="showDropArea$ | async"></div>
+  </div>
   <div #emptyBranchAddButton
     class="empty-loop-add-button ap-flex ap-items-center ap-justify-center ap-absolute ap-cursor-pointer"
     (mousedown)="showEmptyTrueBranchAddButtonBoxShadow = true" (mouseup)="showEmptyTrueBranchAddButtonBoxShadow = false"
@@ -66,10 +64,12 @@
 
   <div class="add-button ap-z-50  ap-cursor-pointer" (click)="addFalseBranchItem()" [style.top]="addButtonTop"
     [style.left]="addButtonFalseBranchLeftStyleProperty" *ngIf="flowItem.onSuccessAction && !viewMode" #addButton>
-    <div class="drop-point-container" *ngIf="showDropArea$ | async as showDropArea">
-      <div class="drop-point-border" [class.scale-1]="showDropArea"></div>
-    </div>
+
     <svg-icon src="./assets/img/custom/add-button.svg" [style]="addButtonSize"></svg-icon>
+  </div>
+  <div class="drop-point-container false-branch">
+
+    <div class="drop-point-border" [class.scale-1]="showDropArea$ | async"></div>
   </div>
   <div #emptyBranchAddButton
     class="empty-loop-add-button ap-flex ap-items-center ap-justify-center ap-absolute ap-cursor-pointer"

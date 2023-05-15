@@ -1,5 +1,10 @@
-import { Component, Input, OnInit } from '@angular/core';
-import { combineLatest, map, Observable, of, startWith } from 'rxjs';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  Input,
+  OnInit,
+} from '@angular/core';
+import { combineLatest, map, Observable, of, startWith, Subject } from 'rxjs';
 import { Store } from '@ngrx/store';
 import {
   FLOW_ITEM_HEIGHT,
@@ -12,14 +17,17 @@ import {
   FlowItem,
   Point,
   FlowStructureUtil,
+  FlowRendererService,
 } from '@activepieces/ui/feature-builder-store';
 import { PannerService } from '../../canvas-utils/panning/panner.service';
 import { ZoomingService } from '../../canvas-utils/zooming/zooming.service';
+import { DragEndEvent } from 'angular-draggable-droppable';
 
 @Component({
   selector: 'app-flow-item',
   templateUrl: './flow-item.component.html',
   styleUrls: [],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FlowItemComponent implements OnInit {
   flowGraphContainer = {};
@@ -28,6 +36,7 @@ export class FlowItemComponent implements OnInit {
   @Input() hoverState = false;
   @Input() trigger = false;
   _flowItemData: FlowItem;
+  hideDraggableSource$: Subject<boolean> = new Subject();
   @Input() set flowItemData(value: FlowItem) {
     this._flowItemData = value;
     this.selected$ = this.store
@@ -42,19 +51,28 @@ export class FlowItemComponent implements OnInit {
       );
     this.flowGraphContainer = this.flowGraphContainerCalculator();
   }
-
-  dragging = false;
   selected$: Observable<boolean> = of(false);
   viewMode$: Observable<boolean> = of(false);
   dragDelta: Point | undefined;
-
+  scale$: Observable<string>;
+  isDragging = false;
+  anyStepIsDragged$: Observable<boolean>;
   constructor(
     private store: Store,
     private pannerService: PannerService,
-    private zoomingService: ZoomingService
+    private zoomingService: ZoomingService,
+    private flowRendererService: FlowRendererService
   ) {}
 
   ngOnInit(): void {
+    this.anyStepIsDragged$ =
+      this.flowRendererService.draggingSubject.asObservable();
+    this.scale$ = this.zoomingService.zoomingScale$.asObservable().pipe(
+      startWith(1),
+      map((val) => {
+        return `scale(${val})`;
+      })
+    );
     this.viewMode$ = this.store.select(BuilderSelectors.selectReadOnly);
     if (FlowStructureUtil.isTrigger(this._flowItemData)) {
       const translate$ = this.pannerService.panningOffset$.asObservable().pipe(
@@ -63,14 +81,9 @@ export class FlowItemComponent implements OnInit {
           return `translate(${val.x}px,${val.y}px)`;
         })
       );
-      const scale$ = this.zoomingService.zoomingScale$.asObservable().pipe(
-        startWith(1),
-        map((val) => {
-          return `scale(${val})`;
-        })
-      );
+
       this.transformObs$ = combineLatest({
-        scale: scale$,
+        scale: this.scale$,
         translate: translate$,
       }).pipe(
         map((value) => {
@@ -110,5 +123,21 @@ export class FlowItemComponent implements OnInit {
       left: '0px',
       position: 'absolute',
     };
+  }
+  draggingStarted() {
+    this.flowRendererService.draggingSubject.next(true);
+    this.isDragging = true;
+    setTimeout(() => {
+      this.hideDraggableSource$.next(true);
+    });
+  }
+  draggingEnded(event$: DragEndEvent) {
+    console.log(event$);
+    this.flowRendererService.draggingSubject.next(false);
+    this.isDragging = false;
+    this.hideDraggableSource$.next(false);
+  }
+  getDocument() {
+    return document.body;
   }
 }
