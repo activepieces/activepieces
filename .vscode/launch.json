@@ -1,0 +1,16 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "attach backend",
+            "port": 9229,
+            "request": "attach",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "node",
+            "localRoot": "${workspaceFolder}",
+            "remoteRoot": "/usr/src/app"
+        }
+    ]
+}
