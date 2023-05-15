@@ -1,10 +1,4 @@
-import {
-  AfterViewInit,
-  Component,
-  EventEmitter,
-  OnInit,
-  Output,
-} from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { map, Observable, switchMap, take, tap } from 'rxjs';
@@ -30,7 +24,7 @@ import { ApEdition, Flow, FlowInstance } from '@activepieces/shared';
   styleUrls: ['./flow-builder-header.component.scss'],
   animations: [fadeIn400ms],
 })
-export class FlowBuilderHeaderComponent implements OnInit, AfterViewInit {
+export class FlowBuilderHeaderComponent implements OnInit {
   viewMode$: Observable<boolean>;
   isGeneratingFlowComponentOpen$: Observable<boolean>;
   instance$: Observable<FlowInstance | undefined>;
@@ -41,8 +35,7 @@ export class FlowBuilderHeaderComponent implements OnInit, AfterViewInit {
   folderDisplayName$: Observable<string>;
   duplicateFlow$: Observable<void>;
   showGuessFlowBtn$: Observable<boolean>;
-  @Output()
-  showAiHelper = new EventEmitter<boolean>();
+
   constructor(
     public dialogService: MatDialog,
     private store: Store,
@@ -71,12 +64,7 @@ export class FlowBuilderHeaderComponent implements OnInit, AfterViewInit {
   changeEditValue(event: boolean) {
     this.editingFlowName = event;
   }
-  ngAfterViewInit(): void {
-    if (localStorage.getItem('SHOW_AI_AFTER_CREATING_FLOW')) {
-      this.guessFlowButtonClicked();
-      localStorage.removeItem('SHOW_AI_AFTER_CREATING_FLOW');
-    }
-  }
+
   redirectHome(newWindow: boolean) {
     if (newWindow) {
       const url = this.router.serializeUrl(this.router.createUrlTree([``]));
@@ -144,9 +132,5 @@ export class FlowBuilderHeaderComponent implements OnInit, AfterViewInit {
         return void 0;
       })
     );
-  }
-  guessFlowButtonClicked() {
-    this.store.dispatch(FlowsActions.openGenerateFlowComponent());
-    this.showAiHelper.emit(true);
   }
 }
