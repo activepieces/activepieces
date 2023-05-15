@@ -21,6 +21,7 @@ services:
      - ./:/usr/src/app
     working_dir: /usr/src/app
     command: /bin/sh -c "npm ci && (npx nx serve backend & npx nx serve ui-core)"
+    #    command: -c log_statement=all -c shared_preload_libraries=auto_explain -c auto_explain.log_min_duration=0
     depends_on:
      - postgres
      - redis
