@@ -52,14 +52,15 @@ export function fromTextToOps(
     const ops: (TextInsertOperation | InsertMentionOperation)[] = matched.map(
       (item) => {
         if (
-          item.length > 3 &&
-          item[0] === '$' &&
+          item.length > 5 &&
+          item[0] === '{' &&
           item[1] === '{' &&
-          item[item.length - 1] === '}'
+          item[item.length - 1] === '}' &&
+          item[item.length - 2] === '}'
         ) {
           const itemPathWithoutInterpolationDenotation = item.slice(
             2,
-            item.length - 1
+            item.length - 2
           );
           const itemPrefix =
             itemPathWithoutInterpolationDenotation.split('.')[0];
