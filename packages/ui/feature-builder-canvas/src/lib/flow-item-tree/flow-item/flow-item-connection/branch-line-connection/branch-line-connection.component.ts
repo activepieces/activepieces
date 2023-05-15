@@ -34,7 +34,7 @@ import {
   RightSideBarType,
 } from '@activepieces/ui/feature-builder-store';
 import { FlowRenderUtil } from '@activepieces/ui/feature-builder-store';
-
+import { DropEvent } from 'angular-draggable-droppable';
 @Component({
   selector: 'app-branch-line-connection',
   templateUrl: './branch-line-connection.component.html',
@@ -383,5 +383,14 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
         'px',
       position: 'absolute',
     };
+  }
+  dropAtTheTopOfTrueBranch(event$: DropEvent<FlowItem>) {
+    console.log(event$);
+  }
+  dropAtTheTopOfFalseBranch(event$: DropEvent<FlowItem>) {
+    console.log(event$);
+  }
+  dropAfterBranch(event$: DropEvent<FlowItem>) {
+    console.log(event$);
   }
 }

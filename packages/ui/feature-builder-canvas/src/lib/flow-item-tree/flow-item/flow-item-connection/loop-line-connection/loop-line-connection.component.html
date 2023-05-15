@@ -16,7 +16,8 @@
     [style.left]="addButtonLeft" *ngIf="flowItem.firstLoopAction && !viewMode" #addButton>
     <svg-icon src="./assets/img/custom/add-button.svg" [style]="addButtonSize"></svg-icon>
   </div>
-  <div class="drop-point-container first-loop-drop">
+  <div class="drop-point-container first-loop-drop" mwlDroppable (drop)="dropAtTheStartOfLoop($event)"
+    dragOverClass="ap-cursor-cell">
     <div class="drop-point-border" [class.scale-1]="showDropArea$ | async"></div>
   </div>
 
@@ -25,7 +26,8 @@
     <svg-icon src="./assets/img/custom/add-button.svg" [style]="addButtonSize"></svg-icon>
   </div>
 
-  <div class="drop-point-container after-loop" [style.top]="'calc( '+afterLoopAddButtonTop +' - 25px )'">
+  <div class="drop-point-container after-loop" mwlDroppable (drop)="dropAfterLoop($event)"
+    dragOverClass="ap-cursor-cell" [style.top]="'calc( '+afterLoopAddButtonTop +' - 25px )'">
     <div class="drop-point-border" [class.scale-1]="showDropArea$ | async"></div>
   </div>
 

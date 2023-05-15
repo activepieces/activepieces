@@ -34,7 +34,7 @@ import {
   FlowsActions,
   RightSideBarType,
 } from '@activepieces/ui/feature-builder-store';
-
+import { DropEvent } from 'angular-draggable-droppable';
 @Component({
   selector: 'app-loop-line-connection',
   templateUrl: './loop-line-connection.component.html',
@@ -324,5 +324,11 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
         'px',
       position: 'relative',
     };
+  }
+  dropAtTheStartOfLoop(event$: DropEvent<FlowItem>) {
+    console.log(event$);
+  }
+  dropAfterLoop(event$: DropEvent<FlowItem>) {
+    console.log(event$);
   }
 }
