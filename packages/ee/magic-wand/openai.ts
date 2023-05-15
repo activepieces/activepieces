@@ -71,7 +71,7 @@ function getTriggerDetails() {
 
 async function fillProperties(prompt: string, trigger: Trigger, sugegstedTrigger: TriggerDetails, suggestAction: ActionDetails[]): Promise<Trigger> {
     const template = `Fill the null values in input properties for the activepieces flow with best prediction. Your response must be a JSON object and should not include any additional information or explanations.
----- 
+----
 Steps:
 
 {steps}
@@ -83,7 +83,7 @@ Examples:
 -----
 Usecase: {prompt}
 Flow: {flow}
-Answer: 
+Answer:
     `
     const chain = new LLMChain({
         llm: creativeLLM,
@@ -135,10 +135,10 @@ async function findTrigger(prompt: string): Promise<TriggerDetails> {
         triggerExamples: `
         Prompt: On new slack message, send me message on discord
         Answer: {"pieceName": "slack", "triggerName": "new_message"}
-        
+
         Prompt: read rows from a sheet and only send email if the name is ahmad
         Answer: {"pieceName": "google-sheets", "triggerName": "new_row_added"}
-        
+
         Prompt: read from discord message and send email
         Answer: {"pieceName": "webhook", "triggerName": "webhook"}
         `,
@@ -163,7 +163,7 @@ async function findTrigger(prompt: string): Promise<TriggerDetails> {
 
 
 async function findActions(prompt: string): Promise<ActionDetails[]> {
-    const template = `You must pick the activepieces flow actions exclusively from the provided actions array. Your response should solely consist of elements from the array. Do not include any explanations in your reply. 
+    const template = `You must pick the activepieces flow actions exclusively from the provided actions array. Your response should solely consist of elements from the array. Do not include any explanations in your reply.
 ---
 Actions Array:
 {allActions}
@@ -171,7 +171,7 @@ Actions Array:
 {actionExamples}
 ---
 Prompt: {prompt}
-Answer: 
+Answer:
     `
     if (llm) {
         const chain = new LLMChain({
@@ -187,7 +187,7 @@ Answer:
             actionExamples: `
             Prompt: On new slack message, send me message on discord
             Answer: [{"pieceName": "discord", "actionName": "send_message_webhook"}]
-            
+
             Prompt: read rows from a sheet and only send email and disord message if the name is ahmad
             Answer: [{"pieceName": "gmail", "actionName": "send_email"}, {"pieceName": "discord", "actionName": "send_message_webhook"}]
             `,
@@ -237,7 +237,7 @@ Answer: {"type":"PIECE_TRIGGER","settings":{"pieceName":"slack","triggerName":"n
 async function generateFlowInternal(trigger: TriggerDetails, actions: ActionDetails[], prompt: string) {
     const template = `
 Your responsibility is to serve as a JSON generator for the activepieces flow by implementing the given flow description. You are to respond with the corresponding flow JSON enclosed within a single code block, without any additional information or explanation. and are only authorized to use "PIECE" as action types and information from steps. failure to comply with these guidelines will result in failure.
---- 
+---
 Steps:
 
 {steps}
@@ -247,7 +247,7 @@ Examples:
 {examples}
 ---
 Prompt: {prompt}
-Answer: 
+Answer:
 `
     const examples = buildExamples(trigger, actions)
     const chain = new LLMChain({
@@ -299,7 +299,7 @@ function cleanAction(step: Action | undefined, count: number): Action | undefine
         return undefined
     }
     const basicStep = {
-        name: 'step-' + count,
+        name: 'step_' + count,
         displayName: step.displayName ?? 'Untitled Step',
         type: step.type,
         valid: false,

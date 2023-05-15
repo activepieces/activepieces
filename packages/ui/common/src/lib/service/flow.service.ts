@@ -31,6 +31,22 @@ export class FlowService {
     });
   }
 
+  exportTemplate(
+    flowId: FlowId,
+    flowVersionId: undefined | FlowVersionId
+  ): Observable<Flow> {
+    const params: Record<string, string> = {};
+    if (flowVersionId) {
+      params['versionId'] = flowVersionId;
+    }
+    return this.http.get<Flow>(
+      environment.apiUrl + '/flows/' + flowId + '/template',
+      {
+        params: params,
+      }
+    );
+  }
+
   get(
     flowId: FlowId,
     flowVersionId: undefined | FlowVersionId

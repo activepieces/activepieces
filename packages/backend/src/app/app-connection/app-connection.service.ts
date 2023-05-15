@@ -182,11 +182,12 @@ const REFRESH_THRESHOLD = 15 * 60 // Refresh if there is less than 15 minutes to
 function isExpired(connection: BaseOAuth2ConnectionValue) {
     const secondsSinceEpoch = Math.round(Date.now() / 1000)
 
-    if (!connection.expires_in || !connection.refresh_token) {
+    if (!connection.refresh_token) {
         return false
     }
-
-    return (secondsSinceEpoch + REFRESH_THRESHOLD >= connection.claimed_at + connection.expires_in)
+    // Salesforce doesn't provide an 'expires_in' field, as it is dynamic per organization; therefore, it's necessary for us to establish a low threshold and consistently refresh it.
+    const expiresIn = connection.expires_in ?? 15 * 60
+    return (secondsSinceEpoch + REFRESH_THRESHOLD >= connection.claimed_at + expiresIn)
 }
 
 async function refreshCloud(appName: string, connectionValue: CloudOAuth2ConnectionValue): Promise<CloudOAuth2ConnectionValue> {

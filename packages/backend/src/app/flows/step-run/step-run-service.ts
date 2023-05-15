@@ -120,7 +120,7 @@ export const stepRunService = {
             projectId,
         }
 
-        const result = await engineHelper.executeAction(operation)
+        const { result } = await engineHelper.executeAction(operation)
 
         if (result.success) {
             step.settings.inputUiInfo.currentSelectedData = result.output
