@@ -415,7 +415,7 @@ function findStepLogoUrlForMentions(
     case ActionType.BRANCH:
       return 'assets/img/custom/piece/branch_mention.png';
     case TriggerType.WEBHOOK:
-      return 'assets/img/custom/piece/wehook_mention.png';
+      return 'assets/img/custom/piece/webhook_mention.png';
     case ActionType.LOOP_ON_ITEMS:
       return 'assets/img/custom/piece/loop_mention.png';
     case ActionType.CODE:
