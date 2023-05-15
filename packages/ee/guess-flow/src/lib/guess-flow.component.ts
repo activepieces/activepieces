@@ -38,7 +38,7 @@ export class GuessFlowComponent {
   guessFlow(prompt: string) {
     this.savePrompt$ = this.promptsService.savePrompt({
       prompt: prompt,
-      userId: this.authenticationService.currentUser.id,
+      email: this.authenticationService.currentUser.id,
     });
     this.store.dispatch(FlowsActions.generateFlow({ prompt: prompt }));
     this.guessFlow$ = this.actions.pipe(
@@ -48,7 +48,7 @@ export class GuessFlowComponent {
           .savePromptAndResult({
             prompt,
             result: JSON.stringify(res),
-            userId: this.authenticationService.currentUser.id,
+            email: this.authenticationService.currentUser.email,
           })
           .pipe(
             catchError(() => of(res)),

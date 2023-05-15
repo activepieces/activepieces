@@ -16,14 +16,14 @@ export class PromptsService {
   savePromptAndResult(request: {
     prompt: string;
     result: string;
-    userId: string;
+    email: string;
   }) {
     return this.http.post(
       'https://cloud.activepieces.com/api/v1/webhooks/TYbw81ZpfYRfMYDLPrtvP',
       request
     );
   }
-  savePrompt(request: { prompt: string; userId: string }) {
+  savePrompt(request: { prompt: string; email: string }) {
     return this.http.post(
       'https://cloud.activepieces.com/api/v1/webhooks/liggKrTlbyYNQ4ciJsy6b',
       request
