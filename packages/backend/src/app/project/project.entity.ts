@@ -1,13 +1,10 @@
 import { EntitySchema } from 'typeorm'
 import { AppConnection, Flow, Folder, Project, TriggerEvent, User } from '@activepieces/shared'
 import { ApIdSchema, BaseColumnSchemaPart } from '../helper/base-entity'
-import { ConnectionKey, AppCredential } from '@activepieces/ee/shared'
 
 type ProjectSchema = {
     owner: User
     flows: Flow[]
-    connectionKeys: ConnectionKey[]
-    appCredentials: AppCredential[]
     files: File[]
     folders: Folder[]
     events: TriggerEvent[]
@@ -42,16 +39,6 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
         appConnections: {
             type: 'one-to-many',
             target: 'app_connection',
-            inverseSide: 'project',
-        },
-        appCredentials: {
-            type: 'one-to-many',
-            target: 'app_credential',
-            inverseSide: 'project',
-        },
-        connectionKeys: {
-            type: 'one-to-many',
-            target: 'connection_key',
             inverseSide: 'project',
         },
         owner: {

@@ -25,8 +25,6 @@ import { initilizeSentry, logger } from './app/helper/logger'
 import { getEdition } from './app/helper/secret-helper'
 import { ApEdition } from '@activepieces/shared'
 import { appEventRoutingModule } from './app/app-event-routing/app-event-routing.module'
-import { appCredentialModule } from '@ee/product-embed/backend/app-credentials/app-credentials.module'
-import { connectionKeyModule } from '@ee/product-embed/backend/connection-keys/connection-key.module'
 import { triggerEventModule } from './app/flows/trigger-events/trigger-event.module'
 import { seedDevData } from './app/database/seeds/dev-seeds'
 import { flowInstanceModule } from './app/flows/flow-instance/flow-instance.module'
@@ -132,8 +130,6 @@ const start = async () => {
         const edition = await getEdition()
         logger.info('Activepieces ' + (edition == ApEdition.ENTERPRISE ? 'Enterprise' : 'Community') + ' Edition')
         if (edition === ApEdition.ENTERPRISE) {
-            app.register(appCredentialModule)
-            app.register(connectionKeyModule)
             initilizeSentry()
         }
         else {
