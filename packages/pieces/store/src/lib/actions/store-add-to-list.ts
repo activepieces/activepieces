@@ -20,7 +20,7 @@ export const storageAddtoList = createAction({
         })
     },
     async run(context) {
-        const items = (await context.store.get<unknown[]>(context.propsValue['key'], StoreScope.COLLECTION)) ?? [];
+        const items = (await context.store.get<unknown[]>(context.propsValue['key'], StoreScope.PROJECT)) ?? [];
         if (!Array.isArray(items)) {
             throw new Error(`Key ${context.propsValue['key']} is not an array`);
         }
@@ -28,6 +28,6 @@ export const storageAddtoList = createAction({
             return items;
         }
         items.push(context.propsValue['value']);
-        return await context.store.put(context.propsValue['key'], items, StoreScope.COLLECTION);
+        return await context.store.put(context.propsValue['key'], items, StoreScope.PROJECT);
     }
 });

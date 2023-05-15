@@ -43,6 +43,6 @@ export interface Store {
 }
 
 export enum StoreScope {
-    COLLECTION = "COLLECTION",
+    PROJECT = "PROJECT",
     FLOW = "FLOW"
 }

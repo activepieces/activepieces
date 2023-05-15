@@ -16,13 +16,13 @@ export const storageRemoveFromList = createAction({
         }),
     },
     async run(context) {
-        const items = (await context.store.get<unknown[]>(context.propsValue['key'], StoreScope.COLLECTION)) ?? [];
+        const items = (await context.store.get<unknown[]>(context.propsValue['key'], StoreScope.PROJECT)) ?? [];
         if (!Array.isArray(items)) {
             throw new Error(`Key ${context.propsValue['key']} is not an array`);
         }
         if(items.includes(context.propsValue['value'])){
             items.splice(items.indexOf(context.propsValue['value']), 1);
         }
-        return await context.store.put(context.propsValue['key'], items, StoreScope.COLLECTION);
+        return await context.store.put(context.propsValue['key'], items, StoreScope.PROJECT);
     }
 });

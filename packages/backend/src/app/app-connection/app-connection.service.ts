@@ -95,6 +95,7 @@ export const appConnectionService = {
             return refreshedAppConnection
         }
         catch (e) {
+            logger.error(e)
             appConnection.status = AppConnectionStatus.ERROR
         }
         finally {
@@ -186,7 +187,7 @@ function isExpired(connection: BaseOAuth2ConnectionValue) {
         return false
     }
     // Salesforce doesn't provide an 'expires_in' field, as it is dynamic per organization; therefore, it's necessary for us to establish a low threshold and consistently refresh it.
-    const expiresIn = connection.expires_in ?? 15 * 60
+    const expiresIn = connection.expires_in ?? 60 * 60
     return (secondsSinceEpoch + REFRESH_THRESHOLD >= connection.claimed_at + expiresIn)
 }
 

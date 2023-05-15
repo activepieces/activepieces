@@ -67,7 +67,7 @@ export function createContextStore(prefix: string, flowId: FlowId): Store {
             if (storeEntry === null) {
                 // TODO remove in three months (May) as old triggers are storing as collection, while it should store as flow
                 if (scope === StoreScope.FLOW) {
-                    return this.get(key, StoreScope.COLLECTION);
+                    return this.get(key, StoreScope.PROJECT);
                 }
                 return null;
             }
@@ -78,7 +78,7 @@ export function createContextStore(prefix: string, flowId: FlowId): Store {
 
 function createKey(prefix: string, scope: StoreScope, flowId: FlowId, key: string): string {
     switch (scope) {
-        case StoreScope.COLLECTION:
+        case StoreScope.PROJECT:
             return prefix + key;
         case StoreScope.FLOW:
             return prefix + "flow_" + flowId + "/" + key;
