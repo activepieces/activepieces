@@ -179,7 +179,6 @@
         "packages/ui/feature-dashboard/src/index.ts"
       ],
       "@backend/*": ["packages/backend/src/app/*"],
-      "@ee/*": ["packages/ee/*"],
       "@frontend/*": ["packages/frontend/src/app/*"]
     },
     "resolveJsonModule": true

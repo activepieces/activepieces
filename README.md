@@ -81,11 +81,9 @@ We're building no-code connectors to make flow building a frictionless process f
 
 > :warning: The list of connectors will keep changing as we hear from our users, [request piece](https://github.com/activepieces/activepieces/issues/new/choose) if you can't find it on the [connectors roadmap](https://github.com/orgs/activepieces/projects/5).
 
-## Open-source and Enterprise
+## Open Source and Cloud
 
-This repo is available under the [MIT license](https://github.com/activepieces/activepieces/blob/main/LICENSE), except for the packages/ee directory which has a different [Enterprise License](https://github.com/activepieces/activepieces/blob/main/packages/ee/LICENSE).
-
-Using the enterprise features (under the packages/ee folder) with a self-hosted instance requires an Activepieces license. If you are looking for these features, contact us at hey@activepieces.com.
+The core of Activepieces is available as open source under the [MIT license](https://github.com/activepieces/activepieces/blob/main/LICENSE). While most of its features are openly accessible, certain functionalities are exclusive to the cloud version and remain closed source.
 
 ## Contributions
 
