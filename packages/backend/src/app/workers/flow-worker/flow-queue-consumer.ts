@@ -16,8 +16,7 @@ import { isNil } from 'lodash'
 const oneTimeJobConsumer = new Worker<OneTimeJobData, unknown, ApId>(
     ONE_TIME_JOB_QUEUE,
     async (job) => {
-        logger.info(`[oneTimeJobConsumer] job.id=${job.name}`)
-        logger.warn(`[FlowQueueConsumer#oneTimeJobConsumer] flowRunId=${job.data.runId} executionType=${job.data.executionType}`)
+        logger.info(`[FlowQueueConsumer#oneTimeJobConsumer] job.id=${job.id} flowRunId=${job.data.runId} executionType=${job.data.executionType}`)
         const data = job.data
         return await flowWorker.executeFlow(data)
     },
@@ -30,8 +29,7 @@ const oneTimeJobConsumer = new Worker<OneTimeJobData, unknown, ApId>(
 const scheduledJobConsumer = new Worker<ScheduledJobData, unknown, ApId>(
     SCHEDULED_JOB_QUEUE,
     async (job) => {
-        logger.warn(job.data, '[FlowQueueConsumer#scheduledJobConsumer] job.data')
-        logger.info(`[scheduledJobConsumer] job.name=${job.name}`)
+        logger.info(`[FlowQueueConsumer#scheduledJobConsumer] job.id=${job.id} executionType=${job.data.executionType}`)
 
         const consumers: Record<ExecutionType, (job: Job) => Promise<void>> = {
             [ExecutionType.BEGIN]: consumeRepeatingJob,
@@ -54,8 +52,7 @@ const scheduledJobConsumer = new Worker<ScheduledJobData, unknown, ApId>(
 )
 
 const consumeDelayedJob = async (job: Job<DelayedJobData, void, string>): Promise<void> => {
-    logger.warn(`[FlowQueueConsumer#consumeDelayedJob] flowRunId=${job.data.runId}`)
-    logger.debug(job, '[FlowQueueConsumer#consumeDelayedJob] job')
+    logger.info(`[FlowQueueConsumer#consumeDelayedJob] flowRunId=${job.data.runId}`)
 
     const { data } = job
 

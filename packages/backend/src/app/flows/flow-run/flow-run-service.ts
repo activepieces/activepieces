@@ -97,8 +97,7 @@ export const flowRunService = {
     },
 
     async start({ projectId, flowVersionId, flowRunId, payload, environment, executionType }: StartParams): Promise<FlowRun> {
-        logger.warn(`[flowRunService#start]  flowVersionId=${flowVersionId} flowRunId=${flowRunId} executionType=${executionType}`)
-        logger.info(`[flowRunService#start]  flowVersionId=${flowVersionId}`)
+        logger.info(`[flowRunService#start] flowRunId=${flowRunId} executionType=${executionType}`)
 
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
 
@@ -139,9 +138,7 @@ export const flowRunService = {
     },
 
     async pause(params: PauseParams): Promise<void> {
-        logger.warn(`[FlowRunService#pause] flowRunId=${params.flowRunId} pauseType=${params.pauseMetadata.type}`)
-
-        logger.debug(params, '[FlowRunService#pause] params')
+        logger.info(`[FlowRunService#pause] flowRunId=${params.flowRunId} pauseType=${params.pauseMetadata.type}`)
 
         const { flowRunId, pauseMetadata } = params
 

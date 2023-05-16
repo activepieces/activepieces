@@ -29,7 +29,7 @@ const calculateDelayForResumeJob = (resumeDateTimeIsoString: string): number => 
 
 export const flowRunSideEffects = {
     async start({ flowRun, executionType, payload }: StartParams): Promise<void> {
-        logger.warn(`[FlowRunSideEffects#start] flowRunId=${flowRun.id} executionType=${executionType}`)
+        logger.info(`[FlowRunSideEffects#start] flowRunId=${flowRun.id} executionType=${executionType}`)
 
         await flowQueue.add({
             id: flowRun.id,
@@ -46,7 +46,7 @@ export const flowRunSideEffects = {
     },
 
     async pause({ flowRun }: PauseParams): Promise<void> {
-        logger.warn(`[FlowRunSideEffects#pause] flowRunId=${flowRun.id} pauseType=${flowRun.pauseMetadata?.type}`)
+        logger.info(`[FlowRunSideEffects#pause] flowRunId=${flowRun.id} pauseType=${flowRun.pauseMetadata?.type}`)
 
         const { pauseMetadata } = flowRun
 

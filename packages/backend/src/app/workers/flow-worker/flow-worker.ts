@@ -132,7 +132,7 @@ const generateInput = async (jobData: OneTimeJobData): Promise<ExecuteFlowOperat
 }
 
 async function executeFlow(jobData: OneTimeJobData): Promise<void> {
-    logger.warn(`[FlowWorker#executeFlow] executionType=${jobData.executionType} flowRunId=${jobData.runId}`)
+    logger.info(`[FlowWorker#executeFlow] flowRunId=${jobData.runId} executionType=${jobData.executionType}`)
 
     const flowVersion = await flowVersionService.getOneOrThrow(jobData.flowVersionId)
 
@@ -163,17 +163,6 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
         const input = await generateInput(jobData)
 
         const { result: executionOutput } = await engineHelper.executeFlow(sandbox, input)
-
-        const debugInfo = {
-            status: executionOutput.status,
-            pauseMetadata: executionOutput.status === ExecutionOutputStatus.PAUSED
-                ? {
-                    ...executionOutput.pauseMetadata,
-                    executionState: undefined,
-                }: undefined,
-        }
-
-        logger.warn(debugInfo, '[FlowWorker#executeFlow] executionOutput')
 
         const logsFile = await fileService.save(
             jobData.projectId,

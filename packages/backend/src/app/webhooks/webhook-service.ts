@@ -26,7 +26,7 @@ import { flowInstanceService } from '../flows/flow-instance/flow-instance.servic
 
 export const webhookService = {
     async callback({ flowId, payload }: CallbackParams): Promise<void> {
-        logger.warn(`[WebhookService#callback] flowId=${flowId}`)
+        logger.info(`[WebhookService#callback] flowId=${flowId}`)
 
         const flow = await getFlowOrThrow(flowId)
         const { projectId } = flow

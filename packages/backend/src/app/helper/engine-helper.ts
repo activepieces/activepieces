@@ -167,7 +167,7 @@ export const engineHelper = {
         sandbox: Sandbox,
         operation: ExecuteFlowOperation,
     ): Promise<EngineHelperResponse<EngineHelperFlowResult>> {
-        logger.warn({ ...operation, triggerPayload: undefined, executionState: undefined }, '[EngineHelper#executeFlow] operation')
+        logger.info({ ...operation, triggerPayload: undefined, executionState: undefined }, '[EngineHelper#executeFlow] operation')
 
         const input = {
             ...operation,

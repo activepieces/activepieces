@@ -86,7 +86,7 @@ export const flowQueue = {
             await client.set(repeatingJobKey(id), job.repeatJobKey)
         }
         else if (params.type === JobType.DELAYED) {
-            logger.warn(`[FlowQueue#add] flowRunId=${params.id} delay=${params.delay}`)
+            logger.info(`[FlowQueue#add] flowRunId=${params.id} delay=${params.delay}`)
 
             const { id, data, delay } = params
 
