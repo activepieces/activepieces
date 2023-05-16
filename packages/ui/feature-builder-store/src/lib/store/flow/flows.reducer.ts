@@ -131,6 +131,14 @@ const _flowsReducer = createReducer(
     };
     return clonedState;
   }),
+  on(FlowsActions.moveAction, (state, { operation }) => {
+    const clonedState: FlowState = JSON.parse(JSON.stringify(state));
+    clonedState.flow.version = flowHelper.apply(clonedState.flow.version, {
+      type: FlowOperationType.MOVE_ACTION,
+      request: operation,
+    });
+    return clonedState;
+  }),
   on(FlowsActions.changeName, (state, { displayName }): FlowState => {
     const clonedState: FlowState = JSON.parse(JSON.stringify(state));
     clonedState.flow.version.displayName = displayName;

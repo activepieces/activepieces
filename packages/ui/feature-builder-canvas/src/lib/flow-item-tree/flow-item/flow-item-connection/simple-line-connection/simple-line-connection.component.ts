@@ -27,6 +27,7 @@ import {
   RightSideBarType,
 } from '@activepieces/ui/feature-builder-store';
 import { StepLocationRelativeToParent } from '@activepieces/shared';
+import { DropEvent } from 'angular-draggable-droppable';
 
 @Component({
   selector: 'app-simple-line-connection',
@@ -143,7 +144,14 @@ export class SimpleLineConnectionComponent
       this.flowItem.nextAction !== null
     );
   }
-  drop($event: unknown) {
-    console.log($event);
+  drop($event: DropEvent<FlowItem>) {
+    this.store.dispatch(
+      FlowsActions.moveAction({
+        operation: {
+          name: $event.dropData.name,
+          newParentStep: this.flowItem.name,
+        },
+      })
+    );
   }
 }
