@@ -25,6 +25,23 @@ type FlowExecutorCtor = {
   resumeStepName?: string;
 }
 
+type BaseIterateFlowResponse<T extends ExecutionOutputStatus> = {
+  status: T
+}
+
+type FinishIterateFlowResponse = BaseIterateFlowResponse<Exclude<ExecutionOutputStatus, ExecutionOutputStatus.PAUSED>>
+
+type PauseIterateFlowResponse = BaseIterateFlowResponse<ExecutionOutputStatus.PAUSED> & {
+  resumeStepName: string
+}
+
+type IterateFlowResponse = FinishIterateFlowResponse | PauseIterateFlowResponse
+
+type GetExecutionOutputParams = {
+  iterateFlowResponse: IterateFlowResponse
+  duration: number
+}
+
 export class FlowExecutor {
   private readonly executionState: ExecutionState;
   private readonly resumeStepName?: string;
@@ -59,7 +76,7 @@ export class FlowExecutor {
 
       const startStep = resumeStep ?? flowVersion.trigger?.nextAction
 
-      const flowStatus = await this.iterateFlow(
+      const iterateFlowResponse = await this.iterateFlow(
         createAction(startStep),
         []
       );
@@ -67,9 +84,14 @@ export class FlowExecutor {
       const endTime = new Date().getTime();
       const duration = endTime - startTime;
 
-      return this.getExecutionOutput(flowStatus, duration);
-    } catch (e) {
+      return this.getExecutionOutput({
+        iterateFlowResponse,
+        duration
+      });
+    }
+    catch (e) {
       console.error(e);
+
       return {
         status: ExecutionOutputStatus.FAILED,
         executionState: this.executionState,
@@ -83,40 +105,41 @@ export class FlowExecutor {
     }
   }
 
-  private getExecutionOutput(
-    flowStatus: ExecutionOutputStatus,
-    duration: number
-  ): ExecutionOutput {
-    if (flowStatus === ExecutionOutputStatus.FAILED) {
-      return {
-        status: ExecutionOutputStatus.FAILED,
-        executionState: this.executionState,
-        duration: duration,
-        tasks: globals.tasks,
-        errorMessage: this.getError()
-      };
-    }
-    else if (flowStatus === ExecutionOutputStatus.PAUSED) {
-      return {
-        status: ExecutionOutputStatus.PAUSED,
-        executionState: this.executionState,
-        duration: duration,
-        tasks: globals.tasks,
-        pauseMetadata: {
-          type: PauseType.DELAY,
-          resumeStepName: 'step_3',
-          executionState: this.executionState,
-          resumeDateTime: dayjs().add(10, 'seconds').toISOString(),
-        },
-      };
-    }
+  private getExecutionOutput(params: GetExecutionOutputParams): ExecutionOutput {
+    const { iterateFlowResponse, duration } = params
 
-    return {
-      status: ExecutionOutputStatus.SUCCEEDED,
+    const baseExecutionOutput = {
       executionState: this.executionState,
       duration: duration,
       tasks: globals.tasks,
-    };
+    }
+
+    switch (iterateFlowResponse.status) {
+      case ExecutionOutputStatus.SUCCEEDED:
+        return {
+          status: ExecutionOutputStatus.SUCCEEDED,
+          ...baseExecutionOutput,
+        }
+
+      case ExecutionOutputStatus.PAUSED:
+        return {
+          status: ExecutionOutputStatus.PAUSED,
+          pauseMetadata: {
+            type: PauseType.DELAY,
+            executionState: this.executionState,
+            resumeStepName: iterateFlowResponse.resumeStepName,
+            resumeDateTime: dayjs().add(10, 'seconds').toISOString(),
+          },
+          ...baseExecutionOutput,
+        }
+
+      default:
+        return {
+          status: iterateFlowResponse.status,
+          errorMessage: this.getError(),
+          ...baseExecutionOutput,
+        }
+    }
   }
 
   private getError(): ExecutionError | undefined {
@@ -135,9 +158,24 @@ export class FlowExecutor {
   public async iterateFlow(
     handler: ActionHandler | undefined,
     ancestors: [string, number][]
-  ): Promise<ExecutionOutputStatus> {
+  ): Promise<IterateFlowResponse> {
     if (handler === undefined) {
-      return ExecutionOutputStatus.SUCCEEDED;
+      return {
+        status: ExecutionOutputStatus.SUCCEEDED
+      }
+    }
+
+    if (handler.action.type === ActionType.PIECE && handler.action.settings.pieceName === 'delay') {
+      if (isNil(handler.nextAction)) {
+        return {
+          status: ExecutionOutputStatus.SUCCEEDED
+        }
+      }
+
+      return {
+        status: ExecutionOutputStatus.PAUSED,
+        resumeStepName: handler.nextAction.action.name
+      }
     }
 
     const startTime = new Date().getTime();
@@ -150,7 +188,9 @@ export class FlowExecutor {
     this.executionState.insertStep(output, handler.action.name, ancestors);
 
     if (output.status === StepOutputStatus.FAILED) {
-      return ExecutionOutputStatus.FAILED;
+      return {
+        status: ExecutionOutputStatus.FAILED
+      }
     }
 
     return await this.iterateFlow(handler.nextAction, ancestors);
