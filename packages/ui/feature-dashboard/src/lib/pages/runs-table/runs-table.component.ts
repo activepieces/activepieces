@@ -26,7 +26,6 @@ import { Store } from '@ngrx/store';
 
 @Component({
   templateUrl: './runs-table.component.html',
-  styleUrls: ['./runs-table.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RunsTableComponent implements OnInit {
