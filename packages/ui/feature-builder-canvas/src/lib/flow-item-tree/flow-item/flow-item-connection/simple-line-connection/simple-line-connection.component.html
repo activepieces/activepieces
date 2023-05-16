@@ -12,7 +12,7 @@
     [style.left]="addButtonLeft" #addButton>
     <svg-icon src="./assets/img/custom/add-button.svg" [svgStyle]="addButtonSize"></svg-icon>
   </div>
-  <div class="drop-point-container  ap-cursor-default ap-transition-colors" mwlDroppable (drop)="drop($event)"
+  <div class="drop-point-container ap-transition-colors" mwlDroppable (drop)="drop($event)"
     dragOverClass="ap-cursor-grabbing ap-bg-graySelect ap-bg-opacity-60">
     <div class="drop-point-border" [class.scale-1]="showDropArea$ | async"></div>
   </div>

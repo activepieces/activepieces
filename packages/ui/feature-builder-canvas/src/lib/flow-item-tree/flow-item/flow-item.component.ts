@@ -57,6 +57,17 @@ export class FlowItemComponent implements OnInit {
   scale$: Observable<string>;
   isDragging = false;
   anyStepIsDragged$: Observable<boolean>;
+  readonly flowItemContentContainer = {
+    left: `calc(50% - ${FLOW_ITEM_WIDTH / 2}px )`,
+    position: 'relative',
+    width: FLOW_ITEM_WIDTH + 'px',
+  };
+  readonly draggedContainer = {
+    left: `calc(50% - ${(FLOW_ITEM_WIDTH - 1) / 2}px )`,
+    width: FLOW_ITEM_WIDTH - 1 + 'px',
+    height: FLOW_ITEM_HEIGHT - 1 + 'px',
+    top: '0px',
+  };
   constructor(
     private store: Store,
     private pannerService: PannerService,
@@ -91,14 +102,6 @@ export class FlowItemComponent implements OnInit {
         })
       );
     }
-  }
-
-  flowContentContainer() {
-    return {
-      left: `calc(50% - ${FLOW_ITEM_WIDTH / 2}px )`,
-      position: 'relative',
-      width: FLOW_ITEM_WIDTH + 'px',
-    };
   }
 
   flowGraphContainerCalculator() {
@@ -138,6 +141,10 @@ export class FlowItemComponent implements OnInit {
     this.hideDraggableSource$.next(false);
   }
   getDocument() {
-    return document.body;
+    const draggingContainer = document.getElementById('draggingContainer');
+    if (!draggingContainer) {
+      throw Error('draggingContainer is not in the page');
+    }
+    return draggingContainer;
   }
 }
