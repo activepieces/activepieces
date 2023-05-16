@@ -12,9 +12,30 @@ import {
   EngineResponse,
   EngineResponseStatus,
   TriggerHookType,
+  ExecutionType,
+  StepOutput,
 } from '@activepieces/shared';
 import { pieceHelper } from './lib/helper/piece-helper';
 import { triggerHelper } from './lib/helper/trigger-helper';
+
+const initFlowExecutor = (input: ExecuteFlowOperation): FlowExecutor => {
+  if (input.executionType === ExecutionType.RESUME) {
+    const { resumeStepName } = input
+    const executionState = new ExecutionState(input.executionState)
+
+    return new FlowExecutor({
+      executionState,
+      resumeStepName,
+    })
+  }
+
+  const executionState = new ExecutionState()
+  executionState.insertStep(input.triggerPayload as StepOutput, 'trigger', []);
+
+  return new FlowExecutor({
+    executionState,
+  })
+}
 
 const executeFlow = async (): Promise<void> => {
   try {
@@ -24,9 +45,7 @@ const executeFlow = async (): Promise<void> => {
     globals.projectId = input.projectId;
     globals.apiUrl = input.apiUrl!;
 
-    const executionState = new ExecutionState();
-    executionState.insertStep(input.triggerPayload!, 'trigger', []);
-    const executor = new FlowExecutor(executionState);
+    const executor = initFlowExecutor(input)
     const output = await executor.executeFlow(input.flowVersionId);
 
     writeOutput({

@@ -5,9 +5,14 @@ import {
     apId,
     CodeActionSettings,
     ErrorCode,
+    ExecuteFlowOperation,
+    ExecutionOutput,
     ExecutionOutputStatus,
+    ExecutionType,
     File,
+    FileId,
     flowHelper,
+    FlowRunId,
     FlowVersion,
     FlowVersionState,
     ProjectId,
@@ -36,7 +41,11 @@ type InstallPiecesParams = {
     flowVersion: FlowVersion
 }
 
-const log = logger.child({ file: 'FlowWorker' })
+type FinishExecutionParams = {
+    flowRunId: FlowRunId
+    logFileId: FileId
+    executionOutput: ExecutionOutput
+}
 
 const extractFlowPieces = (flowVersion: FlowVersion): FlowPiece[] => {
     const pieces: FlowPiece[] = []
@@ -65,7 +74,66 @@ const installPieces = async (params: InstallPiecesParams): Promise<void> => {
     })
 }
 
+const finishExecution = async (params: FinishExecutionParams): Promise<void> => {
+    logger.debug(params, '[FlowWorker#finishExecution] params')
+
+    const { flowRunId, logFileId, executionOutput } = params
+
+    if (executionOutput.status === ExecutionOutputStatus.PAUSED) {
+        await flowRunService.pause({
+            flowRunId,
+            pauseMetadata: executionOutput.pauseMetadata,
+        })
+    }
+    else {
+        await flowRunService.finish(flowRunId, executionOutput.status, logFileId)
+    }
+}
+
+const generateInput = async (jobData: OneTimeJobData): Promise<ExecuteFlowOperation> => {
+    const baseInput = {
+        flowVersionId: jobData.flowVersionId,
+        projectId: jobData.projectId,
+        triggerPayload: {
+            duration: 0,
+            input: {},
+            output: jobData.payload,
+            status: StepOutputStatus.SUCCEEDED,
+        },
+    }
+
+    if (jobData.executionType === ExecutionType.BEGIN) {
+        return {
+            ...baseInput,
+            executionType: ExecutionType.BEGIN,
+        }
+    }
+
+    const flowRun = await flowRunService.getOneOrThrow({
+        id: jobData.runId,
+        projectId: jobData.projectId,
+    })
+
+    if (isNil(flowRun.pauseMetadata)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: `flowrun.pauseMetadata is undefined flowRunId=${jobData.runId}`,
+            },
+        })
+    }
+
+    return {
+        ...baseInput,
+        executionType: ExecutionType.RESUME,
+        executionState: flowRun.pauseMetadata.executionState,
+        resumeStepName: flowRun.pauseMetadata.resumeStepName,
+    }
+}
+
 async function executeFlow(jobData: OneTimeJobData): Promise<void> {
+    logger.info(`[FlowWorker#executeFlow] flowRunId=${jobData.runId} executionType=${jobData.executionType}`)
+
     const flowVersion = await flowVersionService.getOneOrThrow(jobData.flowVersionId)
 
     // Don't use sandbox for draft versions, since they are mutable and we don't want to cache them.
@@ -91,25 +159,30 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
             await sandbox.clean()
             logger.info(`[${jobData.runId}] Reusing sandbox ${sandbox.boxId} took ${Date.now() - startTime}ms`)
         }
-        const { result: executionOutput } = await engineHelper.executeFlow(sandbox, {
-            flowVersionId: flowVersion.id,
-            projectId: jobData.projectId,
-            triggerPayload: {
-                duration: 0,
-                input: {},
-                output: jobData.payload,
-                status: StepOutputStatus.SUCCEEDED,
-            },
+
+        const input = await generateInput(jobData)
+
+        const { result: executionOutput } = await engineHelper.executeFlow(sandbox, input)
+
+        const logsFile = await fileService.save(
+            jobData.projectId,
+            Buffer.from(JSON.stringify(executionOutput)),
+        )
+
+        await finishExecution({
+            flowRunId: jobData.runId,
+            logFileId: logsFile.id,
+            executionOutput,
         })
-        const logsFile = await fileService.save(jobData.projectId, Buffer.from(JSON.stringify(executionOutput)))
-        await flowRunService.finish(jobData.runId, executionOutput.status, logsFile.id)
+
+        logger.info(`[FlowWorker#executeFlow] flowRunId=${jobData.runId} executionOutputStats=${executionOutput.status} sandboxId=${sandbox.boxId} duration=${Date.now() - startTime} ms`)
     }
     catch (e: unknown) {
         if (e instanceof ActivepiecesError && (e as ActivepiecesError).error.code === ErrorCode.EXECUTION_TIMEOUT) {
             await flowRunService.finish(jobData.runId, ExecutionOutputStatus.TIMEOUT, null)
         }
         else {
-            log.error(e, `[${jobData.runId}] Error executing flow`)
+            logger.error(e, `[${jobData.runId}] Error executing flow`)
             captureException(e as Error)
             await flowRunService.finish(jobData.runId, ExecutionOutputStatus.INTERNAL_ERROR, null)
         }
@@ -118,7 +191,6 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
     finally {
         await sandboxManager.returnSandbox(sandbox.boxId)
     }
-    log.info(`[${jobData.runId}] Finished executing flow ${flowVersion.id} in sandbox ${sandbox.boxId} in ${Date.now() - startTime}ms`)
 }
 
 async function downloadFiles(
@@ -126,7 +198,7 @@ async function downloadFiles(
     projectId: ProjectId,
     flowVersion: FlowVersion,
 ): Promise<void> {
-    log.info(`[${flowVersion.id}] Acquiring flow lock to build codes`)
+    logger.info(`[${flowVersion.id}] Acquiring flow lock to build codes`)
     const flowLock = await acquireLock({
         key: flowVersion.id,
         timeout: 60000,
@@ -147,7 +219,7 @@ async function downloadFiles(
 
     }
     finally {
-        log.info(`[${flowVersion.id}] Releasing flow lock`)
+        logger.info(`[${flowVersion.id}] Releasing flow lock`)
         await flowLock.release()
     }
 
@@ -172,7 +244,7 @@ async function buildCodes(projectId: ProjectId, flowVersion: FlowVersion): Promi
 
 const getArtifactFile = async (projectId: ProjectId, codeActionSettings: CodeActionSettings): Promise<File> => {
     if (codeActionSettings.artifactPackagedId === undefined) {
-        log.info(`Building package for file id ${codeActionSettings.artifactSourceId}`)
+        logger.info(`Building package for file id ${codeActionSettings.artifactSourceId}`)
 
         const sourceId = codeActionSettings.artifactSourceId
 

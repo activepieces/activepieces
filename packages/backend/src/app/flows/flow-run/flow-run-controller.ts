@@ -1,6 +1,6 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginCallbackTypebox } from '@fastify/type-provider-typebox'
-import { CreateFlowRunRequest, FlowRunId, ListFlowRunsRequestQuery, RunEnvironment } from '@activepieces/shared'
+import { CreateFlowRunRequest, ExecutionType, FlowRunId, ListFlowRunsRequestQuery, RunEnvironment } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { flowRunService } from './flow-run-service'
 
@@ -26,6 +26,8 @@ export const flowRunController: FastifyPluginCallbackTypebox = (app, _options, d
                 environment: RunEnvironment.TESTING,
                 flowVersionId,
                 payload,
+                projectId: request.principal.projectId,
+                executionType: ExecutionType.BEGIN,
             })
 
             await reply.send(flowRun)
