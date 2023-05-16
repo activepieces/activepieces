@@ -35,6 +35,7 @@ import {
   RightSideBarType,
 } from '@activepieces/ui/feature-builder-store';
 import { DropEvent } from 'angular-draggable-droppable';
+import { MatSnackBar } from '@angular/material/snack-bar';
 @Component({
   selector: 'app-loop-line-connection',
   templateUrl: './loop-line-connection.component.html',
@@ -87,7 +88,8 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
 
   constructor(
     private store: Store,
-    private flowRendererService: FlowRendererService
+    private flowRendererService: FlowRendererService,
+    private snackbar: MatSnackBar
   ) {
     this.showDropArea$ = this.flowRendererService.draggingSubject;
   }
@@ -326,6 +328,12 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
     };
   }
   dropAtTheStartOfLoop(event$: DropEvent<FlowItem>) {
+    if (event$.dropData.name === this.flowItem.name) {
+      this.snackbar.open("Can't drop loop inside itself", '', {
+        panelClass: 'error',
+      });
+      return;
+    }
     this.store.dispatch(
       FlowsActions.moveAction({
         operation: {
@@ -338,6 +346,9 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
     );
   }
   dropAfterLoop(event$: DropEvent<FlowItem>) {
+    if (event$.dropData.name === this.flowItem.name) {
+      return;
+    }
     this.store.dispatch(
       FlowsActions.moveAction({
         operation: {

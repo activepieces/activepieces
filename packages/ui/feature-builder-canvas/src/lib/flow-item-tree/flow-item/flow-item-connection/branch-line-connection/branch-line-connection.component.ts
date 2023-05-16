@@ -35,6 +35,7 @@ import {
 } from '@activepieces/ui/feature-builder-store';
 import { FlowRenderUtil } from '@activepieces/ui/feature-builder-store';
 import { DropEvent } from 'angular-draggable-droppable';
+import { MatSnackBar } from '@angular/material/snack-bar';
 @Component({
   selector: 'app-branch-line-connection',
   templateUrl: './branch-line-connection.component.html',
@@ -92,7 +93,8 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
 
   constructor(
     private store: Store,
-    private flowRendererService: FlowRendererService
+    private flowRendererService: FlowRendererService,
+    private snackbar: MatSnackBar
   ) {
     this.showDropArea$ = this.flowRendererService.draggingSubject;
   }
@@ -385,6 +387,12 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
     };
   }
   dropAtTheTopOfTrueBranch(event$: DropEvent<FlowItem>) {
+    if (event$.dropData.name === this.flowItem.name) {
+      this.snackbar.open("Can't drop branch inside itself", '', {
+        panelClass: 'error',
+      });
+      return;
+    }
     this.store.dispatch(
       FlowsActions.moveAction({
         operation: {
@@ -397,6 +405,12 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
     );
   }
   dropAtTheTopOfFalseBranch(event$: DropEvent<FlowItem>) {
+    if (event$.dropData.name === this.flowItem.name) {
+      this.snackbar.open("Can't drop branch inside itself", '', {
+        panelClass: 'error',
+      });
+      return;
+    }
     this.store.dispatch(
       FlowsActions.moveAction({
         operation: {
