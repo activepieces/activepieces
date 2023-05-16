@@ -1,9 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  HostListener,
-  OnInit,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { map, Observable, of, Subject, tap } from 'rxjs';
 import { Store } from '@ngrx/store';
 import {
@@ -22,7 +17,6 @@ import { ApFlagId } from '@activepieces/shared';
 import { TelemetryService } from '@activepieces/ui/common';
 import { AuthenticationService, fadeInUp400ms } from '@activepieces/ui/common';
 import { MatDialog } from '@angular/material/dialog';
-import { SwitchFlowDialogComponent } from '@activepieces/ui/feature-command-bar';
 
 interface UpgradeNotificationMetaDataInLocalStorage {
   latestVersion: string;
@@ -119,30 +113,6 @@ export class AppComponent implements OnInit {
         }
       })
     );
-  }
-
-  @HostListener('window:keydown', ['$event'])
-  onKeyPress($event: KeyboardEvent) {
-    if (
-      ($event.ctrlKey || $event.metaKey) &&
-      ($event.key == 'k' || $event.key == 'K')
-    ) {
-      this.openCommandBar$ = this.telemetryService
-        .isFeatureEnabled('command-bar')
-        .pipe(
-          tap((enabled) => {
-            if (enabled) {
-              this.dialog.open(SwitchFlowDialogComponent, {
-                position: {
-                  top: '5%',
-                },
-              });
-              $event.preventDefault();
-            }
-          }),
-          map(() => void 0)
-        );
-    }
   }
 
   ngOnInit(): void {
