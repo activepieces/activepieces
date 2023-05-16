@@ -19,8 +19,11 @@ rm -rf node_modules
 2. Run the following command to start the development environment:
 
 ```bash
-docker-compose -f docker-compose.dev.yml up -d
+docker compose -f docker-compose.dev.yml up -d
 ```
+<Warning>
+If this is your first time running it, please note that installing node_modules may take approximately 5 minutes. Please refer to the logs for progress updates.
+</Warning>
 
 3. Go to localhost:4200 on your web browser and sign in with these details:
 
