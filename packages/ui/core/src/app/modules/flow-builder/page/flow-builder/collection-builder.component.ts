@@ -51,7 +51,8 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
   rightSidebarDragging = false;
   leftSidebarDragging = false;
   loadInitialData$: Observable<void> = new Observable<void>();
-  cursorStyle$: Observable<string>;
+  isPanning$: Observable<boolean>;
+  isDragging$: Observable<boolean>;
   TriggerType = TriggerType;
   testingStepSectionIsRendered$: Observable<boolean>;
   graphChanged$: Observable<Flow>;
@@ -71,14 +72,8 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
     this.listenToGraphChanges();
     this.testingStepSectionIsRendered$ =
       this.testStepService.testingStepSectionIsRendered$.asObservable();
-    this.cursorStyle$ = this.pannerService.isGrabbing$.asObservable().pipe(
-      map((val) => {
-        if (val) {
-          return 'grabbing !important';
-        }
-        return 'auto !important';
-      })
-    );
+    this.isPanning$ = this.pannerService.isPanning$;
+    this.isDragging$ = this.flowRendererService.draggingSubject.asObservable();
     this.loadInitialData$ = this.actRoute.data.pipe(
       tap((value) => {
         const runInformation: InstanceRunInfo = value['runInformation'];
