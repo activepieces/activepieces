@@ -167,4 +167,5 @@ export const SingleFlowModifyingState = [
   addAction,
   updateTrigger,
   deleteAction,
+  moveAction,
 ];
