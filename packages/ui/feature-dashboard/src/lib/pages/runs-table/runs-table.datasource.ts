@@ -54,6 +54,7 @@ export class RunsTableDataSource extends DataSource<FlowRun> {
       }),
       switchMap((res) => {
         return this.instanceRunService.list(res.project.id, {
+          status: res.queryParams['status'],
           limit: res.queryParams[LIMIT_QUERY_PARAM] || DEFAULT_PAGE_SIZE,
           cursor: res.queryParams[CURSOR_QUERY_PARAM],
         });

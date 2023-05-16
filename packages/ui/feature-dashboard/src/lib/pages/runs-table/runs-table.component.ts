@@ -37,6 +37,9 @@ export class RunsTableComponent implements OnInit {
   dataSource!: RunsTableDataSource;
   displayedColumns = ['flowName', 'status', 'started', 'finished'];
   updateNotificationsValue$: Observable<boolean>;
+  selectedStatus: FormControl<ExecutionOutputStatus | undefined> =
+    new FormControl();
+  changeRunStatus$: Observable<void>;
   readonly ExecutionOutputStatus = ExecutionOutputStatus;
 
   constructor(
@@ -48,6 +51,18 @@ export class RunsTableComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.changeRunStatus$ = this.selectedStatus.valueChanges.pipe(
+      distinctUntilChanged(),
+      tap((status) => {
+        this.router.navigate([], {
+          queryParams: {
+            status:
+              status && status in ExecutionOutputStatus ? status : undefined,
+          },
+        });
+      }),
+      map(() => undefined)
+    );
     this.enterpriseEdition$ = this.flagsService
       .getEdition()
       .pipe(map((res) => res === ApEdition.ENTERPRISE));
