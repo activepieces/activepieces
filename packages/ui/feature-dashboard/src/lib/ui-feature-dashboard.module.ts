@@ -20,14 +20,12 @@ import { MoveFlowToFolderDialogComponent } from './pages/flows-table/move-flow-t
 import { EffectsModule } from '@ngrx/effects';
 import { FoldersEffects } from './store/folders/folders.effects';
 import { RenameFolderDialogComponent } from './pages/flows-table/rename-folder-dialog/rename-folder-dialog.component';
-import { EeBillingUiModule } from '@activepieces/ee/billing/ui';
 import { StepsListInFlowsTableComponent } from './pages/flows-table/steps-list-in-flows-table/steps-list-in-flows-table.component';
 
 @NgModule({
   imports: [
     CommonModule,
     UiCommonModule,
-    EeBillingUiModule,
     RouterModule.forChild(DashboardLayoutRouting),
     StoreModule.forFeature(FOLDERS_STATE_NAME, foldersReducer),
     EffectsModule.forFeature([FoldersEffects]),

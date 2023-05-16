@@ -95,6 +95,7 @@ export const appConnectionService = {
             return refreshedAppConnection
         }
         catch (e) {
+            logger.error(e)
             appConnection.status = AppConnectionStatus.ERROR
         }
         finally {
@@ -182,11 +183,12 @@ const REFRESH_THRESHOLD = 15 * 60 // Refresh if there is less than 15 minutes to
 function isExpired(connection: BaseOAuth2ConnectionValue) {
     const secondsSinceEpoch = Math.round(Date.now() / 1000)
 
-    if (!connection.expires_in || !connection.refresh_token) {
+    if (!connection.refresh_token) {
         return false
     }
-
-    return (secondsSinceEpoch + REFRESH_THRESHOLD >= connection.claimed_at + connection.expires_in)
+    // Salesforce doesn't provide an 'expires_in' field, as it is dynamic per organization; therefore, it's necessary for us to establish a low threshold and consistently refresh it.
+    const expiresIn = connection.expires_in ?? 60 * 60
+    return (secondsSinceEpoch + REFRESH_THRESHOLD >= connection.claimed_at + expiresIn)
 }
 
 async function refreshCloud(appName: string, connectionValue: CloudOAuth2ConnectionValue): Promise<CloudOAuth2ConnectionValue> {
@@ -248,8 +250,25 @@ async function refreshWithCredentials(appConnection: OAuth2ConnectionValueWithAp
             },
         )
     ).data
-    return { ...appConnection, ...formatOAuth2Response({ ...response }) }
+    const mergedObject = mergeNonNull(appConnection, formatOAuth2Response({ ...response }))
+    return mergedObject
 }
+
+/*
+When the refresh token is null or undefined, it indicates that the original connection's refresh token is also null or undefined.
+Therefore, we only need to merge non-null values to avoid overwriting the original refresh token with a null or undefined value.
+*/
+function mergeNonNull(appConnection: OAuth2ConnectionValueWithApp, oAuth2Response: BaseOAuth2ConnectionValue): OAuth2ConnectionValueWithApp {
+    const formattedOAuth2Response: Partial<BaseOAuth2ConnectionValue> = Object.entries(oAuth2Response)
+        .filter(([, value]) => value !== null && value !== undefined)
+        .reduce<Partial<BaseOAuth2ConnectionValue>>((obj, [key, value]) => {
+        obj[key as keyof BaseOAuth2ConnectionValue] = value
+        return obj
+    }, {})
+  
+    return { ...appConnection, ...formattedOAuth2Response } as OAuth2ConnectionValueWithApp
+}
+  
 
 async function claim(request: {
     clientSecret: string

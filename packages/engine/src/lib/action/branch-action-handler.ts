@@ -136,8 +136,8 @@ function evaluateConditions(conditionGroups: BranchCondition[][]): boolean {
         default:
           throw new Error(`Unknown operator ${castedCondition.operator}`);
       }
-      orOperator = orOperator || andGroup;
     }
+    orOperator = orOperator || andGroup;
   }
   return orOperator;
 }

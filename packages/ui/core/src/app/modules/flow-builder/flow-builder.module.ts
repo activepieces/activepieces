@@ -21,7 +21,6 @@ import { UiFeatureBuilderStoreModule } from '@activepieces/ui/feature-builder-st
 import { UiFeatureBuilderCanvasModule } from '@activepieces/ui/feature-builder-canvas';
 import { UiFeatureBuilderFormControlsModule } from '@activepieces/ui/feature-builder-form-controls';
 import { UiFeatureBuilderRightSidebarModule } from '@activepieces/ui/feature-builder-right-sidebar';
-import { GuessFlowContainerComponent } from './page/flow-builder/guess-flow-container/guess-flow-container.component';
 import { PortalModule } from '@angular/cdk/portal';
 
 @NgModule({
@@ -54,7 +53,7 @@ import { PortalModule } from '@angular/cdk/portal';
       multi: true,
     },
   ],
-  declarations: [CollectionBuilderComponent, GuessFlowContainerComponent],
+  declarations: [CollectionBuilderComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   exports: [],
 })

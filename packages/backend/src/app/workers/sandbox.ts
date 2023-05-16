@@ -48,9 +48,22 @@ export class Sandbox {
 
 
     async recreate(): Promise<void> {
-        await Sandbox.runIsolate('--box-id=' + this.boxId + ' --cleanup')
-        await Sandbox.runIsolate('--box-id=' + this.boxId + ' --init')
+        const sandboxFolderPath = this.getSandboxFolderPath()
+        if (executionMode === ExecutionMode.UNSANDBOXED) {
+            try {
+                await fs.rmdir(sandboxFolderPath, { recursive: true })
+            }
+            catch (error) {
+                // ignored
+            }
+            await fs.mkdir(sandboxFolderPath, { recursive: true })
+        }
+        else {
+            await Sandbox.runIsolate('--box-id=' + this.boxId + ' --cleanup')
+            await Sandbox.runIsolate('--box-id=' + this.boxId + ' --init')
+        }
         await packageManager.initProject(this.getSandboxFolderPath())
+
     }
 
     async clean(): Promise<void> {
@@ -106,7 +119,7 @@ export class Sandbox {
                     ' --env=AP_ENVIRONMENT ' +
                     commandLine,
                 )
-                const engineResponse = (await this.parseFunctionOutput())
+                const engineResponse = await this.parseFunctionOutput()
                 output = engineResponse.response
                 verdict = engineResponse.status
                 const metaResult = await this.parseMetaFile()
@@ -127,7 +140,7 @@ export class Sandbox {
                 standardError: await fs.readFile(this.getSandboxFilePath('_standardError.txt'), { encoding: 'utf-8' }),
             }
 
-            logger.debug(result, '[Sandbox#runCommandLine] result')
+            logger.trace(result, '[Sandbox#runCommandLine] result')
 
             return result
         }
@@ -146,8 +159,12 @@ export class Sandbox {
     }
 
     getSandboxFolderPath(): string {
+        if (executionMode === ExecutionMode.UNSANDBOXED) {
+            return path.join(__dirname, '../../sandbox/' + this.boxId)
+        }
         return '/var/local/lib/isolate/' + this.boxId + '/box'
     }
+
     private async parseFunctionOutput(): Promise<EngineResponse<unknown>> {
         const outputFile = this.getSandboxFilePath('output.json')
         if (!(await this.fileExists(outputFile))) {
@@ -155,7 +172,7 @@ export class Sandbox {
         }
         const output = JSON.parse(await fs.readFile(outputFile, { encoding: 'utf-8' }))
 
-        logger.debug(output, '[Sandbox#parseFunctionOutput] output')
+        logger.trace(output, '[Sandbox#parseFunctionOutput] output')
 
         return output
     }

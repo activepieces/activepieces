@@ -15,6 +15,6 @@ export const storagePutAction = createAction({
         }),
     },
     async run(context) {
-        return await context.store.put(context.propsValue['key']!, context.propsValue['value']!, StoreScope.COLLECTION);
+        return await context.store.put(context.propsValue['key'], context.propsValue['value'], StoreScope.PROJECT);
     }
 });

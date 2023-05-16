@@ -1,5 +1,6 @@
 import { TriggerBase, TriggerStrategy } from '@activepieces/pieces-framework'
 import {
+    EngineResponseStatus,
     FlowVersion,
     PieceTrigger,
     ProjectId,
@@ -10,7 +11,7 @@ import {
 } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { JobType, flowQueue } from '../workers/flow-worker/flow-queue'
-import { engineHelper } from './engine-helper'
+import { EngineHelperResponse, EngineHelperTriggerResult, engineHelper } from './engine-helper'
 import { webhookService } from '../webhooks/webhook-service'
 import { appEventRoutingService } from '../app-event-routing/app-event-routing.service'
 import { captureException } from '@sentry/node'
@@ -25,7 +26,7 @@ export const triggerUtils = {
         switch (flowTrigger.type) {
             case TriggerType.PIECE: {
                 const pieceTrigger = await getPieceTrigger(flowTrigger)
-                const result = await engineHelper.executeTrigger({
+                const { result } = await engineHelper.executeTrigger({
                     hookType: TriggerHookType.RUN,
                     flowVersion: flowVersion,
                     triggerPayload: payload,
@@ -39,7 +40,7 @@ export const triggerUtils = {
 
                 if (result.success && Array.isArray(result.output)) {
                     payloads = result.output
-                } 
+                }
                 else {
                     const error = new ActivepiecesError({
                         code: ErrorCode.TRIGGER_FAILED,
@@ -63,41 +64,45 @@ export const triggerUtils = {
         return payloads as unknown[]
     },
 
-    async enable({ flowVersion, projectId, simulate }: EnableOrDisableParams): Promise<void> {
-        switch (flowVersion.trigger.type) {
-            case TriggerType.PIECE:
-                await enablePieceTrigger({
-                    projectId,
-                    flowVersion,
-                    simulate,
-                })
-                break
-            default:
-                break
+    async enable(
+        params: EnableOrDisableParams,
+    ): Promise<EngineHelperResponse<EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>> | null> {
+        const { flowVersion, projectId, simulate } = params
+
+        if (flowVersion.trigger.type !== TriggerType.PIECE) {
+            return null
         }
+
+        return await enablePieceTrigger({
+            projectId,
+            flowVersion,
+            simulate,
+        })
     },
 
-    async disable({ flowVersion, projectId, simulate }: EnableOrDisableParams): Promise<void> {
-        switch (flowVersion.trigger.type) {
-            case TriggerType.PIECE:
-                await disablePieceTrigger({
-                    projectId,
-                    flowVersion,
-                    simulate,
-                })
-                break
-            default:
-                break
+    async disable(
+        params: EnableOrDisableParams,
+    ): Promise<EngineHelperResponse<EngineHelperTriggerResult<TriggerHookType.ON_DISABLE>> | null> {
+        const { flowVersion, projectId, simulate } = params
+
+        if (flowVersion.trigger.type !== TriggerType.PIECE) {
+            return null
         }
+
+        return await disablePieceTrigger({
+            projectId,
+            flowVersion,
+            simulate,
+        })
     },
 }
 
-const disablePieceTrigger = async (params: EnableOrDisableParams): Promise<void> => {
+const disablePieceTrigger = async (params: EnableOrDisableParams) => {
     const { flowVersion, projectId, simulate } = params
     const flowTrigger = flowVersion.trigger as PieceTrigger
     const pieceTrigger = await getPieceTrigger(flowTrigger)
 
-    await engineHelper.executeTrigger({
+    const engineHelperResponse = await engineHelper.executeTrigger({
         hookType: TriggerHookType.ON_DISABLE,
         flowVersion: flowVersion,
         webhookUrl: await webhookService.getWebhookUrl({
@@ -106,6 +111,10 @@ const disablePieceTrigger = async (params: EnableOrDisableParams): Promise<void>
         }),
         projectId: projectId,
     })
+
+    if (engineHelperResponse.status !== EngineResponseStatus.OK) {
+        return engineHelperResponse
+    }
 
     switch (pieceTrigger.type) {
         case TriggerStrategy.APP_WEBHOOK:
@@ -119,9 +128,11 @@ const disablePieceTrigger = async (params: EnableOrDisableParams): Promise<void>
             })
             break
     }
+
+    return engineHelperResponse
 }
 
-const enablePieceTrigger = async (params: EnableOrDisableParams): Promise<void> => {
+const enablePieceTrigger = async (params: EnableOrDisableParams) => {
     const { flowVersion, projectId, simulate } = params
     const flowTrigger = flowVersion.trigger as PieceTrigger
     const pieceTrigger = await getPieceTrigger(flowTrigger)
@@ -131,18 +142,21 @@ const enablePieceTrigger = async (params: EnableOrDisableParams): Promise<void> 
         simulate,
     })
 
-    const response = await engineHelper.executeTrigger({
+    const engineHelperResponse = await engineHelper.executeTrigger({
         hookType: TriggerHookType.ON_ENABLE,
         flowVersion: flowVersion,
         webhookUrl,
         projectId: projectId,
     })
 
+    if (engineHelperResponse.status !== EngineResponseStatus.OK) {
+        return engineHelperResponse
+    }
+
     switch (pieceTrigger.type) {
         case TriggerStrategy.APP_WEBHOOK: {
             const appName = flowTrigger.settings.pieceName
-            const listeners = response.listeners
-            for (const listener of listeners) {
+            for (const listener of engineHelperResponse.result.listeners) {
                 await appEventRoutingService.createListeners({
                     projectId,
                     flowId: flowVersion.flowId,
@@ -156,7 +170,7 @@ const enablePieceTrigger = async (params: EnableOrDisableParams): Promise<void> 
         case TriggerStrategy.WEBHOOK:
             break
         case TriggerStrategy.POLLING: {
-            const scheduleOptions = response.scheduleOptions
+            const { scheduleOptions } = engineHelperResponse.result
             await flowQueue.add({
                 id: flowVersion.id,
                 type: JobType.REPEATABLE,
@@ -172,6 +186,8 @@ const enablePieceTrigger = async (params: EnableOrDisableParams): Promise<void> 
 
         }
     }
+
+    return engineHelperResponse
 }
 
 export async function getPieceTrigger(trigger: PieceTrigger): Promise<TriggerBase> {
