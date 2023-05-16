@@ -54,7 +54,7 @@ export class RunsTableComponent implements OnInit {
     this.changeRunStatus$ = this.selectedStatus.valueChanges.pipe(
       distinctUntilChanged(),
       tap((status) => {
-        this.router.navigate([], {
+        this.router.navigate(['runs'], {
           queryParams: {
             status:
               status && status in ExecutionOutputStatus ? status : undefined,
