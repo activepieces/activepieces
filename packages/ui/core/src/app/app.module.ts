@@ -23,7 +23,6 @@ import { Route, Router } from '@angular/router';
 import { FlagService } from '@activepieces/ui/common';
 import { ApEdition } from '@activepieces/shared';
 import { UserLoggedIn } from './guards/user-logged-in.guard';
-import { FeatureCommandBarModule } from '@activepieces/ui/feature-command-bar';
 import { ImportFlowComponent } from './modules/import-flow/import-flow.component';
 
 import { LottieCacheModule, LottieModule } from 'ngx-lottie';
@@ -51,7 +50,6 @@ export function playerFactory() {
     BrowserModule,
     AppRoutingModule,
     BrowserAnimationsModule,
-    FeatureCommandBarModule,
     StoreModule.forRoot({}),
     StoreDevtoolsModule.instrument({
       maxAge: 25, // Retains last 25 states
