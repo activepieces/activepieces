@@ -140,10 +140,6 @@ export class FlowExecutor {
       return ExecutionOutputStatus.SUCCEEDED;
     }
 
-    if (handler.action.type === ActionType.PIECE && handler.action.settings.pieceName === 'delay') {
-      return ExecutionOutputStatus.PAUSED;
-    }
-
     const startTime = new Date().getTime();
 
     const output = await handler.execute(this.executionState, ancestors);
