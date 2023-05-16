@@ -13,10 +13,16 @@
     &.false-branch{
         left:265px;
         top:100px;
+        &.empty-false-branch{
+          top:166px;
+        }
     }
     &.true-branch{
         left:-158px;
         top:100px;
+        &.empty-true-branch{
+          top:166px;
+        }
     }
     &.first-loop-drop{
         left: 256px;
