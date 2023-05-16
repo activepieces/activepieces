@@ -8,7 +8,7 @@ import {
   ListFlowRunsRequestQuery,
   SeekPage,
 } from '@activepieces/shared';
-import { CURSOR_QUERY_PARAM } from '../utils/tables.utils';
+import { CURSOR_QUERY_PARAM, LIMIT_QUERY_PARAM, STATUS_QUERY_PARAM } from '../utils/tables.utils';
 
 @Injectable({
   providedIn: 'root',
@@ -39,10 +39,10 @@ export class InstanceRunService {
       projectId: projectId,
     };
     if (params.status) {
-      queryParams['status'] = params.status;
+      queryParams[STATUS_QUERY_PARAM] = params.status;
     }
     if (params.limit) {
-      queryParams['limit'] = params.limit;
+      queryParams[LIMIT_QUERY_PARAM] = params.limit;
     }
     if (params.cursor) {
       queryParams[CURSOR_QUERY_PARAM] = params.cursor;
