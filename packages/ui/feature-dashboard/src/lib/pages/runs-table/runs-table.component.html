@@ -1,14 +1,15 @@
 <div class="ap-w-full ap-h-full ap-px-[30px] ap-pt-[50px]">
   <div class="ap-h-full">
     <app-page-title title="Runs"></app-page-title>
-    <mat-form-field>
-      <mat-label>Filter by status</mat-label>
+    <mat-form-field appearance="outline" class="filter-dropdown">
       <mat-select [formControl]="selectedStatus">
         <mat-option value="null">All</mat-option>
         <mat-option value="{{ExecutionOutputStatus.RUNNING}}">Running</mat-option>
         <mat-option value="{{ExecutionOutputStatus.FAILED}}">Failed</mat-option>
         <mat-option value="{{ExecutionOutputStatus.SUCCEEDED}}">Succeeded</mat-option>
       </mat-select>
+      <mat-icon matSuffix>filter_list</mat-icon>
+      <mat-label>Status</mat-label>
     </mat-form-field>
     <mat-slide-toggle *ngIf="enterpriseEdition$ | async" [formControl]="toggleNotificationFormControl"
       class="ap-mt-[-62px] ap-mb-2 ap-float-right" color="primary" [labelPosition]="'before'">Send email notifications
