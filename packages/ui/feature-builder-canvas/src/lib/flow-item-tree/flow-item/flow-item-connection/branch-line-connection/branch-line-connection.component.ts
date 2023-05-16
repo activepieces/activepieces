@@ -385,12 +385,37 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
     };
   }
   dropAtTheTopOfTrueBranch(event$: DropEvent<FlowItem>) {
-    console.log(event$);
+    this.store.dispatch(
+      FlowsActions.moveAction({
+        operation: {
+          name: event$.dropData.name,
+          newParentStep: this._flowItem.name,
+          stepLocationRelativeToNewParent:
+            StepLocationRelativeToParent.INSIDE_TRUE_BRANCH,
+        },
+      })
+    );
   }
   dropAtTheTopOfFalseBranch(event$: DropEvent<FlowItem>) {
-    console.log(event$);
+    this.store.dispatch(
+      FlowsActions.moveAction({
+        operation: {
+          name: event$.dropData.name,
+          newParentStep: this._flowItem.name,
+          stepLocationRelativeToNewParent:
+            StepLocationRelativeToParent.INSIDE_FALSE_BRANCH,
+        },
+      })
+    );
   }
   dropAfterBranch(event$: DropEvent<FlowItem>) {
-    console.log(event$);
+    this.store.dispatch(
+      FlowsActions.moveAction({
+        operation: {
+          name: event$.dropData.name,
+          newParentStep: this._flowItem.name,
+        },
+      })
+    );
   }
 }

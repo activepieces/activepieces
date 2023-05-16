@@ -3,7 +3,7 @@
   <div *ngIf="trigger" class="ap-flex ap-justify-center ap-mb-9 ap-w-full ap-items-center">
     <app-incomplete-steps-widget></app-incomplete-steps-widget>
   </div>
-  <div #flowItem class="ap-z-40 ap-cursor-pointer  ap-relative" mwlDraggable (dragEnd)="draggingEnded($event)"
+  <div #flowItem class="ap-z-40 ap-cursor-grab  ap-relative" mwlDraggable (dragEnd)="draggingEnded($event)"
     [showOriginalElementWhileDragging]="false" [dropData]="_flowItemData"
     [class.ap-opacity-0]="hideDraggableSource$ | async" [ghostElementAppendTo]="getDocument()"
     [class.ap-cursor-default]="(anyStepIsDragged$|async)" (dragStart)="draggingStarted()">

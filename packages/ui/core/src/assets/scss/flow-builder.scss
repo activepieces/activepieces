@@ -9,19 +9,24 @@
   .drop-point-container {
     position: absolute;
     left: 50px;
-    top:  3px;
+    top:  4px;
     &.false-branch{
         left:265px;
         top:100px;
     }
     &.true-branch{
-        left:-165px;
+        left:-158px;
         top:100px;
     }
     &.first-loop-drop{
         left: 256px;
         top: 88px;
     }
+    &.empty-loop-drop{
+        left: 256px;
+        top: 150px;
+    }
+    
   }
   .drop-point-border {
     height: $drop-point-height;

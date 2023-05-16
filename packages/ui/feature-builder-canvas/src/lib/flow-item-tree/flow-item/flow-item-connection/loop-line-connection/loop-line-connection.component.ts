@@ -326,9 +326,25 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
     };
   }
   dropAtTheStartOfLoop(event$: DropEvent<FlowItem>) {
-    console.log(event$);
+    this.store.dispatch(
+      FlowsActions.moveAction({
+        operation: {
+          name: event$.dropData.name,
+          newParentStep: this._flowItem.name,
+          stepLocationRelativeToNewParent:
+            StepLocationRelativeToParent.INSIDE_LOOP,
+        },
+      })
+    );
   }
   dropAfterLoop(event$: DropEvent<FlowItem>) {
-    console.log(event$);
+    this.store.dispatch(
+      FlowsActions.moveAction({
+        operation: {
+          name: event$.dropData.name,
+          newParentStep: this._flowItem.name,
+        },
+      })
+    );
   }
 }

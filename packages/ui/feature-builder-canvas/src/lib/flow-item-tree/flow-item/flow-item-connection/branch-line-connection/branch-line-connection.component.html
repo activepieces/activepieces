@@ -27,8 +27,9 @@
     [style.left]="addButtonTrueBranchLeftStyleProperty" *ngIf="flowItem.onSuccessAction && !viewMode" #addButton>
     <svg-icon src="./assets/img/custom/add-button.svg" [style]="addButtonSize"></svg-icon>
   </div>
-  <div class="drop-point-container true-branch" mwlDroppable (drop)="dropAtTheTopOfTrueBranch($event)"
-    dragOverClass="ap-cursor-cell">
+  <div class="drop-point-container true-branch ap-transition-colors" mwlDroppable
+    (drop)="dropAtTheTopOfTrueBranch($event)"
+    dragOverClass="ap-z-50 ap-cursor-grabbing ap-bg-graySelect ap-bg-opacity-60">
 
     <div class="drop-point-border" [class.scale-1]="showDropArea$ | async"></div>
   </div>
@@ -36,8 +37,9 @@
     [style.top]="afterBranchAddButtonTop" [style.left]="afterBranchAddButtonLeft" #afterBranchAddButton>
     <svg-icon src="./assets/img/custom/add-button.svg" [style]="addButtonSize"></svg-icon>
   </div>
-  <div class="drop-point-container" [style.top]="'calc( '+ afterBranchAddButtonTop + ' - 25px )'" mwlDroppable
-    (drop)="dropAfterBranch($event)" dragOverClass="ap-cursor-cell">
+  <div class="drop-point-container ap-transition-colors" [style.top]="'calc( '+ afterBranchAddButtonTop + ' - 25px )'"
+    mwlDroppable (drop)="dropAfterBranch($event)"
+    dragOverClass="ap-cursor-grabbing ap-bg-graySelect ap-z-50 ap-bg-opacity-60">
     <div class="drop-point-border" [class.scale-1]="showDropArea$ | async"></div>
   </div>
   <div #emptyBranchAddButton
@@ -69,9 +71,9 @@
 
     <svg-icon src="./assets/img/custom/add-button.svg" [style]="addButtonSize"></svg-icon>
   </div>
-  <div class="drop-point-container false-branch" mwlDroppable (drop)="dropAtTheTopOfFalseBranch($event)"
-    dragOverClass="ap-cursor-cell">
-
+  <div class="drop-point-container false-branch ap-transition-colors " mwlDroppable
+    (drop)="dropAtTheTopOfFalseBranch($event)"
+    dragOverClass="ap-z-50 ap-cursor-grabbing ap-bg-graySelect ap-bg-opacity-60">
     <div class="drop-point-border" [class.scale-1]="showDropArea$ | async"></div>
   </div>
   <div #emptyBranchAddButton
