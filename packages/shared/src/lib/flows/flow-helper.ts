@@ -236,8 +236,8 @@ function addAction(flowVersion: FlowVersion, request: AddActionRequest): void {
 }
 
 function createAction(
-  request: UpdateActionRequest,
-  { nextAction, onSuccessAction, onFailureAction, firstLoopAction }: { nextAction?: Action, onSuccessAction?: Action, onFailureAction?: Action, firstLoopAction?: Action },
+  request: Action,
+  { nextAction}: { nextAction?: Action},
 ): Action {
   const baseProperties = {
     displayName: request.displayName,
@@ -250,8 +250,8 @@ function createAction(
     case ActionType.BRANCH:
       action = {
         ...baseProperties,
-        onFailureAction: onFailureAction,
-        onSuccessAction: onSuccessAction,
+        onFailureAction: request.onFailureAction,
+        onSuccessAction:  request.onSuccessAction,
         type: ActionType.BRANCH,
         settings: request.settings,
       };
@@ -259,7 +259,7 @@ function createAction(
     case ActionType.LOOP_ON_ITEMS:
       action = {
         ...baseProperties,
-        firstLoopAction: firstLoopAction,
+        firstLoopAction: request.firstLoopAction,
         type: ActionType.LOOP_ON_ITEMS,
         settings: request.settings,
       };
