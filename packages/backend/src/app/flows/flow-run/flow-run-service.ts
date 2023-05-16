@@ -10,7 +10,6 @@ import {
     SeekPage,
     RunEnvironment,
     TelemetryEventName,
-    ApEdition,
     FlowId,
     spreadIfDefined,
     PauseMetadata,
@@ -18,7 +17,6 @@ import {
     ErrorCode,
     ExecutionType,
 } from '@activepieces/shared'
-import { getEdition } from '../../helper/secret-helper'
 import { databaseConnection } from '../../database/database-connection'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -27,7 +25,6 @@ import { Order } from '../../helper/pagination/paginator'
 import { telemetry } from '../../helper/telemetry.utils'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
-import { usageService } from '@ee/billing/backend/usage.service'
 import { logger } from '../../helper/logger'
 import { notifications } from '../../helper/notifications'
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity'
@@ -86,7 +83,6 @@ export const flowRunService = {
         flowRunId: FlowRunId,
         status: ExecutionOutputStatus,
         logsFileId: FileId | null,
-        tasks: number,
     ): Promise<FlowRun> {
         await repo.update(flowRunId, {
             logsFileId,
@@ -94,13 +90,6 @@ export const flowRunService = {
             finishTime: new Date().toISOString(),
         })
         const flowRun = (await this.getOne({ id: flowRunId, projectId: undefined }))!
-        const edition = await getEdition()
-        if (edition === ApEdition.ENTERPRISE) {
-            await usageService.addTasksConsumed({
-                projectId: flowRun.projectId,
-                tasks: tasks,
-            })
-        }
         notifications.notifyRun({
             flowRun: flowRun,
         })
@@ -116,11 +105,6 @@ export const flowRunService = {
         const flow = await flowService.getOneOrThrow({
             id: flowVersion.flowId,
             projectId,
-        })
-
-        await usageService.limit({
-            projectId: flow.projectId,
-            flowVersion,
         })
 
         const flowRun = await getFlowRunOrCreate({

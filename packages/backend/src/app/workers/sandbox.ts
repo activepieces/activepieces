@@ -48,9 +48,22 @@ export class Sandbox {
 
 
     async recreate(): Promise<void> {
-        await Sandbox.runIsolate('--box-id=' + this.boxId + ' --cleanup')
-        await Sandbox.runIsolate('--box-id=' + this.boxId + ' --init')
+        const sandboxFolderPath = this.getSandboxFolderPath()
+        if (executionMode === ExecutionMode.UNSANDBOXED) {
+            try {
+                await fs.rmdir(sandboxFolderPath, { recursive: true })
+            }
+            catch (error) {
+                // ignored
+            }
+            await fs.mkdir(sandboxFolderPath, { recursive: true })
+        }
+        else {
+            await Sandbox.runIsolate('--box-id=' + this.boxId + ' --cleanup')
+            await Sandbox.runIsolate('--box-id=' + this.boxId + ' --init')
+        }
         await packageManager.initProject(this.getSandboxFolderPath())
+
     }
 
     async clean(): Promise<void> {
@@ -146,8 +159,12 @@ export class Sandbox {
     }
 
     getSandboxFolderPath(): string {
+        if (executionMode === ExecutionMode.UNSANDBOXED) {
+            return path.join(__dirname, '../../sandbox/' + this.boxId)
+        }
         return '/var/local/lib/isolate/' + this.boxId + '/box'
     }
+
     private async parseFunctionOutput(): Promise<EngineResponse<unknown>> {
         const outputFile = this.getSandboxFilePath('output.json')
         if (!(await this.fileExists(outputFile))) {

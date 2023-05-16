@@ -17,9 +17,6 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@activepieces/ee/billing/ui": ["packages/ee/billing/ui/src/index.ts"],
-      "@activepieces/ee/guess-flow": ["packages/ee/guess-flow/src/index.ts"],
-      "@activepieces/ee/shared": ["packages/ee/shared/src/index.ts"],
       "@activepieces/engine": ["packages/engine/src/main.ts"],
       "@activepieces/piece-airtable": ["packages/pieces/airtable/src/index.ts"],
       "@activepieces/piece-amazon-s3": [
@@ -172,9 +169,6 @@
       "@activepieces/ui/feature-builder-test-steps": [
         "packages/ui/feature-builder-test-steps/src/index.ts"
       ],
-      "@activepieces/ui/feature-command-bar": [
-        "packages/ui/feature-command-bar/src/index.ts"
-      ],
       "@activepieces/ui/feature-connections": [
         "packages/ui/feature-connections/src/index.ts"
       ],
@@ -182,7 +176,6 @@
         "packages/ui/feature-dashboard/src/index.ts"
       ],
       "@backend/*": ["packages/backend/src/app/*"],
-      "@ee/*": ["packages/ee/*"],
       "@frontend/*": ["packages/frontend/src/app/*"]
     },
     "resolveJsonModule": true

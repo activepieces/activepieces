@@ -15,14 +15,10 @@ import { FlowAndFileProjectId1674788714498 } from './migration/1674788714498-Flo
 import { initializeSchema1676238396411 } from './migration/1676238396411-initialize-schema'
 import { removeStoreAction1676649852890 } from './migration/1676649852890-remove-store-action'
 import { encryptCredentials1676505294811 } from './migration/1676505294811-encrypt-credentials'
-import { ProjectPlanEntity } from '@ee/billing/backend/plan.entity'
-import { ProjectUsageEntity } from '@ee/billing/backend/usage.entity'
 import { billing1677286751592 } from './migration/1677286751592-billing'
 import { addVersionToPieceSteps1677521257188 } from './migration/1677521257188-add-version-to-piece-steps'
 import { AppEventRoutingEntity } from '../app-event-routing/app-event-routing.entity'
 import { productEmbed1677894800372 } from './migration/1677894800372-product-embed'
-import { AppCredentialEntity } from '@ee/product-embed/backend/app-credentials/app-credentials.entity'
-import { ConnectionKeyEntity } from '@ee/product-embed/backend/connection-keys/connection-key.entity'
 import { TriggerEventEntity } from '../flows/trigger-events/trigger-event.entity'
 import { addtriggerevents1678621361185 } from './migration/1678621361185-addtriggerevents'
 import { removeCollectionVersion1678492809093 } from './migration/1678492809093-removeCollectionVersion'
@@ -108,8 +104,6 @@ export const databaseConnection = new DataSource({
         TriggerEventEntity,
         FlowInstanceEntity,
         AppEventRoutingEntity,
-        AppCredentialEntity,
-        ConnectionKeyEntity,
         FileEntity,
         FlagEntity,
         FlowEntity,
@@ -119,8 +113,6 @@ export const databaseConnection = new DataSource({
         StoreEntryEntity,
         UserEntity,
         AppConnectionEntity,
-        ProjectPlanEntity,
-        ProjectUsageEntity,
         WebhookSimulationEntity,
         FolderEntity,
     ],

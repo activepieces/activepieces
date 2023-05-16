@@ -23,12 +23,11 @@ import { Route, Router } from '@angular/router';
 import { FlagService } from '@activepieces/ui/common';
 import { ApEdition } from '@activepieces/shared';
 import { UserLoggedIn } from './guards/user-logged-in.guard';
-import { FeatureCommandBarModule } from '@activepieces/ui/feature-command-bar';
 import { ImportFlowComponent } from './modules/import-flow/import-flow.component';
 
 import { LottieCacheModule, LottieModule } from 'ngx-lottie';
 import player from 'lottie-web';
-import { FirebaseAuthLayoutModule } from '../../../../ee/firebase-auth/frontend/firebase-auth.module';
+
 export function tokenGetter() {
   const jwtToken: any = localStorage.getItem(environment.jwtTokenName);
   return jwtToken;
@@ -51,7 +50,6 @@ export function playerFactory() {
     BrowserModule,
     AppRoutingModule,
     BrowserAnimationsModule,
-    FeatureCommandBarModule,
     StoreModule.forRoot({}),
     StoreDevtoolsModule.instrument({
       maxAge: 25, // Retains last 25 states
@@ -71,7 +69,6 @@ export function playerFactory() {
     UiCommonModule,
     LottieModule.forRoot({ player: playerFactory }),
     LottieCacheModule.forRoot(),
-    FirebaseAuthLayoutModule,
   ],
   providers: [
     {
@@ -148,20 +145,7 @@ function dynamicRoutes(edition: string) {
   let editionRoutes: Route[] = [];
   switch (edition) {
     case ApEdition.ENTERPRISE:
-      editionRoutes = [
-        {
-          path: '',
-          children: [
-            {
-              path: '',
-              loadChildren: () =>
-                import(
-                  '../../../../ee/firebase-auth/frontend/firebase-auth.module'
-                ).then((m) => m.FirebaseAuthLayoutModule),
-            },
-          ],
-        },
-      ];
+      editionRoutes = [];
       break;
     case ApEdition.COMMUNITY:
       editionRoutes = [

@@ -5,7 +5,6 @@ import {
   concatMap,
   delay,
   EMPTY,
-  map,
   Observable,
   of,
   switchMap,
@@ -151,23 +150,6 @@ export class FlowsEffects {
         return of(
           FlowsActions.selectStepByName({ stepName: operation.action.name })
         );
-      })
-    );
-  });
-  generateFlow$ = createEffect(() => {
-    return this.actions$.pipe(
-      ofType(FlowsActions.generateFlow),
-      concatLatestFrom(() =>
-        this.store.select(BuilderSelectors.selectCurrentFlow)
-      ),
-      switchMap(([action, flow]) => {
-        return this.flowService.update(flow.id, {
-          type: FlowOperationType.GENERATE_FLOW,
-          request: { prompt: action.prompt },
-        });
-      }),
-      map((res) => {
-        return FlowsActions.generateFlowSuccessful({ flow: res });
       })
     );
   });

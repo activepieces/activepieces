@@ -9,7 +9,6 @@ export enum FlowOperationType {
     CHANGE_FOLDER = "CHANGE_FOLDER",
     IMPORT_FLOW = 'IMPORT_FLOW',
     CHANGE_NAME = "CHANGE_NAME",
-    GENERATE_FLOW = "GENERATE_FLOW",
     UPDATE_TRIGGER = "UPDATE_TRIGGER",
     ADD_ACTION = "ADD_ACTION",
     UPDATE_ACTION = "UPDATE_ACTION",
@@ -39,13 +38,6 @@ export const ChangeFolderRequest = Type.Object({
 export type ChangeFolderRequest = Static<typeof ChangeFolderRequest>;
 
 
-export const GenerateFlowRequest = Type.Object({
-    prompt: Type.String({}),
-});
-
-export type GenerateFlowRequest = Static<typeof GenerateFlowRequest>;
-
-
 export const ChangeNameRequest = Type.Object({
     displayName: Type.String({}),
 });
@@ -72,10 +64,6 @@ export const UpdateTriggerRequest = Type.Union([EmptyTrigger, PieceTrigger, Webh
 export type UpdateTriggerRequest = Static<typeof UpdateTriggerRequest>;
 
 export const FlowOperationRequest = Type.Union([
-    Type.Object({
-        type: Type.Literal(FlowOperationType.GENERATE_FLOW),
-        request: GenerateFlowRequest
-    }),
     Type.Object({
         type: Type.Literal(FlowOperationType.IMPORT_FLOW),
         request: ImportFlowRequest

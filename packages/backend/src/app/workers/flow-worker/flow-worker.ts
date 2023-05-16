@@ -30,7 +30,6 @@ import { acquireLock } from '../../database/redis-connection'
 import { captureException, logger } from '../../helper/logger'
 import { pieceManager } from '../../flows/common/piece-installer'
 import { isNil } from 'lodash'
-import { usageService } from '@ee/billing/backend/usage.service'
 
 type FlowPiece = {
     name: string
@@ -87,7 +86,7 @@ const finishExecution = async (params: FinishExecutionParams): Promise<void> => 
         })
     }
     else {
-        await flowRunService.finish(flowRunId, executionOutput.status, logFileId, executionOutput.tasks)
+        await flowRunService.finish(flowRunId, executionOutput.status, logFileId)
     }
 }
 
@@ -136,11 +135,6 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
     logger.warn(`[FlowWorker#executeFlow] executionType=${jobData.executionType} flowRunId=${jobData.runId}`)
 
     const flowVersion = await flowVersionService.getOneOrThrow(jobData.flowVersionId)
-
-    await usageService.limit({
-        projectId: jobData.projectId,
-        flowVersion,
-    })
 
     // Don't use sandbox for draft versions, since they are mutable and we don't want to cache them.
     const key = flowVersion.id + (FlowVersionState.DRAFT === flowVersion.state ? '-draft' + apId() : '')
@@ -196,12 +190,12 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
     }
     catch (e: unknown) {
         if (e instanceof ActivepiecesError && (e as ActivepiecesError).error.code === ErrorCode.EXECUTION_TIMEOUT) {
-            await flowRunService.finish(jobData.runId, ExecutionOutputStatus.TIMEOUT, null, 1)
+            await flowRunService.finish(jobData.runId, ExecutionOutputStatus.TIMEOUT, null)
         }
         else {
             logger.error(e, `[${jobData.runId}] Error executing flow`)
             captureException(e as Error)
-            await flowRunService.finish(jobData.runId, ExecutionOutputStatus.INTERNAL_ERROR, null, 0)
+            await flowRunService.finish(jobData.runId, ExecutionOutputStatus.INTERNAL_ERROR, null)
         }
 
     }

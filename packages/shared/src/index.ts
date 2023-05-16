@@ -32,7 +32,7 @@ export { PrincipalType } from "./lib/authentication/model/principal-type";
 export { Principal } from "./lib/authentication/model/principal";
 export {
     CodeAction, PieceAction, LoopOnItemsAction,
-    PieceActionSettings, LoopOnItemsActionSettings, Action, ActionType, CodeActionSettings
+    PieceActionSettings, LoopOnItemsActionSettings, Action, ActionType, CodeActionSettings,StepSettings
 } from './lib/flows/actions/action'
 export { StoreEntry, StoreEntryId } from './lib/store-entry/store-entry';
 export * from './lib/user/user';

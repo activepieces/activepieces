@@ -1,10 +1,4 @@
-import {
-  AfterViewInit,
-  Component,
-  EventEmitter,
-  OnInit,
-  Output,
-} from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { map, Observable, switchMap, take, tap } from 'rxjs';
@@ -30,18 +24,18 @@ import { ApEdition, Flow, FlowInstance } from '@activepieces/shared';
   styleUrls: ['./flow-builder-header.component.scss'],
   animations: [fadeIn400ms],
 })
-export class FlowBuilderHeaderComponent implements OnInit, AfterViewInit {
+export class FlowBuilderHeaderComponent implements OnInit {
   viewMode$: Observable<boolean>;
   isGeneratingFlowComponentOpen$: Observable<boolean>;
   instance$: Observable<FlowInstance | undefined>;
   flow$: Observable<Flow>;
   editingFlowName = false;
+  downloadFile$: Observable<void>;
   deleteFlowDialogClosed$: Observable<void>;
   folderDisplayName$: Observable<string>;
   duplicateFlow$: Observable<void>;
   showGuessFlowBtn$: Observable<boolean>;
-  @Output()
-  showAiHelper = new EventEmitter<boolean>();
+
   constructor(
     public dialogService: MatDialog,
     private store: Store,
@@ -70,12 +64,7 @@ export class FlowBuilderHeaderComponent implements OnInit, AfterViewInit {
   changeEditValue(event: boolean) {
     this.editingFlowName = event;
   }
-  ngAfterViewInit(): void {
-    if (localStorage.getItem('SHOW_AI_AFTER_CREATING_FLOW')) {
-      this.guessFlowButtonClicked();
-      localStorage.removeItem('SHOW_AI_AFTER_CREATING_FLOW');
-    }
-  }
+
   redirectHome(newWindow: boolean) {
     if (newWindow) {
       const url = this.router.serializeUrl(this.router.createUrlTree([``]));
@@ -102,6 +91,26 @@ export class FlowBuilderHeaderComponent implements OnInit, AfterViewInit {
         map(() => void 0)
       );
   }
+  download(id: string) {
+    this.downloadFile$ = this.flowService.exportTemplate(id, undefined).pipe(
+      tap((json) => {
+        const blob = new Blob([JSON.stringify(json, null, 2)], {
+          type: 'application/json',
+        });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'template.json';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }),
+      map(() => {
+        return void 0;
+      })
+    );
+  }
 
   deleteFlow(flow: Flow) {
     const dialogData: DeleteEntityDialogData = {
@@ -123,9 +132,5 @@ export class FlowBuilderHeaderComponent implements OnInit, AfterViewInit {
         return void 0;
       })
     );
-  }
-  guessFlowButtonClicked() {
-    this.store.dispatch(FlowsActions.openGenerateFlowComponent());
-    this.showAiHelper.emit(true);
   }
 }

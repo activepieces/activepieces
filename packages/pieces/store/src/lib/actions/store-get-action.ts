@@ -16,6 +16,6 @@ export const storageGetAction = createAction({
         })
     },
     async run(context) {
-        return await context.store.get(context.propsValue['key'], StoreScope.COLLECTION) ?? context.propsValue['defaultValue'];
+        return await context.store.get(context.propsValue['key'], StoreScope.PROJECT) ?? context.propsValue['defaultValue'];
     }
 });

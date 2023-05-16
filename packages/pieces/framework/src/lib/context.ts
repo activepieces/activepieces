@@ -43,6 +43,7 @@ export interface Store {
 }
 
 export enum StoreScope {
-    COLLECTION = "COLLECTION",
+    // Collection were deprecated in favor of project
+    PROJECT = "COLLECTION",
     FLOW = "FLOW"
 }
