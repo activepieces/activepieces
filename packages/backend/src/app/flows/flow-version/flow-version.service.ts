@@ -411,6 +411,7 @@ function buildSchema(props: PiecePropertyMap): TSchema {
                 propsSchema[name] = nonNullableUnknownPropType
                 break
             case PropertyType.BASIC_AUTH:
+            case PropertyType.CUSTOM_AUTH:
             case PropertyType.SECRET_TEXT:
             case PropertyType.OAUTH2:
                 // Only accepts connections variable.
