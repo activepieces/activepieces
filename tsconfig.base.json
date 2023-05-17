@@ -92,6 +92,7 @@
       "@activepieces/piece-mattermost": [
         "packages/pieces/mattermost/src/index.ts"
       ],
+      "@activepieces/piece-mautic": ["packages/pieces/mautic/src/index.ts"],
       "@activepieces/piece-mindee": ["packages/pieces/mindee/src/index.ts"],
       "@activepieces/piece-monday": ["packages/pieces/monday/src/index.ts"],
       "@activepieces/piece-notion": ["packages/pieces/notion/src/index.ts"],
