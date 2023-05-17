@@ -20,12 +20,12 @@ import { triggerHelper } from './lib/helper/trigger-helper';
 
 const initFlowExecutor = (input: ExecuteFlowOperation): FlowExecutor => {
   if (input.executionType === ExecutionType.RESUME) {
-    const { resumeStepName } = input
+    const { resumeStepMetadata } = input
     const executionState = new ExecutionState(input.executionState)
 
     return new FlowExecutor({
       executionState,
-      resumeStepName,
+      resumeStepMetadata,
     })
   }
 

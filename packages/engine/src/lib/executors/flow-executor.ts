@@ -15,14 +15,29 @@ import {
   Action,
   Trigger,
   ActivepiecesError,
-  ErrorCode
+  ErrorCode,
+  FlowVersionId,
+  ResumeStepMetadata
 } from '@activepieces/shared';
 import { createAction } from '../action/action-factory';
 import { isNil } from 'lodash';
 
 type FlowExecutorCtor = {
   executionState: ExecutionState;
-  resumeStepName?: string;
+  resumeStepMetadata?: ResumeStepMetadata;
+}
+
+type GetResumeStepParams = {
+  flowVersion: FlowVersion
+  resumeStepMetadata: ResumeStepMetadata
+}
+
+type GetFirstStepParams = {
+  flowVersion: FlowVersion
+}
+
+type GetStartStepParams = {
+  flowVersionId: FlowVersionId
 }
 
 type BaseIterateFlowResponse<T extends ExecutionOutputStatus> = {
@@ -44,11 +59,45 @@ type GetExecutionOutputParams = {
 
 export class FlowExecutor {
   private readonly executionState: ExecutionState;
-  private readonly resumeStepName?: string;
+  private readonly resumeStepMetadata?: ResumeStepMetadata;
 
-  constructor({ executionState, resumeStepName }: FlowExecutorCtor) {
+  constructor({ executionState, resumeStepMetadata }: FlowExecutorCtor) {
     this.executionState = executionState;
-    this.resumeStepName = resumeStepName;
+    this.resumeStepMetadata = resumeStepMetadata;
+  }
+
+  private getResumeStep({ flowVersion, resumeStepMetadata}: GetResumeStepParams) {
+    const resumeStep = flowHelper.getStep(flowVersion, resumeStepMetadata.name)
+
+    if (isNil(resumeStep)) {
+      throw new ActivepiecesError({
+        code: ErrorCode.STEP_NOT_FOUND,
+        params: {
+          stepName: resumeStepMetadata.name,
+        },
+      })
+    }
+
+    return resumeStep
+  }
+
+  private getFirstStep({ flowVersion }: GetFirstStepParams) {
+    return flowVersion.trigger?.nextAction
+  }
+
+  private getStartStep({ flowVersionId }: GetStartStepParams) {
+    const flowVersion = this.prepareFlow(flowVersionId)
+
+    if (this.resumeStepMetadata) {
+      return this.getResumeStep({
+        flowVersion,
+        resumeStepMetadata: this.resumeStepMetadata,
+      })
+    }
+
+    return this.getFirstStep({
+      flowVersion,
+    })
   }
 
   public async executeFlow(
@@ -57,24 +106,9 @@ export class FlowExecutor {
     try {
       const startTime = new Date().getTime();
 
-      const flowVersion: FlowVersion = this.prepareFlow(flowVersionId);
-
-      let resumeStep: Action | Trigger | undefined
-
-      if (this.resumeStepName) {
-        resumeStep = flowHelper.getStep(flowVersion, this.resumeStepName)
-
-        if (isNil(resumeStep)) {
-          throw new ActivepiecesError({
-            code: ErrorCode.STEP_NOT_FOUND,
-            params: {
-              stepName: this.resumeStepName,
-            },
-          })
-        }
-      }
-
-      const startStep = resumeStep ?? flowVersion.trigger?.nextAction
+      const startStep = this.getStartStep({
+        flowVersionId,
+      })
 
       const iterateFlowResponse = await this.iterateFlow(
         createAction(startStep),
@@ -127,8 +161,11 @@ export class FlowExecutor {
           pauseMetadata: {
             type: PauseType.DELAY,
             executionState: this.executionState,
-            resumeStepName: iterateFlowResponse.resumeStepName,
-            resumeDateTime: dayjs().add(10, 'seconds').toISOString(),
+            resumeStepMetadata: {
+              type: ActionType.PIECE,
+              name: iterateFlowResponse.resumeStepName,
+            },
+            resumeDateTime: dayjs().add(20, 'seconds').toISOString(),
           },
           ...baseExecutionOutput,
         }

@@ -127,7 +127,7 @@ const generateInput = async (jobData: OneTimeJobData): Promise<ExecuteFlowOperat
         ...baseInput,
         executionType: ExecutionType.RESUME,
         executionState: flowRun.pauseMetadata.executionState,
-        resumeStepName: flowRun.pauseMetadata.resumeStepName,
+        resumeStepMetadata: flowRun.pauseMetadata.resumeStepMetadata,
     }
 }
 
