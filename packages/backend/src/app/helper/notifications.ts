@@ -14,7 +14,7 @@ export const notifications = {
         if (flowRun.environment === RunEnvironment.TESTING) {
             return
         }
-        if ([ExecutionOutputStatus.FAILED, ExecutionOutputStatus.INTERNAL_ERROR].indexOf(flowRun.status) === -1) {
+        if (![ExecutionOutputStatus.FAILED, ExecutionOutputStatus.INTERNAL_ERROR].includes(flowRun.status)) {
             return
         }
         if (!notificationUrl) {

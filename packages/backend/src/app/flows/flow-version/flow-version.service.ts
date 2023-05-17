@@ -385,7 +385,7 @@ function validateProps(props: PiecePropertyMap, input: Record<string, unknown>) 
 
 function buildSchema(props: PiecePropertyMap): TSchema {
     const entries = Object.entries(props)
-    const nonNullableUnknownPropType = Type.Not(Type.Null(), Type.Unknown())
+    const nonNullableUnknownPropType = Type.Not(Type.Union([Type.Null(), Type.Undefined()]), Type.Unknown())
     const propsSchema: Record<string, TSchema> = {}
     for (let i = 0; i < entries.length; ++i) {
         const property = entries[i][1]
@@ -447,7 +447,7 @@ function buildSchema(props: PiecePropertyMap): TSchema {
 }
 
 async function deleteArtifact(projectId: ProjectId, codeSettings: CodeActionSettings): Promise<CodeActionSettings> {
-    const requests: Array<Promise<void>> = []
+    const requests: Promise<void>[] = []
     if (codeSettings.artifactSourceId !== undefined) {
         requests.push(fileService.delete({ projectId: projectId, fileId: codeSettings.artifactSourceId }))
     }

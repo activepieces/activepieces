@@ -84,6 +84,8 @@ export const flowInstanceService = {
                         simulate: false,
                     })
                     break
+                case FlowInstanceStatus.UNPUBLISHED:
+                    break     
             }
         }
         const updatedInstance: FlowInstance = {

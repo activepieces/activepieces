@@ -51,7 +51,7 @@ const scheduledJobConsumer = new Worker<ScheduledJobData, unknown, ApId>(
     },
 )
 
-const consumeDelayedJob = async (job: Job<DelayedJobData, void, string>): Promise<void> => {
+const consumeDelayedJob = async (job: Job<DelayedJobData, void>): Promise<void> => {
     logger.info(`[FlowQueueConsumer#consumeDelayedJob] flowRunId=${job.data.runId}`)
 
     const { data } = job
@@ -66,7 +66,7 @@ const consumeDelayedJob = async (job: Job<DelayedJobData, void, string>): Promis
     })
 }
 
-const consumeRepeatingJob = async (job: Job<RepeatingJobData, void, string>): Promise<void> => {
+const consumeRepeatingJob = async (job: Job<RepeatingJobData, void>): Promise<void> => {
     const { data } = job
 
     try {
