@@ -65,9 +65,6 @@ export const gmailSendEmailAction = createAction({
 	},
 });
 
-const escape = (u: string) => String.fromCodePoint(...Buffer.from(u));
-
-
 type SendEmailRequestBody = {
 	/**
 	 * This is a base64 encoding of the email
