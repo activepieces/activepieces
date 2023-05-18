@@ -38,7 +38,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.CLOUD_AUTH_ENABLED,
-                value: system.getBoolean(SystemProp.CLOUD_AUTH_ENABLED) ?? false,
+                value: system.getBoolean(SystemProp.CLOUD_AUTH_ENABLED) ?? true,
                 created,
                 updated,
             },
