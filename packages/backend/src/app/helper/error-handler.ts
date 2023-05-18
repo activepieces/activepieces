@@ -19,6 +19,8 @@ export const errorHandler = async (
             case ErrorCode.INVALID_BEARER_TOKEN:
                 statusCode = StatusCodes.UNAUTHORIZED
                 break
+            default:
+                break    
         }
         await reply.status(statusCode).send({
             code: error.error.code,

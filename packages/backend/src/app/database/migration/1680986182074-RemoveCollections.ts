@@ -54,7 +54,7 @@ export class RemoveCollections1680986182074 implements MigrationInterface {
         let count = 0
         let failed = 0
         for (const instance of instances) {
-            const flowIdToVersionId = instance['flowIdToVersionId']
+            const flowIdToVersionId = instance.flowIdToVersionId
             for (const flowId of Object.keys(flowIdToVersionId)) {
                 const flowVersionId = flowIdToVersionId[flowId]
                 const randomId = apId()
