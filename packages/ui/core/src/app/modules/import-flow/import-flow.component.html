@@ -1,22 +1,22 @@
 <div class="ap-h-screen ap-justify-center ap-items-center" *ngIf="loadFlow$ | async as flowTemplate">
   <div class="ap-flex ap-flex-col ap-justify-center ap-items-center">
     <svg-icon [svgStyle]="{ width: '210px', height: '52px' }" src="assets/img/custom/logo/full-logo.svg"
-      class="ap-bg-white ap-mb-8 ap-mt-8">
+      class="ap-bg-white ap-mb-7.5 ap-mt-7.5">
     </svg-icon>
     <div class="ap-w-[500px]">
-      <div class="ap-border ap-border-dividers ap-p-8 ap-rounded ap-mb-8">
+      <div class="ap-border ap-border-dividers ap-p-7.5 ap-rounded ap-mb-7.5">
         <div class="ap-flex ap-justify-start ap-items-center">
           <h1 class="ap-text-lg ap-font-bold">
             {{ flowTemplate.template.displayName }}
           </h1>
         </div>
-        <hr class="ap-border-dividers ap-w-full ap-mt-8 ap-mb-8" />
+        <hr class="ap-border-dividers ap-w-full ap-mt-7.5 ap-mb-7.5" />
         <div class="ap-flex ap-justify-between ap-items-center">
           <p class="ap-text-sm ap-font-bold">Steps in this flow</p>
           <ap-pieces-icons-from-flow [flowVersion]="flowTemplate.template"></ap-pieces-icons-from-flow>
         </div>
         <div *ngIf="flowTemplate.description">
-          <hr class="ap-border-dividers ap-w-full ap-mt-8 ap-mb-8" />
+          <hr class="ap-border-dividers ap-w-full ap-mt-7.5 ap-mb-7.5" />
           <div class="ap-flex ap-justify-start ap-items-start">
             <div class="ap-flex ap-flex-col ap-items-start">
               <p class="ap-text-sm ap-font-bold">Template Description</p>
@@ -26,7 +26,7 @@
             </div>
           </div>
         </div>
-        <div class="ap-flex ap-justify-center ap-mt-8 ap-justify-around">
+        <div class="ap-flex ap-justify-center ap-mt-7.5 ap-gap-[15px]">
           <ap-button btnSize="default" btnStyle="stroked" btnColor="primary" class="ap-w-[150px]" [fullWidthOfContainer]="true" (click)="dashboard()"> Cancel
           </ap-button>
           <ap-button btnSize="default" btnColor="primary" class="ap-w-[150px]"

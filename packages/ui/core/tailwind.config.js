@@ -22,6 +22,9 @@ module.exports = {
         authBg: "url('/assets/img/custom/auth/auth-bg.png')",
         nofbg: "url('/assets/img/custom/auth/404.svg')",
       },
+      spacing: {
+        '7.5': '1.875rem',
+      },
       colors: {
         body: '#4f4f4f',
         border: '#c2c9d1',
