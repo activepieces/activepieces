@@ -103,6 +103,7 @@
         "pieces/apps/mastodon",
         "pieces/apps/matrix",
         "pieces/apps/mattermost",
+        "pieces/apps/mautic",
         "pieces/apps/mindee",
         "pieces/apps/monday",
         "pieces/apps/notion",
