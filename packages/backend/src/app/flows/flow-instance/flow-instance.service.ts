@@ -12,14 +12,6 @@ export const flowInstanceRepo = databaseConnection.getRepository(FlowInstanceEnt
 export const flowInstanceService = {
     async upsert({ projectId, request }: { projectId: ProjectId, request: UpsertFlowInstanceRequest }): Promise<FlowInstance> {
         const flow = await flowService.getOneOrThrow({ projectId: projectId, id: request.flowId })
-        if (flow == null) {
-            throw new ActivepiecesError({
-                code: ErrorCode.FLOW_NOT_FOUND,
-                params: {
-                    id: request.flowId,
-                },
-            })
-        }
 
         const flowInstance: Partial<FlowInstance> = {
             id: apId(),
@@ -85,7 +77,7 @@ export const flowInstanceService = {
                     })
                     break
                 case FlowInstanceStatus.UNPUBLISHED:
-                    break     
+                    break
             }
         }
         const updatedInstance: FlowInstance = {
@@ -110,7 +102,7 @@ export const flowInstanceService = {
             })
         }
         const flowVersion = await flowVersionService.getOneOrThrow(flowInstance.flowVersionId)
-        if(flowInstance.status === FlowInstanceStatus.ENABLED) {
+        if (flowInstance.status === FlowInstanceStatus.ENABLED) {
             await triggerUtils.disable({
                 flowVersion: flowVersion,
                 projectId: flowInstance.projectId,
@@ -123,11 +115,13 @@ export const flowInstanceService = {
         const flowInstance = await flowInstanceRepo.findOneBy({ projectId, flowId })
         if (flowInstance) {
             const flowVersion = await flowVersionService.getOneOrThrow(flowInstance.flowVersionId)
-            await triggerUtils.disable({
-                flowVersion: flowVersion,
-                projectId: flowInstance.projectId,
-                simulate: false,
-            })
+            if (flowInstance.status === FlowInstanceStatus.ENABLED) {
+                await triggerUtils.disable({
+                    flowVersion: flowVersion,
+                    projectId: flowInstance.projectId,
+                    simulate: false,
+                })
+            }
             await flowInstanceRepo.delete({ projectId, flowId })
         }
     },
