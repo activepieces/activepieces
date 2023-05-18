@@ -1,13 +1,15 @@
 import {Property} from "@activepieces/pieces-framework";
 
 const instructions = {
-    base_url:'The base URL of your Mautic Instance. ' +
-        'If this `https://mautic.ddev.site/s/dashboard` is your dashboard link ' +
+    base_url:'The base URL of your Mautic Instance. \n' +
+        'If this `https://mautic.ddev.site/s/dashboard` is your dashboard link \n' +
         'then your base_url should be `https://mautic.ddev.site/`',
-    access_token: 'To authorize a request for basic authentication, set an Authorization header.\n' +
-        '1. Combine the username and password of a Mautic user with a colon :. ' +
+    access_token: 'To authorize a request for basic authentication,\n' +
+        'first enable Basic Authentication by navigating to \n' +
+        'Settings -> Configuration -> API Settings, set an Authorization header.\n' +
+        '1. Combine the username and password of a Mautic user with a colon :. \n' +
         'For example,if your username is `user` and password is `password` then , user:password.\n' +
-        '2. Base64 encode the string from above. You can go to this website `https://www.base64encode.org/.` for the same.  ' +
+        '2. Base64 encode the string from above. You can go to this website `https://www.base64encode.org/.` for the same.  \n' +
         'After auth it\'ll look like. dXNlcjpwYXNzd29yZA==.\n' +
         '3. Copy and paste the same.',
 
