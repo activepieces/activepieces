@@ -215,8 +215,8 @@ export class Sandbox {
                 }
 
                 if (stderr) {
+                    // Don't return an error, because it's okay for engine to print errors, and they should be caught by the engine
                     await fs.writeFile(standardErrorPath, stderr)
-                    // Don't return an error, becuase it's okay for engine to print errors, and they should be catched by the engine
                 }
 
                 resolve({ verdict: EngineResponseStatus.OK })
