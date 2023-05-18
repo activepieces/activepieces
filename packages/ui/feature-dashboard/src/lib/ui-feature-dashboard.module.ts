@@ -20,7 +20,6 @@ import { MoveFlowToFolderDialogComponent } from './pages/flows-table/move-flow-t
 import { EffectsModule } from '@ngrx/effects';
 import { FoldersEffects } from './store/folders/folders.effects';
 import { RenameFolderDialogComponent } from './pages/flows-table/rename-folder-dialog/rename-folder-dialog.component';
-import { StepsListInFlowsTableComponent } from './pages/flows-table/steps-list-in-flows-table/steps-list-in-flows-table.component';
 
 @NgModule({
   imports: [
@@ -43,7 +42,6 @@ import { StepsListInFlowsTableComponent } from './pages/flows-table/steps-list-i
     NewFolderDialogComponent,
     MoveFlowToFolderDialogComponent,
     RenameFolderDialogComponent,
-    StepsListInFlowsTableComponent,
   ],
 })
 export class UiFeatureDashboardModule {}

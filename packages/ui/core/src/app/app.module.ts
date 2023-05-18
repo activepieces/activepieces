@@ -18,7 +18,7 @@ import { EffectsModule } from '@ngrx/effects';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { CommonModule } from '@angular/common';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
-import { CommonLayoutModule } from './modules/common/common-layout.module';
+import { MaterialLayoutModule } from './modules/common/common-layout.module';
 import { Route, Router } from '@angular/router';
 import { FlagService } from '@activepieces/ui/common';
 import { ApEdition } from '@activepieces/shared';
@@ -27,6 +27,7 @@ import { ImportFlowComponent } from './modules/import-flow/import-flow.component
 
 import { LottieCacheModule, LottieModule } from 'ngx-lottie';
 import player from 'lottie-web';
+import { UiFeatureDashboardModule } from '@activepieces/ui/feature-dashboard';
 
 export function tokenGetter() {
   const jwtToken: any = localStorage.getItem(environment.jwtTokenName);
@@ -50,6 +51,7 @@ export function playerFactory() {
     BrowserModule,
     AppRoutingModule,
     BrowserAnimationsModule,
+    UiFeatureDashboardModule,
     StoreModule.forRoot({}),
     StoreDevtoolsModule.instrument({
       maxAge: 25, // Retains last 25 states
@@ -65,7 +67,7 @@ export function playerFactory() {
       },
     }),
     AngularSvgIconModule.forRoot(),
-    CommonLayoutModule,
+    MaterialLayoutModule,
     UiCommonModule,
     LottieModule.forRoot({ player: playerFactory }),
     LottieCacheModule.forRoot(),
@@ -128,7 +130,7 @@ function dynamicRoutes(edition: string) {
   ];
   const suffixRoutes: Route[] = [
     {
-      canActivate: [UserLoggedIn],
+      //canActivate: [UserLoggedIn],
       path: 'templates/:templateId',
       component: ImportFlowComponent,
     },
