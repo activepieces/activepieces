@@ -37,7 +37,9 @@ export const createContact = createAction({
             company,
         } = context.propsValue;
 
-        const {base_url: BASE_URL, access_token} = authentication;
+        const {base_url: BASE_URL, username, password} = authentication;
+
+        const accessToken:string = btoa(`${username}:${password}`);
 
         const body = JSON.stringify({
             firstname,
@@ -47,24 +49,18 @@ export const createContact = createAction({
             company,
         });
         const headers: HttpHeaders = {
-            'Authorization': 'Basic ' + access_token,
+            'Authorization': 'Basic ' + accessToken,
             'Content-Type': 'application/json'
         }
         const request: HttpRequest = {
             method: HttpMethod.POST,
-            url: BASE_URL + appender.CONTACT_NEW,
+            url: (BASE_URL.endsWith('/') ? BASE_URL : BASE_URL + '/') + appender.CONTACT_NEW,
             body,
             headers
         }
         try {
             return await httpClient.sendRequest(request);
         }catch (error) {
-            console.log('mautic-create-contact: body\n', body);
-            console.log(
-                'mautic-create-contact: BASE_URL\n',
-                BASE_URL + appender.CONTACT_NEW
-            );
-            console.log('mautic-create-contact: error\n' + error);
             throw error;
         }
     },

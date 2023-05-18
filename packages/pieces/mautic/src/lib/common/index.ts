@@ -4,14 +4,8 @@ const instructions = {
     base_url:'The base URL of your Mautic Instance. \n' +
         'If this `https://mautic.ddev.site/s/dashboard` is your dashboard link \n' +
         'then your base_url should be `https://mautic.ddev.site/`',
-    access_token: 'To authorize a request for basic authentication,\n' +
-        'first enable Basic Authentication by navigating to \n' +
-        'Settings -> Configuration -> API Settings, set an Authorization header.\n' +
-        '1. Combine the username and password of a Mautic user with a colon :. \n' +
-        'For example,if your username is `user` and password is `password` then , user:password.\n' +
-        '2. Base64 encode the string from above. You can go to this website `https://www.base64encode.org/.` for the same.  \n' +
-        'After auth it\'ll look like. dXNlcjpwYXNzd29yZA==.\n' +
-        '3. Copy and paste the same.',
+    basic_auth_enable_guide: 'Please ensure that Basic Authentication is enabled here: \n' +
+        'Settings -> Configuration -> API Settings'
 
 }
 export const mauticCommon= {
@@ -24,9 +18,14 @@ export const mauticCommon= {
                 description: instructions.base_url,
                 required: true,
             }),
-            access_token: Property.ShortText({
-                displayName: 'Access Token',
-                description: instructions.access_token,
+            username: Property.ShortText({
+                displayName: 'Username',
+                description: instructions.basic_auth_enable_guide,
+                required: true
+            }),
+            password: Property.ShortText({
+                displayName: 'Password',
+                description: instructions.basic_auth_enable_guide,
                 required: true
             })
         },
