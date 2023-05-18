@@ -1,0 +1,36 @@
+{
+  "name": "pieces-twitter",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/twitter/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/twitter",
+        "tsConfig": "packages/pieces/twitter/tsconfig.lib.json",
+        "packageJson": "packages/pieces/twitter/package.json",
+        "main": "packages/pieces/twitter/src/index.ts",
+        "assets": [
+          "packages/pieces/twitter/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/twitter/**/*.ts"
+        ]
+      }
+    }
+  },
+  "tags": []
+}
