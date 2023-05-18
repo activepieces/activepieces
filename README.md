@@ -150,6 +150,9 @@ This section is dedicated to individuals who have contributed to 5 or more actio
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/dentych"><img src="https://avatars.githubusercontent.com/u/2256372?v=4?s=100" width="100px;" alt="Dennis Tychsen"/><br /><sub><b>Dennis Tychsen</b></sub></a><br /><a href="#plugin-dentych" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/MyWay"><img src="https://avatars.githubusercontent.com/u/1765284?v=4?s=100" width="100px;" alt="MyWay"/><br /><sub><b>MyWay</b></sub></a><br /><a href="#plugin-MyWay" title="Plugin/utility libraries">🔌</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/bibhuty-did-this"><img src="https://avatars.githubusercontent.com/u/28416188?v=4?s=100" width="100px;" alt="Bibhuti Bhusan Panda"/><br /><sub><b>Bibhuti Bhusan Panda</b></sub></a><br /><a href="#plugin-bibhuty-did-this" title="Plugin/utility libraries">🔌</a></td>
+    </tr>
   </tbody>
 </table>
 
