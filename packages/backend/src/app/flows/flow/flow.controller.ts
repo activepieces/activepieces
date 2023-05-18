@@ -3,6 +3,7 @@ import {
     CreateFlowRequest,
     FlowId,
     FlowOperationRequest,
+    FlowTemplate,
     FlowVersion,
     FlowVersionId,
     FlowViewMode,
@@ -95,7 +96,12 @@ export const flowController = async (fastify: FastifyInstance) => {
         '/:flowId/template',
         {
             schema: {
-                querystring: GetFlowRequest,
+                params: {
+                    flowId: { type: 'string' },
+                },
+                response: {
+                    [StatusCodes.OK]: FlowTemplate,
+                },
             },
         },
         async (
@@ -103,16 +109,16 @@ export const flowController = async (fastify: FastifyInstance) => {
                 Params: {
                     flowId: FlowId
                 }
-                Querystring: GetFlowRequest
             }>,
         ) => {
-            const versionId: FlowVersionId | undefined = request.query.versionId
-            const flow = await flowService.getOne({ id: request.params.flowId, versionId: versionId, projectId: request.principal.projectId, viewMode: FlowViewMode.TEMPLATE })
+            const flow = await flowService.getOne({ id: request.params.flowId, versionId: undefined, projectId: request.principal.projectId, viewMode: FlowViewMode.TEMPLATE })
             if (!flow) {
                 throw new ActivepiecesError({ code: ErrorCode.FLOW_NOT_FOUND, params: { id: request.params.flowId } })
             }
             return {
-                tags: flowHelper.getUsedPieces(flow.version.trigger),
+                name: flow.version.displayName,
+                description: '',
+                pieces: flowHelper.getUsedPieces(flow.version.trigger),
                 template: removeMetaInformation(flow.version),
             }
         },

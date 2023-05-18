@@ -18,7 +18,7 @@ import { EffectsModule } from '@ngrx/effects';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { CommonModule } from '@angular/common';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
-import { CommonLayoutModule } from './modules/common/common-layout.module';
+import { MaterialLayoutModule } from './modules/common/common-layout.module';
 import { Route, Router } from '@angular/router';
 import { FlagService } from '@activepieces/ui/common';
 import { ApEdition } from '@activepieces/shared';
@@ -65,7 +65,7 @@ export function playerFactory() {
       },
     }),
     AngularSvgIconModule.forRoot(),
-    CommonLayoutModule,
+    MaterialLayoutModule,
     UiCommonModule,
     LottieModule.forRoot({ player: playerFactory }),
     LottieCacheModule.forRoot(),
@@ -128,7 +128,6 @@ function dynamicRoutes(edition: string) {
   ];
   const suffixRoutes: Route[] = [
     {
-      canActivate: [UserLoggedIn],
       path: 'templates/:templateId',
       component: ImportFlowComponent,
     },
