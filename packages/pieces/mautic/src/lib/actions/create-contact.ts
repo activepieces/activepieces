@@ -5,18 +5,18 @@ import {
     HttpMethod,
     HttpRequest
 } from "@activepieces/pieces-common";
-import {appender, mauticCommon} from "../common";
+import { mauticCommon } from "../common";
 
 export const createContact = createAction({
     description: 'Creates a new contact in Mautic CRM', // Must be a unique across the piece, this shouldn't be changed.
     displayName: 'Create Contact',
     name: 'create_mautic_contact',
-    sampleData:{
-        "firstname":"firstname",
-        "lastname":"lastname",
-        "email":"email@email.com",
-        "tags":"danger",
-        "company":"company",
+    sampleData: {
+        "firstname": "firstname",
+        "lastname": "lastname",
+        "email": "email@email.com",
+        "tags": "danger",
+        "company": "company",
     },
     props: {
         authentication: mauticCommon.authentication,
@@ -37,9 +37,9 @@ export const createContact = createAction({
             company,
         } = context.propsValue;
 
-        const {base_url: BASE_URL, username, password} = authentication;
+        const { base_url: BASE_URL, username, password } = authentication;
 
-        const accessToken:string = btoa(`${username}:${password}`);
+        const accessToken: string = Buffer.from(`${username}:${password}`).toString('base64');
 
         const body = JSON.stringify({
             firstname,
@@ -54,14 +54,10 @@ export const createContact = createAction({
         }
         const request: HttpRequest = {
             method: HttpMethod.POST,
-            url: (BASE_URL.endsWith('/') ? BASE_URL : BASE_URL + '/') + appender.CONTACT_NEW,
+            url: (BASE_URL.endsWith('/') ? BASE_URL : BASE_URL + '/') + 'api/contacts/new',
             body,
             headers
         }
-        try {
-            return await httpClient.sendRequest(request);
-        }catch (error) {
-            throw error;
-        }
+        return await httpClient.sendRequest(request);
     },
 });

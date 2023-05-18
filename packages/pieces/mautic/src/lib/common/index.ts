@@ -1,31 +1,29 @@
 import {Property} from "@activepieces/pieces-framework";
 
-const instructions = {
-    base_url:'The base URL of your Mautic Instance. \n' +
-        'If this `https://mautic.ddev.site/s/dashboard` is your dashboard link \n' +
-        'then your base_url should be `https://mautic.ddev.site/`',
-    basic_auth_enable_guide: 'Please ensure that Basic Authentication is enabled here: \n' +
-        'Settings -> Configuration -> API Settings'
+const markdownDescription = `
+Follow these steps:
 
-}
+1. **Enter the Base URL:** Open your Mautic instance and copy the URL from the address bar. If your dashboard link is "https://mautic.ddev.site/s/dashboard", set your base URL as "https://mautic.ddev.site/".
+
+2. **Enable Basic Authentication:** Log in to Mautic, go to **Settings** > **Configuration** > **API Settings**, and ensure that Basic Authentication is enabled.
+
+`;
+
 export const mauticCommon= {
     authentication: Property.CustomAuth({
         displayName: "Authentication",
-        description: "Basic Authentication data for Mautic CRM",
+        description: markdownDescription,
         props: {
             base_url: Property.ShortText({
                 displayName: 'Base URL',
-                description: instructions.base_url,
                 required: true,
             }),
             username: Property.ShortText({
                 displayName: 'Username',
-                description: instructions.basic_auth_enable_guide,
                 required: true
             }),
             password: Property.ShortText({
                 displayName: 'Password',
-                description: instructions.basic_auth_enable_guide,
                 required: true
             })
         },
@@ -58,6 +56,3 @@ export const mauticCommon= {
     }),
 };
 
-export const appender = {
-    CONTACT_NEW:'api/contacts/new',
-}
