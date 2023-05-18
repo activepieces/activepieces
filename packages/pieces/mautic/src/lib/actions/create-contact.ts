@@ -58,9 +58,14 @@ export const createContact = createAction({
         }
         try {
             return await httpClient.sendRequest(request);
-        }catch (e) {
-            console.log(e);
-            throw e;
+        }catch (error) {
+            console.log('mautic-create-contact: body\n', body);
+            console.log(
+                'mautic-create-contact: BASE_URL\n',
+                BASE_URL + appender.CONTACT_NEW
+            );
+            console.log('mautic-create-contact: error\n' + error);
+            throw error;
         }
     },
 });

@@ -46,8 +46,8 @@ export const mauticCommon= {
         required: false,
     }),
     tags: Property.Array({
-        displayName: 'Email',
-        description: 'Email of the contact',
+        displayName: 'Tags',
+        description: 'Tags of the contact',
         required: false,
     }),
     company: Property.ShortText({
