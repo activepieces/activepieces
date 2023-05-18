@@ -48,7 +48,7 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
     stepOutput.input = await this.variableService.resolve(
       this.action.settings,
       executionState,
-      true 
+      true
     );
 
     stepOutput.output = {
@@ -72,7 +72,7 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
           continue;
         }
 
-        const executor = new FlowExecutor(executionState);
+        const executor = new FlowExecutor({ executionState });
         const loopStatus = await executor.iterateFlow(
           this.firstLoopAction,
           ancestors

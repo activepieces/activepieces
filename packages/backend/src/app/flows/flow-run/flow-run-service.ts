@@ -12,6 +12,10 @@ import {
     TelemetryEventName,
     FlowId,
     spreadIfDefined,
+    PauseMetadata,
+    ActivepiecesError,
+    ErrorCode,
+    ExecutionType,
 } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
@@ -23,9 +27,33 @@ import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
 import { logger } from '../../helper/logger'
 import { notifications } from '../../helper/notifications'
-import { flowRepo } from '../flow/flow.repo'
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity'
+import { flowService } from '../flow/flow.service'
+import { isNil } from 'lodash'
+
 
 export const repo = databaseConnection.getRepository(FlowRunEntity)
+
+const getFlowRunOrCreate = async (params: GetOrCreateParams): Promise<Partial<FlowRun>> => {
+    const { id, projectId, flowId, flowVersionId, flowDisplayName, environment } = params
+
+    if (id) {
+        return await flowRunService.getOneOrThrow({
+            id,
+            projectId,
+        })
+    }
+
+    return {
+        id: apId(),
+        projectId,
+        flowId,
+        flowVersionId,
+        environment,
+        flowDisplayName,
+        startTime: new Date().toISOString(),
+    }
+}
 
 export const flowRunService = {
     async list({ projectId, flowId, status, cursor, limit }: ListParams): Promise<SeekPage<FlowRun>> {
@@ -68,22 +96,26 @@ export const flowRunService = {
         return flowRun
     },
 
-    async start({ flowVersionId, payload, environment }: StartParams): Promise<FlowRun> {
-        logger.info(`[flowRunService#start]  flowVersionId=${flowVersionId}`)
+    async start({ projectId, flowVersionId, flowRunId, payload, environment, executionType }: StartParams): Promise<FlowRun> {
+        logger.info(`[flowRunService#start] flowRunId=${flowRunId} executionType=${executionType}`)
 
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
-        const flow = (await flowRepo.findOneBy({ id: flowVersion.flowId }))!
 
-        const flowRun: Partial<FlowRun> = {
-            id: apId(),
+        const flow = await flowService.getOneOrThrow({
+            id: flowVersion.flowId,
+            projectId,
+        })
+
+        const flowRun = await getFlowRunOrCreate({
+            id: flowRunId,
             projectId: flow.projectId,
             flowId: flowVersion.flowId,
             flowVersionId: flowVersion.id,
             environment: environment,
             flowDisplayName: flowVersion.displayName,
-            status: ExecutionOutputStatus.RUNNING,
-            startTime: new Date().toISOString(),
-        }
+        })
+
+        flowRun.status = ExecutionOutputStatus.RUNNING
 
         const savedFlowRun = await repo.save(flowRun)
 
@@ -95,12 +127,29 @@ export const flowRunService = {
                 environment: savedFlowRun.environment,
             },
         })
+
         await flowRunSideEffects.start({
             flowRun: savedFlowRun,
             payload,
+            executionType,
         })
 
         return savedFlowRun
+    },
+
+    async pause(params: PauseParams): Promise<void> {
+        logger.info(`[FlowRunService#pause] flowRunId=${params.flowRunId} pauseType=${params.pauseMetadata.type}`)
+
+        const { flowRunId, pauseMetadata } = params
+
+        await repo.update(flowRunId, {
+            status: ExecutionOutputStatus.PAUSED,
+            pauseMetadata: pauseMetadata as QueryDeepPartialEntity<PauseMetadata>,
+        })
+
+        const flowRun = await repo.findOneByOrFail({ id: flowRunId })
+
+        await flowRunSideEffects.pause({ flowRun })
     },
 
     async getOne({ projectId, id }: GetOneParams): Promise<FlowRun | null> {
@@ -109,8 +158,31 @@ export const flowRunService = {
             id,
         })
     },
+
+    async getOneOrThrow(params: GetOneParams): Promise<FlowRun> {
+        const flowRun = await this.getOne(params)
+
+        if (isNil(flowRun)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.FLOW_RUN_NOT_FOUND,
+                params: {
+                    id: params.id,
+                },
+            })
+        }
+
+        return flowRun
+    },
 }
 
+type GetOrCreateParams = {
+    id?: FlowRunId
+    projectId: ProjectId
+    flowId: FlowId
+    flowVersionId: FlowVersionId
+    flowDisplayName: string
+    environment: RunEnvironment
+}
 
 type ListParams = {
     projectId: ProjectId
@@ -126,7 +198,15 @@ type GetOneParams = {
 }
 
 type StartParams = {
-    environment: RunEnvironment
+    projectId: ProjectId
     flowVersionId: FlowVersionId
+    flowRunId?: FlowRunId
+    environment: RunEnvironment
     payload: unknown
+    executionType: ExecutionType
+}
+
+type PauseParams = {
+    flowRunId: FlowRunId
+    pauseMetadata: PauseMetadata
 }

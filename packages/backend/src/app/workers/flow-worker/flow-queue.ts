@@ -2,38 +2,42 @@ import { DefaultJobOptions, Queue } from 'bullmq'
 import { ApId, ScheduleOptions } from '@activepieces/shared'
 import { createRedisClient } from '../../database/redis-connection'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
-import { OneTimeJobData, RepeatableJobData } from './job-data'
+import { DelayedJobData, OneTimeJobData, RepeatingJobData, ScheduledJobData, JobData } from './job-data'
 import { logger } from '../../helper/logger'
 import { isNil } from 'lodash'
 
-type BaseAddParams = {
-    id: ApId
-}
-
 export enum JobType {
     ONE_TIME = 'ONE_TIME',
-    REPEATABLE = 'REPEATABLE',
+    REPEATING = 'REPEATING',
+    DELAYED = 'DELAYED',
 }
 
-type RepeatableJobAddParams = {
-    type: JobType.REPEATABLE
-    data: RepeatableJobData
+type BaseAddParams<JT extends JobType, JD extends JobData> = {
+    id: ApId
+    type: JT
+    data: JD
+}
+
+type RepeatingJobAddParams = BaseAddParams<JobType.REPEATING, RepeatingJobData> & {
     scheduleOptions: ScheduleOptions
-} & BaseAddParams
+}
 
-type OneTimeJobAddParams = {
-    type: JobType.ONE_TIME
-    data: OneTimeJobData
-} & BaseAddParams
+type DelayedJobAddParams = BaseAddParams<JobType.DELAYED, DelayedJobData> & {
+    delay: number
+}
 
-type AddParams = OneTimeJobAddParams | RepeatableJobAddParams
+type OneTimeJobAddParams =  BaseAddParams<JobType.ONE_TIME, OneTimeJobData>
+
+type ScheduledJobAddParams = RepeatingJobAddParams | DelayedJobAddParams
+
+type AddParams = OneTimeJobAddParams | ScheduledJobAddParams
 
 type RemoveParams = {
     id: ApId
 }
 
 export const ONE_TIME_JOB_QUEUE = 'oneTimeJobs'
-export const REPEATABLE_JOB_QUEUE = 'repeatableJobs'
+export const SCHEDULED_JOB_QUEUE = 'repeatableJobs'
 
 const EIGHT_MINUTES_IN_MILLISECONDS = 8 * 60 * 1000
 
@@ -43,6 +47,7 @@ const defaultJobOptions: DefaultJobOptions = {
         type: 'exponential',
         delay: EIGHT_MINUTES_IN_MILLISECONDS,
     },
+    removeOnComplete: true,
 }
 
 const oneTimeJobQueue = new Queue<OneTimeJobData, unknown, ApId>(ONE_TIME_JOB_QUEUE, {
@@ -50,21 +55,21 @@ const oneTimeJobQueue = new Queue<OneTimeJobData, unknown, ApId>(ONE_TIME_JOB_QU
     defaultJobOptions,
 })
 
-const repeatableJobQueue = new Queue<RepeatableJobData, unknown, ApId>(REPEATABLE_JOB_QUEUE, {
+const scheduledJobQueue = new Queue<ScheduledJobData, unknown, ApId>(SCHEDULED_JOB_QUEUE, {
     connection: createRedisClient(),
     defaultJobOptions,
 })
 
-const repeatableJobKey = (id: ApId): string => `activepieces:repeatJobKey:${id}`
+const repeatingJobKey = (id: ApId): string => `activepieces:repeatJobKey:${id}`
 
 export const flowQueue = {
     async add(params: AddParams): Promise<void> {
-        logger.info('[flowQueue#add] params=' + JSON.stringify(params))
-        if (isRepeatable(params)) {
+        logger.debug(params, '[flowQueue#add] params')
+
+        if (params.type === JobType.REPEATING) {
             const { id, data, scheduleOptions } = params
-            const job = await repeatableJobQueue.add(id, data, {
+            const job = await scheduledJobQueue.add(id, data, {
                 jobId: id,
-                removeOnComplete: true,
                 repeat: {
                     pattern: scheduleOptions.cronExpression,
                     tz: scheduleOptions.timezone,
@@ -75,33 +80,45 @@ export const flowQueue = {
                 return
             }
 
-            const client = await repeatableJobQueue.client
-            logger.debug('[flowQueue#add] repeatJobKey=' + job.repeatJobKey)
-            await client.set(repeatableJobKey(id), job.repeatJobKey)
+            logger.debug(`[flowQueue#add] repeatJobKey=${job.repeatJobKey}`)
+
+            const client = await scheduledJobQueue.client
+            await client.set(repeatingJobKey(id), job.repeatJobKey)
+        }
+        else if (params.type === JobType.DELAYED) {
+            logger.info(`[FlowQueue#add] flowRunId=${params.id} delay=${params.delay}`)
+
+            const { id, data, delay } = params
+
+            await scheduledJobQueue.add(id, data, {
+                jobId: id,
+                delay,
+            })
         }
         else {
             const { id, data } = params
 
             await oneTimeJobQueue.add(id, data, {
-                removeOnComplete: true,
                 jobId: id,
             })
         }
     },
 
-    async removeRepeatableJob({ id }: RemoveParams): Promise<void> {
-        const client = await repeatableJobQueue.client
-        const jobKey = await client.get(repeatableJobKey(id))
+    async removeRepeatingJob({ id }: RemoveParams): Promise<void> {
+        const client = await scheduledJobQueue.client
+        const jobKey = await client.get(repeatingJobKey(id))
 
         if (jobKey === null) {
-            // If the trigger activation failed, don't let the function fail.
-            // Just ignore the action. Log an error message indicating that the job with key "${jobKey}" couldn't be found, even though it should exist, and proceed to skip the deletion.
+            /*
+                If the trigger activation failed, don't let the function fail, just ignore the action, and log an error
+                message indicating that the job with key "${jobKey}" couldn't be found, even though it should exist, and
+                proceed to skip the deletion.
+            */
             logger.error(`Couldn't find job ${jobKey}, even though It should exists, skipping delete`)
         }
         else {
-
-            const result = await repeatableJobQueue.removeRepeatableByKey(jobKey)
-            await client.del(repeatableJobKey(id))
+            const result = await scheduledJobQueue.removeRepeatableByKey(jobKey)
+            await client.del(repeatingJobKey(id))
 
             if (!result) {
                 throw new ActivepiecesError({
@@ -113,8 +130,4 @@ export const flowQueue = {
             }
         }
     },
-}
-
-const isRepeatable = (params: AddParams): params is RepeatableJobAddParams => {
-    return params.type === JobType.REPEATABLE
 }

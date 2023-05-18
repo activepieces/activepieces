@@ -26,7 +26,7 @@ export class removeCollectionVersion1678492809093 implements MigrationInterface 
     
             let displayName = 'Untitled'
             if (latestCollectionVersion) {
-                displayName = latestCollectionVersion['displayName']
+                displayName = latestCollectionVersion.displayName
             }
     
             currentCollection = {

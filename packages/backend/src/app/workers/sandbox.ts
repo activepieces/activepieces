@@ -255,7 +255,7 @@ export class Sandbox {
 export default class SandboxManager {
     private static _instance?: SandboxManager
 
-    private readonly sandboxes: Map<number, Sandbox> = new Map()
+    private readonly sandboxes = new Map<number, Sandbox>()
     private readonly mutex: Mutex = new Mutex()
 
     private constructor() {

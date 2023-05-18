@@ -6,12 +6,13 @@ import { ApId } from '../common/id-generator';
 import {
   ExecutionOutput,
   ExecutionOutputStatus,
+  PauseMetadata,
 } from './execution/execution-output';
 import { FlowId } from '../flows/flow';
 
 export type FlowRunId = ApId;
 
-export interface FlowRun extends BaseModel<FlowRunId> {
+export type FlowRun = BaseModel<FlowRunId> & {
   id: FlowRunId;
   projectId: ProjectId;
   flowId: FlowId;
@@ -22,8 +23,7 @@ export interface FlowRun extends BaseModel<FlowRunId> {
   startTime: string;
   finishTime: string;
   environment: RunEnvironment;
-
-  // Frontend loads the state
+  pauseMetadata?: PauseMetadata;
   executionOutput?: ExecutionOutput;
 }
 

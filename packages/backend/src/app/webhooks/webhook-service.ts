@@ -1,6 +1,7 @@
 import {
     ApEnvironment,
     EventPayload,
+    ExecutionType,
     Flow,
     FlowId,
     FlowInstanceStatus,
@@ -25,6 +26,8 @@ import { flowInstanceService } from '../flows/flow-instance/flow-instance.servic
 
 export const webhookService = {
     async callback({ flowId, payload }: CallbackParams): Promise<void> {
+        logger.info(`[WebhookService#callback] flowId=${flowId}`)
+
         const flow = await getFlowOrThrow(flowId)
         const { projectId } = flow
         const flowInstance = await flowInstanceService.get({
@@ -55,6 +58,8 @@ export const webhookService = {
                 environment: RunEnvironment.PRODUCTION,
                 flowVersionId: flowVersion.id,
                 payload,
+                projectId,
+                executionType: ExecutionType.BEGIN,
             }),
         )
 

@@ -27,7 +27,6 @@ import { ImportFlowComponent } from './modules/import-flow/import-flow.component
 
 import { LottieCacheModule, LottieModule } from 'ngx-lottie';
 import player from 'lottie-web';
-import { UiFeatureDashboardModule } from '@activepieces/ui/feature-dashboard';
 
 export function tokenGetter() {
   const jwtToken: any = localStorage.getItem(environment.jwtTokenName);
@@ -51,7 +50,6 @@ export function playerFactory() {
     BrowserModule,
     AppRoutingModule,
     BrowserAnimationsModule,
-    UiFeatureDashboardModule,
     StoreModule.forRoot({}),
     StoreDevtoolsModule.instrument({
       maxAge: 25, // Retains last 25 states
@@ -130,7 +128,6 @@ function dynamicRoutes(edition: string) {
   ];
   const suffixRoutes: Route[] = [
     {
-      //canActivate: [UserLoggedIn],
       path: 'templates/:templateId',
       component: ImportFlowComponent,
     },

@@ -34,7 +34,7 @@ export async function getEdition(): Promise<string> {
 }
 
 export async function getWebhookSecret(flowVersion: FlowVersion): Promise<string | undefined> {
-    const appName = flowVersion.trigger?.settings['pieceName']
+    const appName = flowVersion.trigger.settings.pieceName
     if(!appName) {
         return undefined
     }
