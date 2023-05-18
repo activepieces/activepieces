@@ -1,23 +1,29 @@
 import { FlowExecutor } from '../executors/flow-executor';
 import { VariableService } from '../services/variable-service';
-import { Action, ExecutionState, LoopOnItemsAction } from '@activepieces/shared';
+import { Action, ExecutionOutputStatus, ExecutionState, LoopOnItemsAction, LoopResumeStepMetadata } from '@activepieces/shared';
 import { BaseActionHandler } from './action-handler';
 import { LoopOnItemsStepOutput, StepOutputStatus, StepOutput } from '@activepieces/shared';
 
-export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction> {
-  firstLoopAction?: BaseActionHandler<Action>;
-  override action: LoopOnItemsAction;
-  variableService: VariableService;
+type CtorParams = {
+  currentAction: LoopOnItemsAction
+  firstLoopAction?: Action,
+  nextAction?: Action
+  resumeStepMetadata?: LoopResumeStepMetadata
+}
 
-  constructor(
-    action: LoopOnItemsAction,
-    firstLoopAction: BaseActionHandler<Action> | undefined,
-    nextAction: BaseActionHandler<Action> | undefined
-  ) {
-    super(action, nextAction);
-    this.action = action;
-    this.variableService = new VariableService();
-    this.firstLoopAction = firstLoopAction;
+export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction> {
+  firstLoopAction?: Action
+  variableService: VariableService
+
+  constructor({currentAction, firstLoopAction, nextAction, resumeStepMetadata }: CtorParams) {
+    super({
+      currentAction,
+      nextAction,
+      resumeStepMetadata
+    })
+
+    this.firstLoopAction = firstLoopAction
+    this.variableService = new VariableService()
   }
 
   private getError(stepOutput: LoopOnItemsStepOutput) {
@@ -40,13 +46,13 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
     ancestors: [string, number][]
   ): Promise<StepOutput> {
     const resolvedInput = await this.variableService.resolve(
-      this.action.settings,
+      this.currentAction.settings,
       executionState
     );
 
     const stepOutput = new LoopOnItemsStepOutput();
     stepOutput.input = await this.variableService.resolve(
-      this.action.settings,
+      this.currentAction.settings,
       executionState,
       true
     );
@@ -56,11 +62,11 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
       item: undefined,
       iterations: []
     };
-    executionState.insertStep(stepOutput, this.action.name, ancestors);
+    executionState.insertStep(stepOutput, this.currentAction.name, ancestors);
     const loopOutput = stepOutput.output;
     try {
       for (let i = 0; i < resolvedInput.items.length; ++i) {
-        ancestors.push([this.action.name, i]);
+        ancestors.push([this.currentAction.name, i]);
 
         loopOutput.index = i + 1;
         loopOutput.item = resolvedInput.items[i];
@@ -72,24 +78,34 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
           continue;
         }
 
-        const executor = new FlowExecutor({ executionState });
-        const loopStatus = await executor.iterateFlow(
-          this.firstLoopAction,
-          ancestors
-        );
+        const executor = new FlowExecutor({
+          executionState,
+          firstStep: this.firstLoopAction,
+          resumeStepMetadata: this.resumeStepMetadata,
+        })
+
+        const executionOutput = await executor.execute({ ancestors });
 
         ancestors.pop();
 
-        if (!loopStatus) {
-          stepOutput.status = StepOutputStatus.FAILED;
-          stepOutput.errorMessage = this.getError(stepOutput);
-          return Promise.resolve(stepOutput);
+        if (executionOutput.status === ExecutionOutputStatus.FAILED) {
+          stepOutput.status = StepOutputStatus.FAILED
+          stepOutput.errorMessage = this.getError(stepOutput)
+
+          return stepOutput
+        }
+
+        if (executionOutput.status === ExecutionOutputStatus.PAUSED) {
+          stepOutput.status = StepOutputStatus.PAUSED
+          stepOutput.pauseMetadata = executionOutput.pauseMetadata
+
+          return stepOutput
         }
       }
       stepOutput.status = StepOutputStatus.SUCCEEDED;
-      executionState.insertStep(stepOutput, this.action.name, ancestors);
+      executionState.insertStep(stepOutput, this.currentAction.name, ancestors);
 
-      return Promise.resolve(stepOutput);
+      return stepOutput
     } catch (e) {
       console.error(e);
       stepOutput.errorMessage = (e as Error).message;
@@ -110,7 +126,7 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
         ...loopOutput,
         iterations: undefined
       },
-      this.action.name
+      this.currentAction.name
     );
   }
 }

@@ -28,18 +28,13 @@ type BaseResumeStepMetadata<T extends ActionType> = {
   name: string
 }
 
-type LoopResumeStepMetadata = BaseResumeStepMetadata<ActionType.LOOP_ON_ITEMS> & {
+export type LoopResumeStepMetadata = BaseResumeStepMetadata<ActionType.LOOP_ON_ITEMS> & {
   iteration: number
   childResumeStepMetadata: ResumeStepMetadata
 }
 
-enum BranchStepConditionEvaluation {
-  SUCCESS = 'SUCCESS',
-  FAILURE = 'FAILURE',
-}
-
-type BranchResumeStepMetadata = BaseResumeStepMetadata<ActionType.BRANCH> & {
-  conditionEvaluation: BranchStepConditionEvaluation
+export type BranchResumeStepMetadata = BaseResumeStepMetadata<ActionType.BRANCH> & {
+  conditionEvaluation: boolean
   childResumeStepMetadata: ResumeStepMetadata
 }
 

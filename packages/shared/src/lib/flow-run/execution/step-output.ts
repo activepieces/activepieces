@@ -1,16 +1,20 @@
+import { PauseMetadata } from "./execution-output";
+
 export enum StepOutputStatus {
-  RUNNING = "RUNNING",
+  RUNNING = 'RUNNING',
   SUCCEEDED = 'SUCCEEDED',
   FAILED = 'FAILED',
+  PAUSED = 'PAUSED',
 }
 
-export class StepOutput<T = any>{
+export class StepOutput<T = unknown>{
   duration?: number;
   input?: unknown;
   output?: T
   errorMessage?: unknown;
   standardOutput?: unknown;
   status?: StepOutputStatus;
+  pauseMetadata?: Omit<PauseMetadata, 'executionState'>
 }
 
 export class LoopOnItemsStepOutput extends StepOutput<{

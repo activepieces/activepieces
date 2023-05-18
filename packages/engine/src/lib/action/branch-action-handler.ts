@@ -1,23 +1,30 @@
 import { FlowExecutor } from '../executors/flow-executor';
 import { VariableService } from '../services/variable-service';
-import { ExecutionState, BranchAction, Action, BranchStepOutput, BranchCondition, BranchOperator } from '@activepieces/shared';
+import { ExecutionState, BranchAction, Action, BranchStepOutput, BranchCondition, BranchOperator, ResumeStepMetadata, ActivepiecesError, ErrorCode, ExecutionOutputStatus, BranchResumeStepMetadata } from '@activepieces/shared';
 import { BaseActionHandler } from './action-handler';
 import { StepOutputStatus, StepOutput } from '@activepieces/shared';
+import { isNil } from 'lodash';
+
+type CtorParams = {
+  currentAction: BranchAction
+  onSuccessAction?: Action,
+  onFailureAction?: Action,
+  nextAction?: Action
+  resumeStepMetadata?: BranchResumeStepMetadata
+}
 
 export class BranchActionHandler extends BaseActionHandler<BranchAction> {
-  onSuccessAction?: BaseActionHandler<Action>;
-  onFailureAction?: BaseActionHandler<Action>;
-  override action: BranchAction;
+  onSuccessAction?: Action;
+  onFailureAction?: Action;
   variableService: VariableService;
 
-  constructor(
-    action: BranchAction,
-    onSuccessAction: BaseActionHandler<Action> | undefined,
-    onFailureAction: BaseActionHandler<Action> | undefined,
-    nextAction: BaseActionHandler<Action> | undefined
-  ) {
-    super(action, nextAction);
-    this.action = action;
+  constructor({ currentAction, onSuccessAction, onFailureAction, nextAction, resumeStepMetadata }: CtorParams) {
+    super({
+      currentAction,
+      nextAction,
+      resumeStepMetadata,
+    })
+
     this.variableService = new VariableService();
     this.onSuccessAction = onSuccessAction;
     this.onFailureAction = onFailureAction;
@@ -28,13 +35,13 @@ export class BranchActionHandler extends BaseActionHandler<BranchAction> {
     ancestors: [string, number][]
   ): Promise<StepOutput> {
     const resolvedInput = await this.variableService.resolve(
-      this.action.settings,
+      this.currentAction.settings,
       executionState
     );
 
     const stepOutput = new BranchStepOutput();
     stepOutput.input = await this.variableService.resolve(
-      this.action.settings,
+      this.currentAction.settings,
       executionState,
       true
     );
@@ -44,36 +51,52 @@ export class BranchActionHandler extends BaseActionHandler<BranchAction> {
       stepOutput.output = {
         condition: condition,
       };
-      executionState.insertStep(stepOutput, this.action.name, ancestors);
-      const executor = new FlowExecutor({ executionState });
-      if (condition) {
-        if (this.onSuccessAction) {
-          await executor.iterateFlow(
-            this.onSuccessAction,
-            ancestors
-          );
-        }
-      } else {
-        if (this.onFailureAction) {
-          await executor.iterateFlow(
-            this.onFailureAction,
-            ancestors
-          );
-        }
-      }
-      stepOutput.status = StepOutputStatus.SUCCEEDED;
-      executionState.insertStep(stepOutput, this.action.name, ancestors);
+      executionState.insertStep(stepOutput, this.currentAction.name, ancestors);
 
-      return Promise.resolve(stepOutput);
-    } catch (e) {
-      console.error(e);
-      stepOutput.errorMessage = (e as Error).message;
-      stepOutput.status = StepOutputStatus.FAILED;
-      return Promise.resolve(stepOutput);
+      const firstStep = condition
+        ? this.onSuccessAction
+        : this.onFailureAction
+
+      if (isNil(firstStep)) {
+        throw new ActivepiecesError({
+          code: ErrorCode.STEP_NOT_FOUND,
+          params: {
+            stepName: this.currentAction.name,
+          }
+        })
+      }
+
+      const executor = new FlowExecutor({
+        executionState,
+        firstStep,
+        resumeStepMetadata: this.resumeStepMetadata,
+      })
+
+      const executionOutput = await executor.execute()
+
+      if (executionOutput.status === ExecutionOutputStatus.PAUSED) {
+        stepOutput.status = StepOutputStatus.PAUSED
+        stepOutput.pauseMetadata = executionOutput.pauseMetadata
+
+        return stepOutput
+      }
+
+      stepOutput.status = StepOutputStatus.SUCCEEDED;
+      executionState.insertStep(stepOutput, this.currentAction.name, ancestors);
+
+      return stepOutput
+    }
+    catch (e) {
+      console.error(e)
+
+      stepOutput.errorMessage = (e as Error).message
+      stepOutput.status = StepOutputStatus.FAILED
+
+      return stepOutput
     }
   }
-
 }
+
 function evaluateConditions(conditionGroups: BranchCondition[][]): boolean {
   let orOperator = false;
   for (const conditionGroup of conditionGroups) {
@@ -146,4 +169,3 @@ function parseStringToNumber(str: string): number | string {
   const num = Number(str);
   return isNaN(num) ? str : num;
 }
-

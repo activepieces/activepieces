@@ -16,6 +16,17 @@ import { TypeCompiler } from '@sinclair/typebox/compiler';
 import { FlowVersion } from './flow-version';
 import { ActivepiecesError, ErrorCode } from '../common/activepieces-error';
 
+type Step = Action | Trigger
+
+type GetAllSubFlowSteps = {
+  subFlowStartStep: Step
+}
+
+type GetStepFromSubFlow = {
+  subFlowStartStep: Step
+  stepName: string
+}
+
 const actionSchemaValidator = TypeCompiler.Compile(Action);
 const triggerSchemaValidation = TypeCompiler.Compile(Trigger);
 
@@ -107,6 +118,18 @@ function getStep(
   stepName: string
 ): Action | Trigger | undefined {
   return getAllSteps(flowVersion).find((step) => step.name === stepName);
+}
+
+const getAllSubFlowSteps = ({ subFlowStartStep }: GetAllSubFlowSteps): Step[] => {
+  return traverseInternal(subFlowStartStep);
+}
+
+const getStepFromSubFlow = ({ subFlowStartStep, stepName }: GetStepFromSubFlow): Step | undefined => {
+  const subFlowSteps = getAllSubFlowSteps({
+    subFlowStartStep,
+  })
+
+  return subFlowSteps.find((step) => step.name === stepName)
 }
 
 function updateAction(
@@ -338,11 +361,13 @@ export const flowHelper = {
     clonedVersion.valid = isValid(clonedVersion);
     return clonedVersion;
   },
-  getStep: getStep,
-  isAction: isAction,
-  getAllSteps: getAllSteps,
-  getUsedPieces: getUsedPieces,
   clone: (flowVersion: FlowVersion): FlowVersion => {
     return JSON.parse(JSON.stringify(flowVersion));
   },
+  getStep,
+  isAction,
+  getAllSteps,
+  getUsedPieces,
+  getAllSubFlowSteps,
+  getStepFromSubFlow,
 };

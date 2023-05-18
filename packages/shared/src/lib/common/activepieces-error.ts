@@ -248,7 +248,7 @@ export type TriggerDisableErrorParams = BaseErrorParams<
 
 export type PauseMetadataMissingErrorParams = BaseErrorParams<
   ErrorCode.PAUSE_METADATA_MISSING,
-  never
+  Record<string, never>
 >
 
 export enum ErrorCode {

@@ -1,14 +1,22 @@
-import { StepOutput, Action, ExecutionState } from '@activepieces/shared';
+import { StepOutput, Action, ExecutionState, ResumeStepMetadata } from '@activepieces/shared';
 
-export type ActionHandler = BaseActionHandler<Action>;
+export type ActionHandler = BaseActionHandler
 
-export abstract class BaseActionHandler<A extends Action> {
-  action: A;
-  nextAction?: BaseActionHandler<Action> | undefined;
+type CtorParams<CA extends Action> = {
+  currentAction: CA
+  nextAction?: Action
+  resumeStepMetadata?: ResumeStepMetadata
+}
 
-  protected constructor(action: A, nextAction?: BaseActionHandler<Action>) {
-    this.action = action;
+export abstract class BaseActionHandler<CA extends Action = Action> {
+  currentAction: CA
+  nextAction?: Action
+  resumeStepMetadata?: ResumeStepMetadata
+
+  protected constructor({ currentAction, nextAction, resumeStepMetadata }: CtorParams<CA>) {
+    this.currentAction = currentAction;
     this.nextAction = nextAction;
+    this.resumeStepMetadata = resumeStepMetadata;
   }
 
   abstract execute(

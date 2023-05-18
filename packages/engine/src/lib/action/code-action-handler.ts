@@ -11,15 +11,21 @@ import {
 import { BaseActionHandler } from './action-handler';
 import { globals } from '../globals';
 
+type CtorParams = {
+  currentAction: CodeAction
+  nextAction?: Action
+}
+
 export class CodeActionHandler extends BaseActionHandler<CodeAction> {
   variableService: VariableService;
 
-  constructor(
-    action: CodeAction,
-    nextAction: BaseActionHandler<Action> | undefined
-  ) {
-    super(action, nextAction);
-    this.variableService = new VariableService();
+  constructor({ currentAction, nextAction }: CtorParams) {
+    super({
+      currentAction,
+      nextAction,
+    })
+
+    this.variableService = new VariableService()
   }
 
   async execute(
@@ -29,15 +35,15 @@ export class CodeActionHandler extends BaseActionHandler<CodeAction> {
     globals.addOneTask();
     const stepOutput = new StepOutput();
     const params = await this.variableService.resolve(
-      this.action.settings.input,
+      this.currentAction.settings.input,
       executionState
     );
-    const artifactPackagedId = this.action.settings.artifactPackagedId;
+    const artifactPackagedId = this.currentAction.settings.artifactPackagedId
     if(!artifactPackagedId){
       throw new Error("Artifact packaged id is not defined");
     }
     stepOutput.input = await this.variableService.resolve(
-      this.action.settings.input,
+      this.currentAction.settings.input,
       executionState,
       true
     );

@@ -1,10 +1,8 @@
 import dayjs from 'dayjs';
-import { Utils } from '../utils';
 import { globals } from '../globals';
 import { ActionHandler } from '../action/action-handler';
 import {
   ExecutionState,
-  FlowVersion,
   StepOutputStatus,
   ExecutionError,
   ExecutionOutputStatus,
@@ -12,32 +10,26 @@ import {
   ActionType,
   PauseType,
   flowHelper,
-  Action,
-  Trigger,
   ActivepiecesError,
   ErrorCode,
-  FlowVersionId,
-  ResumeStepMetadata
+  ResumeStepMetadata,
+  Action,
+  StepOutput,
+  PauseMetadata,
+  LoopOnItemsStepOutput,
+  BranchStepOutput
 } from '@activepieces/shared';
-import { createAction } from '../action/action-factory';
+import { createActionHandler } from '../action/action-handler-factory';
 import { isNil } from 'lodash';
 
 type FlowExecutorCtor = {
-  executionState: ExecutionState;
-  resumeStepMetadata?: ResumeStepMetadata;
+  executionState: ExecutionState
+  firstStep: Action
+  resumeStepMetadata?: ResumeStepMetadata
 }
 
 type GetResumeStepParams = {
-  flowVersion: FlowVersion
   resumeStepMetadata: ResumeStepMetadata
-}
-
-type GetFirstStepParams = {
-  flowVersion: FlowVersion
-}
-
-type GetStartStepParams = {
-  flowVersionId: FlowVersionId
 }
 
 type BaseIterateFlowResponse<T extends ExecutionOutputStatus> = {
@@ -47,7 +39,7 @@ type BaseIterateFlowResponse<T extends ExecutionOutputStatus> = {
 type FinishIterateFlowResponse = BaseIterateFlowResponse<Exclude<ExecutionOutputStatus, ExecutionOutputStatus.PAUSED>>
 
 type PauseIterateFlowResponse = BaseIterateFlowResponse<ExecutionOutputStatus.PAUSED> & {
-  resumeStepName: string
+  pauseMetadata: Omit<PauseMetadata, 'executionState'>
 }
 
 type IterateFlowResponse = FinishIterateFlowResponse | PauseIterateFlowResponse
@@ -57,17 +49,36 @@ type GetExecutionOutputParams = {
   duration: number
 }
 
+type IterateFlowParams = {
+  actionHandler: ActionHandler | undefined
+  ancestors: [string, number][]
+}
+
+type GeneratePauseMetadata = {
+  actionHandler: ActionHandler
+  stepOutput: StepOutput
+}
+
+type ExecuteParams = {
+  ancestors?: [string, number][]
+}
+
 export class FlowExecutor {
   private readonly executionState: ExecutionState;
+  private readonly firstStep: Action
   private readonly resumeStepMetadata?: ResumeStepMetadata;
 
-  constructor({ executionState, resumeStepMetadata }: FlowExecutorCtor) {
+  constructor({ executionState, firstStep, resumeStepMetadata }: FlowExecutorCtor) {
     this.executionState = executionState;
+    this.firstStep = firstStep
     this.resumeStepMetadata = resumeStepMetadata;
   }
 
-  private getResumeStep({ flowVersion, resumeStepMetadata}: GetResumeStepParams) {
-    const resumeStep = flowHelper.getStep(flowVersion, resumeStepMetadata.name)
+  private getResumeStep({ resumeStepMetadata }: GetResumeStepParams) {
+    const resumeStep = flowHelper.getStepFromSubFlow({
+      subFlowStartStep: this.firstStep,
+      stepName: resumeStepMetadata.name,
+    })
 
     if (isNil(resumeStep)) {
       throw new ActivepiecesError({
@@ -81,50 +92,127 @@ export class FlowExecutor {
     return resumeStep
   }
 
-  private getFirstStep({ flowVersion }: GetFirstStepParams) {
-    return flowVersion.trigger?.nextAction
-  }
-
-  private getStartStep({ flowVersionId }: GetStartStepParams) {
-    const flowVersion = this.prepareFlow(flowVersionId)
-
-    if (this.resumeStepMetadata) {
-      return this.getResumeStep({
-        flowVersion,
-        resumeStepMetadata: this.resumeStepMetadata,
-      })
+  private getStartStep() {
+    if (isNil(this.resumeStepMetadata)) {
+      return this.firstStep
     }
 
-    return this.getFirstStep({
-      flowVersion,
+    return this.getResumeStep({
+      resumeStepMetadata: this.resumeStepMetadata,
     })
   }
 
-  public async executeFlow(
-    flowVersionId: string
-  ): Promise<ExecutionOutput> {
-    try {
-      const startTime = new Date().getTime();
+  private generatePauseMetadata(params: GeneratePauseMetadata): Omit<PauseMetadata, 'executionState'> {
+    const { actionHandler, stepOutput } = params
 
-      const startStep = this.getStartStep({
-        flowVersionId,
+    if (isNil(stepOutput.pauseMetadata)) {
+      throw new ActivepiecesError({
+        code: ErrorCode.PAUSE_METADATA_MISSING,
+        params: {}
       })
+    }
 
-      const iterateFlowResponse = await this.iterateFlow(
-        createAction(startStep),
-        []
-      );
+    switch(actionHandler.currentAction.type) {
+      case ActionType.PIECE: {
+        const output = stepOutput.output as { delay: number, pauseType: PauseType }
+        const resumeDateTime = dayjs().add(output.delay, 'seconds').toISOString()
 
-      const endTime = new Date().getTime();
-      const duration = endTime - startTime;
+        return {
+          type: output.pauseType,
+          resumeDateTime,
+          resumeStepMetadata: {
+            type: ActionType.PIECE,
+            name: actionHandler.currentAction.name,
+          }
+        }
+      }
 
-      return this.getExecutionOutput({
-        iterateFlowResponse,
-        duration
-      });
+      case ActionType.BRANCH: {
+        const { output } = stepOutput as BranchStepOutput
+
+        if (isNil(output)) {
+          throw new ActivepiecesError({
+            code: ErrorCode.PAUSE_METADATA_MISSING,
+            params: {}
+          })
+        }
+
+        return {
+          ...stepOutput.pauseMetadata,
+          resumeStepMetadata: {
+            type: ActionType.BRANCH,
+            conditionEvaluation: output.condition,
+            name: actionHandler.currentAction.name,
+            childResumeStepMetadata: stepOutput.pauseMetadata.resumeStepMetadata,
+          }
+        }
+      }
+
+      case ActionType.LOOP_ON_ITEMS: {
+        const { output } = stepOutput as LoopOnItemsStepOutput
+
+        if (isNil(output)) {
+          throw new ActivepiecesError({
+            code: ErrorCode.PAUSE_METADATA_MISSING,
+            params: {}
+          })
+        }
+
+        return {
+          ...stepOutput.pauseMetadata,
+          resumeStepMetadata: {
+            type: ActionType.LOOP_ON_ITEMS,
+            iteration: output.index,
+            name: actionHandler.currentAction.name,
+            childResumeStepMetadata: stepOutput.pauseMetadata.resumeStepMetadata,
+          }
+        }
+      }
+
+      case ActionType.CODE:
+      case ActionType.MISSING:
+        throw new Error('missing action, this shouldn\'t happen')
+    }
+  }
+
+  /**
+   * execute flow without catching errors, used to run sub flows like branches and loops
+   * @param ancestors holds previous iterations output for loop steps
+   * @returns execution output
+   */
+  public async execute({ ancestors }: ExecuteParams = {}): Promise<ExecutionOutput> {
+    const startTime = dayjs()
+
+    const startStep = this.getStartStep()
+
+    const startActionHandler = createActionHandler({
+      action: startStep,
+      resumeStepMetadata: this.resumeStepMetadata,
+    })
+
+    const iterateFlowResponse = await this.iterateFlow({
+      actionHandler: startActionHandler,
+      ancestors: ancestors ?? [],
+    })
+
+    const endTime = dayjs()
+    const duration = endTime.diff(startTime)
+
+    return this.getExecutionOutput({
+      iterateFlowResponse,
+      duration
+    });
+  }
+
+  /**
+   * execute flow catching errors used to run the main flow
+   */
+  public async safeExecute(): Promise<ExecutionOutput> {
+    try {
+      return await this.execute()
     }
     catch (e) {
-      console.error(e);
+      console.error(e)
 
       return {
         status: ExecutionOutputStatus.FAILED,
@@ -135,7 +223,7 @@ export class FlowExecutor {
           stepName: 'Flow Execution',
           errorMessage: (e as Error).message
         }
-      };
+      }
     }
   }
 
@@ -159,13 +247,8 @@ export class FlowExecutor {
         return {
           status: ExecutionOutputStatus.PAUSED,
           pauseMetadata: {
-            type: PauseType.DELAY,
+            ...iterateFlowResponse.pauseMetadata,
             executionState: this.executionState,
-            resumeStepMetadata: {
-              type: ActionType.PIECE,
-              name: iterateFlowResponse.resumeStepName,
-            },
-            resumeDateTime: dayjs().add(20, 'seconds').toISOString(),
           },
           ...baseExecutionOutput,
         }
@@ -192,59 +275,50 @@ export class FlowExecutor {
     return undefined;
   }
 
-  public async iterateFlow(
-    handler: ActionHandler | undefined,
-    ancestors: [string, number][]
-  ): Promise<IterateFlowResponse> {
-    if (handler === undefined) {
+  private async iterateFlow(params: IterateFlowParams) : Promise<IterateFlowResponse> {
+    const { actionHandler, ancestors } = params
+
+    if (isNil(actionHandler)) {
       return {
         status: ExecutionOutputStatus.SUCCEEDED
       }
     }
 
-    if (handler.action.type === ActionType.PIECE && handler.action.settings.pieceName === 'delay') {
-      if (isNil(handler.nextAction)) {
-        return {
-          status: ExecutionOutputStatus.SUCCEEDED
-        }
-      }
+    const startTime = dayjs()
+
+    const stepOutput = await actionHandler.execute(this.executionState, ancestors);
+
+    const endTime = dayjs()
+    stepOutput.duration = endTime.diff(startTime)
+
+    if (stepOutput.status === StepOutputStatus.PAUSED) {
+      const pauseMetadata = this.generatePauseMetadata({
+        actionHandler,
+        stepOutput,
+      })
 
       return {
         status: ExecutionOutputStatus.PAUSED,
-        resumeStepName: handler.nextAction.action.name
+        pauseMetadata,
       }
     }
 
-    const startTime = new Date().getTime();
+    this.executionState.insertStep(stepOutput, actionHandler.currentAction.name, ancestors);
 
-    const output = await handler.execute(this.executionState, ancestors);
-
-    const endTime = new Date().getTime();
-    output.duration = endTime - startTime;
-
-    this.executionState.insertStep(output, handler.action.name, ancestors);
-
-    if (output.status === StepOutputStatus.FAILED) {
+    if (stepOutput.status === StepOutputStatus.FAILED) {
       return {
         status: ExecutionOutputStatus.FAILED
       }
     }
 
-    return await this.iterateFlow(handler.nextAction, ancestors);
-  }
+    const nextActionHandler = createActionHandler({
+      action: actionHandler.nextAction,
+      resumeStepMetadata: this.resumeStepMetadata,
+    })
 
-  private prepareFlow(flowVersionId: string) {
-    try {
-      // Parse all required files.
-      const flowVersion: FlowVersion = Utils.parseJsonFile(
-        `${globals.flowDirectory}/${flowVersionId}.json`
-      );
-
-      globals.flowId = flowVersion.id;
-
-      return flowVersion;
-    } catch (e) {
-      throw Error((e as Error).message);
-    }
+    return await this.iterateFlow({
+      actionHandler: nextActionHandler,
+      ancestors,
+    })
   }
 }

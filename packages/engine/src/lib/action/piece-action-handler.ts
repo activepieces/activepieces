@@ -2,6 +2,7 @@ import { VariableService } from '../services/variable-service';
 import {
   Action,
   ExecutionState,
+  PauseType,
   PieceAction,
   StepOutput,
   StepOutputStatus
@@ -9,15 +10,22 @@ import {
 import { BaseActionHandler } from './action-handler';
 import { PieceExecutor } from '../executors/piece-executor';
 import { globals } from '../globals';
+import dayjs from 'dayjs';
+
+type CtorParams = {
+  currentAction: PieceAction
+  nextAction?: Action
+}
 
 export class PieceActionHandler extends BaseActionHandler<PieceAction> {
   variableService: VariableService;
 
-  constructor(
-    action: PieceAction,
-    nextAction: BaseActionHandler<Action> | undefined
-  ) {
-    super(action, nextAction);
+  constructor({ currentAction, nextAction }: CtorParams) {
+    super({
+      currentAction,
+      nextAction
+    })
+
     this.variableService = new VariableService();
   }
 
@@ -26,7 +34,26 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
   ): Promise<StepOutput> {
     const stepOutput = new StepOutput();
 
-    const { input, pieceName, pieceVersion, actionName } = this.action.settings;
+    const { input, pieceName, pieceVersion, actionName } = this.currentAction.settings;
+
+    if (pieceName === 'delay') {
+      stepOutput.input = await this.variableService.resolve(
+        input,
+        executionState,
+        true,
+      )
+
+      const { delay } = stepOutput.input as { delay: number }
+
+      stepOutput.output = {
+        delay,
+        pauseType: PauseType.DELAY,
+      }
+
+      stepOutput.status = StepOutputStatus.PAUSED
+
+      return stepOutput
+    }
 
     const config = await this.variableService.resolve(
       input,
@@ -37,12 +64,13 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
     stepOutput.input = await this.variableService.resolve(
       input,
       executionState,
-      true 
+      true
     );
 
-    if(!actionName){
+    if (!actionName){
       throw new Error("Action name is not defined");
     }
+
     try {
       const executer = new PieceExecutor();
 
