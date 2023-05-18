@@ -1,11 +1,11 @@
-import { Worker } from 'bullmq'
-import { ActivepiecesError, ApId, ErrorCode, FlowInstanceStatus, RunEnvironment, TriggerType } from '@activepieces/shared'
+import { Job, Worker } from 'bullmq'
+import { ActivepiecesError, ApId, ErrorCode, ExecutionType, FlowInstanceStatus, RunEnvironment, TriggerType } from '@activepieces/shared'
 import { createRedisClient } from '../../database/redis-connection'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { triggerUtils } from '../../helper/trigger-utils'
-import { ONE_TIME_JOB_QUEUE, REPEATABLE_JOB_QUEUE } from './flow-queue'
+import { ONE_TIME_JOB_QUEUE, SCHEDULED_JOB_QUEUE } from './flow-queue'
 import { flowWorker } from './flow-worker'
-import { OneTimeJobData, RepeatableJobData } from './job-data'
+import { DelayedJobData, OneTimeJobData, RepeatingJobData, ScheduledJobData } from './job-data'
 import { captureException, logger } from '../../helper/logger'
 import { system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
@@ -16,7 +16,7 @@ import { isNil } from 'lodash'
 const oneTimeJobConsumer = new Worker<OneTimeJobData, unknown, ApId>(
     ONE_TIME_JOB_QUEUE,
     async (job) => {
-        logger.info(`[oneTimeJobConsumer] job.id=${job.name}`)
+        logger.info(`[FlowQueueConsumer#oneTimeJobConsumer] job.id=${job.id} flowRunId=${job.data.runId} executionType=${job.data.executionType}`)
         const data = job.data
         return await flowWorker.executeFlow(data)
     },
@@ -26,42 +26,24 @@ const oneTimeJobConsumer = new Worker<OneTimeJobData, unknown, ApId>(
     },
 )
 
-const repeatableJobConsumer = new Worker<RepeatableJobData, unknown, ApId>(
-    REPEATABLE_JOB_QUEUE,
+const scheduledJobConsumer = new Worker<ScheduledJobData, unknown, ApId>(
+    SCHEDULED_JOB_QUEUE,
     async (job) => {
-        logger.info(`[repeatableJobConsumer] job.id=${job.name} job.type=${job.data.triggerType}`)
-        const { data } = job
+        logger.info(`[FlowQueueConsumer#scheduledJobConsumer] job.id=${job.id} executionType=${job.data.executionType}`)
+
+        const consumers: Record<ExecutionType, (job: Job) => Promise<void>> = {
+            [ExecutionType.BEGIN]: consumeRepeatingJob,
+            [ExecutionType.RESUME]: consumeDelayedJob,
+        }
+
+        const consumer = consumers[job.data.executionType]
 
         try {
-            // TODO REMOVE AND FIND PERMANENT SOLUTION
-            const instance = await flowInstanceService.get({
-                projectId: data.projectId,
-                flowId: data.flowVersion.flowId,
-            })
-            if (isNil(instance) || instance.status !== FlowInstanceStatus.ENABLED || instance.flowVersionId !== data.flowVersion.id) {
-                captureException(new Error(`[repeatableJobConsumer] removing job.id=${job.name} instance.flowVersionId=${instance?.flowVersionId} data.flowVersion.id=${data.flowVersion.id}`))
-                await triggerUtils.disable({
-                    projectId: data.projectId,
-                    flowVersion: data.flowVersion,
-                    simulate: false,
-                })
-                return
-            }
-            if (data.triggerType === TriggerType.PIECE) {
-                await consumePieceTrigger(data)
-            }
+            await consumer(job)
         }
         catch (e) {
-            if (e instanceof ActivepiecesError && e.error.code === ErrorCode.TASK_QUOTA_EXCEEDED) {
-                logger.info(`[repeatableJobConsumer] removing job.id=${job.name} run out of flow quota`)
-                await flowInstanceService.delete({ projectId: data.projectId, flowId: data.flowVersion.flowId })
-            }
-            else {
-                captureException(e)
-            }
+            captureException(e)
         }
-
-        logger.info(`[repeatableJobConsumer] done job.id=${job.name} job.type=${job.data.triggerType}`)
     },
     {
         connection: createRedisClient(),
@@ -69,7 +51,63 @@ const repeatableJobConsumer = new Worker<RepeatableJobData, unknown, ApId>(
     },
 )
 
-const consumePieceTrigger = async (data: RepeatableJobData): Promise<void> => {
+const consumeDelayedJob = async (job: Job<DelayedJobData, void>): Promise<void> => {
+    logger.info(`[FlowQueueConsumer#consumeDelayedJob] flowRunId=${job.data.runId}`)
+
+    const { data } = job
+
+    await flowRunService.start({
+        payload: null,
+        flowRunId: data.runId,
+        projectId: data.projectId,
+        flowVersionId: data.flowVersionId,
+        executionType: ExecutionType.RESUME,
+        environment: RunEnvironment.PRODUCTION,
+    })
+}
+
+const consumeRepeatingJob = async (job: Job<RepeatingJobData, void>): Promise<void> => {
+    const { data } = job
+
+    try {
+        // TODO REMOVE AND FIND PERMANENT SOLUTION
+        const instance = await flowInstanceService.get({
+            projectId: data.projectId,
+            flowId: data.flowVersion.flowId,
+        })
+
+        if (
+            isNil(instance) ||
+            instance.status !== FlowInstanceStatus.ENABLED ||
+            instance.flowVersionId !== data.flowVersion.id
+        ) {
+            captureException(new Error(`[repeatableJobConsumer] removing job.id=${job.name} instance.flowVersionId=${instance?.flowVersionId} data.flowVersion.id=${data.flowVersion.id}`))
+
+            await triggerUtils.disable({
+                projectId: data.projectId,
+                flowVersion: data.flowVersion,
+                simulate: false,
+            })
+
+            return
+        }
+
+        if (data.triggerType === TriggerType.PIECE) {
+            await consumePieceTrigger(data)
+        }
+    }
+    catch (e) {
+        if (e instanceof ActivepiecesError && e.error.code === ErrorCode.TASK_QUOTA_EXCEEDED) {
+            logger.info(`[repeatableJobConsumer] removing job.id=${job.name} run out of flow quota`)
+            await flowInstanceService.delete({ projectId: data.projectId, flowId: data.flowVersion.flowId })
+        }
+        else {
+            throw e
+        }
+    }
+}
+
+const consumePieceTrigger = async (data: RepeatingJobData): Promise<void> => {
     const flowVersion = await flowVersionService.getOneOrThrow(data.flowVersion.id)
 
     const payloads: unknown[] = await triggerUtils.executeTrigger({
@@ -86,6 +124,8 @@ const consumePieceTrigger = async (data: RepeatableJobData): Promise<void> => {
             environment: RunEnvironment.PRODUCTION,
             flowVersionId: data.flowVersion.id,
             payload,
+            projectId: data.projectId,
+            executionType: ExecutionType.BEGIN,
         }),
     )
 
@@ -93,6 +133,6 @@ const consumePieceTrigger = async (data: RepeatableJobData): Promise<void> => {
 }
 
 export const initFlowQueueConsumer = async (): Promise<void> => {
-    const startWorkers = [oneTimeJobConsumer.waitUntilReady(), repeatableJobConsumer.waitUntilReady()]
+    const startWorkers = [oneTimeJobConsumer.waitUntilReady(), scheduledJobConsumer.waitUntilReady()]
     await Promise.all(startWorkers)
 }

@@ -37,6 +37,7 @@ import { AllowNullableStoreEntryAndTrigger1683040965874 } from './migration/1683
 import { RenameNotifications1683195711242 } from './migration/1683195711242-rename-notifications'
 import { ListFlowRunsIndices1683199709317 } from './migration/1683199709317-list-flow-runs-indices'
 import { ProjectNotifyStatusNotNull1683458275525 } from './migration/1683458275525-project-notify-status-not-null'
+import { FlowRunPauseMetadata1683552928243 } from './migration/1683552928243-flow-run-pause-metadata'
 import { ChangeVariableSyntax1683898241599 } from './migration/1683898241599-ChangeVariableSyntax'
 
 const database = system.getOrThrow(SystemProp.POSTGRES_DATABASE)
@@ -81,6 +82,7 @@ const getMigrations = () => {
         RenameNotifications1683195711242,
         ListFlowRunsIndices1683199709317,
         ProjectNotifyStatusNotNull1683458275525,
+        FlowRunPauseMetadata1683552928243,
         ChangeVariableSyntax1683898241599,
     ]
 }

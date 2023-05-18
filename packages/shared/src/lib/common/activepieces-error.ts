@@ -123,8 +123,8 @@ export type ExistingUserErrorParams = BaseErrorParams<
 export type StepNotFoundErrorParams = BaseErrorParams<
   ErrorCode.STEP_NOT_FOUND,
   {
-    pieceName: string;
-    pieceVersion: string;
+    pieceName?: string;
+    pieceVersion?: string;
     stepName: string;
   }
 >
@@ -251,7 +251,7 @@ export enum ErrorCode {
   APP_CONNECTION_NOT_FOUND = "APP_CONNECTION_NOT_FOUND",
   FILE_NOT_FOUND = "FILE_NOT_FOUND",
   FLOW_NOT_FOUND = "FLOW_NOT_FOUND",
-  FLOW_RUN_NOT_FOUND = "INSTANCE_NOT_FOUND",
+  FLOW_RUN_NOT_FOUND = "FLOW_RUN_NOT_FOUND",
   FLOW_VERSION_NOT_FOUND = "FLOW_VERSION_NOT_FOUND",
   FLOW_INSTANCE_NOT_FOUND = "INSTANCE_NOT_FOUND",
   INVALID_BEARER_TOKEN = "INVALID_BEARER_TOKEN",

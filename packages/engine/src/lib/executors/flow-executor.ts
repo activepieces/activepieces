@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import { Utils } from '../utils';
 import { globals } from '../globals';
 import { ActionHandler } from '../action/action-handler';
@@ -7,15 +8,30 @@ import {
   StepOutputStatus,
   ExecutionError,
   ExecutionOutputStatus,
-  ExecutionOutput
+  ExecutionOutput,
+  ActionType,
+  PauseType,
+  flowHelper,
+  Action,
+  Trigger,
+  ActivepiecesError,
+  ErrorCode
 } from '@activepieces/shared';
 import { createAction } from '../action/action-factory';
+import { isNil } from 'lodash';
+
+type FlowExecutorCtor = {
+  executionState: ExecutionState;
+  resumeStepName?: string;
+}
 
 export class FlowExecutor {
   private readonly executionState: ExecutionState;
+  private readonly resumeStepName?: string;
 
-  constructor(executionState: ExecutionState) {
+  constructor({ executionState, resumeStepName }: FlowExecutorCtor) {
     this.executionState = executionState;
+    this.resumeStepName = resumeStepName;
   }
 
   public async executeFlow(
@@ -24,9 +40,27 @@ export class FlowExecutor {
     try {
       const startTime = new Date().getTime();
 
-      const flowVersion: FlowVersion = this.prepareFlow( flowVersionId);
+      const flowVersion: FlowVersion = this.prepareFlow(flowVersionId);
+
+      let resumeStep: Action | Trigger | undefined
+
+      if (this.resumeStepName) {
+        resumeStep = flowHelper.getStep(flowVersion, this.resumeStepName)
+
+        if (isNil(resumeStep)) {
+          throw new ActivepiecesError({
+            code: ErrorCode.STEP_NOT_FOUND,
+            params: {
+              stepName: this.resumeStepName,
+            },
+          })
+        }
+      }
+
+      const startStep = resumeStep ?? flowVersion.trigger?.nextAction
+
       const flowStatus = await this.iterateFlow(
-        createAction(flowVersion.trigger?.nextAction),
+        createAction(startStep),
         []
       );
 
@@ -50,10 +84,10 @@ export class FlowExecutor {
   }
 
   private getExecutionOutput(
-    flowStatus: boolean,
+    flowStatus: ExecutionOutputStatus,
     duration: number
   ): ExecutionOutput {
-    if (!flowStatus) {
+    if (flowStatus === ExecutionOutputStatus.FAILED) {
       return {
         status: ExecutionOutputStatus.FAILED,
         executionState: this.executionState,
@@ -62,12 +96,26 @@ export class FlowExecutor {
         errorMessage: this.getError()
       };
     }
+    else if (flowStatus === ExecutionOutputStatus.PAUSED) {
+      return {
+        status: ExecutionOutputStatus.PAUSED,
+        executionState: this.executionState,
+        duration: duration,
+        tasks: globals.tasks,
+        pauseMetadata: {
+          type: PauseType.DELAY,
+          resumeStepName: 'step_3',
+          executionState: this.executionState,
+          resumeDateTime: dayjs().add(10, 'seconds').toISOString(),
+        },
+      };
+    }
+
     return {
       status: ExecutionOutputStatus.SUCCEEDED,
       executionState: this.executionState,
       duration: duration,
       tasks: globals.tasks,
-      errorMessage: undefined
     };
   }
 
@@ -87,9 +135,9 @@ export class FlowExecutor {
   public async iterateFlow(
     handler: ActionHandler | undefined,
     ancestors: [string, number][]
-  ): Promise<boolean> {
+  ): Promise<ExecutionOutputStatus> {
     if (handler === undefined) {
-      return true;
+      return ExecutionOutputStatus.SUCCEEDED;
     }
 
     const startTime = new Date().getTime();
@@ -102,7 +150,7 @@ export class FlowExecutor {
     this.executionState.insertStep(output, handler.action.name, ancestors);
 
     if (output.status === StepOutputStatus.FAILED) {
-      return false;
+      return ExecutionOutputStatus.FAILED;
     }
 
     return await this.iterateFlow(handler.nextAction, ancestors);
@@ -114,7 +162,7 @@ export class FlowExecutor {
       const flowVersion: FlowVersion = Utils.parseJsonFile(
         `${globals.flowDirectory}/${flowVersionId}.json`
       );
-      
+
       globals.flowId = flowVersion.id;
 
       return flowVersion;

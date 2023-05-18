@@ -66,14 +66,18 @@ export const createWordpressPost = createAction({
                     page: pageCursor
                 };
                 const result: { id: string, name: string }[] = [];
+                let hasNext = true;
                 let tags = await wordpressCommon.getTags(getTagsParams);
-                if (tags.totalPages === 0) {
+                while (hasNext) {
                     result.push(...tags.tags);
-                }
-                while (tags.tags.length > 0 && pageCursor <= tags.totalPages) {
-                    result.push(...tags.tags);
-                    pageCursor++;
-                    tags = await wordpressCommon.getTags(getTagsParams);
+                    hasNext = pageCursor <= tags.totalPages;
+                    if (hasNext) {
+                        pageCursor++;
+                        tags = await wordpressCommon.getTags({
+                            ...getTagsParams,
+                            page: pageCursor
+                        });
+                    }
                 }
                 if (result.length === 0) {
                     return {
@@ -128,23 +132,28 @@ export const createWordpressPost = createAction({
                     websiteUrl: propsValues['website_url'] as string,
                     username: connection.username,
                     password: connection.password,
+                    perPage: 10,
                     page: pageCursor
                 };
                 const result: { id: string, name: string }[] = [];
                 let categories = await wordpressCommon.getCategories(getTagsParams);
-                if (categories.totalPages === 0) {
+                let hasNext = true;
+                while (hasNext) {
                     result.push(...categories.categories);
-                }
-                while (categories.categories.length > 0 && pageCursor <= categories.totalPages) {
-                    result.push(...categories.categories);
-                    pageCursor++;
-                    categories = await wordpressCommon.getCategories(getTagsParams);
+                    hasNext = pageCursor <= categories.totalPages;
+                    if (hasNext) {
+                        pageCursor++;
+                        categories = await wordpressCommon.getCategories({
+                            ...getTagsParams,
+                            page: pageCursor
+                        });
+                    }
                 }
                 if (result.length === 0) {
                     return {
                         disabled: true,
                         options: [],
-                        placeholder: "Please add categoreis from your admin dashboard"
+                        placeholder: "Please add categories from your admin dashboard"
                     }
                 }
                 const options = result.map(res => {

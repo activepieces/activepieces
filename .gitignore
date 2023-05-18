@@ -47,3 +47,6 @@ Thumbs.db
 activepieces-engine.js
 .history/
 packages/backend/.env
+
+# produced by unsandboxed engine execution
+.pnpm-store

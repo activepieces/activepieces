@@ -91,18 +91,18 @@ export const flowService = {
         })
         const queryWhere: Record<string, unknown> = { projectId }
         if (folderId !== undefined) {
-            queryWhere['folderId'] = (folderId === 'NULL' ? IsNull() : folderId)
+            queryWhere.folderId = (folderId === 'NULL' ? IsNull() : folderId)
         }
 
         const paginationResult = await paginator.paginate(flowRepo.createQueryBuilder('flow').where(queryWhere))
-        const flowVersionsPromises: Array<Promise<FlowVersion | null>> = []
-        const flowInstancesPromises: Array<Promise<FlowInstance | null>> = []
+        const flowVersionsPromises: Promise<FlowVersion | null>[] = []
+        const flowInstancesPromises: Promise<FlowInstance | null>[] = []
         paginationResult.data.forEach((flow) => {
             flowVersionsPromises.push(flowVersionService.getFlowVersion(projectId, flow.id, undefined, FlowViewMode.NO_ARTIFACTS))
             flowInstancesPromises.push(flowInstanceService.get({ projectId: projectId, flowId: flow.id }))
         })
-        const versions: Array<FlowVersion | null> = await Promise.all(flowVersionsPromises)
-        const instances: Array<FlowInstance | null> = await Promise.all(flowInstancesPromises)
+        const versions: (FlowVersion | null)[] = await Promise.all(flowVersionsPromises)
+        const instances: (FlowInstance | null)[] = await Promise.all(flowInstancesPromises)
         const formattedFlows = paginationResult.data.map((flow, idx) => {
             let status = FlowInstanceStatus.UNPUBLISHED
             const instance = instances[idx]
