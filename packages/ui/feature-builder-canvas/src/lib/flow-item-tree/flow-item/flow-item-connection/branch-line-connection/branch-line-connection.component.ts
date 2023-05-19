@@ -55,9 +55,9 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
   addButtonTop = '0px';
   addButtonFalseBranchLeftStyleProperty = '0px';
   addButtonTrueBranchLeftStyleProperty = '0px';
-  emptyLoopAddButtonTopOffset = '0px';
-  emptyLoopAddButtonLeftOffsetForFalseBranch = '0px';
-  emptyLoopAddButtonLeftOffsetForTrueBranch = '0px';
+  emptyBranchAddButtonTopOffset = '0px';
+  emptyBranchAddButtonLeftOffsetForFalseBranch = '0px';
+  emptyBranchAddButtonLeftOffsetForTrueBranch = '0px';
   afterBranchAddButtonTop = '0px';
   afterBranchAddButtonLeft = '0px';
   afterBranchesArrowHeadLeft = 0;
@@ -214,9 +214,9 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
       VERTICAL_LINE_LENGTH * 2.25 +
       ARC_LENGTH * 2 +
       2 * SPACE_BETWEEN_ITEM_CONTENT_AND_LINE;
-    this.emptyLoopAddButtonTopOffset = `${topOffset}px`;
-    this.emptyLoopAddButtonLeftOffsetForFalseBranch = `calc(50% + ${leftOffset}px)`;
-    this.emptyLoopAddButtonLeftOffsetForTrueBranch = `calc(50% - ${
+    this.emptyBranchAddButtonTopOffset = `${topOffset}px`;
+    this.emptyBranchAddButtonLeftOffsetForFalseBranch = `calc(50% + ${leftOffset}px)`;
+    this.emptyBranchAddButtonLeftOffsetForTrueBranch = `calc(50% - ${
       leftOffset + EMPTY_LOOP_ADD_BUTTON_WIDTH
     }px)`;
   }

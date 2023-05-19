@@ -22,7 +22,8 @@
           </div>
         </mat-drawer>
         <mat-drawer-content [class.no-transition]="rightSidebarDragging || leftSidebarDragging">
-          <div class="box ap-relative ap-overflow-hidden" [class.ap-cursor-grabbing]="(isPanning$| async)"
+          <div class="box ap-relative ap-overflow-hidden"
+            [class.ap-cursor-grabbing]="(isPanning$| async) || (isDragging$ | async)"
             [class.ap-cursor-default]="(isDragging$| async)===false && (isPanning$ | async) === false"
             #draggingContainer id="draggingContainer">
             <app-guess-flow-container #guessFlow></app-guess-flow-container>

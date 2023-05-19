@@ -31,13 +31,11 @@
     (dropped)="dropAfterLoop($event)">
   </app-drop-zone>
 
-  <div #emptyLoopAddButton
-    class="empty-loop-add-button  ap-z-50 ap-flex ap-items-center ap-justify-center ap-absolute ap-cursor-pointer"
-    (mousedown)="showEmptyLoopAddButtonBoxShadow = true" (mouseup)="showEmptyLoopAddButtonBoxShadow = false"
-    [class.box-shadow]="showEmptyLoopAddButtonBoxShadow" [style.top]="emptyLoopAddButtonTopOffset"
-    [style.left]="emptyLoopAddButtonLeftOffset" *ngIf="!flowItem.firstLoopAction && !viewMode" (click)="addLoopItem()">
-    <svg-icon src="./assets/img/custom/plus.svg" class="empty-loop-icon" [applyClass]="true"></svg-icon>
-  </div>
+  <app-big-add-button [showDropZoneIndicator]="isDraggingOverFirstLoopAction" (click)="addLoopItem()"
+    [top]="emptyLoopAddButtonTopOffset" [left]="emptyLoopAddButtonLeftOffset"
+    *ngIf="!flowItem.firstLoopAction && !viewMode">
+  </app-big-add-button>
+
 </div>
 <ng-container *ngIf="flowItem.firstLoopAction">
   <app-flow-item [flowItemData]="flowItem.firstLoopAction" [insideLoopOrBranch]="true"
