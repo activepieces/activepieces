@@ -8,7 +8,7 @@
     height: 40px;
     width: 40px;
     z-index:40;
-    &:hover {
+    &:hover:not(:focus) {
       .add-icon {
         transform: scale(1.1);
       }

@@ -49,7 +49,7 @@
     height: $drop-point-height;
     width: $drop-point-width;
     transform: scale(0);
-    // border: 2px $border dashed;
+    border: 2px $border dashed;
     border-radius: 5px;
     transition-timing-function: cubic-bezier(0.42, 0, 0.58, 1);
     transition-duration: 250ms;

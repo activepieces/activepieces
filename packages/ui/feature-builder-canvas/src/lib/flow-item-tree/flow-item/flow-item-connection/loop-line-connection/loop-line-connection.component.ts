@@ -23,13 +23,16 @@ import {
 } from '../draw-utils';
 import { Observable } from 'rxjs';
 import {
+  ActionType,
   LoopOnItemsAction,
   StepLocationRelativeToParent,
+  flowHelper,
 } from '@activepieces/shared';
 import {
   AddButtonAndFlowItemNameContainer,
   FlowItem,
   FlowItemRenderInfo,
+  FlowRenderUtil,
   FlowRendererService,
   FlowsActions,
   RightSideBarType,
@@ -70,7 +73,7 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
     height: `${ADD_BUTTON_SIZE.height}px`,
   };
   _flowItem: LoopOnItemsAction & FlowItemRenderInfo;
-
+  numberOfNestedBranches = 0;
   showDropArea$: Observable<boolean> = new Observable<boolean>();
 
   @Input() viewMode: boolean;
@@ -78,6 +81,9 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
   @Input() set flowItem(value: LoopOnItemsAction & FlowItemRenderInfo) {
     this._flowItem = value;
     this.svgHeight = this.flowItem.connectionsBox!.height;
+    this.numberOfNestedBranches = FlowRenderUtil.findNumberOfNestedBranches(
+      this._flowItem.firstLoopAction
+    );
     this.writeLines();
     this.calculateOffsetBeforeFirstAction();
     this.calculateOffsetAfterLoop();
@@ -96,6 +102,9 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
     this.showDropArea$ = this.flowRendererService.draggingSubject;
   }
   ngOnInit(): void {
+    this.numberOfNestedBranches = FlowRenderUtil.findNumberOfNestedBranches(
+      this._flowItem.firstLoopAction
+    );
     this.writeLines();
     this.calculateOffsetBeforeFirstAction();
     this.calculateOffsetAfterLoop();
@@ -146,8 +155,11 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
     } else {
       commands.push(this.drawer.move(0, childFlowsGraphHeight));
     }
+    const x = this.numberOfNestedBranches * (HORZIONTAL_LINE_LENGTH * 2);
     commands.push(this.drawer.drawArc(true, true, false));
-    commands.push(this.drawer.drawHorizontalLine(-2 * HORZIONTAL_LINE_LENGTH));
+    commands.push(
+      this.drawer.drawHorizontalLine(-2 * HORZIONTAL_LINE_LENGTH - x)
+    );
     commands.push(this.drawer.drawArc(true, false, false));
     const returningVerticalLineToBeginingLength =
       this.findReturningVerticalLineLength(childFlowsGraphHeight);
@@ -156,7 +168,7 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
     );
     commands.push(this.drawer.drawArc(false, false, false));
     commands.push(
-      this.drawer.drawHorizontalLine(HORZIONTAL_LINE_LENGTH * 0.75)
+      this.drawer.drawHorizontalLine(HORZIONTAL_LINE_LENGTH * 0.75 + x)
     );
     return commands;
   }
@@ -330,11 +342,18 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
     };
   }
   dropAtTheStartOfLoop(event$: DropEvent<FlowItem>) {
-    if (event$.dropData.name === this.flowItem.name) {
-      this.snackbar.open("Can't drop loop inside itself", '', {
-        panelClass: 'error',
-      });
+    if (event$.dropData.name === this._flowItem.name) {
+      this.snackbar.open('Invalid drop');
       return;
+    }
+    if (
+      event$.dropData.type === ActionType.LOOP_ON_ITEMS ||
+      event$.dropData.type === ActionType.BRANCH
+    ) {
+      if (flowHelper.isChildOf(event$.dropData, this._flowItem)) {
+        this.snackbar.open('Invalid drop');
+        return;
+      }
     }
     this.store.dispatch(
       FlowsActions.moveAction({

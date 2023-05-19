@@ -26,9 +26,15 @@ import {
   FlowsActions,
   RightSideBarType,
 } from '@activepieces/ui/feature-builder-store';
-import { StepLocationRelativeToParent } from '@activepieces/shared';
+import {
+  ActionType,
+  StepLocationRelativeToParent,
+  TriggerType,
+  flowHelper,
+} from '@activepieces/shared';
 import { DropEvent } from 'angular-draggable-droppable';
 import { fadeIn400ms } from '@activepieces/ui/common';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-simple-line-connection',
@@ -63,7 +69,8 @@ export class SimpleLineConnectionComponent
   drawCommand: string;
   constructor(
     private store: Store,
-    private flowRendererService: FlowRendererService
+    private flowRendererService: FlowRendererService,
+    private snackbar: MatSnackBar
   ) {
     this.inDraggingMode$ =
       this.flowRendererService.draggingSubject.asObservable();
@@ -150,6 +157,18 @@ export class SimpleLineConnectionComponent
     );
   }
   drop($event: DropEvent<FlowItem>) {
+    if (
+      ($event.dropData.type === ActionType.LOOP_ON_ITEMS ||
+        $event.dropData.type === ActionType.BRANCH) &&
+      this.flowItem.type !== TriggerType.EMPTY &&
+      this.flowItem.type !== TriggerType.PIECE &&
+      this.flowItem.type !== TriggerType.WEBHOOK
+    ) {
+      if (flowHelper.isChildOf($event.dropData, this.flowItem)) {
+        this.snackbar.open('Invalid drop');
+        return;
+      }
+    }
     if ($event.dropData.name !== this.flowItem.name)
       this.store.dispatch(
         FlowsActions.moveAction({

@@ -11,6 +11,8 @@ import {
 import {
   Action,
   ActionType,
+  BranchAction,
+  LoopOnItemsAction,
 } from './actions/action';
 import { Trigger, TriggerType } from './triggers/trigger';
 import { TypeCompiler } from '@sinclair/typebox/compiler';
@@ -289,6 +291,18 @@ function createAction(
   return action;
 }
 
+function isChildOf(parent:LoopOnItemsAction | BranchAction,child:Action)
+{
+  if(parent.type === ActionType.LOOP_ON_ITEMS)
+  {
+    const children = traverseInternal(parent.firstLoopAction);
+    return children.findIndex(c=>c.name === child.name) >-1;
+  }
+
+    const children = [...traverseInternal(parent.onSuccessAction),...traverseInternal(parent.onFailureAction)];
+    return children.findIndex(c=>c.name === child.name) >-1;
+ 
+}
 function createTrigger(
   name: string,
   request: UpdateTriggerRequest,
@@ -367,6 +381,7 @@ export const flowHelper = {
   isAction: isAction,
   getAllSteps: getAllSteps,
   getUsedPieces: getUsedPieces,
+  isChildOf:isChildOf,
   clone: (flowVersion: FlowVersion): FlowVersion => {
     return JSON.parse(JSON.stringify(flowVersion));
   },

@@ -22,8 +22,10 @@ import {
 } from '../draw-utils';
 import { Observable } from 'rxjs';
 import {
+  ActionType,
   BranchAction,
   StepLocationRelativeToParent,
+  flowHelper,
 } from '@activepieces/shared';
 import {
   AddButtonAndFlowItemNameContainer,
@@ -387,11 +389,18 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
     };
   }
   dropAtTheTopOfTrueBranch(event$: DropEvent<FlowItem>) {
-    if (event$.dropData.name === this.flowItem.name) {
-      this.snackbar.open("Can't drop branch inside itself", '', {
-        panelClass: 'error',
-      });
+    if (this._flowItem.name === event$.dropData.name) {
+      this.snackbar.open('Invalid drop');
       return;
+    }
+    if (
+      event$.dropData.type === ActionType.LOOP_ON_ITEMS ||
+      event$.dropData.type === ActionType.BRANCH
+    ) {
+      if (flowHelper.isChildOf(event$.dropData, this._flowItem)) {
+        this.snackbar.open('Invalid drop');
+        return;
+      }
     }
     this.store.dispatch(
       FlowsActions.moveAction({
@@ -405,11 +414,18 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
     );
   }
   dropAtTheTopOfFalseBranch(event$: DropEvent<FlowItem>) {
-    if (event$.dropData.name === this.flowItem.name) {
-      this.snackbar.open("Can't drop branch inside itself", '', {
-        panelClass: 'error',
-      });
+    if (this._flowItem.name === event$.dropData.name) {
+      this.snackbar.open('Invalid drop');
       return;
+    }
+    if (
+      event$.dropData.type === ActionType.LOOP_ON_ITEMS ||
+      event$.dropData.type === ActionType.BRANCH
+    ) {
+      if (flowHelper.isChildOf(event$.dropData, this._flowItem)) {
+        this.snackbar.open('Invalid drop');
+        return;
+      }
     }
     this.store.dispatch(
       FlowsActions.moveAction({
@@ -423,13 +439,15 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
     );
   }
   dropAfterBranch(event$: DropEvent<FlowItem>) {
-    this.store.dispatch(
-      FlowsActions.moveAction({
-        operation: {
-          name: event$.dropData.name,
-          newParentStep: this._flowItem.name,
-        },
-      })
-    );
+    if (event$.dropData.name !== this._flowItem.name) {
+      this.store.dispatch(
+        FlowsActions.moveAction({
+          operation: {
+            name: event$.dropData.name,
+            newParentStep: this._flowItem.name,
+          },
+        })
+      );
+    }
   }
 }

@@ -9,7 +9,8 @@
     [class.ap-opacity-0]="hideDraggableSource$ | async" [ghostElementAppendTo]="getDocument()"
     [class.ap-cursor-default]="(anyStepIsDragged$|async)" (dragStart)="draggingStarted()">
     <div [ngStyle]="flowItemContentContainer" [style.transform]="isDragging? (scale$|async):''" class="ap-z-50">
-      <app-flow-item-content [trigger]="trigger" [flowItem]="_flowItemData" [viewMode]="viewMode$ | async | defaultTrue"
+      <app-flow-item-content #ItemContent [trigger]="trigger" [flowItem]="_flowItemData"
+        [viewMode]="viewMode$ | async | defaultTrue"
         [selected]="selected$ | async | defaultFalse"></app-flow-item-content>
     </div>
   </div>
