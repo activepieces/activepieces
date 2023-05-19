@@ -23,12 +23,10 @@ export const searchContact = createAction({
         let searchParams = "?";
         for(const key of keys){
             if(fields[key]){
-                console.log(key);
                 searchParams += `where[${count}][col]=${key}&where[${count}][expr]=eq&where[${count}][val]=${fields[key]}&`;
                 ++count;
             }
         }
-        console.log(searchParams);
         const request: HttpRequest = {
             method: HttpMethod.GET,
             url: `${url}${searchParams}`,
@@ -37,6 +35,10 @@ export const searchContact = createAction({
                 'Content-Type': 'application/json'
             }
         }
-        return await httpClient.sendRequest(request);
+        let contactResponse:Record<string, any> = await httpClient.sendRequest(request);
+        const length = contactResponse.body.total;
+        if(!length || length!=1)
+            throw Error('The query is not perfect enough to get single result. Please refine');
+        return Object.values(contactResponse.body.contacts)[0];
     },
 });

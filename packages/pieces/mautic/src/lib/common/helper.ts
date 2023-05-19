@@ -70,7 +70,7 @@ export const fetchDynamicFieldsFromMetadata = async (
                     alias,
                     type,
                     properties,
-                } = field as MauticFieldMetaData;
+                } = field as Record<string, any>;
                 const fieldMetadata = {
                     displayName,
                     required: false,
@@ -102,15 +102,6 @@ export const getFields = (type:"contact"|"company") => Property.DynamicPropertie
         );
     },
 });
-
-// Type Section
-export type MauticFieldMetaData = {
-    label: string;
-    alias: string;
-    type: string;
-    properties:object;
-}
-
 
 // Constant Section
 export const markdownDescription = `
