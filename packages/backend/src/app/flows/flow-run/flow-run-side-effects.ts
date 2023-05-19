@@ -3,6 +3,7 @@ import dayjs from 'dayjs'
 import { ActivepiecesError, ErrorCode, ExecutionType, FlowRun, PauseType } from '@activepieces/shared'
 import { JobType, flowQueue } from '../../workers/flow-worker/flow-queue'
 import { logger } from '../../helper/logger'
+import { LATEST_JOB_DATA_SCHEMA_VERSION } from '../../workers/flow-worker/job-data'
 
 type StartParams = {
     flowRun: FlowRun
@@ -64,6 +65,7 @@ export const flowRunSideEffects = {
                 id: flowRun.id,
                 type: JobType.DELAYED,
                 data: {
+                    schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                     runId: flowRun.id,
                     projectId: flowRun.projectId,
                     environment: flowRun.environment,
