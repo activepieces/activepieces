@@ -10,13 +10,6 @@ export const createContact = createAction({
     description: 'Creates a new contact in Mautic CRM', // Must be a unique across the piece, this shouldn't be changed.
     displayName: 'Create Contact',
     name: 'create_mautic_contact',
-    sampleData: {
-        "firstname": "firstname",
-        "lastname": "lastname",
-        "email": "email@email.com",
-        "tags": "danger",
-        "company": "company",
-    },
     props: {
         authentication: mauticCommon.authentication,
         fields: mauticCommon.contactFields
