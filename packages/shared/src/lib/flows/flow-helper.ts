@@ -13,7 +13,7 @@ import {
 } from './actions/action';
 import { Trigger, TriggerType } from './triggers/trigger';
 import { TypeCompiler } from '@sinclair/typebox/compiler';
-import { FlowVersion } from './flow-version';
+import { FlowVersion, FlowVersionState } from './flow-version';
 import { ActivepiecesError, ErrorCode } from '../common/activepieces-error';
 
 const actionSchemaValidator = TypeCompiler.Compile(Action);
@@ -313,6 +313,9 @@ export const flowHelper = {
   ): FlowVersion {
     const clonedVersion: FlowVersion = JSON.parse(JSON.stringify(flowVersion));
     switch (operation.type) {
+      case FlowOperationType.LOCK_FLOW:
+        clonedVersion.state = FlowVersionState.LOCKED;
+        break;
       case FlowOperationType.CHANGE_NAME:
         clonedVersion.displayName = operation.request.displayName;
         break;

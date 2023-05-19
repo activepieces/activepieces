@@ -3,7 +3,6 @@ import {
     apId,
     CreateFlowRequest,
     Cursor,
-    EmptyTrigger,
     Flow,
     FlowId,
     FlowInstance,
@@ -17,7 +16,6 @@ import {
     ProjectId,
     SeekPage,
     TelemetryEventName,
-    TriggerType,
 } from '@activepieces/shared'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -38,16 +36,8 @@ export const flowService = {
             folderId: request.folderId,
         }
         const savedFlow = await flowRepo.save(flow)
-        await flowVersionService.createVersion(savedFlow.id, {
+        await flowVersionService.createEmptyVersion(savedFlow.id, {
             displayName: request.displayName,
-            valid: false,
-            trigger: {
-                displayName: 'Select Trigger',
-                name: 'trigger',
-                type: TriggerType.EMPTY,
-                settings: {},
-                valid: false,
-            } as EmptyTrigger,
         })
         const latestFlowVersion = await flowVersionService.getFlowVersion(projectId, savedFlow.id, undefined, FlowViewMode.NO_ARTIFACTS)
         telemetry.trackProject(
@@ -135,7 +125,7 @@ export const flowService = {
         }
     },
 
-    async update({ flowId, projectId, request: operation }: { projectId: ProjectId, flowId: FlowId, request: FlowOperationRequest }): Promise<Flow | null> {
+    async update({ flowId, projectId, request: operation }: { projectId: ProjectId, flowId: FlowId, request: FlowOperationRequest }): Promise<Flow> {
         const flowLock = await acquireLock({
             key: flowId,
             timeout: 10000,
@@ -159,7 +149,16 @@ export const flowService = {
             else {
                 let lastVersion = (await flowVersionService.getFlowVersion(projectId, flowId, undefined, FlowViewMode.NO_ARTIFACTS))!
                 if (lastVersion.state === FlowVersionState.LOCKED) {
-                    lastVersion = await flowVersionService.createVersion(flowId, lastVersion)
+                    const lastVersionWithArtifacts = (await flowVersionService.getFlowVersion(projectId, flowId, undefined, FlowViewMode.WITH_ARTIFACTS))!
+                    lastVersion = await flowVersionService.createEmptyVersion(flowId, {
+                        displayName: lastVersionWithArtifacts.displayName,
+                    })
+                    // Duplicate the artifacts from the previous version, otherwise they will be deleted during update operation
+                    lastVersion = await flowVersionService.applyOperation(projectId, lastVersion, {
+                        type: FlowOperationType.IMPORT_FLOW,
+                        request: lastVersionWithArtifacts,
+                    })
+
                 }
                 await flowVersionService.applyOperation(projectId, lastVersion, operation)
             }
@@ -167,7 +166,7 @@ export const flowService = {
         finally {
             await flowLock.release()
         }
-        return await flowService.getOne({ id: flowId, versionId: undefined, projectId: projectId, viewMode: FlowViewMode.NO_ARTIFACTS })
+        return (await flowService.getOne({ id: flowId, versionId: undefined, projectId: projectId, viewMode: FlowViewMode.NO_ARTIFACTS }))!
     },
     async delete({ projectId, flowId }: { projectId: ProjectId, flowId: FlowId }): Promise<void> {
         await flowInstanceService.onFlowDelete({ projectId, flowId })
