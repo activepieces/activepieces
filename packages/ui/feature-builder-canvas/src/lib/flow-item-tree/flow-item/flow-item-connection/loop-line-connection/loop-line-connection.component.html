@@ -16,22 +16,19 @@
     [style.left]="addButtonLeft" *ngIf="flowItem.firstLoopAction && !viewMode" #addButton>
     <svg-icon src="./assets/img/custom/add-button.svg" [style]="addButtonSize"></svg-icon>
   </div>
-  <div class="drop-point-container  ap-z-50 ap-transition-colors" [class.first-loop-drop]="!!_flowItem.firstLoopAction"
-    [class.empty-loop-drop]="!_flowItem.firstLoopAction" mwlDroppable (drop)="dropAtTheStartOfLoop($event)"
-    dragOverClass="ap-cursor-grabbing ap-bg-graySelect ap-bg-opacity-60">
-    <div class="drop-point-border" [class.scale-1]="showDropArea$ | async"></div>
-  </div>
-
+  <app-drop-zone [containerClass]="!!_flowItem.firstLoopAction? 'first-loop-drop': 'empty-loop-drop'"
+    (dragEnter)="isDraggingOverFirstLoopAction=true" (dragLeave)="isDraggingOverFirstLoopAction=false"
+    (dropped)="dropAtTheStartOfLoop($event)">
+  </app-drop-zone>
   <div class="add-button ap-cursor-pointer afterLoopAddButton" (click)="add()" *ngIf="!viewMode"
     [style.top]="afterLoopAddButtonTop" [style.left]="afterLoopAddButtonLeft" #afterLoopAddButton>
     <svg-icon src="./assets/img/custom/add-button.svg" [style]="addButtonSize"></svg-icon>
   </div>
 
-  <div class="drop-point-container after-loop ap-transition-colors" mwlDroppable (drop)="dropAfterLoop($event)"
-    dragOverClass="ap-z-50 ap-cursor-grabbing ap-bg-graySelect ap-bg-opacity-60"
-    [style.top]="'calc( '+afterLoopAddButtonTop +' - 25px )'">
-    <div class="drop-point-border" [class.scale-1]="showDropArea$ | async"></div>
-  </div>
+  <app-drop-zone containerClass="after-loop" [top]="'calc( '+afterLoopAddButtonTop +' - 25px )'"
+    (dragEnter)="isDraggingOverFirstLoopAction=true" (dragLeave)="isDraggingOverFirstLoopAction=false"
+    (dropped)="dropAfterLoop($event)">
+  </app-drop-zone>
 
   <div #emptyLoopAddButton
     class="empty-loop-add-button  ap-z-50 ap-flex ap-items-center ap-justify-center ap-absolute ap-cursor-pointer"

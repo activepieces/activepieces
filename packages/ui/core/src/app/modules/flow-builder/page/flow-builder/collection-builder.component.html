@@ -22,8 +22,8 @@
           </div>
         </mat-drawer>
         <mat-drawer-content [class.no-transition]="rightSidebarDragging || leftSidebarDragging">
-          <div class="box ap-relative" [class.ap-cursor-grabbing]="(isDragging$ | async )|| (isPanning$| async)"
-            #draggingContainer id="draggingContainer">
+          <div class="box ap-relative" [class.ap-cursor-grabbing]="(isPanning$| async)" #draggingContainer
+            id="draggingContainer">
             <app-guess-flow-container #guessFlow></app-guess-flow-container>
             <div class="content canvas" #canvasWrapper appCanvasPanner>
               <app-canvas-utils class="ap-absolute ap-right-[15px] ap-bottom-[30px] ap-z-40"></app-canvas-utils>

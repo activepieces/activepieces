@@ -1,0 +1,4 @@
+<div [class]="'drop-point-container '+containerClass" mwlDroppable (drop)="dropped.emit($event)" [style.top]="top"
+    (dragEnter)="dragEnter.emit(true)" (dragLeave)="dragLeave.emit(true)" dragOverClass="ap-z-50">
+    <div class="drop-point-border" [class.scale-1]="showDropArea$ | async"></div>
+</div>

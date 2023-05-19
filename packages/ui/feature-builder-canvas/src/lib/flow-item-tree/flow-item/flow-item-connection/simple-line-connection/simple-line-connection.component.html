@@ -8,12 +8,12 @@
       </svg>
     </g>
   </svg>
-  <div class="add-button ap-cursor-pointer ap-absolute" (click)="add()" [style.top]="addButtonTop" *ngIf="!viewMode"
-    [style.left]="addButtonLeft" #addButton>
-    <svg-icon src="./assets/img/custom/add-button.svg" [svgStyle]="addButtonSize"></svg-icon>
+  <div class="add-button ap-cursor-pointer ap-absolute"
+    [class.add-button-drop-indicator]="insideDropArea && (inDraggingMode$ | async)" (click)="add()"
+    [style.top]="addButtonTop" *ngIf="!viewMode" [style.left]="addButtonLeft" #addButton>
+
   </div>
-  <div class="drop-point-container ap-transition-colors" mwlDroppable (drop)="drop($event)"
-    dragOverClass="ap-cursor-grabbing ap-bg-graySelect ap-bg-opacity-60">
-    <div class="drop-point-border" [class.scale-1]="showDropArea$ | async"></div>
-  </div>
+  <app-drop-zone (dropped)="drop($event)" (dragOver)="insideDropArea=true" (dragLeave)="insideDropArea=false">
+  </app-drop-zone>
+
 </div>

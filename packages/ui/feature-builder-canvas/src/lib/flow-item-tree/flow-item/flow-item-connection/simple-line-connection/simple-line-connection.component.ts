@@ -28,12 +28,14 @@ import {
 } from '@activepieces/ui/feature-builder-store';
 import { StepLocationRelativeToParent } from '@activepieces/shared';
 import { DropEvent } from 'angular-draggable-droppable';
+import { fadeIn400ms } from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-simple-line-connection',
   templateUrl: './simple-line-connection.component.html',
   styleUrls: ['./simple-line-connection.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  animations: [fadeIn400ms],
 })
 export class SimpleLineConnectionComponent
   implements OnInit, AfterViewInit, OnChanges
@@ -42,7 +44,8 @@ export class SimpleLineConnectionComponent
   addButtonAndFlowItemNameContainer: AddButtonAndFlowItemNameContainer;
   @Input() flowItem: FlowItem;
   @Input() viewMode: boolean;
-
+  insideDropArea = false;
+  inDraggingMode$: Observable<boolean>;
   showDropArea$: Observable<boolean> = new Observable<boolean>();
   drawer: Drawer = new Drawer();
   SVG_HEIGHT: number =
@@ -57,12 +60,14 @@ export class SimpleLineConnectionComponent
     width: `${ADD_BUTTON_SIZE.width}px`,
     height: `${ADD_BUTTON_SIZE.height}px`,
   };
+  drawCommand: string;
   constructor(
     private store: Store,
     private flowRendererService: FlowRendererService
-  ) {}
-
-  drawCommand: string;
+  ) {
+    this.inDraggingMode$ =
+      this.flowRendererService.draggingSubject.asObservable();
+  }
 
   ngOnInit(): void {
     this.drawCommand = [
@@ -145,13 +150,14 @@ export class SimpleLineConnectionComponent
     );
   }
   drop($event: DropEvent<FlowItem>) {
-    this.store.dispatch(
-      FlowsActions.moveAction({
-        operation: {
-          name: $event.dropData.name,
-          newParentStep: this.flowItem.name,
-        },
-      })
-    );
+    if ($event.dropData.name !== this.flowItem.name)
+      this.store.dispatch(
+        FlowsActions.moveAction({
+          operation: {
+            name: $event.dropData.name,
+            newParentStep: this.flowItem.name,
+          },
+        })
+      );
   }
 }

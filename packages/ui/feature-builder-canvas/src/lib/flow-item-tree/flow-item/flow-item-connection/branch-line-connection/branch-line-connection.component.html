@@ -25,23 +25,20 @@
 
   <div class="add-button ap-z-50 ap-cursor-pointer" (click)="addTrueBranchItem()" [style.top]="addButtonTop"
     [style.left]="addButtonTrueBranchLeftStyleProperty" *ngIf="flowItem.onSuccessAction && !viewMode" #addButton>
-    <svg-icon src="./assets/img/custom/add-button.svg" [style]="addButtonSize"></svg-icon>
   </div>
-  <div class="drop-point-container true-branch ap-transition-colors" mwlDroppable
-    [class.empty-true-branch]="!_flowItem.onSuccessAction" (drop)="dropAtTheTopOfTrueBranch($event)"
-    dragOverClass="ap-z-50 ap-cursor-grabbing ap-bg-graySelect ap-bg-opacity-60">
+  <app-drop-zone [containerClass]="!_flowItem.onSuccessAction? 'empty-true-branch': 'true-branch'"
+    (dragEnter)="isDraggingOverTrueBranch=true" (dragLeave)="isDraggingOverTrueBranch=false"
+    (dropped)="dropAtTheTopOfTrueBranch($event)">
+  </app-drop-zone>
 
-    <div class="drop-point-border" [class.scale-1]="showDropArea$ | async"></div>
-  </div>
   <div class="add-button ap-cursor-pointer  ap-z-50" (click)="add()" *ngIf="!viewMode"
     [style.top]="afterBranchAddButtonTop" [style.left]="afterBranchAddButtonLeft" #afterBranchAddButton>
     <svg-icon src="./assets/img/custom/add-button.svg" [style]="addButtonSize"></svg-icon>
   </div>
-  <div class="drop-point-container ap-transition-colors" [style.top]="'calc( '+ afterBranchAddButtonTop + ' - 25px )'"
-    mwlDroppable (drop)="dropAfterBranch($event)"
-    dragOverClass="ap-cursor-grabbing ap-bg-graySelect ap-z-50 ap-bg-opacity-60">
-    <div class="drop-point-border" [class.scale-1]="showDropArea$ | async"></div>
-  </div>
+  <app-drop-zone [top]="'calc( '+ afterBranchAddButtonTop + ' - 25px )'" (dragEnter)="isDraggingOverAfterBranch=true"
+    (dragLeave)="isDraggingOverAfterBranch=false" (dropped)="dropAfterBranch($event)">
+  </app-drop-zone>
+
   <div #emptyBranchAddButton
     class="empty-loop-add-button ap-flex ap-items-center ap-justify-center ap-absolute ap-cursor-pointer"
     (mousedown)="showEmptyTrueBranchAddButtonBoxShadow = true" (mouseup)="showEmptyTrueBranchAddButtonBoxShadow = false"
@@ -68,14 +65,12 @@
 
   <div class="add-button ap-z-50  ap-cursor-pointer" (click)="addFalseBranchItem()" [style.top]="addButtonTop"
     [style.left]="addButtonFalseBranchLeftStyleProperty" *ngIf="flowItem.onSuccessAction && !viewMode" #addButton>
-
     <svg-icon src="./assets/img/custom/add-button.svg" [style]="addButtonSize"></svg-icon>
   </div>
-  <div class="drop-point-container false-branch ap-transition-colors " mwlDroppable
-    [class.empty-false-branch]="!_flowItem.onFailureAction" (drop)="dropAtTheTopOfFalseBranch($event)"
-    dragOverClass="ap-z-50 ap-cursor-grabbing ap-bg-graySelect ap-bg-opacity-60">
-    <div class="drop-point-border" [class.scale-1]="showDropArea$ | async"></div>
-  </div>
+  <app-drop-zone [containerClass]="!_flowItem.onFailureAction? 'empty-false-branch': 'false-branch'"
+    (dragEnter)="isDraggingOverFalseBranch=true" (dragLeave)="isDraggingOverFalseBranch=false"
+    (dropped)="dropAtTheTopOfFalseBranch($event)">
+  </app-drop-zone>
   <div #emptyBranchAddButton
     class="empty-loop-add-button ap-flex ap-items-center ap-justify-center ap-absolute ap-cursor-pointer"
     (mousedown)="showEmptyFalseranchAddButtonBoxShadow = true" (mouseup)="showEmptyFalseranchAddButtonBoxShadow = false"

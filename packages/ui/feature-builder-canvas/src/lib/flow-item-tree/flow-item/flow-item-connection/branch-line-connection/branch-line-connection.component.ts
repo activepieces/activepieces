@@ -70,7 +70,9 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
   };
   numberOfNestedBranches = 0;
   _flowItem: BranchAction & FlowItemRenderInfo;
-
+  isDraggingOverTrueBranch = false;
+  isDraggingOverFalseBranch = false;
+  isDraggingOverAfterBranch = false;
   showDropArea$: Observable<boolean> = new Observable<boolean>();
 
   @Input() viewMode: boolean;
