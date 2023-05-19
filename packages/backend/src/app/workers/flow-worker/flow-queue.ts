@@ -157,7 +157,8 @@ export const migrateScheduledJobs = async (): Promise<void> => {
                 }
                 migratedJobs++
                 await job.update(newJobData)
-            } else {
+            }
+            else {
                 throw new Error(`[migrate] Unknown schema version ${data.schemaVersion}`)
             }
         }
