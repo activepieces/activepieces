@@ -1,8 +1,8 @@
 import { DefaultJobOptions, Queue } from 'bullmq'
-import { ApId, ScheduleOptions } from '@activepieces/shared'
-import { createRedisClient } from '../../database/redis-connection'
+import { ApId, ExecutionType, RunEnvironment, ScheduleOptions } from '@activepieces/shared'
+import { acquireLock, createRedisClient } from '../../database/redis-connection'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
-import { DelayedJobData, OneTimeJobData, RepeatingJobData, ScheduledJobData, JobData } from './job-data'
+import { DelayedJobData, OneTimeJobData, RepeatingJobData, ScheduledJobData, JobData, LATEST_JOB_DATA_SCHEMA_VERSION } from './job-data'
 import { logger } from '../../helper/logger'
 import { isNil } from 'lodash'
 
@@ -26,7 +26,7 @@ type DelayedJobAddParams = BaseAddParams<JobType.DELAYED, DelayedJobData> & {
     delay: number
 }
 
-type OneTimeJobAddParams =  BaseAddParams<JobType.ONE_TIME, OneTimeJobData>
+type OneTimeJobAddParams = BaseAddParams<JobType.ONE_TIME, OneTimeJobData>
 
 type ScheduledJobAddParams = RepeatingJobAddParams | DelayedJobAddParams
 
@@ -130,4 +130,41 @@ export const flowQueue = {
             }
         }
     },
+}
+
+export const migrateScheduledJobs = async (): Promise<void> => {
+    const migrationLock = await acquireLock({
+        key: 'jobs_lock',
+        timeout: 30000,
+    })
+    try {
+        logger.info('[migrateScheduledJobs] Starting migration')
+        let migratedJobs = 0
+        const scheduledJobs = await scheduledJobQueue.getJobs()
+        const jobsToMigrate = scheduledJobs.filter((job) => job.data.schemaVersion !== LATEST_JOB_DATA_SCHEMA_VERSION)
+        for (const job of jobsToMigrate) {
+            // Cast as we are sure about the schema
+            const { data } = JSON.parse(JSON.stringify(job))
+            if (data.schemaVersion === undefined) {
+                const { flowVersion, projectId, triggerType } = data
+                const newJobData: RepeatingJobData = {
+                    schemaVersion: 1,
+                    flowVersion,
+                    projectId,
+                    environment: RunEnvironment.PRODUCTION,
+                    executionType: ExecutionType.BEGIN,
+                    triggerType,
+                }
+                migratedJobs++
+                await job.update(newJobData)
+            }
+            else {
+                throw new Error(`[migrate] Unknown schema version ${data.schemaVersion}`)
+            }
+        }
+        logger.info(`[migrateScheduledJobs] Migrated ${migratedJobs} jobs`)
+    }
+    finally {
+        await migrationLock.release()
+    }
 }
