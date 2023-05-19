@@ -1,10 +1,5 @@
 import { createAction } from '@activepieces/pieces-framework';
-import {
-    httpClient,
-    HttpMethod,
-    HttpRequest
-} from "@activepieces/pieces-common";
-import { mauticCommon } from "../common";
+import { mauticCommon, searchEntity } from "../common";
 
 export const searchContact = createAction({
     description: 'Search for a contact in Mautic CRM', // Must be a unique across the piece, this shouldn't be changed.
@@ -27,18 +22,12 @@ export const searchContact = createAction({
                 ++count;
             }
         }
-        const request: HttpRequest = {
-            method: HttpMethod.GET,
-            url: `${url}${searchParams}`,
-            headers:{
-                'Authorization': `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`,
-                'Content-Type': 'application/json'
-            }
-        }
-        let contactResponse:Record<string, any> = await httpClient.sendRequest(request);
-        const length = contactResponse.body.total;
-        if(!length || length!=1)
-            throw Error('The query is not perfect enough to get single result. Please refine');
-        return Object.values(contactResponse.body.contacts)[0];
+        const response = await searchEntity(
+            url,
+            searchParams,
+            username,
+            password
+        );
+        return Object.values(response.body.contacts)[0];
     },
 });
