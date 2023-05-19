@@ -8,12 +8,11 @@
       </svg>
     </g>
   </svg>
-  <div class="add-button ap-cursor-pointer ap-absolute"
-    [class.add-button-drop-indicator]="insideDropArea && (inDraggingMode$ | async)" (click)="add()"
-    [style.top]="addButtonTop" *ngIf="!viewMode" [style.left]="addButtonLeft" #addButton>
+  <app-small-add-button *ngIf="!viewMode" (click)="add()" [top]="addButtonTop" [left]="addButtonLeft"
+    [showDropzoneIndicator]="insideDropArea">
+  </app-small-add-button>
 
-  </div>
-  <app-drop-zone (dropped)="drop($event)" (dragOver)="insideDropArea=true" (dragLeave)="insideDropArea=false">
+  <app-drop-zone (dropped)="drop($event)" (dragEnter)="insideDropArea=true" (dragLeave)="insideDropArea=false">
   </app-drop-zone>
 
 </div>

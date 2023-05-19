@@ -266,9 +266,7 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
       VERTICAL_LINE_LENGTH * 0.5 -
       (this.insideLoopOrBranch ? ARROW_HEAD_SIZE.height : 1)
     }px`;
-    this.afterBranchAddButtonLeft = `calc(50% - ${
-      ADD_BUTTON_SIZE.width / 2 - 0.5
-    }px`;
+    this.afterBranchAddButtonLeft = `calc(50% - ${ADD_BUTTON_SIZE.width / 2}px`;
     const lineStrokeOffset = 1.5;
     this.afterBranchesArrowHeadTop =
       topOffset - ARROW_HEAD_SIZE.height - lineStrokeOffset + 5;

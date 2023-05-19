@@ -22,19 +22,19 @@
     [style.left]="'calc('+addButtonTrueBranchLeftStyleProperty+' - 6px)' ">
     True
   </div>
+  <app-small-add-button *ngIf="flowItem.onSuccessAction && !viewMode" (click)="addTrueBranchItem()" [top]="addButtonTop"
+    [left]="addButtonTrueBranchLeftStyleProperty" [showDropzoneIndicator]="isDraggingOverTrueBranch">
+  </app-small-add-button>
 
-  <div class="add-button ap-z-50 ap-cursor-pointer" (click)="addTrueBranchItem()" [style.top]="addButtonTop"
-    [style.left]="addButtonTrueBranchLeftStyleProperty" *ngIf="flowItem.onSuccessAction && !viewMode" #addButton>
-  </div>
   <app-drop-zone [containerClass]="!_flowItem.onSuccessAction? 'empty-true-branch': 'true-branch'"
     (dragEnter)="isDraggingOverTrueBranch=true" (dragLeave)="isDraggingOverTrueBranch=false"
     (dropped)="dropAtTheTopOfTrueBranch($event)">
   </app-drop-zone>
 
-  <div class="add-button ap-cursor-pointer  ap-z-50" (click)="add()" *ngIf="!viewMode"
-    [style.top]="afterBranchAddButtonTop" [style.left]="afterBranchAddButtonLeft" #afterBranchAddButton>
-    <svg-icon src="./assets/img/custom/add-button.svg" [style]="addButtonSize"></svg-icon>
-  </div>
+  <app-small-add-button *ngIf="!viewMode" (click)="add()" [top]="afterBranchAddButtonTop"
+    [left]="afterBranchAddButtonLeft" [showDropzoneIndicator]="isDraggingOverAfterBranch">
+  </app-small-add-button>
+
   <app-drop-zone [top]="'calc( '+ afterBranchAddButtonTop + ' - 25px )'" (dragEnter)="isDraggingOverAfterBranch=true"
     (dragLeave)="isDraggingOverAfterBranch=false" (dropped)="dropAfterBranch($event)">
   </app-drop-zone>
@@ -63,10 +63,11 @@
     False
   </div>
 
-  <div class="add-button ap-z-50  ap-cursor-pointer" (click)="addFalseBranchItem()" [style.top]="addButtonTop"
-    [style.left]="addButtonFalseBranchLeftStyleProperty" *ngIf="flowItem.onSuccessAction && !viewMode" #addButton>
-    <svg-icon src="./assets/img/custom/add-button.svg" [style]="addButtonSize"></svg-icon>
-  </div>
+  <app-small-add-button *ngIf="flowItem.onFailureAction && !viewMode" (click)="addFalseBranchItem()"
+    [top]="addButtonTop" [left]="addButtonFalseBranchLeftStyleProperty"
+    [showDropzoneIndicator]="isDraggingOverFalseBranch">
+  </app-small-add-button>
+
   <app-drop-zone [containerClass]="!_flowItem.onFailureAction? 'empty-false-branch': 'false-branch'"
     (dragEnter)="isDraggingOverFalseBranch=true" (dragLeave)="isDraggingOverFalseBranch=false"
     (dropped)="dropAtTheTopOfFalseBranch($event)">

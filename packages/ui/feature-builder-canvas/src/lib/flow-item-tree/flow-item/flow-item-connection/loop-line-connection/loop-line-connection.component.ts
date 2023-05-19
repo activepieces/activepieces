@@ -48,6 +48,7 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
   @ViewChild('afterLoopAddButton') afterLoopAddButton: ElementRef;
   @Input() insideLoopOrBranch = false;
   isDraggingOverFirstLoopAction = false;
+  isDraggingOverAfterLoopAction = false;
   afterLoopArrowCommand = '';
   startingLoopLineDrawCommand = '';
   loopingArrowHeadLeft = 0;

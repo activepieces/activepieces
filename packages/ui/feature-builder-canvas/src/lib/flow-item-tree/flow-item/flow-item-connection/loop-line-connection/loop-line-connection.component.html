@@ -12,21 +12,22 @@
       </svg>
     </g>
   </svg>
-  <div class="add-button ap-cursor-pointer" (click)="addLoopItem()" [style.top]="addButtonTop"
-    [style.left]="addButtonLeft" *ngIf="flowItem.firstLoopAction && !viewMode" #addButton>
-    <svg-icon src="./assets/img/custom/add-button.svg" [style]="addButtonSize"></svg-icon>
-  </div>
+
+  <app-small-add-button *ngIf="flowItem.firstLoopAction &&  !viewMode" (click)="addLoopItem()" [top]="addButtonTop"
+    [left]="addButtonLeft" [showDropzoneIndicator]="isDraggingOverFirstLoopAction">
+  </app-small-add-button>
+
   <app-drop-zone [containerClass]="!!_flowItem.firstLoopAction? 'first-loop-drop': 'empty-loop-drop'"
     (dragEnter)="isDraggingOverFirstLoopAction=true" (dragLeave)="isDraggingOverFirstLoopAction=false"
     (dropped)="dropAtTheStartOfLoop($event)">
   </app-drop-zone>
-  <div class="add-button ap-cursor-pointer afterLoopAddButton" (click)="add()" *ngIf="!viewMode"
-    [style.top]="afterLoopAddButtonTop" [style.left]="afterLoopAddButtonLeft" #afterLoopAddButton>
-    <svg-icon src="./assets/img/custom/add-button.svg" [style]="addButtonSize"></svg-icon>
-  </div>
+
+  <app-small-add-button *ngIf="!viewMode" (click)="add()" [top]="afterLoopAddButtonTop" [left]="afterLoopAddButtonLeft"
+    [showDropzoneIndicator]="isDraggingOverAfterLoopAction">
+  </app-small-add-button>
 
   <app-drop-zone containerClass="after-loop" [top]="'calc( '+afterLoopAddButtonTop +' - 25px )'"
-    (dragEnter)="isDraggingOverFirstLoopAction=true" (dragLeave)="isDraggingOverFirstLoopAction=false"
+    (dragEnter)="isDraggingOverAfterLoopAction=true" (dragLeave)="isDraggingOverAfterLoopAction=false"
     (dropped)="dropAfterLoop($event)">
   </app-drop-zone>
 

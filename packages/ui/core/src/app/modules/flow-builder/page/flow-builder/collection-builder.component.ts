@@ -52,10 +52,12 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
   leftSidebarDragging = false;
   loadInitialData$: Observable<void> = new Observable<void>();
   isPanning$: Observable<boolean>;
+  isDragging$: Observable<boolean>;
   TriggerType = TriggerType;
   testingStepSectionIsRendered$: Observable<boolean>;
   graphChanged$: Observable<Flow>;
   showGuessFlowComponent = true;
+
   constructor(
     private store: Store,
     private actRoute: ActivatedRoute,
@@ -71,8 +73,8 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
     this.listenToGraphChanges();
     this.testingStepSectionIsRendered$ =
       this.testStepService.testingStepSectionIsRendered$.asObservable();
-    this.isPanning$ = this.pannerService.isPanning$;
-
+    this.isPanning$ = this.pannerService.isPanning$.asObservable();
+    this.isDragging$ = this.flowRendererService.draggingSubject.asObservable();
     this.loadInitialData$ = this.actRoute.data.pipe(
       tap((value) => {
         const runInformation: InstanceRunInfo = value['runInformation'];

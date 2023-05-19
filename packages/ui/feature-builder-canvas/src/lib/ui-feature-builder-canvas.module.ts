@@ -14,6 +14,7 @@ import { DeleteStepDialogComponent } from './flow-item-tree/flow-item/flow-item-
 import { IncompleteStepsWidgetComponent } from './incomplete-steps-widget/incomplete-steps-widget.component';
 import { DragAndDropModule } from 'angular-draggable-droppable';
 import { DropZoneComponent } from './flow-item-tree/flow-item/flow-item-connection/drop-zone/drop-zone.component';
+import { SmallAddButtonComponent } from './flow-item-tree/flow-item/flow-item-connection/small-add-button/small-add-button.component';
 @NgModule({
   imports: [CommonModule, UiCommonModule, DragAndDropModule],
   declarations: [
@@ -29,6 +30,7 @@ import { DropZoneComponent } from './flow-item-tree/flow-item/flow-item-connecti
     CanvasPannerDirective,
     IncompleteStepsWidgetComponent,
     DropZoneComponent,
+    SmallAddButtonComponent,
   ],
   exports: [FlowItemTreeComponent, CanvasUtilsComponent, CanvasPannerDirective],
 })
