@@ -1,7 +1,6 @@
 import { createAction } from '@activepieces/pieces-framework';
 import {
     httpClient,
-    HttpHeaders,
     HttpMethod,
     HttpRequest
 } from "@activepieces/pieces-common";
@@ -20,43 +19,18 @@ export const createContact = createAction({
     },
     props: {
         authentication: mauticCommon.authentication,
-        firstname: mauticCommon.firstname,
-        lastname: mauticCommon.lastname,
-        email: mauticCommon.email,
-        tags: mauticCommon.tags,
-        company: mauticCommon.company,
+        fields: mauticCommon.contactFields
     },
     run: async function (context) {
-
-        const {
-            authentication,
-            firstname,
-            lastname,
-            email,
-            tags,
-            company,
-        } = context.propsValue;
-
-        const { base_url: BASE_URL, username, password } = authentication;
-
-        const accessToken: string = Buffer.from(`${username}:${password}`).toString('base64');
-
-        const body = JSON.stringify({
-            firstname,
-            lastname,
-            email,
-            tags,
-            company,
-        });
-        const headers: HttpHeaders = {
-            'Authorization': 'Basic ' + accessToken,
-            'Content-Type': 'application/json'
-        }
+        const { base_url, username, password } = context.propsValue.authentication;
         const request: HttpRequest = {
             method: HttpMethod.POST,
-            url: (BASE_URL.endsWith('/') ? BASE_URL : BASE_URL + '/') + 'api/contacts/new',
-            body,
-            headers
+            url: (base_url.endsWith('/') ? base_url : base_url + '/') + 'api/contacts/new',
+            body: JSON.stringify(context.propsValue.fields),
+            headers:{
+                'Authorization': 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64'),
+                'Content-Type': 'application/json'
+            }
         }
         return await httpClient.sendRequest(request);
     },
