@@ -24,12 +24,14 @@ export class AxiosHttpClient extends BaseHttpClient {
 			const url = this.getUrl(request);
 			const headers = this.getHeaders(request);
 			const axiosRequestMethod = this.getAxiosRequestMethod(request.method);
+            const timeout = request.timeout ? request.timeout : 0;
 
 			const response = await axios.request({
 				method: axiosRequestMethod,
 				url,
 				headers,
 				data: request.body,
+                timeout
 			})
 
 			return {
