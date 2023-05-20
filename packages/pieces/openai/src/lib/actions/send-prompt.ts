@@ -40,22 +40,22 @@ export const askOpenAI = createAction({
     maxTokens: Property.Number({
       displayName: 'Maximum Tokens',
       required: false,
-      description: 'The maximum number of tokens to generate. Requests can use up to 2,048 or 4,000 tokens shared between prompt and completion. The exact limit varies by model. (One token is roughly 4 characters for normal English text)',
+      description: 'The maximum number of tokens to generate. Requests can use up to 2,048 or 4,096 tokens shared between prompt and completion, don\'t set the value to maximum and leave some tokens for the input. The exact limit varies by model. (One token is roughly 4 characters for normal English text)',
     }),
     topP: Property.Number({
       displayName: 'Top P',
       required: false,
-      description: 'Controls diversity via nucleus sampling: 0.5 means half of all likelihood-weighted options are considered.',
+      description: 'An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.',
     }),
     frequencyPenalty: Property.Number({
       displayName: 'Frequency penalty',
       required: false,
-      description: 'How much to penalize new tokens based on their existing frequency in the text so far. Decreases the model\'s likelihood to repeat the same line verbatim.',
+      description: 'Number between -2.0 and 2.0. Positive values penalize new tokens based on their existing frequency in the text so far, decreasing the model\'s likelihood to repeat the same line verbatim.',
     }),
     presencePenalty: Property.Number({
       displayName: 'Presence penalty',
       required: false,
-      description: 'How much to penalize new tokens based on whether they appear in the text so far. Increases the model\'s likelihood to talk about new topics.',
+      description: 'Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the mode\'s likelihood to talk about new topics.',
     }),
     roles: Property.Json({
       displayName: 'Roles',
@@ -81,23 +81,23 @@ export const askOpenAI = createAction({
     }
     let temperature = 0.9;
     if (propsValue.temperature) {
-      temperature = propsValue.temperature;
+      temperature = Number(propsValue.temperature);
     }
     let maxTokens = 2048;
     if (propsValue.maxTokens) {
-      maxTokens = propsValue.maxTokens;
+      maxTokens = Number(propsValue.maxTokens);
     }
     let topP = 1;
     if (propsValue.topP) {
-      topP = propsValue.topP;
+      topP = Number(propsValue.topP);
     }
     let frequencyPenalty = 0.0;
     if (propsValue.frequencyPenalty) {
-      frequencyPenalty = propsValue.frequencyPenalty;
+      frequencyPenalty = Number(propsValue.frequencyPenalty);
     }
     let presencePenalty = 0.6;
     if (propsValue.presencePenalty) {
-      presencePenalty = propsValue.presencePenalty;
+      presencePenalty = Number(propsValue.presencePenalty);
     }
 
     const rolesArray = propsValue.roles ? propsValue.roles as unknown as ChatCompletionRequestMessage[] : [];
