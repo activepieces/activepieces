@@ -1,8 +1,8 @@
 import { PropertyType } from "./property";
-import { BasePropertySchema, NumberProperty, ShortTextProperty, TPropertyValue } from "./base-prop";
+import { BasePropertySchema, ShortTextProperty, TPropertyValue } from "./base-prop";
 import { StaticDropdownProperty, StaticMultiSelectDropdownProperty } from "./dropdown-prop";
 
-type DynamicProp = ShortTextProperty<boolean> | NumberProperty<boolean> | StaticDropdownProperty<any, boolean> | StaticMultiSelectDropdownProperty<any,boolean>;
+type DynamicProp = ShortTextProperty<boolean> | StaticDropdownProperty<any, boolean> | StaticMultiSelectDropdownProperty<any,boolean>;
 
 export type DynamicPropsValue = Record<string, DynamicProp['valueSchema']>;
 

@@ -1,5 +1,6 @@
 import { ExecutionState, StepOutput } from '@activepieces/shared';
 import { VariableService } from '../../src/lib/services/variable-service';
+import { Property } from '@activepieces/pieces-framework';
 
 const variableService = new VariableService();
 
@@ -155,5 +156,81 @@ describe('Variable Service', () => {
       8.4
     );
   });
+
+
+  it('should return casted number for text', () => {
+    const variableService = new VariableService();
+    const input = {
+      price: '12',
+      auth: {
+        age: '12'
+      },
+    };
+    const props = {
+      price: Property.Number({
+        displayName: 'Price',
+        required: true,
+      }),
+      auth: Property.CustomAuth({
+        displayName: 'Auth',
+        required: false,
+        props: {
+          age: Property.Number({
+            displayName: 'age',
+            required: true,
+          })
+        }
+      })
+    };
+    const { result, errors } = variableService.validateAndCast(input, props);
+    expect(result).toEqual({
+      auth: {
+        age: 12,
+      },
+      price: 12,
+    });
+    expect(errors).toEqual({});
+  });
+
+  it('should return errors for invalid number', () => {
+    const variableService = new VariableService();
+    const input = {
+      price: 'wrong text',
+      auth: {
+        age: 'wrong text'
+      },
+    };
+    const props = {
+      price: Property.Number({
+        displayName: 'Price',
+        required: true,
+      }),
+      auth: Property.CustomAuth({
+        displayName: 'Auth',
+        required: false,
+        props: {
+          age: Property.Number({
+            displayName: 'age',
+            required: true,
+          })
+        }
+      })
+    };
+    const { result, errors } = variableService.validateAndCast(input, props);
+    expect(result).toEqual({
+      price: NaN,
+      auth: {
+        age: NaN,
+      },
+    });
+    expect(errors).toEqual({
+      price: 'expected number, but found value: wrong text',
+      auth: {
+        age: 'expected number, but found value: wrong text',
+      },
+    });
+  });
+
+  
 
 });

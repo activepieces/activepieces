@@ -1,13 +1,13 @@
 import { PropertyType } from "./property";
 
-import { BasePropertySchema, NumberProperty, SecretTextProperty, ShortTextProperty, TPropertyValue } from "./base-prop";
+import { BasePropertySchema, SecretTextProperty, ShortTextProperty, TPropertyValue } from "./base-prop";
 import { StaticDropdownProperty } from "./dropdown-prop";
 import { StaticPropsValue } from "./property";
 
-type OAuthProp = ShortTextProperty<true> | SecretTextProperty<true> | NumberProperty<true> | StaticDropdownProperty<any, true>;
+type OAuthProp = ShortTextProperty<true> | SecretTextProperty<true> | StaticDropdownProperty<any, true>;
 
 export interface OAuth2Props {
-	[name: string]: ShortTextProperty<boolean> | SecretTextProperty<boolean> | NumberProperty<boolean> | StaticDropdownProperty<unknown, boolean>;
+	[name: string]: ShortTextProperty<boolean> | SecretTextProperty<boolean> | StaticDropdownProperty<unknown, boolean>;
 }
 
 export type OAuthPropsValue<T extends OAuth2Props> = StaticPropsValue<T>;

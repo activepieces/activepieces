@@ -1,6 +1,7 @@
 import { get, isString } from 'lodash';
 import { ExecutionState } from '@activepieces/shared';
 import { connectionService } from './connections.service';
+import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework';
 
 export class VariableService {
   private VARIABLE_TOKEN = RegExp('\\{\\{(.*?)\\}\\}', 'g');
@@ -104,5 +105,29 @@ export class VariableService {
       this.getExecutionStateObject(executionState),
       censorConnections
     );
+  }
+
+  validateAndCast(resolvedInput: any, props: PiecePropertyMap): { result: any, errors: Record<string, any> } {
+    const errors: Record<string, string | Record<string, string>> = {};
+    const clonedInput = JSON.parse(JSON.stringify(resolvedInput));
+    for (const [key, value] of Object.entries(resolvedInput)) {
+      const property = props[key];
+      if (property.type === PropertyType.NUMBER && value) {
+        clonedInput[key] = Number(value);
+        if (isNaN(clonedInput[key])) {
+          errors[key] = `expected number, but found value: ${value}`;
+        }
+      } else if (property.type === PropertyType.CUSTOM_AUTH) {
+        const innerValidation = this.validateAndCast(value, property.props);
+        clonedInput[key] = innerValidation.result;
+        if(Object.keys(innerValidation.errors).length > 0) {
+          errors[key] = innerValidation.errors;
+        }
+      }
+    }
+    return {
+      result: clonedInput,
+      errors
+    };
   }
 }

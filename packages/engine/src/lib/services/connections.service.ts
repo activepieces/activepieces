@@ -2,8 +2,22 @@ import axios from 'axios';
 import { AppConnection, AppConnectionType, CloudOAuth2ConnectionValue, BasicAuthConnectionValue, OAuth2ConnectionValueWithApp } from '@activepieces/shared';
 import { globals } from '../globals';
 
+export const connectionManager = {
+    get: async (key: string) => {
+        try {
+            const connection = await connectionService.obtain(key);
+            if (!connection) {
+                return null;
+            }
+            return connection;
+        } catch (e) {
+            return null;
+        }
+    }
+}
+
 export const connectionService = {
-    async obtain(connectionName: string): Promise<null | OAuth2ConnectionValueWithApp | CloudOAuth2ConnectionValue | BasicAuthConnectionValue | string | Record<string, unknown> > {
+    async obtain(connectionName: string): Promise<null | OAuth2ConnectionValueWithApp | CloudOAuth2ConnectionValue | BasicAuthConnectionValue | string | Record<string, unknown>> {
         const url = globals.apiUrl + `/v1/app-connections/${connectionName}?projectId=${globals.projectId}`;
         try {
             const result: AppConnection = (await axios({
@@ -13,13 +27,13 @@ export const connectionService = {
                     Authorization: 'Bearer ' + globals.workerToken
                 }
             })).data;
-            if(result === null){
+            if (result === null) {
                 return null;
             }
-            if(result.value.type === AppConnectionType.SECRET_TEXT){
+            if (result.value.type === AppConnectionType.SECRET_TEXT) {
                 return result.value.secret_text;
             }
-            if(result.value.type === AppConnectionType.CUSTOM_AUTH){
+            if (result.value.type === AppConnectionType.CUSTOM_AUTH) {
                 return result.value.props;
             }
             return result.value;
