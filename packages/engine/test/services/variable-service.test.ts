@@ -1,5 +1,6 @@
 import { ExecutionState, StepOutput } from '@activepieces/shared';
 import { VariableService } from '../../src/lib/services/variable-service';
+import { Property } from '@activepieces/pieces-framework';
 
 const variableService = new VariableService();
 
@@ -155,5 +156,114 @@ describe('Variable Service', () => {
       8.4
     );
   });
+
+
+  it('should return casted number for text', () => {
+    const variableService = new VariableService();
+    const input = {
+      price: '0',
+      auth: {
+        age: '12'
+      }
+    };
+    const props = {
+      price: Property.Number({
+        displayName: 'Price',
+        required: true,
+      }),
+      auth: Property.CustomAuth({
+        displayName: 'Auth',
+        required: false,
+        props: {
+          age: Property.Number({
+            displayName: 'age',
+            required: true,
+          })
+        }
+      })
+    };
+    const { result, errors } = variableService.validateAndCast(input, props);
+    expect(result).toEqual({
+      auth: {
+        age: 12,
+      },
+      price: 0,
+    });
+    expect(errors).toEqual({});
+  });
+
+  it('should return errors for invalid number', () => {
+    const variableService = new VariableService();
+    const input = {
+      price: 'wrong text',
+      auth: {
+        age: 'wrong text'
+      },
+      emptyStringNumber: '',
+      undefinedNumber: undefined,
+      nullNumber: null,
+      optionalNullNumber: null,
+      optionalUndefinedNumber: undefined,
+    };
+    const props = {
+      emptyStringNumber: Property.Number({
+        displayName: 'Empty String Number',
+        required: true,
+      }),
+      optionalNullNumber: Property.Number({
+        displayName: 'Null Number',
+        required: false,
+      }),
+      optionalUndefinedNumber: Property.Number({
+        displayName: 'Number',
+        required: false,
+      }),
+      nullNumber: Property.Number({
+        displayName: 'Null Number',
+        required: true,
+      }),
+      undefinedNumber: Property.Number({
+        displayName: 'Number',
+        required: true,
+      }),
+      price: Property.Number({
+        displayName: 'Price',
+        required: true,
+      }),
+      auth: Property.CustomAuth({
+        displayName: 'Auth',
+        required: false,
+        props: {
+          age: Property.Number({
+            displayName: 'age',
+            required: true,
+          })
+        }
+      })
+    };
+    const { result, errors } = variableService.validateAndCast(input, props);
+    expect(result).toEqual({
+      price: NaN,
+      emptyStringNumber: NaN,
+      nullNumber: null,
+      undefinedNumber: undefined,
+      optionalNullNumber: null,
+      optionalUndefinedNumber: undefined,
+      auth: {
+        age: NaN,
+      },
+    });
+    expect(errors).toEqual({
+      price: 'expected number, but found value: wrong text',
+      emptyStringNumber: "expected number, but found value: ",
+      nullNumber: "expected number, but found value: null",
+      undefinedNumber: "expected number, but found value: undefined",
+      auth: {
+        age: 'expected number, but found value: wrong text',
+      },
+    });
+  });
+
+  
 
 });

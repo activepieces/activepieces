@@ -7,8 +7,11 @@ import {
   StepOutputStatus
 } from '@activepieces/shared';
 import { BaseActionHandler } from './action-handler';
-import { PieceExecutor } from '../executors/piece-executor';
 import { globals } from '../globals';
+import { isNil } from 'lodash';
+import { pieceHelper } from '../helper/piece-helper';
+import { createContextStore } from '../services/storage.service';
+import { connectionManager } from '../services/connections.service';
 
 export class PieceActionHandler extends BaseActionHandler<PieceAction> {
   variableService: VariableService;
@@ -27,30 +30,36 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
     const stepOutput = new StepOutput();
 
     const { input, pieceName, pieceVersion, actionName } = this.action.settings;
-
-    const config = await this.variableService.resolve(
-      input,
-      executionState
-    );
-
-    globals.addOneTask();
-    stepOutput.input = await this.variableService.resolve(
-      input,
-      executionState,
-      true 
-    );
-
-    if(!actionName){
+    const piece = await pieceHelper.loadPieceOrThrow(pieceName, pieceVersion);
+    if (!actionName) {
       throw new Error("Action name is not defined");
     }
-    try {
-      const executer = new PieceExecutor();
 
-      stepOutput.output = await executer.exec({
-        pieceName,
-        pieceVersion,
-        actionName: actionName,
-        config,
+    const action = piece.getAction(actionName);
+
+    if (isNil(action)) {
+      throw new Error(`error=action_not_found action_name=${actionName}`);
+    }
+    const { result, errors } = this.variableService.validateAndCast(await this.variableService.resolve(
+      input,
+      executionState
+    ), action.props);
+
+    globals.addOneTask();
+    stepOutput.input = this.variableService.validateAndCast(await this.variableService.resolve(
+      input,
+      executionState,
+      true
+    ), action.props).result;
+
+    try {
+      if (Object.keys(errors).length > 0) {
+        throw new Error(JSON.stringify(errors));
+      }
+      stepOutput.output = await action.run({
+        store: createContextStore('', globals.flowId),
+        propsValue: result,
+        connections: connectionManager
       });
 
       stepOutput.status = StepOutputStatus.SUCCEEDED;

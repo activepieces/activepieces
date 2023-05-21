@@ -14,27 +14,27 @@ export const getOrderList = createAction({
             displayName: "From (Year)",
             required: true
         }),
-        toYear: Property.Number({
+        toYear: Property.ShortText({
             displayName: "To (Year)",
             defaultValue: year,
             required: true
         }),
-        fromMonth: Property.Number({
+        fromMonth: Property.ShortText({
             displayName: "From (Month)",
             defaultValue: "01",
             required: false
         }),
-        toMonth: Property.Number({
+        toMonth: Property.ShortText({
             displayName: "To (Month)",
             defaultValue: "12",
             required: false
         }),
-        fromDay: Property.Number({
+        fromDay: Property.ShortText({
             displayName: "From (Day)",
             defaultValue: "01",
             required: false
         }),
-        toDay: Property.Number({
+        toDay: Property.ShortText({
             displayName: "To (Day)",
             defaultValue: "28",
             required: false
