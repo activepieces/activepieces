@@ -5,6 +5,7 @@ import { askOpenAI } from './lib/actions/send-prompt';
 export const openai = createPiece({
   name: 'openai',
   displayName: 'OpenAI',
+  description: 'Use ChatGPT to generate text',
   logoUrl: 'https://cdn.activepieces.com/pieces/openai.png',
   version: packageJson.version,
   actions: [askOpenAI],
