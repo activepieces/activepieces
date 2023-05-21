@@ -27,8 +27,8 @@
   </app-small-add-button>
 
   <app-drop-zone (dragEnter)="isDraggingOverTrueBranch=true" (dragLeave)="isDraggingOverTrueBranch=false"
-    [top]="'calc( '+ addButtonTop + ' - 62px + ' + (_flowItem.onSuccessAction? '35px':'95px') + ')'"
-    [left]="'calc( '+addButtonTrueBranchLeftStyleProperty + ' - 115px)'" (dropped)="dropAtTheTopOfTrueBranch($event)">
+    [top]="'calc( '+ addButtonTop + ' - 62px + ' + (_flowItem.onSuccessAction? '0px':'70px') + ')'"
+    [left]="'calc( '+addButtonTrueBranchLeftStyleProperty + ' - 143px )'" (dropped)="dropAtTheTopOfTrueBranch($event)">
   </app-drop-zone>
 
   <app-small-add-button *ngIf="!viewMode" (click)="add()" [top]="afterBranchAddButtonTop"
@@ -64,9 +64,8 @@
     [top]="addButtonTop" [left]="addButtonFalseBranchLeftStyleProperty"
     [showDropzoneIndicator]="isDraggingOverFalseBranch">
   </app-small-add-button>
-
-  <app-drop-zone [top]="'calc( '+ addButtonTop + ' - 62px + ' + (_flowItem.onFailureAction? '35px':'95px') + ')'"
-    [left]="'calc( '+addButtonFalseBranchLeftStyleProperty + ' - 115px )'" (dragEnter)="isDraggingOverFalseBranch=true"
+  <app-drop-zone [top]="'calc( '+ addButtonTop + ' - 62px + ' + (_flowItem.onFailureAction? '0px':'70px') + ')'"
+    [left]="'calc( '+addButtonFalseBranchLeftStyleProperty + ' - 143px )'" (dragEnter)="isDraggingOverFalseBranch=true"
     (dragLeave)="isDraggingOverFalseBranch=false" (dropped)="dropAtTheTopOfFalseBranch($event)">
   </app-drop-zone>
 

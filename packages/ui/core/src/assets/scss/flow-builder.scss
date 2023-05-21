@@ -18,16 +18,16 @@
   }
   .drop-point-container {
     position: absolute;
-    left: 20px;
-    top:  5px;
+    left: 0px;
+    top:  -52px;
     z-index:30;
     &.first-loop-drop{
-        left: 229px;
+        left: 210px;
         top: 88px;
     }
     &.empty-loop-drop{
-        left: 229px;
-        top: 155px;
+        left: 210px;
+        top: 124px;
     }
     
   }

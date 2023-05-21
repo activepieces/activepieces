@@ -36,5 +36,5 @@ export const LINES_WIDTH = 2;
 export const SPACE_BETWEEN_ITEM_CONTENT_AND_LINE = 8;
 export const AFTER_NESTED_LOOP_LINE_LENGTH =
   VERTICAL_LINE_LENGTH + ARROW_HEAD_SIZE.height;
-export const DROP_ZONE_WIDTH = 257;
-export const DROP_ZONE_HEIGHT = 60;
+export const DROP_ZONE_WIDTH = 300;
+export const DROP_ZONE_HEIGHT = 125;
