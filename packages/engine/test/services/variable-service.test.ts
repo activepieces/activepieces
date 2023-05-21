@@ -161,10 +161,10 @@ describe('Variable Service', () => {
   it('should return casted number for text', () => {
     const variableService = new VariableService();
     const input = {
-      price: '12',
+      price: '0',
       auth: {
         age: '12'
-      },
+      }
     };
     const props = {
       price: Property.Number({
@@ -187,7 +187,7 @@ describe('Variable Service', () => {
       auth: {
         age: 12,
       },
-      price: 12,
+      price: 0,
     });
     expect(errors).toEqual({});
   });
@@ -199,8 +199,33 @@ describe('Variable Service', () => {
       auth: {
         age: 'wrong text'
       },
+      emptyStringNumber: '',
+      undefinedNumber: undefined,
+      nullNumber: null,
+      optionalNullNumber: null,
+      optionalUndefinedNumber: undefined,
     };
     const props = {
+      emptyStringNumber: Property.Number({
+        displayName: 'Empty String Number',
+        required: true,
+      }),
+      optionalNullNumber: Property.Number({
+        displayName: 'Null Number',
+        required: false,
+      }),
+      optionalUndefinedNumber: Property.Number({
+        displayName: 'Number',
+        required: false,
+      }),
+      nullNumber: Property.Number({
+        displayName: 'Null Number',
+        required: true,
+      }),
+      undefinedNumber: Property.Number({
+        displayName: 'Number',
+        required: true,
+      }),
       price: Property.Number({
         displayName: 'Price',
         required: true,
@@ -219,12 +244,20 @@ describe('Variable Service', () => {
     const { result, errors } = variableService.validateAndCast(input, props);
     expect(result).toEqual({
       price: NaN,
+      emptyStringNumber: NaN,
+      nullNumber: null,
+      undefinedNumber: undefined,
+      optionalNullNumber: null,
+      optionalUndefinedNumber: undefined,
       auth: {
         age: NaN,
       },
     });
     expect(errors).toEqual({
       price: 'expected number, but found value: wrong text',
+      emptyStringNumber: "expected number, but found value: ",
+      nullNumber: "expected number, but found value: null",
+      undefinedNumber: "expected number, but found value: undefined",
       auth: {
         age: 'expected number, but found value: wrong text',
       },
