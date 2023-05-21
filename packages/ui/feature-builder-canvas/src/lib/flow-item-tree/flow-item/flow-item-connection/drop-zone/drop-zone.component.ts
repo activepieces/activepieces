@@ -11,6 +11,7 @@ import {
 } from '@activepieces/ui/feature-builder-store';
 import { Observable } from 'rxjs';
 import { DropEvent } from 'angular-draggable-droppable';
+import { DROP_ZONE_HEIGHT, DROP_ZONE_WIDTH } from '../draw-utils';
 
 @Component({
   selector: 'app-drop-zone',
@@ -18,6 +19,8 @@ import { DropEvent } from 'angular-draggable-droppable';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DropZoneComponent {
+  readonly DROP_ZONE_WIDTH = DROP_ZONE_WIDTH;
+  readonly DROP_ZONE_HEIGHT = DROP_ZONE_HEIGHT;
   @Input() containerClass = '';
   @Input() top = '';
   @Input() left = '';

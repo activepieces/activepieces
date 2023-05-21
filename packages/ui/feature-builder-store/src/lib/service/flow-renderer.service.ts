@@ -9,6 +9,8 @@ import { FlowRenderUtil } from '../utils/flowRenderUtil';
   providedIn: 'root',
 })
 export class FlowRendererService {
+  clientX = 0;
+  clientY = 0;
   debuggerNewDropPointSubject = new Subject<{ x: number; y: number }>();
   draggingSubject = new BehaviorSubject<boolean>(false);
   public structureChanged: BehaviorSubject<FlowItem | undefined> =

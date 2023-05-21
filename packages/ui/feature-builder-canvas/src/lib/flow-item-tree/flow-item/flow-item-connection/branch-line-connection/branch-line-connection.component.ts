@@ -81,10 +81,12 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
 
   @Input() set flowItem(value: BranchAction & FlowItemRenderInfo) {
     this._flowItem = value;
-    this.numberOfNestedBranches = Math.max(
-      FlowRenderUtil.findNumberOfNestedBranches(this._flowItem.onFailureAction),
-      FlowRenderUtil.findNumberOfNestedBranches(this._flowItem.onSuccessAction)
-    );
+    this.numberOfNestedBranches =
+      FlowRenderUtil.findNumberOfNestedBranches(
+        this._flowItem.onFailureAction
+      ) +
+      FlowRenderUtil.findNumberOfNestedBranches(this._flowItem.onSuccessAction);
+
     this.writeLines();
     this.calculateOffsetBeforeFirstAction();
     this.calculateOffsetAfterBranch();
@@ -103,10 +105,12 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
     this.showDropArea$ = this.flowRendererService.draggingSubject;
   }
   ngOnInit(): void {
-    this.numberOfNestedBranches = Math.max(
-      FlowRenderUtil.findNumberOfNestedBranches(this._flowItem.onFailureAction),
-      FlowRenderUtil.findNumberOfNestedBranches(this._flowItem.onSuccessAction)
-    );
+    this.numberOfNestedBranches =
+      FlowRenderUtil.findNumberOfNestedBranches(
+        this._flowItem.onFailureAction
+      ) +
+      FlowRenderUtil.findNumberOfNestedBranches(this._flowItem.onSuccessAction);
+
     this.writeLines();
     this.calculateOffsetBeforeFirstAction();
     this.calculateOffsetAfterBranch();
@@ -173,7 +177,7 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
     commands.push(
       this.drawer.drawHorizontalLine(
         (HORZIONTAL_LINE_LENGTH +
-          this.numberOfNestedBranches * (HORZIONTAL_LINE_LENGTH / 2)) *
+          this.numberOfNestedBranches * HORZIONTAL_LINE_LENGTH) *
           (trueBranch ? -1 : 1)
       )
     );
@@ -200,7 +204,7 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
     commands.push(
       this.drawer.drawHorizontalLine(
         (1.1 * HORZIONTAL_LINE_LENGTH +
-          this.numberOfNestedBranches * (HORZIONTAL_LINE_LENGTH / 2)) *
+          this.numberOfNestedBranches * HORZIONTAL_LINE_LENGTH) *
           (isTrueBranch ? 1 : -1)
       )
     );
@@ -211,7 +215,7 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
     const leftOffset =
       HORZIONTAL_LINE_LENGTH +
       11 +
-      this.numberOfNestedBranches * (HORZIONTAL_LINE_LENGTH / 2);
+      this.numberOfNestedBranches * HORZIONTAL_LINE_LENGTH;
     const topOffset =
       VERTICAL_LINE_LENGTH * 2.25 +
       ARC_LENGTH * 2 +
@@ -230,13 +234,13 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
       ARC_LENGTH +
       HORZIONTAL_LINE_LENGTH +
       ARC_LENGTH +
-      this.numberOfNestedBranches * (HORZIONTAL_LINE_LENGTH / 2);
+      this.numberOfNestedBranches * HORZIONTAL_LINE_LENGTH;
     const rightOffset =
       FLOW_ITEM_WIDTH / 2 -
       ARC_LENGTH -
       HORZIONTAL_LINE_LENGTH -
       ARC_LENGTH -
-      this.numberOfNestedBranches * (HORZIONTAL_LINE_LENGTH / 2);
+      this.numberOfNestedBranches * HORZIONTAL_LINE_LENGTH;
     const topOffset =
       VERTICAL_LINE_LENGTH +
       ARC_LENGTH +
@@ -359,7 +363,7 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
         FLOW_ITEM_WIDTH / 2 +
         ARC_LENGTH * 2 +
         (HORZIONTAL_LINE_LENGTH +
-          this.numberOfNestedBranches * (HORZIONTAL_LINE_LENGTH / 2)) -
+          this.numberOfNestedBranches * HORZIONTAL_LINE_LENGTH) -
         FLOW_ITEM_WIDTH / 2 +
         'px',
       position: 'absolute',
@@ -381,7 +385,7 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
         (FLOW_ITEM_WIDTH / 2 +
           ARC_LENGTH * 2 +
           (HORZIONTAL_LINE_LENGTH +
-            this.numberOfNestedBranches * (HORZIONTAL_LINE_LENGTH / 2)) -
+            this.numberOfNestedBranches * HORZIONTAL_LINE_LENGTH) -
           FLOW_ITEM_WIDTH / 2) *
           -1 +
         'px',

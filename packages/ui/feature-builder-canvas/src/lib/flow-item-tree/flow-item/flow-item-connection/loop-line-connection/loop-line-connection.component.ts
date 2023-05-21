@@ -155,10 +155,13 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
     } else {
       commands.push(this.drawer.move(0, childFlowsGraphHeight));
     }
-    const x = this.numberOfNestedBranches * (HORZIONTAL_LINE_LENGTH * 2);
+    const childGraphWIdth =
+      this.numberOfNestedBranches * (HORZIONTAL_LINE_LENGTH * 2);
     commands.push(this.drawer.drawArc(true, true, false));
     commands.push(
-      this.drawer.drawHorizontalLine(-2 * HORZIONTAL_LINE_LENGTH - x)
+      this.drawer.drawHorizontalLine(
+        -2 * HORZIONTAL_LINE_LENGTH - childGraphWIdth
+      )
     );
     commands.push(this.drawer.drawArc(true, false, false));
     const returningVerticalLineToBeginingLength =
@@ -168,7 +171,9 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
     );
     commands.push(this.drawer.drawArc(false, false, false));
     commands.push(
-      this.drawer.drawHorizontalLine(HORZIONTAL_LINE_LENGTH * 0.75 + x)
+      this.drawer.drawHorizontalLine(
+        HORZIONTAL_LINE_LENGTH * 0.75 + childGraphWIdth
+      )
     );
     return commands;
   }

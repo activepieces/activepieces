@@ -104,6 +104,13 @@ function traverseInternal(step: Trigger | Action | undefined): (Action | Trigger
 function getAllSteps(flowVersion: FlowVersion): (Action | Trigger)[] {
   return traverseInternal(flowVersion.trigger);
 }
+function getAllChildSteps(action: LoopOnItemsAction | BranchAction): (Action)[] {
+  if(action.type === ActionType.LOOP_ON_ITEMS)
+  {
+    return traverseInternal(action.firstLoopAction) as Action[];
+  }
+  return [...traverseInternal(action.onSuccessAction),...traverseInternal(action.onFailureAction)] as Action[];
+}
 
 function getStep(
   flowVersion: FlowVersion,
@@ -382,6 +389,7 @@ export const flowHelper = {
   getAllSteps: getAllSteps,
   getUsedPieces: getUsedPieces,
   isChildOf:isChildOf,
+  getAllChildSteps:getAllChildSteps,
   clone: (flowVersion: FlowVersion): FlowVersion => {
     return JSON.parse(JSON.stringify(flowVersion));
   },

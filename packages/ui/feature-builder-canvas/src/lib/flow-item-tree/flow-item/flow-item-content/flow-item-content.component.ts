@@ -4,6 +4,8 @@ import {
   Component,
   Input,
   OnInit,
+  TemplateRef,
+  ViewChild,
 } from '@angular/core';
 import {
   filter,
@@ -26,9 +28,14 @@ import {
   StepOutput,
   StepOutputStatus,
   TriggerType,
+  flowHelper,
 } from '@activepieces/shared';
 import {
+  ActionMetaService,
+  CORE_PIECES_ACTIONS_NAMES,
+  CORE_PIECES_TRIGGERS,
   FlowItemDetails,
+  corePieceIconUrl,
   fadeIn400ms,
   isOverflown,
 } from '@activepieces/ui/common';
@@ -50,6 +57,7 @@ import {
 })
 export class FlowItemContentComponent implements OnInit {
   //in case it is not reached, we return undefined
+  @ViewChild('stepDragTemplate') stepDragTemplate: TemplateRef<any>;
   stepStatus$: Observable<StepOutputStatus | undefined>;
   stepInsideLoopStatus$: Observable<StepOutputStatus | undefined>;
   hover = false;
@@ -60,6 +68,7 @@ export class FlowItemContentComponent implements OnInit {
   readonly$: Observable<boolean>;
   logoTooltipText = '';
   isOverflown = isOverflown;
+  childStepsIconsUrls: Record<string, Observable<string>> = {};
   StepOutputStatus = StepOutputStatus;
   ExecutionOutputStatus = ExecutionOutputStatus;
   TriggerType = TriggerType;
@@ -70,6 +79,7 @@ export class FlowItemContentComponent implements OnInit {
   @Input() set flowItem(newFlowItem: FlowItem) {
     this._flowItem = newFlowItem;
     this.logoTooltipText = this.getLogoTooltipText();
+    this.childStepsIconsUrls = this.extractChildStepsIconsUrls();
     this.flowItemChanged$.next(true);
     this.fetchFlowItemDetailsAndLoadLogo();
   }
@@ -81,7 +91,8 @@ export class FlowItemContentComponent implements OnInit {
     private cd: ChangeDetectorRef,
     private runDetailsService: RunDetailsService,
     private dialogService: MatDialog,
-    private flowRendererService: FlowRendererService
+    private flowRendererService: FlowRendererService,
+    private actionMetaDataService: ActionMetaService
   ) {}
 
   ngOnInit(): void {
@@ -90,6 +101,7 @@ export class FlowItemContentComponent implements OnInit {
     this.selectedRun$ = this.store.select(
       BuilderSelectors.selectCurrentFlowRun
     );
+    this.childStepsIconsUrls = this.extractChildStepsIconsUrls();
     this.stepStatus$ = this.getStepStatusIfItsNotInsideLoop();
     this.stepInsideLoopStatus$ =
       this.runDetailsService.iterationStepResultState$.pipe(
@@ -209,5 +221,39 @@ export class FlowItemContentComponent implements OnInit {
       case TriggerType.PIECE:
         return this._flowItem.settings.pieceName.replace(/-/g, ' ');
     }
+  }
+  extractChildStepsIconsUrls() {
+    const stepsIconsUrls: Record<string, Observable<string>> = {};
+    if (
+      this._flowItem.type === ActionType.BRANCH ||
+      this._flowItem.type === ActionType.LOOP_ON_ITEMS
+    ) {
+      const steps = flowHelper.getAllChildSteps(this._flowItem);
+      steps.forEach((s) => {
+        if (s.type === ActionType.PIECE) {
+          const pieceMetaData$ = this.actionMetaDataService
+            .getPieceMetadata(s.settings.pieceName, s.settings.pieceVersion)
+            .pipe(
+              map((md) => {
+                if (
+                  CORE_PIECES_ACTIONS_NAMES.find(
+                    (n) => s.settings.pieceName === n
+                  ) ||
+                  CORE_PIECES_TRIGGERS.find((n) => s.settings.pieceName === n)
+                ) {
+                  return corePieceIconUrl(s.settings.pieceName);
+                }
+                return md.logoUrl;
+              })
+            );
+          stepsIconsUrls[s.settings.pieceName] = pieceMetaData$;
+        } else if (s.type !== ActionType.MISSING) {
+          const icon = this.actionMetaDataService.findNonPieceStepIcon(s);
+          stepsIconsUrls[icon.key] = of(icon.url);
+        }
+      });
+    }
+
+    return stepsIconsUrls;
   }
 }

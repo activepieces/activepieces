@@ -1,6 +1,7 @@
 import {
   Component,
   ElementRef,
+  HostListener,
   NgZone,
   OnDestroy,
   OnInit,
@@ -125,7 +126,11 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
       BuilderSelectors.selectCurrentRightSideBarType
     );
   }
-
+  @HostListener('mousemove', ['$event'])
+  mouseMove(e: MouseEvent) {
+    this.flowRendererService.clientX = e.clientX;
+    this.flowRendererService.clientY = e.clientY;
+  }
   ngOnDestroy(): void {
     this.snackbar.dismiss();
     this.runDetailsService.currentStepResult$.next(undefined);

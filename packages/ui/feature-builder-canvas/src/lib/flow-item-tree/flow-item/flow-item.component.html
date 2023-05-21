@@ -5,10 +5,12 @@
   </div>
   <ng-container *ngIf="!trigger && (viewMode$ | async)===false">
     <div #flowItem class="ap-z-50 ap-cursor-grab ap-relative" mwlDraggable [dragCursor]="isDragging?'grabbing' :''"
-      (dragEnd)="draggingEnded($event)" [showOriginalElementWhileDragging]="false" [dropData]="_flowItemData"
+      [ghostElementTemplate]="ItemContent.stepDragTemplate" (dragEnd)="draggingEnded()"
+      [showOriginalElementWhileDragging]="false" [dropData]="_flowItemData"
       [class.ap-opacity-0]="hideDraggableSource$ | async" [ghostElementAppendTo]="getDocument()"
-      [class.ap-cursor-default]="(anyStepIsDragged$|async)" (dragStart)="draggingStarted()">
-      <div [ngStyle]="flowItemContentContainer" [style.transform]="isDragging? (scale$|async):''" class="ap-z-50">
+      (dragging)="snapElementToCursor()" [class.ap-cursor-default]="(anyStepIsDragged$|async)"
+      (dragStart)="draggingStarted()">
+      <div [ngStyle]="flowItemContentContainer" class="ap-z-50">
         <app-flow-item-content #ItemContent [trigger]="trigger" [flowItem]="_flowItemData"
           [viewMode]="viewMode$ | async | defaultTrue"
           [selected]="selected$ | async | defaultFalse"></app-flow-item-content>

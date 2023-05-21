@@ -21,7 +21,6 @@ import {
 } from '@activepieces/ui/feature-builder-store';
 import { PannerService } from '../../canvas-utils/panning/panner.service';
 import { ZoomingService } from '../../canvas-utils/zooming/zooming.service';
-import { DragEndEvent } from 'angular-draggable-droppable';
 
 @Component({
   selector: 'app-flow-item',
@@ -36,6 +35,7 @@ export class FlowItemComponent implements OnInit {
   @Input() hoverState = false;
   @Input() trigger = false;
   _flowItemData: FlowItem;
+  snappedDraggedShadowToCursor = false;
   hideDraggableSource$: Subject<boolean> = new Subject();
   @Input() set flowItemData(value: FlowItem) {
     this._flowItemData = value;
@@ -134,11 +134,35 @@ export class FlowItemComponent implements OnInit {
       this.hideDraggableSource$.next(true);
     });
   }
-  draggingEnded(event$: DragEndEvent) {
-    console.log(event$);
+
+  snapElementToCursor() {
+    if (!this.snappedDraggedShadowToCursor) {
+      const shadowEl = document.getElementById('stepShadow');
+      if (shadowEl) {
+        const shadowElRect = shadowEl.getBoundingClientRect();
+        const x = this.flowRendererService.clientX - shadowElRect.left; //x position within the element.
+        const y = this.flowRendererService.clientY - shadowElRect.top; //y position within the element.
+        console.log(x, y);
+        shadowEl.style.transform = `translate(${
+          x - shadowElRect.width / 2
+        }px , ${y - shadowElRect.height / 2}px)`;
+        console.log(
+          `translate(${x - shadowElRect.width / 2}px , ${
+            y - shadowElRect.height / 2
+          }px)`
+        );
+      } else {
+        console.error('shadowEl not found!!!');
+      }
+      this.snappedDraggedShadowToCursor = true;
+    }
+  }
+
+  draggingEnded() {
     this.flowRendererService.draggingSubject.next(false);
     this.isDragging = false;
     this.hideDraggableSource$.next(false);
+    this.snappedDraggedShadowToCursor = false;
   }
   getDocument() {
     const draggingContainer = document.getElementById('draggingContainer');

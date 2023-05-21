@@ -6,7 +6,8 @@
         <path class="line-props" fill-rule="evenodd" style="transform: rotate(-90deg);"
           d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z" />
       </svg>
-      <svg *ngIf="!insideLoopOrBranch" [attr.x]="afterLoopArrowHeadLeft" [attr.y]="afterLoopArrowHeadTop" id="test">
+      <svg *ngIf="!insideLoopOrBranch && _flowItem.nextAction" [attr.x]="afterLoopArrowHeadLeft"
+        [attr.y]="afterLoopArrowHeadTop" id="test">
         <path class="line-props" fill-rule="evenodd"
           d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z" />
       </svg>

@@ -18,30 +18,16 @@
   }
   .drop-point-container {
     position: absolute;
-    left: 0px;
-    top:  -52px;
+    left: 20px;
+    top:  5px;
     z-index:30;
-    &.false-branch{
-        left:210px;
-        top:100px;
-        &.empty-false-branch{
-          top:140px;
-        }
-    }
-    &.true-branch{
-        left:-210px;
-        top:100px;
-        &.empty-true-branch{
-          top:140px;
-        }
-    }
     &.first-loop-drop{
-        left: 210px;
+        left: 229px;
         top: 88px;
     }
     &.empty-loop-drop{
-        left: 210px;
-        top: 124px;
+        left: 229px;
+        top: 155px;
     }
     
   }
@@ -49,7 +35,7 @@
     height: $drop-point-height;
     width: $drop-point-width;
     transform: scale(0);
-    // border: 2px $border dashed;
+    border: 2px $border dashed;
     border-radius: 5px;
     transition-timing-function: cubic-bezier(0.42, 0, 0.58, 1);
     transition-duration: 250ms;
