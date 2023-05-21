@@ -20,6 +20,7 @@ import { DropEvent } from 'angular-draggable-droppable';
 export class DropZoneComponent {
   @Input() containerClass = '';
   @Input() top = '';
+  @Input() left = '';
   @Output() dragEnter = new EventEmitter<boolean>();
   @Output() dragLeave = new EventEmitter<boolean>();
   @Output() dropped = new EventEmitter<DropEvent<FlowItem>>();
