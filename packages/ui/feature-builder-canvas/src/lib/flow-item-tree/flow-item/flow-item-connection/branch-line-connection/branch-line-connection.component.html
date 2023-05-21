@@ -26,11 +26,9 @@
     [left]="addButtonTrueBranchLeftStyleProperty" [showDropzoneIndicator]="isDraggingOverTrueBranch">
   </app-small-add-button>
 
-  <app-drop-zone [containerClass]="!_flowItem.onSuccessAction? 'empty-true-branch true-branch': 'true-branch'"
-    (dragEnter)="isDraggingOverTrueBranch=true" (dragLeave)="isDraggingOverTrueBranch=false"
-    [top]="_flowItem.onFailureAction? 'calc( '+ addButtonTop + ' - 62px )':''"
-    [left]="_flowItem.onFailureAction? 'calc( '+addButtonTrueBranchLeftStyleProperty + ' - 143px )':''"
-    (dropped)="dropAtTheTopOfTrueBranch($event)">
+  <app-drop-zone (dragEnter)="isDraggingOverTrueBranch=true" (dragLeave)="isDraggingOverTrueBranch=false"
+    [top]="'calc( '+ addButtonTop + ' - 62px + ' + (_flowItem.onSuccessAction? '0px':'70px') + ')'"
+    [left]="'calc( '+addButtonTrueBranchLeftStyleProperty + ' - 143px )'" (dropped)="dropAtTheTopOfTrueBranch($event)">
   </app-drop-zone>
 
   <app-small-add-button *ngIf="!viewMode" (click)="add()" [top]="afterBranchAddButtonTop"
@@ -67,11 +65,9 @@
     [showDropzoneIndicator]="isDraggingOverFalseBranch">
   </app-small-add-button>
 
-  <app-drop-zone [containerClass]="!_flowItem.onFailureAction? 'empty-false-branch false-branch': 'false-branch'"
-    [top]="_flowItem.onFailureAction? 'calc( '+ addButtonTop + ' - 62px )':''"
-    [left]="_flowItem.onFailureAction? 'calc( '+addButtonFalseBranchLeftStyleProperty + ' - 143px )':''"
-    (dragEnter)="isDraggingOverFalseBranch=true" (dragLeave)="isDraggingOverFalseBranch=false"
-    (dropped)="dropAtTheTopOfFalseBranch($event)">
+  <app-drop-zone [top]="'calc( '+ addButtonTop + ' - 62px + ' + (_flowItem.onFailureAction? '0px':'70px') + ')'"
+    [left]="'calc( '+addButtonFalseBranchLeftStyleProperty + ' - 143px )'" (dragEnter)="isDraggingOverFalseBranch=true"
+    (dragLeave)="isDraggingOverFalseBranch=false" (dropped)="dropAtTheTopOfFalseBranch($event)">
   </app-drop-zone>
 
   <app-big-add-button [showDropZoneIndicator]="isDraggingOverFalseBranch" (click)="addFalseBranchItem()"
