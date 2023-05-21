@@ -31,7 +31,7 @@ export const httpSendRequestAction = createAction({
       required: false,
     }),
     failsafe: Property.Checkbox({
-      displayName: 'No Error on Failure',
+      displayName: 'No Error On Failure',
       required: false,
     }),
     timeout: Property.Number({
@@ -57,10 +57,17 @@ export const httpSendRequestAction = createAction({
     };
 
     try {
-      return await httpClient.sendRequest(request);
+        const response = await httpClient.sendRequest(request);
+        return {
+            success: response.status && response.status == 200,
+            ...response
+        };
     } catch (error) {
       if (failsafe) {
-        return { error };
+        return {
+            success: false,
+            error
+        };
       }
       throw error;
     }
