@@ -13,16 +13,16 @@ export class ExecutionState {
 
   insertStep(
     stepOutput: StepOutput,
-    actionName: string,
+    stepName: string,
     ancestors: [string, number][]
   ) {
     const targetMap: Record<string, StepOutput> = this.getTargetMap(ancestors);
-    targetMap[actionName] = stepOutput;
-    this.updateLastStep(stepOutput.output, actionName);
+    targetMap[stepName] = stepOutput;
+    this.updateLastStep(stepOutput.output, stepName);
   }
 
-  updateLastStep(outputOnly: unknown, actionName: string) {
-    this.lastStepState[actionName] = ExecutionState.deepClone(outputOnly);
+  updateLastStep(outputOnly: unknown, stepName: string) {
+    this.lastStepState[stepName] = ExecutionState.deepClone(outputOnly);
   }
 
   private static deepClone(value: unknown) {

@@ -1,6 +1,6 @@
 import { FlowExecutor } from '../executors/flow-executor';
 import { VariableService } from '../services/variable-service';
-import { ExecutionState, BranchAction, Action, BranchStepOutput, BranchCondition, BranchOperator, ResumeStepMetadata, ActivepiecesError, ErrorCode, ExecutionOutputStatus, BranchResumeStepMetadata } from '@activepieces/shared';
+import { ExecutionState, BranchAction, Action, BranchStepOutput, BranchCondition, BranchOperator, ActivepiecesError, ErrorCode, ExecutionOutputStatus, BranchResumeStepMetadata } from '@activepieces/shared';
 import { BaseActionHandler } from './action-handler';
 import { StepOutputStatus, StepOutput } from '@activepieces/shared';
 import { isNil } from 'lodash';
@@ -13,7 +13,7 @@ type CtorParams = {
   resumeStepMetadata?: BranchResumeStepMetadata
 }
 
-export class BranchActionHandler extends BaseActionHandler<BranchAction> {
+export class BranchActionHandler extends BaseActionHandler<BranchAction, BranchResumeStepMetadata> {
   onSuccessAction?: Action;
   onFailureAction?: Action;
   variableService: VariableService;
@@ -47,10 +47,14 @@ export class BranchActionHandler extends BaseActionHandler<BranchAction> {
     );
 
     try {
-      const condition = evaluateConditions(resolvedInput.conditions);
+      const condition = this.resumeStepMetadata
+        ? this.resumeStepMetadata.conditionEvaluation
+        : evaluateConditions(resolvedInput.conditions);
+
       stepOutput.output = {
         condition: condition,
-      };
+      }
+
       executionState.insertStep(stepOutput, this.currentAction.name, ancestors);
 
       const firstStep = condition
@@ -69,7 +73,7 @@ export class BranchActionHandler extends BaseActionHandler<BranchAction> {
       const executor = new FlowExecutor({
         executionState,
         firstStep,
-        resumeStepMetadata: this.resumeStepMetadata,
+        resumeStepMetadata: this.resumeStepMetadata?.childResumeStepMetadata,
       })
 
       const executionOutput = await executor.execute()
@@ -89,8 +93,8 @@ export class BranchActionHandler extends BaseActionHandler<BranchAction> {
     catch (e) {
       console.error(e)
 
-      stepOutput.errorMessage = (e as Error).message
       stepOutput.status = StepOutputStatus.FAILED
+      stepOutput.errorMessage = (e as Error).message
 
       return stepOutput
     }

@@ -1,4 +1,4 @@
-import { Action, ActionType, BranchAction, BranchResumeStepMetadata, LoopOnItemsAction, LoopResumeStepMetadata, ResumeStepMetadata, Trigger } from '@activepieces/shared'
+import { Action, ActionType, BranchAction, BranchResumeStepMetadata, ExecutionType, LoopOnItemsAction, LoopResumeStepMetadata, ResumeStepMetadata, Trigger } from '@activepieces/shared'
 import { BaseActionHandler } from './action-handler'
 import { CodeActionHandler } from './code-action-handler'
 import { PieceActionHandler } from './piece-action-handler'
@@ -28,10 +28,16 @@ export function createActionHandler(params: CreateActionHandlerParams): BaseActi
         nextAction,
       })
 
-    case ActionType.PIECE:
+    case ActionType.PIECE: {
+      const executionType = resumeStepMetadata
+        ? ExecutionType.RESUME
+        : ExecutionType.BEGIN
+
       return new PieceActionHandler({
+        executionType,
         currentAction,nextAction,
       })
+    }
 
     case ActionType.BRANCH:{
       const { onSuccessAction, onFailureAction } = action as BranchAction

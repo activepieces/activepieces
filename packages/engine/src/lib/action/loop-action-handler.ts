@@ -15,7 +15,7 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
   firstLoopAction?: Action
   variableService: VariableService
 
-  constructor({currentAction, firstLoopAction, nextAction, resumeStepMetadata }: CtorParams) {
+  constructor({ currentAction, firstLoopAction, nextAction, resumeStepMetadata }: CtorParams) {
     super({
       currentAction,
       nextAction,

@@ -17,7 +17,7 @@ import {
   StepOutput,
   PauseMetadata,
   LoopOnItemsStepOutput,
-  BranchStepOutput
+  BranchStepOutput,
 } from '@activepieces/shared';
 import { createActionHandler } from '../action/action-handler-factory';
 import { isNil } from 'lodash';
@@ -64,17 +64,20 @@ type ExecuteParams = {
 }
 
 export class FlowExecutor {
-  private readonly executionState: ExecutionState;
+  private readonly executionState: ExecutionState
   private readonly firstStep: Action
-  private readonly resumeStepMetadata?: ResumeStepMetadata;
+  private readonly resumeStepMetadata?: ResumeStepMetadata
 
   constructor({ executionState, firstStep, resumeStepMetadata }: FlowExecutorCtor) {
-    this.executionState = executionState;
+    this.executionState = executionState
     this.firstStep = firstStep
-    this.resumeStepMetadata = resumeStepMetadata;
+    this.resumeStepMetadata = resumeStepMetadata
   }
 
   private getResumeStep({ resumeStepMetadata }: GetResumeStepParams) {
+    console.log('[FlowExecutor#getResumeStep] this.firstStep:', this.firstStep);
+    console.log('[FlowExecutor#getResumeStep] resumeStepMetadata:', resumeStepMetadata);
+
     const resumeStep = flowHelper.getStepFromSubFlow({
       subFlowStartStep: this.firstStep,
       stepName: resumeStepMetadata.name,
@@ -105,13 +108,6 @@ export class FlowExecutor {
   private generatePauseMetadata(params: GeneratePauseMetadata): Omit<PauseMetadata, 'executionState'> {
     const { actionHandler, stepOutput } = params
 
-    if (isNil(stepOutput.pauseMetadata)) {
-      throw new ActivepiecesError({
-        code: ErrorCode.PAUSE_METADATA_MISSING,
-        params: {}
-      })
-    }
-
     switch(actionHandler.currentAction.type) {
       case ActionType.PIECE: {
         const output = stepOutput.output as { delay: number, pauseType: PauseType }
@@ -130,12 +126,14 @@ export class FlowExecutor {
       case ActionType.BRANCH: {
         const { output } = stepOutput as BranchStepOutput
 
-        if (isNil(output)) {
+        if (isNil(output) || isNil(stepOutput.pauseMetadata)) {
           throw new ActivepiecesError({
             code: ErrorCode.PAUSE_METADATA_MISSING,
             params: {}
           })
         }
+
+        console.log('[FlowExecutor#generatePauseMetadata] stepOutput.output:', output);
 
         return {
           ...stepOutput.pauseMetadata,
@@ -151,7 +149,7 @@ export class FlowExecutor {
       case ActionType.LOOP_ON_ITEMS: {
         const { output } = stepOutput as LoopOnItemsStepOutput
 
-        if (isNil(output)) {
+        if (isNil(output) || isNil(stepOutput.pauseMetadata)) {
           throw new ActivepiecesError({
             code: ErrorCode.PAUSE_METADATA_MISSING,
             params: {}
@@ -248,7 +246,6 @@ export class FlowExecutor {
           status: ExecutionOutputStatus.PAUSED,
           pauseMetadata: {
             ...iterateFlowResponse.pauseMetadata,
-            executionState: this.executionState,
           },
           ...baseExecutionOutput,
         }
@@ -313,7 +310,6 @@ export class FlowExecutor {
 
     const nextActionHandler = createActionHandler({
       action: actionHandler.nextAction,
-      resumeStepMetadata: this.resumeStepMetadata,
     })
 
     return await this.iterateFlow({

@@ -2,6 +2,7 @@ import { VariableService } from '../services/variable-service';
 import {
   Action,
   ExecutionState,
+  ExecutionType,
   PauseType,
   PieceAction,
   StepOutput,
@@ -10,23 +11,26 @@ import {
 import { BaseActionHandler } from './action-handler';
 import { PieceExecutor } from '../executors/piece-executor';
 import { globals } from '../globals';
-import dayjs from 'dayjs';
+import { isNil } from 'lodash';
 
 type CtorParams = {
+  executionType: ExecutionType
   currentAction: PieceAction
   nextAction?: Action
 }
 
 export class PieceActionHandler extends BaseActionHandler<PieceAction> {
-  variableService: VariableService;
+  executionType: ExecutionType
+  variableService: VariableService
 
-  constructor({ currentAction, nextAction }: CtorParams) {
+  constructor({ executionType, currentAction, nextAction }: CtorParams) {
     super({
       currentAction,
       nextAction
     })
 
-    this.variableService = new VariableService();
+    this.executionType = executionType
+    this.variableService = new VariableService()
   }
 
   async execute(
@@ -36,7 +40,7 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
 
     const { input, pieceName, pieceVersion, actionName } = this.currentAction.settings;
 
-    if (pieceName === 'delay') {
+    if (this.executionType === ExecutionType.BEGIN && pieceName === 'delay') {
       stepOutput.input = await this.variableService.resolve(
         input,
         executionState,

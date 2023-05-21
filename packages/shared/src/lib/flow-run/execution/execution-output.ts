@@ -67,7 +67,7 @@ export type PauseMetadata = DelayPauseMetadata
 
 
 export type PauseExecutionOutput = BaseExecutionOutput<ExecutionOutputStatus.PAUSED> & {
-  pauseMetadata: PauseMetadata
+  pauseMetadata: Omit<PauseMetadata, 'executionState'>
 }
 
 export type FinishExecutionOutput = BaseExecutionOutput<Exclude<ExecutionOutputStatus, ExecutionOutputStatus.PAUSED>>

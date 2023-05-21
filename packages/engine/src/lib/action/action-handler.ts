@@ -2,21 +2,21 @@ import { StepOutput, Action, ExecutionState, ResumeStepMetadata } from '@activep
 
 export type ActionHandler = BaseActionHandler
 
-type CtorParams<CA extends Action> = {
+type CtorParams<CA extends Action, RSM extends ResumeStepMetadata = ResumeStepMetadata> = {
   currentAction: CA
   nextAction?: Action
-  resumeStepMetadata?: ResumeStepMetadata
+  resumeStepMetadata?: RSM
 }
 
-export abstract class BaseActionHandler<CA extends Action = Action> {
+export abstract class BaseActionHandler<CA extends Action = Action, RSM extends ResumeStepMetadata = ResumeStepMetadata> {
   currentAction: CA
   nextAction?: Action
-  resumeStepMetadata?: ResumeStepMetadata
+  resumeStepMetadata?: RSM
 
-  protected constructor({ currentAction, nextAction, resumeStepMetadata }: CtorParams<CA>) {
-    this.currentAction = currentAction;
-    this.nextAction = nextAction;
-    this.resumeStepMetadata = resumeStepMetadata;
+  protected constructor({ currentAction, nextAction, resumeStepMetadata }: CtorParams<CA, RSM>) {
+    this.currentAction = currentAction
+    this.nextAction = nextAction
+    this.resumeStepMetadata = resumeStepMetadata
   }
 
   abstract execute(
