@@ -58,8 +58,10 @@ export const httpSendRequestAction = createAction({
 
     try {
         const response = await httpClient.sendRequest(request);
+        const success: boolean =
+          Math.trunc((response.status ? response.status : 500) / 100) == 2;
         return {
-            success: response.status && response.status == 200,
+            success,
             ...response
         };
     } catch (error) {
