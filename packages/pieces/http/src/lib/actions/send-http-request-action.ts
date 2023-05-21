@@ -31,7 +31,7 @@ export const httpSendRequestAction = createAction({
       required: false,
     }),
     failsafe: Property.Checkbox({
-      displayName: "On error don't abort",
+      displayName: 'No Error on Failure',
       required: false,
     }),
     timeout: Property.Number({

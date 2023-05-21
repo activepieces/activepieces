@@ -1,4 +1,4 @@
-import axios, { AxiosStatic } from 'axios';
+import axios, { AxiosRequestConfig, AxiosStatic } from "axios";
 import { DelegatingAuthenticationConverter } from '../core/delegating-authentication-converter';
 import { BaseHttpClient } from '../core/base-http-client';
 import { HttpError } from '../core/http-error';
@@ -26,13 +26,17 @@ export class AxiosHttpClient extends BaseHttpClient {
 			const axiosRequestMethod = this.getAxiosRequestMethod(request.method);
             const timeout = request.timeout ? request.timeout : 0;
 
-			const response = await axios.request({
-				method: axiosRequestMethod,
-				url,
-				headers,
-				data: request.body,
+
+            const config:AxiosRequestConfig = {
+                method: axiosRequestMethod,
+                url,
+                headers,
+                data: request.body,
                 timeout
-			})
+            };
+            console.log(`[HttpClient#sendRequest] config:\n${JSON.stringify(config)}`);
+
+            const response = await axios.request(config)
 
 			return {
 				status: response.status,
