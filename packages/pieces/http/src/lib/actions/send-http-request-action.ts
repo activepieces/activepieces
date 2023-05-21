@@ -5,6 +5,7 @@ import {
   HttpHeaders,
   QueryParams,
   httpClient,
+  HttpError,
 } from '@activepieces/pieces-common';
 import { httpMethodDropdown } from '../common/props';
 
@@ -57,19 +58,10 @@ export const httpSendRequestAction = createAction({
     };
 
     try {
-        const response = await httpClient.sendRequest(request);
-        const success: boolean =
-          Math.trunc((response.status ? response.status : 500) / 100) == 2;
-        return {
-            success,
-            ...response
-        };
+        return await httpClient.sendRequest(request);
     } catch (error) {
       if (failsafe) {
-        return {
-            success: false,
-            error
-        };
+        return (error as HttpError).errorMessage()
       }
       throw error;
     }
