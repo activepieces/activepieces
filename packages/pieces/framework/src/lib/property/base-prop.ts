@@ -5,22 +5,35 @@ export type BasePropertySchema = {
 	description?: string;
 }
 
-export type TPropertyValue<T, U extends PropertyType, REQUIRED extends boolean> = {
-	valueSchema: T;
-	type: U;
-	required: REQUIRED;
-	defaultValue?: U extends PropertyType.ARRAY?  unknown[]:
-	 U extends PropertyType.JSON? object: 
-	 U extends PropertyType.CHECKBOX? boolean:
-	 U extends PropertyType.LONG_TEXT? string:
-	 U extends PropertyType.SHORT_TEXT? string:
-	 //currently we save number as string
-	 U extends PropertyType.NUMBER? string:
-	 U extends PropertyType.DROPDOWN? unknown  :
-	 U extends PropertyType.MULTI_SELECT_DROPDOWN? unknown[]:
-	 U extends PropertyType.STATIC_MULTI_SELECT_DROPDOWN? unknown[]:
-	 U extends PropertyType.STATIC_DROPDOWN? unknown: 
-	unknown;
+export type TPropertyValue<
+  T,
+  U extends PropertyType,
+  REQUIRED extends boolean
+> = {
+  valueSchema: T;
+  type: U;
+  required: REQUIRED;
+  defaultValue?: U extends PropertyType.ARRAY
+    ? unknown[]
+    : U extends PropertyType.JSON
+    ? object
+    : U extends PropertyType.CHECKBOX
+    ? boolean
+    : U extends PropertyType.LONG_TEXT
+    ? string
+    : U extends PropertyType.SHORT_TEXT
+    ? string
+    : U extends PropertyType.NUMBER
+    ? number
+    : U extends PropertyType.DROPDOWN
+    ? unknown
+    : U extends PropertyType.MULTI_SELECT_DROPDOWN
+    ? unknown[]
+    : U extends PropertyType.STATIC_MULTI_SELECT_DROPDOWN
+    ? unknown[]
+    : U extends PropertyType.STATIC_DROPDOWN
+    ? unknown
+    : unknown;
 };
 
 export type ShortTextProperty<R extends boolean> = BasePropertySchema & TPropertyValue<string, PropertyType.SHORT_TEXT, R>;
