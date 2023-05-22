@@ -123,7 +123,8 @@ export class VariableService {
 
     for (const [key, value] of Object.entries(resolvedInput)) {
       const property = props[key];
-      if (property?.type === PropertyType.NUMBER) {
+      const type = property?.type;
+      if (type === PropertyType.NUMBER) {
         const castedNumber = this.castedToNumber(clonedInput[key]);
         // If the value is required, we don't allow it to be undefined or null
         if ((isNil(castedNumber) || isNaN(castedNumber)) && property.required) {
@@ -134,7 +135,7 @@ export class VariableService {
           errors[key] = `expected number, but found value: ${value}`;
         }
         clonedInput[key] = castedNumber;
-      } else if (property.type === PropertyType.CUSTOM_AUTH) {
+      } else if (type === PropertyType.CUSTOM_AUTH) {
         const innerValidation = this.validateAndCast(value, property.props);
         clonedInput[key] = innerValidation.result;
         if (Object.keys(innerValidation.errors).length > 0) {
