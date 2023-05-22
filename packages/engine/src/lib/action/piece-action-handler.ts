@@ -102,6 +102,8 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
         throw new Error("Action name is not defined")
       }
 
+      globals.addOneTask()
+
       const action = await this.loadAction({
         pieceName,
         pieceVersion,
@@ -134,8 +136,6 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
         executionState,
         censorConnections: false,
       })
-
-      globals.addOneTask()
 
       stepOutput.output = await action.run({
         store: createContextStore('', globals.flowId),
