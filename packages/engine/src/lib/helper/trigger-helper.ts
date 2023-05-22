@@ -24,7 +24,13 @@ export const triggerHelper = {
 
     const variableService = new VariableService();
     const executionState = new ExecutionState();
-    const resolvedInput = await variableService.resolve(input, executionState);
+
+    const resolvedInput = await variableService.resolve({
+      unresolvedInput: input,
+      executionState,
+      censorConnections: false,
+    })
+
     const appListeners: Listener[] = [];
     const prefix = (params.hookType === TriggerHookType.TEST) ? 'test' : '';
     let scheduleOptions: ScheduleOptions = {

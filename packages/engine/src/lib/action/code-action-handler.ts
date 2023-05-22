@@ -2,6 +2,7 @@ import { VariableService } from '../services/variable-service';
 import { CodeExecutor } from '../executors/code-executer';
 import {
   Action,
+  ActionType,
   CodeAction,
   ExecutionState,
   StepOutput,
@@ -9,6 +10,7 @@ import {
 } from '@activepieces/shared';
 import { BaseActionHandler } from './action-handler';
 import { globals } from '../globals';
+import { isNil } from 'lodash';
 
 type CtorParams = {
   currentAction: CodeAction
@@ -27,38 +29,50 @@ export class CodeActionHandler extends BaseActionHandler<CodeAction> {
     this.variableService = new VariableService()
   }
 
-  async execute(
-    executionState: ExecutionState
-  ): Promise<StepOutput> {
+  async execute(executionState: ExecutionState): Promise<StepOutput> {
+    globals.addOneTask()
 
-    globals.addOneTask();
-    const stepOutput = new StepOutput();
-    const params = await this.variableService.resolve(
-      this.currentAction.settings.input,
-      executionState
-    );
+    const censoredInput = await this.variableService.resolve({
+      unresolvedInput: this.currentAction.settings.input,
+      executionState,
+      censorConnections: true,
+    })
+
+    const stepOutput: StepOutput<ActionType.CODE> = {
+      type: ActionType.CODE,
+      status: StepOutputStatus.SUCCEEDED,
+      input: censoredInput,
+    }
+
+    const resolvedInput = await this.variableService.resolve({
+      unresolvedInput: this.currentAction.settings.input,
+      executionState,
+      censorConnections: false,
+    })
+
     const artifactPackagedId = this.currentAction.settings.artifactPackagedId
-    if(!artifactPackagedId){
+
+    if (isNil(artifactPackagedId)) {
       throw new Error("Artifact packaged id is not defined");
     }
-    stepOutput.input = await this.variableService.resolve(
-      this.currentAction.settings.input,
-      executionState,
-      true
-    );
+
     try {
-      const codeExecutor = new CodeExecutor();
+      const codeExecutor = new CodeExecutor()
+
       stepOutput.output = await codeExecutor.executeCode(
         artifactPackagedId,
-        params
-      );
-      stepOutput.status = StepOutputStatus.SUCCEEDED;
-      return stepOutput;
-    } catch (e) {
-      console.error(e);
-      stepOutput.errorMessage = (e as Error).message;
-      stepOutput.status = StepOutputStatus.FAILED;
-      return stepOutput;
+        resolvedInput
+      )
+
+      return stepOutput
+    }
+    catch (e) {
+      console.error(e)
+
+      stepOutput.status = StepOutputStatus.FAILED
+      stepOutput.errorMessage = (e as Error).message
+
+      return stepOutput
     }
   }
 }

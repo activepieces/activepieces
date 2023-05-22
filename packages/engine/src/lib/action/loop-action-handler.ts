@@ -1,6 +1,6 @@
 import { FlowExecutor } from '../executors/flow-executor';
 import { VariableService } from '../services/variable-service';
-import { Action, ExecutionOutputStatus, ExecutionState, LoopOnItemsAction, LoopResumeStepMetadata } from '@activepieces/shared';
+import { Action, ActionType, ExecutionOutputStatus, ExecutionState, LoopOnItemsAction, LoopResumeStepMetadata } from '@activepieces/shared';
 import { BaseActionHandler } from './action-handler';
 import { LoopOnItemsStepOutput, StepOutputStatus, StepOutput } from '@activepieces/shared';
 import { isNil } from 'lodash';
@@ -62,20 +62,24 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
   /**
    * initializes an empty step output
    */
-  private async initStepOutput({ executionState }: InitStepOutputParams) {
-    const newStepOutput = new LoopOnItemsStepOutput()
-
-    newStepOutput.input = await this.variableService.resolve(
-      this.currentAction.settings,
+  private async initStepOutput({ executionState }: InitStepOutputParams): Promise<LoopOnItemsStepOutput> {
+    const censoredInput = await this.variableService.resolve({
+      unresolvedInput: this.currentAction.settings,
       executionState,
-      true
-    );
+      censorConnections: true,
+    })
+
+    const newStepOutput: LoopOnItemsStepOutput = {
+      type: ActionType.LOOP_ON_ITEMS,
+      status: StepOutputStatus.SUCCEEDED,
+      input: censoredInput,
+    }
 
     newStepOutput.output = {
       index: 1,
       item: undefined,
       iterations: []
-    };
+    }
 
     return newStepOutput
   }
@@ -90,7 +94,7 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
       })
     }
 
-    const oldStepOutput = executionState.getStepOutput({
+    const oldStepOutput = executionState.getStepOutput<LoopOnItemsStepOutput>({
       stepName: this.currentAction.name,
       ancestors,
     })
@@ -104,10 +108,11 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
     executionState: ExecutionState,
     ancestors: [string, number][]
   ): Promise<StepOutput> {
-    const resolvedInput = await this.variableService.resolve(
-      this.currentAction.settings,
-      executionState
-    );
+    const resolvedInput = await this.variableService.resolve({
+      unresolvedInput: this.currentAction.settings,
+      executionState,
+      censorConnections: false,
+    })
 
     const stepOutput = await this.loadStepOutput({
       executionState,
@@ -159,17 +164,20 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
           return stepOutput
         }
       }
-      stepOutput.status = StepOutputStatus.SUCCEEDED;
-      executionState.insertStep(stepOutput, this.currentAction.name, ancestors);
 
-      console.log('[LoopActionHandler#execute] stepOutput.output:', stepOutput.output);
+      executionState.insertStep(stepOutput, this.currentAction.name, ancestors)
+
+      console.log('[LoopActionHandler#execute] stepOutput.output:', stepOutput.output)
 
       return stepOutput
-    } catch (e) {
-      console.error(e);
-      stepOutput.errorMessage = (e as Error).message;
-      stepOutput.status = StepOutputStatus.FAILED;
-      return Promise.resolve(stepOutput);
+    }
+    catch (e) {
+      console.error(e)
+
+      stepOutput.errorMessage = (e as Error).message
+      stepOutput.status = StepOutputStatus.FAILED
+
+      return Promise.resolve(stepOutput)
     }
   }
 

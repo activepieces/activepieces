@@ -1,6 +1,7 @@
 import { VariableService } from '../services/variable-service';
 import {
   Action,
+  ActionType,
   ExecutionState,
   ExecutionType,
   PauseType,
@@ -36,17 +37,21 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
   async execute(
     executionState: ExecutionState
   ): Promise<StepOutput> {
-    const stepOutput = new StepOutput();
+    const censoredInput = await this.variableService.resolve({
+      unresolvedInput: this.currentAction.settings.input,
+      executionState,
+      censorConnections: true,
+    })
+
+    const stepOutput: StepOutput<ActionType.PIECE> = {
+      type: ActionType.PIECE,
+      status: StepOutputStatus.SUCCEEDED,
+      input: censoredInput,
+    }
 
     const { input, pieceName, pieceVersion, actionName } = this.currentAction.settings;
 
     if (this.executionType === ExecutionType.BEGIN && pieceName === 'delay') {
-      stepOutput.input = await this.variableService.resolve(
-        input,
-        executionState,
-        true,
-      )
-
       const { delay } = stepOutput.input as { delay: number }
 
       stepOutput.output = {
@@ -59,20 +64,16 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
       return stepOutput
     }
 
-    const config = await this.variableService.resolve(
-      input,
-      executionState
-    );
-
-    globals.addOneTask();
-    stepOutput.input = await this.variableService.resolve(
-      input,
+    const config = await this.variableService.resolve({
+      unresolvedInput: input,
       executionState,
-      true
-    );
+      censorConnections: false,
+    })
 
-    if (!actionName){
-      throw new Error("Action name is not defined");
+    globals.addOneTask()
+
+    if (isNil(actionName)) {
+      throw new Error("Action name is not defined")
     }
 
     try {
@@ -83,14 +84,17 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
         pieceVersion,
         actionName: actionName,
         config,
-      });
+      })
 
-      stepOutput.status = StepOutputStatus.SUCCEEDED;
-      return stepOutput;
-    } catch (e) {
-      stepOutput.errorMessage = (e as Error).message;
-      stepOutput.status = StepOutputStatus.FAILED;
-      return stepOutput;
+      return stepOutput
+    }
+    catch (e) {
+      console.error(e)
+
+      stepOutput.status = StepOutputStatus.FAILED
+      stepOutput.errorMessage = (e as Error).message
+
+      return stepOutput
     }
   }
 }

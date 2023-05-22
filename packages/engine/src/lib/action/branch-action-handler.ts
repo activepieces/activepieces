@@ -1,6 +1,6 @@
 import { FlowExecutor } from '../executors/flow-executor';
 import { VariableService } from '../services/variable-service';
-import { ExecutionState, BranchAction, Action, BranchStepOutput, BranchCondition, BranchOperator, ExecutionOutputStatus, BranchResumeStepMetadata } from '@activepieces/shared';
+import { ExecutionState, BranchAction, Action, BranchStepOutput, BranchCondition, BranchOperator, ExecutionOutputStatus, BranchResumeStepMetadata, ActionType } from '@activepieces/shared';
 import { BaseActionHandler } from './action-handler';
 import { StepOutputStatus, StepOutput } from '@activepieces/shared';
 
@@ -33,17 +33,23 @@ export class BranchActionHandler extends BaseActionHandler<BranchAction, BranchR
     executionState: ExecutionState,
     ancestors: [string, number][]
   ): Promise<StepOutput> {
-    const resolvedInput = await this.variableService.resolve(
-      this.currentAction.settings,
-      executionState
-    );
-
-    const stepOutput = new BranchStepOutput();
-    stepOutput.input = await this.variableService.resolve(
-      this.currentAction.settings,
+    const resolvedInput = await this.variableService.resolve({
+      unresolvedInput: this.currentAction.settings,
       executionState,
-      true
-    );
+      censorConnections: false,
+    })
+
+    const censoredInput = await this.variableService.resolve({
+      unresolvedInput: this.currentAction.settings,
+      executionState,
+      censorConnections: true,
+    })
+
+    const stepOutput: BranchStepOutput = {
+      type: ActionType.BRANCH,
+      status: StepOutputStatus.SUCCEEDED,
+      input: censoredInput,
+    }
 
     try {
       const condition = this.resumeStepMetadata
@@ -51,7 +57,7 @@ export class BranchActionHandler extends BaseActionHandler<BranchAction, BranchR
         : evaluateConditions(resolvedInput.conditions);
 
       stepOutput.output = {
-        condition: condition,
+        condition,
       }
 
       executionState.insertStep(stepOutput, this.currentAction.name, ancestors);
@@ -77,8 +83,7 @@ export class BranchActionHandler extends BaseActionHandler<BranchAction, BranchR
         }
       }
 
-      stepOutput.status = StepOutputStatus.SUCCEEDED;
-      executionState.insertStep(stepOutput, this.currentAction.name, ancestors);
+      executionState.insertStep(stepOutput, this.currentAction.name, ancestors)
 
       return stepOutput
     }
