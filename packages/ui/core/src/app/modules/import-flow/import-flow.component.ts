@@ -45,7 +45,7 @@ export class ImportFlowComponent implements OnInit {
       switchMap((params) => {
         const templateId = encodeURIComponent(params['templateId']);
         return this.http.get<FlowTemplateWithVersion>(
-          `https://cdn.activepieces.com/templates/${templateId}.json`
+          `https://activepieces-cdn.fra1.cdn.digitaloceanspaces.com/templates/${templateId}.json`
         );
       }),
       catchError((error) => {
@@ -89,8 +89,13 @@ export class ImportFlowComponent implements OnInit {
         catchError((error) => {
           console.error(error);
           if (error.status === StatusCodes.UNAUTHORIZED) {
-            this.router.navigate(['/sign-in'], {
-              queryParams: { redirect_url: window.location.href },
+            this.router.navigate(['/sign-up'], {
+              queryParams: {
+                redirect_url:
+                  `${window.location.origin}${window.location.pathname}`.split(
+                    '?'
+                  )[0],
+              },
             });
             return EMPTY;
           }
