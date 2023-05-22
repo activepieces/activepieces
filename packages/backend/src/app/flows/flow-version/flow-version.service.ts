@@ -229,11 +229,14 @@ function replaceConnections(obj: Record<string, unknown>): Record<string, unknow
     const replacedObj: Record<string, unknown> = {}
 
     for (const [key, value] of Object.entries(obj)) {
-        if (typeof value === 'object' && value !== null) {
+        if (Array.isArray(value)) {
+            replacedObj[key] = value
+        } 
+        else if (typeof value === 'object' && value !== null) {
             replacedObj[key] = replaceConnections(value as Record<string, unknown>)
         }
         else if (typeof value === 'string') {
-            const replacedValue = value.replace(/\${connections\.[^}]*}/g, '')
+            const replacedValue = value.replace(/\{{connections\.[^}]*}}/g, '')
             replacedObj[key] = replacedValue === '' ? undefined : replacedValue
         }
         else {
@@ -278,8 +281,8 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
             clonedRequest.request.action.valid = true
             if (clonedRequest.request.action.type === ActionType.MISSING) {
                 clonedRequest.request.action.valid = false
-            } 
-            else  if (clonedRequest.request.action.type === ActionType.LOOP_ON_ITEMS) {
+            }
+            else if (clonedRequest.request.action.type === ActionType.LOOP_ON_ITEMS) {
                 clonedRequest.request.action.valid = loopSettingsValidator.Check(clonedRequest.request.action.settings)
             }
             else if (clonedRequest.request.action.type === ActionType.BRANCH) {
@@ -330,9 +333,9 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
 
         case FlowOperationType.UPDATE_TRIGGER:
             clonedRequest.request.valid = true
-            if(clonedRequest.request.type === TriggerType.EMPTY){
+            if (clonedRequest.request.type === TriggerType.EMPTY) {
                 clonedRequest.request.valid = false
-            } 
+            }
             else if (clonedRequest.request.type === TriggerType.PIECE) {
                 clonedRequest.request.valid = await validateTrigger(clonedRequest.request.settings)
             }
