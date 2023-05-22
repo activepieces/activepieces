@@ -3,6 +3,7 @@ import { VariableService } from '../services/variable-service';
 import { Action, ExecutionOutputStatus, ExecutionState, LoopOnItemsAction, LoopResumeStepMetadata } from '@activepieces/shared';
 import { BaseActionHandler } from './action-handler';
 import { LoopOnItemsStepOutput, StepOutputStatus, StepOutput } from '@activepieces/shared';
+import { isNil } from 'lodash';
 
 type CtorParams = {
   currentAction: LoopOnItemsAction
@@ -11,7 +12,16 @@ type CtorParams = {
   resumeStepMetadata?: LoopResumeStepMetadata
 }
 
-export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction> {
+type InitStepOutputParams = {
+  executionState: ExecutionState
+}
+
+type LoadStepOutputParams = {
+  executionState: ExecutionState
+  ancestors: [string, number][]
+}
+
+export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction, LoopResumeStepMetadata> {
   firstLoopAction?: Action
   variableService: VariableService
 
@@ -41,6 +51,55 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
     return undefined;
   }
 
+  private iterationIsResuming(i: number) {
+    return this.resumeStepMetadata?.iteration === i + 1
+  }
+
+  private iterationIsNotResuming(i: number) {
+    return !this.iterationIsResuming(i)
+  }
+
+  /**
+   * initializes an empty step output
+   */
+  private async initStepOutput({ executionState }: InitStepOutputParams) {
+    const newStepOutput = new LoopOnItemsStepOutput()
+
+    newStepOutput.input = await this.variableService.resolve(
+      this.currentAction.settings,
+      executionState,
+      true
+    );
+
+    newStepOutput.output = {
+      index: 1,
+      item: undefined,
+      iterations: []
+    };
+
+    return newStepOutput
+  }
+
+  /**
+   * Loads old step output if execution is resuming, else initializes an empty step output
+   */
+  private async loadStepOutput({ executionState, ancestors }: LoadStepOutputParams): Promise<LoopOnItemsStepOutput> {
+    if (isNil(this.resumeStepMetadata)) {
+      return this.initStepOutput({
+        executionState,
+      })
+    }
+
+    const oldStepOutput = executionState.getStepOutput({
+      stepName: this.currentAction.name,
+      ancestors,
+    })
+
+    return oldStepOutput ?? this.initStepOutput({
+      executionState,
+    })
+  }
+
   async execute(
     executionState: ExecutionState,
     ancestors: [string, number][]
@@ -50,27 +109,23 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
       executionState
     );
 
-    const stepOutput = new LoopOnItemsStepOutput();
-    stepOutput.input = await this.variableService.resolve(
-      this.currentAction.settings,
+    const stepOutput = await this.loadStepOutput({
       executionState,
-      true
-    );
+      ancestors,
+    })
 
-    stepOutput.output = {
-      index: 1,
-      item: undefined,
-      iterations: []
-    };
     executionState.insertStep(stepOutput, this.currentAction.name, ancestors);
-    const loopOutput = stepOutput.output;
+    const loopOutput = stepOutput.output!
     try {
-      for (let i = 0; i < resolvedInput.items.length; ++i) {
+      for (let i = loopOutput.index - 1; i < resolvedInput.items.length; ++i) {
         ancestors.push([this.currentAction.name, i]);
+
+        if (this.iterationIsNotResuming(i)) {
+          loopOutput.iterations.push({})
+        }
 
         loopOutput.index = i + 1;
         loopOutput.item = resolvedInput.items[i];
-        loopOutput.iterations.push({});
         this.updateExecutionStateWithLoopDetails(executionState, loopOutput);
 
         if (this.firstLoopAction === undefined) {
@@ -81,10 +136,12 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
         const executor = new FlowExecutor({
           executionState,
           firstStep: this.firstLoopAction,
-          resumeStepMetadata: this.resumeStepMetadata,
+          resumeStepMetadata: this.iterationIsResuming(i)
+            ? this.resumeStepMetadata?.childResumeStepMetadata
+            : undefined,
         })
 
-        const executionOutput = await executor.execute({ ancestors });
+        const executionOutput = await executor.execute({ ancestors })
 
         ancestors.pop();
 
@@ -105,6 +162,8 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
       stepOutput.status = StepOutputStatus.SUCCEEDED;
       executionState.insertStep(stepOutput, this.currentAction.name, ancestors);
 
+      console.log('[LoopActionHandler#execute] stepOutput.output:', stepOutput.output);
+
       return stepOutput
     } catch (e) {
       console.error(e);
@@ -114,9 +173,12 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
     }
   }
 
-  // We should remove iterations during the inner calls, to avoid huge overhead for logs.
-  // Example if there are two nested loop contains code that reference to the first loop.
-  // The iteration object will always contain all previous iterations.
+
+  /**
+   * We should remove iterations during the inner calls, to avoid huge overhead for logs.
+   * Example if there are two nested loop contains code that reference to the first loop.
+   * The iteration object will always contain all previous iterations.
+   */
   updateExecutionStateWithLoopDetails(
     executionState: ExecutionState,
     loopOutput: LoopOnItemsStepOutput['output']

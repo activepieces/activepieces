@@ -156,7 +156,7 @@ const execute = async <Result extends EngineHelperResult>(
         result,
     }
 
-    logger.trace(response, '[EngineHelper#response] response')
+    logger.debug(response, '[EngineHelper#response] response')
 
     return response
 }

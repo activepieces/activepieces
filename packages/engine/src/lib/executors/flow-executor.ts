@@ -75,8 +75,7 @@ export class FlowExecutor {
   }
 
   private getResumeStep({ resumeStepMetadata }: GetResumeStepParams) {
-    console.log('[FlowExecutor#getResumeStep] this.firstStep:', this.firstStep);
-    console.log('[FlowExecutor#getResumeStep] resumeStepMetadata:', resumeStepMetadata);
+    console.debug('[FlowExecutor#getResumeStep] resumeStepMetadata:', resumeStepMetadata);
 
     const resumeStep = flowHelper.getStepFromSubFlow({
       subFlowStartStep: this.firstStep,
@@ -132,8 +131,6 @@ export class FlowExecutor {
             params: {}
           })
         }
-
-        console.log('[FlowExecutor#generatePauseMetadata] stepOutput.output:', output);
 
         return {
           ...stepOutput.pauseMetadata,
