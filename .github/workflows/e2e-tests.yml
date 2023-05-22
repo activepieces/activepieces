@@ -19,20 +19,9 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 18
-      - name: Cache dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: npm-${{ hashFiles('package-lock.json') }}
-          restore-keys: npm-
-
-      - name: Cache Playwright Browsers
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-browsers-${{ hashFiles('packages/tests-e2e/package-lock.json') }}
-          restore-keys: playwright-browsers-
-
+      - name: Install dependencies
+        run: npm ci
+        working-directory: packages/tests-e2e
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
         working-directory: packages/tests-e2e
