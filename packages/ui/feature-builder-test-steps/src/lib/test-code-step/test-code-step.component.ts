@@ -120,16 +120,18 @@ export class TestCodeStepComponent extends TestStepCoreComponent {
           take(1),
           tap((step) => {
             if (step && step.type === ActionType.CODE) {
+              debugger;
               const clone: CodeAction = {
                 ...step,
                 settings: {
                   ...step.settings,
                   inputUiInfo: {
-                    currentSelectedData: result.output
-                      ? result.output
-                      : result.output === undefined
-                      ? 'undefined'
-                      : JSON.stringify(result.output),
+                    currentSelectedData:
+                      result.output || result.output
+                        ? result.output
+                        : result.output === undefined
+                        ? 'undefined'
+                        : JSON.stringify(result.output),
                     lastTestDate: new Date().toString(),
                   },
                 },

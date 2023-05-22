@@ -69,7 +69,8 @@
     <div *ngIf="res.date" class="ap-typography-body-2 ap-text-body ap--mt-2 ap-mb-4 ap-pl-0.5">
         {{ res.date | timeago:true}}
     </div>
-    <ap-json-viewer class="json-viewer" title="Output" [maxHeight]="400" [content]="res.output"></ap-json-viewer>
+    <ap-json-viewer [stepDisplayName]="(currentStepDisplayName$|async )|| ''" class="json-viewer" title="Output"
+        [maxHeight]="400" [content]="res.output"></ap-json-viewer>
 
 </ng-template>
 

@@ -40,8 +40,8 @@
                 </mat-select>
             </mat-form-field>
 
-            <ap-json-viewer class="json-viewer" title="Output" [maxHeight]="400"
-                [content]="selectedDataControl.value"></ap-json-viewer>
+            <ap-json-viewer [stepDisplayName]="(currentStepDisplayName$|async )|| ''" class="json-viewer" title="Output"
+                [maxHeight]="400" [content]="selectedDataControl.value"></ap-json-viewer>
 
 
         </ng-container>
