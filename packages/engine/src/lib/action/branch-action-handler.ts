@@ -1,9 +1,8 @@
 import { FlowExecutor } from '../executors/flow-executor';
 import { VariableService } from '../services/variable-service';
-import { ExecutionState, BranchAction, Action, BranchStepOutput, BranchCondition, BranchOperator, ActivepiecesError, ErrorCode, ExecutionOutputStatus, BranchResumeStepMetadata } from '@activepieces/shared';
+import { ExecutionState, BranchAction, Action, BranchStepOutput, BranchCondition, BranchOperator, ExecutionOutputStatus, BranchResumeStepMetadata } from '@activepieces/shared';
 import { BaseActionHandler } from './action-handler';
 import { StepOutputStatus, StepOutput } from '@activepieces/shared';
-import { isNil } from 'lodash';
 
 type CtorParams = {
   currentAction: BranchAction
@@ -61,28 +60,21 @@ export class BranchActionHandler extends BaseActionHandler<BranchAction, BranchR
         ? this.onSuccessAction
         : this.onFailureAction
 
-      if (isNil(firstStep)) {
-        throw new ActivepiecesError({
-          code: ErrorCode.STEP_NOT_FOUND,
-          params: {
-            stepName: this.currentAction.name,
-          }
+      if (firstStep) {
+        const executor = new FlowExecutor({
+          executionState,
+          firstStep,
+          resumeStepMetadata: this.resumeStepMetadata?.childResumeStepMetadata,
         })
-      }
 
-      const executor = new FlowExecutor({
-        executionState,
-        firstStep,
-        resumeStepMetadata: this.resumeStepMetadata?.childResumeStepMetadata,
-      })
+        const executionOutput = await executor.execute()
 
-      const executionOutput = await executor.execute()
+        if (executionOutput.status === ExecutionOutputStatus.PAUSED) {
+          stepOutput.status = StepOutputStatus.PAUSED
+          stepOutput.pauseMetadata = executionOutput.pauseMetadata
 
-      if (executionOutput.status === ExecutionOutputStatus.PAUSED) {
-        stepOutput.status = StepOutputStatus.PAUSED
-        stepOutput.pauseMetadata = executionOutput.pauseMetadata
-
-        return stepOutput
+          return stepOutput
+        }
       }
 
       stepOutput.status = StepOutputStatus.SUCCEEDED;
