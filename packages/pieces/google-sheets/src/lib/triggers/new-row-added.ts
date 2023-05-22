@@ -27,9 +27,6 @@ export const newRowAdded = createTrigger({
     "rowId": 1
   },
   onEnable: async (context) => {
-    context.setSchedule({
-      cronExpression: '*/1 * * * *',
-    })
     await pollingHelper.onEnable(polling, {
       store: context.store,
       propsValue: context.propsValue,
