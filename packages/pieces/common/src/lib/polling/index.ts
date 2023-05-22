@@ -1,4 +1,5 @@
 import { Store } from "@activepieces/pieces-framework";
+import { isNil } from "lodash";
 
 interface TimebasedPolling<INPUT> {
     strategy: DedupeStrategy.TIMEBASED;
@@ -43,14 +44,15 @@ export const pollingHelper = {
                 const lastItemId = (await store.get<unknown>("lastItem"));
                 const items = await polling.items({ propsValue, lastItemId });
                 const newLastItem = items?.[0]?.id;
-                if (!lastItemId || !newLastItem) {
-                    return items;
+                if (!isNil(newLastItem)) {
+                  await store.put("lastItem", newLastItem);
                 }
-                await store.put("lastItem", newLastItem);
-                // get  items until you find the last item
                 const lastItemIndex = items.findIndex(f => f.id === lastItemId);
+                if (isNil(lastItemId) || lastItemIndex == -1) {
+                  return items?.map((item) => item.data) ?? [];
+                }
                 return items?.slice(0, lastItemIndex).map((item) => item.data) ?? [];
-            }
+              }
         }
     },
     async onEnable<INPUT>(polling: Polling<INPUT>, { store, propsValue }: { store: Store, propsValue: INPUT }): Promise<void> {
@@ -60,10 +62,15 @@ export const pollingHelper = {
                 break;
             }
             case DedupeStrategy.LAST_ITEM: {
-                const items = (await polling.items({ propsValue, lastItemId: null}));
-                await store.put("lastItem", items?.[0]?.id);
+                const items = (await polling.items({ propsValue, lastItemId: null }));
+                const lastItemId = items?.[0]?.id;
+                if (!isNil(lastItemId)) {
+                  await store.put("lastItem", lastItemId);
+                } else {
+                  await store.delete("lastItem");
+                }
                 break;
-            }
+              }
         }
     },
     async onDisable<INPUT>(polling: Polling<INPUT>, { store, propsValue }: { store: Store, propsValue: INPUT }): Promise<void> {

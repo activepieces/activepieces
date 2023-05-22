@@ -30,6 +30,8 @@ const linkDependencies = async (params: LinkDependenciesParams) => {
     const basePath = __dirname.split('/dist')[0]
     const baseLinkPath =`${basePath}/dist/packages/pieces`
 
+    await packageManager.linkDependency(projectPath, `${baseLinkPath}/common`)
+    await packageManager.linkDependency(projectPath, `${baseLinkPath}/framework`)
     for (const piece of pieces) {
         await packageManager.linkDependency(projectPath, `${baseLinkPath}/${piece.name}`)
     }

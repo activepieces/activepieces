@@ -1,4 +1,4 @@
-import { OAuth2PropertyValue, createTrigger } from '@activepieces/pieces-framework';
+import { OAuth2PropertyValue, Property, createTrigger } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from "@activepieces/pieces-framework";
 import { googleSheetsCommon } from '../common/common';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
@@ -14,7 +14,12 @@ export const newRowAdded = createTrigger({
   props: {
     authentication: googleSheetsCommon.authentication,
     spreadsheet_id: googleSheetsCommon.spreadsheet_id,
-    sheet_id: googleSheetsCommon.sheet_id
+    sheet_id: googleSheetsCommon.sheet_id,
+    max_rows_to_poll: Property.Number({
+      displayName: 'Max Rows to Poll',
+      description: 'The maximum number of rows to poll, the rest will be polled on the next run',
+      required: false,
+    })
   },
   type: TriggerStrategy.POLLING,
   sampleData: {
@@ -22,6 +27,9 @@ export const newRowAdded = createTrigger({
     "rowId": 1
   },
   onEnable: async (context) => {
+    context.setSchedule({
+      cronExpression: '*/1 * * * *',
+    })
     await pollingHelper.onEnable(polling, {
       store: context.store,
       propsValue: context.propsValue,
@@ -48,16 +56,23 @@ export const newRowAdded = createTrigger({
 });
 
 
-const polling: Polling<{ authentication: OAuth2PropertyValue, spreadsheet_id: string, sheet_id: number}> = {
+const polling: Polling<{ authentication: OAuth2PropertyValue, spreadsheet_id: string, sheet_id: number, max_rows_to_poll: number | undefined }> = {
   strategy: DedupeStrategy.LAST_ITEM,
-  items: async ({ propsValue }) => {
-      const currentValues = await googleSheetsCommon.getValues(propsValue.spreadsheet_id, propsValue.authentication.access_token, propsValue.sheet_id)
-      return currentValues.reverse().map((item, index) => ({
-          id: currentValues.length - index,
-          data: {
-            value: item,
-            rowId: currentValues.length - index
-          },
-      }));
+  items: async ({ propsValue, lastItemId }) => {
+    const currentValues = (await googleSheetsCommon.getValues(propsValue.spreadsheet_id, propsValue.authentication.access_token, propsValue.sheet_id)) ?? []
+    const items = currentValues.map((item, index) => ({
+      id: index + 1,
+      data: {
+        value: item,
+        rowId: index + 1
+      },
+    }));
+    // Results are expected to be from newest to oldest, that is why we reverse the array
+    const lastItemIndex = items.findIndex(f => f.id === lastItemId);
+    if (propsValue.max_rows_to_poll === undefined) {
+      return items.reverse();
+    }
+    const result = items?.slice(lastItemIndex + 1, lastItemIndex + 1 + propsValue.max_rows_to_poll).reverse() ?? [];
+    return result;
   }
 };
