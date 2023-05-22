@@ -120,7 +120,6 @@ export class TestCodeStepComponent extends TestStepCoreComponent {
           take(1),
           tap((step) => {
             if (step && step.type === ActionType.CODE) {
-              debugger;
               const clone: CodeAction = {
                 ...step,
                 settings: {

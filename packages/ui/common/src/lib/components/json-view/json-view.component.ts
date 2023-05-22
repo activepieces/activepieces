@@ -21,7 +21,7 @@ export class JsonViewComponent implements AfterViewInit {
   @Input() isInput = false;
   @Input() title: string;
   @Input() maxHeight: number | undefined = undefined;
-  @Input() stepDisplayName: string;
+
   _content: unknown;
   @Input() set content(value: unknown) {
     this.highlight = false;
@@ -74,8 +74,6 @@ export class JsonViewComponent implements AfterViewInit {
       copyText(JSON.stringify(this._content));
     }
 
-    this.snackbar.open(
-      `${this.stepDisplayName} ${this.isInput ? 'input' : 'output'} copied`
-    );
+    this.snackbar.open(`${this.isInput ? 'Input' : 'Output'} copied`);
   }
 }

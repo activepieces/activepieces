@@ -19,8 +19,8 @@
       <span class="description"> {{ selectedStepResult.duration }}ms </span>
     </div>
     <ap-json-viewer class="json-viewer" title="Input" [maxHeight]="400" [content]="selectedStepResult.input"
-      [stepDisplayName]="selectedStepName" [isInput]="true"></ap-json-viewer>
-    <ap-json-viewer title="Output" [content]="selectedStepResult.errorMessage ?? selectedStepResult.output"
-      [stepDisplayName]="selectedStepName"></ap-json-viewer>
+      [isInput]="true"></ap-json-viewer>
+    <ap-json-viewer title="Output"
+      [content]="selectedStepResult.errorMessage ?? selectedStepResult.output"></ap-json-viewer>
   </div>
 </div>
