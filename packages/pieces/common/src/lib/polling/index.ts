@@ -14,7 +14,7 @@ interface TimebasedPolling<INPUT> {
 interface LastItemPolling<INPUT> {
     strategy: DedupeStrategy.LAST_ITEM;
     items: (
-        { propsValue }: { propsValue: INPUT },
+        { propsValue, lastItemId }: { propsValue: INPUT, lastItemId: unknown },
     ) => Promise<{
         id: unknown;
         data: unknown;
@@ -34,16 +34,16 @@ export const pollingHelper = {
         switch (polling.strategy) {
             case DedupeStrategy.TIMEBASED: {
                 const lastEpochMilliSeconds = (await store.get<number>("lastPoll")) ?? 0;
-                const items = await polling.items({ propsValue, lastFetchEpochMS: lastEpochMilliSeconds});
+                const items = await polling.items({ propsValue, lastFetchEpochMS: lastEpochMilliSeconds });
                 const newLastEpochMilliSeconds = items.reduce((acc, item) => Math.max(acc, item.epochMilliSeconds), lastEpochMilliSeconds);
                 await store.put("lastPoll", newLastEpochMilliSeconds);
                 return items.filter(f => f.epochMilliSeconds > lastEpochMilliSeconds).map((item) => item.data);
             }
             case DedupeStrategy.LAST_ITEM: {
                 const lastItemId = (await store.get<unknown>("lastItem"));
-                const items = await polling.items({ propsValue });
+                const items = await polling.items({ propsValue, lastItemId });
                 const newLastItem = items?.[0]?.id;
-                if (!newLastItem) {
+                if (!lastItemId || !newLastItem) {
                     return items;
                 }
                 await store.put("lastItem", newLastItem);
@@ -60,7 +60,7 @@ export const pollingHelper = {
                 break;
             }
             case DedupeStrategy.LAST_ITEM: {
-                const items = (await polling.items({ propsValue }));
+                const items = (await polling.items({ propsValue, lastItemId: null}));
                 await store.put("lastItem", items?.[0]?.id);
                 break;
             }
@@ -81,7 +81,7 @@ export const pollingHelper = {
                 break;
             }
             case DedupeStrategy.LAST_ITEM: {
-                items = await polling.items({ propsValue });
+                items = await polling.items({ propsValue, lastItemId: null });
                 break;
             }
         }
