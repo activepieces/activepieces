@@ -71,7 +71,7 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
 
     const newStepOutput: LoopOnItemsStepOutput = {
       type: ActionType.LOOP_ON_ITEMS,
-      status: StepOutputStatus.SUCCEEDED,
+      status: StepOutputStatus.RUNNING,
       input: censoredInput,
     }
 
@@ -165,6 +165,7 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
         }
       }
 
+      stepOutput.status = StepOutputStatus.SUCCEEDED
       executionState.insertStep(stepOutput, this.currentAction.name, ancestors)
 
       console.log('[LoopActionHandler#execute] stepOutput.output:', stepOutput.output)

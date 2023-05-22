@@ -47,7 +47,7 @@ export class BranchActionHandler extends BaseActionHandler<BranchAction, BranchR
 
     const stepOutput: BranchStepOutput = {
       type: ActionType.BRANCH,
-      status: StepOutputStatus.SUCCEEDED,
+      status: StepOutputStatus.RUNNING,
       input: censoredInput,
     }
 
@@ -83,6 +83,7 @@ export class BranchActionHandler extends BaseActionHandler<BranchAction, BranchR
         }
       }
 
+      stepOutput.status = StepOutputStatus.SUCCEEDED
       executionState.insertStep(stepOutput, this.currentAction.name, ancestors)
 
       return stepOutput

@@ -45,7 +45,7 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
 
     const stepOutput: StepOutput<ActionType.PIECE> = {
       type: ActionType.PIECE,
-      status: StepOutputStatus.SUCCEEDED,
+      status: StepOutputStatus.RUNNING,
       input: censoredInput,
     }
 
@@ -86,6 +86,7 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
         config,
       })
 
+      stepOutput.status = StepOutputStatus.SUCCEEDED
       return stepOutput
     }
     catch (e) {

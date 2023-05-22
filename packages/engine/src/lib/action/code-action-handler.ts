@@ -40,7 +40,7 @@ export class CodeActionHandler extends BaseActionHandler<CodeAction> {
 
     const stepOutput: StepOutput<ActionType.CODE> = {
       type: ActionType.CODE,
-      status: StepOutputStatus.SUCCEEDED,
+      status: StepOutputStatus.RUNNING,
       input: censoredInput,
     }
 
@@ -64,6 +64,7 @@ export class CodeActionHandler extends BaseActionHandler<CodeAction> {
         resolvedInput
       )
 
+      stepOutput.status = StepOutputStatus.SUCCEEDED
       return stepOutput
     }
     catch (e) {
