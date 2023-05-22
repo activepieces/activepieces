@@ -105,11 +105,14 @@ function getAllSteps(flowVersion: FlowVersion): (Action | Trigger)[] {
   return traverseInternal(flowVersion.trigger);
 }
 function getAllChildSteps(action: LoopOnItemsAction | BranchAction): (Action)[] {
-  if(action.type === ActionType.LOOP_ON_ITEMS)
+  switch(action.type)
   {
+    case ActionType.LOOP_ON_ITEMS:
     return traverseInternal(action.firstLoopAction) as Action[];
+    default:
+      return [...traverseInternal(action.onSuccessAction),...traverseInternal(action.onFailureAction)] as Action[];
   }
-  return [...traverseInternal(action.onSuccessAction),...traverseInternal(action.onFailureAction)] as Action[];
+
 }
 
 function getStep(
@@ -300,14 +303,17 @@ function createAction(
 
 function isChildOf(parent:LoopOnItemsAction | BranchAction,child:Action)
 {
-  if(parent.type === ActionType.LOOP_ON_ITEMS)
+  switch(parent.type)
   {
-    const children = traverseInternal(parent.firstLoopAction);
-    return children.findIndex(c=>c.name === child.name) >-1;
+    case ActionType.LOOP_ON_ITEMS:{
+      const children = getAllChildSteps(parent);
+      return children.findIndex(c=>c.name === child.name) >-1;}
+    default:{
+      const children = [...getAllChildSteps(parent),...getAllChildSteps(parent)];
+      return children.findIndex(c=>c.name === child.name) >-1;}
   }
-
-    const children = [...traverseInternal(parent.onSuccessAction),...traverseInternal(parent.onFailureAction)];
-    return children.findIndex(c=>c.name === child.name) >-1;
+ 
+    
  
 }
 function createTrigger(
