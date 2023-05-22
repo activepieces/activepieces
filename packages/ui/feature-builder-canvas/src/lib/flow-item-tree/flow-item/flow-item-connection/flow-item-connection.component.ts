@@ -14,7 +14,6 @@ import { FlowItem } from '@activepieces/ui/feature-builder-store';
 })
 export class FlowItemConnectionComponent {
   @Input() flowItem: FlowItem;
-  @Input() colorLine = false;
   @Input() viewMode: boolean;
   @Input() insideLoopOrBranch = false;
 

@@ -8,8 +8,9 @@ import { Static, Type } from "@sinclair/typebox";
 export enum FlowOperationType {
     LOCK_FLOW = "LOCK_FLOW",
     CHANGE_FOLDER = "CHANGE_FOLDER",
-    IMPORT_FLOW = 'IMPORT_FLOW',
     CHANGE_NAME = "CHANGE_NAME",
+    MOVE_ACTION = "MOVE_ACTION",
+    IMPORT_FLOW = "IMPORT_FLOW",
     UPDATE_TRIGGER = "UPDATE_TRIGGER",
     ADD_ACTION = "ADD_ACTION",
     UPDATE_ACTION = "UPDATE_ACTION",
@@ -60,6 +61,13 @@ export type DeleteActionRequest = Static<typeof DeleteActionRequest>;
 export const UpdateActionRequest = Type.Union([CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema, BranchActionSchema, MissingActionSchema]);
 export type UpdateActionRequest = Static<typeof UpdateActionRequest>;
 
+export const MoveActionRequest = Type.Object({
+    name: Type.String(),
+    newParentStep: Type.String(),
+    stepLocationRelativeToNewParent: Type.Optional(Type.Enum(StepLocationRelativeToParent))
+})
+export type MoveActionRequest = Static<typeof MoveActionRequest>;
+
 export const AddActionRequest = Type.Object({
     parentStep: Type.String(),
     stepLocationRelativeToParent: Type.Optional(Type.Enum(StepLocationRelativeToParent)),
@@ -70,7 +78,12 @@ export type AddActionRequest = Static<typeof AddActionRequest>;
 export const UpdateTriggerRequest = Type.Union([EmptyTrigger, PieceTrigger, WebhookTrigger]);
 export type UpdateTriggerRequest = Static<typeof UpdateTriggerRequest>;
 
+
 export const FlowOperationRequest = Type.Union([
+    Type.Object({
+        type: Type.Literal(FlowOperationType.MOVE_ACTION),
+        request: MoveActionRequest
+    }),
     Type.Object({
         type: Type.Literal(FlowOperationType.LOCK_FLOW),
         request: LockFlowRequest

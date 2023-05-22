@@ -1,9 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import {
-  Action,
   ActionType,
   FlowVersion,
-  Trigger,
   TriggerType,
   flowHelper,
 } from '@activepieces/shared';
@@ -60,7 +58,7 @@ export class PiecesIconsFromFlowComponent implements OnInit {
         this.stepNamesMap[s.name] = '';
         stepsIconsUrls[s.settings.pieceName] = pieceMetaData$;
       } else if (s.type !== TriggerType.EMPTY) {
-        const icon = this.findNonPieceStepIcon(s);
+        const icon = this.actionMetaDataService.findNonPieceStepIcon(s);
         const displayName =
           [
             ...this.actionMetaDataService.coreFlowItemsDetails,
@@ -74,29 +72,6 @@ export class PiecesIconsFromFlowComponent implements OnInit {
     return stepsIconsUrls;
   }
 
-  findNonPieceStepIcon(step: Trigger | Action) {
-    switch (step.type) {
-      case ActionType.CODE:
-        return { url: 'assets/img/custom/piece/code_mention.png', key: 'code' };
-      case ActionType.BRANCH:
-        return {
-          url: 'assets/img/custom/piece/branch_mention.png',
-          key: 'branch',
-        };
-      case ActionType.LOOP_ON_ITEMS:
-        return {
-          url: 'assets/img/custom/piece/loop_mention.png',
-          key: 'loop',
-        };
-      case TriggerType.WEBHOOK:
-        return {
-          url: 'assets/img/custom/piece/webhook_mention.png',
-          key: 'webhook',
-        };
-    }
-
-    throw new Error("Step type isn't accounted for");
-  }
   loadIconUrls(urls$: Observable<string>[]) {
     this.numberOfStepsLeft = Math.min(urls$.length - 2, 9);
     this.urlsToLoad$ = urls$.slice(0, 2);

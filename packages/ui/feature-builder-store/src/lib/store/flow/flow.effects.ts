@@ -289,6 +289,11 @@ export class FlowsEffects {
               },
             };
             break;
+          case FlowsActionType.MOVE_ACTION:
+            flowOperation = {
+              type: FlowOperationType.MOVE_ACTION,
+              request: action.operation,
+            };
         }
         if (flow) {
           return of(

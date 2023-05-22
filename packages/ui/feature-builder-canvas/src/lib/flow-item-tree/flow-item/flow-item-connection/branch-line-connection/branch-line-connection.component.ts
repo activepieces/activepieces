@@ -22,8 +22,10 @@ import {
 } from '../draw-utils';
 import { Observable } from 'rxjs';
 import {
+  ActionType,
   BranchAction,
   StepLocationRelativeToParent,
+  flowHelper,
 } from '@activepieces/shared';
 import {
   AddButtonAndFlowItemNameContainer,
@@ -34,7 +36,8 @@ import {
   RightSideBarType,
 } from '@activepieces/ui/feature-builder-store';
 import { FlowRenderUtil } from '@activepieces/ui/feature-builder-store';
-
+import { DropEvent } from 'angular-draggable-droppable';
+import { MatSnackBar } from '@angular/material/snack-bar';
 @Component({
   selector: 'app-branch-line-connection',
   templateUrl: './branch-line-connection.component.html',
@@ -54,9 +57,9 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
   addButtonTop = '0px';
   addButtonFalseBranchLeftStyleProperty = '0px';
   addButtonTrueBranchLeftStyleProperty = '0px';
-  emptyLoopAddButtonTopOffset = '0px';
-  emptyLoopAddButtonLeftOffsetForFalseBranch = '0px';
-  emptyLoopAddButtonLeftOffsetForTrueBranch = '0px';
+  emptyBranchAddButtonTopOffset = '0px';
+  emptyBranchAddButtonLeftOffsetForFalseBranch = '0px';
+  emptyBranchAddButtonLeftOffsetForTrueBranch = '0px';
   afterBranchAddButtonTop = '0px';
   afterBranchAddButtonLeft = '0px';
   afterBranchesArrowHeadLeft = 0;
@@ -69,17 +72,21 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
   };
   numberOfNestedBranches = 0;
   _flowItem: BranchAction & FlowItemRenderInfo;
-
+  isDraggingOverTrueBranch = false;
+  isDraggingOverFalseBranch = false;
+  isDraggingOverAfterBranch = false;
   showDropArea$: Observable<boolean> = new Observable<boolean>();
 
   @Input() viewMode: boolean;
 
   @Input() set flowItem(value: BranchAction & FlowItemRenderInfo) {
     this._flowItem = value;
-    this.numberOfNestedBranches = Math.max(
-      FlowRenderUtil.findNumberOfNestedBranches(this._flowItem.onFailureAction),
-      FlowRenderUtil.findNumberOfNestedBranches(this._flowItem.onSuccessAction)
-    );
+    this.numberOfNestedBranches =
+      FlowRenderUtil.findNumberOfNestedBranches(
+        this._flowItem.onFailureAction
+      ) +
+      FlowRenderUtil.findNumberOfNestedBranches(this._flowItem.onSuccessAction);
+
     this.writeLines();
     this.calculateOffsetBeforeFirstAction();
     this.calculateOffsetAfterBranch();
@@ -92,15 +99,18 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
 
   constructor(
     private store: Store,
-    private flowRendererService: FlowRendererService
+    private flowRendererService: FlowRendererService,
+    private snackbar: MatSnackBar
   ) {
     this.showDropArea$ = this.flowRendererService.draggingSubject;
   }
   ngOnInit(): void {
-    this.numberOfNestedBranches = Math.max(
-      FlowRenderUtil.findNumberOfNestedBranches(this._flowItem.onFailureAction),
-      FlowRenderUtil.findNumberOfNestedBranches(this._flowItem.onSuccessAction)
-    );
+    this.numberOfNestedBranches =
+      FlowRenderUtil.findNumberOfNestedBranches(
+        this._flowItem.onFailureAction
+      ) +
+      FlowRenderUtil.findNumberOfNestedBranches(this._flowItem.onSuccessAction);
+
     this.writeLines();
     this.calculateOffsetBeforeFirstAction();
     this.calculateOffsetAfterBranch();
@@ -167,7 +177,7 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
     commands.push(
       this.drawer.drawHorizontalLine(
         (HORZIONTAL_LINE_LENGTH +
-          this.numberOfNestedBranches * (HORZIONTAL_LINE_LENGTH / 2)) *
+          this.numberOfNestedBranches * HORZIONTAL_LINE_LENGTH) *
           (trueBranch ? -1 : 1)
       )
     );
@@ -194,7 +204,7 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
     commands.push(
       this.drawer.drawHorizontalLine(
         (1.1 * HORZIONTAL_LINE_LENGTH +
-          this.numberOfNestedBranches * (HORZIONTAL_LINE_LENGTH / 2)) *
+          this.numberOfNestedBranches * HORZIONTAL_LINE_LENGTH) *
           (isTrueBranch ? 1 : -1)
       )
     );
@@ -205,14 +215,14 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
     const leftOffset =
       HORZIONTAL_LINE_LENGTH +
       11 +
-      this.numberOfNestedBranches * (HORZIONTAL_LINE_LENGTH / 2);
+      this.numberOfNestedBranches * HORZIONTAL_LINE_LENGTH;
     const topOffset =
       VERTICAL_LINE_LENGTH * 2.25 +
       ARC_LENGTH * 2 +
       2 * SPACE_BETWEEN_ITEM_CONTENT_AND_LINE;
-    this.emptyLoopAddButtonTopOffset = `${topOffset}px`;
-    this.emptyLoopAddButtonLeftOffsetForFalseBranch = `calc(50% + ${leftOffset}px)`;
-    this.emptyLoopAddButtonLeftOffsetForTrueBranch = `calc(50% - ${
+    this.emptyBranchAddButtonTopOffset = `${topOffset}px`;
+    this.emptyBranchAddButtonLeftOffsetForFalseBranch = `calc(50% + ${leftOffset}px)`;
+    this.emptyBranchAddButtonLeftOffsetForTrueBranch = `calc(50% - ${
       leftOffset + EMPTY_LOOP_ADD_BUTTON_WIDTH
     }px)`;
   }
@@ -224,13 +234,13 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
       ARC_LENGTH +
       HORZIONTAL_LINE_LENGTH +
       ARC_LENGTH +
-      this.numberOfNestedBranches * (HORZIONTAL_LINE_LENGTH / 2);
+      this.numberOfNestedBranches * HORZIONTAL_LINE_LENGTH;
     const rightOffset =
       FLOW_ITEM_WIDTH / 2 -
       ARC_LENGTH -
       HORZIONTAL_LINE_LENGTH -
       ARC_LENGTH -
-      this.numberOfNestedBranches * (HORZIONTAL_LINE_LENGTH / 2);
+      this.numberOfNestedBranches * HORZIONTAL_LINE_LENGTH;
     const topOffset =
       VERTICAL_LINE_LENGTH +
       ARC_LENGTH +
@@ -262,9 +272,7 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
       VERTICAL_LINE_LENGTH * 0.5 -
       (this.insideLoopOrBranch ? ARROW_HEAD_SIZE.height : 1)
     }px`;
-    this.afterBranchAddButtonLeft = `calc(50% - ${
-      ADD_BUTTON_SIZE.width / 2 - 0.5
-    }px`;
+    this.afterBranchAddButtonLeft = `calc(50% - ${ADD_BUTTON_SIZE.width / 2}px`;
     const lineStrokeOffset = 1.5;
     this.afterBranchesArrowHeadTop =
       topOffset - ARROW_HEAD_SIZE.height - lineStrokeOffset + 5;
@@ -355,7 +363,7 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
         FLOW_ITEM_WIDTH / 2 +
         ARC_LENGTH * 2 +
         (HORZIONTAL_LINE_LENGTH +
-          this.numberOfNestedBranches * (HORZIONTAL_LINE_LENGTH / 2)) -
+          this.numberOfNestedBranches * HORZIONTAL_LINE_LENGTH) -
         FLOW_ITEM_WIDTH / 2 +
         'px',
       position: 'absolute',
@@ -377,11 +385,73 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
         (FLOW_ITEM_WIDTH / 2 +
           ARC_LENGTH * 2 +
           (HORZIONTAL_LINE_LENGTH +
-            this.numberOfNestedBranches * (HORZIONTAL_LINE_LENGTH / 2)) -
+            this.numberOfNestedBranches * HORZIONTAL_LINE_LENGTH) -
           FLOW_ITEM_WIDTH / 2) *
           -1 +
         'px',
       position: 'absolute',
     };
+  }
+  dropAtTheTopOfTrueBranch(event$: DropEvent<FlowItem>) {
+    if (this._flowItem.name === event$.dropData.name) {
+      this.snackbar.open(this.flowRendererService.INVALID_DROP_MESSAGE);
+      return;
+    }
+    if (
+      event$.dropData.type === ActionType.LOOP_ON_ITEMS ||
+      event$.dropData.type === ActionType.BRANCH
+    ) {
+      if (flowHelper.isChildOf(event$.dropData, this._flowItem)) {
+        this.snackbar.open(this.flowRendererService.INVALID_DROP_MESSAGE);
+        return;
+      }
+    }
+    this.store.dispatch(
+      FlowsActions.moveAction({
+        operation: {
+          name: event$.dropData.name,
+          newParentStep: this._flowItem.name,
+          stepLocationRelativeToNewParent:
+            StepLocationRelativeToParent.INSIDE_TRUE_BRANCH,
+        },
+      })
+    );
+  }
+  dropAtTheTopOfFalseBranch(event$: DropEvent<FlowItem>) {
+    if (this._flowItem.name === event$.dropData.name) {
+      this.snackbar.open(this.flowRendererService.INVALID_DROP_MESSAGE);
+      return;
+    }
+    if (
+      event$.dropData.type === ActionType.LOOP_ON_ITEMS ||
+      event$.dropData.type === ActionType.BRANCH
+    ) {
+      if (flowHelper.isChildOf(event$.dropData, this._flowItem)) {
+        this.snackbar.open(this.flowRendererService.INVALID_DROP_MESSAGE);
+        return;
+      }
+    }
+    this.store.dispatch(
+      FlowsActions.moveAction({
+        operation: {
+          name: event$.dropData.name,
+          newParentStep: this._flowItem.name,
+          stepLocationRelativeToNewParent:
+            StepLocationRelativeToParent.INSIDE_FALSE_BRANCH,
+        },
+      })
+    );
+  }
+  dropAfterBranch(event$: DropEvent<FlowItem>) {
+    if (event$.dropData.name !== this._flowItem.name) {
+      this.store.dispatch(
+        FlowsActions.moveAction({
+          operation: {
+            name: event$.dropData.name,
+            newParentStep: this._flowItem.name,
+          },
+        })
+      );
+    }
   }
 }
