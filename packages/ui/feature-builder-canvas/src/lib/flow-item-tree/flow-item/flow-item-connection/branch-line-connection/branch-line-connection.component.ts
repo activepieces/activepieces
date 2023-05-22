@@ -394,7 +394,7 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
   }
   dropAtTheTopOfTrueBranch(event$: DropEvent<FlowItem>) {
     if (this._flowItem.name === event$.dropData.name) {
-      this.snackbar.open('Invalid drop');
+      this.snackbar.open(this.flowRendererService.INVALID_DROP_MESSAGE);
       return;
     }
     if (
@@ -402,7 +402,7 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
       event$.dropData.type === ActionType.BRANCH
     ) {
       if (flowHelper.isChildOf(event$.dropData, this._flowItem)) {
-        this.snackbar.open('Invalid drop');
+        this.snackbar.open(this.flowRendererService.INVALID_DROP_MESSAGE);
         return;
       }
     }
@@ -419,7 +419,7 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
   }
   dropAtTheTopOfFalseBranch(event$: DropEvent<FlowItem>) {
     if (this._flowItem.name === event$.dropData.name) {
-      this.snackbar.open('Invalid drop');
+      this.snackbar.open(this.flowRendererService.INVALID_DROP_MESSAGE);
       return;
     }
     if (
@@ -427,7 +427,7 @@ export class BranchLineConnectionComponent implements OnChanges, OnInit {
       event$.dropData.type === ActionType.BRANCH
     ) {
       if (flowHelper.isChildOf(event$.dropData, this._flowItem)) {
-        this.snackbar.open('Invalid drop');
+        this.snackbar.open(this.flowRendererService.INVALID_DROP_MESSAGE);
         return;
       }
     }

@@ -165,7 +165,7 @@ export class SimpleLineConnectionComponent
       this.flowItem.type !== TriggerType.WEBHOOK
     ) {
       if (flowHelper.isChildOf($event.dropData, this.flowItem)) {
-        this.snackbar.open('Invalid drop');
+        this.snackbar.open(this.flowRendererService.INVALID_DROP_MESSAGE);
         return;
       }
     }

@@ -348,7 +348,7 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
   }
   dropAtTheStartOfLoop(event$: DropEvent<FlowItem>) {
     if (event$.dropData.name === this._flowItem.name) {
-      this.snackbar.open('Invalid drop');
+      this.snackbar.open(this.flowRendererService.INVALID_DROP_MESSAGE);
       return;
     }
     if (
@@ -356,7 +356,7 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
       event$.dropData.type === ActionType.BRANCH
     ) {
       if (flowHelper.isChildOf(event$.dropData, this._flowItem)) {
-        this.snackbar.open('Invalid drop');
+        this.snackbar.open(this.flowRendererService.INVALID_DROP_MESSAGE);
         return;
       }
     }

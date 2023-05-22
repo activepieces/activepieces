@@ -12,6 +12,7 @@ export class FlowRendererService {
   clientX = 0;
   clientY = 0;
   debuggerNewDropPointSubject = new Subject<{ x: number; y: number }>();
+  readonly INVALID_DROP_MESSAGE = "Can't Move here";
   draggingSubject = new BehaviorSubject<boolean>(false);
   public structureChanged: BehaviorSubject<FlowItem | undefined> =
     new BehaviorSubject<FlowItem | undefined>(undefined);
