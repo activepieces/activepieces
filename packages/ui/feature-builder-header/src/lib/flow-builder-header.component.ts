@@ -8,7 +8,6 @@ import {
   FlagService,
   FlowService,
   fadeIn400ms,
-  initialiseBeamer,
 } from '@activepieces/ui/common';
 import { MatDialog } from '@angular/material/dialog';
 import {
@@ -50,7 +49,6 @@ export class FlowBuilderHeaderComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    initialiseBeamer();
     this.instance$ = this.store.select(BuilderSelectors.selectCurrentInstance);
     this.viewMode$ = this.store.select(BuilderSelectors.selectReadOnly);
     this.flow$ = this.store.select(BuilderSelectors.selectCurrentFlow);
