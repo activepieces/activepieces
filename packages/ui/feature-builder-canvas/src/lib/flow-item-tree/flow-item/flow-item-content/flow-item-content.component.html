@@ -1,4 +1,5 @@
 <div class="flow-container ap-shadow-step-container-ds" (mouseenter)="hover = true" (mouseleave)="hover = false"
+  [class.ap-pointer-events-none]="(isDragging$ | async) === true"
   [class.non-empty-step]="_flowItem.type !== ActionType.MISSING"
   [class.empty-step]="_flowItem.type === ActionType.MISSING">
   <div class="options-container" [hidden]="viewMode">
@@ -8,7 +9,8 @@
      ap-bg-white ap-border-solid ap-border-[1px]
       ap-border-line ap-min-w-[50px] ap-min-h-[50px]"
       *ngIf="(readonly$ | async)===undefined || (readonly$ | async)===null  || (readonly$ | async)===false"
-      [class.ap-opacity-100]="hover" [class.ap-opacity-0]="!hover">
+      [class.ap-opacity-100]="hover && (isDragging$ | async) === false"
+      [class.ap-opacity-0]="!hover  || (isDragging$ | async) === true">
       <ap-icon-button *ngIf="trigger" iconFilename="replace.svg" tooltipText="Change Trigger" [width]="17" [height]="17"
         (buttonClicked)="changeTrigger()"></ap-icon-button>
       <ap-icon-button *ngIf="!trigger" iconFilename="trash.svg" color="warn" tooltipText="Delete Step" [width]="20"
@@ -23,10 +25,10 @@
     <div class="flow-icon-container ap-flex ap-justify-center ap-items-center"
       [matTooltip]="logoTooltipText | titlecase">
       <ng-container *ngIf="_flowItem.type !== ActionType.MISSING && (flowItemDetails$ | async)">
-        <img *ngIf="stepIconUrl" class="logo-icon" @fadeIn [src]="stepIconUrl" />
+        <img #logo id="logo" *ngIf="stepIconUrl" class="logo-icon" @fadeIn [src]="stepIconUrl" />
       </ng-container>
       <ng-container *ngIf="_flowItem.type === ActionType.MISSING">
-        <img class="logo-icon" @fadeIn src="assets/img/custom/empty-step-logo.svg" />
+        <img #logo id="logo" class="logo-icon" @fadeIn src="assets/img/custom/empty-step-logo.svg" />
       </ng-container>
 
       <div *ngIf="!stepIconUrl && _flowItem.type !== ActionType.MISSING" class="step-icon-loading-spinner-container">
@@ -74,9 +76,35 @@
             </div>
           </div>
         </div>
-
-
       </div>
     </div>
   </div>
 </div>
+
+
+<ng-template #stepDragTemplate>
+  <div #stepShadow id="stepShadow"
+    class="ap-p-4 ap-h-[78px] ap-opacity-75 ap-w-[78px] ap-flex ap-items-center ap-justify-center ap-rounded-lg ap-border ap-border-solid ap-border ap-bg-white ap-relative">
+    <ng-container *ngIf="_flowItem.type !== ActionType.MISSING ">
+      <img #logo id="logo" *ngIf="stepIconUrl" class="logo-icon !ap-static" @fadeIn [src]="stepIconUrl" />
+    </ng-container>
+    <ng-container *ngIf="_flowItem.type === ActionType.MISSING">
+      <img #logo id="logo" class="logo-icon !ap-static" @fadeIn src="assets/img/custom/empty-step-logo.svg" />
+    </ng-container>
+    <div class="ap-absolute -ap-bottom-[32px] ap-flex ap-items-center ap-content-center ap-gap-1">
+      <ng-container *ngFor="let url$ of childStepsIconsUrls | keyvalue; let idx=index; let isLast=last;">
+        <div class="ap-rounded-lg ap-border ap-h-[27px] ap-w-[27px] ap-p-1 ap-border-solid ap-border ap-bg-white"
+          *ngIf="idx<=1">
+          <img class="ap-object-contain ap-h-[17px] ap-w-[17px] !ap-static" @fadeIn [src]="url$.value | async" />
+        </div>
+        <ng-container *ngIf="idx> 1 && isLast">
+          <div
+            class="ap-rounded-lg ap-h-[27px] ap-w-[27px] ap-border ap-p-1 ap-border-solid ap-border ap-bg-white ap-flex ap-items-center ap-justify-center  ap-description ">
+            <div class="ap-mb-[7px]"> ...</div>
+          </div>
+        </ng-container>
+
+      </ng-container>
+    </div>
+  </div>
+</ng-template>

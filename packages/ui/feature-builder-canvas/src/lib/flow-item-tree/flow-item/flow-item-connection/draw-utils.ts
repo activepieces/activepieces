@@ -22,7 +22,7 @@ export class Drawer {
 }
 
 export const VERTICAL_LINE_LENGTH = 48 * 1.25;
-export const ADD_BUTTON_SIZE = { width: 16.4, height: 19 };
+export const ADD_BUTTON_SIZE = { width: 16, height: 16 };
 export const ARROW_HEAD_SIZE = { width: 13, height: 8 };
 export const FLOW_ITEM_WIDTH = 300;
 export const HORZIONTAL_LINE_LENGTH = 180;
@@ -36,3 +36,5 @@ export const LINES_WIDTH = 2;
 export const SPACE_BETWEEN_ITEM_CONTENT_AND_LINE = 8;
 export const AFTER_NESTED_LOOP_LINE_LENGTH =
   VERTICAL_LINE_LENGTH + ARROW_HEAD_SIZE.height;
+export const DROP_ZONE_WIDTH = 300;
+export const DROP_ZONE_HEIGHT = 125;

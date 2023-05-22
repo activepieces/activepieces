@@ -160,10 +160,17 @@ export class FlowRenderUtil {
   public static findNumberOfNestedBranches(step: Action | undefined): number {
     if (!step) return 0;
     if (step.type === ActionType.BRANCH) {
-      return Math.max(
+      return (
         1 +
-          this.findNumberOfNestedBranches(step.onFailureAction) +
-          this.findNumberOfNestedBranches(step.onSuccessAction),
+        this.findNumberOfNestedBranches(step.onFailureAction) +
+        this.findNumberOfNestedBranches(step.onSuccessAction) +
+        FlowRenderUtil.findNumberOfNestedBranches(step.nextAction)
+      );
+    }
+    if (step.type === ActionType.LOOP_ON_ITEMS) {
+      return (
+        1 +
+        this.findNumberOfNestedBranches(step.firstLoopAction) +
         FlowRenderUtil.findNumberOfNestedBranches(step.nextAction)
       );
     }

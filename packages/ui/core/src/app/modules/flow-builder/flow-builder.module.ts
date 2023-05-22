@@ -22,6 +22,7 @@ import { UiFeatureBuilderCanvasModule } from '@activepieces/ui/feature-builder-c
 import { UiFeatureBuilderFormControlsModule } from '@activepieces/ui/feature-builder-form-controls';
 import { UiFeatureBuilderRightSidebarModule } from '@activepieces/ui/feature-builder-right-sidebar';
 import { PortalModule } from '@angular/cdk/portal';
+
 @NgModule({
   imports: [
     CommonModule,

@@ -1,18 +1,49 @@
 <div [ngStyle]="flowGraphContainer" [style.transform]="transformObs$|async">
 
-  <div *ngIf="trigger" class="ap-flex ap-justify-center ap-mb-9 ap-w-full ap-items-center ">
+  <div *ngIf="trigger" class="ap-flex ap-justify-center ap-mb-9 ap-w-full ap-items-center ap-cursor-pointer ap-z-50">
     <app-incomplete-steps-widget></app-incomplete-steps-widget>
   </div>
+  <ng-container *ngIf="!trigger && (viewMode$ | async)===false">
+    <div #flowItem class="ap-z-50 ap-cursor-grab ap-relative" mwlDraggable [dragCursor]="isDragging?'grabbing' :''"
+      [ghostElementTemplate]="ItemContent.stepDragTemplate" (dragEnd)="draggingEnded()"
+      [showOriginalElementWhileDragging]="false" [dropData]="_flowItemData"
+      [class.ap-opacity-0]="hideDraggableSource$ | async" [ghostElementAppendTo]="getDocument()"
+      (dragging)="snapElementToCursor()" [class.ap-cursor-default]="(anyStepIsDragged$|async)"
+      (dragStart)="draggingStarted()">
+      <div [ngStyle]="flowItemContentContainer" class="ap-z-50">
+        <app-flow-item-content #ItemContent [trigger]="trigger" [flowItem]="_flowItemData"
+          [viewMode]="viewMode$ | async | defaultTrue"
+          [selected]="selected$ | async | defaultFalse"></app-flow-item-content>
+      </div>
+    </div>
+  </ng-container>
+  <ng-container *ngIf="!trigger && (viewMode$ | async)===true">
+    <div #flowItem class="ap-cursor-pointer ap-relative">
+      <div [ngStyle]="flowItemContentContainer" class="ap-z-50">
+        <app-flow-item-content #ItemContent [trigger]="trigger" [flowItem]="_flowItemData"
+          [viewMode]="viewMode$ | async | defaultTrue"
+          [selected]="selected$ | async | defaultFalse"></app-flow-item-content>
+      </div>
+    </div>
+  </ng-container>
 
+  <div [ngStyle]="draggedContainer" *ngIf="!trigger"
+    class="ap-bg-graySelect ap-absolute ap-rounded-lg ap-border-dashed ap-border-border ap-border">
+  </div>
+  <div *ngIf="trigger" #flowItem>
+    <div [ngStyle]="flowItemContentContainer" class="ap-z-50 ap-cursor-pointer">
+      <app-flow-item-content [trigger]="trigger" [flowItem]="_flowItemData" [viewMode]="viewMode$ | async | defaultTrue"
+        [selected]="selected$ | async | defaultFalse"></app-flow-item-content>
+    </div>
+  </div>
 
-  <div [ngStyle]="flowContentContainer()" #flowItem>
-    <app-flow-item-content [trigger]="trigger" [flowItem]="_flowItemData" [viewMode]="viewMode$ | async | defaultTrue"
-      [selected]="selected$ | async | defaultFalse" [style.opacity]="1"></app-flow-item-content>
+  <div class="ap-relative ap-z-40" [ngStyle]="{ height: _flowItemData.connectionsBox!.height + 'px' }">
+    <app-flow-item-connection [insideLoopOrBranch]="insideLoopOrBranch" [flowItem]="_flowItemData"
+      [viewMode]="viewMode$ | async | defaultTrue"></app-flow-item-connection>
   </div>
-  <div class="ap-relative" [ngStyle]="{ height: _flowItemData.connectionsBox!.height + 'px' }">
-    <app-flow-item-connection [insideLoopOrBranch]="insideLoopOrBranch" [colorLine]="hoverState"
-      [flowItem]="_flowItemData" [viewMode]="viewMode$ | async | defaultTrue"></app-flow-item-connection>
+  <div class="ap-z-40">
+    <app-flow-item *ngIf="_flowItemData.nextAction" [hoverState]="hoverState" [flowItemData]="_flowItemData.nextAction"
+      [insideLoopOrBranch]="insideLoopOrBranch"></app-flow-item>
   </div>
-  <app-flow-item *ngIf="_flowItemData.nextAction" [hoverState]="hoverState" [flowItemData]="_flowItemData.nextAction"
-    [insideLoopOrBranch]="insideLoopOrBranch"></app-flow-item>
+
 </div>

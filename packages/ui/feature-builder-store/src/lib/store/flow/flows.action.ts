@@ -10,6 +10,7 @@ import {
   FlowOperationRequest,
   StepLocationRelativeToParent,
   Folder,
+  MoveActionRequest,
 } from '@activepieces/shared';
 import { RightSideBarType } from '../../model/enums/right-side-bar-type.enum';
 import { LeftSideBarType } from '../../model/enums/left-side-bar-type.enum';
@@ -37,11 +38,16 @@ export enum FlowsActionType {
   GENERATE_FLOW = '[FLOWS] GENERATE_FLOW',
   OPEN_GENERATE_FLOW_COMPONENT = '[FLOWS] OPEN_GENERATE_FLOW_COMPONENT',
   CLOSE_GENERATE_FLOW_COMPONENT = '[FLOWS] CLOSE_GENERATE_FLOW_COMPONENT',
+  MOVE_ACTION = '[FLOWS] MOVE_ACTION',
 }
 
 const updateTrigger = createAction(
   FlowsActionType.UPDATE_TRIGGER,
   props<{ operation: UpdateTriggerRequest }>()
+);
+const moveAction = createAction(
+  FlowsActionType.MOVE_ACTION,
+  props<{ operation: MoveActionRequest }>()
 );
 const openGenerateFlowComponent = createAction(
   FlowsActionType.OPEN_GENERATE_FLOW_COMPONENT
@@ -152,6 +158,7 @@ export const FlowsActions = {
   generateFlow,
   openGenerateFlowComponent,
   closeGenerateFlowComponent,
+  moveAction,
 };
 
 export const SingleFlowModifyingState = [
@@ -160,4 +167,5 @@ export const SingleFlowModifyingState = [
   addAction,
   updateTrigger,
   deleteAction,
+  moveAction,
 ];

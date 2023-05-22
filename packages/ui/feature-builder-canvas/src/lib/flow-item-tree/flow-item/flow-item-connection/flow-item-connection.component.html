@@ -1,4 +1,4 @@
-<div class="ap-relative" *ngIf="flowItem">
+<div class="ap-relative ap-z-40" *ngIf="flowItem">
   <app-loop-line-connection *ngIf="flowItem.type === ActionType.LOOP_ON_ITEMS" [viewMode]="viewMode"
     [flowItem]="castToLoopItem()" [insideLoopOrBranch]="insideLoopOrBranch">
   </app-loop-line-connection>

@@ -1,6 +1,7 @@
 import {
   Component,
   ElementRef,
+  HostListener,
   NgZone,
   OnDestroy,
   OnInit,
@@ -51,11 +52,13 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
   rightSidebarDragging = false;
   leftSidebarDragging = false;
   loadInitialData$: Observable<void> = new Observable<void>();
-  cursorStyle$: Observable<string>;
+  isPanning$: Observable<boolean>;
+  isDragging$: Observable<boolean>;
   TriggerType = TriggerType;
   testingStepSectionIsRendered$: Observable<boolean>;
   graphChanged$: Observable<Flow>;
   showGuessFlowComponent = true;
+
   constructor(
     private store: Store,
     private actRoute: ActivatedRoute,
@@ -71,14 +74,8 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
     this.listenToGraphChanges();
     this.testingStepSectionIsRendered$ =
       this.testStepService.testingStepSectionIsRendered$.asObservable();
-    this.cursorStyle$ = this.pannerService.isGrabbing$.asObservable().pipe(
-      map((val) => {
-        if (val) {
-          return 'grabbing !important';
-        }
-        return 'auto !important';
-      })
-    );
+    this.isPanning$ = this.pannerService.isPanning$.asObservable();
+    this.isDragging$ = this.flowRendererService.draggingSubject.asObservable();
     this.loadInitialData$ = this.actRoute.data.pipe(
       tap((value) => {
         const runInformation: InstanceRunInfo = value['runInformation'];
@@ -129,7 +126,11 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
       BuilderSelectors.selectCurrentRightSideBarType
     );
   }
-
+  @HostListener('mousemove', ['$event'])
+  mouseMove(e: MouseEvent) {
+    this.flowRendererService.clientX = e.clientX;
+    this.flowRendererService.clientY = e.clientY;
+  }
   ngOnDestroy(): void {
     this.snackbar.dismiss();
     this.runDetailsService.currentStepResult$.next(undefined);

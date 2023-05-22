@@ -4,46 +4,21 @@ import { BehaviorSubject, Subject } from 'rxjs';
 import { AddButtonAndFlowItemNameContainer } from '../model/flow-add-button';
 import { FlowItem } from '../model/flow-item';
 import { FlowRenderUtil } from '../utils/flowRenderUtil';
-import { Point } from '../model/point';
 
 @Injectable({
   providedIn: 'root',
 })
 export class FlowRendererService {
+  clientX = 0;
+  clientY = 0;
   debuggerNewDropPointSubject = new Subject<{ x: number; y: number }>();
-  draggingSubject = new Subject<boolean>();
+  readonly INVALID_DROP_MESSAGE = "Can't Move here";
+  draggingSubject = new BehaviorSubject<boolean>(false);
   public structureChanged: BehaviorSubject<FlowItem | undefined> =
     new BehaviorSubject<FlowItem | undefined>(undefined);
   public addButtonsWithStepNamesContainers: AddButtonAndFlowItemNameContainer[] =
     [];
   public rootPiece: FlowItem;
-  public attachmentCandidate: BehaviorSubject<
-    AddButtonAndFlowItemNameContainer | undefined
-  > = new BehaviorSubject<AddButtonAndFlowItemNameContainer | undefined>(
-    undefined
-  );
-  private droppedPiece: FlowItem | null;
-  candidateAddButton: AddButtonAndFlowItemNameContainer | undefined;
-
-  public getDraggedInformation(): {
-    draggedPiece: FlowItem | null;
-    candidateAddButton: AddButtonAndFlowItemNameContainer | undefined;
-  } {
-    return {
-      draggedPiece: this.droppedPiece,
-      candidateAddButton: this.candidateAddButton,
-    };
-  }
-
-  public setDropPoint(point: Point, draggedPiece: FlowItem) {
-    this.droppedPiece = draggedPiece;
-    this.debuggerNewDropPointSubject.next(point);
-    this.candidateAddButton = this.findCandidateButton(point);
-  }
-
-  public setDragPiece(draggedPiece: FlowItem) {
-    this.droppedPiece = draggedPiece;
-  }
 
   public refreshCoordinatesAndSetActivePiece(
     clonedActivePiece: FlowItem | undefined
@@ -51,43 +26,10 @@ export class FlowRendererService {
     if (clonedActivePiece) {
       clonedActivePiece.xOffset = clonedActivePiece.yOffset = 0;
       this.rootPiece = clonedActivePiece;
-
       FlowRenderUtil.buildBoxes(clonedActivePiece);
       FlowRenderUtil.buildCoordinates(clonedActivePiece);
     }
 
     this.structureChanged.next(clonedActivePiece);
-  }
-
-  private findCandidateButton(
-    dropPoint: Point
-  ): AddButtonAndFlowItemNameContainer | undefined {
-    let candidate: AddButtonAndFlowItemNameContainer | undefined = undefined;
-    this.addButtonsWithStepNamesContainers.forEach((btn) => {
-      if (btn.stepName !== this.droppedPiece?.name) {
-        if (FlowRenderUtil.isButtonWithinCandidateDistance(btn, dropPoint)) {
-          if (!candidate) {
-            candidate = btn;
-          } else {
-            const distanceBetweenCandidateAndDropPoint = FlowRenderUtil.dist(
-              dropPoint,
-              candidate.htmlElementForButton.getBoundingClientRect()
-            );
-            const distanceBetweenBtnAndDropPoint = FlowRenderUtil.dist(
-              dropPoint,
-              btn.htmlElementForButton.getBoundingClientRect()
-            );
-            if (
-              distanceBetweenBtnAndDropPoint <
-              distanceBetweenCandidateAndDropPoint
-            ) {
-              candidate = btn;
-            }
-          }
-        }
-      }
-    });
-
-    return candidate;
   }
 }

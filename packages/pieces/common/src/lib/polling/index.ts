@@ -1,4 +1,5 @@
 import { Store } from "@activepieces/pieces-framework";
+import { isNil } from "lodash";
 
 interface TimebasedPolling<INPUT> {
     strategy: DedupeStrategy.TIMEBASED;
@@ -14,7 +15,7 @@ interface TimebasedPolling<INPUT> {
 interface LastItemPolling<INPUT> {
     strategy: DedupeStrategy.LAST_ITEM;
     items: (
-        { propsValue }: { propsValue: INPUT },
+        { propsValue, lastItemId }: { propsValue: INPUT, lastItemId: unknown },
     ) => Promise<{
         id: unknown;
         data: unknown;
@@ -34,23 +35,24 @@ export const pollingHelper = {
         switch (polling.strategy) {
             case DedupeStrategy.TIMEBASED: {
                 const lastEpochMilliSeconds = (await store.get<number>("lastPoll")) ?? 0;
-                const items = await polling.items({ propsValue, lastFetchEpochMS: lastEpochMilliSeconds});
+                const items = await polling.items({ propsValue, lastFetchEpochMS: lastEpochMilliSeconds });
                 const newLastEpochMilliSeconds = items.reduce((acc, item) => Math.max(acc, item.epochMilliSeconds), lastEpochMilliSeconds);
                 await store.put("lastPoll", newLastEpochMilliSeconds);
                 return items.filter(f => f.epochMilliSeconds > lastEpochMilliSeconds).map((item) => item.data);
             }
             case DedupeStrategy.LAST_ITEM: {
                 const lastItemId = (await store.get<unknown>("lastItem"));
-                const items = await polling.items({ propsValue });
+                const items = await polling.items({ propsValue, lastItemId });
                 const newLastItem = items?.[0]?.id;
-                if (!newLastItem) {
-                    return items;
+                if (!isNil(newLastItem)) {
+                  await store.put("lastItem", newLastItem);
                 }
-                await store.put("lastItem", newLastItem);
-                // get  items until you find the last item
                 const lastItemIndex = items.findIndex(f => f.id === lastItemId);
+                if (isNil(lastItemId) || lastItemIndex == -1) {
+                  return items?.map((item) => item.data) ?? [];
+                }
                 return items?.slice(0, lastItemIndex).map((item) => item.data) ?? [];
-            }
+              }
         }
     },
     async onEnable<INPUT>(polling: Polling<INPUT>, { store, propsValue }: { store: Store, propsValue: INPUT }): Promise<void> {
@@ -60,10 +62,15 @@ export const pollingHelper = {
                 break;
             }
             case DedupeStrategy.LAST_ITEM: {
-                const items = (await polling.items({ propsValue }));
-                await store.put("lastItem", items?.[0]?.id);
+                const items = (await polling.items({ propsValue, lastItemId: null }));
+                const lastItemId = items?.[0]?.id;
+                if (!isNil(lastItemId)) {
+                  await store.put("lastItem", lastItemId);
+                } else {
+                  await store.delete("lastItem");
+                }
                 break;
-            }
+              }
         }
     },
     async onDisable<INPUT>(polling: Polling<INPUT>, { store, propsValue }: { store: Store, propsValue: INPUT }): Promise<void> {
@@ -81,7 +88,7 @@ export const pollingHelper = {
                 break;
             }
             case DedupeStrategy.LAST_ITEM: {
-                items = await polling.items({ propsValue });
+                items = await polling.items({ propsValue, lastItemId: null });
                 break;
             }
         }

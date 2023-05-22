@@ -26,13 +26,22 @@ import {
   FlowsActions,
   RightSideBarType,
 } from '@activepieces/ui/feature-builder-store';
-import { StepLocationRelativeToParent } from '@activepieces/shared';
+import {
+  ActionType,
+  StepLocationRelativeToParent,
+  TriggerType,
+  flowHelper,
+} from '@activepieces/shared';
+import { DropEvent } from 'angular-draggable-droppable';
+import { fadeIn400ms } from '@activepieces/ui/common';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-simple-line-connection',
   templateUrl: './simple-line-connection.component.html',
   styleUrls: ['./simple-line-connection.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  animations: [fadeIn400ms],
 })
 export class SimpleLineConnectionComponent
   implements OnInit, AfterViewInit, OnChanges
@@ -41,7 +50,8 @@ export class SimpleLineConnectionComponent
   addButtonAndFlowItemNameContainer: AddButtonAndFlowItemNameContainer;
   @Input() flowItem: FlowItem;
   @Input() viewMode: boolean;
-
+  insideDropArea = false;
+  inDraggingMode$: Observable<boolean>;
   showDropArea$: Observable<boolean> = new Observable<boolean>();
   drawer: Drawer = new Drawer();
   SVG_HEIGHT: number =
@@ -56,12 +66,15 @@ export class SimpleLineConnectionComponent
     width: `${ADD_BUTTON_SIZE.width}px`,
     height: `${ADD_BUTTON_SIZE.height}px`,
   };
+  drawCommand: string;
   constructor(
     private store: Store,
-    private flowRendererService: FlowRendererService
-  ) {}
-
-  drawCommand: string;
+    private flowRendererService: FlowRendererService,
+    private snackbar: MatSnackBar
+  ) {
+    this.inDraggingMode$ =
+      this.flowRendererService.draggingSubject.asObservable();
+  }
 
   ngOnInit(): void {
     this.drawCommand = [
@@ -142,5 +155,28 @@ export class SimpleLineConnectionComponent
       this.flowItem.nextAction !== undefined &&
       this.flowItem.nextAction !== null
     );
+  }
+  drop($event: DropEvent<FlowItem>) {
+    if (
+      ($event.dropData.type === ActionType.LOOP_ON_ITEMS ||
+        $event.dropData.type === ActionType.BRANCH) &&
+      this.flowItem.type !== TriggerType.EMPTY &&
+      this.flowItem.type !== TriggerType.PIECE &&
+      this.flowItem.type !== TriggerType.WEBHOOK
+    ) {
+      if (flowHelper.isChildOf($event.dropData, this.flowItem)) {
+        this.snackbar.open(this.flowRendererService.INVALID_DROP_MESSAGE);
+        return;
+      }
+    }
+    if ($event.dropData.name !== this.flowItem.name)
+      this.store.dispatch(
+        FlowsActions.moveAction({
+          operation: {
+            name: $event.dropData.name,
+            newParentStep: this.flowItem.name,
+          },
+        })
+      );
   }
 }
