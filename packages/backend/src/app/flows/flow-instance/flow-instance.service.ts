@@ -1,4 +1,4 @@
-import { ActivepiecesError, ErrorCode, FlowInstance, FlowInstanceStatus, FlowVersionState, ProjectId, UpsertFlowInstanceRequest, apId } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, FlowInstance, FlowInstanceStatus, FlowOperationType, ProjectId, UpsertFlowInstanceRequest, apId } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { FlowInstanceEntity } from './flow-instance.entity'
 import { triggerUtils } from '../../helper/trigger-utils'
@@ -11,15 +11,14 @@ export const flowInstanceRepo = databaseConnection.getRepository(FlowInstanceEnt
 
 export const flowInstanceService = {
     async upsert({ projectId, request }: { projectId: ProjectId, request: UpsertFlowInstanceRequest }): Promise<FlowInstance> {
-        const flow = await flowService.getOneOrThrow({ projectId: projectId, id: request.flowId })
-        if (flow == null) {
-            throw new ActivepiecesError({
-                code: ErrorCode.FLOW_NOT_FOUND,
-                params: {
-                    id: request.flowId,
+        const flow = await flowService.update({
+            flowId: request.flowId, projectId: projectId, request: {
+                type: FlowOperationType.LOCK_FLOW,
+                request: {
+                    flowId: request.flowId,
                 },
-            })
-        }
+            },
+        })
 
         const flowInstance: Partial<FlowInstance> = {
             id: apId(),
@@ -27,10 +26,6 @@ export const flowInstanceService = {
             flowId: request.flowId,
             flowVersionId: flow.version.id,
             status: FlowInstanceStatus.ENABLED,
-        }
-        if (flow.version.state === FlowVersionState.DRAFT) {
-            flow.version.state = FlowVersionState.LOCKED
-            await flowVersionService.overwriteVersion(flow.version.id, flow.version)
         }
         const oldInstance: FlowInstance | null = await flowInstanceRepo.findOneBy({ projectId, flowId: request.flowId })
         if (oldInstance && oldInstance.status === FlowInstanceStatus.ENABLED) {
@@ -84,6 +79,8 @@ export const flowInstanceService = {
                         simulate: false,
                     })
                     break
+                case FlowInstanceStatus.UNPUBLISHED:
+                    break
             }
         }
         const updatedInstance: FlowInstance = {
@@ -108,7 +105,7 @@ export const flowInstanceService = {
             })
         }
         const flowVersion = await flowVersionService.getOneOrThrow(flowInstance.flowVersionId)
-        if(flowInstance.status === FlowInstanceStatus.ENABLED) {
+        if (flowInstance.status === FlowInstanceStatus.ENABLED) {
             await triggerUtils.disable({
                 flowVersion: flowVersion,
                 projectId: flowInstance.projectId,
@@ -121,11 +118,13 @@ export const flowInstanceService = {
         const flowInstance = await flowInstanceRepo.findOneBy({ projectId, flowId })
         if (flowInstance) {
             const flowVersion = await flowVersionService.getOneOrThrow(flowInstance.flowVersionId)
-            await triggerUtils.disable({
-                flowVersion: flowVersion,
-                projectId: flowInstance.projectId,
-                simulate: false,
-            })
+            if (flowInstance.status === FlowInstanceStatus.ENABLED) {
+                await triggerUtils.disable({
+                    flowVersion: flowVersion,
+                    projectId: flowInstance.projectId,
+                    simulate: false,
+                })
+            }
             await flowInstanceRepo.delete({ projectId, flowId })
         }
     },

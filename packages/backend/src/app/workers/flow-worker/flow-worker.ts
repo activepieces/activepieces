@@ -230,7 +230,7 @@ async function downloadFiles(
 
 
 async function buildCodes(projectId: ProjectId, flowVersion: FlowVersion): Promise<File[]> {
-    const buildRequests: Array<Promise<File>> = []
+    const buildRequests: Promise<File>[] = []
     const steps = flowHelper.getAllSteps(flowVersion)
     steps.forEach((step) => {
         if (step.type === ActionType.CODE) {

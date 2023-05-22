@@ -68,11 +68,14 @@ import { vtex }  from '@activepieces/piece-vtex';
 import { postgres }  from '@activepieces/piece-postgres';
 import { amazonS3 }  from '@activepieces/piece-amazon-s3';
 import { stabilityAi }  from '@activepieces/piece-stability-ai';
+import { mautic }  from '@activepieces/piece-mautic';
+import { twitter } from '@activepieces/piece-twitter';
 
 /**
  * @deprecated this will be removed, don't use it
  */
 export const pieces: Piece[] = [
+    mautic,
     stabilityAi,
     amazonS3,
     xml,
@@ -141,7 +144,8 @@ export const pieces: Piece[] = [
     matrix,
     smtp,
     googleForms,
-    postgres
+    postgres,
+    twitter
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
 /**

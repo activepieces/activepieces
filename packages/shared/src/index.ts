@@ -46,7 +46,6 @@ export { FlowRun, FlowRunId, RunEnvironment } from './lib/flow-run/flow-run'
 export { ExecutionState } from './lib/flow-run/execution/execution-state';
 export { Project, ProjectId } from './lib/project/project';
 export * from './lib/flows/dto/create-flow-request';
-export { CloneFlowVersionRequest } from './lib/flows/dto/clone-flow-version-request';
 export { SeekPage, Cursor } from './lib/common/seek-page';
 export { apId, ApId } from './lib/common/id-generator'
 export * from "./lib/flows/trigger-events/trigger-events-dto";
@@ -57,6 +56,7 @@ export * from './lib/common/base-model';
 export * from './lib/flows/flow-instances';
 export * from "./lib/flows/folders/folder";
 export * from "./lib/flows/folders/folder-requests";
+export * from "./lib/flows/dto/flow-template-request";
 import { TypeSystem } from '@sinclair/typebox/system'
 export * from "./lib/flows/dto/list-flows-request";
 // Look at https://github.com/sinclairzx81/typebox/issues/350

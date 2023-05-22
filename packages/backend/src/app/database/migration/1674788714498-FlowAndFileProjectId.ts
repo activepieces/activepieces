@@ -17,7 +17,7 @@ export class FlowAndFileProjectId1674788714498 implements MigrationInterface {
         const flowTableNotExist =
           flowTableExistsQueryResponse &&
           flowTableExistsQueryResponse.length > 0 &&
-          flowTableExistsQueryResponse[0].exists == false
+          !flowTableExistsQueryResponse[0].exists
 
         if (flowTableNotExist) {
             logger.info('FlowAndFileProjectId1674788714498: skipped')

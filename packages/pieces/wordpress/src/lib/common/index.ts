@@ -6,6 +6,7 @@ export type WordpressMedia = { id: string, title: { rendered: string } }
 const markdownPropertyDescription = `
 Enable basic authentication for your Wordpress website by downloading and installing the plugin from this repository: https://github.com/WP-API/Basic-Auth.
 `
+const PAGE_HEADER = 'x-wp-totalpages';
 
 export const wordpressCommon = {
     connection: Property.BasicAuth({
@@ -87,13 +88,16 @@ export const wordpressCommon = {
         const response = await httpClient.sendRequest<{ date: string }[]>(request);
         return {
             posts: response.body,
-            totalPages: response.headers && response.headers['X-WP-TotalPages'] ? Number(response.headers['X-WP-TotalPages']) : 0
+            totalPages: response.headers && response.headers[PAGE_HEADER] ? Number(response.headers[PAGE_HEADER]) : 0
         };
     },
     async getMedia(params: { websiteUrl: string, username: string, password: string, page: number }) {
         const request: HttpRequest = {
             method: HttpMethod.GET,
             url: `${params.websiteUrl}/wp-json/wp/v2/media`,
+            queryParams: {
+                page: params.page.toString()
+            },
             authentication: {
                 type: AuthenticationType.BASIC,
                 username: params.username,
@@ -104,13 +108,16 @@ export const wordpressCommon = {
         const response = await httpClient.sendRequest<WordpressMedia[]>(request);
         return {
             media: response.body,
-            totalPages: response.headers && response.headers['X-WP-TotalPages'] ? Number(response.headers['X-WP-TotalPages']) : 0
+            totalPages: response.headers && response.headers[PAGE_HEADER] ? Number(response.headers[PAGE_HEADER]) : 0
         };
     },
     async getTags(params: { websiteUrl: string, username: string, password: string, page: number }) {
         const request: HttpRequest = {
             method: HttpMethod.GET,
             url: `${params.websiteUrl}/wp-json/wp/v2/tags`,
+            queryParams: {
+                page: params.page.toString()
+            },
             authentication: {
                 type: AuthenticationType.BASIC,
                 username: params.username,
@@ -121,7 +128,7 @@ export const wordpressCommon = {
         const response = await httpClient.sendRequest<{ id: string, name: string }[]>(request);
         return {
             tags: response.body,
-            totalPages: response.headers && response.headers['X-WP-TotalPages'] ? Number(response.headers['X-WP-TotalPages']) : 0
+            totalPages: response.headers && response.headers[PAGE_HEADER] ? Number(response.headers[PAGE_HEADER]) : 0
         };
     },
     async getCategories(params: { websiteUrl: string, username: string, password: string, page: number }) {
@@ -133,12 +140,14 @@ export const wordpressCommon = {
                 username: params.username,
                 password: params.password
             },
-
+            queryParams: {
+                page: params.page.toString()
+            },
         };
         const response = await httpClient.sendRequest<{ id: string, name: string }[]>(request);
         return {
             categories: response.body,
-            totalPages: response.headers && response.headers['X-WP-TotalPages'] ? Number(response.headers['X-WP-TotalPages']) : 0
+            totalPages: response.headers && response.headers[PAGE_HEADER] ? Number(response.headers[PAGE_HEADER]) : 0
         };
     },
     async urlExists(url: string) {

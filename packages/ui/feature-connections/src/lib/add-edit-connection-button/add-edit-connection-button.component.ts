@@ -303,6 +303,7 @@ export class AddEditConnectionButtonComponent {
             );
         })
       );
+    this.cd.detectChanges();
   }
 
   private openNewCloudOAuth2ConnectionModal(

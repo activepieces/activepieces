@@ -8,7 +8,7 @@ export const http = createPiece({
 	logoUrl: 'https://cdn.activepieces.com/pieces/http.png',
   version: packageJson.version,
 	actions: [ httpSendRequestAction,],
-	authors: ['khaledmashaly'],
+	authors: ['khaledmashaly', 'bibhuty-did-this'],
 	triggers: [
   ],
 });

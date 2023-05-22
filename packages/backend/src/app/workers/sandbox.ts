@@ -215,8 +215,8 @@ export class Sandbox {
                 }
 
                 if (stderr) {
+                    // Don't return an error, because it's okay for engine to print errors, and they should be caught by the engine
                     await fs.writeFile(standardErrorPath, stderr)
-                    // Don't return an error, becuase it's okay for engine to print errors, and they should be catched by the engine
                 }
 
                 resolve({ verdict: EngineResponseStatus.OK })
@@ -255,7 +255,7 @@ export class Sandbox {
 export default class SandboxManager {
     private static _instance?: SandboxManager
 
-    private readonly sandboxes: Map<number, Sandbox> = new Map()
+    private readonly sandboxes = new Map<number, Sandbox>()
     private readonly mutex: Mutex = new Mutex()
 
     private constructor() {

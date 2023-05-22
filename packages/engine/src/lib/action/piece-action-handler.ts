@@ -10,14 +10,30 @@ import {
   StepOutputStatus
 } from '@activepieces/shared';
 import { BaseActionHandler } from './action-handler';
-import { PieceExecutor } from '../executors/piece-executor';
 import { globals } from '../globals';
 import { isNil } from 'lodash';
+import { pieceHelper } from '../helper/piece-helper';
+import { createContextStore } from '../services/storage.service';
+import { connectionManager } from '../services/connections.service';
+import { PiecePropertyMap } from '@activepieces/pieces-framework';
 
 type CtorParams = {
   executionType: ExecutionType
   currentAction: PieceAction
   nextAction?: Action
+}
+
+type LoadActionParams = {
+  pieceName: string
+  pieceVersion: string
+  actionName: string
+}
+
+type ResolveAndValidateInput = {
+  actionProps: PiecePropertyMap
+  input: unknown
+  executionState: ExecutionState
+  censorConnections: boolean
 }
 
 export class PieceActionHandler extends BaseActionHandler<PieceAction> {
@@ -34,56 +50,97 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
     this.variableService = new VariableService()
   }
 
+  private async loadAction(params: LoadActionParams) {
+    const { pieceName, pieceVersion, actionName } = params
+
+    const piece = await pieceHelper.loadPieceOrThrow(pieceName, pieceVersion)
+
+    if (isNil(actionName)) {
+      throw new Error("Action name is not defined");
+    }
+
+    const action = piece.getAction(actionName);
+
+    if (isNil(action)) {
+      throw new Error(`error=action_not_found action_name=${actionName}`);
+    }
+
+    return action
+  }
+
+  private async resolveInput(params: ResolveAndValidateInput) {
+    const { actionProps, input, executionState, censorConnections } = params
+
+    const resolvedInput = await this.variableService.resolve({
+      unresolvedInput: input,
+      executionState,
+      censorConnections,
+    })
+
+    const { result, errors } = this.variableService.validateAndCast(resolvedInput, actionProps);
+
+    if (Object.keys(errors).length > 0) {
+      throw new Error(JSON.stringify(errors));
+    }
+
+    return result
+  }
+
   async execute(
     executionState: ExecutionState
   ): Promise<StepOutput> {
-    const censoredInput = await this.variableService.resolve({
-      unresolvedInput: this.currentAction.settings.input,
-      executionState,
-      censorConnections: true,
-    })
+    const { input, pieceName, pieceVersion, actionName } = this.currentAction.settings;
 
     const stepOutput: StepOutput<ActionType.PIECE> = {
       type: ActionType.PIECE,
       status: StepOutputStatus.RUNNING,
-      input: censoredInput,
-    }
-
-    const { input, pieceName, pieceVersion, actionName } = this.currentAction.settings;
-
-    if (this.executionType === ExecutionType.BEGIN && pieceName === 'delay') {
-      const { delay } = stepOutput.input as { delay: number }
-
-      stepOutput.output = {
-        delay,
-        pauseType: PauseType.DELAY,
-      }
-
-      stepOutput.status = StepOutputStatus.PAUSED
-
-      return stepOutput
-    }
-
-    const config = await this.variableService.resolve({
-      unresolvedInput: input,
-      executionState,
-      censorConnections: false,
-    })
-
-    globals.addOneTask()
-
-    if (isNil(actionName)) {
-      throw new Error("Action name is not defined")
+      input: {},
     }
 
     try {
-      const executer = new PieceExecutor();
+      if (isNil(actionName)) {
+        throw new Error("Action name is not defined")
+      }
 
-      stepOutput.output = await executer.exec({
+      const action = await this.loadAction({
         pieceName,
         pieceVersion,
-        actionName: actionName,
-        config,
+        actionName,
+      })
+
+      stepOutput.input = await this.resolveInput({
+        actionProps: action.props,
+        input,
+        executionState,
+        censorConnections: true,
+      })
+
+      if (this.executionType === ExecutionType.BEGIN && pieceName === 'delay') {
+        const { delay } = stepOutput.input as { delay: number }
+
+        stepOutput.output = {
+          delay,
+          pauseType: PauseType.DELAY,
+        }
+
+        stepOutput.status = StepOutputStatus.PAUSED
+
+        return stepOutput
+      }
+
+      const resolvedInput = await this.resolveInput({
+        actionProps: action.props,
+        input,
+        executionState,
+        censorConnections: false,
+      })
+
+      globals.addOneTask()
+
+      stepOutput.output = await action.run({
+        store: createContextStore('', globals.flowId),
+        propsValue: resolvedInput,
+        connections: connectionManager
       })
 
       stepOutput.status = StepOutputStatus.SUCCEEDED

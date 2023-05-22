@@ -126,4 +126,4 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     },
   ],
 })
-export class CommonLayoutModule {}
+export class MaterialLayoutModule {}

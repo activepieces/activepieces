@@ -6,6 +6,7 @@ import { Static, Type } from "@sinclair/typebox";
 
 
 export enum FlowOperationType {
+    LOCK_FLOW = "LOCK_FLOW",
     CHANGE_FOLDER = "CHANGE_FOLDER",
     IMPORT_FLOW = 'IMPORT_FLOW',
     CHANGE_NAME = "CHANGE_NAME",
@@ -22,7 +23,13 @@ export enum StepLocationRelativeToParent {
     INSIDE_LOOP = "INSIDE_LOOP"
 }
 
-const optionalNextAction =Type.Object({ nextAction: Type.Optional(Action) });
+const optionalNextAction = Type.Object({ nextAction: Type.Optional(Action) });
+
+export const LockFlowRequest = Type.Object({
+    flowId: Type.String({})
+})
+
+export type LockFlowRequest = Static<typeof LockFlowRequest>;
 
 export const ImportFlowRequest = Type.Object({
     displayName: Type.String({}),
@@ -64,6 +71,10 @@ export const UpdateTriggerRequest = Type.Union([EmptyTrigger, PieceTrigger, Webh
 export type UpdateTriggerRequest = Static<typeof UpdateTriggerRequest>;
 
 export const FlowOperationRequest = Type.Union([
+    Type.Object({
+        type: Type.Literal(FlowOperationType.LOCK_FLOW),
+        request: LockFlowRequest
+    }),
     Type.Object({
         type: Type.Literal(FlowOperationType.IMPORT_FLOW),
         request: ImportFlowRequest

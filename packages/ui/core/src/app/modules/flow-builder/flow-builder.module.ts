@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FlowLayoutRouting } from './flow-builder.routing';
 import { CollectionBuilderComponent } from './page/flow-builder/collection-builder.component';
-import { CommonLayoutModule } from '../common/common-layout.module';
+import { MaterialLayoutModule } from '../common/common-layout.module';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { MonacoEditorModule } from '@materia-ui/ngx-monaco-editor';
@@ -28,7 +28,7 @@ import { PortalModule } from '@angular/cdk/portal';
     RouterModule.forChild(FlowLayoutRouting),
     FormsModule,
     ReactiveFormsModule,
-    CommonLayoutModule,
+    MaterialLayoutModule,
     UiCommonModule,
     CodemirrorModule,
     DragDropModule,

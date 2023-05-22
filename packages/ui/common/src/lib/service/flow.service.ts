@@ -98,10 +98,10 @@ export class FlowService {
     });
   }
 
-  update(flowId: FlowId, opreation: FlowOperationRequest): Observable<Flow> {
+  update(flowId: FlowId, operation: FlowOperationRequest): Observable<Flow> {
     return this.http.post<Flow>(
       environment.apiUrl + '/flows/' + flowId,
-      opreation
+      operation
     );
   }
 

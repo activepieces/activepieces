@@ -18,6 +18,7 @@ import { appEventRoutingService } from '../app-event-routing/app-event-routing.s
 import { captureException } from '@sentry/node'
 import {  isNil } from 'lodash'
 import { pieceMetadataLoader } from '../pieces/piece-metadata-loader'
+import { LATEST_JOB_DATA_SCHEMA_VERSION } from '../workers/flow-worker/job-data'
 
 export const triggerUtils = {
     async executeTrigger(params: ExecuteTrigger): Promise<unknown[]> {
@@ -176,6 +177,7 @@ const enablePieceTrigger = async (params: EnableOrDisableParams) => {
                 id: flowVersion.id,
                 type: JobType.REPEATING,
                 data: {
+                    schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                     projectId,
                     environment: RunEnvironment.PRODUCTION,
                     flowVersion,
