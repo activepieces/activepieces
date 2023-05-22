@@ -6,7 +6,6 @@ import {
     ActionType,
     apId,
     BranchActionSettingsWithValidation,
-    CloneFlowVersionRequest,
     CodeActionSettings,
     flowHelper,
     FlowId,
@@ -33,7 +32,7 @@ import { pieceMetadataLoader } from '../../pieces/piece-metadata-loader'
 import { FlowViewMode, DEFAULT_SAMPLE_DATA_SETTINGS } from '@activepieces/shared'
 import { isNil } from 'lodash'
 
-const branchSetttingsValidaotr = TypeCompiler.Compile(BranchActionSettingsWithValidation)
+const branchSettingsValidator = TypeCompiler.Compile(BranchActionSettingsWithValidation)
 const loopSettingsValidator = TypeCompiler.Compile(LoopOnItemsActionSettingsWithValidation)
 const flowVersionRepo = databaseConnection.getRepository(FlowVersionEntity)
 
@@ -44,7 +43,7 @@ export const flowVersionService = {
             id: flowVersionId,
         })
     },
-    async applyOperation(projectId: ProjectId, flowVersion: FlowVersion, userOperation: FlowOperationRequest): Promise<FlowVersion | null> {
+    async applyOperation(projectId: ProjectId, flowVersion: FlowVersion, userOperation: FlowOperationRequest): Promise<FlowVersion> {
         let operations: FlowOperationRequest[] = []
         switch (userOperation.type) {
             case FlowOperationType.IMPORT_FLOW:
@@ -78,9 +77,9 @@ export const flowVersionService = {
             mutatedFlowVersion = await applySingleOperation(projectId, mutatedFlowVersion, operation)
         }
         await flowVersionRepo.update(flowVersion.id, mutatedFlowVersion as QueryDeepPartialEntity<FlowVersion>)
-        return await flowVersionRepo.findOneBy({
+        return (await flowVersionRepo.findOneBy({
             id: flowVersion.id,
-        })
+        }))!
     },
 
     async getOne(id: FlowVersionId): Promise<FlowVersion | null> {
@@ -122,13 +121,21 @@ export const flowVersionService = {
         }
         return flowVersion
     },
-    async createVersion(flowId: FlowId, flowRequest: CloneFlowVersionRequest): Promise<FlowVersion> {
+    async createEmptyVersion(flowId: FlowId, request: {
+        displayName: string
+    }): Promise<FlowVersion> {
         const flowVersion: Partial<FlowVersion> = {
             id: apId(),
-            displayName: flowRequest.displayName,
+            displayName: request.displayName,
             flowId,
-            trigger: flowRequest.trigger,
-            valid: flowRequest.valid,
+            trigger: {
+                type: TriggerType.EMPTY,
+                name: 'trigger',
+                settings: {},
+                valid: false,
+                displayName: 'Select Trigger',
+            },
+            valid: false,
             state: FlowVersionState.DRAFT,
         }
         return await flowVersionRepo.save(flowVersion)
@@ -276,7 +283,7 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
                 clonedRequest.request.action.valid = loopSettingsValidator.Check(clonedRequest.request.action.settings)
             }
             else if (clonedRequest.request.action.type === ActionType.BRANCH) {
-                clonedRequest.request.action.valid = branchSetttingsValidaotr.Check(clonedRequest.request.action.settings)
+                clonedRequest.request.action.valid = branchSettingsValidator.Check(clonedRequest.request.action.settings)
             }
             else if (clonedRequest.request.action.type === ActionType.PIECE) {
                 clonedRequest.request.action.valid = await validateAction(clonedRequest.request.action.settings)
@@ -295,7 +302,7 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
                 clonedRequest.request.valid = loopSettingsValidator.Check(clonedRequest.request.settings)
             }
             else if (clonedRequest.request.type === ActionType.BRANCH) {
-                clonedRequest.request.valid = branchSetttingsValidaotr.Check(clonedRequest.request.settings)
+                clonedRequest.request.valid = branchSettingsValidator.Check(clonedRequest.request.settings)
             }
             else if (clonedRequest.request.type === ActionType.PIECE) {
                 clonedRequest.request.valid = await validateAction(clonedRequest.request.settings)
@@ -385,7 +392,7 @@ function validateProps(props: PiecePropertyMap, input: Record<string, unknown>) 
 
 function buildSchema(props: PiecePropertyMap): TSchema {
     const entries = Object.entries(props)
-    const nonNullableUnknownPropType = Type.Not(Type.Null(), Type.Unknown())
+    const nonNullableUnknownPropType = Type.Not(Type.Union([Type.Null(), Type.Undefined()]), Type.Unknown())
     const propsSchema: Record<string, TSchema> = {}
     for (let i = 0; i < entries.length; ++i) {
         const property = entries[i][1]
@@ -411,6 +418,7 @@ function buildSchema(props: PiecePropertyMap): TSchema {
                 propsSchema[name] = nonNullableUnknownPropType
                 break
             case PropertyType.BASIC_AUTH:
+            case PropertyType.CUSTOM_AUTH:
             case PropertyType.SECRET_TEXT:
             case PropertyType.OAUTH2:
                 // Only accepts connections variable.
@@ -446,7 +454,7 @@ function buildSchema(props: PiecePropertyMap): TSchema {
 }
 
 async function deleteArtifact(projectId: ProjectId, codeSettings: CodeActionSettings): Promise<CodeActionSettings> {
-    const requests: Array<Promise<void>> = []
+    const requests: Promise<void>[] = []
     if (codeSettings.artifactSourceId !== undefined) {
         requests.push(fileService.delete({ projectId: projectId, fileId: codeSettings.artifactSourceId }))
     }

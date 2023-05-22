@@ -232,11 +232,11 @@ async function refreshWithCredentials(appConnection: OAuth2ConnectionValueWithAp
     const authorizationMethod = appConnection.authorization_method || OAuth2AuthorizationMethod.BODY
     switch (authorizationMethod) {
         case OAuth2AuthorizationMethod.BODY:
-            body['client_id'] = appConnection.client_id
-            body['client_secret'] = appConnection.client_secret
+            body.client_id = appConnection.client_id
+            body.client_secret = appConnection.client_secret
             break
         case OAuth2AuthorizationMethod.HEADER:
-            headers['authorization'] = `Basic ${Buffer.from(`${appConnection.client_id}:${appConnection.client_secret}`).toString('base64')}`
+            headers.authorization = `Basic ${Buffer.from(`${appConnection.client_id}:${appConnection.client_secret}`).toString('base64')}`
             break
         default:
             throw new Error(`Unknown authorization method: ${authorizationMethod}`)
@@ -286,7 +286,7 @@ async function claim(request: {
             code: request.code,
         }
         if (request.codeVerifier) {
-            body['code_verifier'] = request.codeVerifier
+            body.code_verifier = request.codeVerifier
         }
         const headers: Record<string, string> = {
             'content-type': 'application/x-www-form-urlencoded',
@@ -295,11 +295,11 @@ async function claim(request: {
         const authorizationMethod = request.authorizationMethod || OAuth2AuthorizationMethod.BODY
         switch (authorizationMethod) {
             case OAuth2AuthorizationMethod.BODY:
-                body['client_id'] = request.clientId
-                body['client_secret'] = request.clientSecret
+                body.client_id = request.clientId
+                body.client_secret = request.clientSecret
                 break
             case OAuth2AuthorizationMethod.HEADER:
-                headers['authorization'] = `Basic ${Buffer.from(`${request.clientId}:${request.clientSecret}`).toString('base64')}`
+                headers.authorization = `Basic ${Buffer.from(`${request.clientId}:${request.clientSecret}`).toString('base64')}`
                 break
             default:
                 throw new Error(`Unknown authorization method: ${authorizationMethod}`)
@@ -352,12 +352,12 @@ type UnformattedOauthResponse = {
 function formatOAuth2Response(response: UnformattedOauthResponse) {
     const secondsSinceEpoch = Math.round(Date.now() / 1000)
     const formattedResponse: BaseOAuth2ConnectionValue = {
-        access_token: response['access_token'],
-        expires_in: response['expires_in'],
+        access_token: response.access_token,
+        expires_in: response.expires_in,
         claimed_at: secondsSinceEpoch,
-        refresh_token: response['refresh_token'],
-        scope: response['scope'],
-        token_type: response['token_type'],
+        refresh_token: response.refresh_token,
+        scope: response.scope,
+        token_type: response.token_type,
         data: response,
     }
 

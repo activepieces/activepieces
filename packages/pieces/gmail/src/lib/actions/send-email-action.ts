@@ -23,6 +23,11 @@ export const gmailSendEmailAction = createAction({
 			description: 'Text version of the body for the email you want to send',
 			required: true,
 		}),
+		reply_to: Property.Array({
+			displayName: 'Reply-To Email',
+			description: 'Email address to set as the "Reply-To" header',
+			required: false,
+		}),
 		body_html: Property.ShortText({
 			displayName: 'Body (HTML)',
 			description: 'HTML version of the body for the email you want to send',
@@ -31,12 +36,16 @@ export const gmailSendEmailAction = createAction({
 	},
 	sampleData: {},
 	async run(configValue) {
+		const subjectBase64 = Buffer.from(configValue.propsValue['subject']).toString("base64");
 		const headers = [
-			"subject: " + configValue.propsValue['subject'],
+			`subject: =?UTF-8?B?${subjectBase64}?=`,
             "to: " + configValue.propsValue['receiver'].join(', '), // Join all email addresses with a comma
 			"mime-version: 1.0",
 			"content-type: text/html"
 		];
+		if (configValue.propsValue['reply_to']) {
+			headers.push("reply-to: " + configValue.propsValue['reply_to'].join(', '));
+		}
 		const plainTextBody = configValue.propsValue['body_text'].replace(/\n/g, '<br>');
 		const message = headers.join("\n") + "\n\n" + (configValue.propsValue['body_html'] ?? plainTextBody);
 		const requestBody: SendEmailRequestBody = {

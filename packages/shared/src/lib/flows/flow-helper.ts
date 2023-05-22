@@ -16,7 +16,7 @@ import {
 } from './actions/action';
 import { Trigger, TriggerType } from './triggers/trigger';
 import { TypeCompiler } from '@sinclair/typebox/compiler';
-import { FlowVersion } from './flow-version';
+import { FlowVersion, FlowVersionState } from './flow-version';
 import { ActivepiecesError, ErrorCode } from '../common/activepieces-error';
 
 const actionSchemaValidator = TypeCompiler.Compile(Action);
@@ -360,6 +360,9 @@ export const flowHelper = {
     switch (operation.type) {
       case FlowOperationType.MOVE_ACTION:
         moveAction(clonedVersion, operation.request);
+        break;
+      case FlowOperationType.LOCK_FLOW:
+        clonedVersion.state = FlowVersionState.LOCKED;
         break;
       case FlowOperationType.CHANGE_NAME:
         clonedVersion.displayName = operation.request.displayName;

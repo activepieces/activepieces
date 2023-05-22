@@ -1,5 +1,6 @@
 import { TriggerBase, TriggerStrategy } from '@activepieces/pieces-framework'
 import {
+    ExecutionType,
     EngineResponseStatus,
     FlowVersion,
     PieceTrigger,
@@ -17,6 +18,7 @@ import { appEventRoutingService } from '../app-event-routing/app-event-routing.s
 import { captureException } from '@sentry/node'
 import {  isNil } from 'lodash'
 import { pieceMetadataLoader } from '../pieces/piece-metadata-loader'
+import { LATEST_JOB_DATA_SCHEMA_VERSION } from '../workers/flow-worker/job-data'
 
 export const triggerUtils = {
     async executeTrigger(params: ExecuteTrigger): Promise<unknown[]> {
@@ -123,7 +125,7 @@ const disablePieceTrigger = async (params: EnableOrDisableParams) => {
         case TriggerStrategy.WEBHOOK:
             break
         case TriggerStrategy.POLLING:
-            await flowQueue.removeRepeatableJob({
+            await flowQueue.removeRepeatingJob({
                 id: flowVersion.id,
             })
             break
@@ -173,12 +175,14 @@ const enablePieceTrigger = async (params: EnableOrDisableParams) => {
             const { scheduleOptions } = engineHelperResponse.result
             await flowQueue.add({
                 id: flowVersion.id,
-                type: JobType.REPEATABLE,
+                type: JobType.REPEATING,
                 data: {
+                    schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                     projectId,
                     environment: RunEnvironment.PRODUCTION,
                     flowVersion,
                     triggerType: TriggerType.PIECE,
+                    executionType: ExecutionType.BEGIN,
                 },
                 scheduleOptions: scheduleOptions,
             })

@@ -6,6 +6,7 @@ import { Static, Type } from "@sinclair/typebox";
 
 
 export enum FlowOperationType {
+    LOCK_FLOW = "LOCK_FLOW",
     CHANGE_FOLDER = "CHANGE_FOLDER",
     CHANGE_NAME = "CHANGE_NAME",
     MOVE_ACTION = "MOVE_ACTION",
@@ -23,7 +24,13 @@ export enum StepLocationRelativeToParent {
     INSIDE_LOOP = "INSIDE_LOOP"
 }
 
-const optionalNextAction =Type.Object({ nextAction: Type.Optional(Action) });
+const optionalNextAction = Type.Object({ nextAction: Type.Optional(Action) });
+
+export const LockFlowRequest = Type.Object({
+    flowId: Type.String({})
+})
+
+export type LockFlowRequest = Static<typeof LockFlowRequest>;
 
 export const ImportFlowRequest = Type.Object({
     displayName: Type.String({}),
@@ -76,6 +83,10 @@ export const FlowOperationRequest = Type.Union([
     Type.Object({
         type: Type.Literal(FlowOperationType.MOVE_ACTION),
         request: MoveActionRequest
+    }),
+    Type.Object({
+        type: Type.Literal(FlowOperationType.LOCK_FLOW),
+        request: LockFlowRequest
     }),
     Type.Object({
         type: Type.Literal(FlowOperationType.IMPORT_FLOW),

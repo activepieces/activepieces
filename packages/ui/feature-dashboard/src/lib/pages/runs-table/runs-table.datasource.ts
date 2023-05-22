@@ -18,6 +18,7 @@ import {
   DEFAULT_PAGE_SIZE,
   LIMIT_QUERY_PARAM,
   CURSOR_QUERY_PARAM,
+  STATUS_QUERY_PARAM,
 } from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
 import { Params } from '@angular/router';
@@ -54,6 +55,7 @@ export class RunsTableDataSource extends DataSource<FlowRun> {
       }),
       switchMap((res) => {
         return this.instanceRunService.list(res.project.id, {
+          status: res.queryParams[STATUS_QUERY_PARAM],
           limit: res.queryParams[LIMIT_QUERY_PARAM] || DEFAULT_PAGE_SIZE,
           cursor: res.queryParams[CURSOR_QUERY_PARAM],
         });

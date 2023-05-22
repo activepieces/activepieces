@@ -24,7 +24,10 @@ export const triggerHelper = {
 
     const variableService = new VariableService();
     const executionState = new ExecutionState();
-    const resolvedInput = await variableService.resolve(input, executionState);
+    const { result, errors } = variableService.validateAndCast(await variableService.resolve(input, executionState), trigger.props);
+    if (Object.keys(errors).length > 0) {
+      throw new Error(JSON.stringify(errors));
+    }
     const appListeners: Listener[] = [];
     const prefix = (params.hookType === TriggerHookType.TEST) ? 'test' : '';
     let scheduleOptions: ScheduleOptions = {
@@ -48,7 +51,7 @@ export const triggerHelper = {
         };
       },
       webhookUrl: params.webhookUrl,
-      propsValue: resolvedInput,
+      propsValue: result,
       payload: params.triggerPayload ?? {},
     };
 

@@ -64,13 +64,13 @@ export const runQuery = createAction({
             displayName: 'Query Timeout',
             description: "An integer indicating the maximum number of milliseconds to wait for a query to complete before timing out.",
             required: false,
-            defaultValue: "30000"
+            defaultValue: 30000
         }),
-        connection_timeout_millis: Property.Number({
+        connection_timeout_ms: Property.Number({
             displayName: 'Connection Timeout (ms)',
             description: "An integer indicating the maximum number of milliseconds to wait for a connection to be established before timing out.",
             required: false,
-            defaultValue: "30000"
+            defaultValue: 30000
         }),
         application_name: Property.ShortText({
             displayName: 'Application Name',
@@ -80,7 +80,7 @@ export const runQuery = createAction({
     },
     async run(context) {
         const { host, user, database, password, port, enable_ssl, reject_unauthorized: rejectUnauthorized, certificate } = context.propsValue.authentication;
-        const { query, query_timeout, application_name, connection_timeout_millis: connectionTimeoutMillis } = context.propsValue;
+        const { query, query_timeout, application_name, connection_timeout_ms: connectionTimeoutMillis } = context.propsValue;
         const sslConf = {
             rejectUnauthorized: rejectUnauthorized,
             ca: certificate && certificate.length > 0 ? certificate : undefined

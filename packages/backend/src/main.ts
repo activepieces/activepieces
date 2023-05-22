@@ -112,7 +112,7 @@ app.get(
             reply.send('The code is missing in url')
         }
         else {
-            reply.type('text/html').send(`<script>if(window.opener){window.opener.postMessage({ 'code': '${encodeURIComponent(params['code'])}' },'*')}</script> <html>Redirect succuesfully, this window should close now</html>`)
+            reply.type('text/html').send(`<script>if(window.opener){window.opener.postMessage({ 'code': '${encodeURIComponent(params.code)}' },'*')}</script> <html>Redirect succuesfully, this window should close now</html>`)
         }
     },
 )

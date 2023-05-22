@@ -31,20 +31,20 @@ export const textToImage = createAction({
       description:
         'How strictly the diffusion process adheres to the prompt text (higher values keep your image closer to your prompt) (MIN:0; MAX:35)',
       required: false,
-      defaultValue: '7',
+      defaultValue: 7,
     }),
     height: Property.Number({
       displayName: 'height',
       description:
         'Height of the image in pixels. Must be in increments of 64 and >= 128',
-      defaultValue: '512',
+      defaultValue: 512,
       required: false,
     }),
     width: Property.Number({
       displayName: 'width',
       description:
         'Width of the image in pixels. Must be in increments of 64 and >= 128',
-      defaultValue: '512',
+      defaultValue: 512,
       required: false,
     }),
     samples: Property.ShortText({
@@ -59,7 +59,7 @@ export const textToImage = createAction({
     }),
     weight: Property.Number({
       displayName: 'weight',
-      defaultValue: '1',
+      defaultValue: 1,
       required: false,
     }),
     clip_guidance_preset: Property.StaticDropdown({

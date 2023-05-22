@@ -1,3 +1,5 @@
+import { ExecutionState } from "../flow-run/execution/execution-state";
+import { ExecutionType } from "../flow-run/execution/execution-type";
 import { FlowVersion, FlowVersionId } from "../flows/flow-version";
 import { ProjectId } from "../project/project";
 
@@ -43,13 +45,23 @@ export interface ExecutePropsOptions {
     workerToken?: string;
 }
 
-export interface ExecuteFlowOperation {
-    flowVersionId: FlowVersionId,
-    projectId: ProjectId,
-    triggerPayload: unknown,
+type BaseExecuteFlowOperation<T extends ExecutionType> = {
+    flowVersionId: FlowVersionId;
+    projectId: ProjectId;
+    triggerPayload: unknown;
+    executionType: T;
     workerToken?: string;
     apiUrl?: string;
 }
+
+export type BeginExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.BEGIN>
+
+export type ResumeExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.RESUME> & {
+    executionState: ExecutionState,
+    resumeStepName: string,
+}
+
+export type ExecuteFlowOperation = BeginExecuteFlowOperation | ResumeExecuteFlowOperation
 
 export interface ExecuteTriggerOperation<HT extends TriggerHookType> {
     hookType: HT,

@@ -92,6 +92,7 @@
       "@activepieces/piece-mattermost": [
         "packages/pieces/mattermost/src/index.ts"
       ],
+      "@activepieces/piece-mautic": ["packages/pieces/mautic/src/index.ts"],
       "@activepieces/piece-mindee": ["packages/pieces/mindee/src/index.ts"],
       "@activepieces/piece-monday": ["packages/pieces/monday/src/index.ts"],
       "@activepieces/piece-notion": ["packages/pieces/notion/src/index.ts"],
@@ -127,6 +128,7 @@
       "@activepieces/piece-todoist": ["packages/pieces/todoist/src/index.ts"],
       "@activepieces/piece-trello": ["packages/pieces/trello/src/index.ts"],
       "@activepieces/piece-twilio": ["packages/pieces/twilio/src/index.ts"],
+      "@activepieces/piece-twitter": ["packages/pieces/twitter/src/index.ts"],
       "@activepieces/piece-typeform": ["packages/pieces/typeform/src/index.ts"],
       "@activepieces/piece-vtex": ["packages/pieces/vtex/src/index.ts"],
       "@activepieces/piece-wordpress": [

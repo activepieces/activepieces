@@ -1,3 +1,4 @@
+export * from './pieces-icons-from-flow/pieces-icons-from-flow.component';
 export * from './ap-button/ap-button.component';
 export * from './editable-text/editable-text.component';
 export * from './hotspot/hotspot.component';

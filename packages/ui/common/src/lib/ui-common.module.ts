@@ -48,6 +48,7 @@ import { GenericSnackbarTemplateComponent } from './components/generic-snackbar-
 import { MatIconModule } from '@angular/material/icon';
 import { UserAvatarComponent } from './components/user-avatar/user-avatar.component';
 import { TrackHoverDirective } from './directives/track-hover.directive';
+import { PiecesIconsFromFlowComponent } from './components/pieces-icons-from-flow/pieces-icons-from-flow.component';
 
 const exportedImports = [
   CommonModule,
@@ -96,6 +97,7 @@ const exportedDeclarations = [
   DeleteEntityDialogComponent,
   GenericSnackbarTemplateComponent,
   UserAvatarComponent,
+  PiecesIconsFromFlowComponent,
   TrackHoverDirective,
 ];
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {

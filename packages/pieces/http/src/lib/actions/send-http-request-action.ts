@@ -1,6 +1,13 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
-import {assertNotNullOrUndefined, HttpRequest, HttpHeaders, QueryParams, httpClient} from "@activepieces/pieces-common";
-import { httpMethodDropdown } from "../common/props";
+import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  assertNotNullOrUndefined,
+  HttpRequest,
+  HttpHeaders,
+  QueryParams,
+  httpClient,
+  HttpError,
+} from '@activepieces/pieces-common';
+import { httpMethodDropdown } from '../common/props';
 
 export const httpSendRequestAction = createAction({
   name: 'send_request',
@@ -24,10 +31,19 @@ export const httpSendRequestAction = createAction({
       displayName: 'Body',
       required: false,
     }),
+    failsafe: Property.Checkbox({
+      displayName: 'No Error On Failure',
+      required: false,
+    }),
+    timeout: Property.Number({
+      displayName: 'Timeout(in seconds)',
+      required: false,
+    }),
   },
 
   async run(context) {
-    const { method, url, headers, queryParams, body } = context.propsValue;
+    const { method, url, headers, queryParams, body, failsafe, timeout } =
+      context.propsValue;
 
     assertNotNullOrUndefined(method, 'Method');
     assertNotNullOrUndefined(url, 'URL');
@@ -38,8 +54,16 @@ export const httpSendRequestAction = createAction({
       headers: headers as HttpHeaders,
       queryParams: queryParams as QueryParams,
       body,
+      timeout: timeout ? timeout * 1000 : 0,
     };
 
-    return await httpClient.sendRequest(request);
+    try {
+        return await httpClient.sendRequest(request);
+    } catch (error) {
+      if (failsafe) {
+        return (error as HttpError).errorMessage()
+      }
+      throw error;
+    }
   },
 });

@@ -1,6 +1,7 @@
-import { get, isString } from 'lodash';
+import { get, isNil, isString } from 'lodash';
 import { ExecutionState } from '@activepieces/shared';
 import { connectionService } from './connections.service';
+import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework';
 
 export class VariableService {
   private VARIABLE_TOKEN = RegExp('\\{\\{(.*?)\\}\\}', 'g');
@@ -105,4 +106,47 @@ export class VariableService {
       censorConnections
     );
   }
+
+  castedToNumber(number: any): number | undefined | null {
+    if (isNil(number)) {
+      return number;
+    }
+    if (number === '') {
+      return NaN;
+    }
+    return Number(number);
+  }
+
+  validateAndCast(resolvedInput: any, props: PiecePropertyMap): { result: any, errors: Record<string, any> } {
+    const errors: Record<string, string | Record<string, string>> = {};
+    const clonedInput = JSON.parse(JSON.stringify(resolvedInput));
+
+    for (const [key, value] of Object.entries(resolvedInput)) {
+      const property = props[key];
+      if (property?.type === PropertyType.NUMBER) {
+        const castedNumber = this.castedToNumber(clonedInput[key]);
+        // If the value is required, we don't allow it to be undefined or null
+        if ((isNil(castedNumber) || isNaN(castedNumber)) && property.required) {
+          errors[key] = `expected number, but found value: ${value}`;
+        }
+        // If the value is not required, we allow it to be undefined or null
+        if (!isNil(castedNumber) && isNaN(castedNumber) && !property.required) {
+          errors[key] = `expected number, but found value: ${value}`;
+        }
+        clonedInput[key] = castedNumber;
+      } else if (property.type === PropertyType.CUSTOM_AUTH) {
+        const innerValidation = this.validateAndCast(value, property.props);
+        clonedInput[key] = innerValidation.result;
+        if (Object.keys(innerValidation.errors).length > 0) {
+          errors[key] = innerValidation.errors;
+        }
+      }
+    }
+
+    return {
+      result: clonedInput,
+      errors
+    };
+  }
+
 }

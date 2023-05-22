@@ -5,19 +5,19 @@ import {
   TriggerType,
   flowHelper,
 } from '@activepieces/shared';
+import { Observable, map, of, tap } from 'rxjs';
 import {
   ActionMetaService,
   CORE_PIECES_ACTIONS_NAMES,
   CORE_PIECES_TRIGGERS,
   corePieceIconUrl,
-} from '@activepieces/ui/common';
-import { Observable, map, of, tap } from 'rxjs';
+} from '../../service/action-meta.service';
 
 @Component({
-  selector: 'app-steps-list-in-flows-table',
-  templateUrl: './steps-list-in-flows-table.component.html',
+  selector: 'ap-pieces-icons-from-flow',
+  templateUrl: './pieces-icons-from-flow.component.html',
 })
-export class StepsListInFlowsTableComponent implements OnInit {
+export class PiecesIconsFromFlowComponent implements OnInit {
   @Input() flowVersion: FlowVersion;
   numberOfStepsLeft = 0;
   loadedIcons: Record<number, boolean> = {};
