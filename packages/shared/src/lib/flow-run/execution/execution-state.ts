@@ -1,4 +1,10 @@
+import { ActionType } from '../../flows/actions/action';
 import {LoopOnItemsStepOutput, StepOutput} from './step-output';
+
+type GetStepOutputParams = {
+  stepName: string
+  ancestors: [string, number][]
+}
 
 export class ExecutionState {
   steps: Record<string, StepOutput> = {};
@@ -13,16 +19,23 @@ export class ExecutionState {
 
   insertStep(
     stepOutput: StepOutput,
-    actionName: string,
+    stepName: string,
     ancestors: [string, number][]
   ) {
     const targetMap: Record<string, StepOutput> = this.getTargetMap(ancestors);
-    targetMap[actionName] = stepOutput;
-    this.updateLastStep(stepOutput.output, actionName);
+    targetMap[stepName] = stepOutput;
+    this.updateLastStep(stepOutput.output, stepName);
   }
 
-  updateLastStep(outputOnly: unknown, actionName: string) {
-    this.lastStepState[actionName] = ExecutionState.deepClone(outputOnly);
+  updateLastStep(outputOnly: unknown, stepName: string) {
+    this.lastStepState[stepName] = ExecutionState.deepClone(outputOnly);
+  }
+
+  getStepOutput<T extends StepOutput>(params: GetStepOutputParams): T | undefined {
+    const { stepName, ancestors } = params
+
+    const targetMap = this.getTargetMap(ancestors)
+    return targetMap[stepName] as T
   }
 
   private static deepClone(value: unknown) {
@@ -45,10 +58,12 @@ export class ExecutionState {
       if (targetMap[parent[0]] === undefined) {
         throw 'Error in ancestor tree';
       }
-      const targetStepOutput = targetMap[parent[0]];
-      if (!(targetStepOutput instanceof LoopOnItemsStepOutput)) {
-        throw 'Error in ancestor tree, Not instance of Loop On Items step output';
+      const targetStepOutput = targetMap[parent[0]]
+
+      if (targetStepOutput.type !== ActionType.LOOP_ON_ITEMS) {
+        throw new Error('[ExecutionState#getTargetMap] Not instance of Loop On Items step output')
       }
+
       const loopOutput = targetStepOutput as LoopOnItemsStepOutput;
       targetMap = loopOutput.output!.iterations[parent[1]];
     });
