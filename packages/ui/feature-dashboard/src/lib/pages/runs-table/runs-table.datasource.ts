@@ -9,6 +9,7 @@ import {
   of,
   take,
   BehaviorSubject,
+  filter,
 } from 'rxjs';
 import { FlowRun } from '@activepieces/shared';
 import {
@@ -48,7 +49,11 @@ export class RunsTableDataSource extends DataSource<FlowRun> {
   connect(): Observable<FlowRun[]> {
     return combineLatest({
       queryParams: this.queryParams$,
-      project: this.store.select(ProjectSelectors.selectProject).pipe(take(1)),
+      //wait till projects are loaded
+      project: this.store
+        .select(ProjectSelectors.selectProject)
+        .pipe(filter((project) => !!project))
+        .pipe(take(1)),
     }).pipe(
       tap(() => {
         this.isLoading$.next(true);

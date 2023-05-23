@@ -3,7 +3,6 @@ import { Actions, concatLatestFrom, createEffect, ofType } from '@ngrx/effects';
 import { EMPTY, of } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { MatSnackBar } from '@angular/material/snack-bar';
-
 import { Store } from '@ngrx/store';
 import { CommonActions } from '../common.action';
 import { ProjectActions } from './project.action';
