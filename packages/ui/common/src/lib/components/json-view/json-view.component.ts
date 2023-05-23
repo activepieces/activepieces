@@ -18,25 +18,20 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 })
 export class JsonViewComponent implements AfterViewInit {
   highlight = false;
+  _content: unknown;
   @Input() isInput = false;
   @Input() title: string;
   @Input() maxHeight: number | undefined = undefined;
-
-  _content: unknown;
   @Input() set content(value: unknown) {
     this.highlight = false;
     this._content = value;
-    if (
-      typeof this._content === 'string' &&
-      this._content !== 'undefined' &&
-      this._content !== '0' &&
-      this._content !== 'null' &&
-      this._content !== JSON.stringify('')
-    ) {
-      this._content = `"${this._content}"`;
+    if (typeof this._content !== 'string') {
+      this.highlight = true;
     }
     setTimeout(() => {
-      this.highlightService.highlightAll();
+      if (this.highlight) {
+        this.highlightService.highlightAll();
+      }
     }, 10);
   }
 
@@ -47,8 +42,7 @@ export class JsonViewComponent implements AfterViewInit {
   ) {}
 
   ngAfterViewInit(): void {
-    if (!this.highlight) {
-      this.highlight = true;
+    if (this.highlight) {
       this.highlightService.highlightAll();
     }
   }
@@ -60,16 +54,7 @@ export class JsonViewComponent implements AfterViewInit {
   }
   copyContent() {
     if (typeof this._content === 'string') {
-      if (
-        this._content !== 'undefined' &&
-        this._content !== '0' &&
-        this._content !== 'null' &&
-        this._content !== JSON.stringify('')
-      ) {
-        copyText(this._content.slice(1, this._content.length - 1));
-      } else {
-        copyText(this._content);
-      }
+      copyText(this._content);
     } else {
       copyText(JSON.stringify(this._content));
     }
