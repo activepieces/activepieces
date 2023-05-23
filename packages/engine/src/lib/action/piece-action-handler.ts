@@ -12,6 +12,7 @@ import { isNil } from 'lodash';
 import { pieceHelper } from '../helper/piece-helper';
 import { createContextStore } from '../services/storage.service';
 import { connectionManager } from '../services/connections.service';
+import { Utils } from '../utils';
 
 export class PieceActionHandler extends BaseActionHandler<PieceAction> {
   variableService: VariableService;
@@ -65,7 +66,7 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
       stepOutput.status = StepOutputStatus.SUCCEEDED;
       return stepOutput;
     } catch (e) {
-      stepOutput.errorMessage = (e as Error).message;
+      stepOutput.errorMessage = Utils.tryParseJson((e as Error).message);
       stepOutput.status = StepOutputStatus.FAILED;
       return stepOutput;
     }

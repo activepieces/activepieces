@@ -23,4 +23,12 @@ export class Utils {
       'utf-8'
     );
   }
+
+  public static tryParseJson(value: string): any {
+    try {
+      return JSON.parse(value);
+    } catch (e) {
+      return value;
+    }
+  }
 }
