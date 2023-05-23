@@ -3,6 +3,7 @@ version: '3.0'
 services:
   app:
     image: activepieces/ap-base:3
+    container_name: app
     environment:
       AP_JWT_SECRET: super-secret
       AP_POSTGRES_HOST: postgres
@@ -27,6 +28,7 @@ services:
 
   postgres:
     image: postgres:14.4
+    container_name: postgres
     environment:
       POSTGRES_DB: activepieces
       POSTGRES_USER: postgres
@@ -39,6 +41,7 @@ services:
 
   redis:
     image: redis:7.0.7
+    container_name: redis
     volumes:
       - redis_data_dev:/data
     networks:
