@@ -4,7 +4,7 @@ import { googleSheetsCommon } from '../common/common';
 
 export const insertRowAction = createAction({
     name: 'insert_row',
-    description: 'Append values to an existing sheet you have access to',
+    description: 'Append values to an existing sheet',
     displayName: 'Insert Row',
     props: {
         authentication: googleSheetsCommon.authentication,
