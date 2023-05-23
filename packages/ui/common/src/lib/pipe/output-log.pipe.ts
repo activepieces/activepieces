@@ -43,7 +43,10 @@ export class OutputLogPipe implements PipeTransform {
 
   isJsonString(str: string) {
     try {
-      JSON.parse(str);
+      const result = JSON.parse(str);
+      if (typeof result === 'number') {
+        return false;
+      }
     } catch (e) {
       return false;
     }
