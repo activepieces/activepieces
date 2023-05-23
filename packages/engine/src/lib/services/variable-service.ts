@@ -117,14 +117,17 @@ export class VariableService {
     return Number(number);
   }
 
-    getISODateTime = (clonedInput:any, key: string):string | undefined => {
-        try {
-            return dayjs(clonedInput[key]).toISOString();
-        } catch (error) {
-            console.error(`Error while parsing ${clonedInput[key]}`, error);
-            return undefined;
-        }
+  getISODateTime = (clonedInput: any, key: string): string | undefined => {
+    const dateTimeString = clonedInput[key];
+    try {
+      const dateTimeString = clonedInput[key];
+      if (!dateTimeString) throw Error('Undefined input');
+      return dayjs(dateTimeString).toISOString();
+    } catch (error) {
+      console.error(`Error while parsing ${dateTimeString}`, error);
+      return undefined;
     }
+  }
 
   validateAndCast(
     resolvedInput: any,
