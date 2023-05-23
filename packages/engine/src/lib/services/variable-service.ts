@@ -1,7 +1,8 @@
-import { get, isNil, isString } from 'lodash';
-import { ExecutionState } from '@activepieces/shared';
-import { connectionService } from './connections.service';
-import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework';
+import { get, isNil, isString } from "lodash";
+import { ExecutionState } from "@activepieces/shared";
+import { connectionService } from "./connections.service";
+import { PiecePropertyMap, PropertyType } from "@activepieces/pieces-framework";
+import dayjs from "dayjs";
 
 export class VariableService {
   private VARIABLE_TOKEN = RegExp('\\{\\{(.*?)\\}\\}', 'g');
@@ -56,7 +57,6 @@ export class VariableService {
     }
     return value;
   }
-
 
   private evalInScope(js: string, contextAsScope: Record<string, unknown>) {
     try {
@@ -117,7 +117,19 @@ export class VariableService {
     return Number(number);
   }
 
-  validateAndCast(resolvedInput: any, props: PiecePropertyMap): { result: any, errors: Record<string, any> } {
+    getInferredDateTime = (clonedInput:any, key: string):string | undefined => {
+        try {
+            return dayjs(clonedInput[key]).toISOString();
+        } catch (error) {
+            console.error(`Error while parsing ${clonedInput[key]}`, error);
+            return undefined;
+        }
+    }
+
+  validateAndCast(
+    resolvedInput: any,
+    props: PiecePropertyMap
+  ): { result: any; errors: Record<string, any> } {
     const errors: Record<string, string | Record<string, string>> = {};
     const clonedInput = JSON.parse(JSON.stringify(resolvedInput));
 
@@ -141,6 +153,12 @@ export class VariableService {
         if (Object.keys(innerValidation.errors).length > 0) {
           errors[key] = innerValidation.errors;
         }
+      } else if (type === PropertyType.DATE_TIME) {
+        const inferredDateTime = this.getInferredDateTime(clonedInput, key);
+        if (isNil(inferredDateTime) && property.required) {
+          errors[key] = `expected ISO string, but found value: ${value}`;
+        }
+        clonedInput[key] = inferredDateTime;
       }
     }
 
@@ -149,5 +167,4 @@ export class VariableService {
       errors
     };
   }
-
 }

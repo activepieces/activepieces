@@ -231,7 +231,7 @@ function replaceConnections(obj: Record<string, unknown>): Record<string, unknow
     for (const [key, value] of Object.entries(obj)) {
         if (Array.isArray(value)) {
             replacedObj[key] = value
-        } 
+        }
         else if (typeof value === 'object' && value !== null) {
             replacedObj[key] = replaceConnections(value as Record<string, unknown>)
         }
@@ -403,6 +403,7 @@ function buildSchema(props: PiecePropertyMap): TSchema {
         switch (property.type) {
             case PropertyType.SHORT_TEXT:
             case PropertyType.LONG_TEXT:
+            case PropertyType.DATE_TIME:
                 propsSchema[name] = Type.String({
                     minLength: property.required ? 1 : undefined,
                 })
