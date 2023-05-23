@@ -108,7 +108,7 @@ export class RunsTableComponent implements OnInit {
       case ExecutionOutputStatus.RUNNING:
         return 'Running';
       case ExecutionOutputStatus.SUCCEEDED:
-        return 'Success';
+        return 'Succeeded';
       case ExecutionOutputStatus.FAILED:
         return 'Failed';
       case ExecutionOutputStatus.TIMEOUT:
