@@ -79,6 +79,39 @@ export const asanaCommon = {
             };
         }
     }),
+    assignee: Property.Dropdown<string>({
+        description: 'Assignee for the task',
+        displayName: 'Assignee',
+        required: false,
+        refreshers: ['authentication', 'workspace'],
+        options: async (value) => {
+            if (!value['authentication']) {
+                return {
+                    disabled: true,
+                    placeholder: 'connect your account first',
+                    options: [],
+                };
+            }
+            if (!value['workspace']) {
+                return {
+                    disabled: true,
+                    placeholder: 'Select workspace first',
+                    options: [],
+                };
+            }
+            const accessToken = getAccessTokenOrThrow(value['authentication'] as OAuth2PropertyValue);
+            const users = await getUsers(accessToken, value['workspace'] as string);
+            return {
+                disabled: false,
+                options: users.map((user) => {
+                    return {
+                        label: user.name,
+                        value: user.gid
+                    }
+                }),
+            };
+        },
+    }),
     tags: Property.MultiSelectDropdown<string>({
         description: 'Tags to add to the task',
         displayName: 'Tags',
@@ -112,6 +145,20 @@ export const asanaCommon = {
             };
         },
     }),
+}
+
+export async function getUsers(accessToken: string, workspace: string): Promise<
+    {
+        gid: string,
+        name: string
+    }[]>{
+    const response = (await callAsanaApi<{
+        data: {
+            gid: string,
+            name: string
+        }[]
+    }>(HttpMethod.GET, "users?workspace=" + workspace, accessToken, undefined)).body;
+    return response.data;
 }
 
 export async function getTags(accessToken: string, workspace: string): Promise<
