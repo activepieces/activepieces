@@ -27,6 +27,7 @@ export const createAsanaTask = createAction({
             required: false,
         }),
         tags: asanaCommon.tags,
+        assignee: asanaCommon.assignee,
     },
     sampleData: {
 
@@ -58,7 +59,7 @@ export const createAsanaTask = createAction({
         }
     },
     async run(configValue) {
-        const { project, name, notes, authentication, tags, workspace, due_on } = configValue.propsValue;
+        const { project, name, notes, authentication, tags, workspace, due_on, assignee } = configValue.propsValue;
 
         const convertDueOne =  due_on ? dayjs(due_on).toISOString() : undefined;
 
@@ -83,6 +84,7 @@ export const createAsanaTask = createAction({
                 name,
                 projects: [project],
                 notes,
+                assignee,
                 due_on: convertDueOne,
                 tags: tagsGids
             }
