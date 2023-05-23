@@ -1,5 +1,10 @@
-import { Component, Input, OnInit } from '@angular/core';
-import { combineLatest, map, Observable, of, startWith } from 'rxjs';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  Input,
+  OnInit,
+} from '@angular/core';
+import { combineLatest, map, Observable, of, startWith, Subject } from 'rxjs';
 import { Store } from '@ngrx/store';
 import {
   FLOW_ITEM_HEIGHT,
@@ -12,6 +17,7 @@ import {
   FlowItem,
   Point,
   FlowStructureUtil,
+  FlowRendererService,
 } from '@activepieces/ui/feature-builder-store';
 import { PannerService } from '../../canvas-utils/panning/panner.service';
 import { ZoomingService } from '../../canvas-utils/zooming/zooming.service';
@@ -20,6 +26,7 @@ import { ZoomingService } from '../../canvas-utils/zooming/zooming.service';
   selector: 'app-flow-item',
   templateUrl: './flow-item.component.html',
   styleUrls: [],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FlowItemComponent implements OnInit {
   flowGraphContainer = {};
@@ -28,6 +35,8 @@ export class FlowItemComponent implements OnInit {
   @Input() hoverState = false;
   @Input() trigger = false;
   _flowItemData: FlowItem;
+  snappedDraggedShadowToCursor = false;
+  hideDraggableSource$: Subject<boolean> = new Subject();
   @Input() set flowItemData(value: FlowItem) {
     this._flowItemData = value;
     this.selected$ = this.store
@@ -42,19 +51,39 @@ export class FlowItemComponent implements OnInit {
       );
     this.flowGraphContainer = this.flowGraphContainerCalculator();
   }
-
-  dragging = false;
   selected$: Observable<boolean> = of(false);
   viewMode$: Observable<boolean> = of(false);
   dragDelta: Point | undefined;
-
+  scale$: Observable<string>;
+  isDragging = false;
+  anyStepIsDragged$: Observable<boolean>;
+  readonly flowItemContentContainer = {
+    left: `calc(50% - ${FLOW_ITEM_WIDTH / 2}px )`,
+    position: 'relative',
+    width: FLOW_ITEM_WIDTH + 'px',
+  };
+  readonly draggedContainer = {
+    left: `calc(50% - ${(FLOW_ITEM_WIDTH - 1) / 2}px )`,
+    width: FLOW_ITEM_WIDTH - 1 + 'px',
+    height: FLOW_ITEM_HEIGHT - 1 + 'px',
+    top: '0px',
+  };
   constructor(
     private store: Store,
     private pannerService: PannerService,
-    private zoomingService: ZoomingService
+    private zoomingService: ZoomingService,
+    private flowRendererService: FlowRendererService
   ) {}
 
   ngOnInit(): void {
+    this.anyStepIsDragged$ =
+      this.flowRendererService.draggingSubject.asObservable();
+    this.scale$ = this.zoomingService.zoomingScale$.asObservable().pipe(
+      startWith(1),
+      map((val) => {
+        return `scale(${val})`;
+      })
+    );
     this.viewMode$ = this.store.select(BuilderSelectors.selectReadOnly);
     if (FlowStructureUtil.isTrigger(this._flowItemData)) {
       const translate$ = this.pannerService.panningOffset$.asObservable().pipe(
@@ -63,14 +92,9 @@ export class FlowItemComponent implements OnInit {
           return `translate(${val.x}px,${val.y}px)`;
         })
       );
-      const scale$ = this.zoomingService.zoomingScale$.asObservable().pipe(
-        startWith(1),
-        map((val) => {
-          return `scale(${val})`;
-        })
-      );
+
       this.transformObs$ = combineLatest({
-        scale: scale$,
+        scale: this.scale$,
         translate: translate$,
       }).pipe(
         map((value) => {
@@ -78,14 +102,6 @@ export class FlowItemComponent implements OnInit {
         })
       );
     }
-  }
-
-  flowContentContainer() {
-    return {
-      left: `calc(50% - ${FLOW_ITEM_WIDTH / 2}px )`,
-      position: 'relative',
-      width: FLOW_ITEM_WIDTH + 'px',
-    };
   }
 
   flowGraphContainerCalculator() {
@@ -110,5 +126,49 @@ export class FlowItemComponent implements OnInit {
       left: '0px',
       position: 'absolute',
     };
+  }
+  draggingStarted() {
+    this.flowRendererService.draggingSubject.next(true);
+    this.isDragging = true;
+    setTimeout(() => {
+      this.hideDraggableSource$.next(true);
+    });
+  }
+
+  snapElementToCursor() {
+    if (!this.snappedDraggedShadowToCursor) {
+      const shadowEl = document.getElementById('stepShadow');
+      if (shadowEl) {
+        const shadowElRect = shadowEl.getBoundingClientRect();
+        const x = this.flowRendererService.clientX - shadowElRect.left; //x position within the element.
+        const y = this.flowRendererService.clientY - shadowElRect.top; //y position within the element.
+        console.log(x, y);
+        shadowEl.style.transform = `translate(${
+          x - shadowElRect.width / 2
+        }px , ${y - shadowElRect.height / 2}px)`;
+        console.log(
+          `translate(${x - shadowElRect.width / 2}px , ${
+            y - shadowElRect.height / 2
+          }px)`
+        );
+      } else {
+        console.error('shadowEl not found!!!');
+      }
+      this.snappedDraggedShadowToCursor = true;
+    }
+  }
+
+  draggingEnded() {
+    this.flowRendererService.draggingSubject.next(false);
+    this.isDragging = false;
+    this.hideDraggableSource$.next(false);
+    this.snappedDraggedShadowToCursor = false;
+  }
+  getDocument() {
+    const draggingContainer = document.getElementById('draggingContainer');
+    if (!draggingContainer) {
+      throw Error('draggingContainer is not in the page');
+    }
+    return draggingContainer;
   }
 }

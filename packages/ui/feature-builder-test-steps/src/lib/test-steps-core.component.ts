@@ -10,6 +10,7 @@ import { BuilderSelectors } from '@activepieces/ui/feature-builder-store';
 export class TestStepCoreComponent implements OnDestroy, OnInit {
   isSaving$: Observable<boolean>;
   readonly savingMessage = 'Saving...';
+
   constructor(
     protected testStepService: TestStepService,
     protected store: Store

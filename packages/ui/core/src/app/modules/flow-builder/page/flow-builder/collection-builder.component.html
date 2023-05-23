@@ -1,5 +1,5 @@
 <div class="box">
-  <div class="header">
+  <div class="header ap-z-50">
     <app-flow-builder-header></app-flow-builder-header>
   </div>
   <div class="content">
@@ -22,9 +22,12 @@
           </div>
         </mat-drawer>
         <mat-drawer-content [class.no-transition]="rightSidebarDragging || leftSidebarDragging">
-          <div class="box ap-relative">
+          <div class="box ap-relative ap-overflow-hidden"
+            [class.ap-cursor-grabbing]="(isPanning$| async) || (isDragging$ | async)"
+            [class.ap-cursor-default]="(isDragging$| async)===false && (isPanning$ | async) === false"
+            #draggingContainer id="draggingContainer">
             <app-guess-flow-container #guessFlow></app-guess-flow-container>
-            <div class="content canvas" #canvasWrapper appCanvasPanner [style.cursor]="cursorStyle$ | async">
+            <div class="content canvas" #canvasWrapper appCanvasPanner>
               <app-canvas-utils class="ap-absolute ap-right-[15px] ap-bottom-[30px] ap-z-40"></app-canvas-utils>
               <app-flow-item-tree></app-flow-item-tree>
               <div

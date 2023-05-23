@@ -1,0 +1,53 @@
+@import "./variables.scss";
+.add-button {
+    position: absolute;
+    height: 17px;
+    width: 16px;
+    z-index:40;
+    background: $add-piece;
+    background-image: url('../img/custom/add-button.svg');
+    cursor:pointer;
+    border-radius:3px;
+    transition: box-shadow 0.3s ease-in-out, background 0.3s ease-in-out,background-image 0.3s ease-in-out;;
+    &:focus {
+      box-shadow: 0px 0px 0px 5px rgba(#fafafa,0.6);
+    }
+  }
+  .scale-1 {
+    transform: scale(1) !important;
+  }
+  .drop-point-container {
+    position: absolute;
+    left: 0px;
+    top:  -52px;
+    z-index:30;
+    &.first-loop-drop{
+        left: 210px;
+        top: 88px;
+    }
+    &.empty-loop-drop{
+        left: 210px;
+        top: 124px;
+    }
+    
+  }
+  .drop-point-border {
+    height: $drop-point-height;
+    width: $drop-point-width;
+    transform: scale(0);
+    // border: 2px $border dashed;
+    border-radius: 5px;
+    transition-timing-function: cubic-bezier(0.42, 0, 0.58, 1);
+    transition-duration: 250ms;
+    transition-property: all;
+  }
+
+  .add-button-drop-indicator {
+    background: rgba($primary, 0.6);
+    box-shadow: 0px 0px 0px 6px rgba($primary,0.2);
+    width: 16px;
+    height: 16px; 
+    border-radius: 3px;
+    box-sizing: content-box;
+  }
+  

@@ -9,7 +9,14 @@ import {
   tap,
 } from 'rxjs';
 
-import { Component, Input, OnInit } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  Input,
+  OnInit,
+  ViewChild,
+} from '@angular/core';
 import {
   Trigger,
   ActionType,
@@ -23,6 +30,7 @@ import {
   BuilderSelectors,
   CodeService,
   FlowsActions,
+  FlowsActionType,
   FlowStructureUtil,
   NO_PROPS,
   RightSideBarType,
@@ -34,15 +42,18 @@ import {
   getDisplayNameForTrigger,
 } from '@activepieces/ui/common';
 import { constructUpdateOperation } from './step-type-list/utils';
+import { Actions, ofType } from '@ngrx/effects';
 
 @Component({
   selector: 'app-step-type-sidebar',
   templateUrl: './step-type-sidebar.component.html',
   styleUrls: ['./step-type-sidebar.component.scss'],
 })
-export class StepTypeSidebarComponent implements OnInit {
+export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
+  @ViewChild('searchInput') searchInput: ElementRef;
   _showTriggers = false;
   searchFormControl = new FormControl('');
+  focusSearchInput$: Observable<void>;
   @Input() set showTriggers(shouldShowTriggers: boolean) {
     this._showTriggers = shouldShowTriggers;
     if (this._showTriggers) {
@@ -62,12 +73,30 @@ export class StepTypeSidebarComponent implements OnInit {
   flowTypeSelected$: Observable<void>;
   flowItemDetailsLoaded$: Observable<boolean>;
   triggersDetails$: Observable<FlowItemDetails[]>;
-  constructor(private store: Store, private codeService: CodeService) {}
+  constructor(
+    private store: Store,
+    private codeService: CodeService,
+    private actions: Actions
+  ) {
+    this.focusSearchInput$ = this.actions.pipe(
+      ofType(FlowsActionType.SET_RIGHT_SIDEBAR),
+      tap(() => {
+        this.searchInput.nativeElement.focus();
+      }),
+      map(() => void 0)
+    );
+  }
 
   ngOnInit(): void {
     this.flowItemDetailsLoaded$ = this.store
       .select(BuilderSelectors.selectAllFlowItemsDetailsLoadedState)
       .pipe(tap(console.log));
+  }
+
+  ngAfterViewInit(): void {
+    setTimeout(() => {
+      this.searchInput.nativeElement.focus();
+    }, 350);
   }
 
   populateTabsAndTheirLists() {

@@ -1,10 +1,12 @@
 import { Injectable } from '@angular/core';
 import {
+  Action,
   ActionType,
   ApEdition,
   ApEnvironment,
   compareSemVer,
   PieceOptionRequest,
+  Trigger,
   TriggerType,
 } from '@activepieces/shared';
 import { HttpClient } from '@angular/common/http';
@@ -182,5 +184,28 @@ export class ActionMetaService {
       environment.apiUrl + `/pieces/${pieceName}/options`,
       req
     );
+  }
+  findNonPieceStepIcon(step: Trigger | Action) {
+    switch (step.type) {
+      case ActionType.CODE:
+        return { url: 'assets/img/custom/piece/code_mention.png', key: 'code' };
+      case ActionType.BRANCH:
+        return {
+          url: 'assets/img/custom/piece/branch_mention.png',
+          key: 'branch',
+        };
+      case ActionType.LOOP_ON_ITEMS:
+        return {
+          url: 'assets/img/custom/piece/loop_mention.png',
+          key: 'loop',
+        };
+      case TriggerType.WEBHOOK:
+        return {
+          url: 'assets/img/custom/piece/webhook_mention.png',
+          key: 'webhook',
+        };
+    }
+
+    throw new Error("Step type isn't accounted for");
   }
 }
