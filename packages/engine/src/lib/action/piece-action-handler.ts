@@ -117,19 +117,6 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
         censorConnections: true,
       })
 
-      if (this.executionType === ExecutionType.BEGIN && pieceName === 'delay') {
-        const { delay } = stepOutput.input as { delay: number }
-
-        stepOutput.output = {
-          delay,
-          pauseType: PauseType.DELAY,
-        }
-
-        stepOutput.status = StepOutputStatus.PAUSED
-
-        return stepOutput
-      }
-
       const resolvedInput = await this.resolveInput({
         actionProps: action.props,
         input,
