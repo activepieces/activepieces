@@ -96,6 +96,9 @@ export class InterpolatingTextFormControlComponent
       allowedChars: /^[A-Za-z\sÅÄÖåäö]*$/,
     },
     toolbar: false,
+    keyboard: {
+      bindings: { ['list autofill']: undefined },
+    },
   };
 
   editorFormControl: FormControl<QuillEditorOperationsObject>;
@@ -203,25 +206,39 @@ export class InterpolatingTextFormControlComponent
   }
   editorCreated(): void {
     this.removeDefaultTabKeyBinding();
+    this.removeConvertingSpaceAndMinusToList();
+
     this.editor.quillEditor.clipboard.addMatcher(
       Node.ELEMENT_NODE,
-      (_node: unknown, delta: { ops: TextInsertOperation[] }) => {
-        const ops: TextInsertOperation[] = [];
+      (
+        _node: unknown,
+        delta: { ops: (TextInsertOperation | InsertMentionOperation)[] }
+      ) => {
+        const cleanedOps: (TextInsertOperation | InsertMentionOperation)[] = [];
         delta.ops.forEach((op) => {
           if (op.insert && typeof op.insert === 'string') {
-            ops.push({
+            cleanedOps.push({
               insert:
                 this.sanitizer.sanitize(SecurityContext.HTML, op.insert) || '',
             });
+          } else if (
+            op.insert &&
+            typeof op.insert === 'object' &&
+            op.insert.mention
+          ) {
+            cleanedOps.push(op);
           }
         });
-        delta.ops = ops;
+        delta.ops = cleanedOps;
         return delta;
       }
     );
   }
   private removeDefaultTabKeyBinding() {
     delete this.editor.quillEditor.getModule('keyboard').bindings['9'];
+  }
+  private removeConvertingSpaceAndMinusToList() {
+    delete this.editor.quillEditor.getModule('keyboard').bindings['32'][0];
   }
   get placeholder() {
     return this._placeholder;
