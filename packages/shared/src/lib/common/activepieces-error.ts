@@ -13,36 +13,37 @@ export class ActivepiecesError extends Error {
 }
 
 type ErrorParams =
+  | AppConnectionNotFoundErrorParams
   | ConfigNotFoundErrorParams
+  | EntityNotFoundErrorParams
+  | ExecutionTimeoutErrorParams
   | ExistingUserErrorParams
   | FileNotFoundErrorParams
-  | FlowNotFoundErrorParams
-  | FlowRunNotFoundErrorParams
-  | ProjectNotFoundErrorParams
-  | FlowVersionNotFoundErrorParams
   | FlowInstanceNotFoundErrorParams
+  | FlowNotFoundErrorParams
+  | FlowOperationErrorParams
+  | FlowRunNotFoundErrorParams
+  | FlowVersionNotFoundErrorParams
   | InvalidBearerTokenParams
-  | InvalidCredentialsErrorParams
-  | JobRemovalFailureErrorParams
-  | PieceNotFoundErrorParams
-  | PieceTriggerNotFoundErrorParams
-  | StepNotFoundErrorParams
-  | AppConnectionNotFoundErrorParams
   | InvalidClaimParams
   | InvalidCloudClaimParams
+  | InvalidCredentialsErrorParams
   | InvalidJwtTokenErrorParams
-  | TaskQuotaExceededErrorParams
-  | TriggerFailedErrorParams
+  | JobRemovalFailureErrorParams
+  | OpenAiFailedErrorParams
+  | PauseMetadataMissingErrorParams
+  | PieceNotFoundErrorParams
+  | PieceTriggerNotFoundErrorParams
+  | ProjectNotFoundErrorParams
+  | StepNotFoundErrorParams
   | SystemInvalidErrorParams
   | SystemPropNotDefinedErrorParams
-  | OpenAiFailedErrorParams
+  | TaskQuotaExceededErrorParams
   | TestTriggerFailedErrorParams
-  | FlowOperationErrorParams
-  | EntityNotFoundErrorParams
-  | ValidationErrorParams
-  | ExecutionTimeoutErrorParams
-  | TriggerEnableErrorParams
   | TriggerDisableErrorParams
+  | TriggerEnableErrorParams
+  | TriggerFailedErrorParams
+  | ValidationErrorParams
 
 
 export interface BaseErrorParams<T, V> {
@@ -245,6 +246,11 @@ export type TriggerDisableErrorParams = BaseErrorParams<
   }
 >
 
+export type PauseMetadataMissingErrorParams = BaseErrorParams<
+  ErrorCode.PAUSE_METADATA_MISSING,
+  Record<string, never>
+>
+
 export enum ErrorCode {
   CONFIG_NOT_FOUND = "CONFIG_NOT_FOUND",
   EXISTING_USER = "EXISTING_USER",
@@ -276,4 +282,5 @@ export enum ErrorCode {
   EXECUTION_TIMEOUT = "EXECUTION_TIMEOUT",
   TRIGGER_ENABLE = "TRIGGER_ENABLE",
   TRIGGER_DISABLE = "TRIGGER_DISABLE",
+  PAUSE_METADATA_MISSING = "PAUSE_METADATA_MISSING",
 }

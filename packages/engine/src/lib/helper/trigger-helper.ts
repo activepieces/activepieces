@@ -24,10 +24,18 @@ export const triggerHelper = {
 
     const variableService = new VariableService();
     const executionState = new ExecutionState();
-    const { result, errors } = variableService.validateAndCast(await variableService.resolve(input, executionState), trigger.props);
+
+    const resolvedInput = await variableService.resolve({
+      unresolvedInput: input,
+      executionState,
+      censorConnections: false,
+    })
+
+    const { result, errors } = variableService.validateAndCast(resolvedInput, trigger.props);
     if (Object.keys(errors).length > 0) {
       throw new Error(JSON.stringify(errors));
     }
+
     const appListeners: Listener[] = [];
     const prefix = (params.hookType === TriggerHookType.TEST) ? 'test' : '';
     let scheduleOptions: ScheduleOptions = {

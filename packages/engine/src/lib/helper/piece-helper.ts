@@ -150,7 +150,12 @@ const resolveInput = async ({ input, executionContext = {} }: ResolveInputParams
     }
 
     const variableService = new VariableService()
-    return await variableService.resolve(input, executionState)
+
+    return await variableService.resolve({
+        unresolvedInput: input,
+        executionState,
+        censorConnections: false,
+    })
 }
 
 export const pieceHelper = {
@@ -195,7 +200,7 @@ export const pieceHelper = {
             return {
                 output: Utils.tryParseJson(e.message),
                 success: false,
-                
+
             }
         }
     },
