@@ -31,6 +31,8 @@ import { flowInstanceModule } from './app/flows/flow-instance/flow-instance.modu
 
 const app = fastify({
     logger,
+    // Default 4MB, also set in nginx.conf
+    bodyLimit: 4 * 1024 * 1024,
     ajv: {
         customOptions: {
             removeAdditional: 'all',

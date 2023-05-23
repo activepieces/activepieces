@@ -31,6 +31,14 @@ export class CodeStepInputFormComponent implements ControlValueAccessor {
   }>;
   _stepArtifact$: Observable<Artifact>;
   formValueChanged$: Observable<unknown>;
+
+  markdown = `
+  To use data from previous steps in your code, add them as key/values below.
+  <br>
+  <br>
+  Use **inputs.key** to access any of these inputs in your code.
+  `;
+
   onChange: (val: CodeStepInputFormSchema) => void = (
     value: CodeStepInputFormSchema
   ) => {
