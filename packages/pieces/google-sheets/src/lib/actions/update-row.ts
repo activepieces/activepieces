@@ -3,7 +3,7 @@ import { ValueInputOption } from '../common/common';
 import { googleSheetsCommon } from '../common/common';
 export const updateRowAction = createAction({
     name: 'update_row',
-    description: 'Update values in an existing row of a sheet you have access to',
+    description: 'Overwrite values in an existing row',
     displayName: 'Update Row',
     props: {
         authentication: googleSheetsCommon.authentication,
@@ -11,7 +11,7 @@ export const updateRowAction = createAction({
         sheet_id: googleSheetsCommon.sheet_id,
         row_id: Property.Number({
             displayName: 'Row Number',
-            description: 'The row number you want to remove',
+            description: 'The row number to update',
             required: true,
         }),
         values: Property.Array({
