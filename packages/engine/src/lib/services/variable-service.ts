@@ -117,7 +117,7 @@ export class VariableService {
     return Number(number);
   }
 
-    getInferredDateTime = (clonedInput:any, key: string):string | undefined => {
+    getISODateTime = (clonedInput:any, key: string):string | undefined => {
         try {
             return dayjs(clonedInput[key]).toISOString();
         } catch (error) {
@@ -154,7 +154,7 @@ export class VariableService {
           errors[key] = innerValidation.errors;
         }
       } else if (type === PropertyType.DATE_TIME) {
-        const inferredDateTime = this.getInferredDateTime(clonedInput, key);
+        const inferredDateTime = this.getISODateTime(clonedInput, key);
         if (isNil(inferredDateTime) && property.required) {
           errors[key] = `expected ISO string, but found value: ${value}`;
         }
