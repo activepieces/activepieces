@@ -4,6 +4,12 @@ import { connectionService } from "./connections.service";
 import { PiecePropertyMap, PropertyType } from "@activepieces/pieces-framework";
 import dayjs from "dayjs";
 
+type ResolveParams = {
+  unresolvedInput: unknown
+  executionState: ExecutionState
+  censorConnections: boolean
+}
+
 export class VariableService {
   private VARIABLE_TOKEN = RegExp('\\{\\{(.*?)\\}\\}', 'g');
   private static CONNECTIONS = 'connections';
@@ -99,7 +105,9 @@ export class VariableService {
     return valuesMap;
   }
 
-  resolve(unresolvedInput: any, executionState: ExecutionState, censorConnections = false): Promise<any> {
+  resolve(params: ResolveParams): Promise<any> {
+    const { unresolvedInput, executionState, censorConnections } = params
+
     return this.resolveInternally(
       JSON.parse(JSON.stringify(unresolvedInput)),
       this.getExecutionStateObject(executionState),

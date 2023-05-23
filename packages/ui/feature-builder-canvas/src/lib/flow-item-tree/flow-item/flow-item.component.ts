@@ -3,6 +3,7 @@ import {
   Component,
   Input,
   OnInit,
+  Renderer2,
 } from '@angular/core';
 import { combineLatest, map, Observable, of, startWith, Subject } from 'rxjs';
 import { Store } from '@ngrx/store';
@@ -31,12 +32,14 @@ import { ZoomingService } from '../../canvas-utils/zooming/zooming.service';
 export class FlowItemComponent implements OnInit {
   flowGraphContainer = {};
   transformObs$: Observable<string>;
+  draggingContainer: HTMLElement;
   @Input() insideLoopOrBranch = false;
   @Input() hoverState = false;
   @Input() trigger = false;
   _flowItemData: FlowItem;
   snappedDraggedShadowToCursor = false;
   hideDraggableSource$: Subject<boolean> = new Subject();
+  c = 0;
   @Input() set flowItemData(value: FlowItem) {
     this._flowItemData = value;
     this.selected$ = this.store
@@ -72,10 +75,12 @@ export class FlowItemComponent implements OnInit {
     private store: Store,
     private pannerService: PannerService,
     private zoomingService: ZoomingService,
-    private flowRendererService: FlowRendererService
+    private flowRendererService: FlowRendererService,
+    private renderer2: Renderer2
   ) {}
 
   ngOnInit(): void {
+    this.findDraggingContainer();
     this.anyStepIsDragged$ =
       this.flowRendererService.draggingSubject.asObservable();
     this.scale$ = this.zoomingService.zoomingScale$.asObservable().pipe(
@@ -92,7 +97,6 @@ export class FlowItemComponent implements OnInit {
           return `translate(${val.x}px,${val.y}px)`;
         })
       );
-
       this.transformObs$ = combineLatest({
         scale: this.scale$,
         translate: translate$,
@@ -101,6 +105,14 @@ export class FlowItemComponent implements OnInit {
           return `${value.scale} ${value.translate}`;
         })
       );
+    }
+  }
+
+  private findDraggingContainer() {
+    this.draggingContainer =
+      document.getElementById('draggingContainer') || document.body;
+    if (!document.getElementById('draggingContainer')) {
+      console.warn('Dragging container not found, attaching it to body');
     }
   }
 
@@ -161,14 +173,10 @@ export class FlowItemComponent implements OnInit {
   draggingEnded() {
     this.flowRendererService.draggingSubject.next(false);
     this.isDragging = false;
-    this.hideDraggableSource$.next(false);
+    setTimeout(() => {
+      this.hideDraggableSource$.next(false);
+    });
     this.snappedDraggedShadowToCursor = false;
-  }
-  getDocument() {
-    const draggingContainer = document.getElementById('draggingContainer');
-    if (!draggingContainer) {
-      throw Error('draggingContainer is not in the page');
-    }
-    return draggingContainer;
+    this.renderer2.setStyle(document.body, 'cursor', 'auto');
   }
 }

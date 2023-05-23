@@ -11,7 +11,7 @@ export const deleteRowAction = createAction({
         sheet_id: googleSheetsCommon.sheet_id,
         row_id: Property.Number({
             displayName: 'Row Number',
-            description: 'The row number you want to remove',
+            description: 'The row number to remove',
             required: true,
         })
     },

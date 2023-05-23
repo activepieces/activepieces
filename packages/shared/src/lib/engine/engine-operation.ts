@@ -1,3 +1,4 @@
+import { ResumeStepMetadata } from "../flow-run/execution/execution-output";
 import { ExecutionState } from "../flow-run/execution/execution-state";
 import { ExecutionType } from "../flow-run/execution/execution-type";
 import { FlowVersion, FlowVersionId } from "../flows/flow-version";
@@ -58,7 +59,7 @@ export type BeginExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.B
 
 export type ResumeExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.RESUME> & {
     executionState: ExecutionState,
-    resumeStepName: string,
+    resumeStepMetadata: ResumeStepMetadata,
 }
 
 export type ExecuteFlowOperation = BeginExecuteFlowOperation | ResumeExecuteFlowOperation
