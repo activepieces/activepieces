@@ -1,11 +1,26 @@
-import { OAuth2PropertyValue, Property, createTrigger } from '@activepieces/pieces-framework';
+import { OAuth2PropertyValue, Property, Store, createTrigger } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from "@activepieces/pieces-framework";
 import { googleSheetsCommon } from '../common/common';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 
 const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const sampleData = Array.from(alphabet).map(c => `${c} Value`);
-Array.from(alphabet).forEach(c => sampleData.push(`${c}${c} Value`));
+
+const polling: Polling<{ authentication: OAuth2PropertyValue, spreadsheet_id: string, sheet_id: number, max_rows_to_poll: number | undefined }> = {
+  strategy: DedupeStrategy.LAST_ITEM,
+  items: async ({ propsValue, lastItemId }) => {
+    const currentValues = (await googleSheetsCommon.getValues(propsValue.spreadsheet_id, propsValue.authentication.access_token, propsValue.sheet_id)) ?? []
+    const items = currentValues.map((item, index) => ({
+      id: index + 1,
+      data: {
+        value: item,
+        rowId: index + 1
+      },
+    }));
+    return items.reverse();
+  }
+};
+
 
 export const newRowAdded = createTrigger({
   name: 'new_row_added',
@@ -41,6 +56,7 @@ export const newRowAdded = createTrigger({
   run: async (context) => {
     return await pollingHelper.poll(polling, {
       store: context.store,
+      maxItemsToPoll: context.propsValue.max_rows_to_poll,
       propsValue: context.propsValue,
     });
   },
@@ -52,24 +68,3 @@ export const newRowAdded = createTrigger({
   },
 });
 
-
-const polling: Polling<{ authentication: OAuth2PropertyValue, spreadsheet_id: string, sheet_id: number, max_rows_to_poll: number | undefined }> = {
-  strategy: DedupeStrategy.LAST_ITEM,
-  items: async ({ propsValue, lastItemId }) => {
-    const currentValues = (await googleSheetsCommon.getValues(propsValue.spreadsheet_id, propsValue.authentication.access_token, propsValue.sheet_id)) ?? []
-    const items = currentValues.map((item, index) => ({
-      id: index + 1,
-      data: {
-        value: item,
-        rowId: index + 1
-      },
-    }));
-    // Results are expected to be from newest to oldest, that is why we reverse the array
-    const lastItemIndex = items.findIndex(f => f.id === lastItemId);
-    if (propsValue.max_rows_to_poll === undefined) {
-      return items.reverse();
-    }
-    const result = items?.slice(lastItemIndex + 1, lastItemIndex + 1 + propsValue.max_rows_to_poll).reverse() ?? [];
-    return result;
-  }
-};
