@@ -7,4 +7,5 @@ import { Component, Input } from '@angular/core';
 })
 export class MarkdownComponent {
   @Input() data: string | undefined;
+  @Input() smallText = false;
 }
