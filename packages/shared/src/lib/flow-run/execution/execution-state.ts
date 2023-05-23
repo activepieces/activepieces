@@ -22,9 +22,6 @@ export class ExecutionState {
     stepName: string,
     ancestors: [string, number][]
   ) {
-    console.log('[ExecutionState#insertStep] stepName:', stepName)
-    console.log('[ExecutionState#insertStep] ancestors:', ancestors)
-
     const targetMap: Record<string, StepOutput> = this.getTargetMap(ancestors);
     targetMap[stepName] = stepOutput;
     this.updateLastStep(stepOutput.output, stepName);
@@ -57,8 +54,6 @@ export class ExecutionState {
     let targetMap = this.steps;
 
     ancestors.forEach(parent => {
-      console.log('[ExecutionState#getTargetMap] parent:', parent)
-
       // get loopStepOutput
       if (targetMap[parent[0]] === undefined) {
         throw 'Error in ancestor tree';

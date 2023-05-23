@@ -168,8 +168,6 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
       stepOutput.status = StepOutputStatus.SUCCEEDED
       executionState.insertStep(stepOutput, this.currentAction.name, ancestors)
 
-      console.log('[LoopActionHandler#execute] stepOutput.output:', stepOutput.output)
-
       return stepOutput
     }
     catch (e) {
