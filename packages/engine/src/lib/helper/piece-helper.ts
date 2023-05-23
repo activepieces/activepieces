@@ -27,6 +27,7 @@ import { isNil } from 'lodash';
 import { createContextStore } from '../services/storage.service';
 import { globals } from '../globals';
 import { connectionService } from '../services/connections.service';
+import { Utils } from '../utils';
 
 type GetPackageNameParams = {
     pieceName: string
@@ -149,7 +150,12 @@ const resolveInput = async ({ input, executionContext = {} }: ResolveInputParams
     }
 
     const variableService = new VariableService()
-    return await variableService.resolve(input, executionState)
+
+    return await variableService.resolve({
+        unresolvedInput: input,
+        executionState,
+        censorConnections: false,
+    })
 }
 
 export const pieceHelper = {
@@ -192,9 +198,9 @@ export const pieceHelper = {
             }
         } catch (e: any) {
             return {
-                output: e.message,
+                output: Utils.tryParseJson(e.message),
                 success: false,
-                
+
             }
         }
     },

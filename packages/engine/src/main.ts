@@ -14,18 +14,32 @@ import {
   TriggerHookType,
   ExecutionType,
   StepOutput,
+  FlowVersion,
 } from '@activepieces/shared';
 import { pieceHelper } from './lib/helper/piece-helper';
 import { triggerHelper } from './lib/helper/trigger-helper';
 
+const loadFlowVersion = (flowVersionId: string) => {
+  const flowVersionJsonFile = `${globals.flowDirectory}/${flowVersionId}.json`
+  const flowVersion: FlowVersion = Utils.parseJsonFile(flowVersionJsonFile)
+
+  globals.flowId = flowVersion.id;
+
+  return flowVersion
+}
+
 const initFlowExecutor = (input: ExecuteFlowOperation): FlowExecutor => {
+  const flowVersion = loadFlowVersion(input.flowVersionId)
+  const firstStep = flowVersion.trigger.nextAction
+
   if (input.executionType === ExecutionType.RESUME) {
-    const { resumeStepName } = input
+    const { resumeStepMetadata } = input
     const executionState = new ExecutionState(input.executionState)
 
     return new FlowExecutor({
       executionState,
-      resumeStepName,
+      firstStep,
+      resumeStepMetadata,
     })
   }
 
@@ -34,6 +48,7 @@ const initFlowExecutor = (input: ExecuteFlowOperation): FlowExecutor => {
 
   return new FlowExecutor({
     executionState,
+    firstStep,
   })
 }
 
@@ -46,7 +61,7 @@ const executeFlow = async (): Promise<void> => {
     globals.apiUrl = input.apiUrl!;
 
     const executor = initFlowExecutor(input)
-    const output = await executor.executeFlow(input.flowVersionId);
+    const output = await executor.safeExecute();
 
     writeOutput({
       status: EngineResponseStatus.OK,
@@ -125,7 +140,7 @@ const executeAction = async (): Promise<void> => {
     console.error(e);
     writeOutput({
       status: EngineResponseStatus.ERROR,
-      response: (e as Error).message
+      response: Utils.tryParseJson((e as Error).message)
     })
   }
 }

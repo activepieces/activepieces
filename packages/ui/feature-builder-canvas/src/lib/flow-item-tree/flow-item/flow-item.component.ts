@@ -39,6 +39,7 @@ export class FlowItemComponent implements OnInit {
   _flowItemData: FlowItem;
   snappedDraggedShadowToCursor = false;
   hideDraggableSource$: Subject<boolean> = new Subject();
+  c = 0;
   @Input() set flowItemData(value: FlowItem) {
     this._flowItemData = value;
     this.selected$ = this.store
@@ -172,7 +173,9 @@ export class FlowItemComponent implements OnInit {
   draggingEnded() {
     this.flowRendererService.draggingSubject.next(false);
     this.isDragging = false;
-    this.hideDraggableSource$.next(false);
+    setTimeout(() => {
+      this.hideDraggableSource$.next(false);
+    });
     this.snappedDraggedShadowToCursor = false;
     this.renderer2.setStyle(document.body, 'cursor', 'auto');
   }

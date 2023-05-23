@@ -152,6 +152,7 @@ This section is dedicated to individuals who have contributed to 5 or more actio
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/bibhuty-did-this"><img src="https://avatars.githubusercontent.com/u/28416188?v=4?s=100" width="100px;" alt="Bibhuti Bhusan Panda"/><br /><sub><b>Bibhuti Bhusan Panda</b></sub></a><br /><a href="#plugin-bibhuty-did-this" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/tarunsamanta2k20"><img src="https://avatars.githubusercontent.com/u/55488549?v=4?s=100" width="100px;" alt="Tarun Samanta"/><br /><sub><b>Tarun Samanta</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/issues?q=author%3Atarunsamanta2k20" title="Bug reports">🐛</a></td>
     </tr>
   </tbody>
 </table>

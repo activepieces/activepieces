@@ -1,6 +1,7 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
-import { asanaCommon, callAsanaApi } from "../common";
+import { asanaCommon, callAsanaApi, getTags } from "../common";
 import { getAccessTokenOrThrow, HttpMethod } from "@activepieces/pieces-common";
+import dayjs from "dayjs";
 
 export const createAsanaTask = createAction({
     name: 'create_task',
@@ -19,7 +20,13 @@ export const createAsanaTask = createAction({
             description: 'Free-form textual information associated with the task (i.e. its description).',
             displayName: 'Task Description',
             required: true,
-        })
+        }),
+        due_on: Property.ShortText({
+            description: 'The date on which this task is due in any format.',
+            displayName: 'Due Date',
+            required: false,
+        }),
+        tags: asanaCommon.tags,
     },
     sampleData: {
 
@@ -51,13 +58,33 @@ export const createAsanaTask = createAction({
         }
     },
     async run(configValue) {
-        const { project, name, notes, authentication } = configValue.propsValue;
+        const { project, name, notes, authentication, tags, workspace, due_on } = configValue.propsValue;
+
+        const convertDueOne =  due_on ? dayjs(due_on).toISOString() : undefined;
+
+        // User can provide tags name as dynamic value, we need to convert them to tags gids
+        const userTags = tags ?? [];
+        const convertedTags = await getTags(authentication.access_token, workspace);
+        const tagsGids = userTags.map((tag) => {
+            const foundTagById = convertedTags.find((convertedTag) => convertedTag.gid === tag);
+            if (foundTagById) {
+                return foundTagById.gid;
+            }
+            const foundTag = convertedTags.find((convertedTag) => convertedTag.name?.toLowerCase() === tag.toLowerCase());
+            if (foundTag) {
+                return foundTag.gid;
+            }
+            return null;
+        }).filter((tag) => tag !== null);
+
         return (await callAsanaApi(HttpMethod.POST,
             `tasks`, getAccessTokenOrThrow(authentication), {
             data: {
                 name,
                 projects: [project],
-                notes
+                notes,
+                due_on: convertDueOne,
+                tags: tagsGids
             }
         })).body['data'];
     },

@@ -75,14 +75,17 @@ const installPieces = async (params: InstallPiecesParams): Promise<void> => {
 }
 
 const finishExecution = async (params: FinishExecutionParams): Promise<void> => {
-    logger.debug(params, '[FlowWorker#finishExecution] params')
+    logger.trace(params, '[FlowWorker#finishExecution] params')
 
     const { flowRunId, logFileId, executionOutput } = params
 
     if (executionOutput.status === ExecutionOutputStatus.PAUSED) {
         await flowRunService.pause({
             flowRunId,
-            pauseMetadata: executionOutput.pauseMetadata,
+            pauseMetadata: {
+                ...executionOutput.pauseMetadata,
+                executionState: executionOutput.executionState,
+            },
         })
     }
     else {
@@ -127,7 +130,7 @@ const generateInput = async (jobData: OneTimeJobData): Promise<ExecuteFlowOperat
         ...baseInput,
         executionType: ExecutionType.RESUME,
         executionState: flowRun.pauseMetadata.executionState,
-        resumeStepName: flowRun.pauseMetadata.resumeStepName,
+        resumeStepMetadata: flowRun.pauseMetadata.resumeStepMetadata,
     }
 }
 
