@@ -15,6 +15,7 @@ import { isNil } from 'lodash';
 import { pieceHelper } from '../helper/piece-helper';
 import { createContextStore } from '../services/storage.service';
 import { connectionManager } from '../services/connections.service';
+import { Utils } from '../utils';
 import { PiecePropertyMap } from '@activepieces/pieces-framework';
 
 type CtorParams = {
@@ -137,7 +138,7 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
       console.error(e)
 
       stepOutput.status = StepOutputStatus.FAILED
-      stepOutput.errorMessage = (e as Error).message
+      stepOutput.errorMessage = Utils.tryParseJson((e as Error).message);
 
       return stepOutput
     }

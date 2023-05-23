@@ -140,7 +140,7 @@ const executeAction = async (): Promise<void> => {
     console.error(e);
     writeOutput({
       status: EngineResponseStatus.ERROR,
-      response: (e as Error).message
+      response: Utils.tryParseJson((e as Error).message)
     })
   }
 }
