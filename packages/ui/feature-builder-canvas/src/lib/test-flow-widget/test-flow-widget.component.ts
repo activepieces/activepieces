@@ -21,6 +21,7 @@ import {
   ActionMetaService,
   FlowService,
   InstanceRunService,
+  fadeIn400ms,
   fadeInUp400ms,
   initializedRun,
   jsonValidator,
@@ -46,13 +47,13 @@ import {
 } from '@activepieces/ui/feature-builder-store';
 
 @Component({
-  selector: 'app-test-flow-modal',
-  templateUrl: './test-flow-modal.component.html',
-  styleUrls: ['./test-flow-modal.component.scss'],
-  animations: [fadeInUp400ms],
+  selector: 'app-test-flow-widget',
+  templateUrl: './test-flow-widget.component.html',
+  styleUrls: ['./test-flow-widget.component.scss'],
+  animations: [fadeInUp400ms, fadeIn400ms],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TestFlowModalComponent implements OnInit {
+export class TestFlowWidgetComponent implements OnInit {
   submitted = false;
   dialogRef: MatDialogRef<TemplateRef<unknown>>;
   instanceRunStatus$: Observable<undefined | ExecutionOutputStatus>;
@@ -60,7 +61,7 @@ export class TestFlowModalComponent implements OnInit {
   selectedFlow$: Observable<Flow | undefined>;
   instanceRunStatusChecker$: Observable<FlowRun>;
   executeTest$: Observable<FlowRun | null>;
-  shouldDisableTestButton$: Observable<boolean>;
+  shouldHideTestWidget$: Observable<boolean>;
   testRunSnackbar: MatSnackBarRef<TestRunBarComponent>;
   testFlowButtonDisabledTooltip = '';
   payloadControl: UntypedFormControl = new UntypedFormControl(
@@ -99,7 +100,7 @@ export class TestFlowModalComponent implements OnInit {
     this.isSaving$ = this.store.select(BuilderSelectors.selectIsSaving);
     this.setupSelectedFlowListener();
     this.selectedInstanceRunStatus();
-    this.shouldDisableTestButton$ = combineLatest({
+    this.shouldHideTestWidget$ = combineLatest({
       saving: this.isSaving$,
       valid: this.store.select(BuilderSelectors.selectCurrentFlowValidity),
     }).pipe(
@@ -114,7 +115,7 @@ export class TestFlowModalComponent implements OnInit {
         }
       }),
       map((res) => {
-        return res.saving || !res.valid;
+        return !res.valid;
       })
     );
   }

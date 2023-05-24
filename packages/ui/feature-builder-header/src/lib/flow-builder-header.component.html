@@ -45,7 +45,6 @@
 
       <ng-container *ngIf=" (viewMode$ | async)===false && (isGeneratingFlowComponentOpen$|async) === false ">
         <div class="ap-flex ap-items-center ap-gap-1">
-          <app-test-flow-modal></app-test-flow-modal>
           <app-draft-status></app-draft-status>
           <ng-container *ngIf="(instance$ | async) as instance">
             <app-toggle-instance-state [instance]="instance"></app-toggle-instance-state>

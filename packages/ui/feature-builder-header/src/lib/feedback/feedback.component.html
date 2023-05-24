@@ -1,7 +1,8 @@
 <ap-button [matMenuTriggerFor]="menu" #menuTrigger="matMenuTrigger" btnStyle="basic" btnColor="basic" btnSize="medium"
     (menuOpened)="menuOpened()">
-    <div class="ap-flex ap-items-center ap-font-semibold ap-gap-2">
-        <svg-icon src="assets/img/custom/feedback.svg" [svgStyle]="{height:'25px',width:'20px'}"></svg-icon>Feedback
+    <div class="ap-flex ap-items-center ap-typography-body-2 ap-gap-2">
+        <svg-icon src="assets/img/custom/feedback.svg" class="ap-fill-body ap-w-[20px] ap-h-[25px]"
+            [applyClass]="true"></svg-icon>Feedback
     </div>
 </ap-button>
 <mat-menu #menu="matMenu" xPosition="before">

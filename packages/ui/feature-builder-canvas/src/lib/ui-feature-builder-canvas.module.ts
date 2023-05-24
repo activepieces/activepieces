@@ -16,8 +16,10 @@ import { DragAndDropModule } from 'angular-draggable-droppable';
 import { DropZoneComponent } from './flow-item-tree/flow-item/flow-item-connection/drop-zone/drop-zone.component';
 import { SmallAddButtonComponent } from './flow-item-tree/flow-item/flow-item-connection/small-add-button/small-add-button.component';
 import { BigAddButtonComponent } from './flow-item-tree/flow-item/flow-item-connection/big-add-button/big-add-button.component';
+import { TestFlowWidgetComponent } from './test-flow-widget/test-flow-widget.component';
+import { CodemirrorModule } from '@ctrl/ngx-codemirror';
 @NgModule({
-  imports: [CommonModule, UiCommonModule, DragAndDropModule],
+  imports: [CommonModule, UiCommonModule, DragAndDropModule, CodemirrorModule],
   declarations: [
     BranchLineConnectionComponent,
     LoopLineConnectionComponent,
@@ -33,6 +35,7 @@ import { BigAddButtonComponent } from './flow-item-tree/flow-item/flow-item-conn
     DropZoneComponent,
     SmallAddButtonComponent,
     BigAddButtonComponent,
+    TestFlowWidgetComponent,
   ],
   exports: [FlowItemTreeComponent, CanvasUtilsComponent, CanvasPannerDirective],
 })
