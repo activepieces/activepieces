@@ -401,9 +401,9 @@ function buildSchema(props: PiecePropertyMap): TSchema {
         const property = entries[i][1]
         const name: string = entries[i][0]
         switch (property.type) {
+            case PropertyType.DATE_TIME:
             case PropertyType.SHORT_TEXT:
             case PropertyType.LONG_TEXT:
-            case PropertyType.DATE_TIME:
                 propsSchema[name] = Type.String({
                     minLength: property.required ? 1 : undefined,
                 })
