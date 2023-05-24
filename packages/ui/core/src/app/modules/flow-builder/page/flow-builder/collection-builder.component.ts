@@ -24,7 +24,11 @@ import { CdkDragMove } from '@angular/cdk/drag-drop';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { TestRunBarComponent } from '@activepieces/ui/feature-builder-store';
 import { RunDetailsService } from '@activepieces/ui/feature-builder-left-sidebar';
-import { ExecutionOutputStatus, Flow, TriggerType } from '@activepieces/shared';
+import {
+  ExecutionOutputStatus,
+  FlowVersion,
+  TriggerType,
+} from '@activepieces/shared';
 import { Title } from '@angular/platform-browser';
 import {
   LeftSideBarType,
@@ -59,7 +63,7 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
   isDragging$: Observable<boolean>;
   TriggerType = TriggerType;
   testingStepSectionIsRendered$: Observable<boolean>;
-  graphChanged$: Observable<Flow>;
+  graphChanged$: Observable<FlowVersion>;
   showGuessFlowComponent = true;
 
   constructor(
@@ -107,7 +111,9 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
             BuilderActions.loadInitial({
               flow: routeData.flowAndFolder.flow,
               instance: routeData.instanceData?.instance,
-              viewMode: ViewModeEnum.BUILDING,
+              viewMode: routeData.instanceData?.instance
+                ? ViewModeEnum.SHOW_PUBLISHED
+                : ViewModeEnum.BUILDING,
               appConnections: routeData.connections,
               folder: routeData.flowAndFolder.folder,
               publishedVersion: routeData.instanceData?.publishedFlowVersion,
@@ -198,12 +204,12 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
   }
   listenToGraphChanges() {
     this.graphChanged$ = this.store
-      .select(BuilderSelectors.selectCurrentFlow)
+      .select(BuilderSelectors.selectShownFlowVersion)
       .pipe(
         distinctUntilChanged(),
-        tap((flow) => {
-          if (flow) {
-            const rootStep = FlowFactoryUtil.createRootStep(flow.version);
+        tap((version) => {
+          if (version) {
+            const rootStep = FlowFactoryUtil.createRootStep(version);
             this.flowRendererService.refreshCoordinatesAndSetActivePiece(
               rootStep
             );

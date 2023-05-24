@@ -103,6 +103,7 @@ export class TestFlowWidgetComponent implements OnInit {
     this.shouldHideTestWidget$ = combineLatest({
       saving: this.isSaving$,
       valid: this.store.select(BuilderSelectors.selectCurrentFlowValidity),
+      isInReadOnlyMode: this.store.select(BuilderSelectors.selectReadOnly),
     }).pipe(
       tap((res) => {
         if (res.saving) {
@@ -115,7 +116,7 @@ export class TestFlowWidgetComponent implements OnInit {
         }
       }),
       map((res) => {
-        return !res.valid;
+        return !res.valid || res.isInReadOnlyMode;
       })
     );
   }

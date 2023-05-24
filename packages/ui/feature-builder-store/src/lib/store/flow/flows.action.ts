@@ -99,7 +99,11 @@ const changeName = createAction(
 
 const setInitial = createAction(
   FlowsActionType.SET_INITIAL,
-  props<{ flow: Flow; run: FlowRun | undefined; folder?: Folder }>()
+  props<{
+    flow: Flow;
+    run: FlowRun | undefined;
+    folder?: Folder;
+  }>()
 );
 
 const applyUpdateOperation = createAction(

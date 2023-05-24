@@ -18,8 +18,9 @@
         </div>
         <ap-editable-text [editing]="editingFlowName" (editingChanges)="changeEditValue($event)"
           [value]="(flow$ |async)?.version?.displayName || ''" (valueChanges)="saveFlowName($event)"
-          [disableEditing]="viewMode$ | async | defaultTrue" [allowClick]="true"
-          [cssClasses]="'ap-typography-body-1 !ap-font-semibold'" class="ap-text-title"></ap-editable-text>
+          [disableEditing]="(isInDebugMode$ | async | defaultTrue) || (isInReadOnlyMode$ | async | defaultTrue) "
+          [allowClick]="true" [cssClasses]="'ap-typography-body-1 !ap-font-semibold'"
+          class="ap-text-title"></ap-editable-text>
       </div>
       <div class="ap-p-1 ap-cursor-pointer" [matMenuTriggerFor]="menu" xPosition="after">
         <svg-icon [svgStyle]="{ width: '12px', height: '7px' }" src="assets/img/custom/chevron.svg">
@@ -43,7 +44,7 @@
     <div class="ap-flex ap-items-center ap-gap-2">
       <app-feedback class="ap-z-50 ap-flex ap-items-center"></app-feedback>
 
-      <ng-container *ngIf=" (viewMode$ | async)===false && (isGeneratingFlowComponentOpen$|async) === false ">
+      <ng-container *ngIf=" (isInDebugMode$ | async)===false && (isGeneratingFlowComponentOpen$|async) === false ">
         <div class="ap-flex ap-items-center ap-gap-1">
           <app-draft-status></app-draft-status>
           <ng-container *ngIf="(instance$ | async) as instance">

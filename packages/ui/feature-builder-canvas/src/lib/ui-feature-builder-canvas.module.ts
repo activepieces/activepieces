@@ -18,6 +18,7 @@ import { SmallAddButtonComponent } from './flow-item-tree/flow-item/flow-item-co
 import { BigAddButtonComponent } from './flow-item-tree/flow-item/flow-item-connection/big-add-button/big-add-button.component';
 import { TestFlowWidgetComponent } from './test-flow-widget/test-flow-widget.component';
 import { CodemirrorModule } from '@ctrl/ngx-codemirror';
+import { ViewOnlyModeComponent } from './view-only-mode/view-only-mode.component';
 @NgModule({
   imports: [CommonModule, UiCommonModule, DragAndDropModule, CodemirrorModule],
   declarations: [
@@ -36,6 +37,7 @@ import { CodemirrorModule } from '@ctrl/ngx-codemirror';
     SmallAddButtonComponent,
     BigAddButtonComponent,
     TestFlowWidgetComponent,
+    ViewOnlyModeComponent,
   ],
   exports: [FlowItemTreeComponent, CanvasUtilsComponent, CanvasPannerDirective],
 })
