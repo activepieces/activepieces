@@ -30,7 +30,7 @@ import { FlowVersionEntity } from './flow-version-entity'
 import { flowVersionSideEffects } from './flow-version-side-effects'
 import { pieceMetadataLoader } from '../../pieces/piece-metadata-loader'
 import { FlowViewMode, DEFAULT_SAMPLE_DATA_SETTINGS } from '@activepieces/shared'
-import { clone, isNil } from 'lodash'
+import { isNil } from 'lodash'
 
 const branchSettingsValidator = TypeCompiler.Compile(BranchActionSettingsWithValidation)
 const loopSettingsValidator = TypeCompiler.Compile(LoopOnItemsActionSettingsWithValidation)
@@ -194,7 +194,7 @@ function getImportOperations(step: Action | Trigger | undefined): (FlowOperation
     }
     return steps
 }
- 
+
 function keepBaseAction(action: Action): Action{
     const cloned = JSON.parse(JSON.stringify(action))
     delete cloned.nextAction
