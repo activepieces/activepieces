@@ -2,10 +2,11 @@ import { ActionType } from "../../flows/actions/action";
 import { PauseMetadata } from "./execution-output";
 
 export enum StepOutputStatus {
-  RUNNING = 'RUNNING',
-  SUCCEEDED = 'SUCCEEDED',
   FAILED = 'FAILED',
   PAUSED = 'PAUSED',
+  RUNNING = 'RUNNING',
+  STOPPED = 'STOPPED',
+  SUCCEEDED = 'SUCCEEDED',
 }
 
 export type StepOutput<T extends ActionType = ActionType, O = any> = {
@@ -17,6 +18,7 @@ export type StepOutput<T extends ActionType = ActionType, O = any> = {
   errorMessage?: unknown;
   standardOutput?: unknown;
   pauseMetadata?: Omit<PauseMetadata, 'executionState'>
+  stopResponse?: unknown
 }
 
 type LoopOnItemsOutput = {

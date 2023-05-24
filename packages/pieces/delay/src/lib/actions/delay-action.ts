@@ -13,8 +13,10 @@ export const delayAction = createAction({
     },
     async run(ctx) {
         const delayInMs = Math.min(ctx.propsValue.delay * 1000, 5 * 60 * 1000);
-        await new Promise((resolve) => setTimeout(resolve, delayInMs));
+
+        ctx.stopHook({ response: { type: 'pants' }})
         return {
+
             delay: delayInMs,
             success: true,
         };

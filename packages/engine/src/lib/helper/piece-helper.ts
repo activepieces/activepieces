@@ -187,7 +187,8 @@ export const pieceHelper = {
                         return null;
                     }
                 }
-            }
+            },
+            stopHook: () => console.log('stopHook called!'),
         }
 
         try {

@@ -26,10 +26,17 @@ export interface TriggerContext<T> {
     store: Store,
 }
 
+export type StopHookParams = {
+    response?: unknown
+}
+
+export type StopHook = (params: StopHookParams) => void
+
 export interface ActionContext<T> {
     propsValue: T,
     store: Store,
-    connections: ConnectionsManager
+    connections: ConnectionsManager,
+    stopHook: StopHook,
 }
 
 export interface ConnectionsManager {

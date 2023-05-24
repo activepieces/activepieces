@@ -1,6 +1,6 @@
 import { FlowExecutor } from '../executors/flow-executor';
 import { VariableService } from '../services/variable-service';
-import { ExecutionState, BranchAction, Action, BranchStepOutput, BranchCondition, BranchOperator, ExecutionOutputStatus, BranchResumeStepMetadata, ActionType } from '@activepieces/shared';
+import { ExecutionState, BranchAction, Action, BranchStepOutput, BranchCondition, BranchOperator, BranchResumeStepMetadata, ActionType } from '@activepieces/shared';
 import { BaseActionHandler } from './action-handler';
 import { StepOutputStatus, StepOutput } from '@activepieces/shared';
 
@@ -75,10 +75,13 @@ export class BranchActionHandler extends BaseActionHandler<BranchAction, BranchR
 
         const executionOutput = await executor.execute()
 
-        if (executionOutput.status === ExecutionOutputStatus.PAUSED) {
-          stepOutput.status = StepOutputStatus.PAUSED
-          stepOutput.pauseMetadata = executionOutput.pauseMetadata
+        this.handleFlowExecutorOutput({
+          executionOutput,
+          stepOutput,
+        })
 
+        if (stepOutput.status !== StepOutputStatus.RUNNING) {
+          executionState.insertStep(stepOutput, this.currentAction.name, ancestors)
           return stepOutput
         }
       }

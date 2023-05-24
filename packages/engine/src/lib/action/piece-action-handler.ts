@@ -4,7 +4,6 @@ import {
   ActionType,
   ExecutionState,
   ExecutionType,
-  PauseType,
   PieceAction,
   StepOutput,
   StepOutputStatus
@@ -15,7 +14,7 @@ import { isNil } from 'lodash';
 import { pieceHelper } from '../helper/piece-helper';
 import { createContextStore } from '../services/storage.service';
 import { connectionManager } from '../services/connections.service';
-import { PiecePropertyMap } from '@activepieces/pieces-framework';
+import { PiecePropertyMap, StopHook, StopHookParams } from '@activepieces/pieces-framework';
 
 type CtorParams = {
   executionType: ExecutionType
@@ -34,6 +33,10 @@ type ResolveAndValidateInput = {
   input: unknown
   executionState: ExecutionState
   censorConnections: boolean
+}
+
+type GenerateStopHookParams = {
+  stepOutput: StepOutput<ActionType.PIECE>
 }
 
 export class PieceActionHandler extends BaseActionHandler<PieceAction> {
@@ -86,6 +89,13 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
     return result
   }
 
+  private generateStopHook({ stepOutput }: GenerateStopHookParams): StopHook {
+    return ({ response }: StopHookParams) => {
+      stepOutput.status = StepOutputStatus.STOPPED
+      stepOutput.stopResponse = response
+    }
+  }
+
   async execute(
     executionState: ExecutionState
   ): Promise<StepOutput> {
@@ -127,10 +137,14 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
       stepOutput.output = await action.run({
         store: createContextStore('', globals.flowId),
         propsValue: resolvedInput,
-        connections: connectionManager
+        connections: connectionManager,
+        stopHook: this.generateStopHook({ stepOutput }),
       })
 
-      stepOutput.status = StepOutputStatus.SUCCEEDED
+      if (stepOutput.status === StepOutputStatus.RUNNING) {
+        stepOutput.status = StepOutputStatus.SUCCEEDED
+      }
+
       return stepOutput
     }
     catch (e) {

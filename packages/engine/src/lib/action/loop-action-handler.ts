@@ -1,6 +1,6 @@
 import { FlowExecutor } from '../executors/flow-executor';
 import { VariableService } from '../services/variable-service';
-import { Action, ActionType, ExecutionOutputStatus, ExecutionState, LoopOnItemsAction, LoopResumeStepMetadata } from '@activepieces/shared';
+import { Action, ActionType, ExecutionState, LoopOnItemsAction, LoopResumeStepMetadata } from '@activepieces/shared';
 import { BaseActionHandler } from './action-handler';
 import { LoopOnItemsStepOutput, StepOutputStatus, StepOutput } from '@activepieces/shared';
 import { isNil } from 'lodash';
@@ -34,21 +34,6 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
 
     this.firstLoopAction = firstLoopAction
     this.variableService = new VariableService()
-  }
-
-  private getError(stepOutput: LoopOnItemsStepOutput) {
-    const iterations = stepOutput.output?.iterations;
-    if (iterations === undefined) {
-      throw new Error("Iteration can't be undefined");
-    }
-    for (const iteration of iterations) {
-      for (const stepOutput of Object.values(iteration)) {
-        if (stepOutput.status === StepOutputStatus.FAILED) {
-          return stepOutput.errorMessage;
-        }
-      }
-    }
-    return undefined;
   }
 
   private iterationIsResuming(i: number) {
@@ -150,17 +135,13 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
 
         ancestors.pop();
 
-        if (executionOutput.status === ExecutionOutputStatus.FAILED) {
-          stepOutput.status = StepOutputStatus.FAILED
-          stepOutput.errorMessage = this.getError(stepOutput)
+        this.handleFlowExecutorOutput({
+          executionOutput,
+          stepOutput,
+        })
 
-          return stepOutput
-        }
-
-        if (executionOutput.status === ExecutionOutputStatus.PAUSED) {
-          stepOutput.status = StepOutputStatus.PAUSED
-          stepOutput.pauseMetadata = executionOutput.pauseMetadata
-
+        if (stepOutput.status !== StepOutputStatus.RUNNING) {
+          executionState.insertStep(stepOutput, this.currentAction.name, ancestors)
           return stepOutput
         }
       }
