@@ -195,13 +195,47 @@ function getImportOperations(step: Action | Trigger | undefined): (FlowOperation
     return steps
 }
 
-function keepBaseAction(action: Action): Action{
-    const cloned = JSON.parse(JSON.stringify(action))
-    delete cloned.nextAction
-    delete cloned.onFailureAction
-    delete cloned.onSuccessAction
-    delete cloned.firstLoopAction
-    return cloned
+// It's better to use switch case, to enforce that all actions are covered
+// TODO this can be simplified
+function keepBaseAction(action: Action): Action {
+    const commonProps = {
+        name: action.name,
+        displayName: action.displayName,
+        valid: action.valid,
+    }
+    switch(action.type) {
+        case ActionType.BRANCH:
+            // PICK type and settings from action
+            return {
+                type: ActionType.BRANCH,
+                settings: action.settings,
+                ...commonProps,
+            }
+        case ActionType.LOOP_ON_ITEMS:
+            return {
+                type: ActionType.LOOP_ON_ITEMS,
+                settings: action.settings,
+                ...commonProps,
+            }
+        case ActionType.CODE:
+            return {
+                type: action.type,
+                settings: action.settings,
+                ...commonProps,
+            }
+        case ActionType.PIECE:
+            return {
+                type: action.type,
+                settings: action.settings,
+                ...commonProps,
+            }
+        case ActionType.MISSING:
+            return {
+                type: action.type,
+                settings: action.settings,
+                ...commonProps,
+            }
+    }
 }
 
 async function applySingleOperation(projectId: ProjectId, flowVersion: FlowVersion, operation: FlowOperationRequest): Promise<FlowVersion> {
