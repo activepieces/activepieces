@@ -27,6 +27,7 @@ import { isNil } from 'lodash';
 import { createContextStore } from '../services/storage.service';
 import { globals } from '../globals';
 import { connectionService } from '../services/connections.service';
+import { Utils } from '../utils';
 
 type GetPackageNameParams = {
     pieceName: string
@@ -198,7 +199,7 @@ export const pieceHelper = {
             }
         } catch (e: any) {
             return {
-                output: e.message,
+                output: Utils.tryParseJson(e.message),
                 success: false,
 
             }

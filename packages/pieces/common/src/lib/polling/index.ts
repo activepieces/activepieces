@@ -31,7 +31,7 @@ export enum DedupeStrategy {
 export type Polling<T> = TimebasedPolling<T> | LastItemPolling<T>;
 
 export const pollingHelper = {
-    async poll<INPUT>(polling: Polling<INPUT>, { store, propsValue }: { store: Store, propsValue: INPUT }): Promise<unknown[]> {
+    async poll<INPUT>(polling: Polling<INPUT>, { store, propsValue, maxItemsToPoll }: { store: Store, propsValue: INPUT, maxItemsToPoll?: number }): Promise<unknown[]> {
         switch (polling.strategy) {
             case DedupeStrategy.TIMEBASED: {
                 const lastEpochMilliSeconds = (await store.get<number>("lastPoll")) ?? 0;
@@ -43,16 +43,25 @@ export const pollingHelper = {
             case DedupeStrategy.LAST_ITEM: {
                 const lastItemId = (await store.get<unknown>("lastItem"));
                 const items = await polling.items({ propsValue, lastItemId });
-                const newLastItem = items?.[0]?.id;
-                if (!isNil(newLastItem)) {
-                  await store.put("lastItem", newLastItem);
-                }
+
                 const lastItemIndex = items.findIndex(f => f.id === lastItemId);
+                let newItems = [];
                 if (isNil(lastItemId) || lastItemIndex == -1) {
-                  return items?.map((item) => item.data) ?? [];
+                    newItems = items ?? [];
+                } else {
+                    newItems = items?.slice(0, lastItemIndex) ?? [];
                 }
-                return items?.slice(0, lastItemIndex).map((item) => item.data) ?? [];
-              }
+                // Sorted from newest to oldest
+                if (!isNil(maxItemsToPoll)) {
+                    // Get the last polling.maxItemsToPoll items
+                    newItems = newItems.slice(-maxItemsToPoll);
+                }
+                const newLastItem = newItems?.[0]?.id;
+                if (!isNil(newLastItem)) {
+                    await store.put("lastItem", newLastItem);
+                }
+                return newItems.map((item) => item.data);
+            }
         }
     },
     async onEnable<INPUT>(polling: Polling<INPUT>, { store, propsValue }: { store: Store, propsValue: INPUT }): Promise<void> {
@@ -65,12 +74,12 @@ export const pollingHelper = {
                 const items = (await polling.items({ propsValue, lastItemId: null }));
                 const lastItemId = items?.[0]?.id;
                 if (!isNil(lastItemId)) {
-                  await store.put("lastItem", lastItemId);
+                    await store.put("lastItem", lastItemId);
                 } else {
-                  await store.delete("lastItem");
+                    await store.delete("lastItem");
                 }
                 break;
-              }
+            }
         }
     },
     async onDisable<INPUT>(polling: Polling<INPUT>, { store, propsValue }: { store: Store, propsValue: INPUT }): Promise<void> {

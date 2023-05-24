@@ -30,7 +30,7 @@ import { FlowVersionEntity } from './flow-version-entity'
 import { flowVersionSideEffects } from './flow-version-side-effects'
 import { pieceMetadataLoader } from '../../pieces/piece-metadata-loader'
 import { FlowViewMode, DEFAULT_SAMPLE_DATA_SETTINGS } from '@activepieces/shared'
-import { isNil } from 'lodash'
+import { cloneDeep, isNil } from 'lodash'
 
 const branchSettingsValidator = TypeCompiler.Compile(BranchActionSettingsWithValidation)
 const loopSettingsValidator = TypeCompiler.Compile(LoopOnItemsActionSettingsWithValidation)
@@ -150,7 +150,7 @@ function getImportOperations(step: Action | Trigger | undefined): (FlowOperation
                 type: FlowOperationType.ADD_ACTION,
                 request: {
                     parentStep: step.name,
-                    action: step.nextAction,
+                    action: keepBaseAction(step.nextAction),
                 },
             })
         }
@@ -161,7 +161,7 @@ function getImportOperations(step: Action | Trigger | undefined): (FlowOperation
                     request: {
                         parentStep: step.name,
                         stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_FALSE_BRANCH,
-                        action: step.onFailureAction,
+                        action: keepBaseAction(step.onFailureAction),
                     },
                 })
                 steps.push(...getImportOperations(step.onFailureAction))
@@ -172,7 +172,7 @@ function getImportOperations(step: Action | Trigger | undefined): (FlowOperation
                     request: {
                         parentStep: step.name,
                         stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_TRUE_BRANCH,
-                        action: step.onSuccessAction,
+                        action: keepBaseAction(step.onSuccessAction),
                     },
                 })
                 steps.push(...getImportOperations(step.onSuccessAction))
@@ -184,7 +184,7 @@ function getImportOperations(step: Action | Trigger | undefined): (FlowOperation
                 request: {
                     parentStep: step.name,
                     stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_LOOP,
-                    action: step.firstLoopAction,
+                    action: keepBaseAction(step.firstLoopAction),
                 },
 
             })
@@ -193,6 +193,15 @@ function getImportOperations(step: Action | Trigger | undefined): (FlowOperation
         step = step.nextAction
     }
     return steps
+}
+
+function keepBaseAction(action: Action): Action{
+    const cloned = JSON.parse(JSON.stringify(action))
+    delete cloned.nextAction
+    delete cloned.onFailureAction
+    delete cloned.onSuccessAction
+    delete cloned.firstLoopAction
+    return cloned
 }
 
 async function applySingleOperation(projectId: ProjectId, flowVersion: FlowVersion, operation: FlowOperationRequest): Promise<FlowVersion> {
@@ -231,7 +240,7 @@ function replaceConnections(obj: Record<string, unknown>): Record<string, unknow
     for (const [key, value] of Object.entries(obj)) {
         if (Array.isArray(value)) {
             replacedObj[key] = value
-        } 
+        }
         else if (typeof value === 'object' && value !== null) {
             replacedObj[key] = replaceConnections(value as Record<string, unknown>)
         }
