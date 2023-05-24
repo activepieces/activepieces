@@ -297,7 +297,10 @@ export class FlowExecutor {
     const stepOutput = await actionHandler.execute(this.executionState, ancestors);
 
     const endTime = dayjs()
-    stepOutput.duration = endTime.diff(startTime)
+
+    if (stepOutput.duration) {
+      stepOutput.duration += endTime.diff(startTime)
+    }
 
     this.executionState.insertStep(stepOutput, actionHandler.currentAction.name, ancestors)
 
