@@ -19,6 +19,7 @@ export class PublishButtonComponent implements OnInit {
   disablePublishButton$: Observable<boolean>;
   buttonTooltipText$: Observable<string>;
   buttonText$: Observable<string>;
+  isCurrentFlowVersionPublished$: Observable<boolean>;
   constructor(private store: Store) {}
 
   ngOnInit(): void {
@@ -26,6 +27,9 @@ export class PublishButtonComponent implements OnInit {
   }
 
   private setFlowStateListener() {
+    this.isCurrentFlowVersionPublished$ = this.store.select(
+      BuilderSelectors.selectIsCurrentVersionPublished
+    );
     this.flowState$ = combineLatest({
       isSaving: this.store.select(BuilderSelectors.selectIsSaving),
       isPublishing: this.store.select(BuilderSelectors.selectIsPublishing),
@@ -34,25 +38,30 @@ export class PublishButtonComponent implements OnInit {
       publishingSavingStates: this.flowState$,
       flowHasSteps: this.store.select(BuilderSelectors.selectFlowHasAnySteps),
       flowValid: this.store.select(BuilderSelectors.selectCurrentFlowValidity),
+      isCurrentFlowVersionPublished: this.isCurrentFlowVersionPublished$,
     }).pipe(
       map((res) => {
         return (
           res.publishingSavingStates.isPublishing ||
           res.publishingSavingStates.isSaving ||
           !res.flowHasSteps ||
-          !res.flowValid
+          !res.flowValid ||
+          res.isCurrentFlowVersionPublished
         );
       })
     );
     this.buttonTooltipText$ = combineLatest({
       buttonIsDisabled: this.disablePublishButton$,
       flowHasSteps: this.store.select(BuilderSelectors.selectFlowHasAnySteps),
+      isCurrentFlowVersionPublished: this.isCurrentFlowVersionPublished$,
     }).pipe(
       map((res) => {
         if (!res.flowHasSteps) {
           return 'Add 1 more step to publish';
         } else if (res.buttonIsDisabled) {
           return 'Your flow has invalid steps';
+        } else if (res.isCurrentFlowVersionPublished) {
+          return 'Published';
         }
         return 'Publish Flow';
       })
