@@ -136,3 +136,10 @@ export const initFlowQueueConsumer = async (): Promise<void> => {
     const startWorkers = [oneTimeJobConsumer.waitUntilReady(), scheduledJobConsumer.waitUntilReady()]
     await Promise.all(startWorkers)
 }
+
+
+export const closeAllConsumers = async (): Promise<void> => {
+    logger.info('[FlowQueueConsumer#closeAllConsumers] closing all consumers')
+    const startWorkers = [oneTimeJobConsumer.close(), scheduledJobConsumer.close()]
+    await Promise.all(startWorkers)
+}

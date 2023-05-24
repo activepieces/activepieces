@@ -28,9 +28,12 @@ import { appEventRoutingModule } from './app/app-event-routing/app-event-routing
 import { triggerEventModule } from './app/flows/trigger-events/trigger-event.module'
 import { seedDevData } from './app/database/seeds/dev-seeds'
 import { flowInstanceModule } from './app/flows/flow-instance/flow-instance.module'
+import { closeAllConsumers } from './app/workers/flow-worker/flow-queue-consumer'
 
 const app = fastify({
     logger,
+    // Default 4MB, also set in nginx.conf
+    bodyLimit: 4 * 1024 * 1024,
     ajv: {
         customOptions: {
             removeAdditional: 'all',
@@ -158,3 +161,25 @@ The application started on ${system.get(SystemProp.FRONTEND_URL)}, as specified 
 }
 
 start()
+
+// This might be needed as it can be called twice
+let shuttingDown = false
+
+const stop = async () => {
+    if (shuttingDown) return
+    shuttingDown = true
+
+    try {
+        await app.close()
+        await closeAllConsumers()
+        logger.info('Server stopped')
+        process.exit(0)
+    }
+    catch (err) {
+        logger.error('Error stopping server', err)
+        process.exit(1)
+    }
+}
+
+process.on('SIGINT', stop)
+process.on('SIGTERM', stop)
