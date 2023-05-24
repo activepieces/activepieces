@@ -7,7 +7,7 @@ export const storageService = {
     async get(key: string): Promise<StoreEntry | null> {
         try {
             return (
-                await axios.get(globals.apiUrl + '/v1/store-entries?key=' + key, {
+                await axios.get(globals.apiUrl + '/v1/store-entries?key=' + encodeURIComponent(key), {
                     headers: {
                         Authorization: 'Bearer ' + globals.workerToken
                     }
@@ -33,7 +33,7 @@ export const storageService = {
     async delete(request: DeletStoreEntryRequest): Promise<StoreEntry | null> {
         try {
             return (
-                await axios.delete(globals.apiUrl + '/v1/store-entries?key=' + request.key, {
+                await axios.delete(globals.apiUrl + '/v1/store-entries?key=' + encodeURIComponent(request.key), {
                     headers: {
                         Authorization: 'Bearer ' + globals.workerToken
                     }
