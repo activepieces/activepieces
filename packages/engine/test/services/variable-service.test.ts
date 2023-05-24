@@ -338,14 +338,14 @@ describe('Variable Service', () => {
       const { result, errors } = variableService.validateAndCast(input, props);
       expect(result).toEqual({
         Asana1: '2012-02-22T02:06:58.147Z',
-        Asana2: '2012-02-21T18:30:00.000Z',
-        FormatFive: '2023-05-23T07:04:56.000Z',
-        FormatFour: '2023-05-23T07:04:56.000Z',
-        FormatOne: '2023-05-22T18:30:00.000Z',
+        Asana2: '2012-02-22T00:00:00.000Z',
+        FormatFive: '2023-05-23T12:34:56.000Z',
+        FormatFour: '2023-05-23T12:34:56.000Z',
+        FormatOne: '2023-05-23T00:00:00.000Z',
         FormatThree: '2023-05-22T18:30:00.000Z',
         FormatTwo: '2023-05-22T18:30:00.000Z',
         Hubspot: '2019-10-30T03:30:17.883Z',
-        Microsoft1: '2022-12-13T21:00:00.000Z',
+        Microsoft1: '2022-12-14T02:30:00.000Z',
         Microsoft2: '2022-12-30T10:15:36.677Z',
         Salesforce: '2022-12-27T09:48:06.000Z',
       });

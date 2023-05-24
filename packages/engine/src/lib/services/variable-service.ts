@@ -130,7 +130,7 @@ export class VariableService {
     try {
       const dateTimeString = clonedInput[key];
       if (!dateTimeString) throw Error('Undefined input');
-      return dayjs(dateTimeString).toISOString();
+      return dayjs(dateTimeString, { utc: true},true).toISOString();
     } catch (error) {
       console.error(`Error while parsing ${dateTimeString}`, error);
       return undefined;
