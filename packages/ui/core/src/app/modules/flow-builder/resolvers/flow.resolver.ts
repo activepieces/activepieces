@@ -5,20 +5,17 @@ import { Observable, map, of, switchMap } from 'rxjs';
 import { Flow, FlowId, Folder } from '@activepieces/shared';
 import { FlowService, FoldersService } from '@activepieces/ui/common';
 
+export type FlowResolverData = { flow: Flow; folder?: Folder };
 @Injectable({
   providedIn: 'root',
 })
-export class GetFlowResolver
-  implements Resolve<Observable<{ flow: Flow; folder?: Folder }>>
-{
+export class GetFlowResolver implements Resolve<Observable<FlowResolverData>> {
   constructor(
     private flowService: FlowService,
     private folderService: FoldersService
   ) {}
 
-  resolve(
-    snapshot: ActivatedRouteSnapshot
-  ): Observable<{ flow: Flow; folder?: Folder }> {
+  resolve(snapshot: ActivatedRouteSnapshot): Observable<FlowResolverData> {
     const flowId = snapshot.paramMap.get('id') as FlowId;
     return this.flowService.get(flowId, undefined).pipe(
       switchMap((flow) => {

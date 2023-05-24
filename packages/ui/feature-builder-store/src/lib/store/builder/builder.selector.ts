@@ -72,6 +72,13 @@ export const selectCurrentFlow = createSelector(
     return state.flowState.flow;
   }
 );
+const selectIsCurrentVersionPublished = createSelector(
+  selectCurrentInstance,
+  selectCurrentFlow,
+  (instance, flow) => {
+    return instance?.flowVersionId === flow.version.id;
+  }
+);
 export const selectCurrentFlowFolderName = createSelector(
   selectGlobalBuilderState,
   (state: GlobalBuilderState) => {
@@ -502,4 +509,5 @@ export const BuilderSelectors = {
   selectIsGeneratingFlowComponentOpen,
   selectMissingStepRecommendedFlowItemsDetails,
   selectStepTestSampleDataStringified,
+  selectIsCurrentVersionPublished,
 };
