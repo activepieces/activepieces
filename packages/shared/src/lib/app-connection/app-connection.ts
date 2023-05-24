@@ -36,7 +36,7 @@ export interface BasicAuthConnectionValue {
 }
 
 export interface BaseOAuth2ConnectionValue {
-  expires_in: number;
+  expires_in?: number;
   token_type: string;
   access_token: string;
   claimed_at: number;
