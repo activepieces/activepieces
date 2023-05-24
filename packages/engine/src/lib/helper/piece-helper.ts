@@ -19,6 +19,7 @@ import {
     ExecuteActionResponse,
     ExecutePropsOptions,
     ExecutionState,
+    ExecutionType,
     getPackageAliasForPiece,
     getPackageNameForPiece,
 } from "@activepieces/shared";
@@ -174,6 +175,7 @@ export const pieceHelper = {
         })
 
         const context: ActionContext<StaticPropsValue<Record<string, any>>> = {
+            executionType: ExecutionType.BEGIN,
             propsValue: resolvedInput as Record<string, any>,
             store: createContextStore('', globals.flowId),
             connections: {
@@ -189,7 +191,8 @@ export const pieceHelper = {
                     }
                 }
             },
-            stopHook: () => console.log('stopHook called!'),
+            stopHook: () => console.info('stopHook called!'),
+            pauseHook: () => console.info('pauseHook called!'),
         }
 
         try {

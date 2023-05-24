@@ -8,7 +8,6 @@ import {
   ExecutionOutputStatus,
   ExecutionOutput,
   ActionType,
-  PauseType,
   flowHelper,
   ActivepiecesError,
   ErrorCode,
@@ -122,17 +121,11 @@ export class FlowExecutor {
 
     switch(actionHandler.currentAction.type) {
       case ActionType.PIECE: {
-        const output = stepOutput.output as { delay: number, pauseType: PauseType }
-        const resumeDateTime = dayjs().add(output.delay, 'seconds').toISOString()
-
-        return {
-          type: output.pauseType,
-          resumeDateTime,
-          resumeStepMetadata: {
-            type: ActionType.PIECE,
-            name: actionHandler.currentAction.name,
-          }
+        if (isNil(stepOutput.pauseMetadata)) {
+          throw new Error('pauseMetadata is undefined, this shouldn\'t happen')
         }
+
+        return stepOutput.pauseMetadata
       }
 
       case ActionType.BRANCH: {

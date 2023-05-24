@@ -15,7 +15,7 @@ import { pieceHelper } from '../helper/piece-helper';
 import { createContextStore } from '../services/storage.service';
 import { connectionManager } from '../services/connections.service';
 import { Utils } from '../utils';
-import { PiecePropertyMap, StopHook, StopHookParams } from '@activepieces/pieces-framework';
+import { PauseHook, PauseHookParams, PiecePropertyMap, StopHook, StopHookParams } from '@activepieces/pieces-framework';
 
 type CtorParams = {
   executionType: ExecutionType
@@ -37,6 +37,10 @@ type ResolveAndValidateInput = {
 }
 
 type GenerateStopHookParams = {
+  stepOutput: StepOutput<ActionType.PIECE>
+}
+
+type GeneratePauseHookParams = {
   stepOutput: StepOutput<ActionType.PIECE>
 }
 
@@ -97,6 +101,21 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
     }
   }
 
+  private generatePauseHook({ stepOutput }: GeneratePauseHookParams): PauseHook {
+    const actionName = this.currentAction.name
+
+    return ({ pauseMetadata }: PauseHookParams) => {
+      stepOutput.status = StepOutputStatus.PAUSED
+      stepOutput.pauseMetadata = {
+        ...pauseMetadata,
+        resumeStepMetadata: {
+          type: ActionType.PIECE,
+          name: actionName,
+        }
+      }
+    }
+  }
+
   async execute(
     executionState: ExecutionState
   ): Promise<StepOutput> {
@@ -136,10 +155,12 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
       })
 
       stepOutput.output = await action.run({
+        executionType: this.executionType,
         store: createContextStore('', globals.flowId),
         propsValue: resolvedInput,
         connections: connectionManager,
         stopHook: this.generateStopHook({ stepOutput }),
+        pauseHook: this.generatePauseHook({ stepOutput }),
       })
 
       if (stepOutput.status === StepOutputStatus.RUNNING) {

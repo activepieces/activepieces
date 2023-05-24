@@ -84,6 +84,11 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
       ancestors,
     })
 
+    if (oldStepOutput) {
+      oldStepOutput.status = StepOutputStatus.RUNNING
+      delete oldStepOutput.pauseMetadata
+    }
+
     return oldStepOutput ?? this.initStepOutput({
       executionState,
     })
