@@ -3,6 +3,8 @@ import { ExecutionState } from "@activepieces/shared";
 import { connectionService } from "./connections.service";
 import { PiecePropertyMap, PropertyType } from "@activepieces/pieces-framework";
 import dayjs from "dayjs";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
 
 type ResolveParams = {
   unresolvedInput: unknown
@@ -126,16 +128,18 @@ export class VariableService {
   }
 
   getISODateTime = (clonedInput: any, key: string): string | undefined => {
+    dayjs.extend(utc);
+    dayjs.extend(timezone);
     const dateTimeString = clonedInput[key];
     try {
       const dateTimeString = clonedInput[key];
       if (!dateTimeString) throw Error('Undefined input');
-      return dayjs(dateTimeString, { utc: true},true).toISOString();
+      return dayjs.tz(dateTimeString, 'UTC').toISOString();
     } catch (error) {
       console.error(`Error while parsing ${dateTimeString}`, error);
       return undefined;
     }
-  }
+  };
 
   validateAndCast(
     resolvedInput: any,
