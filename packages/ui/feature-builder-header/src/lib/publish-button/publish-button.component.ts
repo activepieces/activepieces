@@ -13,7 +13,11 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PublishButtonComponent implements OnInit {
-  flowState$: Observable<{ isSaving: boolean; isPublishing: boolean }>;
+  flowState$: Observable<{
+    isSaving: boolean;
+    isPublishing: boolean;
+    isCurrentFlowVersionPublished: boolean;
+  }>;
   isDeployingOrIsSaving$: Observable<boolean>;
   deploying$: Observable<boolean> = of(false);
   disablePublishButton$: Observable<boolean>;
@@ -33,6 +37,7 @@ export class PublishButtonComponent implements OnInit {
     this.flowState$ = combineLatest({
       isSaving: this.store.select(BuilderSelectors.selectIsSaving),
       isPublishing: this.store.select(BuilderSelectors.selectIsPublishing),
+      isCurrentFlowVersionPublished: this.isCurrentFlowVersionPublished$,
     });
     this.disablePublishButton$ = combineLatest({
       publishingSavingStates: this.flowState$,
@@ -72,6 +77,8 @@ export class PublishButtonComponent implements OnInit {
           return 'Saving';
         } else if (res.isPublishing) {
           return 'Publishing';
+        } else if (res.isCurrentFlowVersionPublished) {
+          return 'Published';
         }
         return 'Publish';
       })
