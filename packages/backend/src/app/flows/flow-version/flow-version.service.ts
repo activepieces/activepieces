@@ -30,7 +30,7 @@ import { FlowVersionEntity } from './flow-version-entity'
 import { flowVersionSideEffects } from './flow-version-side-effects'
 import { pieceMetadataLoader } from '../../pieces/piece-metadata-loader'
 import { FlowViewMode, DEFAULT_SAMPLE_DATA_SETTINGS } from '@activepieces/shared'
-import { isNil } from 'lodash'
+import { clone, isNil } from 'lodash'
 
 const branchSettingsValidator = TypeCompiler.Compile(BranchActionSettingsWithValidation)
 const loopSettingsValidator = TypeCompiler.Compile(LoopOnItemsActionSettingsWithValidation)
@@ -200,6 +200,7 @@ function keepBaseAction(action: Action): Action{
     delete cloned.nextAction
     delete cloned.onFailureAction
     delete cloned.onSuccessAction
+    delete cloned.firstLoopAction
     return cloned
 }
 
