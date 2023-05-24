@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
 import { Actions, createEffect, ofType, concatLatestFrom } from '@ngrx/effects';
 import { EMPTY, catchError, of, tap } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { map, switchMap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { FlowInstance, FlowInstanceStatus } from '@activepieces/shared';
+import { FlowInstanceStatus } from '@activepieces/shared';
 import { FlowInstanceActions } from './flow-instance.action';
-import { FlowInstanceService } from '@activepieces/ui/common';
+import { FlowInstanceService, FlowService } from '@activepieces/ui/common';
 import { BuilderSelectors } from '../builder.selector';
 import { BuilderActions } from '../builder.action';
 
@@ -15,13 +15,17 @@ export class FlowInstanceEffects {
   loadInitial$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(BuilderActions.loadInitial),
-      switchMap(({ instance }: { instance?: FlowInstance }) => {
-        if (instance === undefined) {
+      switchMap((action) => {
+        if (
+          action.instance === undefined ||
+          action.publishedVersion === undefined
+        ) {
           return EMPTY;
         }
         return of(
           FlowInstanceActions.setInitial({
-            instance: instance,
+            instance: action.instance,
+            publishedFlowVersion: action.publishedVersion,
           })
         );
       })
@@ -53,6 +57,7 @@ export class FlowInstanceEffects {
           }
           FlowInstanceActions.setInitial({
             instance: action.instance,
+            publishedFlowVersion: action.publishedFlowVersion,
           });
         })
       );
@@ -73,12 +78,17 @@ export class FlowInstanceEffects {
           })
           .pipe(
             switchMap((instance) => {
-              return of(
-                FlowInstanceActions.publishSuccess({
-                  instance: instance,
-                  showSnackbar: true,
-                })
-              );
+              return this.flowService
+                .get(instance.flowId, instance.flowVersionId)
+                .pipe(
+                  map((flow) => {
+                    return FlowInstanceActions.publishSuccess({
+                      instance: instance,
+                      showSnackbar: true,
+                      publishedFlowVersion: flow.version,
+                    });
+                  })
+                );
             }),
             catchError((err) => {
               console.error(err);
@@ -103,9 +113,8 @@ export class FlowInstanceEffects {
           .pipe(
             switchMap((instance) => {
               return of(
-                FlowInstanceActions.publishSuccess({
+                FlowInstanceActions.updateInstanceStatusSuccess({
                   instance: instance,
-                  showSnackbar: false,
                 })
               );
             }),
@@ -132,9 +141,8 @@ export class FlowInstanceEffects {
           .pipe(
             switchMap((instance) => {
               return of(
-                FlowInstanceActions.publishSuccess({
+                FlowInstanceActions.updateInstanceStatusSuccess({
                   instance: instance,
-                  showSnackbar: false,
                 })
               );
             }),
@@ -151,6 +159,7 @@ export class FlowInstanceEffects {
     private flowInstanceService: FlowInstanceService,
     private actions$: Actions,
     private store: Store,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private flowService: FlowService
   ) {}
 }

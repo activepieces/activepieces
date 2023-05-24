@@ -23,6 +23,12 @@ const __flowInstanceReducer = createReducer(
     (state, { instance }): FlowInstance => {
       return { ...instance };
     }
+  ),
+  on(
+    FlowInstanceActions.updateInstanceStatusSuccess,
+    (state, { instance }): FlowInstance => {
+      return { ...instance };
+    }
   )
 );
 

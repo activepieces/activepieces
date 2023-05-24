@@ -232,8 +232,9 @@ const _flowsReducer = createReducer(
     clonedState.savingStatus |= BuilderSavingStatusEnum.PUBLISHING;
     return clonedState;
   }),
-  on(FlowInstanceActions.publishSuccess, (state) => {
+  on(FlowInstanceActions.publishSuccess, (state, { instance }) => {
     const clonedState: FlowState = JSON.parse(JSON.stringify(state));
+    clonedState.flow.version.id = instance.flowVersionId;
     clonedState.savingStatus &= ~BuilderSavingStatusEnum.PUBLISHING;
     return clonedState;
   }),
