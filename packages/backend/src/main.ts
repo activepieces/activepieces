@@ -28,6 +28,7 @@ import { appEventRoutingModule } from './app/app-event-routing/app-event-routing
 import { triggerEventModule } from './app/flows/trigger-events/trigger-event.module'
 import { seedDevData } from './app/database/seeds/dev-seeds'
 import { flowInstanceModule } from './app/flows/flow-instance/flow-instance.module'
+import { closeAllConsumers } from './app/workers/flow-worker/flow-queue-consumer'
 
 const app = fastify({
     logger,
@@ -83,6 +84,10 @@ app.addHook('onRequest', async (request, reply) => {
             We suggest turning around and trying another path. Good luck!
         `)
     }
+})
+
+app.addHook('onClose', async () => {
+    await closeAllConsumers()
 })
 
 app.addHook('onRequest', tokenVerifyMiddleware)
