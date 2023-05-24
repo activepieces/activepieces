@@ -30,7 +30,7 @@ import { FlowVersionEntity } from './flow-version-entity'
 import { flowVersionSideEffects } from './flow-version-side-effects'
 import { pieceMetadataLoader } from '../../pieces/piece-metadata-loader'
 import { FlowViewMode, DEFAULT_SAMPLE_DATA_SETTINGS } from '@activepieces/shared'
-import { cloneDeep, isNil } from 'lodash'
+import { isNil } from 'lodash'
 
 const branchSettingsValidator = TypeCompiler.Compile(BranchActionSettingsWithValidation)
 const loopSettingsValidator = TypeCompiler.Compile(LoopOnItemsActionSettingsWithValidation)
@@ -288,47 +288,53 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
     switch (clonedRequest.type) {
         case FlowOperationType.ADD_ACTION:
             clonedRequest.request.action.valid = true
-            if (clonedRequest.request.action.type === ActionType.MISSING) {
-                clonedRequest.request.action.valid = false
-            }
-            else if (clonedRequest.request.action.type === ActionType.LOOP_ON_ITEMS) {
-                clonedRequest.request.action.valid = loopSettingsValidator.Check(clonedRequest.request.action.settings)
-            }
-            else if (clonedRequest.request.action.type === ActionType.BRANCH) {
-                clonedRequest.request.action.valid = branchSettingsValidator.Check(clonedRequest.request.action.settings)
-            }
-            else if (clonedRequest.request.action.type === ActionType.PIECE) {
-                clonedRequest.request.action.valid = await validateAction(clonedRequest.request.action.settings)
-            }
-            else if (clonedRequest.request.action.type === ActionType.CODE) {
-                const codeSettings: CodeActionSettings = clonedRequest.request.action.settings
-                await uploadArtifact(projectId, codeSettings)
+            switch (clonedRequest.request.action.type) {
+                case ActionType.MISSING:
+                    clonedRequest.request.action.valid = false
+                    break
+                case ActionType.LOOP_ON_ITEMS:
+                    clonedRequest.request.action.valid = loopSettingsValidator.Check(clonedRequest.request.action.settings)
+                    break
+                case ActionType.BRANCH:
+                    clonedRequest.request.action.valid = branchSettingsValidator.Check(clonedRequest.request.action.settings)
+                    break
+                case ActionType.PIECE:
+                    clonedRequest.request.action.valid = await validateAction(clonedRequest.request.action.settings)
+                    break
+                case ActionType.CODE: {
+                    const codeSettings: CodeActionSettings = clonedRequest.request.action.settings
+                    await uploadArtifact(projectId, codeSettings)
+                    break
+                }
             }
             break
         case FlowOperationType.UPDATE_ACTION:
             clonedRequest.request.valid = true
-            if (clonedRequest.request.type === ActionType.MISSING) {
-                clonedRequest.request.valid = false
-            }
-            else if (clonedRequest.request.type === ActionType.LOOP_ON_ITEMS) {
-                clonedRequest.request.valid = loopSettingsValidator.Check(clonedRequest.request.settings)
-            }
-            else if (clonedRequest.request.type === ActionType.BRANCH) {
-                clonedRequest.request.valid = branchSettingsValidator.Check(clonedRequest.request.settings)
-            }
-            else if (clonedRequest.request.type === ActionType.PIECE) {
-                clonedRequest.request.valid = await validateAction(clonedRequest.request.settings)
-            }
-            else if (clonedRequest.request.type === ActionType.CODE) {
-                const codeSettings: CodeActionSettings = clonedRequest.request.settings
-                await uploadArtifact(projectId, codeSettings)
-                const previousStep = flowHelper.getStep(flowVersion, clonedRequest.request.name)
-                if (
-                    previousStep !== undefined &&
-                    previousStep.type === ActionType.CODE &&
-                    codeSettings.artifactSourceId !== previousStep.settings.artifactSourceId
-                ) {
-                    await deleteArtifact(projectId, previousStep.settings)
+            switch (clonedRequest.request.type) {
+                case ActionType.MISSING:
+                    clonedRequest.request.valid = false
+                    break
+                case ActionType.LOOP_ON_ITEMS:
+                    clonedRequest.request.valid = loopSettingsValidator.Check(clonedRequest.request.settings)
+                    break
+                case ActionType.BRANCH:
+                    clonedRequest.request.valid = branchSettingsValidator.Check(clonedRequest.request.settings)
+                    break
+                case ActionType.PIECE:
+                    clonedRequest.request.valid = await validateAction(clonedRequest.request.settings)
+                    break
+                case ActionType.CODE: {
+                    const codeSettings: CodeActionSettings = clonedRequest.request.settings
+                    await uploadArtifact(projectId, codeSettings)
+                    const previousStep = flowHelper.getStep(flowVersion, clonedRequest.request.name)
+                    if (
+                        previousStep !== undefined &&
+                        previousStep.type === ActionType.CODE &&
+                        codeSettings.artifactSourceId !== previousStep.settings.artifactSourceId
+                    ) {
+                        await deleteArtifact(projectId, previousStep.settings)
+                    }
+                    break
                 }
             }
             break
@@ -341,12 +347,16 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
         }
 
         case FlowOperationType.UPDATE_TRIGGER:
-            clonedRequest.request.valid = true
-            if (clonedRequest.request.type === TriggerType.EMPTY) {
-                clonedRequest.request.valid = false
-            }
-            else if (clonedRequest.request.type === TriggerType.PIECE) {
-                clonedRequest.request.valid = await validateTrigger(clonedRequest.request.settings)
+            switch (clonedRequest.request.type) {
+                case TriggerType.EMPTY:
+                    clonedRequest.request.valid = false
+                    break
+                case TriggerType.PIECE:
+                    clonedRequest.request.valid = await validateTrigger(clonedRequest.request.settings)
+                    break
+                default:
+                    clonedRequest.request.valid = true
+                    break
             }
             break
         default:
@@ -406,9 +416,7 @@ function buildSchema(props: PiecePropertyMap): TSchema {
     const entries = Object.entries(props)
     const nonNullableUnknownPropType = Type.Not(Type.Union([Type.Null(), Type.Undefined()]), Type.Unknown())
     const propsSchema: Record<string, TSchema> = {}
-    for (let i = 0; i < entries.length; ++i) {
-        const property = entries[i][1]
-        const name: string = entries[i][0]
+    for (const [name, property] of entries) {
         switch (property.type) {
             case PropertyType.SHORT_TEXT:
             case PropertyType.LONG_TEXT:
@@ -486,4 +494,8 @@ async function uploadArtifact(projectId: ProjectId, codeSettings: CodeActionSett
         codeSettings.artifactPackagedId = undefined
     }
     return codeSettings
+}
+
+export const exportedFlowVersionTesting = {
+    getImportOperations,
 }
