@@ -86,10 +86,6 @@ app.addHook('onRequest', async (request, reply) => {
     }
 })
 
-app.addHook('onClose', async () => {
-    await closeAllConsumers()
-})
-
 app.addHook('onRequest', tokenVerifyMiddleware)
 app.register(projectModule)
 app.register(fileModule)
@@ -165,3 +161,25 @@ The application started on ${system.get(SystemProp.FRONTEND_URL)}, as specified 
 }
 
 start()
+
+// This might be needed as it can be called twice
+let shuttingDown = false
+
+const stop = async () => {
+    if (shuttingDown) return
+    shuttingDown = true
+
+    try {
+        await app.close()
+        await closeAllConsumers()
+        logger.info('Server stopped')
+        process.exit(0)
+    }
+    catch (err) {
+        logger.error('Error stopping server', err)
+        process.exit(1)
+    }
+}
+
+process.on('SIGINT', stop)
+process.on('SIGTERM', stop)
