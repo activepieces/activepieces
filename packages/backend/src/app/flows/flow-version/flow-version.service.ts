@@ -150,7 +150,7 @@ function getImportOperations(step: Action | Trigger | undefined): (FlowOperation
                 type: FlowOperationType.ADD_ACTION,
                 request: {
                     parentStep: step.name,
-                    action: step.nextAction,
+                    action: keepBaseAction(step.nextAction),
                 },
             })
         }
@@ -161,7 +161,7 @@ function getImportOperations(step: Action | Trigger | undefined): (FlowOperation
                     request: {
                         parentStep: step.name,
                         stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_FALSE_BRANCH,
-                        action: step.onFailureAction,
+                        action: keepBaseAction(step.onFailureAction),
                     },
                 })
                 steps.push(...getImportOperations(step.onFailureAction))
@@ -172,7 +172,7 @@ function getImportOperations(step: Action | Trigger | undefined): (FlowOperation
                     request: {
                         parentStep: step.name,
                         stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_TRUE_BRANCH,
-                        action: step.onSuccessAction,
+                        action: keepBaseAction(step.onSuccessAction),
                     },
                 })
                 steps.push(...getImportOperations(step.onSuccessAction))
@@ -184,7 +184,7 @@ function getImportOperations(step: Action | Trigger | undefined): (FlowOperation
                 request: {
                     parentStep: step.name,
                     stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_LOOP,
-                    action: step.firstLoopAction,
+                    action: keepBaseAction(step.firstLoopAction),
                 },
 
             })
@@ -193,6 +193,14 @@ function getImportOperations(step: Action | Trigger | undefined): (FlowOperation
         step = step.nextAction
     }
     return steps
+}
+ 
+function keepBaseAction(action: Action): Action{
+    const cloned = JSON.parse(JSON.stringify(action))
+    delete cloned.nextAction
+    delete cloned.onFailureAction
+    delete cloned.onSuccessAction
+    return cloned
 }
 
 async function applySingleOperation(projectId: ProjectId, flowVersion: FlowVersion, operation: FlowOperationRequest): Promise<FlowVersion> {
