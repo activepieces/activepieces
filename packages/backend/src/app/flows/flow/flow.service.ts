@@ -158,7 +158,6 @@ export const flowService = {
                         type: FlowOperationType.IMPORT_FLOW,
                         request: lastVersionWithArtifacts,
                     })
-
                 }
                 await flowVersionService.applyOperation(projectId, lastVersion, operation)
             }
