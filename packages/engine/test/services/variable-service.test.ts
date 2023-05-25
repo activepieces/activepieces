@@ -274,6 +274,130 @@ describe('Variable Service', () => {
     });
   });
 
+    it('should return proper iso date time for valid texts', () => {
+      const variableService = new VariableService();
+      const input = {
+        Salesforce: '2022-12-27T09:48:06.000+0000',
+        Microsoft1: '2022-12-14T02:30:00.0000000',
+        Microsoft2: '2022-12-30T10:15:36.6778769Z',
+        Asana1: '2012-02-22T02:06:58.147Z',
+        Asana2: '2012-02-22',
+        Hubspot: '2019-10-30T03:30:17.883Z',
+        FormatOne: '2023-05-23',
+        FormatTwo: 'May 23, 2023',
+        FormatThree: '05/23/2023',
+        FormatFour: '2023-05-23T12:34:56',
+        FormatFive: '2023-05-23 12:34:56',
+      };
+      const props = {
+        Salesforce: Property.DateTime({
+          displayName: 'Salesforce',
+          required: true,
+        }),
+        Microsoft1: Property.DateTime({
+          displayName: 'Microsoft1',
+          required: true,
+        }),
+        Microsoft2: Property.DateTime({
+          displayName: 'Microsoft2',
+          required: true,
+        }),
+        Asana1: Property.DateTime({
+          displayName: 'Asana1',
+          required: true,
+        }),
+        Asana2: Property.DateTime({
+          displayName: 'Asana2',
+          required: true,
+        }),
+        Hubspot: Property.DateTime({
+          displayName: 'Hubspot',
+          required: true,
+        }),
+        FormatOne: Property.DateTime({
+          displayName: 'One',
+          required: true,
+        }),
+        FormatTwo: Property.DateTime({
+          displayName: 'One',
+          required: true,
+        }),
+        FormatThree: Property.DateTime({
+          displayName: 'One',
+          required: true,
+        }),
+        FormatFour: Property.DateTime({
+          displayName: 'One',
+          required: true,
+        }),
+        FormatFive: Property.DateTime({
+          displayName: 'One',
+          required: true,
+        }),
+      };
+      const { result, errors } = variableService.validateAndCast(input, props);
+      expect(result).toEqual({
+        Asana1: '2012-02-22T02:06:58.147Z',
+        Asana2: '2012-02-22T00:00:00.000Z',
+        FormatFive: '2023-05-23T12:34:56.000Z',
+        FormatFour: '2023-05-23T12:34:56.000Z',
+        FormatOne: '2023-05-23T00:00:00.000Z',
+        FormatThree: '2023-05-23T00:00:00.000Z',
+        FormatTwo: '2023-05-23T00:00:00.000Z',
+        Hubspot: '2019-10-30T03:30:17.883Z',
+        Microsoft1: '2022-12-14T02:30:00.000Z',
+        Microsoft2: '2022-12-30T10:15:36.677Z',
+        Salesforce: '2022-12-27T09:48:06.000Z',
+      });
+      expect(errors).toEqual({});
+    });
 
+    it('should return error for invalid texts for iso dates', () => {
+      const variableService = new VariableService();
+      const input = {
+        invalidDateString: 'wrong text',
+        wrongDateString: '2023-023-331',
+        emptyStringNumber: '',
+        undefinedNumber: undefined,
+        nullNumber: null,
+      };
+      const props = {
+        invalidDateString: Property.DateTime({
+          displayName: 'Invalid Date String',
+          required: true,
+        }),
+        wrongDateString: Property.DateTime({
+          displayName: 'Wrong Date String',
+          required: true,
+        }),
+        emptyStringNumber: Property.DateTime({
+          displayName: 'Empty String Number',
+          required: true,
+        }),
+        undefinedNumber: Property.DateTime({
+          displayName: 'Undefined Number',
+          required: true,
+        }),
+        nullNumber: Property.DateTime({
+          displayName: 'Null Number',
+          required: true,
+        }),
+      };
+      const { result, errors } = variableService.validateAndCast(input, props);
+      expect(result).toEqual({
+        emptyStringNumber: undefined,
+        invalidDateString: undefined,
+        nullNumber: undefined,
+        undefinedNumber: undefined,
+        wrongDateString: undefined,
+      });
+      expect(errors).toEqual({
+        emptyStringNumber: 'expected ISO string, but found value: ',
+        invalidDateString: 'expected ISO string, but found value: wrong text',
+        nullNumber: 'expected ISO string, but found value: null',
+        undefinedNumber: 'expected ISO string, but found value: undefined',
+        wrongDateString: 'expected ISO string, but found value: 2023-023-331',
+      });
+    });
 
 });
