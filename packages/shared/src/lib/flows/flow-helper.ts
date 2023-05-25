@@ -271,8 +271,8 @@ function addAction(flowVersion: FlowVersion, request: AddActionRequest): void {
 }
 
 function createAction(
-  request: Action,
-  { nextAction}: { nextAction?: Action},
+  request: UpdateActionRequest,
+  { nextAction, onFailureAction, onSuccessAction, firstLoopAction}: { nextAction?: Action, firstLoopAction?: Action, onSuccessAction?: Action, onFailureAction?: Action},
 ): Action {
   const baseProperties = {
     displayName: request.displayName,
@@ -285,8 +285,8 @@ function createAction(
     case ActionType.BRANCH:
       action = {
         ...baseProperties,
-        onFailureAction: request.onFailureAction,
-        onSuccessAction:  request.onSuccessAction,
+        onFailureAction: onFailureAction,
+        onSuccessAction: onSuccessAction,
         type: ActionType.BRANCH,
         settings: request.settings,
       };
@@ -294,7 +294,7 @@ function createAction(
     case ActionType.LOOP_ON_ITEMS:
       action = {
         ...baseProperties,
-        firstLoopAction: request.firstLoopAction,
+        firstLoopAction: firstLoopAction,
         type: ActionType.LOOP_ON_ITEMS,
         settings: request.settings,
       };
@@ -415,9 +415,6 @@ export const flowHelper = {
     }
     clonedVersion.valid = isValid(clonedVersion);
     return clonedVersion;
-  },
-  clone: (flowVersion: FlowVersion): FlowVersion => {
-    return JSON.parse(JSON.stringify(flowVersion));
   },
   getStep,
   isAction,
