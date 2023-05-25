@@ -8,6 +8,10 @@ This tutorial will guide you through the process of creating a Hacker News piece
 * [Activepieces Repo Structure](../architecture/repo-structure) and [Activepieces Local development](../development-setup/local-development) Or [Github Codespaces](../development-setup/codespaces).
 * TypeScript syntax.
 
+<Warning>
+Using the regular `docker-compose.yaml` instead of `docker-compose-dev.yaml` will not function correctly, as the local pieces are only visible in development mode.
+</Warning>
+
 HackerNews is a social news website that allows users to submit and vote on stories related to computer science and entrepreneurship.
 
 ## Piece Definition
@@ -60,7 +64,8 @@ You can ask ChatGPT3 to write the function to get top stories from hackernews.
 </Tip>
 
 ```typescript
-import { createPiece, HttpMethod, httpClient, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from "@activepieces/pieces-framework";
+import { httpClient, HttpMethod } from "@activepieces/pieces-common";
 
 export const fetchTopStories = createAction({
 	name: 'fetch_top_stories', // Must be a unique across the piece, this shouldn't be changed.
