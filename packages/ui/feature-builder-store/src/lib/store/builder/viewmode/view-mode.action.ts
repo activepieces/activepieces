@@ -11,7 +11,7 @@ export const setViewMode = createAction(
   props<{ viewMode: ViewModeEnum }>()
 );
 export const setInitial = createAction(
-  ViewModeActionType.SET_VIEW_MODE,
+  ViewModeActionType.SET_INITIAL,
   props<{ viewMode: ViewModeEnum }>()
 );
 
