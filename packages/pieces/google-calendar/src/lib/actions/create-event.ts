@@ -10,9 +10,8 @@ export const createEvent = createAction({
     props: {
         authentication: googleCalendarCommon.authentication,
         calendar_id: googleCalendarCommon.calendarDropdown('writer'),
-        description: Property.LongText({
-            displayName: 'Description',
-            description: 'The text describing the event to be created',
+        title: Property.ShortText({
+            displayName: 'Title of the event',
             required: true,
         }),
         startDateTime: Property.DateTime({
@@ -29,27 +28,23 @@ export const createEvent = createAction({
         const {
             authentication,
             calendar_id:calendarId,
-            description,
+            title: summary,
             startDateTime,
             endDateTime
         } = configValue.propsValue;
         const {access_token:token} = authentication;
         const start = {
-            date:dayjs(startDateTime).format('YYYY-MM-DD'),
-            dateTime: startDateTime,
-            timeZone:'Etc/Zulu'
+            dateTime: dayjs(startDateTime).format('YYYY-MM-DDTHH:mm:ss.sssZ'),
         };
         const end = {
-            date:dayjs(endDateTime).format('YYYY-MM-DD'),
-            dateTime: endDateTime,
-            timeZone:'Etc/Zulu'
+            dateTime: dayjs(endDateTime).format('YYYY-MM-DDTHH:mm:ss.sssZ'),
         };
         const url = `${googleCalendarCommon.baseUrl}/calendars/${calendarId}/events`;
         const request: HttpRequest<Record<string, unknown>> = {
             method: HttpMethod.POST,
             url,
             body:{
-                description,
+                summary,
                 start,
                 end
             },
