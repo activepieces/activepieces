@@ -14,13 +14,14 @@ export const createEvent = createAction({
             displayName: 'Title of the event',
             required: true,
         }),
-        startDateTime: Property.DateTime({
+        start_date_time: Property.DateTime({
             displayName: 'Start date time of the event',
             required: true,
         }),
-        endDateTime: Property.DateTime({
+        end_date_time: Property.DateTime({
             displayName: 'End date time of the event',
-            required: true,
+            description: 'By default it\'ll be 30 min post start time',
+            required: false,
         })
     },
     async run(configValue) {
@@ -29,15 +30,16 @@ export const createEvent = createAction({
             authentication,
             calendar_id:calendarId,
             title: summary,
-            startDateTime,
-            endDateTime
+            start_date_time,
+            end_date_time,
         } = configValue.propsValue;
         const {access_token:token} = authentication;
         const start = {
-            dateTime: dayjs(startDateTime).format('YYYY-MM-DDTHH:mm:ss.sssZ'),
+            dateTime: dayjs(start_date_time).format('YYYY-MM-DDTHH:mm:ss.sssZ'),
         };
+        const endTime = end_date_time ? end_date_time : dayjs(start_date_time).add(30,'m');
         const end = {
-            dateTime: dayjs(endDateTime).format('YYYY-MM-DDTHH:mm:ss.sssZ'),
+            dateTime: dayjs(endTime).format('YYYY-MM-DDTHH:mm:ss.sssZ'),
         };
         const url = `${googleCalendarCommon.baseUrl}/calendars/${calendarId}/events`;
         const request: HttpRequest<Record<string, unknown>> = {
@@ -46,7 +48,7 @@ export const createEvent = createAction({
             body:{
                 summary,
                 start,
-                end
+                end,
             },
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
