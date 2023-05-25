@@ -10,7 +10,7 @@ export type TPropertyValue<T, U extends PropertyType, REQUIRED extends boolean> 
 	type: U;
 	required: REQUIRED;
 	defaultValue?: U extends PropertyType.ARRAY?  unknown[]:
-	 U extends PropertyType.JSON? object: 
+	 U extends PropertyType.JSON? object:
 	 U extends PropertyType.CHECKBOX? boolean:
 	 U extends PropertyType.LONG_TEXT? string:
 	 U extends PropertyType.SHORT_TEXT? string:
@@ -18,7 +18,8 @@ export type TPropertyValue<T, U extends PropertyType, REQUIRED extends boolean> 
 	 U extends PropertyType.DROPDOWN? unknown  :
 	 U extends PropertyType.MULTI_SELECT_DROPDOWN? unknown[]:
 	 U extends PropertyType.STATIC_MULTI_SELECT_DROPDOWN? unknown[]:
-	 U extends PropertyType.STATIC_DROPDOWN? unknown: 
+	 U extends PropertyType.STATIC_DROPDOWN? unknown:
+	 U extends PropertyType.DATE_TIME? string:
 	unknown;
 };
 
@@ -37,5 +38,8 @@ export type ArrayProperty<R extends boolean> = BasePropertySchema & TPropertyVal
 export type ObjectProperty<R extends boolean> = BasePropertySchema & TPropertyValue<Record<string, unknown>, PropertyType.OBJECT, R>;
 
 export type JsonProperty<R extends boolean> = BasePropertySchema & TPropertyValue<Record<string, unknown>, PropertyType.JSON, R>;
+
+export type DateTimeProperty<R extends boolean> = BasePropertySchema & TPropertyValue<string, PropertyType.DATE_TIME, R>;
+
 
 

@@ -150,7 +150,7 @@ function getImportOperations(step: Action | Trigger | undefined): (FlowOperation
                 type: FlowOperationType.ADD_ACTION,
                 request: {
                     parentStep: step.name,
-                    action: step.nextAction,
+                    action: keepBaseAction(step.nextAction),
                 },
             })
         }
@@ -161,7 +161,7 @@ function getImportOperations(step: Action | Trigger | undefined): (FlowOperation
                     request: {
                         parentStep: step.name,
                         stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_FALSE_BRANCH,
-                        action: step.onFailureAction,
+                        action: keepBaseAction(step.onFailureAction),
                     },
                 })
                 steps.push(...getImportOperations(step.onFailureAction))
@@ -172,7 +172,7 @@ function getImportOperations(step: Action | Trigger | undefined): (FlowOperation
                     request: {
                         parentStep: step.name,
                         stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_TRUE_BRANCH,
-                        action: step.onSuccessAction,
+                        action: keepBaseAction(step.onSuccessAction),
                     },
                 })
                 steps.push(...getImportOperations(step.onSuccessAction))
@@ -184,7 +184,7 @@ function getImportOperations(step: Action | Trigger | undefined): (FlowOperation
                 request: {
                     parentStep: step.name,
                     stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_LOOP,
-                    action: step.firstLoopAction,
+                    action: keepBaseAction(step.firstLoopAction),
                 },
 
             })
@@ -193,6 +193,49 @@ function getImportOperations(step: Action | Trigger | undefined): (FlowOperation
         step = step.nextAction
     }
     return steps
+}
+
+// It's better to use switch case, to enforce that all actions are covered
+// TODO this can be simplified
+function keepBaseAction(action: Action): Action {
+    const commonProps = {
+        name: action.name,
+        displayName: action.displayName,
+        valid: action.valid,
+    }
+    switch(action.type) {
+        case ActionType.BRANCH:
+            // PICK type and settings from action
+            return {
+                type: ActionType.BRANCH,
+                settings: action.settings,
+                ...commonProps,
+            }
+        case ActionType.LOOP_ON_ITEMS:
+            return {
+                type: ActionType.LOOP_ON_ITEMS,
+                settings: action.settings,
+                ...commonProps,
+            }
+        case ActionType.CODE:
+            return {
+                type: action.type,
+                settings: action.settings,
+                ...commonProps,
+            }
+        case ActionType.PIECE:
+            return {
+                type: action.type,
+                settings: action.settings,
+                ...commonProps,
+            }
+        case ActionType.MISSING:
+            return {
+                type: action.type,
+                settings: action.settings,
+                ...commonProps,
+            }
+    }
 }
 
 async function applySingleOperation(projectId: ProjectId, flowVersion: FlowVersion, operation: FlowOperationRequest): Promise<FlowVersion> {
@@ -231,7 +274,7 @@ function replaceConnections(obj: Record<string, unknown>): Record<string, unknow
     for (const [key, value] of Object.entries(obj)) {
         if (Array.isArray(value)) {
             replacedObj[key] = value
-        } 
+        }
         else if (typeof value === 'object' && value !== null) {
             replacedObj[key] = replaceConnections(value as Record<string, unknown>)
         }
@@ -279,47 +322,53 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
     switch (clonedRequest.type) {
         case FlowOperationType.ADD_ACTION:
             clonedRequest.request.action.valid = true
-            if (clonedRequest.request.action.type === ActionType.MISSING) {
-                clonedRequest.request.action.valid = false
-            }
-            else if (clonedRequest.request.action.type === ActionType.LOOP_ON_ITEMS) {
-                clonedRequest.request.action.valid = loopSettingsValidator.Check(clonedRequest.request.action.settings)
-            }
-            else if (clonedRequest.request.action.type === ActionType.BRANCH) {
-                clonedRequest.request.action.valid = branchSettingsValidator.Check(clonedRequest.request.action.settings)
-            }
-            else if (clonedRequest.request.action.type === ActionType.PIECE) {
-                clonedRequest.request.action.valid = await validateAction(clonedRequest.request.action.settings)
-            }
-            else if (clonedRequest.request.action.type === ActionType.CODE) {
-                const codeSettings: CodeActionSettings = clonedRequest.request.action.settings
-                await uploadArtifact(projectId, codeSettings)
+            switch (clonedRequest.request.action.type) {
+                case ActionType.MISSING:
+                    clonedRequest.request.action.valid = false
+                    break
+                case ActionType.LOOP_ON_ITEMS:
+                    clonedRequest.request.action.valid = loopSettingsValidator.Check(clonedRequest.request.action.settings)
+                    break
+                case ActionType.BRANCH:
+                    clonedRequest.request.action.valid = branchSettingsValidator.Check(clonedRequest.request.action.settings)
+                    break
+                case ActionType.PIECE:
+                    clonedRequest.request.action.valid = await validateAction(clonedRequest.request.action.settings)
+                    break
+                case ActionType.CODE: {
+                    const codeSettings: CodeActionSettings = clonedRequest.request.action.settings
+                    await uploadArtifact(projectId, codeSettings)
+                    break
+                }
             }
             break
         case FlowOperationType.UPDATE_ACTION:
             clonedRequest.request.valid = true
-            if (clonedRequest.request.type === ActionType.MISSING) {
-                clonedRequest.request.valid = false
-            }
-            else if (clonedRequest.request.type === ActionType.LOOP_ON_ITEMS) {
-                clonedRequest.request.valid = loopSettingsValidator.Check(clonedRequest.request.settings)
-            }
-            else if (clonedRequest.request.type === ActionType.BRANCH) {
-                clonedRequest.request.valid = branchSettingsValidator.Check(clonedRequest.request.settings)
-            }
-            else if (clonedRequest.request.type === ActionType.PIECE) {
-                clonedRequest.request.valid = await validateAction(clonedRequest.request.settings)
-            }
-            else if (clonedRequest.request.type === ActionType.CODE) {
-                const codeSettings: CodeActionSettings = clonedRequest.request.settings
-                await uploadArtifact(projectId, codeSettings)
-                const previousStep = flowHelper.getStep(flowVersion, clonedRequest.request.name)
-                if (
-                    previousStep !== undefined &&
-                    previousStep.type === ActionType.CODE &&
-                    codeSettings.artifactSourceId !== previousStep.settings.artifactSourceId
-                ) {
-                    await deleteArtifact(projectId, previousStep.settings)
+            switch (clonedRequest.request.type) {
+                case ActionType.MISSING:
+                    clonedRequest.request.valid = false
+                    break
+                case ActionType.LOOP_ON_ITEMS:
+                    clonedRequest.request.valid = loopSettingsValidator.Check(clonedRequest.request.settings)
+                    break
+                case ActionType.BRANCH:
+                    clonedRequest.request.valid = branchSettingsValidator.Check(clonedRequest.request.settings)
+                    break
+                case ActionType.PIECE:
+                    clonedRequest.request.valid = await validateAction(clonedRequest.request.settings)
+                    break
+                case ActionType.CODE: {
+                    const codeSettings: CodeActionSettings = clonedRequest.request.settings
+                    await uploadArtifact(projectId, codeSettings)
+                    const previousStep = flowHelper.getStep(flowVersion, clonedRequest.request.name)
+                    if (
+                        previousStep !== undefined &&
+                        previousStep.type === ActionType.CODE &&
+                        codeSettings.artifactSourceId !== previousStep.settings.artifactSourceId
+                    ) {
+                        await deleteArtifact(projectId, previousStep.settings)
+                    }
+                    break
                 }
             }
             break
@@ -332,12 +381,16 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
         }
 
         case FlowOperationType.UPDATE_TRIGGER:
-            clonedRequest.request.valid = true
-            if (clonedRequest.request.type === TriggerType.EMPTY) {
-                clonedRequest.request.valid = false
-            }
-            else if (clonedRequest.request.type === TriggerType.PIECE) {
-                clonedRequest.request.valid = await validateTrigger(clonedRequest.request.settings)
+            switch (clonedRequest.request.type) {
+                case TriggerType.EMPTY:
+                    clonedRequest.request.valid = false
+                    break
+                case TriggerType.PIECE:
+                    clonedRequest.request.valid = await validateTrigger(clonedRequest.request.settings)
+                    break
+                default:
+                    clonedRequest.request.valid = true
+                    break
             }
             break
         default:
@@ -397,10 +450,9 @@ function buildSchema(props: PiecePropertyMap): TSchema {
     const entries = Object.entries(props)
     const nonNullableUnknownPropType = Type.Not(Type.Union([Type.Null(), Type.Undefined()]), Type.Unknown())
     const propsSchema: Record<string, TSchema> = {}
-    for (let i = 0; i < entries.length; ++i) {
-        const property = entries[i][1]
-        const name: string = entries[i][0]
+    for (const [name, property] of entries) {
         switch (property.type) {
+            case PropertyType.DATE_TIME:
             case PropertyType.SHORT_TEXT:
             case PropertyType.LONG_TEXT:
                 propsSchema[name] = Type.String({
@@ -477,4 +529,8 @@ async function uploadArtifact(projectId: ProjectId, codeSettings: CodeActionSett
         codeSettings.artifactPackagedId = undefined
     }
     return codeSettings
+}
+
+export const exportedFlowVersionTesting = {
+    getImportOperations,
 }

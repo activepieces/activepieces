@@ -1,7 +1,10 @@
-import { get, isNil, isString } from 'lodash';
-import { ExecutionState } from '@activepieces/shared';
-import { connectionService } from './connections.service';
-import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework';
+import { get, isNil, isString } from "lodash";
+import { ExecutionState } from "@activepieces/shared";
+import { connectionService } from "./connections.service";
+import { PiecePropertyMap, PropertyType } from "@activepieces/pieces-framework";
+import dayjs from "dayjs";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
 
 type ResolveParams = {
   unresolvedInput: unknown
@@ -62,7 +65,6 @@ export class VariableService {
     }
     return value;
   }
-
 
   private evalInScope(js: string, contextAsScope: Record<string, unknown>) {
     try {
@@ -125,7 +127,24 @@ export class VariableService {
     return Number(number);
   }
 
-  validateAndCast(resolvedInput: any, props: PiecePropertyMap): { result: any, errors: Record<string, any> } {
+  getISODateTime = (clonedInput: any, key: string): string | undefined => {
+    dayjs.extend(utc);
+    dayjs.extend(timezone);
+    const dateTimeString = clonedInput[key];
+    try {
+      const dateTimeString = clonedInput[key];
+      if (!dateTimeString) throw Error('Undefined input');
+      return dayjs.tz(dateTimeString, 'UTC').toISOString();
+    } catch (error) {
+      console.error(`Error while parsing ${dateTimeString}`, error);
+      return undefined;
+    }
+  };
+
+  validateAndCast(
+    resolvedInput: any,
+    props: PiecePropertyMap
+  ): { result: any; errors: Record<string, any> } {
     const errors: Record<string, string | Record<string, string>> = {};
     const clonedInput = JSON.parse(JSON.stringify(resolvedInput));
 
@@ -149,6 +168,12 @@ export class VariableService {
         if (Object.keys(innerValidation.errors).length > 0) {
           errors[key] = innerValidation.errors;
         }
+      } else if (type === PropertyType.DATE_TIME) {
+        const inferredDateTime = this.getISODateTime(clonedInput, key);
+        if (isNil(inferredDateTime) && property.required) {
+          errors[key] = `expected ISO string, but found value: ${value}`;
+        }
+        clonedInput[key] = inferredDateTime;
       }
     }
 
@@ -157,5 +182,4 @@ export class VariableService {
       errors
     };
   }
-
 }

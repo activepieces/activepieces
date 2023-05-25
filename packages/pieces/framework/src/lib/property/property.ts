@@ -1,12 +1,13 @@
 import {
-	ArrayProperty,
-	CheckboxProperty,
-	JsonProperty,
-	LongTextProperty,
-	NumberProperty,
-	ObjectProperty,
-	SecretTextProperty,
-	ShortTextProperty,
+    ArrayProperty,
+    CheckboxProperty,
+    DateTimeProperty,
+    JsonProperty,
+    LongTextProperty,
+    NumberProperty,
+    ObjectProperty,
+    SecretTextProperty,
+    ShortTextProperty
 } from "./base-prop";
 import { BasicAuthProperty } from "./basic-auth-prop";
 import { CustomAuthProperty, CustomAuthProps } from "./custom-auth-prop";
@@ -30,7 +31,8 @@ export enum PropertyType {
 	MULTI_SELECT_DROPDOWN = 'MULTI_SELECT_DROPDOWN',
 	STATIC_MULTI_SELECT_DROPDOWN = 'STATIC_MULTI_SELECT_DROPDOWN',
 	DYNAMIC = "DYNAMIC",
-	CUSTOM_AUTH = "CUSTOM_AUTH"
+	CUSTOM_AUTH = "CUSTOM_AUTH",
+	DATE_TIME = "DATE_TIME",
 }
 
 
@@ -49,7 +51,8 @@ export type PieceProperty = ShortTextProperty<boolean>
 | MultiSelectDropdownProperty<unknown, boolean>
 | StaticMultiSelectDropdownProperty<unknown, boolean>
 | DynamicProperties<boolean>
-| CustomAuthProperty<boolean, CustomAuthProps>;
+| CustomAuthProperty<boolean, CustomAuthProps>
+| DateTimeProperty<boolean>;
 
 export interface PiecePropertyMap {
 	[name: string]: PieceProperty
@@ -110,6 +113,9 @@ export const Property = {
 	StaticMultiSelectDropdown<T, R extends boolean = boolean>(request: Properties<StaticMultiSelectDropdownProperty<T, R>>): R extends true ? StaticMultiSelectDropdownProperty<T, true> : StaticMultiSelectDropdownProperty<T, false> {
 		return { ...request, valueSchema: undefined, type: PropertyType.STATIC_MULTI_SELECT_DROPDOWN } as unknown as R extends true ? StaticMultiSelectDropdownProperty<T, true> : StaticMultiSelectDropdownProperty<T, false>;
 	},
+    DateTime<R extends boolean>(request: Properties<DateTimeProperty<R>>): R extends true ? DateTimeProperty<true> : DateTimeProperty<false> {
+        return { ...request, valueSchema: undefined, type: PropertyType.DATE_TIME } as unknown as R extends true ? DateTimeProperty<true> : DateTimeProperty<false>;
+    },
 };
 
 type Properties<T> = Omit<T, "valueSchema" | "type">;
