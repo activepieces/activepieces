@@ -173,7 +173,7 @@ export class TestFlowWidgetComponent implements OnInit {
         flow,
         JSON.parse(this.payloadControl.value)
       );
-      this.cd.detectChanges();
+      this.cd.markForCheck();
     }
   }
   executeTest(flow: Flow, payload: unknown) {

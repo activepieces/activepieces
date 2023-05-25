@@ -8,7 +8,7 @@ import {
   tap,
 } from 'rxjs';
 import { Store } from '@ngrx/store';
-import { ActionType, Flow } from '@activepieces/shared';
+import { ActionType, FlowVersion } from '@activepieces/shared';
 import {
   BuilderSelectors,
   FlowItem,
@@ -28,18 +28,18 @@ export class NewEditPieceSidebarComponent implements OnInit {
   displayNameChanged$: BehaviorSubject<string> = new BehaviorSubject('Step');
   selectedStepAndFlowId$: Observable<{
     step: FlowItem | null | undefined;
-    flow: Flow | null;
+    version: FlowVersion;
   }>;
   selectedFlowItemDetails$: Observable<FlowItemDetails | undefined>;
   ngOnInit(): void {
     //in case you switch piece while the edit piece panel is opened
     this.selectedStepAndFlowId$ = combineLatest({
       step: this.store.select(BuilderSelectors.selectCurrentStep),
-      flow: this.store.select(BuilderSelectors.selectCurrentFlow),
+      version: this.store.select(BuilderSelectors.selectShownFlowVersion),
     }).pipe(
       distinctUntilChanged((prev, current) => {
         return (
-          prev.flow.id === current.flow.id &&
+          prev.version.id === current.version.id &&
           prev.step?.name === current.step?.name
         );
       }),
@@ -49,7 +49,7 @@ export class NewEditPieceSidebarComponent implements OnInit {
           this.selectedFlowItemDetails$ = this.store.select(
             BuilderSelectors.selectFlowItemDetails(result.step)
           );
-          this.cd.detectChanges();
+          this.cd.markForCheck();
         } else {
           this.selectedFlowItemDetails$ = of(undefined);
         }

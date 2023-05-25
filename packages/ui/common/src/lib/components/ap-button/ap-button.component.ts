@@ -19,7 +19,6 @@ export class ApButtonComponent {
   @Input() btnColor: 'primary' | 'warn' | 'success' | 'basic' | 'white' =
     'primary';
   @Input() set disabled(val: true | false | null) {
-    debugger;
     this._disabled = val;
   }
   @Input() darkLoadingSpinner = false;

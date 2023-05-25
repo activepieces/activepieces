@@ -19,6 +19,7 @@ const enableInstance = createAction(FlowInstanceActionType.ENABLE_INSTANCE);
 const disableInstance = createAction(FlowInstanceActionType.DISABLE_INSTANCE);
 const publish = createAction(FlowInstanceActionType.PUBLISH_FLOW);
 const publishFailed = createAction(FlowInstanceActionType.PUBLISH_FLOW_FAILED);
+
 const publishSuccess = createAction(
   FlowInstanceActionType.PUBLISH_FLOW_SUCCESS,
   props<{
