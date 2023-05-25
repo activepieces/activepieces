@@ -43,9 +43,9 @@ import {
   BuilderSelectors,
   FlowItem,
   FlowRendererService,
-  FlowsActions,
   NO_PROPS,
   RightSideBarType,
+  canvasActions,
 } from '@activepieces/ui/feature-builder-store';
 
 @Component({
@@ -183,7 +183,7 @@ export class FlowItemContentComponent implements OnInit {
 
   changeTrigger() {
     this.store.dispatch(
-      FlowsActions.setRightSidebar({
+      canvasActions.setRightSidebar({
         sidebarType: RightSideBarType.TRIGGER_TYPE,
         props: NO_PROPS,
         deselectCurrentStep: false,
@@ -192,7 +192,7 @@ export class FlowItemContentComponent implements OnInit {
   }
   selectStep() {
     this.store.dispatch(
-      FlowsActions.selectStepByName({
+      canvasActions.selectStepByName({
         stepName: this._flowItem.name,
       })
     );

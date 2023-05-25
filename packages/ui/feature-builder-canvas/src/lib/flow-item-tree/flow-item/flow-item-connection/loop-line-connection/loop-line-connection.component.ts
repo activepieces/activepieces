@@ -36,6 +36,7 @@ import {
   FlowRendererService,
   FlowsActions,
   RightSideBarType,
+  canvasActions,
 } from '@activepieces/ui/feature-builder-store';
 import { DropEvent } from 'angular-draggable-droppable';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -276,7 +277,7 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
 
   addLoopItem() {
     this.store.dispatch(
-      FlowsActions.setRightSidebar({
+      canvasActions.setRightSidebar({
         sidebarType: RightSideBarType.STEP_TYPE,
         props: {
           stepLocationRelativeToParent:
@@ -290,7 +291,7 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
 
   add() {
     this.store.dispatch(
-      FlowsActions.setRightSidebar({
+      canvasActions.setRightSidebar({
         sidebarType: RightSideBarType.STEP_TYPE,
         props: {
           stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,

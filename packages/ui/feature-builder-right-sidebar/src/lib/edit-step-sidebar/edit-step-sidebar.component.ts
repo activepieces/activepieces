@@ -12,9 +12,9 @@ import { ActionType, FlowVersion } from '@activepieces/shared';
 import {
   BuilderSelectors,
   FlowItem,
-  FlowsActions,
   NO_PROPS,
   RightSideBarType,
+  canvasActions,
 } from '@activepieces/ui/feature-builder-store';
 import { FlowItemDetails } from '@activepieces/ui/common';
 
@@ -59,7 +59,7 @@ export class NewEditPieceSidebarComponent implements OnInit {
 
   closeSidebar() {
     this.store.dispatch(
-      FlowsActions.setRightSidebar({
+      canvasActions.setRightSidebar({
         sidebarType: RightSideBarType.NONE,
         props: NO_PROPS,
         deselectCurrentStep: true,

@@ -7,7 +7,7 @@ import { LeftSideBarType } from './enums/left-side-bar-type.enum';
 import { RightSideBarType } from './enums/right-side-bar-type.enum';
 import { FlowItem } from './flow-item';
 export const NO_PROPS = 'NO_PROPS';
-export interface BuilderState {
+export interface CanvasState {
   leftSidebar: {
     type: LeftSideBarType;
   };
@@ -24,7 +24,7 @@ export interface BuilderState {
   selectedRun: FlowRun | undefined;
   selectedStepName: string;
   isGeneratingFlowComponentOpen: boolean;
-  displayedFlowVersion?: FlowVersion;
+  displayedFlowVersion: FlowVersion;
 }
 
 export interface StepTypeSideBarProps {

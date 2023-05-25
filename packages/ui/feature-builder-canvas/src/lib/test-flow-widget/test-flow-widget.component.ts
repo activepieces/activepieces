@@ -42,9 +42,9 @@ import {
 import {
   BuilderSelectors,
   CodeService,
-  FlowsActions,
   TestRunBarComponent,
 } from '@activepieces/ui/feature-builder-store';
+import { canvasActions } from '@activepieces/ui/feature-builder-store';
 
 @Component({
   selector: 'app-test-flow-widget',
@@ -195,7 +195,7 @@ export class TestFlowWidgetComponent implements OnInit {
               }
             );
             this.store.dispatch(
-              FlowsActions.setRun({
+              canvasActions.setRun({
                 run: instanceRun ?? initializedRun,
               })
             );
@@ -225,7 +225,7 @@ export class TestFlowWidgetComponent implements OnInit {
               }
             );
           }
-          this.store.dispatch(FlowsActions.exitRun());
+          this.store.dispatch(canvasActions.exitRun());
           return of(null);
         })
       );
@@ -250,7 +250,7 @@ export class TestFlowWidgetComponent implements OnInit {
       tap((instanceRun) => {
         if (instanceRun.status !== ExecutionOutputStatus.RUNNING) {
           this.store.dispatch(
-            FlowsActions.setRun({
+            canvasActions.setRun({
               run: instanceRun,
             })
           );

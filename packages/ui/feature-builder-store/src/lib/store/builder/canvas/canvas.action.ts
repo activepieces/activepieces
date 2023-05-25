@@ -1,5 +1,7 @@
 import { createAction, props } from '@ngrx/store';
 import {
+  Flow,
+  FlowRun,
   FlowVersion,
   StepLocationRelativeToParent,
 } from '@activepieces/shared';
@@ -13,6 +15,11 @@ export enum CanvasActionType {
   SET_DISPLAYED_FLOW_VERSION = '[CANVAS] SET_DISPLAYED_FLOW_VERSION',
   SET_INITIAL = '[CANVAS] SET_INITIAL',
   OPEN_GENERATE_FLOW_COMPONENT = '[CANVAS] OPEN_GENERATE_FLOW_COMPONENT',
+  GENERATE_FLOW_SUCCESSFUL = '[CANVAS] GENERATE_FLOW_SUCCESSFUL',
+  GENERATE_FLOW = '[CANVAS] GENERATE_FLOW',
+  CLOSE_GENERATE_FLOW_COMPONENT = '[CANVAS] CLOSE_GENERATE_FLOW_COMPONENT',
+  SET_RUN = '[CANVAS] SET_RUN',
+  EXIT_RUN = '[CANVAS] EXIT_RUN',
 }
 
 const setInitial = createAction(
@@ -46,13 +53,35 @@ const selectStepByName = createAction(
   CanvasActionType.SELECT_STEP_BY_NAME,
   props<{ stepName: string }>()
 );
-const deselectFocusedStep = createAction(CanvasActionType.DESELECT_STEP);
+const deselectStep = createAction(CanvasActionType.DESELECT_STEP);
+const exitRun = createAction(CanvasActionType.EXIT_RUN);
 
+const setRun = createAction(
+  CanvasActionType.SET_RUN,
+  props<{ run: FlowRun }>()
+);
+
+const generateFlowSuccessful = createAction(
+  CanvasActionType.GENERATE_FLOW_SUCCESSFUL,
+  props<{ flow: Flow }>()
+);
+const generateFlow = createAction(
+  CanvasActionType.GENERATE_FLOW,
+  props<{ prompt: string }>()
+);
+const closeGenerateFlowComponent = createAction(
+  CanvasActionType.CLOSE_GENERATE_FLOW_COMPONENT
+);
 export const canvasActions = {
   setInitial,
   setLeftSidebar,
   setRightSidebar,
   selectStepByName,
-  deselectFocusedStep,
+  deselectStep,
   openGenerateFlowComponent,
+  generateFlowSuccessful,
+  generateFlow,
+  closeGenerateFlowComponent,
+  setRun,
+  exitRun,
 };

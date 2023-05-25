@@ -1,21 +1,22 @@
 import { Action, createReducer, on } from '@ngrx/store';
 
 import {
-  BuilderState,
+  CanvasState,
   FlowItem,
   LeftSideBarType,
   NO_PROPS,
   RightSideBarType,
 } from '../../../model';
 import {
+  FlowOperationType,
   FlowVersionState,
   TriggerType,
   flowHelper,
 } from '@activepieces/shared';
 import { canvasActions } from './canvas.action';
-import { stat } from 'fs';
+import { FlowsActions } from '../../flow/flows.action';
 
-const initialState: BuilderState = {
+const initialState: CanvasState = {
   selectedRun: undefined,
   leftSidebar: {
     type: LeftSideBarType.NONE,
@@ -47,14 +48,14 @@ const initialState: BuilderState = {
 
 const __CanvasReducer = createReducer(
   initialState,
-  on(canvasActions.setInitial, (state, action): BuilderState => {
+  on(canvasActions.setInitial, (state, action): CanvasState => {
     return {
       ...initialState,
       displayedFlowVersion: action.displayedFlowVersion,
     };
   }),
-  on(canvasActions.deselectFocusedStep, (state): BuilderState => {
-    const clonedState: BuilderState = JSON.parse(JSON.stringify(state));
+  on(canvasActions.deselectStep, (state): CanvasState => {
+    const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
     return {
       ...clonedState,
       focusedStep: undefined,
@@ -62,8 +63,8 @@ const __CanvasReducer = createReducer(
   }),
   on(
     canvasActions.setRightSidebar,
-    (state, { sidebarType, props }): BuilderState => {
-      const clonedState: BuilderState = JSON.parse(JSON.stringify(state));
+    (state, { sidebarType, props }): CanvasState => {
+      const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
       clonedState.rightSidebar = {
         type: sidebarType,
         props: props,
@@ -71,8 +72,8 @@ const __CanvasReducer = createReducer(
       return clonedState;
     }
   ),
-  on(canvasActions.selectStepByName, (flowState, { stepName }) => {
-    const clonedState: BuilderState = JSON.parse(JSON.stringify(flowState));
+  on(canvasActions.selectStepByName, (state, { stepName }) => {
+    const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
     if (clonedState.displayedFlowVersion) {
       const step: FlowItem | undefined = flowHelper.getStep(
         clonedState.displayedFlowVersion,
@@ -85,8 +86,8 @@ const __CanvasReducer = createReducer(
     }
     return clonedState;
   }),
-  on(canvasActions.setLeftSidebar, (state, { sidebarType }): BuilderState => {
-    const clonedState: BuilderState = JSON.parse(JSON.stringify(state));
+  on(canvasActions.setLeftSidebar, (state, { sidebarType }): CanvasState => {
+    const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
     return {
       ...clonedState,
       leftSidebar: {
@@ -94,7 +95,7 @@ const __CanvasReducer = createReducer(
       },
     };
   }),
-  on(canvasActions.openGenerateFlowComponent, (state): BuilderState => {
+  on(canvasActions.openGenerateFlowComponent, (state): CanvasState => {
     return {
       ...state,
       leftSidebar: {
@@ -107,12 +108,97 @@ const __CanvasReducer = createReducer(
       isGeneratingFlowComponentOpen: true,
       selectedRun: undefined,
     };
+  }),
+  on(canvasActions.setRun, (state, { run }): CanvasState => {
+    const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
+    clonedState.selectedRun = run;
+    return clonedState;
+  }),
+  on(canvasActions.exitRun, (state): CanvasState => {
+    const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
+    return {
+      ...clonedState,
+      selectedRun: undefined,
+    };
+  }),
+  on(canvasActions.closeGenerateFlowComponent, (state): CanvasState => {
+    const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
+    return {
+      ...clonedState,
+      isGeneratingFlowComponentOpen: false,
+    };
+  }),
+  on(canvasActions.generateFlowSuccessful, (state, action): CanvasState => {
+    const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
+    return {
+      ...clonedState,
+      displayedFlowVersion: action.flow.version,
+    };
+  }),
+  on(FlowsActions.updateAction, (state, { operation }): CanvasState => {
+    const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
+    clonedState.displayedFlowVersion = flowHelper.apply(
+      clonedState.displayedFlowVersion,
+      {
+        type: FlowOperationType.UPDATE_ACTION,
+        request: operation,
+      }
+    );
+    if (operation.name === state.focusedStep?.name) {
+      clonedState.focusedStep = operation;
+    }
+    return clonedState;
+  }),
+  on(FlowsActions.addAction, (state, { operation }): CanvasState => {
+    const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
+    clonedState.displayedFlowVersion = flowHelper.apply(
+      clonedState.displayedFlowVersion,
+      {
+        type: FlowOperationType.ADD_ACTION,
+        request: operation,
+      }
+    );
+    return clonedState;
+  }),
+  on(FlowsActions.updateTrigger, (state, { operation }): CanvasState => {
+    const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
+    clonedState.displayedFlowVersion = flowHelper.apply(
+      clonedState.displayedFlowVersion,
+      {
+        type: FlowOperationType.UPDATE_TRIGGER,
+        request: operation,
+      }
+    );
+    if (operation.name === state.focusedStep?.name) {
+      clonedState.focusedStep = operation;
+    }
+    return clonedState;
+  }),
+  on(FlowsActions.deleteAction, (state, { operation }): CanvasState => {
+    const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
+    clonedState.displayedFlowVersion = flowHelper.apply(
+      clonedState.displayedFlowVersion,
+      {
+        type: FlowOperationType.DELETE_ACTION,
+        request: operation,
+      }
+    );
+    clonedState.focusedStep = undefined;
+    return clonedState;
+  }),
+  on(FlowsActions.moveAction, (state, { operation }): CanvasState => {
+    const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
+    clonedState.displayedFlowVersion = flowHelper.apply(
+      clonedState.displayedFlowVersion,
+      {
+        type: FlowOperationType.MOVE_ACTION,
+        request: operation,
+      }
+    );
+    return clonedState;
   })
 );
 
-export function flowInstanceReducer(
-  state: BuilderState | undefined,
-  action: Action
-) {
+export function canvasReducer(state: CanvasState | undefined, action: Action) {
   return __CanvasReducer(state, action);
 }

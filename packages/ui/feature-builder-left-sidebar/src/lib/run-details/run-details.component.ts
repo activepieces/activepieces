@@ -20,8 +20,8 @@ import {
 } from '@activepieces/shared';
 import {
   BuilderSelectors,
-  FlowsActions,
   LeftSideBarType,
+  canvasActions,
 } from '@activepieces/ui/feature-builder-store';
 
 @Component({
@@ -108,7 +108,7 @@ export class RunDetailsComponent implements OnInit {
 
   closeLeftSideBar() {
     this.store.dispatch(
-      FlowsActions.setLeftSidebar({
+      canvasActions.setLeftSidebar({
         sidebarType: LeftSideBarType.NONE,
       })
     );

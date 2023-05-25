@@ -10,13 +10,14 @@ import { FlowItem } from '../../model/flow-item';
 import { MentionListItem } from '../../model/mention-list-item';
 import { FlowStructureUtil } from '../../utils/flowStructureUtil';
 import { ConnectionDropdownItem } from '../../model/connections-dropdown-item';
-import { BuilderSavingStatusEnum, BuilderState } from '../../model';
+import { BuilderSavingStatusEnum, CanvasState } from '../../model';
 import {
   CORE_PIECES_ACTIONS_NAMES,
   CORE_PIECES_TRIGGERS,
   FlowItemDetails,
   corePieceIconUrl,
 } from '@activepieces/ui/common';
+import { FlowInstanceState } from './flow-instance/flow-instance.reducer';
 
 export const BUILDER_STATE_NAME = 'builderState';
 
@@ -70,33 +71,23 @@ const selectInstanceState = createSelector(
 );
 
 export const selectCurrentInstance = createSelector(
-  selectGlobalBuilderState,
-  (state: GlobalBuilderState) => {
-    return state.instance?.instance;
+  selectInstanceState,
+  (state: FlowInstanceState) => {
+    return state?.instance;
   }
 );
+const selectCanvasState = createSelector(selectGlobalBuilderState, (state) => {
+  return state.canvasState;
+});
 
 export const selectCurrentFlow = createSelector(selectFlowState, (state) => {
   return state.flow;
 });
-const selectPublishedFlowVersion = createSelector(
-  selectInstanceState,
-  (state) => {
-    return state?.publishedFlowVersion;
-  }
-);
+
 const selectShownFlowVersion = createSelector(
-  selectIsInPublishedVersionViewMode,
-  selectCurrentFlow,
-  selectPublishedFlowVersion,
-  (isInPublishingViewMode, flow, publishedFlowVersion) => {
-    if (isInPublishingViewMode) {
-      if (!publishedFlowVersion) {
-        throw Error('Trying to show published version when there is none');
-      }
-      return publishedFlowVersion;
-    }
-    return flow.version;
+  selectCanvasState,
+  (cavnasState) => {
+    return cavnasState.displayedFlowVersion;
   }
 );
 const selectIsCurrentVersionPublished = createSelector(
@@ -124,8 +115,8 @@ export const selectCurrentFlowValidity = createSelector(
   }
 );
 
-export const selectCurrentStep = createSelector(selectFlowState, (state) => {
-  return state.builderState.focusedStep;
+export const selectCurrentStep = createSelector(selectCanvasState, (state) => {
+  return state.focusedStep;
 });
 
 const selectCurrentStepSettings = createSelector(
@@ -206,10 +197,18 @@ export const selectNumberOfInvalidSteps = createSelector(
     return steps.reduce((prev, curr) => prev + (curr.valid ? 0 : 1), 0);
   }
 );
-export const selectCurrentFlowRun = createSelector(selectFlowState, (state) => {
-  return state.builderState.selectedRun;
-});
-
+export const selectCurrentFlowRun = createSelector(
+  selectCanvasState,
+  (state) => {
+    return state.selectedRun;
+  }
+);
+const selectPublishedFlowVersion = createSelector(
+  selectInstanceState,
+  (instanceState) => {
+    return instanceState.publishedFlowVersion;
+  }
+);
 export const selectCurrentFlowRunStatus = createSelector(
   selectCurrentFlowRun,
   (run: FlowRun | undefined) => {
@@ -219,32 +218,30 @@ export const selectCurrentFlowRunStatus = createSelector(
     return run.status;
   }
 );
-const selectBuidlerState = createSelector(selectFlowState, (state) => {
-  return state.builderState;
-});
+
 export const selectCurrentLeftSidebarType = createSelector(
-  selectBuidlerState,
-  (state: BuilderState) => {
+  selectCanvasState,
+  (state: CanvasState) => {
     return state.leftSidebar.type;
   }
 );
 export const selectIsGeneratingFlowComponentOpen = createSelector(
-  selectBuidlerState,
-  (state: BuilderState) => {
+  selectCanvasState,
+  (state: CanvasState) => {
     return state.isGeneratingFlowComponentOpen;
   }
 );
 
 export const selectCurrentRightSideBar = createSelector(
-  selectBuidlerState,
-  (state: BuilderState) => {
+  selectCanvasState,
+  (state: CanvasState) => {
     return state.rightSidebar;
   }
 );
 
 export const selectCurrentRightSideBarType = createSelector(
-  selectBuidlerState,
-  (state: BuilderState) => {
+  selectCanvasState,
+  (state: CanvasState) => {
     return state.rightSidebar.type;
   }
 );
@@ -530,4 +527,5 @@ export const BuilderSelectors = {
   selectMissingStepRecommendedFlowItemsDetails,
   selectStepTestSampleDataStringified,
   selectIsCurrentVersionPublished,
+  selectPublishedFlowVersion,
 };

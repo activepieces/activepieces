@@ -7,8 +7,8 @@ import {
 } from '@angular/material/snack-bar';
 import { ExecutionOutputStatus, FlowId, FlowRun } from '@activepieces/shared';
 import { BuilderSelectors } from '../store/builder/builder.selector';
-import { FlowsActions } from '../store/flow/flows.action';
 import { FlagService } from '@activepieces/ui/common';
+import { canvasActions } from '../store/builder/canvas/canvas.action';
 
 @Component({
   selector: 'app-test-run-bar',
@@ -40,7 +40,7 @@ export class TestRunBarComponent implements OnInit {
         this.snackbarRef.dismiss();
         //wait for animation to be done
         setTimeout(() => {
-          this.store.dispatch(FlowsActions.exitRun());
+          this.store.dispatch(canvasActions.exitRun());
         }, 150);
       })
     );
