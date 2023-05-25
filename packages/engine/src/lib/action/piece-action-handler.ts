@@ -8,7 +8,7 @@ import {
   StepOutput,
   StepOutputStatus
 } from '@activepieces/shared';
-import { BaseActionHandler } from './action-handler';
+import { BaseActionHandler, InitStepOutputParams } from './action-handler';
 import { globals } from '../globals';
 import { isNil } from 'lodash';
 import { pieceHelper } from '../helper/piece-helper';
@@ -116,16 +116,33 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
     }
   }
 
+  /**
+   * initializes an empty piece step output
+   */
+  protected override async initStepOutput({ executionState }: InitStepOutputParams): Promise<StepOutput<ActionType.PIECE>> {
+    const censoredInput = await this.variableService.resolve({
+      unresolvedInput: this.currentAction.settings,
+      executionState,
+      censorConnections: true,
+    })
+
+    return {
+      type: ActionType.PIECE,
+      status: StepOutputStatus.RUNNING,
+      input: censoredInput,
+    }
+  }
+
   async execute(
-    executionState: ExecutionState
+    executionState: ExecutionState,
+    ancestors: [string, number][],
   ): Promise<StepOutput> {
     const { input, pieceName, pieceVersion, actionName } = this.currentAction.settings;
 
-    const stepOutput: StepOutput<ActionType.PIECE> = {
-      type: ActionType.PIECE,
-      status: StepOutputStatus.RUNNING,
-      input: {},
-    }
+    const stepOutput = await this.loadStepOutput({
+      executionState,
+      ancestors,
+    })
 
     try {
       if (isNil(actionName)) {
@@ -138,13 +155,6 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
         pieceName,
         pieceVersion,
         actionName,
-      })
-
-      stepOutput.input = await this.resolveInput({
-        actionProps: action.props,
-        input,
-        executionState,
-        censorConnections: true,
       })
 
       const resolvedInput = await this.resolveInput({
