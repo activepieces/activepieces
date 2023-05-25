@@ -82,6 +82,7 @@ const __CanvasReducer = createReducer(
       return {
         ...clonedState,
         focusedStep: step,
+        selectedStepName: stepName,
       };
     }
     return clonedState;
