@@ -11,7 +11,6 @@ import {
   OnInit,
   Optional,
   Output,
-  SecurityContext,
   Self,
   ViewChild,
 } from '@angular/core';
@@ -216,16 +215,12 @@ export class InterpolatingTextFormControlComponent
       ) => {
         const cleanedOps: (TextInsertOperation | InsertMentionOperation)[] = [];
         delta.ops.forEach((op) => {
-          if (op.insert && typeof op.insert === 'string') {
-            cleanedOps.push({
-              insert:
-                this.sanitizer.sanitize(SecurityContext.HTML, op.insert) || '',
-            });
-          } else if (
-            op.insert &&
-            typeof op.insert === 'object' &&
-            op.insert.mention
+          if (
+            (op.insert && typeof op.insert === 'string') ||
+            (typeof op.insert === 'object' && op.insert.mention)
           ) {
+            //remove styling in case user is pasting html
+            delete op['attributes'];
             cleanedOps.push(op);
           }
         });
@@ -365,7 +360,7 @@ export class InterpolatingTextFormControlComponent
       const itemPathWithoutInterpolationDenotation =
         mentionOp.insert.mention.serverValue.slice(
           2,
-          mentionOp.insert.mention.serverValue.length - 1
+          mentionOp.insert.mention.serverValue.length - 2
         );
       const itemPrefix = itemPathWithoutInterpolationDenotation.split('.')[0];
       let imageTag = '';
