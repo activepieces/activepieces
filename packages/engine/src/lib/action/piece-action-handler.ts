@@ -159,9 +159,9 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
         store: createContextStore('', globals.flowId),
         propsValue: resolvedInput,
         connections: connectionManager,
-        hooks: {
-          stopHook: this.generateStopHook({ stepOutput }),
-          pauseHook: this.generatePauseHook({ stepOutput }),
+        run: {
+          stop: this.generateStopHook({ stepOutput }),
+          pause: this.generatePauseHook({ stepOutput }),
         }
       })
 
