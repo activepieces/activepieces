@@ -12,7 +12,7 @@
 
   </div>
   <ng-container *ngIf="!trigger && (viewMode$ | async)===false">
-    <div #flowItem class="ap-z-50 ap-cursor-pointer ap-relative" mwlDraggable dragCursor="grabbing"
+    <div #flowItem class="ap-z-50 ap-cursor-pointer ap-relative" mwlDraggable
       [ghostElementTemplate]="ItemContent.stepDragTemplate" (dragEnd)="draggingEnded()"
       [showOriginalElementWhileDragging]="false" [dropData]="_flowItemData"
       [class.ap-opacity-0]="hideDraggableSource$ | async" [ghostElementAppendTo]="draggingContainer"
