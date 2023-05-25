@@ -1,9 +1,8 @@
 import { FlowExecutor } from '../executors/flow-executor';
 import { VariableService } from '../services/variable-service';
 import { ExecutionState, BranchAction, Action, BranchStepOutput, BranchCondition, BranchOperator, BranchResumeStepMetadata, ActionType } from '@activepieces/shared';
-import { BaseActionHandler } from './action-handler';
+import { BaseActionHandler, InitStepOutputParams } from './action-handler';
 import { StepOutputStatus, StepOutput } from '@activepieces/shared';
-import { isNil } from 'lodash';
 
 type CtorParams = {
   currentAction: BranchAction
@@ -11,15 +10,6 @@ type CtorParams = {
   onFailureAction?: Action,
   nextAction?: Action
   resumeStepMetadata?: BranchResumeStepMetadata
-}
-
-type InitStepOutputParams = {
-  executionState: ExecutionState
-}
-
-type LoadStepOutputParams = {
-  executionState: ExecutionState
-  ancestors: [string, number][]
 }
 
 export class BranchActionHandler extends BaseActionHandler<BranchAction, BranchResumeStepMetadata> {
@@ -40,9 +30,9 @@ export class BranchActionHandler extends BaseActionHandler<BranchAction, BranchR
   }
 
   /**
-   * initializes an empty step output
+   * initializes an empty branch step output
    */
-  private async initStepOutput({ executionState }: InitStepOutputParams): Promise<BranchStepOutput> {
+  protected override async initStepOutput({ executionState }: InitStepOutputParams): Promise<BranchStepOutput> {
     const censoredInput = await this.variableService.resolve({
       unresolvedInput: this.currentAction.settings,
       executionState,
@@ -56,31 +46,6 @@ export class BranchActionHandler extends BaseActionHandler<BranchAction, BranchR
     }
 
     return newStepOutput
-  }
-
-  /**
-   * Loads old step output if execution is resuming, else initializes an empty step output
-   */
-  private async loadStepOutput({ executionState, ancestors }: LoadStepOutputParams): Promise<BranchStepOutput> {
-    if (isNil(this.resumeStepMetadata)) {
-      return this.initStepOutput({
-        executionState,
-      })
-    }
-
-    const oldStepOutput = executionState.getStepOutput<BranchStepOutput>({
-      stepName: this.currentAction.name,
-      ancestors,
-    })
-
-    if (oldStepOutput) {
-      oldStepOutput.status = StepOutputStatus.RUNNING
-      delete oldStepOutput.pauseMetadata
-    }
-
-    return oldStepOutput ?? this.initStepOutput({
-      executionState,
-    })
   }
 
   async execute(

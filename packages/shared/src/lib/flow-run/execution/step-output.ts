@@ -34,3 +34,8 @@ type BranchOutput = {
 }
 
 export type BranchStepOutput = StepOutput<ActionType.BRANCH, BranchOutput>
+
+export type StepOutputForActionType<T extends ActionType, O = unknown> =
+  T extends ActionType.BRANCH ? BranchStepOutput :
+  T extends ActionType.LOOP_ON_ITEMS ? LoopOnItemsStepOutput :
+  StepOutput<T, O>
