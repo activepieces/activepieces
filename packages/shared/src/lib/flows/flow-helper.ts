@@ -271,7 +271,7 @@ function addAction(flowVersion: FlowVersion, request: AddActionRequest): void {
 }
 
 function createAction(
-  request: Action,
+  request: UpdateActionRequest,
   { nextAction, onFailureAction, onSuccessAction, firstLoopAction}: { nextAction?: Action, firstLoopAction?: Action, onSuccessAction?: Action, onFailureAction?: Action},
 ): Action {
   const baseProperties = {
@@ -415,9 +415,6 @@ export const flowHelper = {
     }
     clonedVersion.valid = isValid(clonedVersion);
     return clonedVersion;
-  },
-  clone: (flowVersion: FlowVersion): FlowVersion => {
-    return JSON.parse(JSON.stringify(flowVersion));
   },
   getStep,
   isAction,
