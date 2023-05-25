@@ -45,8 +45,10 @@ export interface ActionContext<T> {
     propsValue: T,
     store: Store,
     connections: ConnectionsManager,
-    stopHook: StopHook,
-    pauseHook: PauseHook,
+    hooks: {
+        stopHook: StopHook,
+        pauseHook: PauseHook,
+    }
 }
 
 export interface ConnectionsManager {
