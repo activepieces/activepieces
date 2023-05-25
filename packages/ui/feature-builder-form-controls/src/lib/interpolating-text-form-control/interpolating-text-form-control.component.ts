@@ -360,7 +360,7 @@ export class InterpolatingTextFormControlComponent
       const itemPathWithoutInterpolationDenotation =
         mentionOp.insert.mention.serverValue.slice(
           2,
-          mentionOp.insert.mention.serverValue.length - 1
+          mentionOp.insert.mention.serverValue.length - 2
         );
       const itemPrefix = itemPathWithoutInterpolationDenotation.split('.')[0];
       let imageTag = '';
