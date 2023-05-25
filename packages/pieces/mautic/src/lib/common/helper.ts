@@ -20,8 +20,9 @@ export const mapMauticToActivepiecesProperty = (
         case 'locale':
         case 'timezone':
         case 'url':
-        case 'datetime':
             return Property.ShortText(fieldMetadata);
+        case 'datetime':
+            return Property.DateTime(fieldMetadata);
         case 'number':
             return Property.Number(fieldMetadata);
         case 'boolean':
