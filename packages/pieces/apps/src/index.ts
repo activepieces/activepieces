@@ -70,6 +70,7 @@ import { amazonS3 }  from '@activepieces/piece-amazon-s3';
 import { stabilityAi }  from '@activepieces/piece-stability-ai';
 import { mautic }  from '@activepieces/piece-mautic';
 import { twitter } from '@activepieces/piece-twitter';
+import { jira } from '@activepieces/piece-jira';
 
 /**
  * @deprecated this will be removed, don't use it
@@ -145,7 +146,8 @@ export const pieces: Piece[] = [
     smtp,
     googleForms,
     postgres,
-    twitter
+    twitter,
+    jira
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
 /**
