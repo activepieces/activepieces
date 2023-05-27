@@ -8,7 +8,6 @@ import {
   ExecutionOutputStatus,
   ExecutionOutput,
   ActionType,
-  PauseType,
   flowHelper,
   ActivepiecesError,
   ErrorCode,
@@ -36,13 +35,26 @@ type BaseIterateFlowResponse<T extends ExecutionOutputStatus> = {
   status: T
 }
 
-type FinishIterateFlowResponse = BaseIterateFlowResponse<Exclude<ExecutionOutputStatus, ExecutionOutputStatus.PAUSED>>
+type FinishIterateFlowResponse = BaseIterateFlowResponse<
+  Exclude<
+    ExecutionOutputStatus,
+      | ExecutionOutputStatus.PAUSED
+      | ExecutionOutputStatus.STOPPED
+  >
+>
 
 type PauseIterateFlowResponse = BaseIterateFlowResponse<ExecutionOutputStatus.PAUSED> & {
   pauseMetadata: Omit<PauseMetadata, 'executionState'>
 }
 
-type IterateFlowResponse = FinishIterateFlowResponse | PauseIterateFlowResponse
+type StopIterateFlowResponse = BaseIterateFlowResponse<ExecutionOutputStatus.STOPPED> & {
+  stopResponse?: unknown
+}
+
+type IterateFlowResponse =
+  | FinishIterateFlowResponse
+  | PauseIterateFlowResponse
+  | StopIterateFlowResponse
 
 type GetExecutionOutputParams = {
   iterateFlowResponse: IterateFlowResponse
@@ -109,17 +121,11 @@ export class FlowExecutor {
 
     switch(actionHandler.currentAction.type) {
       case ActionType.PIECE: {
-        const output = stepOutput.output as { delay: number, pauseType: PauseType }
-        const resumeDateTime = dayjs().add(output.delay, 'seconds').toISOString()
-
-        return {
-          type: output.pauseType,
-          resumeDateTime,
-          resumeStepMetadata: {
-            type: ActionType.PIECE,
-            name: actionHandler.currentAction.name,
-          }
+        if (isNil(stepOutput.pauseMetadata)) {
+          throw new Error('pauseMetadata is undefined, this shouldn\'t happen')
         }
+
+        return stepOutput.pauseMetadata
       }
 
       case ActionType.BRANCH: {
@@ -238,16 +244,24 @@ export class FlowExecutor {
           ...baseExecutionOutput,
         }
 
+      case ExecutionOutputStatus.STOPPED:
+          return {
+            status: ExecutionOutputStatus.STOPPED,
+            stopResponse: iterateFlowResponse.stopResponse,
+            ...baseExecutionOutput,
+          }
+
       case ExecutionOutputStatus.PAUSED:
         return {
           status: ExecutionOutputStatus.PAUSED,
-          pauseMetadata: {
-            ...iterateFlowResponse.pauseMetadata,
-          },
+          pauseMetadata: iterateFlowResponse.pauseMetadata,
           ...baseExecutionOutput,
         }
 
-      default:
+      case ExecutionOutputStatus.FAILED:
+      case ExecutionOutputStatus.RUNNING:
+      case ExecutionOutputStatus.TIMEOUT:
+      case ExecutionOutputStatus.INTERNAL_ERROR:
         return {
           status: iterateFlowResponse.status,
           errorMessage: this.getError(),
@@ -283,26 +297,47 @@ export class FlowExecutor {
     const stepOutput = await actionHandler.execute(this.executionState, ancestors);
 
     const endTime = dayjs()
-    stepOutput.duration = endTime.diff(startTime)
 
-    if (stepOutput.status === StepOutputStatus.PAUSED) {
-      const pauseMetadata = this.generatePauseMetadata({
-        actionHandler,
-        stepOutput,
-      })
+    const duration = endTime.diff(startTime)
 
-      return {
-        status: ExecutionOutputStatus.PAUSED,
-        pauseMetadata,
+    stepOutput.duration = stepOutput.duration
+      ? stepOutput.duration + duration
+      : duration
+
+    this.executionState.insertStep(stepOutput, actionHandler.currentAction.name, ancestors)
+
+    switch (stepOutput.status) {
+      case StepOutputStatus.PAUSED: {
+        const pauseMetadata = this.generatePauseMetadata({
+          actionHandler,
+          stepOutput,
+        })
+
+        return {
+          status: ExecutionOutputStatus.PAUSED,
+          pauseMetadata,
+        }
       }
-    }
 
-    this.executionState.insertStep(stepOutput, actionHandler.currentAction.name, ancestors);
-
-    if (stepOutput.status === StepOutputStatus.FAILED) {
-      return {
-        status: ExecutionOutputStatus.FAILED
+      case StepOutputStatus.STOPPED: {
+        return {
+          status: ExecutionOutputStatus.STOPPED,
+          stopResponse: stepOutput.stopResponse,
+        }
       }
+
+      case StepOutputStatus.FAILED: {
+        return {
+          status: ExecutionOutputStatus.FAILED
+        }
+      }
+
+      case StepOutputStatus.RUNNING: {
+        throw new Error('this shouldn\'t happen')
+      }
+
+      case StepOutputStatus.SUCCEEDED:
+        break
     }
 
     const nextActionHandler = createActionHandler({

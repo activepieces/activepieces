@@ -1,4 +1,4 @@
-import { AppConnectionValue, ScheduleOptions, TriggerPayload } from "@activepieces/shared";
+import { AppConnectionValue, ExecutionType, PauseMetadata, ScheduleOptions, TriggerPayload } from "@activepieces/shared";
 import { TriggerStrategy } from "./trigger/trigger";
 
 export type TriggerHookContext<T, S extends TriggerStrategy> =
@@ -26,10 +26,29 @@ export interface TriggerContext<T> {
     store: Store,
 }
 
+export type StopHookParams = {
+    response?: unknown
+}
+
+export type StopHook = (params: StopHookParams) => void
+
+export type PauseHookPauseMetadata = Omit<PauseMetadata, 'executionState' | 'resumeStepMetadata'>
+
+export type PauseHookParams = {
+    pauseMetadata: PauseHookPauseMetadata
+}
+
+export type PauseHook = (params: PauseHookParams) => void
+
 export interface ActionContext<T> {
+    executionType: ExecutionType,
     propsValue: T,
     store: Store,
-    connections: ConnectionsManager
+    connections: ConnectionsManager,
+    run: {
+        stop: StopHook,
+        pause: PauseHook,
+    }
 }
 
 export interface ConnectionsManager {

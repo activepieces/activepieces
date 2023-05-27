@@ -1,24 +1,14 @@
 import { FlowExecutor } from '../executors/flow-executor';
 import { VariableService } from '../services/variable-service';
-import { Action, ActionType, ExecutionOutputStatus, ExecutionState, LoopOnItemsAction, LoopResumeStepMetadata } from '@activepieces/shared';
-import { BaseActionHandler } from './action-handler';
+import { Action, ActionType, ExecutionState, LoopOnItemsAction, LoopResumeStepMetadata } from '@activepieces/shared';
+import { BaseActionHandler, InitStepOutputParams } from './action-handler';
 import { LoopOnItemsStepOutput, StepOutputStatus, StepOutput } from '@activepieces/shared';
-import { isNil } from 'lodash';
 
 type CtorParams = {
   currentAction: LoopOnItemsAction
   firstLoopAction?: Action,
   nextAction?: Action
   resumeStepMetadata?: LoopResumeStepMetadata
-}
-
-type InitStepOutputParams = {
-  executionState: ExecutionState
-}
-
-type LoadStepOutputParams = {
-  executionState: ExecutionState
-  ancestors: [string, number][]
 }
 
 export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction, LoopResumeStepMetadata> {
@@ -36,21 +26,6 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
     this.variableService = new VariableService()
   }
 
-  private getError(stepOutput: LoopOnItemsStepOutput) {
-    const iterations = stepOutput.output?.iterations;
-    if (iterations === undefined) {
-      throw new Error("Iteration can't be undefined");
-    }
-    for (const iteration of iterations) {
-      for (const stepOutput of Object.values(iteration)) {
-        if (stepOutput.status === StepOutputStatus.FAILED) {
-          return stepOutput.errorMessage;
-        }
-      }
-    }
-    return undefined;
-  }
-
   private iterationIsResuming(i: number) {
     return this.resumeStepMetadata?.iteration === i + 1
   }
@@ -60,9 +35,9 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
   }
 
   /**
-   * initializes an empty step output
+   * initializes an empty loop step output
    */
-  private async initStepOutput({ executionState }: InitStepOutputParams): Promise<LoopOnItemsStepOutput> {
+  protected override async initStepOutput({ executionState }: InitStepOutputParams): Promise<LoopOnItemsStepOutput> {
     const censoredInput = await this.variableService.resolve({
       unresolvedInput: this.currentAction.settings,
       executionState,
@@ -73,35 +48,14 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
       type: ActionType.LOOP_ON_ITEMS,
       status: StepOutputStatus.RUNNING,
       input: censoredInput,
-    }
-
-    newStepOutput.output = {
-      index: 1,
-      item: undefined,
-      iterations: []
+      output: {
+        index: 1,
+        item: undefined,
+        iterations: [],
+      }
     }
 
     return newStepOutput
-  }
-
-  /**
-   * Loads old step output if execution is resuming, else initializes an empty step output
-   */
-  private async loadStepOutput({ executionState, ancestors }: LoadStepOutputParams): Promise<LoopOnItemsStepOutput> {
-    if (isNil(this.resumeStepMetadata)) {
-      return this.initStepOutput({
-        executionState,
-      })
-    }
-
-    const oldStepOutput = executionState.getStepOutput<LoopOnItemsStepOutput>({
-      stepName: this.currentAction.name,
-      ancestors,
-    })
-
-    return oldStepOutput ?? this.initStepOutput({
-      executionState,
-    })
   }
 
   async execute(
@@ -150,17 +104,13 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
 
         ancestors.pop();
 
-        if (executionOutput.status === ExecutionOutputStatus.FAILED) {
-          stepOutput.status = StepOutputStatus.FAILED
-          stepOutput.errorMessage = this.getError(stepOutput)
+        this.handleFlowExecutorOutput({
+          executionOutput,
+          stepOutput,
+        })
 
-          return stepOutput
-        }
-
-        if (executionOutput.status === ExecutionOutputStatus.PAUSED) {
-          stepOutput.status = StepOutputStatus.PAUSED
-          stepOutput.pauseMetadata = executionOutput.pauseMetadata
-
+        if (stepOutput.status !== StepOutputStatus.RUNNING) {
+          executionState.insertStep(stepOutput, this.currentAction.name, ancestors)
           return stepOutput
         }
       }
