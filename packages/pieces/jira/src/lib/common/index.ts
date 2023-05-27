@@ -20,6 +20,8 @@ export function buildClient(context: ActionContext<StaticPropsValue<any>>): Vers
     return buildClientWithCredentials(accessToken, context.propsValue.site_id)
 }
 
+Property
+
 export const jiraCommon = {
     authentication: Property.OAuth2({
         description: "",
@@ -81,6 +83,36 @@ export const jiraCommon = {
                         value: project.id
                     }
                 }),
+            };
+        }
+    }),
+    issue_type: (required = true) => Property.Dropdown({
+        description: 'The issue type you want to use',
+        displayName: 'Issue Type',
+        required,
+        refreshers: ['authentication', 'site_id', 'project_id'],
+        defaultValue: null,
+        options: async (value) => {
+            if (!value.authentication || !value.site_id || !value.project_id) {
+                return {
+                    disabled: true,
+                    placeholder: 'connect your account and choose a site and project first',
+                    options: [],
+                };
+            }
+            const accessToken = getAccessTokenOrThrow(value.authentication as OAuth2PropertyValue);
+            const client = buildClientWithCredentials(accessToken, value.site_id as string)
+            const issueTypes = await client.issueTypes.getIssueTypesForProject({
+                projectId: (value.project_id as number)
+            })
+            return {
+                disabled: false,
+                options: issueTypes.map(issueType => {
+                    return {
+                        label: issueType.name || '',
+                        value: issueType.name
+                    };
+                })
             };
         }
     })
