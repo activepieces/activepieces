@@ -15,7 +15,8 @@
     <div class="ap-relative">
       <div #flowItem class="ap-z-50 ap-cursor-pointer ap-relative" mwlDraggable apTrackHover
         #itemContent="hoverTrackerDirective" [ghostElementTemplate]="ItemContent.stepDragTemplate"
-        (dragEnd)="draggingEnded()" [showOriginalElementWhileDragging]="false" [dropData]="_flowItemData"
+        [touchStartLongPress]="touchStartLongPress" (dragEnd)="draggingEnded()"
+        [showOriginalElementWhileDragging]="false" [dropData]="_flowItemData"
         [class.ap-opacity-0]="hideDraggableSource$ | async" [ghostElementAppendTo]="draggingContainer"
         (dragging)="snapElementToCursor()" [class.ap-cursor-default]="(anyStepIsDragged$|async)"
         (dragStart)="draggingStarted()">
