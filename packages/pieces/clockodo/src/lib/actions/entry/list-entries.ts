@@ -1,7 +1,18 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { clockodoCommon, makeClient, reformatDateTime } from "../../common";
-import { ProjectListFilter } from "../../common/models/project";
-import { EntryListFilter } from "../../common/models/entry";
+import { BillableType, EntryListFilter } from "../../common/models/entry";
+
+function calculateBillable(billable?: boolean, billed?: boolean): BillableType|undefined {
+    if(billable === undefined && billed === undefined) {
+        return undefined
+    } else {
+        if(billed) {
+            return 2
+        } else {
+            return billable ? 1 : 0
+        }
+    }
+}
 
 export default createAction({
     name: 'list_entries',
@@ -37,6 +48,16 @@ export default createAction({
             description: 'Filter entries by their service',
             required: false
         }),
+        billable_filter: Property.Checkbox({
+            displayName: 'Billable',
+            description: 'Only show entries that are billable',
+            required: false
+        }),
+        billed_filter: Property.Checkbox({
+            displayName: 'Billed',
+            description: 'Only show entries that are already billed',
+            required: false
+        }),
         enhanced_list: Property.Checkbox({
             displayName: 'Enhanced List',
             description: 'Retrieves additional information about the entries',
@@ -54,7 +75,8 @@ export default createAction({
             users_id: context.propsValue.user_id_filter,
             customers_id: context.propsValue.customer_id_filter,
             projects_id: context.propsValue.project_id_filter,
-            services_id: context.propsValue.service_id_filter
+            services_id: context.propsValue.service_id_filter,
+            billable: calculateBillable(context.propsValue.billable_filter, context.propsValue.billed_filter)
         }
         const time_since = reformatDateTime(context.propsValue.time_since) as string
         const time_until = reformatDateTime(context.propsValue.time_until) as string
