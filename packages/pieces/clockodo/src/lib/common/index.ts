@@ -27,6 +27,29 @@ export const clockodoCommon = {
                 required: true,
             })
         }
+    }),
+    absenceType: (required = true) => Property.StaticDropdown({
+        displayName: 'Type',
+        required,
+        options: {
+            options: [
+                { value: 1, label: 'Regular holiday' },
+                { value: 2, label: 'Special leaves' },
+                { value: 3, label: 'Reduction of overtime' },
+                { value: 4, label: 'Sick day' },
+                { value: 5, label: 'Sick day of a child' },
+                { value: 6, label: 'School / further education' },
+                { value: 7, label: 'Maternity protection' },
+                { value: 8, label: 'Home office (planned hours are applied)' },
+                { value: 9, label: 'Work out of office (planned hours are applied)' },
+                { value: 10, label: 'Special leaves (unpaid)' },
+                { value: 11, label: 'Sick day (unpaid)' },
+                { value: 12, label: 'Sick day of child (unpaid)' },
+                { value: 13, label: 'Quarantine' },
+                { value: 14, label: 'Military / alternative service (only full days)' },
+                { value: 15, label: 'Sick day (sickness benefit)' }
+            ]
+        }
     })
 }
 
@@ -52,4 +75,10 @@ export function reformatDateTime(s?: string): string|undefined {
     if(!s)
         return undefined
     return s.replace(/\.[0-9]{3}/, '')
+}
+
+export function reformatDate(s?: string): string|undefined {
+    if(!s)
+        return undefined
+    return s.split('T', 2) [0]
 }

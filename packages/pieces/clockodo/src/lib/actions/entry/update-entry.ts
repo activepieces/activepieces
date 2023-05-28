@@ -31,7 +31,7 @@ export default createAction({
             displayName: 'End Time',
             required: false
         }),
-        text: Property.ShortText({
+        text: Property.LongText({
             displayName: 'Description',
             required: false
         }),
