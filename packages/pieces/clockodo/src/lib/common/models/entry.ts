@@ -116,15 +116,15 @@ export interface EntryListFilter {
     billable?: BillableType,
     text?: string,
     texts_id?: number,
-    budget_type?: string,
-    enhanced_list?: boolean,
-    calc_also_revenues_for_projects_with_hard_budget?: boolean
+    budget_type?: string
 }
 
 export interface EntryListRequest extends ListRequest<EntryListFilter> {
 
     time_since: string,
-    time_until: string
+    time_until: string,
+    enhanced_list?: boolean,
+    calc_also_revenues_for_projects_with_hard_budget?: boolean
 
 }
 

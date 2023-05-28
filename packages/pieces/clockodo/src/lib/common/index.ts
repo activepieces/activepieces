@@ -47,3 +47,9 @@ export function currentYear(): number {
     const todaysDate = new Date()
     return todaysDate.getFullYear()
 }
+
+export function reformatDateTime(s?: string): string|undefined {
+    if(!s)
+        return undefined
+    return s.replace(/\.[0-9]{3}/, '')
+}

@@ -10,7 +10,7 @@ export const clockodo = createPiece({
   displayName: "Clockodo",
   logoUrl: "https://play-lh.googleusercontent.com/LA9-rtB-09fZ9DTYXOhWB0Nf3rjky-4kp-nKcBT4SlPgIxYR8efjCYN3tcNj_viRwP-T=w480-h960-rw",
   version: packageJson.version,
-  authors: [],
+  authors: ["JanHolger"],
   actions,
   triggers
 });
