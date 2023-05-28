@@ -4,7 +4,7 @@ import { EMPTY, catchError, of, tap } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { FlowInstanceStatus } from '@activepieces/shared';
+import { FlowInstanceStatus, FlowVersionState } from '@activepieces/shared';
 import { FlowInstanceActions } from './flow-instance.action';
 import { FlowInstanceService, FlowService } from '@activepieces/ui/common';
 import { BuilderSelectors } from '../builder.selector';
@@ -161,21 +161,40 @@ export class FlowInstanceEffects {
   showPublishedVersion$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(ViewModeActions.setViewMode),
-      concatLatestFrom(() =>
-        this.store.select(BuilderSelectors.selectPublishedFlowVersion)
-      ),
-      switchMap(([action, publishedVersion]) => {
-        if (
-          action.viewMode === ViewModeEnum.SHOW_PUBLISHED &&
-          publishedVersion
-        ) {
-          return of(
-            canvasActions.setInitial({ displayedFlowVersion: publishedVersion })
-          );
-        } else if (action.viewMode === ViewModeEnum.SHOW_PUBLISHED) {
-          throw Error('Trying to view published version when there is none');
+      concatLatestFrom(() => [
+        this.store.select(BuilderSelectors.selectPublishedFlowVersion),
+        this.store.select(BuilderSelectors.selectCurrentFlow),
+      ]),
+      switchMap(([action, publishedVersion, currentFlow]) => {
+        switch (action.viewMode) {
+          case ViewModeEnum.SHOW_PUBLISHED:
+            if (publishedVersion) {
+              return of(
+                canvasActions.setInitial({
+                  displayedFlowVersion: publishedVersion,
+                })
+              );
+            } else {
+              throw Error(
+                'Trying to view published version when there is none'
+              );
+            }
+          case ViewModeEnum.BUILDING:
+            if (currentFlow.version.state === FlowVersionState.LOCKED) {
+              throw Error('Trying to view draft version when there is none');
+            } else {
+              return of(
+                canvasActions.setInitial({
+                  displayedFlowVersion: currentFlow.version,
+                })
+              );
+            }
+          case ViewModeEnum.VIEW_INSTANCE_RUN: {
+            throw Error(
+              'Trying to view run version, viewing run version should only be the initial state'
+            );
+          }
         }
-        return EMPTY;
       })
     );
   });

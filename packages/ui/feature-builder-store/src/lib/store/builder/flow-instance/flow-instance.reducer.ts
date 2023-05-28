@@ -23,9 +23,7 @@ const __flowInstanceReducer = createReducer(
   on(
     FlowInstanceActions.publishSuccess,
     (state, { instance, publishedFlowVersion }): FlowInstanceState => {
-      const clonedState = JSON.parse(JSON.stringify(state));
       return {
-        ...clonedState,
         instance: {
           ...instance,
         },

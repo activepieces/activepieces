@@ -7,10 +7,11 @@ import {
   FlowVersionState,
   TriggerType,
 } from '@activepieces/shared';
-import { BuilderSavingStatusEnum } from '../../model';
+import { BuilderSavingStatusEnum, ViewModeEnum } from '../../model';
 import { FlowState } from '../../model/flow-state';
 import { FlowInstanceActions } from '../builder/flow-instance/flow-instance.action';
 import { canvasActions } from '../builder/canvas/canvas.action';
+import { ViewModeActions } from '../builder/viewmode/view-mode.action';
 
 const initialState: FlowState = {
   flow: {
@@ -105,7 +106,16 @@ const _flowsReducer = createReducer(
   on(FlowsActions.applyUpdateOperation, (flowState, action) => {
     const clonedState: FlowState = JSON.parse(JSON.stringify(flowState));
     clonedState.lastSaveId = action.saveRequestId;
+    clonedState.flow.version.state = FlowVersionState.DRAFT;
     clonedState.savingStatus |= BuilderSavingStatusEnum.SAVING_FLOW;
+    return clonedState;
+  }),
+  on(ViewModeActions.setViewMode, (flowState, action) => {
+    const clonedState: FlowState = JSON.parse(JSON.stringify(flowState));
+    if (action.viewMode === ViewModeEnum.BUILDING) {
+      clonedState.flow.version.state = FlowVersionState.DRAFT;
+    }
+
     return clonedState;
   }),
   on(FlowsActions.savedSuccess, (state, action) => {
@@ -129,6 +139,7 @@ const _flowsReducer = createReducer(
   on(FlowInstanceActions.publishSuccess, (state, { instance }) => {
     const clonedState: FlowState = JSON.parse(JSON.stringify(state));
     clonedState.flow.version.id = instance.flowVersionId;
+    clonedState.flow.version.state = FlowVersionState.LOCKED;
     clonedState.savingStatus &= ~BuilderSavingStatusEnum.PUBLISHING;
     return clonedState;
   }),

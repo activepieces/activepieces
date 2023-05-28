@@ -1,6 +1,10 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { BuilderSelectors } from '@activepieces/ui/feature-builder-store';
+import {
+  BuilderSelectors,
+  ViewModeActions,
+  ViewModeEnum,
+} from '@activepieces/ui/feature-builder-store';
 import { Observable, combineLatest, map } from 'rxjs';
 
 @Component({
@@ -10,7 +14,15 @@ import { Observable, combineLatest, map } from 'rxjs';
 })
 export class DraftStatusComponent {
   draftStatus$: Observable<string>;
+  hideDraftOption$: Observable<boolean>;
+  showPublishedOption$: Observable<boolean>;
   constructor(private store: Store) {
+    this.hideDraftOption$ = this.store.select(
+      BuilderSelectors.selectIsCurrentVersionPublished
+    );
+    this.showPublishedOption$ = this.store.select(
+      BuilderSelectors.selectHasFlowBeenPublished
+    );
     this.draftStatus$ = combineLatest({
       isCurrentVersionPublished: this.store.select(
         BuilderSelectors.selectIsCurrentVersionPublished
@@ -25,6 +37,17 @@ export class DraftStatusComponent {
         }
         return 'Draft';
       })
+    );
+  }
+
+  showPublishedVersion() {
+    this.store.dispatch(
+      ViewModeActions.setViewMode({ viewMode: ViewModeEnum.SHOW_PUBLISHED })
+    );
+  }
+  showDraftVersion() {
+    this.store.dispatch(
+      ViewModeActions.setViewMode({ viewMode: ViewModeEnum.BUILDING })
     );
   }
 }

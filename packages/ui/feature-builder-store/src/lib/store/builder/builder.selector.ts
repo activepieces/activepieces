@@ -1,7 +1,13 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { GlobalBuilderState } from '../../model/global-builder-state.model';
 
-import { AppConnection, Flow, FlowRun, flowHelper } from '@activepieces/shared';
+import {
+  AppConnection,
+  Flow,
+  FlowRun,
+  FlowVersionState,
+  flowHelper,
+} from '@activepieces/shared';
 import { ViewModeEnum } from '../../model/enums/view-mode.enum';
 
 import { FlowItemsDetailsState } from '../../model/flow-items-details-state.model';
@@ -70,10 +76,16 @@ const selectInstanceState = createSelector(
   (state: GlobalBuilderState) => state.instance
 );
 
-export const selectCurrentInstance = createSelector(
+const selectCurrentInstance = createSelector(
   selectInstanceState,
   (state: FlowInstanceState) => {
     return state?.instance;
+  }
+);
+const selectHasFlowBeenPublished = createSelector(
+  selectInstanceState,
+  (state: FlowInstanceState) => {
+    return !!state?.instance;
   }
 );
 const selectCanvasState = createSelector(selectGlobalBuilderState, (state) => {
@@ -91,10 +103,9 @@ const selectShownFlowVersion = createSelector(
   }
 );
 const selectIsCurrentVersionPublished = createSelector(
-  selectCurrentInstance,
   selectCurrentFlow,
-  (instance, flow) => {
-    return instance?.flowVersionId === flow.version.id;
+  (flow) => {
+    return flow.version.state === FlowVersionState.LOCKED;
   }
 );
 export const selectCurrentFlowFolderName = createSelector(
@@ -528,4 +539,5 @@ export const BuilderSelectors = {
   selectStepTestSampleDataStringified,
   selectIsCurrentVersionPublished,
   selectPublishedFlowVersion,
+  selectHasFlowBeenPublished,
 };
