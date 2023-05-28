@@ -42,3 +42,8 @@ export function makeClient(context: ActionContext<StaticPropsValue<any>>): Clock
 export function emptyToNull(val?: string): undefined|string|null {
     return val === undefined ? val : (val || null)
 }
+
+export function currentYear(): number {
+    const todaysDate = new Date()
+    return todaysDate.getFullYear()
+}

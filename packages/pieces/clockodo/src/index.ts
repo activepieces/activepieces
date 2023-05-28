@@ -3,6 +3,7 @@ import { createPiece } from "@activepieces/pieces-framework";
 import packageJson from "../package.json";
 
 import actions from "./lib/actions";
+import triggers from './lib/triggers'
 
 export const clockodo = createPiece({
   name: "clockodo",
@@ -11,5 +12,5 @@ export const clockodo = createPiece({
   version: packageJson.version,
   authors: [],
   actions,
-  triggers: [],
+  triggers
 });

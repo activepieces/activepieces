@@ -1,7 +1,11 @@
 import { HttpMessageBody, HttpMethod, QueryParams, httpClient } from "@activepieces/pieces-common"
 import { ListRequest, prepareListRequest } from './models/common'
+import { UserListResponse, UserSingleResponse } from './models/user'
 import { CustomerSingleResponse, CustomerListResponse, CustomerCreateRequest, CustomerUpdateRequest, CustomerListFilter, Customer } from './models/customer'
 import { ProjectSingleResponse, ProjectListResponse, ProjectCreateRequest, ProjectUpdateRequest, ProjectListFilter, Project } from './models/project'
+import { ServiceSingleResponse, ServiceListResponse, ServiceCreateRequest, ServiceUpdateRequest } from './models/service'
+import { EntrySingleResponse, EntryListResponse, EntryCreateRequest, EntryUpdateRequest, EntryListRequest, Entry, EntryListFilter } from './models/entry'
+import { AbsenceSingleResponse, AbsenceListResponse, AbsenceCreateRequest, AbsenceUpdateRequest, AbsenceListRequest } from './models/absence'
 
 export class ClockodoClient {
 
@@ -30,6 +34,14 @@ export class ClockodoClient {
             }
         })
         return res.body
+    }
+
+    listUsers(): Promise<UserListResponse> {
+        return this.makeRequest<UserListResponse>(HttpMethod.GET, '/v2/users')
+    }
+
+    getUser(id: number): Promise<UserSingleResponse> {
+        return this.makeRequest<UserSingleResponse>(HttpMethod.GET, '/v2/users/' + id)
     }
 
     listCustomers(request: ListRequest<CustomerListFilter> = {}): Promise<CustomerListResponse> {
@@ -98,6 +110,87 @@ export class ClockodoClient {
 
     deleteProject(id: number): Promise<object> {
         return this.makeRequest<object>(HttpMethod.DELETE, '/v2/projects/' + id)
+    }
+
+    listServices(): Promise<ServiceListResponse> {
+        return this.makeRequest<ServiceListResponse>(HttpMethod.GET, '/v2/services')
+    }
+    
+    getService(id: number): Promise<ServiceSingleResponse> {
+        return this.makeRequest<ServiceSingleResponse>(HttpMethod.GET, '/v2/services/' + id)
+    }
+    
+    createService(request: ServiceCreateRequest) {
+        return this.makeRequest<ServiceSingleResponse>(HttpMethod.POST, '/v2/services', undefined, request)
+    }
+    
+    updateService(id: number, request: ServiceUpdateRequest): Promise<ServiceSingleResponse> {
+        return this.makeRequest<ServiceSingleResponse>(HttpMethod.PUT, '/v2/services/' + id, undefined, request)
+    }
+    
+    deleteService(id: number): Promise<object> {
+        return this.makeRequest<object>(HttpMethod.DELETE, '/v2/services/' + id)
+    }
+
+    listEntries(request: EntryListRequest): Promise<EntryListResponse> {
+        return this.makeRequest<EntryListResponse>(HttpMethod.GET, '/v2/entries', prepareListRequest(request))
+    }
+    
+    async listAllEntries(time_since: string, time_until: string, filter: EntryListFilter = {}): Promise<Entry[]> {
+        let totalPages = 999999
+        const all: Entry[] = []
+        for(let page=0; page < totalPages; page++) {
+            const res = await this.listEntries({
+                page: page + 1,
+                time_since,
+                time_until,
+                filter
+            })
+            totalPages = res.paging.count_pages
+            res.entries.forEach(e => all.push(e))
+        }
+        return all
+    }
+    
+    getEntry(id: number): Promise<EntrySingleResponse> {
+        return this.makeRequest<EntrySingleResponse>(HttpMethod.GET, '/v2/entries/' + id)
+    }
+    
+    createEntry(request: EntryCreateRequest) {
+        return this.makeRequest<EntrySingleResponse>(HttpMethod.POST, '/v2/entries', undefined, request)
+    }
+    
+    updateEntry(id: number, request: EntryUpdateRequest): Promise<EntrySingleResponse> {
+        return this.makeRequest<EntrySingleResponse>(HttpMethod.PUT, '/v2/entries/' + id, undefined, request)
+    }
+    
+    deleteEntry(id: number): Promise<object> {
+        return this.makeRequest<object>(HttpMethod.DELETE, '/v2/entries/' + id)
+    }
+
+    listAbsences(request: AbsenceListRequest): Promise<AbsenceListResponse> {
+        const query: QueryParams = {
+            year: request.year.toString()
+        }
+        if(request.users_id)
+            query.users_id = request.users_id.toString()
+        return this.makeRequest<AbsenceListResponse>(HttpMethod.GET, '/absences', query)
+    }
+    
+    getAbsence(id: number): Promise<AbsenceSingleResponse> {
+        return this.makeRequest<AbsenceSingleResponse>(HttpMethod.GET, '/absences/' + id)
+    }
+    
+    createAbsence(request: AbsenceCreateRequest) {
+        return this.makeRequest<AbsenceSingleResponse>(HttpMethod.POST, '/absences', undefined, request)
+    }
+    
+    updateAbsence(id: number, request: AbsenceUpdateRequest): Promise<AbsenceSingleResponse> {
+        return this.makeRequest<AbsenceSingleResponse>(HttpMethod.PUT, '/absences/' + id, undefined, request)
+    }
+    
+    deleteAbsence(id: number): Promise<object> {
+        return this.makeRequest<object>(HttpMethod.DELETE, '/absences/' + id)
     }
 
 }
