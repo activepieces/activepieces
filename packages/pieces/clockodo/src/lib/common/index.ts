@@ -38,3 +38,7 @@ export function makeClient(context: ActionContext<StaticPropsValue<any>>): Clock
         context.propsValue.authentication.company_email,
     )
 }
+
+export function emptyToNull(val?: string): undefined|string|null {
+    return val === undefined ? val : (val || null)
+}
