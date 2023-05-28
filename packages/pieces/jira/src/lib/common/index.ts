@@ -15,9 +15,9 @@ export function buildClientWithCredentials(accessToken: string, siteId: string):
     return client
 }
 
-export function buildClient(context: ActionContext<StaticPropsValue<any>>): Version3Client {
-    const accessToken = getAccessTokenOrThrow(context.propsValue.authentication)
-    return buildClientWithCredentials(accessToken, context.propsValue.site_id)
+export function buildClient(props: StaticPropsValue<any>): Version3Client {
+    const accessToken = getAccessTokenOrThrow(props.authentication)
+    return buildClientWithCredentials(accessToken, props.site_id)
 }
 
 Property
@@ -29,7 +29,7 @@ export const jiraCommon = {
         authUrl: "https://auth.atlassian.com/authorize",
         tokenUrl: "https://auth.atlassian.com/oauth/token",
         required: true,
-        scope: ['read:jira-work','write:jira-work','read:me','read:account']
+        scope: ['read:jira-work','write:jira-work','read:me','read:account','manage:jira-webhook']
     }),
     site_id: (required = true) => Property.Dropdown({
         description: 'The Jira Site you want to use',

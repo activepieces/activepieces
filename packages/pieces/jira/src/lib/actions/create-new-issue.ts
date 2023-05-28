@@ -1,7 +1,7 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { jiraCommon, buildClient } from "../common";
 
-export const createNewIssue = createAction({
+export default createAction({
   name: 'create_new_issue',
   displayName:'Create New Issue',
   description: 'Creates a new issue',
@@ -19,13 +19,18 @@ export const createNewIssue = createAction({
       description: 'Description of the issue',
       displayName: 'Description',
       required: false
+    }),
+    fields: Property.Object({
+      displayName: 'Additional Fields',
+      required: false
     })
   },
   async run(context) {
-    const client = buildClient(context)
+    const client = buildClient(context.propsValue)
     try {
       const issue = await client.issues.createIssue({
         fields: {
+          ...context.propsValue.fields,
           issuetype: {
             name: context.propsValue.issue_type
           },
@@ -38,10 +43,7 @@ export const createNewIssue = createAction({
       })
       return issue
     } catch (e: any) {
-      throw {
-        status: e.response.status,
-        message: JSON.stringify(e.response.data)
-      }
+      throw e.response.data
     }
   }
 })
