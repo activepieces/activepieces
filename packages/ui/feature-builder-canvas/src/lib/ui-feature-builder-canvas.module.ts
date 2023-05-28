@@ -10,7 +10,7 @@ import { FlowItemContentComponent } from './flow-item-tree/flow-item/flow-item-c
 import { FlowItemTreeComponent } from './flow-item-tree/flow-item-tree.component';
 import { CanvasUtilsComponent } from './canvas-utils/canvas-utils.component';
 import { CanvasPannerDirective } from './canvas-utils/panning/panner.directive';
-import { DeleteStepDialogComponent } from './flow-item-tree/flow-item/flow-item-content/delete-step-dialog/delete-step-dialog.component';
+import { DeleteStepDialogComponent } from './flow-item-tree/flow-item/actions/delete-flow-item-action/delete-step-dialog/delete-step-dialog.component';
 import { IncompleteStepsWidgetComponent } from './incomplete-steps-widget/incomplete-steps-widget.component';
 import { DragAndDropModule } from 'angular-draggable-droppable';
 import { DropZoneComponent } from './flow-item-tree/flow-item/flow-item-connection/drop-zone/drop-zone.component';
@@ -19,6 +19,9 @@ import { BigAddButtonComponent } from './flow-item-tree/flow-item/flow-item-conn
 import { TestFlowWidgetComponent } from './test-flow-widget/test-flow-widget.component';
 import { CodemirrorModule } from '@ctrl/ngx-codemirror';
 import { ViewOnlyModeComponent } from './view-only-mode/view-only-mode.component';
+import { DeleteFlowItemActionComponent } from './flow-item-tree/flow-item/actions/delete-flow-item-action/delete-flow-item-action.component';
+import { ReplaceTriggerActionComponent } from './flow-item-tree/flow-item/actions/replace-trigger-action/replace-trigger-action.component';
+import { ActionsContainerComponent } from './flow-item-tree/flow-item/actions/actions-container/actions-container.component';
 @NgModule({
   imports: [CommonModule, UiCommonModule, DragAndDropModule, CodemirrorModule],
   declarations: [
@@ -38,6 +41,9 @@ import { ViewOnlyModeComponent } from './view-only-mode/view-only-mode.component
     BigAddButtonComponent,
     TestFlowWidgetComponent,
     ViewOnlyModeComponent,
+    DeleteFlowItemActionComponent,
+    ReplaceTriggerActionComponent,
+    ActionsContainerComponent,
   ],
   exports: [FlowItemTreeComponent, CanvasUtilsComponent, CanvasPannerDirective],
 })

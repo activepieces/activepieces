@@ -19,8 +19,6 @@ import {
 } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { RunDetailsService } from '@activepieces/ui/feature-builder-left-sidebar';
-import { DeleteStepDialogComponent } from './delete-step-dialog/delete-step-dialog.component';
-import { MatDialog } from '@angular/material/dialog';
 import {
   ActionType,
   ExecutionOutputStatus,
@@ -43,8 +41,6 @@ import {
   BuilderSelectors,
   FlowItem,
   FlowRendererService,
-  NO_PROPS,
-  RightSideBarType,
   canvasActions,
 } from '@activepieces/ui/feature-builder-store';
 
@@ -65,7 +61,7 @@ export class FlowItemContentComponent implements OnInit {
   stepIconUrl: string;
   _flowItem: FlowItem;
   selectedRun$: Observable<FlowRun | undefined>;
-  readonly$: Observable<boolean>;
+
   logoTooltipText = '';
   isOverflown = isOverflown;
   childStepsIconsUrls: Record<string, Observable<string>> = {};
@@ -90,14 +86,13 @@ export class FlowItemContentComponent implements OnInit {
     private store: Store,
     private cd: ChangeDetectorRef,
     private runDetailsService: RunDetailsService,
-    private dialogService: MatDialog,
     private flowRendererService: FlowRendererService,
     private actionMetaDataService: ActionMetaService
   ) {}
 
   ngOnInit(): void {
     this.isDragging$ = this.flowRendererService.draggingSubject.asObservable();
-    this.readonly$ = this.store.select(BuilderSelectors.selectReadOnly);
+
     this.selectedRun$ = this.store.select(
       BuilderSelectors.selectCurrentFlowRun
     );
@@ -173,23 +168,6 @@ export class FlowItemContentComponent implements OnInit {
     );
   }
 
-  deleteStep() {
-    const stepName = this._flowItem.name;
-    if (stepName == undefined) {
-      return;
-    }
-    this.dialogService.open(DeleteStepDialogComponent, { data: stepName });
-  }
-
-  changeTrigger() {
-    this.store.dispatch(
-      canvasActions.setRightSidebar({
-        sidebarType: RightSideBarType.TRIGGER_TYPE,
-        props: NO_PROPS,
-        deselectCurrentStep: false,
-      })
-    );
-  }
   selectStep() {
     this.store.dispatch(
       canvasActions.selectStepByName({
