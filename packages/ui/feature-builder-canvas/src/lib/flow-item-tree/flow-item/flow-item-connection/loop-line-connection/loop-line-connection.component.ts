@@ -150,9 +150,22 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
     const commands: string[] = [];
     commands.push(this.drawer.move(0, SPACE_BETWEEN_ITEM_CONTENT_AND_LINE));
     if (!this.flowItem.firstLoopAction) {
-      commands.push(this.drawer.move(0, EMPTY_LOOP_ADD_BUTTON_HEIGHT));
-      commands.push(this.drawer.move(0, SPACE_BETWEEN_ITEM_CONTENT_AND_LINE));
-      commands.push(this.drawer.drawVerticalLine(VERTICAL_LINE_LENGTH));
+      if (!this.viewMode) {
+        commands.push(this.drawer.move(0, EMPTY_LOOP_ADD_BUTTON_HEIGHT));
+        commands.push(this.drawer.move(0, SPACE_BETWEEN_ITEM_CONTENT_AND_LINE));
+        commands.push(this.drawer.drawVerticalLine(VERTICAL_LINE_LENGTH));
+      } else {
+        commands.push(
+          this.drawer.move(0, -SPACE_BETWEEN_ITEM_CONTENT_AND_LINE)
+        );
+        commands.push(
+          this.drawer.drawVerticalLine(EMPTY_LOOP_ADD_BUTTON_HEIGHT)
+        );
+        commands.push(
+          this.drawer.drawVerticalLine(2 * SPACE_BETWEEN_ITEM_CONTENT_AND_LINE)
+        );
+        commands.push(this.drawer.drawVerticalLine(VERTICAL_LINE_LENGTH));
+      }
     } else {
       commands.push(this.drawer.move(0, childFlowsGraphHeight));
     }
