@@ -29,7 +29,7 @@ import {
 import { Store } from '@ngrx/store';
 import { HttpStatusCode } from '@angular/common/http';
 import { UntypedFormControl } from '@angular/forms';
-import jsonlint from 'jsonlint-mod';
+import jsonlint from 'codemirror/addon/lint/json-lint';
 import { MatSnackBar, MatSnackBarRef } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import {
