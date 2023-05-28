@@ -38,7 +38,7 @@ import {
 import { FlowRenderUtil } from '@activepieces/ui/feature-builder-store';
 import { DropEvent } from 'angular-draggable-droppable';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { canvasActions } from '../../../../../../../feature-builder-store/src/lib/store/builder/canvas/canvas.action';
+import { canvasActions } from '@activepieces/ui/feature-builder-store';
 @Component({
   selector: 'app-branch-line-connection',
   templateUrl: './branch-line-connection.component.html',
