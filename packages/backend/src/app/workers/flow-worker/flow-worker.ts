@@ -47,6 +47,15 @@ type FinishExecutionParams = {
     executionOutput: ExecutionOutput
 }
 
+type LoadInputAndLogFileIdParams = {
+    jobData: OneTimeJobData
+}
+
+type LoadInputAndLogFileIdResponse = {
+    input: ExecuteFlowOperation
+    logFileId?: FileId | undefined
+}
+
 const extractFlowPieces = (flowVersion: FlowVersion): FlowPiece[] => {
     const pieces: FlowPiece[] = []
     const steps = flowHelper.getAllSteps(flowVersion)
@@ -93,7 +102,7 @@ const finishExecution = async (params: FinishExecutionParams): Promise<void> => 
     }
 }
 
-const generateInput = async (jobData: OneTimeJobData): Promise<ExecuteFlowOperation> => {
+const loadInputAndLogFileId = async ({ jobData }: LoadInputAndLogFileIdParams): Promise<LoadInputAndLogFileIdResponse> => {
     const baseInput = {
         flowVersionId: jobData.flowVersionId,
         projectId: jobData.projectId,
@@ -107,8 +116,10 @@ const generateInput = async (jobData: OneTimeJobData): Promise<ExecuteFlowOperat
 
     if (jobData.executionType === ExecutionType.BEGIN) {
         return {
-            ...baseInput,
-            executionType: ExecutionType.BEGIN,
+            input: {
+                executionType: ExecutionType.BEGIN,
+                ...baseInput,
+            },
         }
     }
 
@@ -117,20 +128,28 @@ const generateInput = async (jobData: OneTimeJobData): Promise<ExecuteFlowOperat
         projectId: jobData.projectId,
     })
 
-    if (isNil(flowRun.pauseMetadata)) {
+    if (isNil(flowRun.pauseMetadata) || isNil(flowRun.logsFileId)) {
         throw new ActivepiecesError({
             code: ErrorCode.VALIDATION,
             params: {
-                message: `flowrun.pauseMetadata is undefined flowRunId=${jobData.runId}`,
+                message: `flowRunId=${flowRun.id}`,
             },
         })
     }
 
+    const logFile = await fileService.getOneOrThrow({
+        fileId: flowRun.logsFileId,
+        projectId: jobData.projectId,
+    })
+
     return {
-        ...baseInput,
-        executionType: ExecutionType.RESUME,
-        executionState: flowRun.pauseMetadata.executionState,
-        resumeStepMetadata: flowRun.pauseMetadata.resumeStepMetadata,
+        input: {
+            executionType: ExecutionType.RESUME,
+            executionState: flowRun.pauseMetadata.executionState,
+            resumeStepMetadata: flowRun.pauseMetadata.resumeStepMetadata,
+            ...baseInput,
+        },
+        logFileId: logFile.id,
     }
 }
 
@@ -163,14 +182,15 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
             logger.info(`[${jobData.runId}] Reusing sandbox ${sandbox.boxId} took ${Date.now() - startTime}ms`)
         }
 
-        const input = await generateInput(jobData)
+        const { input, logFileId } = await loadInputAndLogFileId({ jobData })
 
         const { result: executionOutput } = await engineHelper.executeFlow(sandbox, input)
 
-        const logsFile = await fileService.save(
-            jobData.projectId,
-            Buffer.from(JSON.stringify(executionOutput)),
-        )
+        const logsFile = await fileService.save({
+            fileId: logFileId,
+            projectId: jobData.projectId,
+            data: Buffer.from(JSON.stringify(executionOutput)),
+        })
 
         await finishExecution({
             flowRunId: jobData.runId,
