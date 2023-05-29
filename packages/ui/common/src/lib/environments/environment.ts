@@ -1,6 +1,6 @@
 export const environment = {
   production: false,
-  apiUrl: 'https://abdallah-alwarawreh-effective-engine-46gppqp6rr7hjqqv-3000.preview.app.github.dev/v1',
+  apiUrl: 'http://localhost:3000/v1',
   jwtTokenName: 'token',
   redirectUrl: 'http://localhost:4200/redirect',
   userPropertyNameInLocalStorage: 'currentUser',
