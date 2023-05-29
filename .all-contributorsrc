@@ -283,6 +283,16 @@
       "contributions": [
         "bug"
       ]
+    },
+    {
+      "login": "HKudria",
+      "name": "Herman Kudria",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9007211?v=4",
+      "profile": "https://www.linkedin.com/in/herman-kudria-10868b207/",
+      "contributions": [
+        "plugin"
+      ]
     }
-  ]
+  ],
+  "commitType": "docs"
 }
