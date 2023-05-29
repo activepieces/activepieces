@@ -9,6 +9,7 @@ export const http = createPiece({
 	description: 'Sens HTTP requests and return responses',
 	logoUrl: 'https://cdn.activepieces.com/pieces/http.png',
 	version: packageJson.version,
+	minimumSupportedRelease: '0.3.15',
 	actions: [httpSendRequestAction, httpReturnResponse],
 	authors: ['khaledmashaly', 'bibhuty-did-this'],
 	triggers: [
