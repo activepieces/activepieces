@@ -11,7 +11,7 @@ import {
 import { BaseActionHandler, InitStepOutputParams } from './action-handler';
 import { globals } from '../globals';
 import { isNil } from 'lodash';
-import { pieceHelper } from '../helper/piece-helper';
+import { pieceHelper } from '../helper/action-helper';
 import { createContextStore } from '../services/storage.service';
 import { connectionManager } from '../services/connections.service';
 import { Utils } from '../utils';

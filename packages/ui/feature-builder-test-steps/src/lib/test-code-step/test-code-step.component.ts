@@ -9,6 +9,7 @@ import {
   distinctUntilChanged,
   forkJoin,
   map,
+  shareReplay,
   switchMap,
   take,
   tap,
@@ -16,7 +17,7 @@ import {
 import {
   ActionType,
   CodeAction,
-  CodeExecutionResult,
+  CreateStepRunResponse,
 } from '@activepieces/shared';
 import { Store } from '@ngrx/store';
 import { TestStepCoreComponent } from '../test-steps-core.component';
@@ -31,7 +32,7 @@ export class TestCodeStepComponent extends TestStepCoreComponent {
   testing$: Subject<boolean> = new Subject();
   startTest$: Observable<void>;
   testDialogClosed$: Observable<void>;
-  stepTest$: Observable<CodeExecutionResult>;
+  stepTest$: Observable<CreateStepRunResponse>;
   lastTestResult$: Observable<unknown | undefined>;
   saveTestResult$: Observable<void>;
   saveStepAfterTesting$: Observable<void>;
@@ -56,16 +57,15 @@ export class TestCodeStepComponent extends TestStepCoreComponent {
 
   testStep() {
     this.testing$.next(true);
-    const testCodeParams$ = forkJoin({
+    this.stepTest$ = forkJoin({
       step: this.store.select(BuilderSelectors.selectCurrentStep).pipe(take(1)),
       flowVersionId: this.store
         .select(BuilderSelectors.selectCurrentFlowVersionId)
         .pipe(take(1)),
-    });
-    this.stepTest$ = testCodeParams$.pipe(
+    }).pipe(
       switchMap((params) => {
         if (params.step && params.flowVersionId)
-          return this.testStepService.testPieceOrCodeStep<CodeExecutionResult>({
+          return this.testStepService.testPieceOrCodeStep({
             stepName: params.step.name,
             flowVersionId: params.flowVersionId,
           });
@@ -73,14 +73,15 @@ export class TestCodeStepComponent extends TestStepCoreComponent {
           `Flow version Id or step name are undefined, step:${params.step} versionId:${params.flowVersionId}`
         );
       }),
-      map((result) => result.output),
       tap((result) => {
         this.saveTestResult(result);
         this.testing$.next(false);
-      })
+      }),
+      shareReplay(1)
     );
   }
-  saveTestResult(result: CodeExecutionResult) {
+
+  saveTestResult(result: CreateStepRunResponse) {
     if (!result.standardError) {
       this.saveStepAfterTesting$ = this.store
         .select(BuilderSelectors.selectCurrentStep)
@@ -88,7 +89,6 @@ export class TestCodeStepComponent extends TestStepCoreComponent {
           take(1),
           tap((step) => {
             if (step && step.type === ActionType.CODE) {
-              debugger;
               const clone: CodeAction = {
                 ...step,
                 settings: {

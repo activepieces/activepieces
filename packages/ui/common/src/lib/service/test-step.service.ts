@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Subject } from 'rxjs';
 import {
-  CodeExecutionResult,
+  CreateStepRunResponse,
   SeekPage,
   TriggerEvent,
 } from '@activepieces/shared';
@@ -37,11 +37,8 @@ export class TestStepService {
       }
     );
   }
-  testPieceOrCodeStep<T extends CodeExecutionResult | unknown>(req: {
-    stepName: string;
-    flowVersionId: string;
-  }) {
-    return this.http.post<{ output: T; success: boolean }>(
+  testPieceOrCodeStep(req: { stepName: string; flowVersionId: string }) {
+    return this.http.post<CreateStepRunResponse>(
       environment.apiUrl + '/step-run',
       req
     );

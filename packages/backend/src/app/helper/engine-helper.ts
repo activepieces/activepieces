@@ -17,6 +17,7 @@ import {
     EngineResponseStatus,
     ActivepiecesError,
     ErrorCode,
+    ExecuteCodeOperation,
 } from '@activepieces/shared'
 import { Sandbox, sandboxManager } from '../workers/sandbox'
 import { system } from './system/system'
@@ -52,15 +53,20 @@ export type EngineHelperPropResult = DropdownState<unknown> | Record<string, Dyn
 
 export type EngineHelperActionResult = ExecuteActionResponse
 
+export type EngineHelperCodeResult = ExecuteActionResponse
+
 export type EngineHelperResult =
     | EngineHelperFlowResult
     | EngineHelperTriggerResult
     | EngineHelperPropResult
+    | EngineHelperCodeResult
     | EngineHelperActionResult
 
 export type EngineHelperResponse<Result extends EngineHelperResult> = {
     status: EngineResponseStatus
     result: Result
+    standardError: string
+    standardOutput: string
 }
 
 
@@ -154,6 +160,8 @@ const execute = async <Result extends EngineHelperResult>(
     const response = {
         status: sandboxResponse.verdict,
         result,
+        standardError: sandboxResponse.standardError,
+        standardOutput: sandboxResponse.standardOutput,
     }
 
     logger.trace(response, '[EngineHelper#response] response')
@@ -231,6 +239,28 @@ export const engineHelper = {
         try {
             return await execute(
                 EngineOperationType.EXECUTE_PROPERTY,
+                sandbox,
+                input,
+            )
+        }
+        finally {
+            await sandboxManager.returnSandbox(sandbox.boxId)
+        }
+    },
+
+    async executeCode(operation: ExecuteCodeOperation): Promise<EngineHelperResponse<EngineHelperCodeResult>> {
+        logger.debug(operation, '[EngineHelper#executeAction] operation')
+
+        const sandbox = await sandboxManager.obtainSandbox(`${apId()}`)
+        await sandbox.recreate()
+        const input = {
+            ...operation,
+            workerToken: await generateWorkerToken({ projectId: operation.projectId }),
+        }
+
+        try {
+            return execute(
+                EngineOperationType.EXECUTE_CODE,
                 sandbox,
                 input,
             )

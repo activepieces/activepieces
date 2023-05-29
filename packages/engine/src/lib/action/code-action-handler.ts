@@ -1,5 +1,4 @@
 import { VariableService } from '../services/variable-service';
-import { CodeExecutor } from '../executors/code-executer';
 import {
   Action,
   ActionType,
@@ -11,6 +10,7 @@ import {
 import { BaseActionHandler, InitStepOutputParams } from './action-handler';
 import { globals } from '../globals';
 import { isNil } from 'lodash';
+import { codeExecutor } from '../executors/code-executer';
 
 type CtorParams = {
   currentAction: CodeAction
@@ -67,8 +67,6 @@ export class CodeActionHandler extends BaseActionHandler<CodeAction> {
     }
 
     try {
-      const codeExecutor = new CodeExecutor()
-
       stepOutput.output = await codeExecutor.executeCode(
         artifactPackagedId,
         resolvedInput

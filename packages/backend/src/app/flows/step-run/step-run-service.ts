@@ -2,7 +2,7 @@ import {
     ActionType,
     ActivepiecesError,
     CodeAction,
-    CodeRunStatus,
+    CreateStepRunResponse,
     ErrorCode,
     ExecuteActionOperation,
     flowHelper,
@@ -16,13 +16,8 @@ import { logger } from '../../helper/logger'
 import { get, isNil } from 'lodash'
 import { engineHelper } from '../../helper/engine-helper'
 import { flowVersionService } from '../flow-version/flow-version.service'
-import { codeRunner } from '../../workers/code-worker/code-runner'
 import { fileService } from '../../file/file.service'
-
-type CreateReturn = {
-    success: boolean
-    output: unknown
-}
+import { codeBuilder } from '../../workers/code-worker/code-builder'
 
 type CreateParams = {
     projectId: ProjectId
@@ -91,7 +86,7 @@ const generateTestExecutionContext = (flowVersion: FlowVersion): Record<string, 
 }
 
 export const stepRunService = {
-    async create({ projectId, flowVersionId, stepName }: CreateParams): Promise<CreateReturn> {
+    async create({ projectId, flowVersionId, stepName }: CreateParams): Promise<CreateStepRunResponse> {
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
         const step = flowHelper.getStep(flowVersion, stepName)
 
@@ -118,7 +113,7 @@ export const stepRunService = {
 
 async function executePiece({ step, testExecutionContext, projectId, flowVersionId, flowVersion }: {
     step: PieceAction, testExecutionContext: Record<string, unknown>, projectId: ProjectId, flowVersionId: FlowVersionId, flowVersion: FlowVersion
-}): Promise<CreateReturn> {
+}): Promise<CreateStepRunResponse> {
     const { pieceName, pieceVersion, actionName, input } = step.settings
 
     if (isNil(actionName)) {
@@ -139,7 +134,7 @@ async function executePiece({ step, testExecutionContext, projectId, flowVersion
         projectId,
     }
 
-    const {result} = await engineHelper.executeAction(operation)
+    const {result, standardError, standardOutput} = await engineHelper.executeAction(operation)
     if (result.success) {
         step.settings.inputUiInfo.currentSelectedData = result.output
         await flowVersionService.overwriteVersion(flowVersionId, flowVersion)
@@ -147,17 +142,28 @@ async function executePiece({ step, testExecutionContext, projectId, flowVersion
     return {
         success: result.success,
         output: result.output,
+        standardError: standardError,
+        standardOutput: standardOutput,
     }
 }
 
-async function executeCode({ step, testExecutionContext, projectId }: { step: CodeAction, testExecutionContext: Record<string, unknown>, projectId: ProjectId }): Promise<CreateReturn> {
+async function executeCode({ step, testExecutionContext, projectId }: { step: CodeAction, testExecutionContext: Record<string, unknown>, projectId: ProjectId }): Promise<CreateStepRunResponse> {
     const file = await fileService.getOneOrThrow({
         projectId,
         fileId: step.settings.artifactSourceId!,
     })
-    const result = await codeRunner.run(file.data, testExecutionContext)
+    const bundledCode = await codeBuilder.build(file.data)
+
+    const {result, standardError, standardOutput} = await engineHelper.executeCode({
+        codeBase64: bundledCode.toString('base64'),
+        input: step.settings.input,
+        testExecutionContext,
+        projectId,
+    })
     return {
-        success: result.verdict === CodeRunStatus.OK,
-        output: result,
+        success: result.success,
+        output: result.output,
+        standardError: standardError,
+        standardOutput: standardOutput,
     }
 }

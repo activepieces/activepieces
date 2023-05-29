@@ -5,8 +5,7 @@ import {
   MatDialogRef,
   MAT_DIALOG_DATA,
 } from '@angular/material/dialog';
-import { forkJoin, map, Observable, switchMap, take, tap } from 'rxjs';
-import { CodeExecutionResult } from '@activepieces/shared';
+import { forkJoin, Observable, switchMap, take, tap } from 'rxjs';
 import { CodeArtifactForm } from '../code-artifact-form-control.component';
 import { SelectedFileInFullscreenCodeEditor } from '../selected-file-in-fullscreeen-code-editor.enum';
 import { AddNpmPackageModalComponent } from './add-npm-package-modal/add-npm-package-modal.component';
@@ -18,6 +17,7 @@ import {
 } from '@activepieces/ui/feature-builder-store';
 import { TestStepService } from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
+import { CreateStepRunResponse } from '@activepieces/shared';
 
 type PackageName = string;
 type PackageVersion = string;
@@ -33,7 +33,7 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
   codeFilesForm: FormGroup<CodeArtifactForm>;
   readOnly: boolean;
   selectedFile = SelectedFileInFullscreenCodeEditor.CONTENT;
-  executeCodeTest$: Observable<CodeExecutionResult>;
+  executeCodeTest$: Observable<CreateStepRunResponse>;
   codeEditorOptions = {
     minimap: { enabled: false },
     theme: 'vs',
@@ -149,16 +149,10 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
             `Flow version Id or step name are undefined, step:${params.step} versionId:${params.flowVersionId}`
           );
         }
-        return this.testStepService
-          .testPieceOrCodeStep<CodeExecutionResult>({
-            stepName: params.step.name,
-            flowVersionId: params.flowVersionId,
-          })
-          .pipe(
-            map((result) => {
-              return result.output;
-            })
-          );
+        return this.testStepService.testPieceOrCodeStep({
+          stepName: params.step.name,
+          flowVersionId: params.flowVersionId,
+        });
       }),
       tap((result) => {
         const outputResult = this.codeService.beautifyJson(result.output);
@@ -175,7 +169,7 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
     );
   }
 
-  getConsoleResult(codeTestExecutionResult: CodeExecutionResult) {
+  getConsoleResult(codeTestExecutionResult: CreateStepRunResponse) {
     if (codeTestExecutionResult.standardError) {
       return `${codeTestExecutionResult.standardOutput} \n---------error-------\n ${codeTestExecutionResult.standardError}`;
     }
