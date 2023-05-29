@@ -91,10 +91,7 @@ const finishExecution = async (params: FinishExecutionParams): Promise<void> => 
     if (executionOutput.status === ExecutionOutputStatus.PAUSED) {
         await flowRunService.pause({
             flowRunId,
-            pauseMetadata: {
-                ...executionOutput.pauseMetadata,
-                executionState: executionOutput.executionState,
-            },
+            pauseMetadata: executionOutput.pauseMetadata,
         })
     }
     else {
@@ -142,10 +139,13 @@ const loadInputAndLogFileId = async ({ jobData }: LoadInputAndLogFileIdParams): 
         projectId: jobData.projectId,
     })
 
+    const serializedExecutionOutput = logFile.data.toString('utf-8')
+    const executionOutput = JSON.parse(serializedExecutionOutput) as ExecutionOutput
+
     return {
         input: {
             executionType: ExecutionType.RESUME,
-            executionState: flowRun.pauseMetadata.executionState,
+            executionState: executionOutput.executionState,
             resumeStepMetadata: flowRun.pauseMetadata.resumeStepMetadata,
             ...baseInput,
         },
