@@ -1,18 +1,23 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup, UntypedFormBuilder } from '@angular/forms';
 import {
   MatDialog,
   MatDialogRef,
   MAT_DIALOG_DATA,
 } from '@angular/material/dialog';
-import { filter, Observable, switchMap, tap } from 'rxjs';
+import { forkJoin, map, Observable, switchMap, take, tap } from 'rxjs';
 import { CodeExecutionResult } from '@activepieces/shared';
 import { CodeArtifactForm } from '../code-artifact-form-control.component';
 import { SelectedFileInFullscreenCodeEditor } from '../selected-file-in-fullscreeen-code-editor.enum';
 import { AddNpmPackageModalComponent } from './add-npm-package-modal/add-npm-package-modal.component';
 import { SelectedTabInFullscreenCodeEditor } from './selected-tab-in-fullscreen-code-editor.enum';
-import { TestCodeFormModalComponent } from './test-code-form-modal/test-code-form-modal.component';
-import { CodeService } from '@activepieces/ui/feature-builder-store';
+
+import {
+  BuilderSelectors,
+  CodeService,
+} from '@activepieces/ui/feature-builder-store';
+import { TestStepService } from '@activepieces/ui/common';
+import { Store } from '@ngrx/store';
 
 type PackageName = string;
 type PackageVersion = string;
@@ -65,7 +70,10 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA)
     public state: { codeFilesForm: FormGroup; readOnly: boolean },
     private dialogRef: MatDialogRef<CodeArtifactControlFullscreenComponent>,
-    private dialogService: MatDialog
+    private dialogService: MatDialog,
+    private testStepService: TestStepService,
+    private store: Store,
+    private cd: ChangeDetectorRef
   ) {
     this.testResultForm = this.formBuilder.group({
       outputResult: new FormControl(),
@@ -125,33 +133,46 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
     }
   }
   openTestCodeModal() {
-    this.executeCodeTest$ = this.dialogService
-      .open(TestCodeFormModalComponent)
-      .afterClosed()
-      .pipe(
-        filter((res) => !!res),
-        tap(() => {
-          this.testResultForm.setValue({ outputResult: '', consoleResult: '' });
-          this.testLoading = true;
-        }),
-        switchMap((context) => {
-          return this.codeService.executeTest(
-            this.codeFilesForm.getRawValue(),
-            context
+    this.testResultForm.setValue({ outputResult: '', consoleResult: '' });
+    this.testLoading = true;
+    const testCodeParams$ = forkJoin({
+      step: this.store.select(BuilderSelectors.selectCurrentStep).pipe(take(1)),
+      flowVersionId: this.store
+        .select(BuilderSelectors.selectCurrentFlowVersionId)
+        .pipe(take(1)),
+    });
+
+    this.executeCodeTest$ = testCodeParams$.pipe(
+      switchMap((params) => {
+        if (!params.step || !params.flowVersionId) {
+          throw Error(
+            `Flow version Id or step name are undefined, step:${params.step} versionId:${params.flowVersionId}`
           );
-        }),
-        tap((result) => {
-          const outputResult = this.codeService.beautifyJson(result.output);
-          const consoleResult = this.getConsoleResult(result);
-          this.testResultForm.patchValue({
-            outputResult: outputResult
-              ? outputResult
-              : 'No output returned, check logs in case of errors',
-            consoleResult: consoleResult,
-          });
-          this.testLoading = false;
-        })
-      );
+        }
+        return this.testStepService
+          .testPieceOrCodeStep<CodeExecutionResult>({
+            stepName: params.step.name,
+            flowVersionId: params.flowVersionId,
+          })
+          .pipe(
+            map((result) => {
+              return result.output;
+            })
+          );
+      }),
+      tap((result) => {
+        const outputResult = this.codeService.beautifyJson(result.output);
+        const consoleResult = this.getConsoleResult(result);
+        this.testResultForm.patchValue({
+          outputResult: outputResult
+            ? outputResult
+            : 'No output returned, check logs in case of errors',
+          consoleResult: consoleResult,
+        });
+        this.testLoading = false;
+        this.cd.markForCheck();
+      })
+    );
   }
 
   getConsoleResult(codeTestExecutionResult: CodeExecutionResult) {

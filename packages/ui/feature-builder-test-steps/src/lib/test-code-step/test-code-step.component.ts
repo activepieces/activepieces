@@ -1,19 +1,14 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import {
   BuilderSelectors,
-  CodeService,
   FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
 import {
   Observable,
   Subject,
   distinctUntilChanged,
-  filter,
   forkJoin,
-  from,
   map,
-  of,
-  shareReplay,
   switchMap,
   take,
   tap,
@@ -21,11 +16,8 @@ import {
 import {
   ActionType,
   CodeAction,
-  CodeActionSettings,
   CodeExecutionResult,
 } from '@activepieces/shared';
-import { MatDialog } from '@angular/material/dialog';
-import { TestCodeFormModalComponent } from '@activepieces/ui/feature-builder-form-controls';
 import { Store } from '@ngrx/store';
 import { TestStepCoreComponent } from '../test-steps-core.component';
 import { TestStepService } from '@activepieces/ui/common';
@@ -44,12 +36,7 @@ export class TestCodeStepComponent extends TestStepCoreComponent {
   saveTestResult$: Observable<void>;
   saveStepAfterTesting$: Observable<void>;
   lastTestDate$: Observable<string | undefined>;
-  constructor(
-    private codeService: CodeService,
-    private dialogService: MatDialog,
-    store: Store,
-    testStepService: TestStepService
-  ) {
+  constructor(store: Store, testStepService: TestStepService) {
     super(testStepService, store);
     this.lastTestResult$ = this.store
       .select(BuilderSelectors.selectStepTestSampleData)
@@ -68,49 +55,30 @@ export class TestCodeStepComponent extends TestStepCoreComponent {
   }
 
   testStep() {
-    this.startTest$ = this.store
-      .select(BuilderSelectors.selectCurrentStep)
-      .pipe(
-        take(1),
-        tap((step) => {
-          if (step?.type === ActionType.CODE) {
-            const codeStepSettings = step.settings;
-            const testData = codeStepSettings.input;
-            const artifact$ = this.getArtifactObs$(codeStepSettings);
-            this.testDialogClosed$ = this.dialogService
-              .open(TestCodeFormModalComponent, {
-                data: { testData: testData },
-              })
-              .afterClosed()
-              .pipe(
-                filter((res) => {
-                  return !!res;
-                }),
-                tap((context) => {
-                  this.testing$.next(true);
-                  this.stepTest$ = forkJoin({
-                    context: of(context),
-                    artifact: artifact$,
-                  }).pipe(
-                    switchMap((res) => {
-                      return this.codeService.executeTest(
-                        res.artifact,
-                        res.context
-                      );
-                    }),
-                    tap((res) => {
-                      this.testStepService.elevateResizer$.next(true);
-                      this.saveTestResult(res);
-                      this.testing$.next(false);
-                    }),
-                    shareReplay(1)
-                  );
-                })
-              );
-          }
-        }),
-        map(() => void 0)
-      );
+    this.testing$.next(true);
+    const testCodeParams$ = forkJoin({
+      step: this.store.select(BuilderSelectors.selectCurrentStep).pipe(take(1)),
+      flowVersionId: this.store
+        .select(BuilderSelectors.selectCurrentFlowVersionId)
+        .pipe(take(1)),
+    });
+    this.stepTest$ = testCodeParams$.pipe(
+      switchMap((params) => {
+        if (params.step && params.flowVersionId)
+          return this.testStepService.testPieceOrCodeStep<CodeExecutionResult>({
+            stepName: params.step.name,
+            flowVersionId: params.flowVersionId,
+          });
+        throw Error(
+          `Flow version Id or step name are undefined, step:${params.step} versionId:${params.flowVersionId}`
+        );
+      }),
+      map((result) => result.output),
+      tap((result) => {
+        this.saveTestResult(result);
+        this.testing$.next(false);
+      })
+    );
   }
   saveTestResult(result: CodeExecutionResult) {
     if (!result.standardError) {
@@ -120,6 +88,7 @@ export class TestCodeStepComponent extends TestStepCoreComponent {
           take(1),
           tap((step) => {
             if (step && step.type === ActionType.CODE) {
+              debugger;
               const clone: CodeAction = {
                 ...step,
                 settings: {
@@ -144,15 +113,6 @@ export class TestCodeStepComponent extends TestStepCoreComponent {
           }),
           map(() => void 0)
         );
-    }
-  }
-  getArtifactObs$(codeStepSettings: CodeActionSettings) {
-    if (codeStepSettings.artifactSourceId) {
-      return this.codeService.downloadAndReadFile(
-        CodeService.constructFileUrl(codeStepSettings.artifactSourceId)
-      );
-    } else {
-      return from(this.codeService.readFile(atob(codeStepSettings.artifact!)));
     }
   }
 }

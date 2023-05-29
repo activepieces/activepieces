@@ -1,7 +1,11 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Subject } from 'rxjs';
-import { SeekPage, TriggerEvent } from '@activepieces/shared';
+import {
+  CodeExecutionResult,
+  SeekPage,
+  TriggerEvent,
+} from '@activepieces/shared';
 import { environment } from '../environments/environment';
 
 @Injectable({
@@ -33,8 +37,11 @@ export class TestStepService {
       }
     );
   }
-  testPieceStep(req: { stepName: string; flowVersionId: string }) {
-    return this.http.post<{ output: unknown; success: boolean }>(
+  testPieceOrCodeStep<T extends CodeExecutionResult | unknown>(req: {
+    stepName: string;
+    flowVersionId: string;
+  }) {
+    return this.http.post<{ output: T; success: boolean }>(
       environment.apiUrl + '/step-run',
       req
     );

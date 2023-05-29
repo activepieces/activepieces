@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import JSZip from 'jszip';
 import { catchError, from, map, Observable, of, switchMap } from 'rxjs';
 import { Artifact, environment } from '@activepieces/ui/common';
-import { CodeExecutionResult } from '@activepieces/shared';
+
 type NpmPkg = {
   'dist-tags': {
     latest: string;
