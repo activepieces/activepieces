@@ -1,7 +1,14 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { GlobalBuilderState } from '../../model/global-builder-state.model';
 
-import { AppConnection, Flow, FlowRun, flowHelper } from '@activepieces/shared';
+import {
+  AppConnection,
+  ExecutionOutputStatus,
+  Flow,
+  FlowRun,
+  StepOutput,
+  flowHelper,
+} from '@activepieces/shared';
 import { ViewModeEnum } from '../../model/enums/view-mode.enum';
 
 import { FlowItemsDetailsState } from '../../model/flow-items-details-state.model';
@@ -72,6 +79,7 @@ export const selectCurrentFlow = createSelector(
     return state.flowState.flow;
   }
 );
+
 export const selectCurrentFlowFolderName = createSelector(
   selectGlobalBuilderState,
   (state: GlobalBuilderState) => {
@@ -189,6 +197,35 @@ export const selectCurrentFlowRunStatus = createSelector(
       return undefined;
     }
     return run.status;
+  }
+);
+const selectStepResultsAccordion = createSelector(
+  selectCurrentFlow,
+  selectCurrentFlowRun,
+  (flow, run) => {
+    if (!run || run.status === ExecutionOutputStatus.RUNNING) {
+      return [];
+    }
+    const steps = flowHelper.getAllSteps(flow.version);
+    const results: {
+      result: StepOutput;
+      stepName: string;
+    }[] = [];
+    const executionState = run.executionOutput?.executionState
+      ? run.executionOutput?.executionState
+      : run.pauseMetadata?.executionState;
+    if (!executionState) {
+      return [];
+    }
+    steps.forEach((s) => {
+      if (executionState?.steps[s.name]) {
+        results.push({
+          result: executionState.steps[s.name],
+          stepName: s.name,
+        });
+      }
+    });
+    return results;
   }
 );
 const selectBuidlerState = createSelector(
@@ -502,4 +539,5 @@ export const BuilderSelectors = {
   selectIsGeneratingFlowComponentOpen,
   selectMissingStepRecommendedFlowItemsDetails,
   selectStepTestSampleDataStringified,
+  selectStepResultsAccordion,
 };
