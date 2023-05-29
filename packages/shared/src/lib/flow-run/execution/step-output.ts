@@ -9,6 +9,12 @@ export enum StepOutputStatus {
   SUCCEEDED = 'SUCCEEDED',
 }
 
+export type StopResponse = {
+  status?: number
+  body?: unknown
+  headers?: Record<string, string>
+}
+
 export type StepOutput<T extends ActionType = ActionType, O = any> = {
   type: T
   status: StepOutputStatus
@@ -18,7 +24,7 @@ export type StepOutput<T extends ActionType = ActionType, O = any> = {
   errorMessage?: unknown;
   standardOutput?: unknown;
   pauseMetadata?: Omit<PauseMetadata, 'executionState'>
-  stopResponse?: unknown
+  stopResponse?: StopResponse
 }
 
 type LoopOnItemsOutput = {

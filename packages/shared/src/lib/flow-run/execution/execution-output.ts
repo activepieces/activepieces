@@ -1,5 +1,6 @@
 import { ActionType } from '../../flows/actions/action';
 import {ExecutionState} from './execution-state';
+import { StopResponse } from './step-output';
 
 export enum ExecutionOutputStatus {
   FAILED = 'FAILED',
@@ -80,7 +81,7 @@ export type FinishExecutionOutput = BaseExecutionOutput<
 >
 
 export type StopExecutionOutput = BaseExecutionOutput<ExecutionOutputStatus.STOPPED> & {
-  stopResponse?: unknown
+  stopResponse?: StopResponse
 }
 
 export type ExecutionOutput =

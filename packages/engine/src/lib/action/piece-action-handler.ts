@@ -95,9 +95,13 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
   }
 
   private generateStopHook({ stepOutput }: GenerateStopHookParams): StopHook {
-    return ({ response }: StopHookParams) => {
+    return ({ body, status, headers }: StopHookParams) => {
       stepOutput.status = StepOutputStatus.STOPPED
-      stepOutput.stopResponse = response
+      stepOutput.stopResponse = {
+        body,
+        status,
+        headers,
+      }
     }
   }
 
