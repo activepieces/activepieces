@@ -60,24 +60,6 @@ export class CodeService {
     return this.cachedFile.get(url);
   }
 
-  executeTest(
-    artifact: Artifact,
-    context: any
-  ): Observable<CodeExecutionResult> {
-    return CodeService.zipFile(artifact).pipe(
-      switchMap((zippedArtifact) => {
-        const zippedArtifactEncodedB64 = btoa(zippedArtifact);
-        return this.http.post<CodeExecutionResult>(
-          environment.apiUrl + '/codes/execute',
-          {
-            artifact: zippedArtifactEncodedB64,
-            input: context,
-          }
-        );
-      })
-    );
-  }
-
   public helloWorldBase64(): string {
     return 'UEsDBBQDAAAIAF2qt1ZI5no5OgAAADwAAAAIAAAAaW5kZXgudHNLrSjILypRSM7PKwaRKakKtgqJxZV5yQoamXkFpSXFmgq2dgrVXApAUJRaUlqUp1BSVJpqzVVrzQUAUEsDBAoDAAAAAIGZWlYaUtEIHAAAABwAAAAMAAAAcGFja2FnZS5qc29uewogICJkZXBlbmRlbmNpZXMiOiB7CiAgfQp9ClBLAQI/AxQDAAAIAF2qt1ZI5no5OgAAADwAAAAIACQAAAAAAAAAIIC0gQAAAABpbmRleC50cwoAIAAAAAAAAQAYAICms2urjdkBgKaza6uN2QGAprNrq43ZAVBLAQI/AwoDAAAAAIGZWlYaUtEIHAAAABwAAAAMACQAAAAAAAAAIIC0gWAAAABwYWNrYWdlLmpzb24KACAAAAAAAAEAGAAAXUhxBUrZAQAvJWWrjdkBAC8lZauN2QFQSwUGAAAAAAIAAgC4AAAApgAAAAAA';
   }
