@@ -27,7 +27,7 @@ export const UpdateObjectById = createAction({
     },
     async run(context) {
         const { authentication, object, id, data } = context.propsValue;
-        const response = await callSalesforceApi(HttpMethod.PATCH, authentication, `/services/data/v58.0/sobjects/${object}/${id}`, {
+        const response = await callSalesforceApi(HttpMethod.PATCH, authentication, `/services/data/v56.0/sobjects/${object}/${id}`, {
             ...data
         });
         return response;

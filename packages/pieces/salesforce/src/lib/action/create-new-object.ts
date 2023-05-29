@@ -21,7 +21,7 @@ export const createNewObject = createAction({
     },
     async run(context) {
         const { authentication, data, object} = context.propsValue;
-        const response = await callSalesforceApi(HttpMethod.POST, authentication, `/services/data/v58.0/sobjects/${object}`, {
+        const response = await callSalesforceApi(HttpMethod.POST, authentication, `/services/data/v56.0/sobjects/${object}`, {
             ...data
         });
         return response;
