@@ -292,6 +292,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "Abdallah-Alwarawreh",
+      "name": "[NULL] Dev",
+      "avatar_url": "https://avatars.githubusercontent.com/u/66683380?v=4",
+      "profile": "http://nulldev.imagefoo.com/",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
