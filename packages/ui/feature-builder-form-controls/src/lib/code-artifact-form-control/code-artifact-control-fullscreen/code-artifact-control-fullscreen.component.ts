@@ -33,7 +33,7 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
   codeFilesForm: FormGroup<CodeArtifactForm>;
   readOnly: boolean;
   selectedFile = SelectedFileInFullscreenCodeEditor.CONTENT;
-  executeCodeTest$: Observable<CreateStepRunResponse>;
+  executeCodeTest$: Observable<StepRunResponse>;
   codeEditorOptions = {
     minimap: { enabled: false },
     theme: 'vs',
@@ -169,7 +169,7 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
     );
   }
 
-  getConsoleResult(codeTestExecutionResult: CreateStepRunResponse) {
+  getConsoleResult(codeTestExecutionResult: StepRunResponse) {
     if (codeTestExecutionResult.standardError) {
       return `${codeTestExecutionResult.standardOutput} \n---------error-------\n ${codeTestExecutionResult.standardError}`;
     }

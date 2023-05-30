@@ -28,7 +28,7 @@ export class TestCodeStepComponent extends TestStepCoreComponent {
   testing$: Subject<boolean> = new Subject();
   startTest$: Observable<void>;
   testDialogClosed$: Observable<void>;
-  stepTest$: Observable<CreateStepRunResponse>;
+  stepTest$: Observable<StepRunResponse>;
   lastTestResult$: Observable<unknown | undefined>;
   saveTestResult$: Observable<void>;
   saveStepAfterTesting$: Observable<void>;

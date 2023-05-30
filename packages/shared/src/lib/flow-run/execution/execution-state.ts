@@ -6,14 +6,37 @@ type GetStepOutputParams = {
   ancestors: [string, number][]
 }
 
+type AdjustTaskCountParams = {
+  stepOutput: StepOutput
+}
+
 export class ExecutionState {
+  private _taskCount = 0
   steps: Record<string, StepOutput> = {};
   lastStepState: Record<string, unknown> = {};
 
   constructor(executionState?: ExecutionState) {
     if (executionState) {
+      this._taskCount = executionState.taskCount
       this.steps = executionState.steps
       this.lastStepState = executionState.lastStepState
+    }
+  }
+
+  get taskCount() {
+    return this._taskCount
+  }
+
+  private adjustTaskCount({ stepOutput }: AdjustTaskCountParams) {
+    const nonCountableSteps = [
+      ActionType.BRANCH,
+      ActionType.LOOP_ON_ITEMS,
+    ]
+
+    const stepIsCountable = !nonCountableSteps.includes(stepOutput.type)
+
+    if (stepIsCountable) {
+      this._taskCount += 1
     }
   }
 
@@ -23,6 +46,11 @@ export class ExecutionState {
     ancestors: [string, number][]
   ) {
     const targetMap: Record<string, StepOutput> = this.getTargetMap(ancestors);
+
+    this.adjustTaskCount({
+      stepOutput,
+    })
+
     targetMap[stepName] = stepOutput;
     this.updateLastStep(stepOutput.output, stepName);
   }

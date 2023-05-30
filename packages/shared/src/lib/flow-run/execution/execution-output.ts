@@ -57,7 +57,6 @@ export enum PauseType {
 type BasePauseMetadata<T extends PauseType> = {
   type: T;
   resumeStepMetadata: ResumeStepMetadata;
-  executionState: ExecutionState;
 }
 
 export type DelayPauseMetadata = BasePauseMetadata<PauseType.DELAY> & {
@@ -68,7 +67,7 @@ export type PauseMetadata = DelayPauseMetadata
 
 
 export type PauseExecutionOutput = BaseExecutionOutput<ExecutionOutputStatus.PAUSED> & {
-  pauseMetadata: Omit<PauseMetadata, 'executionState'>
+  pauseMetadata: PauseMetadata
 }
 
 export type FinishExecutionOutput = BaseExecutionOutput<

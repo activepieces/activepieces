@@ -9,16 +9,6 @@ class Globals {
   private _projectId = '';
   private _apiUrl = '';
   private _flowId = '';
-  // One task is added because trigger is counted as a task
-  private _tasks = 1;
-
-  addOneTask(){
-    this._tasks++;
-  }
-
-  get tasks() {
-    return this._tasks;
-  }
 
   set flowId(_flowId: string) {
     this._flowId = _flowId;

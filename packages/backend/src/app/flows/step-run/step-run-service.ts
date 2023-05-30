@@ -147,7 +147,7 @@ async function executePiece({ step, testExecutionContext, projectId, flowVersion
     }
 }
 
-async function executeCode({ step, testExecutionContext, projectId }: { step: CodeAction, testExecutionContext: Record<string, unknown>, projectId: ProjectId }): Promise<CreateStepRunResponse> {
+async function executeCode({ step, testExecutionContext, projectId }: { step: CodeAction, testExecutionContext: Record<string, unknown>, projectId: ProjectId }): Promise<StepRunResponse> {
     const file = await fileService.getOneOrThrow({
         projectId,
         fileId: step.settings.artifactSourceId!,
