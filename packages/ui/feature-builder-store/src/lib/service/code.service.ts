@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import JSZip from 'jszip';
 import { catchError, from, map, Observable, of, switchMap } from 'rxjs';
 import { Artifact, environment } from '@activepieces/ui/common';
-import { CodeExecutionResult } from '@activepieces/shared';
+
 type NpmPkg = {
   'dist-tags': {
     latest: string;
@@ -58,24 +58,6 @@ export class CodeService {
       );
     }
     return this.cachedFile.get(url);
-  }
-
-  executeTest(
-    artifact: Artifact,
-    context: any
-  ): Observable<CodeExecutionResult> {
-    return CodeService.zipFile(artifact).pipe(
-      switchMap((zippedArtifact) => {
-        const zippedArtifactEncodedB64 = btoa(zippedArtifact);
-        return this.http.post<CodeExecutionResult>(
-          environment.apiUrl + '/codes/execute',
-          {
-            artifact: zippedArtifactEncodedB64,
-            input: context,
-          }
-        );
-      })
-    );
   }
 
   public helloWorldBase64(): string {

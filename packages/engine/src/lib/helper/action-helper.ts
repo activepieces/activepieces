@@ -11,12 +11,14 @@ import {
     PropertyType,
     StaticPropsValue,
 } from "@activepieces/pieces-framework";
+import fs from 'node:fs/promises';
 import {
     ActivepiecesError,
     ApEnvironment,
     ErrorCode,
     ExecuteActionOperation,
     ExecuteActionResponse,
+    ExecuteCodeOperation,
     ExecutePropsOptions,
     ExecutionState,
     ExecutionType,
@@ -29,6 +31,7 @@ import { createContextStore } from '../services/storage.service';
 import { globals } from '../globals';
 import { connectionService } from '../services/connections.service';
 import { Utils } from '../utils';
+import { codeExecutor } from '../executors/code-executer';
 
 type GetPackageNameParams = {
     pieceName: string
@@ -160,6 +163,31 @@ const resolveInput = async ({ input, executionContext = {} }: ResolveInputParams
 }
 
 export const pieceHelper = {
+    async executeCode(params: ExecuteCodeOperation): Promise<ExecuteActionResponse> {
+        const { codeBase64, input, testExecutionContext } = params;
+        const resolvedInput = await resolveInput({
+            input,
+            executionContext: testExecutionContext,
+        })
+        try {
+            const code = Buffer.from(codeBase64, 'base64').toString('utf-8');
+            const fileName = `${globals.codeDirectory}/code.js`;
+            await fs.mkdir(globals.codeDirectory, { recursive: true });  
+            await fs.writeFile(fileName, code, 'utf-8');
+            const result = await codeExecutor.executeCode('code', resolvedInput);
+            return {
+                success: true,
+                output: result,
+            };
+        } catch (e: any) {
+            // Don't remove this console.error, it's used in the UI to display the error
+            console.error(e);
+            return {
+                success: false,
+                output: undefined
+            };
+        }
+    },
     async executeAction(params: ExecuteActionOperation): Promise<ExecuteActionResponse> {
         const { actionName, pieceName, pieceVersion, input, testExecutionContext } = params;
 
@@ -206,7 +234,6 @@ export const pieceHelper = {
             return {
                 output: Utils.tryParseJson(e.message),
                 success: false,
-
             }
         }
     },

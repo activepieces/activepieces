@@ -76,7 +76,7 @@ export class TestPieceStepComponent extends TestStepCoreComponent {
           if (!res.flowVersionId || !res.stepName) {
             throw new Error('some test piece step params are missing');
           }
-          return this.testStepService.testPieceStep({
+          return this.testStepService.testPieceOrCodeStep({
             flowVersionId: res.flowVersionId,
             stepName: res.stepName,
           });

@@ -12,7 +12,6 @@ import { tokenVerifyMiddleware } from './app/authentication/token-verify-middlew
 import { storeEntryModule } from './app/store-entry/store-entry.module'
 import { flowRunModule } from './app/flows/flow-run/flow-run-module'
 import { flagModule } from './app/flags/flag.module'
-import { codeModule } from './app/workers/code-worker/code.module'
 import { flowWorkerModule } from './app/workers/flow-worker/flow-worker-module'
 import { webhookModule } from './app/webhooks/webhook-module'
 import { errorHandler } from './app/helper/error-handler'
@@ -92,7 +91,6 @@ app.register(fileModule)
 app.register(flagModule)
 app.register(storeEntryModule)
 app.register(flowModule)
-app.register(codeModule)
 app.register(flowWorkerModule)
 app.register(piecesController)
 app.register(flowInstanceModule)
@@ -111,7 +109,7 @@ app.get(
         const params = {
             'code': request.query.code,
         }
-        if (params.code === undefined) {
+        if (!params.code) {
             reply.send('The code is missing in url')
         }
         else {
