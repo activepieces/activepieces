@@ -23,7 +23,6 @@ export * from "./lib/pieces";
 export * from "./lib/store-entry/dto/store-entry-request";
 export * from "./lib/webhook";
 export * from './lib/flows/dto/count-flows-request'
-export * from "./lib/workers/code-worker/code-execution-result";
 export { ExecuteCodeRequest } from './lib/code/dto/code-request';
 export { AuthenticationResponse } from './lib/authentication/dto/authentication-response';
 export { SignUpRequest } from './lib/authentication/dto/sign-up-request';

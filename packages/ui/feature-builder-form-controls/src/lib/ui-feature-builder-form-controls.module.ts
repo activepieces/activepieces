@@ -9,7 +9,6 @@ import { CodeArtifactFormControlComponent } from './code-artifact-form-control/c
 import { DictionaryFormControlComponent } from './dictionary-form-control/dictionary-form-control.component';
 import { InterpolatingTextFormControlComponent } from './interpolating-text-form-control/interpolating-text-form-control.component';
 import { AddNpmPackageModalComponent } from './code-artifact-form-control/code-artifact-control-fullscreen/add-npm-package-modal/add-npm-package-modal.component';
-import { TestCodeFormModalComponent } from './code-artifact-form-control/code-artifact-control-fullscreen/test-code-form-modal/test-code-form-modal.component';
 import { CodeArtifactControlFullscreenComponent } from './code-artifact-form-control/code-artifact-control-fullscreen/code-artifact-control-fullscreen.component';
 import { MentionsListComponent } from './interpolating-text-form-control/mentions-list/mentions-list.component';
 import { BuilderAutocompleteMentionsDropdownComponent } from './interpolating-text-form-control/builder-autocomplete-mentions-dropdown/builder-autocomplete-mentions-dropdown.component';
@@ -40,7 +39,6 @@ const exportedDeclarations = [
   InterpolatingTextFormControlComponent,
   PiecePropertiesFormComponent,
   BuilderAutocompleteMentionsDropdownComponent,
-  TestCodeFormModalComponent,
 ];
 @NgModule({
   imports: [

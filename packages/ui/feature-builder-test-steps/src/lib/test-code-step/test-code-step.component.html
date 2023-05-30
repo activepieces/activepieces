@@ -8,7 +8,7 @@
             <div class="ap-flex ap-items-center">
                 <div class="ap-min-h-[48px] ap-gap-2  ap-flex ap-items-center">
                     <ng-container
-                        *ngIf="!(stepTest$ | async)?.standardError || (stepTest$ | async) === undefined; else errorTemplate">
+                        *ngIf="(stepTest$ | async)?.success === true || (!stepTest$ && (lastTestResult$ | async)) ; else errorTemplate">
                         <svg-icon src="assets/img/custom/success-step-result.svg"
                             [svgStyle]="{ width: '21px', height: '20px' }" matTooltip="Step succeeded"></svg-icon>
                         Tested Successfully
@@ -54,5 +54,4 @@
 </ng-template>
 <ng-container *ngIf="stepTest$ | async"></ng-container>
 <ng-container *ngIf="saveStepAfterTesting$ | async"></ng-container>
-<ng-container *ngIf="startTest$ | async"></ng-container>
 <ng-container *ngIf="testDialogClosed$ | async"></ng-container>
