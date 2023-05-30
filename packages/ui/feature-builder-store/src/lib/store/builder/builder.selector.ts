@@ -211,9 +211,7 @@ const selectStepResultsAccordion = createSelector(
       result: StepOutput;
       stepName: string;
     }[] = [];
-    const executionState = run.executionOutput?.executionState
-      ? run.executionOutput?.executionState
-      : run.pauseMetadata?.executionState;
+    const executionState = run.executionOutput?.executionState;
     if (!executionState) {
       return [];
     }

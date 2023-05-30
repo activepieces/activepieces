@@ -7,6 +7,10 @@
         <span class="ap-text-white">Run succeeded ({{ selectedRun.id }})</span>
         <div class="ap-flex-grow"></div>
       </ng-container>
+      <ng-container *ngSwitchCase="instanceRunStatus.STOPPED">
+        <span class="ap-text-white">Run succeeded ({{ selectedRun.id }})</span>
+        <div class="ap-flex-grow"></div>
+      </ng-container>
       <ng-container *ngSwitchCase="instanceRunStatus.FAILED">
         <span class="ap-text-white">Run failed ({{ selectedRun.id }})</span>
         <div class="ap-flex-grow"></div>

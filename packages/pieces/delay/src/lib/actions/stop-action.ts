@@ -14,7 +14,7 @@ export const stopAction = createAction({
     async run(ctx) {
         const { response } = ctx.propsValue
 
-        ctx.stopHook({
+        ctx.run.stop({
             response,
         })
 

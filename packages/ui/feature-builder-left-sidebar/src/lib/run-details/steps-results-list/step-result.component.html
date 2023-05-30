@@ -124,9 +124,10 @@
 <ng-container *ngIf="hideIterationInput$ | async"></ng-container>
 
 <ng-template #statusIconTemplate>
-  <svg-icon *ngIf="ActionStatus.SUCCEEDED === stepNameAndResult.result.status" matTooltip="Step succeeded"
-    src="assets/img/custom/success-step-result.svg" [svgStyle]="{ width: '21px', height: '20px' }"
-    class="icon-padding"></svg-icon>
+  <svg-icon
+    *ngIf="ActionStatus.SUCCEEDED === stepNameAndResult.result.status || ActionStatus.STOPPED === stepNameAndResult.result.status"
+    matTooltip="Step succeeded" src="assets/img/custom/success-step-result.svg"
+    [svgStyle]="{ width: '21px', height: '20px' }" class="icon-padding"></svg-icon>
   <svg-icon *ngIf="ActionStatus.FAILED === stepNameAndResult.result.status"
     src="assets/img/custom/failure-step-result.svg" [svgStyle]="{ width: '21px', height: '20px' }" class="icon-padding"
     matTooltip="Step failed"></svg-icon>

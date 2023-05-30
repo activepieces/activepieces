@@ -17,7 +17,7 @@ export const pauseAction = createAction({
         const { pause } = ctx.propsValue
 
         if (ctx.executionType === ExecutionType.BEGIN ) {
-            ctx.pauseHook({
+            ctx.run.pause({
                 pauseMetadata: {
                     type: PauseType.DELAY,
                     resumeDateTime: dayjs().add(pause, 'seconds').toISOString(),
