@@ -8,7 +8,7 @@ export const mysql = createPiece({
   displayName: "MySQL",
   logoUrl: "https://cdn.activepieces.com/pieces/mysql.png",
   version: packageJson.version,
-  authors: [],
+  authors: ["JanHolger"],
   actions,
   triggers: [],
 });
