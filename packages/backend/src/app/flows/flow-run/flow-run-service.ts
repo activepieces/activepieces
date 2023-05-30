@@ -27,7 +27,6 @@ import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
 import { logger } from '../../helper/logger'
 import { notifications } from '../../helper/notifications'
-import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity'
 import { flowService } from '../flow/flow.service'
 import { isNil } from 'lodash'
 
@@ -141,11 +140,12 @@ export const flowRunService = {
     async pause(params: PauseParams): Promise<void> {
         logger.info(`[FlowRunService#pause] flowRunId=${params.flowRunId} pauseType=${params.pauseMetadata.type}`)
 
-        const { flowRunId, pauseMetadata } = params
+        const { flowRunId, logFileId, pauseMetadata } = params
 
         await repo.update(flowRunId, {
             status: ExecutionOutputStatus.PAUSED,
-            pauseMetadata: pauseMetadata as QueryDeepPartialEntity<PauseMetadata>,
+            logsFileId: logFileId,
+            pauseMetadata,
         })
 
         const flowRun = await repo.findOneByOrFail({ id: flowRunId })
@@ -209,5 +209,6 @@ type StartParams = {
 
 type PauseParams = {
     flowRunId: FlowRunId
+    logFileId: FileId
     pauseMetadata: PauseMetadata
 }

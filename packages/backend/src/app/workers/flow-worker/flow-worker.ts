@@ -91,6 +91,7 @@ const finishExecution = async (params: FinishExecutionParams): Promise<void> => 
     if (executionOutput.status === ExecutionOutputStatus.PAUSED) {
         await flowRunService.pause({
             flowRunId,
+            logFileId,
             pauseMetadata: executionOutput.pauseMetadata,
         })
     }
