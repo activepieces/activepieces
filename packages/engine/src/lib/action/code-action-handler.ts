@@ -47,8 +47,6 @@ export class CodeActionHandler extends BaseActionHandler<CodeAction> {
   }
 
   override async execute(executionState: ExecutionState, ancestors: [string, number][]): Promise<StepOutput> {
-    globals.addOneTask()
-
     const stepOutput = await this.loadStepOutput({
       executionState,
       ancestors,

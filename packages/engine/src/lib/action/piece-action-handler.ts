@@ -149,8 +149,6 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
         throw new Error("Action name is not defined")
       }
 
-      globals.addOneTask()
-
       const action = await this.loadAction({
         pieceName,
         pieceVersion,
