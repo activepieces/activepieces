@@ -44,7 +44,7 @@ type FinishIterateFlowResponse = BaseIterateFlowResponse<
 >
 
 type PauseIterateFlowResponse = BaseIterateFlowResponse<ExecutionOutputStatus.PAUSED> & {
-  pauseMetadata: Omit<PauseMetadata, 'executionState'>
+  pauseMetadata: PauseMetadata
 }
 
 type StopIterateFlowResponse = BaseIterateFlowResponse<ExecutionOutputStatus.STOPPED> & {
@@ -116,7 +116,7 @@ export class FlowExecutor {
     })
   }
 
-  private generatePauseMetadata(params: GeneratePauseMetadata): Omit<PauseMetadata, 'executionState'> {
+  private generatePauseMetadata(params: GeneratePauseMetadata): PauseMetadata {
     const { actionHandler, stepOutput } = params
 
     switch(actionHandler.currentAction.type) {

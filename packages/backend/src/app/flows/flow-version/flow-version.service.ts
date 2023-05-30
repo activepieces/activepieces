@@ -523,7 +523,12 @@ async function deleteArtifact(projectId: ProjectId, codeSettings: CodeActionSett
 async function uploadArtifact(projectId: ProjectId, codeSettings: CodeActionSettings): Promise<CodeActionSettings> {
     if (codeSettings.artifact !== undefined) {
         const bufferFromBase64 = Buffer.from(codeSettings.artifact, 'base64')
-        const savedFile = await fileService.save(projectId, bufferFromBase64)
+
+        const savedFile = await fileService.save({
+            projectId,
+            data: bufferFromBase64,
+        })
+
         codeSettings.artifact = undefined
         codeSettings.artifactSourceId = savedFile.id
         codeSettings.artifactPackagedId = undefined

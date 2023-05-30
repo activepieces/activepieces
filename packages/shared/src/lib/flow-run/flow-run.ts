@@ -23,7 +23,7 @@ export type FlowRun = BaseModel<FlowRunId> & {
   startTime: string;
   finishTime: string;
   environment: RunEnvironment;
-  pauseMetadata?: PauseMetadata;
+  pauseMetadata?: PauseMetadata | null;
   executionOutput?: ExecutionOutput;
 }
 
