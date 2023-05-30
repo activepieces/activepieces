@@ -219,7 +219,7 @@ export class FlowExecutor {
         status: ExecutionOutputStatus.FAILED,
         executionState: this.executionState,
         duration: 0,
-        tasks: globals.tasks,
+        tasks: this.executionState.taskCount,
         errorMessage: {
           stepName: 'Flow Execution',
           errorMessage: (e as Error).message
@@ -234,7 +234,7 @@ export class FlowExecutor {
     const baseExecutionOutput = {
       executionState: this.executionState,
       duration: duration,
-      tasks: globals.tasks,
+      tasks: this.executionState.taskCount,
     }
 
     switch (iterateFlowResponse.status) {
