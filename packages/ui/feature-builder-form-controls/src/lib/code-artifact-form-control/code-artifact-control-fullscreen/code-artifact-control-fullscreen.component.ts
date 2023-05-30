@@ -17,7 +17,7 @@ import {
 } from '@activepieces/ui/feature-builder-store';
 import { TestStepService } from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
-import { CreateStepRunResponse } from '@activepieces/shared';
+import { StepRunResponse } from '@activepieces/shared';
 
 type PackageName = string;
 type PackageVersion = string;

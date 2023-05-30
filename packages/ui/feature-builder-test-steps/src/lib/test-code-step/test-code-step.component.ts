@@ -14,11 +14,7 @@ import {
   take,
   tap,
 } from 'rxjs';
-import {
-  ActionType,
-  CodeAction,
-  CreateStepRunResponse,
-} from '@activepieces/shared';
+import { ActionType, CodeAction, StepRunResponse } from '@activepieces/shared';
 import { Store } from '@ngrx/store';
 import { TestStepCoreComponent } from '../test-steps-core.component';
 import { TestStepService } from '@activepieces/ui/common';
@@ -81,7 +77,7 @@ export class TestCodeStepComponent extends TestStepCoreComponent {
     );
   }
 
-  saveTestResult(result: CreateStepRunResponse) {
+  saveTestResult(result: StepRunResponse) {
     if (!result.standardError) {
       this.saveStepAfterTesting$ = this.store
         .select(BuilderSelectors.selectCurrentStep)

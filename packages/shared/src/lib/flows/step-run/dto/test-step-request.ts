@@ -5,11 +5,11 @@ export const CreateStepRunRequestBody = Type.Object({
     stepName: Type.String(),
 })
 
-export const CreateStepRunResponse = Type.Object({
+export const StepRunResponse = Type.Object({
     success: Type.Boolean(),
     output: Type.Unknown(),
     standardError: Type.String(),
     standardOutput: Type.String(),
 })
 
-export type CreateStepRunResponse = Static<typeof CreateStepRunResponse>
+export type StepRunResponse = Static<typeof StepRunResponse>

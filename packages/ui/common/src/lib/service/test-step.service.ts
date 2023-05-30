@@ -1,11 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Subject } from 'rxjs';
-import {
-  CreateStepRunResponse,
-  SeekPage,
-  TriggerEvent,
-} from '@activepieces/shared';
+import { StepRunResponse, SeekPage, TriggerEvent } from '@activepieces/shared';
 import { environment } from '../environments/environment';
 
 @Injectable({
@@ -38,7 +34,7 @@ export class TestStepService {
     );
   }
   testPieceOrCodeStep(req: { stepName: string; flowVersionId: string }) {
-    return this.http.post<CreateStepRunResponse>(
+    return this.http.post<StepRunResponse>(
       environment.apiUrl + '/step-run',
       req
     );

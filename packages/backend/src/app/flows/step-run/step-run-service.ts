@@ -2,7 +2,7 @@ import {
     ActionType,
     ActivepiecesError,
     CodeAction,
-    CreateStepRunResponse,
+    StepRunResponse,
     ErrorCode,
     ExecuteActionOperation,
     flowHelper,
@@ -86,7 +86,7 @@ const generateTestExecutionContext = (flowVersion: FlowVersion): Record<string, 
 }
 
 export const stepRunService = {
-    async create({ projectId, flowVersionId, stepName }: CreateParams): Promise<CreateStepRunResponse> {
+    async create({ projectId, flowVersionId, stepName }: CreateParams): Promise<StepRunResponse> {
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
         const step = flowHelper.getStep(flowVersion, stepName)
 
@@ -113,7 +113,7 @@ export const stepRunService = {
 
 async function executePiece({ step, testExecutionContext, projectId, flowVersionId, flowVersion }: {
     step: PieceAction, testExecutionContext: Record<string, unknown>, projectId: ProjectId, flowVersionId: FlowVersionId, flowVersion: FlowVersion
-}): Promise<CreateStepRunResponse> {
+}): Promise<StepRunResponse> {
     const { pieceName, pieceVersion, actionName, input } = step.settings
 
     if (isNil(actionName)) {
