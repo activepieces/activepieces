@@ -12,8 +12,9 @@
       </div>
     </div>
 
-    <ngx-codemirror formControlName="content" [options]="codeEditorOptions"></ngx-codemirror>
+    <ngx-codemirror #codeMirror formControlName="content" [options]="codeEditorOptions"></ngx-codemirror>
 
   </div>
 </form>
 <ng-container *ngIf="updateComponentValue$|async"></ng-container>
+<ng-container *ngIf="refreshCodeMirror$ | async"></ng-container>
