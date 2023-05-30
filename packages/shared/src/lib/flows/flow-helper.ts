@@ -100,8 +100,8 @@ function traverseInternal(step: Trigger | Action | undefined): (Action | Trigger
   while (step !== undefined && step !== null) {
     steps.push(step);
     if (step.type === ActionType.BRANCH) {
-      steps.push(...traverseInternal(step.onSuccessAction));
       steps.push(...traverseInternal(step.onFailureAction));
+      steps.push(...traverseInternal(step.onSuccessAction));
     }
     if (step.type === ActionType.LOOP_ON_ITEMS) {
       steps.push(...traverseInternal(step.firstLoopAction));

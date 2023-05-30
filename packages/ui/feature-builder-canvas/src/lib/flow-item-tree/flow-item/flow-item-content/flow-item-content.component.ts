@@ -156,7 +156,6 @@ export class FlowItemContentComponent implements OnInit {
         if (selectedRun) {
           if (selectedRun.status !== ExecutionOutputStatus.RUNNING) {
             const stepName = this._flowItem.name;
-            debugger;
             const executionState = selectedRun.executionOutput?.executionState;
             if (!executionState) {
               throw new Error('Flow is done but there is no executionState');
