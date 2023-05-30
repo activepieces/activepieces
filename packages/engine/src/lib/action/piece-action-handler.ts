@@ -85,7 +85,7 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
       censorConnections,
     })
 
-    const { result, errors } = this.variableService.validateAndCast(resolvedInput, actionProps);
+    const { result, errors } = await this.variableService.validateAndCast(resolvedInput, actionProps);
 
     if (Object.keys(errors).length > 0) {
       throw new Error(JSON.stringify(errors));

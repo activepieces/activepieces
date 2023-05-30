@@ -1,10 +1,12 @@
 import { get, isNil, isString } from "lodash";
 import { ExecutionState } from "@activepieces/shared";
 import { connectionService } from "./connections.service";
-import { PiecePropertyMap, PropertyType } from "@activepieces/pieces-framework";
+import { ApFile, PiecePropertyMap, PropertyType } from "@activepieces/pieces-framework";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
+import axios from "axios";
+import path from "path";
 
 type ResolveParams = {
   unresolvedInput: unknown
@@ -117,7 +119,7 @@ export class VariableService {
     );
   }
 
-  castedToNumber(number: any): number | undefined | null {
+  castToNumber(number: any): number | undefined | null {
     if (isNil(number)) {
       return number;
     }
@@ -126,6 +128,30 @@ export class VariableService {
     }
     return Number(number);
   }
+
+  convertUrlToFile = async (url: unknown): Promise<ApFile | null> => {
+    if (isNil(url) || !isString(url)) {
+      return null;
+    }
+    // Get the file from the URL
+    const response = await axios.get(url, {
+      responseType: 'arraybuffer',
+    });
+
+    // Get filename and extension
+    const filename = path.basename(url);
+    const extension = path.extname(url);
+
+    // Convert file data to base64
+    const base64 = Buffer.from(response.data, 'binary').toString('base64');
+
+    // Return the ApFile object
+    return {
+      filename,
+      extension,
+      base64,
+    };
+  };
 
   getISODateTime = (clonedInput: any, key: string): string | undefined => {
     dayjs.extend(utc);
@@ -141,18 +167,24 @@ export class VariableService {
     }
   };
 
-  validateAndCast(
+  async validateAndCast(
     resolvedInput: any,
     props: PiecePropertyMap
-  ): { result: any; errors: Record<string, any> } {
+  ): Promise<{ result: any; errors: Record<string, any>; }> {
     const errors: Record<string, string | Record<string, string>> = {};
     const clonedInput = JSON.parse(JSON.stringify(resolvedInput));
 
     for (const [key, value] of Object.entries(resolvedInput)) {
       const property = props[key];
       const type = property?.type;
-      if (type === PropertyType.NUMBER) {
-        const castedNumber = this.castedToNumber(clonedInput[key]);
+      if (type === PropertyType.FILE) {
+        const file = await this.convertUrlToFile(value);
+        if (isNil(file) && property.required) {
+          errors[key] = `expected file url, but found value: ${value}`;
+        }
+        clonedInput[key] = file;
+      } else if (type === PropertyType.NUMBER) {
+        const castedNumber = this.castToNumber(clonedInput[key]);
         // If the value is required, we don't allow it to be undefined or null
         if ((isNil(castedNumber) || isNaN(castedNumber)) && property.required) {
           errors[key] = `expected number, but found value: ${value}`;
@@ -163,7 +195,7 @@ export class VariableService {
         }
         clonedInput[key] = castedNumber;
       } else if (type === PropertyType.CUSTOM_AUTH) {
-        const innerValidation = this.validateAndCast(value, property.props);
+        const innerValidation = await this.validateAndCast(value, property.props);
         clonedInput[key] = innerValidation.result;
         if (Object.keys(innerValidation.errors).length > 0) {
           errors[key] = innerValidation.errors;

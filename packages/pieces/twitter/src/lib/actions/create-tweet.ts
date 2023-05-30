@@ -2,13 +2,17 @@ import { Property, createAction } from "@activepieces/pieces-framework";
 import { TwitterApi } from 'twitter-api-v2';
 
 const markdownDescription = `
-The Steps to obtain the required credentials:
+The steps to obtain the required credentials:
 
 1. Go to [https://developer.twitter.com/en/portal/projects-and-apps](https://developer.twitter.com/en/portal/projects-and-apps) and create a new app.
 
-2. Go to the app details page and click on the **Keys and tokens** tab.
+2. Make sure your app is placed in a project (it won't work otherwise).
 
-3. Copy the following values from the **Keys and tokens** tab:
+3. In your app, go to Settings -> User authentication set up -> Update permission to Read and Write.
+
+4. Go to Keys and Tokens tab.
+
+5. Copy the following values from the **Keys and tokens** tab:
 
     - Click on **API key and secret** and copy the following values:
     
