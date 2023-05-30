@@ -27,7 +27,7 @@
 
         <ng-container *ngFor="let prop of dialogData.pieceAuthProperty.props |objectToArray">
             <mat-form-field class="ap-w-full" appearance="outline"
-                *ngIf="prop.value.type === PropertyType.SECRET_TEXT || prop.value.type === PropertyType.SHORT_TEXT ">
+                *ngIf="prop.value.type === PropertyType.SECRET_TEXT || prop.value.type === PropertyType.SHORT_TEXT || prop.value.type === PropertyType.NUMBER ">
                 <mat-label>{{prop.value.displayName}} {{prop.value.required?'': '(Optional)'}}</mat-label>
                 <input [matTooltip]="prop.value.description||''" [formControlName]="prop.key" matInput
                     [type]="prop.value.type === PropertyType.SECRET_TEXT? 'password':'text'" />

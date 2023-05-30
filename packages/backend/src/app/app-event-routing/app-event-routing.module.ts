@@ -4,7 +4,9 @@ import { appEventRoutingService } from './app-event-routing.service'
 import { logger } from '../helper/logger'
 import { getPiece } from '@activepieces/pieces-apps'
 import { isNil } from 'lodash'
-import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, EventPayload } from '@activepieces/shared'
+import { flowService } from '../flows/flow/flow.service'
+import { AppEventRouting } from './app-event-routing.entity'
 
 export const appEventRoutingModule = async (app: FastifyInstance) => {
     app.register(appEventRoutingController, { prefix: '/v1/app-events' })
@@ -58,15 +60,20 @@ export const appEventRoutingController = async (fastify: FastifyInstance) => {
                     identifierValue: identifierValue,
                 })
                 logger.info(`Found ${listeners.length} listeners for event ${event} with identifier ${identifierValue} in app ${pieceName}`)
-                listeners.forEach(listener => {
-                    webhookService.callback({
-                        flowId: listener.flowId,
-                        payload: eventPayload,
-                    })
+                listeners.map(listener => {
+                    callback(listener, eventPayload)
                 })
             }
             requestReply.status(200).headers(reply?.headers ?? {}).send(reply?.body ?? {})
         },
     )
 
+}
+
+async function callback(listener: AppEventRouting, eventPayload: EventPayload) {
+    const flow = await flowService.getOneOrThrow({ projectId: listener.projectId, id: listener.flowId })
+    webhookService.callback({
+        flow: flow,
+        payload: eventPayload,
+    })
 }
