@@ -16,7 +16,7 @@ export const mauticCommon= {
                 displayName: 'Username',
                 required: true
             }),
-            password: Property.ShortText({
+            password: Property.SecretText({
                 displayName: 'Password',
                 required: true
             })

@@ -1,24 +1,14 @@
 import { FlowExecutor } from '../executors/flow-executor';
 import { VariableService } from '../services/variable-service';
 import { Action, ActionType, ExecutionState, LoopOnItemsAction, LoopResumeStepMetadata } from '@activepieces/shared';
-import { BaseActionHandler } from './action-handler';
+import { BaseActionHandler, InitStepOutputParams } from './action-handler';
 import { LoopOnItemsStepOutput, StepOutputStatus, StepOutput } from '@activepieces/shared';
-import { isNil } from 'lodash';
 
 type CtorParams = {
   currentAction: LoopOnItemsAction
   firstLoopAction?: Action,
   nextAction?: Action
   resumeStepMetadata?: LoopResumeStepMetadata
-}
-
-type InitStepOutputParams = {
-  executionState: ExecutionState
-}
-
-type LoadStepOutputParams = {
-  executionState: ExecutionState
-  ancestors: [string, number][]
 }
 
 export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction, LoopResumeStepMetadata> {
@@ -45,9 +35,9 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
   }
 
   /**
-   * initializes an empty step output
+   * initializes an empty loop step output
    */
-  private async initStepOutput({ executionState }: InitStepOutputParams): Promise<LoopOnItemsStepOutput> {
+  protected override async initStepOutput({ executionState }: InitStepOutputParams): Promise<LoopOnItemsStepOutput> {
     const censoredInput = await this.variableService.resolve({
       unresolvedInput: this.currentAction.settings,
       executionState,
@@ -58,40 +48,14 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
       type: ActionType.LOOP_ON_ITEMS,
       status: StepOutputStatus.RUNNING,
       input: censoredInput,
-    }
-
-    newStepOutput.output = {
-      index: 1,
-      item: undefined,
-      iterations: []
+      output: {
+        index: 1,
+        item: undefined,
+        iterations: [],
+      }
     }
 
     return newStepOutput
-  }
-
-  /**
-   * Loads old step output if execution is resuming, else initializes an empty step output
-   */
-  private async loadStepOutput({ executionState, ancestors }: LoadStepOutputParams): Promise<LoopOnItemsStepOutput> {
-    if (isNil(this.resumeStepMetadata)) {
-      return this.initStepOutput({
-        executionState,
-      })
-    }
-
-    const oldStepOutput = executionState.getStepOutput<LoopOnItemsStepOutput>({
-      stepName: this.currentAction.name,
-      ancestors,
-    })
-
-    if (oldStepOutput) {
-      oldStepOutput.status = StepOutputStatus.RUNNING
-      delete oldStepOutput.pauseMetadata
-    }
-
-    return oldStepOutput ?? this.initStepOutput({
-      executionState,
-    })
   }
 
   async execute(

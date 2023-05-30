@@ -1,7 +1,7 @@
 import { FlowExecutor } from '../executors/flow-executor';
 import { VariableService } from '../services/variable-service';
 import { ExecutionState, BranchAction, Action, BranchStepOutput, BranchCondition, BranchOperator, BranchResumeStepMetadata, ActionType } from '@activepieces/shared';
-import { BaseActionHandler } from './action-handler';
+import { BaseActionHandler, InitStepOutputParams } from './action-handler';
 import { StepOutputStatus, StepOutput } from '@activepieces/shared';
 
 type CtorParams = {
@@ -29,6 +29,25 @@ export class BranchActionHandler extends BaseActionHandler<BranchAction, BranchR
     this.onFailureAction = onFailureAction;
   }
 
+  /**
+   * initializes an empty branch step output
+   */
+  protected override async initStepOutput({ executionState }: InitStepOutputParams): Promise<BranchStepOutput> {
+    const censoredInput = await this.variableService.resolve({
+      unresolvedInput: this.currentAction.settings,
+      executionState,
+      censorConnections: true,
+    })
+
+    const newStepOutput: BranchStepOutput = {
+      type: ActionType.BRANCH,
+      status: StepOutputStatus.RUNNING,
+      input: censoredInput,
+    }
+
+    return newStepOutput
+  }
+
   async execute(
     executionState: ExecutionState,
     ancestors: [string, number][]
@@ -39,30 +58,19 @@ export class BranchActionHandler extends BaseActionHandler<BranchAction, BranchR
       censorConnections: false,
     })
 
-    const censoredInput = await this.variableService.resolve({
-      unresolvedInput: this.currentAction.settings,
+    const stepOutput = await this.loadStepOutput({
       executionState,
-      censorConnections: true,
+      ancestors,
     })
 
-    const stepOutput: BranchStepOutput = {
-      type: ActionType.BRANCH,
-      status: StepOutputStatus.RUNNING,
-      input: censoredInput,
-    }
+    executionState.insertStep(stepOutput, this.currentAction.name, ancestors)
 
     try {
-      const condition = this.resumeStepMetadata
-        ? this.resumeStepMetadata.conditionEvaluation
-        : evaluateConditions(resolvedInput.conditions);
-
       stepOutput.output = {
-        condition,
+        condition: stepOutput.output?.condition ?? evaluateConditions(resolvedInput.conditions)
       }
 
-      executionState.insertStep(stepOutput, this.currentAction.name, ancestors);
-
-      const firstStep = condition
+      const firstStep = stepOutput.output.condition
         ? this.onSuccessAction
         : this.onFailureAction
 
@@ -167,7 +175,7 @@ function evaluateConditions(conditionGroups: BranchCondition[][]): boolean {
     }
     orOperator = orOperator || andGroup;
   }
-  return orOperator;
+  return Boolean(orOperator);
 }
 
 function parseStringToNumber(str: string): number | string {

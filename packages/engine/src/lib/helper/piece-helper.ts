@@ -191,8 +191,10 @@ export const pieceHelper = {
                     }
                 }
             },
-            stopHook: () => console.info('stopHook called!'),
-            pauseHook: () => console.info('pauseHook called!'),
+            run: {
+                stop: () => console.info('stopHook called!'),
+                pause: () => console.info('pauseHook called!'),
+            }
         }
 
         try {

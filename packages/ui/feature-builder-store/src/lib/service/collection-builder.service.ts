@@ -5,6 +5,7 @@ import { Subject } from 'rxjs';
 @Injectable({ providedIn: 'root' })
 export class CollectionBuilderService {
   lastSuccessfulSaveDate = '';
+  refreshCodeMirror$ = new Subject<void>();
   componentToShowInsidePortal$ = new Subject<
     ComponentPortal<unknown> | undefined
   >();
