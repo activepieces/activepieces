@@ -33,6 +33,7 @@ import { LeftSideBarType } from '../../model/enums/left-side-bar-type.enum';
 import { NO_PROPS } from '../../model/builder-state';
 import { CollectionBuilderService } from '../../service/collection-builder.service';
 import { FlowService, environment } from '@activepieces/ui/common';
+import { RunDetailsService } from '../../service/run-details.service';
 @Injectable()
 export class FlowsEffects {
   loadInitial$ = createEffect(() => {
@@ -189,9 +190,14 @@ export class FlowsEffects {
     return this.actions$.pipe(
       ofType(FlowsActions.setRun),
       concatLatestFrom(() => [
-        this.store.select(BuilderSelectors.selectCurrentFlow),
+        this.store.select(BuilderSelectors.selectCurrentFlowRun),
       ]),
-      concatMap(([run]) => {
+      tap(([{ run }, currentRun]) => {
+        if (run.id !== currentRun?.id) {
+          this.runDetailsService.currentStepResult$.next(undefined);
+        }
+      }),
+      switchMap(() => {
         return of(
           FlowsActions.setLeftSidebar({
             sidebarType: LeftSideBarType.SHOW_RUN,
@@ -372,6 +378,7 @@ export class FlowsEffects {
     private flowService: FlowService,
     private store: Store,
     private actions$: Actions,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private runDetailsService: RunDetailsService
   ) {}
 }
