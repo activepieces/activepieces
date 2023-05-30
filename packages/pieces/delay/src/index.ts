@@ -1,8 +1,7 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import packageJson from '../package.json';
 import { delayAction } from './lib/actions/delay-action';
-import { pauseAction } from './lib/actions/pause-action';
-import { stopAction } from './lib/actions/stop-action';
+;
 
 export const delay = createPiece({
   name: 'delay',
@@ -14,8 +13,6 @@ export const delay = createPiece({
   ],
   actions: [
     delayAction,
-    pauseAction,
-    stopAction,
   ],
   triggers: [
   ],
