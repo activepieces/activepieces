@@ -1,4 +1,4 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
+import { createAction } from "@activepieces/pieces-framework";
 import { clockodoCommon, makeClient } from "../../common";
 
 export default createAction({
@@ -7,14 +7,11 @@ export default createAction({
     description: 'Retrieves a single customer from clockodo',
     props: {
         authentication: clockodoCommon.authentication,
-        customer_id: Property.Number({
-            displayName: 'Customer ID',
-            required: true
-        })
+        customer_id: clockodoCommon.customer_id(true, undefined)
     },
     async run(context) {
-        const client = makeClient(context);
-        const res = await client.getCustomer(context.propsValue.customer_id)
+        const client = makeClient(context.propsValue);
+        const res = await client.getCustomer(context.propsValue.customer_id as number)
         return res.customer
     }
 })

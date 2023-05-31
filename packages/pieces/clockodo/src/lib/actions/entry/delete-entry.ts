@@ -13,7 +13,7 @@ export default createAction({
         })
     },
     async run(context) {
-        const client = makeClient(context);
+        const client = makeClient(context.propsValue);
         await client.deleteEntry(context.propsValue.entry_id)
     }
 })

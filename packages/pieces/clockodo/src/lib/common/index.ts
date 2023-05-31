@@ -1,5 +1,14 @@
-import { ActionContext, Property, StaticPropsValue } from "@activepieces/pieces-framework"
+import { Property, StaticPropsValue } from "@activepieces/pieces-framework"
 import { ClockodoClient } from "./client";
+
+export function makeClient(propsValue: StaticPropsValue<any>): ClockodoClient {
+    return new ClockodoClient(
+        propsValue.authentication.email,
+        propsValue.authentication.token,
+        propsValue.authentication.company_name,
+        propsValue.authentication.company_email,
+    )
+}
 
 export const clockodoCommon = {
     authentication: Property.CustomAuth({
@@ -9,11 +18,11 @@ export const clockodoCommon = {
             email: Property.ShortText({
                 displayName: 'E-Mail',
                 required: true,
-                description: "A string indicating the user to authenticate as when connecting to the PostgreSQL server."
+                description: "The email of your clockodo user"
             }),
             token: Property.SecretText({
                 displayName: 'API-Token',
-                description: "A string indicating the password to use for authentication.",
+                description: "Your api token (can be found in profile settings)",
                 required: true,
             }),
             company_name: Property.ShortText({
@@ -50,16 +59,138 @@ export const clockodoCommon = {
                 { value: 15, label: 'Sick day (sickness benefit)' }
             ]
         }
+    }),
+    customer_id: (required = true, active = true) => Property.Dropdown({
+        description: 'The ID of the customer',
+        displayName: 'Customer',
+        required,
+        refreshers: ['authentication'],
+        options: async (value) => {
+            if (!value['authentication']) {
+                return {
+                    disabled: true,
+                    placeholder: 'setup authentication first',
+                    options: []
+                };
+            }
+            const client = makeClient(value)
+            const customers = await client.listAllCustomers({ active })
+            return {
+                disabled: false,
+                options: customers.map((customer) => {
+                    return {
+                        label: customer.name,
+                        value: customer.id
+                    }
+                })
+            }
+        }
+    }),
+    project_id: (required = true, requiresCustomer = true, active = true) => Property.Dropdown({
+        description: 'The ID of the project',
+        displayName: 'Project',
+        required,
+        refreshers: ['authentication', ...(requiresCustomer ? ['customer_id'] : [])],
+        options: async (value) => {
+            if (!value['authentication']) {
+                return {
+                    disabled: true,
+                    placeholder: 'setup authentication first',
+                    options: []
+                }
+            }
+            if (requiresCustomer && !value['customer_id']) {
+                return {
+                    disabled: true,
+                    placeholder: 'select a customer first',
+                    options: []
+                }
+            }
+            const client = makeClient(value)
+            const projects = await client.listAllProjects({
+                active,
+                customers_id: requiresCustomer ? parseInt(value.customer_id as string) : undefined
+            })
+            return {
+                disabled: false,
+                options: projects.map((project) => {
+                    return {
+                        label: project.name,
+                        value: project.id
+                    }
+                })
+            }
+        }
+    }),
+    user_id: (required = true) => Property.Dropdown({
+        description: 'The ID of the user',
+        displayName: 'User',
+        required,
+        refreshers: ['authentication'],
+        options: async (value) => {
+            if (!value['authentication']) {
+                return {
+                    disabled: true,
+                    placeholder: 'setup authentication first',
+                    options: []
+                };
+            }
+            const client = makeClient(value)
+            const usersRes = await client.listUsers()
+            return {
+                disabled: false,
+                options: usersRes.users.map((user) => {
+                    return {
+                        label: user.name,
+                        value: user.id
+                    }
+                })
+            }
+        }
+    }),
+    service_id: (required = true) => Property.Dropdown({
+        description: 'The ID of the service',
+        displayName: 'Service',
+        required,
+        refreshers: ['authentication'],
+        options: async (value) => {
+            if (!value['authentication']) {
+                return {
+                    disabled: true,
+                    placeholder: 'setup authentication first',
+                    options: []
+                };
+            }
+            const client = makeClient(value)
+            const servicesRes = await client.listServices()
+            return {
+                disabled: false,
+                options: servicesRes.services.map((service) => {
+                    return {
+                        label: service.name,
+                        value: service.id
+                    }
+                })
+            }
+        }
+    }),
+    color: (required = true) => Property.StaticDropdown({
+        displayName: 'Color',
+        required,
+        options: {
+            options: [
+                { label: 'Orange', value: 0xEE9163 },
+                { label: 'Yellow', value: 0xF0D758 },
+                { label: 'Green', value: 0x9DE34A },
+                { label: 'Caribean', value: 0x39E6CA },
+                { label: 'Lightblue', value: 0x56C6F9 },
+                { label: 'Blue', value: 0x3657F7 },
+                { label: 'Purple', value: 0x7B4BE7 },
+                { label: 'Magenta', value: 0xD065E6 },
+                { label: 'Pink', value: 0xFC71D1 },
+            ]
+        }
     })
-}
-
-export function makeClient(context: ActionContext<StaticPropsValue<any>>): ClockodoClient {
-    return new ClockodoClient(
-        context.propsValue.authentication.email,
-        context.propsValue.authentication.token,
-        context.propsValue.authentication.company_name,
-        context.propsValue.authentication.company_email,
-    )
 }
 
 export function emptyToNull(val?: string): undefined|string|null {

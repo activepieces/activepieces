@@ -7,10 +7,7 @@ export default createAction({
     description: 'Updates a customer in clockodo',
     props: {
         authentication: clockodoCommon.authentication,
-        customer_id: Property.Number({
-            displayName: 'Customer ID',
-            required: true
-        }),
+        customer_id: clockodoCommon.customer_id(true, undefined),
         name: Property.ShortText({
             displayName: 'Name',
             required: false
@@ -31,14 +28,11 @@ export default createAction({
             displayName: 'Note',
             required: false
         }),
-        color: Property.Number({
-            displayName: 'Color',
-            required: false
-        })
+        color: clockodoCommon.color(false)
     },
     async run(context) {
-        const client = makeClient(context);
-        const res = await client.updateCustomer(context.propsValue.customer_id, {
+        const client = makeClient(context.propsValue);
+        const res = await client.updateCustomer(context.propsValue.customer_id as number, {
             name: context.propsValue.name,
             number: emptyToNull(context.propsValue.number),
             active: context.propsValue.active,

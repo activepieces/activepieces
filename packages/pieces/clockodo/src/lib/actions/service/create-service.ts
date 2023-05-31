@@ -25,7 +25,7 @@ export default createAction({
         })
     },
     async run(context) {
-        const client = makeClient(context);
+        const client = makeClient(context.propsValue);
         const res = await client.createService({
             name: context.propsValue.name,
             number: emptyToNull(context.propsValue.number),

@@ -7,15 +7,8 @@ export default createAction({
     description: 'Updates a project in clockodo',
     props: {
         authentication: clockodoCommon.authentication,
-        project_id: Property.Number({
-            displayName: 'Project ID',
-            required: true
-        }),
-        // This might be changed to a dropdown later on but the list can become quite long, therefor it's not feasible right now
-        customer_id: Property.Number({
-            displayName: 'Customer ID',
-            required: false
-        }),
+        project_id: clockodoCommon.project_id(true, false, undefined),
+        customer_id: clockodoCommon.customer_id(false),
         name: Property.ShortText({
             displayName: 'Name',
             required: false
@@ -62,8 +55,8 @@ export default createAction({
         }),
     },
     async run(context) {
-        const client = makeClient(context);
-        const res = await client.updateProject(context.propsValue.project_id, {
+        const client = makeClient(context.propsValue);
+        const res = await client.updateProject(context.propsValue.project_id as number, {
             name: context.propsValue.name,
             customers_id: context.propsValue.customer_id,
             number: emptyToNull(context.propsValue.number),
