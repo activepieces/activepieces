@@ -11,11 +11,7 @@ export default createAction({
             displayName: 'Name',
             required: true
         }),
-        // This might be changed to a dropdown later on but the list can become quite long, therefor it's not feasible right now
-        customer_id: Property.Number({
-            displayName: 'Customer ID',
-            required: true
-        }),
+        customer_id: clockodoCommon.customer_id(),
         number: Property.ShortText({
             displayName: 'Number',
             required: false
@@ -46,10 +42,10 @@ export default createAction({
         })
     },
     async run(context) {
-        const client = makeClient(context);
+        const client = makeClient(context.propsValue);
         const res = await client.createProject({
             name: context.propsValue.name,
-            customers_id: context.propsValue.customer_id,
+            customers_id: context.propsValue.customer_id as number,
             number: emptyToNull(context.propsValue.number),
             active: context.propsValue.active,
             billable_default: context.propsValue.billable,
