@@ -148,6 +148,32 @@ export const clockodoCommon = {
             }
         }
     }),
+    team_id: (required = true) => Property.Dropdown({
+        description: 'The ID of the team',
+        displayName: 'Team',
+        required,
+        refreshers: ['authentication'],
+        options: async (value) => {
+            if (!value['authentication']) {
+                return {
+                    disabled: true,
+                    placeholder: 'setup authentication first',
+                    options: []
+                };
+            }
+            const client = makeClient(value)
+            const teamsRes = await client.listTeams()
+            return {
+                disabled: false,
+                options: teamsRes.teams.map((team) => {
+                    return {
+                        label: team.name,
+                        value: team.id
+                    }
+                })
+            }
+        }
+    }),
     service_id: (required = true) => Property.Dropdown({
         description: 'The ID of the service',
         displayName: 'Service',
