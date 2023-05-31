@@ -60,7 +60,7 @@ export const clockodoCommon = {
             ]
         }
     }),
-    customer_id: (required = true, active = true) => Property.Dropdown({
+    customer_id: (required = true, active: boolean|null = true) => Property.Dropdown({
         description: 'The ID of the customer',
         displayName: 'Customer',
         required,
@@ -74,7 +74,7 @@ export const clockodoCommon = {
                 };
             }
             const client = makeClient(value)
-            const customers = await client.listAllCustomers({ active })
+            const customers = await client.listAllCustomers({ active: active === null ? undefined : active })
             return {
                 disabled: false,
                 options: customers.map((customer) => {
@@ -86,7 +86,7 @@ export const clockodoCommon = {
             }
         }
     }),
-    project_id: (required = true, requiresCustomer = true, active = true) => Property.Dropdown({
+    project_id: (required = true, requiresCustomer = true, active: boolean|null = true) => Property.Dropdown({
         description: 'The ID of the project',
         displayName: 'Project',
         required,
@@ -108,7 +108,7 @@ export const clockodoCommon = {
             }
             const client = makeClient(value)
             const projects = await client.listAllProjects({
-                active,
+                active: active === null ? undefined : active,
                 customers_id: requiresCustomer ? parseInt(value.customer_id as string) : undefined
             })
             return {
@@ -122,7 +122,7 @@ export const clockodoCommon = {
             }
         }
     }),
-    user_id: (required = true) => Property.Dropdown({
+    user_id: (required = true, active: boolean|null = true) => Property.Dropdown({
         description: 'The ID of the user',
         displayName: 'User',
         required,
@@ -139,7 +139,7 @@ export const clockodoCommon = {
             const usersRes = await client.listUsers()
             return {
                 disabled: false,
-                options: usersRes.users.map((user) => {
+                options: usersRes.users.filter(u => active === null || u.active === active).map((user) => {
                     return {
                         label: user.name,
                         value: user.id
@@ -174,7 +174,7 @@ export const clockodoCommon = {
             }
         }
     }),
-    service_id: (required = true) => Property.Dropdown({
+    service_id: (required = true, active: boolean|null = true) => Property.Dropdown({
         description: 'The ID of the service',
         displayName: 'Service',
         required,
@@ -191,13 +191,24 @@ export const clockodoCommon = {
             const servicesRes = await client.listServices()
             return {
                 disabled: false,
-                options: servicesRes.services.map((service) => {
+                options: servicesRes.services.filter(s => active === null || s.active === active).map((service) => {
                     return {
                         label: service.name,
                         value: service.id
                     }
                 })
             }
+        }
+    }),
+    language: (required = true) => Property.StaticDropdown({
+        displayName: 'Language',
+        required,
+        options: {
+            options: [
+                { label: 'German', value: 'de' },
+                { label: 'English', value: 'en' },
+                { label: 'French', value: 'fr' }
+            ]
         }
     }),
     color: (required = true) => Property.StaticDropdown({

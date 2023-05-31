@@ -7,7 +7,7 @@ export default createAction({
     description: 'Updates a service in clockodo',
     props: {
         authentication: clockodoCommon.authentication,
-        service_id: clockodoCommon.service_id(),
+        service_id: clockodoCommon.service_id(true, null),
         name: Property.ShortText({
             displayName: 'Name',
             required: false

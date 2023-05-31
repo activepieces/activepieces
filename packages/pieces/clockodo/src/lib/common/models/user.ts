@@ -24,7 +24,7 @@ export interface User {
 
 export interface UserCreateRequest {
     name: string,
-    number?: string,
+    number?: string|null,
     email: string,
     role: string,
     timeformat_12h?: boolean,
@@ -44,10 +44,10 @@ export interface UserCreateRequest {
 }
 
 export interface UserUpdateRequest {
-    name: string,
-    number?: string,
-    email: string,
-    role: string,
+    name?: string,
+    number?: string|null,
+    email?: string,
+    role?: string,
     active?: boolean,
     timeformat_12h?: boolean,
     weekstart_monday?: boolean,

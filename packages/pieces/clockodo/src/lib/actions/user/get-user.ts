@@ -7,7 +7,7 @@ export default createAction({
     description: 'Retrieves a single user from clockodo',
     props: {
         authentication: clockodoCommon.authentication,
-        user_id: clockodoCommon.user_id()
+        user_id: clockodoCommon.user_id(true, null)
     },
     async run(context) {
         const client = makeClient(context.propsValue);

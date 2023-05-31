@@ -7,7 +7,7 @@ export default createAction({
     description: 'Updates a project in clockodo',
     props: {
         authentication: clockodoCommon.authentication,
-        project_id: clockodoCommon.project_id(true, false, undefined),
+        project_id: clockodoCommon.project_id(true, false, null),
         customer_id: clockodoCommon.customer_id(false),
         name: Property.ShortText({
             displayName: 'Name',

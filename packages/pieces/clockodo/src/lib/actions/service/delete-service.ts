@@ -7,7 +7,7 @@ export default createAction({
     description: 'Deletes a service in clockodo',
     props: {
         authentication: clockodoCommon.authentication,
-        service_id: clockodoCommon.service_id()
+        service_id: clockodoCommon.service_id(true, false)
     },
     async run(context) {
         const client = makeClient(context.propsValue);
