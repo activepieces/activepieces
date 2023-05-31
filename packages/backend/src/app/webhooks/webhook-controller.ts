@@ -50,7 +50,7 @@ export const webhookController: FastifyPluginAsync = async (app) => {
                 payload: {
                     method: request.method,
                     headers: request.headers as Record<string, string>,
-                    body: request.body,
+                    body: await convertBody(request),
                     queryParams: request.query as Record<string, string>,
                 },
             })
@@ -60,6 +60,29 @@ export const webhookController: FastifyPluginAsync = async (app) => {
     )
 }
 
+const convertBody = async (request: FastifyRequest) => {
+    if(request.isMultipart()){
+        const jsonResult: Record<string, unknown> = {}
+        const parts = request.parts()
+        for await (const part of parts) {
+            // TODO: support files
+            if (part.type === 'file') {
+                const chunks = []
+                for await (const chunk of part.file) {
+                    chunks.push(chunk)
+                }
+                const fileBuffer = Buffer.concat(chunks)
+                jsonResult[part.fieldname] = fileBuffer.toString('base64')
+            }
+            else {
+                jsonResult[part.fieldname] = part.value
+            }
+        }
+        return jsonResult
+    }
+    return request.body
+
+}
 const handler = async (request: FastifyRequest, flow: Flow) => {
     // If we don't catch the error here, it will crash the Fastify API. Adding await before the function call can help, but since 3P services expect a fast response, we still don't want to wait for the callback to finish.
     try {
@@ -68,7 +91,7 @@ const handler = async (request: FastifyRequest, flow: Flow) => {
             payload: {
                 method: request.method,
                 headers: request.headers as Record<string, string>,
-                body: request.body,
+                body: await convertBody(request),
                 queryParams: request.query as Record<string, string>,
             },
         })
