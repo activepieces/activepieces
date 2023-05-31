@@ -26,7 +26,7 @@ export default createAction({
         })
     },
     async run(context) {
-        const client = makeClient(context);
+        const client = makeClient(context.propsValue);
         const filter: ProjectListFilter = {
             customers_id: context.propsValue.customer_id_filter,
             active: context.propsValue.active_filter

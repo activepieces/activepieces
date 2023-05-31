@@ -11,18 +11,9 @@ export default createAction({
             displayName: 'Entry ID',
             required: true
         }),
-        customer_id: Property.Number({
-            displayName: 'Customer ID',
-            required: false
-        }),
-        project_id: Property.Number({
-            displayName: 'Project ID',
-            required: false
-        }),
-        service_id: Property.Number({
-            displayName: 'Service ID',
-            required: false
-        }),
+        customer_id: clockodoCommon.customer_id(false),
+        project_id: clockodoCommon.project_id(false),
+        service_id: clockodoCommon.service_id(false),
         time_since: Property.DateTime({
             displayName: 'Start Time',
             required: false
@@ -35,13 +26,10 @@ export default createAction({
             displayName: 'Description',
             required: false
         }),
-        user_id: Property.Number({
-            displayName: 'User ID',
-            required: false
-        })
+        user_id: clockodoCommon.user_id(false)
     },
     async run(context) {
-        const client = makeClient(context);
+        const client = makeClient(context.propsValue);
         const res = await client.updateEntry(context.propsValue.entry_id, {
             customers_id: context.propsValue.customer_id,
             projects_id: context.propsValue.project_id,

@@ -21,6 +21,7 @@ import {
   ActionMetaService,
   FlowService,
   InstanceRunService,
+  fadeIn400ms,
   fadeInUp400ms,
   initializedRun,
   jsonValidator,
@@ -28,7 +29,7 @@ import {
 import { Store } from '@ngrx/store';
 import { HttpStatusCode } from '@angular/common/http';
 import { UntypedFormControl } from '@angular/forms';
-import jsonlint from 'jsonlint-mod';
+import jsonlint from 'codemirror/addon/lint/json-lint';
 import { MatSnackBar, MatSnackBarRef } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import {
@@ -41,18 +42,18 @@ import {
 import {
   BuilderSelectors,
   CodeService,
-  FlowsActions,
   TestRunBarComponent,
 } from '@activepieces/ui/feature-builder-store';
+import { canvasActions } from '@activepieces/ui/feature-builder-store';
 
 @Component({
-  selector: 'app-test-flow-modal',
-  templateUrl: './test-flow-modal.component.html',
-  styleUrls: ['./test-flow-modal.component.scss'],
-  animations: [fadeInUp400ms],
+  selector: 'app-test-flow-widget',
+  templateUrl: './test-flow-widget.component.html',
+  styleUrls: ['./test-flow-widget.component.scss'],
+  animations: [fadeInUp400ms, fadeIn400ms],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TestFlowModalComponent implements OnInit {
+export class TestFlowWidgetComponent implements OnInit {
   submitted = false;
   dialogRef: MatDialogRef<TemplateRef<unknown>>;
   instanceRunStatus$: Observable<undefined | ExecutionOutputStatus>;
@@ -60,7 +61,7 @@ export class TestFlowModalComponent implements OnInit {
   selectedFlow$: Observable<Flow | undefined>;
   instanceRunStatusChecker$: Observable<FlowRun>;
   executeTest$: Observable<FlowRun | null>;
-  shouldDisableTestButton$: Observable<boolean>;
+  shouldHideTestWidget$: Observable<boolean>;
   testRunSnackbar: MatSnackBarRef<TestRunBarComponent>;
   testFlowButtonDisabledTooltip = '';
   payloadControl: UntypedFormControl = new UntypedFormControl(
@@ -99,9 +100,10 @@ export class TestFlowModalComponent implements OnInit {
     this.isSaving$ = this.store.select(BuilderSelectors.selectIsSaving);
     this.setupSelectedFlowListener();
     this.selectedInstanceRunStatus();
-    this.shouldDisableTestButton$ = combineLatest({
+    this.shouldHideTestWidget$ = combineLatest({
       saving: this.isSaving$,
       valid: this.store.select(BuilderSelectors.selectCurrentFlowValidity),
+      isInReadOnlyMode: this.store.select(BuilderSelectors.selectReadOnly),
     }).pipe(
       tap((res) => {
         if (res.saving) {
@@ -114,7 +116,7 @@ export class TestFlowModalComponent implements OnInit {
         }
       }),
       map((res) => {
-        return res.saving || !res.valid;
+        return !res.valid || res.isInReadOnlyMode;
       })
     );
   }
@@ -171,7 +173,7 @@ export class TestFlowModalComponent implements OnInit {
         flow,
         JSON.parse(this.payloadControl.value)
       );
-      this.cd.detectChanges();
+      this.cd.markForCheck();
     }
   }
   executeTest(flow: Flow, payload: unknown) {
@@ -183,6 +185,11 @@ export class TestFlowModalComponent implements OnInit {
       .pipe(
         tap({
           next: (instanceRun: FlowRun) => {
+            this.store.dispatch(
+              canvasActions.setRun({
+                run: instanceRun ?? initializedRun,
+              })
+            );
             this.testRunSnackbar = this.snackbar.openFromComponent(
               TestRunBarComponent,
               {
@@ -191,11 +198,6 @@ export class TestFlowModalComponent implements OnInit {
                   flowId: flow.id,
                 },
               }
-            );
-            this.store.dispatch(
-              FlowsActions.setRun({
-                run: instanceRun ?? initializedRun,
-              })
             );
             this.setStatusChecker(instanceRun.id);
           },
@@ -223,7 +225,7 @@ export class TestFlowModalComponent implements OnInit {
               }
             );
           }
-          this.store.dispatch(FlowsActions.exitRun());
+          this.store.dispatch(canvasActions.exitRun());
           return of(null);
         })
       );
@@ -248,7 +250,7 @@ export class TestFlowModalComponent implements OnInit {
       tap((instanceRun) => {
         if (instanceRun.status !== ExecutionOutputStatus.RUNNING) {
           this.store.dispatch(
-            FlowsActions.setRun({
+            canvasActions.setRun({
               run: instanceRun,
             })
           );

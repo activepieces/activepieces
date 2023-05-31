@@ -47,7 +47,7 @@ export default createAction({
         })
     },
     async run(context) {
-        const client = makeClient(context);
+        const client = makeClient(context.propsValue);
         const res = await client.updateAbsence(context.propsValue.absence_id, {
             date_since: reformatDate(context.propsValue.date_since),
             date_until: reformatDate(context.propsValue.date_until),

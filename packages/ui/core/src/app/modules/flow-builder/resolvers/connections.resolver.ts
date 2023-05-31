@@ -9,10 +9,12 @@ import {
 } from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
 
+export type ConnectionsResolverData = AppConnection[];
+
 @Injectable({
   providedIn: 'root',
 })
-export class ConnectionsResolver implements Resolve<AppConnection[]> {
+export class ConnectionsResolver implements Resolve<ConnectionsResolverData> {
   constructor(
     private appConnectionsService: AppConnectionsService,
     private store: Store

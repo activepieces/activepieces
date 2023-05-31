@@ -7,8 +7,7 @@ import { MagicWandDialogComponent } from './magic-wand-dialog/magic-flow-dialog.
 import { FlowBuilderHeaderComponent } from './flow-builder-header.component';
 import { ToggleInstanceStateComponent } from './toggle-instance-state/toggle-instance-state.component';
 import { PublishButtonComponent } from './publish-button/publish-button.component';
-import { TestFlowModalComponent } from './test-flow-modal/test-flow-modal.component';
-import { CodemirrorModule } from '@ctrl/ngx-codemirror';
+import { DraftStatusComponent } from './draft-status/draft-status.component';
 
 const exportedDeclarations = [
   FlowBuilderHeaderComponent,
@@ -16,17 +15,15 @@ const exportedDeclarations = [
   MagicWandDialogComponent,
   ToggleInstanceStateComponent,
   PublishButtonComponent,
-  TestFlowModalComponent,
 ];
 @NgModule({
   imports: [
     CommonModule,
     UiCommonModule,
     UiFeatureBuilderStoreModule,
-    CodemirrorModule,
     UiCommonModule,
   ],
-  declarations: [...exportedDeclarations],
+  declarations: [...exportedDeclarations, DraftStatusComponent],
   exports: [...exportedDeclarations],
 })
 export class UiFeatureBuilderHeaderModule {}

@@ -264,6 +264,7 @@ export class PieceActionInputFormComponent
     this.intialComponentInputFormValue = obj;
     this.pieceName = obj.pieceName;
     this.pieceVersion = obj.pieceVersion;
+
     this.pieceActionForm
       .get(ACTION_FORM_CONTROL_NAME)
       ?.setValue(undefined, { emitEvent: false });

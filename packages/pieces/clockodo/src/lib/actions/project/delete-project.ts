@@ -1,4 +1,4 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
+import { createAction } from "@activepieces/pieces-framework";
 import { clockodoCommon, makeClient } from "../../common";
 
 export default createAction({
@@ -7,13 +7,10 @@ export default createAction({
     description: 'Deletes a project in clockodo',
     props: {
         authentication: clockodoCommon.authentication,
-        project_id: Property.Number({
-            displayName: 'Project ID',
-            required: true
-        })
+        project_id: clockodoCommon.project_id(true, false, false)
     },
     async run(context) {
-        const client = makeClient(context);
-        await client.deleteProject(context.propsValue.project_id)
+        const client = makeClient(context.propsValue);
+        await client.deleteProject(context.propsValue.project_id as number)
     }
 })

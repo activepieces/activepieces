@@ -9,7 +9,7 @@ export default createAction({
         authentication: clockodoCommon.authentication
     },
     async run(context) {
-        const client = makeClient(context);
+        const client = makeClient(context.propsValue);
         const res = await client.listUsers()
         return {
             users: res.users

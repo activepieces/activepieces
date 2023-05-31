@@ -13,7 +13,7 @@ export default createAction({
         })
     },
     async run(context) {
-        const client = makeClient(context);
+        const client = makeClient(context.propsValue);
         const res = await client.getAbsence(context.propsValue.absence_id)
         return res.absence
     }

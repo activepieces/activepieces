@@ -27,13 +27,10 @@ export default createAction({
             displayName: 'Note',
             required: false
         }),
-        color: Property.Number({
-            displayName: 'Color',
-            required: false
-        })
+        color: clockodoCommon.color(false)
     },
     async run(context) {
-        const client = makeClient(context);
+        const client = makeClient(context.propsValue);
         const res = await client.createCustomer({
             name: context.propsValue.name,
             number: emptyToNull(context.propsValue.number),

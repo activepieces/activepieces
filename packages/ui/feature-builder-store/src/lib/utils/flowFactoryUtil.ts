@@ -1,7 +1,7 @@
 import {
   ActionType,
   BranchAction,
-  Flow,
+  FlowVersion,
   LoopOnItemsAction,
   Trigger,
 } from '@activepieces/shared';
@@ -10,10 +10,9 @@ import { FLOW_ITEM_HEIGHT, FLOW_ITEM_WIDTH } from './draw-utils';
 import { ActionFlowItem, FlowItem } from '../model/flow-item';
 
 export class FlowFactoryUtil {
-  public static createRootStep(flow: Flow): FlowItem | undefined {
-    const latestVersion = flow.version;
-    if (latestVersion?.trigger) {
-      const newFlow = FlowFactoryUtil.addCordDetails(latestVersion.trigger);
+  public static createRootStep(flowVersion: FlowVersion): FlowItem | undefined {
+    if (flowVersion.trigger) {
+      const newFlow = FlowFactoryUtil.addCordDetails(flowVersion.trigger);
       FlowFactoryUtil.buildHelper(newFlow);
       return newFlow;
     }
