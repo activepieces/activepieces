@@ -13,7 +13,7 @@ export enum FlowInstanceActionType {
 
 const setInitial = createAction(
   FlowInstanceActionType.SET_INITIAL,
-  props<{ instance: FlowInstance; publishedFlowVersion: FlowVersion }>()
+  props<{ instance?: FlowInstance; publishedFlowVersion?: FlowVersion }>()
 );
 const enableInstance = createAction(FlowInstanceActionType.ENABLE_INSTANCE);
 const disableInstance = createAction(FlowInstanceActionType.DISABLE_INSTANCE);

@@ -14,6 +14,9 @@ const __flowInstanceReducer = createReducer(
   on(
     FlowInstanceActions.setInitial,
     (state, { instance, publishedFlowVersion }): FlowInstanceState => {
+      if (!instance || !publishedFlowVersion) {
+        return {};
+      }
       return {
         instance: { ...instance },
         publishedFlowVersion: { ...publishedFlowVersion },

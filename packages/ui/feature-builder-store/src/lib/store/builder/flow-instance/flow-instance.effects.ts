@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Actions, createEffect, ofType, concatLatestFrom } from '@ngrx/effects';
-import { EMPTY, catchError, of, tap } from 'rxjs';
+import { catchError, of, tap } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -19,12 +19,6 @@ export class FlowInstanceEffects {
     return this.actions$.pipe(
       ofType(BuilderActions.loadInitial),
       switchMap((action) => {
-        if (
-          action.instance === undefined ||
-          action.publishedVersion === undefined
-        ) {
-          return EMPTY;
-        }
         return of(
           FlowInstanceActions.setInitial({
             instance: action.instance,
