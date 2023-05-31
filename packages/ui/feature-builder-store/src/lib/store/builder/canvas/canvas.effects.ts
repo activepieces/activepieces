@@ -8,6 +8,7 @@ import { EMPTY, of } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { BuilderSelectors } from '../builder.selector';
 import { LeftSideBarType } from '../../../model';
+import { RunDetailsService } from '../../../service/run-details.service';
 
 @Injectable()
 export class CanvasEffects {
@@ -71,6 +72,11 @@ export class CanvasEffects {
       concatLatestFrom(() => [
         this.store.select(BuilderSelectors.selectCurrentFlow),
       ]),
+      tap(([{ run }, currentRun]) => {
+        if (run.id !== currentRun?.id) {
+          this.runDetailsService.currentStepResult$.next(undefined);
+        }
+      }),
       switchMap(([run]) => {
         return of(
           canvasActions.setLeftSidebar({
@@ -84,6 +90,7 @@ export class CanvasEffects {
   constructor(
     private actions$: Actions,
     private store: Store,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private runDetailsService: RunDetailsService
   ) {}
 }
