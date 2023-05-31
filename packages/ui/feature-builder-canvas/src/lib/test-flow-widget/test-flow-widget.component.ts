@@ -185,6 +185,11 @@ export class TestFlowWidgetComponent implements OnInit {
       .pipe(
         tap({
           next: (instanceRun: FlowRun) => {
+            this.store.dispatch(
+              canvasActions.setRun({
+                run: instanceRun ?? initializedRun,
+              })
+            );
             this.testRunSnackbar = this.snackbar.openFromComponent(
               TestRunBarComponent,
               {
@@ -193,11 +198,6 @@ export class TestFlowWidgetComponent implements OnInit {
                   flowId: flow.id,
                 },
               }
-            );
-            this.store.dispatch(
-              canvasActions.setRun({
-                run: instanceRun ?? initializedRun,
-              })
             );
             this.setStatusChecker(instanceRun.id);
           },

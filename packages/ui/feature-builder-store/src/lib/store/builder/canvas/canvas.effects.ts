@@ -20,6 +20,7 @@ export class CanvasEffects {
           displayedFlowVersion: action.publishedVersion
             ? action.publishedVersion
             : action.flow.version,
+          run: action.run,
         });
       })
     );

@@ -24,7 +24,7 @@ export enum CanvasActionType {
 
 const setInitial = createAction(
   CanvasActionType.SET_INITIAL,
-  props<{ displayedFlowVersion: FlowVersion }>()
+  props<{ displayedFlowVersion: FlowVersion; run?: FlowRun }>()
 );
 const setLeftSidebar = createAction(
   CanvasActionType.SET_LEFT_SIDEBAR,
