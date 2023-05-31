@@ -37,7 +37,7 @@ export class FlowItemComponent implements OnInit {
   @Input() hoverState = false;
   @Input() trigger = false;
   _flowItemData: FlowItem;
-  touchStartLongPress={delay:750,delta:10}
+  touchStartLongPress = { delay: 750, delta: 10 };
   snappedDraggedShadowToCursor = false;
   hideDraggableSource$: Subject<boolean> = new Subject();
   c = 0;
