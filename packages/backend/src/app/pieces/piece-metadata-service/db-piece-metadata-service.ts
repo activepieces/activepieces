@@ -5,6 +5,7 @@ import { GetParams, ListParams, PieceMetadataService } from './piece-metadata-se
 import { PieceBase, PieceMetadata, PieceMetadataSummary } from '@activepieces/pieces-framework'
 import { isNil } from 'lodash'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
+import { AllPiecesStats, pieceStatsService } from './piece-stats-service'
 
 const repo = databaseConnection.getRepository(PieceMetadataEntity)
 
@@ -83,6 +84,10 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
             }
 
             return toPieceMetadata(pieceMetadataEntity)
+        },
+
+        async stats(): Promise<AllPiecesStats> {
+            return await pieceStatsService.get()
         },
     }
 }

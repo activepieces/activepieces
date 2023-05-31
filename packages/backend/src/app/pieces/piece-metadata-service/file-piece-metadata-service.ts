@@ -64,5 +64,9 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
 
             return pieceMetadata
         },
+
+        async stats() {
+            return {}
+        },
     }
 }
