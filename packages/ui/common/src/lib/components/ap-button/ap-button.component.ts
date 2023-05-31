@@ -14,6 +14,7 @@ import {
 })
 export class ApButtonComponent {
   _disabled: true | false | null = false;
+  @Input() onlyShowContent = false;
   @Input() loading = false;
   @Input() btnStyle: 'flat' | 'raised' | 'stroked' | 'basic' = 'flat';
   @Input() btnColor: 'primary' | 'warn' | 'success' | 'basic' | 'white' =

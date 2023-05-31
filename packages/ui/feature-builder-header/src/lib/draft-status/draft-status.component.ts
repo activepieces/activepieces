@@ -14,13 +14,13 @@ import { Observable, combineLatest, map } from 'rxjs';
 })
 export class DraftStatusComponent {
   draftStatus$: Observable<string>;
-  hideDraftOption$: Observable<boolean>;
-  showPublishedOption$: Observable<boolean>;
+  isCurrentFlowVersionPublished$: Observable<boolean>;
+  hasFlowBeenPublished$: Observable<boolean>;
   constructor(private store: Store) {
-    this.hideDraftOption$ = this.store.select(
+    this.isCurrentFlowVersionPublished$ = this.store.select(
       BuilderSelectors.selectIsCurrentVersionPublished
     );
-    this.showPublishedOption$ = this.store.select(
+    this.hasFlowBeenPublished$ = this.store.select(
       BuilderSelectors.selectHasFlowBeenPublished
     );
     this.draftStatus$ = combineLatest({

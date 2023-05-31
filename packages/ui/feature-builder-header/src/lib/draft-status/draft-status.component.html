@@ -1,12 +1,16 @@
 <div class="ap-border-x  ap-border-dividers ap-px-4 ap-mx-3">
     <ap-button btnColor="basic" btnSize="medium" btnStyle="basic" #menuTrigger="matMenuTrigger"
-        [matMenuTriggerFor]="versionsMenu">
+        [onlyShowContent]="(hasFlowBeenPublished$ | async) === false || (isCurrentFlowVersionPublished$ | async) === true"
+        [matMenuTriggerFor]="((hasFlowBeenPublished$ | async) === false || (isCurrentFlowVersionPublished$ | async) === true) ? null: versionsMenu">
         <div class="ap-typography-body-2 ap-text-body ap-flex ap-items-center ap-gap-2">
-            {{(draftStatus$ | async)}} <svg-icon [applyClass]="true" class="ap-w-[10px] ap-h-[6px] ap-fill-body"
+            {{(draftStatus$ | async)}} <svg-icon
+                *ngIf="(hasFlowBeenPublished$ | async) === true && (isCurrentFlowVersionPublished$ | async) === false"
+                [applyClass]="true" class="ap-w-[10px] ap-h-[6px] ap-fill-body"
                 src="assets/img/custom/chevron.svg"></svg-icon>
         </div>
     </ap-button>
 </div>
+
 
 
 <mat-menu #versionsMenu="matMenu" xPosition="before">
@@ -14,15 +18,11 @@
         <div class="ap-text-description ap-px-3 ap-py-2">
             Switch Version
         </div>
-        <div class="!ap-px-3 !ap-py-2" *ngIf="(hideDraftOption$ | async) === false" mat-menu-item
-            (click)="showDraftVersion()">
+        <div class="!ap-px-3 !ap-py-2" mat-menu-item (click)="showDraftVersion()">
             Draft
         </div>
-        <div class="!ap-px-3 !ap-py-2" *ngIf="(showPublishedOption$ | async) === true" mat-menu-item
-            (click)="showPublishedVersion()">
+        <div class="!ap-px-3 !ap-py-2" mat-menu-item (click)="showPublishedVersion()">
             Published
         </div>
     </div>
-
-
 </mat-menu>
