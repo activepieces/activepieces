@@ -65,7 +65,6 @@ const convertBody = async (request: FastifyRequest) => {
         const jsonResult: Record<string, unknown> = {}
         const parts = request.parts()
         for await (const part of parts) {
-            // TODO: support files
             if (part.type === 'file') {
                 const chunks = []
                 for await (const chunk of part.file) {
