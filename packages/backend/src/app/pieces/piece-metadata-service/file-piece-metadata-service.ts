@@ -65,6 +65,10 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
             return pieceMetadata
         },
 
+        async create() {
+            throw new Error('not supported')
+        },
+
         async stats() {
             return {}
         },
