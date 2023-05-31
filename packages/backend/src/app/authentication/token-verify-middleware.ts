@@ -1,6 +1,7 @@
 import { FastifyRequest } from 'fastify'
 import { tokenUtils } from './lib/token-utils'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
+import { API_KEY_PROTECTED_ROUTES } from './api-key-auth-middleware'
 
 const ignoredRoutes = new Set([
     // BEGIN EE
@@ -21,6 +22,7 @@ const ignoredRoutes = new Set([
     '/v1/webhooks/:flowId/simulate',
     '/v1/docs',
     '/redirect',
+    ...API_KEY_PROTECTED_ROUTES,
 ])
 
 const HEADER_PREFIX = 'Bearer '
