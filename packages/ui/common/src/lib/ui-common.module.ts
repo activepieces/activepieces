@@ -49,6 +49,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { UserAvatarComponent } from './components/user-avatar/user-avatar.component';
 import { TrackHoverDirective } from './directives/track-hover.directive';
 import { PiecesIconsFromFlowComponent } from './components/pieces-icons-from-flow/pieces-icons-from-flow.component';
+import { PieceIconContainerComponent } from './components/pieces-icons/piece-icon-container/piece-icon-container.component';
 
 const exportedImports = [
   CommonModule,
@@ -99,6 +100,7 @@ const exportedDeclarations = [
   UserAvatarComponent,
   PiecesIconsFromFlowComponent,
   TrackHoverDirective,
+  PieceIconContainerComponent,
 ];
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 0,
