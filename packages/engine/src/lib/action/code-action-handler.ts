@@ -8,7 +8,7 @@ import {
   StepOutput,
   StepOutputStatus
 } from '@activepieces/shared';
-import { BaseActionHandler } from './action-handler';
+import { BaseActionHandler, InitStepOutputParams } from './action-handler';
 import { globals } from '../globals';
 import { isNil } from 'lodash';
 
@@ -29,20 +29,28 @@ export class CodeActionHandler extends BaseActionHandler<CodeAction> {
     this.variableService = new VariableService()
   }
 
-  async execute(executionState: ExecutionState): Promise<StepOutput> {
-    globals.addOneTask()
-
+  /**
+   * initializes an empty code step output
+   */
+  protected override async initStepOutput({ executionState }: InitStepOutputParams): Promise<StepOutput<ActionType.CODE>> {
     const censoredInput = await this.variableService.resolve({
-      unresolvedInput: this.currentAction.settings.input,
+      unresolvedInput: this.currentAction.settings,
       executionState,
       censorConnections: true,
     })
 
-    const stepOutput: StepOutput<ActionType.CODE> = {
+    return {
       type: ActionType.CODE,
       status: StepOutputStatus.RUNNING,
       input: censoredInput,
     }
+  }
+
+  override async execute(executionState: ExecutionState, ancestors: [string, number][]): Promise<StepOutput> {
+    const stepOutput = await this.loadStepOutput({
+      executionState,
+      ancestors,
+    })
 
     const resolvedInput = await this.variableService.resolve({
       unresolvedInput: this.currentAction.settings.input,

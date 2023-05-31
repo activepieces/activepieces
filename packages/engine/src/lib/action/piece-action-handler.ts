@@ -4,19 +4,18 @@ import {
   ActionType,
   ExecutionState,
   ExecutionType,
-  PauseType,
   PieceAction,
   StepOutput,
   StepOutputStatus
 } from '@activepieces/shared';
-import { BaseActionHandler } from './action-handler';
+import { BaseActionHandler, InitStepOutputParams } from './action-handler';
 import { globals } from '../globals';
 import { isNil } from 'lodash';
 import { pieceHelper } from '../helper/piece-helper';
 import { createContextStore } from '../services/storage.service';
 import { connectionManager } from '../services/connections.service';
 import { Utils } from '../utils';
-import { PiecePropertyMap } from '@activepieces/pieces-framework';
+import { PauseHook, PauseHookParams, PiecePropertyMap, StopHook, StopHookParams } from '@activepieces/pieces-framework';
 
 type CtorParams = {
   executionType: ExecutionType
@@ -35,6 +34,14 @@ type ResolveAndValidateInput = {
   input: unknown
   executionState: ExecutionState
   censorConnections: boolean
+}
+
+type GenerateStopHookParams = {
+  stepOutput: StepOutput<ActionType.PIECE>
+}
+
+type GeneratePauseHookParams = {
+  stepOutput: StepOutput<ActionType.PIECE>
 }
 
 export class PieceActionHandler extends BaseActionHandler<PieceAction> {
@@ -87,35 +94,65 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
     return result
   }
 
+  private generateStopHook({ stepOutput }: GenerateStopHookParams): StopHook {
+    return ({ response }: StopHookParams) => {
+      stepOutput.status = StepOutputStatus.STOPPED
+      stepOutput.stopResponse = response
+    }
+  }
+
+  private generatePauseHook({ stepOutput }: GeneratePauseHookParams): PauseHook {
+    const actionName = this.currentAction.name
+
+    return ({ pauseMetadata }: PauseHookParams) => {
+      stepOutput.status = StepOutputStatus.PAUSED
+      stepOutput.pauseMetadata = {
+        ...pauseMetadata,
+        resumeStepMetadata: {
+          type: ActionType.PIECE,
+          name: actionName,
+        }
+      }
+    }
+  }
+
+  /**
+   * initializes an empty piece step output
+   */
+  protected override async initStepOutput({ executionState }: InitStepOutputParams): Promise<StepOutput<ActionType.PIECE>> {
+    const censoredInput = await this.variableService.resolve({
+      unresolvedInput: this.currentAction.settings,
+      executionState,
+      censorConnections: true,
+    })
+
+    return {
+      type: ActionType.PIECE,
+      status: StepOutputStatus.RUNNING,
+      input: censoredInput,
+    }
+  }
+
   async execute(
-    executionState: ExecutionState
+    executionState: ExecutionState,
+    ancestors: [string, number][],
   ): Promise<StepOutput> {
     const { input, pieceName, pieceVersion, actionName } = this.currentAction.settings;
 
-    const stepOutput: StepOutput<ActionType.PIECE> = {
-      type: ActionType.PIECE,
-      status: StepOutputStatus.RUNNING,
-      input: {},
-    }
+    const stepOutput = await this.loadStepOutput({
+      executionState,
+      ancestors,
+    })
 
     try {
       if (isNil(actionName)) {
         throw new Error("Action name is not defined")
       }
 
-      globals.addOneTask()
-
       const action = await this.loadAction({
         pieceName,
         pieceVersion,
         actionName,
-      })
-
-      stepOutput.input = await this.resolveInput({
-        actionProps: action.props,
-        input,
-        executionState,
-        censorConnections: true,
       })
 
       const resolvedInput = await this.resolveInput({
@@ -126,12 +163,20 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
       })
 
       stepOutput.output = await action.run({
+        executionType: this.executionType,
         store: createContextStore('', globals.flowId),
         propsValue: resolvedInput,
-        connections: connectionManager
+        connections: connectionManager,
+        run: {
+          stop: this.generateStopHook({ stepOutput }),
+          pause: this.generatePauseHook({ stepOutput }),
+        }
       })
 
-      stepOutput.status = StepOutputStatus.SUCCEEDED
+      if (stepOutput.status === StepOutputStatus.RUNNING) {
+        stepOutput.status = StepOutputStatus.SUCCEEDED
+      }
+
       return stepOutput
     }
     catch (e) {

@@ -4,23 +4,38 @@ import { databaseConnection } from '../database/database-connection'
 import { logger } from '../helper/logger'
 import { FileEntity } from './file.entity'
 
-type GetOneParams = {
+type SaveParams = {
+    fileId?: FileId | undefined
+    projectId: ProjectId
+    data: Buffer
+}
+
+type BaseOneParams = {
     fileId: FileId
     projectId: ProjectId
 }
 
+type GetOneParams = BaseOneParams
+
+type DeleteOneParams = BaseOneParams
+
 const fileRepo = databaseConnection.getRepository<File>(FileEntity)
 
 export const fileService = {
-    async save(projectId: ProjectId, buffer: Buffer): Promise<File> {
-        const savedFile = await fileRepo.save({
-            id: apId(),
-            projectId: projectId,
-            data: buffer,
-        })
-        logger.info('Saved File id ' + savedFile.id + ' number of bytes ' + buffer.length)
+    async save({ fileId, projectId, data }: SaveParams): Promise<File> {
+        const file = {
+            id: fileId ?? apId(),
+            projectId,
+            data,
+        }
+
+        const savedFile = await fileRepo.save(file)
+
+        logger.info(`[FileService#save] fileId=${savedFile.id} data.length=${data.length}`)
+
         return savedFile
     },
+
     async getOne({projectId, fileId}: GetOneParams): Promise<File | null> {
         return await fileRepo.findOneBy({
             projectId: projectId,
@@ -43,7 +58,7 @@ export const fileService = {
         return file
     },
 
-    async delete({ projectId, fileId }: { projectId: ProjectId, fileId: FileId }): Promise<void> {
+    async delete({ fileId, projectId }: DeleteOneParams): Promise<void> {
         logger.info('Deleted file with Id ' + fileId)
         await fileRepo.delete({ id: fileId, projectId: projectId })
     },

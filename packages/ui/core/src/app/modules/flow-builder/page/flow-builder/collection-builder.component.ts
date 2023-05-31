@@ -197,6 +197,7 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
 
   rightDrawHandleDragStopped() {
     this.rightSidebarDragging = false;
+    this.builderService.refreshCodeMirror$.next();
   }
 
   leftDrawerHandleDragEnded() {

@@ -4,9 +4,10 @@ import {ExecutionState} from './execution-state';
 export enum ExecutionOutputStatus {
   FAILED = 'FAILED',
   INTERNAL_ERROR = 'INTERNAL_ERROR',
-  RUNNING = "RUNNING",
-  SUCCEEDED = 'SUCCEEDED',
   PAUSED = 'PAUSED',
+  RUNNING = "RUNNING",
+  STOPPED = 'STOPPED',
+  SUCCEEDED = 'SUCCEEDED',
   TIMEOUT = 'TIMEOUT',
 }
 
@@ -56,7 +57,6 @@ export enum PauseType {
 type BasePauseMetadata<T extends PauseType> = {
   type: T;
   resumeStepMetadata: ResumeStepMetadata;
-  executionState: ExecutionState;
 }
 
 export type DelayPauseMetadata = BasePauseMetadata<PauseType.DELAY> & {
@@ -67,9 +67,22 @@ export type PauseMetadata = DelayPauseMetadata
 
 
 export type PauseExecutionOutput = BaseExecutionOutput<ExecutionOutputStatus.PAUSED> & {
-  pauseMetadata: Omit<PauseMetadata, 'executionState'>
+  pauseMetadata: PauseMetadata
 }
 
-export type FinishExecutionOutput = BaseExecutionOutput<Exclude<ExecutionOutputStatus, ExecutionOutputStatus.PAUSED>>
+export type FinishExecutionOutput = BaseExecutionOutput<
+  Exclude<
+    ExecutionOutputStatus,
+      | ExecutionOutputStatus.PAUSED
+      | ExecutionOutputStatus.STOPPED
+  >
+>
 
-export type ExecutionOutput = FinishExecutionOutput | PauseExecutionOutput
+export type StopExecutionOutput = BaseExecutionOutput<ExecutionOutputStatus.STOPPED> & {
+  stopResponse?: unknown
+}
+
+export type ExecutionOutput =
+  | FinishExecutionOutput
+  | PauseExecutionOutput
+  | StopExecutionOutput

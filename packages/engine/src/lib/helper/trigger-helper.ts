@@ -117,7 +117,7 @@ export const triggerHelper = {
             });
 
             if (verified === false) {
-              console.log("Webhook is not verified");
+              console.info("Webhook is not verified");
               return {
                 success: false,
                 message: "Webhook is not verified",
