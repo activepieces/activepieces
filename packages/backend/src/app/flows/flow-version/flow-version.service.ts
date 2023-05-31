@@ -28,9 +28,9 @@ import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { FlowVersionEntity } from './flow-version-entity'
 import { flowVersionSideEffects } from './flow-version-side-effects'
-import { pieceMetadataLoader } from '../../pieces/piece-metadata-loader'
 import { FlowViewMode, DEFAULT_SAMPLE_DATA_SETTINGS } from '@activepieces/shared'
 import { isNil } from 'lodash'
+import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 
 const branchSettingsValidator = TypeCompiler.Compile(BranchActionSettingsWithValidation)
 const loopSettingsValidator = TypeCompiler.Compile(LoopOnItemsActionSettingsWithValidation)
@@ -409,7 +409,12 @@ async function validateAction(settings: PieceActionSettings) {
     ) {
         return false
     }
-    const piece = await pieceMetadataLoader.pieceMetadata(settings.pieceName, settings.pieceVersion)
+
+    const piece = await pieceMetadataService.get({
+        name: settings.pieceName,
+        version: settings.pieceVersion,
+    })
+
     if (piece === undefined) {
         return false
     }
@@ -429,7 +434,12 @@ async function validateTrigger(settings: PieceTriggerSettings) {
     ) {
         return false
     }
-    const piece = await pieceMetadataLoader.pieceMetadata(settings.pieceName, settings.pieceVersion)
+
+    const piece = await pieceMetadataService.get({
+        name: settings.pieceName,
+        version: settings.pieceVersion,
+    })
+
     if (piece === undefined) {
         return false
     }
