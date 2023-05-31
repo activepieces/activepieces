@@ -2,13 +2,18 @@ import { createAction, Property } from "@activepieces/pieces-framework";
 import { mysqlCommon, mysqlConnect } from "../common";
 
 export default createAction({
-    name: 'delete_rows',
-    displayName: 'Delete Rows',
-    description: 'Deletes one or more rows from a table',
+    name: 'update_row',
+    displayName: 'Update Row',
+    description: 'Updates one or more rows in a table',
     props: {
         authentication: mysqlCommon.authentication,
         timezone: mysqlCommon.timezone,
         table: mysqlCommon.table(),
+        values: Property.Object({
+            displayName: 'Values',
+            description: 'Values to be updated',
+            required: true
+        }),
         condition: Property.ShortText({
             displayName: 'Condition',
             required: true
@@ -20,10 +25,13 @@ export default createAction({
         })
     },
     async run(context) {
-        const qs = "DELETE FROM `" + context.propsValue.table + "` WHERE " + context.propsValue.condition + ";"
+        const fields = Object.keys(context.propsValue.values)
+        const values = fields.map(f => context.propsValue.values[f])
+        const qsValues = fields.map(f => "`" + f + "`=?").join(',')
+        const qs = "UPDATE `" + context.propsValue.table + "` SET " + qsValues + " WHERE " + context.propsValue.condition + ";"
         const conn = await mysqlConnect(context.propsValue);
         try {
-            const result = await conn.query(qs, context.propsValue.args)
+            const result = await conn.query(qs, [ ...values, ...(context.propsValue.args || []) ])
             await conn.end()
             return result
         } catch(e) {

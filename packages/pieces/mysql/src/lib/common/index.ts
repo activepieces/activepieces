@@ -27,14 +27,14 @@ export const mysqlCommon = {
                     required: true,
                     description: "The hostname or address of the mysql server"
                 }),
-                port: Property.ShortText({
+                port: Property.Number({
                     displayName: 'Port',
-                    defaultValue: '3306',
+                    defaultValue: 3306,
                     description: "The port to use for connecting to the mysql server",
                     required: true,
                 }),
                 user: Property.ShortText({
-                    displayName: 'User',
+                    displayName: 'Username',
                     required: true,
                     description: "The username to use for connecting to the mysql server"
                 }),

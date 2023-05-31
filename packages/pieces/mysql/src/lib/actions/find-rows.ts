@@ -2,8 +2,8 @@ import { createAction, Property } from "@activepieces/pieces-framework";
 import { mysqlCommon, mysqlConnect, isSpecialColumn } from "../common";
 
 export default createAction({
-    name: 'select_rows',
-    displayName: 'Select Rows',
+    name: 'find_rows',
+    displayName: 'Find Rows',
     description: 'Reads rows from a table',
     props: {
         authentication: mysqlCommon.authentication,
