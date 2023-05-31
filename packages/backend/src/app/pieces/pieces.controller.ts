@@ -10,7 +10,7 @@ import { GetPieceRequest, ListPiecesRequest, PieceOptionsRequest } from './piece
 const statsEnabled = system.get(SystemProp.STATS_ENABLED) ?? false
 
 export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done) => {
-    app.get('/v1/pieces', ListPiecesRequest, async (req): Promise<SeekPage<PieceMetadataSummary>> => {
+    app.get('/', ListPiecesRequest, async (req): Promise<SeekPage<PieceMetadataSummary>> => {
         const { release } = req.query
 
         const pieceMetadataSummaryList = await pieceMetadataService.list({
@@ -24,7 +24,7 @@ export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done)
         }
     })
 
-    app.get('/v1/pieces/:name', GetPieceRequest, async (req): Promise<PieceMetadata> => {
+    app.get('/:name', GetPieceRequest, async (req): Promise<PieceMetadata> => {
         const { name } = req.params
         const { version } = req.query
 
@@ -34,7 +34,7 @@ export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done)
         })
     })
 
-    app.post('/v1/pieces/:pieceName/options', PieceOptionsRequest, async (req) => {
+    app.post('/:pieceName/options', PieceOptionsRequest, async (req) => {
         const { result } = await engineHelper.executeProp({
             pieceName: req.params.pieceName,
             pieceVersion: req.body.pieceVersion,
@@ -47,7 +47,7 @@ export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done)
         return result
     })
 
-    app.get('/v1/pieces/stats', async () => {
+    app.get('/stats', async () => {
         if (!statsEnabled) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,

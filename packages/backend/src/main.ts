@@ -7,7 +7,7 @@ import { projectModule } from './app/project/project.module'
 import { openapiModule } from './app/helper/openapi/openapi.module'
 import { flowModule } from './app/flows/flow.module'
 import { fileModule } from './app/file/file.module'
-import { piecesController } from './app/pieces/pieces.controller'
+import { pieceModule } from './app/pieces/piece-module'
 import { tokenVerifyMiddleware } from './app/authentication/token-verify-middleware'
 import { storeEntryModule } from './app/store-entry/store-entry.module'
 import { flowRunModule } from './app/flows/flow-run/flow-run-module'
@@ -94,7 +94,7 @@ app.register(storeEntryModule)
 app.register(flowModule)
 app.register(codeModule)
 app.register(flowWorkerModule)
-app.register(piecesController)
+app.register(pieceModule)
 app.register(flowInstanceModule)
 app.register(flowRunModule)
 app.register(webhookModule)
