@@ -6,6 +6,9 @@ const initialState: any = ViewModeEnum.BUILDING;
 
 const _viewModeReducer = createReducer(
   initialState,
+  on(ViewModeActions.setInitial, (state, { viewMode }): ViewModeEnum => {
+    return viewMode;
+  }),
   on(ViewModeActions.setViewMode, (state, { viewMode }): ViewModeEnum => {
     return viewMode;
   })

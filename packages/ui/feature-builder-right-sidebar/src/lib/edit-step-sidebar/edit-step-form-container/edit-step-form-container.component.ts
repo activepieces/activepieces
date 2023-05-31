@@ -73,6 +73,7 @@ export class EditStepFormContainerComponent {
       })
     );
     this.readOnly$ = this.store.select(BuilderSelectors.selectReadOnly).pipe(
+      take(1),
       tap((readOnly) => {
         if (readOnly) {
           this.stepForm.disable();

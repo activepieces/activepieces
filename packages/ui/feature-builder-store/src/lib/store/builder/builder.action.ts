@@ -4,6 +4,7 @@ import {
   Flow,
   FlowInstance,
   FlowRun,
+  FlowVersion,
   Folder,
 } from '@activepieces/shared';
 import { ViewModeEnum } from '../../model/enums/view-mode.enum';
@@ -21,6 +22,7 @@ export const loadInitial = createAction(
     run?: FlowRun;
     appConnections: AppConnection[];
     folder?: Folder;
+    publishedVersion?: FlowVersion;
   }>()
 );
 
