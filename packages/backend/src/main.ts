@@ -2,6 +2,8 @@ import fastify, { FastifyRequest, HTTPMethods } from 'fastify'
 import cors from '@fastify/cors'
 import formBody from '@fastify/formbody'
 import qs from 'qs'
+import fastifyMultipart from '@fastify/multipart'
+
 import { authenticationModule } from './app/authentication/authentication.module'
 import { projectModule } from './app/project/project.module'
 import { openapiModule } from './app/helper/openapi/openapi.module'
@@ -62,6 +64,7 @@ app.register(cors, {
     origin: '*',
     methods: ['*'],
 })
+app.register(fastifyMultipart)
 app.register(import('fastify-raw-body'), {
     field: 'rawBody',
     global: false,

@@ -27,6 +27,7 @@
     "@ctrl/ngx-codemirror": "^5.1.1",
     "@fastify/cors": "^8.2.0",
     "@fastify/formbody": "^7.4.0",
+    "@fastify/multipart": "^7.6.0",
     "@fastify/swagger": "^8.3.1",
     "@fastify/type-provider-typebox": "^3.0.0",
     "@firebase/auth": "^0.21.3",
