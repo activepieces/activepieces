@@ -31,9 +31,15 @@ export class TestRunBarComponent implements OnInit {
 
   ngOnInit(): void {
     this.hideExit$ = this.store.select(BuilderSelectors.selectIsInDebugMode);
-    this.selectedRun$ = this.store.select(
-      BuilderSelectors.selectCurrentFlowRun
-    );
+    this.selectedRun$ = this.store
+      .select(BuilderSelectors.selectCurrentFlowRun)
+      .pipe(
+        tap((run) => {
+          if (!run) {
+            this.snackbarRef.dismiss();
+          }
+        })
+      );
     this.sandboxTimeoutSeconds$ = this.flagsService.getSandboxTimeout();
     this.exitRun$ = this.exitButtonClicked.pipe(
       tap(() => {
