@@ -283,9 +283,9 @@ describe('Variable Service', () => {
         Asana1: '2012-02-22T02:06:58.147Z',
         Asana2: '2012-02-22',
         Hubspot: '2019-10-30T03:30:17.883Z',
-        FormatOne: '2023-05-23',
-        FormatTwo: 'May 23, 2023',
-        FormatThree: '05/23/2023',
+        FormatOne: '2023-05-23Z',
+        FormatTwo: 'May 23, 2023Z',
+        FormatThree: '05/23/2023Z',
         FormatFour: '2023-05-23T12:34:56',
         FormatFive: '2023-05-23 12:34:56',
       };

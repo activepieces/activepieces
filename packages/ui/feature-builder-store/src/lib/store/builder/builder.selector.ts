@@ -3,9 +3,11 @@ import { GlobalBuilderState } from '../../model/global-builder-state.model';
 
 import {
   AppConnection,
+  ExecutionOutputStatus,
   Flow,
   FlowRun,
   FlowVersionState,
+  StepOutput,
   flowHelper,
 } from '@activepieces/shared';
 import { ViewModeEnum } from '../../model/enums/view-mode.enum';
@@ -108,6 +110,7 @@ const selectIsCurrentVersionPublished = createSelector(
     return flow.version.state === FlowVersionState.LOCKED;
   }
 );
+
 export const selectCurrentFlowFolderName = createSelector(
   selectFlowState,
   (state) => {
@@ -229,7 +232,33 @@ export const selectCurrentFlowRunStatus = createSelector(
     return run.status;
   }
 );
-
+const selectStepResultsAccordion = createSelector(
+  selectCurrentFlow,
+  selectCurrentFlowRun,
+  (flow, run) => {
+    if (!run || run.status === ExecutionOutputStatus.RUNNING) {
+      return [];
+    }
+    const steps = flowHelper.getAllSteps(flow.version);
+    const results: {
+      result: StepOutput;
+      stepName: string;
+    }[] = [];
+    const executionState = run.executionOutput?.executionState;
+    if (!executionState) {
+      return [];
+    }
+    steps.forEach((s) => {
+      if (executionState?.steps[s.name]) {
+        results.push({
+          result: executionState.steps[s.name],
+          stepName: s.name,
+        });
+      }
+    });
+    return results;
+  }
+);
 export const selectCurrentLeftSidebarType = createSelector(
   selectCanvasState,
   (state: CanvasState) => {
@@ -540,4 +569,5 @@ export const BuilderSelectors = {
   selectIsCurrentVersionPublished,
   selectPublishedFlowVersion,
   selectHasFlowBeenPublished,
+  selectStepResultsAccordion,
 };

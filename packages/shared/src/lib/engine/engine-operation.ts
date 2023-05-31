@@ -6,6 +6,7 @@ import { ProjectId } from "../project/project";
 
 export enum EngineOperationType {
     EXECUTE_ACTION = "EXECUTE_ACTION",
+    EXECUTE_CODE = "EXECUTE_CODE",
     EXECUTE_FLOW = "EXECUTE_FLOW",
     EXECUTE_PROPERTY = "EXECUTE_PROPERTY",
     EXECUTE_TRIGGER_HOOK = "EXECUTE_TRIGGER_HOOK"
@@ -20,6 +21,7 @@ export enum TriggerHookType {
 
 export type EngineOperation =
     | ExecuteActionOperation
+    | ExecuteCodeOperation
     | ExecuteFlowOperation
     | ExecutePropsOptions
     | ExecuteTriggerOperation<TriggerHookType>
@@ -33,6 +35,13 @@ export type ExecuteActionOperation = {
     projectId: ProjectId
     workerToken?: string
     apiUrl?: string
+}
+
+export type ExecuteCodeOperation = {
+    codeBase64: string
+    testExecutionContext: Record<string, unknown>
+    input: Record<string, unknown>
+    projectId: ProjectId
 }
 
 export interface ExecutePropsOptions {

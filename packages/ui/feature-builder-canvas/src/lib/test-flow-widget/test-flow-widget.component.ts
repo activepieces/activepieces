@@ -199,7 +199,7 @@ export class TestFlowWidgetComponent implements OnInit {
                 run: instanceRun ?? initializedRun,
               })
             );
-            this.setStatusChecker(flow.id, instanceRun.id);
+            this.setStatusChecker(instanceRun.id);
           },
           error: (err) => {
             console.error(err);
@@ -230,7 +230,7 @@ export class TestFlowWidgetComponent implements OnInit {
         })
       );
   }
-  setStatusChecker(flowId: string, runId: string) {
+  setStatusChecker(runId: string) {
     this.instanceRunStatusChecker$ = interval(1500).pipe(
       takeUntil(this.testRunSnackbar.instance.exitButtonClicked),
       switchMap(() => this.instanceRunService.get(runId)),
@@ -257,7 +257,10 @@ export class TestFlowWidgetComponent implements OnInit {
         }
       }),
       takeWhile((instanceRun) => {
-        return instanceRun.status === ExecutionOutputStatus.RUNNING;
+        return (
+          instanceRun.status === ExecutionOutputStatus.RUNNING ||
+          instanceRun.status === ExecutionOutputStatus.PAUSED
+        );
       })
     );
   }

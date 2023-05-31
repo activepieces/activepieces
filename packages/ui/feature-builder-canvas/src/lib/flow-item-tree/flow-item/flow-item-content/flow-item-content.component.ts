@@ -8,6 +8,7 @@ import {
   ViewChild,
 } from '@angular/core';
 import {
+  distinctUntilChanged,
   filter,
   map,
   Observable,
@@ -144,17 +145,17 @@ export class FlowItemContentComponent implements OnInit {
 
   getStepStatusIfItsNotInsideLoop(): Observable<StepOutputStatus | undefined> {
     return this.selectedRun$.pipe(
+      distinctUntilChanged(),
       map((selectedRun) => {
+        this.stepResult = undefined;
         if (selectedRun) {
-          if (
-            selectedRun.status !== ExecutionOutputStatus.RUNNING &&
-            selectedRun.executionOutput?.executionState
-          ) {
+          if (selectedRun.status !== ExecutionOutputStatus.RUNNING) {
             const stepName = this._flowItem.name;
-            const result =
-              selectedRun.executionOutput?.executionState.steps[
-                stepName.toString()
-              ];
+            const executionState = selectedRun.executionOutput?.executionState;
+            if (!executionState) {
+              throw new Error('Flow is done but there is no executionState');
+            }
+            const result = executionState.steps[stepName.toString()];
             if (result) {
               this.stepResult = result;
             }
