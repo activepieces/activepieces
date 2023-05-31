@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { combineLatest, map, Observable, of, take, tap } from 'rxjs';
+import { combineLatest, map, Observable, of } from 'rxjs';
 import {
   BuilderSelectors,
   FlowInstanceActions,
@@ -25,7 +25,7 @@ export class PublishButtonComponent implements OnInit {
   deploying$: Observable<boolean> = of(false);
   disablePublishButton$: Observable<boolean>;
   buttonTooltipText$: Observable<string>;
-  buttonText$: Observable<string>;
+  publishBtnText$: Observable<string>;
   isCurrentFlowVersionPublished$: Observable<boolean>;
   dispatchAction$: Observable<void>;
   constructor(private store: Store) {}
@@ -64,9 +64,6 @@ export class PublishButtonComponent implements OnInit {
             res.isCurrentFlowVersionPublished) &&
           !res.isShowingPublishedVersion
         );
-      }),
-      tap((res) => {
-        console.log(res);
       })
     );
     this.buttonTooltipText$ = combineLatest({
@@ -91,11 +88,8 @@ export class PublishButtonComponent implements OnInit {
         return 'Publish Flow';
       })
     );
-    this.buttonText$ = this.flowState$.pipe(
+    this.publishBtnText$ = this.flowState$.pipe(
       map((res) => {
-        if (res.isShowingPublishedVersion) {
-          return 'Edit Flow';
-        }
         if (res.isSaving) {
           return 'Saving';
         } else if (res.isPublishing) {
@@ -106,21 +100,12 @@ export class PublishButtonComponent implements OnInit {
     );
   }
 
-  buttonClicked() {
-    this.dispatchAction$ = this.store
-      .select(BuilderSelectors.selectIsInPublishedVersionViewMode)
-      .pipe(
-        take(1),
-        tap((res) => {
-          if (res) {
-            this.store.dispatch(
-              ViewModeActions.setViewMode({ viewMode: ViewModeEnum.BUILDING })
-            );
-          } else {
-            this.store.dispatch(FlowInstanceActions.publish());
-          }
-        }),
-        map(() => void 0)
-      );
+  publishButtonClicked() {
+    this.store.dispatch(FlowInstanceActions.publish());
+  }
+  editFlowButtonClicked() {
+    this.store.dispatch(
+      ViewModeActions.setViewMode({ viewMode: ViewModeEnum.BUILDING })
+    );
   }
 }
