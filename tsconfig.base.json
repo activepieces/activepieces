@@ -177,9 +177,7 @@
       ],
       "@activepieces/ui/feature-dashboard": [
         "packages/ui/feature-dashboard/src/index.ts"
-      ],
-      "@backend/*": ["packages/backend/src/app/*"],
-      "@frontend/*": ["packages/frontend/src/app/*"]
+      ]
     },
     "resolveJsonModule": true
   },
