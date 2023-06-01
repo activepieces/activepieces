@@ -220,7 +220,11 @@ function keepBaseAction(action: Action): Action {
         case ActionType.CODE:
             return {
                 type: action.type,
-                settings: action.settings,
+                settings: {
+                    ...action.settings,
+                    artifactPackagedId: undefined,
+                    artifactSourceId: undefined,
+                },
                 ...commonProps,
             }
         case ActionType.PIECE:
