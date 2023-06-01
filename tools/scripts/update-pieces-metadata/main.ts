@@ -1,11 +1,11 @@
 import { generateMetadata } from './generate-metadata'
-import { uploadMetadata } from './upload-metadata'
+import { insertMetadata } from './insert-metadata'
 
 const main = async () => {
     console.log('update pieces metadata: started')
 
     const piecesMetadata = await generateMetadata()
-    await uploadMetadata(piecesMetadata)
+    await insertMetadata(piecesMetadata)
 
     console.log('update pieces metadata: completed')
 }
