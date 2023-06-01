@@ -134,23 +134,35 @@ export class VariableService {
       return null;
     }
     // Get the file from the URL
-    const response = await axios.get(url, {
-      responseType: 'arraybuffer',
-    });
+    try {
+      const response = await axios.head(url);
 
-    // Get filename and extension
-    const filename = path.basename(url);
-    const extension = path.extname(url);
+      const contentType = response.headers['content-type'];
+      if (!contentType || !contentType.startsWith('application/') || contentType === 'application/octet-stream') {
+        return null;
+      }
 
-    // Convert file data to base64
-    const base64 = Buffer.from(response.data, 'binary').toString('base64');
+      const fileResponse = await axios.get(url, {
+        responseType: 'arraybuffer',
+      });
 
-    // Return the ApFile object
-    return {
-      filename,
-      extension,
-      base64,
-    };
+      // Get filename and extension
+      const filename = path.basename(url);
+      // Remove dot from extension
+      const extension = path.extname(url)?.substring(1);
+      // Convert file data to base64
+      const base64 = Buffer.from(fileResponse.data, 'binary').toString('base64');
+
+      // Return the ApFile object
+      return {
+        filename,
+        extension,
+        base64,
+      };
+    } catch (e) {
+      console.error(e);
+      return null;
+    }
   };
 
   getISODateTime = (clonedInput: any, key: string): string | undefined => {
@@ -180,6 +192,9 @@ export class VariableService {
       if (type === PropertyType.FILE) {
         const file = await this.convertUrlToFile(value);
         if (isNil(file) && property.required) {
+          errors[key] = `expected file url, but found value: ${value}`;
+        }
+        if(isNil(file) && !isNil(value) && value !== '' && !property.required){
           errors[key] = `expected file url, but found value: ${value}`;
         }
         clonedInput[key] = file;
