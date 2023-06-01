@@ -34,7 +34,7 @@ export class CodeActionHandler extends BaseActionHandler<CodeAction> {
    */
   protected override async initStepOutput({ executionState }: InitStepOutputParams): Promise<StepOutput<ActionType.CODE>> {
     const censoredInput = await this.variableService.resolve({
-      unresolvedInput: this.currentAction.settings,
+      unresolvedInput: this.currentAction.settings.input,
       executionState,
       censorConnections: true,
     })
