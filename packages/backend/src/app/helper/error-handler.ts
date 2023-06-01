@@ -16,11 +16,12 @@ export const errorHandler = async (
             case ErrorCode.TASK_QUOTA_EXCEEDED:
                 statusCode = StatusCodes.PAYMENT_REQUIRED
                 break
+            case ErrorCode.INVALID_API_KEY:
             case ErrorCode.INVALID_BEARER_TOKEN:
                 statusCode = StatusCodes.UNAUTHORIZED
                 break
             default:
-                break    
+                break
         }
         await reply.status(statusCode).send({
             code: error.error.code,

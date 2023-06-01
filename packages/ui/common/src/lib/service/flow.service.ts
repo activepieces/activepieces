@@ -15,6 +15,7 @@ import {
   FlowOperationType,
   FlowRun,
   FlowVersionId,
+  FlowViewMode,
   ListFlowsRequest,
   SeekPage,
 } from '@activepieces/shared';
@@ -60,25 +61,35 @@ export class FlowService {
     });
   }
 
-  duplicate(flow: Flow): Observable<void> {
-    return this.create({
-      displayName: flow.version.displayName,
-    }).pipe(
-      switchMap((clonedFlow) => {
-        return this.update(clonedFlow.id, {
-          type: FlowOperationType.IMPORT_FLOW,
-          request: {
+  duplicate(flowId: FlowId): Observable<void> {
+    return this.http
+      .get<Flow>(environment.apiUrl + '/flows/' + flowId, {
+        params: {
+          viewMode: FlowViewMode.WITH_ARTIFACTS,
+        },
+      })
+      .pipe(
+        switchMap((flow) => {
+          return this.create({
             displayName: flow.version.displayName,
-            trigger: flow.version.trigger,
-          },
-        }).pipe(
-          tap((clonedFlow: Flow) => {
-            window.open(`/flows/${clonedFlow.id}`, '_blank');
-          })
-        );
-      }),
-      map(() => void 0)
-    );
+          }).pipe(
+            switchMap((clonedFlow) => {
+              return this.update(clonedFlow.id, {
+                type: FlowOperationType.IMPORT_FLOW,
+                request: {
+                  displayName: flow.version.displayName,
+                  trigger: flow.version.trigger,
+                },
+              }).pipe(
+                tap((clonedFlow: Flow) => {
+                  window.open(`/flows/${clonedFlow.id}`, '_blank');
+                })
+              );
+            }),
+            map(() => void 0)
+          );
+        })
+      );
   }
 
   delete(flowId: FlowId): Observable<void> {

@@ -158,7 +158,7 @@ export class FlowsTableComponent implements OnInit {
     }
   }
   duplicate(flow: Flow) {
-    this.duplicateFlow$ = this.flowService.duplicate(flow);
+    this.duplicateFlow$ = this.flowService.duplicate(flow.id);
   }
 
   moveFlow(flow: Flow) {

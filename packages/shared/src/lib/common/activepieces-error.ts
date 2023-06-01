@@ -24,6 +24,7 @@ type ErrorParams =
   | FlowOperationErrorParams
   | FlowRunNotFoundErrorParams
   | FlowVersionNotFoundErrorParams
+  | InvalidApiKeyParams
   | InvalidBearerTokenParams
   | InvalidClaimParams
   | InvalidCloudClaimParams
@@ -44,7 +45,6 @@ type ErrorParams =
   | TriggerEnableErrorParams
   | TriggerFailedErrorParams
   | ValidationErrorParams
-
 
 export interface BaseErrorParams<T, V> {
   code: T;
@@ -251,6 +251,11 @@ export type PauseMetadataMissingErrorParams = BaseErrorParams<
   Record<string, never>
 >
 
+export type InvalidApiKeyParams = BaseErrorParams<
+  ErrorCode.INVALID_API_KEY,
+  Record<string, never>
+>
+
 export enum ErrorCode {
   CONFIG_NOT_FOUND = "CONFIG_NOT_FOUND",
   EXISTING_USER = "EXISTING_USER",
@@ -283,4 +288,5 @@ export enum ErrorCode {
   TRIGGER_ENABLE = "TRIGGER_ENABLE",
   TRIGGER_DISABLE = "TRIGGER_DISABLE",
   PAUSE_METADATA_MISSING = "PAUSE_METADATA_MISSING",
+  INVALID_API_KEY = "INVALID_API_KEY",
 }

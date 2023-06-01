@@ -121,7 +121,7 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
    */
   protected override async initStepOutput({ executionState }: InitStepOutputParams): Promise<StepOutput<ActionType.PIECE>> {
     const censoredInput = await this.variableService.resolve({
-      unresolvedInput: this.currentAction.settings,
+      unresolvedInput: this.currentAction.settings.input,
       executionState,
       censorConnections: true,
     })

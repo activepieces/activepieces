@@ -17,9 +17,7 @@ export class CanvasEffects {
       ofType(BuilderActions.loadInitial),
       map((action) => {
         return canvasActions.setInitial({
-          displayedFlowVersion: action.publishedVersion
-            ? action.publishedVersion
-            : action.flow.version,
+          displayedFlowVersion: action.flow.version,
           run: action.run,
         });
       })

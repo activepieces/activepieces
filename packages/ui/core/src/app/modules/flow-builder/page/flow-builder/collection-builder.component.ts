@@ -111,9 +111,7 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
             BuilderActions.loadInitial({
               flow: routeData.flowAndFolder.flow,
               instance: routeData.instanceData?.instance,
-              viewMode: routeData.instanceData?.instance
-                ? ViewModeEnum.SHOW_PUBLISHED
-                : ViewModeEnum.BUILDING,
+              viewMode: ViewModeEnum.BUILDING,
               appConnections: routeData.connections,
               folder: routeData.flowAndFolder.folder,
               publishedVersion: routeData.instanceData?.publishedFlowVersion,

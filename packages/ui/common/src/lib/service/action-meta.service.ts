@@ -6,11 +6,12 @@ import {
   ApEnvironment,
   compareSemVer,
   PieceOptionRequest,
+  SeekPage,
   Trigger,
   TriggerType,
 } from '@activepieces/shared';
 import { HttpClient } from '@angular/common/http';
-import { Observable, shareReplay, map, forkJoin } from 'rxjs';
+import { Observable, shareReplay, map, forkJoin, switchMap } from 'rxjs';
 import { environment } from '../environments/environment';
 import { FlowItemDetails } from '../models/flow-item-details';
 import { FlagService } from './flag.service';
@@ -47,9 +48,15 @@ export const CORE_PIECES_TRIGGERS = ['schedule'];
 export class ActionMetaService {
   private release$ = this.flagsService.getRelease().pipe(shareReplay(1));
 
-  private piecesManifest$ = this.http
-    .get<PieceMetadataSummary[]>(`${environment.apiUrl}/pieces`)
-    .pipe(shareReplay(1));
+  private piecesManifest$ = this.release$.pipe(
+    switchMap((release) => {
+      return this.http.get<SeekPage<PieceMetadataSummary>>(
+        `${environment.apiUrl}/pieces?release=${release}`
+      );
+    }),
+    map((response) => response.data),
+    shareReplay(1)
+  );
 
   private piecesCache = new Map<string, Observable<PieceMetadata>>();
 

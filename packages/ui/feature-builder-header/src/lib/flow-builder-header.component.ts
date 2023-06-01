@@ -90,7 +90,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
       .pipe(
         take(1),
         switchMap((currentFlow) => {
-          return this.flowService.duplicate(currentFlow);
+          return this.flowService.duplicate(currentFlow.id);
         }),
         map(() => void 0)
       );
