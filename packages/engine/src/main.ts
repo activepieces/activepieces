@@ -15,8 +15,9 @@ import {
   ExecutionType,
   StepOutput,
   FlowVersion,
+  ExecuteCodeOperation,
 } from '@activepieces/shared';
-import { pieceHelper } from './lib/helper/piece-helper';
+import { pieceHelper } from './lib/helper/action-helper';
 import { triggerHelper } from './lib/helper/trigger-helper';
 
 const loadFlowVersion = (flowVersionId: string) => {
@@ -122,6 +123,27 @@ const executeTrigger = async (): Promise<void> => {
   }
 }
 
+const executeCode = async (): Promise<void> => {
+  try {
+    const operationInput: ExecuteCodeOperation = Utils.parseJsonFile(globals.inputFile);
+
+    globals.projectId = operationInput.projectId;
+
+  const output = await pieceHelper.executeCode(operationInput);
+    writeOutput({
+      status: EngineResponseStatus.OK,
+      response: output
+    })
+  }
+  catch (e) {
+    console.error(e);
+    writeOutput({
+      status: EngineResponseStatus.ERROR,
+      response: Utils.tryParseJson((e as Error).message)
+    })
+  }
+}
+
 const executeAction = async (): Promise<void> => {
   try {
     const operationInput: ExecuteActionOperation = Utils.parseJsonFile(globals.inputFile);
@@ -164,6 +186,9 @@ async function execute() {
       break;
     case EngineOperationType.EXECUTE_ACTION:
       executeAction();
+      break;
+    case EngineOperationType.EXECUTE_CODE:
+      executeCode();
       break;
     default:
       console.error('unknown operation');

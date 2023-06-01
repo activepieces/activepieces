@@ -19,8 +19,9 @@ import {
 } from '../../utils';
 import { MentionsTreeCacheService } from '../mentions-tree-cache.service';
 
-import { FlowItem, FlowsActions } from '@activepieces/ui/feature-builder-store';
+import { FlowItem } from '@activepieces/ui/feature-builder-store';
 import { Store } from '@ngrx/store';
+import { canvasActions } from '@activepieces/ui/feature-builder-store';
 
 @Component({
   selector: 'app-code-step-mention-item',
@@ -94,7 +95,7 @@ export class CodeStepMentionItemComponent implements OnInit {
   }
   selectStep() {
     this.store.dispatch(
-      FlowsActions.selectStepByName({ stepName: this.stepMention.step.name })
+      canvasActions.selectStepByName({ stepName: this.stepMention.step.name })
     );
   }
 }

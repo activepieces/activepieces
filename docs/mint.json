@@ -23,6 +23,10 @@
     "name": "Get Started",
     "url": "https://www.activepieces.com/plans"
   },
+  "feedback": {
+    "suggestEdit": true,
+    "raiseIssue": true
+  },
   "topbarLinks": [
     {
       "name": "Github",

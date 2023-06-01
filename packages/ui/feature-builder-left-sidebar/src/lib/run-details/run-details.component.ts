@@ -7,7 +7,7 @@ import {
   Renderer2,
   ViewChild,
 } from '@angular/core';
-import { distinctUntilChanged, map, Observable } from 'rxjs';
+import { distinctUntilChanged, map, Observable, switchMap, take } from 'rxjs';
 import { UUID } from 'angular2-uuid';
 import { Store } from '@ngrx/store';
 import { RunDetailsService } from './iteration-details.service';
@@ -20,8 +20,8 @@ import {
 } from '@activepieces/shared';
 import {
   BuilderSelectors,
-  FlowsActions,
   LeftSideBarType,
+  canvasActions,
 } from '@activepieces/ui/feature-builder-store';
 
 @Component({
@@ -70,27 +70,21 @@ export class RunDetailsComponent implements OnInit {
     );
     this.logs$ = this.selectedRun$.pipe(
       distinctUntilChanged((prev, curr) => {
-        return (
-          prev?.id === curr?.id &&
-          prev?.status === curr?.status &&
-          prev?.logsFileId === curr?.logsFileId
-        );
+        return JSON.stringify(prev) === JSON.stringify(curr);
       }),
-      map((selectedFlowRun) => {
-        if (
-          selectedFlowRun &&
-          selectedFlowRun.status !== ExecutionOutputStatus.RUNNING &&
-          selectedFlowRun.logsFileId
-        ) {
-          this.runResults =
-            this.createStepResultsForDetailsAccordion(selectedFlowRun);
-          return {
-            selectedRun: selectedFlowRun,
-            runResults: this.runResults,
-          };
-        }
-        this.runResults = [];
-        return undefined;
+      switchMap((flowRun) => {
+        return this.store
+          .select(BuilderSelectors.selectStepResultsAccordion)
+          .pipe(
+            take(1),
+            map((results) => {
+              this.runResults = results;
+              return {
+                selectedRun: flowRun,
+                runResults: this.runResults,
+              };
+            })
+          );
       })
     );
   }
@@ -108,7 +102,7 @@ export class RunDetailsComponent implements OnInit {
 
   closeLeftSideBar() {
     this.store.dispatch(
-      FlowsActions.setLeftSidebar({
+      canvasActions.setLeftSidebar({
         sidebarType: LeftSideBarType.NONE,
       })
     );
@@ -122,19 +116,6 @@ export class RunDetailsComponent implements OnInit {
     return ExecutionOutputStatus;
   }
 
-  createStepResultsForDetailsAccordion(run: FlowRun): {
-    result: StepOutput;
-    stepName: string;
-  }[] {
-    const stepNames = Object.keys(run.executionOutput!.executionState.steps);
-    return stepNames.map((name) => {
-      const result = run.executionOutput!.executionState.steps[name];
-      return {
-        result: result,
-        stepName: name,
-      };
-    });
-  }
   resizerDragStarted(stepsResultsAccordion: HTMLElement) {
     this.resizerKnobIsBeingDragged = true;
     this.accordionRect = stepsResultsAccordion.getBoundingClientRect();

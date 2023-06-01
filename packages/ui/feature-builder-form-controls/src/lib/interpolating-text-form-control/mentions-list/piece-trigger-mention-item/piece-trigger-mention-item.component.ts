@@ -20,7 +20,7 @@ import { MentionsTreeCacheService } from '../mentions-tree-cache.service';
 import {
   BuilderSelectors,
   FlowItem,
-  FlowsActions,
+  canvasActions,
 } from '@activepieces/ui/feature-builder-store';
 import { ActionMetaService, FlowItemDetails } from '@activepieces/ui/common';
 
@@ -131,7 +131,7 @@ export class PieceTriggerMentionItemComponent implements OnInit {
   }
   selectStep() {
     this.store.dispatch(
-      FlowsActions.selectStepByName({ stepName: this._stepMention.step.name })
+      canvasActions.selectStepByName({ stepName: this._stepMention.step.name })
     );
   }
 }

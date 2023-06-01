@@ -1,16 +1,8 @@
 <div class="ap-flex ap-items-center ap-gap-2">
-  <div *ngIf="!succeeded">
-    <svg-icon
-      src="assets/img/custom/status/error.svg"
-      [svgStyle]="{ 'width.px': size, 'height.px': size }"
-      [matTooltip]="textAfter"
-    ></svg-icon>
-  </div>
-  <div [matTooltip]="textAfter" *ngIf="succeeded">
-    <svg-icon
-      src="assets/img/custom/status/success.svg"
-      [svgStyle]="{ 'width.px': size, 'height.px': size }"
-    ></svg-icon>
+  <div class="spinner-border !ap-border-primary !ap-border-r-transparent " role="status"
+    *ngIf="status === ExecutionOutputStatus.RUNNING || status === StepOutputStatus.RUNNING"></div>
+  <div [matTooltip]="textAfter" *ngIf="status !== ExecutionOutputStatus.RUNNING && status !== StepOutputStatus.RUNNING">
+    <svg-icon [src]="iconUrl" [svgStyle]="{ 'width.px': size, 'height.px': size }"></svg-icon>
   </div>
   <div class="ap-typography-caption" *ngIf="textAfter && showStatusText">
     {{ textAfter }}

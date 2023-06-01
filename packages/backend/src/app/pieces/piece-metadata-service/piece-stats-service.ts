@@ -48,6 +48,9 @@ export const pieceStatsService = {
         }
         for (const flowWithoutVersion of flows) {
             const flow = await flowService.getOneOrThrow({ id: flowWithoutVersion.id, projectId: flowWithoutVersion.projectId })
+            if(isNil(flow.version)) {
+                continue
+            }
             const trigger = flow.version.trigger
             if (isNil(trigger)) {
                 continue

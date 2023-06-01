@@ -1,4 +1,4 @@
-<div class="btn-container ap-relative" [matTooltip]="tooltipText">
+<div class="btn-container ap-relative" [matTooltip]="tooltipText" *ngIf="!onlyShowContent">
   <ng-container [ngSwitch]="btnStyle">
     <button [type]="type" [class]="btnSizeClass" [class.ap-w-full]="fullWidthOfContainer" *ngSwitchCase="'flat'"
       mat-flat-button [color]="btnColor" [disabled]="disabled ? true : false" (click)="click()"
@@ -23,6 +23,9 @@
   </ng-container>
   <div class="ap-absolute ap-h-full ap-w-full ap-left-0 ap-top-0 ap-z-50" *ngIf="disabled" [matTooltip]="tooltipText">
   </div>
+</div>
+<div [class]="btnSizeClass" *ngIf="onlyShowContent">
+  <ng-container *ngTemplateOutlet="btnContent"></ng-container>
 </div>
 <ng-template #btnContent>
   <div [class.ap-opacity-0]="!loading" class="spinner-border loading-spinner-size-and-position"

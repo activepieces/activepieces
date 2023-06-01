@@ -1,11 +1,12 @@
 import { HttpMessageBody, HttpMethod, QueryParams, httpClient } from "@activepieces/pieces-common"
 import { ListRequest, prepareListRequest } from './models/common'
-import { UserListResponse, UserSingleResponse } from './models/user'
+import { UserCreateRequest, UserListResponse, UserSingleResponse, UserUpdateRequest } from './models/user'
 import { CustomerSingleResponse, CustomerListResponse, CustomerCreateRequest, CustomerUpdateRequest, CustomerListFilter, Customer } from './models/customer'
 import { ProjectSingleResponse, ProjectListResponse, ProjectCreateRequest, ProjectUpdateRequest, ProjectListFilter, Project } from './models/project'
 import { ServiceSingleResponse, ServiceListResponse, ServiceCreateRequest, ServiceUpdateRequest } from './models/service'
 import { EntrySingleResponse, EntryListResponse, EntryCreateRequest, EntryUpdateRequest, EntryListRequest, Entry, EntryListFilter } from './models/entry'
 import { AbsenceSingleResponse, AbsenceListResponse, AbsenceCreateRequest, AbsenceUpdateRequest, AbsenceListRequest } from './models/absence'
+import { TeamCreateRequest, TeamListResponse, TeamSingleResponse, TeamUpdateRequest } from "./models/team"
 
 export class ClockodoClient {
 
@@ -42,6 +43,38 @@ export class ClockodoClient {
 
     getUser(id: number): Promise<UserSingleResponse> {
         return this.makeRequest<UserSingleResponse>(HttpMethod.GET, '/v2/users/' + id)
+    }
+    
+    createUser(request: UserCreateRequest) {
+        return this.makeRequest<UserSingleResponse>(HttpMethod.POST, '/v2/users', undefined, request)
+    }
+    
+    updateUser(id: number, request: UserUpdateRequest): Promise<UserSingleResponse> {
+        return this.makeRequest<UserSingleResponse>(HttpMethod.PUT, '/v2/users/' + id, undefined, request)
+    }
+    
+    deleteUser(id: number): Promise<object> {
+        return this.makeRequest<object>(HttpMethod.DELETE, '/v2/users/' + id)
+    }
+
+    listTeams(): Promise<TeamListResponse> {
+        return this.makeRequest<TeamListResponse>(HttpMethod.GET, '/v2/teams')
+    }
+    
+    getTeam(id: number): Promise<TeamSingleResponse> {
+        return this.makeRequest<TeamSingleResponse>(HttpMethod.GET, '/v2/teams/' + id)
+    }
+    
+    createTeam(request: TeamCreateRequest) {
+        return this.makeRequest<TeamSingleResponse>(HttpMethod.POST, '/v2/teams', undefined, request)
+    }
+    
+    updateTeam(id: number, request: TeamUpdateRequest): Promise<TeamSingleResponse> {
+        return this.makeRequest<TeamSingleResponse>(HttpMethod.PUT, '/v2/teams/' + id, undefined, request)
+    }
+    
+    deleteTeam(id: number): Promise<object> {
+        return this.makeRequest<object>(HttpMethod.DELETE, '/v2/teams/' + id)
     }
 
     listCustomers(request: ListRequest<CustomerListFilter> = {}): Promise<CustomerListResponse> {

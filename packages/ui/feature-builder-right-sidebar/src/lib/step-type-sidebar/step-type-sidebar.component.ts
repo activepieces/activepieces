@@ -28,9 +28,10 @@ import {
 import { FormControl } from '@angular/forms';
 import {
   BuilderSelectors,
+  canvasActions,
+  CanvasActionType,
   CodeService,
   FlowsActions,
-  FlowsActionType,
   FlowStructureUtil,
   NO_PROPS,
   RightSideBarType,
@@ -79,7 +80,7 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
     private actions: Actions
   ) {
     this.focusSearchInput$ = this.actions.pipe(
-      ofType(FlowsActionType.SET_RIGHT_SIDEBAR),
+      ofType(CanvasActionType.SET_RIGHT_SIDEBAR),
       tap(() => {
         this.searchInput.nativeElement.focus();
       }),
@@ -144,7 +145,7 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
 
   closeSidebar() {
     this.store.dispatch(
-      FlowsActions.setRightSidebar({
+      canvasActions.setRightSidebar({
         sidebarType: RightSideBarType.NONE,
         props: NO_PROPS,
         deselectCurrentStep: true,

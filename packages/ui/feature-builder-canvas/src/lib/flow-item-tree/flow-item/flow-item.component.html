@@ -1,21 +1,37 @@
 <div [ngStyle]="flowGraphContainer" [style.transform]="transformObs$|async">
 
-  <div *ngIf="trigger" class="ap-flex ap-justify-center ap-mb-9 ap-w-full ap-items-center ap-cursor-pointer ap-z-50">
+  <div *ngIf="trigger" class="ap-flex ap-justify-center ap-mb-9 ap-w-full ap-items-center ap-z-40 ap-relative">
+    <div class="ap-absolute">
+      <app-test-flow-widget></app-test-flow-widget>
+
+    </div>
+    <div class="ap-absolute">
+      <app-view-only-mode></app-view-only-mode>
+    </div>
     <app-incomplete-steps-widget></app-incomplete-steps-widget>
+
   </div>
   <ng-container *ngIf="!trigger && (viewMode$ | async)===false">
-    <div #flowItem class="ap-z-50 ap-cursor-pointer ap-relative" mwlDraggable
-      [ghostElementTemplate]="ItemContent.stepDragTemplate" (dragEnd)="draggingEnded()"
-      [showOriginalElementWhileDragging]="false" [dropData]="_flowItemData"
-      [class.ap-opacity-0]="hideDraggableSource$ | async" [ghostElementAppendTo]="draggingContainer"
-      (dragging)="snapElementToCursor()" [class.ap-cursor-default]="(anyStepIsDragged$|async)"
-      (dragStart)="draggingStarted()">
-      <div [ngStyle]="flowItemContentContainer" class="ap-z-50">
-        <app-flow-item-content #ItemContent [trigger]="trigger" [flowItem]="_flowItemData"
-          [viewMode]="viewMode$ | async | defaultTrue"
-          [selected]="selected$ | async | defaultFalse"></app-flow-item-content>
+    <div class="ap-relative">
+      <div #flowItem class="ap-z-50 ap-cursor-pointer ap-relative" mwlDraggable apTrackHover
+        #itemContent="hoverTrackerDirective" [ghostElementTemplate]="ItemContent.stepDragTemplate"
+        [touchStartLongPress]="touchStartLongPress" (dragEnd)="draggingEnded()"
+        [showOriginalElementWhileDragging]="false" [dropData]="_flowItemData"
+        [class.ap-opacity-0]="hideDraggableSource$ | async" [ghostElementAppendTo]="draggingContainer"
+        (dragging)="snapElementToCursor()" [class.ap-cursor-default]="(anyStepIsDragged$|async)"
+        (dragStart)="draggingStarted()">
+        <div [ngStyle]="flowItemContentContainer" class="ap-z-50">
+          <app-flow-item-content #ItemContent [trigger]="trigger" [flowItem]="_flowItemData"
+            [viewMode]="viewMode$ | async | defaultTrue"
+            [selected]="selected$ | async | defaultFalse"></app-flow-item-content>
+        </div>
+      </div>
+      <div class="ap-absolute -ap-left-[58px] ap-w-[50px] ap-h-[92px] ap-flex ap-flex-col ap-justify-center  ap-top-0">
+        <app-actions-container [trigger]="trigger" [flowItem]="_flowItemData"
+          [stepHovered]="itemContent.isHovered"></app-actions-container>
       </div>
     </div>
+
   </ng-container>
   <ng-container *ngIf="!trigger && (viewMode$ | async)===true">
     <div #flowItem class="ap-cursor-pointer ap-relative">
@@ -28,12 +44,17 @@
   </ng-container>
 
   <div [ngStyle]="draggedContainer" *ngIf="!trigger"
-    class="ap-bg-graySelect ap-absolute ap-rounded-lg ap-border-dashed ap-border-border ap-border">
+    class=" ap-bg-graySelect ap-absolute ap-rounded-lg ap-border-dashed ap-border-border ap-border">
   </div>
-  <div *ngIf="trigger" #flowItem>
-    <div [ngStyle]="flowItemContentContainer" class="ap-z-50 ap-cursor-pointer">
+  <div *ngIf="trigger" #flowItem class="ap-relative">
+    <div [ngStyle]="flowItemContentContainer" class="ap-z-50 ap-cursor-pointer" apTrackHover
+      #itemContent="hoverTrackerDirective">
       <app-flow-item-content [trigger]="trigger" [flowItem]="_flowItemData" [viewMode]="viewMode$ | async | defaultTrue"
         [selected]="selected$ | async | defaultFalse"></app-flow-item-content>
+    </div>
+    <div class="ap-absolute -ap-left-[58px] ap-w-[50px] ap-h-[92px] ap-flex ap-flex-col ap-justify-center  ap-top-0">
+      <app-actions-container [trigger]="trigger" [flowItem]="_flowItemData"
+        [stepHovered]="itemContent.isHovered"></app-actions-container>
     </div>
   </div>
 

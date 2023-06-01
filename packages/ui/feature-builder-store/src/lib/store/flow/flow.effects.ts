@@ -30,9 +30,12 @@ import {
 } from '@activepieces/shared';
 import { RightSideBarType } from '../../model/enums/right-side-bar-type.enum';
 import { LeftSideBarType } from '../../model/enums/left-side-bar-type.enum';
-import { NO_PROPS } from '../../model/builder-state';
+import { NO_PROPS } from '../../model/canvas-state';
 import { CollectionBuilderService } from '../../service/collection-builder.service';
 import { FlowService, environment } from '@activepieces/ui/common';
+import { canvasActions } from '../builder/canvas/canvas.action';
+import { ViewModeActions } from '../builder/viewmode/view-mode.action';
+import { ViewModeEnum } from '../../model';
 @Injectable()
 export class FlowsEffects {
   loadInitial$ = createEffect(() => {
@@ -48,18 +51,6 @@ export class FlowsEffects {
     );
   });
 
-  removeStepSelection$ = createEffect(() => {
-    return this.actions$.pipe(
-      ofType(FlowsActions.setRightSidebar),
-      switchMap((action) => {
-        if (action.deselectCurrentStep) {
-          return of(FlowsActions.deselectStep());
-        }
-        return EMPTY;
-      })
-    );
-  });
-
   replaceEmptyStep = createEffect(() => {
     return this.actions$.pipe(
       ofType(FlowsActions.updateAction),
@@ -69,7 +60,7 @@ export class FlowsEffects {
       switchMap(([action, stepName]) => {
         if (action.updatingMissingStep) {
           return of(
-            FlowsActions.selectStepByName({
+            canvasActions.selectStepByName({
               stepName: stepName,
             })
           );
@@ -86,7 +77,7 @@ export class FlowsEffects {
       ),
       switchMap(([action, flow]) => {
         return of(
-          FlowsActions.selectStepByName({
+          canvasActions.selectStepByName({
             stepName: flow.version.trigger.name,
           })
         );
@@ -105,13 +96,13 @@ export class FlowsEffects {
           .filter((s) => !s.valid);
         if (invalidSteps.length > 0) {
           return of(
-            FlowsActions.selectStepByName({
+            canvasActions.selectStepByName({
               stepName: invalidSteps[0].name,
             })
           );
         }
         return of(
-          FlowsActions.selectStepByName({
+          canvasActions.selectStepByName({
             stepName: flow.version.trigger.name,
           })
         );
@@ -128,7 +119,7 @@ export class FlowsEffects {
       switchMap(([{ operation }, rightSidebar]) => {
         if (rightSidebar === RightSideBarType.EDIT_STEP) {
           return of(
-            FlowsActions.setRightSidebar({
+            canvasActions.setRightSidebar({
               sidebarType: RightSideBarType.NONE,
               props: NO_PROPS,
               deselectCurrentStep: true,
@@ -148,54 +139,7 @@ export class FlowsEffects {
       ),
       switchMap(([{ operation }]) => {
         return of(
-          FlowsActions.selectStepByName({ stepName: operation.action.name })
-        );
-      })
-    );
-  });
-
-  openGenerateFlowComponent$ = createEffect(
-    () => {
-      return this.actions$.pipe(
-        ofType(FlowsActions.openGenerateFlowComponent),
-        tap(() => {
-          this.snackBar.dismiss();
-        })
-      );
-    },
-    { dispatch: false }
-  );
-
-  exitRun$ = createEffect(() => {
-    return this.actions$.pipe(
-      ofType(FlowsActions.exitRun),
-      concatLatestFrom(() =>
-        this.store.select(BuilderSelectors.selectCurrentLeftSidebarType)
-      ),
-      switchMap(([action, leftSideBar]) => {
-        if (leftSideBar === LeftSideBarType.SHOW_RUN) {
-          return of(
-            FlowsActions.setLeftSidebar({
-              sidebarType: LeftSideBarType.NONE,
-            })
-          );
-        }
-        return EMPTY;
-      })
-    );
-  });
-
-  setRun$ = createEffect(() => {
-    return this.actions$.pipe(
-      ofType(FlowsActions.setRun),
-      concatLatestFrom(() => [
-        this.store.select(BuilderSelectors.selectCurrentFlow),
-      ]),
-      concatMap(([run]) => {
-        return of(
-          FlowsActions.setLeftSidebar({
-            sidebarType: LeftSideBarType.SHOW_RUN,
-          })
+          canvasActions.selectStepByName({ stepName: operation.action.name })
         );
       })
     );
@@ -203,46 +147,55 @@ export class FlowsEffects {
 
   stepSelectedEffect = createEffect(() => {
     return this.actions$.pipe(
-      ofType(FlowsActions.selectStepByName),
+      ofType(canvasActions.selectStepByName),
       concatLatestFrom(() => [
         this.store.select(BuilderSelectors.selectCurrentStep),
         this.store.select(BuilderSelectors.selectCurrentFlowRun),
       ]),
       switchMap(([{ stepName }, step, run]) => {
         if (step) {
-          if (step.type === TriggerType.EMPTY) {
-            return of(
-              FlowsActions.setRightSidebar({
-                sidebarType: RightSideBarType.TRIGGER_TYPE,
-                props: NO_PROPS,
-                deselectCurrentStep: false,
-              })
-            );
-          } else if (step.type === ActionType.MISSING) {
-            return of(
-              FlowsActions.setRightSidebar({
-                sidebarType: RightSideBarType.STEP_TYPE,
-                props: NO_PROPS,
-                deselectCurrentStep: false,
-              })
-            );
+          switch (step.type) {
+            case TriggerType.EMPTY:
+              return of(
+                canvasActions.setRightSidebar({
+                  sidebarType: RightSideBarType.TRIGGER_TYPE,
+                  props: NO_PROPS,
+                  deselectCurrentStep: false,
+                })
+              );
+            case ActionType.MISSING:
+              return of(
+                canvasActions.setRightSidebar({
+                  sidebarType: RightSideBarType.STEP_TYPE,
+                  props: NO_PROPS,
+                  deselectCurrentStep: false,
+                })
+              );
+            case ActionType.BRANCH:
+            case ActionType.CODE:
+            case ActionType.LOOP_ON_ITEMS:
+            case TriggerType.PIECE:
+            case TriggerType.WEBHOOK:
+            case ActionType.PIECE: {
+              const actionsToDispatch: Array<any> = [
+                canvasActions.setRightSidebar({
+                  sidebarType: RightSideBarType.EDIT_STEP,
+                  props: NO_PROPS,
+                  deselectCurrentStep: false,
+                }),
+              ];
+              if (run) {
+                actionsToDispatch.push(
+                  canvasActions.setLeftSidebar({
+                    sidebarType: LeftSideBarType.SHOW_RUN,
+                  })
+                );
+              }
+              return of(...actionsToDispatch);
+            }
           }
         }
-        const actionsToDispatch: Array<any> = [
-          FlowsActions.setRightSidebar({
-            sidebarType: RightSideBarType.EDIT_STEP,
-            props: NO_PROPS,
-            deselectCurrentStep: false,
-          }),
-        ];
-        if (run) {
-          actionsToDispatch.push(
-            FlowsActions.setLeftSidebar({
-              sidebarType: LeftSideBarType.SHOW_RUN,
-            })
-          );
-        }
-        return of(...actionsToDispatch);
+        return EMPTY;
       })
     );
   });
@@ -308,7 +261,22 @@ export class FlowsEffects {
       })
     );
   });
-
+  showDraftVersion$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(ViewModeActions.setViewMode),
+      concatLatestFrom(() =>
+        this.store.select(BuilderSelectors.selectCurrentFlow)
+      ),
+      switchMap(([action, flow]) => {
+        if (action.viewMode === ViewModeEnum.BUILDING) {
+          return of(
+            canvasActions.setInitial({ displayedFlowVersion: flow.version })
+          );
+        }
+        return EMPTY;
+      })
+    );
+  });
   applyUpdateOperationS = createEffect(
     () => {
       return this.actions$.pipe(

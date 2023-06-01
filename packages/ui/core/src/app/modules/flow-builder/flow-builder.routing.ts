@@ -13,7 +13,7 @@ export const FlowLayoutRouting: Routes = [
     component: CollectionBuilderComponent,
     resolve: {
       flowAndFolder: GetFlowResolver,
-      instance: GetInstanceResolver,
+      instanceData: GetInstanceResolver,
       connections: ConnectionsResolver,
     },
     canActivate: [UserLoggedIn],
