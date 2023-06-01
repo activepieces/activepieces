@@ -155,7 +155,7 @@ test('Duplicate Flow With Branch', () => {
                     'displayName': 'Code',
                     'settings': {
                         'input': {},
-                        'artifactSourceId': 'pJskIPz1ZL3RYiyUX1HPm',
+                        'artifactSourceId': undefined,
                     },
                     'valid': true,
                 },
