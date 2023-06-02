@@ -11,7 +11,6 @@ export default defineConfig({
             persistent: false,
             onChange: async ({ spawn, first, files } :ChangeEvent) => {
                 if (first) {
-                    await spawn`nx run-many -t build --projects=pieces-* --parallel=10`
                     return
                 }
 
@@ -30,6 +29,6 @@ export default defineConfig({
         },
     ],
     debounce: {
-        wait: 0,
+        wait: 1000,
     },
 })

@@ -14,7 +14,7 @@ type PnpmCommand = PnpmCoreCommand | PnpmDependencyCommand
 export type PackageManagerDependencies = Record<string, string>
 
 const executePnpm = async (directory: string, command: PnpmCommand, ...args: string[]): Promise<PackageManagerOutput> => {
-    const fullCommand = `pnpm ${command} ${args.join(' ')}`
+    const fullCommand = `npx pnpm ${command} ${args.join(' ')}`
 
     const execOptions: ExecOptions = {
         cwd: directory,

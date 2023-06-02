@@ -9,7 +9,7 @@ import { GetParams, PieceMetadataService } from './piece-metadata-service'
 
 const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
     const ignoredPackages = ['framework', 'apps', 'dist', 'common']
-    const piecesPath = resolve(cwd(), 'packages', 'pieces')
+    const piecesPath = resolve(cwd(), 'dist', 'packages', 'pieces')
     const piecePackages = await readdir(piecesPath)
     const filteredPiecePackages = piecePackages.filter(d => !ignoredPackages.includes(d))
 

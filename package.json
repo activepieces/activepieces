@@ -5,7 +5,8 @@
     "prepare": "husky install",
     "start:frontend": "nx serve ui-core",
     "start:backend": "nx serve backend",
-    "start": "npm run start:backend & npm run start:frontend"
+    "start": "npm run start:backend & npm run start:frontend",
+    "start:native": "AP_NODE_EXECUTABLE_PATH=node npm run start:backend & nx run ui-core:serve"
   },
   "private": true,
   "dependencies": {
@@ -181,6 +182,7 @@
     "nodemon": "^2.0.20",
     "nx": "15.6.2",
     "pino-pretty": "^9.1.1",
+    "pnpm": "^8.6.0",
     "postcss": "^8.4.5",
     "postcss-import": "~14.1.0",
     "postcss-preset-env": "~7.5.0",
