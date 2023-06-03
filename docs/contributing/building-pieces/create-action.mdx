@@ -133,27 +133,11 @@ export const hackerNews = createPiece({
 });
 ```
 
-To make the `hackernews_tutorial` piece readable by Activepieces, add it to the pieces array in `/packages/pieces/apps/src/index.ts`.
-
-First, import the `hackernews_tutorial` piece at the top of the file by adding the following line:
-
-
-``` ts
-import { hackerNews } from '@activepieces/piece-hacker-news';
-
-export const pieces: Piece[] = [
-  // other pieces
-  hackerNews, // Add the hackernews piece to the array
-  // more pieces
-];
-
-```
-
 # Testing
 
-The backend and frontend are running using `nodemon`, which will automatically refresh the server when any changes are made to the source code.
+Once you make an edit, the piece will be rebuilt. After this is finished, you'll need to refresh the frontend to see the changes.
 
-To test the action, you can use the Flow Builder in Activepieces. It should be working as shown in the provided screenshot.
+To test the action, you can use the Flow Builder in Activepieces. It should work just like the screenshot demonstrates.
 
 <img src="/resources/screenshots/contributing-first-connector.png" />
 

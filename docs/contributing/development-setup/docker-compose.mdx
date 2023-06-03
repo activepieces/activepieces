@@ -24,10 +24,17 @@ docker compose -f docker-compose.dev.yml up
 ```
 
 <Warning>
+**Troubleshoot 1:**
 The IP address 0.0.0.0:5432 is already in use. This suggests that another PostgreSQL on your device is currently active, leading to a port conflict.
+
+Please stop the existing service or edit the environment variables in `packages/backend/.env`
 </Warning>
+
 <Warning>
+**Troubleshoot 2:**
 The IP address 0.0.0.0:6379 is already in use. This suggests that another Redis on your device is currently active, leading to a port conflict.
+
+Please stop the existing service or edit the environment variables in `packages/backend/.env`
 </Warning>
 
 3. Run the backend & frontend
@@ -39,3 +46,11 @@ npm run start:native
 
 Email: `dev@ap.com`
 Password: `12345678`
+
+<Tip>
+**Friendly Tip #1:**
+By default, you won't be able to see all the pieces unless you build or modify something in the pieces package while serving the backend. 
+
+To build the pieces, you should use the corresponding to project name in the `project.json` inside piece package for example:
+`npx nx build pieces-discord`
+</Tip>

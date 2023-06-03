@@ -181,7 +181,8 @@
     {
       "group": "Overview",
       "pages": [
-        "contributing/overview"
+        "contributing/overview",
+        "contributing/getting-started"
       ]
     },
     {
@@ -195,7 +196,6 @@
     {
       "group": "Building Pieces",
       "pages": [
-        "contributing/building-pieces/overview",
         "contributing/building-pieces/create-action",
         "contributing/building-pieces/triggers",
         "contributing/building-pieces/create-polling-trigger",
