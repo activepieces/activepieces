@@ -24,11 +24,9 @@ export default createAction({
         const conn = await mysqlConnect(context.propsValue);
         try {
             const result = await conn.query(qs, context.propsValue.args)
-            await conn.end()
             return result
-        } catch(e) {
+        } finally {
             await conn.end()
-            throw e
         }
     }
 })

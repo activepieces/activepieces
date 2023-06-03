@@ -12,11 +12,9 @@ export default createAction({
         const conn = await mysqlConnect(context.propsValue)
         try {
             const tables = await mysqlGetTableNames(conn)
-            await conn.end()
             return { tables }
-        } catch(e) {
+        } finally {
             await conn.end()
-            throw e
         }
     }
 })
