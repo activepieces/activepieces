@@ -15,7 +15,7 @@ export default createAction({
             required: true
         }),
         args: Property.Array({
-            displayName: 'Args',
+            displayName: 'Arguments',
             description: 'Arguments can be used using ? in the condition',
             required: false
         }),
