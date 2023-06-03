@@ -3,11 +3,12 @@ title: 'Dev Docker Compose (Recommended)'
 description: ''
 ---
 
-The `docker-compose.dev.yml` file is a Docker Compose file specifically used for development environments. 
+The `docker-compose.dev.yml` file is a Docker Compose file contains all external services required.
 
-# Requirements
+## Requirements
 - Node.js version 18 or higher & npm installed
 
+## Steps
 
 Here are the steps to use `docker-compose.dev.yml`:
 
@@ -21,6 +22,13 @@ node tools/setup-dev.js
 ```bash
 docker compose -f docker-compose.dev.yml up
 ```
+
+<Warning>
+The IP address 0.0.0.0:5432 is already in use. This suggests that another PostgreSQL on your device is currently active, leading to a port conflict.
+</Warning>
+<Warning>
+The IP address 0.0.0.0:6379 is already in use. This suggests that another Redis on your device is currently active, leading to a port conflict.
+</Warning>
 
 3. Run the backend & frontend
 ```
