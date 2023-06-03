@@ -5,13 +5,15 @@ description: ''
 
 The `docker-compose.dev.yml` file is a Docker Compose file specifically used for development environments. 
 
-This file includes the necessary configurations for running a development version of your application.
+# Requirements
+- Node.js version 18 or higher & npm installed
+
 
 Here are the steps to use `docker-compose.dev.yml`:
 
 1. Run the script to install node_modules 
 ```bash
-sh tools/setup-dev.sh
+node tools/setup-dev.js
 ```
 
 2. Run the following command to start postgres & redis:

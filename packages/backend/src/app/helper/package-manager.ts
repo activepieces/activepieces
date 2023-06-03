@@ -56,8 +56,8 @@ export const packageManager = {
     async runLocalDependency(directory: string, command: PnpmDependencyCommand): Promise<PackageManagerOutput> {
         return await executePnpm(directory, command)
     },
-
     async linkDependency(directory: string, dependencyDirectory: string) {
-        return await executePnpm(directory, 'link', dependencyDirectory)
+        const result = await executePnpm(directory, 'link', dependencyDirectory)
+        logger.info(`[PackageManager#linkDependency] result: ${JSON.stringify(result)} for directory: ${directory} and dependencyDirectory: ${dependencyDirectory}`)
     },
 }
