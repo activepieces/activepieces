@@ -11,6 +11,7 @@ export default createAction({
         table: mysqlCommon.table(),
         condition: Property.ShortText({
             displayName: 'Condition',
+            description: 'SQL condition, can also include logic operators, etc.',
             required: true
         }),
         args: Property.Array({

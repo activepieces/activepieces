@@ -90,3 +90,10 @@ export function isSpecialColumn(name: string): boolean {
         name.includes(' ') ||
         name.includes('(');
 }
+
+export function sanitizeColumnName(name: string): string {
+    if (isSpecialColumn(name)) {
+        return name;
+    }
+    return "`" + name + "`"
+}

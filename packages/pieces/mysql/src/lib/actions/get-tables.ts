@@ -1,4 +1,4 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
+import { createAction } from "@activepieces/pieces-framework";
 import { mysqlCommon, mysqlConnect, mysqlGetTableNames } from "../common";
 
 export default createAction({
