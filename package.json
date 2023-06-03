@@ -5,8 +5,7 @@
     "prepare": "husky install",
     "start:frontend": "nx serve ui-core",
     "start:backend": "nx serve backend",
-    "start": "npm run start:backend & npm run start:frontend",
-    "start:native": "AP_NODE_EXECUTABLE_PATH=node npm run start:backend & nx run ui-core:serve"
+    "start": "npm run start:backend & npm run start:frontend"
   },
   "private": true,
   "dependencies": {
