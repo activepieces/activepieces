@@ -4,14 +4,26 @@ const { execSync } = require('child_process');
 const path = require('path');
 
   // Modify packages/backend/.env key AP_NODE_EXECUTABLE_PATH with absolute path to node executable
-  try {
-    const nodeExecutablePath = execSync('which node').toString().trim();
-    const absoluteNodeExecutablePath = path.resolve(nodeExecutablePath);
-    console.info(`Found path to node executable: ${absoluteNodeExecutablePath}`)
+  const os = require('os');
+  const fs = require('fs');
 
-    execSync(`sed -i 's#AP_NODE_EXECUTABLE_PATH=.*#AP_NODE_EXECUTABLE_PATH=${absoluteNodeExecutablePath}#' packages/backend/.env`);
+  try {
+    let nodeExecutablePath;
+    if (os.platform() === 'win32') {
+      nodeExecutablePath = execSync('where node').toString().trim();
+    } else {
+      nodeExecutablePath = execSync('which node').toString().trim();
+    }
+    const absoluteNodeExecutablePath = path.resolve(nodeExecutablePath);
+    console.info(`Found path to node executable: ${absoluteNodeExecutablePath}`);
+
+    const envFilePath = path.join('.', 'packages', 'backend', '.env');
+    const envFileContent = fs.readFileSync(envFilePath, 'utf8');
+    const updatedEnvFileContent = envFileContent.replace(/AP_NODE_EXECUTABLE_PATH=.*/, `AP_NODE_EXECUTABLE_PATH=${absoluteNodeExecutablePath}`);
+    fs.writeFileSync(envFilePath, updatedEnvFileContent);
   } catch (error) {
-    console.error('Error: Could not find path to node executable.');
+    console.error(error);
+    console.error('Error: Could not find path to node executable. ',);
     process.exit(1);
   }
 
