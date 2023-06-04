@@ -29,17 +29,8 @@ export default createAction({
     async run(context) {
         const client = makeClient(context.propsValue)
         if(context.propsValue.all) {
-            const items: PlaylistItem[] = []
-            let total = 99999;
-            while(items.length < total) {
-                const res = await client.getPlaylistItems(context.propsValue.playlist_id, {
-                    limit: 50,
-                    offset: items.length
-                })
-                total = res.total
-                res.items.forEach(item => items.push(item))
-            }
-            return { total, items }
+            const items = await client.getAllPlaylistItems(context.propsValue.playlist_id)
+            return { total: items.length, items }
         }
         return await client.getPlaylistItems(context.propsValue.playlist_id, {
             limit: context.propsValue.limit,
