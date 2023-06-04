@@ -66,8 +66,8 @@ export class TemplateAppsDropdownComponent implements ControlValueAccessor {
   writeValue(): void {
     //ignored
   }
-  registerOnChange(fn: any): void {
-    throw new Error('Method not implemented.');
+  registerOnChange(fn: (val: Array<string>) => void): void {
+    this.onChange = fn;
   }
   registerOnTouched(): void {
     //ignored

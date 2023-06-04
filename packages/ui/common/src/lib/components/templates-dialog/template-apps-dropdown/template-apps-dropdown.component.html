@@ -1,7 +1,7 @@
 <div class="ap-typography-subtitle-1 ap-text-title ap-mb-2.5">
     Apps
 </div>
-<mat-form-field subscriptSizing="dynamic" class="">
+<mat-form-field subscriptSizing="dynamic" class="ap-w-[190px]">
     <mat-select [formControl]="dropdownControl" placeholder="Select">
         <mat-option (click)="addPieceToFilter(piece.name)" *ngFor="let piece of (piecesToShowInDropdown$ | async)"
             [value]="piece.name">
