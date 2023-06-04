@@ -16,9 +16,6 @@ export default createTrigger({
     },
     sampleData: {},
     onEnable: async (context) => {
-        context.setSchedule({
-            cronExpression: '* * * * *'
-        })
         const client = makeClient(context.propsValue)
         const items = await client.getAllPlaylistItems(context.propsValue.playlist_id)
         const hash = createHash('md5').update(items.map(item => item.track.id).join(',')).digest('hex')
