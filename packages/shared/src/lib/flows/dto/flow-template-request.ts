@@ -1,4 +1,5 @@
 import { Static, Type } from "@sinclair/typebox";
+import { FlowVersion } from "../flow-version";
 
 export const FlowTemplate = Type.Object({
     name: Type.String(),
@@ -8,4 +9,4 @@ export const FlowTemplate = Type.Object({
     template: Type.Unknown(),
 })
 
-export type FlowTemplate = Static<typeof FlowTemplate>
+export type FlowTemplate = Static<typeof FlowTemplate> & {template: FlowVersion}
