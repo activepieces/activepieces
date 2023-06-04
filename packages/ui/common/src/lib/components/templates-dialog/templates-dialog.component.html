@@ -1,16 +1,28 @@
 <div class="ap-px-4 ap-py-3 ap-flex ap-items-center">
     <mat-form-field class="ap-w-[355px]" appearance="fill" subscriptSizing="dynamic">
         <mat-icon matPrefix color="body-icon" svgIcon="search" class="!ap-w-[18px] !ap-h-[18px]"></mat-icon>
-        <input #searchInput [formControl]="searchFormControl" matInput placeholder="Search templates"
+        <input #searchInput [formControl]="dialogForm.controls.search" matInput placeholder="Search templates"
             autocomplete="off">
     </mat-form-field>
     <div class="ap-flex-grow"></div>
-    <ap-icon-button iconFilename="close.svg" mat-dialog-close></ap-icon-button>
+    <ap-icon-button tooltipText="Close" iconFilename="close.svg" mat-dialog-close></ap-icon-button>
 </div>
 
-<mat-dialog-content class="ap-w-[1050px] !ap-flex ap-h-[655px] !ap-mt-3">
+<mat-dialog-content class="!ap-flex ap-h-[655px] !ap-mt-3">
     <div class="ap-w-[220px] ap-flex ap-flex-col ap-gap-8">
-        <ap-templates-filters [filters]="filters"></ap-templates-filters>
-        <ap-template-apps-dropdown></ap-template-apps-dropdown>
+        <ap-templates-filters [formControl]="dialogForm.controls.filters" [filters]="filters"></ap-templates-filters>
+        <ap-template-apps-dropdown [formControl]="dialogForm.controls.apps"></ap-template-apps-dropdown>
+    </div>
+    <div class="ap-flex ap-gap-5 ap-w-[830px] ap-flex-wrap ap-overflow-y-scroll  thin-scrollbars"
+        [class.ap-items-center]="loading$|async" [class.ap-justify-center]="loading$ | async">
+        <ng-container *ngIf="(loading$ | async) === false">
+            <ap-template-card [showBtnOnHover]="true" [template]="template"
+                *ngFor="let template of (templates$ | async)"></ap-template-card>
+        </ng-container>
+
+        <ap-loading-icon *ngIf="loading$ | async" [outlineLoader]="false" [whiteLoader]="false" height="40px"
+            width="40px">
+        </ap-loading-icon>
     </div>
 </mat-dialog-content>
+<ng-container *ngIf="templates$ | async"></ng-container>
