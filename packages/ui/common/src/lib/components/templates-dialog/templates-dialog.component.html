@@ -1,1 +1,12 @@
-<p>templates-dialog works!</p>
+<div class="ap-px-4 ap-py-3 ap-flex ap-items-center">
+    <mat-form-field class="ap-w-[355px]" appearance="fill" subscriptSizing="dynamic">
+        <mat-icon matPrefix color="body-icon" svgIcon="search" class="!ap-w-[18px] !ap-h-[18px]"></mat-icon>
+        <input #searchInput [formControl]="searchFormControl" matInput placeholder="Search" autocomplete="off">
+    </mat-form-field>
+    <div class="ap-flex-grow"></div>
+    <ap-icon-button iconFilename="close.svg" mat-dialog-close></ap-icon-button>
+</div>
+
+<mat-dialog-content class="ap-w-[1050px]">
+
+</mat-dialog-content>

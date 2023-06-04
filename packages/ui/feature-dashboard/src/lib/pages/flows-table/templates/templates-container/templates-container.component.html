@@ -1,6 +1,11 @@
 <div class="ap-p-5 ap-bg-grayCard ap-rounded-lg">
-    <div class="ap-typography-headline-6 ap-mb-6">
+    <div class="ap-typography-headline-6 ap-mb-6 ap-flex">
         Recommended templates
+        <div class="ap-flex-grow"></div>
+        <div>
+            <ap-button btnColor="primary" btnSize="medium" btnStyle="basic" (buttonClicked)="openTemplateDialog()">Show
+                all</ap-button>
+        </div>
     </div>
     <div class="ap-flex ap-gap-4">
         <app-new-flow-card></app-new-flow-card>

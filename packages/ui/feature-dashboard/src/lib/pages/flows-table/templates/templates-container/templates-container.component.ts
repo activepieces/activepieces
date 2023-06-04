@@ -1,4 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { TemplatesDialogComponent } from '@activepieces/ui/common';
+import { MatDialog } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-templates-container',
@@ -106,4 +108,8 @@ export class TemplatesContainerComponent {
       state: 'DRAFT',
     },
   };
+  constructor(private matDialog: MatDialog) {}
+  openTemplateDialog() {
+    this.matDialog.open(TemplatesDialogComponent, {});
+  }
 }
