@@ -16,7 +16,8 @@
     <div class="ap-flex ap-gap-5 ap-w-[830px] ap-flex-wrap ap-overflow-y-scroll  thin-scrollbars"
         [class.ap-items-center]="loading$|async" [class.ap-justify-center]="loading$ | async">
         <ng-container *ngIf="(loading$ | async) === false">
-            <ap-template-card [showBtnOnHover]="true" [template]="template" (useTemplateClicked)="useTemplate(template)"
+            <ap-template-card [showBtnOnHover]="true" [template]="template"
+                [insideBuilder]="data? data.insideBuilder:false" (useTemplateClicked)="useTemplate(template)"
                 *ngFor="let template of (templates$ | async)"></ap-template-card>
         </ng-container>
 

@@ -27,7 +27,7 @@ export class TemplateCardComponent implements AfterViewInit {
   useTemplate$: Observable<Flow>;
   @Output() useTemplateClicked = new EventEmitter<FlowTemplateWithVersion>();
   @Input() template: FlowTemplateWithVersion;
-  @Input() redirecToBuilder = true;
+  @Input() insideBuilder = true;
   @Input() showBtnOnHover = false;
   constructor(
     private flowService: FlowService,
@@ -36,7 +36,7 @@ export class TemplateCardComponent implements AfterViewInit {
     private matDialog: MatDialog
   ) {}
   useTemplate() {
-    if (!this.useTemplate$ && this.redirecToBuilder) {
+    if (!this.useTemplate$ && !this.insideBuilder) {
       this.useTemplate$ = this.flowService
         .create({
           displayName: this.template.name,

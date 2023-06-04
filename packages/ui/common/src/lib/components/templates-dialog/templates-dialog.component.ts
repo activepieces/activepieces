@@ -11,7 +11,7 @@ import {
 } from 'rxjs';
 import { FlowTemplate, FlowVersion } from '@activepieces/shared';
 import { TemplatesService } from '../../service/templates.service';
-import { MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 
 @Component({
   selector: 'ap-templates-dialog',
@@ -34,8 +34,9 @@ export class TemplatesDialogComponent {
   filters = ['ChatGPT', 'Content', 'RSS', 'Sales Funnel', 'Notifications'];
   constructor(
     private templatesService: TemplatesService,
+    private dialogRef: MatDialogRef<TemplatesDialogComponent>,
     @Inject(MAT_DIALOG_DATA)
-    public data: { insideBuilder: boolean }
+    public data?: { insideBuilder: boolean }
   ) {
     this.templates$ = this.dialogForm.valueChanges.pipe(
       startWith(() => {
@@ -60,5 +61,7 @@ export class TemplatesDialogComponent {
       shareReplay(1)
     );
   }
-  useTemplate(template: FlowTemplate & { template: FlowVersion }) {}
+  useTemplate(template: FlowTemplate) {
+    this.dialogRef.close(template);
+  }
 }
