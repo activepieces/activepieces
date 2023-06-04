@@ -1,4 +1,3 @@
-import { Device } from "./device";
 import { Track } from "./track";
 
 export enum RepeatState {
@@ -44,6 +43,10 @@ export interface PlaybackVolumeRequest {
     device_id?: string
 }
 
+export interface PlaybackPauseRequest {
+    device_id?: string
+}
+
 export interface PlaybackPlayRequest {
     device_id?: string,
     context_uri?: string,
@@ -54,4 +57,24 @@ export interface PlaybackPlayRequest {
 export interface PlaybackSeekRequest {
     device_id?: string,
     position_ms: number
+}
+
+export enum DeviceType {
+    COMPUTER = 'computer',
+    SMARTPHONE = 'smartphone',
+    SPEAKER = 'speaker'
+}
+
+export interface Device {
+    id: string,
+    is_active: boolean,
+    is_private_session: boolean,
+    is_restricted: boolean,
+    name: string,
+    type: DeviceType,
+    volume_percent: number
+}
+
+export interface DeviceListResponse {
+    devices: Device[]
 }

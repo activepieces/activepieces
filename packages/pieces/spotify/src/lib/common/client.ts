@@ -1,6 +1,9 @@
 import { AuthenticationType, HttpMessageBody, HttpMethod, QueryParams, httpClient } from "@activepieces/pieces-common"
 import { SearchRequest, SearchResult } from "./models/search"
-import { PlaybackPlayRequest, PlaybackSeekRequest, PlaybackState, PlaybackVolumeRequest } from "./models/playback"
+import { DeviceListResponse, PlaybackPauseRequest, PlaybackPlayRequest, PlaybackSeekRequest, PlaybackState, PlaybackVolumeRequest } from "./models/playback"
+import { Playlist, PlaylistAddItemsRequest, PlaylistCreateRequest, PlaylistItem, PlaylistRemoveItemsRequest, PlaylistReorderItemsRequest, PlaylistUpdateRequest } from "./models/playlist"
+import { User } from "./models/user"
+import { Pagination, PaginationRequest } from "./models/common"
 
 function emptyValueFilter(accessor: (key: string) => any): (key: string) => boolean {
     return (key: string) => {
@@ -9,8 +12,10 @@ function emptyValueFilter(accessor: (key: string) => any): (key: string) => bool
     }
 }
 
-export function prepareQuery(request: Record<string, any>): QueryParams {
+export function prepareQuery(request?: Record<string, any>): QueryParams {
     const params: QueryParams = {}
+    if(!request)
+        return params
     Object.keys(request).filter(emptyValueFilter(k => request[k])).forEach((k: string) => {
         params[k] = (request as Record<string, any>)[k].toString()
     })
@@ -40,6 +45,10 @@ export class SpotifyWebApi {
         return res
     }
 
+    async getDevices(): Promise<DeviceListResponse> {
+        return await this.makeRequest<DeviceListResponse>(HttpMethod.GET, '/me/player/devices')
+    }
+
     async getPlaybackState(): Promise<PlaybackState> {
         return await this.makeRequest<PlaybackState>(HttpMethod.GET, '/me/player')
     }
@@ -48,8 +57,8 @@ export class SpotifyWebApi {
         await this.makeRequest(HttpMethod.PUT, '/me/player/volume', prepareQuery(request))
     }
 
-    async pause() {
-        await this.makeRequest(HttpMethod.PUT, '/me/player/pause')
+    async pause(request: PlaybackPauseRequest) {
+        await this.makeRequest(HttpMethod.PUT, '/me/player/pause', prepareQuery(request))
     }
 
     async play(request: PlaybackPlayRequest) {
@@ -62,6 +71,42 @@ export class SpotifyWebApi {
 
     async seek(request: PlaybackSeekRequest) {
         await this.makeRequest(HttpMethod.PUT, '/me/player/seek', prepareQuery(request))
+    }
+
+    async getCurrentUser(): Promise<User> {
+        return await this.makeRequest<User>(HttpMethod.GET, '/me')
+    }
+
+    async getCurrentUserPlaylists(request?: PaginationRequest): Promise<Pagination<Playlist>> {
+        return await this.makeRequest<Pagination<Playlist>>(HttpMethod.GET, '/me/playlists', prepareQuery(request))
+    }
+
+    async createPlaylist(userId: string, request: PlaylistCreateRequest): Promise<Playlist> {
+        return await this.makeRequest<Playlist>(HttpMethod.POST, '/users/' + userId + '/playlists', undefined, request)
+    }
+
+    async updatePlaylist(id: string, request: PlaylistUpdateRequest) {
+        await this.makeRequest(HttpMethod.PUT, '/playlists/' + id, undefined, request)
+    }
+
+    async getPlaylist(id: string): Promise<Playlist> {
+        return await this.makeRequest<Playlist>(HttpMethod.GET, '/playlists/' + id)
+    }
+
+    async getPlaylistItems(id: string, request?: PaginationRequest): Promise<Pagination<PlaylistItem>> {
+        return await this.makeRequest<Pagination<PlaylistItem>>(HttpMethod.GET, '/playlists/' + id + '/tracks', prepareQuery(request))
+    }
+
+    async addItemsToPlaylist(id: string, request: PlaylistAddItemsRequest) {
+        await this.makeRequest(HttpMethod.POST, '/playlists/' + id + '/tracks', undefined, request)
+    }
+
+    async removeItemsFromPlaylist(id: string, request: PlaylistRemoveItemsRequest) {
+        await this.makeRequest(HttpMethod.DELETE, '/playlists/' + id + '/tracks', undefined, request)
+    }
+
+    async reorderPlaylist(id: string, request: PlaylistReorderItemsRequest) {
+        await this.makeRequest(HttpMethod.PUT, '/playlists/' + id + '/tracks', undefined, request)
     }
 
 }

@@ -13,17 +13,38 @@ export const spotifyCommon = {
             'user-read-playback-state',
             'user-modify-playback-state',
             'user-read-currently-playing',
-            'app-remote-control',
-            'streaming',
+            'user-read-playback-position',
+            'user-read-recently-played',
             'playlist-read-private',
             'playlist-read-collaborative',
             'playlist-modify-private',
-            'playlist-modify-public',
-            'user-read-playback-position',
-            'user-read-recently-played',
-            'user-library-modify',
-            'user-library-read'
+            'playlist-modify-public'
         ]
+    }),
+    device_id: (required = true) => Property.Dropdown({
+        displayName: 'Device',
+        required,
+        refreshers: ['authentication'],
+        options: async (value) => {
+            if (!value['authentication']) {
+                return {
+                    disabled: true,
+                    placeholder: 'setup authentication first',
+                    options: []
+                };
+            }
+            const client = makeClient(value)
+            const res = await client.getDevices()
+            return {
+                disabled: false,
+                options: res.devices.map((device) => {
+                    return {
+                        label: device.name,
+                        value: device.id
+                    }
+                })
+            }
+        }
     })
 }
 

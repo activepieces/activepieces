@@ -12,10 +12,7 @@ export default createAction({
             description: 'Volume from 0 to 100',
             required: true
         }),
-        device_id: Property.ShortText({
-            displayName: 'Device ID',
-            required: false
-        })
+        device_id: spotifyCommon.device_id(false)
     },
     async run(context) {
         const client = makeClient(context.propsValue)
