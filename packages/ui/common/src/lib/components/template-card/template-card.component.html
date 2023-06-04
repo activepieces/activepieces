@@ -2,7 +2,7 @@
     <div class="ap-flex">
         <ap-pieces-icons-from-flow [flowVersion]="template.template"></ap-pieces-icons-from-flow>
     </div>
-    <div class="ap-typography-subtitle-1 ap-clamp-4 ap-w-[212px]"
+    <div class="ap-typography-subtitle-1 ap-text-body ap-clamp-4 ap-w-[212px]"
         [matTooltip]="descriptionDiv.clientHeight < descriptionDiv.scrollHeight? template.description : ''"
         #descriptionDiv>
         {{template.description}}
