@@ -29,7 +29,7 @@ export class TemplatesFiltersComponent implements OnInit, ControlValueAccessor {
   filtersForm: FormGroup<{ filters: FormArray }> = new FormGroup({
     filters: new FormArray([] as Array<FormControl<boolean>>),
   });
-  valueChanges$: Observable<Partial<{ filters: Array<boolean> }>>;
+  valueChanges$: Observable<Partial<Array<boolean>>>;
   @Input() filters: Array<string> = [];
   onChange: (val: Array<string>) => void = () => {
     //ignored
@@ -38,11 +38,9 @@ export class TemplatesFiltersComponent implements OnInit, ControlValueAccessor {
     this.filtersForm.controls.filters = new FormArray(
       this.filters.map(() => new FormControl(false))
     );
-    this.valueChanges$ = this.filtersForm.valueChanges.pipe(
+    this.valueChanges$ = this.filtersForm.controls.filters.valueChanges.pipe(
       tap((val) => {
-        const value = this.filters.filter((_, i) =>
-          val.filters ? val.filters[i] : false
-        );
+        const value = this.filters.filter((_, i) => (val ? val[i] : false));
         this.onChange(value);
       })
     );
