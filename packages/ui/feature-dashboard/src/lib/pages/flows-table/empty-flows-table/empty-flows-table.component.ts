@@ -18,15 +18,14 @@ export class EmptyFlowsTableComponent {
   createFlow() {
     if (!this.creatingFlow) {
       this.creatingFlow = true;
+      localStorage.setItem('newFlow', 'true');
       this.createFlow$ = this.flowService
         .create({
           displayName: 'Untitled',
         })
         .pipe(
           tap((flow) => {
-            this.router.navigate(['/flows/', flow.id], {
-              queryParams: { newFlow: true },
-            });
+            this.router.navigate(['/flows/', flow.id]);
           })
         );
     }
