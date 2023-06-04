@@ -99,6 +99,7 @@ This section is dedicated to individuals who have contributed to 10 or more acti
 <a href="https://github.com/AbdulTheActivePiecer"><img src="https://avatars.githubusercontent.com/u/106555838?v=4?s=100" width="100px;" alt="AbdulTheActivePiecer"/> </a>
 <a href="https://github.com/abuaboud"><img src="https://avatars.githubusercontent.com/u/1812998?v=4?s=100" width="100px;" alt="Mohammed Abu Aboud"/></a>
 <a href="https://github.com/Willianwg"><img src="https://avatars.githubusercontent.com/u/51550522?v=4?s=100" width="100px;" alt="Willian Guedes"/></a>
+<a href="https://github.com/JanHolger"><img src="https://avatars.githubusercontent.com/u/25184957?v=4?s=100" width="100px;" alt="Jan Bebendorf"/></a>
 
 ### Busy Beavers Club 🦸
 
