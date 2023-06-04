@@ -16,6 +16,7 @@ export class TemplatesService {
       "ChatGPT is awesome, you can ask it to write a blog post for you, make some modifications and publish it. But if you have hundreds of ideas that you'd like to convert into blog posts, you will need something that runs in the background while you're on the beach (just kidding, you'll be buried under lots of other work 😳).",
     name: 'Automate Blog Writing with AI: A Step by Step Guide using OpenAI',
     pieces: ['google-sheets', 'openai', 'wordpress', 'gmail'],
+    tags: [],
     template: {
       flowId: 'mjTPcRA5uKPQKerEM8T1C',
       created: '2021-09-30T14:00:00.000Z',
