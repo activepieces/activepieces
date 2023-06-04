@@ -31,7 +31,7 @@ export const spotifyCommon = {
                     disabled: true,
                     placeholder: 'setup authentication first',
                     options: []
-                };
+                }
             }
             const client = makeClient(value)
             const res = await client.getDevices()
@@ -41,6 +41,31 @@ export const spotifyCommon = {
                     return {
                         label: device.name,
                         value: device.id
+                    }
+                })
+            }
+        }
+    }),
+    playlist_id: (required = true) => Property.Dropdown({
+        displayName: 'Playlist',
+        required,
+        refreshers: ['authentication'],
+        options: async (value) => {
+            if (!value['authentication']) {
+                return {
+                    disabled: true,
+                    placeholder: 'setup authentication first',
+                    options: []
+                }
+            }
+            const client = makeClient(value)
+            const playlists = await client.getAllCurrentUserPlaylists()
+            return {
+                disabled: false,
+                options: playlists.map((playlist) => {
+                    return {
+                        label: playlist.name,
+                        value: playlist.id
                     }
                 })
             }

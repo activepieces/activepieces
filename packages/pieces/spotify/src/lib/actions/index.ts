@@ -10,6 +10,7 @@ import addPlaylistItems from "./add-playlist-items"
 import removePlaylistItems from "./remove-playlist-items"
 import getPlaylistItems from "./get-playlist-items"
 import reorderPlaylist from "./reorder-playlist"
+import getPlaylists from "./get-playlists"
 
 export default [
     search,
@@ -17,6 +18,7 @@ export default [
     play,
     pause,
     setVolume,
+    getPlaylists,
     getPlaylistInfo,
     getPlaylistItems,
     createPlaylist,

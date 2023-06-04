@@ -7,10 +7,7 @@ export default createAction({
     description: 'Adds tracks or episodes to the playlist',
     props: {
         authentication: spotifyCommon.authentication,
-        playlist_id: Property.ShortText({
-            displayName: 'Playlist ID',
-            required: true
-        }),
+        playlist_id: spotifyCommon.playlist_id(true),
         items: Property.Array({
             displayName: 'Items',
             description: "URI's of the items to add",
@@ -23,7 +20,7 @@ export default createAction({
     },
     async run(context) {
         const client = makeClient(context.propsValue)
-        await client.addItemsToPlaylist(context.propsValue.playlist_id, {
+        await client.addItemsToPlaylist(context.propsValue.playlist_id as string, {
             uris: context.propsValue.items as string[],
             position: context.propsValue.position
         })

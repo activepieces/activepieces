@@ -7,10 +7,7 @@ export default createAction({
     description: 'Updates details of the playlist',
     props: {
         authentication: spotifyCommon.authentication,
-        playlist_id: Property.ShortText({
-            displayName: 'Playlist ID',
-            required: true
-        }),
+        playlist_id: spotifyCommon.playlist_id(true),
         name: Property.ShortText({
             displayName: 'Name',
             required: false
@@ -30,7 +27,7 @@ export default createAction({
     },
     async run(context) {
         const client = makeClient(context.propsValue)
-        await client.updatePlaylist(context.propsValue.playlist_id, {
+        await client.updatePlaylist(context.propsValue.playlist_id as string, {
             name: context.propsValue.name,
             description: context.propsValue.description,
             public: context.propsValue.public,

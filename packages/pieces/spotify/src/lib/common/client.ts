@@ -81,6 +81,20 @@ export class SpotifyWebApi {
         return await this.makeRequest<Pagination<Playlist>>(HttpMethod.GET, '/me/playlists', prepareQuery(request))
     }
 
+    async getAllCurrentUserPlaylists(): Promise<Playlist[]> {
+        const playlists: Playlist[] = []
+        let total = 99999;
+        while(playlists.length < total) {
+            const res = await this.getCurrentUserPlaylists({
+                limit: 50,
+                offset: playlists.length
+            })
+            total = res.total
+            res.items.forEach(item => playlists.push(item))
+        }
+        return playlists
+    }
+
     async createPlaylist(userId: string, request: PlaylistCreateRequest): Promise<Playlist> {
         return await this.makeRequest<Playlist>(HttpMethod.POST, '/users/' + userId + '/playlists', undefined, request)
     }

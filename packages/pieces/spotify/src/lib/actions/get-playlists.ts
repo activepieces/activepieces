@@ -2,12 +2,11 @@ import { Property, createAction } from "@activepieces/pieces-framework";
 import { spotifyCommon, makeClient } from "../common";
 
 export default createAction({
-    name: 'get_playlist_items',
-    displayName: 'Get Playlist Items',
-    description: 'Retrieves the list of items in the playlist',
+    name: 'get_playlists',
+    displayName: 'Get Playlists',
+    description: 'Retrieves the list of playlists that you created or followed',
     props: {
         authentication: spotifyCommon.authentication,
-        playlist_id: spotifyCommon.playlist_id(true),
         offset: Property.Number({
             displayName: 'Limit',
             required: false
@@ -18,17 +17,17 @@ export default createAction({
         }),
         all: Property.Checkbox({
             displayName: 'All',
-            description: 'Fetches all items in a single request',
+            description: 'Fetches all playlists in a single request',
             required: false
         })
     },
     async run(context) {
         const client = makeClient(context.propsValue)
         if(context.propsValue.all) {
-            const items = await client.getAllPlaylistItems(context.propsValue.playlist_id as string)
+            const items = await client.getAllCurrentUserPlaylists()
             return { total: items.length, items }
         }
-        return await client.getPlaylistItems(context.propsValue.playlist_id as string, {
+        return await client.getCurrentUserPlaylists({
             limit: context.propsValue.limit,
             offset: context.propsValue.offset
         })
