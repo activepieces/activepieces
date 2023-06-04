@@ -50,6 +50,8 @@ import { UserAvatarComponent } from './components/user-avatar/user-avatar.compon
 import { TrackHoverDirective } from './directives/track-hover.directive';
 import { PiecesIconsFromFlowComponent } from './components/pieces-icons-from-flow/pieces-icons-from-flow.component';
 import { PieceIconContainerComponent } from './components/pieces-icons/piece-icon-container/piece-icon-container.component';
+import { TemplatesDialogComponent } from './components/templates-dialog/templates-dialog.component';
+import { TemplateCardComponent } from './components/template-card/template-card.component';
 
 const exportedImports = [
   CommonModule,
@@ -101,6 +103,7 @@ const exportedDeclarations = [
   PiecesIconsFromFlowComponent,
   TrackHoverDirective,
   PieceIconContainerComponent,
+  TemplateCardComponent,
 ];
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 0,
@@ -142,7 +145,7 @@ export function markedOptionsFactory(): MarkedOptions {
   providers: [
     { provide: MAT_TOOLTIP_DEFAULT_OPTIONS, useValue: materialTooltipDefaults },
   ],
-  declarations: [...exportedDeclarations],
+  declarations: [...exportedDeclarations, TemplatesDialogComponent],
   exports: [...exportedImports, ...exportedDeclarations],
 })
 export class UiCommonModule {}

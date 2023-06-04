@@ -6,21 +6,22 @@ import {
   FlowVersion,
 } from '@activepieces/shared';
 import { FlowService } from '@activepieces/ui/common';
-import { Observable, switchMap, tap } from 'rxjs';
+import { Observable, Subject, switchMap, tap } from 'rxjs';
 import { Router } from '@angular/router';
 type FlowTemplateWithVersion = FlowTemplate & { template: FlowVersion };
 @Component({
-  selector: 'app-template-card',
+  selector: 'ap-template-card',
   templateUrl: './template-card.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TemplateCardComponent {
   useTemplate$: Observable<Flow>;
+  useTemplateClicked$ = new Subject<FlowTemplateWithVersion>();
   @Input() template: FlowTemplateWithVersion;
   @Input() redirecToBuilder = true;
   constructor(private flowService: FlowService, private router: Router) {}
   useTemplate() {
-    if (!this.useTemplate$) {
+    if (!this.useTemplate$ && !this.redirecToBuilder) {
       this.useTemplate$ = this.flowService
         .create({
           displayName: this.template.name,
@@ -40,5 +41,6 @@ export class TemplateCardComponent {
           })
         );
     }
+    this.useTemplateClicked$.next(this.template);
   }
 }
