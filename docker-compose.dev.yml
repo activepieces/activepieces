@@ -8,6 +8,33 @@ version: '3.0'
 
 services:
 
+  app:
+    image: activepieces/ap-base:3
+    container_name: app
+    environment:
+      AP_JWT_SECRET: super-secret
+      AP_POSTGRES_HOST: postgres
+      AP_SIGN_UP_ENABLED: false
+      AP_REDIS_HOST: redis
+      AP_EXECUTION_MODE: UNSANDBOXED
+    user: 1000:1000
+    ports:
+     - "3000:3000"
+     - "4200:4200"
+     - "9229:9229"
+     - "9222:9222"
+    networks:
+      - activepieces_dev
+    profiles:
+      - full
+    volumes:
+     - ./:/usr/src/app
+    working_dir: /usr/src/app
+    command: /bin/sh -c "npm i && (npx nx serve backend & npx nx serve ui-core)"
+    depends_on:
+     - postgres
+     - redis
+
   postgres:
     image: postgres:14.4
     ports:
