@@ -32,9 +32,8 @@ export class NewFlowCardComponent {
               })
               .pipe(
                 tap((flow) => {
-                  this.router.navigate(['/flows/', flow.id], {
-                    queryParams: { newFlow: true },
-                  });
+                  localStorage.setItem('newFlow', 'true');
+                  this.router.navigate(['/flows/', flow.id]);
                 })
               );
           })

@@ -18,7 +18,15 @@ import {
   ViewModeEnum,
 } from '@activepieces/ui/feature-builder-store';
 import { Store } from '@ngrx/store';
-import { distinctUntilChanged, map, Observable, tap } from 'rxjs';
+import {
+  distinctUntilChanged,
+  EMPTY,
+  map,
+  Observable,
+  switchMap,
+  take,
+  tap,
+} from 'rxjs';
 import { MatDrawerContainer } from '@angular/material/sidenav';
 import { CdkDragMove } from '@angular/cdk/drag-drop';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -26,6 +34,7 @@ import { TestRunBarComponent } from '@activepieces/ui/feature-builder-store';
 import { RunDetailsService } from '@activepieces/ui/feature-builder-left-sidebar';
 import {
   ExecutionOutputStatus,
+  FlowTemplate,
   FlowVersion,
   TriggerType,
 } from '@activepieces/shared';
@@ -69,7 +78,7 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
   testingStepSectionIsRendered$: Observable<boolean>;
   graphChanged$: Observable<FlowVersion>;
   showGuessFlowComponent = true;
-
+  importTemplate$: Observable<void>;
   constructor(
     private store: Store,
     private actRoute: ActivatedRoute,
@@ -88,12 +97,32 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
       this.testStepService.testingStepSectionIsRendered$.asObservable();
     this.isPanning$ = this.pannerService.isPanning$.asObservable();
     this.isDragging$ = this.flowRendererService.draggingSubject.asObservable();
-    if (this.actRoute.snapshot.queryParams['newFlow']) {
-      this.matDialog.open(TemplatesDialogComponent, {
-        data: {
-          insideBuilder: true,
-        },
-      });
+    if (localStorage.getItem('newFlow')) {
+      this.importTemplate$ = this.matDialog
+        .open(TemplatesDialogComponent, {
+          data: {
+            insideBuilder: true,
+          },
+        })
+        .afterClosed()
+        .pipe(
+          switchMap((template?: FlowTemplate) => {
+            if (template) {
+              return this.store.select(BuilderSelectors.selectCurrentFlow).pipe(
+                take(1),
+                tap((flow) => {
+                  return this.builderService.importTemplate$.next({
+                    flowId: flow.id,
+                    template: template,
+                  });
+                })
+              );
+            }
+            return EMPTY;
+          }),
+          map(() => void 0)
+        );
+      localStorage.removeItem('newFlow');
     }
     this.loadInitialData$ = this.actRoute.data.pipe(
       tap((value) => {
