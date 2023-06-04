@@ -1,13 +1,13 @@
 <div class="ap-border ap-border-outline ap-bg-white ap-p-5 ap-rounded-lg  ap-flex ap-flex-col ap-gap-5">
     <div class="ap-flex">
-        <div class="ap-inline-block" matTooltip="Webhook,Code and Branch" matTooltipPosition="above">
-            <ap-piece-icon-container *ngFor="let url of urls; let isFirst=first" [url]="url"
-                [class.ap-ml-[5px]]="!isFirst"></ap-piece-icon-container>
-        </div>
+        <ap-pieces-icons-from-flow [flowVersion]="template.template"></ap-pieces-icons-from-flow>
     </div>
-
-    <div class="ap-typography-subtitle-1 ap-line-clamp-3 ap-w-[212px]">
-        In today's fast-paced digital world, content creation is one of the most important aspects of building
+    <div class="ap-typography-subtitle-1 ap-clamp-4 ap-w-[212px]"
+        [matTooltip]="descriptionDiv.clientHeight < descriptionDiv.scrollHeight? template.description : ''"
+        #descriptionDiv>
+        {{template.description}}
     </div>
-    <ap-button btnSize="medium" btnStyle="flat" btnColor="primary">Use Template</ap-button>
+    <ap-button btnSize="medium" btnStyle="flat" btnColor="primary" (buttonClicked)="useTemplate()"
+        [loading]="!!useTemplate$">Use Template</ap-button>
 </div>
+<ng-container *ngIf="useTemplate$ | async"></ng-container>

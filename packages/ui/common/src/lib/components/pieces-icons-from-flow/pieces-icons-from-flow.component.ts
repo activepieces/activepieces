@@ -33,7 +33,6 @@ export class PiecesIconsFromFlowComponent implements OnInit {
   extractIconUrlsAndTooltipText() {
     const steps = flowHelper.getAllSteps(this.flowVersion);
     const stepsIconsUrls: Record<string, Observable<string>> = {};
-
     steps.forEach((s) => {
       if (s.type === ActionType.PIECE || s.type === TriggerType.PIECE) {
         const pieceMetaData$ = this.actionMetaDataService
