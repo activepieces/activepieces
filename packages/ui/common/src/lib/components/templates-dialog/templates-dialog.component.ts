@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import {
   BehaviorSubject,
@@ -11,6 +11,7 @@ import {
 } from 'rxjs';
 import { FlowTemplate, FlowVersion } from '@activepieces/shared';
 import { TemplatesService } from '../../service/templates.service';
+import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 
 @Component({
   selector: 'ap-templates-dialog',
@@ -31,7 +32,11 @@ export class TemplatesDialogComponent {
   templates$: Observable<(FlowTemplate & { template: FlowVersion })[]>;
   searchFormControl = new FormControl<string>('');
   filters = ['ChatGPT', 'Content', 'RSS', 'Sales Funnel', 'Notifications'];
-  constructor(private templatesService: TemplatesService) {
+  constructor(
+    private templatesService: TemplatesService,
+    @Inject(MAT_DIALOG_DATA)
+    public data: { insideBuilder: boolean }
+  ) {
     this.templates$ = this.dialogForm.valueChanges.pipe(
       startWith(() => {
         return {
@@ -55,4 +60,5 @@ export class TemplatesDialogComponent {
       shareReplay(1)
     );
   }
+  useTemplate(template: FlowTemplate & { template: FlowVersion }) {}
 }

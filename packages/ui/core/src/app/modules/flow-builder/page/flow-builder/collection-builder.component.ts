@@ -31,8 +31,12 @@ import {
   LeftSideBarType,
   RightSideBarType,
 } from '@activepieces/ui/feature-builder-store';
-import { TestStepService } from '@activepieces/ui/common';
+import {
+  TemplatesDialogComponent,
+  TestStepService,
+} from '@activepieces/ui/common';
 import { PannerService } from '@activepieces/ui/feature-builder-canvas';
+import { MatDialog } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-collection-builder',
@@ -69,13 +73,21 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
     private pannerService: PannerService,
     private testStepService: TestStepService,
     private flowRendererService: FlowRendererService,
-    public builderService: CollectionBuilderService
+    public builderService: CollectionBuilderService,
+    private matDialog: MatDialog
   ) {
     this.listenToGraphChanges();
     this.testingStepSectionIsRendered$ =
       this.testStepService.testingStepSectionIsRendered$.asObservable();
     this.isPanning$ = this.pannerService.isPanning$.asObservable();
     this.isDragging$ = this.flowRendererService.draggingSubject.asObservable();
+    if (this.actRoute.snapshot.queryParams['newFlow']) {
+      this.matDialog.open(TemplatesDialogComponent, {
+        data: {
+          insideBuilder: true,
+        },
+      });
+    }
     this.loadInitialData$ = this.actRoute.data.pipe(
       tap((value) => {
         const runInformation: InstanceRunInfo = value['runInformation'];
@@ -93,7 +105,6 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
               folder,
             })
           );
-
           this.titleService.setTitle(`AP-${flow.version.displayName}`);
           this.snackbar.openFromComponent(TestRunBarComponent, {
             duration: undefined,
@@ -104,7 +115,6 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
           const instance = value['instance'];
           const appConnections = value['connections'];
           this.titleService.setTitle(`AP-${flow.version.displayName}`);
-
           this.store.dispatch(
             BuilderActions.loadInitial({
               flow,

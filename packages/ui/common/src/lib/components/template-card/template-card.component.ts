@@ -3,7 +3,9 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  EventEmitter,
   Input,
+  Output,
 } from '@angular/core';
 import {
   Flow,
@@ -12,7 +14,7 @@ import {
   FlowVersion,
 } from '@activepieces/shared';
 import { FlowService } from '@activepieces/ui/common';
-import { Observable, Subject, switchMap, tap } from 'rxjs';
+import { Observable, switchMap, tap } from 'rxjs';
 import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 type FlowTemplateWithVersion = FlowTemplate & { template: FlowVersion };
@@ -23,7 +25,7 @@ type FlowTemplateWithVersion = FlowTemplate & { template: FlowVersion };
 })
 export class TemplateCardComponent implements AfterViewInit {
   useTemplate$: Observable<Flow>;
-  useTemplateClicked$ = new Subject<FlowTemplateWithVersion>();
+  @Output() useTemplateClicked = new EventEmitter<FlowTemplateWithVersion>();
   @Input() template: FlowTemplateWithVersion;
   @Input() redirecToBuilder = true;
   @Input() showBtnOnHover = false;
@@ -55,7 +57,7 @@ export class TemplateCardComponent implements AfterViewInit {
         );
       this.matDialog.closeAll();
     }
-    this.useTemplateClicked$.next(this.template);
+    this.useTemplateClicked.emit(this.template);
   }
   ngAfterViewInit(): void {
     //This is a workaround to make tooltip appear.
