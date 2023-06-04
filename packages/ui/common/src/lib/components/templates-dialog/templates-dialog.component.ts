@@ -8,4 +8,5 @@ import { FormControl } from '@angular/forms';
 })
 export class TemplatesDialogComponent {
   searchFormControl = new FormControl<string>('');
+  filters = ['ChatGPT', 'Content', 'RSS', 'Sales Funnel', 'Notifications'];
 }

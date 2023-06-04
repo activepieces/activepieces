@@ -7,6 +7,8 @@
     <ap-icon-button iconFilename="close.svg" mat-dialog-close></ap-icon-button>
 </div>
 
-<mat-dialog-content class="ap-w-[1050px]">
-
+<mat-dialog-content class="ap-w-[1050px] !ap-flex ap-h-[655px] !ap-mt-3">
+    <div class="ap-w-[170px] ap-flex ap-flex-col ap-gap-8">
+        <ap-templates-filters [filters]="filters"></ap-templates-filters>
+    </div>
 </mat-dialog-content>

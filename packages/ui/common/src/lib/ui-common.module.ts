@@ -52,6 +52,7 @@ import { PiecesIconsFromFlowComponent } from './components/pieces-icons-from-flo
 import { PieceIconContainerComponent } from './components/pieces-icons/piece-icon-container/piece-icon-container.component';
 import { TemplatesDialogComponent } from './components/templates-dialog/templates-dialog.component';
 import { TemplateCardComponent } from './components/template-card/template-card.component';
+import { TemplatesFiltersComponent } from './components/templates-dialog/templates-filters/templates-filters.component';
 
 const exportedImports = [
   CommonModule,
@@ -145,7 +146,11 @@ export function markedOptionsFactory(): MarkedOptions {
   providers: [
     { provide: MAT_TOOLTIP_DEFAULT_OPTIONS, useValue: materialTooltipDefaults },
   ],
-  declarations: [...exportedDeclarations, TemplatesDialogComponent],
+  declarations: [
+    ...exportedDeclarations,
+    TemplatesDialogComponent,
+    TemplatesFiltersComponent,
+  ],
   exports: [...exportedImports, ...exportedDeclarations],
 })
 export class UiCommonModule {}
