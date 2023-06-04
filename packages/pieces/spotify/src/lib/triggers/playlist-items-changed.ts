@@ -1,4 +1,4 @@
-import { createTrigger, Property, StoreScope, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, StoreScope, TriggerStrategy } from '@activepieces/pieces-framework';
 import { spotifyCommon, makeClient } from '../common';
 import { createHash } from 'crypto'
 
@@ -9,15 +9,12 @@ export default createTrigger({
     type: TriggerStrategy.POLLING,
     props: {
         authentication: spotifyCommon.authentication,
-        playlist_id: Property.ShortText({
-            displayName: 'Playlist ID',
-            required: true
-        })
+        playlist_id: spotifyCommon.playlist_id(true)
     },
     sampleData: {},
     onEnable: async (context) => {
         const client = makeClient(context.propsValue)
-        const items = await client.getAllPlaylistItems(context.propsValue.playlist_id)
+        const items = await client.getAllPlaylistItems(context.propsValue.playlist_id as string)
         const hash = createHash('md5').update(items.map(item => item.track.id).join(',')).digest('hex')
         await context.store.put('playlist_changed_trigger_hash', hash, StoreScope.FLOW)
     },
@@ -27,7 +24,7 @@ export default createTrigger({
     run: async (context) => {
         const oldHash = await context.store.get('playlist_changed_trigger_hash', StoreScope.FLOW)
         const client = makeClient(context.propsValue)
-        const items = await client.getAllPlaylistItems(context.propsValue.playlist_id)
+        const items = await client.getAllPlaylistItems(context.propsValue.playlist_id as string)
         const newHash = createHash('md5').update(items.map(item => item.track.id).join(',')).digest('hex')
         if(oldHash != newHash) {
             await context.store.put('playlist_changed_trigger_hash', newHash, StoreScope.FLOW)
@@ -37,7 +34,7 @@ export default createTrigger({
     },
     test: async (context) => {
         const client = makeClient(context.propsValue)
-        const items = await client.getAllPlaylistItems(context.propsValue.playlist_id)
+        const items = await client.getAllPlaylistItems(context.propsValue.playlist_id as string)
         return [ { total: items.length, items } ]
     }
 })
