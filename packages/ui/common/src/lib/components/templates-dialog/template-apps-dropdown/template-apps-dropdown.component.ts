@@ -1,5 +1,10 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { ActionMetaService } from '../../../service/action-meta.service';
+import {
+  ActionMetaService,
+  CORE_PIECES_ACTIONS_NAMES,
+  CORE_PIECES_TRIGGERS,
+  corePieceIconUrl,
+} from '../../../service/action-meta.service';
 import { PieceMetadataSummary } from '@activepieces/pieces-framework';
 import { Observable, map } from 'rxjs';
 import { TriggerType } from '@activepieces/shared';
@@ -53,7 +58,22 @@ export class TemplateAppsDropdownComponent implements ControlValueAccessor {
           };
         });
 
-        const result = [...coreSteps, ...pieces];
+        const result = [
+          ...coreSteps,
+          ...pieces.map((p) => {
+            if (
+              CORE_PIECES_ACTIONS_NAMES.find((n) => p.name === n) ||
+              CORE_PIECES_TRIGGERS.find((n) => p.name === n)
+            ) {
+              console.log(p.name);
+              return {
+                ...p,
+                logoUrl: corePieceIconUrl(p.name),
+              };
+            }
+            return p;
+          }),
+        ];
         // sort result by display name
         result.sort((a, b) => {
           return a.displayName.localeCompare(b.displayName) > -1 ? 1 : -1;
