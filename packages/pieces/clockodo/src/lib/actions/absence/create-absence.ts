@@ -17,10 +17,7 @@ export default createAction({
             required: true
         }),
         type: clockodoCommon.absenceType(true),
-        user_id: Property.Number({
-            displayName: 'User ID',
-            required: false
-        }),
+        user_id: clockodoCommon.user_id(false),
         half_days: Property.Checkbox({
             displayName: 'Half Days',
             required: false
@@ -39,7 +36,7 @@ export default createAction({
         })
     },
     async run(context) {
-        const client = makeClient(context);
+        const client = makeClient(context.propsValue);
         const res = await client.createAbsence({
             date_since: reformatDate(context.propsValue.date_since) as string,
             date_until: reformatDate(context.propsValue.date_until) as string,

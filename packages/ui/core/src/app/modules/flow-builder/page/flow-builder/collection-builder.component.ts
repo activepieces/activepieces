@@ -24,8 +24,11 @@ import { CdkDragMove } from '@angular/cdk/drag-drop';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { TestRunBarComponent } from '@activepieces/ui/feature-builder-store';
 import { RunDetailsService } from '@activepieces/ui/feature-builder-left-sidebar';
-import { InstanceRunInfo } from '../../resolvers/instance-run.resolver';
-import { ExecutionOutputStatus, Flow, TriggerType } from '@activepieces/shared';
+import {
+  ExecutionOutputStatus,
+  FlowVersion,
+  TriggerType,
+} from '@activepieces/shared';
 import { Title } from '@angular/platform-browser';
 import {
   LeftSideBarType,
@@ -37,6 +40,10 @@ import {
 } from '@activepieces/ui/common';
 import { PannerService } from '@activepieces/ui/feature-builder-canvas';
 import { MatDialog } from '@angular/material/dialog';
+import {
+  BuilderRouteData,
+  RunRouteData,
+} from '../../resolvers/builder-route-data';
 
 @Component({
   selector: 'app-collection-builder',
@@ -60,7 +67,7 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
   isDragging$: Observable<boolean>;
   TriggerType = TriggerType;
   testingStepSectionIsRendered$: Observable<boolean>;
-  graphChanged$: Observable<Flow>;
+  graphChanged$: Observable<FlowVersion>;
   showGuessFlowComponent = true;
 
   constructor(
@@ -90,38 +97,36 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
     }
     this.loadInitialData$ = this.actRoute.data.pipe(
       tap((value) => {
-        const runInformation: InstanceRunInfo = value['runInformation'];
-        if (runInformation !== undefined) {
-          const flow = runInformation.flow;
-          const run = runInformation.run;
-          const folder = runInformation.folder;
-          const appConnections = value['connections'];
+        const routeData = value as BuilderRouteData | RunRouteData;
+        const runInformation = routeData.runInformation;
+        if (runInformation) {
           this.store.dispatch(
             BuilderActions.loadInitial({
-              flow,
+              flow: routeData.runInformation.flow,
               viewMode: ViewModeEnum.VIEW_INSTANCE_RUN,
-              run,
-              appConnections,
-              folder,
+              run: routeData.runInformation.run,
+              appConnections: routeData.connections,
+              folder: routeData.runInformation.folder,
             })
           );
-          this.titleService.setTitle(`AP-${flow.version.displayName}`);
+          this.titleService.setTitle(
+            `AP-${routeData.runInformation.flow.version.displayName}`
+          );
           this.snackbar.openFromComponent(TestRunBarComponent, {
             duration: undefined,
           });
         } else {
-          const flow = value['flowAndFolder'].flow;
-          const folder = value['flowAndFolder'].folder;
-          const instance = value['instance'];
-          const appConnections = value['connections'];
-          this.titleService.setTitle(`AP-${flow.version.displayName}`);
+          this.titleService.setTitle(
+            `AP-${routeData.flowAndFolder.flow.version.displayName}`
+          );
           this.store.dispatch(
             BuilderActions.loadInitial({
-              flow,
-              instance,
+              flow: routeData.flowAndFolder.flow,
+              instance: routeData.instanceData?.instance,
               viewMode: ViewModeEnum.BUILDING,
-              appConnections,
-              folder,
+              appConnections: routeData.connections,
+              folder: routeData.flowAndFolder.folder,
+              publishedVersion: routeData.instanceData?.publishedFlowVersion,
             })
           );
         }
@@ -210,12 +215,12 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
   }
   listenToGraphChanges() {
     this.graphChanged$ = this.store
-      .select(BuilderSelectors.selectCurrentFlow)
+      .select(BuilderSelectors.selectShownFlowVersion)
       .pipe(
         distinctUntilChanged(),
-        tap((flow) => {
-          if (flow) {
-            const rootStep = FlowFactoryUtil.createRootStep(flow);
+        tap((version) => {
+          if (version) {
+            const rootStep = FlowFactoryUtil.createRootStep(version);
             this.flowRendererService.refreshCoordinatesAndSetActivePiece(
               rootStep
             );

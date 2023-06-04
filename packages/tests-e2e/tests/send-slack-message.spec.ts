@@ -40,8 +40,7 @@ test('Test Send Slack message', async ({ page }) => {
   await page.locator('#custom-form-field-id-0').getByRole('paragraph').click();
   await page.locator('#custom-form-field-id-0 div').nth(1).fill('Test from Checkly');
 
-
-  await page.getByRole('button', { name: 'Test flow' }).click();
+  await page.getByText('Test flow').click();
   await page.getByRole('button', { name: 'Test' }).click();
   await page.waitForFunction(() => {
     const elements = document.querySelectorAll('*');

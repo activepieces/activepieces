@@ -11,13 +11,10 @@ export default createAction({
             displayName: 'Year',
             required: true
         }),
-        user_id: Property.Number({
-            displayName: 'User ID',
-            required: false
-        })
+        user_id: clockodoCommon.user_id(false)
     },
     async run(context) {
-        const client = makeClient(context);
+        const client = makeClient(context.propsValue);
         const res = await client.listAbsences({
             year: context.propsValue.year,
             users_id: context.propsValue.user_id

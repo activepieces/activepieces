@@ -35,7 +35,7 @@ module.exports = {
           DEFAULT: '#dc3545',
           light: '#efa2a980',
         },
-        primary: { DEFAULT: '#6e41e2', light: '#EEE8FC', dark: '#472c8a','10':'rgba(110, 65, 226, 0.1)' },
+        primary: { DEFAULT: '#6e41e2', medium:'#ab90ee', light: '#eee9fc', dark: '#6838e0','10':'rgba(110, 65, 226, 0.1)' },
         warn: {
          DEFAULT:'#f78a3b',
          light:"#FFF6E4",

@@ -21,7 +21,10 @@ import {
   CustomPathMentionDialogComponent,
   CustomPathMentionDialogData,
 } from '../custom-path-mention-dialog/custom-path-mention-dialog.component';
-import { FlowItem, FlowsActions } from '@activepieces/ui/feature-builder-store';
+import {
+  FlowItem,
+  canvasActions,
+} from '@activepieces/ui/feature-builder-store';
 
 @Component({
   selector: 'app-webhook-trigger-mention-item',
@@ -94,7 +97,7 @@ export class WebhookTriggerMentionItemComponent implements OnInit {
   }
   selectStep() {
     this.store.dispatch(
-      FlowsActions.selectStepByName({ stepName: this._stepMention.step.name })
+      canvasActions.selectStepByName({ stepName: this._stepMention.step.name })
     );
   }
 }

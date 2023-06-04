@@ -8,18 +8,9 @@ export default createAction({
     description: 'Creates an entry in clockodo',
     props: {
         authentication: clockodoCommon.authentication,
-        customer_id: Property.Number({
-            displayName: 'Customer ID',
-            required: true
-        }),
-        project_id: Property.Number({
-            displayName: 'Project ID',
-            required: false
-        }),
-        service_id: Property.Number({
-            displayName: 'Service ID',
-            required: true
-        }),
+        customer_id: clockodoCommon.customer_id(),
+        project_id: clockodoCommon.project_id(false),
+        service_id: clockodoCommon.service_id(),
         time_since: Property.DateTime({
             displayName: 'Start Time',
             required: true
@@ -36,13 +27,10 @@ export default createAction({
             displayName: 'Hourly Rate',
             required: false
         }),
-        user_id: Property.Number({
-            displayName: 'User ID',
-            required: false
-        })
+        user_id: clockodoCommon.user_id(false)
     },
     async run(context) {
-        const client = makeClient(context);
+        const client = makeClient(context.propsValue);
         const res = await client.createEntry({
             customers_id: context.propsValue.customer_id,
             projects_id: context.propsValue.project_id,

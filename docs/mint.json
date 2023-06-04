@@ -23,6 +23,10 @@
     "name": "Get Started",
     "url": "https://www.activepieces.com/plans"
   },
+  "feedback": {
+    "suggestEdit": true,
+    "raiseIssue": true
+  },
   "topbarLinks": [
     {
       "name": "Github",
@@ -74,6 +78,7 @@
         "pieces/apps/cal-com",
         "pieces/apps/calendly",
         "pieces/apps/clickup",
+        "pieces/apps/clockodo",
         "pieces/apps/connections",
         "pieces/apps/constant-contact",
         "pieces/apps/csv",

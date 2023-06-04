@@ -7,10 +7,7 @@ export default createAction({
     description: 'Updates a service in clockodo',
     props: {
         authentication: clockodoCommon.authentication,
-        service_id: Property.Number({
-            displayName: 'Service ID',
-            required: true
-        }),
+        service_id: clockodoCommon.service_id(true, null),
         name: Property.ShortText({
             displayName: 'Name',
             required: false
@@ -29,8 +26,8 @@ export default createAction({
         })
     },
     async run(context) {
-        const client = makeClient(context);
-        const res = await client.updateService(context.propsValue.service_id, {
+        const client = makeClient(context.propsValue);
+        const res = await client.updateService(context.propsValue.service_id as number, {
             name: context.propsValue.name,
             number: emptyToNull(context.propsValue.number),
             active: context.propsValue.active,

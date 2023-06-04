@@ -13,7 +13,7 @@ export default createAction({
         })
     },
     async run(context) {
-        const client = makeClient(context);
+        const client = makeClient(context.propsValue);
         const res = await client.getEntry(context.propsValue.entry_id)
         return res.entry
     }

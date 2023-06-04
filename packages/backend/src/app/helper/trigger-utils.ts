@@ -17,8 +17,8 @@ import { webhookService } from '../webhooks/webhook-service'
 import { appEventRoutingService } from '../app-event-routing/app-event-routing.service'
 import { captureException } from '@sentry/node'
 import {  isNil } from 'lodash'
-import { pieceMetadataLoader } from '../pieces/piece-metadata-loader'
 import { LATEST_JOB_DATA_SCHEMA_VERSION } from '../workers/flow-worker/job-data'
+import { pieceMetadataService } from '../pieces/piece-metadata-service'
 
 export const triggerUtils = {
     async executeTrigger(params: ExecuteTrigger): Promise<unknown[]> {
@@ -195,7 +195,11 @@ const enablePieceTrigger = async (params: EnableOrDisableParams) => {
 }
 
 export async function getPieceTrigger(trigger: PieceTrigger): Promise<TriggerBase> {
-    const piece = await pieceMetadataLoader.pieceMetadata(trigger.settings.pieceName, trigger.settings.pieceVersion)
+    const piece = await pieceMetadataService.get({
+        name: trigger.settings.pieceName,
+        version: trigger.settings.pieceVersion,
+    })
+
     if (isNil(piece)) {
         throw new ActivepiecesError({
             code: ErrorCode.PIECE_NOT_FOUND,
