@@ -53,6 +53,8 @@ import { PieceIconContainerComponent } from './components/pieces-icons/piece-ico
 import { TemplatesDialogComponent } from './components/templates-dialog/templates-dialog.component';
 import { TemplateCardComponent } from './components/template-card/template-card.component';
 import { TemplatesFiltersComponent } from './components/templates-dialog/templates-filters/templates-filters.component';
+import { TemplateAppsDropdownComponent } from './components/templates-dialog/template-apps-dropdown/template-apps-dropdown.component';
+import { TemplateAppTagContainerComponent } from './components/templates-dialog/template-apps-dropdown/template-app-tag-container/template-app-tag-container.component';
 
 const exportedImports = [
   CommonModule,
@@ -150,6 +152,8 @@ export function markedOptionsFactory(): MarkedOptions {
     ...exportedDeclarations,
     TemplatesDialogComponent,
     TemplatesFiltersComponent,
+    TemplateAppsDropdownComponent,
+    TemplateAppTagContainerComponent,
   ],
   exports: [...exportedImports, ...exportedDeclarations],
 })

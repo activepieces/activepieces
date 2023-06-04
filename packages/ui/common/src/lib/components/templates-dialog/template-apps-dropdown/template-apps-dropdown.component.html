@@ -1,0 +1,23 @@
+<div class="ap-typography-subtitle-1 ap-text-title ap-mb-2.5">
+    Apps
+</div>
+<mat-form-field subscriptSizing="dynamic" class="">
+    <mat-select [formControl]="dropdownControl" placeholder="Select">
+        <mat-option (click)="addPieceToFilter(piece.name)" *ngFor="let piece of (piecesToShowInDropdown$ | async)"
+            [value]="piece.name">
+            <div class="ap-flex ap-gap-2.5 ap-items-center">
+                <ap-piece-icon-container [url]="piece.logoUrl"></ap-piece-icon-container>
+                <div class="ap-typography-body-2">
+                    {{ piece.displayName }}
+                </div>
+            </div>
+        </mat-option>
+    </mat-select>
+</mat-form-field>
+
+
+<div class="ap-mt-5 ap-flex ap-flex-col ap-gap-2.5 ap-h-[265px] thin-scrollbars ap-overflow-y-scroll">
+    <ap-template-app-tag-container [pieces$]="pieces$" *ngFor="let p of selectedPieces" [pieceName]="p"
+        (removePiece)="removePieceFromFilter(p)">
+    </ap-template-app-tag-container>
+</div>

@@ -57,7 +57,7 @@ export class PiecesIconsFromFlowComponent implements OnInit {
         this.stepNamesMap[s.name] = '';
         stepsIconsUrls[s.settings.pieceName] = pieceMetaData$;
       } else if (s.type !== TriggerType.EMPTY) {
-        const icon = this.actionMetaDataService.findNonPieceStepIcon(s);
+        const icon = this.actionMetaDataService.findNonPieceStepIcon(s.type);
         const displayName =
           [
             ...this.actionMetaDataService.coreFlowItemsDetails,

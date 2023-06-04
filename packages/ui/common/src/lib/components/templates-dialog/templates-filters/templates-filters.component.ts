@@ -9,7 +9,6 @@ import {
   FormArray,
   FormControl,
   FormGroup,
-  NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
 } from '@angular/forms';
 import { Observable, tap } from 'rxjs';
@@ -21,11 +20,6 @@ import { Observable, tap } from 'rxjs';
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      multi: true,
-      useExisting: TemplatesFiltersComponent,
-    },
-    {
-      provide: NG_VALIDATORS,
       multi: true,
       useExisting: TemplatesFiltersComponent,
     },
