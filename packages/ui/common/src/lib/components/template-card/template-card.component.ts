@@ -1,4 +1,10 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  Input,
+} from '@angular/core';
 import {
   Flow,
   FlowOperationType,
@@ -8,20 +14,27 @@ import {
 import { FlowService } from '@activepieces/ui/common';
 import { Observable, Subject, switchMap, tap } from 'rxjs';
 import { Router } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
 type FlowTemplateWithVersion = FlowTemplate & { template: FlowVersion };
 @Component({
   selector: 'ap-template-card',
   templateUrl: './template-card.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TemplateCardComponent {
+export class TemplateCardComponent implements AfterViewInit {
   useTemplate$: Observable<Flow>;
   useTemplateClicked$ = new Subject<FlowTemplateWithVersion>();
   @Input() template: FlowTemplateWithVersion;
   @Input() redirecToBuilder = true;
-  constructor(private flowService: FlowService, private router: Router) {}
+  @Input() showBtnOnHover = false;
+  constructor(
+    private flowService: FlowService,
+    private router: Router,
+    private cd: ChangeDetectorRef,
+    private matDialog: MatDialog
+  ) {}
   useTemplate() {
-    if (!this.useTemplate$ && !this.redirecToBuilder) {
+    if (!this.useTemplate$ && this.redirecToBuilder) {
       this.useTemplate$ = this.flowService
         .create({
           displayName: this.template.name,
@@ -40,7 +53,14 @@ export class TemplateCardComponent {
               );
           })
         );
+      this.matDialog.closeAll();
     }
     this.useTemplateClicked$.next(this.template);
+  }
+  ngAfterViewInit(): void {
+    //This is a workaround to make tooltip appear.
+    setTimeout(() => {
+      this.cd.markForCheck();
+    }, 100);
   }
 }
