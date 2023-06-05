@@ -6,7 +6,6 @@ import {
   ApEnvironment,
   compareSemVer,
   PieceOptionRequest,
-  SeekPage,
   Trigger,
   TriggerType,
 } from '@activepieces/shared';
@@ -50,11 +49,10 @@ export class ActionMetaService {
 
   private piecesManifest$ = this.release$.pipe(
     switchMap((release) => {
-      return this.http.get<SeekPage<PieceMetadataSummary>>(
+      return this.http.get<PieceMetadataSummary[]>(
         `${environment.apiUrl}/pieces?release=${release}`
       );
     }),
-    map((response) => response.data),
     shareReplay(1)
   );
 
