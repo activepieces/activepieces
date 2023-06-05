@@ -5,7 +5,7 @@ import { AllPiecesStats, pieceStatsService } from './piece-stats-service'
 import { StatusCodes } from 'http-status-codes'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 
-const CLOUD_API_URL = 'https://activepieces-cdn.fra1.digitaloceanspaces.com/pieces/metadata'
+const CLOUD_API_URL = 'https://cloud.activepieces.com/api/v1/pieces'
 
 const handleHttpErrors = async (response: Response) => {
     if (response.status === StatusCodes.NOT_FOUND) {
@@ -24,8 +24,8 @@ const handleHttpErrors = async (response: Response) => {
 
 export const CloudPieceMetadataService = (): PieceMetadataService => {
     return {
-        async list(): Promise<PieceMetadataSummary[]> {
-            const response = await fetch(`${CLOUD_API_URL}/latest.json`)
+        async list({ release }): Promise<PieceMetadataSummary[]> {
+            const response = await fetch(`${CLOUD_API_URL}?release=${release}`)
 
             await handleHttpErrors(response)
 
@@ -33,7 +33,7 @@ export const CloudPieceMetadataService = (): PieceMetadataService => {
         },
 
         async get({ name, version }: GetParams): Promise<PieceMetadata> {
-            const response = await fetch(`${CLOUD_API_URL}/${name}/${version}.json`)
+            const response = await fetch(`${CLOUD_API_URL}/${name}?version=${version}`)
 
             await handleHttpErrors(response)
 
