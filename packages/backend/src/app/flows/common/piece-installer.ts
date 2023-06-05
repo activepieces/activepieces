@@ -3,6 +3,7 @@ import { system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
 import { logger } from '../../helper/logger'
 import { packageManager } from '../../helper/package-manager'
+import * as path from 'path'
 import fs from 'fs/promises'
 
 type BaseParams = {
@@ -28,8 +29,8 @@ const linkDependencies = async (params: LinkDependenciesParams) => {
 
     const { projectPath, pieces } = params
     // Get Path before /dist
-    const basePath = __dirname.split('/dist')[0]
-    const baseLinkPath =`${basePath}/dist/packages/pieces`
+    const basePath = path.resolve(__dirname.split('/dist')[0])
+    const baseLinkPath = path.join(basePath, 'dist', 'packages', 'pieces')
     const frameworkPackages = {
         '@activepieces/pieces-common': `link:${baseLinkPath}/common`,
         '@activepieces/pieces-framework': `link:${baseLinkPath}/framework`,
