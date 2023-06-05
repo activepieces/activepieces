@@ -3,6 +3,7 @@ import { system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
 import { logger } from '../../helper/logger'
 import { packageManager } from '../../helper/package-manager'
+import fs from 'fs/promises'
 
 type BaseParams = {
     projectPath: string
@@ -29,10 +30,22 @@ const linkDependencies = async (params: LinkDependenciesParams) => {
     // Get Path before /dist
     const basePath = __dirname.split('/dist')[0]
     const baseLinkPath =`${basePath}/dist/packages/pieces`
-
-    await packageManager.linkDependency(projectPath, `${baseLinkPath}/common`)
-    await packageManager.linkDependency(projectPath, `${baseLinkPath}/framework`)
+    const frameworkPackages = {
+        '@activepieces/pieces-common': `link:${baseLinkPath}/common`,
+        '@activepieces/pieces-framework': `link:${baseLinkPath}/framework`,
+        '@activepieces/shared': `link:${basePath}/dist/packages/shared`,
+    }
     for (const piece of pieces) {
+        const packageJsonForPiece = `${baseLinkPath}/${piece.name}/package.json`
+
+        const packageJson = await fs.readFile(packageJsonForPiece, 'utf-8').then(JSON.parse)
+        for(const [key, value] of Object.entries(frameworkPackages)) {
+            if(Object.keys(packageJson.dependencies).includes(key)) {
+                packageJson.dependencies[key] = value
+            }
+        }
+        await fs.writeFile(packageJsonForPiece, JSON.stringify(packageJson, null, 2))
+
         await packageManager.linkDependency(projectPath, `${baseLinkPath}/${piece.name}`)
     }
 }

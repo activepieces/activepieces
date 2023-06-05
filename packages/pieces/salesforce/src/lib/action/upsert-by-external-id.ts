@@ -26,6 +26,10 @@ export const upsertByExternalId = createAction({
         }),
     },
     async run(context) {
+        const records = context.propsValue?.records?.records;
+        if(!records){
+            throw new Error("Expect records field inside json to be an array with records to upsert");
+        }
         const { authentication, object, external_field } = context.propsValue;
         const response = await callSalesforceApi(HttpMethod.PATCH, authentication, `/services/data/v55.0/composite/sobjects/${object}/${external_field}`, {
             "allOrNone": false,
