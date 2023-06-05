@@ -24,7 +24,7 @@ export const webhookController: FastifyPluginAsync = async (app) => {
                 payload: {
                     method: request.method,
                     headers: request.headers as Record<string, string>,
-                    body: request.body,
+                    body: await convertBody(request),
                     queryParams: request.query as Record<string, string>,
                 },
             }))[0]
