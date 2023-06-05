@@ -71,7 +71,8 @@ import { stabilityAi }  from '@activepieces/piece-stability-ai';
 import { mautic }  from '@activepieces/piece-mautic';
 import { twitter } from '@activepieces/piece-twitter';
 import { clockodo } from '@activepieces/piece-clockodo';
-import { mysql } from '@activepieces/piece-mysql'
+import { mysql } from '@activepieces/piece-mysql';
+import { pastebin } from '@activepieces/piece-pastebin';
 
 /**
  * @deprecated this will be removed, don't use it
@@ -149,7 +150,8 @@ export const pieces: Piece[] = [
     postgres,
     twitter,
     clockodo,
-    mysql
+    mysql,
+    pastebin
 ].sort((a, b) => a.displayName > b.displayName ? 1 : -1);
 
 /**
