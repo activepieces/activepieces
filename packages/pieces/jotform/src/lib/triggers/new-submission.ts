@@ -25,7 +25,7 @@ export const newSubmission = createTrigger({
         });
     },
 
-    //Delete the webhook URL from Jotform and delete from store
+    //Delete the webhook URL from Jotform
     async onDisable(context) {
         const response = await context.store?.get<WebhookInformation>(
           '_new_jotform_submission_trigger'
