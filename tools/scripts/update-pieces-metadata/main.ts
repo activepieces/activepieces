@@ -8,6 +8,7 @@ const main = async () => {
     await insertMetadata(piecesMetadata)
 
     console.log('update pieces metadata: completed')
+    process.exit()
 }
 
 main()
