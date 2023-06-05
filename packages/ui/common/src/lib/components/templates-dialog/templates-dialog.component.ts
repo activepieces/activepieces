@@ -9,9 +9,14 @@ import {
   switchMap,
   tap,
 } from 'rxjs';
-import { FlowTemplate, FlowVersion } from '@activepieces/shared';
+import { FlowTemplate, FlowVersion, FolderId } from '@activepieces/shared';
 import { TemplatesService } from '../../service/templates.service';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+
+export interface TemplateDialogData {
+  insideBuilder: boolean;
+  folderId$?: Observable<FolderId | undefined>;
+}
 
 @Component({
   selector: 'ap-templates-dialog',
@@ -36,7 +41,7 @@ export class TemplatesDialogComponent {
     private templatesService: TemplatesService,
     private dialogRef: MatDialogRef<TemplatesDialogComponent>,
     @Inject(MAT_DIALOG_DATA)
-    public data?: { insideBuilder: boolean }
+    public data?: TemplateDialogData
   ) {
     this.templates$ = this.dialogForm.valueChanges.pipe(
       startWith(() => {

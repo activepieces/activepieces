@@ -1,6 +1,13 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { TemplatesDialogComponent } from '@activepieces/ui/common';
+import {
+  TemplateDialogData,
+  TemplatesDialogComponent,
+} from '@activepieces/ui/common';
 import { MatDialog } from '@angular/material/dialog';
+import { FolderId } from '@activepieces/shared';
+import { Store } from '@ngrx/store';
+import { FoldersSelectors } from '../../../../store/folders/folders.selector';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-templates-container',
@@ -108,8 +115,15 @@ export class TemplatesContainerComponent {
       state: 'DRAFT',
     },
   };
-  constructor(private matDialog: MatDialog) {}
+  folderId$: Observable<FolderId | undefined>;
+  constructor(private matDialog: MatDialog, private store: Store) {
+    this.folderId$ = this.store.select(FoldersSelectors.selectCurrentFolderId);
+  }
   openTemplateDialog() {
-    this.matDialog.open(TemplatesDialogComponent, {});
+    const templateDialogData: TemplateDialogData = {
+      insideBuilder: false,
+      folderId$: this.folderId$,
+    };
+    this.matDialog.open(TemplatesDialogComponent, { data: templateDialogData });
   }
 }

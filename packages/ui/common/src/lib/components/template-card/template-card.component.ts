@@ -11,14 +11,13 @@ import {
   Flow,
   FlowOperationType,
   FlowTemplate,
-  FlowVersion,
   FolderId,
 } from '@activepieces/shared';
 import { FlowService } from '@activepieces/ui/common';
 import { Observable, switchMap, tap } from 'rxjs';
 import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
-type FlowTemplateWithVersion = FlowTemplate & { template: FlowVersion };
+
 @Component({
   selector: 'ap-template-card',
   templateUrl: './template-card.component.html',
@@ -26,11 +25,11 @@ type FlowTemplateWithVersion = FlowTemplate & { template: FlowVersion };
 })
 export class TemplateCardComponent implements AfterViewInit {
   useTemplate$: Observable<Flow>;
-  @Output() useTemplateClicked = new EventEmitter<FlowTemplateWithVersion>();
-  @Input() template: FlowTemplateWithVersion;
+  @Output() useTemplateClicked = new EventEmitter<FlowTemplate>();
+  @Input() template: FlowTemplate;
   @Input() insideBuilder = true;
   @Input() showBtnOnHover = false;
-  @Input() folderId?:FolderId;
+  @Input() folderId?: FolderId | null;
   constructor(
     private flowService: FlowService,
     private router: Router,
@@ -42,6 +41,7 @@ export class TemplateCardComponent implements AfterViewInit {
       this.useTemplate$ = this.flowService
         .create({
           displayName: this.template.name,
+          folderId: this.folderId || undefined,
         })
         .pipe(
           switchMap((flow) => {

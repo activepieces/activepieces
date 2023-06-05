@@ -46,6 +46,7 @@ import {
 import {
   TemplatesDialogComponent,
   TestStepService,
+  TemplateDialogData,
 } from '@activepieces/ui/common';
 import { PannerService } from '@activepieces/ui/feature-builder-canvas';
 import { MatDialog } from '@angular/material/dialog';
@@ -98,11 +99,12 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
     this.isPanning$ = this.pannerService.isPanning$.asObservable();
     this.isDragging$ = this.flowRendererService.draggingSubject.asObservable();
     if (localStorage.getItem('newFlow')) {
+      const TemplateDialogData: TemplateDialogData = {
+        insideBuilder: true,
+      };
       this.importTemplate$ = this.matDialog
         .open(TemplatesDialogComponent, {
-          data: {
-            insideBuilder: true,
-          },
+          data: TemplateDialogData,
         })
         .afterClosed()
         .pipe(
