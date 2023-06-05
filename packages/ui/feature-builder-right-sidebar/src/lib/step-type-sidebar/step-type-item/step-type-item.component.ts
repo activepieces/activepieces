@@ -46,7 +46,7 @@ export class StepTypeItemComponent {
     itemIcon.src = url;
     itemIcon.onload = () => {
       this.stepIconUrl = url;
-      this.cd.detectChanges();
+      this.cd.markForCheck();
     };
   }
   openDocs(url: string) {

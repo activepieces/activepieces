@@ -25,6 +25,7 @@ import {
   FlowRendererService,
   FlowsActions,
   RightSideBarType,
+  canvasActions,
 } from '@activepieces/ui/feature-builder-store';
 import {
   ActionType,
@@ -121,7 +122,7 @@ export class SimpleLineConnectionComponent
 
   add() {
     this.store.dispatch(
-      FlowsActions.setRightSidebar({
+      canvasActions.setRightSidebar({
         sidebarType: RightSideBarType.STEP_TYPE,
         props: {
           stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,

@@ -1,25 +1,34 @@
 <div class="ap-flex ap-items-center bar-container">
   <ng-container *ngIf="selectedRun$ | async as selectedRun; else InitialisingRunTemplate">
+    <ap-state-icon *ngIf="selectedRun.status !== instanceRunStatus.PAUSED" [status]="selectedRun.status"
+      [showStatusText]="false"></ap-state-icon>
     <ng-container [ngSwitch]="selectedRun.status">
       <ng-container *ngSwitchCase="instanceRunStatus.SUCCEEDED">
-        <ap-state-icon [succeeded]="true" [showStatusText]="false"></ap-state-icon>
         <span class="ap-text-white">Run succeeded ({{ selectedRun.id }})</span>
+        <div class="ap-flex-grow"></div>
+      </ng-container>
+      <ng-container *ngSwitchCase="instanceRunStatus.STOPPED">
+        <span class="ap-text-white">Run succeeded ({{ selectedRun.id }})</span>
+        <div class="ap-flex-grow"></div>
       </ng-container>
       <ng-container *ngSwitchCase="instanceRunStatus.FAILED">
-        <ap-state-icon [succeeded]="false" [showStatusText]="false"></ap-state-icon>
         <span class="ap-text-white">Run failed ({{ selectedRun.id }})</span>
+        <div class="ap-flex-grow"></div>
       </ng-container>
       <ng-container *ngSwitchCase="instanceRunStatus.RUNNING">
         <span class="ap-text-white">Flow is running</span>
         <div class="ap-flex-grow"></div>
       </ng-container>
+      <ng-container *ngSwitchCase="instanceRunStatus.PAUSED">
+        <span class="ap-text-white">Flow is paused ...</span>
+        <div class="ap-flex-grow"></div>
+      </ng-container>
       <ng-container *ngSwitchCase="instanceRunStatus.TIMEOUT">
-        <ap-state-icon [succeeded]="false" [showStatusText]="false"></ap-state-icon>
-        <span class="ap-text-white">Run exceeded {{sandboxTimeoutSeconds$ | async}} seconds, try to optimize your steps.</span>
+        <span class="ap-text-white">Run exceeded {{sandboxTimeoutSeconds$ | async}} seconds, try to optimize your
+          steps.</span>
         <div class="ap-flex-grow"></div>
       </ng-container>
       <ng-container *ngSwitchCase="instanceRunStatus.INTERNAL_ERROR">
-        <ap-state-icon [succeeded]="false" [showStatusText]="false"></ap-state-icon>
         <span class="ap-text-white">Run failed for an unknown reason, contact support.</span>
         <div class="ap-flex-grow"></div>
       </ng-container>

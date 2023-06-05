@@ -28,9 +28,9 @@ import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { FlowVersionEntity } from './flow-version-entity'
 import { flowVersionSideEffects } from './flow-version-side-effects'
-import { pieceMetadataLoader } from '../../pieces/piece-metadata-loader'
 import { FlowViewMode, DEFAULT_SAMPLE_DATA_SETTINGS } from '@activepieces/shared'
 import { isNil } from 'lodash'
+import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 
 const branchSettingsValidator = TypeCompiler.Compile(BranchActionSettingsWithValidation)
 const loopSettingsValidator = TypeCompiler.Compile(LoopOnItemsActionSettingsWithValidation)
@@ -220,7 +220,11 @@ function keepBaseAction(action: Action): Action {
         case ActionType.CODE:
             return {
                 type: action.type,
-                settings: action.settings,
+                settings: {
+                    ...action.settings,
+                    artifactPackagedId: undefined,
+                    artifactSourceId: undefined,
+                },
                 ...commonProps,
             }
         case ActionType.PIECE:
@@ -409,7 +413,12 @@ async function validateAction(settings: PieceActionSettings) {
     ) {
         return false
     }
-    const piece = await pieceMetadataLoader.pieceMetadata(settings.pieceName, settings.pieceVersion)
+
+    const piece = await pieceMetadataService.get({
+        name: settings.pieceName,
+        version: settings.pieceVersion,
+    })
+
     if (piece === undefined) {
         return false
     }
@@ -429,7 +438,12 @@ async function validateTrigger(settings: PieceTriggerSettings) {
     ) {
         return false
     }
-    const piece = await pieceMetadataLoader.pieceMetadata(settings.pieceName, settings.pieceVersion)
+
+    const piece = await pieceMetadataService.get({
+        name: settings.pieceName,
+        version: settings.pieceVersion,
+    })
+
     if (piece === undefined) {
         return false
     }
@@ -523,7 +537,12 @@ async function deleteArtifact(projectId: ProjectId, codeSettings: CodeActionSett
 async function uploadArtifact(projectId: ProjectId, codeSettings: CodeActionSettings): Promise<CodeActionSettings> {
     if (codeSettings.artifact !== undefined) {
         const bufferFromBase64 = Buffer.from(codeSettings.artifact, 'base64')
-        const savedFile = await fileService.save(projectId, bufferFromBase64)
+
+        const savedFile = await fileService.save({
+            projectId,
+            data: bufferFromBase64,
+        })
+
         codeSettings.artifact = undefined
         codeSettings.artifactSourceId = savedFile.id
         codeSettings.artifactPackagedId = undefined

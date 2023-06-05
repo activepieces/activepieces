@@ -32,7 +32,7 @@ export type StopHookParams = {
 
 export type StopHook = (params: StopHookParams) => void
 
-export type PauseHookPauseMetadata = Omit<PauseMetadata, 'executionState' | 'resumeStepMetadata'>
+export type PauseHookPauseMetadata = Omit<PauseMetadata, 'resumeStepMetadata'>
 
 export type PauseHookParams = {
     pauseMetadata: PauseHookPauseMetadata

@@ -175,7 +175,7 @@ function evaluateConditions(conditionGroups: BranchCondition[][]): boolean {
     }
     orOperator = orOperator || andGroup;
   }
-  return orOperator;
+  return Boolean(orOperator);
 }
 
 function parseStringToNumber(str: string): number | string {

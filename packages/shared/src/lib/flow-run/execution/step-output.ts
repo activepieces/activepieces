@@ -23,7 +23,7 @@ export type StepOutput<T extends ActionType = ActionType, O = any> = {
   duration?: number
   errorMessage?: unknown;
   standardOutput?: unknown;
-  pauseMetadata?: Omit<PauseMetadata, 'executionState'>
+  pauseMetadata?: PauseMetadata
   stopResponse?: StopResponse
 }
 

@@ -15,7 +15,6 @@ import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { triggerUtils } from '../helper/trigger-utils'
-import { flowRepo } from '../flows/flow/flow.repo'
 import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
 import { getPublicIp } from '../helper/public-ip-utils'
@@ -26,23 +25,22 @@ import { webhookSimulationService } from './webhook-simulation/webhook-simulatio
 import { flowInstanceService } from '../flows/flow-instance/flow-instance.service'
 
 export const webhookService = {
-    async callback({ flowId, payload }: CallbackParams): Promise<FlowRun[]> {
-        logger.info(`[WebhookService#callback] flowId=${flowId}`)
+    async callback({ flow, payload }: CallbackParams): Promise<FlowRun[]> {
+        logger.info(`[WebhookService#callback] flowId=${flow.id}`)
 
-        const flow = await getFlowOrThrow(flowId)
         const { projectId } = flow
         const flowInstance = await flowInstanceService.get({
             flowId: flow.id,
             projectId: flow.projectId,
         })
         triggerEventService.saveEvent({
-            flowId,
+            flowId: flow.id,
             payload,
             projectId,
         })
 
         if (isNil(flowInstance) || flowInstance.status !== FlowInstanceStatus.ENABLED) {
-            logger.info(`[WebhookService#callback] flowInstance not found or not enabled ignoring the webhhook, flowId=${flowId}`)
+            logger.info(`[WebhookService#callback] flowInstance not found or not enabled ignoring the webhook, flowId=${flow.id}`)
             return []
         }
         const flowVersion = await flowVersionService.getOneOrThrow(flowInstance.flowVersionId)
@@ -67,10 +65,9 @@ export const webhookService = {
         return await Promise.all(createFlowRuns)
     },
 
-    async simulationCallback({ flowId, payload }: CallbackParams): Promise<void> {
-        const flow = await getFlowOrThrow(flowId)
+    async simulationCallback({ flow, payload }: CallbackParams): Promise<void> {
         const { projectId } = flow
-        const flowVersion = await getLatestFlowVersionOrThrow(flowId, projectId)
+        const flowVersion = await getLatestFlowVersionOrThrow(flow.id, projectId)
 
         const events = await triggerUtils.executeTrigger({
             projectId,
@@ -83,17 +80,17 @@ export const webhookService = {
             return
         }
 
-        logger.debug(events, `[WebhookService#simulationCallback] events, flowId=${flowId}`)
+        logger.debug(events, `[WebhookService#simulationCallback] events, flowId=${flow.id}`)
 
         const eventSaveJobs = events.map(event => triggerEventService.saveEvent({
-            flowId,
+            flowId: flow.id,
             projectId,
             payload: event,
         }))
 
         await Promise.all(eventSaveJobs)
 
-        await webhookSimulationService.delete({ flowId, projectId })
+        await webhookSimulationService.delete({ flowId: flow.id, projectId })
     },
 
     async getWebhookPrefix(): Promise<string> {
@@ -155,33 +152,6 @@ const getLatestFlowVersionOrThrow = async (flowId: FlowId, projectId: ProjectId)
     return flowVersion
 }
 
-const getFlowOrThrow = async (flowId: FlowId): Promise<Flow> => {
-    if (isNil(flowId)) {
-        logger.error('[WebhookService#getFlowOrThrow] error=flow_id_is_undefined')
-        throw new ActivepiecesError({
-            code: ErrorCode.VALIDATION,
-            params: {
-                message: 'flowId is undefined',
-            },
-        })
-    }
-
-    const flow = await flowRepo.findOneBy({ id: flowId })
-
-    if (isNil(flow)) {
-        logger.error(`[WebhookService#getFlowOrThrow] error=flow_not_found flowId=${flowId}`)
-
-        throw new ActivepiecesError({
-            code: ErrorCode.FLOW_NOT_FOUND,
-            params: {
-                id: flowId,
-            },
-        })
-    }
-
-    return flow
-}
-
 type WebhookUrlSuffix = '' | '/simulate'
 
 type GetWebhookUrlParams = {
@@ -190,6 +160,6 @@ type GetWebhookUrlParams = {
 }
 
 type CallbackParams = {
-    flowId: FlowId
+    flow: Flow
     payload: EventPayload
 }

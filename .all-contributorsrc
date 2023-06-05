@@ -283,6 +283,34 @@
       "contributions": [
         "bug"
       ]
+    },
+    {
+      "login": "HKudria",
+      "name": "Herman Kudria",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9007211?v=4",
+      "profile": "https://www.linkedin.com/in/herman-kudria-10868b207/",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "Abdallah-Alwarawreh",
+      "name": "[NULL] Dev",
+      "avatar_url": "https://avatars.githubusercontent.com/u/66683380?v=4",
+      "profile": "http://nulldev.imagefoo.com/",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "JanHolger",
+      "name": "Jan Bebendorf",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25184957?v=4",
+      "profile": "https://github.com/JanHolger",
+      "contributions": [
+        "plugin"
+      ]
     }
-  ]
+  ],
+  "commitType": "docs"
 }

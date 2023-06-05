@@ -1,5 +1,4 @@
 import { VariableService } from '../services/variable-service';
-import { CodeExecutor } from '../executors/code-executer';
 import {
   Action,
   ActionType,
@@ -11,6 +10,7 @@ import {
 import { BaseActionHandler, InitStepOutputParams } from './action-handler';
 import { globals } from '../globals';
 import { isNil } from 'lodash';
+import { codeExecutor } from '../executors/code-executer';
 
 type CtorParams = {
   currentAction: CodeAction
@@ -34,7 +34,7 @@ export class CodeActionHandler extends BaseActionHandler<CodeAction> {
    */
   protected override async initStepOutput({ executionState }: InitStepOutputParams): Promise<StepOutput<ActionType.CODE>> {
     const censoredInput = await this.variableService.resolve({
-      unresolvedInput: this.currentAction.settings,
+      unresolvedInput: this.currentAction.settings.input,
       executionState,
       censorConnections: true,
     })
@@ -47,8 +47,6 @@ export class CodeActionHandler extends BaseActionHandler<CodeAction> {
   }
 
   override async execute(executionState: ExecutionState, ancestors: [string, number][]): Promise<StepOutput> {
-    globals.addOneTask()
-
     const stepOutput = await this.loadStepOutput({
       executionState,
       ancestors,
@@ -67,8 +65,6 @@ export class CodeActionHandler extends BaseActionHandler<CodeAction> {
     }
 
     try {
-      const codeExecutor = new CodeExecutor()
-
       stepOutput.output = await codeExecutor.executeCode(
         artifactPackagedId,
         resolvedInput

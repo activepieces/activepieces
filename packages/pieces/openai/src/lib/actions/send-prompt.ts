@@ -1,12 +1,22 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { ChatCompletionRequestMessage, Configuration, OpenAIApi } from 'openai';
 
+const markdownDescription = `
+Follow these instructions to get your OpenAI API Key:
+
+1. Visit the following website: https://platform.openai.com/account/api-keys.
+2. Once on the website, locate and click on the option to obtain your OpenAI API Key.
+
+It is strongly recommended that you add your credit card information to your OpenAI account and upgrade to the paid plan **before** generating the API Key. This will help you prevent 429 errors.
+`
+
 export const askOpenAI = createAction({
   name: 'ask_chatgpt',
   displayName: 'Ask ChatGPT',
   description: 'Ask ChatGPT anything you want!',
   props: {
     apiKey: Property.SecretText({
+      description: markdownDescription,
       displayName: 'Api Key',
       required: true,
     }),

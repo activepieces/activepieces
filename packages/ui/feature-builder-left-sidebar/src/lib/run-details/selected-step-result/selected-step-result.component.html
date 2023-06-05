@@ -9,6 +9,10 @@
         <svg-icon src="assets/img/custom/failure-step-result.svg" [svgStyle]="{ width: '21px', height: '20px' }"
           matTooltip="Step succeeded"></svg-icon>
       </ng-container>
+      <ng-container *ngIf="ActionStatusEnum.PAUSED === selectedStepResult.status">
+        <svg-icon src="assets/img/custom/status/paused.svg" [svgStyle]="{ width: '21px', height: '20px' }"
+          matTooltip="Step paused"></svg-icon>
+      </ng-container>
       {{ selectedStepName }}
     </div>
   </div>

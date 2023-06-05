@@ -3,14 +3,12 @@ import {
   Action,
   ActionType,
   ApEdition,
-  ApEnvironment,
-  compareSemVer,
   PieceOptionRequest,
   Trigger,
   TriggerType,
 } from '@activepieces/shared';
 import { HttpClient } from '@angular/common/http';
-import { Observable, shareReplay, map, forkJoin } from 'rxjs';
+import { Observable, shareReplay, map, forkJoin, switchMap } from 'rxjs';
 import { environment } from '../environments/environment';
 import { FlowItemDetails } from '../models/flow-item-details';
 import { FlagService } from './flag.service';
@@ -25,11 +23,6 @@ import {
 
 type TriggersMetadata = Record<string, TriggerBase>;
 
-type FilterUnSupportedPiecesParams = {
-  piecesManifest: PieceMetadataSummary[];
-  release: string;
-  environment: string;
-};
 export const CORE_PIECES_ACTIONS_NAMES = [
   'store',
   'data-mapper',
@@ -47,9 +40,14 @@ export const CORE_PIECES_TRIGGERS = ['schedule'];
 export class ActionMetaService {
   private release$ = this.flagsService.getRelease().pipe(shareReplay(1));
 
-  private piecesManifest$ = this.http
-    .get<PieceMetadataSummary[]>(`${environment.apiUrl}/pieces`)
-    .pipe(shareReplay(1));
+  private piecesManifest$ = this.release$.pipe(
+    switchMap((release) => {
+      return this.http.get<PieceMetadataSummary[]>(
+        `${environment.apiUrl}/pieces?release=${release}`
+      );
+    }),
+    shareReplay(1)
+  );
 
   private piecesCache = new Map<string, Observable<PieceMetadata>>();
 
@@ -93,25 +91,6 @@ export class ActionMetaService {
 
   constructor(private http: HttpClient, private flagsService: FlagService) {}
 
-  private filterUnSupportedPieces = (params: FilterUnSupportedPiecesParams) => {
-    const { piecesManifest, release } = params;
-
-    return piecesManifest.filter((piece) => {
-      if (params.environment === ApEnvironment.DEVELOPMENT) {
-        return true;
-      }
-      const minRelease = piece.minimumSupportedRelease;
-      const maxRelease = piece.maximumSupportedRelease;
-      if (minRelease && compareSemVer(release, minRelease) === -1) {
-        return false;
-      } else if (maxRelease && compareSemVer(release, maxRelease) === 1) {
-        return false;
-      } else {
-        return true;
-      }
-    });
-  };
-
   private getCacheKey(pieceName: string, pieceVersion: string): string {
     return `${pieceName}-${pieceVersion}`;
   }
@@ -143,11 +122,7 @@ export class ActionMetaService {
   }
 
   getPiecesManifest(): Observable<PieceMetadataSummary[]> {
-    return forkJoin({
-      piecesManifest: this.piecesManifest$,
-      environment: this.flagsService.getEnvironment(),
-      release: this.release$,
-    }).pipe(map(this.filterUnSupportedPieces), shareReplay(1));
+    return this.piecesManifest$;
   }
 
   getPieceMetadata(

@@ -20,7 +20,7 @@ export class SidebarHeaderComponent implements OnChanges {
   ngOnChanges(): void {
     setTimeout(() => {
       //trigger drawerTitle width change detection
-      this.cd.detectChanges();
+      this.cd.markForCheck();
     }, 100);
   }
 }

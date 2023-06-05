@@ -12,7 +12,7 @@ import { MatExpansionPanel } from '@angular/material/expansion';
 import { Store } from '@ngrx/store';
 import {
   BuilderSelectors,
-  FlowsActions,
+  canvasActions,
 } from '@activepieces/ui/feature-builder-store';
 import { map, Observable, startWith, tap } from 'rxjs';
 import { RunDetailsService } from '../iteration-details.service';
@@ -164,7 +164,7 @@ export class StepResultComponent implements OnInit, AfterViewInit {
   ) {
     if (this._selectedStepName !== this.stepNameAndResult.stepName) {
       this.store.dispatch(
-        FlowsActions.selectStepByName({
+        canvasActions.selectStepByName({
           stepName: this.stepNameAndResult.stepName,
         })
       );

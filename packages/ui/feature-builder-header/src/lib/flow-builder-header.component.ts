@@ -25,7 +25,8 @@ import { ApEdition, Flow, FlowInstance } from '@activepieces/shared';
   animations: [fadeIn400ms],
 })
 export class FlowBuilderHeaderComponent implements OnInit {
-  viewMode$: Observable<boolean>;
+  isInDebugMode$: Observable<boolean>;
+  isInReadOnlyMode$: Observable<boolean>;
   isGeneratingFlowComponentOpen$: Observable<boolean>;
   instance$: Observable<FlowInstance | undefined>;
   flow$: Observable<Flow>;
@@ -52,7 +53,10 @@ export class FlowBuilderHeaderComponent implements OnInit {
   ngOnInit(): void {
     initialiseBeamer();
     this.instance$ = this.store.select(BuilderSelectors.selectCurrentInstance);
-    this.viewMode$ = this.store.select(BuilderSelectors.selectReadOnly);
+    this.isInDebugMode$ = this.store.select(
+      BuilderSelectors.selectIsInDebugMode
+    );
+    this.isInReadOnlyMode$ = this.store.select(BuilderSelectors.selectReadOnly);
     this.flow$ = this.store.select(BuilderSelectors.selectCurrentFlow);
     this.folderDisplayName$ = this.store.select(
       BuilderSelectors.selectCurrentFlowFolderName
@@ -86,7 +90,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
       .pipe(
         take(1),
         switchMap((currentFlow) => {
-          return this.flowService.duplicate(currentFlow);
+          return this.flowService.duplicate(currentFlow.id);
         }),
         map(() => void 0)
       );

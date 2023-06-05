@@ -11,6 +11,63 @@ Semantic versioning is a standardized way of versioning software projects. It us
 
 <Note>You will only see Version X.Y here as all Patch changes (Z) are added under their minor versions.</Note>
 
+### 06/01/2023
+
+**Features:**
+
+- Filter Flow Runs by Status.
+- Ability to Reorder steps by drag and drop.
+- Ability to view Published/Draft Versions from the Builder.
+- Ability to disable Activepieces OAuth2 apps for self-hosters.
+- Payload dialog no longer appears on test flows if sample data is provided.
+- Testing Code Steps now resolve variables from previous steps, and the dialog to provide input has been removed.
+
+**Fixes:**
+
+- Fixed the saving indicator in the builder.
+- Wordpress will now show all categories and tags.
+- If a flow times out or has an internal error, a snackbar will now show up; before, it would just keep loading.
+- Fixed a bug in Branch Conditions where "or" between condition groups didn't work.
+- When you add a new folder, it will now scroll to the newest folder too.
+- Code Steps is no longer deleted from the published version when editing the draft version anymore.
+- Fixed copying autocomplete tags variables and removed unneeded keyboard shortcuts in the autocomplete UI.
+- The Webhook Trigger can now handle multipart format (files and fields).
+- Fixed a bug where duplicating a Flow could remove a code piece from the newest version in the original flow.
+
+**Pieces:**
+
+- Todoist: Added more inputs for the "Add Tasks" Action by @MyWay.
+- Matrix: Ability to send messages using Room Alias instead of ID by @MyWay.
+- Salesforce: Updated "Record (Advanced)" and "Create Record (Advanced)" Actions.
+- Google Sheets: Updated "Update Row" Action.
+- Twitter: "Create Tweet" Action.
+- Store: "Add Item to List" and "Delete Item From List" Actions.
+- Mautic: "Create Contact," "Search Contact," "Update Contact," "Create Company," "Search Company," and "Update Company" Actions by @bibhuti-did-this.
+- Gmail:"Add Reply To" for the "Send Email" Action.
+- WordPress: "Create Page" Action.
+- Asana: Added "Due Date" and "Assignee" inputs to the "Create Task" Action.
+- Google Calendar: "Add Events" Action by @bibhuti-did-this.
+- Clockodo: Added all types of Actions for Entry, Customer, Project, Service, Team, User, and Absence by @JanHolger.
+- Discord: The "Send Message" webhook now has an "embed" field by @Abdallah-Alwarawreh.
+- Blackbaud: "Create Gift," "Get Gift List," and "Get Fundraising Lists" Actions by @HKudria.
+
+**Development Experience:**
+
+- Docker Compose Development now works for ARM-based machines (like MacOS).
+- Turned on strict checking mode for the backend package.
+- In the piece framework, the Number property now gives a number instead of a string.
+- Added a new DateTime Property.
+- In Actions, you can now use hooks to stop and pause the flow in the context.
+
+**New Contributors:**
+
+- @tarunsamanta2k20: Fixed a typo in the Flows Run table.
+- @HKudria for contributing to Blackbaud.
+- @Abdallah-Alwarawreh: Enriched the Discord "Send Message" functionality.
+- @JanHolger: Created the perfect Clockodo piece.
+
+**Full Changelog**: [View full changelog here](https://github.com/activepieces/activepieces/compare/0.3.14..0.3.15)
+
 ### 05/15/2023
 
 **Pieces:**

@@ -11,7 +11,7 @@ import {
 import { BaseActionHandler, InitStepOutputParams } from './action-handler';
 import { globals } from '../globals';
 import { isNil } from 'lodash';
-import { pieceHelper } from '../helper/piece-helper';
+import { pieceHelper } from '../helper/action-helper';
 import { createContextStore } from '../services/storage.service';
 import { connectionManager } from '../services/connections.service';
 import { Utils } from '../utils';
@@ -121,7 +121,7 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
    */
   protected override async initStepOutput({ executionState }: InitStepOutputParams): Promise<StepOutput<ActionType.PIECE>> {
     const censoredInput = await this.variableService.resolve({
-      unresolvedInput: this.currentAction.settings,
+      unresolvedInput: this.currentAction.settings.input,
       executionState,
       censorConnections: true,
     })
@@ -148,8 +148,6 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
       if (isNil(actionName)) {
         throw new Error("Action name is not defined")
       }
-
-      globals.addOneTask()
 
       const action = await this.loadAction({
         pieceName,
