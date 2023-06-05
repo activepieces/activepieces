@@ -12,6 +12,7 @@ import {
   FlowOperationType,
   FlowTemplate,
   FlowVersion,
+  FolderId,
 } from '@activepieces/shared';
 import { FlowService } from '@activepieces/ui/common';
 import { Observable, switchMap, tap } from 'rxjs';
@@ -29,6 +30,7 @@ export class TemplateCardComponent implements AfterViewInit {
   @Input() template: FlowTemplateWithVersion;
   @Input() insideBuilder = true;
   @Input() showBtnOnHover = false;
+  @Input() folderId?:FolderId;
   constructor(
     private flowService: FlowService,
     private router: Router,
