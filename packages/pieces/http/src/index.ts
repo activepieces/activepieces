@@ -6,7 +6,7 @@ import { httpReturnResponse } from './lib/actions/return-response';
 export const http = createPiece({
 	name: 'http',
 	displayName: 'HTTP',
-	description: 'Sens HTTP requests and return responses',
+	description: 'Sends HTTP requests and return responses',
 	logoUrl: 'https://cdn.activepieces.com/pieces/http.png',
 	version: packageJson.version,
 	minimumSupportedRelease: '0.3.15',
