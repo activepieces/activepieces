@@ -1,5 +1,5 @@
 import { FastifyPluginCallbackTypebox } from '@fastify/type-provider-typebox'
-import { ActivepiecesError, ErrorCode, SeekPage } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { engineHelper } from '../helper/engine-helper'
 import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
@@ -10,18 +10,12 @@ import { GetPieceRequest, ListPiecesRequest, PieceOptionsRequest } from './piece
 const statsEnabled = system.get(SystemProp.STATS_ENABLED) ?? false
 
 export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done) => {
-    app.get('/', ListPiecesRequest, async (req): Promise<SeekPage<PieceMetadataSummary>> => {
+    app.get('/', ListPiecesRequest, async (req): Promise<PieceMetadataSummary[]> => {
         const { release } = req.query
 
-        const pieceMetadataSummaryList = await pieceMetadataService.list({
+        return await pieceMetadataService.list({
             release,
         })
-
-        return {
-            data: pieceMetadataSummaryList,
-            next: null,
-            previous: null,
-        }
     })
 
     app.get('/:name', GetPieceRequest, async (req): Promise<PieceMetadata> => {
