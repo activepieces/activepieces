@@ -171,6 +171,36 @@ describe('Variable Service', () => {
     );
   });
 
+  it('should return base64 from base64 with mime only', async () => {
+    const variableService = new VariableService();
+    const input = {
+      base64WithMime: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAiAAAAC4CAYAAADaI1cbAAA0h0lEQVR4AezdA5AlPx7A8Zxt27Z9r5PB2SidWTqbr26S9Hr/tm3btu3723eDJD3r15ec17vzXr+Z',
+      base64: 'iVBORw0KGgoAAAANSUhEUgAAAiAAAAC4CAYAAADaI1cbAAA0h0lEQVR4AezdA5AlPx7A8Zxt27Z9r5PB2SidWTqbr26S9Hr/tm3btu3723eDJD3r15ec17vzXr+Z',
+    }
+    const props = {
+      base64WithMime: Property.File({
+        displayName: 'Base64',
+        required: true,
+      }),
+      base64: Property.File({
+        displayName: 'Base64',
+        required: true,
+      }),
+    }
+    const { result, errors } = await variableService.validateAndCast(input, props);
+    expect(result).toEqual({
+      base64: null,
+      base64WithMime: {
+        "base64": "iVBORw0KGgoAAAANSUhEUgAAAiAAAAC4CAYAAADaI1cbAAA0h0lEQVR4AezdA5AlPx7A8Zxt27Z9r5PB2SidWTqbr26S9Hr/tm3btu3723eDJD3r15ec17vzXr+Z",
+        "extension": "png",
+        "filename": "unknown.png",
+      }
+    });
+    expect(errors).toEqual({
+      "base64": "expected file url or base64 with mimeType, but found value: iVBORw0KGgoAAAANSUhEUgAAAiAAAAC4CAYAAADaI1cbAAA0h0lEQVR4AezdA5AlPx7A8Zxt27Z9r5PB2SidWTqbr26S9Hr/tm3btu3723eDJD3r15ec17vzXr+Z",
+    });
+  });
+  
   it('should return base64 from url', async () => {
     const variableService = new VariableService();
     const input = {
@@ -222,8 +252,8 @@ describe('Variable Service', () => {
       nullOptionalFile: null,
     });
     expect(errors).toEqual({
-      nullFile: 'expected file url, but found value: null',
-      file: 'expected file url, but found value: https://google.com',
+      "file": "expected file url or base64 with mimeType, but found value: https://google.com",
+      "nullFile": "expected file url or base64 with mimeType, but found value: null",
     });
   });
         
