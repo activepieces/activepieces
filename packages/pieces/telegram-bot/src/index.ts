@@ -9,6 +9,6 @@ export const telegramBot = createPiece({
 	logoUrl: 'https://cdn.activepieces.com/pieces/telegram_bot.png',
 	version: packageJson.version,
 	actions: [telegramSendMessageAction],
-	authors: ['abuaboud'],
+	authors: ['abuaboud', 'Abdallah-Alwarawreh'],
 	triggers: [telegramNewMessage],
 });

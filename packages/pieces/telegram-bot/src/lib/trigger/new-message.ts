@@ -10,7 +10,29 @@ export const telegramNewMessage = createTrigger({
     },
     type: TriggerStrategy.WEBHOOK,
     sampleData: {
-        
+        "body": {
+          "message": {
+            "chat": {
+              "id": 55169542059,
+              "type": "private",
+              "username": "AbdallahAlwarawreh",
+              "last_name": "Alwarawreh",
+              "first_name": "Abdallah"
+            },
+            "date": 1686050152,
+            "from": {
+              "id": 55169542059,
+              "is_bot": false,
+              "username": "AbdallahAlwarawreh",
+              "last_name": "Alwarawreh",
+              "first_name": "Abdallah",
+              "language_code": "en"
+            },
+            "text": "Hello world",
+            "message_id": 21
+          },
+          "update_id": 351114420
+        }
     },
     async onEnable(context) {
         await telegramCommons.subscribeWebhook(
