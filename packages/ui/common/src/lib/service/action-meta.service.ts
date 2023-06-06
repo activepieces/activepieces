@@ -3,10 +3,7 @@ import {
   Action,
   ActionType,
   ApEdition,
-  ApEnvironment,
-  compareSemVer,
   PieceOptionRequest,
-  SeekPage,
   Trigger,
   TriggerType,
 } from '@activepieces/shared';
@@ -26,11 +23,6 @@ import {
 
 type TriggersMetadata = Record<string, TriggerBase>;
 
-type FilterUnSupportedPiecesParams = {
-  piecesManifest: PieceMetadataSummary[];
-  release: string;
-  environment: string;
-};
 export const CORE_PIECES_ACTIONS_NAMES = [
   'store',
   'data-mapper',
@@ -50,11 +42,10 @@ export class ActionMetaService {
 
   private piecesManifest$ = this.release$.pipe(
     switchMap((release) => {
-      return this.http.get<SeekPage<PieceMetadataSummary>>(
+      return this.http.get<PieceMetadataSummary[]>(
         `${environment.apiUrl}/pieces?release=${release}`
       );
     }),
-    map((response) => response.data),
     shareReplay(1)
   );
 
@@ -100,25 +91,6 @@ export class ActionMetaService {
 
   constructor(private http: HttpClient, private flagsService: FlagService) {}
 
-  private filterUnSupportedPieces = (params: FilterUnSupportedPiecesParams) => {
-    const { piecesManifest, release } = params;
-
-    return piecesManifest.filter((piece) => {
-      if (params.environment === ApEnvironment.DEVELOPMENT) {
-        return true;
-      }
-      const minRelease = piece.minimumSupportedRelease;
-      const maxRelease = piece.maximumSupportedRelease;
-      if (minRelease && compareSemVer(release, minRelease) === -1) {
-        return false;
-      } else if (maxRelease && compareSemVer(release, maxRelease) === 1) {
-        return false;
-      } else {
-        return true;
-      }
-    });
-  };
-
   private getCacheKey(pieceName: string, pieceVersion: string): string {
     return `${pieceName}-${pieceVersion}`;
   }
@@ -150,11 +122,7 @@ export class ActionMetaService {
   }
 
   getPiecesManifest(): Observable<PieceMetadataSummary[]> {
-    return forkJoin({
-      piecesManifest: this.piecesManifest$,
-      environment: this.flagsService.getEnvironment(),
-      release: this.release$,
-    }).pipe(map(this.filterUnSupportedPieces), shareReplay(1));
+    return this.piecesManifest$;
   }
 
   getPieceMetadata(
