@@ -23,7 +23,7 @@ const polling: Polling<{ authentication: OAuth2PropertyValue, spreadsheet_id: st
 
 
 export const readNewRows = createTrigger({
-  name: 'read_row',
+  name: 'new_row',
   displayName: 'Read Rows',
   description: 'Trigger when a new row is added, and it can include existing rows as well.',
   props: {
