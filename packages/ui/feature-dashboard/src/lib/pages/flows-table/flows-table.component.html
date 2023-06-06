@@ -7,7 +7,7 @@
     </div>
     <div class="ap-h-full ap-w-[calc(100%-274px)] ap-pl-[30px] ap-pt-[80px]">
       <div class="ap-h-full ap-mb-[40px]">
-        <div class="ap-mb-[50px]">
+        <div class="ap-mb-[50px]" *ngIf="showTemplates$ | async">
           <app-templates-container [folderId$]="folderId$"></app-templates-container>
         </div>
         <div

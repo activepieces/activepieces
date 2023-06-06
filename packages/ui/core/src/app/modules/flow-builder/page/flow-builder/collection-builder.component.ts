@@ -44,7 +44,7 @@ import {
   LeftSideBarType,
   RightSideBarType,
 } from '@activepieces/ui/feature-builder-store';
-import { TestStepService } from '@activepieces/ui/common';
+import { FlagService, TestStepService } from '@activepieces/ui/common';
 import { PannerService } from '@activepieces/ui/feature-builder-canvas';
 import { MatDialog } from '@angular/material/dialog';
 import {
@@ -95,7 +95,8 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
     private testStepService: TestStepService,
     private flowRendererService: FlowRendererService,
     public builderService: CollectionBuilderService,
-    private matDialog: MatDialog
+    private matDialog: MatDialog,
+    private flagService: FlagService
   ) {
     this.listenToGraphChanges();
     this.testingStepSectionIsRendered$ =
@@ -106,31 +107,40 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
       const TemplateDialogData: TemplateDialogData = {
         insideBuilder: true,
       };
-      this.importTemplate$ = this.matDialog
-        .open(TemplatesDialogComponent, {
-          data: TemplateDialogData,
-        })
-        .afterClosed()
-        .pipe(
-          switchMap((template?: FlowTemplate) => {
-            if (template) {
-              return this.store.select(BuilderSelectors.selectCurrentFlow).pipe(
-                take(1),
-                tap((flow) => {
-                  this.builderService.importTemplate$.next({
-                    flowId: flow.id,
-                    template: template,
-                  });
-                  if (template.blogUrl) {
-                    this.showBlogNotification(template);
+      this.importTemplate$ = this.flagService.getTemplatesSourceUrl().pipe(
+        map((url) => !!url),
+        tap((showDialog) => {
+          if (showDialog) {
+            this.matDialog
+              .open(TemplatesDialogComponent, {
+                data: TemplateDialogData,
+              })
+              .afterClosed()
+              .pipe(
+                switchMap((template?: FlowTemplate) => {
+                  if (template) {
+                    return this.store
+                      .select(BuilderSelectors.selectCurrentFlow)
+                      .pipe(
+                        take(1),
+                        tap((flow) => {
+                          this.builderService.importTemplate$.next({
+                            flowId: flow.id,
+                            template: template,
+                          });
+                          if (template.blogUrl) {
+                            this.showBlogNotification(template);
+                          }
+                        })
+                      );
                   }
+                  return EMPTY;
                 })
               );
-            }
-            return EMPTY;
-          }),
-          map(() => void 0)
-        );
+          }
+        }),
+        map(() => void 0)
+      );
       localStorage.removeItem('newFlow');
     }
     this.loadInitialData$ = this.actRoute.data.pipe(
