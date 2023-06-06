@@ -136,7 +136,6 @@ export class VariableService {
     }
     // Get the file from the URL
     try {
-      const response = await axios.head(urlOrBase64);
 
 
       // Check if the string is a Base64 string
@@ -148,11 +147,11 @@ export class VariableService {
         if (matches && matches?.length === 3) {
           contentType = matches[1];
           base64 = matches[2];
-  
+
           // You need to provide how you decide filename and extension in case of base64 string
           const filename = 'unknown';
           const extension = contentType.split('/')[1];
-  
+
           return {
             filename: filename + "." + extension,
             extension,
@@ -161,6 +160,7 @@ export class VariableService {
         }
 
       }
+      const response = await axios.head(urlOrBase64);
       const contentType = response.headers['content-type'];
 
       // Check if content type is file
