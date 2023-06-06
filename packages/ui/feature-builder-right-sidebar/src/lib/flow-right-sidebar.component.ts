@@ -237,7 +237,8 @@ export class FlowRightSidebarComponent implements OnInit {
   openVersionDocs() {
     window.open(
       'https://www.activepieces.com/docs/pieces/versioning',
-      '_blank'
+      '_blank',
+      'noopener'
     );
   }
   @HostListener('window:resize', ['$event'])

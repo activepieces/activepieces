@@ -201,7 +201,8 @@ export class AppComponent implements OnInit {
   openUpgradeDocs() {
     window.open(
       'https://www.activepieces.com/docs/install/docker#upgrading',
-      '_blank'
+      '_blank',
+      'noopener noreferrer'
     );
   }
 }

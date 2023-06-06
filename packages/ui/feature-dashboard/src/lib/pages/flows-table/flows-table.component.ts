@@ -103,7 +103,7 @@ export class FlowsTableComponent implements OnInit {
     const link = '/flows/' + flow.id;
     if (event.ctrlKey) {
       // Open in new tab
-      window.open(link, '_blank');
+      window.open(link, '_blank', 'noopener');
     } else {
       // Open in the same tab
       this.router.navigateByUrl(link);
