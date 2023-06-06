@@ -8,23 +8,20 @@
         </div>
     </div>
 
-    <div class="ap-flex ap-gap-4 ap-overflow-x-scroll thin-scrollbars ap-pb-2">
-        <ap-template-card [insideBuilder]="false" [folderId]="folderId$ | async"
-            [template]="template"></ap-template-card>
-        <ap-template-card [insideBuilder]="false" [folderId]="folderId$ | async"
-            [template]="template"></ap-template-card>
-        <ap-template-card [insideBuilder]="false" [folderId]="folderId$ | async"
-            [template]="template"></ap-template-card>
-        <ap-template-card [insideBuilder]="false" [folderId]="folderId$ | async"
-            [template]="template"></ap-template-card>
-        <ap-template-card [insideBuilder]="false" [folderId]="folderId$ | async"
-            [template]="template"></ap-template-card>
-        <ap-template-card [insideBuilder]="false" [folderId]="folderId$ | async"
-            [template]="template"></ap-template-card>
-        <ap-template-card [insideBuilder]="false" [folderId]="folderId$ | async"
-            [template]="template"></ap-template-card>
-        <ap-template-card [insideBuilder]="false" [folderId]="folderId$ | async"
-            [template]="template"></ap-template-card>
+    <div class="ap-flex ap-gap-4 ap-overflow-x-scroll thin-scrollbars ap-pb-2 ap-h-[17.125rem]"
+        [class.ap-items-center]="(templates$ | async) === null"
+        [class.ap-justify-center]="(templates$ | async) === null">
+
+        <ng-container *ngIf="templates$ | async as templates;else loading">
+            <ap-template-card [insideBuilder]="false" *ngFor="let template of templates" [folderId]="folderId$ | async"
+                [template]="template"></ap-template-card>
+        </ng-container>
+        <ng-template #loading>
+            {{(templates$ | async)}}
+            <ap-loading-icon height="40px" width="40px" [outlineLoader]="false" [whiteLoader]="false">
+            </ap-loading-icon>
+        </ng-template>
+
     </div>
 
 </div>

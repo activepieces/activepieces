@@ -117,7 +117,20 @@ export class TemplatesService {
     pinned: false,
   };
 
-  getTemplates(params: { search: string; apps: string[]; filters: string[] }) {
+  getPinnedTemplates() {
+    return this.getTemplates({
+      apps: [],
+      filters: [],
+      search: '',
+      pinned: true,
+    });
+  }
+  getTemplates(params: {
+    search: string;
+    apps: string[];
+    filters: string[];
+    pinned?: boolean;
+  }) {
     return this.flagsService.getTemplatesSourceUrl().pipe(
       switchMap((url) => {
         return this.http.get<FlowTemplate[]>(url, {

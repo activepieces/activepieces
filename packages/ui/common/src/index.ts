@@ -34,3 +34,4 @@ export * from './lib/environments/environment';
 export * from './lib/components/delete-enity-dialog/delete-entity-dialog.component';
 export * from './lib/utils/beamer';
 export * from './lib/directives/track-hover.directive';
+export * from './lib/service/templates.service';
