@@ -48,6 +48,9 @@
       "@activepieces/piece-discord": ["packages/pieces/discord/src/index.ts"],
       "@activepieces/piece-drip": ["packages/pieces/drip/src/index.ts"],
       "@activepieces/piece-dropbox": ["packages/pieces/dropbox/src/index.ts"],
+      "@activepieces/piece-facebook-leads": [
+        "packages/pieces/facebook-leads/src/index.ts"
+      ],
       "@activepieces/piece-figma": ["packages/pieces/figma/src/index.ts"],
       "@activepieces/piece-freshsales": [
         "packages/pieces/freshsales/src/index.ts"
