@@ -50,11 +50,11 @@ const getPackageName = (params: GetPackageNameParams): string => {
     const { pieceName, pieceVersion } = params;
 
     if (apEnv === ApEnvironment.DEVELOPMENT) {
-        return getPackageNameForPiece({
-            pieceName,
-            pieceVersion,
-        })
-    }
+    return getPackageNameForPiece({
+        pieceName,
+        pieceVersion,
+    })
+}
     else {
         return getPackageAliasForPiece({
             pieceName,
