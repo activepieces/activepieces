@@ -115,12 +115,17 @@ export const flowController = async (fastify: FastifyInstance) => {
             if (!flow) {
                 throw new ActivepiecesError({ code: ErrorCode.FLOW_NOT_FOUND, params: { id: request.params.flowId } })
             }
-            return {
+            const template: FlowTemplate =
+            {
                 name: flow.version.displayName,
                 description: '',
                 pieces: flowHelper.getUsedPieces(flow.version.trigger),
                 template: removeMetaInformation(flow.version),
+                pinned:false,
+                tags:[],
+                blogUrl:'', 
             }
+            return template
         },
     )
 
@@ -168,9 +173,9 @@ export const flowController = async (fastify: FastifyInstance) => {
 
 function removeMetaInformation(flowVersion: FlowVersion) {
     const sensitiveDataKeys = ['created', 'updated', 'projectId', 'folderId', 'flowId']
-
-    const filteredEntries = Object.entries(flowVersion)
-        .filter(([key]) => !sensitiveDataKeys.includes(key))
-
-    return Object.fromEntries(filteredEntries)
+    const clone=JSON.parse(JSON.stringify(flowVersion))
+    sensitiveDataKeys.forEach(key => {
+        clone[key] = ''
+    })
+    return clone as FlowVersion
 }

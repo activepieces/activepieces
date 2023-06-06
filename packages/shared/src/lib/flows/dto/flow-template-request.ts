@@ -6,6 +6,8 @@ export const FlowTemplate = Type.Object({
     description: Type.String(),
     tags: Type.Array(Type.String()),
     pieces: Type.Array(Type.String()),
+    pinned: Type.Boolean(),
+    blogUrl: Type.Optional(Type.String()),
     template: Type.Unknown(),
 })
 

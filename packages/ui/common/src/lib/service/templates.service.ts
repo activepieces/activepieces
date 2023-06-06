@@ -1,17 +1,19 @@
 import { Injectable } from '@angular/core';
-import { delay, of } from 'rxjs';
+import { map, switchMap } from 'rxjs';
 import {
   FlowTemplate,
-  FlowVersion,
   FlowVersionState,
   TriggerType,
 } from '@activepieces/shared';
+import { FlagService } from './flag.service';
+import { HttpClient } from '@angular/common/http';
 
 @Injectable({
   providedIn: 'root',
 })
 export class TemplatesService {
-  template: FlowTemplate & { template: FlowVersion } = {
+  constructor(private flagsService: FlagService, private http: HttpClient) {}
+  template: FlowTemplate = {
     description:
       "ChatGPT is awesome, you can ask it to write a blog post for you, make some modifications and publish it. But if you have hundreds of ideas that you'd like to convert into blog posts, you will need something that runs in the background while you're on the beach (just kidding, you'll be buried under lots of other work 😳).",
     name: 'Automate Blog Writing with AI: A Step by Step Guide using OpenAI',
@@ -112,25 +114,36 @@ export class TemplatesService {
       valid: true,
       state: FlowVersionState.DRAFT,
     },
+    pinned: false,
   };
 
   getTemplates(params: { search: string; apps: string[]; filters: string[] }) {
-    console.log(params);
-    return of([
-      this.template,
-      this.template,
-      this.template,
-      this.template,
-      this.template,
-      this.template,
-      this.template,
-      this.template,
-      this.template,
-      this.template,
-      this.template,
-      this.template,
-      this.template,
-      this.template,
-    ]).pipe(delay(500));
+    return this.flagsService.getTemplatesSourceUrl().pipe(
+      switchMap((url) => {
+        return this.http.get<FlowTemplate[]>(url, {
+          params,
+        });
+      }),
+      map((res) => {
+        return [...res, this.template];
+      })
+    );
+    // console.log(params);
+    // return of([
+    //   this.template,
+    //   this.template,
+    //   this.template,
+    //   this.template,
+    //   this.template,
+    //   this.template,
+    //   this.template,
+    //   this.template,
+    //   this.template,
+    //   this.template,
+    //   this.template,
+    //   this.template,
+    //   this.template,
+    //   this.template,
+    // ]).pipe(delay(500));
   }
 }

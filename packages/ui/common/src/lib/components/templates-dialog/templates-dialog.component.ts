@@ -60,7 +60,7 @@ export class TemplatesDialogComponent {
           this.dialogForm.getRawValue()
         );
       }),
-      tap((res) => {
+      tap(() => {
         this.loading$.next(false);
       }),
       shareReplay(1)
