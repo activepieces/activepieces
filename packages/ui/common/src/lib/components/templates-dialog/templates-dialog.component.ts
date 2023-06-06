@@ -26,12 +26,12 @@ export interface TemplateDialogData {
 export class TemplatesDialogComponent {
   dialogForm: FormGroup<{
     search: FormControl<string>;
-    filters: FormControl<string[]>;
-    apps: FormControl<string[]>;
+    tags: FormControl<string[]>;
+    pieces: FormControl<string[]>;
   }> = new FormGroup({
     search: new FormControl('', { nonNullable: true }),
-    filters: new FormControl([] as Array<string>, { nonNullable: true }),
-    apps: new FormControl([] as Array<string>, { nonNullable: true }),
+    tags: new FormControl([] as Array<string>, { nonNullable: true }),
+    pieces: new FormControl([] as Array<string>, { nonNullable: true }),
   });
   loading$: BehaviorSubject<boolean> = new BehaviorSubject(true);
   templates$: Observable<(FlowTemplate & { template: FlowVersion })[]>;

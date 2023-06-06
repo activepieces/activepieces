@@ -12,3 +12,13 @@ export const FlowTemplate = Type.Object({
 })
 
 export type FlowTemplate = Static<typeof FlowTemplate> & {template: FlowVersion}
+
+
+export const ListFlowTemplatesRequest = Type.Object({
+    pieces: Type.Optional(Type.Array(Type.String())),
+    tags: Type.Optional(Type.Array(Type.String())),
+    search: Type.Optional(Type.String()),
+    pinned:Type.Optional(Type.Boolean())
+})
+
+export type ListFlowTemplatesRequest = Static<typeof ListFlowTemplatesRequest>

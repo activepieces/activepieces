@@ -10,15 +10,19 @@
 
 <mat-dialog-content class="!ap-flex ap-h-[655px] !ap-mt-3">
     <div class="ap-w-[220px] ap-flex ap-flex-col ap-gap-8">
-        <ap-templates-filters [formControl]="dialogForm.controls.filters" [filters]="filters"></ap-templates-filters>
-        <ap-template-apps-dropdown [formControl]="dialogForm.controls.apps"></ap-template-apps-dropdown>
+        <ap-templates-filters [formControl]="dialogForm.controls.tags" [filters]="filters"></ap-templates-filters>
+        <ap-template-apps-dropdown [formControl]="dialogForm.controls.pieces"></ap-template-apps-dropdown>
     </div>
     <div class="ap-flex ap-gap-5 ap-w-[830px] ap-flex-wrap ap-overflow-y-scroll  thin-scrollbars"
-        [class.ap-items-center]="loading$|async" [class.ap-justify-center]="loading$ | async">
+        [class.ap-items-center]="(loading$ | async) || (templates$ | async)?.length === 0"
+        [class.ap-justify-center]="(loading$ | async) || (templates$ | async)?.length === 0">
         <ng-container *ngIf="(loading$ | async) === false">
             <ap-template-card [showBtnOnHover]="true" [template]="template" [folderId]="(data?.folderId$ | async)"
                 [insideBuilder]="data? data.insideBuilder:false" (useTemplateClicked)="useTemplate(template)"
                 *ngFor="let template of (templates$ | async)"></ap-template-card>
+            <div class="ap-typography-body-1 ap-text-center" *ngIf="(templates$ | async)?.length === 0">
+                No results found. <br> Please adjust your search, filters or apps.
+            </div>
         </ng-container>
 
         <ap-loading-icon *ngIf="loading$ | async" [outlineLoader]="false" [whiteLoader]="false" height="40px"

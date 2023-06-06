@@ -3,6 +3,7 @@ import { map, switchMap } from 'rxjs';
 import {
   FlowTemplate,
   FlowVersionState,
+  ListFlowTemplatesRequest,
   TriggerType,
 } from '@activepieces/shared';
 import { FlagService } from './flag.service';
@@ -12,7 +13,6 @@ import { HttpClient } from '@angular/common/http';
   providedIn: 'root',
 })
 export class TemplatesService {
-  constructor(private flagsService: FlagService, private http: HttpClient) {}
   template: FlowTemplate = {
     description:
       "ChatGPT is awesome, you can ask it to write a blog post for you, make some modifications and publish it. But if you have hundreds of ideas that you'd like to convert into blog posts, you will need something that runs in the background while you're on the beach (just kidding, you'll be buried under lots of other work 😳).",
@@ -116,21 +116,16 @@ export class TemplatesService {
     },
     pinned: false,
   };
-
+  constructor(private flagsService: FlagService, private http: HttpClient) {}
   getPinnedTemplates() {
     return this.getTemplates({
-      apps: [],
-      filters: [],
+      pieces: [],
+      tags: [],
       search: '',
       pinned: true,
     });
   }
-  getTemplates(params: {
-    search: string;
-    apps: string[];
-    filters: string[];
-    pinned?: boolean;
-  }) {
+  getTemplates(params: ListFlowTemplatesRequest) {
     return this.flagsService.getTemplatesSourceUrl().pipe(
       switchMap((url) => {
         return this.http.get<FlowTemplate[]>(url, {
@@ -138,25 +133,8 @@ export class TemplatesService {
         });
       }),
       map((res) => {
-        return [...res, this.template];
+        return [...res];
       })
     );
-    // console.log(params);
-    // return of([
-    //   this.template,
-    //   this.template,
-    //   this.template,
-    //   this.template,
-    //   this.template,
-    //   this.template,
-    //   this.template,
-    //   this.template,
-    //   this.template,
-    //   this.template,
-    //   this.template,
-    //   this.template,
-    //   this.template,
-    //   this.template,
-    // ]).pipe(delay(500));
   }
 }
