@@ -1,19 +1,20 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { ExecutionType, PauseType } from "@activepieces/shared";
+import dayjs from "dayjs";
 
-export const delayTillAction = createAction({
-    name: 'delayTill',
-    displayName: 'Delay Till',
-    description: 'Delays the execution of the next action till a given timestamp',
+export const delayUntilAction = createAction({
+    name: 'delay_until',
+    displayName: 'Delay Until',
+    description: 'Delays the execution of the next action until a given timestamp',
     props: {
-        delayTill: Property.DateTime({
+        delayUntilTimestamp: Property.DateTime({
             displayName: 'Timestamp',
-            description: 'The timestamp till when the delay the execution of the next action should be delayed',
+            description: 'The timestamp until when the delay the execution of the next action should be delayed',
             required: true,
         }),
     },
     async run(ctx) {
-		const delayTill = new Date(ctx.propsValue.delayTill);
+		const delayTill = new Date(ctx.propsValue.delayUntilTimestamp);
 		const delayInMs = delayTill.getTime() - Date.now();
 		if(ctx.executionType == ExecutionType.RESUME) {
 			return {
@@ -26,14 +27,14 @@ export const delayTillAction = createAction({
 				delayTill: delayTill,
 				success: true
 			};
-		} else if (delayInMs > 5 * 60 * 1000){
+		} else if (delayInMs > 1 * 60 * 1000){
 			// use flow pause
 			const currentTime = new Date();
-			const futureTime = new Date(currentTime.getTime() + delayInMs);
+			const futureTime = dayjs(currentTime.getTime() + delayInMs);
 			ctx.run.pause({
 				pauseMetadata: {
 					type: PauseType.DELAY,
-					resumeDateTime: futureTime.toUTCString()
+					resumeDateTime: futureTime.toISOString()
 				}
 			});
 			return {}; // irrelevant as the flow is being paused, not completed
