@@ -17,10 +17,29 @@ export const storageAddtoList = createAction({
         ignore_if_exists: Property.Checkbox({
             displayName: 'Ignore if value exists',
             required: false
+        }),
+        store_scope: Property.StaticDropdown({
+            displayName: 'Store Scope',
+            description: 'The storage scope of the value.',
+            required: true,
+            options: {
+                options: [
+                    {
+                        label: "Project",
+                        value: StoreScope.PROJECT
+                    },
+                    {
+                        label: "Flow",
+                        value: StoreScope.FLOW
+                    }
+                ]
+            },
+            defaultValue: StoreScope.PROJECT
         })
     },
     async run(context) {
-        const items = (await context.store.get<unknown[]>(context.propsValue['key'], StoreScope.PROJECT)) ?? [];
+        
+        const items = (await context.store.get<unknown[]>(context.propsValue['key'], context.propsValue.store_scope)) ?? [];
         if (!Array.isArray(items)) {
             throw new Error(`Key ${context.propsValue['key']} is not an array`);
         }
@@ -28,6 +47,6 @@ export const storageAddtoList = createAction({
             return items;
         }
         items.push(context.propsValue['value']);
-        return await context.store.put(context.propsValue['key'], items, StoreScope.PROJECT);
+        return await context.store.put(context.propsValue['key'], items, context.propsValue.store_scope);
     }
 });
