@@ -1,0 +1,36 @@
+{
+  "name": "pieces-facebook-pages",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/facebook-pages/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/facebook-pages",
+        "tsConfig": "packages/pieces/facebook-pages/tsconfig.lib.json",
+        "packageJson": "packages/pieces/facebook-pages/package.json",
+        "main": "packages/pieces/facebook-pages/src/index.ts",
+        "assets": [
+          "packages/pieces/facebook-pages/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/facebook-pages/**/*.ts"
+        ]
+      }
+    }
+  },
+  "tags": []
+}

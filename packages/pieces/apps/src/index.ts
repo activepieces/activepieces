@@ -72,6 +72,7 @@ import { mautic }  from '@activepieces/piece-mautic';
 import { twitter } from '@activepieces/piece-twitter';
 import { clockodo } from '@activepieces/piece-clockodo';
 import { mysql } from '@activepieces/piece-mysql'
+import { facebookPages } from '@activepieces/piece-facebook-pages';
 
 /**
  * @deprecated this will be removed, don't use it
