@@ -21,7 +21,10 @@ import { ApFlagId, FlowOperationType } from '@activepieces/shared';
 import { TelemetryService } from '@activepieces/ui/common';
 import { AuthenticationService, fadeInUp400ms } from '@activepieces/ui/common';
 import { MatDialog } from '@angular/material/dialog';
-import { CollectionBuilderService } from '@activepieces/ui/feature-builder-store';
+import {
+  CollectionBuilderService,
+  FlowsActions,
+} from '@activepieces/ui/feature-builder-store';
 
 interface UpgradeNotificationMetaDataInLocalStorage {
   latestVersion: string;
@@ -136,13 +139,12 @@ export class AppComponent implements OnInit {
               },
             })
             .pipe(
-              tap(() => {
+              tap((res) => {
                 this.loading$.next(false);
-                this.router.navigate([`/flows/${res.flowId}?importFlow=true `]);
+                this.store.dispatch(FlowsActions.importFlow({ flow: res }));
               })
             );
         }),
-
         map(() => void 0)
       );
   }

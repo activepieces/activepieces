@@ -44,9 +44,7 @@ export class FlowsTableTitleComponent {
               .pipe(
                 tap((flow) => {
                   localStorage.setItem('newFlow', 'true');
-                  this.router.navigate(['/flows/', flow.id], {
-                    queryParams: { newFlow: true },
-                  });
+                  this.router.navigate(['/flows/', flow.id], {});
                 })
               );
           })
