@@ -10,8 +10,9 @@ import {
   tap,
 } from 'rxjs';
 import { FlowTemplate, FlowVersion, FolderId } from '@activepieces/shared';
-import { TemplatesService } from '../../service/templates.service';
+
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { TemplatesService } from '@activepieces/ui/common';
 
 export interface TemplateDialogData {
   insideBuilder: boolean;
@@ -19,7 +20,7 @@ export interface TemplateDialogData {
 }
 
 @Component({
-  selector: 'ap-templates-dialog',
+  selector: 'app-templates-dialog',
   templateUrl: './templates-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

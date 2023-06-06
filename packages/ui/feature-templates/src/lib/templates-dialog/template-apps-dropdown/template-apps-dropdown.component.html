@@ -17,7 +17,7 @@
 
 
 <div class="ap-mt-5 ap-flex ap-flex-col ap-gap-2.5 ap-h-[265px] thin-scrollbars ap-overflow-y-scroll">
-    <ap-template-app-tag-container [pieces$]="pieces$" *ngFor="let p of selectedPieces" [pieceName]="p"
+    <app-template-app-tag-container [pieces$]="pieces$" *ngFor="let p of selectedPieces" [pieceName]="p"
         (removePiece)="removePieceFromFilter(p)">
-    </ap-template-app-tag-container>
+    </app-template-app-tag-container>
 </div>

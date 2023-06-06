@@ -4,7 +4,7 @@ import {
   CORE_PIECES_ACTIONS_NAMES,
   CORE_PIECES_TRIGGERS,
   corePieceIconUrl,
-} from '../../../service/action-meta.service';
+} from '@activepieces/ui/common';
 import { PieceMetadataSummary } from '@activepieces/pieces-framework';
 import { Observable, map } from 'rxjs';
 import { TriggerType } from '@activepieces/shared';
@@ -15,7 +15,7 @@ import {
 } from '@angular/forms';
 
 @Component({
-  selector: 'ap-template-apps-dropdown',
+  selector: 'app-template-apps-dropdown',
   templateUrl: './template-apps-dropdown.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [

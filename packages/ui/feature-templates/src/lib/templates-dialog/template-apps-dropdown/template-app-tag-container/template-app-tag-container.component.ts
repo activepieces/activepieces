@@ -10,7 +10,7 @@ import { PieceMetadataSummary } from '@activepieces/pieces-framework';
 import { Observable, map } from 'rxjs';
 
 @Component({
-  selector: 'ap-template-app-tag-container',
+  selector: 'app-template-app-tag-container',
   templateUrl: './template-app-tag-container.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

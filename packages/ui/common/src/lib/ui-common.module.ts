@@ -50,12 +50,6 @@ import { UserAvatarComponent } from './components/user-avatar/user-avatar.compon
 import { TrackHoverDirective } from './directives/track-hover.directive';
 import { PiecesIconsFromFlowComponent } from './components/pieces-icons-from-flow/pieces-icons-from-flow.component';
 import { PieceIconContainerComponent } from './components/pieces-icons/piece-icon-container/piece-icon-container.component';
-import { TemplatesDialogComponent } from './components/templates-dialog/templates-dialog.component';
-import { TemplateCardComponent } from './components/template-card/template-card.component';
-import { TemplatesFiltersComponent } from './components/templates-dialog/templates-filters/templates-filters.component';
-import { TemplateAppsDropdownComponent } from './components/templates-dialog/template-apps-dropdown/template-apps-dropdown.component';
-import { TemplateAppTagContainerComponent } from './components/templates-dialog/template-apps-dropdown/template-app-tag-container/template-app-tag-container.component';
-
 const exportedImports = [
   CommonModule,
   MatTooltipModule,
@@ -106,7 +100,6 @@ const exportedDeclarations = [
   PiecesIconsFromFlowComponent,
   TrackHoverDirective,
   PieceIconContainerComponent,
-  TemplateCardComponent,
 ];
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 0,
@@ -122,7 +115,7 @@ export function markedOptionsFactory(): MarkedOptions {
     const html = linkRenderer.call(renderer, href, title, text);
     return html.replace(
       /^<a /,
-      '<a role="link" tabindex="0" target="_blank" rel="nofollow noopener noreferrer" '
+      '<a role="link" tabindex="0" rel="noopener" target="_blank" rel="nofollow noopener noreferrer" '
     );
   };
 
@@ -148,13 +141,7 @@ export function markedOptionsFactory(): MarkedOptions {
   providers: [
     { provide: MAT_TOOLTIP_DEFAULT_OPTIONS, useValue: materialTooltipDefaults },
   ],
-  declarations: [
-    ...exportedDeclarations,
-    TemplatesDialogComponent,
-    TemplatesFiltersComponent,
-    TemplateAppsDropdownComponent,
-    TemplateAppTagContainerComponent,
-  ],
+  declarations: [...exportedDeclarations],
   exports: [...exportedImports, ...exportedDeclarations],
 })
 export class UiCommonModule {}

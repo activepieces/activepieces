@@ -2,6 +2,7 @@ import {
   Component,
   ElementRef,
   HostListener,
+  Injector,
   NgZone,
   OnDestroy,
   OnInit,
@@ -43,17 +44,20 @@ import {
   LeftSideBarType,
   RightSideBarType,
 } from '@activepieces/ui/feature-builder-store';
-import {
-  TemplatesDialogComponent,
-  TestStepService,
-  TemplateDialogData,
-} from '@activepieces/ui/common';
+import { TestStepService } from '@activepieces/ui/common';
 import { PannerService } from '@activepieces/ui/feature-builder-canvas';
 import { MatDialog } from '@angular/material/dialog';
 import {
   BuilderRouteData,
   RunRouteData,
 } from '../../resolvers/builder-route-data';
+import { ComponentPortal } from '@angular/cdk/portal';
+import {
+  TemplatesDialogComponent,
+  TemplateDialogData,
+  TemplateBlogNotificationComponent,
+  BLOG_URL_TOKEN,
+} from '@activepieces/ui/feature-templates';
 
 @Component({
   selector: 'app-collection-builder',
@@ -113,10 +117,13 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
               return this.store.select(BuilderSelectors.selectCurrentFlow).pipe(
                 take(1),
                 tap((flow) => {
-                  return this.builderService.importTemplate$.next({
+                  this.builderService.importTemplate$.next({
                     flowId: flow.id,
                     template: template,
                   });
+                  if (template.blogUrl) {
+                    this.showBlogNotification(template);
+                  }
                 })
               );
             }
@@ -172,6 +179,23 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
       BuilderSelectors.selectCurrentRightSideBarType
     );
   }
+  private showBlogNotification(template: FlowTemplate) {
+    this.builderService.componentToShowInsidePortal$.next(
+      new ComponentPortal(
+        TemplateBlogNotificationComponent,
+        null,
+        Injector.create({
+          providers: [
+            {
+              provide: BLOG_URL_TOKEN,
+              useValue: template.blogUrl,
+            },
+          ],
+        })
+      )
+    );
+  }
+
   @HostListener('mousemove', ['$event'])
   mouseMove(e: MouseEvent) {
     this.flowRendererService.clientX = e.clientX;

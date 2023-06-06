@@ -178,7 +178,11 @@
       ],
       "@activepieces/ui/feature-dashboard": [
         "packages/ui/feature-dashboard/src/index.ts"
-      ]
+      ],
+      "@activepieces/ui/feature-templates": [
+        "packages/ui/feature-templates/src/index.ts"
+      ],
+      "@activepieces/ui/templates": ["packages/ui/templates/src/index.ts"]
     },
     "resolveJsonModule": true
   },

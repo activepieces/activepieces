@@ -7,7 +7,7 @@ import {
   TriggerType,
 } from '@activepieces/shared';
 import { FlagService } from './flag.service';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 
 @Injectable({
   providedIn: 'root',
@@ -114,7 +114,9 @@ export class TemplatesService {
       valid: true,
       state: FlowVersionState.DRAFT,
     },
-    pinned: false,
+    pinned: true,
+    blogUrl:
+      'https://www.activepieces.com/blog/use-chatgpt-to-write-long-blog-posts-on-wordpress-1500-words',
   };
   constructor(private flagsService: FlagService, private http: HttpClient) {}
   getPinnedTemplates() {
@@ -126,14 +128,29 @@ export class TemplatesService {
     });
   }
   getTemplates(params: ListFlowTemplatesRequest) {
+    const httpParams = new HttpParams();
+    if (params.pieces && params.pieces.length > 0) {
+      params.pieces.forEach((piece) => {
+        httpParams.append('pieces', piece);
+      });
+    }
+    if (params.tags && params.tags.length > 0) {
+      params.tags.forEach((tag) => {
+        httpParams.append('tags', tag);
+      });
+    }
+    if (params.search) {
+      httpParams.append('search', params.search);
+    }
+    if (params.pinned !== undefined) {
+      httpParams.append('pinned', params.pinned.toString());
+    }
     return this.flagsService.getTemplatesSourceUrl().pipe(
       switchMap((url) => {
-        return this.http.get<FlowTemplate[]>(url, {
-          params,
-        });
+        return this.http.get<FlowTemplate[]>(url, { params: httpParams });
       }),
       map((res) => {
-        return [...res];
+        return [...res, this.template];
       })
     );
   }

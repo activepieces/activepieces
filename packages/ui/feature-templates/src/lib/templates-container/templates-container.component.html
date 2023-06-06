@@ -13,8 +13,8 @@
         [class.ap-justify-center]="(templates$ | async) === null">
 
         <ng-container *ngIf="templates$ | async as templates;else loading">
-            <ap-template-card [insideBuilder]="false" *ngFor="let template of templates" [folderId]="folderId$ | async"
-                [template]="template"></ap-template-card>
+            <app-template-card [insideBuilder]="false" *ngFor="let template of templates" [folderId]="folderId$ | async"
+                [template]="template"></app-template-card>
         </ng-container>
         <ng-template #loading>
             {{(templates$ | async)}}

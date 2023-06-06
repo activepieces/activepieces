@@ -14,7 +14,7 @@ import {
 import { Observable, tap } from 'rxjs';
 
 @Component({
-  selector: 'ap-templates-filters',
+  selector: 'app-templates-filters',
   templateUrl: './templates-filters.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [

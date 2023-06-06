@@ -4,6 +4,7 @@ import {
   ChangeDetectorRef,
   Component,
   EventEmitter,
+  Injector,
   Input,
   Output,
 } from '@angular/core';
@@ -17,9 +18,14 @@ import { FlowService } from '@activepieces/ui/common';
 import { Observable, switchMap, tap } from 'rxjs';
 import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
-
+import { CollectionBuilderService } from '@activepieces/ui/feature-builder-store';
+import { ComponentPortal } from '@angular/cdk/portal';
+import {
+  BLOG_URL_TOKEN,
+  TemplateBlogNotificationComponent,
+} from '../template-blog-notification/template-blog-notification.component';
 @Component({
-  selector: 'ap-template-card',
+  selector: 'app-template-card',
   templateUrl: './template-card.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -34,7 +40,8 @@ export class TemplateCardComponent implements AfterViewInit {
     private flowService: FlowService,
     private router: Router,
     private cd: ChangeDetectorRef,
-    private matDialog: MatDialog
+    private matDialog: MatDialog,
+    private builderService: CollectionBuilderService
   ) {}
   useTemplate() {
     if (!this.useTemplate$ && !this.insideBuilder) {
@@ -52,6 +59,22 @@ export class TemplateCardComponent implements AfterViewInit {
               })
               .pipe(
                 tap((updatedFlow: Flow) => {
+                  if (this.template.blogUrl) {
+                    this.builderService.componentToShowInsidePortal$.next(
+                      new ComponentPortal(
+                        TemplateBlogNotificationComponent,
+                        null,
+                        Injector.create({
+                          providers: [
+                            {
+                              provide: BLOG_URL_TOKEN,
+                              useValue: this.template.blogUrl,
+                            },
+                          ],
+                        })
+                      )
+                    );
+                  }
                   this.router.navigate(['flows', updatedFlow.id]);
                 })
               );

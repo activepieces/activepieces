@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { map, Observable, shareReplay, startWith, Subject, tap } from 'rxjs';
 import { FlowsTableDataSource } from './flows-table.datasource';
 import { MatDialog } from '@angular/material/dialog';
-import { Flow, FlowInstanceStatus } from '@activepieces/shared';
+import { Flow, FlowInstanceStatus, FolderId } from '@activepieces/shared';
 
 import {
   ApPaginatorComponent,
@@ -35,6 +35,7 @@ export class FlowsTableComponent implements OnInit {
   deleteFlowDialogClosed$: Observable<void>;
   moveFlowDialogClosed$: Observable<void>;
   dataSource!: FlowsTableDataSource;
+  folderId$: Observable<FolderId | undefined>;
   displayedColumns = [
     'name',
     'steps',
@@ -59,6 +60,7 @@ export class FlowsTableComponent implements OnInit {
     private store: Store
   ) {
     this.listenToShowAllFolders();
+    this.folderId$ = this.store.select(FoldersSelectors.selectCurrentFolderId);
   }
 
   private listenToShowAllFolders() {

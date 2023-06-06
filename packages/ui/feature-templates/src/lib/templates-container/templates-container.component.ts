@@ -1,14 +1,13 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+
+import { MatDialog } from '@angular/material/dialog';
+import { FlowTemplate, FolderId } from '@activepieces/shared';
+import { Observable, shareReplay } from 'rxjs';
+import { TemplatesService } from '@activepieces/ui/common';
 import {
   TemplateDialogData,
   TemplatesDialogComponent,
-} from '@activepieces/ui/common';
-import { MatDialog } from '@angular/material/dialog';
-import { FlowTemplate, FolderId } from '@activepieces/shared';
-import { Store } from '@ngrx/store';
-import { FoldersSelectors } from '../../../../store/folders/folders.selector';
-import { Observable, shareReplay } from 'rxjs';
-import { TemplatesService } from '@activepieces/ui/common';
+} from '../templates-dialog/templates-dialog.component';
 
 @Component({
   selector: 'app-templates-container',
@@ -16,14 +15,12 @@ import { TemplatesService } from '@activepieces/ui/common';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TemplatesContainerComponent {
-  folderId$: Observable<FolderId | undefined>;
+  @Input() folderId$: Observable<FolderId | undefined>;
   templates$: Observable<FlowTemplate[]>;
   constructor(
     private matDialog: MatDialog,
-    private store: Store,
     private templatesService: TemplatesService
   ) {
-    this.folderId$ = this.store.select(FoldersSelectors.selectCurrentFolderId);
     this.templates$ = this.templatesService
       .getPinnedTemplates()
       .pipe(shareReplay(1));
