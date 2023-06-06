@@ -1,6 +1,7 @@
 import packageJson from '../package.json';
 import { createPiece } from '@activepieces/pieces-framework';
 import { telegramSendMessageAction } from './lib/action/send-text-message.action';
+import { telegramNewMessage } from './lib/trigger/new-message';
 
 export const telegramBot = createPiece({
 	name: 'telegram-bot',
@@ -9,5 +10,5 @@ export const telegramBot = createPiece({
 	version: packageJson.version,
 	actions: [telegramSendMessageAction],
 	authors: ['abuaboud'],
-	triggers: [],
+	triggers: [telegramNewMessage],
 });
