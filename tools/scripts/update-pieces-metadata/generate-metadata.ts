@@ -8,6 +8,8 @@ type Piece = {
     name: string
     displayName: string
     version: string
+    minimumSupportedRelease?: string
+    maximumSupportedRelease?: string
     metadata(): PieceMetadata
 }
 
@@ -46,6 +48,8 @@ export const generateMetadata = async (): Promise<PieceMetadata[]> => {
 
         piece.name = pieceName
         piece.version = packageJson.version
+        piece.minimumSupportedRelease = piece.minimumSupportedRelease ?? '0.0.0'
+        piece.maximumSupportedRelease = piece.maximumSupportedRelease ?? '99999.99999.9999'
 
         validateMetadata(piece.metadata())
         pieces.push(piece)
