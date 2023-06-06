@@ -1,10 +1,19 @@
 import { Property, StaticPropsValue } from "@activepieces/pieces-framework";
 import { PastebinClient } from "./client";
 
+const markdownDescription = `
+Here are the simple steps to get your credentials:
+
+1. Make an account, If you don't have one yet.
+2. Go to **https://pastebin.com/doc_api**.
+3. Copy your unique Developer API Key and paste it.
+`
+
 export const pastebinCommon = {
     authentication: (required = true) => Property.CustomAuth({
         displayName: 'API Authentication',
         required,
+        description: markdownDescription,
         props: {
             token: Property.SecretText({
                 displayName: 'Developer Key',
