@@ -34,6 +34,11 @@ export const newRowAdded = createTrigger({
       displayName: 'Max Rows to Poll',
       description: 'The maximum number of rows to poll, the rest will be polled on the next run',
       required: false,
+    }),
+    read_historical_rows: Property.Checkbox({
+      displayName: "Read old rows",
+      description: "Read rows from the 0th row",
+      required: false
     })
   },
   type: TriggerStrategy.POLLING,
@@ -42,6 +47,8 @@ export const newRowAdded = createTrigger({
     "rowId": 1
   },
   onEnable: async (context) => {
+    if(context.propsValue.read_historical_rows) return;
+    
     await pollingHelper.onEnable(polling, {
       store: context.store,
       propsValue: context.propsValue,
