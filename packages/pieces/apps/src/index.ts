@@ -71,11 +71,13 @@ import { stabilityAi }  from '@activepieces/piece-stability-ai';
 import { mautic }  from '@activepieces/piece-mautic';
 import { twitter } from '@activepieces/piece-twitter';
 import { clockodo } from '@activepieces/piece-clockodo';
+import { proma } from '@activepieces/piece-proma';
 
 /**
  * @deprecated this will be removed, don't use it
  */
 export const pieces: Piece[] = [
+    proma,
     mautic,
     stabilityAi,
     amazonS3,

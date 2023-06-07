@@ -1,0 +1,36 @@
+{
+  "name": "pieces-proma",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/proma/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/proma",
+        "tsConfig": "packages/pieces/proma/tsconfig.lib.json",
+        "packageJson": "packages/pieces/proma/package.json",
+        "main": "packages/pieces/proma/src/index.ts",
+        "assets": [
+          "packages/pieces/proma/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/proma/**/*.ts"
+        ]
+      }
+    }
+  },
+  "tags": []
+}

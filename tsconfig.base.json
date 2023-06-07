@@ -104,6 +104,7 @@
       ],
       "@activepieces/piece-postgres": ["packages/pieces/postgres/src/index.ts"],
       "@activepieces/piece-posthog": ["packages/pieces/posthog/src/index.ts"],
+      "@activepieces/piece-proma": ["packages/pieces/proma/src/index.ts"],
       "@activepieces/piece-pushover": ["packages/pieces/pushover/src/index.ts"],
       "@activepieces/piece-rss": ["packages/pieces/rss/src/index.ts"],
       "@activepieces/piece-salesforce": [
