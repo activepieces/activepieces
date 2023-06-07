@@ -18,7 +18,7 @@ export class TemplatesService {
     }).pipe(
       map((res) => {
         return res.sort((a, b) =>
-          (a.pinnedOrder || 0) > (b.pinnedOrder || 0) ? -1 : 1
+          (a.pinnedOrder || 0) > (b.pinnedOrder || 0) ? 1 : -1
         );
       })
     );
@@ -41,9 +41,6 @@ export class TemplatesService {
       switchMap((url) => {
         return this.http.get<FlowTemplate[]>(url, { params: httpParams });
       }),
-      map((res) => {
-        return [...res];
-      })
     );
   }
 }
