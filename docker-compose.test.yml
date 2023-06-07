@@ -5,6 +5,7 @@ services:
     extends:
       file: docker-compose.dev.yml
       service: app
+    user: ${UID}:${GID}
     command: npx nx run-tests backend
 
   postgres:
