@@ -37,7 +37,7 @@ export class TemplatesDialogComponent {
   loading$: BehaviorSubject<boolean> = new BehaviorSubject(true);
   templates$: Observable<FlowTemplate[]>;
   searchFormControl = new FormControl<string>('');
-  filters = ['ChatGPT', 'Content', 'RSS', 'Sales Funnel', 'Notifications'];
+  filters = ['ChatGPT', 'Content Creation', 'Social Media', 'Customer Service', 'Marketing Automation','Analysis'];
   constructor(
     private templatesService: TemplatesService,
     private dialogRef: MatDialogRef<TemplatesDialogComponent>,
