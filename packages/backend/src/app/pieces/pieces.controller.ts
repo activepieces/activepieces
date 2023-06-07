@@ -22,8 +22,9 @@ export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done)
         const { name } = req.params
         const { version } = req.query
 
+        const decodedName = decodeURIComponent(name)
         return await pieceMetadataService.get({
-            name,
+            name: decodedName,
             version,
         })
     })

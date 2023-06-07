@@ -22,6 +22,7 @@ import { BuilderSavingStatusEnum, CanvasState } from '../../model';
 import {
   CORE_PIECES_ACTIONS_NAMES,
   CORE_PIECES_TRIGGERS,
+  CORE_SCHEDULE,
   FlowItemDetails,
   corePieceIconUrl,
 } from '@activepieces/ui/common';
@@ -310,7 +311,8 @@ const selectMissingStepRecommendedFlowItemsDetails = createSelector(
   (core: FlowItemDetails[]) => {
     const recommendations = core.filter(
       (f) =>
-        (f.type === ActionType.PIECE && f.extra?.appName === 'http') ||
+        (f.type === ActionType.PIECE &&
+          f.extra?.appName === '@activepieces/piece-http') ||
         f.type === ActionType.CODE
     );
     return recommendations;
@@ -490,7 +492,7 @@ function findStepLogoUrlForMentions(
 
 const selectIsSchduleTrigger = createSelector(selectCurrentFlow, (flow) => {
   if (flow?.version?.trigger.type === TriggerType.PIECE) {
-    return flow.version.trigger.settings.pieceName === 'schedule';
+    return flow.version.trigger.settings.pieceName === CORE_SCHEDULE;
   }
   return false;
 });

@@ -22,7 +22,11 @@ import {
   FlowItem,
   canvasActions,
 } from '@activepieces/ui/feature-builder-store';
-import { ActionMetaService, FlowItemDetails } from '@activepieces/ui/common';
+import {
+  ActionMetaService,
+  CORE_SCHEDULE,
+  FlowItemDetails,
+} from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-piece-trigger-mention-item',
@@ -32,6 +36,7 @@ import { ActionMetaService, FlowItemDetails } from '@activepieces/ui/common';
 export class PieceTriggerMentionItemComponent implements OnInit {
   FIRST_LEVEL_PADDING_IN_MENTIONS_LIST = FIRST_LEVEL_PADDING_IN_MENTIONS_LIST;
   TriggerType = TriggerType;
+  CORE_SCHEDULE = CORE_SCHEDULE;
   expandSample = false;
   @Input()
   set stepMention(val: MentionListItem & { step: FlowItem }) {
@@ -66,7 +71,6 @@ export class PieceTriggerMentionItemComponent implements OnInit {
       BuilderSelectors.selectIsSchduleTrigger
     );
     this.isPollingTrigger$ = this.checkIfItIsPollingTrigger();
-
     if (cachedResult) {
       this.sampleData$ = combineLatest({
         stepTree: of({
@@ -122,7 +126,7 @@ export class PieceTriggerMentionItemComponent implements OnInit {
             return (
               res.triggers[this._stepMention.step.settings.triggerName]
                 ?.type === TriggerStrategy.POLLING &&
-              this._stepMention.step.settings.pieceName !== 'schedule'
+              this._stepMention.step.settings.pieceName !== CORE_SCHEDULE
             );
           }
           return false;

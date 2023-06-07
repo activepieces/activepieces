@@ -2,11 +2,18 @@ import { FastifyInstance, FastifyRequest } from 'fastify'
 import { webhookService } from '../webhooks/webhook-service'
 import { appEventRoutingService } from './app-event-routing.service'
 import { logger } from '../helper/logger'
-import { getPiece } from '@activepieces/pieces-apps'
 import { isNil } from 'lodash'
 import { ActivepiecesError, ErrorCode, EventPayload } from '@activepieces/shared'
 import { flowService } from '../flows/flow/flow.service'
 import { AppEventRouting } from './app-event-routing.entity'
+import { slack } from '@activepieces/piece-slack'
+import { square } from '@activepieces/piece-square'
+import { Piece } from '@activepieces/pieces-framework'
+
+const appWebhooks: Record<string, Piece> = {
+    slack: slack,
+    square: square,
+}
 
 export const appEventRoutingModule = async (app: FastifyInstance) => {
     app.register(appEventRoutingController, { prefix: '/v1/app-events' })
@@ -38,7 +45,7 @@ export const appEventRoutingController = async (fastify: FastifyInstance) => {
                 method: request.method,
                 queryParams: request.query as Record<string, string>,
             }
-            const piece = getPiece(pieceName)
+            const piece = appWebhooks[pieceName]
 
             if (isNil(piece)) {
                 throw new ActivepiecesError({

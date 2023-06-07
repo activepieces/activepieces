@@ -19,9 +19,13 @@ const loadPiecesMetadata = async (): Promise<PieceInfo[]> => {
 
   for (const piecePackage of filteredPiecePackages) {
     const module = await import(`packages/pieces/${piecePackage}/src/index.ts`)
+    const packageJson = await import(`packages/pieces/${piecePackage}/package.json`)
+
     const piece = Object.values<Piece>(module)[0]
     piecesMetadata.push({
       ...piece.metadata(),
+      name: packageJson.name,
+      version: packageJson.version,
       directory: piecePackage,
     })
   }

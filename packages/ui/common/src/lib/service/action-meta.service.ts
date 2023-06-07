@@ -24,16 +24,20 @@ import {
 type TriggersMetadata = Record<string, TriggerBase>;
 
 export const CORE_PIECES_ACTIONS_NAMES = [
-  'store',
-  'data-mapper',
-  'connections',
-  'delay',
-  'http',
-  'smtp',
+  '@activepieces/piece-store',
+  '@activepieces/piece-data-mapper',
+  '@activepieces/piece-connections',
+  '@activepieces/piece-delay',
+  '@activepieces/piece-http',
+  '@activepieces/piece-smtp',
 ];
 export const corePieceIconUrl = (pieceName: string) =>
-  `assets/img/custom/piece/${pieceName}_mention.png`;
-export const CORE_PIECES_TRIGGERS = ['schedule'];
+  `assets/img/custom/piece/${pieceName.replace(
+    '@activepieces/',
+    ''
+  )}_mention.png`;
+export const CORE_SCHEDULE = '@activepieces/piece-schedule';
+export const CORE_PIECES_TRIGGERS = [CORE_SCHEDULE];
 @Injectable({
   providedIn: 'root',
 })
@@ -117,7 +121,9 @@ export class ActionMetaService {
     pieceVersion: string
   ): Observable<PieceMetadata> {
     return this.http.get<PieceMetadata>(
-      `${environment.apiUrl}/pieces/${pieceName}?version=${pieceVersion}`
+      `${environment.apiUrl}/pieces/${encodeURIComponent(
+        pieceName
+      )}?version=${pieceVersion}`
     );
   }
 
