@@ -45,18 +45,39 @@ export const facebookLeadsCommon = {
         }
     }),
 
-    subscribeWebhook: async (formId: any, webhookUrl: string, apiKey: string) => {
+    subscribeAppWebhook: async (appId: string, webhookUrl: string, appAccessToken: string) => {
         const request: HttpRequest = {
             method: HttpMethod.POST,
-            url: `${facebookLeadsCommon.baseUrl}/form/${formId}/webhooks`,
-            headers: {
-                APIKEY: apiKey
-            },
-            body: `webhookURL=${webhookUrl}`
-        };
+            url: `${facebookLeadsCommon.baseUrl}/${appId}/subscriptions`,
+            body: {
+                object: 'page',
+                callback_url: 'https://dffc-2a01-9700-1aa2-e200-5929-65fb-baf8-3f32.eu.ngrok.io',
+                // callback_url: webhookUrl,
+                fields: 'leadgen',
+                verify_token: 'testToken123',
+                access_token: appAccessToken
+            }
+        }
 
-        await httpClient.sendRequest(request);
+        const response = await httpClient.sendRequest(request);
+        return response.body;
     },
+
+    // subscribeWebhook: async (pageId: any, webhookUrl: string, accessToken: string) => {
+    //     const request: HttpRequest = {
+    //         method: HttpMethod.POST,
+    //         url: `${facebookLeadsCommon.baseUrl}/${formId}/webhooks`,
+    //         body: {
+    //             object: 'page',
+    //             callback_url: 'https://dffc-2a01-9700-1aa2-e200-5929-65fb-baf8-3f32.eu.ngrok.io',
+    //             fields: 'leadgen',
+    //             verify_token: 'testToken123',
+    //             access_token: accessToken
+    //         }
+    //     }
+
+    //     await httpClient.sendRequest(request);
+    // },
 
     unsubscribeWebhook: async (formId: any, webhookUrl: string, apiKey: string) => {
         const getWebhooksRequest: HttpRequest = {

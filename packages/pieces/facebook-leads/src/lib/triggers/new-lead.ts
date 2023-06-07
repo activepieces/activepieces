@@ -5,7 +5,7 @@ export const newLead = createTrigger({
     name: 'new_lead',
     displayName: 'New Lead',
     description: 'Triggers when a new lead is created',
-    type: TriggerStrategy.WEBHOOK,
+    type: TriggerStrategy.APP_WEBHOOK,
     sampleData: {},
     props: {
         authentication: facebookLeadsCommon.authentication,
