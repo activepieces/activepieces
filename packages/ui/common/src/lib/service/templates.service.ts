@@ -40,7 +40,7 @@ export class TemplatesService {
     return this.flagsService.getTemplatesSourceUrl().pipe(
       switchMap((url) => {
         return this.http.get<FlowTemplate[]>(url, { params: httpParams });
-      }),
+      })
     );
   }
 }
