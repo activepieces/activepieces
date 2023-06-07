@@ -9,7 +9,7 @@ import {
   switchMap,
   tap,
 } from 'rxjs';
-import { FlowTemplate, FlowVersion, FolderId } from '@activepieces/shared';
+import { FlowTemplate, FolderId } from '@activepieces/shared';
 
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { TemplatesService } from '@activepieces/ui/common';
@@ -35,7 +35,7 @@ export class TemplatesDialogComponent {
     pieces: new FormControl([] as Array<string>, { nonNullable: true }),
   });
   loading$: BehaviorSubject<boolean> = new BehaviorSubject(true);
-  templates$: Observable<(FlowTemplate & { template: FlowVersion })[]>;
+  templates$: Observable<FlowTemplate[]>;
   searchFormControl = new FormControl<string>('');
   filters = ['ChatGPT', 'Content', 'RSS', 'Sales Funnel', 'Notifications'];
   constructor(

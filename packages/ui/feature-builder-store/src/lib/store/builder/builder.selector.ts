@@ -207,7 +207,7 @@ export const selectCurrentFlowVersionId = createSelector(
 export const selectNumberOfInvalidSteps = createSelector(
   selectCurrentFlow,
   (flow) => {
-    const steps = flowHelper.getAllSteps(flow.version);
+    const steps = flowHelper.getAllSteps(flow.version.trigger);
     return steps.reduce((prev, curr) => prev + (curr.valid ? 0 : 1), 0);
   }
 );
@@ -239,7 +239,7 @@ const selectStepResultsAccordion = createSelector(
     if (!run || run.status === ExecutionOutputStatus.RUNNING) {
       return [];
     }
-    const steps = flowHelper.getAllSteps(flow.version);
+    const steps = flowHelper.getAllSteps(flow.version.trigger);
     const results: {
       result: StepOutput;
       stepName: string;

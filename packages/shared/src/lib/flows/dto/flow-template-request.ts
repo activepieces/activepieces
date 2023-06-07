@@ -1,6 +1,13 @@
 import { Static, Type } from "@sinclair/typebox";
 import { FlowVersion } from "../flow-version";
 
+export const FlowVersionTemplate = Type.Omit(
+    FlowVersion,
+    ["id", "created", "updated", "flowId", "state"]
+);
+
+export type FlowVersionTemplate = Static<typeof FlowVersionTemplate>;
+
 export const FlowTemplate = Type.Object({
     name: Type.String(),
     description: Type.String(),
@@ -8,10 +15,10 @@ export const FlowTemplate = Type.Object({
     pieces: Type.Array(Type.String()),
     pinned: Type.Boolean(),
     blogUrl: Type.Optional(Type.String()),
-    template: Type.Unknown(),
+    template: FlowVersionTemplate,
 })
 
-export type FlowTemplate = Static<typeof FlowTemplate> & {template: FlowVersion}
+export type FlowTemplate = Static<typeof FlowTemplate>;
 
 
 export const ListFlowTemplatesRequest = Type.Object({

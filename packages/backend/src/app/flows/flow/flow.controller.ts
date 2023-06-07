@@ -4,7 +4,6 @@ import {
     FlowId,
     FlowOperationRequest,
     FlowTemplate,
-    FlowVersion,
     FlowVersionId,
     FlowViewMode,
     GetFlowRequest,
@@ -120,7 +119,7 @@ export const flowController = async (fastify: FastifyInstance) => {
                 name: flow.version.displayName,
                 description: '',
                 pieces: flowHelper.getUsedPieces(flow.version.trigger),
-                template: removeMetaInformation(flow.version),
+                template: flow.version,
                 pinned:false,
                 tags:[],
                 blogUrl:'', 
@@ -169,13 +168,4 @@ export const flowController = async (fastify: FastifyInstance) => {
         },
     )
 
-}
-
-function removeMetaInformation(flowVersion: FlowVersion) {
-    const sensitiveDataKeys = ['created', 'updated', 'projectId', 'folderId', 'flowId']
-    const clone=JSON.parse(JSON.stringify(flowVersion))
-    sensitiveDataKeys.forEach(key => {
-        clone[key] = ''
-    })
-    return clone as FlowVersion
 }

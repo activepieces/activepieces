@@ -35,7 +35,7 @@ const triggerSchemaValidation = TypeCompiler.Compile(Trigger);
 
 function isValid(flowVersion: FlowVersion) {
   let valid = true;
-  const steps = flowHelper.getAllSteps(flowVersion);
+  const steps = flowHelper.getAllSteps(flowVersion.trigger);
   for (let i = 0; i < steps.length; i++) {
     const step = steps[i];
     valid = valid && step.valid;
@@ -51,7 +51,7 @@ function deleteAction(
   flowVersion: FlowVersion,
   request: DeleteActionRequest
 ): void {
-  const steps = getAllSteps(flowVersion);
+  const steps = getAllSteps(flowVersion.trigger);
   let deleted = false;
   for (let i = 0; i < steps.length; i++) {
     const parentStep = steps[i];
@@ -112,9 +112,10 @@ function traverseInternal(step: Trigger | Action | undefined): (Action | Trigger
 }
 
 
-function getAllSteps(flowVersion: FlowVersion): (Action | Trigger)[] {
-  return traverseInternal(flowVersion.trigger);
+function getAllSteps(trigger: Trigger): (Action | Trigger)[] {
+  return traverseInternal(trigger);
 }
+
 function getAllChildSteps(action: LoopOnItemsAction | BranchAction): (Action)[] {
   switch(action.type)
   {
@@ -130,7 +131,7 @@ function getStep(
   flowVersion: FlowVersion,
   stepName: string
 ): Action | Trigger | undefined {
-  return getAllSteps(flowVersion).find((step) => step.name === stepName);
+  return getAllSteps(flowVersion.trigger).find((step) => step.name === stepName);
 }
 
 const getAllSubFlowSteps = ({ subFlowStartStep }: GetAllSubFlowSteps): Step[] => {
@@ -149,7 +150,7 @@ function updateAction(
   flowVersion: FlowVersion,
   request: UpdateActionRequest
 ): void {
-  const steps = getAllSteps(flowVersion);
+  const steps = getAllSteps(flowVersion.trigger);
   let updated = false;
   for (let i = 0; i < steps.length; i++) {
     const parentStep = steps[i];
@@ -196,7 +197,7 @@ function extractActions(step: Trigger | Action): { nextAction?: Action, onSucces
 }
 
 function moveAction(flowVersion: FlowVersion, request: MoveActionRequest): void {
-  const steps = getAllSteps(flowVersion);
+  const steps = getAllSteps(flowVersion.trigger);
   const sourceStep = steps.find(step => step.name === request.name);
   if (!sourceStep || !isAction(sourceStep?.type)) {
     throw new ActivepiecesError({
@@ -220,7 +221,7 @@ function moveAction(flowVersion: FlowVersion, request: MoveActionRequest): void 
 }
 
 function addAction(flowVersion: FlowVersion, request: AddActionRequest): void {
-  const parentStep = getAllSteps(flowVersion).find(step => step.name === request.parentStep);
+  const parentStep = getAllSteps(flowVersion.trigger).find(step => step.name === request.parentStep);
   if (parentStep === undefined) {
     throw new ActivepiecesError({
       code: ErrorCode.FLOW_OPERATION_INVALID,

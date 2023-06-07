@@ -58,7 +58,7 @@ type LoadInputAndLogFileIdResponse = {
 
 const extractFlowPieces = (flowVersion: FlowVersion): FlowPiece[] => {
     const pieces: FlowPiece[] = []
-    const steps = flowHelper.getAllSteps(flowVersion)
+    const steps = flowHelper.getAllSteps(flowVersion.trigger)
 
     for (const step of steps) {
         if (step.type === TriggerType.PIECE || step.type === ActionType.PIECE) {
@@ -252,7 +252,7 @@ async function downloadFiles(
 
 async function buildCodes(projectId: ProjectId, flowVersion: FlowVersion): Promise<File[]> {
     const buildRequests: Promise<File>[] = []
-    const steps = flowHelper.getAllSteps(flowVersion)
+    const steps = flowHelper.getAllSteps(flowVersion.trigger)
     steps.forEach((step) => {
         if (step.type === ActionType.CODE) {
             const codeActionSettings: CodeActionSettings = step.settings
