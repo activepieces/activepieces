@@ -1,5 +1,5 @@
 import { FlowVersion, FlowVersionState, TriggerType } from '@activepieces/shared'
-import { exportedFlowVersionTesting } from '../../../src/app/flows/flow-version/flow-version.service'
+import { exportedFlowVersionTesting } from '../../../../src/app/flows/flow-version/flow-version.service'
 
 
 test('Duplicate Flow With Branch', () => {
@@ -19,7 +19,7 @@ test('Duplicate Flow With Branch', () => {
                 },
                 'pieceName':'schedule',
                 'inputUiInfo':{
-                 
+
                 },
                 'triggerName':'cron_expression',
                 'pieceVersion':'0.0.2',
@@ -51,7 +51,7 @@ test('Duplicate Flow With Branch', () => {
                         'actionName':'get',
                         'inputUiInfo':{
                             'customizedInputs':{
-                          
+
                             },
                         },
                         'pieceVersion':'0.2.6',
@@ -65,7 +65,7 @@ test('Duplicate Flow With Branch', () => {
                     'valid':true,
                     'settings':{
                         'input':{
-                       
+
                         },
                         'artifactSourceId':'pJskIPz1ZL3RYiyUX1HPm',
                     },
@@ -84,7 +84,7 @@ test('Duplicate Flow With Branch', () => {
                         'actionName':'send_message_webhook',
                         'inputUiInfo':{
                             'customizedInputs':{
-                          
+
                             },
                         },
                         'pieceVersion':'0.2.1',
@@ -155,7 +155,7 @@ test('Duplicate Flow With Branch', () => {
                     'displayName': 'Code',
                     'settings': {
                         'input': {},
-                        'artifactSourceId': undefined,
+                        'artifactSourceId': 'pJskIPz1ZL3RYiyUX1HPm',
                     },
                     'valid': true,
                 },
@@ -304,7 +304,7 @@ test('Duplicate Flow With Loops using Import', () => {
             },
         },
     ]
-    
+
     const importOperations = exportedFlowVersionTesting.getImportOperations(flowVersion.trigger)
     expect(importOperations).toEqual(expectedResult)
 })
