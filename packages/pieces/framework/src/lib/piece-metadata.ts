@@ -6,6 +6,7 @@ export type PieceBase = {
   displayName: string;
   logoUrl: string;
   description: string;
+  folderName?: string;
   version: string;
   minimumSupportedRelease?: string;
   maximumSupportedRelease?: string;

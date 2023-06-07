@@ -98,7 +98,6 @@ export class ActionMetaService {
   private getCacheKey(pieceName: string, pieceVersion: string): string {
     return `${pieceName}-${pieceVersion}`;
   }
-
   private filterAppWebhooks(
     triggersMap: TriggersMetadata,
     edition: ApEdition
@@ -129,6 +128,12 @@ export class ActionMetaService {
 
   getPiecesManifest(): Observable<PieceMetadataSummary[]> {
     return this.piecesManifest$;
+  }
+
+  getPieceNameLogo(pieceName: string): Observable<string | undefined> {
+    return this.piecesManifest$.pipe(
+      map((pieces) => pieces.find((piece) => piece.name === pieceName)?.logoUrl)
+    );
   }
 
   getPieceMetadata(
@@ -162,7 +167,7 @@ export class ActionMetaService {
     T extends DropdownState<unknown> | PiecePropertyMap
   >(req: PieceOptionRequest, pieceName: string) {
     return this.http.post<T>(
-      environment.apiUrl + `/pieces/${pieceName}/options`,
+      environment.apiUrl + `/pieces/${encodeURIComponent(pieceName)}/options`,
       req
     );
   }

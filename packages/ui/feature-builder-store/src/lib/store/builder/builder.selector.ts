@@ -290,7 +290,7 @@ export const selectCurrentRightSideBarType = createSelector(
 export const selectAllFlowItemsDetails = createSelector(
   selectGlobalBuilderState,
   (state: GlobalBuilderState) => {
-    return state.flowItemsDetailsState;
+    return state?.flowItemsDetailsState;
   }
 );
 export const selectAllFlowItemsDetailsLoadedState = createSelector(

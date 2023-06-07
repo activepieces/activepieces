@@ -31,7 +31,7 @@ export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done)
 
     app.post('/:pieceName/options', PieceOptionsRequest, async (req) => {
         const { result } = await engineHelper.executeProp({
-            pieceName: req.params.pieceName,
+            pieceName: decodeURIComponent(req.params.pieceName),
             pieceVersion: req.body.pieceVersion,
             propertyName: req.body.propertyName,
             stepName: req.body.stepName,
