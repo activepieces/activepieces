@@ -20,7 +20,7 @@ const loadPiecesMetadata = async (): Promise<PieceInfo[]> => {
   for (const piecePackage of filteredPiecePackages) {
     const module = await import(`packages/pieces/${piecePackage}/src/index.ts`)
     const piece = Object.values<Piece>(module)[0]
-    if(piece.displayName != "Discord" && piece.displayName != "Telegram bot") continue;
+
     piecesMetadata.push({
       ...piece.metadata(),
       directory: piecePackage,
@@ -36,6 +36,12 @@ const capitilizeFirstLetter = (str: string) => {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
+const fixUrls = (input: string) => {
+  // find all urls and put them inside ` `
+  const regex = /(https?:\/\/[^\s]+)/g;
+  return input.replace(regex, '`$1`');
+}
+
 const getCardTemplate = (title: string, description: string, props: PiecePropertyMap, TriggerStrategy: TriggerStrategy | undefined) => {
   return `
       <Card title="${title} ${TriggerStrategy != undefined ? '(' + capitilizeFirstLetter(TriggerStrategy) + ')' : ''}">
@@ -44,10 +50,9 @@ const getCardTemplate = (title: string, description: string, props: PiecePropert
         <Expandable title="Properties">
           ${Object.entries(props).map(([key, value]) => {
             return `
-            <ResponseField name="${value.displayName}" ${value.required ? "required" : ""} type="${capitilizeFirstLetter(value.type)}" >
-              ${value.description == undefined ? "" : value.description}
-              
-            </ResponseField>
+<ResponseField name="${value.displayName}" ${value.required ? "required" : ""} type="${capitilizeFirstLetter(value.type)}">
+${value.description == undefined ? "" : fixUrls(value.description)}
+</ResponseField>
             `
           }).join('')}  
         </Expandable>
@@ -80,10 +85,17 @@ const getPieceCardsTrigger = (items: Record<string, TriggerBase>) => {
 /** returns the mint.json navigation path for the docs */
 const writePieceDoc = async (appsDocsFolderPath:string, p: PieceInfo, mdxTemplate: string) => {
   let docsFile = mdxTemplate.replace('TITLE', p.displayName);
-  const index: number = docsFile.indexOf(`${p.displayName}'`);
-  const authorsText = `\n## Authors ${p.authors.join(', ')} \n`;
-  docsFile = docsFile.slice(0, index + p.displayName.length + 1) + '\n' + authorsText + docsFile.slice(index + p.displayName.length + 1);
+  if(p.authors.length != 0) {
+    const authors = p.authors.map((author) => {
+      const githubLink = `https://github.com/${author}`;
+      return `[${author}](${githubLink})`;
+    });
 
+    const split = docsFile.split('---');
+    const secondIndex = split[1].length + 3;
+    const authorsText = `##### Authors: ${authors.join(', ')}\n`;
+    docsFile = docsFile.slice(0, secondIndex) + '---\n\n' + authorsText + docsFile.slice(secondIndex).replace("---", "");
+  }
   
   let actionsCards = getPieceCards(p.actions);
   if (!actionsCards) {
