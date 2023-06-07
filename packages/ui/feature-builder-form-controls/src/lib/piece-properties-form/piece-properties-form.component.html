@@ -65,7 +65,7 @@
 
     </ng-container>
     <div
-      *ngIf="property.value.type === PropertyType.SHORT_TEXT || property.value.type === PropertyType.NUMBER || property.value.type === PropertyType.LONG_TEXT || property.value.type === PropertyType.DATE_TIME">
+      *ngIf="property.value.type === PropertyType.FILE || property.value.type === PropertyType.SHORT_TEXT || property.value.type === PropertyType.NUMBER || property.value.type === PropertyType.LONG_TEXT || property.value.type === PropertyType.DATE_TIME">
       <ng-container *ngTemplateOutlet="textInputTemplate;context:{$implicit:property, formGroup:formGroup}">
       </ng-container>
     </div>

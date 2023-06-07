@@ -79,10 +79,6 @@ export function fromTextToOps(
               imageTag = getImageTemplateForStepLogo(
                 'assets/img/custom/piece/connection.png'
               );
-            } else if (itemPrefix === 'configs') {
-              imageTag = getImageTemplateForStepLogo(
-                'assets/img/custom/piece/config.png'
-              );
             }
           }
           const mentionText = replaceArrayNotationsWithSpaces(

@@ -469,6 +469,7 @@ function buildSchema(props: PiecePropertyMap): TSchema {
             case PropertyType.DATE_TIME:
             case PropertyType.SHORT_TEXT:
             case PropertyType.LONG_TEXT:
+            case PropertyType.FILE:
                 propsSchema[name] = Type.String({
                     minLength: property.required ? 1 : undefined,
                 })
