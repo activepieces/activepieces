@@ -2,32 +2,59 @@
 title: 'Stripe'
 ---
 
+##### Authors: [ashrafsamhouri](https://github.com/ashrafsamhouri)
+
+
 ## Triggers
 
 
-    <CardGroup cols={2}>
-      <Card title="New Payment">
+      <Card title="New Payment (Webhook)" icon="bolt">
         Triggers when a new payment is made
+
+        <Expandable title="Properties">
+          
+<ResponseField name="API Key" required type="Secret_text">
+API key acquired from your Stripe dashboard
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   
-    <CardGroup cols={2}>
-      <Card title="New Customer">
+      <Card title="New Customer (Webhook)" icon="bolt">
         Triggers when a new customer is created
+
+        <Expandable title="Properties">
+          
+<ResponseField name="API Key" required type="Secret_text">
+API key acquired from your Stripe dashboard
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   
-    <CardGroup cols={2}>
-      <Card title="Payment Failed">
+      <Card title="Payment Failed (Webhook)" icon="bolt">
         Triggers when a payment fails
+
+        <Expandable title="Properties">
+          
+<ResponseField name="API Key" required type="Secret_text">
+API key acquired from your Stripe dashboard
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   
-    <CardGroup cols={2}>
-      <Card title="New Subscription">
+      <Card title="New Subscription (Webhook)" icon="bolt">
         Triggers when a new subscription is made
+
+        <Expandable title="Properties">
+          
+<ResponseField name="API Key" required type="Secret_text">
+API key acquired from your Stripe dashboard
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   
 
 ---

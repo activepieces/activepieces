@@ -2,14 +2,27 @@
 title: 'TypeForm'
 ---
 
+##### Authors: [ShahedAlMashni](https://github.com/ShahedAlMashni)
+
+
 ## Triggers
 
 
-    <CardGroup cols={2}>
-      <Card title="New Submission">
+      <Card title="New Submission (Webhook)" icon="bolt">
         Triggers when Typeform receives a new submission
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Authentication" required type="Oauth2">
+
+</ResponseField>
+            
+<ResponseField name="Form" required type="Dropdown">
+Form Name
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   
 
 ---

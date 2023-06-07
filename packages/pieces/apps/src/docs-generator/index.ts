@@ -42,9 +42,9 @@ const fixUrls = (input: string) => {
   return input.replace(regex, '`$1`');
 }
 
-const getCardTemplate = (title: string, description: string, props: PiecePropertyMap, TriggerStrategy: TriggerStrategy | undefined) => {
+const getCardTemplate = (title: string, description: string, props: PiecePropertyMap, triggerStrategy: TriggerStrategy | undefined) => {
   return `
-      <Card title="${title} ${TriggerStrategy != undefined ? '(' + capitilizeFirstLetter(TriggerStrategy) + ')' : ''}">
+      <Card title="${title} ${triggerStrategy != undefined ? '(' + capitilizeFirstLetter(triggerStrategy) + ')' : ''}" ${triggerStrategy != undefined ? (triggerStrategy == TriggerStrategy.POLLING ? 'icon="clock"' : 'icon="bolt"') : ""}>
         ${description}
 
         <Expandable title="Properties">

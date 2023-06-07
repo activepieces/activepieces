@@ -2,14 +2,39 @@
 title: 'Google Sheets'
 ---
 
+##### Authors: [abuaboud](https://github.com/abuaboud), [AbdulTheActivepiecer](https://github.com/AbdulTheActivepiecer), [Shay Punter](https://github.com/Shay Punter), [Abdallah-Alwarawreh](https://github.com/Abdallah-Alwarawreh)
+
+
 ## Triggers
 
 
-    <CardGroup cols={2}>
-      <Card title="New Row">
-        Triggers when there is a new row added
+      <Card title="Read Rows (Polling)" icon="clock">
+        Trigger when a new row is added, and it can include existing rows as well.
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Authentication" required type="Oauth2">
+
+</ResponseField>
+            
+<ResponseField name="Spreadsheet" required type="Dropdown">
+
+</ResponseField>
+            
+<ResponseField name="Sheet" required type="Dropdown">
+
+</ResponseField>
+            
+<ResponseField name="Max Rows to Poll"  type="Number">
+The maximum number of rows to poll, the rest will be polled on the next run
+</ResponseField>
+            
+<ResponseField name="Read old rows"  type="Checkbox">
+Read rows from the 0th row
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   
 
 ---
@@ -17,21 +42,83 @@ title: 'Google Sheets'
 ## Actions
 
 
-    <CardGroup cols={2}>
-      <Card title="Insert Row">
+      <Card title="Insert Row " >
         Append values to an existing sheet
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Authentication" required type="Oauth2">
+
+</ResponseField>
+            
+<ResponseField name="Spreadsheet" required type="Dropdown">
+
+</ResponseField>
+            
+<ResponseField name="Sheet" required type="Dropdown">
+
+</ResponseField>
+            
+<ResponseField name="As String"  type="Checkbox">
+Inserted values that are dates and formulas will be strings and have no affect
+</ResponseField>
+            
+<ResponseField name="Values" required type="Array">
+These are the cell values of the row that will be added
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   
-    <CardGroup cols={2}>
-      <Card title="Delete Row">
+      <Card title="Delete Row " >
         Delete a row on an existing sheet you have access to
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Authentication" required type="Oauth2">
+
+</ResponseField>
+            
+<ResponseField name="Spreadsheet" required type="Dropdown">
+
+</ResponseField>
+            
+<ResponseField name="Sheet" required type="Dropdown">
+
+</ResponseField>
+            
+<ResponseField name="Row Number" required type="Number">
+The row number to remove
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   
-    <CardGroup cols={2}>
-      <Card title="Update Row">
+      <Card title="Update Row " >
         Overwrite values in an existing row
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Authentication" required type="Oauth2">
+
+</ResponseField>
+            
+<ResponseField name="Spreadsheet" required type="Dropdown">
+
+</ResponseField>
+            
+<ResponseField name="Sheet" required type="Dropdown">
+
+</ResponseField>
+            
+<ResponseField name="Row Number" required type="Number">
+The row number to update
+</ResponseField>
+            
+<ResponseField name="Values" required type="Array">
+These are the cell values of the row that will be updated
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   

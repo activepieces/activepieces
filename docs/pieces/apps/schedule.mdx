@@ -2,38 +2,83 @@
 title: 'Schedule'
 ---
 
+##### Authors: [abuaboud](https://github.com/abuaboud), [AbdulTheActivePiecer](https://github.com/AbdulTheActivePiecer)
+
+
 ## Triggers
 
 
-    <CardGroup cols={2}>
-      <Card title="Every Hour">
+      <Card title="Every Hour (Polling)" icon="clock">
         Triggers the current flow every hour
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Run on weekends (Sat,Sun)" required type="Checkbox">
+
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   
-    <CardGroup cols={2}>
-      <Card title="Every Day">
+      <Card title="Every Day (Polling)" icon="clock">
         Triggers the current flow every day
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Hour of the day (UTC)" required type="Static_dropdown">
+
+</ResponseField>
+            
+<ResponseField name="Run on weekends (Sat,Sun)" required type="Checkbox">
+
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   
-    <CardGroup cols={2}>
-      <Card title="Every Week">
+      <Card title="Every Week (Polling)" icon="clock">
         Triggers the current flow every week
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Day of the week" required type="Static_dropdown">
+
+</ResponseField>
+            
+<ResponseField name="Hour of the day (UTC)" required type="Static_dropdown">
+
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   
-    <CardGroup cols={2}>
-      <Card title="Every Month">
+      <Card title="Every Month (Polling)" icon="clock">
         Triggers the current flow every month
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Day of the month" required type="Static_dropdown">
+
+</ResponseField>
+            
+<ResponseField name="Hour of the day (UTC)" required type="Static_dropdown">
+
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   
-    <CardGroup cols={2}>
-      <Card title="Cron Expression">
+      <Card title="Cron Expression (Polling)" icon="clock">
         Trigger based on cron expression
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Cron Expression" required type="Short_text">
+Cron expression to trigger
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   
 
 ---

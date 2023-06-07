@@ -2,38 +2,71 @@
 title: 'Pipedrive'
 ---
 
+##### Authors: [ashrafsamhouri](https://github.com/ashrafsamhouri)
+
+
 ## Triggers
 
 
-    <CardGroup cols={2}>
-      <Card title="New Person">
+      <Card title="New Person (Webhook)" icon="bolt">
         Triggers when a new person is created
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Authentication" required type="Oauth2">
+
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   
-    <CardGroup cols={2}>
-      <Card title="New Deal">
+      <Card title="New Deal (Webhook)" icon="bolt">
         Triggers when a new deal is created
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Authentication" required type="Oauth2">
+
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   
-    <CardGroup cols={2}>
-      <Card title="New Activity">
+      <Card title="New Activity (Webhook)" icon="bolt">
         Triggers when a new activity is added
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Authentication" required type="Oauth2">
+
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   
-    <CardGroup cols={2}>
-      <Card title="Updated Person">
+      <Card title="Updated Person (Webhook)" icon="bolt">
         Triggers when a person is updated
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Authentication" required type="Oauth2">
+
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   
-    <CardGroup cols={2}>
-      <Card title="Updated Deal">
+      <Card title="Updated Deal (Webhook)" icon="bolt">
         Triggers when a deal is updated
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Authentication" required type="Oauth2">
+
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   
 
 ---
@@ -41,9 +74,39 @@ title: 'Pipedrive'
 ## Actions
 
 
-    <CardGroup cols={2}>
-      <Card title="Add Person">
+      <Card title="Add Person " >
         Add a new person to the account
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Authentication" required type="Oauth2">
+
+</ResponseField>
+            
+<ResponseField name="Name" required type="Short_text">
+
+</ResponseField>
+            
+<ResponseField name="Owner"  type="Dropdown">
+The user who owns this Person's record
+</ResponseField>
+            
+<ResponseField name="Organization"  type="Dropdown">
+The Org of this Person
+</ResponseField>
+            
+<ResponseField name="Email"  type="Short_text">
+
+</ResponseField>
+            
+<ResponseField name="Phone"  type="Short_text">
+
+</ResponseField>
+            
+<ResponseField name="Marketing Status"  type="Static_dropdown">
+Marketing opt-in status
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   

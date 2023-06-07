@@ -3,6 +3,9 @@ title: "Google Calendar"
 description: ""
 ---
 
+##### Authors: [osamahaikal](https://github.com/osamahaikal), [bibhuty-did-this](https://github.com/bibhuty-did-this)
+
+
 ## Set up and run an app that calls a Google calendar API.
 
 1. In the Google Cloud console, enable the Google Calendar API.
@@ -16,11 +19,21 @@ description: ""
 ## Triggers
 
 
-    <CardGroup cols={2}>
-      <Card title="New Or updated Event">
+      <Card title="New Or updated Event (Webhook)" icon="bolt">
         Triggers when there is an event added or updated
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Authentication" required type="Oauth2">
+
+</ResponseField>
+            
+<ResponseField name="Calendar" required type="Dropdown">
+
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   
 
 ---
@@ -28,15 +41,55 @@ description: ""
 ## Actions
 
 
-    <CardGroup cols={2}>
-      <Card title="Create Quick Event">
+      <Card title="Create Quick Event " >
         Add Quick Calendar Event
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Authentication" required type="Oauth2">
+
+</ResponseField>
+            
+<ResponseField name="Calendar" required type="Dropdown">
+
+</ResponseField>
+            
+<ResponseField name="Summary" required type="Long_text">
+The text describing the event to be created
+</ResponseField>
+            
+<ResponseField name="Send Updates"  type="Dropdown">
+Guests who should receive notifications about the creation of the new event.
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   
-    <CardGroup cols={2}>
-      <Card title="Create Event">
+      <Card title="Create Event " >
         Add Event
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Authentication" required type="Oauth2">
+
+</ResponseField>
+            
+<ResponseField name="Calendar" required type="Dropdown">
+
+</ResponseField>
+            
+<ResponseField name="Title of the event" required type="Short_text">
+
+</ResponseField>
+            
+<ResponseField name="Start date time of the event" required type="Date_time">
+
+</ResponseField>
+            
+<ResponseField name="End date time of the event"  type="Date_time">
+By default it'll be 30 min post start time
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   

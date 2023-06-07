@@ -2,14 +2,23 @@
 title: 'YouTube'
 ---
 
+##### Authors: [abuaboud](https://github.com/abuaboud)
+
+
 ## Triggers
 
 
-    <CardGroup cols={2}>
-      <Card title="New Video In Channel">
+      <Card title="New Video In Channel (Polling)" icon="clock">
         Runs when a new video is added to a YouTube channel
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Channel ID, URL, or handle" required type="Short_text">
+YouTube channel's ID, URL, or handle (e.g: @DutchPilotGirl)
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   
 
 ---
