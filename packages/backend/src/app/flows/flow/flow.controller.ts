@@ -120,7 +120,6 @@ export const flowController = async (fastify: FastifyInstance) => {
                 description: '',
                 pieces: flowHelper.getUsedPieces(flow.version.trigger),
                 template: flow.version,
-                pinned:false,
                 tags:[],
                 blogUrl:'', 
             }
