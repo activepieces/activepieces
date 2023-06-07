@@ -41,7 +41,7 @@ export class UserAvatarComponent {
     return this.authenticationService.currentUser.firstName[0];
   }
   goToCommunity() {
-    window.open('https://discord.gg/GHgqTAJy', '_blank');
+    window.open('https://discord.gg/GHgqTAJy', '_blank', 'noopener');
   }
   showWhatIsNew() {
     showBeamer();

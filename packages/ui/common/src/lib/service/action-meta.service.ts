@@ -1,10 +1,8 @@
 import { Injectable } from '@angular/core';
 import {
-  Action,
   ActionType,
   ApEdition,
   PieceOptionRequest,
-  Trigger,
   TriggerType,
 } from '@activepieces/shared';
 import { HttpClient } from '@angular/common/http';
@@ -168,8 +166,8 @@ export class ActionMetaService {
   >(req: PieceOptionRequest) {
     return this.http.post<T>(environment.apiUrl + `/pieces/options`, req);
   }
-  findNonPieceStepIcon(step: Trigger | Action) {
-    switch (step.type) {
+  findNonPieceStepIcon(type: ActionType | TriggerType) {
+    switch (type) {
       case ActionType.CODE:
         return { url: 'assets/img/custom/piece/code_mention.png', key: 'code' };
       case ActionType.BRANCH:

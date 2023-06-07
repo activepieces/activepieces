@@ -227,7 +227,7 @@ export class FlowItemContentComponent implements OnInit {
             );
           stepsIconsUrls[s.settings.pieceName] = pieceMetaData$;
         } else if (s.type !== ActionType.MISSING) {
-          const icon = this.actionMetaDataService.findNonPieceStepIcon(s);
+          const icon = this.actionMetaDataService.findNonPieceStepIcon(s.type);
           stepsIconsUrls[icon.key] = of(icon.url);
         }
       });

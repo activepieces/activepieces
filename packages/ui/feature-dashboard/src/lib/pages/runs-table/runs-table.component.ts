@@ -100,6 +100,6 @@ export class RunsTableComponent implements OnInit {
       this.router.serializeUrl(this.router.createUrlTree(['/runs'])) +
       '/' +
       run.id;
-    window.open(url, '_blank');
+    window.open(url, '_blank', 'noopener');
   }
 }
