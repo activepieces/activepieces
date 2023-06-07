@@ -4,6 +4,9 @@ description: "Convert from / to json"
 
 ---
 
+##### Authors: [kanarelo](https://github.com/kanarelo)
+
+
 ## Triggers
 
 *No supported triggers yet, please let us know if you need something on Discord so we can help out* 
@@ -14,15 +17,43 @@ description: "Convert from / to json"
 ## Actions
 
 
-    <CardGroup cols={2}>
-      <Card title="Convert CSV to JSON">
+      <Card title="Convert CSV to JSON " >
         This function reads a CSV string and converts it into JSON array format.
+
+        <Expandable title="Properties">
+          
+<ResponseField name="CSV Text" required type="Long_text">
+
+</ResponseField>
+            
+<ResponseField name="CSV contains headers" required type="Checkbox">
+
+</ResponseField>
+            
+<ResponseField name="Delimeter Type" required type="Static_dropdown">
+Will try to guess the delimeter
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   
-    <CardGroup cols={2}>
-      <Card title="Convert JSON to CSV">
+      <Card title="Convert JSON to CSV " >
         This function reads a JSON file and converts it into a CSV file format.
+
+        <Expandable title="Properties">
+          
+<ResponseField name="CSV JSON" required type="Json">
+
+</ResponseField>
+            
+<ResponseField name="CSV contains headers" required type="Checkbox">
+
+</ResponseField>
+            
+<ResponseField name="Delimeter Type" required type="Static_dropdown">
+Will try to guess the delimeter
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   
