@@ -42,7 +42,7 @@ const linkDependencies = async (params: LinkDependenciesParams) => {
             name: piece.name,
             version: piece.version,
         }))
-        const packageJsonForPiece = `${baseLinkPath}/${pieceMetadata.folderName}/package.json`
+        const packageJsonForPiece = `${baseLinkPath}/${pieceMetadata.directoryName}/package.json`
 
         const packageJson = await fs.readFile(packageJsonForPiece, 'utf-8').then(JSON.parse)
         for(const [key, value] of Object.entries(frameworkPackages)) {
@@ -52,7 +52,7 @@ const linkDependencies = async (params: LinkDependenciesParams) => {
         }
         await fs.writeFile(packageJsonForPiece, JSON.stringify(packageJson, null, 2))
 
-        await packageManager.linkDependency(projectPath, `${baseLinkPath}/${pieceMetadata.folderName}`)
+        await packageManager.linkDependency(projectPath, `${baseLinkPath}/${pieceMetadata.directoryName}`)
     }
 }
 
