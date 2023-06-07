@@ -378,10 +378,6 @@ export class InterpolatingTextFormControlComponent
           imageTag = getImageTemplateForStepLogo(
             'assets/img/custom/piece/connection.png'
           );
-        } else if (itemPrefix === 'configs') {
-          imageTag = getImageTemplateForStepLogo(
-            'assets/img/custom/piece/config.png'
-          );
         }
       }
       mentionOp.insert.mention.value =

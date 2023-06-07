@@ -4,13 +4,14 @@ import {
   combineLatest,
   switchMap,
   tap,
-  map,
   catchError,
   of,
   take,
   BehaviorSubject,
+  forkJoin,
+  map,
 } from 'rxjs';
-import { AppConnection, FlowRun } from '@activepieces/shared';
+import { AppConnection } from '@activepieces/shared';
 import {
   AppConnectionsService,
   ApPaginatorComponent,
@@ -18,6 +19,7 @@ import {
   DEFAULT_PAGE_SIZE,
   LIMIT_QUERY_PARAM,
   CURSOR_QUERY_PARAM,
+  ActionMetaService,
 } from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
 import { Params } from '@angular/router';
@@ -27,13 +29,14 @@ import { Params } from '@angular/router';
  * encapsulate all logic for fetching and manipulating the displayed data
  * (including sorting, pagination, and filtering).
  */
-export class ConnectionsTableDataSource extends DataSource<FlowRun> {
+export class ConnectionsTableDataSource extends DataSource<any> {
   data: AppConnection[] = [];
   isLoading$: BehaviorSubject<boolean> = new BehaviorSubject(true);
   constructor(
     private queryParams$: Observable<Params>,
     private paginator: ApPaginatorComponent,
     private store: Store,
+    private actionMetaService: ActionMetaService,
     private connectionsService: AppConnectionsService,
     private refresh$: Observable<boolean>
   ) {
@@ -74,7 +77,21 @@ export class ConnectionsTableDataSource extends DataSource<FlowRun> {
         this.paginator.previous = res.previous;
         this.data = res.data;
       }),
-      map((res) => res.data)
+      switchMap((res) => {
+        const logos: Observable<string | undefined>[] = res.data.map((item) =>
+          this.actionMetaService.getPieceNameLogo(item.appName)
+        );
+        return forkJoin(logos).pipe(
+          map((logos) => {
+            return res.data.map((item, index) => {
+              return {
+                ...item,
+                logoUrl: logos[index],
+              };
+            });
+          })
+        );
+      })
     );
   }
 

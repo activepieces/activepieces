@@ -1,5 +1,5 @@
 <button mat-menu-item apTrackHover #hoverTracker="hoverTrackerDirective" class="!ap-px-[9px]"
-  (click)="_stepMention.step.settings.pieceName !=='schedule'? expandSample? expandSample=false : expandSample=true :mentionClicked.emit(_stepMention) ">
+  (click)="_stepMention.step.settings.pieceName !== CORE_SCHEDULE? expandSample? expandSample=false : expandSample=true :mentionClicked.emit(_stepMention) ">
   <div class="ap-flex">
 
     <mat-icon class="mat-icon-rtl-mirror !ap-mr-[5px]"
@@ -45,7 +45,7 @@
     </ng-container>
 
   </ng-container>
-  <ng-container *ngIf="!(sampleData$) && _stepMention.step.settings.pieceName !=='schedule'">
+  <ng-container *ngIf="!(sampleData$) && _stepMention.step.settings.pieceName !== CORE_SCHEDULE">
     <div class="ap-my-3 ap-px-2">
       <div class="ap-typography-body-1 ap-text-center ap-mb-1">
         {{

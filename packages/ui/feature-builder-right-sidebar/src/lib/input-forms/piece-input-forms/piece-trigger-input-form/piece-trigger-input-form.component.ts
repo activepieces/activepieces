@@ -14,7 +14,11 @@ import {
 import { forkJoin, map, Observable, of, shareReplay, take, tap } from 'rxjs';
 import { TriggerType, UpdateTriggerRequest } from '@activepieces/shared';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
-import { ActionMetaService, fadeInUp400ms } from '@activepieces/ui/common';
+import {
+  ActionMetaService,
+  CORE_SCHEDULE,
+  fadeInUp400ms,
+} from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
 import {
   BuilderSelectors,
@@ -24,6 +28,7 @@ import {
 import { PiecePropertiesFormValue } from '@activepieces/ui/feature-builder-form-controls';
 import { ComponentTriggerInputFormSchema } from '../../input-forms-schema';
 import { PiecePropertyMap } from '@activepieces/pieces-framework';
+
 declare type TriggerDropdownOption = {
   label: {
     name: string;
@@ -59,6 +64,7 @@ const PIECE_PROPERTIES_FORM_CONTROL_NAME = 'configs';
 export class PieceTriggerInputFormComponent {
   readonly TRIGGER_FORM_CONTROL_NAME = TRIGGER_FORM_CONTROL_NAME;
   readonly CONFIGS_FORM_CONTROL_NAME = PIECE_PROPERTIES_FORM_CONTROL_NAME;
+  CORE_SCHEDULE = CORE_SCHEDULE;
   pieceTriggerInputForm: UntypedFormGroup;
   initialSetup$: Observable<TriggerDropdownOption[]>;
   pieceName: string;
