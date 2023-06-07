@@ -333,6 +333,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
         return this.actionMetaDataService.getPieceActionConfigOptions<T>(
           {
             pieceVersion: this.pieceVersion,
+            pieceName: this.pieceName,
             propertyName: obj.propertyKey,
             stepName: this.actionOrTriggerName,
             input: res,

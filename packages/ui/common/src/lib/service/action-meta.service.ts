@@ -33,7 +33,7 @@ export const CORE_PIECES_ACTIONS_NAMES = [
 ];
 export const corePieceIconUrl = (pieceName: string) =>
   `assets/img/custom/piece/${pieceName.replace(
-    '@activepieces/',
+    '@activepieces/piece-',
     ''
   )}_mention.png`;
 export const CORE_SCHEDULE = '@activepieces/piece-schedule';

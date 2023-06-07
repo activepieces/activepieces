@@ -1,5 +1,5 @@
-import { FastifyPluginCallbackTypebox } from '@fastify/type-provider-typebox'
-import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
+import { FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
+import { ActivepiecesError, ErrorCode, GetPieceRequestQuery } from '@activepieces/shared'
 import { engineHelper } from '../helper/engine-helper'
 import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
@@ -18,6 +18,26 @@ export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done)
         })
     })
 
+    app.get('/:scope/:name', {
+        schema: {
+            params: Type.Object({
+                name: Type.String(),
+                scope: Type.String(),
+            }),
+            querystring: GetPieceRequestQuery,
+        },
+    }, async (req): Promise<PieceMetadata> => {
+        const { name, scope } = req.params
+        const { version } = req.query
+
+        const decodeScope = decodeURIComponent(scope)
+        const decodedName = decodeURIComponent(name)
+        return await pieceMetadataService.get({
+            name: `${decodeScope}/${decodedName}`,
+            version,
+        })
+    })
+
     app.get('/:name', GetPieceRequest, async (req): Promise<PieceMetadata> => {
         const { name } = req.params
         const { version } = req.query
@@ -29,9 +49,9 @@ export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done)
         })
     })
 
-    app.post('/:pieceName/options', PieceOptionsRequest, async (req) => {
+    app.post('/options', PieceOptionsRequest, async (req) => {
         const { result } = await engineHelper.executeProp({
-            pieceName: decodeURIComponent(req.params.pieceName),
+            pieceName: req.body.pieceName,
             pieceVersion: req.body.pieceVersion,
             propertyName: req.body.propertyName,
             stepName: req.body.stepName,
