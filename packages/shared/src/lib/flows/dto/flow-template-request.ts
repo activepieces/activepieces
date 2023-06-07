@@ -13,7 +13,7 @@ export const FlowTemplate = Type.Object({
     description: Type.String(),
     tags: Type.Array(Type.String()),
     pieces: Type.Array(Type.String()),
-    pinned: Type.Boolean(),
+    pinnedOrder: Type.Optional(Type.Number()),
     blogUrl: Type.Optional(Type.String()),
     template: FlowVersionTemplate,
 })

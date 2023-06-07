@@ -15,7 +15,13 @@ export class TemplatesService {
       tags: [],
       search: '',
       pinned: true,
-    });
+    }).pipe(
+      map((res) => {
+        return res.sort((a, b) =>
+          (a.pinnedOrder || 0) > (b.pinnedOrder || 0) ? -1 : 1
+        );
+      })
+    );
   }
   getTemplates(params: ListFlowTemplatesRequest) {
     const httpParams = new HttpParams();
