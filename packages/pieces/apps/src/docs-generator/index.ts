@@ -3,10 +3,11 @@ import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { cwd } from "node:process";
 import sortBy from "lodash/sortBy";
-import { Piece, ActionBase, PieceMetadata} from '@activepieces/pieces-framework';
+import { Piece, ActionBase, PieceMetadata, PiecePropertyMap, TriggerBase, TriggerStrategy} from '@activepieces/pieces-framework';
 
 type PieceInfo = PieceMetadata & {
   directory: string;
+  authors: string[];
 }
 
 const loadPiecesMetadata = async (): Promise<PieceInfo[]> => {
@@ -14,28 +15,43 @@ const loadPiecesMetadata = async (): Promise<PieceInfo[]> => {
   const piecesPath = resolve(cwd(), 'packages', 'pieces')
   const piecePackages = await readdir(piecesPath)
   const filteredPiecePackages = piecePackages.filter(d => !frameworkPackages.includes(d))
-
   const piecesMetadata: PieceInfo[] = [];
 
   for (const piecePackage of filteredPiecePackages) {
     const module = await import(`packages/pieces/${piecePackage}/src/index.ts`)
     const piece = Object.values<Piece>(module)[0]
+    if(piece.displayName != "Discord" && piece.displayName != "Telegram bot") continue;
     piecesMetadata.push({
       ...piece.metadata(),
       directory: piecePackage,
+      authors: piece.authors
     })
   }
 
   return sortBy(piecesMetadata, [p => p.displayName.toUpperCase()])
 }
 
-const getCardTemplate = (title: string, description: string) => {
+const capitilizeFirstLetter = (str: string) => {
+  str = str.toLowerCase();
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+const getCardTemplate = (title: string, description: string, props: PiecePropertyMap, TriggerStrategy: TriggerStrategy | undefined) => {
   return `
-    <CardGroup cols={2}>
-      <Card title="${title}">
+      <Card title="${title} ${TriggerStrategy != undefined ? '(' + capitilizeFirstLetter(TriggerStrategy) + ')' : ''}">
         ${description}
+
+        <Expandable title="Properties">
+          ${Object.entries(props).map(([key, value]) => {
+            return `
+            <ResponseField name="${value.displayName}" ${value.required ? "required" : ""} type="${capitilizeFirstLetter(value.type)}" >
+              ${value.description == undefined ? "" : value.description}
+              
+            </ResponseField>
+            `
+          }).join('')}  
+        </Expandable>
       </Card>
-    </CardGroup>
   `;
 }
 
@@ -43,7 +59,18 @@ const getPieceCards = (items: Record<string, ActionBase>) => {
   const itemsCards: string[] = [];
 
   Object.values(items).forEach(item => {
-    const card = getCardTemplate(item.displayName, item.description);
+    const card = getCardTemplate(item.displayName, item.description, item.props, undefined);
+    itemsCards.push(card);
+  })
+
+  return itemsCards.join('');
+}
+
+const getPieceCardsTrigger = (items: Record<string, TriggerBase>) => {
+  const itemsCards: string[] = [];
+
+  Object.values(items).forEach(item => {
+    const card = getCardTemplate(item.displayName, item.description, item.props, item.type);
     itemsCards.push(card);
   })
 
@@ -53,12 +80,17 @@ const getPieceCards = (items: Record<string, ActionBase>) => {
 /** returns the mint.json navigation path for the docs */
 const writePieceDoc = async (appsDocsFolderPath:string, p: PieceInfo, mdxTemplate: string) => {
   let docsFile = mdxTemplate.replace('TITLE', p.displayName);
+  const index: number = docsFile.indexOf(`${p.displayName}'`);
+  const authorsText = `\n## Authors ${p.authors.join(', ')} \n`;
+  docsFile = docsFile.slice(0, index + p.displayName.length + 1) + '\n' + authorsText + docsFile.slice(index + p.displayName.length + 1);
+
+  
   let actionsCards = getPieceCards(p.actions);
   if (!actionsCards) {
     actionsCards =
       '*No supported actions yet, please let us know if you need something on Discord so we can help out* \n';
   }
-  let triggerCards = getPieceCards(p.triggers);
+  let triggerCards = getPieceCardsTrigger(p.triggers);
   if (!triggerCards) {
     triggerCards =
       '*No supported triggers yet, please let us know if you need something on Discord so we can help out* \n';
