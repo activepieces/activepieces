@@ -1,34 +1,79 @@
-import { FastifyPluginCallbackTypebox } from '@fastify/type-provider-typebox'
-import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
+import { FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
+import { ActivepiecesError, ErrorCode, GetPieceRequestParams, GetPieceRequestQuery, InstallPieceRequest, PieceOptionRequest, SemVerType } from '@activepieces/shared'
 import { engineHelper } from '../helper/engine-helper'
 import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
 import { pieceMetadataService } from './piece-metadata-service'
 import { PieceMetadata, PieceMetadataSummary } from '@activepieces/pieces-framework'
-import { GetPieceRequest, ListPiecesRequest, PieceOptionsRequest } from './piece-requests'
+import { FastifyRequest } from 'fastify'
 
 const statsEnabled = system.get(SystemProp.STATS_ENABLED) ?? false
 
 export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done) => {
-    app.get('/', ListPiecesRequest, async (req): Promise<PieceMetadataSummary[]> => {
+
+
+    app.post(
+        '/',
+        {
+            schema: {
+                body: InstallPieceRequest,
+            },
+        },
+        async (
+            request: FastifyRequest<{
+                Body: InstallPieceRequest
+            }>,
+        ) => {
+            const {result} = await engineHelper.extractPieceMetadata({
+                pieceName: request.body.pieceName,
+                pieceVersion: request.body.pieceVersion,
+            })
+            return pieceMetadataService.create({
+                projectId: request.principal.projectId,
+                pieceMetadata: result,
+            })
+        },
+    )
+
+    app.get('/', {
+        schema: {
+            querystring: Type.Object({
+                release: SemVerType,
+            }),
+        },
+    }, async (req): Promise<PieceMetadataSummary[]> => {
         const { release } = req.query
 
         return await pieceMetadataService.list({
             release,
+            projectId: req.principal.projectId,
         })
     })
 
-    app.get('/:name', GetPieceRequest, async (req): Promise<PieceMetadata> => {
+    app.get('/:name', {
+        schema: {
+            params: GetPieceRequestParams,
+            querystring: GetPieceRequestQuery,
+        },
+    }, async (req): Promise<PieceMetadata> => {
         const { name } = req.params
         const { version } = req.query
 
         return await pieceMetadataService.get({
+            projectId: req.principal.projectId,
             name,
             version,
         })
     })
 
-    app.post('/:pieceName/options', PieceOptionsRequest, async (req) => {
+    app.post('/:pieceName/options',  {
+        schema: {
+            params: Type.Object({
+                pieceName: Type.String(),
+            }),
+            body: PieceOptionRequest,
+        },
+    }, async (req) => {
         const { result } = await engineHelper.executeProp({
             pieceName: req.params.pieceName,
             pieceVersion: req.body.pieceVersion,

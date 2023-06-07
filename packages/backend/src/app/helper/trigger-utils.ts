@@ -27,7 +27,10 @@ export const triggerUtils = {
         let payloads: unknown[] = []
         switch (flowTrigger.type) {
             case TriggerType.PIECE: {
-                const pieceTrigger = await getPieceTrigger(flowTrigger)
+                const pieceTrigger = await getPieceTrigger({
+                    trigger: flowTrigger,
+                    projectId,
+                })            
                 const { result } = await engineHelper.executeTrigger({
                     hookType: TriggerHookType.RUN,
                     flowVersion: flowVersion,
@@ -102,7 +105,10 @@ export const triggerUtils = {
 const disablePieceTrigger = async (params: EnableOrDisableParams) => {
     const { flowVersion, projectId, simulate } = params
     const flowTrigger = flowVersion.trigger as PieceTrigger
-    const pieceTrigger = await getPieceTrigger(flowTrigger)
+    const pieceTrigger = await getPieceTrigger({
+        trigger: flowTrigger,
+        projectId,
+    })
 
     const engineHelperResponse = await engineHelper.executeTrigger({
         hookType: TriggerHookType.ON_DISABLE,
@@ -137,7 +143,10 @@ const disablePieceTrigger = async (params: EnableOrDisableParams) => {
 const enablePieceTrigger = async (params: EnableOrDisableParams) => {
     const { flowVersion, projectId, simulate } = params
     const flowTrigger = flowVersion.trigger as PieceTrigger
-    const pieceTrigger = await getPieceTrigger(flowTrigger)
+    const pieceTrigger = await getPieceTrigger({
+        trigger: flowTrigger,
+        projectId,
+    })
 
     const webhookUrl = await webhookService.getWebhookUrl({
         flowId: flowVersion.flowId,
@@ -193,9 +202,10 @@ const enablePieceTrigger = async (params: EnableOrDisableParams) => {
 
     return engineHelperResponse
 }
-
-export async function getPieceTrigger(trigger: PieceTrigger): Promise<TriggerBase> {
+ 
+async function getPieceTrigger({trigger, projectId}: {trigger: PieceTrigger, projectId: ProjectId}): Promise<TriggerBase> {
     const piece = await pieceMetadataService.get({
+        projectId,
         name: trigger.settings.pieceName,
         version: trigger.settings.pieceVersion,
     })

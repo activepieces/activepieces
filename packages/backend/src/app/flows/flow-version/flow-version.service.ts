@@ -337,7 +337,10 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
                     clonedRequest.request.action.valid = branchSettingsValidator.Check(clonedRequest.request.action.settings)
                     break
                 case ActionType.PIECE:
-                    clonedRequest.request.action.valid = await validateAction(clonedRequest.request.action.settings)
+                    clonedRequest.request.action.valid = await validateAction({
+                        settings: clonedRequest.request.action.settings,
+                        projectId: projectId,
+                    })
                     break
                 case ActionType.CODE: {
                     const codeSettings: CodeActionSettings = clonedRequest.request.action.settings
@@ -359,7 +362,10 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
                     clonedRequest.request.valid = branchSettingsValidator.Check(clonedRequest.request.settings)
                     break
                 case ActionType.PIECE:
-                    clonedRequest.request.valid = await validateAction(clonedRequest.request.settings)
+                    clonedRequest.request.valid = await validateAction({
+                        settings: clonedRequest.request.settings,
+                        projectId: projectId,
+                    })
                     break
                 case ActionType.CODE: {
                     const codeSettings: CodeActionSettings = clonedRequest.request.settings
@@ -390,7 +396,10 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
                     clonedRequest.request.valid = false
                     break
                 case TriggerType.PIECE:
-                    clonedRequest.request.valid = await validateTrigger(clonedRequest.request.settings)
+                    clonedRequest.request.valid = await validateTrigger({
+                        settings: clonedRequest.request.settings,
+                        projectId: projectId,
+                    })
                     break
                 default:
                     clonedRequest.request.valid = true
@@ -404,7 +413,8 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
 }
 
 
-async function validateAction(settings: PieceActionSettings) {
+async function validateAction({projectId, settings}: {projectId: ProjectId, settings: PieceActionSettings}) {
+
     if (
         settings.pieceName === undefined ||
         settings.pieceVersion === undefined ||
@@ -415,6 +425,7 @@ async function validateAction(settings: PieceActionSettings) {
     }
 
     const piece = await pieceMetadataService.get({
+        projectId: projectId,
         name: settings.pieceName,
         version: settings.pieceVersion,
     })
@@ -429,7 +440,7 @@ async function validateAction(settings: PieceActionSettings) {
     return validateProps(action.props, settings.input)
 }
 
-async function validateTrigger(settings: PieceTriggerSettings) {
+async function validateTrigger({settings, projectId}: {settings: PieceTriggerSettings, projectId: ProjectId}) {
     if (
         settings.pieceName === undefined ||
         settings.pieceVersion === undefined ||
@@ -440,6 +451,7 @@ async function validateTrigger(settings: PieceTriggerSettings) {
     }
 
     const piece = await pieceMetadataService.get({
+        projectId: projectId,
         name: settings.pieceName,
         version: settings.pieceVersion,
     })

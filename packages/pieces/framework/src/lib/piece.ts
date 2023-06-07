@@ -54,7 +54,6 @@ export class Piece implements PieceBase {
       actions: this._actions,
       triggers: this._triggers,
       description: this.description,
-      version: this.version,
       minimumSupportedRelease: this.minimumSupportedRelease,
       maximumSupportedRelease: this.maximumSupportedRelease,
     };

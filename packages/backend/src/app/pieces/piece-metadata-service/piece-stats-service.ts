@@ -36,7 +36,7 @@ export const pieceStatsService = {
             activeFlows: Set<FlowId>
         }> = {}
         const defaultStats = { activeSteps: 0, allSteps: 0, allProjects: 0, activeFlows: 0, allFlows: 0, activeProjects: 0 }
-        const pieces = await filePieceMetadataService.list({ release: '' })
+        const pieces = await filePieceMetadataService.list({ release: '', projectId: null })
         for (const piece of pieces) {
             uniqueStatsPerPiece[piece.name] = {
                 flows: new Set(),

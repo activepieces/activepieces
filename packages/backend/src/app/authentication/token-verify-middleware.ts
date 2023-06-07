@@ -1,6 +1,6 @@
 import { FastifyRequest } from 'fastify'
 import { tokenUtils } from './lib/token-utils'
-import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, PrincipalType, apId } from '@activepieces/shared'
 
 const ignoredRoutes = new Set([
     // BEGIN EE
@@ -15,7 +15,6 @@ const ignoredRoutes = new Set([
     '/v1/authentication/sign-in',
     '/v1/authentication/sign-up',
     '/v1/flags',
-    '/v1/pieces',
     '/v1/webhooks',
     '/v1/webhooks/:flowId',
     '/v1/webhooks/:flowId/sync',
@@ -27,15 +26,16 @@ const ignoredRoutes = new Set([
 const HEADER_PREFIX = 'Bearer '
 
 export const tokenVerifyMiddleware = async (request: FastifyRequest): Promise<void> => {
-    if (ignoredRoutes.has(request.routerPath)) {
-        return
-    }
-    if(request.routerPath == '/v1/app-credentials' && request.method == 'GET') {
-        return
+    request.principal = {
+        id: `ANONYMOUS_${apId()}`,
+        type: PrincipalType.UNKNOWN,
+        projectId: `ANONYMOUS_${apId()}`,
     }
     const rawToken = request.headers.authorization
-    if (rawToken === undefined || rawToken === null) {
-        throw new ActivepiecesError({ code: ErrorCode.INVALID_BEARER_TOKEN, params: {} })
+    if (!rawToken) {
+        if (requiresAuthentication(request.routerPath, request.method)) {
+            throw new ActivepiecesError({ code: ErrorCode.INVALID_BEARER_TOKEN, params: {} })
+        }
     }
     else {
         try {
@@ -44,7 +44,22 @@ export const tokenVerifyMiddleware = async (request: FastifyRequest): Promise<vo
             request.principal = principal
         }
         catch (e) {
-            throw new ActivepiecesError({ code: ErrorCode.INVALID_BEARER_TOKEN, params: {} })
+            if (requiresAuthentication(request.routerPath, request.method)) {
+                throw new ActivepiecesError({ code: ErrorCode.INVALID_BEARER_TOKEN, params: {} })
+            }
         }
     }
+}
+
+function requiresAuthentication(routerPath: string, method: string) {
+    if (ignoredRoutes.has(routerPath)) {
+        return false
+    }
+    if (routerPath == '/v1/app-credentials' && method == 'GET') {
+        return false
+    }
+    if(routerPath == '/v1/pieces' && method == 'GET') {
+        return false
+    }
+    return true
 }

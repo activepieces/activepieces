@@ -5,6 +5,7 @@ import { FlowVersion, FlowVersionId } from "../flows/flow-version";
 import { ProjectId } from "../project/project";
 
 export enum EngineOperationType {
+    EXTRACT_PIECE_METADATA = "EXTRACT_PIECE_METADATA",
     EXECUTE_ACTION = "EXECUTE_ACTION",
     EXECUTE_CODE = "EXECUTE_CODE",
     EXECUTE_FLOW = "EXECUTE_FLOW",
@@ -25,6 +26,7 @@ export type EngineOperation =
     | ExecuteFlowOperation
     | ExecutePropsOptions
     | ExecuteTriggerOperation<TriggerHookType>
+    | ExecuteExtractPieceMetadata
 
 export type ExecuteActionOperation = {
     actionName: string
@@ -35,6 +37,11 @@ export type ExecuteActionOperation = {
     projectId: ProjectId
     workerToken?: string
     apiUrl?: string
+}
+
+export type ExecuteExtractPieceMetadata = {
+    pieceName: string
+    pieceVersion: string
 }
 
 export type ExecuteCodeOperation = {

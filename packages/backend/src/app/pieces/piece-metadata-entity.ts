@@ -1,9 +1,9 @@
 import { EntitySchema } from 'typeorm'
 import { PieceMetadata } from '@activepieces/pieces-framework'
-import { ApId, BaseModel } from '@activepieces/shared'
+import { ApId, BaseModel, Project } from '@activepieces/shared'
 import { BaseColumnSchemaPart } from '../helper/base-entity'
 
-export type PieceMetadataSchema = BaseModel<ApId> & PieceMetadata
+export type PieceMetadataSchema = BaseModel<ApId> & PieceMetadata & { projectId: ApId, project: Project}
 
 export const PieceMetadataEntity = new EntitySchema<PieceMetadataSchema>({
     name: 'piece_metadata',
@@ -22,6 +22,10 @@ export const PieceMetadataEntity = new EntitySchema<PieceMetadataSchema>({
             nullable: false,
         },
         description: {
+            type: String,
+            nullable: true,
+        },
+        projectId: {
             type: String,
             nullable: true,
         },
@@ -51,9 +55,21 @@ export const PieceMetadataEntity = new EntitySchema<PieceMetadataSchema>({
     },
     indices: [
         {
-            name: 'idx_piece_metadata_name_version',
-            columns: ['name', 'version'],
+            name: 'idx_piece_metadata_name_project_id_version',
+            columns: ['name', 'version', 'projectId'],
             unique: true,
         },
     ],
+    relations: {
+        project: {
+            type: 'many-to-one',
+            target: 'project',
+            cascade: true,
+            onDelete: 'CASCADE',
+            joinColumn: {
+                name: 'projectId',
+                foreignKeyConstraintName: 'fk_piece_metadata_project_id',
+            },
+        },
+    },
 })

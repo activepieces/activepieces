@@ -16,9 +16,11 @@ import {
   StepOutput,
   FlowVersion,
   ExecuteCodeOperation,
+  ExecuteExtractPieceMetadata,
 } from '@activepieces/shared';
 import { pieceHelper } from './lib/helper/action-helper';
 import { triggerHelper } from './lib/helper/trigger-helper';
+import { Piece } from '@activepieces/pieces-framework';
 
 const loadFlowVersion = (flowVersionId: string) => {
   const flowVersionJsonFile = `${globals.flowDirectory}/${flowVersionId}.json`
@@ -51,6 +53,27 @@ const initFlowExecutor = (input: ExecuteFlowOperation): FlowExecutor => {
     executionState,
     firstStep,
   })
+}
+
+const extractInformation = async (): Promise<void> => {
+  try {
+    const input: ExecuteExtractPieceMetadata = Utils.parseJsonFile(globals.inputFile);
+
+
+    const pieceModule = await import(input.pieceName);
+    const piece = Object.values<Piece>(pieceModule)[0];
+
+    writeOutput({
+      status: EngineResponseStatus.OK,
+      response: piece.metadata()
+    })
+  } catch (e) {
+    console.error(e);
+    writeOutput({
+      status: EngineResponseStatus.ERROR,
+      response: (e as Error).message
+    })
+  }
 }
 
 const executeFlow = async (): Promise<void> => {
@@ -175,6 +198,9 @@ async function execute() {
   const operationType = argv[2]
 
   switch (operationType) {
+    case EngineOperationType.EXTRACT_PIECE_METADATA:
+      extractInformation();
+      break;
     case EngineOperationType.EXECUTE_FLOW:
       executeFlow();
       break;
