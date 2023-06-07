@@ -39,7 +39,7 @@ const app = fastify({
         customOptions: {
             removeAdditional: 'all',
             useDefaults: true,
-            coerceTypes: true,
+            coerceTypes: 'array',
             formats: {
 
             },
