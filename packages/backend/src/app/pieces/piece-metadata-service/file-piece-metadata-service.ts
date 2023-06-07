@@ -21,7 +21,7 @@ const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
             const packageJson = await import(`../../../../../pieces/${piecePackage}/package.json`)
             const piece = Object.values<Piece>(module)[0]
             piecesMetadata.push({
-                folderName: piecePackage,
+                directoryName: piecePackage,
                 ...piece.metadata(),
                 name: packageJson.name,
                 version: packageJson.version,
