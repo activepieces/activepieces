@@ -114,7 +114,9 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
         validators: [Validators.required],
       }),
       name: new FormControl(
-        this.dialogData.pieceName.replace(/[^A-Za-z0-9_\\-]/g, '_'),
+        this.appConnectionsService.getConnectionNameSuggest(
+          this.dialogData.pieceName
+        ),
         {
           nonNullable: true,
           validators: [

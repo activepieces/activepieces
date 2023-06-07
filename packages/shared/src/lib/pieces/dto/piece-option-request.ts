@@ -3,6 +3,7 @@ import { SemVerType } from "./get-piece-request-query";
 
 export const PieceOptionRequest = Type.Object({
     pieceVersion: SemVerType,
+    pieceName: Type.String({}),
     stepName: Type.String({}),
     propertyName: Type.String({}),
     input: Type.Any({})
