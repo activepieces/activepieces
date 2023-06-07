@@ -50,3 +50,6 @@ packages/backend/.env
 
 # produced by unsandboxed engine execution
 .pnpm-store
+
+# produced by backend tests
+.npm-cache
