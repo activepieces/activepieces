@@ -44,7 +44,7 @@ const fixUrls = (input: string) => {
 
 const getCardTemplate = (title: string, description: string, props: PiecePropertyMap, triggerStrategy: TriggerStrategy | undefined) => {
   return `
-      <Card title="${title} ${triggerStrategy != undefined ? '(' + capitilizeFirstLetter(triggerStrategy) + ')' : ''}" ${triggerStrategy != undefined ? (triggerStrategy == TriggerStrategy.POLLING ? 'icon="clock"' : 'icon="bolt"') : ""}>
+      <Card title="${title} ${triggerStrategy != undefined ? (triggerStrategy == TriggerStrategy.POLLING ? "(Scheduled)" : "(Instant)") : ''}" ${triggerStrategy != undefined ? (triggerStrategy == TriggerStrategy.POLLING ? 'icon="clock"' : 'icon="bolt"') : ""}>
         ${description}
 
         <Expandable title="Properties">
