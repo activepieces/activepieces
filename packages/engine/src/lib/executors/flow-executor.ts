@@ -17,6 +17,7 @@ import {
   PauseMetadata,
   LoopOnItemsStepOutput,
   BranchStepOutput,
+  StopResponse,
 } from '@activepieces/shared';
 import { createActionHandler } from '../action/action-handler-factory';
 import { isNil } from 'lodash';
@@ -48,7 +49,7 @@ type PauseIterateFlowResponse = BaseIterateFlowResponse<ExecutionOutputStatus.PA
 }
 
 type StopIterateFlowResponse = BaseIterateFlowResponse<ExecutionOutputStatus.STOPPED> & {
-  stopResponse?: unknown
+  stopResponse?: StopResponse
 }
 
 type IterateFlowResponse =

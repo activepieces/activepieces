@@ -108,8 +108,9 @@ export class Sandbox {
             let output
             let verdict
             try {
+                const basePath = path.resolve(__dirname.split('/dist')[0])
                 await Sandbox.runIsolate(
-                    `--dir=/usr/bin/ --dir=/etc/=${etcDir} --dir=/workspace=/workspace:maybe --share-net --box-id=` +
+                    `--dir=/usr/bin/ --dir=/etc/=${etcDir} --dir=${basePath}=/${basePath}:maybe --share-net --box-id=` +
                     this.boxId +
                     ` --processes --wall-time=${Sandbox.sandboxRunTimeSeconds} --meta=` +
                     metaFile +
