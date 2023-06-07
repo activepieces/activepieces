@@ -25,7 +25,7 @@ export class EmptyFlowsTableComponent {
         })
         .pipe(
           tap((flow) => {
-            localStorage.setItem('newFlow','true');
+            localStorage.setItem('newFlow', 'true');
             this.router.navigate(['/flows/', flow.id]);
           })
         );
