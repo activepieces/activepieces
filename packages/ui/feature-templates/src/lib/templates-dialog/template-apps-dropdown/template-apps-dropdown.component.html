@@ -1,10 +1,9 @@
 <div class="ap-typography-subtitle-1 ap-text-title ap-mb-2.5">
     Apps
 </div>
-<mat-form-field subscriptSizing="dynamic" class="ap-w-[190px]">
+<mat-form-field subscriptSizing="dynamic">
     <mat-select [formControl]="dropdownControl" placeholder="Select">
-        <mat-option (click)="addPieceToFilter(piece.name)" *ngFor="let piece of (piecesToShowInDropdown$ | async)"
-            [value]="piece.name">
+        <mat-option *ngFor="let piece of (piecesToShowInDropdown$ | async)" [value]="piece.name">
             <div class="ap-flex ap-gap-2.5 ap-items-center">
                 <ap-piece-icon-container [url]="piece.logoUrl"></ap-piece-icon-container>
                 <div class="ap-typography-body-2">
@@ -21,3 +20,4 @@
         (removePiece)="removePieceFromFilter(p)">
     </app-template-app-tag-container>
 </div>
+<ng-template *ngIf="valueChanges$|async"></ng-template>

@@ -8,8 +8,8 @@
     <ap-icon-button tooltipText="Close" iconFilename="close.svg" mat-dialog-close></ap-icon-button>
 </div>
 
-<mat-dialog-content class="!ap-flex ap-h-[655px] !ap-mt-3">
-    <div class="ap-w-[220px] ap-flex ap-flex-col ap-gap-8">
+<mat-dialog-content class="!ap-flex ap-h-[655px] ap-gap-2 !ap-mt-3">
+    <div class="ap-w-[230px] ap-flex ap-flex-col ap-gap-8">
         <app-templates-filters [formControl]="dialogForm.controls.tags" [filters]="filters"></app-templates-filters>
         <app-template-apps-dropdown [formControl]="dialogForm.controls.pieces"></app-template-apps-dropdown>
     </div>

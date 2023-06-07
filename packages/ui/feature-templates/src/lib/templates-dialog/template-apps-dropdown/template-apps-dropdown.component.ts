@@ -6,7 +6,7 @@ import {
   corePieceIconUrl,
 } from '@activepieces/ui/common';
 import { PieceMetadataSummary } from '@activepieces/pieces-framework';
-import { Observable, map } from 'rxjs';
+import { Observable, map, tap } from 'rxjs';
 import { TriggerType } from '@activepieces/shared';
 import {
   ControlValueAccessor,
@@ -37,10 +37,17 @@ export class TemplateAppsDropdownComponent implements ControlValueAccessor {
   dropdownControl: FormControl<string> = new FormControl('', {
     nonNullable: true,
   });
+  valueChanges$: Observable<string>;
   onChange: (val: Array<string>) => void = () => {
     //ignored
   };
   constructor(private actionMetaDataService: ActionMetaService) {
+    this.valueChanges$ = this.dropdownControl.valueChanges.pipe(
+      tap((val) => {
+        this.addPieceToFilter(val);
+        this.dropdownControl.setValue('', { emitEvent: false });
+      })
+    );
     this.pieces$ = this.actionMetaDataService.getPiecesManifest().pipe(
       map((pieces) => {
         const coreSteps = [
@@ -57,7 +64,6 @@ export class TemplateAppsDropdownComponent implements ControlValueAccessor {
             name: nonePieceDetials.key,
           };
         });
-
         const result = [
           ...coreSteps,
           ...pieces.map((p) => {
@@ -97,7 +103,7 @@ export class TemplateAppsDropdownComponent implements ControlValueAccessor {
   }
   addPieceToFilter(pieceName: string) {
     this.selectedPieces.push(pieceName);
-    this.dropdownControl.setValue('');
+    this.dropdownControl.setValue('', { emitEvent: false });
     this.setPiecesToShowInDropdown();
     this.onChange(this.selectedPieces);
   }
