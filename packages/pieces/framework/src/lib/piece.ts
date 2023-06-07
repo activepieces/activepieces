@@ -59,6 +59,14 @@ export class Piece implements PieceBase {
       maximumSupportedRelease: this.maximumSupportedRelease,
     };
   }
+
+  actions(){
+    return this._actions;
+  }
+
+  triggers(){
+    return this._triggers;
+  }
 }
 
 export const createPiece = (request: {
