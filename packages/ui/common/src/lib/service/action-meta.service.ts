@@ -165,11 +165,8 @@ export class ActionMetaService {
 
   getPieceActionConfigOptions<
     T extends DropdownState<unknown> | PiecePropertyMap
-  >(req: PieceOptionRequest, pieceName: string) {
-    return this.http.post<T>(
-      environment.apiUrl + `/pieces/${encodeURIComponent(pieceName)}/options`,
-      req
-    );
+  >(req: PieceOptionRequest) {
+    return this.http.post<T>(environment.apiUrl + `/pieces/options`, req);
   }
   findNonPieceStepIcon(step: Trigger | Action) {
     switch (step.type) {
