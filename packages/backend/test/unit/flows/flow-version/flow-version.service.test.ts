@@ -1,5 +1,5 @@
 import { FlowVersion, FlowVersionState, TriggerType } from '@activepieces/shared'
-import { exportedFlowVersionTesting } from '../../../src/app/flows/flow-version/flow-version.service'
+import { exportedFlowVersionTesting } from '../../../../src/app/flows/flow-version/flow-version.service'
 
 
 test('Duplicate Flow With Branch', () => {
@@ -308,4 +308,3 @@ test('Duplicate Flow With Loops using Import', () => {
     const importOperations = exportedFlowVersionTesting.getImportOperations(flowVersion.trigger)
     expect(importOperations).toEqual(expectedResult)
 })
-

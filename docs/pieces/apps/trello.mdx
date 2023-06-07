@@ -2,6 +2,9 @@
 title: 'Trello'
 ---
 
+##### Authors: [ShayPunter](https://github.com/ShayPunter)
+
+
 ## Creating your first Trello card using Activepiece
 
 1. Create a new collection
@@ -58,15 +61,63 @@ title: 'Trello'
 ## Actions
 
 
-    <CardGroup cols={2}>
-      <Card title="Create Card">
+      <Card title="Create Card " >
         Create a new card in Trello
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Trello Connection" required type="Basic_auth">
+
+To obtain your API key and token, follow these steps:
+
+1. Go to `https://trello.com/app-key`
+2. Copy **Personal Key** and enter it into the Trello API Key connection
+3. Click **generate a Token** in trello
+4. Copy the token and paste it into the Trello Token connection
+5. Your connection should now work!
+
+</ResponseField>
+            
+<ResponseField name="Boards" required type="Dropdown">
+List of boards
+</ResponseField>
+            
+<ResponseField name="Lists" required type="Dropdown">
+Get lists from a board
+</ResponseField>
+            
+<ResponseField name="Task Name" required type="Short_text">
+The name of the card to create
+</ResponseField>
+            
+<ResponseField name="Task Description"  type="Long_text">
+The description of the card to create
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   
-    <CardGroup cols={2}>
-      <Card title="Get Card">
+      <Card title="Get Card " >
         Get a card in Trello
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Trello Connection" required type="Basic_auth">
+
+To obtain your API key and token, follow these steps:
+
+1. Go to `https://trello.com/app-key`
+2. Copy **Personal Key** and enter it into the Trello API Key connection
+3. Click **generate a Token** in trello
+4. Copy the token and paste it into the Trello Token connection
+5. Your connection should now work!
+
+</ResponseField>
+            
+<ResponseField name="Card ID" required type="Short_text">
+The card ID
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   

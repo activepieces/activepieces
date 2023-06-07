@@ -3,10 +3,11 @@ import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { cwd } from "node:process";
 import sortBy from "lodash/sortBy";
-import { Piece, ActionBase, PieceMetadata} from '@activepieces/pieces-framework';
+import { Piece, ActionBase, PieceMetadata, PiecePropertyMap, TriggerBase, TriggerStrategy} from '@activepieces/pieces-framework';
 
 type PieceInfo = PieceMetadata & {
   directory: string;
+  authors: string[];
 }
 
 const loadPiecesMetadata = async (): Promise<PieceInfo[]> => {
@@ -14,7 +15,6 @@ const loadPiecesMetadata = async (): Promise<PieceInfo[]> => {
   const piecesPath = resolve(cwd(), 'packages', 'pieces')
   const piecePackages = await readdir(piecesPath)
   const filteredPiecePackages = piecePackages.filter(d => !frameworkPackages.includes(d))
-
   const piecesMetadata: PieceInfo[] = [];
 
   for (const piecePackage of filteredPiecePackages) {
@@ -22,24 +22,45 @@ const loadPiecesMetadata = async (): Promise<PieceInfo[]> => {
     const packageJson = await import(`packages/pieces/${piecePackage}/package.json`)
 
     const piece = Object.values<Piece>(module)[0]
+
     piecesMetadata.push({
       ...piece.metadata(),
       name: packageJson.name,
       version: packageJson.version,
       directory: piecePackage,
+      authors: piece.authors
     })
   }
 
   return sortBy(piecesMetadata, [p => p.displayName.toUpperCase()])
 }
 
-const getCardTemplate = (title: string, description: string) => {
+const capitilizeFirstLetter = (str: string) => {
+  str = str.toLowerCase();
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+const fixUrls = (input: string) => {
+  // find all urls and put them inside ` `
+  const regex = /(https?:\/\/[^\s]+)/g;
+  return input.replace(regex, '`$1`');
+}
+
+const getCardTemplate = (title: string, description: string, props: PiecePropertyMap, triggerStrategy: TriggerStrategy | undefined) => {
   return `
-    <CardGroup cols={2}>
-      <Card title="${title}">
+      <Card title="${title} ${triggerStrategy != undefined ? (triggerStrategy == TriggerStrategy.POLLING ? "(Scheduled)" : "(Instant)") : ''}" ${triggerStrategy != undefined ? (triggerStrategy == TriggerStrategy.POLLING ? 'icon="clock"' : 'icon="bolt"') : ""}>
         ${description}
+
+        <Expandable title="Properties">
+          ${Object.entries(props).map(([key, value]) => {
+            return `
+<ResponseField name="${value.displayName}" ${value.required ? "required" : ""} type="${capitilizeFirstLetter(value.type)}">
+${value.description == undefined ? "" : fixUrls(value.description)}
+</ResponseField>
+            `
+          }).join('')}  
+        </Expandable>
       </Card>
-    </CardGroup>
   `;
 }
 
@@ -47,7 +68,18 @@ const getPieceCards = (items: Record<string, ActionBase>) => {
   const itemsCards: string[] = [];
 
   Object.values(items).forEach(item => {
-    const card = getCardTemplate(item.displayName, item.description);
+    const card = getCardTemplate(item.displayName, item.description, item.props, undefined);
+    itemsCards.push(card);
+  })
+
+  return itemsCards.join('');
+}
+
+const getPieceCardsTrigger = (items: Record<string, TriggerBase>) => {
+  const itemsCards: string[] = [];
+
+  Object.values(items).forEach(item => {
+    const card = getCardTemplate(item.displayName, item.description, item.props, item.type);
     itemsCards.push(card);
   })
 
@@ -57,12 +89,24 @@ const getPieceCards = (items: Record<string, ActionBase>) => {
 /** returns the mint.json navigation path for the docs */
 const writePieceDoc = async (appsDocsFolderPath:string, p: PieceInfo, mdxTemplate: string) => {
   let docsFile = mdxTemplate.replace('TITLE', p.displayName);
+  if(p.authors.length != 0) {
+    const authors = p.authors.map((author) => {
+      const githubLink = `https://github.com/${author}`;
+      return `[${author}](${githubLink})`;
+    });
+
+    const split = docsFile.split('---');
+    const secondIndex = split[1].length + 3;
+    const authorsText = `##### Authors: ${authors.join(', ')}\n`;
+    docsFile = docsFile.slice(0, secondIndex) + '---\n\n' + authorsText + docsFile.slice(secondIndex).replace("---", "");
+  }
+  
   let actionsCards = getPieceCards(p.actions);
   if (!actionsCards) {
     actionsCards =
       '*No supported actions yet, please let us know if you need something on Discord so we can help out* \n';
   }
-  let triggerCards = getPieceCards(p.triggers);
+  let triggerCards = getPieceCardsTrigger(p.triggers);
   if (!triggerCards) {
     triggerCards =
       '*No supported triggers yet, please let us know if you need something on Discord so we can help out* \n';

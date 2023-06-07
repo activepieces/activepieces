@@ -55,6 +55,14 @@ export class Piece implements Omit<PieceBase, "version" | "name"> {
       maximumSupportedRelease: this.maximumSupportedRelease,
     };
   }
+
+  actions(){
+    return this._actions;
+  }
+
+  triggers(){
+    return this._triggers;
+  }
 }
 
 export const createPiece = (request: {
