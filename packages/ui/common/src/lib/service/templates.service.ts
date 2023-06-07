@@ -24,22 +24,18 @@ export class TemplatesService {
     );
   }
   getTemplates(params: ListFlowTemplatesRequest) {
-    const httpParams = new HttpParams();
+    let httpParams = new HttpParams();
     if (params.pieces && params.pieces.length > 0) {
-      params.pieces.forEach((piece) => {
-        httpParams.append('pieces', piece);
-      });
+      httpParams = httpParams.appendAll({ pieces: params.pieces });
     }
     if (params.tags && params.tags.length > 0) {
-      params.tags.forEach((tag) => {
-        httpParams.append('tags', tag);
-      });
+      httpParams = httpParams.appendAll({ tags: params.tags });
     }
     if (params.search) {
-      httpParams.append('search', params.search);
+      httpParams = httpParams.append('search', params.search);
     }
     if (params.pinned !== undefined) {
-      httpParams.append('pinned', params.pinned.toString());
+      httpParams = httpParams.append('pinned', params.pinned ? true : false);
     }
     return this.flagsService.getTemplatesSourceUrl().pipe(
       switchMap((url) => {
