@@ -7,7 +7,7 @@ export const addPromaTable = createAction({
   description: '',
   props: {
     api_key: promaProps.api_key,
-    organization_id: promaProps.organization_id(true),
+    // organization_id: promaProps.organization_id(true),
     workspace_id: promaProps.workspace_id(true),
     table_name: promaProps.table_name(true),
   },

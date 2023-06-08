@@ -8,7 +8,6 @@ export const getPromaProjects = createAction({
   description: '',
   props: {
     api_key: promaProps.api_key,
-    organization_id: promaProps.organization_id(true),
     workspace_id: promaProps.workspace_id(true),
   },
   async run(context) {

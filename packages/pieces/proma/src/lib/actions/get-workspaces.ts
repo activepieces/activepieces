@@ -8,13 +8,11 @@ export const getPromaWorkspaces = createAction({
   description: '',
   props: {
     api_key: promaProps.api_key,
-    organization_id: promaProps.organization_id(true),
   },
   async run(context) {
     const api_key = context.propsValue.api_key;
-    const organization_id = context.propsValue.organization_id;
-    if (api_key && organization_id) {
-      const temp = await getWorkSpaces(api_key, organization_id).catch(
+    if (api_key) {
+      const temp = await getWorkSpaces(api_key).catch(
         () => []
       );
       return { workspaces: temp };

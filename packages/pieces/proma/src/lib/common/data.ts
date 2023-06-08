@@ -16,10 +16,6 @@ import {
 } from './types';
 import _ from 'lodash';
 
-export const isApiKeyValid = (x: string | undefined) => {
-  return x?.length === 36;
-};
-
 export const parseJSON = (x: string, returnNull = false) => {
   try {
     if (!_.isString(x)) return x;
@@ -45,14 +41,11 @@ export async function getOrganizations(
   return response.body.data;
 }
 
-export async function getWorkSpaces(
-  api_key: string,
-  organization_id: string
-): Promise<Workspace[]> {
+export async function getWorkSpaces(api_key: string): Promise<Workspace[]> {
   const response = await httpClient.sendRequest<WorkspaceResponse>({
     url: `${PROMA_SERVER_URL}/getworkspaces`,
     method: HttpMethod.GET,
-    queryParams: { organization_id, api_key },
+    queryParams: { api_key },
   });
   return response.body.data;
 }
@@ -101,13 +94,11 @@ export async function getTableColumns(
 export async function storeWebhookUrl({
   api_key,
   table_id,
-  organization_id,
   webhook_url,
   trigger_type,
 }: {
   api_key: string;
   table_id: string;
-  organization_id: string;
   webhook_url: string;
   trigger_type: string;
 }): Promise<Webhook> {
@@ -116,11 +107,11 @@ export async function storeWebhookUrl({
     method: HttpMethod.POST,
     body: {
       table_id,
-      organization_id,
       webhook_url,
       trigger_type,
       api_key,
     },
+    queryParams:{api_key}
   });
   return response.body.data;
 }
@@ -136,19 +127,18 @@ export async function removeWebhookUrl({
     url: `${PROMA_SERVER_URL}/webhook/delete`,
     method: HttpMethod.POST,
     body: { ROWID: id, api_key },
+    queryParams: {api_key}
   });
   return response.body?.data;
 }
 
 export async function insertTableRow({
-  organization_id,
   workspace_id,
   table_id,
   data,
   api_key,
 }: {
   api_key: string;
-  organization_id: string;
   table_id: string;
   workspace_id: string;
   data: unknown;
@@ -157,11 +147,12 @@ export async function insertTableRow({
     url: `${PROMA_SERVER_URL}/tablerow/add`,
     method: HttpMethod.POST,
     body: {
-      organization_id,
       workspace_id,
       table_id,
-      data, api_key
+      data,
+      api_key,
     },
+    queryParams: { api_key },
   });
   return response.body.data;
 }

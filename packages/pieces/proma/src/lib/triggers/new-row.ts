@@ -8,7 +8,7 @@ export const newRowAdded = createTrigger({
   description: 'Triggers when a new row is added',
   props: {
     api_key: promaProps.api_key,
-    organization_id: promaProps.organization_id(true),
+    // organization_id: promaProps.organization_id(true),
     workspace_id: promaProps.workspace_id(true),
     table_id: promaProps.table_id(true),
   },
@@ -28,7 +28,7 @@ export const newRowAdded = createTrigger({
     const resp = await storeWebhookUrl({
       api_key,
       trigger_type: 'tableRowAdded',
-      organization_id: context.propsValue.organization_id || '',
+      // organization_id: context.propsValue.organization_id || '',
       table_id: context.propsValue.table_id || '',
       webhook_url: context.webhookUrl,
     });
@@ -46,7 +46,7 @@ export const newRowAdded = createTrigger({
     }
   },
   async run(context) {
-    const body = context.payload.body as { form_response: unknown };
-    return [body.form_response];
+    const body = context.payload.body;
+    return [body];
   },
 });

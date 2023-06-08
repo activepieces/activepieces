@@ -8,23 +8,23 @@ export const addPromaRow = createAction({
   description: 'Add a row in master sheet',
   props: {
     api_key: promaProps.api_key,
-    organization_id: promaProps.organization_id(true),
+    // organization_id: promaProps.organization_id(true),
     workspace_id: promaProps.workspace_id(true),
     table_id: promaProps.table_id(true),
     dataRow: promaProps.data_row(true)
   },
   async run(context) {
     const api_key = context.propsValue.api_key;
-    const organization_id = context.propsValue.organization_id;
+    // const organization_id = context.propsValue.organization_id;
     const workspace_id = context.propsValue.workspace_id;
     const table_id = context.propsValue.table_id;
     const dataRow = context.propsValue.dataRow;
-    if (api_key && organization_id && workspace_id && table_id) {
-      const temp = await insertTableRow({ api_key, organization_id, workspace_id, table_id, data: dataRow }).catch(
+    if (api_key && workspace_id && table_id) {
+      const temp = await insertTableRow({ api_key, workspace_id, table_id, data: dataRow }).catch(
         () => null
       );
       return { data: temp };
     }
-    return { data: null };
+    return null;
   },
 });

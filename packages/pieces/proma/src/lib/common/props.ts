@@ -1,10 +1,8 @@
 import { Property } from '@activepieces/pieces-framework';
-import { Organization, Table, Workspace } from './types';
+import {Table, Workspace } from './types';
 import {
-  getOrganizations,
   getTables,
   getWorkSpaces,
-  isApiKeyValid,
 } from './data';
 
 export const promaProps = {
@@ -20,7 +18,7 @@ export const promaProps = {
   //     'ZohoCatalyst.functions.EXECUTE',
   //   ],
   // }),
-  api_key: Property.LongText({
+  api_key: Property.SecretText({
     displayName: 'API Key',
     description: 'Enter API Key from Proma App',
     required: true,
@@ -49,79 +47,65 @@ export const promaProps = {
         ],
       },
     }),
-  organization_id: (required = false) =>
-    Property.Dropdown({
-      displayName: 'Organization',
-      description: "The organization's unique identifier.",
-      required: required,
-      defaultValue: 'private',
-      refreshers: ['api_key'],
-      options: async ({ api_key }) => {
-        if (!api_key)
-          return {
-            disabled: true,
-            placeholder: 'enter your api key',
-            options: [],
-          };
-        if (!isApiKeyValid(api_key as string)) {
-          return {
-            disabled: false,
-            placeholder: 'api key is invalid',
-            options: [],
-          };
-        }
+  // organization_id: (required = false) =>
+  //   Property.Dropdown({
+  //     displayName: 'Organization',
+  //     description: "The organization's unique identifier.",
+  //     required: required,
+  //     defaultValue: 'private',
+  //     refreshers: ['api_key'],
+  //     options: async ({ api_key }) => {
+  //       if (!api_key)
+  //         return {
+  //           disabled: true,
+  //           placeholder: 'enter your api key',
+  //           options: [],
+  //         };
 
-        const response: Organization[] | null = await getOrganizations(
-          api_key as string
-        ).catch(() => null);
+  //       const response: Organization[] | null = await getOrganizations(
+  //         api_key as string
+  //       ).catch(() => null);
 
-        if (!response)
-          return {
-            disabled: true,
-            placeholder: 'api key is invalid.',
-            options: [],
-          };
+  //       if (!response)
+  //         return {
+  //           disabled: true,
+  //           placeholder: 'api key is invalid.',
+  //           options: [],
+  //         };
 
-        const options = (response || []).map((el) => ({
-          label: el.name,
-          value: el.ROWID,
-        }));
+  //       const options = (response || []).map((el) => ({
+  //         label: el.name,
+  //         value: el.ROWID,
+  //       }));
 
-        return {
-          disabled: false,
-          options: [{ label: 'Private', value: 'private' }].concat(options),
-        };
-      },
-    }),
+  //       return {
+  //         disabled: false,
+  //         options: [{ label: 'Private', value: 'private' }].concat(options),
+  //       };
+  //     },
+  //   }),
   workspace_id: (required = false) =>
     Property.Dropdown({
       displayName: 'Workspace',
       description: "The workspace's unique identifier.",
       required: required,
-      refreshers: ['api_key', 'organization_id'],
-      options: async ({ api_key, organization_id }) => {
+      refreshers: ['api_key', ],
+      options: async ({ api_key }) => {
         if (!api_key)
           return {
             disabled: true,
             placeholder: 'connect your account first',
             options: [],
           };
-        if (!organization_id)
-          return {
-            disabled: true,
-            placeholder: 'select an organization first',
-            options: [],
-          };
-
+       
         const response: Workspace[] | null = await getWorkSpaces(
           api_key as string,
-          organization_id as string
         );
 
         if (!response)
           return {
             disabled: true,
-            placeholder: '',
+            placeholder: 'Invalid API key',
             options: [],
           };
 
@@ -141,8 +125,8 @@ export const promaProps = {
       displayName: 'Master Sheet',
       description: '',
       required: required,
-      refreshers: ['api_key', 'organization_id', 'workspace_id'],
-      options: async ({ api_key, organization_id, workspace_id }) => {
+      refreshers: ['api_key', 'workspace_id'],
+      options: async ({ api_key, workspace_id }) => {
         if (!api_key)
           return {
             disabled: true,
@@ -155,12 +139,6 @@ export const promaProps = {
             placeholder: 'select a workspace first',
             options: [],
           };
-        if (!organization_id)
-          return {
-            disabled: true,
-            placeholder: 'select an organization first',
-            options: [],
-          };
 
         const response: Table[] | null = await getTables(
           api_key as string,
@@ -170,7 +148,7 @@ export const promaProps = {
         if (!response)
           return {
             disabled: true,
-            placeholder: '',
+            placeholder: 'Invalid API key',
             options: [],
           };
 
