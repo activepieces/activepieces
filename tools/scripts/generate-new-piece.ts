@@ -95,7 +95,6 @@ const main = async () => {
   await setupGeneratedLibrary(pieceName)
   console.log(chalk.green('✨  Done!'));
   console.log(chalk.yellow(`The piece has been generated at: packages/pieces/${pieceName}`));
-  console.log(chalk.blue("Don't forget to add the piece to the list of pieces in packages/pieces/apps/src/index.ts"));
 }
 
 main()

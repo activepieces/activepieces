@@ -30,6 +30,7 @@ const linkDependencies = async (params: LinkDependenciesParams) => {
 
     const { projectPath, pieces } = params
     // Get Path before /dist
+    const uniquePieces = removeDuplicatedPieces(pieces)
     const basePath = path.resolve(__dirname.split('/dist')[0])
     const baseLinkPath = path.join(basePath, 'dist', 'packages', 'pieces')
     const frameworkPackages = {
@@ -37,7 +38,7 @@ const linkDependencies = async (params: LinkDependenciesParams) => {
         '@activepieces/pieces-framework': `link:${baseLinkPath}/framework`,
         '@activepieces/shared': `link:${basePath}/dist/packages/shared`,
     }
-    for (const piece of pieces) {
+    for (const piece of uniquePieces) {
         const pieceMetadata =( await FilePieceMetadataService().get({
             name: piece.name,
             version: piece.version,
@@ -61,7 +62,8 @@ const installDependencies = async (params: InstallDependenciesParams) => {
 
     const { projectPath, pieces } = params
 
-    const packages = pieces.map(piece => {
+    const uniquePieces = removeDuplicatedPieces(pieces)
+    const packages = uniquePieces.map(piece => {
         const packageAlias = getPackageAliasForPiece({
             pieceName: piece.name,
             pieceVersion: piece.version,
@@ -78,6 +80,12 @@ const installDependencies = async (params: InstallDependenciesParams) => {
     const dependencies: PackageManagerDependencies = Object.fromEntries(packages)
 
     await packageManager.addDependencies(projectPath, dependencies)
+}
+
+const removeDuplicatedPieces = (pieces: { name: string, version: string }[]) => {
+    return pieces.filter((piece, index, self) =>
+        index === self.findIndex((p) => p.name === piece.name && p.version === piece.version),
+    )
 }
 
 export const pieceManager = {

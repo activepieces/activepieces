@@ -72,7 +72,7 @@ export class FlowItemsDetailsEffects {
         const index = source.findIndex((p) => p.extra?.appName === n);
 
         if (index < 0) {
-          console.error(`piece ${n} is not found`);
+          console.warn(`piece ${n} is not found`);
         }
         return index;
       })
@@ -82,8 +82,10 @@ export class FlowItemsDetailsEffects {
     });
     piecesNamesToMove.forEach((pieceName) => {
       const index = source.findIndex((p) => p.extra?.appName === pieceName);
-      source.splice(index, 1);
-      return index;
+      // Remove the piece from the source if it is found
+      if (index > 0) {
+        source.splice(index, 1);
+      }
     });
     return target.sort((a, b) => {
       return a.name.localeCompare(b.name);

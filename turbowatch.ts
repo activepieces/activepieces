@@ -11,7 +11,8 @@ export default defineConfig({
             persistent: false,
             onChange: async ({ spawn, first, files } :ChangeEvent) => {
                 if (first) {
-                    await spawn`nx run-many -t build --projects=pieces-* --parallel=10`
+                    const pieces = process.env.AP_DEV_PIECES?.split(',').map(p => `pieces-${p}`).join(',')
+                    await spawn`nx run-many -t build --projects=${pieces}`
                     return
                 }
 
@@ -30,6 +31,6 @@ export default defineConfig({
         },
     ],
     debounce: {
-        wait: 0,
+        wait: 1000,
     },
 })

@@ -189,6 +189,19 @@ Property.CustomAuth({
 }),
 ```
 
+#### DateTime
+
+This function accepts a date in various formats and converts it to a string in ISO format.
+
+```typescript
+Property.DateTime({
+	displayName: string;
+	description: string | undefined;
+	required: boolean;
+})
+```
+
+
 #### Number
 
 ```typescript
@@ -225,6 +238,7 @@ Property.Dropdown({
 })
 ```
 
+#### Static Dropdown
 
 ```typescript
 Property.StaticDropdown({
@@ -239,6 +253,8 @@ Property.StaticDropdown({
     }
 })
 ```
+
+#### Array Dropdown
 
 ```typescript
 Property.Array({

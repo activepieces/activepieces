@@ -1,6 +1,13 @@
+## **************** DOCUMENTATION ****************
+##
+## Please refer to the documentation for more information on how to use this file. 
+## https://www.activepieces.com/docs/contributing/development-setup/docker-compose
+##
+## ***********************************************
 version: '3.0'
 
 services:
+
   app:
     image: activepieces/ap-base:3
     container_name: app
@@ -18,6 +25,8 @@ services:
      - "9222:9222"
     networks:
       - activepieces_dev
+    profiles:
+      - full
     volumes:
      - ./:/usr/src/app
     working_dir: /usr/src/app
@@ -28,6 +37,8 @@ services:
 
   postgres:
     image: postgres:14.4
+    ports:
+      - "5432:5432"
     container_name: postgres
     environment:
       POSTGRES_DB: activepieces
@@ -42,6 +53,8 @@ services:
   redis:
     image: redis:7.0.7
     container_name: redis
+    ports:
+      - "6379:6379"
     volumes:
       - redis_data_dev:/data
     networks:

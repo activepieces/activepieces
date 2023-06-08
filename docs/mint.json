@@ -183,21 +183,21 @@
     {
       "group": "Overview",
       "pages": [
-        "contributing/overview"
+        "contributing/overview",
+        "contributing/getting-started"
       ]
     },
     {
       "group": "Development Setup",
       "pages": [
         "contributing/development-setup/codespaces",
-        "contributing/development-setup/docker-compose",
-        "contributing/development-setup/local-development"
+        "contributing/development-setup/local",
+        "contributing/development-setup/dev-container"
       ]
     },
     {
       "group": "Building Pieces",
       "pages": [
-        "contributing/building-pieces/overview",
         "contributing/building-pieces/create-action",
         "contributing/building-pieces/triggers",
         "contributing/building-pieces/create-polling-trigger",

@@ -5,12 +5,9 @@ description: ""
 
 This tutorial will guide you through the process of creating a Hacker News piece with an action that fetches the top stories. It assumes that you are familiar with the following:
 
-* [Activepieces Repo Structure](../architecture/repo-structure) and [Activepieces Local development](../development-setup/local-development) Or [Github Codespaces](../development-setup/codespaces).
+* [Activepieces Repo Structure](../architecture/repo-structure)
+* [Activepieces Local development](../development-setup/local) Or [Github Codespaces](../development-setup/codespaces).
 * TypeScript syntax.
-
-<Warning>
-Using the regular `docker-compose.yaml` instead of `docker-compose-dev.yaml` will not function correctly, as the local pieces are only visible in development mode.
-</Warning>
 
 HackerNews is a social news website that allows users to submit and vote on stories related to computer science and entrepreneurship.
 
@@ -133,27 +130,11 @@ export const hackerNews = createPiece({
 });
 ```
 
-To make the `hackernews_tutorial` piece readable by Activepieces, add it to the pieces array in `/packages/pieces/apps/src/index.ts`.
-
-First, import the `hackernews_tutorial` piece at the top of the file by adding the following line:
-
-
-``` ts
-import { hackerNews } from '@activepieces/piece-hacker-news';
-
-export const pieces: Piece[] = [
-  // other pieces
-  hackerNews, // Add the hackernews piece to the array
-  // more pieces
-];
-
-```
-
 # Testing
 
-The backend and frontend are running using `nodemon`, which will automatically refresh the server when any changes are made to the source code.
+Once you make an edit, the piece will be rebuilt. After this is finished, you'll need to refresh the frontend to see the changes.
 
-To test the action, you can use the Flow Builder in Activepieces. It should be working as shown in the provided screenshot.
+To test the action, you can use the Flow Builder in Activepieces. It should work just like the screenshot demonstrates.
 
 <img src="/resources/screenshots/contributing-first-connector.png" />
 
