@@ -109,9 +109,9 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
       };
       this.importTemplate$ = this.flagService.getTemplatesSourceUrl().pipe(
         map((url) => !!url),
-        tap((showDialog) => {
+        switchMap((showDialog) => {
           if (showDialog) {
-            this.matDialog
+            return this.matDialog
               .open(TemplatesDialogComponent, {
                 data: TemplateDialogData,
               })
@@ -138,6 +138,7 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
                 })
               );
           }
+          return EMPTY;
         }),
         map(() => void 0)
       );
@@ -214,6 +215,7 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.snackbar.dismiss();
     this.runDetailsService.currentStepResult$.next(undefined);
+    this.builderService.componentToShowInsidePortal$.next(undefined);
   }
 
   ngOnInit(): void {
