@@ -7,7 +7,7 @@ export const facebookPagesCommon = {
     authentication: Property.OAuth2({
         displayName: 'Authentication',
         description: '',
-        authUrl: "https://graph.facebook.com/oauth/authorize?",
+        authUrl: "https://graph.facebook.com/oauth/authorize",
         tokenUrl: "https://graph.facebook.com/oauth/access_token",
         required: true,
         scope: ['pages_show_list', 'pages_manage_posts', 'pages_read_engagement'],
