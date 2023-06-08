@@ -99,6 +99,7 @@ This section is dedicated to individuals who have contributed to 10 or more acti
 <a href="https://github.com/AbdulTheActivePiecer"><img src="https://avatars.githubusercontent.com/u/106555838?v=4?s=100" width="100px;" alt="AbdulTheActivePiecer"/> </a>
 <a href="https://github.com/abuaboud"><img src="https://avatars.githubusercontent.com/u/1812998?v=4?s=100" width="100px;" alt="Mohammed Abu Aboud"/></a>
 <a href="https://github.com/Willianwg"><img src="https://avatars.githubusercontent.com/u/51550522?v=4?s=100" width="100px;" alt="Willian Guedes"/></a>
+<a href="https://github.com/JanHolger"><img src="https://avatars.githubusercontent.com/u/25184957?v=4?s=100" width="100px;" alt="Jan Bebendorf"/></a>
 
 ### Busy Beavers Club 🦸
 
@@ -155,6 +156,8 @@ This section is dedicated to individuals who have contributed to 5 or more actio
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/tarunsamanta2k20"><img src="https://avatars.githubusercontent.com/u/55488549?v=4?s=100" width="100px;" alt="Tarun Samanta"/><br /><sub><b>Tarun Samanta</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/issues?q=author%3Atarunsamanta2k20" title="Bug reports">🐛</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://www.linkedin.com/in/herman-kudria-10868b207/"><img src="https://avatars.githubusercontent.com/u/9007211?v=4?s=100" width="100px;" alt="Herman Kudria"/><br /><sub><b>Herman Kudria</b></sub></a><br /><a href="#plugin-HKudria" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://nulldev.imagefoo.com/"><img src="https://avatars.githubusercontent.com/u/66683380?v=4?s=100" width="100px;" alt="[NULL] Dev"/><br /><sub><b>[NULL] Dev</b></sub></a><br /><a href="#plugin-Abdallah-Alwarawreh" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/JanHolger"><img src="https://avatars.githubusercontent.com/u/25184957?v=4?s=100" width="100px;" alt="Jan Bebendorf"/><br /><sub><b>Jan Bebendorf</b></sub></a><br /><a href="#plugin-JanHolger" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://blog.nileshtrivedi.com"><img src="https://avatars.githubusercontent.com/u/19304?v=4?s=100" width="100px;" alt="Nilesh"/><br /><sub><b>Nilesh</b></sub></a><br /><a href="#plugin-nileshtrivedi" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>

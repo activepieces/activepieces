@@ -118,6 +118,7 @@
       "@activepieces/piece-shopify": ["packages/pieces/shopify/src/index.ts"],
       "@activepieces/piece-slack": ["packages/pieces/slack/src/index.ts"],
       "@activepieces/piece-smtp": ["packages/pieces/smtp/src/index.ts"],
+      "@activepieces/piece-spotify": ["packages/pieces/spotify/src/index.ts"],
       "@activepieces/piece-square": ["packages/pieces/square/src/index.ts"],
       "@activepieces/piece-stability-ai": [
         "packages/pieces/stability-ai/src/index.ts"
@@ -178,7 +179,11 @@
       ],
       "@activepieces/ui/feature-dashboard": [
         "packages/ui/feature-dashboard/src/index.ts"
-      ]
+      ],
+      "@activepieces/ui/feature-templates": [
+        "packages/ui/feature-templates/src/index.ts"
+      ],
+      "@activepieces/ui/templates": ["packages/ui/templates/src/index.ts"]
     },
     "resolveJsonModule": true
   },

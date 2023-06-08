@@ -301,6 +301,24 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "JanHolger",
+      "name": "Jan Bebendorf",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25184957?v=4",
+      "profile": "https://github.com/JanHolger",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "nileshtrivedi",
+      "name": "Nilesh",
+      "avatar_url": "https://avatars.githubusercontent.com/u/19304?v=4",
+      "profile": "https://blog.nileshtrivedi.com",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

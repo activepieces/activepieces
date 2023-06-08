@@ -50,7 +50,7 @@ export class CustomPathMentionDialogComponent implements OnInit {
       const customPath = `{{${this.pathFormGroup.controls.path.value!}}}`;
       const triggerPathWithoutInterpolationDenotation = customPath.slice(
         2,
-        customPath.length - 1
+        customPath.length - 2
       );
       const mentionText = replaceArrayNotationsWithSpaces(
         replaceDotsWithSpaces(

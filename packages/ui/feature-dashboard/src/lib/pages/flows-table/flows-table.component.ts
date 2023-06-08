@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { map, Observable, shareReplay, startWith, Subject, tap } from 'rxjs';
 import { FlowsTableDataSource } from './flows-table.datasource';
 import { MatDialog } from '@angular/material/dialog';
-import { Flow, FlowInstanceStatus } from '@activepieces/shared';
+import { Flow, FlowInstanceStatus, FolderId } from '@activepieces/shared';
 
 import {
   ApPaginatorComponent,
@@ -35,6 +35,7 @@ export class FlowsTableComponent implements OnInit {
   deleteFlowDialogClosed$: Observable<void>;
   moveFlowDialogClosed$: Observable<void>;
   dataSource!: FlowsTableDataSource;
+  folderId$: Observable<FolderId | undefined>;
   displayedColumns = [
     'name',
     'steps',
@@ -48,7 +49,6 @@ export class FlowsTableComponent implements OnInit {
   flowsUpdateStatusRequest$: Record<string, Observable<void> | null> = {};
   showAllFlows$: Observable<boolean>;
   duplicateFlow$: Observable<void>;
-
   constructor(
     private activatedRoute: ActivatedRoute,
     private dialogService: MatDialog,
@@ -59,6 +59,7 @@ export class FlowsTableComponent implements OnInit {
     private store: Store
   ) {
     this.listenToShowAllFolders();
+    this.folderId$ = this.store.select(FoldersSelectors.selectCurrentFolderId);
   }
 
   private listenToShowAllFolders() {
@@ -103,7 +104,7 @@ export class FlowsTableComponent implements OnInit {
     const link = '/flows/' + flow.id;
     if (event.ctrlKey) {
       // Open in new tab
-      window.open(link, '_blank');
+      window.open(link, '_blank', 'noopener');
     } else {
       // Open in the same tab
       this.router.navigateByUrl(link);

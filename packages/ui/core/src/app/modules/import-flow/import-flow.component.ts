@@ -7,6 +7,7 @@ import {
 import { FlowService } from '@activepieces/ui/common';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
+import { Meta } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { StatusCodes } from 'http-status-codes';
 import {
@@ -37,16 +38,26 @@ export class ImportFlowComponent implements OnInit {
     private route: ActivatedRoute,
     private http: HttpClient,
     private flowService: FlowService,
-    private router: Router
+    private router: Router,
+    private metaService: Meta
   ) {}
 
   ngOnInit(): void {
     this.loadFlow$ = this.route.params.pipe(
       switchMap((params) => {
         const templateId = encodeURIComponent(params['templateId']);
-        return this.http.get<FlowTemplateWithVersion>(
-          `https://activepieces-cdn.fra1.cdn.digitaloceanspaces.com/templates/${templateId}.json`
-        );
+        return this.http
+          .get<FlowTemplateWithVersion>(
+            `https://activepieces-cdn.fra1.cdn.digitaloceanspaces.com/templates/${templateId}.json`
+          )
+          .pipe(
+            tap((res) => {
+              this.metaService.addTag({
+                name: 'description',
+                content: `Use this Activepieces automation template for yourself: ${res.name}`,
+              });
+            })
+          );
       }),
       catchError((error) => {
         console.error(error);

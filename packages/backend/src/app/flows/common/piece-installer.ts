@@ -2,8 +2,10 @@ import { ApEnvironment, getPackageAliasForPiece, getPackageVersionForPiece } fro
 import { system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
 import { logger } from '../../helper/logger'
-import { packageManager } from '../../helper/package-manager'
+import { PackageManagerDependencies, packageManager } from '../../helper/package-manager'
+import * as path from 'path'
 import fs from 'fs/promises'
+import { FilePieceMetadataService } from '../../pieces/piece-metadata-service/file-piece-metadata-service'
 
 type BaseParams = {
     projectPath: string
@@ -28,17 +30,20 @@ const linkDependencies = async (params: LinkDependenciesParams) => {
 
     const { projectPath, pieces } = params
     // Get Path before /dist
-
     const uniquePieces = removeDuplicatedPieces(pieces)
-    const basePath = __dirname.split('/dist')[0]
-    const baseLinkPath =`${basePath}/dist/packages/pieces`
+    const basePath = path.resolve(__dirname.split('/dist')[0])
+    const baseLinkPath = path.join(basePath, 'dist', 'packages', 'pieces')
     const frameworkPackages = {
         '@activepieces/pieces-common': `link:${baseLinkPath}/common`,
         '@activepieces/pieces-framework': `link:${baseLinkPath}/framework`,
         '@activepieces/shared': `link:${basePath}/dist/packages/shared`,
     }
     for (const piece of uniquePieces) {
-        const packageJsonForPiece = `${baseLinkPath}/${piece.name}/package.json`
+        const pieceMetadata =( await FilePieceMetadataService().get({
+            name: piece.name,
+            version: piece.version,
+        }))
+        const packageJsonForPiece = `${baseLinkPath}/${pieceMetadata.directoryName}/package.json`
 
         const packageJson = await fs.readFile(packageJsonForPiece, 'utf-8').then(JSON.parse)
         for(const [key, value] of Object.entries(frameworkPackages)) {
@@ -47,7 +52,8 @@ const linkDependencies = async (params: LinkDependenciesParams) => {
             }
         }
         await fs.writeFile(packageJsonForPiece, JSON.stringify(packageJson, null, 2))
-        await packageManager.linkDependency(projectPath, `${baseLinkPath}/${piece.name}`)
+
+        await packageManager.linkDependency(projectPath, `${baseLinkPath}/${pieceMetadata.directoryName}`)
     }
 }
 
@@ -71,7 +77,7 @@ const installDependencies = async (params: InstallDependenciesParams) => {
         return [packageAlias, packageVersion]
     })
 
-    const dependencies = Object.fromEntries(packages)
+    const dependencies: PackageManagerDependencies = Object.fromEntries(packages)
 
     await packageManager.addDependencies(projectPath, dependencies)
 }

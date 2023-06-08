@@ -228,6 +228,6 @@ export class EditStepFormContainerComponent {
   }
   copyUrl(url: string) {
     navigator.clipboard.writeText(url);
-    this.snackbar.open('Webhook url copied to clipboard');
+    this.snackbar.open('Webhook URL copied to clipboard');
   }
 }

@@ -155,6 +155,11 @@ const _flowsReducer = createReducer(
       ...clonedState,
       flow: action.flow,
     };
+  }),
+  on(FlowsActions.importFlow, (state, { flow }) => {
+    const clonedState: FlowState = JSON.parse(JSON.stringify(state));
+    clonedState.flow = flow;
+    return clonedState;
   })
 );
 export function flowsReducer(state: FlowState | undefined, action: Action) {

@@ -17,6 +17,7 @@ import {
   FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
 import { ApEdition, Flow, FlowInstance } from '@activepieces/shared';
+import { ImportFlowDialogueComponent } from './import-flow-dialogue/import-flow-dialogue.component';
 
 @Component({
   selector: 'app-flow-builder-header',
@@ -43,7 +44,8 @@ export class FlowBuilderHeaderComponent implements OnInit {
     private router: Router,
     public collectionBuilderService: CollectionBuilderService,
     private flowService: FlowService,
-    private flagsService: FlagService
+    private flagsService: FlagService,
+    private matDialog: MatDialog
   ) {
     this.isGeneratingFlowComponentOpen$ = this.store.select(
       BuilderSelectors.selectIsGeneratingFlowComponentOpen
@@ -72,7 +74,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
   redirectHome(newWindow: boolean) {
     if (newWindow) {
       const url = this.router.serializeUrl(this.router.createUrlTree([``]));
-      window.open(url, '_blank');
+      window.open(url, '_blank', 'noopener');
     } else {
       const urlArrays = this.router.url.split('/');
       urlArrays.splice(urlArrays.length - 1, 1);
@@ -114,6 +116,10 @@ export class FlowBuilderHeaderComponent implements OnInit {
         return void 0;
       })
     );
+  }
+
+  import() {
+    this.matDialog.open(ImportFlowDialogueComponent);
   }
 
   deleteFlow(flow: Flow) {

@@ -49,7 +49,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { UserAvatarComponent } from './components/user-avatar/user-avatar.component';
 import { TrackHoverDirective } from './directives/track-hover.directive';
 import { PiecesIconsFromFlowComponent } from './components/pieces-icons-from-flow/pieces-icons-from-flow.component';
-
+import { PieceIconContainerComponent } from './components/pieces-icons/piece-icon-container/piece-icon-container.component';
+import { UploadImageControlComponent } from './components/upload-file-control/upload-file-control.component';
+import { DragDropDirective } from './directives/drag-drop.directive';
 const exportedImports = [
   CommonModule,
   MatTooltipModule,
@@ -73,6 +75,7 @@ const exportedImports = [
   MatIconModule,
 ];
 const exportedDeclarations = [
+  UploadImageControlComponent,
   MarkdownComponent,
   EditableTextComponent,
   ApButtonComponent,
@@ -99,6 +102,8 @@ const exportedDeclarations = [
   UserAvatarComponent,
   PiecesIconsFromFlowComponent,
   TrackHoverDirective,
+  PieceIconContainerComponent,
+  DragDropDirective,
 ];
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 0,
@@ -114,7 +119,7 @@ export function markedOptionsFactory(): MarkedOptions {
     const html = linkRenderer.call(renderer, href, title, text);
     return html.replace(
       /^<a /,
-      '<a role="link" tabindex="0" target="_blank" rel="nofollow noopener noreferrer" '
+      '<a role="link" tabindex="0" rel="noopener" target="_blank" rel="nofollow noopener noreferrer" '
     );
   };
 

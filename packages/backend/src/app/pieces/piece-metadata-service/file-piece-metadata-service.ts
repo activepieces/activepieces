@@ -18,8 +18,14 @@ const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
     for (const piecePackage of filteredPiecePackages) {
         try {
             const module = await import(`../../../../../pieces/${piecePackage}/src/index.ts`)
+            const packageJson = await import(`../../../../../pieces/${piecePackage}/package.json`)
             const piece = Object.values<Piece>(module)[0]
-            piecesMetadata.push(piece.metadata())
+            piecesMetadata.push({
+                directoryName: piecePackage,
+                ...piece.metadata(),
+                name: packageJson.name,
+                version: packageJson.version,
+            })
         }
         catch(ex) {
             captureException(ex)
