@@ -1,6 +1,6 @@
 <div class="ap-p-5 ap-bg-grayCard ap-rounded-lg">
     <div class="ap-typography-headline-6 ap-mb-6 ap-flex">
-        Recommended templates
+        Create a flow
         <div class="ap-flex-grow"></div>
         <div>
             <ap-button btnColor="primary" btnSize="medium" btnStyle="basic" (buttonClicked)="openTemplateDialog()">Show
@@ -9,7 +9,8 @@
     </div>
     <div class="ap-flex ap-gap-4">
         <app-new-flow-card [folderId$]="folderId$"></app-new-flow-card>
-        <div class="ap-flex ap-gap-4 ap-overflow-x-scroll thin-scrollbars ap-pb-2 ap-h-[17.125rem]"
+        <div *ngIf="showTemplates$ | async"
+            class="ap-flex ap-gap-4 ap-overflow-x-scroll thin-scrollbars ap-pb-2 ap-h-[17.125rem]"
             [class.ap-items-center]="(templates$ | async) === null"
             [class.ap-justify-center]="(templates$ | async) === null">
             <ng-container *ngIf="templates$ | async as templates;else loading">

@@ -50,7 +50,6 @@ export class FlowsTableComponent implements OnInit {
   flowsUpdateStatusRequest$: Record<string, Observable<void> | null> = {};
   showAllFlows$: Observable<boolean>;
   duplicateFlow$: Observable<void>;
-  showTemplates$: Observable<boolean>;
   constructor(
     private activatedRoute: ActivatedRoute,
     private dialogService: MatDialog,
@@ -58,14 +57,10 @@ export class FlowsTableComponent implements OnInit {
     private foldersService: FoldersService,
     private router: Router,
     private instanceService: FlowInstanceService,
-    private store: Store,
-    private flagService: FlagService
+    private store: Store
   ) {
     this.listenToShowAllFolders();
     this.folderId$ = this.store.select(FoldersSelectors.selectCurrentFolderId);
-    this.showTemplates$ = this.flagService
-      .getTemplatesSourceUrl()
-      .pipe(map((url) => !!url));
   }
 
   private listenToShowAllFolders() {
