@@ -51,7 +51,7 @@ import { TrackHoverDirective } from './directives/track-hover.directive';
 import { PiecesIconsFromFlowComponent } from './components/pieces-icons-from-flow/pieces-icons-from-flow.component';
 import { PieceIconContainerComponent } from './components/pieces-icons/piece-icon-container/piece-icon-container.component';
 import { UploadImageControlComponent } from './components/upload-file-control/upload-file-control.component';
-import { DragDropDirective } from './components/upload-file-control/drag-drop.directive';
+import { DragDropDirective } from './directives/drag-drop.directive';
 const exportedImports = [
   CommonModule,
   MatTooltipModule,
