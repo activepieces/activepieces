@@ -1,20 +1,22 @@
-import {BaseModel} from "../common/base-model";
-import {FlowId} from "./flow";
-import {ApId} from "../common/id-generator";
-import {Trigger} from "./triggers/trigger";
+import { BaseModelSchema } from "../common/base-model";
+import { ApId } from "../common/id-generator";
+import { Trigger } from "./triggers/trigger";
+import { Static, Type } from "@sinclair/typebox";
 
 export type FlowVersionId = ApId;
-
-export interface FlowVersion extends BaseModel<FlowVersionId> {
-  flowId: FlowId;
-  displayName: string;
-  trigger: Trigger;
-  valid: boolean;
-  state: FlowVersionState;
-
-}
 
 export enum FlowVersionState {
   LOCKED = "LOCKED",
   DRAFT = "DRAFT"
 }
+
+export const FlowVersion = Type.Object({
+  ...BaseModelSchema,
+  flowId: Type.String(),
+  displayName: Type.String(),
+  trigger: Trigger,
+  valid: Type.Boolean(),
+  state: Type.Enum(FlowVersionState)
+});
+
+export type FlowVersion = Static<typeof FlowVersion>;

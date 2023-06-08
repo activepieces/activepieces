@@ -2,6 +2,7 @@ import {
     ArrayProperty,
     CheckboxProperty,
     DateTimeProperty,
+    FileProperty,
     JsonProperty,
     LongTextProperty,
     NumberProperty,
@@ -33,6 +34,7 @@ export enum PropertyType {
 	DYNAMIC = "DYNAMIC",
 	CUSTOM_AUTH = "CUSTOM_AUTH",
 	DATE_TIME = "DATE_TIME",
+	FILE = "FILE"
 }
 
 
@@ -52,7 +54,8 @@ export type PieceProperty = ShortTextProperty<boolean>
 | StaticMultiSelectDropdownProperty<unknown, boolean>
 | DynamicProperties<boolean>
 | CustomAuthProperty<boolean, CustomAuthProps>
-| DateTimeProperty<boolean>;
+| DateTimeProperty<boolean>
+| FileProperty<boolean>;
 
 export interface PiecePropertyMap {
 	[name: string]: PieceProperty
@@ -116,6 +119,9 @@ export const Property = {
     DateTime<R extends boolean>(request: Properties<DateTimeProperty<R>>): R extends true ? DateTimeProperty<true> : DateTimeProperty<false> {
         return { ...request, valueSchema: undefined, type: PropertyType.DATE_TIME } as unknown as R extends true ? DateTimeProperty<true> : DateTimeProperty<false>;
     },
+	File<R extends boolean>(request: Properties<FileProperty<R>>): R extends true ? FileProperty<true> : FileProperty<false> {
+		return { ...request, valueSchema: undefined, type: PropertyType.FILE } as unknown as R extends true ? FileProperty<true> : FileProperty<false>;
+	},
 };
 
 type Properties<T> = Omit<T, "valueSchema" | "type">;

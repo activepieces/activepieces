@@ -56,7 +56,7 @@ export const pieceStatsService = {
                 continue
             }
             const isEnabled = !isNil(await flowInstanceService.get({ projectId: flow.projectId, flowId: flow.id }))
-            const steps = flowHelper.getAllSteps(flow.version)
+            const steps = flowHelper.getAllSteps(flow.version.trigger)
             for (const step of steps) {
                 if (step.type === TriggerType.PIECE || step.type === ActionType.PIECE) {
                     if (!stats[step.settings.pieceName]) {

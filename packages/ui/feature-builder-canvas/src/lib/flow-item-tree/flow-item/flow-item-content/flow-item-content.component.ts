@@ -192,13 +192,13 @@ export class FlowItemContentComponent implements OnInit {
       case ActionType.LOOP_ON_ITEMS:
         return 'Loop';
       case ActionType.PIECE:
-        return this._flowItem.settings.pieceName.replace(/-/g, ' ');
+      case TriggerType.PIECE:
+        // TODO use human readable name
+        return '';
       case TriggerType.EMPTY:
         return 'Click to choose a trigger';
       case TriggerType.WEBHOOK:
         return 'Webhook trigger';
-      case TriggerType.PIECE:
-        return this._flowItem.settings.pieceName.replace(/-/g, ' ');
     }
   }
   extractChildStepsIconsUrls() {
@@ -227,7 +227,7 @@ export class FlowItemContentComponent implements OnInit {
             );
           stepsIconsUrls[s.settings.pieceName] = pieceMetaData$;
         } else if (s.type !== ActionType.MISSING) {
-          const icon = this.actionMetaDataService.findNonPieceStepIcon(s);
+          const icon = this.actionMetaDataService.findNonPieceStepIcon(s.type);
           stepsIconsUrls[icon.key] = of(icon.url);
         }
       });

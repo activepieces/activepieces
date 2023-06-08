@@ -22,10 +22,10 @@ const polling: Polling<{ authentication: OAuth2PropertyValue, spreadsheet_id: st
 };
 
 
-export const newRowAdded = createTrigger({
-  name: 'new_row_added',
-  displayName: 'New Row',
-  description: 'Triggers when there is a new row added',
+export const readNewRows = createTrigger({
+  name: 'new_row',
+  displayName: 'Read Rows',
+  description: 'Trigger when a new row is added, and it can include existing rows as well.',
   props: {
     authentication: googleSheetsCommon.authentication,
     spreadsheet_id: googleSheetsCommon.spreadsheet_id,

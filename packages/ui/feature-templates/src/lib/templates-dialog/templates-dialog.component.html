@@ -1,0 +1,33 @@
+<div class="ap-px-4 ap-py-3 ap-flex ap-items-center">
+    <mat-form-field class="ap-w-[355px]" appearance="fill" subscriptSizing="dynamic">
+        <mat-icon matPrefix color="body-icon" svgIcon="search" class="!ap-w-[18px] !ap-h-[18px]"></mat-icon>
+        <input #searchInput [formControl]="dialogForm.controls.search" matInput placeholder="Search templates"
+            autocomplete="off">
+    </mat-form-field>
+    <div class="ap-flex-grow"></div>
+    <ap-icon-button tooltipText="Close" iconFilename="close.svg" mat-dialog-close></ap-icon-button>
+</div>
+
+<mat-dialog-content class="!ap-flex ap-h-[655px] ap-gap-2 !ap-mt-3">
+    <div class="ap-w-[230px] ap-flex ap-flex-col ap-gap-8">
+        <app-templates-filters [formControl]="dialogForm.controls.tags" [filters]="filters"></app-templates-filters>
+        <app-template-apps-dropdown [formControl]="dialogForm.controls.pieces"></app-template-apps-dropdown>
+    </div>
+    <div class="ap-flex ap-gap-5 ap-w-[830px] ap-flex-wrap ap-overflow-y-scroll  thin-scrollbars"
+        [class.ap-items-center]="(loading$ | async) || (templates$ | async)?.length === 0"
+        [class.ap-justify-center]="(loading$ | async) || (templates$ | async)?.length === 0">
+        <ng-container *ngIf="(loading$ | async) === false">
+            <app-template-card [showBtnOnHover]="true" [template]="template" [folderId]="(data?.folderId$ | async)"
+                [insideBuilder]="data? data.insideBuilder:false" (useTemplateClicked)="useTemplate(template)"
+                *ngFor="let template of (templates$ | async)"></app-template-card>
+            <div class="ap-typography-body-1 ap-text-center" *ngIf="(templates$ | async)?.length === 0">
+                No results found. <br> Please adjust your search, filters or apps.
+            </div>
+        </ng-container>
+
+        <ap-loading-icon *ngIf="loading$ | async" [outlineLoader]="false" [whiteLoader]="false" height="40px"
+            width="40px">
+        </ap-loading-icon>
+    </div>
+</mat-dialog-content>
+<ng-container *ngIf="templates$ | async"></ng-container>

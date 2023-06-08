@@ -13,7 +13,12 @@ const selectDisplayAllFlows = createSelector(selectFoldersState, (state) => {
 const selectCurrentFolder = createSelector(selectFoldersState, (state) => {
   return state.selectedFolder;
 });
-
+const selectCurrentFolderId = createSelector(
+  selectCurrentFolder,
+  (selectedFolder) => {
+    return selectedFolder?.id;
+  }
+);
 const selectFolders = createSelector(selectFoldersState, (state) => {
   return state.folders;
 });
@@ -40,4 +45,5 @@ export const FoldersSelectors = {
   selectAllFlowsNumber,
   selectUncategorizedFlowsNumber,
   selectCurrentFolderExceptCurrent,
+  selectCurrentFolderId,
 };
