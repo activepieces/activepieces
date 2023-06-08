@@ -189,8 +189,8 @@
       "group": "Development Setup",
       "pages": [
         "contributing/development-setup/codespaces",
-        "contributing/development-setup/docker-compose",
-        "contributing/development-setup/local-development"
+        "contributing/development-setup/local",
+        "contributing/development-setup/dev-container"
       ]
     },
     {
