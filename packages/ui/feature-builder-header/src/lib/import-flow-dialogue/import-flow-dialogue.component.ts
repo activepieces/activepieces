@@ -40,7 +40,6 @@ export class ImportFlowDialogueComponent {
     const reader = new FileReader();
     reader.onload = () => {
       const template: FlowTemplate = JSON.parse(reader.result as string);
-      debugger;
       this.emitTemplate$ = this.store
         .select(BuilderSelectors.selectCurrentFlow)
         .pipe(
