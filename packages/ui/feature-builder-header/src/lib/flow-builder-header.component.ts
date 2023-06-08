@@ -116,6 +116,10 @@ export class FlowBuilderHeaderComponent implements OnInit {
     );
   }
 
+  import(flow: Flow) {
+    
+  }
+
   deleteFlow(flow: Flow) {
     const dialogData: DeleteEntityDialogData = {
       deleteEntity$: this.flowService.delete(flow.id),
