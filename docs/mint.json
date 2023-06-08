@@ -202,12 +202,19 @@
         "contributing/building-pieces/triggers",
         "contributing/building-pieces/create-polling-trigger",
         "contributing/building-pieces/create-webhook-trigger",
-        "contributing/building-pieces/reference",
         "contributing/building-pieces/examples"
       ]
     },
     {
-      "group": "Architecture",
+      "group": "Piece Reference",
+      "pages": [
+        "contributing/piece-reference/properties",
+        "contributing/piece-reference/flow-hooks",
+        "contributing/piece-reference/persistent-storage"
+      ]
+    },
+    {
+      "group": "Worker Architecture",
       "pages": [
         "contributing/architecture/repo-structure",
         "contributing/architecture/flow-worker",

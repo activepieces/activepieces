@@ -1,5 +1,5 @@
 ---
-title: "Create Action & Piece"
+title: "Create First Action"
 description: ""
 ---
 
@@ -118,6 +118,7 @@ To make the action readable by Activepieces, add it to the array of actions in t
 import { createPiece } from '@activepieces/pieces-framework';
 // Don't forget to add the following import.
 import { fetchTopStories } from './lib/actions/fetch-top-stories';
+import packageJson from '../package.json';
 
 export const hackerNews = createPiece({
   name: 'hackernews_tutorial',
@@ -127,12 +128,13 @@ export const hackerNews = createPiece({
    // Add the action here.
   actions: [fetchTopStories], // <--------
   triggers: [],
+  version: packageJson.version,
 });
 ```
 
 # Testing
 
-Once you make an edit, the piece will be rebuilt. After this is finished, you'll need to refresh the frontend to see the changes.
+Once you make an edit, the piece will be rebuilt. After this is finished, you'll need to **refresh** the frontend to see the changes.
 
 To test the action, you can use the Flow Builder in Activepieces. It should work just like the screenshot demonstrates.
 
