@@ -1,0 +1,109 @@
+.input-container {
+  background: #fafafa;
+  color: #8c8c8c;
+  padding: 15px;
+  border: 1px dashed #c2c9d1;
+  border-radius: 5px;
+  transition: all 0.5s ease;
+}
+
+.red-border {
+  border-color: #dc3545;
+}
+
+.cloud-image {
+  height: 40px;
+  width: 40px;
+  background-color: grey;
+}
+
+.uploaded-image-container {
+  height: 40px;
+  width: 40px;
+  text-align: center;
+}
+
+.uploaded-image {
+  height: 40px;
+  width: 40px;
+}
+
+.upload-text {
+  overflow-wrap: break-word;
+  transition: all 0.5s ease;
+  word-wrap: break-word;
+  color: #8c8c8c;
+  -webkit-touch-callout: none;
+  /* iOS Safari */
+  -webkit-user-select: none;
+  /* Safari */
+  -khtml-user-select: none;
+  /* Konqueror HTML */
+  -moz-user-select: none;
+  /* Old versions of Firefox */
+  -ms-user-select: none;
+  /* Internet Explorer/Edge */
+  user-select: none;
+}
+
+.image-container {
+  margin-right: 15px;
+}
+
+.uploaded-image-name {
+  width: 215px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-input {
+  display: none;
+}
+
+.cloud-svg {
+  fill: #c8c8c8;
+  transition: all 0.5s ease;
+}
+.cloud-svg-hover {
+  fill: #8c8c8c;
+}
+
+.upload-svg {
+  fill: transparent;
+  stroke: #4f4f4f;
+  width: 15px;
+  height: 15px;
+  margin-right: 2px;
+}
+
+.upload-btn {
+  padding: 9px 9px;
+  transition: all 0.5s ease;
+  cursor: pointer;
+  &:hover {
+    background: #e6e6e6;
+    border-radius: 4px;
+  }
+}
+.replace-btn {
+  padding: 8px 9px;
+  transition: all 0.5s ease;
+  cursor: pointer;
+  &:hover {
+    background: #e6e6e6;
+    border-radius: 4px;
+  }
+}
+
+.replace-img-svg {
+  fill: transparent;
+  stroke: #4f4f4f;
+  width: 18px;
+  height: 18px;
+  margin-bottom: 3px;
+}
+
+.error-msg {
+  margin-top: 10px;
+  color: #dc3545;
+}

@@ -48,7 +48,7 @@ export const flowVersionService = {
         switch (userOperation.type) {
             case FlowOperationType.IMPORT_FLOW:
             {
-                const actionsToRemove = flowHelper.getAllSteps(flowVersion.trigger).filter(step => flowHelper.isAction(step.type))
+                const actionsToRemove = flowHelper.getAllParentSteps(flowVersion.trigger).filter(step => flowHelper.isAction(step.type))
                 for (const step of actionsToRemove) {
                     operations.push({
                         type: FlowOperationType.DELETE_ACTION,

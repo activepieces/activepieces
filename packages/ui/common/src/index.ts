@@ -35,3 +35,5 @@ export * from './lib/components/delete-enity-dialog/delete-entity-dialog.compone
 export * from './lib/utils/beamer';
 export * from './lib/directives/track-hover.directive';
 export * from './lib/service/templates.service';
+export * from './lib/directives/drag-drop.directive';
+export * from './lib/components/upload-file-control/upload-file-control.component';

@@ -115,7 +115,14 @@ function traverseInternal(step: Trigger | Action | undefined): (Action | Trigger
 function getAllSteps(trigger: Trigger): (Action | Trigger)[] {
   return traverseInternal(trigger);
 }
-
+function getAllParentSteps(step: Trigger): (Action | Trigger)[] {
+  const steps: (Action | Trigger)[] = [];
+  while (step !== undefined && step !== null) {
+    steps.push(step);
+    step = step.nextAction;
+  }
+  return steps;
+}
 function getAllChildSteps(action: LoopOnItemsAction | BranchAction): (Action)[] {
   switch(action.type)
   {
@@ -425,4 +432,5 @@ export const flowHelper = {
   getStepFromSubFlow,
   isChildOf,
   getAllChildSteps,
+  getAllParentSteps
 };
