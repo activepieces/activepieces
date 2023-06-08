@@ -72,7 +72,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
   redirectHome(newWindow: boolean) {
     if (newWindow) {
       const url = this.router.serializeUrl(this.router.createUrlTree([``]));
-      window.open(url, '_blank');
+      window.open(url, '_blank', 'noopener');
     } else {
       const urlArrays = this.router.url.split('/');
       urlArrays.splice(urlArrays.length - 1, 1);

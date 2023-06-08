@@ -2,6 +2,9 @@
 title: 'Delay'
 ---
 
+##### Authors: [abuaboud](https://github.com/abuaboud), [nileshtrivedi](https://github.com/nileshtrivedi)
+
+
 ## Triggers
 
 *No supported triggers yet, please let us know if you need something on Discord so we can help out* 
@@ -12,9 +15,27 @@ title: 'Delay'
 ## Actions
 
 
-    <CardGroup cols={2}>
-      <Card title="Delay">
-        Delays the execution of the next action by maximum 5 minutes
+      <Card title="Delay For " >
+        Delays the execution of the next action for a given duration
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Seconds" required type="Number">
+The number of seconds to delay the execution of the next action
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
+  
+      <Card title="Delay Until " >
+        Delays the execution of the next action until a given timestamp
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Timestamp" required type="Date_time">
+The timestamp until when the delay the execution of the next action should be delayed
+</ResponseField>
+              
+        </Expandable>
+      </Card>
   

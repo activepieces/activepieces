@@ -4,7 +4,7 @@ import { semVerRegex } from "../../common";
 export const SemVerType = Type.RegEx(semVerRegex);
 
 export const GetPieceRequestParams = Type.Object({
-    name: Type.RegEx(/^[A-Za-z0-9_\\-]+$/),
+    name: Type.String(),
 });
 
 export type GetPieceRequestParams = Static<typeof GetPieceRequestParams>;
@@ -18,6 +18,7 @@ export type GetPieceRequestQuery = Static<typeof GetPieceRequestQuery>;
 
 export const PieceOptionRequest = Type.Object({
     pieceVersion: SemVerType,
+    pieceName: Type.String({}),
     stepName: Type.String({}),
     propertyName: Type.String({}),
     input: Type.Any({})

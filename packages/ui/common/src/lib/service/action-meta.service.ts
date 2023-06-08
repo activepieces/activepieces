@@ -1,10 +1,8 @@
 import { Injectable } from '@angular/core';
 import {
-  Action,
   ActionType,
   ApEdition,
   PieceOptionRequest,
-  Trigger,
   TriggerType,
 } from '@activepieces/shared';
 import { HttpClient } from '@angular/common/http';
@@ -24,16 +22,20 @@ import {
 type TriggersMetadata = Record<string, TriggerBase>;
 
 export const CORE_PIECES_ACTIONS_NAMES = [
-  'store',
-  'data-mapper',
-  'connections',
-  'delay',
-  'http',
-  'smtp',
+  '@activepieces/piece-store',
+  '@activepieces/piece-data-mapper',
+  '@activepieces/piece-connections',
+  '@activepieces/piece-delay',
+  '@activepieces/piece-http',
+  '@activepieces/piece-smtp',
 ];
 export const corePieceIconUrl = (pieceName: string) =>
-  `assets/img/custom/piece/${pieceName}_mention.png`;
-export const CORE_PIECES_TRIGGERS = ['schedule'];
+  `assets/img/custom/piece/${pieceName.replace(
+    '@activepieces/piece-',
+    ''
+  )}_mention.png`;
+export const CORE_SCHEDULE = '@activepieces/piece-schedule';
+export const CORE_PIECES_TRIGGERS = [CORE_SCHEDULE];
 @Injectable({
   providedIn: 'root',
 })
@@ -94,7 +96,6 @@ export class ActionMetaService {
   private getCacheKey(pieceName: string, pieceVersion: string): string {
     return `${pieceName}-${pieceVersion}`;
   }
-
   private filterAppWebhooks(
     triggersMap: TriggersMetadata,
     edition: ApEdition
@@ -117,12 +118,20 @@ export class ActionMetaService {
     pieceVersion: string
   ): Observable<PieceMetadata> {
     return this.http.get<PieceMetadata>(
-      `${environment.apiUrl}/pieces/${pieceName}?version=${pieceVersion}`
+      `${environment.apiUrl}/pieces/${encodeURIComponent(
+        pieceName
+      )}?version=${pieceVersion}`
     );
   }
 
   getPiecesManifest(): Observable<PieceMetadataSummary[]> {
     return this.piecesManifest$;
+  }
+
+  getPieceNameLogo(pieceName: string): Observable<string | undefined> {
+    return this.piecesManifest$.pipe(
+      map((pieces) => pieces.find((piece) => piece.name === pieceName)?.logoUrl)
+    );
   }
 
   getPieceMetadata(
@@ -154,14 +163,11 @@ export class ActionMetaService {
 
   getPieceActionConfigOptions<
     T extends DropdownState<unknown> | PiecePropertyMap
-  >(req: PieceOptionRequest, pieceName: string) {
-    return this.http.post<T>(
-      environment.apiUrl + `/pieces/${pieceName}/options`,
-      req
-    );
+  >(req: PieceOptionRequest) {
+    return this.http.post<T>(environment.apiUrl + `/pieces/options`, req);
   }
-  findNonPieceStepIcon(step: Trigger | Action) {
-    switch (step.type) {
+  findNonPieceStepIcon(type: ActionType | TriggerType) {
+    switch (type) {
       case ActionType.CODE:
         return { url: 'assets/img/custom/piece/code_mention.png', key: 'code' };
       case ActionType.BRANCH:

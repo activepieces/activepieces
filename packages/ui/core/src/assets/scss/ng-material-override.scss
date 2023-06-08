@@ -576,7 +576,11 @@ tr.mat-header-row {
 
 mat-form-field {
   .mat-mdc-text-field-wrapper {
-    background-color: $white;
+    background-color: $white !important;
+  }
+  .mat-mdc-form-field-focus-overlay
+  {
+    opacity: 0 !important;
   }
 }
 .fullscreen-dialog {
@@ -674,4 +678,8 @@ app-dashboard-container .mat-drawer {
 .mat-placeholder-icon
 {
   fill:$placeholder !important;
+}
+.mat-body-icon
+{
+  fill:$body !important;
 }

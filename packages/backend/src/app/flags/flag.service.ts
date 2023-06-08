@@ -102,6 +102,12 @@ export const flagService = {
                 created,
                 updated,
             },
+            {
+                id: ApFlagId.TEMPLATES_SOURCE_URL,
+                value: system.get(SystemProp.TEMPLATES_SOURCE_URL),
+                created,
+                updated,
+            },
         )
 
         return flags

@@ -45,12 +45,12 @@ export class SidenavRoutesListComponent {
   ];
 
   openDocs() {
-    window.open('https://activepieces.com/docs', '_blank');
+    window.open('https://activepieces.com/docs', '_blank', 'noopener');
   }
   redirectHome(newWindow: boolean) {
     if (newWindow) {
       const url = this.router.serializeUrl(this.router.createUrlTree([``]));
-      window.open(url, '_blank');
+      window.open(url, '_blank', 'noopener');
     } else {
       const urlArrays = this.router.url.split('/');
       urlArrays.splice(urlArrays.length - 1, 1);

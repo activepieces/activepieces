@@ -16,6 +16,7 @@ test('Test Send Slack message', async ({ page }) => {
   await testSignIn(page, config);
 
   await page.getByRole('button', { name: 'Start building' }).click();
+  await page.getByRole('button', { name: 'Close' }).click();
   await page.getByText('Select Trigger').click();
   await page.getByText('Webhook').click();
 

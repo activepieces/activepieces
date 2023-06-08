@@ -2,6 +2,7 @@ import {
   Component,
   ElementRef,
   HostListener,
+  Injector,
   NgZone,
   OnDestroy,
   OnInit,
@@ -18,7 +19,15 @@ import {
   ViewModeEnum,
 } from '@activepieces/ui/feature-builder-store';
 import { Store } from '@ngrx/store';
-import { distinctUntilChanged, map, Observable, tap } from 'rxjs';
+import {
+  distinctUntilChanged,
+  EMPTY,
+  map,
+  Observable,
+  switchMap,
+  take,
+  tap,
+} from 'rxjs';
 import { MatDrawerContainer } from '@angular/material/sidenav';
 import { CdkDragMove } from '@angular/cdk/drag-drop';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -26,6 +35,7 @@ import { TestRunBarComponent } from '@activepieces/ui/feature-builder-store';
 import { RunDetailsService } from '@activepieces/ui/feature-builder-left-sidebar';
 import {
   ExecutionOutputStatus,
+  FlowTemplate,
   FlowVersion,
   TriggerType,
 } from '@activepieces/shared';
@@ -34,12 +44,20 @@ import {
   LeftSideBarType,
   RightSideBarType,
 } from '@activepieces/ui/feature-builder-store';
-import { TestStepService } from '@activepieces/ui/common';
+import { FlagService, TestStepService } from '@activepieces/ui/common';
 import { PannerService } from '@activepieces/ui/feature-builder-canvas';
+import { MatDialog } from '@angular/material/dialog';
 import {
   BuilderRouteData,
   RunRouteData,
 } from '../../resolvers/builder-route-data';
+import { ComponentPortal } from '@angular/cdk/portal';
+import {
+  TemplatesDialogComponent,
+  TemplateDialogData,
+  TemplateBlogNotificationComponent,
+  BLOG_URL_TOKEN,
+} from '@activepieces/ui/feature-templates';
 
 @Component({
   selector: 'app-collection-builder',
@@ -65,7 +83,7 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
   testingStepSectionIsRendered$: Observable<boolean>;
   graphChanged$: Observable<FlowVersion>;
   showGuessFlowComponent = true;
-
+  importTemplate$: Observable<void>;
   constructor(
     private store: Store,
     private actRoute: ActivatedRoute,
@@ -76,13 +94,56 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
     private pannerService: PannerService,
     private testStepService: TestStepService,
     private flowRendererService: FlowRendererService,
-    public builderService: CollectionBuilderService
+    public builderService: CollectionBuilderService,
+    private matDialog: MatDialog,
+    private flagService: FlagService
   ) {
     this.listenToGraphChanges();
     this.testingStepSectionIsRendered$ =
       this.testStepService.testingStepSectionIsRendered$.asObservable();
     this.isPanning$ = this.pannerService.isPanning$.asObservable();
     this.isDragging$ = this.flowRendererService.draggingSubject.asObservable();
+    if (localStorage.getItem('newFlow')) {
+      const TemplateDialogData: TemplateDialogData = {
+        insideBuilder: true,
+      };
+      this.importTemplate$ = this.flagService.getTemplatesSourceUrl().pipe(
+        map((url) => !!url),
+        switchMap((showDialog) => {
+          if (showDialog) {
+            return this.matDialog
+              .open(TemplatesDialogComponent, {
+                data: TemplateDialogData,
+              })
+              .afterClosed()
+              .pipe(
+                switchMap((template?: FlowTemplate) => {
+                  if (template) {
+                    return this.store
+                      .select(BuilderSelectors.selectCurrentFlow)
+                      .pipe(
+                        take(1),
+                        tap((flow) => {
+                          this.builderService.importTemplate$.next({
+                            flowId: flow.id,
+                            template: template,
+                          });
+                          if (template.blogUrl) {
+                            this.showBlogNotification(template);
+                          }
+                        })
+                      );
+                  }
+                  return EMPTY;
+                })
+              );
+          }
+          return EMPTY;
+        }),
+        map(() => void 0)
+      );
+      localStorage.removeItem('newFlow');
+    }
     this.loadInitialData$ = this.actRoute.data.pipe(
       tap((value) => {
         const routeData = value as BuilderRouteData | RunRouteData;
@@ -129,6 +190,23 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
       BuilderSelectors.selectCurrentRightSideBarType
     );
   }
+  private showBlogNotification(template: FlowTemplate) {
+    this.builderService.componentToShowInsidePortal$.next(
+      new ComponentPortal(
+        TemplateBlogNotificationComponent,
+        null,
+        Injector.create({
+          providers: [
+            {
+              provide: BLOG_URL_TOKEN,
+              useValue: template.blogUrl,
+            },
+          ],
+        })
+      )
+    );
+  }
+
   @HostListener('mousemove', ['$event'])
   mouseMove(e: MouseEvent) {
     this.flowRendererService.clientX = e.clientX;
@@ -137,6 +215,7 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.snackbar.dismiss();
     this.runDetailsService.currentStepResult$.next(undefined);
+    this.builderService.componentToShowInsidePortal$.next(undefined);
   }
 
   ngOnInit(): void {

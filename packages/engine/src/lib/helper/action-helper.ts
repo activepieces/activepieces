@@ -23,7 +23,6 @@ import {
     ExecutionState,
     ExecutionType,
     getPackageAliasForPiece,
-    getPackageNameForPiece,
 } from "@activepieces/shared";
 import { VariableService } from "../services/variable-service";
 import { isNil } from 'lodash';
@@ -50,11 +49,8 @@ const getPackageName = (params: GetPackageNameParams): string => {
     const { pieceName, pieceVersion } = params;
 
     if (apEnv === ApEnvironment.DEVELOPMENT) {
-    return getPackageNameForPiece({
-        pieceName,
-        pieceVersion,
-    })
-}
+        return pieceName;
+    }
     else {
         return getPackageAliasForPiece({
             pieceName,
@@ -172,7 +168,7 @@ export const pieceHelper = {
         try {
             const code = Buffer.from(codeBase64, 'base64').toString('utf-8');
             const fileName = `${globals.codeDirectory}/code.js`;
-            await fs.mkdir(globals.codeDirectory, { recursive: true });  
+            await fs.mkdir(globals.codeDirectory, { recursive: true });
             await fs.writeFile(fileName, code, 'utf-8');
             const result = await codeExecutor.executeCode('code', resolvedInput);
             return {

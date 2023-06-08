@@ -48,7 +48,7 @@ export const flowVersionService = {
         switch (userOperation.type) {
             case FlowOperationType.IMPORT_FLOW:
             {
-                const actionsToRemove = flowHelper.getAllSteps(flowVersion).filter(step => flowHelper.isAction(step.type))
+                const actionsToRemove = flowHelper.getAllSteps(flowVersion.trigger).filter(step => flowHelper.isAction(step.type))
                 for (const step of actionsToRemove) {
                     operations.push({
                         type: FlowOperationType.DELETE_ACTION,
@@ -258,7 +258,7 @@ async function removeSecrets(flowVersion: FlowVersion | null) {
     }
     const flowVersionWithArtifacts: FlowVersion = JSON.parse(JSON.stringify(flowVersion))
 
-    const steps = flowHelper.getAllSteps(flowVersionWithArtifacts)
+    const steps = flowHelper.getAllSteps(flowVersionWithArtifacts.trigger)
     for (const step of steps) {
         /*
         Remove Sample Data & connections
@@ -301,7 +301,7 @@ async function addArtifactsAsBase64(projectId: ProjectId, flowVersion: FlowVersi
     const flowVersionWithArtifacts: FlowVersion = JSON.parse(JSON.stringify(flowVersion))
     const artifactPromises = []
 
-    const steps = flowHelper.getAllSteps(flowVersionWithArtifacts)
+    const steps = flowHelper.getAllSteps(flowVersionWithArtifacts.trigger)
     for (const step of steps) {
         if (step.type === ActionType.CODE) {
             const codeSettings: CodeActionSettings = step.settings
@@ -481,6 +481,7 @@ function buildSchema(props: PiecePropertyMap): TSchema {
             case PropertyType.DATE_TIME:
             case PropertyType.SHORT_TEXT:
             case PropertyType.LONG_TEXT:
+            case PropertyType.FILE:
                 propsSchema[name] = Type.String({
                     minLength: property.required ? 1 : undefined,
                 })

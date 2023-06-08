@@ -22,6 +22,7 @@ import {
   TestStepService,
   ActionMetaService,
   isOverflown,
+  CORE_SCHEDULE,
 } from '@activepieces/ui/common';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { BuilderAutocompleteMentionsDropdownService } from '@activepieces/ui/feature-builder-form-controls';
@@ -90,7 +91,7 @@ export class FlowRightSidebarComponent implements OnInit {
         if (
           step &&
           step.type === TriggerType.PIECE &&
-          step.settings.pieceName !== 'schedule'
+          step.settings.pieceName !== CORE_SCHEDULE
         ) {
           return this.actionMetaDataService
             .getPieceMetadata(
@@ -118,7 +119,7 @@ export class FlowRightSidebarComponent implements OnInit {
         if (
           step &&
           step.type === TriggerType.PIECE &&
-          step.settings.pieceName !== 'schedule'
+          step.settings.pieceName !== CORE_SCHEDULE
         ) {
           return this.actionMetaDataService
             .getPieceMetadata(
@@ -237,7 +238,8 @@ export class FlowRightSidebarComponent implements OnInit {
   openVersionDocs() {
     window.open(
       'https://www.activepieces.com/docs/pieces/versioning',
-      '_blank'
+      '_blank',
+      'noopener'
     );
   }
   @HostListener('window:resize', ['$event'])
