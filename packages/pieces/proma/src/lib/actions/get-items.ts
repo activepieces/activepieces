@@ -4,7 +4,7 @@ import { getTableRows } from '../common/data';
 
 export const getPromaTableRows = createAction({
   name: 'get_proma_table_rows', // Must be a unique across the piece, this shouldn't be changed.
-  displayName: 'Get Items',
+  displayName: 'Get Rows',
   description: '',
   props: {
     api_key: promaProps.api_key,

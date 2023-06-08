@@ -1,23 +1,11 @@
 import { Property } from '@activepieces/pieces-framework';
-import {Table, Workspace } from './types';
+import { Table, Workspace } from './types';
 import {
   getTables,
   getWorkSpaces,
 } from './data';
 
 export const promaProps = {
-  // authentication: Property.OAuth2({
-  //   displayName: 'Authentication',
-  //   description: 'OAuth2.0 Authentication',
-  //   authUrl: 'https://accounts.zoho.com/oauth/v2/auth',
-  //   tokenUrl: 'https://accounts.zoho.com/oauth/v2/token',
-  //   required: true,
-  //   scope: [
-  //     'AaaServer.profile.READ',
-  //     // "ZohoCatalyst.projects.READ","ZohoCatalyst.projects.users.READ","ZohoCatalyst.tables.READ", "ZohoCatalyst.tables.rows.READ", "ZohoCatalyst.tables.rows.CREATE", "ZohoCatalyst.tables.rows.UPDATE", "ZohoCatalyst.tables.rows.DELETE", "ZohoCatalyst.tables.columns.READ",
-  //     'ZohoCatalyst.functions.EXECUTE',
-  //   ],
-  // }),
   api_key: Property.SecretText({
     displayName: 'API Key',
     description: 'Enter API Key from Proma App',
@@ -25,6 +13,21 @@ export const promaProps = {
   }),
   table_name: (required = false) =>
     Property.ShortText({ displayName: 'Master Sheet Name', required }),
+  acl: (required = false) =>
+    Property.StaticDropdown({
+      displayName: 'Access',
+      required,
+      defaultValue: "private",
+      options: {
+        disabled: false,
+        placeholder: '',
+        options: [
+          { label: 'Private', value: "private" },
+          { label: 'Public', value: "public" },
+          { label: 'Inherit from workspace', value: "inherit" },
+        ],
+      },
+    }),
   column_name: (required = false) =>
     Property.ShortText({ displayName: 'Column Name', required }),
   column_data_type: (required = false) =>
@@ -42,8 +45,11 @@ export const promaProps = {
           { label: 'time', value: 'time' },
           { label: 'date', value: 'date' },
           { label: 'image', value: 'image' },
+          { label: 'select', value: 'select' },
+          { label: 'multiSelect', value: 'multiSelect' },
           { label: 'file', value: 'file' },
           { label: 'tel', value: 'tel' },
+          { label: 'team members', value: "teamMembers" }
         ],
       },
     }),
@@ -84,12 +90,12 @@ export const promaProps = {
   //       };
   //     },
   //   }),
-  workspace_id: (required = false) =>
+  workspace_id: (required = false, mode = "read") =>
     Property.Dropdown({
       displayName: 'Workspace',
       description: "The workspace's unique identifier.",
       required: required,
-      refreshers: ['api_key', ],
+      refreshers: ['api_key',],
       options: async ({ api_key }) => {
         if (!api_key)
           return {
@@ -97,9 +103,9 @@ export const promaProps = {
             placeholder: 'connect your account first',
             options: [],
           };
-       
+
         const response: Workspace[] | null = await getWorkSpaces(
-          api_key as string,
+          api_key as string, mode as string
         );
 
         if (!response)
@@ -120,7 +126,7 @@ export const promaProps = {
         };
       },
     }),
-  table_id: (required = false) =>
+  table_id: (required = false, mode = "read") =>
     Property.Dropdown({
       displayName: 'Master Sheet',
       description: '',
@@ -142,7 +148,8 @@ export const promaProps = {
 
         const response: Table[] | null = await getTables(
           api_key as string,
-          workspace_id as string
+          workspace_id as string,
+          mode
         );
 
         if (!response)
@@ -168,8 +175,9 @@ export const promaProps = {
       displayName: 'Enter data',
       required,
       defaultValue: {},
-      description: 'Enter Data for Rows as Column Name:Value',
+      description: 'Enter column name on left and its value on right',
     }),
+  row_id: (required = false) => Property.ShortText({ displayName: "Row ID", required, description: "" })
   // item_id: (required = false) => Property.Dropdown({
   //   description: 'Board Item',
   //   displayName: 'Item',

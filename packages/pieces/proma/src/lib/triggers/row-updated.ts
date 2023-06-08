@@ -4,8 +4,8 @@ import { removeWebhookUrl, storeWebhookUrl } from '../common/data';
 
 export const dataRowUpdated = createTrigger({
   name: 'row_updated',
-  displayName: 'Data Row Updated',
-  description: 'Triggers when a data row is updated',
+  displayName: 'Row Updated',
+  description: 'Triggers when a row is updated',
   props: {
     api_key: promaProps.api_key,
     // organization_id: promaProps.organization_id(true),

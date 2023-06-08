@@ -9,6 +9,9 @@ import { getPromaWorkspaces } from './lib/actions/get-workspaces';
 import { getPromaProjects } from './lib/actions/get-projects';
 import { getPromaTableRows } from './lib/actions/get-items';
 import { getPromaTableColumns } from './lib/actions/get-table-columns';
+import { teamMemberAddedOrganization } from './lib/triggers/team-member-added-org';
+import { updatePromaRow } from './lib/actions/update-item';
+import { teamMemberAddedWorkspace } from './lib/triggers/team-member-added-ws';
 
 export const proma = createPiece({
   name: 'proma',
@@ -19,6 +22,7 @@ export const proma = createPiece({
   authors: [],
   actions: [
     addPromaRow,
+    updatePromaRow,
     addPromaTable,
     addPromaTableColumn,
     getPromaWorkspaces,
@@ -26,5 +30,5 @@ export const proma = createPiece({
     getPromaTableColumns,
     getPromaTableRows,
   ],
-  triggers: [newRowAdded, dataRowUpdated],
+  triggers: [newRowAdded, dataRowUpdated, teamMemberAddedOrganization, teamMemberAddedWorkspace],
 });

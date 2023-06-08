@@ -4,7 +4,7 @@ import { getWorkSpaces } from '../common/data';
 
 export const getPromaWorkspaces = createAction({
   name: 'get_proma_workspaces', // Must be a unique across the piece, this shouldn't be changed.
-  displayName: 'Get workspaces',
+  displayName: 'Get Workspaces',
   description: '',
   props: {
     api_key: promaProps.api_key,

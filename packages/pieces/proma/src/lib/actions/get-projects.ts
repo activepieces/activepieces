@@ -4,7 +4,7 @@ import { getTables } from '../common/data';
 
 export const getPromaProjects = createAction({
   name: 'get_proma_projects', // Must be a unique across the piece, this shouldn't be changed.
-  displayName: 'Get master sheets',
+  displayName: 'Get Master Sheets',
   description: '',
   props: {
     api_key: promaProps.api_key,

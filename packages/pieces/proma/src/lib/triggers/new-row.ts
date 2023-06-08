@@ -4,7 +4,7 @@ import { removeWebhookUrl, storeWebhookUrl } from '../common/data';
 
 export const newRowAdded = createTrigger({
   name: 'new_row',
-  displayName: 'Data Row Added',
+  displayName: 'Row Added',
   description: 'Triggers when a new row is added',
   props: {
     api_key: promaProps.api_key,
