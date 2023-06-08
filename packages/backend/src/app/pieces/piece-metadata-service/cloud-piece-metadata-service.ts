@@ -55,13 +55,13 @@ export const CloudPieceMetadataService = (): PieceMetadataService => {
             return [...cloudPieceMetadataList, ...dbEntityList]
         },
 
-        async get({ name, version }: GetParams): Promise<PieceMetadata> {
-            const query = {
+        async get({ name, version, projectId }: GetParams): Promise<PieceMetadata> {
+
+            const pieceMetadataEntity = await repo.findOneBy({
                 name,
                 version,
-            }
-
-            const pieceMetadataEntity = await repo.findOneBy(query)
+                projectId: projectId ?? undefined,
+            })
             if (!isNil(pieceMetadataEntity)) {
                 return pieceMetadataEntity
             }
@@ -73,7 +73,14 @@ export const CloudPieceMetadataService = (): PieceMetadataService => {
         },
 
         async create({ pieceMetadata, projectId }: CreateParams): Promise<PieceMetadata> {
-            const piece = await this.get({ name: pieceMetadata.name, version: pieceMetadata.version, projectId })
+            if(isNil(projectId)) {  
+                throw new Error('projectId is required and cannot be null')
+            }
+            const piece = await repo.findOneBy({
+                name: pieceMetadata.name,
+                version: pieceMetadata.version,
+                projectId: projectId,
+            })
             if(!isNil(piece)) {
                 return piece
             }
@@ -81,7 +88,7 @@ export const CloudPieceMetadataService = (): PieceMetadataService => {
                 id: apId(),
                 minimumSupportedRelease: pieceMetadata.minimumSupportedRelease ?? '0.0.0',
                 maximumSupportedRelease: pieceMetadata.maximumSupportedRelease ?? '99999.99999.99999',
-                projectId: projectId ?? undefined,
+                projectId: projectId,
                 ...pieceMetadata,
             }))
             return savedPiece

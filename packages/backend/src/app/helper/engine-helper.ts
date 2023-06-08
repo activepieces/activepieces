@@ -56,7 +56,7 @@ export type EngineHelperPropResult = DropdownState<unknown> | Record<string, Dyn
 export type EngineHelperActionResult = ExecuteActionResponse
 
 export type EngineHelperCodeResult = ExecuteActionResponse
-export type EngineHelperExtractPieceInformation = PieceMetadata
+export type EngineHelperExtractPieceInformation = Omit<PieceMetadata, 'name' | 'version'>
 
 export type EngineHelperResult =
     | EngineHelperFlowResult
@@ -275,7 +275,7 @@ export const engineHelper = {
     },
 
 
-    async extractPieceMetadata(operation: ExecuteExtractPieceMetadata): Promise<EngineHelperResponse<PieceMetadata>> {
+    async extractPieceMetadata(operation: ExecuteExtractPieceMetadata): Promise<EngineHelperResponse<EngineHelperExtractPieceInformation>> {
         logger.info(operation, '[EngineHelper#ExecuteExtractPieceMetadata] operation')
         const sandbox = await sandboxManager.obtainSandbox(operation.pieceName)
         await sandbox.recreate()

@@ -31,7 +31,11 @@ export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done)
             })
             return pieceMetadataService.create({
                 projectId: request.principal.projectId,
-                pieceMetadata: result,
+                pieceMetadata: {
+                    ...result,
+                    name: request.body.pieceName,
+                    version: request.body.pieceVersion,
+                },
             })
         },
     )

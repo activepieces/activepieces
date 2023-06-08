@@ -72,7 +72,7 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
         },
 
         async create() {
-            throw new Error('not supported')
+            throw new Error('Creating pieces is not supported in development mode')
         },
 
         async stats() {
