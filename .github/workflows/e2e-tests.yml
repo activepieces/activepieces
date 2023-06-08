@@ -32,7 +32,6 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 30
-          working-directory: packages/tests-e2e
       - name: Notify webhook on failure
         if: failure()
         run: |
