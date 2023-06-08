@@ -1,0 +1,65 @@
+<input
+    #fileInput
+    class="file-input"
+    type="file"
+    [accept]="extensions.join(',')"
+  />
+  <div
+    class="input-container d-flex align-items-center"
+    apDragDrop
+    (fileDropped)="fileDropped($event)"
+    [class.red-border]="showError"
+  >
+    <div
+      class="d-flex flex-column justify-content-center align-items-center image-container"
+    >
+      <div *ngIf="!file" class="d-flex justify-content-center align-items-center">
+        <svg-icon
+          [attr.class]="cloudSvgClass"
+          [attr.src]="'assets/img/custom/cloud.svg'"
+        ></svg-icon>
+      </div>
+      <div *ngIf="file" class="uploaded-image-container">
+        <img [src]="loadedImageUrl" class="uploaded-image" />
+      </div>
+    </div>
+    <div *ngIf="file" class="uploaded-image-name">
+      {{ file?.name }}
+    </div>
+    <div *ngIf="!file" class="upload-text">
+      Click to upload the icon or drop it here
+    </div>
+    <div class="flex-grow-1"></div>
+    <div class="d-flex justify-content-center align-items-center">
+      <div
+        class="d-flex justify-content-center align-items-center upload-btn"
+        *ngIf="!file"
+        (mouseenter)="uploadButtonHovered = true"
+        (mouseleave)="uploadButtonHovered = false"
+        (click)="fileInput.click()"
+      >
+        <svg-icon
+          [attr.class]="'upload-svg'"
+          [attr.src]="'assets/img/custom/upload.svg'"
+        ></svg-icon>
+      </div>
+      <div
+        class="d-flex justify-content-center align-items-center replace-btn"
+        (mouseenter)="uploadButtonHovered = true"
+        (mouseleave)="uploadButtonHovered = false"
+        (click)="fileInput.click()"
+        *ngIf="file"
+        matTooltip="Change"
+      >
+        <svg-icon
+          [attr.class]="'replace-img-svg'"
+          [attr.src]="'assets/img/custom/replace-file.svg'"
+        ></svg-icon>
+      </div>
+    </div>
+  </div>
+
+  <div class="error-msg" *ngIf="showError">
+    Allowed extensions are: ({{ extensions.join(" | ") }}), and the file size
+    limit is {{ fileMaxSize / 1000 }} kbs.
+  </div>
