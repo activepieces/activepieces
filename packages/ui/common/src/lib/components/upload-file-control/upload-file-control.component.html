@@ -1,0 +1,9 @@
+<input #fileInput class="file-input" type="file" [accept]="extensions.join(',')" />
+<div class="ap-flex ap-gap-2">
+  <mat-form-field class="ap-flex-grow">
+    <input matInput readonly [value]="file?.name || ''" [placeholder]="placeHolder" (click)="fileInput.click()" />
+    <mat-label>{{label}}</mat-label>
+  </mat-form-field>
+  <ap-icon-button [height]="25" [width]="25" iconFilename="attach.svg"
+    (buttonClicked)="fileInput.click()"></ap-icon-button>
+</div>

@@ -1,45 +1,59 @@
 import { Component, HostListener, Input } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import {
+  ControlValueAccessor,
+  NG_VALIDATORS,
+  NG_VALUE_ACCESSOR,
+} from '@angular/forms';
 
 @Component({
   selector: 'ap-file-upload',
-  templateUrl: './upload-image-control.component.html',
+  templateUrl: './upload-file-control.component.html',
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
       useExisting: UploadImageControlComponent,
       multi: true,
     },
+    {
+      provide: NG_VALIDATORS,
+      useExisting: UploadImageControlComponent,
+      multi: true,
+    },
   ],
-  styleUrls: ['./upload-image-control.component.scss'],
+  styleUrls: ['./upload-file-control.component.scss'],
 })
 export class UploadImageControlComponent implements ControlValueAccessor {
-  onChange!: (file: File | null) => void;
   @Input() public file: File | null = null;
   @Input() loadedImageUrl = '';
-  uploadButtonHovered = false;
-  showError = false;
   @Input() extensions: string[] = ['.json'];
   @Input() fileMaxSize = 90000;
+  @Input() placeHolder = 'Template.json';
+  @Input() label = 'File';
   @HostListener('change', ['$event.target.files']) emitFiles(event: FileList) {
     const file = event && event.item(0);
     if (file) {
       this.fileDropped(file);
     }
   }
-
-  fileDropped(file: any) {
-    this.showError = !this.validateFileType(file);
-    if (!this.showError) {
-      this.onChange(file);
+  onChange: (file: File | null) => void = (file: File | null) => {
+    //ignore
+  };
+  fileDropped(file: File) {
+    if (this.validateFileType(file) === null) {
       this.file = file;
-      this.readImage();
+      this.onChange(file);
     } else {
       this.onChange(null);
       this.file = null;
     }
   }
-
+  validate() {
+    const err = this.validateFileType(this.file);
+    if (err) {
+      return err;
+    }
+    return null;
+  }
   writeValue(file: File) {
     this.file = file;
   }
@@ -52,11 +66,11 @@ export class UploadImageControlComponent implements ControlValueAccessor {
     // ignored
   }
 
-  validateFileType(file: File) {
+  validateFileType(file: File | null): Record<string, boolean> | null {
     if (file) {
       const parts = file.name.split('.');
       if (parts.length === 0) {
-        return false;
+        return { emptyFile: true };
       }
       const extension = '.' + parts[parts.length - 1].toLowerCase();
       if (
@@ -66,26 +80,13 @@ export class UploadImageControlComponent implements ControlValueAccessor {
             extension.toLocaleLowerCase()
         )
       ) {
-        return false;
+        return { invalidExtenstion: true };
       }
-      return file.size <= this.fileMaxSize;
+      if (file.size > this.fileMaxSize) {
+        return { sizeLimit: true };
+      }
+      return null;
     }
-    return false;
-  }
-
-  readImage() {
-    const reader = new FileReader();
-    reader.onload = () => {
-      this.loadedImageUrl = reader.result as string;
-    };
-    if (this.file) reader.readAsDataURL(this.file);
-  }
-
-  get cloudSvgClass() {
-    if (this.uploadButtonHovered) {
-      return 'cloud-svg cloud-svg-hover';
-    } else {
-      return 'cloud-svg';
-    }
+    return { emptyFile: true };
   }
 }

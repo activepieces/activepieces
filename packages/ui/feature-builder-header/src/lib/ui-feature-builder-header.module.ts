@@ -8,6 +8,7 @@ import { FlowBuilderHeaderComponent } from './flow-builder-header.component';
 import { ToggleInstanceStateComponent } from './toggle-instance-state/toggle-instance-state.component';
 import { PublishButtonComponent } from './publish-button/publish-button.component';
 import { DraftStatusComponent } from './draft-status/draft-status.component';
+import { ImportFlowDialogueComponent } from './import-flow-dialogue/import-flow-dialogue.component';
 
 const exportedDeclarations = [
   FlowBuilderHeaderComponent,
@@ -23,7 +24,11 @@ const exportedDeclarations = [
     UiFeatureBuilderStoreModule,
     UiCommonModule,
   ],
-  declarations: [...exportedDeclarations, DraftStatusComponent],
+  declarations: [
+    ...exportedDeclarations,
+    DraftStatusComponent,
+    ImportFlowDialogueComponent,
+  ],
   exports: [...exportedDeclarations],
 })
 export class UiFeatureBuilderHeaderModule {}
