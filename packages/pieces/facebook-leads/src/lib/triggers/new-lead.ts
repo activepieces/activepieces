@@ -1,5 +1,5 @@
 import { TriggerStrategy, createTrigger } from "@activepieces/pieces-framework";
-import { WebhookInformation, facebookLeadsCommon } from "../common";
+import { FacebookPageDropdown, facebookLeadsCommon } from "../common";
 
 export const newLead = createTrigger({
     name: 'new_lead',
@@ -9,39 +9,37 @@ export const newLead = createTrigger({
     sampleData: {},
     props: {
         authentication: facebookLeadsCommon.authentication,
-        formId: facebookLeadsCommon.form
+        page: facebookLeadsCommon.page,
+        form: facebookLeadsCommon.form
     },
 
     async onEnable(context) {
-        // await jotformCommon.subscribeWebhook(
-        //     context.propsValue['formId'],
-        //     context.webhookUrl,
-        //     context.propsValue['authentication']
-        // );
+        const page = context.propsValue['page'] as FacebookPageDropdown
+        await facebookLeadsCommon.subscribePageToApp(page.id, page.accessToken)
 
-        // await context.store?.put<WebhookInformation>('_new_facebook_lead_trigger', {
-        //     leadId: context.webhookUrl,
-        // });
-        return
+        context.app.createListeners({ events: ['lead'], identifierValue: '444444444444' })
     },
 
     async onDisable(context) {
-        // const response = await context.store?.get<WebhookInformation>(
-        //     '_new_facebook_lead_trigger'
-        // );
-
-        // if (response !== null && response !== undefined) {
-        //     // await jotformCommon.unsubscribeWebhook(
-        //     //     context.propsValue['formId'],
-        //     //     response.jotformWebhook,
-        //     //     context.propsValue['authentication']
-        //     // );
-        // }
-        return
+        //
     },
 
     //Return new lead
     async run(context) {
-        return [context.payload.body];
+        let leads: any[] = [];
+        const form = context.propsValue.form;
+        
+        if (form !== undefined && form !== '' && form !== null) {
+            context.payload.body.entry.forEach((lead: any) => {
+                if (form == lead.changes[0].value.form_id) {
+                    leads.push(lead)
+                }
+            });
+        }
+        else {
+            leads = context.payload.body.entry;
+        }
+
+        return [leads];
     }
 })

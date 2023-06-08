@@ -14,7 +14,7 @@ export const appEventRoutingModule = async (app: FastifyInstance) => {
 
 export const appEventRoutingController = async (fastify: FastifyInstance) => {
 
-    fastify.post(
+    fastify.all(
         '/:pieceName',
         {
             config: {
