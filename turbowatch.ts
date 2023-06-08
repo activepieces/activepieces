@@ -11,6 +11,8 @@ export default defineConfig({
             persistent: false,
             onChange: async ({ spawn, first, files } :ChangeEvent) => {
                 if (first) {
+                    const pieces = process.env.AP_DEV_PIECES?.split(',').map(p => `pieces-${p}`).join(',')
+                    await spawn`nx run-many -t build --projects=${pieces}`
                     return
                 }
 
