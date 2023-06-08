@@ -28,7 +28,7 @@
       </div>
       <mat-menu #menu="matMenu">
         <button mat-menu-item (click)="editingFlowName = true">Rename</button>
-        <button mat-menu-item *ngIf="flow$ | async as flow" (click)="download(flow.id)"> Download </button>
+        <button mat-menu-item *ngIf="flow$ | async as flow" (click)="download(flow.id)"> Export </button>
         <button mat-menu-item *ngIf="flow$ | async as flow" (click)="import()"> Import </button>
         <button mat-menu-item *ngIf="flow$ | async as flow" (click)="duplicate()">Duplicate</button>
         <button mat-menu-item *ngIf="flow$ | async as flow" (click)="deleteFlow(flow)">
