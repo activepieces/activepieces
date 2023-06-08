@@ -1,7 +1,5 @@
 name: Playwright Tests
 on:
-  schedule:
-    - cron: '*/30 * * * *'
   workflow_dispatch:
 
 jobs:
