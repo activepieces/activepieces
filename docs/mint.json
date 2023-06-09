@@ -181,10 +181,9 @@
       ]
     },
     {
-      "group": "Overview",
+      "group": "Getting Started",
       "pages": [
-        "contributing/overview",
-        "contributing/getting-started"
+        "contributing/overview"
       ]
     },
     {
