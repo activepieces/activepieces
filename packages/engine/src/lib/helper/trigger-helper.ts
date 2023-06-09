@@ -31,7 +31,7 @@ export const triggerHelper = {
       censorConnections: false,
     })
 
-    const { result, errors } = variableService.validateAndCast(resolvedInput, trigger.props);
+    const { result, errors } = await variableService.validateAndCast(resolvedInput, trigger.props);
     if (Object.keys(errors).length > 0) {
       throw new Error(JSON.stringify(errors));
     }

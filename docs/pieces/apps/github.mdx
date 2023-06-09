@@ -2,26 +2,59 @@
 title: 'Github'
 ---
 
+##### Authors: [kanarelo](https://github.com/kanarelo)
+
+
 ## Triggers
 
 
-    <CardGroup cols={2}>
-      <Card title="New Pull Request">
+      <Card title="New Pull Request (Instant)" icon="bolt">
         Triggers when there is activity on a pull request.
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Authentication" required type="Oauth2">
+
+</ResponseField>
+            
+<ResponseField name="Repository" required type="Dropdown">
+
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   
-    <CardGroup cols={2}>
-      <Card title="New Star">
+      <Card title="New Star (Instant)" icon="bolt">
         Trigger when there is activity relating to repository stars.
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Authentication" required type="Oauth2">
+
+</ResponseField>
+            
+<ResponseField name="Repository" required type="Dropdown">
+
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   
-    <CardGroup cols={2}>
-      <Card title="New Issue">
+      <Card title="New Issue (Instant)" icon="bolt">
         Triggers when there is activity relating to an issue.
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Authentication" required type="Oauth2">
+
+</ResponseField>
+            
+<ResponseField name="Repository" required type="Dropdown">
+
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   
 
 ---

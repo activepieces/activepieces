@@ -5,11 +5,21 @@ title: 'Figma'
 ## Triggers
 
 
-    <CardGroup cols={2}>
-      <Card title="New Comment (Figma Professional plan only)">
+      <Card title="New Comment (Figma Professional plan only) (Instant)" icon="bolt">
         Triggers when a new comment is posted
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Authentication" required type="Oauth2">
+
+</ResponseField>
+            
+<ResponseField name="Team ID" required type="Short_text">
+Naviate to team page, copy the Id from the URL after the word team/
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   
 
 ---
@@ -17,21 +27,55 @@ title: 'Figma'
 ## Actions
 
 
-    <CardGroup cols={2}>
-      <Card title="Get File">
+      <Card title="Get File " >
         Get file
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Authentication" required type="Oauth2">
+
+</ResponseField>
+            
+<ResponseField name="File Key" required type="Short_text">
+The Figma file key (copy from Figma file URL)
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   
-    <CardGroup cols={2}>
-      <Card title="Get File Comments">
+      <Card title="Get File Comments " >
         Get file comments
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Authentication" required type="Oauth2">
+
+</ResponseField>
+            
+<ResponseField name="File Key" required type="Short_text">
+The Figma file key (copy from Figma file URL)
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   
-    <CardGroup cols={2}>
-      <Card title="Post File Comment">
+      <Card title="Post File Comment " >
         Post file comment
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Authentication" required type="Oauth2">
+
+</ResponseField>
+            
+<ResponseField name="File Key" required type="Short_text">
+The Figma file key (copy from Figma file URL)
+</ResponseField>
+            
+<ResponseField name="Comment" required type="Long_text">
+Your comment
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   

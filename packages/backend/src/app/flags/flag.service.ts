@@ -21,6 +21,9 @@ export const flagService = {
             id: flagId,
         })
     },
+    async getCurrentVersion(): Promise<string> {
+        return (await import('../../../../../package.json')).version
+    },
     async getAll(): Promise<Flag[]> {
         const flags = await flagRepo.find({})
         const now = new Date().toISOString()
@@ -28,7 +31,7 @@ export const flagService = {
         const updated = now
         // eslint-disable-next-line @typescript-eslint/no-var-requires
         const currentVersion = (await import('../../../../../package.json')).version
-        const latestVersion = (await flagService.getLatestPackageDotJson()).version
+        const latestVersion = (await this.getCurrentVersion())
         flags.push(
             {
                 id: ApFlagId.ENVIRONMENT,
@@ -99,6 +102,12 @@ export const flagService = {
             {
                 id: ApFlagId.LATEST_VERSION,
                 value: latestVersion,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.TEMPLATES_SOURCE_URL,
+                value: system.get(SystemProp.TEMPLATES_SOURCE_URL),
                 created,
                 updated,
             },

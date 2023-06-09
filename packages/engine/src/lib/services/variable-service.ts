@@ -1,10 +1,13 @@
 import { get, isNil, isString } from "lodash";
 import { ExecutionState } from "@activepieces/shared";
 import { connectionService } from "./connections.service";
-import { PiecePropertyMap, PropertyType } from "@activepieces/pieces-framework";
+import { ApFile, PiecePropertyMap, PropertyType } from "@activepieces/pieces-framework";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
+import axios from "axios";
+import path from "path";
+import isBase64 from 'is-base64';
 
 type ResolveParams = {
   unresolvedInput: unknown
@@ -117,7 +120,7 @@ export class VariableService {
     );
   }
 
-  castedToNumber(number: any): number | undefined | null {
+  castToNumber(number: any): number | undefined | null {
     if (isNil(number)) {
       return number;
     }
@@ -126,6 +129,66 @@ export class VariableService {
     }
     return Number(number);
   }
+
+  convertUrlOrBase64ToFile = async (urlOrBase64: unknown): Promise<ApFile | null> => {
+    if (isNil(urlOrBase64) || !isString(urlOrBase64)) {
+      return null;
+    }
+    // Get the file from the URL
+    try {
+
+
+      // Check if the string is a Base64 string
+      if (isBase64(urlOrBase64, { allowMime: true })) {
+        const matches = urlOrBase64.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
+        let base64 = urlOrBase64;
+        let contentType = null;
+
+        if (matches && matches?.length === 3) {
+          contentType = matches[1];
+          base64 = matches[2];
+
+          // You need to provide how you decide filename and extension in case of base64 string
+          const filename = 'unknown';
+          const extension = contentType.split('/')[1];
+
+          return {
+            filename: filename + "." + extension,
+            extension,
+            base64,
+          };
+        }
+
+      }
+      const response = await axios.head(urlOrBase64);
+      const contentType = response.headers['content-type'];
+
+      // Check if content type is file
+      if (!contentType || !(contentType.startsWith('application/') || contentType.startsWith("image") || contentType === 'application/octet-stream')) {
+        return null;
+      }
+      const fileResponse = await axios.get(urlOrBase64, {
+        responseType: 'arraybuffer',
+      });
+
+      // Get filename and extension
+      const filename = path.basename(urlOrBase64);
+      // Remove dot from extension
+      const extension = path.extname(urlOrBase64)?.substring(1);
+      // Convert file data to base64
+      const base64 = Buffer.from(fileResponse.data, 'binary').toString('base64');
+
+      // Return the ApFile object
+      return {
+        filename,
+        extension,
+        base64,
+      };
+    } catch (e) {
+      console.error(e);
+      return null;
+    }
+  };
 
   getISODateTime = (clonedInput: any, key: string): string | undefined => {
     dayjs.extend(utc);
@@ -141,18 +204,27 @@ export class VariableService {
     }
   };
 
-  validateAndCast(
+  async validateAndCast(
     resolvedInput: any,
     props: PiecePropertyMap
-  ): { result: any; errors: Record<string, any> } {
+  ): Promise<{ result: any; errors: Record<string, any>; }> {
     const errors: Record<string, string | Record<string, string>> = {};
     const clonedInput = JSON.parse(JSON.stringify(resolvedInput));
 
     for (const [key, value] of Object.entries(resolvedInput)) {
       const property = props[key];
       const type = property?.type;
-      if (type === PropertyType.NUMBER) {
-        const castedNumber = this.castedToNumber(clonedInput[key]);
+      if (type === PropertyType.FILE) {
+        const file = await this.convertUrlOrBase64ToFile(value);
+        if (isNil(file) && property.required) {
+          errors[key] = `expected file url or base64 with mimeType, but found value: ${value}`;
+        }
+        if (isNil(file) && !isNil(value) && value !== '' && !property.required) {
+          errors[key] = `expected file url or base64 with mimeType, but found value: ${value}`;
+        }
+        clonedInput[key] = file;
+      } else if (type === PropertyType.NUMBER) {
+        const castedNumber = this.castToNumber(clonedInput[key]);
         // If the value is required, we don't allow it to be undefined or null
         if ((isNil(castedNumber) || isNaN(castedNumber)) && property.required) {
           errors[key] = `expected number, but found value: ${value}`;
@@ -163,7 +235,7 @@ export class VariableService {
         }
         clonedInput[key] = castedNumber;
       } else if (type === PropertyType.CUSTOM_AUTH) {
-        const innerValidation = this.validateAndCast(value, property.props);
+        const innerValidation = await this.validateAndCast(value, property.props);
         clonedInput[key] = innerValidation.result;
         if (Object.keys(innerValidation.errors).length > 0) {
           errors[key] = innerValidation.errors;

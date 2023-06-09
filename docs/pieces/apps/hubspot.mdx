@@ -2,6 +2,9 @@
 title: 'HubSpot'
 ---
 
+##### Authors: [khaledmashaly](https://github.com/khaledmashaly)
+
+
 ## Triggers
 
 *No supported triggers yet, please let us know if you need something on Discord so we can help out* 
@@ -12,21 +15,79 @@ title: 'HubSpot'
 ## Actions
 
 
-    <CardGroup cols={2}>
-      <Card title="Create Contact">
+      <Card title="Create Contact " >
         Fails on duplicate email addresses
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Authentication" required type="Oauth2">
+
+</ResponseField>
+            
+<ResponseField name="First Name" required type="Short_text">
+First name of the new contact
+</ResponseField>
+            
+<ResponseField name="Last Name" required type="Short_text">
+Last name of the new contact
+</ResponseField>
+            
+<ResponseField name="Zip Code"  type="Short_text">
+Zip code of the new contact
+</ResponseField>
+            
+<ResponseField name="Email"  type="Short_text">
+Email of the new contact
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   
-    <CardGroup cols={2}>
-      <Card title="Create or Update Contact">
+      <Card title="Create or Update Contact " >
         Updates contact if email address already exists
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Authentication" required type="Oauth2">
+
+</ResponseField>
+            
+<ResponseField name="Email" required type="Short_text">
+Contact email
+</ResponseField>
+            
+<ResponseField name="First Name"  type="Short_text">
+contact first name
+</ResponseField>
+            
+<ResponseField name="Last Name"  type="Short_text">
+contact last name
+</ResponseField>
+            
+<ResponseField name="Zip Code"  type="Short_text">
+contact zip code
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   
-    <CardGroup cols={2}>
-      <Card title="Add contact To List">
+      <Card title="Add contact To List " >
         Add contact to list
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Authentication" required type="Oauth2">
+
+</ResponseField>
+            
+<ResponseField name="List" required type="Dropdown">
+List to add contact to
+</ResponseField>
+            
+<ResponseField name="Email" required type="Short_text">
+Contact email
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   

@@ -6,12 +6,16 @@
         <div class="ap-mt-1">
           <ng-container *ngIf="webhookUrl$ | async as url">
             <section class="ap-typography-body-2">
-              <p class="ap-mt-1 ap-flex ap-items-center">Url: <ap-icon-button [width]="15" [height]="15"
+              <p class="ap-mt-1 ap-flex ap-items-center">URL: <ap-icon-button [width]="15" [height]="15"
                   [iconFilename]="'copy.svg'" [tooltipText]="'copy'" (buttonClicked)="copyUrl(url)"></ap-icon-button>
               </p>
-              <div class="ap-typography-caption ap-flex ap-flex-col ap-gap-2">
-                <p [matTooltip]="url" class="ap-truncate"> {{url}} </p>
-              </div>
+              <mat-form-field class="ap-w-full">
+                <input matInput [value]="url" readonly #webhookUrl (click)="webhookUrl.select()">
+              </mat-form-field>
+
+              <ap-markdown [fullWidth]="true"
+                data="If you are expecting a reply from image.png, append <b>/sync</b> to the URL.<br> <br>
+                  In that case, you will also have to add an <b>HTTP step</b>  with return response to the end of your flow."></ap-markdown>
             </section>
           </ng-container>
         </div>
