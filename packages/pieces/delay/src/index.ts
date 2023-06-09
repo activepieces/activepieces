@@ -13,8 +13,8 @@ export const delay = createPiece({
     "nileshtrivedi"
   ],
   actions: [
-	delayForAction, // Delay for a fixed duration
-	delayUntilAction // Takes a timestamp parameter instead of duration
+    delayForAction, // Delay for a fixed duration
+    delayUntilAction // Takes a timestamp parameter instead of duration
   ],
   triggers: [
   ],
