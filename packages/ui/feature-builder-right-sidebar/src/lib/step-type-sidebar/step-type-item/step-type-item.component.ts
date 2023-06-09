@@ -50,6 +50,6 @@ export class StepTypeItemComponent {
     };
   }
   openDocs(url: string) {
-    window.open(url, '_blank');
+    window.open(url, '_blank', 'noopener');
   }
 }

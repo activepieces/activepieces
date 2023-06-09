@@ -63,7 +63,8 @@ module.exports = {
         graySelect: '#F5F5F5',
         title:'#262626',
         bleachedGray:'#A6B1BF',
-        disable:'#AAAAAA'
+        disable:'#AAAAAA',
+        outline: 'rgba(0, 0, 0, 0.12)'
       },
     },
     container: {

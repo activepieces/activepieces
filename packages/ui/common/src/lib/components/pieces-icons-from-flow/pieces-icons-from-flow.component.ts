@@ -2,6 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import {
   ActionType,
   FlowVersion,
+  FlowVersionTemplate,
   TriggerType,
   flowHelper,
 } from '@activepieces/shared';
@@ -18,7 +19,7 @@ import {
   templateUrl: './pieces-icons-from-flow.component.html',
 })
 export class PiecesIconsFromFlowComponent implements OnInit {
-  @Input() flowVersion: FlowVersion;
+  @Input() flowVersion: FlowVersionTemplate | FlowVersion;
   numberOfStepsLeft = 0;
   loadedIcons: Record<number, boolean> = {};
   urlsToLoad$: Observable<string>[] = [];
@@ -31,9 +32,8 @@ export class PiecesIconsFromFlowComponent implements OnInit {
     this.loadIconUrls(Object.values(icons$));
   }
   extractIconUrlsAndTooltipText() {
-    const steps = flowHelper.getAllSteps(this.flowVersion);
+    const steps = flowHelper.getAllSteps(this.flowVersion.trigger);
     const stepsIconsUrls: Record<string, Observable<string>> = {};
-
     steps.forEach((s) => {
       if (s.type === ActionType.PIECE || s.type === TriggerType.PIECE) {
         const pieceMetaData$ = this.actionMetaDataService
@@ -58,7 +58,7 @@ export class PiecesIconsFromFlowComponent implements OnInit {
         this.stepNamesMap[s.name] = '';
         stepsIconsUrls[s.settings.pieceName] = pieceMetaData$;
       } else if (s.type !== TriggerType.EMPTY) {
-        const icon = this.actionMetaDataService.findNonPieceStepIcon(s);
+        const icon = this.actionMetaDataService.findNonPieceStepIcon(s.type);
         const displayName =
           [
             ...this.actionMetaDataService.coreFlowItemsDetails,

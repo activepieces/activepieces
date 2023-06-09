@@ -26,6 +26,7 @@ export enum FlowsActionType {
   DESELECT_STEP = '[FLOWS] DESELECT_STEP',
   SELECT_FIRST_INVALID_STEP = '[FLOWS] SELECT_FIRST_INVALID_STEP',
   MOVE_ACTION = '[FLOWS] MOVE_ACTION',
+  IMPORT_FLOW = '[FLOWS] IMPORT_FLOW',
 }
 
 const updateTrigger = createAction(
@@ -78,7 +79,12 @@ const setInitial = createAction(
     folder?: Folder;
   }>()
 );
-
+const importFlow = createAction(
+  FlowsActionType.SET_INITIAL,
+  props<{
+    flow: Flow;
+  }>()
+);
 const applyUpdateOperation = createAction(
   FlowsActionType.APPLY_UPDATE_OPERATION,
   props<{ flow: Flow; operation: FlowOperationRequest; saveRequestId: UUID }>()
@@ -99,6 +105,7 @@ export const FlowsActions = {
   deselectStep,
   selectFirstInvalidStep,
   moveAction,
+  importFlow,
 };
 
 export const SingleFlowModifyingState = [

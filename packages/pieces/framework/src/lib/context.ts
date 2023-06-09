@@ -1,4 +1,4 @@
-import { AppConnectionValue, ExecutionType, PauseMetadata, ScheduleOptions, TriggerPayload } from "@activepieces/shared";
+import { AppConnectionValue, ExecutionType, PauseMetadata, ScheduleOptions, StopResponse, TriggerPayload } from "@activepieces/shared";
 import { TriggerStrategy } from "./trigger/trigger";
 
 export type TriggerHookContext<T, S extends TriggerStrategy> =
@@ -27,7 +27,7 @@ export interface TriggerContext<T> {
 }
 
 export type StopHookParams = {
-    response?: unknown
+    response: StopResponse
 }
 
 export type StopHook = (params: StopHookParams) => void

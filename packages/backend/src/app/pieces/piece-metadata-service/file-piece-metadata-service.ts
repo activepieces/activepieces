@@ -9,7 +9,7 @@ import { GetParams, PieceMetadataService } from './piece-metadata-service'
 
 const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
     const ignoredPackages = ['framework', 'apps', 'dist', 'common']
-    const piecesPath = resolve(cwd(), 'packages', 'pieces')
+    const piecesPath = resolve(cwd(), 'dist', 'packages', 'pieces')
     const piecePackages = await readdir(piecesPath)
     const filteredPiecePackages = piecePackages.filter(d => !ignoredPackages.includes(d))
 
@@ -18,8 +18,14 @@ const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
     for (const piecePackage of filteredPiecePackages) {
         try {
             const module = await import(`../../../../../pieces/${piecePackage}/src/index.ts`)
+            const packageJson = await import(`../../../../../pieces/${piecePackage}/package.json`)
             const piece = Object.values<Piece>(module)[0]
-            piecesMetadata.push(piece.metadata())
+            piecesMetadata.push({
+                directoryName: piecePackage,
+                ...piece.metadata(),
+                name: packageJson.name,
+                version: packageJson.version,
+            })
         }
         catch(ex) {
             captureException(ex)

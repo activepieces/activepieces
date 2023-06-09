@@ -5,11 +5,27 @@ title: 'Wordpress'
 ## Triggers
 
 
-    <CardGroup cols={2}>
-      <Card title="New Post">
+      <Card title="New Post (Scheduled)" icon="clock">
         Triggers when a new post is published
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Connection" required type="Basic_auth">
+
+Enable basic authentication for your Wordpress website by downloading and installing the plugin from this repository: `https://github.com/WP-API/Basic-Auth.`
+
+</ResponseField>
+            
+<ResponseField name="Website URL" required type="Short_text">
+URL of the wordpress url i.e `https://www.example-website.com`
+</ResponseField>
+            
+<ResponseField name="Authors"  type="Dropdown">
+
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   
 
 ---
@@ -17,15 +33,115 @@ title: 'Wordpress'
 ## Actions
 
 
-    <CardGroup cols={2}>
-      <Card title="Create Post">
+      <Card title="Create Post " >
         Create new post on Wordpress
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Connection" required type="Basic_auth">
+
+Enable basic authentication for your Wordpress website by downloading and installing the plugin from this repository: `https://github.com/WP-API/Basic-Auth.`
+
+</ResponseField>
+            
+<ResponseField name="Website URL" required type="Short_text">
+URL of the wordpress url i.e `https://www.example-website.com`
+</ResponseField>
+            
+<ResponseField name="Title" required type="Short_text">
+Title of the post about to be added
+</ResponseField>
+            
+<ResponseField name="Content" required type="Long_text">
+Uses the WordPress Text Editor which supports HTML
+</ResponseField>
+            
+<ResponseField name="Slug"  type="Short_text">
+
+</ResponseField>
+            
+<ResponseField name="Date"  type="Short_text">
+Post publish date (ISO-8601)
+</ResponseField>
+            
+<ResponseField name="Tags"  type="Multi_select_dropdown">
+Post tags
+</ResponseField>
+            
+<ResponseField name="Categories"  type="Multi_select_dropdown">
+Post categories
+</ResponseField>
+            
+<ResponseField name="Featured Media (image)"  type="Dropdown">
+Choose from one of your uploaded media files
+</ResponseField>
+            
+<ResponseField name="Status"  type="Static_dropdown">
+Choose post status
+</ResponseField>
+            
+<ResponseField name="Excerpt"  type="Long_text">
+Uses the WordPress Text Editor which supports HTML
+</ResponseField>
+            
+<ResponseField name="Enable Comments"  type="Checkbox">
+
+</ResponseField>
+            
+<ResponseField name="Open to Pinging"  type="Checkbox">
+
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   
-    <CardGroup cols={2}>
-      <Card title="Create Page">
+      <Card title="Create Page " >
         Create new page on Wordpress
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Connection" required type="Basic_auth">
+
+Enable basic authentication for your Wordpress website by downloading and installing the plugin from this repository: `https://github.com/WP-API/Basic-Auth.`
+
+</ResponseField>
+            
+<ResponseField name="Website URL" required type="Short_text">
+URL of the wordpress url i.e `https://www.example-website.com`
+</ResponseField>
+            
+<ResponseField name="Title" required type="Short_text">
+Title of the page about to be added
+</ResponseField>
+            
+<ResponseField name="Content" required type="Long_text">
+Uses the WordPress Text Editor which supports HTML
+</ResponseField>
+            
+<ResponseField name="Slug"  type="Short_text">
+
+</ResponseField>
+            
+<ResponseField name="Date"  type="Short_text">
+Page publish date (ISO-8601)
+</ResponseField>
+            
+<ResponseField name="Status"  type="Static_dropdown">
+Choose status
+</ResponseField>
+            
+<ResponseField name="Excerpt"  type="Long_text">
+Uses the WordPress Text Editor which supports HTML
+</ResponseField>
+            
+<ResponseField name="Enable Comments"  type="Checkbox">
+
+</ResponseField>
+            
+<ResponseField name="Open to Pinging"  type="Checkbox">
+
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   

@@ -2,11 +2,23 @@ import { FastifyInstance, FastifyRequest } from 'fastify'
 import { webhookService } from '../webhooks/webhook-service'
 import { appEventRoutingService } from './app-event-routing.service'
 import { logger } from '../helper/logger'
-import { getPiece } from '@activepieces/pieces-apps'
 import { isNil } from 'lodash'
 import { ActivepiecesError, ErrorCode, EventPayload } from '@activepieces/shared'
 import { flowService } from '../flows/flow/flow.service'
 import { AppEventRouting } from './app-event-routing.entity'
+import { slack } from '@activepieces/piece-slack'
+import { square } from '@activepieces/piece-square'
+import { Piece } from '@activepieces/pieces-framework'
+
+// TODO CLEAN UP
+const appWebhooks: Record<string, Piece> = {
+    slack: slack,
+    square: square,
+}
+const pieceNames: Record<string, string> = {
+    slack: '@activepieces/piece-slack',
+    square: '@activepieces/piece-square',
+}
 
 export const appEventRoutingModule = async (app: FastifyInstance) => {
     app.register(appEventRoutingController, { prefix: '/v1/app-events' })
@@ -15,7 +27,7 @@ export const appEventRoutingModule = async (app: FastifyInstance) => {
 export const appEventRoutingController = async (fastify: FastifyInstance) => {
 
     fastify.post(
-        '/:pieceName',
+        '/:pieceUrl',
         {
             config: {
                 rawBody: true,
@@ -25,12 +37,12 @@ export const appEventRoutingController = async (fastify: FastifyInstance) => {
             request: FastifyRequest<{
                 Body: unknown
                 Params: {
-                    pieceName: string
+                    pieceUrl: string
                 }
             }>,
             requestReply,
         ) => {
-            const pieceName = request.params.pieceName
+            const pieceUrl = request.params.pieceUrl
             const eventPayload = {
                 headers: request.headers as Record<string, string>,
                 body: request.body,
@@ -38,18 +50,17 @@ export const appEventRoutingController = async (fastify: FastifyInstance) => {
                 method: request.method,
                 queryParams: request.query as Record<string, string>,
             }
-            const piece = getPiece(pieceName)
-
+            const piece = appWebhooks[pieceUrl]
             if (isNil(piece)) {
                 throw new ActivepiecesError({
                     code: ErrorCode.PIECE_NOT_FOUND,
                     params: {
-                        pieceName,
+                        pieceName: pieceUrl,
                         pieceVersion: 'latest',
                     },
                 })
             }
-
+            const pieceName = pieceNames[pieceUrl]
             const { reply, event, identifierValue } = piece.events!.parseAndReply({ payload: eventPayload })
 
             logger.info(`Received event ${event} with identifier ${identifierValue} in app ${pieceName}`)

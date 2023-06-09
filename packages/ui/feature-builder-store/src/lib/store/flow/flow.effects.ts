@@ -92,7 +92,7 @@ export class FlowsEffects {
       ),
       switchMap(([action, flow]) => {
         const invalidSteps = flowHelper
-          .getAllSteps(flow.version)
+          .getAllSteps(flow.version.trigger)
           .filter((s) => !s.valid);
         if (invalidSteps.length > 0) {
           return of(

@@ -5,6 +5,7 @@ import {
     Flow,
     FlowId,
     FlowInstanceStatus,
+    FlowRun,
     FlowVersion,
     FlowViewMode,
     ProjectId,
@@ -24,7 +25,7 @@ import { webhookSimulationService } from './webhook-simulation/webhook-simulatio
 import { flowInstanceService } from '../flows/flow-instance/flow-instance.service'
 
 export const webhookService = {
-    async callback({ flow, payload }: CallbackParams): Promise<void> {
+    async callback({ flow, payload }: CallbackParams): Promise<FlowRun[]> {
         logger.info(`[WebhookService#callback] flowId=${flow.id}`)
 
         const { projectId } = flow
@@ -40,7 +41,7 @@ export const webhookService = {
 
         if (isNil(flowInstance) || flowInstance.status !== FlowInstanceStatus.ENABLED) {
             logger.info(`[WebhookService#callback] flowInstance not found or not enabled ignoring the webhook, flowId=${flow.id}`)
-            return
+            return []
         }
         const flowVersion = await flowVersionService.getOneOrThrow(flowInstance.flowVersionId)
 
@@ -61,7 +62,7 @@ export const webhookService = {
             }),
         )
 
-        await Promise.all(createFlowRuns)
+        return await Promise.all(createFlowRuns)
     },
 
     async simulationCallback({ flow, payload }: CallbackParams): Promise<void> {
