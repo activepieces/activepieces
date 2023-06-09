@@ -7,7 +7,7 @@ import { isNil } from 'lodash'
 assert(process.env.AP_CLOUD_API_KEY, 'API Key is not defined')
 
 const { AP_CLOUD_API_KEY } = process.env
-const AP_CLOUD_API_BASE = 'https://cloud.activepieces.com/v1'
+const AP_CLOUD_API_BASE = 'https://cloud.activepieces.com/api/v1'
 
 const insertPieceMetadata = async (pieceMetadata: PieceMetadata): Promise<void> => {
     const body = JSON.stringify(pieceMetadata)
