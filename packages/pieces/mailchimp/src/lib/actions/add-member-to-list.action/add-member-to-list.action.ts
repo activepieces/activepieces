@@ -9,6 +9,16 @@ export const addMemberToList = createAction({
     description: "Add a member to an existing Mailchimp audience (list)",
     props: {
         authentication: mailChimpAuth,
+        first_name: Property.ShortText({
+            displayName: 'First Name',
+            description: 'First name of the new contact',
+            required: false,
+        }),
+        last_name: Property.ShortText({
+            displayName: 'Last Name',
+            description: 'Last name of the new contact',
+            required: false,
+        }),
         email: Property.ShortText({
             displayName: 'Email',
             description: 'Email of the new contact',
@@ -38,6 +48,22 @@ export const addMemberToList = createAction({
             server: mailChimpServerPrefix
         });
 
-        return await mailchimp.lists.addListMember(context.propsValue.list_id!, { email_address: context.propsValue.email!, status: context.propsValue.status! })
+        const memberData: {
+            email_address: string,
+            status: 'subscribed' | 'unsubscribed' | 'cleaned' | 'pending' | 'transactional',
+            merge_fields: {
+                FNAME: string,
+                LNAME: string
+            }
+        } = {
+            email_address: context.propsValue.email!,
+            status: context.propsValue.status!,
+            merge_fields: {
+                FNAME: context.propsValue.first_name || '',
+                LNAME: context.propsValue.last_name || ''
+            }
+        };
+
+        return await mailchimp.lists.addListMember(context.propsValue.list_id!, memberData);
     },
 });
