@@ -18,6 +18,7 @@ export const FlowLayoutRouting: Routes = [
     },
     canActivate: [UserLoggedIn],
     canDeactivate: [BuilderSavingGuard],
+    runGuardsAndResolvers: 'always',
   },
   {
     path: 'runs/:runId',

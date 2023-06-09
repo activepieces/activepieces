@@ -20,6 +20,7 @@ export type TPropertyValue<T, U extends PropertyType, REQUIRED extends boolean> 
 	 U extends PropertyType.STATIC_MULTI_SELECT_DROPDOWN? unknown[]:
 	 U extends PropertyType.STATIC_DROPDOWN? unknown:
 	 U extends PropertyType.DATE_TIME? string:
+	 U extends PropertyType.FILE? ApFile:
 	unknown;
 };
 
@@ -41,5 +42,10 @@ export type JsonProperty<R extends boolean> = BasePropertySchema & TPropertyValu
 
 export type DateTimeProperty<R extends boolean> = BasePropertySchema & TPropertyValue<string, PropertyType.DATE_TIME, R>;
 
+export type ApFile = {
+    filename?: string;
+    extension?: string;
+    base64: string;
+}
 
-
+export type FileProperty<R extends boolean> = BasePropertySchema & TPropertyValue<ApFile, PropertyType.FILE, R>;

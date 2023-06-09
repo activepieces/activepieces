@@ -2,6 +2,9 @@
 title: "Data Mapper"
 description: ""
 ---
+
+##### Authors: [abuaboud](https://github.com/abuaboud)
+
 This utility helps you map outputs of steps to a specific JSON object of your design.
 Example:
 if you have step_1 and its output is :
@@ -38,9 +41,15 @@ If there is any string next to it, the object will be stringified and concatenat
 ## Actions
 
 
-    <CardGroup cols={2}>
-      <Card title="Advanced Mapping">
+      <Card title="Advanced Mapping " >
         Map data from one format to another
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Mapping" required type="Json">
+The mapping to use
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   

@@ -43,6 +43,12 @@ export class AppConnectionsService {
     );
   }
 
+  getConnectionNameSuggest(pieceName: string) {
+    return pieceName
+      .replace('@activepieces/piece-', '')
+      .replace(/[^A-Za-z0-9_\\-]/g, '_');
+  }
+
   delete(id: AppConnectionId): Observable<void> {
     return this.http.delete<void>(
       environment.apiUrl + '/app-connections/' + id

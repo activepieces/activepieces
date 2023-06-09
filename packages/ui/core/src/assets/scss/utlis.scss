@@ -109,4 +109,18 @@ ap-markdown {
         border-radius: 40px;
         scrollbar-width: thin;
     }
+   &::-webkit-scrollbar-thumb:hover {
+      background: rgba(179, 179, 179, 0.7);
+      background-clip: content-box;
+      border: 5px solid transparent;
+      border-radius: 40px;
+      scrollbar-width: thin;
+    }
+}
+
+.ap-clamp-4{
+  display: -webkit-box;
+    overflow: hidden;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
 }

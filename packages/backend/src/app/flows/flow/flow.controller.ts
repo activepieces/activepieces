@@ -4,7 +4,6 @@ import {
     FlowId,
     FlowOperationRequest,
     FlowTemplate,
-    FlowVersion,
     FlowVersionId,
     FlowViewMode,
     GetFlowRequest,
@@ -115,12 +114,16 @@ export const flowController = async (fastify: FastifyInstance) => {
             if (!flow) {
                 throw new ActivepiecesError({ code: ErrorCode.FLOW_NOT_FOUND, params: { id: request.params.flowId } })
             }
-            return {
+            const template: FlowTemplate =
+            {
                 name: flow.version.displayName,
                 description: '',
                 pieces: flowHelper.getUsedPieces(flow.version.trigger),
-                template: removeMetaInformation(flow.version),
+                template: flow.version,
+                tags:[],
+                blogUrl:'', 
             }
+            return template
         },
     )
 
@@ -164,13 +167,4 @@ export const flowController = async (fastify: FastifyInstance) => {
         },
     )
 
-}
-
-function removeMetaInformation(flowVersion: FlowVersion) {
-    const sensitiveDataKeys = ['created', 'updated', 'projectId', 'folderId', 'flowId']
-
-    const filteredEntries = Object.entries(flowVersion)
-        .filter(([key]) => !sensitiveDataKeys.includes(key))
-
-    return Object.fromEntries(filteredEntries)
 }
