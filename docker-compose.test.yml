@@ -1,0 +1,30 @@
+version: '3.0'
+
+services:
+  app:
+    extends:
+      file: docker-compose.dev.yml
+      service: app
+    user: "${UID}:${GID}"
+    command: /bin/sh -c "npm_config_cache=/usr/src/app/.npm-cache npx nx run-tests backend"
+
+  postgres:
+    extends:
+      file: docker-compose.dev.yml
+      service: postgres
+    ports:
+     - "5432:5432"
+
+  redis:
+    extends:
+      file: docker-compose.dev.yml
+      service: redis
+    ports:
+     - "6379:6379"
+
+volumes:
+  postgres_data_dev:
+  redis_data_dev:
+
+networks:
+  activepieces_dev:

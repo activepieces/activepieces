@@ -18,9 +18,6 @@ export const GetPieceRequest = {
 
 export const PieceOptionsRequest = {
     schema: {
-        params: Type.Object({
-            pieceName: Type.String(),
-        }),
         body: PieceOptionRequest,
     },
 }

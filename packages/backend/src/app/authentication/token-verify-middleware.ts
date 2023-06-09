@@ -11,7 +11,8 @@ const ignoredRoutes = new Set([
     // END EE
     '/v1/pieces/stats',
     '/v1/pieces/:name',
-    '/v1/app-events/:pieceName',
+    '/v1/pieces/:scope/:name',
+    '/v1/app-events/:pieceUrl',
     '/v1/authentication/sign-in',
     '/v1/authentication/sign-up',
     '/v1/flags',

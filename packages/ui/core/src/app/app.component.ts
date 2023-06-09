@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { map, Observable, of, Subject, tap } from 'rxjs';
+import { catchError, map, Observable, of, Subject, switchMap, tap } from 'rxjs';
 import { Store } from '@ngrx/store';
 import {
   NavigationCancel,
@@ -11,12 +11,21 @@ import {
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
 
-import { FlagService, CommonActions } from '@activepieces/ui/common';
+import {
+  FlagService,
+  CommonActions,
+  FlowService,
+} from '@activepieces/ui/common';
 import { compareVersions } from 'compare-versions';
-import { ApFlagId } from '@activepieces/shared';
+import { ApFlagId, FlowOperationType } from '@activepieces/shared';
 import { TelemetryService } from '@activepieces/ui/common';
 import { AuthenticationService, fadeInUp400ms } from '@activepieces/ui/common';
 import { MatDialog } from '@angular/material/dialog';
+import {
+  CollectionBuilderService,
+  FlowsActions,
+} from '@activepieces/ui/feature-builder-store';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 interface UpgradeNotificationMetaDataInLocalStorage {
   latestVersion: string;
@@ -39,6 +48,7 @@ export class AppComponent implements OnInit {
   hideUpgradeNotification = false;
   openCommandBar$: Observable<void>;
   loading$: Subject<boolean> = new Subject();
+  importTemplate$: Observable<void>;
   constructor(
     public dialog: MatDialog,
     private store: Store,
@@ -47,14 +57,13 @@ export class AppComponent implements OnInit {
     private telemetryService: TelemetryService,
     private router: Router,
     private maticonRegistry: MatIconRegistry,
-    private domSanitizer: DomSanitizer
+    private domSanitizer: DomSanitizer,
+    private builderService: CollectionBuilderService,
+    private flowService: FlowService,
+    private snackbar: MatSnackBar
   ) {
-    this.maticonRegistry.addSvgIcon(
-      'search',
-      this.domSanitizer.bypassSecurityTrustResourceUrl(
-        '../assets/img/custom/search.svg'
-      )
-    );
+    this.registerSearchIconIntoMaterialIconRegistery();
+    this.listenToImportFlow();
     this.routeLoader$ = this.router.events.pipe(
       tap((event) => {
         if (
@@ -115,6 +124,51 @@ export class AppComponent implements OnInit {
     );
   }
 
+  private listenToImportFlow() {
+    this.importTemplate$ = this.builderService.importTemplate$
+      .asObservable()
+      .pipe(
+        tap(() => {
+          this.loading$.next(true);
+        }),
+        switchMap((res) => {
+          return this.flowService
+            .update(res.flowId, {
+              type: FlowOperationType.IMPORT_FLOW,
+              request: {
+                displayName: res.template.name,
+                trigger: res.template.template.trigger,
+              },
+            })
+            .pipe(
+              tap((res) => {
+                this.loading$.next(false);
+                this.store.dispatch(FlowsActions.importFlow({ flow: res }));
+              }),
+              catchError((err) => {
+                this.loading$.next(false);
+                console.error(err);
+                this.snackbar.open(
+                  'Failed to import flow, check Console for erros',
+                  'Close'
+                );
+                return of(void 0);
+              })
+            );
+        }),
+        map(() => void 0)
+      );
+  }
+
+  private registerSearchIconIntoMaterialIconRegistery() {
+    this.maticonRegistry.addSvgIcon(
+      'search',
+      this.domSanitizer.bypassSecurityTrustResourceUrl(
+        '../assets/img/custom/search.svg'
+      )
+    );
+  }
+
   ngOnInit(): void {
     this.warningMessage$ = this.flagService.getWarningMessage();
     this.loggedInUser$ = this.authenticationService.currentUserSubject.pipe(
@@ -158,7 +212,8 @@ export class AppComponent implements OnInit {
   openUpgradeDocs() {
     window.open(
       'https://www.activepieces.com/docs/install/docker#upgrading',
-      '_blank'
+      '_blank',
+      'noopener noreferrer'
     );
   }
 }

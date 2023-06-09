@@ -111,6 +111,7 @@
         "pieces/apps/mautic",
         "pieces/apps/mindee",
         "pieces/apps/monday",
+        "pieces/apps/mysql",
         "pieces/apps/notion",
         "pieces/apps/ntfy",
         "pieces/apps/openai",
@@ -126,6 +127,7 @@
         "pieces/apps/shopify",
         "pieces/apps/slack",
         "pieces/apps/smtp",
+        "pieces/apps/spotify",
         "pieces/apps/square",
         "pieces/apps/stability-ai",
         "pieces/apps/store",
@@ -179,7 +181,7 @@
       ]
     },
     {
-      "group": "Overview",
+      "group": "Getting Started",
       "pages": [
         "contributing/overview"
       ]
@@ -188,24 +190,30 @@
       "group": "Development Setup",
       "pages": [
         "contributing/development-setup/codespaces",
-        "contributing/development-setup/docker-compose",
-        "contributing/development-setup/local-development"
+        "contributing/development-setup/local",
+        "contributing/development-setup/dev-container"
       ]
     },
     {
       "group": "Building Pieces",
       "pages": [
-        "contributing/building-pieces/overview",
         "contributing/building-pieces/create-action",
         "contributing/building-pieces/triggers",
         "contributing/building-pieces/create-polling-trigger",
         "contributing/building-pieces/create-webhook-trigger",
-        "contributing/building-pieces/reference",
         "contributing/building-pieces/examples"
       ]
     },
     {
-      "group": "Architecture",
+      "group": "Piece Reference",
+      "pages": [
+        "contributing/piece-reference/properties",
+        "contributing/piece-reference/flow-hooks",
+        "contributing/piece-reference/persistent-storage"
+      ]
+    },
+    {
+      "group": "Worker Architecture",
       "pages": [
         "contributing/architecture/repo-structure",
         "contributing/architecture/flow-worker",

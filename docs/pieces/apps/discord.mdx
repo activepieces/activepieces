@@ -3,6 +3,9 @@ title: "Discord"
 description: ""
 ---
 
+##### Authors: [creed983](https://github.com/creed983)
+
+
 ## Obtain Webhook URL for Sending Message
 
 1. Go to the Discord server where you want to add the webhook.
@@ -33,9 +36,35 @@ TTS (Optional): Make a robotic voice to read the message out loud.
 ## Actions
 
 
-    <CardGroup cols={2}>
-      <Card title="Send Message Webhook">
+      <Card title="Send Message Webhook " >
         Send a discord message via webhook
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Webhook URL" required type="Short_text">
+
+</ResponseField>
+            
+<ResponseField name="Name"  type="Short_text">
+The webhook name
+</ResponseField>
+            
+<ResponseField name="Message" required type="Long_text">
+The message you want to send
+</ResponseField>
+            
+<ResponseField name="Avatar URL"  type="Short_text">
+The avatar url for webhook
+</ResponseField>
+            
+<ResponseField name="embeds"  type="Json">
+Embeds to send along with the message
+</ResponseField>
+            
+<ResponseField name="Text to speech"  type="Checkbox">
+Robot reads the message
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   

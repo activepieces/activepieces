@@ -64,7 +64,7 @@ const resolveLoopFirstItem = (flowVersion: FlowVersion, loopItemExpression: stri
 }
 
 const generateTestExecutionContext = (flowVersion: FlowVersion): Record<string, unknown> => {
-    const flowSteps = flowHelper.getAllSteps(flowVersion)
+    const flowSteps = flowHelper.getAllSteps(flowVersion.trigger)
     const testContext: Record<string, unknown> = {}
 
     for (const step of flowSteps) {

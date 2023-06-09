@@ -3,6 +3,9 @@ title: "Blackbaud"
 description: ""
 ---
 
+##### Authors: [abuaboud](https://github.com/abuaboud), [HKudria](https://github.com/HKudria)
+
+
 ## Authentication
 
 To obtain the subscription key, client ID, and client secret for Blackbaud, you will need to follow these steps:
@@ -66,33 +69,119 @@ This connector will enable you to insert multiple contacts into Blackbaud by inp
 ## Actions
 
 
-    <CardGroup cols={2}>
-      <Card title="Search Contacts After Date">
+      <Card title="Search Contacts After Date " >
         Search contacts
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Authentication" required type="Oauth2">
+
+</ResponseField>
+            
+<ResponseField name="Subscription Key" required type="Short_text">
+
+</ResponseField>
+            
+<ResponseField name="Last Modified Date" required type="Short_text">
+The date to search for contacts modified after
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   
-    <CardGroup cols={2}>
-      <Card title="Upsert Contact on Email">
+      <Card title="Upsert Contact on Email " >
         Upsert Contact based on Email
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Authentication" required type="Oauth2">
+
+</ResponseField>
+            
+<ResponseField name="Subscription Key" required type="Short_text">
+
+</ResponseField>
+            
+<ResponseField name="Contact (JSON)" required type="Json">
+The Contact JSON
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   
-    <CardGroup cols={2}>
-      <Card title="Get Gift subtypes ">
+      <Card title="Get Gift subtypes  " >
         Returns a list of gift subtypes.
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Authentication" required type="Oauth2">
+
+</ResponseField>
+            
+<ResponseField name="Subscription Key" required type="Short_text">
+
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   
-    <CardGroup cols={2}>
-      <Card title="Get Fundraising List">
+      <Card title="Get Fundraising List " >
         Get Fundraising List
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Authentication" required type="Oauth2">
+
+</ResponseField>
+            
+<ResponseField name="Subscription Key" required type="Short_text">
+
+</ResponseField>
+            
+<ResponseField name="Fundraising List" required type="Dropdown">
+Select the List
+</ResponseField>
+            
+<ResponseField name="Last Modified Date"  type="Short_text">
+The date to search for appeal modified after | 2021-01-01T00:00:00.000Z
+</ResponseField>
+            
+<ResponseField name="Date added"  type="Short_text">
+The date to search for contacts modified after | 2021-01-01T00:00:00.000Z
+</ResponseField>
+            
+<ResponseField name="Sort token"  type="Short_text">
+Represents a token filter to provide the next stable-sorted list of appeals
+</ResponseField>
+            
+<ResponseField name="Include inactive" required type="Checkbox">
+Include inactive appeals in the response
+</ResponseField>
+            
+<ResponseField name="Limit"  type="Number">
+Represents the number of records to return. The default is 500. The maximum is 5000
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   
-    <CardGroup cols={2}>
-      <Card title="Create gift">
+      <Card title="Create gift " >
         Create gift
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Authentication" required type="Oauth2">
+
+</ResponseField>
+            
+<ResponseField name="Subscription Key" required type="Short_text">
+
+</ResponseField>
+            
+<ResponseField name="Gift (JSON)" required type="Json">
+The Gift JSON
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   

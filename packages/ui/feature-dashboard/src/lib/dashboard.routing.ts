@@ -16,19 +16,19 @@ export const DashboardLayoutRouting: Routes = [
     children: [
       { path: '', pathMatch: 'full', redirectTo: '/flows' },
       {
-        title: 'AP-Runs',
+        title: 'Runs - Activepieces',
         path: 'runs',
         pathMatch: 'full',
         component: RunsTableComponent,
       },
       {
-        title: 'AP-Connections',
+        title: 'Connections - Activepieces',
         path: 'connections',
         pathMatch: 'full',
         component: ConnectionsTableComponent,
       },
       {
-        title: 'AP-Flows',
+        title: 'Flows - Activepieces',
         path: 'flows',
         pathMatch: 'full',
         component: FlowsTableComponent,
