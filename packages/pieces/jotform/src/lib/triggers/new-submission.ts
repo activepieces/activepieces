@@ -11,7 +11,6 @@ export const newSubmission = createTrigger({
         authentication: jotformCommon.authentication,
         formId: jotformCommon.form
     },
-
     //Set the webhook URL in Jotform and save the webhook URL in store for disable behavior
     async onEnable(context) {
         await jotformCommon.subscribeWebhook(
@@ -24,7 +23,6 @@ export const newSubmission = createTrigger({
           jotformWebhook: context.webhookUrl,
         });
     },
-
     //Delete the webhook URL from Jotform
     async onDisable(context) {
         const response = await context.store?.get<WebhookInformation>(
@@ -39,7 +37,6 @@ export const newSubmission = createTrigger({
           );
         }
     },
-
     //Return new submission
     async run(context) {
         return [context.payload.body];

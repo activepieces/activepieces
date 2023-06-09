@@ -1,8 +1,48 @@
 import { Property } from "@activepieces/pieces-framework";
 import { HttpRequest, HttpMethod, httpClient } from "@activepieces/pieces-common";
 
+const markdownDescription = `
+To obtain api key, follow the steps below:
+1. Go to Settings -> API
+2. Click on "Create New Key" button
+3. Change the permissions to "Full Access"
+4. Copy the API Key and paste it in the API Key field
+`;
+
 export const jotformCommon = {
-    baseUrl: 'https://api.jotform.com',
+    baseUrl: (region: string) => {
+        if (region === 'eu') {
+            return 'https://eu-api.jotform.com';
+        }
+        return 'https://api.jotform.com';  
+    },
+    authentication: Property.CustomAuth({
+        displayName: "Authentication",
+        required: true,
+        description: markdownDescription,
+        props: {
+            apiKey: Property.SecretText({
+                displayName: 'API Key',
+                required: true,
+            }),
+            region: Property.StaticDropdown({
+                displayName: 'Region',
+                required: true,
+                options: {
+                    options: [
+                        {
+                            label: 'US (jotform.com)',
+                            value: 'us'
+                        },
+                        {
+                            label: 'EU (eu.jotform.com)',
+                            value: 'eu'
+                        }
+                    ]
+                }
+            })
+        }
+    }),
     form: Property.Dropdown({
         displayName: 'Form',
         required: true,
@@ -15,41 +55,23 @@ export const jotformCommon = {
                     placeholder: 'Enter API Key'
                 }
             }
-
-            try {
-                const options: any[] = await jotformCommon.getUserForms(props['authentication'].toString());
-                return {
-                    options: options,
-                    placeholder: 'Choose form to connect'
-                }
-            }
-            catch (e) {
-                console.debug(e)
-                return {
-                    disabled: true,
-                    options: [],
-                    placeholder: 'Enter API Key'
-                }
+            const auth = props['authentication'] as { apiKey: string, region: string };
+            const options: any[] = await jotformCommon.getUserForms(auth.apiKey, auth.region);
+            return {
+                options: options,
+                placeholder: 'Choose form to connect'
             }
         }
     }),
-
-    authentication: Property.SecretText({
-        displayName: "API Key",
-        required: true,
-        description: "Get it from https://www.jotform.com/myaccount/api (must be full access, not read access)"
-    }),
-
-    getUserForms: async (apiKey: string) => {
+    getUserForms: async (apiKey: string, region: string) => {
         const request: HttpRequest = {
             method: HttpMethod.GET,
-            url: `${jotformCommon.baseUrl}/user/forms`,
+            url: `${jotformCommon.baseUrl(region)}/user/forms`,
             headers: {
                 APIKEY: apiKey,
             },
         };
         const response = await httpClient.sendRequest(request);
-
         const newValues = response.body.content.map((form: JotformForm) => {
             return {
                 label: form.title,
@@ -60,25 +82,27 @@ export const jotformCommon = {
         return newValues;
     },
 
-    subscribeWebhook: async (formId: any, webhookUrl: string, apiKey: string) => {
+    subscribeWebhook: async (formId: any, webhookUrl: string, authentication: {apiKey: string, region: string}) => {
         const request: HttpRequest = {
             method: HttpMethod.POST,
-            url: `${jotformCommon.baseUrl}/form/${formId}/webhooks`,
+            url: `${jotformCommon.baseUrl(authentication.region)}/form/${formId}/webhooks`,
             headers: {
-                APIKEY: apiKey
+                APIKEY: authentication.apiKey,
             },
             body: `webhookURL=${webhookUrl}`
         };
+        console.log("HELLO");
+        console.log(`${jotformCommon.baseUrl(authentication.region)}/form/${formId}/webhooks`);
 
         await httpClient.sendRequest(request);
     },
 
-    unsubscribeWebhook: async (formId: any, webhookUrl: string, apiKey: string) => {
+    unsubscribeWebhook: async (formId: any, webhookUrl: string, authentication: {apiKey: string, region: string}) => {
         const getWebhooksRequest: HttpRequest = {
             method: HttpMethod.GET,
-            url: `${jotformCommon.baseUrl}/form/${formId}/webhooks`,
+            url: `${jotformCommon.baseUrl(authentication.region)}/form/${formId}/webhooks`,
             headers: {
-                APIKEY: apiKey,
+                APIKEY: authentication.apiKey,
             },
         };
 
@@ -93,9 +117,9 @@ export const jotformCommon = {
 
         const request: HttpRequest = {
             method: HttpMethod.DELETE,
-            url: `${jotformCommon.baseUrl}/form/${formId}/webhooks/${webhookId}`,
+            url: `${jotformCommon.baseUrl(authentication.region)}/form/${formId}/webhooks/${webhookId}`,
             headers: {
-                APIKEY: apiKey
+                APIKEY: authentication.region
             }
         };
 
