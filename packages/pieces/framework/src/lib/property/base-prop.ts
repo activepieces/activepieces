@@ -1,4 +1,6 @@
+import { ProcessorFn } from "../processors/processors";
 import { PropertyType } from "./property";
+import { ValidatorFn } from "../validators/validators";
 
 export type BasePropertySchema = {
 	displayName: string;
@@ -9,6 +11,10 @@ export type TPropertyValue<T, U extends PropertyType, REQUIRED extends boolean> 
 	valueSchema: T;
 	type: U;
 	required: REQUIRED;
+	defaultProcessors?: ProcessorFn[]; 
+	defaultValidators?: ValidatorFn[];
+	processors?: ProcessorFn[];
+	validators?: ValidatorFn[];
 	defaultValue?: U extends PropertyType.ARRAY?  unknown[]:
 	 U extends PropertyType.JSON? object:
 	 U extends PropertyType.CHECKBOX? boolean:
