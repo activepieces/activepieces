@@ -66,7 +66,6 @@ export class Piece implements Omit<PieceBase, "version" | "name"> {
 }
 
 export const createPiece = (request: {
-  name: string;
   displayName: string;
   logoUrl: string;
   authors?: string[],
@@ -77,7 +76,6 @@ export const createPiece = (request: {
     parseAndReply: (ctx: {payload: EventPayload}) => ParseEventResponse;
     verify: (ctx: { webhookSecret: string, payload: EventPayload, appWebhookUrl: string }) => boolean;
   }
-  version: string;
   minimumSupportedRelease?: string;
   maximumSupportedRelease?: string;
 }): Piece =>
