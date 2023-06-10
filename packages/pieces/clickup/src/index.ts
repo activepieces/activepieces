@@ -1,4 +1,3 @@
-import packageJson from "../package.json";
 import { createPiece } from "@activepieces/pieces-framework";
 import { getClickupTaskComments } from "./lib/actions/comments/get-task-comments";
 import { createClickupFolderlessList } from "./lib/actions/lists/create-folderless-list";
@@ -11,7 +10,6 @@ import { createClickupSubtask } from "./lib/actions/tasks/create-subtask";
 import { clickupTriggers as triggers } from "./lib/triggers";
 
 export const clickup = createPiece({
-    name: 'clickup',
     displayName: "Clickup",
     logoUrl: 'https://cdn.activepieces.com/pieces/clickup.png',
     actions: [
@@ -25,6 +23,5 @@ export const clickup = createPiece({
         createClickupSubtask,
     ],
     authors: ['abuaboud', 'ShayPunter', 'kanarelo'],
-    triggers,
-    version: packageJson.version,
+    triggers
 });
