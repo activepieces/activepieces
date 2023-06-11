@@ -22,7 +22,7 @@
     [style.left]="'calc('+addButtonTrueBranchLeftStyleProperty+' - 6px)' ">
     True
   </div>
-  <app-small-add-button *ngIf="flowItem.onSuccessAction && !viewMode" (click)="addTrueBranchItem()" [top]="addButtonTop"
+  <app-small-add-button *ngIf="flowItem.onSuccessAction && !readOnly" (click)="addTrueBranchItem()" [top]="addButtonTop"
     [left]="addButtonTrueBranchLeftStyleProperty" [showDropzoneIndicator]="isDraggingOverTrueBranch">
   </app-small-add-button>
 
@@ -31,7 +31,7 @@
     [left]="'calc( '+addButtonTrueBranchLeftStyleProperty + ' - 143px )'" (dropped)="dropAtTheTopOfTrueBranch($event)">
   </app-drop-zone>
 
-  <app-small-add-button *ngIf="!viewMode" (click)="add()" [top]="afterBranchAddButtonTop"
+  <app-small-add-button *ngIf="!readOnly" (click)="add()" [top]="afterBranchAddButtonTop"
     [left]="afterBranchAddButtonLeft" [showDropzoneIndicator]="isDraggingOverAfterBranch">
   </app-small-add-button>
 
@@ -41,7 +41,7 @@
 
   <app-big-add-button [showDropZoneIndicator]="isDraggingOverTrueBranch" (click)="addTrueBranchItem()"
     [top]="emptyBranchAddButtonTopOffset" [left]="emptyBranchAddButtonLeftOffsetForTrueBranch"
-    *ngIf="!flowItem.onSuccessAction && !viewMode">
+    *ngIf="!flowItem.onSuccessAction && !readOnly">
   </app-big-add-button>
 
 </div>
@@ -59,7 +59,7 @@
     False
   </div>
 
-  <app-small-add-button *ngIf="flowItem.onFailureAction && !viewMode" (click)="addFalseBranchItem()"
+  <app-small-add-button *ngIf="flowItem.onFailureAction && !readOnly" (click)="addFalseBranchItem()"
     [top]="addButtonTop" [left]="addButtonFalseBranchLeftStyleProperty"
     [showDropzoneIndicator]="isDraggingOverFalseBranch">
   </app-small-add-button>
@@ -70,7 +70,7 @@
 
   <app-big-add-button [showDropZoneIndicator]="isDraggingOverFalseBranch" (click)="addFalseBranchItem()"
     [top]="emptyBranchAddButtonTopOffset" [left]="emptyBranchAddButtonLeftOffsetForFalseBranch"
-    *ngIf="!flowItem.onFailureAction && !viewMode">
+    *ngIf="!flowItem.onFailureAction && !readOnly">
   </app-big-add-button>
 
 </div>
