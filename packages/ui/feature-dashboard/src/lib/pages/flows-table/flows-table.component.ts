@@ -102,7 +102,7 @@ export class FlowsTableComponent implements OnInit {
 
   openBuilder(flow: Flow, event: MouseEvent) {
     const link = '/flows/' + flow.id;
-    if (event.ctrlKey) {
+    if (event.ctrlKey || event.which == 2 || event.button == 4) {
       // Open in new tab
       window.open(link, '_blank', 'noopener');
     } else {
