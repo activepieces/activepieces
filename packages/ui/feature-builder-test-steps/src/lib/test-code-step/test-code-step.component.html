@@ -4,7 +4,8 @@
     </div>
     <ng-container
         *ngIf="(testing$ | async) === false  || (testing$ | async) === undefined || (testing$ | async) === null else loadingSpinner">
-        <ng-container *ngIf="(lastTestResult$ |async) !== undefined; else firstTimeTest">
+        <ng-container
+            *ngIf="(lastTestResult$ |async) !== undefined || (stepTest$ | async)?.standardError; else firstTimeTest">
             <div class="ap-flex ap-items-center">
                 <div class="ap-min-h-[48px] ap-gap-2  ap-flex ap-items-center">
                     <ng-container
