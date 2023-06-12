@@ -1,31 +1,29 @@
 import { FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
-import { ActivepiecesError, ErrorCode, GetPieceRequestQuery, InstallPieceRequest, SemVerType } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, GetPieceRequestParams, GetPieceRequestQuery, GetPieceRequestWithScopeParams, InstallPieceRequest, ListPiecesRequestQuery, PieceOptionRequest } from '@activepieces/shared'
 import { engineHelper } from '../helper/engine-helper'
 import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
 import { pieceMetadataService } from './piece-metadata-service'
 import { PieceMetadata, PieceMetadataSummary } from '@activepieces/pieces-framework'
 import { FastifyRequest } from 'fastify'
-import { GetPieceRequest, PieceOptionsRequest } from './piece-requests'
 
 const statsEnabled = system.get(SystemProp.STATS_ENABLED) ?? false
 
 export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done) => {
 
-
     app.post(
         '/',
         {
-            schema: {
+            schema: Type.Object({
                 body: InstallPieceRequest,
-            },
+            }),
         },
         async (
             request: FastifyRequest<{
                 Body: InstallPieceRequest
             }>,
         ) => {
-            const {result} = await engineHelper.extractPieceMetadata({
+            const { result } = await engineHelper.extractPieceMetadata({
                 pieceName: request.body.pieceName,
                 pieceVersion: request.body.pieceVersion,
             })
@@ -42,9 +40,7 @@ export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done)
 
     app.get('/', {
         schema: {
-            querystring: Type.Object({
-                release: SemVerType,
-            }),
+            querystring: ListPiecesRequestQuery,
         },
     }, async (req): Promise<PieceMetadataSummary[]> => {
         const { release } = req.query
@@ -57,10 +53,7 @@ export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done)
 
     app.get('/:scope/:name', {
         schema: {
-            params: Type.Object({
-                name: Type.String(),
-                scope: Type.String(),
-            }),
+            params: GetPieceRequestWithScopeParams,
             querystring: GetPieceRequestQuery,
         },
     }, async (req): Promise<PieceMetadata> => {
@@ -76,7 +69,12 @@ export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done)
         })
     })
 
-    app.get('/:name', GetPieceRequest, async (req): Promise<PieceMetadata> => {
+    app.get('/:name', {
+        schema: {
+            params: GetPieceRequestParams,
+            querystring: GetPieceRequestQuery,
+        },
+    }, async (req): Promise<PieceMetadata> => {
         const { name } = req.params
         const { version } = req.query
 
@@ -88,7 +86,11 @@ export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done)
         })
     })
 
-    app.post('/options', PieceOptionsRequest, async (req) => {
+    app.post('/options', {
+        schema: {
+            body: PieceOptionRequest,
+        },
+    }, async (req) => {
         const { result } = await engineHelper.executeProp({
             pieceName: req.body.pieceName,
             pieceVersion: req.body.pieceVersion,
