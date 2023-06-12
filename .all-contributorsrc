@@ -319,6 +319,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "VrajGohil",
+      "name": "Vraj Gohil",
+      "avatar_url": "https://avatars.githubusercontent.com/u/40790016?v=4",
+      "profile": "https://certopus.com",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
