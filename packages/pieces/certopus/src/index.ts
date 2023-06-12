@@ -7,7 +7,7 @@ export const certopus = createPiece({
   displayName: 'Certopus',
   logoUrl: 'https://cdn.activepieces.com/pieces/certopus.png',
   version: packageJson.version,
-  authors: [],
+  authors: ['VrajGohil'],
   actions: [createCredential],
   triggers: [],
 });
