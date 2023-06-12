@@ -5,7 +5,7 @@ import { createCredential } from './lib/actions/create-credential';
 export const certopus = createPiece({
   name: 'certopus',
   displayName: 'Certopus',
-  logoUrl: 'https://i.ibb.co/QfWXSdW/certopus-logo.png',
+  logoUrl: 'https://cdn.activepieces.com/pieces/certopus.png',
   version: packageJson.version,
   authors: [],
   actions: [createCredential],
