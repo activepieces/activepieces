@@ -7,7 +7,6 @@ import { Flow, FlowInstanceStatus, FolderId } from '@activepieces/shared';
 
 import {
   ApPaginatorComponent,
-  FlagService,
   FlowInstanceService,
   FoldersService,
 } from '@activepieces/ui/common';
@@ -50,7 +49,6 @@ export class FlowsTableComponent implements OnInit {
   flowsUpdateStatusRequest$: Record<string, Observable<void> | null> = {};
   showAllFlows$: Observable<boolean>;
   duplicateFlow$: Observable<void>;
-  showTemplates$: Observable<boolean>;
   constructor(
     private activatedRoute: ActivatedRoute,
     private dialogService: MatDialog,
@@ -58,14 +56,10 @@ export class FlowsTableComponent implements OnInit {
     private foldersService: FoldersService,
     private router: Router,
     private instanceService: FlowInstanceService,
-    private store: Store,
-    private flagService: FlagService
+    private store: Store
   ) {
     this.listenToShowAllFolders();
     this.folderId$ = this.store.select(FoldersSelectors.selectCurrentFolderId);
-    this.showTemplates$ = this.flagService
-      .getTemplatesSourceUrl()
-      .pipe(map((url) => !!url));
   }
 
   private listenToShowAllFolders() {
@@ -108,7 +102,7 @@ export class FlowsTableComponent implements OnInit {
 
   openBuilder(flow: Flow, event: MouseEvent) {
     const link = '/flows/' + flow.id;
-    if (event.ctrlKey) {
+    if (event.ctrlKey || event.which == 2 || event.button == 4) {
       // Open in new tab
       window.open(link, '_blank', 'noopener');
     } else {

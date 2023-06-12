@@ -74,7 +74,6 @@ export type EngineHelperResponse<Result extends EngineHelperResult> = {
 }
 
 
-const nodeExecutablePath = system.getOrThrow(SystemProp.NODE_EXECUTABLE_PATH)
 const engineExecutablePath = system.getOrThrow(SystemProp.ENGINE_EXECUTABLE_PATH)
 
 
@@ -139,7 +138,8 @@ const execute = async <Result extends EngineHelperResult>(
         ...input,
         apiUrl: 'http://127.0.0.1:3000',
     }))
-
+    
+    const nodeExecutablePath = process.execPath
     const sandboxResponse = await sandbox.runCommandLine(`${nodeExecutablePath} activepieces-engine.js ${operation}`)
 
     sandboxResponse.standardOutput.split('\n').forEach(f => {

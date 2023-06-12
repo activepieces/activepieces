@@ -158,6 +158,7 @@ This section is dedicated to individuals who have contributed to 5 or more actio
       <td align="center" valign="top" width="14.28%"><a href="http://nulldev.imagefoo.com/"><img src="https://avatars.githubusercontent.com/u/66683380?v=4?s=100" width="100px;" alt="[NULL] Dev"/><br /><sub><b>[NULL] Dev</b></sub></a><br /><a href="#plugin-Abdallah-Alwarawreh" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/JanHolger"><img src="https://avatars.githubusercontent.com/u/25184957?v=4?s=100" width="100px;" alt="Jan Bebendorf"/><br /><sub><b>Jan Bebendorf</b></sub></a><br /><a href="#plugin-JanHolger" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://blog.nileshtrivedi.com"><img src="https://avatars.githubusercontent.com/u/19304?v=4?s=100" width="100px;" alt="Nilesh"/><br /><sub><b>Nilesh</b></sub></a><br /><a href="#plugin-nileshtrivedi" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://certopus.com"><img src="https://avatars.githubusercontent.com/u/40790016?v=4?s=100" width="100px;" alt="Vraj Gohil"/><br /><sub><b>Vraj Gohil</b></sub></a><br /><a href="#plugin-VrajGohil" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>

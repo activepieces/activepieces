@@ -1,0 +1,60 @@
+---
+title: 'Local Dev Environment'
+description: ''
+---
+
+## Prerequisites
+- Node.js v18+
+- npm v9+
+
+## Instructions
+
+1. Setup the environment
+```bash
+node tools/setup-dev.js
+```
+
+2. Start the environment
+
+```bash
+npm start
+```
+
+<Warning>
+**Troubleshoot 1:**
+The IP address 0.0.0.0:5432 is already in use. This suggests that another PostgreSQL on your device is currently active, leading to a port conflict.
+
+Please stop the existing service or edit the environment variables in `packages/backend/.env`
+</Warning>
+
+<Warning>
+**Troubleshoot 2:**
+The IP address 0.0.0.0:6379 is already in use. This suggests that another Redis on your device is currently active, leading to a port conflict.
+
+Please stop the existing service or edit the environment variables in `packages/backend/.env`
+</Warning>
+
+3. Go to ***localhost:4200*** on your web browser and sign in with these details:
+
+Email: `dev@ap.com`
+Password: `12345678`
+
+
+## Pieces development
+
+To avoid making the dev environment slow, not all pieces are functional during development at first. By default, only
+theses pieces are functional at first:
+- delay
+- discord
+- github
+- hackernews
+- slack
+- store
+
+Any other piece become functional after any edit in its code.
+
+To override the default list available at first, define a `AP_DEV_PIECES` env var with a comma-separated list of pieces
+to make available. For example, to make `google-sheets` and `cal-com` available you can use
+```sh
+AP_DEV_PIECES=google-sheets,cal-com npm start
+```

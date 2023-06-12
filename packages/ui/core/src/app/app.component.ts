@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { map, Observable, of, Subject, switchMap, tap } from 'rxjs';
+import { catchError, map, Observable, of, Subject, switchMap, tap } from 'rxjs';
 import { Store } from '@ngrx/store';
 import {
   NavigationCancel,
@@ -25,6 +25,7 @@ import {
   CollectionBuilderService,
   FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 interface UpgradeNotificationMetaDataInLocalStorage {
   latestVersion: string;
@@ -58,7 +59,8 @@ export class AppComponent implements OnInit {
     private maticonRegistry: MatIconRegistry,
     private domSanitizer: DomSanitizer,
     private builderService: CollectionBuilderService,
-    private flowService: FlowService
+    private flowService: FlowService,
+    private snackbar: MatSnackBar
   ) {
     this.registerSearchIconIntoMaterialIconRegistery();
     this.listenToImportFlow();
@@ -142,6 +144,15 @@ export class AppComponent implements OnInit {
               tap((res) => {
                 this.loading$.next(false);
                 this.store.dispatch(FlowsActions.importFlow({ flow: res }));
+              }),
+              catchError((err) => {
+                this.loading$.next(false);
+                console.error(err);
+                this.snackbar.open(
+                  'Failed to import flow, check Console for erros',
+                  'Close'
+                );
+                return of(void 0);
               })
             );
         }),

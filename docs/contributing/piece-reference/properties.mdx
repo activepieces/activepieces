@@ -1,0 +1,395 @@
+---
+title: "Properties"
+description: ""
+---
+
+Properties are used in actions and triggers to collect information from the user. They are also displayed to the user for input. Here are some commonly used properties:
+
+## Authentication Properties
+
+These properties are used to collect user credentials and store them securely for reuse across flows.
+
+### Secret Text
+
+This property collects sensitive information, such as passwords or API keys. It is displayed as a masked input field.
+
+**Example:**
+
+```typescript
+Property.SecretText({
+    displayName: 'API Key',
+    description: 'Enter your API key',
+    required: true,
+})
+```
+
+### Username and Password
+
+This property collects a username and password as separate fields.
+
+**Example:**
+
+```typescript
+Property.BasicAuth({
+    displayName: 'Credentials',
+    description: 'Enter your username and password',
+    required: true,
+    username: {
+        displayName: 'Username',
+        description: 'Enter your username',
+    },
+    password: {
+        displayName: 'Password',
+        description: 'Enter your password',
+    }
+})
+```
+
+### Custom
+
+This property allows for custom authentication by collecting specific properties, such as a base URL and access token.
+
+**Example:**
+
+```typescript
+Property.CustomAuth({
+    displayName: 'Custom Authentication',
+    description: 'Enter custom authentication details',
+    props: {
+        base_url: Property.ShortText({
+            displayName: 'Base URL',
+            description: 'Enter the base URL',
+            required: true,
+        }),
+        access_token: Property.SecretText({
+            displayName: 'Access Token',
+            description: 'Enter the access token',
+            required: true
+        })
+    },
+    required: true
+})
+```
+
+### OAuth2
+
+This property collects OAuth2 authentication details, including the authentication URL, token URL, and scope.
+
+**Example:**
+
+```typescript
+Property.OAuth2({
+    displayName: 'OAuth2 Authentication',
+    required: true,
+    authUrl: 'https://example.com/auth',
+    tokenUrl: 'https://example.com/token',
+    scope: ['read', 'write']
+})
+```
+
+## Basic Properties
+
+These properties collect basic information from the user.
+
+### Short Text
+
+This property collects a short text input from the user.
+
+**Example:**
+
+```typescript
+Property.ShortText({
+    displayName: 'Name',
+    description: 'Enter your name',
+    required: true,
+    defaultValue: 'John Doe'
+})
+```
+
+### Long Text
+
+This property collects a long text input from the user.
+
+**Example:**
+
+```typescript
+Property.LongText({
+    displayName: 'Description',
+    description: 'Enter a description',
+    required: false
+})
+```
+
+### Checkbox
+
+This property presents a checkbox for the user to select or deselect.
+
+**Example:**
+
+```typescript
+Property.Checkbox({
+    displayName: 'Agree to Terms',
+    description: 'Check this box to agree to the terms',
+    required: true,
+    defaultValue: false
+})
+```
+
+### DateTime
+
+This property collects a date and time from the user.
+
+**Example:**
+
+```typescript
+Property.DateTime({
+    displayName: 'Date and Time',
+    description: 'Select a date and time',
+    required: true,
+    defaultValue: '2023-06-09T12:00:00Z'
+})
+```
+
+### Number
+
+This property collects a numeric input from the user.
+
+**Example:**
+
+```typescript
+Property.Number({
+    displayName: 'Quantity',
+    description: 'Enter a number',
+    required: true
+})
+```
+
+### Static Dropdown
+
+This property presents a dropdown menu with predefined options.
+
+**Example:**
+
+```typescript
+Property.StaticDropdown({
+    displayName: 'Country',
+    description: 'Select your country',
+    required: true,
+    options: {
+        options: [
+            {
+                label: 'Option One',
+
+
+                value: '1'
+            },
+            {
+                label: 'Option Two',
+                value: '2'
+            }
+        ]
+    }
+})
+```
+
+### Static Multiple Dropdown
+
+This property presents a dropdown menu with multiple selection options.
+
+**Example:**
+
+```typescript
+Property.StaticMultiSelectDropdown({
+    displayName: 'Colors',
+    description: 'Select one or more colors',
+    required: true,
+    options: {
+        options: [
+            {
+                label: 'Red',
+                value: 'red'
+            },
+            {
+                label: 'Green',
+                value: 'green'
+            },
+            {
+                label: 'Blue',
+                value: 'blue'
+            }
+        ]
+    }
+})
+```
+
+### JSON
+
+This property collects JSON data from the user.
+
+**Example:**
+
+```typescript
+Property.Json({
+    displayName: 'Data',
+    description: 'Enter JSON data',
+    required: true,
+    defaultValue: {"key": "value"}
+})
+```
+
+### Dictionary
+
+This property collects key-value pairs from the user.
+
+**Example:**
+
+```typescript
+Property.Object({
+    displayName: 'Options',
+    description: 'Enter key-value pairs',
+    required: true,
+    defaultValue: {
+        key1: 'value1',
+        key2: 'value2'
+    }
+})
+```
+
+### File
+
+This property collects a file from the user, either by providing a URL or uploading a file.
+
+**Example:**
+
+```typescript
+Property.File({
+    displayName: 'File',
+    description: 'Upload a file',
+    required: true
+})
+```
+
+### Array of Strings
+
+This property collects an array of strings from the user.
+
+**Example:**
+
+```typescript
+Property.Array({
+    displayName: 'Tags',
+    description: 'Enter tags',
+    required: false,
+    defaultValue: ['tag1', 'tag2']
+})
+```
+
+## Dynamic Data Properties
+
+These properties provide more advanced options for collecting user input.
+
+### Dropdown
+
+This property allows for dynamically loaded options based on the user's input.
+
+**Example:**
+
+```typescript
+Property.Dropdown<string>({
+    displayName: 'Options',
+    description: 'Select an option',
+    required: true,
+    refreshers: ['authentication'],
+    options: async (propsValue) => {
+        if (!propsValue['authentication']) {
+            return {
+                disabled: true
+            };
+        }
+        return {
+            options: [
+                {
+                    label: 'Option One',
+                    value: '1'
+                },
+                {
+                    label: 'Option Two',
+                    value: '2'
+                }
+            ]
+        };
+    }
+})
+```
+
+### Multi-Select Dropdown
+
+This property allows for multiple selections from dynamically loaded options.
+
+**Example:**
+
+```typescript
+Property.MultiSelectDropdown<string>({
+    displayName: 'Options',
+    description: 'Select one or more options',
+    required: true,
+    refreshers: ['authentication'],
+    options: async (propsValue) => {
+        if (!propsValue['authentication']) {
+            return {
+                disabled: true
+            };
+        }
+        return {
+            options: [
+                {
+                    label: 'Option One',
+                    value: '1'
+                },
+                {
+                    label: 'Option Two',
+                    value: '2'
+                }
+            ]
+        };
+    }
+})
+```
+
+### Dynamic Properties
+
+This property is used to construct forms dynamically based on API responses or user input.
+
+**Example:**
+
+```typescript
+Property.DynamicProperties({
+    description: 'Dynamic Form',
+    displayName: 'Dynamic Form',
+    required: true,
+    refreshers: ['authentication'],
+    props: async (propsValue) => {
+        const authentication
+
+ = propsValue['authentication'];
+        const apiEndpoint = 'https://someapi.com';
+        const response = await fetch(apiEndpoint);
+        const data = await response.json();
+        
+        const properties = {
+            prop1: Property.ShortText({
+                displayName: 'Property 1',
+                description: 'Enter property 1',
+                required: true
+            }),
+            prop2: Property.Number({
+                displayName: 'Property 2',
+                description: 'Enter property 2',
+                required: false
+            })
+        };
+        
+        return properties;
+    }
+})
+```

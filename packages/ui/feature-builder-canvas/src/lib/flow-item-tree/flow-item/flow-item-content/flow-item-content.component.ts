@@ -72,7 +72,7 @@ export class FlowItemContentComponent implements OnInit {
   ActionType = ActionType;
   @Input() selected: boolean;
   @Input() trigger = false;
-  @Input() viewMode: boolean;
+  @Input() readOnly: boolean;
   @Input() set flowItem(newFlowItem: FlowItem) {
     this._flowItem = newFlowItem;
     this.logoTooltipText = this.getLogoTooltipText();

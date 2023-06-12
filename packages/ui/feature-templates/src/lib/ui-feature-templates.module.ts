@@ -8,6 +8,7 @@ import { TemplateCardComponent } from './template-card/template-card.component';
 import { UiCommonModule } from '@activepieces/ui/common';
 import { TemplatesContainerComponent } from './templates-container/templates-container.component';
 import { TemplateBlogNotificationComponent } from './template-blog-notification/template-blog-notification.component';
+import { NewFlowCardComponent } from './new-flow-card/new-flow-card.component';
 const exportedDeclarations = [
   TemplatesDialogComponent,
   TemplatesFiltersComponent,
@@ -16,6 +17,7 @@ const exportedDeclarations = [
   TemplateCardComponent,
   TemplatesContainerComponent,
   TemplateBlogNotificationComponent,
+  NewFlowCardComponent,
 ];
 @NgModule({
   imports: [CommonModule, UiCommonModule],
