@@ -24,7 +24,7 @@ export const flagService = {
     async getCurrentVersion(): Promise<string> {
         return (await import('../../../../../package.json')).version
     },
-    async getAll(): Promise<Flag[]> {
+    async getAll(isAuthenticated: boolean): Promise<Flag[]> {
         const flags = await flagRepo.find({})
         const now = new Date().toISOString()
         const created = now
@@ -32,7 +32,7 @@ export const flagService = {
         // eslint-disable-next-line @typescript-eslint/no-var-requires
         const currentVersion = (await import('../../../../../package.json')).version
         const latestVersion = (await this.getCurrentVersion())
-        flags.push(
+        const publicFlags = [
             {
                 id: ApFlagId.ENVIRONMENT,
                 value: system.get(SystemProp.ENVIRONMENT),
@@ -94,6 +94,14 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.TEMPLATES_SOURCE_URL,
+                value: system.get(SystemProp.TEMPLATES_SOURCE_URL),
+                created,
+                updated,
+            }
+        ]
+        const privateFlags = [
+            {
                 id: ApFlagId.CURRENT_VERSION,
                 value: currentVersion,
                 created,
@@ -104,14 +112,13 @@ export const flagService = {
                 value: latestVersion,
                 created,
                 updated,
-            },
-            {
-                id: ApFlagId.TEMPLATES_SOURCE_URL,
-                value: system.get(SystemProp.TEMPLATES_SOURCE_URL),
-                created,
-                updated,
-            },
-        )
+            }
+        ]
+        if (isAuthenticated) {
+            flags.push(...publicFlags, ...privateFlags);
+        } else {
+            flags.push(...publicFlags);
+        }
 
         return flags
     },
