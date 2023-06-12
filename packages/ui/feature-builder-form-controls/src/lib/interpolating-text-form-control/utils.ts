@@ -45,7 +45,7 @@ export const keysWithinPath = (path: string) => {
   }
 
   return result.map((w) => {
-    if (w.startsWith('"')) {
+    if (w.startsWith(`"`) || w.startsWith(`'`)) {
       return w.slice(1, w.length - 1);
     }
     return w;
