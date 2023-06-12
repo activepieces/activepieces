@@ -186,20 +186,6 @@ export function fromOpsToText(operations: QuillEditorOperationsObject) {
     .join('');
   return result;
 }
-const dotRegex = /\./g;
-export function replaceDotsWithSpaces(str: string) {
-  return str.replace(dotRegex, ' ');
-}
-export const arrayNotationRegex = /\[[0-9]+\]/g;
-export function replaceArrayNotationsWithSpaces(str: string) {
-  return str.replace(arrayNotationRegex, (foundArrayNotation) => {
-    const indexOfArrayWitoutBrackets = foundArrayNotation.slice(
-      1,
-      foundArrayNotation.length - 1
-    );
-    return ` ${indexOfArrayWitoutBrackets}`;
-  });
-}
 
 export interface MentionTreeNode {
   propertyPath: string;
@@ -220,7 +206,7 @@ export function traverseStepOutputAndReturnMentionTree(
       children: Object.keys(stepOutput).map((k) => {
         const newPath = Array.isArray(stepOutput)
           ? `${path}[${k}]`
-          : `${path}["${k}"]`;
+          : `${path}['${k}']`;
         const newKey = Array.isArray(stepOutput) ? `${lastKey} ${k}` : k;
         return traverseStepOutputAndReturnMentionTree(
           (stepOutput as Record<string, unknown>)[k],
