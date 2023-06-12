@@ -98,7 +98,7 @@ export const flagService = {
                 value: system.get(SystemProp.TEMPLATES_SOURCE_URL),
                 created,
                 updated,
-            }
+            },
         ]
         const privateFlags = [
             {
@@ -112,11 +112,12 @@ export const flagService = {
                 value: latestVersion,
                 created,
                 updated,
-            }
+            },
         ]
         if (isAuthenticated) {
             flags.push(...publicFlags, ...privateFlags);
-        } else {
+        } 
+        else {
             flags.push(...publicFlags);
         }
 

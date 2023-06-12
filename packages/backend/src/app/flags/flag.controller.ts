@@ -2,7 +2,6 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { flagService } from './flag.service'
 
 export const flagController = async (app: FastifyInstance) => {
-
     app.get('/', async (_request: FastifyRequest, reply: FastifyReply) => {
         const rawToken = _request.headers.authorization
         const isAuthenticated = !(rawToken === undefined || rawToken === null)
