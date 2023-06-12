@@ -1,6 +1,8 @@
 import { AuthenticationType, DedupeStrategy, HttpMessageBody, HttpMethod, HttpRequest, Polling, httpClient, pollingHelper } from '@activepieces/pieces-common';
-import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, DropdownProperty, NumberProperty, Property, SecretTextProperty, TriggerStrategy } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs'
+import { channel } from 'diagnostics_channel';
+import { property } from 'lodash';
 
 
 interface Message {
@@ -25,15 +27,30 @@ interface Message {
     components: any;
 }
 
-const polling: Polling<{ channelId: string, limit: number, token: string }> = {
+interface Guild {
+    id: string;
+    name: string;
+    icon: string | null;
+    owner: boolean;
+    permissions: string;
+    features: string[];
+}
+
+interface Channel {
+    id: string;
+    name: string;
+}
+
+const polling: Polling<{ channel: string | undefined; token: string; limit: number }> = {
     strategy: DedupeStrategy.TIMEBASED,
-    items: async ({ propsValue }) => {
+    items: async ({ propsValue: { channel, token, limit } }) => {
+        if (channel === undefined) return [];
         
-        const request: HttpRequest<{ channelId: string, limit: number, token: string}> = {
+        const request: HttpRequest = {
             method: HttpMethod.GET,
-            url: "https://discord.com/api/v9/channels/" + propsValue.channelId + "/messages?limit=" + propsValue.limit,
+            url: "https://discord.com/api/v9/channels/" + channel + "/messages?limit=" + limit,
             headers: {
-                "Authorization": "Bot " + propsValue.token,
+                "Authorization": "Bot " + token,
             }
         };
 
@@ -45,7 +62,7 @@ const polling: Polling<{ channelId: string, limit: number, token: string }> = {
             data: item,
         }));
     }
-}
+};
 
 export const onMesssage = createTrigger({
     name: 'on_message',
@@ -58,20 +75,54 @@ export const onMesssage = createTrigger({
             description: "The bot token",
             required: true,
         }),
-        channelId: Property.ShortText({
-            displayName: 'Channel ID',
-            description: "The channel ID to listen to",
-            required: true,
-        }),
         limit: Property.Number({
             displayName: 'Limit',
             description: "The number of messages to fetch",
             required: true,
             defaultValue: 50
-        }) 
+        }),
+        channel: Property.Dropdown<string>({
+            displayName: 'Channel',
+            description: 'List of channels',
+            required: true,
+            refreshers: ['token'],
+            options: async (propsValue) => {
+                const request = {
+                  method: HttpMethod.GET,
+                  url: "https://discord.com/api/v9/users/@me/guilds",
+                  headers: {
+                    "Authorization": "Bot " + propsValue.token,
+                  }
+                };
+              
+                const res = await httpClient.sendRequest<Guild[]>(request);
+                const options: { options: { value: string, label: string }[] } = { options: [] };
+              
+                await Promise.all(res.body.map(async (guild) => {
+                  const requestChannels = {
+                    method: HttpMethod.GET,
+                    url: "https://discord.com/api/v9/guilds/" + guild.id + "/channels",
+                    headers: {
+                      "Authorization": "Bot " + propsValue.token,
+                    }
+                  };
+              
+                  const resChannels = await httpClient.sendRequest<Channel[]>(requestChannels);
+                  resChannels.body.forEach((channel) => {
+                    options.options.push({
+                      value: channel.id,
+                      label: channel.name
+                    });
+                  });
+                }));
+              
+                return options;
+            },
+        }),
     },
     sampleData: {},
     onEnable: async (context) => {
+        
         await pollingHelper.onEnable(polling, {
             store: context.store,
             propsValue: context.propsValue,

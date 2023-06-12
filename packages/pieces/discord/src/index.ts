@@ -6,6 +6,6 @@ export const discord = createPiece({
     displayName: "Discord",
     logoUrl: 'https://cdn.activepieces.com/pieces/discord.png',
     actions: [discordSendMessageWebhook],
-    authors: ['creed983'],
+    authors: ['creed983', "Abdallah-Alwarawreh"],
     triggers: [onMesssage],
 });
