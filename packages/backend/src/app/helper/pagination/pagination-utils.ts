@@ -13,7 +13,7 @@ export function encodeByType(type: string, value: unknown): string | null {
     if (value === null) return null
 
     switch (type) {
-        case 'timestamp with time zone':
+        case 'datetime':
         case 'date': {
             return new Date(value as string).valueOf().toString()
         }

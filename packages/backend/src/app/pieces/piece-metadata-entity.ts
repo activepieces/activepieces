@@ -1,7 +1,7 @@
 import { EntitySchema } from 'typeorm'
 import { PieceMetadata } from '@activepieces/pieces-framework'
 import { ApId, BaseModel } from '@activepieces/shared'
-import { BaseColumnSchemaPart } from '../helper/base-entity'
+import { BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../helper/base-entity'
 
 export type PieceMetadataSchema = BaseModel<ApId> & PieceMetadata
 
@@ -28,24 +28,21 @@ export const PieceMetadataEntity = new EntitySchema<PieceMetadataSchema>({
         version: {
             type: String,
             nullable: false,
-            collation: 'en_natural',
         },
         minimumSupportedRelease: {
             type: String,
             nullable: false,
-            collation: 'en_natural',
         },
         maximumSupportedRelease: {
             type: String,
             nullable: false,
-            collation: 'en_natural',
         },
         actions: {
-            type: 'jsonb',
+            type: JSONB_COLUMN_TYPE,
             nullable: false,
         },
         triggers: {
-            type: 'jsonb',
+            type: JSONB_COLUMN_TYPE,
             nullable: false,
         },
     },

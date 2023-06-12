@@ -42,6 +42,10 @@ import { ChangeVariableSyntax1683898241599 } from './migration/1683898241599-Cha
 import { PieceMetadataEntity } from '../pieces/piece-metadata-entity'
 import { PieceMetadata1685537054805 } from './migration/1685537054805-piece-metadata'
 import { UnifyPieceName1686138629812 } from './migration/1686138629812-unifyPieceName'
+import { ApEnvironment } from '@activepieces/shared'
+import os from 'os'
+import path from 'path'
+import fs from 'fs'
 
 const database = system.getOrThrow(SystemProp.POSTGRES_DATABASE)
 const host = system.getOrThrow(SystemProp.POSTGRES_HOST)
@@ -92,19 +96,8 @@ const getMigrations = () => {
     ]
 }
 
-export const databaseConnection = new DataSource({
-    type: 'postgres',
-    host,
-    port,
-    username,
-    password,
-    database,
-    synchronize: false,
+const commonProperties = {
     subscribers: [],
-    migrationsRun: true,
-    migrationsTransactionMode: 'each',
-    ssl: getSslConfig(),
-    migrations: getMigrations(),
     entities: [
         TriggerEventEntity,
         FlowInstanceEntity,
@@ -122,4 +115,39 @@ export const databaseConnection = new DataSource({
         FolderEntity,
         PieceMetadataEntity,
     ],
-})
+}
+
+function getSQLiteFilePath() {
+    const homeDirectory = os.homedir()
+    const hiddenFolderName = '.activepieces'
+    const hiddenFolderPath = path.join(homeDirectory, hiddenFolderName)
+    if (!fs.existsSync(hiddenFolderPath)) {
+        fs.mkdirSync(hiddenFolderPath)
+    }
+    const sqliteFilePath = path.join(hiddenFolderPath, 'database.sqlite')
+    return sqliteFilePath
+}
+
+// Create the database connection based on the selected type and merge the common properties
+export const databaseConnection =
+    system.get(SystemProp.ENVIRONMENT) === ApEnvironment.DEVELOPMENT
+        ? new DataSource({
+            type: 'sqlite',
+            database: getSQLiteFilePath(),
+            synchronize: true,
+            ...commonProperties,
+        })
+        : new DataSource({
+            type: 'postgres',
+            host,
+            port,
+            username,
+            password,
+            database,
+            synchronize: false,
+            migrationsRun: true,
+            migrationsTransactionMode: 'each',
+            ssl: getSslConfig(),
+            migrations: getMigrations(),
+            ...commonProperties,
+        })

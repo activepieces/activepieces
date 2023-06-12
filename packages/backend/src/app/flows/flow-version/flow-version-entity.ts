@@ -1,6 +1,6 @@
 import { EntitySchema } from 'typeorm'
 import { Flow, FlowVersion } from '@activepieces/shared'
-import { ApIdSchema, BaseColumnSchemaPart } from '../../helper/base-entity'
+import { ApIdSchema, BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../../helper/base-entity'
 
 type FlowVersionSchema = {
     flow: Flow
@@ -15,7 +15,7 @@ export const FlowVersionEntity = new EntitySchema<FlowVersionSchema>({
             type: String,
         },
         trigger: {
-            type: 'jsonb',
+            type: JSONB_COLUMN_TYPE,
             nullable: true,
         },
         valid: {
