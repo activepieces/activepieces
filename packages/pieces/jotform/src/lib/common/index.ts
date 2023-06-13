@@ -88,11 +88,12 @@ export const jotformCommon = {
             url: `${jotformCommon.baseUrl(authentication.region)}/form/${formId}/webhooks`,
             headers: {
                 APIKEY: authentication.apiKey,
+                'Content-Type': 'multipart/form-data'
             },
-            body: `webhookURL=${webhookUrl}`
+            body: {
+                webhookURL: webhookUrl
+            },
         };
-        console.log("HELLO");
-        console.log(`${jotformCommon.baseUrl(authentication.region)}/form/${formId}/webhooks`);
 
         await httpClient.sendRequest(request);
     },
@@ -119,11 +120,12 @@ export const jotformCommon = {
             method: HttpMethod.DELETE,
             url: `${jotformCommon.baseUrl(authentication.region)}/form/${formId}/webhooks/${webhookId}`,
             headers: {
-                APIKEY: authentication.region
+                APIKEY: authentication.apiKey
             }
         };
 
-        return await httpClient.sendRequest(request);
+        const deleteResponse = await httpClient.sendRequest(request);
+        return deleteResponse;
     }
 }
 
