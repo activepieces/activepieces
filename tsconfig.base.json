@@ -30,6 +30,9 @@
       "@activepieces/piece-blackbaud": [
         "packages/pieces/blackbaud/src/index.ts"
       ],
+      "@activepieces/piece-bloomerang": [
+        "packages/pieces/bloomerang/src/index.ts"
+      ],
       "@activepieces/piece-cal-com": ["packages/pieces/cal-com/src/index.ts"],
       "@activepieces/piece-calendly": ["packages/pieces/calendly/src/index.ts"],
       "@activepieces/piece-certopus": ["packages/pieces/certopus/src/index.ts"],
