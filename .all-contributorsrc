@@ -328,6 +328,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "BastienMe",
+      "name": "BastienMe",
+      "avatar_url": "https://avatars.githubusercontent.com/u/71411115?v=4",
+      "profile": "https://github.com/BastienMe",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
