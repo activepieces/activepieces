@@ -64,9 +64,9 @@ const polling: Polling<{ channel: string | undefined; token: string; limit: numb
     }
 };
 
-export const onMesssage = createTrigger({
-    name: 'on_message',
-    displayName: 'On message',
+export const newMessage = createTrigger({
+    name: 'new_message',
+    displayName: 'New message',
     description: 'Triggers when a message is sent in a channel',
     type: TriggerStrategy.POLLING,
     props: {
