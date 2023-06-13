@@ -14,8 +14,8 @@ import { eventOnDataUpdated } from "./lib/trigger/event-on-data-updated";
 
 export const kizeoForms = createPiece({
   displayName: "Kizeo Forms",
-  logoUrl: "https://cdn.zapier.com/storage/developer_cli/84d326e004b57e6afa863f3ed6c2828a.png",
-  authors: [],
+  logoUrl: "https://cdn.activepieces.com/pieces/kizeo-forms.png",
+  authors: ["BastienMe"],
   actions: [getDataDefinition,pushData,downloadStandardPDF,downloadCustomExportInItsOriginalFormat],
   triggers: [eventOnData, eventOnDataDeleted, eventOnDataFinished, eventOnDataPushed, eventOnDataPulled, eventOnDataUpdated],
 });
