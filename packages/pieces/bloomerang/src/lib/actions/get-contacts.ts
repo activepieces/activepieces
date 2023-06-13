@@ -3,7 +3,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { bloomerangCommon } from '../common/common';
 
 export const bloomerangGetContacts = createAction({
-    name: 'get_contacts_from_bloomerang',
+    name: 'get_contacts',
     description: 'Get all contacts after date',
     displayName: 'Get contacts',
     props: {

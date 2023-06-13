@@ -3,9 +3,9 @@ import {httpClient, HttpMethod} from '@activepieces/pieces-common';
 import {bloomerangCommon} from '../common/common';
 
 export const bloomerangCreateTransaction = createAction({
-    name: 'create_transaction_bloomerang',
+    name: 'create_transaction',
     description: 'Create a transaction',
-    displayName: 'Create a transaction',
+    displayName: 'Create a transaction (Advanced)',
     props: {
         authentication: bloomerangCommon.authentication,
         transaction: Property.Json({

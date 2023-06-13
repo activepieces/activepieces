@@ -5,7 +5,7 @@ import {bloomerangCommon} from '../common/common';
 export const bloomerangUpsertContacts = createAction({
     name: 'upsert_contact',
     description: 'Update or create bloomerang contact',
-    displayName: 'Update or create bloomerang contact',
+    displayName: 'Upsert Contact (Advanced)',
     props: {
         authentication: bloomerangCommon.authentication,
         first_name: Property.ShortText({

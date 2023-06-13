@@ -3,9 +3,9 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { bloomerangCommon } from '../common/common';
 
 export const bloomerangGetTransactionStuff = createAction({
-    name: 'get_transaction_stuff_bloomerang',
-    description: 'Get all contacts after date',
-    displayName: 'Get contacts',
+    name: 'get_transaction_stuff',
+    description: 'Get Transaction Stuff',
+    displayName: 'Get Transaction Stuff (Advanced)',
     props: {
         authentication: bloomerangCommon.authentication,
         transaction_stuff: bloomerangCommon.transaction_stuff,
