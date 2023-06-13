@@ -12,6 +12,11 @@ export type GetParams = {
     projectId: string | null
 }
 
+export type DeleteParams = {
+    id: string
+    projectId: string | null
+}
+
 export type CreateParams = {
     pieceMetadata: PieceMetadata
     projectId: string | null
@@ -21,5 +26,6 @@ export type PieceMetadataService = {
     list(params: ListParams): Promise<PieceMetadataSummary[]>
     get(params: GetParams): Promise<PieceMetadata>
     create(params: CreateParams): Promise<PieceMetadata>
+    delete(params: DeleteParams): Promise<void>
     stats(): Promise<AllPiecesStats>
 }

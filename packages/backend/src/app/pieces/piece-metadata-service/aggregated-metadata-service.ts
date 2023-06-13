@@ -1,4 +1,3 @@
-import { PieceMetadataSchema } from '../piece-metadata-entity'
 import { GetParams, PieceMetadataService } from './piece-metadata-service'
 import { PieceMetadata, PieceMetadataSummary } from '@activepieces/pieces-framework'
 import { AllPiecesStats } from './piece-stats-service'
@@ -41,8 +40,12 @@ export const AggregatedPieceMetadataService = (): PieceMetadataService => {
             }
         },
 
-        async create(): Promise<PieceMetadataSchema> {
-            throw new Error('operation not supported')
+        async create(params): Promise<PieceMetadata> {
+            return dbPieceProvider.create(params)
+        },
+
+        async delete(params): Promise<void> {
+            return dbPieceProvider.delete(params)
         },
 
         async stats(): Promise<AllPiecesStats> {

@@ -30,7 +30,7 @@ import {
   flowHelper,
 } from '@activepieces/shared';
 import {
-  ActionMetaService,
+  PieceMetadataService,
   CORE_PIECES_ACTIONS_NAMES,
   CORE_PIECES_TRIGGERS,
   FlowItemDetails,
@@ -88,7 +88,7 @@ export class FlowItemContentComponent implements OnInit {
     private cd: ChangeDetectorRef,
     private runDetailsService: RunDetailsService,
     private flowRendererService: FlowRendererService,
-    private actionMetaDataService: ActionMetaService
+    private actionMetaDataService: PieceMetadataService
   ) {}
 
   ngOnInit(): void {

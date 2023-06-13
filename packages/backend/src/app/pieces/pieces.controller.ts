@@ -31,6 +31,8 @@ export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done)
                 projectId: request.principal.projectId,
                 pieceMetadata: {
                     ...result,
+                    minimumSupportedRelease: result.minimumSupportedRelease ?? '0.0.0',
+                    maximumSupportedRelease: result.maximumSupportedRelease ?? '999.999.999',
                     name: request.body.pieceName,
                     version: request.body.pieceVersion,
                 },
@@ -114,6 +116,19 @@ export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done)
         }
 
         return await pieceMetadataService.stats()
+    })
+
+    app.delete('/:id', {
+        schema: {
+            params: Type.Object({
+                id: Type.String(),
+            }),
+        },
+    }, async (req): Promise<void> => {
+        return await pieceMetadataService.delete({
+            projectId: req.principal.projectId,
+            id: req.params.id,
+        })
     })
 
     done()

@@ -28,7 +28,7 @@ import {
   UpdateActionRequest,
   UpdateTriggerRequest,
 } from '@activepieces/shared';
-import { ActionMetaService, FlagService } from '@activepieces/ui/common';
+import { PieceMetadataService, FlagService } from '@activepieces/ui/common';
 import {
   BuilderSelectors,
   FlowItem,
@@ -62,7 +62,7 @@ export class EditStepFormContainerComponent {
     private store: Store,
     private snackbar: MatSnackBar,
     private flagService: FlagService,
-    private actionMetaService: ActionMetaService
+    private actionMetaService: PieceMetadataService
   ) {
     this.webhookUrl$ = forkJoin({
       flow: this.store.select(BuilderSelectors.selectCurrentFlow).pipe(take(1)),

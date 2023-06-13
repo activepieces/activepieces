@@ -4,7 +4,7 @@ import { forkJoin, map, of, switchMap } from 'rxjs';
 import { ActionType, TriggerType } from '@activepieces/shared';
 import { FlowItemDetailsActions } from './flow-items-details.action';
 import {
-  ActionMetaService,
+  PieceMetadataService,
   CORE_PIECES_ACTIONS_NAMES,
   CORE_PIECES_TRIGGERS,
   FlowItemDetails,
@@ -127,6 +127,6 @@ export class FlowItemsDetailsEffects {
   }
   constructor(
     private actions$: Actions,
-    private flowItemsDetailsService: ActionMetaService
+    private flowItemsDetailsService: PieceMetadataService
   ) {}
 }
