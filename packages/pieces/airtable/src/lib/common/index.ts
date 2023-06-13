@@ -1,10 +1,9 @@
 import Airtable from "airtable";
-import { Property, DynamicPropsValue } from "@activepieces/pieces-framework";
+import { Property, DynamicPropsValue, PieceAuthProperty } from "@activepieces/pieces-framework";
 import { HttpMethod, AuthenticationType, httpClient, HttpRequest } from "@activepieces/pieces-common";
 import { AirtableBase, AirtableEnterpriseFields, AirtableField, AirtableFieldMapping, AirtableRecord, AirtableTable } from "./models";
 
-
-const markdownDescription = `
+const authMarkdownDescription = `
 To obtain your personal token, follow these steps:
 
 1. Log in to your Airtable account.
@@ -14,13 +13,20 @@ To obtain your personal token, follow these steps:
 5. Click on "Create token" and copy the token.
 `
 
-export const airtableCommon = {
-  authentication: Property.SecretText({
-    displayName: "Personal Token",
-    required: true,
-    description: markdownDescription
-  }),
+export const airtableAuthProp = Property.SecretText({
+  displayName: 'Personal Token',
+  required: true,
+  description: authMarkdownDescription,
+})
 
+type PieceAuthPropValue<T extends PieceAuthProperty> =
+  T extends { required: true }
+    ? T['valueSchema']
+    : T['valueSchema'] | undefined
+
+export type AirtableAuthPropValue = PieceAuthPropValue<typeof airtableAuthProp>
+
+export const airtableCommon = {
   base: Property.Dropdown({
     displayName: 'Base',
     required: true,
@@ -207,9 +213,9 @@ export const airtableCommon = {
     return []
   },
 
-  async fetchTable({ token, baseId, tableId }: { token: string, baseId: string, tableId: string }) { 
-    const response = await airtableCommon.fetchTableList({ token, baseId }); 
-    return response.find(t => t.id === tableId)!; 
+  async fetchTable({ token, baseId, tableId }: { token: string, baseId: string, tableId: string }) {
+    const response = await airtableCommon.fetchTableList({ token, baseId });
+    return response.find(t => t.id === tableId)!;
   },
 
   async createRecord({ personalToken: token, fields, tableId, baseId }: Params) {

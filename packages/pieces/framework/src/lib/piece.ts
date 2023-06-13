@@ -2,6 +2,7 @@ import type { Trigger } from './trigger/trigger';
 import { Action } from './action/action';
 import { EventPayload, ParseEventResponse } from '@activepieces/shared';
 import { PieceBase, PieceMetadata } from './piece-metadata';
+import { PieceAuthProperty } from './property';
 
 export class Piece implements Omit<PieceBase, "version" | "name"> {
   private readonly _actions: Record<string, Action>;
@@ -17,6 +18,7 @@ export class Piece implements Omit<PieceBase, "version" | "name"> {
     } | undefined,
     actions: Action[],
     triggers: Trigger[],
+    public readonly auth: PieceAuthProperty,
     public readonly minimumSupportedRelease?: string,
     public readonly maximumSupportedRelease?: string,
     public readonly description: string = ''
@@ -51,6 +53,7 @@ export class Piece implements Omit<PieceBase, "version" | "name"> {
       actions: this._actions,
       triggers: this._triggers,
       description: this.description,
+      auth: this.auth,
       minimumSupportedRelease: this.minimumSupportedRelease,
       maximumSupportedRelease: this.maximumSupportedRelease,
     };
@@ -78,6 +81,7 @@ export const createPiece = (request: {
   }
   minimumSupportedRelease?: string;
   maximumSupportedRelease?: string;
+  auth: PieceAuthProperty;
 }): Piece =>
   new Piece(
     request.displayName,
@@ -86,6 +90,7 @@ export const createPiece = (request: {
     request.events,
     request.actions,
     request.triggers,
+    request.auth,
     request.minimumSupportedRelease,
     request.maximumSupportedRelease,
     request.description

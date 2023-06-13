@@ -40,9 +40,10 @@ export type PauseHookParams = {
 
 export type PauseHook = (params: PauseHookParams) => void
 
-export interface ActionContext<T> {
+export interface ActionContext<PropsValue, AuthPropValue> {
     executionType: ExecutionType,
-    propsValue: T,
+    auth: AuthPropValue,
+    propsValue: PropsValue,
     store: Store,
     connections: ConnectionsManager,
     run: {

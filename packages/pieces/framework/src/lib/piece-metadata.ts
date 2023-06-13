@@ -1,4 +1,4 @@
-import { PiecePropertyMap } from "./property";
+import { PieceAuthProperty, PiecePropertyMap } from "./property";
 import { TriggerStrategy } from "./trigger/trigger";
 
 export type PieceBase = {
@@ -7,6 +7,7 @@ export type PieceBase = {
   logoUrl: string;
   description: string;
   directoryName?: string;
+  auth: PieceAuthProperty;
   version: string;
   minimumSupportedRelease?: string;
   maximumSupportedRelease?: string;
