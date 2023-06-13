@@ -683,3 +683,7 @@ app-dashboard-container .mat-drawer {
 {
   fill:$body !important;
 }
+.mat-expansion-panel-content
+{
+  overflow:hidden !important;
+}
