@@ -30,8 +30,12 @@
       "@activepieces/piece-blackbaud": [
         "packages/pieces/blackbaud/src/index.ts"
       ],
+      "@activepieces/piece-bloomerang": [
+        "packages/pieces/bloomerang/src/index.ts"
+      ],
       "@activepieces/piece-cal-com": ["packages/pieces/cal-com/src/index.ts"],
       "@activepieces/piece-calendly": ["packages/pieces/calendly/src/index.ts"],
+      "@activepieces/piece-certopus": ["packages/pieces/certopus/src/index.ts"],
       "@activepieces/piece-clickup": ["packages/pieces/clickup/src/index.ts"],
       "@activepieces/piece-clockodo": ["packages/pieces/clockodo/src/index.ts"],
       "@activepieces/piece-connections": [
@@ -101,6 +105,7 @@
       "@activepieces/piece-notion": ["packages/pieces/notion/src/index.ts"],
       "@activepieces/piece-ntfy": ["packages/pieces/ntfy/src/index.ts"],
       "@activepieces/piece-openai": ["packages/pieces/openai/src/index.ts"],
+      "@activepieces/piece-pastebin": ["packages/pieces/pastebin/src/index.ts"],
       "@activepieces/piece-pipedrive": [
         "packages/pieces/pipedrive/src/index.ts"
       ],
@@ -116,6 +121,7 @@
       "@activepieces/piece-sendinblue": [
         "packages/pieces/sendinblue/src/index.ts"
       ],
+      "@activepieces/piece-sftp": ["packages/pieces/sftp/src/index.ts"],
       "@activepieces/piece-shopify": ["packages/pieces/shopify/src/index.ts"],
       "@activepieces/piece-slack": ["packages/pieces/slack/src/index.ts"],
       "@activepieces/piece-smtp": ["packages/pieces/smtp/src/index.ts"],

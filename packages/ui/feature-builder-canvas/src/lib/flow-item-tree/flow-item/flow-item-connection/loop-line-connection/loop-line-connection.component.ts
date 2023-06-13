@@ -77,7 +77,7 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
   numberOfNestedBranches = 0;
   showDropArea$: Observable<boolean> = new Observable<boolean>();
 
-  @Input() viewMode: boolean;
+  @Input() readOnly: boolean;
 
   @Input() set flowItem(value: LoopOnItemsAction & FlowItemRenderInfo) {
     this._flowItem = value;
@@ -150,7 +150,7 @@ export class LoopLineConnectionComponent implements OnChanges, OnInit {
     const commands: string[] = [];
     commands.push(this.drawer.move(0, SPACE_BETWEEN_ITEM_CONTENT_AND_LINE));
     if (!this.flowItem.firstLoopAction) {
-      if (!this.viewMode) {
+      if (!this.readOnly) {
         commands.push(this.drawer.move(0, EMPTY_LOOP_ADD_BUTTON_HEIGHT));
         commands.push(this.drawer.move(0, SPACE_BETWEEN_ITEM_CONTENT_AND_LINE));
         commands.push(this.drawer.drawVerticalLine(VERTICAL_LINE_LENGTH));
