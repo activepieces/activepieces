@@ -81,7 +81,9 @@ export class BranchActionHandler extends BaseActionHandler<BranchAction, BranchR
           resumeStepMetadata: this.resumeStepMetadata?.childResumeStepMetadata,
         })
 
-        const executionOutput = await executor.execute()
+        const executionOutput = await executor.execute({
+          ancestors,
+        })
 
         this.handleFlowExecutorOutput({
           executionOutput,
