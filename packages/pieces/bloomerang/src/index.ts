@@ -1,8 +1,8 @@
 import { createPiece } from '@activepieces/pieces-framework';
-import { bloomerangUpsertContacts } from './lib/actions/upsert_contact';
-import { bloomerangCreateTransaction } from './lib/actions/create_transaction';
-import { bloomerangGetContacts } from './lib/actions/get_contacts';
-import { bloomerangGetTransactionStuff } from './lib/actions/get_transaction_stuff';
+import { bloomerangUpsertContacts } from './lib/actions/upsert-contact';
+import { bloomerangCreateTransaction } from './lib/actions/create-transaction';
+import { bloomerangGetContacts } from './lib/actions/get-contacts';
+import { bloomerangGetTransactionStuff } from './lib/actions/get-transaction-stuff';
 
 export const bloomerang = createPiece({
   displayName: 'Bloomerang',
