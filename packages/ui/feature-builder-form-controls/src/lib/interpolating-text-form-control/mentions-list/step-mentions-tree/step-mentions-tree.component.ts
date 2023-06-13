@@ -10,13 +10,11 @@ import {
 import { MatTreeNestedDataSource } from '@angular/material/tree';
 import { map, Observable, tap } from 'rxjs';
 import {
-  arrayNotationRegex,
   CHEVRON_SPACE_IN_MENTIONS_LIST,
   FIRST_LEVEL_PADDING_IN_MENTIONS_LIST,
+  keysWithinPath,
   MentionListItem,
   MentionTreeNode,
-  replaceArrayNotationsWithSpaces,
-  replaceDotsWithSpaces,
 } from '../../utils';
 import { MentionsTreeCacheService } from '../mentions-tree-cache.service';
 
@@ -68,25 +66,14 @@ export class StepMentionsTreeComponent implements OnInit {
     this.dataSource.data = this.stepOutputObjectChildNodes;
   }
   mentionTreeNodeClicked(node: MentionTreeNode) {
+    const label = [
+      this.stepDisplayName,
+      ...keysWithinPath(node.propertyPath).slice(1),
+    ].join(' ');
     const mentionListItem = {
       value: `{{${node.propertyPath}}}`,
-      label: replaceArrayNotationsWithSpaces(
-        replaceDotsWithSpaces(
-          this.replaceStepNameWithDisplayNameInPath(
-            node.propertyPath,
-            this.stepDisplayName
-          )
-        )
-      ),
+      label: label,
     };
     this.mentionClicked.emit(mentionListItem);
-  }
-  replaceStepNameWithDisplayNameInPath(nodePath: string, stepName: string) {
-    const splitPath = nodePath.split('.');
-    const arrayNotationNextToStep = splitPath[0].match(arrayNotationRegex);
-    const newPathHead =
-      stepName +
-      (arrayNotationNextToStep !== null ? arrayNotationNextToStep![0] : '');
-    return [newPathHead, ...splitPath.slice(1)].join('.');
   }
 }
