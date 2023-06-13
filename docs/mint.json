@@ -105,6 +105,7 @@
         "pieces/apps/http",
         "pieces/apps/hubspot",
         "pieces/apps/intercom",
+        "pieces/apps/jotform",
         "pieces/apps/mailchimp",
         "pieces/apps/mailer-lite",
         "pieces/apps/mastodon",
