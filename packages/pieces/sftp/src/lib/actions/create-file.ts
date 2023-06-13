@@ -18,33 +18,40 @@ export const createFile = createAction({
             required: true,
         }),
         // host, port, username, password
-        host: Property.ShortText({
-            displayName: 'Host',
-            description: 'The host of the SFTP server',
-            required: true,
-        }),
-        port: Property.Number({
-            displayName: 'Port',
-            description: 'The port of the SFTP server',
-            required: true,
-            defaultValue: 22,
-        }),
-        username: Property.ShortText({
-            displayName: 'Username',
-            description: 'The username of the SFTP server',
-            required: true,
-        }),
-        password: Property.SecretText({
-            displayName: 'Password',
-            description: 'The password of the SFTP server',
-            required: true,
-        }),
+        authentication: Property.CustomAuth({
+            displayName: 'Authentication',
+            description: 'Enter the authentication details',
+            props: {
+                host: Property.ShortText({
+                    displayName: 'Host',
+                    description: 'The host of the SFTP server',
+                    required: true,
+                }),
+                port: Property.Number({
+                    displayName: 'Port',
+                    description: 'The port of the SFTP server',
+                    required: true,
+                    defaultValue: 22,
+                }),
+                username: Property.ShortText({
+                    displayName: 'Username',
+                    description: 'The username of the SFTP server',
+                    required: true,
+                }),
+                password: Property.SecretText({
+                    displayName: 'Password',
+                    description: 'The password of the SFTP server',
+                    required: true,
+                }),
+            },
+            required: true
+        })
 	},
 	async run(context) {
-        const host = context.propsValue['host']
-        const port = context.propsValue['port']
-        const username = context.propsValue['username']
-        const password = context.propsValue['password']
+        const host = context.propsValue['authentication'].host;
+        const port = context.propsValue['authentication'].port;
+        const username = context.propsValue['authentication'].username;
+        const password = context.propsValue['authentication'].password;
         const fileName = context.propsValue['fileName']
         const fileContent = context.propsValue['fileContent']
         const sftp = new Client();
@@ -59,30 +66,10 @@ export const createFile = createAction({
             });
 
             await sftp.put(Buffer.from(fileContent), fileName);
-            
-            let fileObjects: Client.FileInfo[] | undefined = undefined;
-            try {
-                fileObjects = await sftp.list(".");
-            } catch (err) {
-                return {
-                    status: 'error',
-                    error: err
-                }
-            }
-
-            const fileNames = [];
-            if (fileObjects != undefined) {
-                for (const file of fileObjects) {
-                    fileNames.push(file.name);
-                }
-            }
             await sftp.end();
 
             return {
-                status: 'success',
-                result: {
-                    fileNames
-                }
+                status: 'success'
             }
         } catch (err) {
             return {
