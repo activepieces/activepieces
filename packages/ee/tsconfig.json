@@ -1,7 +1,0 @@
-{
-    "extends": "../../tsconfig.base.json",
-    "files": [],
-    "include": [
-        "**/*.ts"
-, "../backend/src/app/flows/agent/flow-agent.ts"    ],
-}
