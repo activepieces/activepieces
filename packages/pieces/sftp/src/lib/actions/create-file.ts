@@ -1,22 +1,11 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
-import { httpClient, HttpMethod } from "@activepieces/pieces-common";
 import Client from 'ssh2-sftp-client'
 
 export const createFile = createAction({
-	name: 'create_file', 
-    displayName:'Create new file',
+    name: 'create_file',
+    displayName: 'Create new file',
     description: 'Create a new file in the given path',
-	props: {
-		fileName: Property.ShortText({
-			displayName: 'File name',
-			description: 'The name of the file to create',
-			required: true,
-		}),
-        fileContent: Property.LongText({
-            displayName: 'File content',
-            description: 'The content of the file to create',
-            required: true,
-        }),
+    props: {
         // host, port, username, password
         authentication: Property.CustomAuth({
             displayName: 'Authentication',
@@ -45,9 +34,19 @@ export const createFile = createAction({
                 }),
             },
             required: true
-        })
-	},
-	async run(context) {
+        }),
+        fileName: Property.ShortText({
+            displayName: 'File Path',
+            description: 'The name of the file to create',
+            required: true,
+        }),
+        fileContent: Property.LongText({
+            displayName: 'File content',
+            description: 'The content of the file to create',
+            required: true,
+        }),
+    },
+    async run(context) {
         const host = context.propsValue['authentication'].host;
         const port = context.propsValue['authentication'].port;
         const username = context.propsValue['authentication'].username;
@@ -56,7 +55,7 @@ export const createFile = createAction({
         const fileContent = context.propsValue['fileContent']
         const sftp = new Client();
 
-        
+
         try {
             await sftp.connect({
                 host,
@@ -77,5 +76,5 @@ export const createFile = createAction({
                 error: err
             }
         }
-	},
+    },
 });

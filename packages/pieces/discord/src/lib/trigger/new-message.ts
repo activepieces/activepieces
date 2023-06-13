@@ -1,8 +1,6 @@
-import { AuthenticationType, DedupeStrategy, HttpMessageBody, HttpMethod, HttpRequest, Polling, httpClient, pollingHelper } from '@activepieces/pieces-common';
-import { createTrigger, DropdownProperty, NumberProperty, Property, SecretTextProperty, TriggerStrategy } from '@activepieces/pieces-framework';
+import { DedupeStrategy, HttpMethod, HttpRequest, Polling, httpClient, pollingHelper } from '@activepieces/pieces-common';
+import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs'
-import { channel } from 'diagnostics_channel';
-import { property } from 'lodash';
 
 
 interface Message {
@@ -45,7 +43,7 @@ const polling: Polling<{ channel: string | undefined; token: string; limit: numb
     strategy: DedupeStrategy.TIMEBASED,
     items: async ({ propsValue: { channel, token, limit } }) => {
         if (channel === undefined) return [];
-        
+
         const request: HttpRequest = {
             method: HttpMethod.GET,
             url: "https://discord.com/api/v9/channels/" + channel + "/messages?limit=" + limit,
@@ -55,7 +53,7 @@ const polling: Polling<{ channel: string | undefined; token: string; limit: numb
         };
 
         const res = await httpClient.sendRequest<Message[]>(request);
-        
+
         const items = res.body;
         return items.map((item) => ({
             epochMilliSeconds: dayjs(item.timestamp).valueOf(),
@@ -63,6 +61,14 @@ const polling: Polling<{ channel: string | undefined; token: string; limit: numb
         }));
     }
 };
+
+const markdown = `
+To obtain a token, follow these steps:
+1. Go to https://discord.com/developers/applications
+2. Click on Application (or create one if you don't have one)
+3. Click on Bot
+4. Copy the token
+`
 
 export const newMessage = createTrigger({
     name: 'new_message',
@@ -72,13 +78,13 @@ export const newMessage = createTrigger({
     props: {
         token: Property.SecretText({
             displayName: 'Token',
-            description: "The bot token",
+            description: markdown,
             required: true,
         }),
         limit: Property.Number({
             displayName: 'Limit',
             description: "The number of messages to fetch",
-            required: true,
+            required: false,
             defaultValue: 50
         }),
         channel: Property.Dropdown<string>({
@@ -88,62 +94,78 @@ export const newMessage = createTrigger({
             refreshers: ['token'],
             options: async (propsValue) => {
                 const request = {
-                  method: HttpMethod.GET,
-                  url: "https://discord.com/api/v9/users/@me/guilds",
-                  headers: {
-                    "Authorization": "Bot " + propsValue.token,
-                  }
+                    method: HttpMethod.GET,
+                    url: "https://discord.com/api/v9/users/@me/guilds",
+                    headers: {
+                        "Authorization": "Bot " + propsValue.token,
+                    }
                 };
-              
+
                 const res = await httpClient.sendRequest<Guild[]>(request);
                 const options: { options: { value: string, label: string }[] } = { options: [] };
-              
+
                 await Promise.all(res.body.map(async (guild) => {
-                  const requestChannels = {
-                    method: HttpMethod.GET,
-                    url: "https://discord.com/api/v9/guilds/" + guild.id + "/channels",
-                    headers: {
-                      "Authorization": "Bot " + propsValue.token,
-                    }
-                  };
-              
-                  const resChannels = await httpClient.sendRequest<Channel[]>(requestChannels);
-                  resChannels.body.forEach((channel) => {
-                    options.options.push({
-                      value: channel.id,
-                      label: channel.name
+                    const requestChannels = {
+                        method: HttpMethod.GET,
+                        url: "https://discord.com/api/v9/guilds/" + guild.id + "/channels",
+                        headers: {
+                            "Authorization": "Bot " + propsValue.token,
+                        }
+                    };
+
+                    const resChannels = await httpClient.sendRequest<Channel[]>(requestChannels);
+                    resChannels.body.forEach((channel) => {
+                        options.options.push({
+                            value: channel.id,
+                            label: channel.name
+                        });
                     });
-                  });
                 }));
-              
+
                 return options;
             },
         }),
     },
     sampleData: {},
     onEnable: async (context) => {
-        
+
         await pollingHelper.onEnable(polling, {
             store: context.store,
-            propsValue: context.propsValue,
+            propsValue: {
+                channel: context.propsValue.channel,
+                token: context.propsValue.token,
+                limit: context.propsValue.limit ?? 50
+            },
         })
     },
     onDisable: async (context) => {
         await pollingHelper.onDisable(polling, {
             store: context.store,
-            propsValue: context.propsValue,
+            propsValue: {
+                channel: context.propsValue.channel,
+                token: context.propsValue.token,
+                limit: context.propsValue.limit ?? 50
+            },
         })
     },
     run: async (context) => {
         return await pollingHelper.poll(polling, {
             store: context.store,
-            propsValue: context.propsValue,
+            propsValue: {
+                channel: context.propsValue.channel,
+                token: context.propsValue.token,
+                limit: context.propsValue.limit ?? 50
+            },
         });
     },
     test: async (context) => {
         return await pollingHelper.test(polling, {
             store: context.store,
-            propsValue: context.propsValue,
+            propsValue: {
+                channel: context.propsValue.channel,
+                token: context.propsValue.token,
+                limit: context.propsValue.limit ?? 50
+            },
         });
     }
 });
