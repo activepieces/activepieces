@@ -4,10 +4,10 @@ const { execSync } = require('child_process');
 
 // Check Node.js version
 const nodeVersion = execSync('node --version').toString().trim();
-const requiredVersion = 'v18';
+const requiredVersions = ['v18','v20'];
 
-if (nodeVersion.startsWith(requiredVersion)) {
-  console.log('Node.js version is compatible (18.0).');
+if (requiredVersions.some(version=>nodeVersion.startsWith(version))) {
+  console.log(`Node.js version is compatible ${nodeVersion}.`);
 } else {
   console.log(`Node.js version is not compatible. Required version: ${requiredVersion}`);
   process.exit(1);

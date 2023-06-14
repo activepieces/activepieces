@@ -8,9 +8,9 @@ export const delayUntilAction = createAction({
     description: 'Delays the execution of the next action until a given timestamp',
     props: {
         delayUntilTimestamp: Property.DateTime({
-            displayName: 'Timestamp',
-            description: 'The timestamp until when the delay the execution of the next action should be delayed',
-            required: true,
+			displayName: 'Date and Time',
+			description: 'Specifies the date and time until which the execution of the next action should be delayed. It supports multiple formats, including ISO format.',
+		    required: true,
         }),
     },
     async run(ctx) {

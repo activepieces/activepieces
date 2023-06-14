@@ -45,7 +45,7 @@ export class StepResultComponent implements OnInit, AfterViewInit {
   iterationIndexControl = new UntypedFormControl(1);
   iteration$: Observable<{ stepName: string; result: StepOutput }[]>;
   iterationsAccordionList: { stepName: string; result: StepOutput }[][] = [];
-  private previousIterationIndex = 0;
+  previousIterationIndex = 0;
   hideIterationInput$: Observable<boolean>;
   showIterationInput = false;
   iterationInputMinWidth = '0px';
@@ -195,27 +195,29 @@ export class StepResultComponent implements OnInit, AfterViewInit {
     $event.stopPropagation();
   }
 
-  clearStepsThatWereNotReached(parentLoopStepResultAndName: {
+  clearStepsThatWereNotReached(stepWithinLoop: {
     stepName: string;
     result: StepOutput;
   }) {
     this.runDetailsService.iterationStepResultState$.next({
-      stepName: parentLoopStepResultAndName.stepName,
+      stepName: stepWithinLoop.stepName,
       result: undefined,
     });
     if (
-      parentLoopStepResultAndName.stepName ===
+      stepWithinLoop.stepName ===
       this.runDetailsService.currentStepResult$.value?.stepName
     ) {
       this.runDetailsService.currentStepResult$.next(undefined);
     }
-    if (parentLoopStepResultAndName.result.output?.iterations) {
-      const firstIterationResult = this.createStepResultsForDetailsAccordion(
-        parentLoopStepResultAndName.result.output.iterations[0]
-      );
-      firstIterationResult.forEach((st) => {
-        this.clearStepsThatWereNotReached(st);
-      });
+    if (stepWithinLoop.result.output?.iterations) {
+      if (stepWithinLoop.result.output.iterations[0]) {
+        const firstIterationResult = this.createStepResultsForDetailsAccordion(
+          stepWithinLoop.result.output.iterations[0]
+        );
+        firstIterationResult.forEach((st) => {
+          this.clearStepsThatWereNotReached(st);
+        });
+      }
     }
   }
   childStepSelectedHandler() {
