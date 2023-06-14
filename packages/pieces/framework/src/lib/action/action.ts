@@ -4,7 +4,10 @@ import { PieceAuthProperty, PiecePropertyMap, StaticPropsValue } from '../proper
 
 type PieceAuthPropValue<T extends PieceAuthProperty> = T extends { required: true } ? T['valueSchema'] : T['valueSchema'] | undefined
 
-class IAction<
+export type ActionRunner<Props extends PiecePropertyMap, AuthPropValue> =
+  (ctx: ActionContext<StaticPropsValue<Props>, AuthPropValue>) => Promise<unknown | void>
+
+export class IAction<
   T extends PiecePropertyMap,
   AuthPropValue extends PieceAuthPropValue<PieceAuthProperty> = PieceAuthPropValue<PieceAuthProperty>
 > implements ActionBase {
@@ -13,9 +16,7 @@ class IAction<
     public readonly displayName: string,
     public readonly description: string,
     public readonly props: T,
-    public readonly run: (
-      ctx: ActionContext<StaticPropsValue<T>, AuthPropValue>
-    ) => Promise<unknown | void>,
+    public readonly run: ActionRunner<T, AuthPropValue>,
     public readonly sampleData: unknown = {}
   ) {}
 }

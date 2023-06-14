@@ -1,10 +1,21 @@
 import type { Trigger } from './trigger/trigger';
-import { Action } from './action/action';
+import { Action, ActionRunner, IAction } from './action/action';
 import { EventPayload, ParseEventResponse } from '@activepieces/shared';
 import { PieceBase, PieceMetadata } from './piece-metadata';
-import { PieceAuthProperty } from './property';
+import { PieceAuthProperty, PiecePropertyMap } from './property';
 
-export class Piece implements Omit<PieceBase, "version" | "name"> {
+type AddActionParams<Props extends PiecePropertyMap, AuthPropValue> = {
+  name: string
+  displayName: string
+  description: string
+  props: Props
+  run: ActionRunner<Props, AuthPropValue>
+  sampleData?: unknown
+}
+
+type PieceAuthPropValue<T extends PieceAuthProperty> = T extends { required: true } ? T['valueSchema'] : T['valueSchema'] | undefined
+
+export class Piece<AuthProp extends PieceAuthProperty> implements Omit<PieceBase, "version" | "name"> {
   private readonly _actions: Record<string, Action>;
   private readonly _triggers: Record<string, Trigger>;
 
@@ -18,7 +29,7 @@ export class Piece implements Omit<PieceBase, "version" | "name"> {
     } | undefined,
     actions: Action[],
     triggers: Trigger[],
-    public readonly auth: PieceAuthProperty,
+    public readonly auth: AuthProp,
     public readonly minimumSupportedRelease?: string,
     public readonly maximumSupportedRelease?: string,
     public readonly description: string = ''
@@ -66,9 +77,24 @@ export class Piece implements Omit<PieceBase, "version" | "name"> {
   triggers(){
     return this._triggers;
   }
+
+  addAction<Props extends PiecePropertyMap> (params: AddActionParams<Props, PieceAuthPropValue<AuthProp>>) {
+    const { name, displayName, description, props, run, sampleData } = params
+
+    const action = new IAction(
+      name,
+      displayName,
+      description,
+      props,
+      run,
+      sampleData,
+    )
+
+    this._actions[action.name] = action
+  }
 }
 
-export const createPiece = (request: {
+export const createPiece = <AuthProp extends PieceAuthProperty>(request: {
   displayName: string;
   logoUrl: string;
   authors?: string[],
@@ -81,8 +107,8 @@ export const createPiece = (request: {
   }
   minimumSupportedRelease?: string;
   maximumSupportedRelease?: string;
-  auth: PieceAuthProperty;
-}): Piece =>
+  auth: AuthProp;
+}): Piece<AuthProp> =>
   new Piece(
     request.displayName,
     request.logoUrl,

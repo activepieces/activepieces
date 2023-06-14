@@ -1,7 +1,8 @@
-import { createAction, DynamicPropsValue } from "@activepieces/pieces-framework";
-import { AirtableAuthPropValue, airtableCommon } from "../common";
+import { DynamicPropsValue } from "@activepieces/pieces-framework";
+import { airtableCommon } from "../common";
+import { airtable } from "../../index";
 
-export const airtableCreateRecord = createAction<AirtableAuthPropValue>()({
+airtable.addAction({
   name: 'airtable_create_record',
   displayName: 'Create Airtable Record',
   description: 'Adds a record into an airtable',
