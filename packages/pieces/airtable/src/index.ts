@@ -1,12 +1,22 @@
-import { createPiece } from '@activepieces/pieces-framework';
-import { airtableNewRecord } from './lib/trigger/new-record.trigger';
-import { airtableAuthProp } from './lib/common';
+import { AuthProp, Piece } from '@activepieces/pieces-framework';
 
-export const airtable = createPiece({
-	displayName: 'Airtable',
-	logoUrl: 'https://cdn.activepieces.com/pieces/airtable.png',
-	authors: ['AbdulTheActivePiecer', 'kanarelo'],
-	actions: [],
-	triggers: [airtableNewRecord],
-    auth: airtableAuthProp
-});
+const auth = AuthProp.SecretText({
+    displayName: 'Personal Token',
+    required: true,
+    description: `
+    To obtain your personal token, follow these steps:
+
+    1. Log in to your Airtable account.
+    2. Visit https://airtable.com/create/tokens/ to create one
+    3. Click on "+ Add a base" and select the base you want to use or all bases.
+    4. Click on "+ Add a scope" and select "data.records.read" and "schema.bases.read".
+    5. Click on "Create token" and copy the token.
+    `,
+})
+
+export const airtable = Piece.create({
+    displayName: 'Airtable',
+    logoUrl: 'https://cdn.activepieces.com/pieces/airtable.png',
+    authors: ['AbdulTheActivePiecer', 'kanarelo'],
+    auth,
+})

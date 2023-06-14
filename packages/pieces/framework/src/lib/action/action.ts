@@ -1,44 +1,27 @@
+import type { Piece } from '../piece';
 import { ActionContext } from '../context';
 import { ActionBase } from '../piece-metadata';
-import { PieceAuthProperty, PiecePropertyMap, StaticPropsValue } from '../property/property';
+import { PieceAuthProperty, PiecePropertyMap } from '../property/property';
 
-type PieceAuthPropValue<T extends PieceAuthProperty> = T extends { required: true } ? T['valueSchema'] : T['valueSchema'] | undefined
-
-export type ActionRunner<Props extends PiecePropertyMap, AuthPropValue> =
-  (ctx: ActionContext<StaticPropsValue<Props>, AuthPropValue>) => Promise<unknown | void>
+export type ActionRunner<AuthProp extends PieceAuthProperty, Props extends PiecePropertyMap> =
+  (ctx: ActionContext<AuthProp, Props>) => Promise<unknown | void>
 
 export class IAction<
-  T extends PiecePropertyMap,
-  AuthPropValue extends PieceAuthPropValue<PieceAuthProperty> = PieceAuthPropValue<PieceAuthProperty>
+  Props extends PiecePropertyMap,
+  AuthProp extends PieceAuthProperty,
 > implements ActionBase {
+
+  /**
+   * Use {@link Piece#addAction} to create actions
+   */
   constructor(
     public readonly name: string,
     public readonly displayName: string,
     public readonly description: string,
-    public readonly props: T,
-    public readonly run: ActionRunner<T, AuthPropValue>,
-    public readonly sampleData: unknown = {}
+    public readonly props: Props,
+    public readonly run: ActionRunner<AuthProp, Props>,
+    public readonly sampleData: unknown = {},
   ) {}
 }
 
-export type Action<T extends PiecePropertyMap = any, A extends PieceAuthPropValue<PieceAuthProperty> = any> = IAction<T, A>
-
-export function createAction<AuthPropValue extends PieceAuthPropValue<PieceAuthProperty>> () {
-  return <T extends PiecePropertyMap>(request: {
-    name: string;
-    displayName: string;
-    description: string;
-    props: T;
-    run: (context: ActionContext<StaticPropsValue<T>, AuthPropValue>) => Promise<unknown | void>;
-    sampleData?: unknown;
-  }): Action<T, AuthPropValue> => {
-    return new IAction(
-      request.name,
-      request.displayName,
-      request.description,
-      request.props,
-      request.run,
-      request.sampleData
-    );
-  }
-}
+export type Action<T extends PiecePropertyMap = any, A extends PieceAuthProperty = any> = IAction<T, A>

@@ -1,24 +1,44 @@
 import { AppConnectionValue, ExecutionType, PauseMetadata, ScheduleOptions, StopResponse, TriggerPayload } from "@activepieces/shared";
 import { TriggerStrategy } from "./trigger/trigger";
+import { PieceAuthProperty, PiecePropValueSchema, PiecePropertyMap, StaticPropsValue } from "./property";
 
-export type TriggerHookContext<T, S extends TriggerStrategy> =
-    S extends TriggerStrategy.APP_WEBHOOK ? {
-        webhookUrl: string,
+type BaseTriggerHookContext<AuthProp extends PieceAuthProperty, Props extends PiecePropertyMap> = {
+    auth: PiecePropValueSchema<AuthProp>
+    propsValue: StaticPropsValue<Props>
+    store: Store
+}
+
+type AppWebhookTriggerHookContext<AuthProp extends PieceAuthProperty, Props extends PiecePropertyMap> =
+    BaseTriggerHookContext<AuthProp, Props> & {
+        webhookUrl: string
+        payload: TriggerPayload
         app: {
             createListeners({ events, identifierValue }: { events: string[], identifierValue: string }): Promise<void>
-        },
-        propsValue: T,
-        store: Store
-    } : S extends TriggerStrategy.POLLING ? {
-        propsValue: T,
-        setSchedule(schedule: ScheduleOptions): void,
-        store: Store
-    } : {
-        webhookUrl: string,
-        propsValue: T,
-        store: Store
-    };
+        }
+    }
 
+type PollingTriggerHookContext<AuthProp extends PieceAuthProperty, Props extends PiecePropertyMap> =
+    BaseTriggerHookContext<AuthProp, Props> & {
+        setSchedule(schedule: ScheduleOptions): void
+    }
+
+type WebhookTriggerHookContext<AuthProp extends PieceAuthProperty, Props extends PiecePropertyMap> =
+    BaseTriggerHookContext<AuthProp, Props> & {
+        webhookUrl: string
+        payload: TriggerPayload
+    }
+
+export type TriggerHookContext<
+    S extends TriggerStrategy,
+    AuthProp extends PieceAuthProperty,
+    Props extends PiecePropertyMap,
+> = S extends TriggerStrategy.APP_WEBHOOK
+    ? AppWebhookTriggerHookContext<AuthProp, Props>
+    : S extends TriggerStrategy.POLLING
+        ? PollingTriggerHookContext<AuthProp, Props>
+        : S extends TriggerStrategy.WEBHOOK
+            ? WebhookTriggerHookContext<AuthProp, Props>
+            : never
 
 export interface TriggerContext<T> {
     payload: TriggerPayload;
@@ -40,10 +60,10 @@ export type PauseHookParams = {
 
 export type PauseHook = (params: PauseHookParams) => void
 
-export interface ActionContext<PropsValue, AuthPropValue> {
+export type ActionContext<AuthProp extends PieceAuthProperty, Props extends PiecePropertyMap> = {
     executionType: ExecutionType,
-    auth: AuthPropValue,
-    propsValue: PropsValue,
+    auth: PiecePropValueSchema<AuthProp>,
+    propsValue: StaticPropsValue<Props>,
     store: Store,
     connections: ConnectionsManager,
     run: {
