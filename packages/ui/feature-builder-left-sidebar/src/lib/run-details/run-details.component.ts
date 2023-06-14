@@ -49,6 +49,9 @@ export class RunDetailsComponent implements OnInit {
     | undefined
     | null
   >;
+  currentStepResult$: Observable<
+    { stepName: string; result: StepOutput | undefined } | undefined
+  >;
   selectedStepName$: Observable<string | null>;
   @ViewChild('stepsResultsAccordion', { read: ElementRef })
   stepsResultsAccordion: ElementRef;
@@ -56,10 +59,13 @@ export class RunDetailsComponent implements OnInit {
   selectedStepResultContainer: ElementRef;
   constructor(
     private store: Store,
-    public runDetailsService: RunDetailsService,
+    private runDetailsService: RunDetailsService,
     private ngZone: NgZone,
     private renderer2: Renderer2
-  ) {}
+  ) {
+    this.currentStepResult$ =
+      this.runDetailsService.currentStepResult$.asObservable();
+  }
 
   ngOnInit(): void {
     this.selectedStepName$ = this.store.select(

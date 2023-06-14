@@ -40,6 +40,7 @@ const linkDependencies = async (params: LinkDependenciesParams) => {
     }
     for (const piece of uniquePieces) {
         const pieceMetadata =( await FilePieceMetadataService().get({
+            projectId: null,
             name: piece.name,
             version: piece.version,
         }))
