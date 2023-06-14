@@ -11,7 +11,7 @@
     <app-incomplete-steps-widget></app-incomplete-steps-widget>
 
   </div>
-  <ng-container *ngIf="!trigger && (viewMode$ | async)===false">
+  <ng-container *ngIf="!trigger && (readOnly$ | async)===false">
     <div class="ap-relative">
       <div #flowItem class="ap-z-50 ap-cursor-pointer ap-relative" mwlDraggable apTrackHover
         #itemContent="hoverTrackerDirective" [ghostElementTemplate]="ItemContent.stepDragTemplate"
@@ -22,7 +22,7 @@
         (dragStart)="draggingStarted()">
         <div [ngStyle]="flowItemContentContainer" class="ap-z-50">
           <app-flow-item-content #ItemContent [trigger]="trigger" [flowItem]="_flowItemData"
-            [viewMode]="viewMode$ | async | defaultTrue"
+            [readOnly]="readOnly$ | async | defaultTrue"
             [selected]="selected$ | async | defaultFalse"></app-flow-item-content>
         </div>
       </div>
@@ -33,11 +33,11 @@
     </div>
 
   </ng-container>
-  <ng-container *ngIf="!trigger && (viewMode$ | async)===true">
+  <ng-container *ngIf="!trigger && (readOnly$ | async)===true">
     <div #flowItem class="ap-cursor-pointer ap-relative">
       <div [ngStyle]="flowItemContentContainer" class="ap-z-50">
         <app-flow-item-content #ItemContent [trigger]="trigger" [flowItem]="_flowItemData"
-          [viewMode]="viewMode$ | async | defaultTrue"
+          [readOnly]="readOnly$ | async | defaultTrue"
           [selected]="selected$ | async | defaultFalse"></app-flow-item-content>
       </div>
     </div>
@@ -49,7 +49,7 @@
   <div *ngIf="trigger" #flowItem class="ap-relative">
     <div [ngStyle]="flowItemContentContainer" class="ap-z-50 ap-cursor-pointer" apTrackHover
       #itemContent="hoverTrackerDirective">
-      <app-flow-item-content [trigger]="trigger" [flowItem]="_flowItemData" [viewMode]="viewMode$ | async | defaultTrue"
+      <app-flow-item-content [trigger]="trigger" [flowItem]="_flowItemData" [readOnly]="readOnly$ | async | defaultTrue"
         [selected]="selected$ | async | defaultFalse"></app-flow-item-content>
     </div>
     <div class="ap-absolute -ap-left-[58px] ap-w-[50px] ap-h-[92px] ap-flex ap-flex-col ap-justify-center  ap-top-0">
@@ -60,7 +60,7 @@
 
   <div class="ap-relative ap-z-40" [ngStyle]="{ height: _flowItemData.connectionsBox!.height + 'px' }">
     <app-flow-item-connection [insideLoopOrBranch]="insideLoopOrBranch" [flowItem]="_flowItemData"
-      [viewMode]="viewMode$ | async | defaultTrue"></app-flow-item-connection>
+      [readOnly]="readOnly$ | async | defaultTrue"></app-flow-item-connection>
   </div>
   <div class="ap-z-40">
     <app-flow-item *ngIf="_flowItemData.nextAction" [hoverState]="hoverState" [flowItemData]="_flowItemData.nextAction"

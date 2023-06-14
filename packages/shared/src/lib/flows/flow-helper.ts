@@ -35,7 +35,7 @@ const triggerSchemaValidation = TypeCompiler.Compile(Trigger);
 
 function isValid(flowVersion: FlowVersion) {
   let valid = true;
-  const steps = flowHelper.getAllSteps(flowVersion);
+  const steps = flowHelper.getAllSteps(flowVersion.trigger);
   for (let i = 0; i < steps.length; i++) {
     const step = steps[i];
     valid = valid && step.valid;
@@ -51,7 +51,7 @@ function deleteAction(
   flowVersion: FlowVersion,
   request: DeleteActionRequest
 ): void {
-  const steps = getAllSteps(flowVersion);
+  const steps = getAllSteps(flowVersion.trigger);
   let deleted = false;
   for (let i = 0; i < steps.length; i++) {
     const parentStep = steps[i];
@@ -90,9 +90,9 @@ function deleteAction(
 
 function getUsedPieces(trigger: Trigger): string[] {
   return traverseInternal(trigger)
-  .filter((step) => step.type === ActionType.PIECE || step.type === TriggerType.PIECE)
-  .map((step) => step.settings.pieceName)
-  .filter((value, index, self) => self.indexOf(value) === index);
+    .filter((step) => step.type === ActionType.PIECE || step.type === TriggerType.PIECE)
+    .map((step) => step.settings.pieceName)
+    .filter((value, index, self) => self.indexOf(value) === index);
 }
 
 function traverseInternal(step: Trigger | Action | undefined): (Action | Trigger)[] {
@@ -111,17 +111,24 @@ function traverseInternal(step: Trigger | Action | undefined): (Action | Trigger
   return steps;
 }
 
+function getAllSteps(trigger: Trigger): (Action | Trigger)[] {
+  return traverseInternal(trigger);
+}
 
-function getAllSteps(flowVersion: FlowVersion): (Action | Trigger)[] {
-  return traverseInternal(flowVersion.trigger);
+function getAllParentSteps(step: Trigger): (Action | Trigger)[] {
+  const steps: (Action | Trigger)[] = [];
+  while (step !== undefined && step !== null) {
+    steps.push(step);
+    step = step.nextAction;
+  }
+  return steps;
 }
 function getAllChildSteps(action: LoopOnItemsAction | BranchAction): (Action)[] {
-  switch(action.type)
-  {
+  switch (action.type) {
     case ActionType.LOOP_ON_ITEMS:
-    return traverseInternal(action.firstLoopAction) as Action[];
+      return traverseInternal(action.firstLoopAction) as Action[];
     default:
-      return [...traverseInternal(action.onSuccessAction),...traverseInternal(action.onFailureAction)] as Action[];
+      return [...traverseInternal(action.onSuccessAction), ...traverseInternal(action.onFailureAction)] as Action[];
   }
 
 }
@@ -130,7 +137,7 @@ function getStep(
   flowVersion: FlowVersion,
   stepName: string
 ): Action | Trigger | undefined {
-  return getAllSteps(flowVersion).find((step) => step.name === stepName);
+  return getAllSteps(flowVersion.trigger).find((step) => step.name === stepName);
 }
 
 const getAllSubFlowSteps = ({ subFlowStartStep }: GetAllSubFlowSteps): Step[] => {
@@ -149,7 +156,7 @@ function updateAction(
   flowVersion: FlowVersion,
   request: UpdateActionRequest
 ): void {
-  const steps = getAllSteps(flowVersion);
+  const steps = getAllSteps(flowVersion.trigger);
   let updated = false;
   for (let i = 0; i < steps.length; i++) {
     const parentStep = steps[i];
@@ -187,16 +194,16 @@ function updateAction(
   }
 }
 
-function extractActions(step: Trigger | Action): { nextAction?: Action, onSuccessAction?: Action, onFailureAction?: Action , firstLoopAction?:Action } {
+function extractActions(step: Trigger | Action): { nextAction?: Action, onSuccessAction?: Action, onFailureAction?: Action, firstLoopAction?: Action } {
   const nextAction = step.nextAction;
   const onSuccessAction = step.type === ActionType.BRANCH ? step.onSuccessAction : undefined;
   const onFailureAction = step.type === ActionType.BRANCH ? step.onFailureAction : undefined;
   const firstLoopAction = step.type === ActionType.LOOP_ON_ITEMS ? step.firstLoopAction : undefined;
-  return { nextAction, onSuccessAction, onFailureAction ,firstLoopAction};
+  return { nextAction, onSuccessAction, onFailureAction, firstLoopAction };
 }
 
-function moveAction(flowVersion: FlowVersion, request: MoveActionRequest): void {
-  const steps = getAllSteps(flowVersion);
+function moveAction(flowVersion: FlowVersion, request: MoveActionRequest): FlowVersion {
+  const steps = getAllSteps(flowVersion.trigger);
   const sourceStep = steps.find(step => step.name === request.name);
   if (!sourceStep || !isAction(sourceStep?.type)) {
     throw new ActivepiecesError({
@@ -211,16 +218,28 @@ function moveAction(flowVersion: FlowVersion, request: MoveActionRequest): void 
       params: {}
     }, `Destination step ${request.newParentStep} not found`);
   }
+  const childOperation: FlowOperationRequest[] = [];
+  const clonedSourceStep: Step = JSON.parse(JSON.stringify(sourceStep));
+  if (clonedSourceStep.type === ActionType.LOOP_ON_ITEMS || clonedSourceStep.type === ActionType.BRANCH) {
+    // Don't Clone the next action for first step only
+    clonedSourceStep.nextAction = undefined;
+    childOperation.push(...getImportOperations(clonedSourceStep));
+  }
   deleteAction(flowVersion, { name: request.name });
   addAction(flowVersion, {
     action: sourceStep as Action,
     parentStep: request.newParentStep,
     stepLocationRelativeToParent: request.stepLocationRelativeToNewParent
   });
+
+  childOperation.forEach(operation => {
+    flowVersion = flowHelper.apply(flowVersion, operation);
+  });
+  return flowVersion;
 }
 
 function addAction(flowVersion: FlowVersion, request: AddActionRequest): void {
-  const parentStep = getAllSteps(flowVersion).find(step => step.name === request.parentStep);
+  const parentStep = getAllSteps(flowVersion.trigger).find(step => step.name === request.parentStep);
   if (parentStep === undefined) {
     throw new ActivepiecesError({
       code: ErrorCode.FLOW_OPERATION_INVALID,
@@ -272,7 +291,7 @@ function addAction(flowVersion: FlowVersion, request: AddActionRequest): void {
 
 function createAction(
   request: UpdateActionRequest,
-  { nextAction, onFailureAction, onSuccessAction, firstLoopAction}: { nextAction?: Action, firstLoopAction?: Action, onSuccessAction?: Action, onFailureAction?: Action},
+  { nextAction, onFailureAction, onSuccessAction, firstLoopAction }: { nextAction?: Action, firstLoopAction?: Action, onSuccessAction?: Action, onFailureAction?: Action },
 ): Action {
   const baseProperties = {
     displayName: request.displayName,
@@ -324,16 +343,16 @@ function createAction(
   return action;
 }
 
-function isChildOf(parent:LoopOnItemsAction | BranchAction,child:Action)
-{
-  switch(parent.type)
-  {
-    case ActionType.LOOP_ON_ITEMS:{
+function isChildOf(parent: LoopOnItemsAction | BranchAction, child: Action) {
+  switch (parent.type) {
+    case ActionType.LOOP_ON_ITEMS: {
       const children = getAllChildSteps(parent);
-      return children.findIndex(c=>c.name === child.name) >-1;}
-    default:{
-      const children = [...getAllChildSteps(parent),...getAllChildSteps(parent)];
-      return children.findIndex(c=>c.name === child.name) >-1;}
+      return children.findIndex(c => c.name === child.name) > -1;
+    }
+    default: {
+      const children = [...getAllChildSteps(parent), ...getAllChildSteps(parent)];
+      return children.findIndex(c => c.name === child.name) > -1;
+    }
   }
 
 
@@ -379,16 +398,117 @@ function createTrigger(
   return trigger;
 }
 
+
+export function getImportOperations(step: Action | Trigger | undefined): (FlowOperationRequest)[] {
+  const steps: FlowOperationRequest[] = []
+  while (step) {
+    if (step.nextAction) {
+      steps.push({
+        type: FlowOperationType.ADD_ACTION,
+        request: {
+          parentStep: step.name,
+          action: keepBaseAction(step.nextAction),
+        },
+      })
+    }
+    if (step.type === ActionType.BRANCH) {
+      if (step.onFailureAction) {
+        steps.push({
+          type: FlowOperationType.ADD_ACTION,
+          request: {
+            parentStep: step.name,
+            stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_FALSE_BRANCH,
+            action: keepBaseAction(step.onFailureAction),
+          },
+        })
+        steps.push(...getImportOperations(step.onFailureAction))
+      }
+      if (step.onSuccessAction) {
+        steps.push({
+          type: FlowOperationType.ADD_ACTION,
+          request: {
+            parentStep: step.name,
+            stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_TRUE_BRANCH,
+            action: keepBaseAction(step.onSuccessAction),
+          },
+        })
+        steps.push(...getImportOperations(step.onSuccessAction))
+      }
+    }
+    if (step.type === ActionType.LOOP_ON_ITEMS && step.firstLoopAction) {
+      steps.push({
+        type: FlowOperationType.ADD_ACTION,
+        request: {
+          parentStep: step.name,
+          stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_LOOP,
+          action: keepBaseAction(step.firstLoopAction),
+        },
+
+      })
+      steps.push(...getImportOperations(step.firstLoopAction))
+    }
+    step = step.nextAction
+  }
+  return steps
+}
+
+// It's better to use switch case, to enforce that all actions are covered
+// TODO this can be simplified
+function keepBaseAction(action: Action): Action {
+  const commonProps = {
+    name: action.name,
+    displayName: action.displayName,
+    valid: action.valid,
+  }
+  switch (action.type) {
+    case ActionType.BRANCH:
+      // PICK type and settings from action
+      return {
+        type: ActionType.BRANCH,
+        settings: action.settings,
+        ...commonProps,
+      }
+    case ActionType.LOOP_ON_ITEMS:
+      return {
+        type: ActionType.LOOP_ON_ITEMS,
+        settings: action.settings,
+        ...commonProps,
+      }
+    case ActionType.CODE:
+      return {
+        type: action.type,
+        settings: {
+          ...action.settings,
+          artifactPackagedId: undefined,
+          artifactSourceId: undefined,
+        },
+        ...commonProps,
+      }
+    case ActionType.PIECE:
+      return {
+        type: action.type,
+        settings: action.settings,
+        ...commonProps,
+      }
+    case ActionType.MISSING:
+      return {
+        type: action.type,
+        settings: action.settings,
+        ...commonProps,
+      }
+  }
+}
+
 export const flowHelper = {
   isValid: isValid,
   apply(
     flowVersion: FlowVersion,
     operation: FlowOperationRequest
   ): FlowVersion {
-    const clonedVersion: FlowVersion = JSON.parse(JSON.stringify(flowVersion));
+    let clonedVersion: FlowVersion = JSON.parse(JSON.stringify(flowVersion));
     switch (operation.type) {
       case FlowOperationType.MOVE_ACTION:
-        moveAction(clonedVersion, operation.request);
+        clonedVersion = moveAction(clonedVersion, operation.request);
         break;
       case FlowOperationType.LOCK_FLOW:
         clonedVersion.state = FlowVersionState.LOCKED;
@@ -420,8 +540,11 @@ export const flowHelper = {
   isAction,
   getAllSteps,
   getUsedPieces,
+  getImportOperations,
   getAllSubFlowSteps,
   getStepFromSubFlow,
   isChildOf,
   getAllChildSteps,
+  getAllParentSteps
 };
+

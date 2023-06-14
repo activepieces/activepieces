@@ -2,6 +2,7 @@ import { OAuth2PropertyValue, Property, Store, createTrigger } from '@activepiec
 import { TriggerStrategy } from "@activepieces/pieces-framework";
 import { googleSheetsCommon } from '../common/common';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { isNil } from 'lodash';
 
 const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const sampleData = Array.from(alphabet).map(c => `${c} Value`);
@@ -16,16 +17,16 @@ const polling: Polling<{ authentication: OAuth2PropertyValue, spreadsheet_id: st
         value: item,
         rowId: index + 1
       },
-    }));
+    })).filter(f => isNil(lastItemId) || f.data.rowId > (lastItemId as number));
     return items.reverse();
   }
 };
 
 
-export const newRowAdded = createTrigger({
-  name: 'new_row_added',
+export const readNewRows = createTrigger({
+  name: 'new_row',
   displayName: 'New Row',
-  description: 'Triggers when there is a new row added',
+  description: 'Trigger when a new row is added, and it can include existing rows as well.',
   props: {
     authentication: googleSheetsCommon.authentication,
     spreadsheet_id: googleSheetsCommon.spreadsheet_id,
@@ -34,11 +35,6 @@ export const newRowAdded = createTrigger({
       displayName: 'Max Rows to Poll',
       description: 'The maximum number of rows to poll, the rest will be polled on the next run',
       required: false,
-    }),
-    read_historical_rows: Property.Checkbox({
-      displayName: "Read old rows",
-      description: "Read rows from the 0th row",
-      required: false
     })
   },
   type: TriggerStrategy.POLLING,
@@ -47,8 +43,6 @@ export const newRowAdded = createTrigger({
     "rowId": 1
   },
   onEnable: async (context) => {
-    if(context.propsValue.read_historical_rows) return;
-    
     await pollingHelper.onEnable(polling, {
       store: context.store,
       propsValue: context.propsValue,

@@ -26,6 +26,7 @@ The steps to obtain the required credentials:
         
         **Access Token Secret**
 `
+
 export const createTweet = createAction({
     name: "create-tweet",
     displayName: "Create Tweet",
@@ -63,6 +64,11 @@ export const createTweet = createAction({
             description: "The text of the tweet",
             required: true,
         }),
+        image: Property.File({
+            displayName: "Media",
+            description: "The image, video or GIF url or base64 to attach to the tweet",
+            required: false,
+        }),
     },
     async run(context) {
         const { consumerKey, consumerSecret, accessToken, accessTokenSecret } = context.propsValue.authentication;
@@ -73,6 +79,21 @@ export const createTweet = createAction({
             accessSecret: accessTokenSecret,
         });
 
-        return userClient.v2.tweet(context.propsValue.text);
+        const media = context.propsValue.image;
+        if (media) {
+            console.log(`Uploading media to Twitter...`);
+            const uploaded = await userClient.v1.uploadMedia(Buffer.from(media.base64, "base64"), {
+                mimeType: 'image/png',
+                target: 'tweet'
+            });
+            console.log(`Uploaded media to Twitter: ${uploaded}`);
+            return userClient.v2.tweet(context.propsValue.text, {
+                media: {
+                    media_ids: [uploaded]
+                }
+            });
+        } else {
+            return userClient.v2.tweet(context.propsValue.text);
+        }
     },
 });

@@ -2,6 +2,9 @@
 title: 'XML'
 ---
 
+##### Authors: [Willianwg](https://github.com/Willianwg)
+
+
 ## Triggers
 
 *No supported triggers yet, please let us know if you need something on Discord so we can help out* 
@@ -12,9 +15,23 @@ title: 'XML'
 ## Actions
 
 
-    <CardGroup cols={2}>
-      <Card title="Convert JSON to XML">
+      <Card title="Convert JSON to XML " >
         Convert JSON to XML
+
+        <Expandable title="Properties">
+          
+<ResponseField name="JSON" required type="Json">
+
+</ResponseField>
+            
+<ResponseField name="Attribute field"  type="Short_text">
+Field to add your tag's attributes
+</ResponseField>
+            
+<ResponseField name="Header"  type="Checkbox">
+Add XML header
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   

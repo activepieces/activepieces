@@ -72,7 +72,9 @@ export class CustomAuthConnectionDialogComponent {
     this.settingsForm = this.fb.group({
       name: new FormControl(
         this.dialogData.connectionToUpdate?.name ||
-          this.dialogData.pieceName.replace(/[^A-Za-z0-9_\\-]/g, '_'),
+          appConnectionsService.getConnectionNameSuggest(
+            this.dialogData.pieceName
+          ),
         {
           nonNullable: true,
           validators: [

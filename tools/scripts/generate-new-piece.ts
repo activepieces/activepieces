@@ -51,13 +51,10 @@ const generateIndexTsFile = async (pieceName: string) => {
 
   const indexTemplate = `
 import { createPiece } from "@activepieces/pieces-framework";
-import packageJson from "../package.json";
 
 export const ${pieceNameCamelCase} = createPiece({
-  name: "${pieceName}",
   displayName: "${capitalizeFirstLetter(pieceName)}",
   logoUrl: "https://cdn.activepieces.com/pieces/${pieceName}.png",
-  version: packageJson.version,
   authors: [],
   actions: [],
   triggers: [],
@@ -95,7 +92,6 @@ const main = async () => {
   await setupGeneratedLibrary(pieceName)
   console.log(chalk.green('✨  Done!'));
   console.log(chalk.yellow(`The piece has been generated at: packages/pieces/${pieceName}`));
-  console.log(chalk.blue("Don't forget to add the piece to the list of pieces in packages/pieces/apps/src/index.ts"));
 }
 
 main()

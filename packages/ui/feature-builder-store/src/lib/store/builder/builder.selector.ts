@@ -22,6 +22,7 @@ import { BuilderSavingStatusEnum, CanvasState } from '../../model';
 import {
   CORE_PIECES_ACTIONS_NAMES,
   CORE_PIECES_TRIGGERS,
+  CORE_SCHEDULE,
   FlowItemDetails,
   corePieceIconUrl,
 } from '@activepieces/ui/common';
@@ -158,7 +159,9 @@ const selectTriggerSelectedSampleData = createSelector(
 const selectStepTestSampleData = createSelector(selectCurrentStep, (step) => {
   if (
     step &&
-    (step.type === ActionType.PIECE || step.type === ActionType.CODE) &&
+    (step.type === ActionType.PIECE ||
+      step.type === ActionType.CODE ||
+      step.type === TriggerType.PIECE) &&
     step.settings.inputUiInfo
   ) {
     return step.settings.inputUiInfo.currentSelectedData;
@@ -207,7 +210,7 @@ export const selectCurrentFlowVersionId = createSelector(
 export const selectNumberOfInvalidSteps = createSelector(
   selectCurrentFlow,
   (flow) => {
-    const steps = flowHelper.getAllSteps(flow.version);
+    const steps = flowHelper.getAllSteps(flow.version.trigger);
     return steps.reduce((prev, curr) => prev + (curr.valid ? 0 : 1), 0);
   }
 );
@@ -239,7 +242,7 @@ const selectStepResultsAccordion = createSelector(
     if (!run || run.status === ExecutionOutputStatus.RUNNING) {
       return [];
     }
-    const steps = flowHelper.getAllSteps(flow.version);
+    const steps = flowHelper.getAllSteps(flow.version.trigger);
     const results: {
       result: StepOutput;
       stepName: string;
@@ -289,7 +292,7 @@ export const selectCurrentRightSideBarType = createSelector(
 export const selectAllFlowItemsDetails = createSelector(
   selectGlobalBuilderState,
   (state: GlobalBuilderState) => {
-    return state.flowItemsDetailsState;
+    return state?.flowItemsDetailsState;
   }
 );
 export const selectAllFlowItemsDetailsLoadedState = createSelector(
@@ -310,7 +313,8 @@ const selectMissingStepRecommendedFlowItemsDetails = createSelector(
   (core: FlowItemDetails[]) => {
     const recommendations = core.filter(
       (f) =>
-        (f.type === ActionType.PIECE && f.extra?.appName === 'http') ||
+        (f.type === ActionType.PIECE &&
+          f.extra?.appName === '@activepieces/piece-http') ||
         f.type === ActionType.CODE
     );
     return recommendations;
@@ -490,7 +494,7 @@ function findStepLogoUrlForMentions(
 
 const selectIsSchduleTrigger = createSelector(selectCurrentFlow, (flow) => {
   if (flow?.version?.trigger.type === TriggerType.PIECE) {
-    return flow.version.trigger.settings.pieceName === 'schedule';
+    return flow.version.trigger.settings.pieceName === CORE_SCHEDULE;
   }
   return false;
 });

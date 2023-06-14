@@ -86,18 +86,35 @@ export const webhookController: FastifyPluginAsync = async (app) => {
     )
 }
 
-const POLLING_INTERVAL_MS = 500
+const POLLING_INTERVAL_MS = 300
+const MAX_POLLING_INTERVAL_MS = 2000
 const POLLING_TIMEOUT_MS = 1000 * 30
 
 const waitForRunToComplete = async (run: FlowRun) => {
     const startTime = Date.now()
-    while (run.status === ExecutionOutputStatus.RUNNING && Date.now() - startTime < POLLING_TIMEOUT_MS) {
+    let pollingInterval = POLLING_INTERVAL_MS // Initialize with the initial polling interval
+
+    while (run.status === ExecutionOutputStatus.RUNNING) {
+        if (Date.now() - startTime >= POLLING_TIMEOUT_MS) {
+            break
+        }
+
         run = await flowRunService.getOneOrThrow({
             id: run.id,
             projectId: run.projectId,
         })
-        await new Promise((resolve) => setTimeout(resolve, POLLING_INTERVAL_MS))
+
+        if (run.status === ExecutionOutputStatus.RUNNING) {
+            await new Promise((resolve) => setTimeout(resolve, pollingInterval))
+
+            // Increase the polling interval
+            if (pollingInterval < MAX_POLLING_INTERVAL_MS) {
+                pollingInterval *= 2
+                pollingInterval = Math.min(pollingInterval, MAX_POLLING_INTERVAL_MS)
+            }
+        }
     }
+
     return run
 }
 
@@ -125,7 +142,7 @@ const handleExecutionOutputStatus = async (run: FlowRun, reply: FastifyReply) =>
 }
 
 const convertBody = async (request: FastifyRequest) => {
-    if(request.isMultipart()){
+    if (request.isMultipart()) {
         const jsonResult: Record<string, unknown> = {}
         const parts = request.parts()
         for await (const part of parts) {

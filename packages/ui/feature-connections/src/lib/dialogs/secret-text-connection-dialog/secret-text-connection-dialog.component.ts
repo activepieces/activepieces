@@ -55,7 +55,9 @@ export class SecretTextConnectionDialogComponent {
         validators: [Validators.required],
       }),
       name: new FormControl(
-        this.dialogData.pieceName.replace(/[^A-Za-z0-9_\\-]/g, '_'),
+        appConnectionsService.getConnectionNameSuggest(
+          this.dialogData.pieceName
+        ),
         {
           nonNullable: true,
           validators: [

@@ -310,6 +310,33 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "nileshtrivedi",
+      "name": "Nilesh",
+      "avatar_url": "https://avatars.githubusercontent.com/u/19304?v=4",
+      "profile": "https://blog.nileshtrivedi.com",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "VrajGohil",
+      "name": "Vraj Gohil",
+      "avatar_url": "https://avatars.githubusercontent.com/u/40790016?v=4",
+      "profile": "https://certopus.com",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "BastienMe",
+      "name": "BastienMe",
+      "avatar_url": "https://avatars.githubusercontent.com/u/71411115?v=4",
+      "profile": "https://github.com/BastienMe",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
