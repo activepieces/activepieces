@@ -97,17 +97,7 @@ export const newTaskAdded = createTrigger({
 				},
 				"createdAt": "2023-06-13T09:42:37.557Z",
 				"updatedAt": "2023-06-13T10:03:41.073Z",
-				"archived": false,
-				"associations": {
-					"contacts": {
-						"results": [
-							{
-								"id": "51",
-								"type": "task_to_contact"
-							}
-						]
-					}
-				}
+				"archived": false
 			}
 		]
 	},
