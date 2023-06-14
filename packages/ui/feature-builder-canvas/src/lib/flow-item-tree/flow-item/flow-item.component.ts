@@ -56,7 +56,7 @@ export class FlowItemComponent implements OnInit {
     this.flowGraphContainer = this.flowGraphContainerCalculator();
   }
   selected$: Observable<boolean> = of(false);
-  viewMode$: Observable<boolean> = of(false);
+  readOnly$: Observable<boolean> = of(false);
   dragDelta: Point | undefined;
   scale$: Observable<string>;
   isDragging = false;
@@ -90,7 +90,7 @@ export class FlowItemComponent implements OnInit {
         return `scale(${val})`;
       })
     );
-    this.viewMode$ = this.store.select(BuilderSelectors.selectReadOnly);
+    this.readOnly$ = this.store.select(BuilderSelectors.selectReadOnly);
     if (FlowStructureUtil.isTrigger(this._flowItemData)) {
       const translate$ = this.pannerService.panningOffset$.asObservable().pipe(
         startWith({ x: 0, y: 0 }),

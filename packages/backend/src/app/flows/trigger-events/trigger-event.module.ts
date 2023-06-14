@@ -34,6 +34,26 @@ const triggerEventController = async (fastify: FastifyInstance) => {
         },
     )
 
+    fastify.post(
+        '/',
+        {
+            schema: {
+                querystring: TestPollingTriggerRequest,
+            },
+        },
+        async (
+            request: FastifyRequest<{
+                Querystring: TestPollingTriggerRequest
+            }>,
+        ) => {
+            return await triggerEventService.saveEvent({
+                projectId: request.principal.projectId,
+                flowId:request.query.flowId,
+                payload:request.body,
+            })
+        },
+    )
+
     fastify.get(
         '/',
         {
@@ -55,5 +75,7 @@ const triggerEventController = async (fastify: FastifyInstance) => {
             })
         },
     )
+
+    
     
 }

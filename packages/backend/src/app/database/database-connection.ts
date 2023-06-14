@@ -41,6 +41,8 @@ import { FlowRunPauseMetadata1683552928243 } from './migration/1683552928243-flo
 import { ChangeVariableSyntax1683898241599 } from './migration/1683898241599-ChangeVariableSyntax'
 import { PieceMetadataEntity } from '../pieces/piece-metadata-entity'
 import { PieceMetadata1685537054805 } from './migration/1685537054805-piece-metadata'
+import { AddProjectIdToPieceMetadata1686090319016 } from './migration/1686090319016-AddProjectIdToPieceMetadata'
+import { UnifyPieceName1686138629812 } from './migration/1686138629812-unifyPieceName'
 
 const database = system.getOrThrow(SystemProp.POSTGRES_DATABASE)
 const host = system.getOrThrow(SystemProp.POSTGRES_HOST)
@@ -87,6 +89,8 @@ const getMigrations = () => {
         FlowRunPauseMetadata1683552928243,
         ChangeVariableSyntax1683898241599,
         PieceMetadata1685537054805,
+        AddProjectIdToPieceMetadata1686090319016,
+        UnifyPieceName1686138629812,
     ]
 }
 

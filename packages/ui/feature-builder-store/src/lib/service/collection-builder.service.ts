@@ -1,12 +1,15 @@
 import { ComponentPortal } from '@angular/cdk/portal';
 import { Injectable } from '@angular/core';
-import { Subject } from 'rxjs';
+import { ReplaySubject, Subject } from 'rxjs';
+import { FlowId, FlowTemplate } from '@activepieces/shared';
 
 @Injectable({ providedIn: 'root' })
 export class CollectionBuilderService {
   lastSuccessfulSaveDate = '';
   refreshCodeMirror$ = new Subject<void>();
-  componentToShowInsidePortal$ = new Subject<
+  importTemplate$: Subject<{ template: FlowTemplate; flowId: FlowId }> =
+    new Subject();
+  componentToShowInsidePortal$ = new ReplaySubject<
     ComponentPortal<unknown> | undefined
   >();
   get unsavedNote() {

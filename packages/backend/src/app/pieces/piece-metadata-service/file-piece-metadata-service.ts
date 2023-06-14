@@ -6,10 +6,11 @@ import { Piece, PieceMetadata, PieceMetadataSummary } from '@activepieces/pieces
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { captureException, logger } from '../../helper/logger'
 import { GetParams, PieceMetadataService } from './piece-metadata-service'
+import { isNil } from 'lodash'
 
 const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
     const ignoredPackages = ['framework', 'apps', 'dist', 'common']
-    const piecesPath = resolve(cwd(), 'packages', 'pieces')
+    const piecesPath = resolve(cwd(), 'dist', 'packages', 'pieces')
     const piecePackages = await readdir(piecesPath)
     const filteredPiecePackages = piecePackages.filter(d => !ignoredPackages.includes(d))
 
@@ -18,8 +19,14 @@ const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
     for (const piecePackage of filteredPiecePackages) {
         try {
             const module = await import(`../../../../../pieces/${piecePackage}/src/index.ts`)
+            const packageJson = await import(`../../../../../pieces/${piecePackage}/package.json`)
             const piece = Object.values<Piece>(module)[0]
-            piecesMetadata.push(piece.metadata())
+            piecesMetadata.push({
+                directoryName: piecePackage,
+                ...piece.metadata(),
+                name: packageJson.name,
+                version: packageJson.version,
+            })
         }
         catch(ex) {
             captureException(ex)
@@ -52,7 +59,7 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
             const piecesMetadata = await loadPiecesMetadata()
             const pieceMetadata = piecesMetadata.find(p => p.name === name)
 
-            if (pieceMetadata === undefined) {
+            if (isNil(pieceMetadata)) {
                 throw new ActivepiecesError({
                     code: ErrorCode.PIECE_NOT_FOUND,
                     params: {
@@ -66,7 +73,7 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
         },
 
         async create() {
-            throw new Error('not supported')
+            throw new Error('Creating pieces is not supported in development mode')
         },
 
         async stats() {

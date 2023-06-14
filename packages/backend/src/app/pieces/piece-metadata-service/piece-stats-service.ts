@@ -36,7 +36,7 @@ export const pieceStatsService = {
             activeFlows: Set<FlowId>
         }> = {}
         const defaultStats = { activeSteps: 0, allSteps: 0, allProjects: 0, activeFlows: 0, allFlows: 0, activeProjects: 0 }
-        const pieces = await filePieceMetadataService.list({ release: '' })
+        const pieces = await filePieceMetadataService.list({ release: '', projectId: null })
         for (const piece of pieces) {
             uniqueStatsPerPiece[piece.name] = {
                 flows: new Set(),
@@ -56,7 +56,7 @@ export const pieceStatsService = {
                 continue
             }
             const isEnabled = !isNil(await flowInstanceService.get({ projectId: flow.projectId, flowId: flow.id }))
-            const steps = flowHelper.getAllSteps(flow.version)
+            const steps = flowHelper.getAllSteps(flow.version.trigger)
             for (const step of steps) {
                 if (step.type === TriggerType.PIECE || step.type === ActionType.PIECE) {
                     if (!stats[step.settings.pieceName]) {

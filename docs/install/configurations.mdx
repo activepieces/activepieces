@@ -33,6 +33,8 @@ When you execute the deploy.sh script in the Docker installation tutorial, it wi
 | `AP_NOTIFICATION_URL`        | The notification URL is triggered whenever a run fails.                                                     | `false`                 | https://cloud.activepieces.com/flows/WEBHOOK_TRIGGER_FLOW_ID 
 | `AP_TELEMETRY_ENABLED`       | Collect telemetry information                                                                               | `false`                 |
 | `AP_SIGN_UP_ENABLED`         | Enable Signed Up                                                                                            | `false`                 |
+| `AP_TEMPLATES_SOURCE_URL`    | This is the endpoint we query for templates, remove it and templates will be removed from UI                | `https://cloud.activepieces.com/api/v1/flow-templates` | 
+
 
 <Warning>
 The frontend URL is essential for webhooks and app triggers to work. 

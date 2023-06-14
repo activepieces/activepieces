@@ -17,7 +17,7 @@ export class ExecutionState {
 
   constructor(executionState?: ExecutionState) {
     if (executionState) {
-      this._taskCount = executionState.taskCount
+      this._taskCount = executionState._taskCount
       this.steps = executionState.steps
       this.lastStepState = executionState.lastStepState
     }
