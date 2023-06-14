@@ -10,7 +10,7 @@ const polling: Polling<{ authentication: OAuth2PropertyValue }> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	items: async ({ propsValue, lastFetchEpochMS }) => {
 		const currentValues = (await hubSpotClient.tasks.getTasksAfterLastSearch(propsValue.authentication.access_token, lastFetchEpochMS)).results ?? []
-		const items = currentValues.map((item: any) => ({
+		const items = currentValues.map((item: {createdAt: string}) => ({
 			epochMilliSeconds: dayjs(item.createdAt).valueOf(),
 			data: item
 		}));
