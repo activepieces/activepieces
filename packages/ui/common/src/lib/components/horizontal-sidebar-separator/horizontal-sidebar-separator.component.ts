@@ -33,6 +33,7 @@ export class HorizontalSidebarSeparatorComponent implements OnDestroy, OnInit {
     this.elevateResizer$ = this.testStepService.elevateResizer$.pipe(
       tap((shouldAnimate) => {
         if (shouldAnimate && !this.isResizerGrabbed) {
+          this.dragPosition = { x: 0, y: 0 };
           this.topStyle = 'calc(50% + 17px)';
           setTimeout(() => {
             this.animate = false;
