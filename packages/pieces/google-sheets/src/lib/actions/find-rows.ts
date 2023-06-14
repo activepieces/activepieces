@@ -36,18 +36,14 @@ export const findRowsAction = createAction({
             const values = await googleSheetsCommon.getValues(context.propsValue.spreadsheet_id, context.propsValue['authentication']['access_token'], context.propsValue.sheet_id);
             
             const matchingRows = [];
-            for (let i = 0; i < values.length; i++) {
-                if (values[i].length > column) {
-                    const row = values[i][column];
-                    if (row.includes(context.propsValue.search_value)) {
-                        matchingRows.push({
-                            row: i + 1,
-                            values: values[i].map((value, index) => {
-                                return {
-                                    [alphabet[index].toUpperCase()]: value
-                                }
-                            })
-                        });
+            for (const { row, values: innerValues } of values) {
+                for (const value of innerValues) {
+                    for (const key in value) {
+                        if(value[key].includes(context.propsValue.search_value)){
+                            matchingRows.push({
+                                [key]: value[key],
+                            });
+                        }
                     }
                 }
             }

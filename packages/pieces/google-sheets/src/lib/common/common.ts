@@ -156,7 +156,7 @@ async function appendGoogleSheetValues(params: AppendGoogleSheetValuesParams) {
     return httpClient.sendRequest(request);
 }
 
-async function getValues(spreadsheetId: string, accessToken: string, sheetId: number): Promise<[string[]][]> {
+async function getValues(spreadsheetId: string, accessToken: string, sheetId: number): Promise<{ row: number; values: { [x: string]: string[]; }[]; }[]> {
     // Define the API endpoint and headers
     // Send the API request
     const sheetName = await findSheetName(accessToken, spreadsheetId, sheetId);
@@ -169,9 +169,27 @@ async function getValues(spreadsheetId: string, accessToken: string, sheetId: nu
         }
     };
     const response = await httpClient.sendRequest<{ values: [string[]][] }>(request);
-    // Get the rows from the response
-    return response.body.values;
+    if (response.body.values === undefined) return [];
+    
+    const alphabet = 'abcdefghijklmnopqrstuvwxyz';
+    const res = [];
+    for (let i = 0; i < response.body.values.length; i++) {
+        for (let j = 0; j < response.body.values[i].length; j++) {
+            res.push({
+                row: i + 1,
+                values: response.body.values[i].map((value, index) => {
+                    return {
+                        [alphabet[index].toUpperCase()]: value
+                    }
+                })
+            });
+
+        }
+    }
+    
+    return res;
 }
+
 
 async function deleteRow(spreadsheetId: string, sheetId: number, rowIndex: number, accessToken: string) {
     const request: HttpRequest = {
