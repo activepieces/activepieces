@@ -5,7 +5,7 @@ import { createTweet } from "./lib/actions/create-tweet";
 export const twitter = createPiece({
   displayName: "Twitter",
   logoUrl: "https://cdn.activepieces.com/pieces/twitter.png",
-  authors: ["abuaboud"],
+  authors: ["abuaboud", "Abdallah-Alwarawreh"],
   actions: [createTweet],
   triggers: [],
 });
