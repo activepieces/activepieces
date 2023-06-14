@@ -40,9 +40,6 @@ export const findRowsAction = createAction({
                 if (values[i].length > column) {
                     const row = values[i][column];
                     if (row.includes(context.propsValue.search_value)) {
-                        // Output would include the values in that row as a hash, identified by the header, 
-                        // so the returned value would be something like:
-                        // { row: 1, values: { "A": "Hello", "B": "World" } }
                         matchingRows.push({
                             row: i + 1,
                             values: values[i].map((value, index) => {

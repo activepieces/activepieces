@@ -28,8 +28,9 @@ export const insertRowAction = createAction({
         if (!sheetName) {
             throw Error("Sheet not found in spreadsheet");
         }
+        
         if (Array.isArray(values)) {
-            await googleSheetsCommon.appendGoogleSheetValues({
+            const res = await googleSheetsCommon.appendGoogleSheetValues({
                 accessToken: context.propsValue['authentication']['access_token'],
                 majorDimension: Dimension.COLUMNS,
                 range: sheetName,
@@ -39,11 +40,18 @@ export const insertRowAction = createAction({
                     : ValueInputOption.USER_ENTERED,
                 values: values as string[],
             });
+            
+            res.body.updates.updatedRange = res.body.updates.updatedRange.replace(sheetName + "!", "");
+            res.body.updates.updatedRange = res.body.updates.updatedRange.split(":");
+            const UpdatedRows = [];
+            
+            for (let i = 0; i < res.body.updates.updatedRange.length; i++) 
+                UpdatedRows.push({ [res.body.updates.updatedRange[i].charAt(0)]: parseInt(res.body.updates.updatedRange[i].slice(1)) });
+            
+
+            return UpdatedRows;
         } else {
             throw Error("Values passed are not an array")
         }
-        return {
-            success: true,
-        };
     },
 });
