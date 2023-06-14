@@ -5,6 +5,7 @@ import {
   HostListener,
   Input,
   OnDestroy,
+  OnInit,
   Output,
 } from '@angular/core';
 import { map, Observable, tap } from 'rxjs';
@@ -15,7 +16,7 @@ import { TestStepService } from '../../service/test-step.service';
   templateUrl: './horizontal-sidebar-separator.component.html',
   styleUrls: ['./horizontal-sidebar-separator.component.scss'],
 })
-export class HorizontalSidebarSeparatorComponent implements OnDestroy {
+export class HorizontalSidebarSeparatorComponent implements OnDestroy, OnInit {
   animate = false;
   resizerKnobIsBeingDragged = false;
   @Input() resizerArea: HTMLElement;
@@ -24,6 +25,7 @@ export class HorizontalSidebarSeparatorComponent implements OnDestroy {
   @Output() resizerDragStarted = new EventEmitter();
   @Output() resizerDragStopped = new EventEmitter();
   @Output() resetTopResizerSectionHeight = new EventEmitter();
+  initialTopStyle = '';
   isResizerGrabbed = false;
   dragPosition = { x: 0, y: 0 };
   elevateResizer$: Observable<void>;
@@ -31,7 +33,6 @@ export class HorizontalSidebarSeparatorComponent implements OnDestroy {
     this.elevateResizer$ = this.testStepService.elevateResizer$.pipe(
       tap((shouldAnimate) => {
         if (shouldAnimate && !this.isResizerGrabbed) {
-          this.dragPosition = { x: 0, y: 0 };
           this.topStyle = 'calc(50% + 17px)';
           setTimeout(() => {
             this.animate = false;
@@ -40,6 +41,9 @@ export class HorizontalSidebarSeparatorComponent implements OnDestroy {
       }),
       map(() => void 0)
     );
+  }
+  ngOnInit(): void {
+    this.initialTopStyle = this.topStyle;
   }
 
   resizerIsBeingDragged(dragMoveEvent: CdkDragMove) {
@@ -50,6 +54,7 @@ export class HorizontalSidebarSeparatorComponent implements OnDestroy {
   }
   @HostListener('window:resize', ['$event'])
   onResize() {
+    this.topStyle = this.initialTopStyle;
     this.dragPosition = { x: 0, y: 0 };
   }
 }
