@@ -10,6 +10,7 @@ import {
     FlowViewMode,
     ProjectId,
     RunEnvironment,
+    TriggerType,
 } from '@activepieces/shared'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
@@ -33,23 +34,34 @@ export const webhookService = {
             flowId: flow.id,
             projectId: flow.projectId,
         })
-        triggerEventService.saveEvent({
-            flowId: flow.id,
-            payload,
-            projectId,
-        })
-
-        if (isNil(flowInstance) || flowInstance.status !== FlowInstanceStatus.ENABLED) {
+        if (isNil(flowInstance)) {
+            logger.info(`[WebhookService#callback] flowInstance not found, flowId=${flow.id}`)
+            // If the flow instance is not found and there is flow, then the user is sending sample data for webhook trigger.
+            triggerEventService.saveEvent({
+                flowId: flow.id,
+                payload,
+                projectId,
+            })
+            return []
+        }
+        if (flowInstance.status !== FlowInstanceStatus.ENABLED) {
             logger.info(`[WebhookService#callback] flowInstance not found or not enabled ignoring the webhook, flowId=${flow.id}`)
             return []
         }
         const flowVersion = await flowVersionService.getOneOrThrow(flowInstance.flowVersionId)
-
         const payloads: unknown[] = await triggerUtils.executeTrigger({
             projectId,
             flowVersion,
             payload,
             simulate: false,
+        })
+
+        payloads.forEach((payload) => {
+            triggerEventService.saveEvent({
+                flowId: flow.id,
+                payload,
+                projectId,
+            })
         })
 
         const createFlowRuns = payloads.map((payload) =>
