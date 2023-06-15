@@ -1,6 +1,6 @@
 import { createAction } from "@activepieces/pieces-framework"
+import { FacebookPageDropdown, facebookPagesCommon } from "../common/common";
 
-import { facebookPagesCommon, FacebookPageDropdown } from "../common"
 
 export const createVideoPost = createAction({
     name: 'create_video_post',
@@ -16,7 +16,7 @@ export const createVideoPost = createAction({
     sampleData: {},
 
     async run(context) {
-        const page = context.propsValue.page as FacebookPageDropdown
+        const page: FacebookPageDropdown = context.propsValue.page!
         
         const result = await facebookPagesCommon.createVideoPost(page, context.propsValue.title, context.propsValue.description, context.propsValue.video)
 

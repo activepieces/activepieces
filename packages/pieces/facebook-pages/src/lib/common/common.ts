@@ -1,19 +1,27 @@
+import { HttpMethod, httpClient } from "@activepieces/pieces-common";
 import { OAuth2PropertyValue, Property } from "@activepieces/pieces-framework";
-import { HttpRequest, HttpMethod, httpClient } from "@activepieces/pieces-common";
+
+const markdown = `
+To Obtain the following credentials:
+1. Visit https://developers.facebook.com/
+2. Create an application, Select Other for Usecase.
+3. Select Business as App Type.
+4. Copy App Id and App Secret from Basic Settings.
+`
 
 export const facebookPagesCommon = {
     baseUrl: 'https://graph.facebook.com/v17.0',
 
     authentication: Property.OAuth2({
         displayName: 'Authentication',
-        description: '',
+        description: markdown,
         authUrl: "https://graph.facebook.com/oauth/authorize",
         tokenUrl: "https://graph.facebook.com/oauth/access_token",
         required: true,
         scope: ['pages_show_list', 'pages_manage_posts', 'pages_read_engagement'],
     }),
 
-    page: Property.Dropdown({
+    page: Property.Dropdown<FacebookPageDropdown>({
         displayName: 'Page',
         required: true,
         refreshers: ['authentication'],
@@ -88,18 +96,16 @@ export const facebookPagesCommon = {
     }),
 
     getPages: async (accessToken: string) => {
-        const request: HttpRequest = {
+        const response = await httpClient.sendRequest( {
             method: HttpMethod.GET,
             url: `${facebookPagesCommon.baseUrl}/me/accounts?access_token=${accessToken}`,
-        }
-
-        const response = await httpClient.sendRequest(request);
+        });
 
         return response.body.data;
     },
 
     createPost: async (page: FacebookPageDropdown, message: string, link: string | undefined) => {
-        const request: HttpRequest = {
+        const response = await httpClient.sendRequest({
             method: HttpMethod.POST,
             url: `${facebookPagesCommon.baseUrl}/${page.id}/feed`,
             body: {
@@ -107,15 +113,12 @@ export const facebookPagesCommon = {
                 message: message,
                 link: link
             }
-        }
-
-        const response = await httpClient.sendRequest(request);
-
+        });
         return response.body;
     },
-
     createPhotoPost: async (page: FacebookPageDropdown, caption: string | undefined, photo: string) => {
-        const request: HttpRequest = {
+
+        const response = await httpClient.sendRequest({
             method: HttpMethod.POST,
             url: `${facebookPagesCommon.baseUrl}/${page.id}/photos`,
             body: {
@@ -123,15 +126,13 @@ export const facebookPagesCommon = {
                 url: photo,
                 caption: caption
             }
-        }
-
-        const response = await httpClient.sendRequest(request);
+        });
 
         return response.body;
     },
 
     createVideoPost: async (page: FacebookPageDropdown, title: string | undefined, description: string | undefined, video: string) => {
-        const request: HttpRequest = {
+        const response = await httpClient.sendRequest({
             method: HttpMethod.POST,
             url: `${facebookPagesCommon.baseUrl}/${page.id}/videos`,
             body: {
@@ -140,9 +141,7 @@ export const facebookPagesCommon = {
                 description: description,
                 file_url: video
             }
-        }
-
-        const response = await httpClient.sendRequest(request);
+        });
 
         return response.body;
     },
