@@ -12,17 +12,19 @@ import {
 import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
+  GenericSnackbarTemplateComponent,
   PieceMetadataService,
 } from '@activepieces/ui/common';
 import { PieceMetadataSummary } from '@activepieces/pieces-framework';
 import { CommunityPiecesDataSource } from './community-pieces-table.datasource';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   templateUrl: './community-pieces-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CommunityPiecesTableComponent {
-  addPackageDialogClosed$: Observable<void>;
+  addPackageDialogClosed$: Observable<Record<string, string> | null>;
   displayedColumns = ['app', 'name', 'version', 'action'];
   deleteDialogClosed$: Observable<void>;
   isLoading$: BehaviorSubject<boolean> = new BehaviorSubject(true);
@@ -30,7 +32,8 @@ export class CommunityPiecesTableComponent {
   dataSource!: CommunityPiecesDataSource;
   constructor(
     private dialogService: MatDialog,
-    private pieceMetadataService: PieceMetadataService
+    private pieceMetadataService: PieceMetadataService,
+    private snackBar: MatSnackBar
   ) {
     this.dataSource = new CommunityPiecesDataSource(
       this.pieceMetadataService,
@@ -43,9 +46,11 @@ export class CommunityPiecesTableComponent {
       .open(InstallCommunityPieceModalComponent)
       .afterClosed()
       .pipe(
-        tap(() => {
-          this.pieceMetadataService.clearCache();
-          this.refreshTable$.next(true);
+        tap((res) => {
+          if (res) {
+            this.pieceMetadataService.clearCache();
+            this.refreshTable$.next(true);
+          }
         })
       );
   }
@@ -60,11 +65,16 @@ export class CommunityPiecesTableComponent {
           })
         ),
         entityName: metadata.name,
-        note: `This will permanently delete the community piece, all steps using it will fail.`,
+        note: `This will permanently delete this piece, all steps using it will fail.`,
       } as DeleteEntityDialogData,
     });
     this.deleteDialogClosed$ = dialogRef.afterClosed().pipe(
-      map(() => {
+      map((res) => {
+        if (res) {
+          this.snackBar.openFromComponent(GenericSnackbarTemplateComponent, {
+            data: `<b>${metadata.name}</b> deleted`,
+          });
+        }
         return void 0;
       })
     );

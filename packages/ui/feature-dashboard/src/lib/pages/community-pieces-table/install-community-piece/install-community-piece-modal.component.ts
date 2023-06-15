@@ -7,8 +7,12 @@ import {
 } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
 import { Observable, of, switchMap, tap, map, catchError } from 'rxjs';
-import { PieceMetadataService } from '@activepieces/ui/common';
+import {
+  GenericSnackbarTemplateComponent,
+  PieceMetadataService,
+} from '@activepieces/ui/common';
 import { CodeService } from '@activepieces/ui/feature-builder-store';
+import { MatSnackBar } from '@angular/material/snack-bar';
 @Component({
   selector: 'app-install-community-piece-modal',
   templateUrl: './install-community-piece-modal.component.html',
@@ -35,7 +39,8 @@ export class InstallCommunityPieceModalComponent implements OnInit {
     private formBuilder: FormBuilder,
     private codeService: CodeService,
     private pieceMetadataService: PieceMetadataService,
-    private dialogRef: MatDialogRef<InstallCommunityPieceModalComponent>
+    private dialogRef: MatDialogRef<InstallCommunityPieceModalComponent>,
+    private snackBar: MatSnackBar
   ) {
     this.npmForm = this.formBuilder.group({
       packageName: new FormControl('', {
@@ -78,6 +83,12 @@ export class InstallCommunityPieceModalComponent implements OnInit {
                     throw err;
                   }),
                   tap(() => {
+                    this.snackBar.openFromComponent(
+                      GenericSnackbarTemplateComponent,
+                      {
+                        data: `<b>${Object.keys(pkg)[0]}</b> added`,
+                      }
+                    );
                     this.dialogRef.close(pkg);
                   }),
                   map(() => {
