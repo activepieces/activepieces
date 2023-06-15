@@ -24,8 +24,8 @@ export const DashboardLayoutRouting: Routes = [
         component: RunsTableComponent,
       },
       {
-        title: 'Community Pieces - Activepieces',
-        path: 'community-pieces',
+        title: 'Settings - Activepieces',
+        path: 'settings',
         pathMatch: 'full',
         component: CommunityPiecesTableComponent,
       },

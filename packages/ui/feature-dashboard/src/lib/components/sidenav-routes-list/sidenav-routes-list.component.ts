@@ -42,6 +42,12 @@ export class SidenavRoutesListComponent {
       caption: 'Connections',
       route: 'connections',
     },
+    {
+      icon: 'assets/img/custom/settings.svg',
+      borderColorInTailwind: '!ap-border-description',
+      caption: 'Settings',
+      route: 'settings',
+    },
   ];
 
   openDocs() {
