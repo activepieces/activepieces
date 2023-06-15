@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
-import { forkJoin, map, of, switchMap } from 'rxjs';
+import { forkJoin, map, of, switchMap, take } from 'rxjs';
 import { ActionType, TriggerType } from '@activepieces/shared';
 import { FlowItemDetailsActions } from './flow-items-details.action';
 import {
@@ -17,14 +17,16 @@ export class FlowItemsDetailsEffects {
     return this.actions$.pipe(
       ofType(FlowItemDetailsActions.loadFlowItemsDetails),
       switchMap(() => {
-        const components$ = this.flowItemsDetailsService.getPiecesManifest();
+        const pieces$ = this.flowItemsDetailsService
+          .getPiecesManifest()
+          .pipe(take(1));
         const coreTriggersFlowItemsDetails$ = of(
           this.flowItemsDetailsService.triggerItemsDetails
         );
-        const customPiecesTriggersFlowItemDetails$ = components$.pipe(
+        const customPiecesTriggersFlowItemDetails$ = pieces$.pipe(
           map(this.createFlowItemDetailsForComponents(true))
         );
-        const customPiecesActions$ = components$.pipe(
+        const customPiecesActions$ = pieces$.pipe(
           map(this.createFlowItemDetailsForComponents(false))
         );
         const coreFlowItemsDetails$ = of(
