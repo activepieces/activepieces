@@ -13,11 +13,8 @@ const polling: Polling<{ authentication: OAuth2PropertyValue, spreadsheet_id: st
     const currentValues = (await googleSheetsCommon.getValues(propsValue.spreadsheet_id, propsValue.authentication.access_token, propsValue.sheet_id)) ?? []
     const items = currentValues.map((item, index) => ({
       id: index + 1,
-      data: {
-        value: item,
-        rowId: index + 1
-      },
-    })).filter(f => isNil(lastItemId) || f.data.rowId > (lastItemId as number));
+      data: item,
+    })).filter(f => isNil(lastItemId) || f.data.row > (lastItemId as number));
     return items.reverse();
   }
 };
