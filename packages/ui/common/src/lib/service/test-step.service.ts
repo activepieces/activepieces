@@ -23,6 +23,12 @@ export class TestStepService {
       }
     );
   }
+  savePieceWebhookTriggerMockdata(flowId: string, mockData: unknown) {
+    return this.http.post<TriggerEvent>(
+      environment.apiUrl + '/trigger-events?flowId=' + flowId,
+      mockData
+    );
+  }
   getPollingResults(flowId: string) {
     return this.http.get<SeekPage<TriggerEvent>>(
       environment.apiUrl + '/trigger-events/poll',

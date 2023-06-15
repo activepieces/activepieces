@@ -1,6 +1,5 @@
-import assert from 'node:assert'
 import { getAvailablePieceNames } from '../utils/get-available-piece-names'
-import { readPackageJson, PackageJson } from '../utils/files'
+import { readPackageJson } from '../utils/files'
 import { validateMetadata } from './validate-metadata'
 import { PieceMetadata } from '../../../packages/pieces/framework/src'
 
@@ -10,21 +9,11 @@ type Piece = {
     version: string
     minimumSupportedRelease?: string
     maximumSupportedRelease?: string
-    metadata(): PieceMetadata
+    metadata(): Omit<PieceMetadata, "name" | "version">
 }
 
-const extractPieceNameFromPackageJson = (packageJson: PackageJson): string => {
-    const { name } = packageJson
-    const pieceNameRegex = /^@activepieces\/piece-(?<pieceName>.+)$/
-    const matchResult = name.match(pieceNameRegex)
-    const pieceName = matchResult?.groups?.pieceName
 
-    assert(pieceName, `[generateMetadata] package name "${name}" is not on the form "@activepieces/piece-xyz`)
-
-    return pieceName;
-}
-
-const byDisplayNameIgnoreCase = (a: Piece, b: Piece) => {
+const byDisplayNameIgnoreCase = (a: PieceMetadata, b: PieceMetadata) => {
     const aName = a.displayName.toUpperCase()
     const bName = b.displayName.toUpperCase()
     return aName.localeCompare(bName, 'en')
@@ -33,7 +22,7 @@ const byDisplayNameIgnoreCase = (a: Piece, b: Piece) => {
 export const generateMetadata = async (): Promise<PieceMetadata[]> => {
     console.log('generateMetadata')
 
-    const pieces: Piece[] = [];
+    const pieces: PieceMetadata[] = [];
 
     const piecePackageNames = await getAvailablePieceNames();
 
@@ -41,21 +30,25 @@ export const generateMetadata = async (): Promise<PieceMetadata[]> => {
         const packagePath = `packages/pieces/${packageName}`
 
         const packageJson = await readPackageJson(packagePath)
-        const pieceName = extractPieceNameFromPackageJson(packageJson)
 
         const module = await import(`${packagePath}/src/index.ts`)
         const piece = Object.values<Piece>(module)[0]
 
-        piece.name = pieceName
+        piece.name = packageJson.name
         piece.version = packageJson.version
         piece.minimumSupportedRelease = piece.minimumSupportedRelease ?? '0.0.0'
         piece.maximumSupportedRelease = piece.maximumSupportedRelease ?? '99999.99999.9999'
 
-        validateMetadata(piece.metadata())
-        pieces.push(piece)
+        const metadata = {
+            ...piece.metadata(),
+            name: piece.name,
+            version: piece.version,
+        }
+        validateMetadata(metadata)
+        pieces.push(metadata)
     }
 
     pieces.sort(byDisplayNameIgnoreCase)
 
-    return pieces.map(p => p.metadata())
+    return pieces;
 }

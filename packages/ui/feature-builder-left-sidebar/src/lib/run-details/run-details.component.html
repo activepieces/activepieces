@@ -25,7 +25,7 @@
 
         <div class="bottom-resizer-section" #selectedStepResultContainer>
           <ng-container *ngIf="
-                runDetailsService.currentStepResult$ | async as currentStepResult
+                currentStepResult$ | async as currentStepResult
               ">
             <div class="px-3">
               <app-selected-step-result *ngIf="currentStepResult.result" [selectedStepResult]="currentStepResult.result"
