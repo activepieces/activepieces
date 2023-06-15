@@ -2,11 +2,21 @@ import { Injectable } from '@angular/core';
 import {
   ActionType,
   ApEdition,
+  InstallPieceRequest,
   PieceOptionRequest,
   TriggerType,
 } from '@activepieces/shared';
 import { HttpClient } from '@angular/common/http';
-import { Observable, shareReplay, map, forkJoin, switchMap } from 'rxjs';
+import {
+  Observable,
+  shareReplay,
+  map,
+  forkJoin,
+  switchMap,
+  Subject,
+  combineLatest,
+  startWith,
+} from 'rxjs';
 import { environment } from '../environments/environment';
 import { FlowItemDetails } from '../models/flow-item-details';
 import { FlagService } from './flag.service';
@@ -18,6 +28,7 @@ import {
   PieceMetadataSummary,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
+import { isNil } from 'lodash';
 
 type TriggersMetadata = Record<string, TriggerBase>;
 
@@ -39,11 +50,14 @@ export const CORE_PIECES_TRIGGERS = [CORE_SCHEDULE];
 @Injectable({
   providedIn: 'root',
 })
-export class ActionMetaService {
+export class PieceMetadataService {
   private release$ = this.flagsService.getRelease().pipe(shareReplay(1));
-
-  private piecesManifest$ = this.release$.pipe(
-    switchMap((release) => {
+  private clearCache$ = new Subject<void>();
+  private piecesManifest$ = combineLatest([
+    this.release$,
+    this.clearCache$.asObservable().pipe(startWith(void 0)),
+  ]).pipe(
+    switchMap(([release]) => {
       return this.http.get<PieceMetadataSummary[]>(
         `${environment.apiUrl}/pieces?release=${release}`
       );
@@ -121,6 +135,27 @@ export class ActionMetaService {
       `${environment.apiUrl}/pieces/${encodeURIComponent(
         pieceName
       )}?version=${pieceVersion}`
+    );
+  }
+
+  installCommunityPiece(req: InstallPieceRequest) {
+    return this.http.post<PieceMetadataSummary>(
+      `${environment.apiUrl}/pieces`,
+      req
+    );
+  }
+
+  delete(id: string) {
+    return this.http.delete(`${environment.apiUrl}/pieces/${id}`);
+  }
+
+  clearCache() {
+    this.clearCache$.next();
+  }
+
+  getCommunityPieces(): Observable<PieceMetadataSummary[]> {
+    return this.piecesManifest$.pipe(
+      map((pieces) => pieces.filter((p) => !isNil(p.projectId)))
     );
   }
 

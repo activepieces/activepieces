@@ -72,6 +72,9 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
             return pieceMetadata
         },
 
+        async delete(){
+            throw new Error('Deleting pieces is not supported in development mode')
+        },
         async create() {
             throw new Error('Creating pieces is not supported in development mode')
         },
