@@ -1,4 +1,4 @@
-import { HttpMethod, httpClient } from "@activepieces/pieces-common";
+import { HttpMethod, httpClient, getAccessTokenOrThrow } from "@activepieces/pieces-common";
 import { OAuth2PropertyValue, Property } from "@activepieces/pieces-framework";
 
 const markdown = `
@@ -35,8 +35,8 @@ export const facebookPagesCommon = {
             }
 
             try {
-                const authProp: OAuth2PropertyValue = props['authentication'] as OAuth2PropertyValue;
-                const pages: any[] = (await facebookPagesCommon.getPages(authProp.access_token)).map((page: FacebookPage) => {
+                const accessToken: string = getAccessTokenOrThrow(props['authentication'] as OAuth2PropertyValue)
+                const pages: any[] = (await facebookPagesCommon.getPages(accessToken)).map((page: FacebookPage) => {
                     return {
                         label: page.name,
                         value: {
