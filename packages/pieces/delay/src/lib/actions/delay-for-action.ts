@@ -29,7 +29,6 @@ export const delayForAction = createAction({
 			ctx.run.pause({
 				pauseMetadata: {
 					type: PauseType.DELAY,
-					resumeDateTime: futureTime.toUTCString()
 				}
 			});
 			return {}; // irrelevant as the flow is being paused, not completed

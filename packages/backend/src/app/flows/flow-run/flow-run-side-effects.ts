@@ -60,20 +60,24 @@ export const flowRunSideEffects = {
             })
         }
 
-        if (pauseMetadata.type === PauseType.DELAY) {
-            await flowQueue.add({
-                id: flowRun.id,
-                type: JobType.DELAYED,
-                data: {
-                    schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
-                    runId: flowRun.id,
-                    projectId: flowRun.projectId,
-                    environment: flowRun.environment,
-                    executionType: ExecutionType.RESUME,
-                    flowVersionId: flowRun.flowVersionId,
-                },
-                delay: calculateDelayForResumeJob(pauseMetadata.resumeDateTime),
-            })
+        switch (pauseMetadata.type) {
+            case PauseType.DELAY:
+                await flowQueue.add({
+                    id: flowRun.id,
+                    type: JobType.DELAYED,
+                    data: {
+                        schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
+                        runId: flowRun.id,
+                        projectId: flowRun.projectId,
+                        environment: flowRun.environment,
+                        executionType: ExecutionType.RESUME,
+                        flowVersionId: flowRun.flowVersionId,
+                    },
+                    delay: calculateDelayForResumeJob(pauseMetadata.resumeDateTime),
+                })
+                break
+            case PauseType.WEBHOOK:
+                break
         }
     },
 }

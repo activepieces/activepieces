@@ -112,7 +112,7 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
           type: ActionType.PIECE,
           name: actionName,
         }
-      }
+      } as any;
     }
   }
 
