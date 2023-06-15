@@ -14,32 +14,31 @@ export const webflowNewSubmission = createTrigger({
         formName: Property.ShortText({
             displayName: 'Form Name',
             required: false,
-            description: "your form name"
+            description: "Copy from the form settings, or from one of the respones"
         }),
     },
     type: TriggerStrategy.WEBHOOK,
+    // TODO remove and force testing as the data can be custom.
     sampleData: {
-      "name": "Sample Form",
-      "site": "62749158efef318abc8d5a0f",
-      "data": { //these fields are custom fields and can be changed, user can add more, delete, or change field name.
-          "name": "Some One",
-          "email": "some.one@home.com",
-          "subject": "message subject"
-      },
-      "d": "2022-09-14T12:35:16.117Z",
-      "_id": "6321ca84df3949bfc6752327"
+        "name": "Sample Form",
+        "site": "62749158efef318abc8d5a0f",
+        "data": { 
+            "field_one": "mock valued"
+        },
+        "d": "2022-09-14T12:35:16.117Z",
+        "_id": "6321ca84df3949bfc6752327"
     },
     async onEnable(context) {
-        const formSubmissionTag ="form_submission";
-        
-       const res = await webflowCommon.subscribeWebhook(
+        const formSubmissionTag = "form_submission";
+
+        const res = await webflowCommon.subscribeWebhook(
             context.propsValue['site_id']!,
             formSubmissionTag,
             context.webhookUrl,
             getAccessTokenOrThrow(context.propsValue['authentication'])
         );
         await context.store?.put<WebhookInformation>(triggerNameInStore, {
-          webhookId: res.body._id,
+            webhookId: res.body._id,
         });
     },
     async onDisable(context) {
@@ -56,7 +55,7 @@ export const webflowNewSubmission = createTrigger({
         const body = context.payload.body;
         const { formName } = context.propsValue;
         //if formName provided, trigger only required formName if it's matched; else trigger all forms in selected webflow site.
-        if (formName) { 
+        if (formName) {
             if (body.name == formName) {
                 return [body];
             } else {
@@ -69,5 +68,5 @@ export const webflowNewSubmission = createTrigger({
 });
 
 interface WebhookInformation {
-  webhookId: string;
+    webhookId: string;
 }
