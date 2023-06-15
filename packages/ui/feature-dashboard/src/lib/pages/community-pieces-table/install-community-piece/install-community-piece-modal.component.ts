@@ -16,15 +16,15 @@ import { CodeService } from '@activepieces/ui/feature-builder-store';
 })
 export class InstallCommunityPieceModalComponent implements OnInit {
   risksMarkdown = `
-  **Warning: Installing a community piece is a risk.**
+  **Warning: Installing a piece is a risk.**
 
-  - This community piece is not reviewed or maintained by Activepieces.
+  - This piece is not reviewed or maintained by Activepieces.
   - It may not be compatible with the current version of Activepieces.
   - It has access to all the data provided in the flow.
   
   Please exercise caution and ensure that you trust the author of the piece before installing it.
   <br>
-  To install a community, you must provide the name of the npm package that contains the piece.
+  To install a piece, you must provide the name of the npm package that contains the piece.
   `;
 
   npmForm: FormGroup<{ packageName: FormControl<string> }>;
