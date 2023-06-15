@@ -18,7 +18,6 @@ export const uploadReel = createAction({
         const page: FacebookPageDropdown = context.propsValue.page!
         
         const result = await instagramCommon.createVideoPost(page, context.propsValue.caption, context.propsValue.video)
-
         return result;
     }
 });

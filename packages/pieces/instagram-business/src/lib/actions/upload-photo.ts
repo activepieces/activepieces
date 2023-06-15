@@ -16,9 +16,8 @@ export const uploadPhoto = createAction({
 
     async run(context) {
         const page: FacebookPageDropdown = context.propsValue.page!
-        
+    
         const result = await instagramCommon.createPhotoPost(page, context.propsValue.caption, context.propsValue.photo)
-
         return result;
     }
 });
