@@ -1,7 +1,21 @@
+export enum UserType {
+    USER,
+    ADMIN,
+    BLOCKED,
+    AWAITING_ACCESS
+}
+
 export interface User {
-    id: string,
     name: string,
+    avatar?: string
+    displayName: string
+}
+
+export interface DetailedUser extends User {
+    id: string,
+    color: string,
     profile_picture?: string,
-    color?: string,
-    logged_id?: boolean
+    logged_in: true,
+    auth_type: string,
+    type: UserType
 }

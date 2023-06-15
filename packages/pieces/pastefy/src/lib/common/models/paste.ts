@@ -1,3 +1,5 @@
+import { ActionResponse } from "./common"
+
 export enum PasteType {
     PASTE = 'PASTE',
     MULTI_PASTE = 'MULTI_PASTE'
@@ -10,44 +12,52 @@ export enum PasteVisibility {
 }
 
 export interface Paste {
-    id: string,
-    type: PasteType,
-    title: string,
-    content: string,
-    encrypted: boolean,
     exists: boolean,
-    raw_url: string,
-    created_at: string,
-    expire_at?: string,
-    user_id?: string
-}
-
-export interface PasteCreateRequest {
-    title: string,
+    id: string,
     content: string,
-    type?: PasteType,
-    visibility?: PasteVisibility,
-    encrypted?: boolean,
+    title: string,
+    encrypted: boolean,
+    folder: string,
+    user_id?: string,
+    visibility: PasteVisibility,
+    forked_from?: string,
+    raw_url: string,
+    type: PasteType,
+    created_at: string,
     expire_at?: string
 }
 
-export interface PasteCreateResponse {
-    success: boolean,
+export interface PasteCreateRequest {
+    title?: string,
+    content: string,
+    encrypted?: boolean,
+    folder?: string,
+    expire_at?: string,
+    forked_from?: string,
+    visibility?: PasteVisibility,
+    type?: PasteType
+}
+
+export interface PasteCreateResponse extends ActionResponse {
     paste: Paste
 }
 
 export interface PasteEditRequest {
     title?: string,
     content?: string,
+    encrypted?: boolean,
+    folder?: string,
     type?: PasteType,
     visibility?: PasteVisibility,
-    encrypted?: boolean,
     expire_at?: string
 }
 
-export interface PasteEditResponse {
-    success: boolean,
+export interface PasteEditResponse extends ActionResponse {
     paste: Paste
+}
+
+export interface PasteShareRequest {
+    friend: string
 }
 
 export interface PasteListRequest {
