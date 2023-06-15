@@ -4,15 +4,20 @@
   <form class="ap-flex ap-flex-col ap-gap-1 ap-mt-4" [formGroup]="npmForm" (submit)="lookForNpmPackage()">
     <mat-form-field class="ap-w-full" appearance="outline">
       <mat-label>Package Name</mat-label>
-      <input cdkFocusInitial formControlName="packageName" matInput type="text" placeholder="loadash" />
+      <input cdkFocusInitial formControlName="packageName" matInput type="text"
+        placeholder="@activepieces/piece-google-sheets" />
       <mat-error *ngIf="npmForm.controls.packageName.invalid"><ng-container
-          *ngIf="npmForm.controls.packageName.hasError('required');else invalidName">
+          *ngIf="npmForm.controls.packageName.hasError('required');else validationErrors">
           Package name is required
         </ng-container>
-        <ng-template #invalidName>
-          <p @fadeInUp class="invalid-input">
-            Failed to install piece, please check the package name.
-          </p>
+        <ng-template #validationErrors>
+          <ng-container *ngIf="npmForm.controls.packageName.hasError('invalid')">
+            Couldn't find package, please check the package name.
+          </ng-container>
+          <ng-container *ngIf="npmForm.controls.packageName.hasError('failedInstall')">
+            Couldn't install piece, please make sure your package is a piece.
+          </ng-container>
+
         </ng-template>
       </mat-error>
     </mat-form-field>

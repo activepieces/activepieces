@@ -6,9 +6,29 @@ import { SystemProp } from '../helper/system/system-prop'
 import { pieceMetadataService } from './piece-metadata-service'
 import { PieceMetadata, PieceMetadataSummary } from '@activepieces/pieces-framework'
 import { FastifyRequest } from 'fastify'
+import { logger } from '../helper/logger'
 
 const statsEnabled = system.get(SystemProp.STATS_ENABLED) ?? false
 
+const getPieceMetaData=async(pieceName:string, pieceVersion:string)=>{
+    try {
+        const { result } = await engineHelper.extractPieceMetadata({
+            pieceName: pieceName,
+            pieceVersion: pieceVersion,
+        })
+        return result
+    }
+    catch(err) {
+        logger.error(JSON.stringify(err))
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: 'Couldn\'t import package as piece',
+            },
+        })
+    }
+  
+}
 export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done) => {
 
     app.post(
@@ -23,10 +43,8 @@ export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done)
                 Body: InstallPieceRequest
             }>,
         ) => {
-            const { result } = await engineHelper.extractPieceMetadata({
-                pieceName: request.body.pieceName,
-                pieceVersion: request.body.pieceVersion,
-            })
+
+            const  result  = await getPieceMetaData(request.body.pieceName, request.body.pieceVersion)
             return pieceMetadataService.create({
                 projectId: request.principal.projectId,
                 pieceMetadata: {

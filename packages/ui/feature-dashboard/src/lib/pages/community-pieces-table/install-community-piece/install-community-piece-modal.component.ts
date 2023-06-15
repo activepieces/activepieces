@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import {
   FormBuilder,
   FormControl,
@@ -6,13 +6,12 @@ import {
   Validators,
 } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
-import { Observable, of, switchMap, tap, map } from 'rxjs';
-import { PieceMetadataService, fadeInUp400ms } from '@activepieces/ui/common';
+import { Observable, of, switchMap, tap, map, catchError } from 'rxjs';
+import { PieceMetadataService } from '@activepieces/ui/common';
 import { CodeService } from '@activepieces/ui/feature-builder-store';
 @Component({
   selector: 'app-install-community-piece-modal',
   templateUrl: './install-community-piece-modal.component.html',
-  animations: [fadeInUp400ms],
 })
 export class InstallCommunityPieceModalComponent implements OnInit {
   risksMarkdown = `
@@ -28,8 +27,6 @@ export class InstallCommunityPieceModalComponent implements OnInit {
   `;
 
   npmForm: FormGroup<{ packageName: FormControl<string> }>;
-  @Output()
-  packageFound$: EventEmitter<void> = new EventEmitter();
   loading = false;
   npmPackage$: Observable<PieceMetadataService | null>;
   submitted = false;
@@ -50,8 +47,8 @@ export class InstallCommunityPieceModalComponent implements OnInit {
   ngOnInit(): void {
     const packaageNameControl = this.npmForm.controls.packageName;
     this.packageNameChanged$ = packaageNameControl.valueChanges.pipe(
-      tap(() => {
-        packaageNameControl.setErrors(null);
+      tap((val) => {
+        if (val) packaageNameControl.setErrors(null);
       })
     );
   }
@@ -73,11 +70,17 @@ export class InstallCommunityPieceModalComponent implements OnInit {
                   pieceVersion: Object.values(pkg)[0],
                 })
                 .pipe(
+                  catchError((err) => {
+                    this.loading = false;
+                    this.npmForm.controls.packageName.setErrors({
+                      failedInstall: true,
+                    });
+                    throw err;
+                  }),
                   tap(() => {
                     this.dialogRef.close(pkg);
                   }),
                   map(() => {
-                    this.packageFound$.emit();
                     return null;
                   })
                 );
