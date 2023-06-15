@@ -28,8 +28,9 @@ export const insertRowAction = createAction({
         if (!sheetName) {
             throw Error("Sheet not found in spreadsheet");
         }
+        
         if (Array.isArray(values)) {
-            await googleSheetsCommon.appendGoogleSheetValues({
+            const res = await googleSheetsCommon.appendGoogleSheetValues({
                 accessToken: context.propsValue['authentication']['access_token'],
                 majorDimension: Dimension.COLUMNS,
                 range: sheetName,
@@ -39,11 +40,10 @@ export const insertRowAction = createAction({
                     : ValueInputOption.USER_ENTERED,
                 values: values as string[],
             });
+
+            return res.body;
         } else {
             throw Error("Values passed are not an array")
         }
-        return {
-            success: true,
-        };
     },
 });

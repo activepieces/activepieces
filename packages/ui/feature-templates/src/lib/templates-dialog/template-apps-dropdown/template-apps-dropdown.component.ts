@@ -6,7 +6,7 @@ import {
   corePieceIconUrl,
 } from '@activepieces/ui/common';
 import { PieceMetadataSummary } from '@activepieces/pieces-framework';
-import { Observable, map, tap } from 'rxjs';
+import { Observable, map, shareReplay, startWith, switchMap, tap } from 'rxjs';
 import { TriggerType } from '@activepieces/shared';
 import {
   ControlValueAccessor,
@@ -30,6 +30,9 @@ export class TemplateAppsDropdownComponent implements ControlValueAccessor {
   pieces$: Observable<
     Pick<PieceMetadataSummary, 'displayName' | 'logoUrl' | 'name'>[]
   >;
+  filteredBySearchPieces$: Observable<
+    Pick<PieceMetadataSummary, 'displayName' | 'logoUrl' | 'name'>[]
+  >;
   piecesToShowInDropdown$: Observable<
     Pick<PieceMetadataSummary, 'displayName' | 'logoUrl' | 'name'>[]
   >;
@@ -38,6 +41,9 @@ export class TemplateAppsDropdownComponent implements ControlValueAccessor {
     nonNullable: true,
   });
   valueChanges$: Observable<string>;
+  searchControl: FormControl<string> = new FormControl('', {
+    nonNullable: true,
+  });
   onChange: (val: Array<string>) => void = () => {
     //ignored
   };
@@ -48,6 +54,25 @@ export class TemplateAppsDropdownComponent implements ControlValueAccessor {
         this.dropdownControl.setValue('', { emitEvent: false });
       })
     );
+
+    this.fetchPieces();
+
+    this.filteredBySearchPieces$ = this.searchControl.valueChanges.pipe(
+      startWith(''),
+      switchMap((search) => {
+        return this.pieces$.pipe(
+          map((pieces) => {
+            return pieces.filter((p) => {
+              return p.displayName.toLowerCase().includes(search);
+            });
+          })
+        );
+      })
+    );
+
+    this.setPiecesToShowInDropdown();
+  }
+  private fetchPieces() {
     this.pieces$ = this.pieceMetadataService.getPiecesManifest().pipe(
       map((pieces) => {
         const coreSteps = [
@@ -85,10 +110,11 @@ export class TemplateAppsDropdownComponent implements ControlValueAccessor {
           return a.displayName.localeCompare(b.displayName) > -1 ? 1 : -1;
         });
         return result;
-      })
+      }),
+      shareReplay(1)
     );
-    this.setPiecesToShowInDropdown();
   }
+
   writeValue(): void {
     //ignored
   }

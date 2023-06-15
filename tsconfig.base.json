@@ -30,6 +30,9 @@
       "@activepieces/piece-blackbaud": [
         "packages/pieces/blackbaud/src/index.ts"
       ],
+      "@activepieces/piece-bloomerang": [
+        "packages/pieces/bloomerang/src/index.ts"
+      ],
       "@activepieces/piece-cal-com": ["packages/pieces/cal-com/src/index.ts"],
       "@activepieces/piece-calendly": ["packages/pieces/calendly/src/index.ts"],
       "@activepieces/piece-certopus": ["packages/pieces/certopus/src/index.ts"],
@@ -49,6 +52,9 @@
       "@activepieces/piece-discord": ["packages/pieces/discord/src/index.ts"],
       "@activepieces/piece-drip": ["packages/pieces/drip/src/index.ts"],
       "@activepieces/piece-dropbox": ["packages/pieces/dropbox/src/index.ts"],
+      "@activepieces/piece-facebook-pages": [
+        "packages/pieces/facebook-pages/src/index.ts"
+      ],
       "@activepieces/piece-figma": ["packages/pieces/figma/src/index.ts"],
       "@activepieces/piece-freshsales": [
         "packages/pieces/freshsales/src/index.ts"
@@ -83,6 +89,10 @@
       "@activepieces/piece-http": ["packages/pieces/http/src/index.ts"],
       "@activepieces/piece-hubspot": ["packages/pieces/hubspot/src/index.ts"],
       "@activepieces/piece-intercom": ["packages/pieces/intercom/src/index.ts"],
+      "@activepieces/piece-kizeo-forms": [
+        "packages/pieces/kizeo-forms/src/index.ts"
+      ],
+      "@activepieces/piece-jotform": ["packages/pieces/jotform/src/index.ts"],
       "@activepieces/piece-mailchimp": [
         "packages/pieces/mailchimp/src/index.ts"
       ],
@@ -117,6 +127,7 @@
       "@activepieces/piece-sendinblue": [
         "packages/pieces/sendinblue/src/index.ts"
       ],
+      "@activepieces/piece-sftp": ["packages/pieces/sftp/src/index.ts"],
       "@activepieces/piece-shopify": ["packages/pieces/shopify/src/index.ts"],
       "@activepieces/piece-slack": ["packages/pieces/slack/src/index.ts"],
       "@activepieces/piece-smtp": ["packages/pieces/smtp/src/index.ts"],
@@ -191,3 +202,4 @@
   },
   "exclude": ["node_modules", "tmp"]
 }
+

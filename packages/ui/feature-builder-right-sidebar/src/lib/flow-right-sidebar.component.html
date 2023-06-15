@@ -69,7 +69,7 @@
         <div class="resizer-area" #resizerArea>
           <ap-horizontal-sidebar-separator [resizerArea]="resizerArea" topStyle="calc( 100% - 10px )"
             (resetTopResizerSectionHeight)="resetTopResizerSectionHeight()" (resizerDragged)="resizerDragged($event)"
-            (resizerDragStarted)="resizerDragStarted()">
+            (resizerDragStarted)="resizerDragStarted()" (resizerDragStopped)="isResizerGrabbed=false">
           </ap-horizontal-sidebar-separator>
         </div>
         <div class="bottom-resizer-section" #selectedStepResultContainer>

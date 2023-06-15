@@ -13,6 +13,7 @@ import {
   map,
   Observable,
   of,
+  shareReplay,
   Subject,
   switchMap,
   takeUntil,
@@ -93,7 +94,6 @@ export class FlowItemContentComponent implements OnInit {
 
   ngOnInit(): void {
     this.isDragging$ = this.flowRendererService.draggingSubject.asObservable();
-
     this.selectedRun$ = this.store.select(
       BuilderSelectors.selectCurrentFlowRun
     );
@@ -147,7 +147,6 @@ export class FlowItemContentComponent implements OnInit {
     return this.selectedRun$.pipe(
       distinctUntilChanged(),
       map((selectedRun) => {
-        this.stepResult = undefined;
         if (selectedRun) {
           if (selectedRun.status !== ExecutionOutputStatus.RUNNING) {
             const stepName = this._flowItem.name;
@@ -165,7 +164,8 @@ export class FlowItemContentComponent implements OnInit {
           }
         }
         return undefined;
-      })
+      }),
+      shareReplay(1)
     );
   }
 

@@ -1,0 +1,36 @@
+{
+  "name": "pieces-sftp",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/sftp/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/sftp",
+        "tsConfig": "packages/pieces/sftp/tsconfig.lib.json",
+        "packageJson": "packages/pieces/sftp/package.json",
+        "main": "packages/pieces/sftp/src/index.ts",
+        "assets": [
+          "packages/pieces/sftp/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/sftp/**/*.ts"
+        ]
+      }
+    }
+  },
+  "tags": []
+}
