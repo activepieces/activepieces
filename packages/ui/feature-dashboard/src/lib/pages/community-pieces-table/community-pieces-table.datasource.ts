@@ -1,5 +1,5 @@
 import { DataSource } from '@angular/cdk/collections';
-import { Observable, BehaviorSubject, tap, switchMap } from 'rxjs';
+import { Observable, BehaviorSubject, tap, switchMap, delay } from 'rxjs';
 import { PieceMetadataService } from '@activepieces/ui/common';
 import { PieceMetadataSummary } from '@activepieces/pieces-framework';
 import { combineLatest } from 'rxjs';
@@ -31,6 +31,7 @@ export class CommunityPiecesDataSource extends DataSource<PieceMetadataSummary> 
         this.isLoading$.next(true);
       }),
       switchMap(() => this.pieceMetadataService.getCommunityPieces()),
+      delay(100),
       tap((pieces) => {
         this.data = pieces;
         this.isLoading$.next(false);
