@@ -27,7 +27,7 @@ export class UserAvatarComponent {
   }
 
   goToDeveloperPage() {
-    this.router.navigate(['community-pieces']);
+    this.router.navigate(['settings/my-pieces']);
   }
 
   logout() {

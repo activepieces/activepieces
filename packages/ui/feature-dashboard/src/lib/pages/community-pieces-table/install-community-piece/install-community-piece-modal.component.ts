@@ -19,15 +19,11 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 })
 export class InstallCommunityPieceModalComponent implements OnInit {
   risksMarkdown = `
-  **Warning: Installing a piece is a risk.**
+  Use this to install a <a href="https://www.activepieces.com/docs/contributing/building-pieces/create-action" target="_blank" rel="noopener">custom piece</a> that you (or someone else) created.
+  Once the piece is installed, you can use it in the flow builder.
+ <br><br>**Warning:** 
+ Make sure you trust the author as the piece will have access to your flow data and it might not be compatible with the current version of Activepieces.
 
-  - This piece is not reviewed or maintained by Activepieces.
-  - It may not be compatible with the current version of Activepieces.
-  - It has access to all the data provided in the flow.
-  
-  Please exercise caution and ensure that you trust the author of the piece before installing it.
-  <br>
-  To install a piece, you must provide the name of the npm package that contains the piece.
   `;
 
   npmForm: FormGroup<{ packageName: FormControl<string> }>;

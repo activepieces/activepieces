@@ -1,6 +1,10 @@
 <div class="ap-w-full ap-h-full ap-px-[30px] ap-pt-[50px]">
   <div class="ap-h-full">
-    <app-page-title title="My Pieces"></app-page-title>
+    <app-page-title title="My Pieces">
+      <p underTitle class="ap-text-description ap-typography-body-2 ap ap-mt-2">
+        This where you can install pieces made by yourself or other piece creators.
+      </p>
+    </app-page-title>
     <div class="ap-min-h-[70%]">
       <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Runs">
         <ng-container matColumnDef="app">
