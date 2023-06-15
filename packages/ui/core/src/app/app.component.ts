@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { catchError, map, Observable, of, Subject, switchMap, tap } from 'rxjs';
+import { catchError, forkJoin, map, Observable, of, Subject, switchMap, tap } from 'rxjs';
 import { Store } from '@ngrx/store';
 import {
   NavigationCancel,
@@ -17,7 +17,7 @@ import {
   FlowService,
 } from '@activepieces/ui/common';
 import { compareVersions } from 'compare-versions';
-import { ApFlagId, FlowOperationType } from '@activepieces/shared';
+import { FlowOperationType } from '@activepieces/shared';
 import { TelemetryService } from '@activepieces/ui/common';
 import { AuthenticationService, fadeInUp400ms } from '@activepieces/ui/common';
 import { MatDialog } from '@angular/material/dialog';
@@ -84,12 +84,17 @@ export class AppComponent implements OnInit {
         }
       })
     );
-    this.showUpgradeNotification$ = this.flagService.getAllFlags().pipe(
-      map((res) => {
-        const currentVersion =
-          (res[ApFlagId.CURRENT_VERSION] as string) || '0.0.0';
-        const latestVersion =
-          (res[ApFlagId.LATEST_VERSION] as string) || '0.0.0';
+
+    this.showUpgradeNotification$ = forkJoin({
+      currentVersion: this.flagService.getRelease(),
+      latestVersion: this.flagService.getLatestRelease()
+    }).pipe(
+      map((flags) => {
+        if(!flags.currentVersion){
+          return false;
+        }
+        const currentVersion = flags.currentVersion || '0.0.0';
+        const latestVersion = flags.latestVersion || '0.0.0';
         const upgradeNotificationMetadataInLocalStorage =
           this.getUpgradeNotificationMetadataInLocalStorage();
         if (!upgradeNotificationMetadataInLocalStorage) {

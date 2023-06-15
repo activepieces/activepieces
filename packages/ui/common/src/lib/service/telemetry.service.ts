@@ -1,30 +1,30 @@
 import { Injectable } from '@angular/core';
 import posthog from 'posthog-js';
-import { ApEnvironment, ApFlagId, User } from '@activepieces/shared';
+import { ApEnvironment, User } from '@activepieces/shared';
 import { FlagService } from '../service/flag.service';
-import { Observable, map } from 'rxjs';
+import { Observable, forkJoin, map } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
 })
 export class TelemetryService {
-  constructor(private flagService: FlagService) {}
+  constructor(private flagService: FlagService) { }
   init(user: User) {
     if (user !== null && user !== undefined) {
-      this.flagService.getAllFlags().subscribe((flags) => {
-        if (flags[ApFlagId.TELEMETRY_ENABLED] === true) {
+      forkJoin({
+        telemetry: this.flagService.isTelemetryEnabled(),
+        currentVersion: this.flagService.getRelease(),
+        environment: this.flagService.getEnvironment()
+      }).subscribe((flags) => {
+        if (flags.telemetry === true) {
           posthog.init('phc_7F92HoXJPeGnTKmYv0eOw62FurPMRW9Aqr0TPrDzvHh', {
             api_host: 'https://app.posthog.com',
             autocapture: false,
           });
-          const currentVersion =
-            (flags[ApFlagId.CURRENT_VERSION] as string) || '0.0.0';
-          const environment =
-            (flags[ApFlagId.ENVIRONMENT] as string) || '0.0.0';
 
           posthog.identify(user.id, {
-            activepiecesVersion: currentVersion,
-            activepiecesEnvironment: environment,
+            activepiecesVersion: flags.currentVersion,
+            activepiecesEnvironment: flags.environment,
           });
         }
       });
@@ -32,16 +32,20 @@ export class TelemetryService {
   }
 
   isFeatureEnabled(feature: string): Observable<boolean> {
-    return this.flagService.getAllFlags().pipe(
-      map((flags) => {
-        if (flags[ApFlagId.ENVIRONMENT] === ApEnvironment.DEVELOPMENT) {
+    return forkJoin({
+      environment: this.flagService.getEnvironment(),
+      telemetryEnabled: this.flagService.isTelemetryEnabled(),
+    }).pipe(
+      map(({ environment, telemetryEnabled }) => {
+        if (environment === ApEnvironment.DEVELOPMENT) {
           return false;
         }
-        if (!flags[ApFlagId.TELEMETRY_ENABLED]) {
+        if (!telemetryEnabled) {
           return false;
         }
         return posthog.isFeatureEnabled(feature);
       })
     );
   }
+  
 }

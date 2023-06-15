@@ -1,8 +1,9 @@
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { map, Observable, shareReplay } from 'rxjs';
+import { map, Observable, of, shareReplay } from 'rxjs';
 import { environment } from '../environments/environment';
+import { AuthenticationService } from './authentication.service';
 
 type FlagsMap = Record<string, boolean | string | object | undefined>;
 
@@ -11,10 +12,12 @@ type FlagsMap = Record<string, boolean | string | object | undefined>;
 })
 export class FlagService {
   flags$: Observable<FlagsMap> | undefined;
+  privateFlags$: Observable<FlagsMap> | undefined;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient,
+    private authenticationService: AuthenticationService) { }
 
-  getAllFlags() {
+  private getPublicFlags() {
     if (!this.flags$) {
       this.flags$ = this.http
         .get<FlagsMap>(environment.apiUrl + '/flags')
@@ -23,8 +26,20 @@ export class FlagService {
     return this.flags$;
   }
 
+  private getPrivateFlags(): Observable<FlagsMap> {
+    if (!this.authenticationService.isLoggedIn()) {
+      return of({});
+    }
+    if (!this.privateFlags$) {
+      this.privateFlags$ = this.http
+        .get<FlagsMap>(environment.apiUrl + '/flags')
+        .pipe(shareReplay(1));
+    }
+    return this.privateFlags$;
+  }
+
   isFirstSignIn() {
-    return this.getAllFlags().pipe(
+    return this.getPublicFlags().pipe(
       map((value) => {
         return !value['USER_CREATED'];
       })
@@ -34,7 +49,7 @@ export class FlagService {
   getWarningMessage(): Observable<
     { title?: string; body?: string } | undefined
   > {
-    return this.getAllFlags().pipe(
+    return this.getPublicFlags().pipe(
       map((flags) => {
         const warningTitle: string | undefined = flags[
           'WARNING_TEXT_HEADER'
@@ -54,7 +69,7 @@ export class FlagService {
   }
 
   isSignedUpEnabled(): Observable<boolean> {
-    return this.getAllFlags().pipe(
+    return this.getPublicFlags().pipe(
       map((flags) => {
         const firstUser = flags['USER_CREATED'] as boolean;
         if (!firstUser) {
@@ -66,7 +81,7 @@ export class FlagService {
   }
 
   isTelemetryEnabled(): Observable<boolean> {
-    return this.getAllFlags().pipe(
+    return this.getPublicFlags().pipe(
       map((flags) => {
         return flags['TELEMETRY_ENABLED'] as boolean;
       })
@@ -74,15 +89,22 @@ export class FlagService {
   }
 
   getWebhookUrlPrefix(): Observable<string> {
-    return this.getAllFlags().pipe(
+    return this.getPublicFlags().pipe(
       map((flags) => {
         return flags[ApFlagId.WEBHOOK_URL_PREFIX] as string;
       })
     );
   }
 
+  isCloudAuthEnabled(): Observable<boolean> {
+    return this.getPublicFlags().pipe(
+      map((flags) => {
+        return flags[ApFlagId.CLOUD_AUTH_ENABLED] as boolean;
+      })
+    );
+  }
   getEdition(): Observable<ApEdition> {
-    return this.getAllFlags().pipe(
+    return this.getPublicFlags().pipe(
       map((flags) => {
         return flags[ApFlagId.EDITION] as ApEdition;
       })
@@ -90,15 +112,23 @@ export class FlagService {
   }
 
   getRelease(): Observable<string> {
-    return this.getAllFlags().pipe(
+    return this.getPrivateFlags().pipe(
       map((flags) => {
         return flags[ApFlagId.CURRENT_VERSION] as string;
       })
     );
   }
 
+  getLatestRelease(): Observable<string> {
+    return this.getPublicFlags().pipe(
+      map((flags) => {
+        return flags[ApFlagId.LATEST_VERSION] as string;
+      })
+    );
+  }
+
   getSandboxTimeout(): Observable<number> {
-    return this.getAllFlags().pipe(
+    return this.getPublicFlags().pipe(
       map((flags) => {
         return Number(flags[ApFlagId.SANDBOX_RUN_TIME_SECONDS]);
       })
@@ -106,7 +136,7 @@ export class FlagService {
   }
 
   getEnvironment(): Observable<string> {
-    return this.getAllFlags().pipe(
+    return this.getPublicFlags().pipe(
       map((flags) => {
         return flags[ApFlagId.ENVIRONMENT] as string;
       })
@@ -114,7 +144,7 @@ export class FlagService {
   }
 
   getFrontendUrl(): Observable<string> {
-    return this.getAllFlags().pipe(
+    return this.getPublicFlags().pipe(
       map((flags) => {
         return flags[ApFlagId.FRONTEND_URL] as string;
       })
@@ -122,7 +152,7 @@ export class FlagService {
   }
 
   getTemplatesSourceUrl(): Observable<string> {
-    return this.getAllFlags().pipe(
+    return this.getPublicFlags().pipe(
       map((flags) => {
         return flags[ApFlagId.TEMPLATES_SOURCE_URL] as string;
       })

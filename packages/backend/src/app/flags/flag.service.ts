@@ -21,17 +21,14 @@ export const flagService = {
             id: flagId,
         })
     },
-    async getCurrentVersion(): Promise<string> {
-        return (await import('../../../../../package.json')).version
-    },
     async getAll(isAuthenticated: boolean): Promise<Flag[]> {
         const flags = await flagRepo.find({})
         const now = new Date().toISOString()
         const created = now
         const updated = now
         // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const currentVersion = (await import('../../../../../package.json')).version
-        const latestVersion = (await this.getCurrentVersion())
+        const currentVersion = (await this.getCurrentVersion())
+        const latestVersion = (await this.getLatestPackageDotJson()).version
         const publicFlags = [
             {
                 id: ApFlagId.ENVIRONMENT,
@@ -94,34 +91,30 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.LATEST_VERSION,
+                value: latestVersion,
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.TEMPLATES_SOURCE_URL,
                 value: system.get(SystemProp.TEMPLATES_SOURCE_URL),
                 created,
                 updated,
             },
         ]
-        const privateFlags = [
-            {
+        if (isAuthenticated) {
+            flags.push(          {
                 id: ApFlagId.CURRENT_VERSION,
                 value: currentVersion,
                 created,
                 updated,
-            },
-            {
-                id: ApFlagId.LATEST_VERSION,
-                value: latestVersion,
-                created,
-                updated,
-            },
-        ]
-        if (isAuthenticated) {
-            flags.push(...publicFlags, ...privateFlags);
-        } 
-        else {
-            flags.push(...publicFlags);
+            });
         }
-
-        return flags
+        return [...flags, ...publicFlags]
+    },
+    async getCurrentVersion(): Promise<string> {
+        return (await import('../../../../../package.json')).version
     },
     async getLatestPackageDotJson() {
         try {
