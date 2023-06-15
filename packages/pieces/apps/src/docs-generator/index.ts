@@ -6,7 +6,6 @@ import sortBy from "lodash/sortBy";
 import { Piece, ActionBase, PieceMetadata, PiecePropertyMap, TriggerBase, TriggerStrategy} from '@activepieces/pieces-framework';
 
 type PieceInfo = PieceMetadata & {
-  directory: string;
   authors: string[];
 }
 
@@ -27,7 +26,7 @@ const loadPiecesMetadata = async (): Promise<PieceInfo[]> => {
       ...piece.metadata(),
       name: packageJson.name,
       version: packageJson.version,
-      directory: piecePackage,
+      directoryName: piecePackage,
       authors: piece.authors
     })
   }
@@ -114,21 +113,21 @@ const writePieceDoc = async (appsDocsFolderPath:string, p: PieceInfo, mdxTemplat
   docsFile = docsFile.replace('ACTIONS', actionsCards);
   docsFile = docsFile.replace('TRIGGERS', triggerCards);
   await writeFile(
-    `./docs/${appsDocsFolderPath}/${p.name}.mdx`,
+    `./docs/${appsDocsFolderPath}/${p.directoryName}.mdx`,
     docsFile
   );
-  return `${appsDocsFolderPath}/${p.name}`;
+  return `${appsDocsFolderPath}/${p.directoryName}`;
 }
 
 const writeAppsOverView = async (pieces: PieceInfo[]) => {
   let appsSnippet = "<CardGroup cols={3}>";
   pieces.forEach(piece => {
     appsSnippet += `
-    <a href="https://activepieces.com/docs/pieces/apps/${piece.name}">
+    <a href="https://activepieces.com/docs/pieces/apps/${piece.directoryName}">
       <Card>
           <p align="center">
             <strong>${piece.displayName}</strong>
-            <img height="75px" width="75px" src="https://cdn.activepieces.com/pieces/${piece.name}.png" />
+            <img height="75px" width="75px" src="https://cdn.activepieces.com/pieces/${piece.directoryName}.png" />
           </p>
       </Card>
     </a>
@@ -148,7 +147,7 @@ const main = async () => {
   const TEMPLATE_MDX = await readFile('packages/pieces/apps/src/docs-generator/template.mdx', 'utf8');
   const appsDocsFilesPaths: string[] = [];
   for (const p of pieces) {
-    const predefinedMdxPath = `packages/pieces/${p.directory}/src/lib/${p.name}.mdx`;
+    const predefinedMdxPath = `packages/pieces/${p.directoryName}/src/lib/${p.directoryName}.mdx`;
     if (existsSync(predefinedMdxPath)) {
       const predefinedMdxFile = await readFile(predefinedMdxPath, 'utf8');
       appsDocsFilesPaths.push(await writePieceDoc(appsDocsFolderPath, p, predefinedMdxFile));

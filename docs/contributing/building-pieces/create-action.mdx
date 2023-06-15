@@ -24,13 +24,10 @@ the `src/index.ts` file should contain the following code
 
 ```ts
 import { createPiece } from '@activepieces/pieces-framework';
-import packageJson from '../package.json';
 
 export const hackerNews = createPiece({
-  name: 'hacker-news',
   displayName: 'hacker-news',
   logoUrl: 'https://cdn.activepieces.com/pieces/hacker-news.png',
-  version: packageJson.version,
   authors: [
   ],
   actions: [
@@ -118,17 +115,14 @@ To make the action readable by Activepieces, add it to the array of actions in t
 import { createPiece } from '@activepieces/pieces-framework';
 // Don't forget to add the following import.
 import { fetchTopStories } from './lib/actions/fetch-top-stories';
-import packageJson from '../package.json';
 
 export const hackerNews = createPiece({
-  name: 'hackernews_tutorial',
   displayName: 'Hackernews Tutorial',
   logoUrl: 'https://cdn.activepieces.com/pieces/hackernews.png',
   authors: [],
    // Add the action here.
   actions: [fetchTopStories], // <--------
   triggers: [],
-  version: packageJson.version,
 });
 ```
 

@@ -33,23 +33,31 @@ export const webhookService = {
             flowId: flow.id,
             projectId: flow.projectId,
         })
-        triggerEventService.saveEvent({
-            flowId: flow.id,
-            payload,
-            projectId,
-        })
-
-        if (isNil(flowInstance) || flowInstance.status !== FlowInstanceStatus.ENABLED) {
+        if (isNil(flowInstance)) {
+            logger.info(`[WebhookService#callback] flowInstance not found, flowId=${flow.id}`)
+            saveSampleDataForWebhookTesting(
+                flow,
+                payload)
+            return []
+        }
+        if (flowInstance.status !== FlowInstanceStatus.ENABLED) {
             logger.info(`[WebhookService#callback] flowInstance not found or not enabled ignoring the webhook, flowId=${flow.id}`)
             return []
         }
         const flowVersion = await flowVersionService.getOneOrThrow(flowInstance.flowVersionId)
-
         const payloads: unknown[] = await triggerUtils.executeTrigger({
             projectId,
             flowVersion,
             payload,
             simulate: false,
+        })
+
+        payloads.forEach((payload) => {
+            triggerEventService.saveEvent({
+                flowId: flow.id,
+                payload,
+                projectId,
+            })
         })
 
         const createFlowRuns = payloads.map((payload) =>
@@ -150,6 +158,14 @@ const getLatestFlowVersionOrThrow = async (flowId: FlowId, projectId: ProjectId)
     }
 
     return flowVersion
+}
+
+function saveSampleDataForWebhookTesting(flow: Flow, payload: EventPayload): void {
+    triggerEventService.saveEvent({
+        flowId: flow.id,
+        payload,
+        projectId: flow.projectId,
+    })
 }
 
 type WebhookUrlSuffix = '' | '/simulate'

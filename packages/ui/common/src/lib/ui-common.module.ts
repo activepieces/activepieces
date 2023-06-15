@@ -52,6 +52,7 @@ import { PiecesIconsFromFlowComponent } from './components/pieces-icons-from-flo
 import { PieceIconContainerComponent } from './components/pieces-icons/piece-icon-container/piece-icon-container.component';
 import { UploadImageControlComponent } from './components/upload-file-control/upload-file-control.component';
 import { DragDropDirective } from './directives/drag-drop.directive';
+import { ElementDirective } from './directives/element-ref.directive';
 const exportedImports = [
   CommonModule,
   MatTooltipModule,
@@ -76,6 +77,7 @@ const exportedImports = [
 ];
 const exportedDeclarations = [
   UploadImageControlComponent,
+  ElementDirective,
   MarkdownComponent,
   EditableTextComponent,
   ApButtonComponent,

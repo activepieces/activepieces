@@ -6,6 +6,7 @@ import { Piece, PieceMetadata, PieceMetadataSummary } from '@activepieces/pieces
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { captureException, logger } from '../../helper/logger'
 import { GetParams, PieceMetadataService } from './piece-metadata-service'
+import { isNil } from 'lodash'
 
 const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
     const ignoredPackages = ['framework', 'apps', 'dist', 'common']
@@ -58,7 +59,7 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
             const piecesMetadata = await loadPiecesMetadata()
             const pieceMetadata = piecesMetadata.find(p => p.name === name)
 
-            if (pieceMetadata === undefined) {
+            if (isNil(pieceMetadata)) {
                 throw new ActivepiecesError({
                     code: ErrorCode.PIECE_NOT_FOUND,
                     params: {
@@ -72,7 +73,7 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
         },
 
         async create() {
-            throw new Error('not supported')
+            throw new Error('Creating pieces is not supported in development mode')
         },
 
         async stats() {

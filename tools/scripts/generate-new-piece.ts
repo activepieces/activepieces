@@ -51,13 +51,10 @@ const generateIndexTsFile = async (pieceName: string) => {
 
   const indexTemplate = `
 import { createPiece } from "@activepieces/pieces-framework";
-import packageJson from "../package.json";
 
 export const ${pieceNameCamelCase} = createPiece({
-  name: "${pieceName}",
   displayName: "${capitalizeFirstLetter(pieceName)}",
   logoUrl: "https://cdn.activepieces.com/pieces/${pieceName}.png",
-  version: packageJson.version,
   authors: [],
   actions: [],
   triggers: [],

@@ -159,7 +159,9 @@ const selectTriggerSelectedSampleData = createSelector(
 const selectStepTestSampleData = createSelector(selectCurrentStep, (step) => {
   if (
     step &&
-    (step.type === ActionType.PIECE || step.type === ActionType.CODE) &&
+    (step.type === ActionType.PIECE ||
+      step.type === ActionType.CODE ||
+      step.type === TriggerType.PIECE) &&
     step.settings.inputUiInfo
   ) {
     return step.settings.inputUiInfo.currentSelectedData;
