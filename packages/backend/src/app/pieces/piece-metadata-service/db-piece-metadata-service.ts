@@ -1,4 +1,4 @@
-import { In, IsNull, LessThanOrEqual, MoreThanOrEqual } from 'typeorm'
+import { Equal, IsNull, LessThanOrEqual, MoreThanOrEqual } from 'typeorm'
 import { databaseConnection } from '../../database/database-connection'
 import { PieceMetadataEntity, PieceMetadataSchema } from '../piece-metadata-entity'
 import { GetParams, ListParams, PieceMetadataService } from './piece-metadata-service'
@@ -31,19 +31,24 @@ const toPieceMetadata = (pieceMetadataEntity: PieceMetadataSchema): PieceMetadat
 export const DbPieceMetadataService = (): PieceMetadataService => {
     return {
         async list({ release, projectId }: ListParams): Promise<PieceMetadataSummary[]> {
-            const query = {
-                minimumSupportedRelease: LessThanOrEqual(release),
-                maximumSupportedRelease: MoreThanOrEqual(release),
-                projectId: In([projectId, null]),
-            }
-
             const order = {
                 name: 'ASC',
                 version: 'DESC',
             } as const
 
             const pieceMetadataEntityList = await repo.createQueryBuilder()
-                .where(query)
+                .where([
+                    {
+                        minimumSupportedRelease: LessThanOrEqual(release),
+                        maximumSupportedRelease: MoreThanOrEqual(release),
+                        projectId: Equal(projectId),
+                    },
+                    {
+                        minimumSupportedRelease: LessThanOrEqual(release),
+                        maximumSupportedRelease: MoreThanOrEqual(release),
+                        projectId: IsNull(),
+                    },
+                ])
                 .distinctOn(['name'])
                 .orderBy(order)
                 .getMany()
@@ -51,11 +56,18 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
         },
 
         async get({ name, version, projectId }: GetParams): Promise<PieceMetadata> {
-            const pieceMetadataEntity = await repo.findOneBy({
-                name,
-                version,
-                projectId: projectId ?? IsNull(),
-            })
+            const pieceMetadataEntity = await repo.findOneBy([
+                {
+                    name,
+                    version,
+                    projectId: Equal(projectId),
+                },
+                {
+                    name,
+                    version,
+                    projectId: IsNull(),
+                },
+            ])
 
             if (isNil(pieceMetadataEntity)) {
                 throw new ActivepiecesError({
