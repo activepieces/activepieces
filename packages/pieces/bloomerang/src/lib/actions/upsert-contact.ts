@@ -33,12 +33,12 @@ export const bloomerangUpsertContacts = createAction({
             description: "Phone number",
             required: false,
         }),
-        email_address: Property.Number({
+        email_address: Property.ShortText({
             displayName: "Email",
             description: "Email",
             required: false,
         }),
-        type: Property.Number({
+        type: Property.ShortText({
             displayName: "Type",
             description: "Type",
             required: false,
