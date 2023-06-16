@@ -61,6 +61,5 @@ async function sendWebhook(payload: RunFailedWebhookPayload): Promise<void> {
     }
     catch (error) {
         captureException(error)
-        logger.error(`Error sending webhook: ${error}`)
     }
 }
