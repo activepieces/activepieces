@@ -15,10 +15,10 @@ import { JobType, flowQueue } from '../workers/flow-worker/flow-queue'
 import { EngineHelperResponse, EngineHelperTriggerResult, engineHelper } from './engine-helper'
 import { webhookService } from '../webhooks/webhook-service'
 import { appEventRoutingService } from '../app-event-routing/app-event-routing.service'
-import { captureException } from '@sentry/node'
 import {  isNil } from 'lodash'
 import { LATEST_JOB_DATA_SCHEMA_VERSION } from '../workers/flow-worker/job-data'
 import { pieceMetadataService } from '../pieces/piece-metadata-service'
+import { captureException } from './logger'
 
 export const triggerUtils = {
     async executeTrigger(params: ExecuteTrigger): Promise<unknown[]> {

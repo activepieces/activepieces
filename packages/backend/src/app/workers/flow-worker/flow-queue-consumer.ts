@@ -102,7 +102,7 @@ const consumeRepeatingJob = async (job: Job<RepeatingJobData, void>): Promise<vo
             await flowInstanceService.delete({ projectId: data.projectId, flowId: data.flowVersion.flowId })
         }
         else {
-            throw e
+            captureException(e)
         }
     }
 }
