@@ -21,7 +21,7 @@ export const bloomerangUpsertContacts = createAction({
         organization_name: Property.ShortText({
             displayName: "Organization name",
             description: "Organization name",
-            required: true,
+            required: false,
         }),
         street: Property.ShortText({
             displayName: "Street",
@@ -34,8 +34,8 @@ export const bloomerangUpsertContacts = createAction({
             required: false,
         }),
         email_address: Property.Number({
-            displayName: "Email number",
-            description: "Email number",
+            displayName: "Email",
+            description: "Email",
             required: false,
         }),
         type: Property.Number({
