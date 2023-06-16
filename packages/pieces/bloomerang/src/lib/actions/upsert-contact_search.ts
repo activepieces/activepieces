@@ -54,7 +54,7 @@ export const bloomerangUpsertContactsSearch = createAction({
             },
         })).body;
         if (findContact.ResultCount > 0) {
-            const contactID = findContact.Results[0].id
+            const contactID = findContact.Results[0].Id
             return (await httpClient.sendRequest({
                 method: HttpMethod.PUT,
                 url: `${bloomerangCommon.baseUrl}/constituent/${contactID}`,

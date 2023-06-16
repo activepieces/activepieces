@@ -81,7 +81,7 @@ export const bloomerangUpsertContactsDuplicates = createAction({
             },
         })).body;
         if (findContact.Total > 0) {
-            const contactID = findContact.Result[0].id
+            const contactID = findContact.Result[0].Id
             return (await httpClient.sendRequest({
                 method: HttpMethod.PUT,
                 url: `${bloomerangCommon.baseUrl}/constituent/${contactID}`,
