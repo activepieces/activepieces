@@ -76,10 +76,11 @@ export class ConnectionsTableDataSource extends DataSource<any> {
         this.paginator.next = res.next;
         this.paginator.previous = res.previous;
         this.data = res.data;
+        console.log(this.data);
       }),
       switchMap((res) => {
         const logos: Observable<string | undefined>[] = res.data.map((item) =>
-          this.pieceMetadataService.getPieceNameLogo(item.appName)
+          this.pieceMetadataService.getPieceNameLogo(item.appName).pipe(take(1))
         );
         return forkJoin(logos).pipe(
           map((logos) => {
