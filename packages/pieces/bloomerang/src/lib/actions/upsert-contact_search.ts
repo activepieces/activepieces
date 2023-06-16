@@ -3,7 +3,7 @@ import {httpClient, HttpMethod} from '@activepieces/pieces-common';
 import {bloomerangCommon} from '../common/common';
 
 export const bloomerangUpsertContactsSearch = createAction({
-    name: 'upsert_contact_duplicates',
+    name: 'upsert_contact_search',
     description: 'Update or create bloomerang contact using search',
     displayName: 'Upsert Contact (Search)',
     props: {
@@ -54,7 +54,7 @@ export const bloomerangUpsertContactsSearch = createAction({
             },
         })).body;
         if (findContact.ResultCount > 0) {
-            const contactID = findContact.Result[0].id
+            const contactID = findContact.Results[0].id
             return (await httpClient.sendRequest({
                 method: HttpMethod.PUT,
                 url: `${bloomerangCommon.baseUrl}/constituent/${contactID}`,
