@@ -34,14 +34,12 @@ export const bloomerangGetContacts = createAction({
         order_by: Property.ShortText({
             displayName: "Sorts by Id, CreatedDate, or LastModifiedDate (default Id)",
             description: "Available values : Id, CreatedDate, LastModifiedDate",
-            defaultValue: "1970-01-01T00:00:00.000Z",
-            required: true
+            required: false
         }),
         order_direction: Property.ShortText({
             displayName: "Sorts the orderBy in ascending or descending order.",
             description: "Available values : Asc, Desc",
-            defaultValue: "1970-01-01T00:00:00.000Z",
-            required: true
+            required: false
         }),
         id: Property.Array({
             displayName: "IDs list",
@@ -170,17 +168,17 @@ export const bloomerangGetContacts = createAction({
         }
     ],
     async run(context) {
-        const { authentication, last_modified_date, take, id, order_by, skip, type, order_direction, is_favorite} = context.propsValue
+        const { authentication, last_modified_date, take, id, order_by, skip, type, order_direction, is_favorite} = context.propsValue;
         let url = `${bloomerangCommon.baseUrl}/constituents?lastModified=${last_modified_date}`;
-        if(take) url += `&take${take}`;
-        if(skip) url += `&skip${skip}`
-        if(is_favorite) url += `&isFavorite${is_favorite}`
-        if(type) url += `&type${type}`
-        if(order_by) url += `&orderBy${order_by}`
-        if(order_direction) url += `&orderDirection${order_direction}`
+        if(take) url += `&take=${take}`;
+        if(skip) url += `&skip=${skip}`;
+        if(is_favorite) url += `&isFavorite=${is_favorite}`;
+        if(type) url += `&type=${type}`;
+        if(order_by) url += `&orderBy=${order_by}`;
+        if(order_direction) url += `&orderDirection=${order_direction}`;
         if(id && id.length > 0) {
             const parserId = id.map(el => `id=${el}`)
-            url += parserId.join('&')
+            url += parserId.join('&');
         }
         return (await httpClient.sendRequest({
             method: HttpMethod.GET,
