@@ -29,11 +29,14 @@ type LoadActionParams = {
   actionName: string
 }
 
-type ResolveAndValidateInput = {
-  actionProps: PiecePropertyMap
+type ResolveInputParams = {
   input: unknown
   executionState: ExecutionState
   censorConnections: boolean
+}
+
+type ResolveAndValidateInputParams = ResolveInputParams & {
+  actionProps: PiecePropertyMap
 }
 
 type GenerateStopHookParams = {
@@ -76,11 +79,21 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
     return action
   }
 
-  private async resolveInput(params: ResolveAndValidateInput) {
+  private async resolveInput(params: ResolveInputParams) {
+    const { input, executionState, censorConnections } = params
+
+    return await this.variableService.resolve({
+      unresolvedInput: input,
+      executionState,
+      censorConnections,
+    })
+  }
+
+  private async resolveAndValidateInput(params: ResolveAndValidateInputParams) {
     const { actionProps, input, executionState, censorConnections } = params
 
-    const resolvedInput = await this.variableService.resolve({
-      unresolvedInput: input,
+    const resolvedInput = await this.resolveInput({
+      input,
       executionState,
       censorConnections,
     })
@@ -155,8 +168,14 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
         actionName,
       })
 
-      const resolvedInput = await this.resolveInput({
+      const resolvedProps = await this.resolveAndValidateInput({
         actionProps: action.props,
+        input,
+        executionState,
+        censorConnections: false,
+      })
+
+      const resolvedAuth = await this.resolveInput({
         input,
         executionState,
         censorConnections: false,
@@ -165,7 +184,8 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
       stepOutput.output = await action.run({
         executionType: this.executionType,
         store: createContextStore('', globals.flowId),
-        propsValue: resolvedInput,
+        auth: resolvedAuth,
+        propsValue: resolvedProps,
         connections: connectionManager,
         run: {
           stop: this.generateStopHook({ stepOutput }),

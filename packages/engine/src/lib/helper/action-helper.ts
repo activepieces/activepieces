@@ -8,6 +8,9 @@ import {
     DynamicPropsValue,
     MultiSelectDropdownProperty,
     Piece,
+    PieceAuthProperty,
+    PiecePropValueSchema,
+    PiecePropertyMap,
     PropertyType,
     StaticPropsValue,
 } from "@activepieces/pieces-framework";
@@ -138,11 +141,11 @@ const getPropOrThrow = async (params: ExecutePropsOptions) => {
 }
 
 type ResolveInputParams = {
-    input: Record<string, unknown>
+    input: unknown
     executionContext?: Record<string, unknown>
 }
 
-const resolveInput = async ({ input, executionContext = {} }: ResolveInputParams): Promise<unknown> => {
+const resolveInput = async <T = unknown>({ input, executionContext = {} }: ResolveInputParams): Promise<T> => {
     const executionState = new ExecutionState()
 
     for (const [stepName, stepOutput] of Object.entries(executionContext)) {
@@ -155,7 +158,7 @@ const resolveInput = async ({ input, executionContext = {} }: ResolveInputParams
         unresolvedInput: input,
         executionState,
         censorConnections: false,
-    })
+    }) as T
 }
 
 export const pieceHelper = {
@@ -175,7 +178,7 @@ export const pieceHelper = {
                 success: true,
                 output: result,
             };
-        } catch (e: any) {
+        } catch (e) {
             // Don't remove this console.error, it's used in the UI to display the error
             console.error(e);
             return {
@@ -185,7 +188,7 @@ export const pieceHelper = {
         }
     },
     async executeAction(params: ExecuteActionOperation): Promise<ExecuteActionResponse> {
-        const { actionName, pieceName, pieceVersion, input, testExecutionContext } = params;
+        const { actionName, pieceName, pieceVersion, authValue, propsValue, testExecutionContext } = params;
 
         const action = await getActionOrThrow({
             pieceName,
@@ -193,14 +196,20 @@ export const pieceHelper = {
             actionName,
         })
 
-        const resolvedInput = await resolveInput({
-            input,
+        const resolvedProps = await resolveInput<StaticPropsValue<PiecePropertyMap>>({
+            input: propsValue,
             executionContext: testExecutionContext,
         })
 
-        const context: ActionContext<StaticPropsValue<Record<string, any>>> = {
+        const resolvedAuth = await resolveInput<PiecePropValueSchema<PieceAuthProperty>>({
+            input: authValue,
+            executionContext: testExecutionContext,
+        })
+
+        const context: ActionContext = {
             executionType: ExecutionType.BEGIN,
-            propsValue: resolvedInput as Record<string, any>,
+            auth: resolvedAuth,
+            propsValue: resolvedProps,
             store: createContextStore('', globals.flowId),
             connections: {
                 get: async (key: string) => {
@@ -226,9 +235,9 @@ export const pieceHelper = {
                 output: await action.run(context),
                 success: true,
             }
-        } catch (e: any) {
+        } catch (e) {
             return {
-                output: Utils.tryParseJson(e.message),
+                output: e instanceof Error ? Utils.tryParseJson(e.message) : e,
                 success: false,
             }
         }

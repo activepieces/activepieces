@@ -84,21 +84,27 @@ export class VariableService {
   }
 
   private async resolveInternally(unresolvedInput: any, valuesMap: any, censorConnections: boolean): Promise<any> {
-    if (unresolvedInput === undefined || unresolvedInput === null) {
+    if (isNil(unresolvedInput)) {
       return unresolvedInput;
-    } else if (isString(unresolvedInput)) {
+    }
+
+    if (isString(unresolvedInput)) {
       return this.resolveInput(unresolvedInput, valuesMap, censorConnections);
-    } else if (Array.isArray(unresolvedInput)) {
+    }
+
+    if (Array.isArray(unresolvedInput)) {
       for (let i = 0; i < unresolvedInput.length; ++i) {
         unresolvedInput[i] = await this.resolveInternally(unresolvedInput[i], valuesMap, censorConnections);
       }
-    } else if (typeof unresolvedInput === 'object') {
+    }
+    else if (typeof unresolvedInput === 'object') {
       const entries = Object.entries(unresolvedInput);
       for (let i = 0; i < entries.length; ++i) {
         const [key, value] = entries[i];
         unresolvedInput[key] = await this.resolveInternally(value, valuesMap, censorConnections);
       }
     }
+
     return unresolvedInput;
   }
 

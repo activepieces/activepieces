@@ -13,7 +13,7 @@ type Listener = {
 
 export const triggerHelper = {
   async executeTrigger(params: ExecuteTriggerOperation<TriggerHookType>): Promise<ExecuteTriggerResponse<TriggerHookType>> {
-    const { pieceName, pieceVersion, triggerName, input } = (params.flowVersion.trigger as PieceTrigger).settings;
+    const { pieceName, pieceVersion, triggerName, input, auth } = (params.flowVersion.trigger as PieceTrigger).settings;
 
     const piece = await pieceHelper.loadPieceOrThrow(pieceName, pieceVersion);
     const trigger = piece.getTrigger(triggerName);
@@ -25,13 +25,20 @@ export const triggerHelper = {
     const variableService = new VariableService();
     const executionState = new ExecutionState();
 
-    const resolvedInput = await variableService.resolve({
+    const resolvedProps = await variableService.resolve({
       unresolvedInput: input,
       executionState,
       censorConnections: false,
     })
 
-    const { result, errors } = await variableService.validateAndCast(resolvedInput, trigger.props);
+    const resolvedAuth = await variableService.resolve({
+      unresolvedInput: auth,
+      executionState,
+      censorConnections: false,
+    })
+
+    const { result: validatedProps, errors } = await variableService.validateAndCast(resolvedProps, trigger.props);
+
     if (Object.keys(errors).length > 0) {
       throw new Error(JSON.stringify(errors));
     }
@@ -59,7 +66,8 @@ export const triggerHelper = {
         };
       },
       webhookUrl: params.webhookUrl,
-      propsValue: result,
+      auth: resolvedAuth,
+      propsValue: validatedProps,
       payload: params.triggerPayload ?? {},
     };
 

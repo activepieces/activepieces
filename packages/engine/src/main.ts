@@ -169,13 +169,13 @@ const executeCode = async (): Promise<void> => {
 
 const executeAction = async (): Promise<void> => {
   try {
-    const operationInput: ExecuteActionOperation = Utils.parseJsonFile(globals.inputFile);
+    const input: ExecuteActionOperation = Utils.parseJsonFile(globals.inputFile);
 
-    globals.workerToken = operationInput.workerToken!;
-    globals.projectId = operationInput.projectId;
-    globals.apiUrl = operationInput.apiUrl!;
+    globals.workerToken = input.workerToken!;
+    globals.projectId = input.projectId;
+    globals.apiUrl = input.apiUrl!;
 
-  const output = await pieceHelper.executeAction(operationInput);
+  const output = await pieceHelper.executeAction(input);
     writeOutput({
       status: EngineResponseStatus.OK,
       response: output
