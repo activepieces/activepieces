@@ -141,7 +141,8 @@ const execute = async <Result extends EngineHelperResult>(
 
     const sandboxPath = sandbox.getSandboxFolderPath()
 
-    await fs.copyFile(engineExecutablePath, `${sandboxPath}/activepieces-engine.js`)
+    await fs.copyFile(engineExecutablePath, `${sandboxPath}/main.js`)
+    await fs.copyFile(`${engineExecutablePath}.map`, `${sandboxPath}/main.js.map`)
 
     await fs.writeFile(`${sandboxPath}/input.json`, JSON.stringify({
         ...input,
@@ -149,7 +150,7 @@ const execute = async <Result extends EngineHelperResult>(
     }))
 
     const nodeExecutablePath = process.execPath
-    const sandboxResponse = await sandbox.runCommandLine(`${nodeExecutablePath} activepieces-engine.js ${operation}`)
+    const sandboxResponse = await sandbox.runCommandLine(`${nodeExecutablePath} --enable-source-maps main.js ${operation}`)
 
     sandboxResponse.standardOutput.split('\n').forEach(f => {
         if (f.trim().length > 0) logger.info({}, chalk.yellow(f))
