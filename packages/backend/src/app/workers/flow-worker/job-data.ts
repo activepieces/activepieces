@@ -1,6 +1,6 @@
-import { ExecutionType, FlowRunId, FlowVersion, FlowVersionId, ProjectId, RunEnvironment, TriggerType } from '@activepieces/shared'
+import { ExecutionType, FlowId, FlowRunId, FlowVersionId, ProjectId, RunEnvironment, TriggerType } from '@activepieces/shared'
 
-export const LATEST_JOB_DATA_SCHEMA_VERSION = 1
+export const LATEST_JOB_DATA_SCHEMA_VERSION = 2
 
 type BaseJobData = {
     projectId: ProjectId
@@ -11,7 +11,8 @@ type BaseJobData = {
 // Never change without increasing LATEST_JOB_DATA_SCHEMA_VERSION, and adding a migration
 export type RepeatingJobData = BaseJobData & {
     schemaVersion: number
-    flowVersion: FlowVersion
+    flowVersionId: FlowVersionId
+    flowId: FlowId
     triggerType: TriggerType
 }
 
