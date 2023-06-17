@@ -111,10 +111,6 @@ const disablePieceTrigger = async (params: EnableOrDisableParams) => {
         projectId: projectId,
     })
 
-    if (engineHelperResponse.status !== EngineResponseStatus.OK) {
-        return engineHelperResponse
-    }
-
     switch (pieceTrigger.type) {
         case TriggerStrategy.APP_WEBHOOK:
             await appEventRoutingService.deleteListeners({ projectId, flowId: flowVersion.flowId })

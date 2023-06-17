@@ -29,14 +29,14 @@ export const flowInstanceService = {
         }
         const oldInstance: FlowInstance | null = await flowInstanceRepo.findOneBy({ projectId, flowId: request.flowId })
         if (oldInstance && oldInstance.status === FlowInstanceStatus.ENABLED) {
-            triggerUtils.disable({
+            await triggerUtils.disable({
                 flowVersion: await flowVersionService.getOneOrThrow(oldInstance.flowVersionId),
                 projectId: oldInstance.projectId,
                 simulate: false,
             })
         }
 
-        triggerUtils.enable({
+        await triggerUtils.enable({
             flowVersion: flow.version,
             projectId: projectId,
             simulate: false,
@@ -66,14 +66,14 @@ export const flowInstanceService = {
         if (flowInstance.status !== status) {
             switch (status) {
                 case FlowInstanceStatus.ENABLED:
-                    triggerUtils.enable({
+                    await triggerUtils.enable({
                         flowVersion: flowVersion,
                         projectId: flowInstance.projectId,
                         simulate: false,
                     })
                     break
                 case FlowInstanceStatus.DISABLED:
-                    triggerUtils.disable({
+                    await triggerUtils.disable({
                         flowVersion: flowVersion,
                         projectId: flowInstance.projectId,
                         simulate: false,
