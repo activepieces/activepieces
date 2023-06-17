@@ -123,6 +123,15 @@ const getSandbox = async ({ pieceName, pieceVersion }: GetSandboxParams): Promis
     return sandbox
 }
 
+function tryParseJson(value: unknown) {
+    try {
+        return JSON.parse(value as string)
+    } 
+    catch (e) {
+        return value
+    }
+}
+
 const execute = async <Result extends EngineHelperResult>(
     operation: EngineOperationType,
     sandbox: Sandbox,
@@ -138,7 +147,7 @@ const execute = async <Result extends EngineHelperResult>(
         ...input,
         apiUrl: 'http://127.0.0.1:3000',
     }))
-    
+
     const nodeExecutablePath = process.execPath
     const sandboxResponse = await sandbox.runCommandLine(`${nodeExecutablePath} activepieces-engine.js ${operation}`)
 
@@ -150,16 +159,14 @@ const execute = async <Result extends EngineHelperResult>(
         if (f.trim().length > 0) logger.error({}, chalk.red(f))
     })
 
-    if(sandboxResponse.verdict === EngineResponseStatus.TIMEOUT){
+    if (sandboxResponse.verdict === EngineResponseStatus.TIMEOUT) {
         throw new ActivepiecesError({
             code: ErrorCode.EXECUTION_TIMEOUT,
             params: {},
         })
     }
 
-    const result: Result = typeof sandboxResponse.output === 'string'
-        ? JSON.parse(sandboxResponse.output)
-        : sandboxResponse.output
+    const result: Result = tryParseJson(sandboxResponse.output)
 
     const response = {
         status: sandboxResponse.verdict,
@@ -172,7 +179,6 @@ const execute = async <Result extends EngineHelperResult>(
 
     return response
 }
-
 
 export const engineHelper = {
     async executeFlow(
@@ -203,7 +209,7 @@ export const engineHelper = {
             pieceVersion,
         })
 
-        const input ={
+        const input = {
             ...operation,
             edition: await getEdition(),
             appWebhookUrl: await appEventRoutingService.getAppWebhookUrl({ appName: pieceName }),
