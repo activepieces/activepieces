@@ -48,6 +48,7 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
                 description: p.description,
                 logoUrl: p.logoUrl,
                 version: p.version,
+                auth: p.auth,
                 minimumSupportedRelease: p.minimumSupportedRelease,
                 maximumSupportedRelease: p.maximumSupportedRelease,
                 actions: Object.keys(p.actions).length,

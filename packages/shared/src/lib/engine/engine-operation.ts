@@ -32,7 +32,7 @@ export type ExecuteActionOperation = {
     actionName: string
     pieceName: string
     pieceVersion: string
-    authValue: unknown
+    authValue?: unknown
     propsValue: Record<string, unknown>
     testExecutionContext: Record<string, unknown>
     projectId: ProjectId
