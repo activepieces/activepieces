@@ -1,17 +1,25 @@
 import crypto from 'node:crypto'
-import { createPiece } from '@activepieces/pieces-framework'
-import { slackSendDirectMessageAction } from './lib/actions/send-direct-message-action'
-import { slackSendMessageAction } from './lib/actions/send-message-action'
-import { newMessage } from './lib/triggers/new-message'
-import { newReactionAdded } from './lib/triggers/new-reaction-added'
+import { AuthProp, Piece } from '@activepieces/pieces-framework'
 
-export const slack = createPiece({
+export const slack = Piece.create({
   displayName: 'Slack',
   logoUrl: 'https://cdn.activepieces.com/pieces/slack.png',
-  actions: [
-    slackSendDirectMessageAction,
-    slackSendMessageAction,
-  ],
+  auth: AuthProp.OAuth2({
+    description: '',
+    authUrl: 'https://slack.com/oauth/authorize',
+    tokenUrl: 'https://slack.com/api/oauth.access',
+    required: true,
+    scope: [
+      'channels:read',
+      'channels:write',
+      'channels:history',
+      'chat:write:bot',
+      'groups:read',
+      'reactions:read',
+      'mpim:read',
+      'users:read',
+    ],
+  }),
   events: {
     parseAndReply: ({ payload }) => {
       if (payload.body['challenge']) {
@@ -34,6 +42,5 @@ export const slack = createPiece({
       const computedSignature = `v0=${hmac.digest('hex')}`;
       return signature === computedSignature;
     }
-  },
-  triggers: [newMessage, newReactionAdded]
+  }
 })

@@ -60,7 +60,10 @@ export type PauseHookParams = {
 
 export type PauseHook = (params: PauseHookParams) => void
 
-export type ActionContext<AuthProp extends PieceAuthProperty, Props extends PiecePropertyMap> = {
+export type ActionContext<
+    AuthProp extends PieceAuthProperty = PieceAuthProperty,
+    Props extends PiecePropertyMap = PiecePropertyMap,
+> = {
     executionType: ExecutionType,
     auth: PiecePropValueSchema<AuthProp>,
     propsValue: StaticPropsValue<Props>,

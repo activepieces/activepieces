@@ -1,13 +1,12 @@
-import { createTrigger, TriggerStrategy } from "@activepieces/pieces-framework";
-import { slackAuth, slackChannel } from "../common/props";
+import { TriggerStrategy } from "@activepieces/pieces-framework";
+import { slackChannel } from "../common/props";
+import { slack } from "../../";
 
-
-export const newMessage = createTrigger({
+slack.addTrigger({
     name: 'new_message',
     displayName: 'New Message',
     description: 'Triggers when a new message is received',
     props: {
-        authentication: slackAuth,
         channel: slackChannel
     },
     type: TriggerStrategy.APP_WEBHOOK,
@@ -40,7 +39,7 @@ export const newMessage = createTrigger({
         "channel_type": "channel"
     },
     onEnable: async (context) => {
-        context.app.createListeners({ events: ['message'], identifierValue: context.propsValue.authentication.data['team_id'] })
+        context.app.createListeners({ events: ['message'], identifierValue: context.auth.data['team_id'] })
     },
     onDisable: async (context) => {
         // Ignored

@@ -47,7 +47,7 @@ type PieceEventProcessors = {
   verify: (ctx: { webhookSecret: string, payload: EventPayload, appWebhookUrl: string }) => boolean
 }
 
-export class Piece<AuthProp extends PieceAuthProperty> implements Omit<PieceBase, "version" | "name"> {
+export class Piece<AuthProp extends PieceAuthProperty = PieceAuthProperty> implements Omit<PieceBase, "version" | "name"> {
   private readonly _actions: Record<string, Action> = {}
   private readonly _triggers: Record<string, Trigger> = {}
 

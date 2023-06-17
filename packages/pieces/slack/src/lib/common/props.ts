@@ -1,24 +1,6 @@
 import { OAuth2PropertyValue, Property } from "@activepieces/pieces-framework";
 import { AuthenticationType, httpClient, HttpMethod, HttpRequest } from "@activepieces/pieces-common";
 
-export const slackAuth = Property.OAuth2({
-  description: '',
-  displayName: 'Authentication',
-  authUrl: 'https://slack.com/oauth/authorize',
-  tokenUrl: 'https://slack.com/api/oauth.access',
-  required: true,
-  scope: [
-    'channels:read',
-    'channels:write',
-    'channels:history',
-    'chat:write:bot',
-    'groups:read',
-    'reactions:read',
-    'mpim:read',
-    'users:read',
-  ],
-})
-
 export const slackChannel = Property.Dropdown({
   displayName: 'Channel',
   description: 'Channel, private group, or IM channel to send message to.',

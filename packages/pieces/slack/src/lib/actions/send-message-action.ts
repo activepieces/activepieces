@@ -1,12 +1,11 @@
 import {
-  createAction,
   Property,
 } from '@activepieces/pieces-framework'
-import { assertNotNullOrUndefined } from '@activepieces/pieces-common'
-import { slackAuth, slackChannel } from '../common/props'
+import { slackChannel } from '../common/props'
 import { slackSendMessage } from '../common/utils'
+import { slack } from "../../";
 
-export const slackSendMessageAction = createAction({
+slack.addAction({
   name: 'send_channel_message',
   displayName: 'Send Message To A Channel',
   description: 'Send message to a channel',
@@ -16,7 +15,6 @@ export const slackSendMessageAction = createAction({
     results: [1, 2, 3, 4],
   },
   props: {
-    authentication: slackAuth,
     channel: slackChannel,
     text: Property.LongText({
       displayName: 'Message',
@@ -25,12 +23,8 @@ export const slackSendMessageAction = createAction({
     }),
   },
   async run(context) {
-    const token = context.propsValue.authentication?.access_token
+    const token = context.auth.access_token
     const { text, channel } = context.propsValue
-
-    assertNotNullOrUndefined(token, 'token')
-    assertNotNullOrUndefined(text, 'text')
-    assertNotNullOrUndefined(channel, 'channel')
 
     return slackSendMessage({
       token,

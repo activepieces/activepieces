@@ -1,6 +1,5 @@
+import { square } from "../../";
 import { TriggerStrategy } from "@activepieces/pieces-framework";
-import { createTrigger } from "@activepieces/pieces-framework";
-import { squareAuthentication } from "../common/props";
 
 const tirggerData = [
     {
@@ -375,20 +374,18 @@ const tirggerData = [
     }
 ]
 
-export const squareTriggers = tirggerData.map((trigger) => {
-    return createTrigger({
+tirggerData.forEach((trigger) => {
+    square.addTrigger({
         name: trigger.name,
         displayName: trigger.displayName,
         description: trigger.description,
-        props: {
-            authentication: squareAuthentication
-        },
+        props: {},
         type: TriggerStrategy.APP_WEBHOOK,
         sampleData: trigger.sampleData,
         onEnable: async (context) => {
-            context.app.createListeners({ events: [trigger.event], identifierValue: context.propsValue.authentication.data['merchant_id'] })
+            context.app.createListeners({ events: [trigger.event], identifierValue: context.auth.data['merchant_id'] })
         },
-        onDisable: async (context) => {
+        onDisable: async () => {
             // Ignored
         },
         run: async (context) => {

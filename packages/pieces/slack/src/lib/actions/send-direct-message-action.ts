@@ -1,6 +1,5 @@
 import {
   OAuth2PropertyValue,
-  createAction,
   Property,
 } from '@activepieces/pieces-framework'
 import {
@@ -10,10 +9,10 @@ import {
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common'
-import { slackAuth } from '../common/props'
 import { slackSendMessage } from '../common/utils'
+import { slack } from "../../";
 
-export const slackSendDirectMessageAction = createAction({
+slack.addAction({
   name: 'send_direct_message',
   displayName: 'Send Message To A User',
   description: 'Send message to a user',
@@ -23,7 +22,6 @@ export const slackSendDirectMessageAction = createAction({
     results: [1, 2, 3, 4],
   },
   props: {
-    authentication: slackAuth,
     userId: Property.Dropdown<string>({
       displayName: 'User',
       description: 'Message receiver',
@@ -72,7 +70,7 @@ export const slackSendDirectMessageAction = createAction({
     }),
   },
   async run(context) {
-    const token = context.propsValue.authentication?.access_token
+    const token = context.auth.access_token
     const { text, userId } = context.propsValue
 
     assertNotNullOrUndefined(token, 'token')
