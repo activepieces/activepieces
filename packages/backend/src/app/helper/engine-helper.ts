@@ -150,7 +150,7 @@ const execute = async <Result extends EngineHelperResult>(
     }))
 
     const nodeExecutablePath = process.execPath
-    const sandboxResponse = await sandbox.runCommandLine(`${nodeExecutablePath} --enable-source-maps main.js ${operation}`)
+    const sandboxResponse = await sandbox.runCommandLine(`${nodeExecutablePath} main.js ${operation}`)
 
     sandboxResponse.standardOutput.split('\n').forEach(f => {
         if (f.trim().length > 0) logger.info({}, chalk.yellow(f))
