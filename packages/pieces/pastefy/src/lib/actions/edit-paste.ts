@@ -3,14 +3,18 @@ import { formatDate, makeClient, pastefyCommon } from "../common";
 import CryptoJS from 'crypto-js';
 
 export default createAction({
-    name: 'create_paste',
-    displayName: 'Create Paste',
-    description: 'Creates a new paste',
+    name: 'edit_paste',
+    displayName: 'Edit Paste',
+    description: 'Edits an existing private paste',
     props: {
         authentication: pastefyCommon.authentication(),
+        paste_id: Property.ShortText({
+            displayName: 'Paste ID',
+            required: true
+        }),
         content: Property.LongText({
             displayName: 'Content',
-            required: true
+            required: false
         }),
         title: Property.ShortText({
             displayName: 'Title',
@@ -34,12 +38,14 @@ export default createAction({
         let content = context.propsValue.content
         let title = context.propsValue.title
         if(password) {
-            content = CryptoJS.AES.encrypt(content, password).toString()
+            if(content) {
+                content = CryptoJS.AES.encrypt(content, password).toString()
+            }
             if(title) {
                 title = CryptoJS.AES.encrypt(title, password).toString()
             }
         }
-        const res = await client.createPaste({
+        const res = await client.editPaste(context.propsValue.paste_id, {
             title,
             content,
             encrypted: !!password,
@@ -47,6 +53,6 @@ export default createAction({
             visibility: context.propsValue.visibility,
             expire_at: formatDate(context.propsValue.expiry)
         })
-        return res.paste
+        return res
     }
 })

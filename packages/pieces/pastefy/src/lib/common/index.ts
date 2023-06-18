@@ -1,6 +1,7 @@
 import { Property, StaticPropsValue } from "@activepieces/pieces-framework";
 import { PastefyClient } from "./client";
 import { FolderHierarchy } from "./models/folder";
+import { PasteVisibility } from "./models/paste";
 
 interface FlatFolder {
     id: string,
@@ -21,6 +22,12 @@ function flattenFolderHierarchy(hierarchy: FolderHierarchy[]): FlatFolder[] {
     return folders
 }
 
+export function formatDate(date?: string): string|undefined {
+    if(!date)
+        return date
+    return date.replace('T', ' ').replace('Z', '').replace(/\.[0-9]{3}/, '')
+}
+
 export const pastefyCommon = {
     authentication: (required = true) => Property.CustomAuth({
         displayName: 'Authentication',
@@ -34,7 +41,7 @@ export const pastefyCommon = {
             }),
             token: Property.SecretText({
                 displayName: 'API-Token',
-                required: true
+                required: false
             })   
         }
     }),
@@ -64,9 +71,20 @@ export const pastefyCommon = {
                 })
             }
         }
+    }),
+    visibility: (required = true) => Property.StaticDropdown({
+        displayName: 'Visibility',
+        required,
+        options: {
+            options: [
+                { label: 'Public', value: PasteVisibility.PUBLIC },
+                { label: 'Unlisted', value: PasteVisibility.UNLISTED },
+                { label: 'Private', value: PasteVisibility.PRIVATE },
+            ]
+        }
     })
 }
 
 export function makeClient(propsValue: StaticPropsValue<any>): PastefyClient {
-    return new PastefyClient(propsValue.authentication.token, propsValue.instance_url)
+    return new PastefyClient(propsValue.authentication.token || undefined, propsValue.instance_url)
 }

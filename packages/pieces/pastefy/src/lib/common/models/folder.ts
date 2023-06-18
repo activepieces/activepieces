@@ -13,7 +13,7 @@ export interface Folder {
 
 export interface FolderCreateRequest {
     name: string,
-    parent: string
+    parent?: string
 }
 
 export interface FolderCreateResponse extends ActionResponse {
