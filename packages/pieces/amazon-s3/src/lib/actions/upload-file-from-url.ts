@@ -1,14 +1,13 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
-import { auth } from "../common/auth";
+import { Property } from "@activepieces/pieces-framework";
 import { S3 } from "@aws-sdk/client-s3";
 import axios from "axios";
+import { amazonS3 } from "../../";
 
-export const uploadFileFromUrl = createAction({
+amazonS3.addAction({
     name: 'upload-file-from-url',
     displayName: "Upload File from URL",
     description: "Upload an file to S3 by using it's url",
     props: {
-        authentication: auth,
         url: Property.LongText({
             displayName: 'url',
             required: true,
@@ -56,7 +55,7 @@ export const uploadFileFromUrl = createAction({
         }),
     },
     async run(context) {
-        const { accessKeyId, secretAccessKey, region, bucket } = context.propsValue.authentication;
+        const { accessKeyId, secretAccessKey, region, bucket } = context.auth;
         const { url, imageName, acl } = context.propsValue;
         const s3 = new S3({
             credentials: {

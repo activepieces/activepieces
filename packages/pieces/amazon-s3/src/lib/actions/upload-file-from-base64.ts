@@ -1,13 +1,12 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
+import { Property } from "@activepieces/pieces-framework";
 import { S3 } from "@aws-sdk/client-s3";
-import { auth } from "../common/auth";
+import { amazonS3 } from "../../";
 
-export const uploadBase64File = createAction({
+amazonS3.addAction({
     name: 'upload-base64-file',
     displayName: "Upload base64 File",
     description: "Upload an File to S3 by using it's base64 string",
     props: {
-        authentication: auth,
         base64: Property.LongText({
             displayName: 'Base64',
             required: true,
@@ -52,7 +51,7 @@ export const uploadBase64File = createAction({
                     }
                 ]
             }
-        }),        
+        }),
         type: Property.StaticDropdown({
             displayName: 'Type',
             required: true,
@@ -103,7 +102,7 @@ export const uploadBase64File = createAction({
         }),
     },
     async run(context) {
-        const { accessKeyId, secretAccessKey, region, bucket } = context.propsValue.authentication;
+        const { accessKeyId, secretAccessKey, region, bucket } = context.auth;
         const { base64, fileName: imageName, acl, type } = context.propsValue;
 
         const buffer = Buffer.from(base64.replace(/^data:image\/\w+;base64,/, ""), 'base64');
