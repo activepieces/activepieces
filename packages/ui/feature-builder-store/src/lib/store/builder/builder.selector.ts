@@ -428,19 +428,19 @@ const selectAppConnectionsForMentionsDropdown = createSelector(
 
 const selectAllStepsForMentionsDropdown = createSelector(
   selectCurrentStep,
-  selectCurrentFlow,
+  selectShownFlowVersion,
   selectAllFlowItemsDetails,
   (
     currentStep,
-    flow,
+    flowVersion,
     flowItemDetails
   ): (MentionListItem & { step: FlowItem })[] => {
-    if (!currentStep || !flow || !flow.version || !flow.version.trigger) {
+    if (!currentStep || !flowVersion || !flowVersion.trigger) {
       return [];
     }
     const path = FlowStructureUtil.findPathToStep(
       currentStep,
-      flow?.version?.trigger
+      flowVersion?.trigger
     );
     return path.map((s) => {
       return {

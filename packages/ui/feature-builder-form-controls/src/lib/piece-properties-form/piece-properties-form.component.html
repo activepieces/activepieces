@@ -443,7 +443,7 @@
       </mat-error>
     </mat-form-field>
     <app-builder-autocomplete-mentions-dropdown #mentionsDropdown (menuClosed)="textControl.focusEditor()"
-      [container]="interpolatingTextComponentContainer" marginTop="-20px"
+      [container]="interpolatingTextComponentContainer" marginTop="-20px" width="100%"
       (addMention)="addMention(textControl,$event)"></app-builder-autocomplete-mentions-dropdown>
   </div>
 </ng-template>
@@ -462,7 +462,7 @@
 
 <ng-template #removeOptionalPropertyIcon let-property let-propertyUiContainer="propertyUiContainer">
   <svg-icon (click)="removeConfig(property.key)" src="/assets/img/custom/close.svg" apTrackHover
-    #removeIcon="hoverTrackerDirective" *ngIf="!property.value.required"
+    #removeIcon="hoverTrackerDirective" *ngIf="!property.value.required && form.enabled"
     class="ap-w-[13px] ap-h-[13px] ap-cursor-pointer ap-mt-[1px]"
     [class.ap-opacity-0]="!removeIcon.isHovered && !propertyUiContainer.isHovered" [applyClass]="true"></svg-icon>
 </ng-template>
