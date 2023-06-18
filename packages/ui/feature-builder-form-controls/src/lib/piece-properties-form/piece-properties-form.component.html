@@ -28,7 +28,6 @@
     <ng-container *ngTemplateOutlet="formFieldsTemplate;context:{$implicit:property, propertyIndex:i, formGroup:form}">
     </ng-container>
   </div>
-
 </form>
 
 <ng-template let-property let-propertyIndex="propertyIndex" #formFieldsTemplate let-formGroup="formGroup">
@@ -41,9 +40,13 @@
       </ng-container>
 
       <ng-template #checkboxInputTemplate>
-        <div class="ap-flex ap-mb-[20px] ap-mr-[5px]">
+        <div class="ap-flex ap-mb-[20px] ap-mr-[5px] ap-items-center ap-gap-2">
+
           <mat-slide-toggle [formControlName]="property.key" color="primary"
             [matTooltip]="property.value.description">{{property.value.displayName}}</mat-slide-toggle>
+          <svg-icon (click)="removeConfig(property.key)" src="/assets/img/custom/close.svg"
+            *ngIf="!property.value.required" class="ap-w-[13px] ap-h-[13px] ap-cursor-pointer ap-mt-[1px]"
+            [applyClass]="true"></svg-icon>
           <div class="ap-flex-grow"></div>
           <div class="ap-cursor-pointer">
             <ng-container

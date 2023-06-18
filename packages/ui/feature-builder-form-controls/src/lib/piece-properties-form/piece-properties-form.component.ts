@@ -178,7 +178,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
         this.requiredProperties[pk] = this.properties[pk];
       } else {
         this.allOptionalProperties[pk] = this.properties[pk];
-        if (propertiesValues[pk]) {
+        if (propertiesValues[pk] !== undefined) {
           this.selectedOptionalProperties[pk] = this.properties[pk];
         }
       }
