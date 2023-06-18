@@ -298,6 +298,11 @@
       </ng-container>
       <ng-template #connectionDropdownInputTemplate>
         <div class="ap-relative">
+          <div class="ap-absolute -ap-left-[20px]"
+            [style.top]="dropdown._elementRef.nativeElement.clientHeight/2 - 13+'px'">
+            <ng-container
+              *ngTemplateOutlet="removeOptionalPropertyIcon; context{$implicit:property, propertyUiContainer:dropdownUiContainer}"></ng-container>
+          </div>
           <app-add-edit-connection-button class="edit-selected-auth ap-z-40"
             *ngIf="formGroup.enabled && formGroup.get(property.key)!.value" btnSize="extraSmall"
             [isEditConnectionButton]="true" [authProperty]="property.value" [pieceName]="pieceName"
@@ -306,7 +311,8 @@
             (connectionPropertyValueChanged)="connectionValueChanged($event)" [triggerName]="actionOrTriggerName">
             Edit
           </app-add-edit-connection-button>
-          <mat-form-field class="ap-w-full" appearance="outline">
+          <mat-form-field class="ap-w-full" appearance="outline" #dropdown #dropdownUiContainer="hoverTrackerDirective"
+            apTrackHover>
             <mat-label> {{ property.value.displayName }} </mat-label>
             <mat-select [formControlName]="property.key" [compareWith]="dropdownCompareWithFunction">
               <mat-option *ngFor="let opt of ((allAuthConfigs$ | async)!| authConfigsForPiece:pieceName)"
@@ -392,7 +398,6 @@
       <ng-container *ngIf="(refreshableConfigsLoadingFlags$[property.key] | async) === false ||
         (refreshableConfigsLoadingFlags$[property.key] | async) === undefined ||
         (refreshableConfigsLoadingFlags$[property.key] | async) === null; else loading">
-
         <div class="ap-flex ap-flex-col ap-gap-2">
           <div *ngFor="let cp of (dynamicPropsObservables$[property.key] | async)| objectToArray; let i = index">
             <ng-container
