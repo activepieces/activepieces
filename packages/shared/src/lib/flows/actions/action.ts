@@ -44,17 +44,9 @@ export const PieceActionSettings = Type.Object({
   pieceName: Type.String({}),
   pieceVersion: SemVerType,
   actionName: Type.Optional(Type.String({})),
+  auth: Type.String(),
   input: Type.Record(Type.String({}), Type.Any()),
   inputUiInfo: SampleDataSettingsObject,
-  auth: Type.Optional(
-    Type.Union([
-      Type.String(),
-      Type.Record(
-        Type.String(),
-        Type.Unknown(),
-      )
-    ])
-  )
 });
 
 export const MissingActionSchema = Type.Object({

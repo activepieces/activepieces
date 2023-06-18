@@ -37,8 +37,8 @@ export const PieceTriggerSettings = Type.Object({
   pieceName: Type.String({}),
   pieceVersion: SemVerType,
   triggerName: Type.String({}),
+  auth: Type.String(),
   input: Type.Record(Type.String({}), Type.Any()),
-  auth: Type.Union([Type.String(), Type.Record(Type.String({}), Type.Unknown())]),
   inputUiInfo: SampleDataSettingsObject
 });
 
