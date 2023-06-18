@@ -9,15 +9,7 @@ import {
   ViewChild,
 } from '@angular/core';
 
-import {
-  BehaviorSubject,
-  Observable,
-  of,
-  switchMap,
-  take,
-  tap,
-  map,
-} from 'rxjs';
+import { Observable, of, switchMap, take, tap, map } from 'rxjs';
 import { fadeIn400ms } from '@activepieces/ui/common';
 import { BuilderAutocompleteMentionsDropdownService } from './builder-autocomplete-mentions-dropdown.service';
 import { InsertMentionOperation } from '../utils';
@@ -39,7 +31,7 @@ export class BuilderAutocompleteMentionsDropdownComponent {
   @ViewChild('mentionsList', { read: ElementRef }) mentionsList: ElementRef;
   @Output() addMention: EventEmitter<InsertMentionOperation> =
     new EventEmitter();
-  showMenuSubject$: BehaviorSubject<boolean> = new BehaviorSubject(false);
+
   showMenuObs$: Observable<boolean>;
   @Input() width = 'calc( 100% - 2.4rem )';
   @Input() left = 'unset';
@@ -66,6 +58,7 @@ export class BuilderAutocompleteMentionsDropdownComponent {
           .asObservable()
           .pipe(
             map((val) => {
+              debugger;
               return val === this.id;
             }),
             tap((val) => {
@@ -116,7 +109,11 @@ export class BuilderAutocompleteMentionsDropdownComponent {
 
   calculateDropdownOffset() {
     setTimeout(() => {
-      if (this.mentionsList && this.showMenuSubject$.value) {
+      if (
+        this.mentionsList &&
+        this.interpolatingTextFormControlService.currentAutocompleteInputId$
+          .value === this.id
+      ) {
         const containerRect = this.container.getBoundingClientRect();
         const MENTIONS_DROPDOWN_HEIGHT =
           this.mentionsList.nativeElement.getBoundingClientRect().height;

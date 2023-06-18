@@ -385,9 +385,12 @@
             </div>
           </div>
           <ngx-codemirror [formControlName]="property.key" #jsonControl [options]="editorOptions"
-            (focusChange)="$event? mentionsDropdown.showMenuSubject$.next(true): null"></ngx-codemirror>
-          <app-builder-autocomplete-mentions-dropdown #mentionsDropdown [container]="interpolatingTextControlContainer"
-            (addMention)="addMentionToJsonControl(jsonControl,$event)"></app-builder-autocomplete-mentions-dropdown>
+            (focusChange)="$event? handler.showMentionsDropdown(): null"></ngx-codemirror>
+          <app-builder-autocomplete-mentions-dropdown #mentionsDropdown
+            [id]="handler.id"></app-builder-autocomplete-mentions-dropdown>
+          <app-builder-autocomplete-dropdown-handler #handler [container]="interpolatingTextControlContainer"
+            (mentionEmitted)="addMentionToJsonControl(jsonControl,$event)">
+          </app-builder-autocomplete-dropdown-handler>
         </div>
         <div *ngIf="getControl(property.key)!.invalid" class="ap-p-2">
           <p @fadeInUp *ngIf="getControl(property.key)!.hasError('required');else invalidJson"

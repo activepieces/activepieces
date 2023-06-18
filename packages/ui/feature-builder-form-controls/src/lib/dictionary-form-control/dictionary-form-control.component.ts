@@ -10,7 +10,7 @@ import {
 import { Observable, tap } from 'rxjs';
 import { InterpolatingTextFormControlComponent } from '../interpolating-text-form-control/interpolating-text-form-control.component';
 import { InsertMentionOperation } from '../interpolating-text-form-control/utils';
-import { BuilderAutocompleteMentionsDropdownComponent } from '../interpolating-text-form-control/builder-autocomplete-mentions-dropdown/builder-autocomplete-mentions-dropdown.component';
+import { BuilderAutocompleteDropdownHandlerComponent } from '../interpolating-text-form-control/builder-autocomplete-dropdown-handler/builder-autocomplete-dropdown-handler.component';
 
 @Component({
   selector: 'app-dictonary-form-control',
@@ -129,12 +129,13 @@ export class DictionaryFormControlComponent
   }
   showMenu(
     $event: MouseEvent | boolean,
-    mentionsDropdown: BuilderAutocompleteMentionsDropdownComponent
+    mentionsDropdown: BuilderAutocompleteDropdownHandlerComponent
   ) {
+    //if it is boolean it means that the invocation of this function was from editorfocused
     if (typeof $event !== 'boolean') {
       $event.stopImmediatePropagation();
     }
-    mentionsDropdown.showMenuSubject$.next(true);
+    mentionsDropdown.showMentionsDropdown();
   }
   focusFirstKeyInput() {
     this.firstKeyInput.nativeElement.focus();
