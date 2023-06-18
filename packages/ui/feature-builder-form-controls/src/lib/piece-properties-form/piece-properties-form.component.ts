@@ -416,7 +416,6 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
         );
       }
     });
-
     return controls;
   }
   getControl(configKey: string) {
@@ -450,7 +449,8 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
         new UntypedFormControl(
           property.defaultValue
             ? JSON.stringify(property.defaultValue, null, 2)
-            : undefined
+            : '',
+          [jsonValidator]
         )
       );
     }
