@@ -8,8 +8,16 @@ import {
   Output,
   ViewChild,
 } from '@angular/core';
-import { UUID } from 'angular2-uuid';
-import { BehaviorSubject, Observable, of, switchMap, take, tap } from 'rxjs';
+
+import {
+  BehaviorSubject,
+  Observable,
+  of,
+  switchMap,
+  take,
+  tap,
+  map,
+} from 'rxjs';
 import { fadeIn400ms } from '@activepieces/ui/common';
 import { BuilderAutocompleteMentionsDropdownService } from './builder-autocomplete-mentions-dropdown.service';
 import { InsertMentionOperation } from '../utils';
@@ -39,7 +47,7 @@ export class BuilderAutocompleteMentionsDropdownComponent {
   @Input() focusSearch = false;
   @Input() mouseWithin = false;
   calculatedMarginTop = '0px';
-  id = new UUID();
+  @Input() id: number;
   @Input() container: HTMLElement;
   focusChecker: NodeJS.Timer;
   constructor(
@@ -54,27 +62,42 @@ export class BuilderAutocompleteMentionsDropdownComponent {
         if (val === ViewModeEnum.VIEW_INSTANCE_RUN) {
           return of(false);
         }
-        return this.showMenuSubject$.asObservable().pipe(
-          tap((val) => {
-            if (val) {
-              this.calculateDropdownOffset();
-              this.setFocusChecker();
-            }
-          })
-        );
+        return this.interpolatingTextFormControlService.currentAutocompleteInputId$
+          .asObservable()
+          .pipe(
+            map((val) => {
+              return val === this.id;
+            }),
+            tap((val) => {
+              if (val) {
+                this.calculateDropdownOffset();
+                this.setFocusChecker();
+              }
+            })
+          );
       })
     );
   }
-
+  mentionEmitted(mention: InsertMentionOperation) {
+    this.interpolatingTextFormControlService.mentionEmitted.next({
+      id: this.interpolatingTextFormControlService.currentAutocompleteInputId$
+        .value!,
+      insert: mention,
+    });
+  }
   private setFocusChecker() {
     if (this.focusChecker) {
       clearInterval(this.focusChecker);
     }
     this.focusChecker = setInterval(() => {
       if (
-        !this.container.matches(':focus-within') &&
-        this.matDialog.openDialogs.length === 0 &&
-        !this.mouseWithin
+        !this.interpolatingTextFormControlService
+          .currentAutoCompleteInputContainer$.value ||
+        (!this.interpolatingTextFormControlService.currentAutoCompleteInputContainer$.value.matches(
+          ':focus-within'
+        ) &&
+          this.matDialog.openDialogs.length === 0 &&
+          !this.mouseWithin)
       ) {
         clearInterval(this.focusChecker);
         this.close();
@@ -83,7 +106,12 @@ export class BuilderAutocompleteMentionsDropdownComponent {
   }
 
   close() {
-    this.showMenuSubject$.next(false);
+    this.interpolatingTextFormControlService.currentAutocompleteInputId$.next(
+      null
+    );
+    this.interpolatingTextFormControlService.currentAutoCompleteInputContainer$.next(
+      null
+    );
   }
 
   calculateDropdownOffset() {

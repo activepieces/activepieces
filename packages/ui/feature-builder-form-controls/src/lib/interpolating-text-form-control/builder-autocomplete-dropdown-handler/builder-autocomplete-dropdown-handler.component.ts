@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   EventEmitter,
+  Input,
   Output,
 } from '@angular/core';
 import { BuilderAutocompleteMentionsDropdownService } from '../builder-autocomplete-mentions-dropdown/builder-autocomplete-mentions-dropdown.service';
@@ -16,7 +17,9 @@ import { Observable, filter, tap } from 'rxjs';
 export class BuilderAutocompleteDropdownHandlerComponent {
   static nextId = 0;
   id = BuilderAutocompleteDropdownHandlerComponent.nextId++;
-  @Output() mentionEmitted: EventEmitter<InsertMentionOperation>;
+  @Input() container: HTMLElement;
+  @Output() mentionEmitted: EventEmitter<InsertMentionOperation> =
+    new EventEmitter();
   listenToMentions$: Observable<{ id: number; insert: InsertMentionOperation }>;
   constructor(
     private builderAutocompleteService: BuilderAutocompleteMentionsDropdownService
@@ -30,15 +33,8 @@ export class BuilderAutocompleteDropdownHandlerComponent {
   }
   showMentionsDropdown() {
     this.builderAutocompleteService.currentAutocompleteInputId$.next(this.id);
-  }
-  hideMentionsDropdown() {
-    if (
-      this.builderAutocompleteService.currentAutocompleteInputId$.value ===
-      this.id
-    ) {
-      this.builderAutocompleteService.currentAutocompleteInputId$.next(
-        undefined
-      );
-    }
+    this.builderAutocompleteService.currentAutoCompleteInputContainer$.next(
+      this.container
+    );
   }
 }

@@ -8,8 +8,10 @@ import { InsertMentionOperation } from '../utils';
 })
 export class BuilderAutocompleteMentionsDropdownService {
   editStepSection?: ElementRef;
-  currentAutocompleteInputId$: BehaviorSubject<undefined | number> =
-    new BehaviorSubject(undefined);
+  currentAutoCompleteInputContainer$: BehaviorSubject<HTMLElement | null> =
+    new BehaviorSubject<HTMLElement | null>(null);
+  currentAutocompleteInputId$: BehaviorSubject<number | null> =
+    new BehaviorSubject<number | null>(null);
   mentionEmitted: Subject<{
     id: number;
     insert: InsertMentionOperation;
