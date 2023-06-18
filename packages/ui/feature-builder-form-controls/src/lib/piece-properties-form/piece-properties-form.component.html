@@ -42,11 +42,10 @@
       <ng-template #checkboxInputTemplate>
         <div class="ap-flex ap-mb-[20px] ap-mr-[5px] ap-items-center ap-gap-2">
 
-          <mat-slide-toggle [formControlName]="property.key" color="primary"
-            [matTooltip]="property.value.description">{{property.value.displayName}}</mat-slide-toggle>
-          <svg-icon (click)="removeConfig(property.key)" src="/assets/img/custom/close.svg"
-            *ngIf="!property.value.required" class="ap-w-[13px] ap-h-[13px] ap-cursor-pointer ap-mt-[1px]"
-            [applyClass]="true"></svg-icon>
+          <mat-slide-toggle apTrackHover #slider="hoverTrackerDirective" [formControlName]="property.key"
+            color="primary" [matTooltip]="property.value.description">{{property.value.displayName}}</mat-slide-toggle>
+          <ng-container
+            *ngTemplateOutlet="removeOptionalPropertyIcon; context{$implicit:property, propertyUiContainer:slider}"></ng-container>
           <div class="ap-flex-grow"></div>
           <div class="ap-cursor-pointer">
             <ng-container
@@ -389,8 +388,14 @@
 <ng-container *ngIf="configDropdownChanged$  | keyvalue"></ng-container>
 
 <ng-template #textInputTemplate let-property let-formGroup="formGroup">
-  <div [formGroup]="formGroup" #interpolatingTextComponentContainer (click)="$event.stopImmediatePropagation()">
-    <mat-form-field class="ap-w-full" appearance="outline"
+
+  <div [formGroup]="formGroup" #interpolatingTextComponentContainer (click)="$event.stopImmediatePropagation()"
+    class="ap-relative" apTrackHover #textInputContainer="hoverTrackerDirective">
+    <div class="ap-absolute -ap-left-[20px]" [style.top]="textInput._elementRef.nativeElement.clientHeight/2-10+'px'">
+      <ng-container
+        *ngTemplateOutlet="removeOptionalPropertyIcon; context{$implicit:property, propertyUiContainer:textInputContainer}"></ng-container>
+    </div>
+    <mat-form-field class="ap-w-full" appearance="outline" #textInput
       (click)="isTriggerPieceForm?null: mentionsDropdown.showMenuSubject$.next(true)">
       <mat-label>{{property.value.displayName}}</mat-label>
       <app-interpolating-text-form-control #textControl [matTooltip]="property.value.description"
@@ -417,3 +422,11 @@
 </ng-template>
 
 <ng-container *ngIf="setDefaultValue$ | async"></ng-container>
+
+
+<ng-template #removeOptionalPropertyIcon let-property let-propertyUiContainer="propertyUiContainer">
+  <svg-icon (click)="removeConfig(property.key)" src="/assets/img/custom/close.svg" apTrackHover
+    #removeIcon="hoverTrackerDirective" *ngIf="!property.value.required"
+    class="ap-w-[13px] ap-h-[13px] ap-cursor-pointer ap-mt-[1px]"
+    [class.ap-opacity-0]="!removeIcon.isHovered && !propertyUiContainer.isHovered" [applyClass]="true"></svg-icon>
+</ng-template>
