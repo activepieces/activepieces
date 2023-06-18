@@ -82,26 +82,35 @@
           *ngTemplateOutlet="customizedInputs && customizedInputs[property.key]? textInputTemplate:dropdownInputTemplate ;context:{$implicit:property, formGroup:formGroup}">
         </ng-container>
         <ng-template #dropdownInputTemplate>
-          <mat-form-field class="ap-w-full" appearance="outline">
-            <mat-label> {{ (refreshableConfigsLoadingFlags$[property.key] | async)? 'Loading...' :
-              property.value.displayName
-              }}</mat-label>
-            <mat-select [formControlName]="property.key" [compareWith]="dropdownCompareWithFunction">
-              <ng-container *ngIf="dropdownOptionsObservables$[property.key]| async as state">
+          <div class="ap-relative">
+            <div class="ap-absolute -ap-left-[20px]"
+              [style.top]="dropdown._elementRef.nativeElement.clientHeight/2+6.5+'px'">
+              <ng-container
+                *ngTemplateOutlet="removeOptionalPropertyIcon; context{$implicit:property, propertyUiContainer:dropdownUiContainer}"></ng-container>
+            </div>
+            <mat-form-field class="ap-w-full" appearance="outline" #dropdown
+              #dropdownUiContainer="hoverTrackerDirective" apTrackHover>
+              <mat-label> {{ (refreshableConfigsLoadingFlags$[property.key] | async)? 'Loading...' :
+                property.value.displayName
+                }}</mat-label>
+              <mat-select [formControlName]="property.key" [compareWith]="dropdownCompareWithFunction">
+                <ng-container *ngIf="dropdownOptionsObservables$[property.key]| async as state">
 
-                <mat-option *ngFor="let opt of state.options" [value]="opt.value">
-                  {{opt.label}}
-                </mat-option>
-                <mat-option [disabled]="true"
-                  *ngIf="state.disabled && ((refreshableConfigsLoadingFlags$[property.key] | async) === false || !refreshableConfigsLoadingFlags$[property.key])">
-                  <div> {{state.placeholder}} </div>
-                </mat-option>
-              </ng-container>
-            </mat-select>
-            <mat-error *ngIf="formGroup.get(property.key)?.invalid">
-              {{property.value.displayName}} is required
-            </mat-error>
-          </mat-form-field>
+                  <mat-option *ngFor="let opt of state.options" [value]="opt.value">
+                    {{opt.label}}
+                  </mat-option>
+                  <mat-option [disabled]="true"
+                    *ngIf="state.disabled && ((refreshableConfigsLoadingFlags$[property.key] | async) === false || !refreshableConfigsLoadingFlags$[property.key])">
+                    <div> {{state.placeholder}} </div>
+                  </mat-option>
+                </ng-container>
+              </mat-select>
+              <mat-error *ngIf="formGroup.get(property.key)?.invalid">
+                {{property.value.displayName}} is required
+              </mat-error>
+            </mat-form-field>
+          </div>
+
         </ng-template>
 
       </div>
@@ -117,35 +126,45 @@
           *ngTemplateOutlet="customizedInputs && customizedInputs[property.key]? textInputTemplate:multiDropdownInputTemplate ;context:{$implicit:property, formGroup:formGroup}">
         </ng-container>
         <ng-template #multiDropdownInputTemplate>
-          <mat-form-field class="ap-w-full" appearance="outline">
-            <mat-label> {{ (refreshableConfigsLoadingFlags$[property.key] | async)? 'Loading...' :
-              property.value.displayName
-              }}</mat-label>
-            <mat-select
-              [style.display]="((dropdownOptionsObservables$[property.key] | async) === undefined || (dropdownOptionsObservables$[property.key] | async) === null ||  (dropdownOptionsObservables$[property.key] | async)?.disabled === true)? 'none':'block' "
-              multiple [formControlName]="property.key" [compareWith]="dropdownCompareWithFunction">
-              <ng-container *ngIf="dropdownOptionsObservables$[property.key]| async as state">
+          <div class="ap-relative">
+            <div class="ap-absolute -ap-left-[20px]"
+              [style.top]="dropdown._elementRef.nativeElement.clientHeight/2+6.5+'px'">
 
-                <mat-option *ngFor="let opt of state.options" [value]="opt.value">
-                  {{opt.label}}
-                </mat-option>
-              </ng-container>
-            </mat-select>
-            <ng-container
-              *ngIf="!!(dropdownOptionsObservables$[property.key] | async) &&  (dropdownOptionsObservables$[property.key] | async)?.disabled === true; ">
-              <mat-select [formControlName]="property.key" [compareWith]="dropdownCompareWithFunction">
+              <ng-container
+                *ngTemplateOutlet="removeOptionalPropertyIcon; context{$implicit:property, propertyUiContainer:dropdownUiContainer}"></ng-container>
+            </div>
+            <mat-form-field class="ap-w-full" appearance="outline" #dropdown
+              #dropdownUiContainer="hoverTrackerDirective" apTrackHover>
+              <mat-label> {{ (refreshableConfigsLoadingFlags$[property.key] | async)? 'Loading...' :
+                property.value.displayName
+                }}</mat-label>
+              <mat-select
+                [style.display]="((dropdownOptionsObservables$[property.key] | async) === undefined || (dropdownOptionsObservables$[property.key] | async) === null ||  (dropdownOptionsObservables$[property.key] | async)?.disabled === true)? 'none':'block' "
+                multiple [formControlName]="property.key" [compareWith]="dropdownCompareWithFunction">
                 <ng-container *ngIf="dropdownOptionsObservables$[property.key]| async as state">
-                  <mat-option [disabled]="true"
-                    *ngIf="state.disabled && ((refreshableConfigsLoadingFlags$[property.key] | async) === false || !refreshableConfigsLoadingFlags$[property.key])">
-                    <div> {{state.placeholder}} </div>
+
+                  <mat-option *ngFor="let opt of state.options" [value]="opt.value">
+                    {{opt.label}}
                   </mat-option>
                 </ng-container>
               </mat-select>
-            </ng-container>
-            <mat-error *ngIf="formGroup.get(property.key)?.invalid">
-              {{property.value.displayName}} is required
-            </mat-error>
-          </mat-form-field>
+              <ng-container
+                *ngIf="!!(dropdownOptionsObservables$[property.key] | async) &&  (dropdownOptionsObservables$[property.key] | async)?.disabled === true; ">
+                <mat-select [formControlName]="property.key" [compareWith]="dropdownCompareWithFunction">
+                  <ng-container *ngIf="dropdownOptionsObservables$[property.key]| async as state">
+                    <mat-option [disabled]="true"
+                      *ngIf="state.disabled && ((refreshableConfigsLoadingFlags$[property.key] | async) === false || !refreshableConfigsLoadingFlags$[property.key])">
+                      <div> {{state.placeholder}} </div>
+                    </mat-option>
+                  </ng-container>
+                </mat-select>
+              </ng-container>
+              <mat-error *ngIf="formGroup.get(property.key)?.invalid">
+                {{property.value.displayName}} is required
+              </mat-error>
+            </mat-form-field>
+          </div>
+
         </ng-template>
 
       </div>
@@ -163,18 +182,26 @@
           *ngTemplateOutlet="customizedInputs && customizedInputs[property.key]? textInputTemplate:staticDropdownInputTemplate ;context:{$implicit:property, formGroup:formGroup}">
         </ng-container>
         <ng-template #staticDropdownInputTemplate>
-          <mat-form-field class="ap-w-full" appearance="outline">
-            <mat-label> {{ property.value.displayName }} </mat-label>
-            <mat-select [matTooltip]="property.value.description" [formControlName]="property.key"
-              [compareWith]="dropdownCompareWithFunction">
-              <mat-option *ngFor="let opt of property.value.options.options" [value]="opt.value">
-                {{opt.label}}
-              </mat-option>
-            </mat-select>
-            <mat-error *ngIf="formGroup.get(property.key)?.invalid">
-              {{property.value.displayName}} is required
-            </mat-error>
-          </mat-form-field>
+          <div class="ap-relative">
+            <div class="ap-absolute -ap-left-[20px]"
+              [style.top]="dropdown._elementRef.nativeElement.clientHeight/2 + 6.5+'px'">
+              <ng-container
+                *ngTemplateOutlet="removeOptionalPropertyIcon; context{$implicit:property, propertyUiContainer:dropdownUiContainer}"></ng-container>
+            </div>
+            <mat-form-field class="ap-w-full" appearance="outline" apTrackHover
+              #dropdownUiContainer="hoverTrackerDirective" #dropdown>
+              <mat-label> {{ property.value.displayName }} </mat-label>
+              <mat-select [matTooltip]="property.value.description" [formControlName]="property.key"
+                [compareWith]="dropdownCompareWithFunction">
+                <mat-option *ngFor="let opt of property.value.options.options" [value]="opt.value">
+                  {{opt.label}}
+                </mat-option>
+              </mat-select>
+              <mat-error *ngIf="formGroup.get(property.key)?.invalid">
+                {{property.value.displayName}} is required
+              </mat-error>
+            </mat-form-field>
+          </div>
         </ng-template>
 
       </div>
@@ -191,18 +218,27 @@
           *ngTemplateOutlet="customizedInputs && customizedInputs[property.key]? textInputTemplate:staticMultiSelectDropdownInputTemplate ;context:{$implicit:property, formGroup:formGroup}">
         </ng-container>
         <ng-template #staticMultiSelectDropdownInputTemplate>
-          <mat-form-field class="ap-w-full" appearance="outline">
-            <mat-label> {{ property.value.displayName }} </mat-label>
-            <mat-select [matTooltip]="property.value.description" [formControlName]="property.key" multiple
-              [compareWith]="dropdownCompareWithFunction">
-              <mat-option *ngFor="let opt of property.value.options.options" [value]="opt.value">
-                {{opt.label}}
-              </mat-option>
-            </mat-select>
-            <mat-error *ngIf="formGroup.get(property.key)?.invalid">
-              {{property.value.displayName}} is required
-            </mat-error>
-          </mat-form-field>
+          <div class="ap-relative">
+            <div class="ap-absolute -ap-left-[20px]"
+              [style.top]="dropdown._elementRef.nativeElement.clientHeight/2 + 6.5+'px'">
+              <ng-container
+                *ngTemplateOutlet="removeOptionalPropertyIcon; context{$implicit:property, propertyUiContainer:dropdownUiContainer}"></ng-container>
+            </div>
+            <mat-form-field #dropdown class="ap-w-full" appearance="outline"
+              #dropdownUiContainer="hoverTrackerDirective" apTrackHover>
+              <mat-label> {{ property.value.displayName }} </mat-label>
+              <mat-select [matTooltip]="property.value.description" [formControlName]="property.key" multiple
+                [compareWith]="dropdownCompareWithFunction">
+                <mat-option *ngFor="let opt of property.value.options.options" [value]="opt.value">
+                  {{opt.label}}
+                </mat-option>
+              </mat-select>
+              <mat-error *ngIf="formGroup.get(property.key)?.invalid">
+                {{property.value.displayName}} is required
+              </mat-error>
+            </mat-form-field>
+          </div>
+
         </ng-template>
       </div>
     </ng-container>
