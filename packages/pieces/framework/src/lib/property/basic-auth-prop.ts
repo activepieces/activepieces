@@ -1,5 +1,6 @@
 import { PropertyType } from "./property";
 import { BasePropertySchema, TPropertyValue } from "./base-prop";
+import { StringValidators } from "../validators/types";
 
 
 export type BasicAuthPropertySchema = BasePropertySchema & {
@@ -20,6 +21,8 @@ export type BasicAuthPropertyValue = {
 
 export type BasicAuthProperty<R extends boolean> = BasicAuthPropertySchema & TPropertyValue<
 	BasicAuthPropertyValue,
-    PropertyType.BASIC_AUTH,
+	never,
+	StringValidators,
+	PropertyType.BASIC_AUTH,
 	R
 >;

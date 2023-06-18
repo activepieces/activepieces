@@ -5,24 +5,14 @@ import { emailValidator, patternValidator, urlValidator } from "./regex";
 import { imageValidator } from "./file";
 import { inRangeValidator, maxValueValidator, minValueValidator, numberValidator } from "./number";
 import { maxLengthValidator, minLengthValidator } from "./text";
+import { ValidatorFn, ValidationErrors } from "./types";
+import { formatErrorMessage } from "./utils";
 
-export type ValidatorFn = (property: PieceProperty, processedValue: any, userInput: any) => string | null;
-
-export { ErrorMessages }
-
-export type ValidationErrors = Record<string, string[] | Record<string, string[]>>;
-
-export function formatErrorMessage(errorMessage: string, tokens: Record<string, any>): string {
-  let formattedMessage = errorMessage;
-  for (const key in tokens) {
-    formattedMessage = formattedMessage.replace(`{${key}}`, tokens[key]);
-  }
-  return formattedMessage;
-}
+export { ErrorMessages, ValidationErrors, formatErrorMessage }
 
 export class Validators {
 
-  static number(property: PieceProperty, processedValue: any, userInput: any): string | null {
+  static number: ValidatorFn = (property, processedValue, userInput) => {
     return numberValidator(property, processedValue, userInput)
   }
 
@@ -46,7 +36,7 @@ export class Validators {
     return inRangeValidator(min, max);
   }
 
-  static image(property: PieceProperty, processedValue: any, userInput: any): string | null {
+  static image: ValidatorFn = (property, processedValue, userInput) => {
     return imageValidator(property, processedValue, userInput);
   };
 
@@ -62,7 +52,7 @@ export class Validators {
     return patternValidator(regex);
   }
 
-  static datetime_iso(property: PieceProperty, processedValue: any, userInput: any): string | null {
+  static datetimeIso: ValidatorFn = (property, processedValue, userInput) => {
 
     if (property.required && isNil(processedValue)) {
       return formatErrorMessage(ErrorMessages.ISO_DATE, { userInput });
@@ -71,7 +61,7 @@ export class Validators {
     return null;
   }
 
-  static file(property: PieceProperty, processedValue: any, userInput: any): string | null {
+  static file: ValidatorFn = (property, processedValue, userInput) => {
 
     if (property.required && isNil(processedValue)) {
       return formatErrorMessage(ErrorMessages.FILE, { userInput });

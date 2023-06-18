@@ -1,20 +1,20 @@
-import { ProcessorFn } from "../processors/processors";
+import { AnyProcessors, DateTimeProcessors, FileProcessors, NumberProcessors } from "../processors/types";
+import { AnyValidators, DateTimeValidators, FileValidators, NumberValidators, StringValidators } from "../validators/types";
 import { PropertyType } from "./property";
-import { ValidatorFn } from "../validators/validators";
 
 export type BasePropertySchema = {
 	displayName: string;
 	description?: string;
 }
 
-export type TPropertyValue<T, U extends PropertyType, REQUIRED extends boolean> = {
+export type TPropertyValue<T, ALLOWED_PROCESSORS, ALLOWED_VALIDATORS, U extends PropertyType, REQUIRED extends boolean> = {
 	valueSchema: T;
 	type: U;
 	required: REQUIRED;
-	defaultProcessors?: ProcessorFn[]; 
-	defaultValidators?: ValidatorFn[];
-	processors?: ProcessorFn[];
-	validators?: ValidatorFn[];
+	defaultProcessors?: ALLOWED_PROCESSORS[]; 
+	defaultValidators?: ALLOWED_VALIDATORS[];
+	processors?: ALLOWED_PROCESSORS[];
+	validators?: ALLOWED_VALIDATORS[];
 	defaultValue?: U extends PropertyType.ARRAY?  unknown[]:
 	 U extends PropertyType.JSON? object:
 	 U extends PropertyType.CHECKBOX? boolean:
@@ -30,23 +30,23 @@ export type TPropertyValue<T, U extends PropertyType, REQUIRED extends boolean> 
 	unknown;
 };
 
-export type ShortTextProperty<R extends boolean> = BasePropertySchema & TPropertyValue<string, PropertyType.SHORT_TEXT, R>;
+export type ShortTextProperty<R extends boolean> = BasePropertySchema & TPropertyValue<string, never, StringValidators, PropertyType.SHORT_TEXT, R>;
 
-export type LongTextProperty<R extends boolean> = BasePropertySchema & TPropertyValue<string, PropertyType.LONG_TEXT, R>;
+export type LongTextProperty<R extends boolean> = BasePropertySchema & TPropertyValue<string, never, StringValidators, PropertyType.LONG_TEXT, R>;
 
-export type SecretTextProperty<R extends boolean> = BasePropertySchema & TPropertyValue<string, PropertyType.SECRET_TEXT, R>;
+export type SecretTextProperty<R extends boolean> = BasePropertySchema & TPropertyValue<string, never, StringValidators, PropertyType.SECRET_TEXT, R>;
 
-export type CheckboxProperty<R extends boolean> = BasePropertySchema & TPropertyValue<boolean, PropertyType.CHECKBOX, R>;
+export type CheckboxProperty<R extends boolean> = BasePropertySchema & TPropertyValue<boolean, never, never, PropertyType.CHECKBOX, R>;
 
-export type NumberProperty<R extends boolean> = BasePropertySchema & TPropertyValue<number, PropertyType.NUMBER, R>;
+export type NumberProperty<R extends boolean> = BasePropertySchema & TPropertyValue<number, NumberProcessors, NumberValidators, PropertyType.NUMBER, R>;
 
-export type ArrayProperty<R extends boolean> = BasePropertySchema & TPropertyValue<unknown[], PropertyType.ARRAY, R>;
+export type ArrayProperty<R extends boolean> = BasePropertySchema & TPropertyValue<unknown[], AnyProcessors, AnyValidators, PropertyType.ARRAY, R>;
 
-export type ObjectProperty<R extends boolean> = BasePropertySchema & TPropertyValue<Record<string, unknown>, PropertyType.OBJECT, R>;
+export type ObjectProperty<R extends boolean> = BasePropertySchema & TPropertyValue<Record<string, unknown>, never, never, PropertyType.OBJECT, R>;
 
-export type JsonProperty<R extends boolean> = BasePropertySchema & TPropertyValue<Record<string, unknown>, PropertyType.JSON, R>;
+export type JsonProperty<R extends boolean> = BasePropertySchema & TPropertyValue<Record<string, unknown>, never, never, PropertyType.JSON, R>;
 
-export type DateTimeProperty<R extends boolean> = BasePropertySchema & TPropertyValue<string, PropertyType.DATE_TIME, R>;
+export type DateTimeProperty<R extends boolean> = BasePropertySchema & TPropertyValue<string, DateTimeProcessors, DateTimeValidators, PropertyType.DATE_TIME, R>;
 
 export type ApFile = {
     filename?: string;
@@ -54,4 +54,4 @@ export type ApFile = {
     base64: string;
 }
 
-export type FileProperty<R extends boolean> = BasePropertySchema & TPropertyValue<ApFile, PropertyType.FILE, R>;
+export type FileProperty<R extends boolean> = BasePropertySchema & TPropertyValue<ApFile, FileProcessors, FileValidators, PropertyType.FILE, R>;

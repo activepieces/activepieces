@@ -1,8 +1,8 @@
-import { PieceProperty } from "../property";
 import { ErrorMessages } from './errors';
-import { formatErrorMessage } from "./validators";
+import { ValidatorFn } from "./types";
+import { formatErrorMessage } from "./utils";
 
-export function imageValidator(property: PieceProperty, processedValue: any, userInput: any): string | null {
+export const imageValidator: ValidatorFn = (property, processedValue, userInput) => {
   const regex = /\.(jpg|svg|jpeg|png|bmp|gif|webp)$/i;
 
   return regex.test((processedValue as File).name)

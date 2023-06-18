@@ -198,13 +198,13 @@ export const pieceHelper = {
             executionContext: testExecutionContext,
         })
         const variableService = new VariableService()
-        const { result, errors } = await variableService.validateAndCast(resolvedInput, action.props);
+        const { processedInput, errors } = await variableService.applyProcessorsAndValidators(resolvedInput, action.props);
         if (Object.keys(errors).length > 0) {
             throw new Error(JSON.stringify(errors));
         }
         const context: ActionContext<StaticPropsValue<Record<string, any>>> = {
             executionType: ExecutionType.BEGIN,
-            propsValue: result as Record<string, any>,
+            propsValue: processedInput as Record<string, any>,
             store: createContextStore('', globals.flowId),
             connections: {
                 get: async (key: string) => {

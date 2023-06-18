@@ -1,7 +1,8 @@
 import { isEmpty } from "lodash";
 import { PieceProperty } from "../property";
 import { ErrorMessages } from './errors';
-import { ValidatorFn, formatErrorMessage } from "./validators";
+import { formatErrorMessage } from "./utils";
+import { ValidatorFn } from "./types";
 
 export function maxLengthValidator(max: number): ValidatorFn {
   return (property: PieceProperty, processedValue: any, userInput: any): string | null => {

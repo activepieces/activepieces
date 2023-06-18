@@ -131,7 +131,7 @@ export const Property = {
 		request = {
 			...request, 
 			defaultProcessors: [Processors.datetime],
-			defaultValidators: [Validators.datetime_iso]
+			defaultValidators: [Validators.datetimeIso]
 		}
 		return { 
 			...request, 

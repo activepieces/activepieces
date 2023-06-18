@@ -2,6 +2,8 @@ import { PropertyType } from "./property";
 import { BasePropertySchema, CheckboxProperty, LongTextProperty, NumberProperty, SecretTextProperty, ShortTextProperty, TPropertyValue } from "./base-prop";
 import { StaticDropdownProperty } from "./dropdown-prop";
 import { StaticPropsValue } from "./property";
+import { NumberProcessors } from "../processors/types";
+import { NumberValidators, StringValidators } from "../validators/types";
 
 
 export interface CustomAuthProps {
@@ -16,6 +18,8 @@ export type CustomAuthPropertySchema<T> = BasePropertySchema & {
 
 export type CustomAuthProperty<R extends boolean, T extends CustomAuthProps> = CustomAuthPropertySchema<T> & TPropertyValue<
 	CustomAuthPropertyValue<T>,
+	NumberProcessors,
+	NumberValidators | StringValidators,
 	PropertyType.CUSTOM_AUTH,
 	R
 >;

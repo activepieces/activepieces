@@ -1,8 +1,8 @@
-import { PieceProperty } from "../property";
 import { ErrorMessages } from './errors';
-import { ValidatorFn, formatErrorMessage } from "./validators";
+import { ValidatorFn } from "./types";
+import { formatErrorMessage } from "./utils";
 
-export function numberValidator(property: PieceProperty, processedValue: any, userInput: any): string | null {
+export const numberValidator: ValidatorFn = (property, processedValue, userInput) => {
 
   if (isNaN(processedValue)) {
     return formatErrorMessage(ErrorMessages.NUMBER, { userInput });
@@ -12,7 +12,7 @@ export function numberValidator(property: PieceProperty, processedValue: any, us
 }
 
 export function minValueValidator(min: number): ValidatorFn {
-  return (property: PieceProperty, processedValue: any, userInput: any): string | null => {
+  return (property, processedValue, userInput) => {
     const isValid = Number(processedValue) >= Number(min);
 
     if (isValid) return null;
@@ -23,7 +23,7 @@ export function minValueValidator(min: number): ValidatorFn {
 }
 
 export function maxValueValidator(max: number): ValidatorFn {
-  return (property: PieceProperty, processedValue: any, userInput: any): string | null => {
+  return (property, processedValue, userInput) => {
     const isValid = Number(processedValue) <= Number(max);
 
     if (isValid) return null;
@@ -34,7 +34,7 @@ export function maxValueValidator(max: number): ValidatorFn {
 }
 
 export function inRangeValidator(min:number, max: number): ValidatorFn {
-  return (property: PieceProperty, processedValue: any, userInput: any): string | null => {
+  return (property, processedValue, userInput) => {
     const isValid = Number(processedValue) <= Number(max) && Number(processedValue) >= Number(min);
 
     if (isValid) return null;

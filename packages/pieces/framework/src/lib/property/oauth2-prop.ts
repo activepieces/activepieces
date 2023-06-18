@@ -30,6 +30,8 @@ export type OAuth2PropertyValue<T extends OAuth2Props = any> = {
 
 export type OAuth2Property<R extends boolean, T extends OAuth2Props> = OAuth2PropertySchema & TPropertyValue<
 	OAuth2PropertyValue<T>,
+	never,
+	never,
 	PropertyType.OAUTH2,
 	R
 >;

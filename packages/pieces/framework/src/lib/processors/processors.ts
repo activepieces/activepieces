@@ -1,17 +1,17 @@
 import { isNil, isString } from "lodash";
-import { ApFile, PieceProperty } from "../property";
+import { ApFile } from "../property";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 import isBase64 from 'is-base64';
 import axios from "axios";
 import path from "path";
+import { ProcessorFn } from "./types";
 
-export type ProcessorFn = (property: PieceProperty, value: any) => any;
 
 export class Processors {
 
-  static number(property: PieceProperty, value: any): number | undefined | null {
+  static number: ProcessorFn<string|number|undefined|null, number|null|undefined> = (property, value) => {
     if (isNil(value)) {
       return value;
     }
@@ -21,7 +21,7 @@ export class Processors {
     return Number(value);
   }
 
-  static datetime(property: PieceProperty, value: any): string | undefined {
+  static datetime: ProcessorFn<number|string|undefined|null, string | undefined> = (property, value) => {
     dayjs.extend(utc);
     dayjs.extend(timezone);
     const dateTimeString = value;
@@ -34,7 +34,7 @@ export class Processors {
     }
   }
 
-  static async file (property: PieceProperty, urlOrBase64: unknown): Promise<ApFile | null> {
+  static file: ProcessorFn<unknown, Promise<ApFile | null>> = async (property, urlOrBase64) => {
     // convertUrlOrBase64ToFile
     if (isNil(urlOrBase64) || !isString(urlOrBase64)) {
       return null;

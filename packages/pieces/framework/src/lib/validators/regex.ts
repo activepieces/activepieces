@@ -1,9 +1,11 @@
 import { isEmpty } from "lodash";
 import { PieceProperty } from "../property";
 import { ErrorMessages } from './errors';
-import { ValidatorFn, formatErrorMessage } from "./validators";
+import { ValidatorFn } from "./types";
+import { formatErrorMessage } from "./utils";
 
-export function emailValidator(property: PieceProperty, processedValue: any, userInput: any): string | null {
+export const emailValidator: ValidatorFn = (property, processedValue, userInput) => {
+
   const pattern = new RegExp('^(([^<>()\\[\\]\\.,;:\\s@\"]+(\\.[^<>()\\[\\]\\.,;:\\s@\"]+)*)|(\".+\"))@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\])|(([a-zA-Z\\-0-9]+\\.)+[a-zA-Z]{2,}))$');
   if (isEmpty(processedValue)) {
     return null;
@@ -16,7 +18,7 @@ export function emailValidator(property: PieceProperty, processedValue: any, use
   : formatErrorMessage(ErrorMessages.EMAIL, { userInput });
 }
 
-export function urlValidator(property: PieceProperty, processedValue: any, userInput: any): string | null {
+export const urlValidator: ValidatorFn = (property, processedValue, userInput) => {
   const pattern = new RegExp(
     '^((https?|ftp|file)://)?' + // protocol
     '((([a-zA-Z\\d]([a-zA-Z\\d-]*[a-zA-Z\\d])*)\\.)+[a-zA-Z]{2,}|' + // domain name
