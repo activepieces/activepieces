@@ -254,9 +254,11 @@
       </ng-container>
 
       <ng-template #arrayInputTemplate>
-        <div [class.ap-mb-5]="form.disabled">
-          <div class="ap-mb-2 ap-pointer-events-none" [matTooltip]="property.value.description">
-            {{property.value.displayName}}</div>
+        <div [class.ap-mb-5]="form.disabled" #hoverContainer="hoverTrackerDirective" apTrackHover>
+          <div class="ap-mb-2 ap-flex ap-gap-2 ap-items-center" [matTooltip]="property.value.description">
+            <div class="ap-pointer-events-none">{{property.value.displayName}} </div><ng-container
+              *ngTemplateOutlet="removeOptionalPropertyIcon; context{$implicit:property, propertyUiContainer:hoverContainer}"></ng-container>
+          </div>
           <app-array-form-control [formControlName]="property.key"></app-array-form-control>
         </div>
       </ng-template>
@@ -273,9 +275,11 @@
       </ng-container>
 
       <ng-template #objectInputTemplate>
-        <div [class.ap-mb-5]="form.disabled">
-          <div class="ap-mb-2 ap-pointer-events-none" [matTooltip]="property.value.description">
-            {{property.value.displayName}}</div>
+        <div [class.ap-mb-5]="form.disabled" #hoverContainer="hoverTrackerDirective" apTrackHover>
+          <div class="ap-mb-2 ap-flex ap-gap-2 ap-items-center" [matTooltip]="property.value.description">
+            <div class="ap-pointer-events-none">{{property.value.displayName}} </div> <ng-container
+              *ngTemplateOutlet="removeOptionalPropertyIcon; context{$implicit:property, propertyUiContainer:hoverContainer}"></ng-container>
+          </div>
           <app-dictonary-form-control [formControlName]="property.key"></app-dictonary-form-control>
         </div>
       </ng-template>
