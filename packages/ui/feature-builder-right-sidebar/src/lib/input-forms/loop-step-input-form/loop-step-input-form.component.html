@@ -1,19 +1,16 @@
-<form #inputContainer [formGroup]="loopStepForm" class="ap-flex ap-flex-col ap-gap-2"
-  (click)="$event.stopImmediatePropagation()">
-  <div>
+<form [formGroup]="loopStepForm" class="ap-flex ap-flex-col ap-gap-2" (click)="$event.stopImmediatePropagation()">
+  <div #inputContainer>
     <mat-form-field class="ap-w-full" appearance="outline" (click)="handler.showMentionsDropdown()">
       <mat-label>Items</mat-label>
       <app-interpolating-text-form-control #ItemsTextControl formControlName="items" [disabled]="true"
-        [onlyAllowOneMentionToBeAdded]="true"
-        (keyup)="$event.key ==='Escape'? itemsMentionsDropdown.close() : null"></app-interpolating-text-form-control>
+        [onlyAllowOneMentionToBeAdded]="true"></app-interpolating-text-form-control>
       <mat-error *ngIf="loopStepForm.controls.items.invalid">
         Items are required.
       </mat-error>
     </mat-form-field>
-    <app-builder-autocomplete-mentions-dropdown #itemsMentionsDropdown width="calc(100% - 2rem)" marginTop="-20px"
-      [focusSearch]="true" [id]="handler.id"></app-builder-autocomplete-mentions-dropdown>
+
     <app-builder-autocomplete-dropdown-handler #handler [container]="inputContainer"
-      (mentionEmitted)="addMention(ItemsTextControl,$event)">
+      [currentInputCanHaveOnlyOneMention]="true" (mentionEmitted)="addMention(ItemsTextControl,$event)">
     </app-builder-autocomplete-dropdown-handler>
   </div>
 </form>

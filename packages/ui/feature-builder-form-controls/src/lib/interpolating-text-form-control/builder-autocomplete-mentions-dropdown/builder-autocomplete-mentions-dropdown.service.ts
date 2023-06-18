@@ -16,4 +16,5 @@ export class BuilderAutocompleteMentionsDropdownService {
     id: number;
     insert: InsertMentionOperation;
   }> = new Subject();
+  currentInputCanHaveOnlyOneMention = false;
 }

@@ -14,11 +14,8 @@
                 apTrackHover #valueInput="hoverTrackerDirective" #interpolatingTextControlContainer>
                 <app-interpolating-text-form-control #textControl [insideMatField]="false"
                     [formControl]="formArray.controls[idx]" placeholder="Value"
-                    (click)="formArray.enabled? handler.showMentionsDropdown():null"
-                    (keyup)="$event.key ==='Escape'? mentionsDropdown.close() : null"></app-interpolating-text-form-control>
-                <app-builder-autocomplete-mentions-dropdown #mentionsDropdown width="calc(100% - 0.5rem)" [
-                    [id]="handler.id"
-                    (menuClosed)="textControl.focusEditor()"></app-builder-autocomplete-mentions-dropdown>
+                    (click)="formArray.enabled? handler.showMentionsDropdown():null"></app-interpolating-text-form-control>
+
                 <app-builder-autocomplete-dropdown-handler #handler [container]="interpolatingTextControlContainer"
                     (mentionEmitted)="addMention(textControl,$event)">
 

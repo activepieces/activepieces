@@ -386,8 +386,6 @@
           </div>
           <ngx-codemirror [formControlName]="property.key" #jsonControl [options]="editorOptions"
             (focusChange)="$event? handler.showMentionsDropdown(): null"></ngx-codemirror>
-          <app-builder-autocomplete-mentions-dropdown #mentionsDropdown
-            [id]="handler.id"></app-builder-autocomplete-mentions-dropdown>
           <app-builder-autocomplete-dropdown-handler #handler [container]="interpolatingTextControlContainer"
             (mentionEmitted)="addMentionToJsonControl(jsonControl,$event)">
           </app-builder-autocomplete-dropdown-handler>
@@ -460,10 +458,8 @@
     </mat-form-field>
     <app-builder-autocomplete-dropdown-handler #handler [container]="interpolatingTextComponentContainer"
       (mentionEmitted)="addMention(textControl,$event)">
-
     </app-builder-autocomplete-dropdown-handler>
-    <app-builder-autocomplete-mentions-dropdown #mentionsDropdown (menuClosed)="textControl.focusEditor()"
-      [id]="handler.id" marginTop="-20px" width="100%"></app-builder-autocomplete-mentions-dropdown>
+
   </div>
 </ng-template>
 

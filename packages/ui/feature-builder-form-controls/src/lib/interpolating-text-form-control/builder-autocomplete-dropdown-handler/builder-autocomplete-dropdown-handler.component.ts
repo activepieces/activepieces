@@ -18,6 +18,7 @@ export class BuilderAutocompleteDropdownHandlerComponent {
   static nextId = 0;
   id = BuilderAutocompleteDropdownHandlerComponent.nextId++;
   @Input() container: HTMLElement;
+  @Input() currentInputCanHaveOnlyOneMention = false;
   @Output() mentionEmitted: EventEmitter<InsertMentionOperation> =
     new EventEmitter();
   listenToMentions$: Observable<{ id: number; insert: InsertMentionOperation }>;
@@ -36,5 +37,7 @@ export class BuilderAutocompleteDropdownHandlerComponent {
     this.builderAutocompleteService.currentAutoCompleteInputContainer$.next(
       this.container
     );
+    this.builderAutocompleteService.currentInputCanHaveOnlyOneMention =
+      this.currentInputCanHaveOnlyOneMention;
   }
 }
