@@ -82,7 +82,7 @@ export const newTaskAdded = createTrigger({
 					"hs_task_type": "TODO",
 					"hs_updated_by_user_id": "5605286",
 					"hubspot_owner_id": "1041576162",
-                    "hs_timestamp": "2023-06-16T05:00:00Z"
+                                        "hs_timestamp": "2023-06-16T05:00:00Z"
 				},
 				"createdAt": "2023-06-13T09:42:37.557Z",
 				"updatedAt": "2023-06-13T10:03:41.073Z",
