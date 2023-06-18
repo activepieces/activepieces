@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
 import {
   ControlValueAccessor,
   FormArray,
@@ -26,7 +26,7 @@ import { InsertMentionOperation } from '../interpolating-text-form-control/utils
 export class ArrayFormControlComponent implements ControlValueAccessor {
   valueChanges$: Observable<void>;
   formArray: FormArray<FormControl>;
-
+  @ViewChild('textControl') firstInput: InterpolatingTextFormControlComponent;
   onChange: (val: unknown) => void = () => {
     //ignore
   };
@@ -83,5 +83,8 @@ export class ArrayFormControlComponent implements ControlValueAccessor {
     mention: InsertMentionOperation
   ) {
     await textControl.addMention(mention);
+  }
+  focusFirstInput() {
+    this.firstInput.focusEditor();
   }
 }

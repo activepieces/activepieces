@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import {
   ControlValueAccessor,
   UntypedFormArray,
@@ -30,6 +30,8 @@ export class DictionaryFormControlComponent
   form!: UntypedFormGroup;
   disabled = false;
   valueChanges$: Observable<void>;
+  @ViewChild('key', { read: ElementRef })
+  firstKeyInput: ElementRef<HTMLInputElement>;
   onChange: (val: unknown) => void = (val) => {
     val;
   };
@@ -133,5 +135,8 @@ export class DictionaryFormControlComponent
       $event.stopImmediatePropagation();
     }
     mentionsDropdown.showMenuSubject$.next(true);
+  }
+  focusFirstKeyInput() {
+    this.firstKeyInput.nativeElement.focus();
   }
 }

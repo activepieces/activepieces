@@ -256,10 +256,11 @@
       <ng-template #arrayInputTemplate>
         <div [class.ap-mb-5]="form.disabled" #hoverContainer="hoverTrackerDirective" apTrackHover>
           <div class="ap-mb-2 ap-flex ap-gap-2 ap-items-center" [matTooltip]="property.value.description">
-            <div class="ap-pointer-events-none">{{property.value.displayName}} </div><ng-container
+            <div class="ap-cursor-pointer" (click)="array.focusFirstInput()">{{property.value.displayName}}
+            </div><ng-container
               *ngTemplateOutlet="removeOptionalPropertyIcon; context{$implicit:property, propertyUiContainer:hoverContainer}"></ng-container>
           </div>
-          <app-array-form-control [formControlName]="property.key"></app-array-form-control>
+          <app-array-form-control #array [formControlName]="property.key"></app-array-form-control>
         </div>
       </ng-template>
 
@@ -277,10 +278,12 @@
       <ng-template #objectInputTemplate>
         <div [class.ap-mb-5]="form.disabled" #hoverContainer="hoverTrackerDirective" apTrackHover>
           <div class="ap-mb-2 ap-flex ap-gap-2 ap-items-center" [matTooltip]="property.value.description">
-            <div class="ap-pointer-events-none">{{property.value.displayName}} </div> <ng-container
+            <div class="ap-cursor-pointer" (click)="dictonary.focusFirstKeyInput()">{{property.value.displayName}}
+            </div>
+            <ng-container
               *ngTemplateOutlet="removeOptionalPropertyIcon; context{$implicit:property, propertyUiContainer:hoverContainer}"></ng-container>
           </div>
-          <app-dictonary-form-control [formControlName]="property.key"></app-dictonary-form-control>
+          <app-dictonary-form-control #dictonary [formControlName]="property.key"></app-dictonary-form-control>
         </div>
       </ng-template>
 
@@ -473,8 +476,9 @@
 
 <ng-template #removeOptionalPropertyIcon let-property let-propertyUiContainer="propertyUiContainer"
   let-isWhite="isWhite">
-  <svg-icon (click)="removeConfig(property.key)" src="/assets/img/custom/close.svg" apTrackHover
-    #removeIcon="hoverTrackerDirective" *ngIf="!property.value.required && form.enabled"
-    class="ap-w-[13px] ap-h-[13px] !ap-cursor-pointer ap-mt-[1px]" [class.ap-fill-white]="isWhite"
-    [class.ap-opacity-0]="!removeIcon.isHovered && !propertyUiContainer.isHovered" [applyClass]="true"></svg-icon>
+  <svg-icon [matTooltip]="'Remove ' + property.value.displayName" (click)="removeConfig(property.key)"
+    src="/assets/img/custom/close.svg" apTrackHover #removeIcon="hoverTrackerDirective"
+    *ngIf="!property.value.required && form.enabled" class="ap-w-[13px] ap-h-[13px] !ap-cursor-pointer ap-mt-[1px]"
+    [class.ap-fill-white]="isWhite" [class.ap-opacity-0]="!removeIcon.isHovered && !propertyUiContainer.isHovered"
+    [applyClass]="true"></svg-icon>
 </ng-template>
