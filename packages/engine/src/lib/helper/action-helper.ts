@@ -208,7 +208,13 @@ export const pieceHelper = {
 
         const context: ActionContext = {
             executionType: ExecutionType.BEGIN,
-            auth: resolvedAuth,
+            get auth() {
+                if (isNil(resolvedAuth)) {
+                    return resolvedProps['authentication'] as PiecePropValueSchema<PieceAuthProperty>
+                }
+
+                return resolvedAuth
+            },
             propsValue: resolvedProps,
             store: createContextStore('', globals.flowId),
             connections: {

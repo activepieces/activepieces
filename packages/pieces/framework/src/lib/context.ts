@@ -3,7 +3,7 @@ import { TriggerStrategy } from "./trigger/trigger";
 import { PieceAuthProperty, PiecePropValueSchema, PiecePropertyMap, StaticPropsValue } from "./property";
 
 type BaseTriggerHookContext<AuthProp extends PieceAuthProperty, Props extends PiecePropertyMap> = {
-    auth: PiecePropValueSchema<AuthProp>
+    get auth(): PiecePropValueSchema<AuthProp>,
     propsValue: StaticPropsValue<Props>
     store: Store
 }
@@ -40,12 +40,6 @@ export type TriggerHookContext<
             ? WebhookTriggerHookContext<AuthProp, Props>
             : never
 
-export interface TriggerContext<T> {
-    payload: TriggerPayload;
-    propsValue: T,
-    store: Store,
-}
-
 export type StopHookParams = {
     response: StopResponse
 }
@@ -65,7 +59,7 @@ export type ActionContext<
     Props extends PiecePropertyMap = PiecePropertyMap,
 > = {
     executionType: ExecutionType,
-    auth: PiecePropValueSchema<AuthProp>,
+    get auth(): PiecePropValueSchema<AuthProp>,
     propsValue: StaticPropsValue<Props>,
     store: Store,
     connections: ConnectionsManager,

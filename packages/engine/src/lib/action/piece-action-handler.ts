@@ -15,7 +15,7 @@ import { pieceHelper } from '../helper/action-helper';
 import { createContextStore } from '../services/storage.service';
 import { connectionManager } from '../services/connections.service';
 import { Utils } from '../utils';
-import { PauseHook, PauseHookParams, PiecePropertyMap, StopHook, StopHookParams } from '@activepieces/pieces-framework';
+import { ActionContext, PauseHook, PauseHookParams, PieceAuthProperty, PiecePropValueSchema, PiecePropertyMap, StopHook, StopHookParams } from '@activepieces/pieces-framework';
 
 type CtorParams = {
   executionType: ExecutionType
@@ -181,17 +181,25 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
         censorConnections: false,
       })
 
-      stepOutput.output = await action.run({
+      const context: ActionContext = {
         executionType: this.executionType,
         store: createContextStore('', globals.flowId),
-        auth: resolvedAuth,
+        get auth() {
+            if (isNil(resolvedAuth)) {
+                return resolvedProps['authentication']
+            }
+
+            return resolvedAuth
+        },
         propsValue: resolvedProps,
         connections: connectionManager,
         run: {
           stop: this.generateStopHook({ stepOutput }),
           pause: this.generatePauseHook({ stepOutput }),
         }
-      })
+      }
+
+      stepOutput.output = await action.run(context)
 
       if (stepOutput.status === StepOutputStatus.RUNNING) {
         stepOutput.status = StepOutputStatus.SUCCEEDED
