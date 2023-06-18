@@ -365,10 +365,12 @@
 
       <ng-template #jsonInputTemplate>
         <div class="code-font-sm code-size-200 code-block" #interpolatingTextControlContainer
-          (click)="$event.stopImmediatePropagation()">
+          #hoverContainer="hoverTrackerDirective" apTrackHover (click)="$event.stopImmediatePropagation()">
           <div class="ap-py-2 ap-px-4 ap-flex bar-containing-beautify-button">
             <div class="ap-flex-grow">
-              <span class="ap-text-white">{{property.value.displayName}}</span>
+              <span class="ap-text-white ap-flex ap-gap-2 ap-items-center">{{property.value.displayName}} <ng-container
+                  *ngTemplateOutlet="removeOptionalPropertyIcon; context{$implicit:property, propertyUiContainer:hoverContainer, isWhite:true}"></ng-container>
+              </span>
             </div>
             <div>
               <svg-icon src="/assets/img/custom/beautify.svg" [svgStyle]="{width:'16px', height:'16px'}"
@@ -465,9 +467,10 @@
 <ng-container *ngIf="setDefaultValue$ | async"></ng-container>
 
 
-<ng-template #removeOptionalPropertyIcon let-property let-propertyUiContainer="propertyUiContainer">
+<ng-template #removeOptionalPropertyIcon let-property let-propertyUiContainer="propertyUiContainer"
+  let-isWhite="isWhite">
   <svg-icon (click)="removeConfig(property.key)" src="/assets/img/custom/close.svg" apTrackHover
     #removeIcon="hoverTrackerDirective" *ngIf="!property.value.required && form.enabled"
-    class="ap-w-[13px] ap-h-[13px] ap-cursor-pointer ap-mt-[1px]"
+    class="ap-w-[13px] ap-h-[13px] !ap-cursor-pointer ap-mt-[1px]" [class.ap-fill-white]="isWhite"
     [class.ap-opacity-0]="!removeIcon.isHovered && !propertyUiContainer.isHovered" [applyClass]="true"></svg-icon>
 </ng-template>
