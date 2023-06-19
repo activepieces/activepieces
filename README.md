@@ -38,15 +38,15 @@ src="https://github.com/activepieces/activepieces/assets/1812998/21652bf1-9f25-4
 
 # ✨ What Is Activepieces?
 
-Activepieces is a **no-code** workflow builder, designed to be **extensible** through a **strongly typed** connectors framework written in **Typescript**.
+Activepieces is a **no-code** workflow builder, designed to be **extensible** through a **strongly typed** pieces framework written in **Typescript**.
 
-# 🔌 Connectors
+# 🔌 Pieces
 
 Activepieces integrates Google Sheets, OpenAI, Discord, and RSS, along with 80+ other integrations. [The list of supported integrations](https://www.activepieces.com/docs/pieces/overview) continues to grow rapidly, thanks to valuable contributions from the community.
 
 Activepieces is an **open ecosystem;** all connector source code is available in the repository, and they are versioned and [published](https://www.npmjs.com/search?q=%40activepieces) directly to npmjs.com upon contributions.
 
-If you cannot find a specific connector on the connectors roadmap, please submit a request by visiting the following link: [Request Piece](https://github.com/activepieces/activepieces/issues/new/choose)
+If you cannot find a specific connector on the pieces roadmap, please submit a request by visiting the following link: [Request Piece](https://github.com/activepieces/activepieces/issues/new/choose)
 
 Alternatively, if you are a developer, you can quickly build your own connector using our TypeScript framework. For guidance, please refer to the following guide: [Contributor's Guide](https://www.activepieces.com/docs/contributing/overview)
 
