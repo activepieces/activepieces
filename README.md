@@ -1,95 +1,86 @@
-<p align="center">
-  <img width="300" alt="activepieceslogo" src="https://github.com/activepieces/activepieces/raw/main/assets/ap-logo.png">
-</p>
+
+<h1 align="center">
+  <a
+    target="_blank"
+    href="https://activepieces.com"
+  >
+    <img
+      align="center"
+      alt="Activepieces"
+src="https://github.com/activepieces/activepieces/assets/1812998/21652bf1-9f25-4dd7-90a8-531cea0b4538"
+      style="width:100%;"
+    />
+  </a>
+</h1>
+
 <p align="center">
 <a href="/LICENSE" target="_blank"><img src='https://img.shields.io/badge/license-MIT-green?style=for-the-badge' /></a>&nbsp;<a href='https://discord.gg/2jUXBKDdP8'><img src='https://img.shields.io/discord/966798490984382485?style=for-the-badge' /></a>
 </p>
+<p align="center">
+   A modern open source replacement for Zapier
+</p>
+<p align="center">
+  <a
+    href="https://www.activepieces.com/docs"
+    target="_blank"
+  ><b>Documentation</b></a>&nbsp;&nbsp;&nbsp;🌪️&nbsp;&nbsp;&nbsp;
+  <a
+    href="https://www.activepieces.com/docs/install/overview"
+    target="_blank"
+  ><b>Try Now</b></a>&nbsp;&nbsp;&nbsp;🔥&nbsp;&nbsp;&nbsp;
+  <a
+    href="https://discord.gg/yvxF5k5AUb"
+    target="_blank"
+  >
+    <b>Get Instant Support</b>
+  </a>
+</p>
 
-## Activepieces is an open-source business automation tool
+# ✨ What Is Activepieces?
 
-- Built for no-code users and citizen developers
-- Self-host with a simple Docker command
-- An alternative to Zapier, Make.com and Tray
+Activepieces is a **no-code** workflow builder, designed to be **extensible** through a **strongly typed** connectors framework written in **Typescript**.
 
-## Quicklinks
+# 🔌 Connectors
 
-- Website: https://www.activepieces.com
-- Discord: https://discord.gg/2jUXBKDdP8
-- Docs: https://www.activepieces.com/docs
+Activepieces integrates Google Sheets, OpenAI, Discord, and RSS, along with 80+ other integrations. [The list of supported integrations](https://www.activepieces.com/docs/pieces/overview) continues to grow rapidly, thanks to valuable contributions from the community.
 
-## Get started for free
+Activepieces is an **open ecosystem;** all connector source code is available in the repository, and they are versioned and [published](https://www.npmjs.com/search?q=%40activepieces) directly to npmjs.com upon contributions.
 
-Visit https://www.activepieces.com/docs/install/overview
+If you cannot find a specific connector on the connectors roadmap, please submit a request by visiting the following link: [Request Piece](https://github.com/activepieces/activepieces/issues/new/choose)
 
-## Features
+Alternatively, if you are a developer, you can quickly build your own connector using our TypeScript framework. For guidance, please refer to the following guide: [Contributor's Guide](https://www.activepieces.com/docs/contributing/overview)
 
-<table>
-  
-  <tr>
-    <th>
-      <a href="#">Intuitive Visual Flow Designer</a>
-    </th>
-    <th>
-      <a href="#">Powerful Logging</a>
-    </th>
+<br>
+<br>
+<h1> 🎨 Visual Builder</h1>
+<p>
+User-friendly Workflow Builder! Enjoy building fun and interactive flows with support for Branches, Loops, and Drag and Drop.
+  <br />
+</p>
 
-  </tr>
+![build](https://github.com/activepieces/activepieces/assets/1812998/e75616ce-7801-45b7-b3fa-eba778bebde3)
 
-   <tr>
-    <td width="50%">
-      <a href="#">
-        <img src="https://uploads-ssl.webflow.com/62c21c5154de255ece48bdf4/638f882fe84c1e465161177c_Screenshot%202022-12-06%20at%2021.14%201-p-1080.png" />
-      </a>
-    </td>
-    <td width="50%">
-        <a href="#">
-            <img src="https://uploads-ssl.webflow.com/62c21c5154de255ece48bdf4/638f8e093a493043dc8ed633_Screenshot%202022-12-06%20at%2021.44%201-p-1080.png" />
-        </a>
-    </td>
-  </tr>
+<br>
+<br>
+<h1>
+💡 Infinite Usecases</h1>
+<p>
+Get Inspired by the community
+  <br />
+</p>
 
-  <tr>
-    <th>
-      <a href="#">Custom NodeJS (with any npm)</a>
-    </th>
-    <th>
-      <a href="#">Self Hosted</a>
-    </th>
-</tr>
+![templates](https://github.com/activepieces/activepieces/assets/1812998/2851f96e-3d9c-42b3-b021-b1cc5153df50)
 
- <tr>
-    <td width="50%">
-        <a href="#">
-            <img src="https://uploads-ssl.webflow.com/62c21c5154de255ece48bdf4/638f902e016e13f712543baf_Screenshot%202022-12-06%20at%2021.54%201-p-1080.png" />
-        </a>
-    </td>
-    <td width="50%">
-      <a href="#">
-        <img src="https://uploads-ssl.webflow.com/62c21c5154de255ece48bdf4/638fc2f3d951ef60fb258a6e_Screenshot%202022-12-07%20at%2001.31%201-p-1080.png" />
-      </a>
-    </td>
- </tr>
-</table>
 
-## Repo Activity
-
-![Alt](https://repobeats.axiom.co/api/embed/f3afe14b092263a6c76408043fd4fc2f72ed4cf3.svg 'Repobeats analytics image')
-
-## Connectors
-
-We're building no-code connectors to make flow building a frictionless process for non developers. Go to the [Pieces](https://www.activepieces.com/docs/pieces) section of our docs to browse all available pieces.
-
-> :warning: The list of connectors will keep changing as we hear from our users, [request piece](https://github.com/activepieces/activepieces/issues/new/choose) if you can't find it on the [connectors roadmap](https://github.com/orgs/activepieces/projects/5).
-
-## Open Source and Cloud
+# ☁️ Open Source and Cloud
 
 The core of Activepieces is available as open source under the [MIT license](https://github.com/activepieces/activepieces/blob/main/LICENSE). While most of its features are openly accessible, certain functionalities are exclusive to the cloud version and remain closed source.
 
-## Contributions
+# 🌐 Contributions
 
 We welcome contributions big or small and in different directions. The best way to do this is to check this [document](https://www.activepieces.com/docs/contributing/building-pieces/create-action) and we are always up to talk on [our Discord Server](https://discord.gg/2jUXBKDdP8).
 
-## Contributors 🦫
+## 🦫 Contributors 
 
 ### Legendary Beavers Club 🔥
 
