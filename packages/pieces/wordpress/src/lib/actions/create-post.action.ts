@@ -29,7 +29,7 @@ export const createWordpressPost = createAction({
             displayName: 'Date',
             required: false,
         }),
-     //   featured_media_file: wordpressCommon.featured_media_file,
+        featured_media_file: wordpressCommon.featured_media_file,
         tags: Property.MultiSelectDropdown<string, false>({
             description: 'Post tags',
             displayName: 'Tags',
@@ -296,7 +296,7 @@ export const createWordpressPost = createAction({
             requestBody['featured_media'] = context.propsValue.featured_media;
         }
 
-        /*
+        
         if (context.propsValue.featured_media_file !== undefined) {
             const formData = new FormData();
             const { filename, base64 } = context.propsValue.featured_media_file;
@@ -316,7 +316,7 @@ export const createWordpressPost = createAction({
                 },
             });
             requestBody['feature_media'] = uploadMediaResponse.body.id;
-        }*/
+        }
         requestBody['content'] = context.propsValue.content;
         requestBody['title'] = context.propsValue.title;
         return await httpClient.sendRequest<{ id: string, name: string }[]>({

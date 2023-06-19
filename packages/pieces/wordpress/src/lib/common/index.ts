@@ -32,11 +32,11 @@ export const wordpressCommon = {
         required: true,
         description: "URL of the wordpress url i.e https://www.example-website.com"
     }),
-   /* featured_media_file: Property.File({
+    featured_media_file: Property.File({
         displayName: 'Featured Media URL',
         required: false,
         description: 'URL of featured media',
-    }),*/
+    }),
     authors: Property.Dropdown({
         displayName: 'Authors',
         required: false,
