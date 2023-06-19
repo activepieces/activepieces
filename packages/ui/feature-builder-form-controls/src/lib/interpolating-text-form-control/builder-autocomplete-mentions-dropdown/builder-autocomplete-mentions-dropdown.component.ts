@@ -31,9 +31,8 @@ export class BuilderAutocompleteMentionsDropdownComponent {
   showMenuObs$: Observable<boolean>;
   @Input() focusSearch = false;
   @Input() mouseWithin = false;
-  @Input() id: number;
   @Input() container: HTMLElement;
-  focusChecker: NodeJS.Timer;
+  focusChecker: NodeJS.Timer | undefined;
   constructor(
     private interpolatingTextFormControlService: BuilderAutocompleteMentionsDropdownService,
     private store: Store,
@@ -72,26 +71,23 @@ export class BuilderAutocompleteMentionsDropdownComponent {
       clearInterval(this.focusChecker);
     }
     this.focusChecker = setInterval(() => {
-      console.log(
-        this.interpolatingTextFormControlService.currentAutoCompleteInputContainer$.value?.matches(
-          ':focus-within'
-        )
-      );
       if (
         !this.interpolatingTextFormControlService
           .currentAutoCompleteInputContainer$.value ||
         (!this.interpolatingTextFormControlService.currentAutoCompleteInputContainer$.value.matches(
           ':focus-within'
         ) &&
-          !this.interpolatingTextFormControlService
-            .currentInputCanHaveOnlyOneMention &&
+          !this.mentionsList?.nativeElement.matches(':focus-within') &&
           this.matDialog.openDialogs.length === 0 &&
-          !this.mouseWithin)
+          !this.mouseWithin &&
+          document.getElementsByClassName('mdc-tooltip--shown').length === 0)
       ) {
-        clearInterval(this.focusChecker);
+        if (this.focusChecker) {
+          clearInterval(this.focusChecker);
+        }
         this.close();
       }
-    }, 100);
+    }, 200);
   }
 
   close() {
@@ -101,5 +97,8 @@ export class BuilderAutocompleteMentionsDropdownComponent {
     this.interpolatingTextFormControlService.currentAutoCompleteInputContainer$.next(
       null
     );
+  }
+  mouseWithinToggle(val: boolean) {
+    this.mouseWithin = val;
   }
 }

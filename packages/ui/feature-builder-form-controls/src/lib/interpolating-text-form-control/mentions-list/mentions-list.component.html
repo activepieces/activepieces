@@ -7,7 +7,7 @@
   <input id="searchInput" #searchInput [formControl]="searchFormControl" matInput placeholder="Search"
     autocomplete="off">
 </mat-form-field>
-<div class="ap-max-h-[240px] ap-overflow-scroll ">
+<div class="ap-max-h-[338px] ap-h-[338px] ap-max-w-[355px] ap-w-[355px] ap-overflow-scroll ">
 
   <ng-container *ngFor="let stepMention of stepsMentions$|async" #stepsListTemplate>
     <ng-container [ngSwitch]="stepMention.step.type">

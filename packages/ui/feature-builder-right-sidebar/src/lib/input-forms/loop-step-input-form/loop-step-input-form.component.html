@@ -1,8 +1,8 @@
 <form [formGroup]="loopStepForm" class="ap-flex ap-flex-col ap-gap-2" (click)="$event.stopImmediatePropagation()">
-  <div #inputContainer>
-    <mat-form-field class="ap-w-full" appearance="outline" (click)="handler.showMentionsDropdown()">
+  <div #inputContainer tabIndex="0">
+    <mat-form-field class="ap-w-full" appearance="outline" (click)="handler.showMentionsDropdown()" #inputContainer>
       <mat-label>Items</mat-label>
-      <app-interpolating-text-form-control #ItemsTextControl formControlName="items" [disabled]="true"
+      <app-interpolating-text-form-control #ItemsTextControl formControlName="items"
         [onlyAllowOneMentionToBeAdded]="true"></app-interpolating-text-form-control>
       <mat-error *ngIf="loopStepForm.controls.items.invalid">
         Items are required.
@@ -10,7 +10,7 @@
     </mat-form-field>
 
     <app-builder-autocomplete-dropdown-handler #handler [container]="inputContainer"
-      [currentInputCanHaveOnlyOneMention]="true" (mentionEmitted)="addMention(ItemsTextControl,$event)">
+      (mentionEmitted)="addMention(ItemsTextControl,$event)">
     </app-builder-autocomplete-dropdown-handler>
   </div>
 </form>
