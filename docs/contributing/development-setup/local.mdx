@@ -6,6 +6,7 @@ description: ''
 ## Prerequisites
 - Node.js v18+
 - npm v9+
+- Docker & Docker Compose v2
 
 ## Instructions
 
@@ -15,6 +16,12 @@ node tools/setup-dev.js
 ```
 
 2. Start the environment
+
+This command uses Docker Compose to start PostgreSQL and Redis containers based on the configurations specified in the Docker Compose file.
+
+<Tip>
+To ensure that Docker is working properly, you can test it separately by running the command `npm run docker`.
+</Tip>
 
 ```bash
 npm start
@@ -40,21 +47,3 @@ Email: `dev@ap.com`
 Password: `12345678`
 
 
-## Pieces development
-
-To avoid making the dev environment slow, not all pieces are functional during development at first. By default, only
-theses pieces are functional at first:
-- delay
-- discord
-- github
-- hackernews
-- slack
-- store
-
-Any other piece become functional after any edit in its code.
-
-To override the default list available at first, define a `AP_DEV_PIECES` env var with a comma-separated list of pieces
-to make available. For example, to make `google-sheets` and `cal-com` available you can use
-```sh
-AP_DEV_PIECES=google-sheets,cal-com npm start
-```

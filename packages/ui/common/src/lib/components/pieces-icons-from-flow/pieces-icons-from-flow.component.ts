@@ -8,11 +8,11 @@ import {
 } from '@activepieces/shared';
 import { Observable, map, of, tap } from 'rxjs';
 import {
-  ActionMetaService,
+  PieceMetadataService,
   CORE_PIECES_ACTIONS_NAMES,
   CORE_PIECES_TRIGGERS,
   corePieceIconUrl,
-} from '../../service/action-meta.service';
+} from '../../service/piece-meta.service';
 
 @Component({
   selector: 'ap-pieces-icons-from-flow',
@@ -26,7 +26,7 @@ export class PiecesIconsFromFlowComponent implements OnInit {
   tooltipText = '';
   stepNamesMap: Record<string, string> = {};
   piecesMetadata$: Observable<string>[] = [];
-  constructor(private actionMetaDataService: ActionMetaService) {}
+  constructor(private actionMetaDataService: PieceMetadataService) {}
   ngOnInit(): void {
     const icons$ = this.extractIconUrlsAndTooltipText();
     this.loadIconUrls(Object.values(icons$));

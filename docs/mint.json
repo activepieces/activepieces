@@ -89,6 +89,7 @@
         "pieces/apps/discord",
         "pieces/apps/drip",
         "pieces/apps/dropbox",
+        "pieces/apps/facebook-pages",
         "pieces/apps/figma",
         "pieces/apps/freshsales",
         "pieces/apps/generatebanners",
@@ -106,6 +107,7 @@
         "pieces/apps/hubspot",
         "pieces/apps/intercom",
         "pieces/apps/jotform",
+        "pieces/apps/kizeo-forms",
         "pieces/apps/mailchimp",
         "pieces/apps/mailer-lite",
         "pieces/apps/mastodon",
@@ -144,6 +146,7 @@
         "pieces/apps/twitter",
         "pieces/apps/typeform",
         "pieces/apps/vtex",
+        "pieces/apps/webflow",
         "pieces/apps/wordpress",
         "pieces/apps/xero",
         "pieces/apps/xml",
@@ -194,18 +197,20 @@
     {
       "group": "Development Setup",
       "pages": [
+        "contributing/development-setup/getting-started",
         "contributing/development-setup/codespaces",
         "contributing/development-setup/local",
         "contributing/development-setup/dev-container"
       ]
     },
     {
-      "group": "Building Pieces",
+      "group": "Tutorials",
       "pages": [
         "contributing/building-pieces/create-action",
         "contributing/building-pieces/triggers",
         "contributing/building-pieces/create-polling-trigger",
         "contributing/building-pieces/create-webhook-trigger",
+        "contributing/building-pieces/publish-piece",
         "contributing/building-pieces/examples"
       ]
     },

@@ -40,16 +40,8 @@ export const insertRowAction = createAction({
                     : ValueInputOption.USER_ENTERED,
                 values: values as string[],
             });
-            
-            res.body.updates.updatedRange = res.body.updates.updatedRange.replace(sheetName + "!", "");
-            res.body.updates.updatedRange = res.body.updates.updatedRange.split(":");
-            const UpdatedRows = [];
-            
-            for (let i = 0; i < res.body.updates.updatedRange.length; i++) 
-                UpdatedRows.push({ [res.body.updates.updatedRange[i].charAt(0)]: parseInt(res.body.updates.updatedRange[i].slice(1)) });
-            
 
-            return UpdatedRows;
+            return res.body;
         } else {
             throw Error("Values passed are not an array")
         }

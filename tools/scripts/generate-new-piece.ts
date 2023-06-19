@@ -3,7 +3,7 @@ import { argv } from 'node:process'
 import { rm, writeFile } from 'node:fs/promises'
 import { getAvailablePieceNames } from './utils/get-available-piece-names'
 import { exec } from './utils/exec'
-import { readProjectJson, writeProjectJson } from './utils/files'
+import { readPackageJson, readProjectJson, writeProjectJson } from './utils/files'
 import chalk from 'chalk';
 
 const validatePieceName = async (pieceName: string) => {
@@ -75,6 +75,13 @@ const updateProjectJsonConfig = async (pieceName: string) => {
   assert(projectJson.targets?.build?.options, '[updateProjectJsonConfig] targets.build.options is required');
 
   projectJson.targets.build.options.buildableProjectDepsInPackageJsonType = 'dependencies'
+  await writeProjectJson(`packages/pieces/${pieceName}`, projectJson)
+}
+
+
+const updatePackageJsonConfig = async (pieceName: string) => {
+  const projectJson = await readPackageJson(`packages/pieces/${pieceName}`)
+  projectJson.keywords = ['activepieces'];
   await writeProjectJson(`packages/pieces/${pieceName}`, projectJson)
 }
 

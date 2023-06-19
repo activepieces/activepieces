@@ -170,25 +170,35 @@ async function getValues(spreadsheetId: string, accessToken: string, sheetId: nu
     };
     const response = await httpClient.sendRequest<{ values: [string[]][] }>(request);
     if (response.body.values === undefined) return [];
-    
-    const alphabet = 'abcdefghijklmnopqrstuvwxyz';
+
+
     const res = [];
     for (let i = 0; i < response.body.values.length; i++) {
-        for (let j = 0; j < response.body.values[i].length; j++) {
-            res.push({
-                row: i + 1,
-                values: response.body.values[i].map((value, index) => {
-                    return {
-                        [alphabet[index].toUpperCase()]: value
-                    }
-                })
-            });
+        res.push({
+            row: i + 1,
+            values: response.body.values[i].map((value, index) => {
+                return {
+                    [columnToLabel(index)]: value
+                }
+            })
+        });
 
-        }
     }
-    
+
     return res;
 }
+
+const columnToLabel = (columnIndex: number) => {
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    let label = '';
+
+    while (columnIndex >= 0) {
+        label = alphabet[columnIndex % 26] + label;
+        columnIndex = Math.floor(columnIndex / 26) - 1;
+    }
+
+    return label;
+};
 
 
 async function deleteRow(spreadsheetId: string, sheetId: number, rowIndex: number, accessToken: string) {

@@ -16,7 +16,7 @@ HackerNews is a social news website that allows users to submit and vote on stor
 To get started, let's generate a new piece for Hacker News
 
 ```bash
-npx ts-node tools/scripts/generate-new-piece.ts hacker-news
+npm run create-piece hacker-news
 ```
 
 The piece will be generated at `packages/pieces/hacker-news/`,
@@ -127,6 +127,10 @@ export const hackerNews = createPiece({
 ```
 
 # Testing
+
+<Tip>
+By default dvelopment setup only builds modified pieces. If you want a new piece to be built automatically upon `npm start`, make sure you read about [Piece Development](../development-setup/getting-started) section.
+</Tip>
 
 Once you make an edit, the piece will be rebuilt. After this is finished, you'll need to **refresh** the frontend to see the changes.
 
