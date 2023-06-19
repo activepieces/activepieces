@@ -1,6 +1,6 @@
 import { BasicAuthPropertyValue, createAction, Property } from "@activepieces/pieces-framework";
 import { wordpressCommon, WordpressMedia } from "../common";
-import { httpClient, HttpMethod, HttpRequest, AuthenticationType } from "@activepieces/pieces-common";
+import { httpClient, HttpMethod, AuthenticationType } from "@activepieces/pieces-common";
 
 
 export const createWordpressPost = createAction({
@@ -29,6 +29,7 @@ export const createWordpressPost = createAction({
             displayName: 'Date',
             required: false,
         }),
+     //   featured_media_file: wordpressCommon.featured_media_file,
         tags: Property.MultiSelectDropdown<string, false>({
             description: 'Post tags',
             displayName: 'Tags',
@@ -294,9 +295,31 @@ export const createWordpressPost = createAction({
         if (context.propsValue.featured_media !== undefined) {
             requestBody['featured_media'] = context.propsValue.featured_media;
         }
+
+        /*
+        if (context.propsValue.featured_media_file !== undefined) {
+            const formData = new FormData();
+            const { filename, base64 } = context.propsValue.featured_media_file;
+            formData.append('file',  Buffer.from(base64, "base64"), filename);
+            console.log(context.propsValue.featured_media_file.filename);
+            const uploadMediaResponse = await httpClient.sendRequest<{ id: string }>({
+                method: HttpMethod.POST,
+                url: `${context.propsValue.website_url.trim()}/wp-json/wp/v2/media`,
+                body: formData,
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+                authentication: {
+                    type: AuthenticationType.BASIC,
+                    username: context.propsValue.connection.username,
+                    password: context.propsValue.connection.password,
+                },
+            });
+            requestBody['feature_media'] = uploadMediaResponse.body.id;
+        }*/
         requestBody['content'] = context.propsValue.content;
         requestBody['title'] = context.propsValue.title;
-        const request: HttpRequest = {
+        return await httpClient.sendRequest<{ id: string, name: string }[]>({
             method: HttpMethod.POST,
             url: `${context.propsValue.website_url.trim()}/wp-json/wp/v2/posts`,
             authentication: {
@@ -305,8 +328,7 @@ export const createWordpressPost = createAction({
                 password: context.propsValue.connection.password,
             },
             body: requestBody
-        };
-        const response = await httpClient.sendRequest<{ id: string, name: string }[]>(request);
-        return response;
+        });
+;
     }
 });
