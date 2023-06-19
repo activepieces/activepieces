@@ -3,7 +3,6 @@ import { AuthenticationType, httpClient, HttpMethod, HttpRequest } from "@active
 export type WordpressMedia = { id: string, title: { rendered: string } }
 
 const markdownPropertyDescription = `
- 
 **Steps to Enable Basic Authentication:**
 
 1. Visit the repository at https://github.com/WP-API/Basic-Auth.
@@ -33,9 +32,9 @@ export const wordpressCommon = {
         description: "URL of the wordpress url i.e https://www.example-website.com"
     }),
     featured_media_file: Property.File({
-        displayName: 'Featured Media URL',
+        displayName: "Featured Media (URL)",
         required: false,
-        description: 'URL of featured media',
+        description: "URL of featured media"
     }),
     authors: Property.Dropdown({
         displayName: 'Authors',

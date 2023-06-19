@@ -1,7 +1,7 @@
 import { BasicAuthPropertyValue, createAction, Property } from "@activepieces/pieces-framework";
 import { wordpressCommon, WordpressMedia } from "../common";
 import { httpClient, HttpMethod, AuthenticationType } from "@activepieces/pieces-common";
-
+import FormData from "form-data";
 
 export const createWordpressPost = createAction({
     name: 'create_post',
