@@ -1,16 +1,16 @@
-<button mat-menu-item (click)="expandCodeCollapse = !expandCodeCollapse" class="!ap-px-[9px]">
+<button mat-menu-item (click)="expandCodeCollapse = !expandCodeCollapse" class="!ap-px-5">
   <div apTrackHover #parentNodeHoverTracker="hoverTrackerDirective"
     class="ap-flex ap-flex-grow ap-min-h-[27px] ap-items-center">
-    <mat-icon class="mat-icon-rtl-mirror !ap-mr-[5px]">
-      {{expandCodeCollapse ? 'expand_less' : 'expand_more'}}
-    </mat-icon>
     <app-generic-step-mention-item [stepIndex]="stepIndex" [stepMention]="stepMention"></app-generic-step-mention-item>
     <div class="ap-flex-grow"></div>
     <ap-button *ngIf="parentNodeHoverTracker.isHovered && !!(codeStepTest$ | async)" btnColor="primary" btnStyle="basic"
-      type="button" btnSize="small" class="ap-absolute ap-right-[10px]" [buttonIsInsideAutocomplete]="true"
-      [darkLoadingSpinner]="true" (click)="$event.stopPropagation();"
-      (buttonClicked)="mentionClicked.emit(stepMention)">Select
+      type="button" btnSize="small" [buttonIsInsideAutocomplete]="true" [darkLoadingSpinner]="true"
+      (click)="$event.stopPropagation();" (buttonClicked)="mentionClicked.emit(stepMention)">Insert
     </ap-button>
+    <mat-icon class="mat-icon-rtl-mirror !ap-mr-[5px]">
+      {{expandCodeCollapse ? 'expand_less' : 'expand_more'}}
+    </mat-icon>
+
   </div>
 </button>
 
@@ -29,7 +29,7 @@
     <ap-button *ngIf="resultNodeHoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button"
       btnSize="small" class="ap-absolute ap-right-[10px]" [buttonIsInsideAutocomplete]="true"
       [darkLoadingSpinner]="true" (click)="$event.stopPropagation();"
-      (buttonClicked)="mentionClicked.emit(stepMention)">Select
+      (buttonClicked)="mentionClicked.emit(stepMention)">Insert
     </ap-button>
   </button>
 
