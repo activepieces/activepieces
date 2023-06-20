@@ -20,7 +20,7 @@ import { TriggerType } from '@activepieces/shared';
 import { FormControl } from '@angular/forms';
 import deepEqual from 'deep-equal';
 import { TestStepCoreComponent } from '../test-steps-core.component';
-import { ActionMetaService, TestStepService } from '@activepieces/ui/common';
+import { PieceMetadataService, TestStepService } from '@activepieces/ui/common';
 import {
   BuilderSelectors,
   FlowsActions,
@@ -57,7 +57,7 @@ export class TestPieceWebhookTriggerComponent extends TestStepCoreComponent {
   constructor(
     testStepService: TestStepService,
     store: Store,
-    private actionMetaService: ActionMetaService
+    private actionMetaService: PieceMetadataService
   ) {
     super(testStepService, store);
     this.initialObservables();

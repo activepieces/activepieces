@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import {
-  ActionMetaService,
+  PieceMetadataService,
   CORE_PIECES_ACTIONS_NAMES,
   CORE_PIECES_TRIGGERS,
   corePieceIconUrl,
@@ -47,7 +47,7 @@ export class TemplateAppsDropdownComponent implements ControlValueAccessor {
   onChange: (val: Array<string>) => void = () => {
     //ignored
   };
-  constructor(private actionMetaDataService: ActionMetaService) {
+  constructor(private pieceMetadataService: PieceMetadataService) {
     this.valueChanges$ = this.dropdownControl.valueChanges.pipe(
       tap((val) => {
         this.addPieceToFilter(val);
@@ -73,16 +73,16 @@ export class TemplateAppsDropdownComponent implements ControlValueAccessor {
     this.setPiecesToShowInDropdown();
   }
   private fetchPieces() {
-    this.pieces$ = this.actionMetaDataService.getPiecesManifest().pipe(
+    this.pieces$ = this.pieceMetadataService.getPiecesManifest().pipe(
       map((pieces) => {
         const coreSteps = [
-          ...this.actionMetaDataService.triggerItemsDetails.filter(
+          ...this.pieceMetadataService.triggerItemsDetails.filter(
             (d) => d.type !== TriggerType.EMPTY
           ),
-          ...this.actionMetaDataService.coreFlowItemsDetails,
+          ...this.pieceMetadataService.coreFlowItemsDetails,
         ].map((detail) => {
           const nonePieceDetials =
-            this.actionMetaDataService.findNonPieceStepIcon(detail.type);
+            this.pieceMetadataService.findNonPieceStepIcon(detail.type);
           return {
             displayName: detail.name,
             logoUrl: nonePieceDetials.url,

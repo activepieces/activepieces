@@ -125,6 +125,7 @@
         "pieces/apps/postgres",
         "pieces/apps/posthog",
         "pieces/apps/pushover",
+        "pieces/apps/resend",
         "pieces/apps/rss",
         "pieces/apps/salesforce",
         "pieces/apps/schedule",
@@ -197,18 +198,20 @@
     {
       "group": "Development Setup",
       "pages": [
+        "contributing/development-setup/getting-started",
         "contributing/development-setup/codespaces",
         "contributing/development-setup/local",
         "contributing/development-setup/dev-container"
       ]
     },
     {
-      "group": "Building Pieces",
+      "group": "Tutorials",
       "pages": [
         "contributing/building-pieces/create-action",
         "contributing/building-pieces/triggers",
         "contributing/building-pieces/create-polling-trigger",
         "contributing/building-pieces/create-webhook-trigger",
+        "contributing/building-pieces/publish-piece",
         "contributing/building-pieces/examples"
       ]
     },

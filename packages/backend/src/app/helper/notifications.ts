@@ -1,9 +1,8 @@
 import { ExecutionOutputStatus, FlowRun, NotificationStatus, RunEnvironment, UserMeta } from '@activepieces/shared'
-import { logger } from './logger'
+import { captureException, logger } from './logger'
 import { system } from './system/system'
 import { SystemProp } from './system/system-prop'
 import axios from 'axios'
-import { captureException } from '@sentry/node'
 import { projectService } from '../project/project.service'
 import { userService } from '../user/user-service'
 
@@ -62,6 +61,5 @@ async function sendWebhook(payload: RunFailedWebhookPayload): Promise<void> {
     }
     catch (error) {
         captureException(error)
-        logger.error(`Error sending webhook: ${error}`)
     }
 }

@@ -1,8 +1,8 @@
 import Redis from 'ioredis'
 import RedLock, { Lock } from 'redlock'
-import { captureException } from '@sentry/node'
 import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
+import { captureException } from '../helper/logger'
 
 const url = system.get(SystemProp.REDIS_URL)
 const username = system.get(SystemProp.REDIS_USER)

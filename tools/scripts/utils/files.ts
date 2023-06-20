@@ -3,6 +3,7 @@ import { readFile, writeFile } from 'node:fs/promises'
 export type PackageJson = {
   name: string
   version: string
+  keywords: string[]
 }
 
 export type ProjectJson = {
