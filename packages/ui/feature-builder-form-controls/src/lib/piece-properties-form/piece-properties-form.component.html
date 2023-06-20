@@ -55,10 +55,10 @@
         </div>
       </ng-template>
       <ng-template #dynamicValueTemplate let-property>
-        <span class="ap-float-right ap-mb-1 ap-mr-1 ap-text-primary ap-cursor-pointer">
+        <div class="ap-flex ap-justify-end ap-mb-1 ap-mr-1 ap-text-primary">
           <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:property} ">
           </ng-container>
-        </span>
+        </div>
         <ng-container>
           <ng-container *ngTemplateOutlet="textInputTemplate;context:{$implicit:property, formGroup:formGroup}">
           </ng-container>
@@ -74,17 +74,17 @@
 
     <ng-container *ngSwitchCase="PropertyType.DROPDOWN">
       <div>
-        <span class="ap-float-right ap-mb-1 ap-mr-1 ap-text-primary ap-cursor-pointer">
-          <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:property} ">
+        <div class="ap-flex ap-justify-end ap-mb-1 ap-mr-1 ap-text-primary ">
+          <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:property}">
           </ng-container>
-        </span>
+        </div>
         <ng-container
           *ngTemplateOutlet="customizedInputs && customizedInputs[property.key]? textInputTemplate:dropdownInputTemplate ;context:{$implicit:property, formGroup:formGroup}">
         </ng-container>
         <ng-template #dropdownInputTemplate>
           <div class="ap-relative">
             <div class="ap-absolute -ap-left-[20px]"
-              [style.top]="dropdown._elementRef.nativeElement.clientHeight/2+6.5+'px'">
+              [style.top]="dropdown._elementRef.nativeElement.clientHeight/2-15+'px'">
               <ng-container
                 *ngTemplateOutlet="removeOptionalPropertyIcon; context{$implicit:property, propertyUiContainer:dropdownUiContainer}"></ng-container>
             </div>
@@ -118,7 +118,7 @@
     </ng-container>
     <ng-container *ngSwitchCase="PropertyType.MULTI_SELECT_DROPDOWN">
       <div>
-        <span class="ap-float-right ap-mb-1 ap-mr-1 ap-text-primary ap-cursor-pointer">
+        <span class="ap-flex ap-justify-end ap-mb-1 ap-mr-1 ap-text-primary r">
           <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:property} ">
           </ng-container>
         </span>
@@ -128,7 +128,7 @@
         <ng-template #multiDropdownInputTemplate>
           <div class="ap-relative">
             <div class="ap-absolute -ap-left-[20px]"
-              [style.top]="dropdown._elementRef.nativeElement.clientHeight/2+6.5+'px'">
+              [style.top]="dropdown._elementRef.nativeElement.clientHeight/2-15+'px'">
 
               <ng-container
                 *ngTemplateOutlet="removeOptionalPropertyIcon; context{$implicit:property, propertyUiContainer:dropdownUiContainer}"></ng-container>
@@ -174,17 +174,17 @@
 
     <ng-container *ngSwitchCase="PropertyType.STATIC_DROPDOWN">
       <div>
-        <span class="ap-float-right ap-mb-1 ap-mr-1 ap-text-primary ap-cursor-pointer">
+        <div class="ap-mb-1 ap-mr-1 ap-text-primary ap-flex ap-justify-end">
           <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:property} ">
           </ng-container>
-        </span>
+        </div>
         <ng-container
           *ngTemplateOutlet="customizedInputs && customizedInputs[property.key]? textInputTemplate:staticDropdownInputTemplate ;context:{$implicit:property, formGroup:formGroup}">
         </ng-container>
         <ng-template #staticDropdownInputTemplate>
           <div class="ap-relative">
             <div class="ap-absolute -ap-left-[20px]"
-              [style.top]="dropdown._elementRef.nativeElement.clientHeight/2 + 6.5+'px'">
+              [style.top]="dropdown._elementRef.nativeElement.clientHeight/2 -15 +'px'">
               <ng-container
                 *ngTemplateOutlet="removeOptionalPropertyIcon; context{$implicit:property, propertyUiContainer:dropdownUiContainer}"></ng-container>
             </div>
@@ -210,7 +210,7 @@
 
     <ng-container *ngSwitchCase="PropertyType.STATIC_MULTI_SELECT_DROPDOWN">
       <div>
-        <span class="ap-float-right ap-mb-1 ap-mr-1 ap-text-primary ap-cursor-pointer">
+        <span class="ap-flex ap-justify-end ap-mb-1 ap-mr-1 ap-text-primary ">
           <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:property} ">
           </ng-container>
         </span>
@@ -220,7 +220,7 @@
         <ng-template #staticMultiSelectDropdownInputTemplate>
           <div class="ap-relative">
             <div class="ap-absolute -ap-left-[20px]"
-              [style.top]="dropdown._elementRef.nativeElement.clientHeight/2 + 6.5+'px'">
+              [style.top]="dropdown._elementRef.nativeElement.clientHeight/2 - 15 +'px'">
               <ng-container
                 *ngTemplateOutlet="removeOptionalPropertyIcon; context{$implicit:property, propertyUiContainer:dropdownUiContainer}"></ng-container>
             </div>
@@ -245,7 +245,7 @@
 
 
     <ng-container *ngSwitchCase="PropertyType.ARRAY">
-      <span class="ap-float-right ap-mb-1 ap-mr-1 ap-text-primary ap-cursor-pointer">
+      <span class="ap-flex ap-justify-end ap-mr-1 ap-text-primary">
         <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:property} ">
         </ng-container>
       </span>
@@ -266,7 +266,7 @@
 
     </ng-container>
     <ng-container *ngSwitchCase="PropertyType.OBJECT">
-      <span class="ap-float-right ap-mb-1 ap-mr-1 ap-text-primary ap-cursor-pointer">
+      <span class="ap-justify-end ap-flex ap-mb-1 ap-mr-1 ap-text-primary ">
         <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:property} ">
         </ng-container>
       </span>
@@ -292,12 +292,11 @@
 
     <ng-container
       *ngIf="property.value.type === PropertyType.OAUTH2 || property.value.type === PropertyType.SECRET_TEXT || property.value.type === PropertyType.BASIC_AUTH || property.value.type === PropertyType.CUSTOM_AUTH">
-      <div class="ap-flex">
-        <div class="ap-flex-grow"></div>
-        <div class="ap-cursor-pointer">
-          <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:property} ">
-          </ng-container>
-        </div>
+      <div class="ap-flex ap-justify-end">
+
+        <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:property} ">
+        </ng-container>
+
       </div>
 
       <ng-container
@@ -306,7 +305,7 @@
       <ng-template #connectionDropdownInputTemplate>
         <div class="ap-relative">
           <div class="ap-absolute -ap-left-[20px]"
-            [style.top]="dropdown._elementRef.nativeElement.clientHeight/2 - 13+'px'">
+            [style.top]="dropdown._elementRef.nativeElement.clientHeight/2 - 15+'px'">
             <ng-container
               *ngTemplateOutlet="removeOptionalPropertyIcon; context{$implicit:property, propertyUiContainer:dropdownUiContainer}"></ng-container>
           </div>
@@ -358,12 +357,9 @@
 
     </ng-container>
     <ng-container *ngSwitchCase="PropertyType.JSON">
-      <div class="ap-flex">
-        <div class="ap-flex-grow"></div>
-        <span class="ap-mb-1 ap-mr-1 ap-text-primary ap-cursor-pointer">
-          <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:property} ">
-          </ng-container>
-        </span>
+      <div class="ap-flex ap-justify-end">
+        <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:property} ">
+        </ng-container>
       </div>
 
       <ng-container
@@ -441,7 +437,7 @@
 
   <div [formGroup]="formGroup" #interpolatingTextComponentContainer (click)="$event.stopImmediatePropagation()"
     class="ap-relative" apTrackHover #textInputContainer="hoverTrackerDirective">
-    <div class="ap-absolute -ap-left-[20px]" [style.top]="textInput._elementRef.nativeElement.clientHeight/2-10+'px'">
+    <div class="ap-absolute -ap-left-[20px]" [style.top]="textInput._elementRef.nativeElement.clientHeight/2-15+'px'">
       <ng-container
         *ngTemplateOutlet="removeOptionalPropertyIcon; context{$implicit:property, propertyUiContainer:textInputContainer}"></ng-container>
     </div>
@@ -464,8 +460,8 @@
 
 
 <ng-template #dynamicVariableIcon let-config>
-  <svg-icon [svgStyle]="{width:'22px', height:'22px'}" *ngIf="form.enabled" class="ap-mb-[3px]" apTrackHover
-    [class.!ap-opacity-100]="hoverTracker.isHovered" #hoverTracker="hoverTrackerDirective"
+  <svg-icon [svgStyle]="{width:'22px', height:'22px'}" *ngIf="form.enabled" class="ap-mb-[3px] ap-cursor-pointer"
+    apTrackHover [class.!ap-opacity-100]="hoverTracker.isHovered" #hoverTracker="hoverTrackerDirective"
     [class.ap-opacity-40]="customizedInputs && !customizedInputs[config.key]" src="assets/img/custom/variable.svg"
     matTooltip="Dynamic Value" (click)="toggleCustomizedInputFlag(config.key)">
   </svg-icon>
