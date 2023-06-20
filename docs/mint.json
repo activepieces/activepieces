@@ -125,6 +125,7 @@
         "pieces/apps/postgres",
         "pieces/apps/posthog",
         "pieces/apps/pushover",
+        "pieces/apps/resend",
         "pieces/apps/rss",
         "pieces/apps/salesforce",
         "pieces/apps/schedule",
