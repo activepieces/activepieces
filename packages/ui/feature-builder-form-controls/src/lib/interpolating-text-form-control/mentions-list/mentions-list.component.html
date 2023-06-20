@@ -7,9 +7,12 @@
   [class.!ap-hidden]="(builderAutocompleteService.dataInsertionPopupSize$ | async) === 'collapse'"
   [class.!ap-border-none]="(builderAutocompleteService.dataInsertionPopupSize$ | async) === 'collapse'"
   class="ap-w-full ap-border-t ap-border-solid ap-border-outline data-insertion-search" subscriptSizing="dynamic">
-  <mat-icon matPrefix svgIcon="search"></mat-icon>
+  <mat-icon class="ap-ml-2.5" matPrefix svgIcon="search"></mat-icon>
+
   <input id="searchInput" #searchInput [formControl]="searchFormControl" matInput placeholder="Search"
     autocomplete="off">
+  <ap-icon-button [class.!ap-visible]="searchFormControl.value" matSuffix class="ap-mr-[4.5rem] ap-invisible"
+    (buttonClicked)="searchFormControl.setValue('')" [iconFilename]="'close.svg'"></ap-icon-button>
 </mat-form-field>
 <div class="ap-max-h-[338px] ap-h-[338px] ap-max-w-[357px] ap-w-[357px] ap-overflow-scroll"
   [class.!ap-h-full]="(builderAutocompleteService.dataInsertionPopupSize$ | async) === 'fullscreen'"
