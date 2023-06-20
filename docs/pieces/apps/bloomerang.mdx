@@ -15,8 +15,8 @@ title: 'Bloomerang'
 ## Actions
 
 
-      <Card title="Upsert Contact (Advanced) " >
-        Update or create bloomerang contact
+      <Card title="Upsert Contact (Duplicates) " >
+        Update or create bloomerang contact using duplicates
 
         <Expandable title="Properties">
           
@@ -32,7 +32,7 @@ Firs name
 Last name
 </ResponseField>
             
-<ResponseField name="Organization name" required type="Short_text">
+<ResponseField name="Organization name"  type="Short_text">
 Organization name
 </ResponseField>
             
@@ -44,12 +44,44 @@ Street
 Phone number
 </ResponseField>
             
-<ResponseField name="Email number"  type="Number">
-Email number
+<ResponseField name="Email"  type="Short_text">
+Email
 </ResponseField>
             
-<ResponseField name="Type"  type="Number">
+<ResponseField name="Type"  type="Short_text">
 Type
+</ResponseField>
+            
+<ResponseField name="Contact (JSON)" required type="Json">
+The Contact JSON
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  
+      <Card title="Upsert Contact (Search) " >
+        Update or create bloomerang contact using search
+
+        <Expandable title="Properties">
+          
+<ResponseField name="API Key" required type="Secret_text">
+API key acquired from your Bloomerang crm
+</ResponseField>
+            
+<ResponseField name="Search" required type="Short_text">
+The text to search
+</ResponseField>
+            
+<ResponseField name="Skip"  type="Number">
+The number of items to skip before starting to collect the result set.
+</ResponseField>
+            
+<ResponseField name="Take"  type="Number">
+The number of items to include in the result set.
+</ResponseField>
+            
+<ResponseField name="Contact type"  type="Dropdown">
+Select the object
 </ResponseField>
             
 <ResponseField name="Contact (JSON)" required type="Json">
@@ -86,6 +118,34 @@ API key acquired from your Bloomerang crm
             
 <ResponseField name="Last Modified Date" required type="Short_text">
 The date to search for contacts modified after
+</ResponseField>
+            
+<ResponseField name="The number of items to skip"  type="Number">
+The number of items to skip before starting to collect the result set.
+</ResponseField>
+            
+<ResponseField name="The number of items to include"  type="Number">
+The number of items to include in the result set.
+</ResponseField>
+            
+<ResponseField name="Is favorite"  type="Checkbox">
+Filters constituents to only constituents the user has favorited.
+</ResponseField>
+            
+<ResponseField name="Contact type"  type="Dropdown">
+Select the object
+</ResponseField>
+            
+<ResponseField name="Sorts by Id, CreatedDate, or LastModifiedDate (default Id)"  type="Short_text">
+Available values : Id, CreatedDate, LastModifiedDate
+</ResponseField>
+            
+<ResponseField name="Sorts the orderBy in ascending or descending order."  type="Short_text">
+Available values : Asc, Desc
+</ResponseField>
+            
+<ResponseField name="IDs list"  type="Array">
+Filters results based on the ID for the constituent.
 </ResponseField>
               
         </Expandable>

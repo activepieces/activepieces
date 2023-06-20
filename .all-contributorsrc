@@ -337,6 +337,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "SFoskett",
+      "name": "Stephen Foskett",
+      "avatar_url": "https://avatars.githubusercontent.com/u/8627862?v=4",
+      "profile": "http://blog.fosketts.net",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "commitType": "docs"

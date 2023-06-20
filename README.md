@@ -1,114 +1,113 @@
-<p align="center">
-  <img width="300" alt="activepieceslogo" src="https://github.com/activepieces/activepieces/raw/main/assets/ap-logo.png">
-</p>
+
+<h1 align="center">
+  <a
+    target="_blank"
+    href="https://activepieces.com"
+  >
+    <img
+      align="center"
+      alt="Activepieces"
+src="https://github.com/activepieces/activepieces/assets/1812998/76c97441-c285-4480-bc75-30a0c73ed340"
+      style="width:100%;"
+    />
+    
+  </a>
+</h1>
+
+
 <p align="center">
 <a href="/LICENSE" target="_blank"><img src='https://img.shields.io/badge/license-MIT-green?style=for-the-badge' /></a>&nbsp;<a href='https://discord.gg/2jUXBKDdP8'><img src='https://img.shields.io/discord/966798490984382485?style=for-the-badge' /></a>
 </p>
+<p align="center">
+   A open source replacement for Zapier
+</p>
 
-## Activepieces is an open-source business automation tool
+<p align="center">
+  <a
+    href="https://www.activepieces.com/docs"
+    target="_blank"
+  ><b>Documentation</b></a>&nbsp;&nbsp;&nbsp;🌪️&nbsp;&nbsp;&nbsp;
+  <a
+    href="https://www.activepieces.com/docs/install/overview"
+    target="_blank"
+  ><b>Try Now</b></a>&nbsp;&nbsp;&nbsp;🔥&nbsp;&nbsp;&nbsp;
+  <a
+    href="https://discord.gg/yvxF5k5AUb"
+    target="_blank"
+  >
+    <b>Get Instant Support</b>
+  </a>
+</p>
 
-- Built for no-code users and citizen developers
-- Self-host with a simple Docker command
-- An alternative to Zapier, Make.com and Tray
+<br>
+<br>
 
-## Quicklinks
+# ✨ What Is Activepieces?
 
-- Website: https://www.activepieces.com
-- Discord: https://discord.gg/2jUXBKDdP8
-- Docs: https://www.activepieces.com/docs
+Activepieces is a **no-code** workflow builder, designed to be **extensible** through a **strongly typed** pieces framework written in **Typescript**.
 
-## Get started for free
+<br>
+<br>
 
-Visit https://www.activepieces.com/docs/install/overview
+# 🔌 Pieces
 
-## Features
+Activepieces integrates Google Sheets, OpenAI, Discord, and RSS, along with 80+ other integrations. [The list of supported integrations](https://www.activepieces.com/docs/pieces/overview) continues to grow rapidly, thanks to valuable contributions from the community.
 
-<table>
-  
-  <tr>
-    <th>
-      <a href="#">Intuitive Visual Flow Designer</a>
-    </th>
-    <th>
-      <a href="#">Powerful Logging</a>
-    </th>
+Activepieces is an **open ecosystem;** all piece source code is available in the repository, and they are versioned and [published](https://www.npmjs.com/search?q=%40activepieces) directly to npmjs.com upon contributions.
 
-  </tr>
+If you cannot find a specific piece on the pieces roadmap, please submit a request by visiting the following link: [Request Piece](https://github.com/activepieces/activepieces/issues/new/choose)
 
-   <tr>
-    <td width="50%">
-      <a href="#">
-        <img src="https://uploads-ssl.webflow.com/62c21c5154de255ece48bdf4/638f882fe84c1e465161177c_Screenshot%202022-12-06%20at%2021.14%201-p-1080.png" />
-      </a>
-    </td>
-    <td width="50%">
-        <a href="#">
-            <img src="https://uploads-ssl.webflow.com/62c21c5154de255ece48bdf4/638f8e093a493043dc8ed633_Screenshot%202022-12-06%20at%2021.44%201-p-1080.png" />
-        </a>
-    </td>
-  </tr>
+Alternatively, if you are a developer, you can quickly build your own piece using our TypeScript framework. For guidance, please refer to the following guide: [Contributor's Guide](https://www.activepieces.com/docs/contributing/overview)
 
-  <tr>
-    <th>
-      <a href="#">Custom NodeJS (with any npm)</a>
-    </th>
-    <th>
-      <a href="#">Self Hosted</a>
-    </th>
-</tr>
+<br>
+<br>
+<h1> 🎨 Visual Builder</h1>
+<p>
+User-friendly Workflow Builder! Enjoy building fun and interactive flows with support for Branches, Loops, and Drag and Drop.
+  <br />
+</p>
 
- <tr>
-    <td width="50%">
-        <a href="#">
-            <img src="https://uploads-ssl.webflow.com/62c21c5154de255ece48bdf4/638f902e016e13f712543baf_Screenshot%202022-12-06%20at%2021.54%201-p-1080.png" />
-        </a>
-    </td>
-    <td width="50%">
-      <a href="#">
-        <img src="https://uploads-ssl.webflow.com/62c21c5154de255ece48bdf4/638fc2f3d951ef60fb258a6e_Screenshot%202022-12-07%20at%2001.31%201-p-1080.png" />
-      </a>
-    </td>
- </tr>
-</table>
+![build](https://github.com/activepieces/activepieces/assets/1812998/e75616ce-7801-45b7-b3fa-eba778bebde3)
 
-## Repo Activity
+<br>
+<br>
+<h1>
+💡 Infinite Use Cases</h1>
+<p>
+Community templates provide inspiration and enable you to effortlessly build flows in no time.
+<br />
+</p>
 
-![Alt](https://repobeats.axiom.co/api/embed/f3afe14b092263a6c76408043fd4fc2f72ed4cf3.svg 'Repobeats analytics image')
+![templates](https://github.com/activepieces/activepieces/assets/1812998/2851f96e-3d9c-42b3-b021-b1cc5153df50)
 
-## Connectors
+<br>
+<br>
 
-We're building no-code connectors to make flow building a frictionless process for non developers. Go to the [Pieces](https://www.activepieces.com/docs/pieces) section of our docs to browse all available pieces.
+# ☁️ Open Source and Cloud
 
-> :warning: The list of connectors will keep changing as we hear from our users, [request piece](https://github.com/activepieces/activepieces/issues/new/choose) if you can't find it on the [connectors roadmap](https://github.com/orgs/activepieces/projects/5).
+Activepieces is open source under the [MIT license](https://github.com/activepieces/activepieces/blob/main/LICENSE). You might notice some differences on the cloud version as it's a special version developed privately on top of the open source software.
 
-## Open Source and Cloud
+<br>
+<br>
 
-The core of Activepieces is available as open source under the [MIT license](https://github.com/activepieces/activepieces/blob/main/LICENSE). While most of its features are openly accessible, certain functionalities are exclusive to the cloud version and remain closed source.
 
-## Contributions
+# 💭 Join Our Community
+
+<a href="https://discord.gg/2jUXBKDdP8" target="_blank">
+<img src="https://discordapp.com/api/guilds/966798490984382485/widget.png?style=banner3" alt="">
+</a>
+
+<br>
+<br>
+
+# 🌐 Contributions
 
 We welcome contributions big or small and in different directions. The best way to do this is to check this [document](https://www.activepieces.com/docs/contributing/building-pieces/create-action) and we are always up to talk on [our Discord Server](https://discord.gg/2jUXBKDdP8).
 
-## Contributors 🦫
+<br>
+<br>
 
-### Legendary Beavers Club 🔥
-
-This section is dedicated to individuals who have contributed to 10 or more actions/triggers.
-<br><br>
-<a href="https://github.com/kanarelo"><img src="https://avatars.githubusercontent.com/u/393261?v=4?s=100" width="100px;" alt="Mukewa Wekalao"/></a>
-<a href="https://github.com/AbdulTheActivePiecer"><img src="https://avatars.githubusercontent.com/u/106555838?v=4?s=100" width="100px;" alt="AbdulTheActivePiecer"/> </a>
-<a href="https://github.com/abuaboud"><img src="https://avatars.githubusercontent.com/u/1812998?v=4?s=100" width="100px;" alt="Mohammed Abu Aboud"/></a>
-<a href="https://github.com/Willianwg"><img src="https://avatars.githubusercontent.com/u/51550522?v=4?s=100" width="100px;" alt="Willian Guedes"/></a>
-<a href="https://github.com/JanHolger"><img src="https://avatars.githubusercontent.com/u/25184957?v=4?s=100" width="100px;" alt="Jan Bebendorf"/></a>
-
-### Busy Beavers Club 🦸
-
-This section is dedicated to individuals who have contributed to 5 or more actions/triggers.
-<br><br>
-<a href="https://github.com/khaledmashaly"><img src="https://avatars.githubusercontent.com/u/61781545?v=4?s=100" width="100px;" alt="khaledmashaly"/></a>
-<a href="https://shaypunter.co.uk"><img src="https://avatars.githubusercontent.com/u/18310437?v=4?s=100" width="100px;" alt="Shay Punter"/></a>
-
-### Builder Beavers Club 🏗️
+## 🦫 Contributors
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
@@ -162,6 +161,7 @@ This section is dedicated to individuals who have contributed to 5 or more actio
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/BastienMe"><img src="https://avatars.githubusercontent.com/u/71411115?v=4?s=100" width="100px;" alt="BastienMe"/><br /><sub><b>BastienMe</b></sub></a><br /><a href="#plugin-BastienMe" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://blog.fosketts.net"><img src="https://avatars.githubusercontent.com/u/8627862?v=4?s=100" width="100px;" alt="Stephen Foskett"/><br /><sub><b>Stephen Foskett</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=SFoskett" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>

@@ -2,9 +2,13 @@ import { BasicAuthPropertyValue, Property } from "@activepieces/pieces-framework
 import { AuthenticationType, httpClient, HttpMethod, HttpRequest } from "@activepieces/pieces-common";
 export type WordpressMedia = { id: string, title: { rendered: string } }
 
-// TODO This needs a better description
 const markdownPropertyDescription = `
-Enable basic authentication for your Wordpress website by downloading and installing the plugin from this repository: https://github.com/WP-API/Basic-Auth.
+**Steps to Enable Basic Authentication:**
+
+1. Visit the repository at https://github.com/WP-API/Basic-Auth.
+2. Download the basic authentication plugin for Wordpress (ZIP File).
+3. Install the downloaded plugin on your Wordpress website (Upload from ZIP).
+4. Enter your username and password that you use for login.
 `
 const PAGE_HEADER = 'x-wp-totalpages';
 
@@ -26,6 +30,11 @@ export const wordpressCommon = {
         displayName: 'Website URL',
         required: true,
         description: "URL of the wordpress url i.e https://www.example-website.com"
+    }),
+    featured_media_file: Property.File({
+        displayName: "Featured Media (URL)",
+        required: false,
+        description: "URL of featured media"
     }),
     authors: Property.Dropdown({
         displayName: 'Authors',

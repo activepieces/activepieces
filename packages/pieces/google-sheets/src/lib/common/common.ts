@@ -174,17 +174,15 @@ async function getValues(spreadsheetId: string, accessToken: string, sheetId: nu
 
     const res = [];
     for (let i = 0; i < response.body.values.length; i++) {
-        for (let j = 0; j < response.body.values[i].length; j++) {
-            res.push({
-                row: i + 1,
-                values: response.body.values[i].map((value, index) => {
-                    return {
-                        [columnToLabel(index)]: value
-                    }
-                })
-            });
+        res.push({
+            row: i + 1,
+            values: response.body.values[i].map((value, index) => {
+                return {
+                    [columnToLabel(index)]: value
+                }
+            })
+        });
 
-        }
     }
 
     return res;
