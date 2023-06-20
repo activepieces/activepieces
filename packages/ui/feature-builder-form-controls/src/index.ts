@@ -1,3 +1,4 @@
+export * from './lib/interpolating-text-form-control/builder-autocomplete-dropdown-handler/builder-autocomplete-dropdown-handler.component';
 export * from './lib/ui-feature-builder-form-controls.module';
 export * from './lib/models/piece-properties-form-value';
 export * from './lib/interpolating-text-form-control/utils';
