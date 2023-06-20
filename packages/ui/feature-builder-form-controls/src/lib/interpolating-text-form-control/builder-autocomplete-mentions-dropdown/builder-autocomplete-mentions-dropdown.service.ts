@@ -17,4 +17,7 @@ export class BuilderAutocompleteMentionsDropdownService {
     insert: InsertMentionOperation;
   }> = new Subject();
   currentInputCanHaveOnlyOneMention = false;
+  dataInsertionPopupSize$: BehaviorSubject<
+    'fullscreen' | 'docked' | 'collapse'
+  > = new BehaviorSubject<'fullscreen' | 'docked' | 'collapse'>('fullscreen');
 }

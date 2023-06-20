@@ -34,7 +34,7 @@ export class BuilderAutocompleteMentionsDropdownComponent {
   @Input() container: HTMLElement;
   focusChecker: NodeJS.Timer | undefined;
   constructor(
-    private interpolatingTextFormControlService: BuilderAutocompleteMentionsDropdownService,
+    public interpolatingTextFormControlService: BuilderAutocompleteMentionsDropdownService,
     private store: Store,
     private matDialog: MatDialog
   ) {

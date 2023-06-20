@@ -101,7 +101,7 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
     public builderService: CollectionBuilderService,
     private matDialog: MatDialog,
     private flagService: FlagService,
-    private builderAutocompleteService: BuilderAutocompleteMentionsDropdownService
+    public builderAutocompleteService: BuilderAutocompleteMentionsDropdownService
   ) {
     this.listenToGraphChanges();
     this.dataInsertionPopupHidden$ =
