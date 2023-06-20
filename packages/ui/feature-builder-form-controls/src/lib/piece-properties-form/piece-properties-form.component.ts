@@ -47,7 +47,7 @@ import {
 import {
   jsonValidator,
   fadeInUp400ms,
-  ActionMetaService,
+  PieceMetadataService,
 } from '@activepieces/ui/common';
 import {
   BuilderSelectors,
@@ -128,7 +128,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
 
   constructor(
     private fb: UntypedFormBuilder,
-    private actionMetaDataService: ActionMetaService,
+    private actionMetaDataService: PieceMetadataService,
     private store: Store,
     private codeService: CodeService,
     private cd: ChangeDetectorRef

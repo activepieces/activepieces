@@ -4,7 +4,7 @@ import { cwd } from 'node:process'
 import sortBy from 'lodash/sortBy'
 import { Piece, PieceMetadata, PieceMetadataSummary } from '@activepieces/pieces-framework'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
-import { captureException, logger } from '../../helper/logger'
+import { captureException } from '../../helper/logger'
 import { GetParams, PieceMetadataService } from './piece-metadata-service'
 import { isNil } from 'lodash'
 
@@ -30,7 +30,6 @@ const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
         }
         catch(ex) {
             captureException(ex)
-            logger.error(ex)
         }
     }
 
@@ -72,6 +71,9 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
             return pieceMetadata
         },
 
+        async delete(){
+            throw new Error('Deleting pieces is not supported in development mode')
+        },
         async create() {
             throw new Error('Creating pieces is not supported in development mode')
         },

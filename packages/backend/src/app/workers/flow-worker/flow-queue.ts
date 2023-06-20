@@ -143,13 +143,14 @@ export const migrateScheduledJobs = async (): Promise<void> => {
         const scheduledJobs = await scheduledJobQueue.getJobs()
         const jobsToMigrate = scheduledJobs.filter((job) => job.data.schemaVersion !== LATEST_JOB_DATA_SCHEMA_VERSION)
         for (const job of jobsToMigrate) {
-            // Cast as we are sure about the schema
+            // Cast as we are not sure about the schema
             const { data } = JSON.parse(JSON.stringify(job))
-            if (data.schemaVersion === undefined) {
+            if (data.schemaVersion === undefined || data.schemaVersion === 1) {
                 const { flowVersion, projectId, triggerType } = data
-                const newJobData: RepeatingJobData = {
-                    schemaVersion: 1,
-                    flowVersion,
+                const newJobData = {
+                    schemaVersion: 2,
+                    flowVersionId: flowVersion.id,
+                    flowId: flowVersion.flowId,
                     projectId,
                     environment: RunEnvironment.PRODUCTION,
                     executionType: ExecutionType.BEGIN,

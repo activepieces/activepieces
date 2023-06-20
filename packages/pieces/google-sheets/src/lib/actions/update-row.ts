@@ -28,7 +28,7 @@ export const updateRowAction = createAction({
             throw Error("Sheet not found in spreadsheet");
         }
         if (Array.isArray(values)) {
-            await googleSheetsCommon.updateGoogleSheetRow({
+            const res = await googleSheetsCommon.updateGoogleSheetRow({
                 accessToken: context.propsValue['authentication']['access_token'],
                 rowIndex:  Number(context.propsValue.row_id),
                 sheetName: sheetName,
@@ -36,11 +36,19 @@ export const updateRowAction = createAction({
                 valueInputOption: ValueInputOption.USER_ENTERED,
                 values: values as string[],
             });
+
+            
+            res.body.updatedRange = res.body.updatedRange.replace(sheetName + "!", "");
+            res.body.updatedRange = res.body.updatedRange.split(":");
+            const UpdatedRows = [];
+            
+            for (let i = 0; i < res.body.updatedRange.length; i++) 
+                UpdatedRows.push({ [res.body.updatedRange[i].charAt(0)]: parseInt(res.body.updatedRange[i].slice(1)) });
+            
+
+            return UpdatedRows;
         } else {
             throw Error("Values passed are not an array")
         }
-        return {
-            success: true,
-        };
     },
 });

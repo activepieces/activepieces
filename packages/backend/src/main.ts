@@ -2,7 +2,7 @@ import { authenticationModule } from './app/authentication/authentication.module
 import { system, validateEnvPropsOnStartup } from './app/helper/system/system'
 import { SystemProp } from './app/helper/system/system-prop'
 import { databaseConnection } from './app/database/database-connection'
-import { initilizeSentry, logger } from './app/helper/logger'
+import { logger } from './app/helper/logger'
 import { getEdition } from './app/helper/secret-helper'
 import { ApEdition } from '@activepieces/shared'
 import { seedDevData } from './app/database/seeds/dev-seeds'
@@ -19,10 +19,7 @@ const start = async () => {
 
         const edition = await getEdition()
         logger.info('Activepieces ' + (edition == ApEdition.ENTERPRISE ? 'Enterprise' : 'Community') + ' Edition')
-        if (edition === ApEdition.ENTERPRISE) {
-            initilizeSentry()
-        }
-        else {
+        if (edition === ApEdition.COMMUNITY) {
             app.register(authenticationModule)
         }
         await app.listen({
