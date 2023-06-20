@@ -175,11 +175,13 @@ export class FlowStructureUtil {
       throw new Error('Step not found while traversing to find it ');
     }
     if (trigger.nextAction) {
-      this.findIndeciesInDfsOrder(path, trigger.nextAction, { value: 2 });
+      this.findIndeciesForPathInDfsOrder(path, trigger.nextAction, {
+        value: 2,
+      });
     }
     return [trigger, ...path];
   }
-  private static findIndeciesInDfsOrder(
+  private static findIndeciesForPathInDfsOrder(
     path: FlowItem[],
     action: FlowItem,
     idx: { value: number }
@@ -194,17 +196,47 @@ export class FlowStructureUtil {
     idx.value++;
     const branchAction: BranchAction = action as BranchAction;
     if (branchAction.onSuccessAction) {
-      this.findIndeciesInDfsOrder(path, branchAction.onSuccessAction, idx);
+      this.findIndeciesForPathInDfsOrder(
+        path,
+        branchAction.onSuccessAction,
+        idx
+      );
     }
     if (branchAction.onFailureAction) {
-      this.findIndeciesInDfsOrder(path, branchAction.onFailureAction, idx);
+      this.findIndeciesForPathInDfsOrder(
+        path,
+        branchAction.onFailureAction,
+        idx
+      );
     }
     const loopOnItemsAction: LoopOnItemsAction = action as LoopOnItemsAction;
     if (loopOnItemsAction.firstLoopAction) {
-      this.findIndeciesInDfsOrder(path, loopOnItemsAction.firstLoopAction, idx);
+      this.findIndeciesForPathInDfsOrder(
+        path,
+        loopOnItemsAction.firstLoopAction,
+        idx
+      );
     }
     if (action.nextAction) {
-      this.findIndeciesInDfsOrder(path, action.nextAction, idx);
+      this.findIndeciesForPathInDfsOrder(path, action.nextAction, idx);
+    }
+  }
+  public static findDfsIndicies(action: FlowItem, idx: { value: number }) {
+    action.indexInDfsTraversal = idx.value;
+    idx.value++;
+    const branchAction: BranchAction = action as BranchAction;
+    if (branchAction.onSuccessAction) {
+      this.findDfsIndicies(branchAction.onSuccessAction, idx);
+    }
+    if (branchAction.onFailureAction) {
+      this.findDfsIndicies(branchAction.onFailureAction, idx);
+    }
+    const loopOnItemsAction: LoopOnItemsAction = action as LoopOnItemsAction;
+    if (loopOnItemsAction.firstLoopAction) {
+      this.findDfsIndicies(loopOnItemsAction.firstLoopAction, idx);
+    }
+    if (action.nextAction) {
+      this.findDfsIndicies(action.nextAction, idx);
     }
   }
 }

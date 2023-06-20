@@ -14,6 +14,7 @@ export class FlowFactoryUtil {
     if (flowVersion.trigger) {
       const newFlow = FlowFactoryUtil.addCordDetails(flowVersion.trigger);
       FlowFactoryUtil.buildHelper(newFlow);
+      FlowStructureUtil.findDfsIndicies(newFlow, { value: 1 });
       return newFlow;
     }
     return undefined;

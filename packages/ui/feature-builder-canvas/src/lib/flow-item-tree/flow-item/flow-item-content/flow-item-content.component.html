@@ -2,8 +2,6 @@
   [class.ap-pointer-events-none]="(isDragging$ | async) === true"
   [class.non-empty-step]="_flowItem.type !== ActionType.MISSING"
   [class.empty-step]="_flowItem.type === ActionType.MISSING">
-
-
   <div class="flow-item ap-flex ap-items-center ap-border-solid ap-border-border ap-border-[1px]"
     [class.selected-non-empty]="selected && _flowItem.type !== ActionType.MISSING"
     [class.selected-empty]="selected && _flowItem.type === ActionType.MISSING"
@@ -26,9 +24,9 @@
     <div class="flow-content ap-flex ap-flex-col ap-justify-center  ap-self-stretch">
       <div class="ap-flex  ap-items-center ap-gap-2 ">
         <div class="ap-flex ap-flex-grow ap-flex-col ap-gap-2">
-          <div class="ap-typography-subtitle-1 ap-font-normal flow-title ap-flex-grow ap-max-w-[193px]" #stepTitle
+          <div class="ap-typography-subtitle-1  flow-title ap-flex-grow ap-max-w-[193px] ap-text-body" #stepTitle
             [matTooltip]="isOverflown(stepTitle)?_flowItem.displayName:''">
-            {{ _flowItem.displayName }}
+            {{_flowItem.indexInDfsTraversal}}. {{ _flowItem.displayName }}
           </div>
           <div class="ap-typography-caption ap-flex ap-text-description ap-items-center">
             <div>{{ stepAppName$ | async}}</div>
