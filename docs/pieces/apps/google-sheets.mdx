@@ -118,3 +118,31 @@ These are the cell values of the row that will be updated, begining with column 
         </Expandable>
       </Card>
   
+      <Card title="Find Rows " >
+        Find rows in a Google Sheet
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Authentication" required type="Oauth2">
+
+</ResponseField>
+            
+<ResponseField name="Spreadsheet" required type="Dropdown">
+
+</ResponseField>
+            
+<ResponseField name="Sheet" required type="Dropdown">
+
+</ResponseField>
+            
+<ResponseField name="Column Name" required type="Short_text">
+The name of the column to search in, e.g. "A"
+</ResponseField>
+            
+<ResponseField name="Search Value" required type="Short_text">
+The value to search for
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  

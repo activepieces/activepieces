@@ -16,7 +16,7 @@ export const updateRowAction = createAction({
         }),
         values: Property.Array({
             displayName: 'Values',
-            description: 'These are the cell values of the row that will be updated',
+            description: 'These are the cell values of the row that will be updated, begining with column A and continuing with each Value entered into the next column. For example, to update column C, you must enter Values for columns A, B, and C. It is likely that you will update these columns using Values selected from a previous Google Sheets operation so they will remain the same. If they are left blank they will be blanked out when updating. You do not need to enter Values for all of the columns, just those to the left of the Value you wish to update.',
             required: true,
         }),
     },
