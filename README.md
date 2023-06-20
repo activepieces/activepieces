@@ -7,11 +7,13 @@
     <img
       align="center"
       alt="Activepieces"
-src="https://github.com/activepieces/activepieces/assets/1812998/21652bf1-9f25-4dd7-90a8-531cea0b4538"
+src="https://github.com/activepieces/activepieces/assets/1812998/76c97441-c285-4480-bc75-30a0c73ed340"
       style="width:100%;"
     />
   </a>
 </h1>
+
+
 
 <p align="center">
 <a href="/LICENSE" target="_blank"><img src='https://img.shields.io/badge/license-MIT-green?style=for-the-badge' /></a>&nbsp;<a href='https://discord.gg/2jUXBKDdP8'><img src='https://img.shields.io/discord/966798490984382485?style=for-the-badge' /></a>
@@ -71,35 +73,24 @@ Get Inspired by the community
 
 ![templates](https://github.com/activepieces/activepieces/assets/1812998/2851f96e-3d9c-42b3-b021-b1cc5153df50)
 
+<br>
+<br>
 
 # ☁️ Open Source and Cloud
 
-The core of Activepieces is available as open source under the [MIT license](https://github.com/activepieces/activepieces/blob/main/LICENSE). While most of its features are openly accessible, certain functionalities are exclusive to the cloud version and remain closed source.
+Activepieces is open source under the [MIT license](https://github.com/activepieces/activepieces/blob/main/LICENSE). You might notice some differences on the cloud version as it's a special version developed privately on top of the open source software.
+
+<br>
+<br>
 
 # 🌐 Contributions
 
 We welcome contributions big or small and in different directions. The best way to do this is to check this [document](https://www.activepieces.com/docs/contributing/building-pieces/create-action) and we are always up to talk on [our Discord Server](https://discord.gg/2jUXBKDdP8).
 
-## 🦫 Contributors 
+<br>
+<br>
 
-### Legendary Beavers Club 🔥
-
-This section is dedicated to individuals who have contributed to 10 or more actions/triggers.
-<br><br>
-<a href="https://github.com/kanarelo"><img src="https://avatars.githubusercontent.com/u/393261?v=4?s=100" width="100px;" alt="Mukewa Wekalao"/></a>
-<a href="https://github.com/AbdulTheActivePiecer"><img src="https://avatars.githubusercontent.com/u/106555838?v=4?s=100" width="100px;" alt="AbdulTheActivePiecer"/> </a>
-<a href="https://github.com/abuaboud"><img src="https://avatars.githubusercontent.com/u/1812998?v=4?s=100" width="100px;" alt="Mohammed Abu Aboud"/></a>
-<a href="https://github.com/Willianwg"><img src="https://avatars.githubusercontent.com/u/51550522?v=4?s=100" width="100px;" alt="Willian Guedes"/></a>
-<a href="https://github.com/JanHolger"><img src="https://avatars.githubusercontent.com/u/25184957?v=4?s=100" width="100px;" alt="Jan Bebendorf"/></a>
-
-### Busy Beavers Club 🦸
-
-This section is dedicated to individuals who have contributed to 5 or more actions/triggers.
-<br><br>
-<a href="https://github.com/khaledmashaly"><img src="https://avatars.githubusercontent.com/u/61781545?v=4?s=100" width="100px;" alt="khaledmashaly"/></a>
-<a href="https://shaypunter.co.uk"><img src="https://avatars.githubusercontent.com/u/18310437?v=4?s=100" width="100px;" alt="Shay Punter"/></a>
-
-### Builder Beavers Club 🏗️
+## 🦫 Contributors (Builders)
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
