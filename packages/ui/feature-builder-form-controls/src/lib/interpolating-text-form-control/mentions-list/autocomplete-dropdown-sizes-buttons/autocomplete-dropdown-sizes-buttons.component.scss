@@ -1,0 +1,28 @@
+
+
+
+
+.size-icon{
+    [fill-rect]
+    {
+        fill: #AAAAAA;
+    }
+    [stroke-rect]
+    {
+        stroke: #AAAAAA;
+    }
+
+    &.active{
+        [fill-rect]
+        {
+            fill: #212121 ;
+        }
+        [stroke-rect]
+        {
+            stroke: #212121 ; 
+        }
+    }
+}
+
+
+
