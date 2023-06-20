@@ -9,6 +9,7 @@ export const FlowVersionTemplate = Type.Omit(
 export type FlowVersionTemplate = Static<typeof FlowVersionTemplate>;
 
 export const FlowTemplate = Type.Object({
+    id: Type.String(),
     name: Type.String(),
     description: Type.String(),
     tags: Type.Array(Type.String()),
