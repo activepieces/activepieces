@@ -28,10 +28,14 @@ export function formatDate(date?: string): string|undefined {
     return date.replace('T', ' ').replace('Z', '').replace(/\.[0-9]{3}/, '')
 }
 
+const markdown = `
+Create an account and obtain the API Key from Pastefy.
+`
+
 export const pastefyCommon = {
     authentication: (required = true) => Property.CustomAuth({
         displayName: 'Authentication',
-        description: 'API credentials to authorize against the pastefy api',
+        description: markdown,
         required,
         props: {
             instance_url: Property.ShortText({
