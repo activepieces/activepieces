@@ -7,8 +7,9 @@
       type="button" btnSize="small" [buttonIsInsideAutocomplete]="true" [darkLoadingSpinner]="true"
       (click)="$event.stopPropagation();" (buttonClicked)="mentionClicked.emit(stepMention)">Insert
     </ap-button>
-    <mat-icon class="mat-icon-rtl-mirror !ap-mr-[5px]">
-      {{expandCodeCollapse ? 'expand_less' : 'expand_more'}}
+    <mat-icon [svgIcon]="expandCodeCollapse ? 'custom_expand_less' : 'custom_expand_more'"
+      class="mat-icon-rtl-mirror !ap-mr-[5px]">
+
     </mat-icon>
 
   </div>

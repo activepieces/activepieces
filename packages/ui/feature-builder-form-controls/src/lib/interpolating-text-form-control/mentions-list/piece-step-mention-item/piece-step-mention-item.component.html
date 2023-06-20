@@ -1,26 +1,32 @@
-<button mat-menu-item apTrackHover #hoverTracker="hoverTrackerDirective" class="!ap-px-[9px]"
+<button mat-menu-item apTrackHover #hoverTracker="hoverTrackerDirective" class="!ap-px-5"
   (click)="expandSample? expandSample=false : expandSample=true">
-  <div class="ap-flex">
+  <div class="ap-flex ap-items-center">
     <ng-container *ngIf="sampleData$ | async as result; else noSampleDataNote">
-      <mat-icon class="mat-icon-rtl-mirror !ap-mr-[5px]"
-        *ngIf="(result.children && result.children.length>0) || result.value">
-        {{expandSample ? 'expand_less' : 'expand_more'}}
-      </mat-icon>
+
       <app-generic-step-mention-item [stepIndex]="stepIndex" [stepMention]="_stepMention"
         [indentation]="(!result.children || result.children.length===0) && !result.value"></app-generic-step-mention-item>
+      <div class="ap-flex-grow"></div>
+      <ap-button *ngIf="hoverTracker.isHovered " btnColor="primary" btnStyle="basic" type="button" btnSize="small"
+        [buttonIsInsideAutocomplete]="true" (click)="mentionClicked.emit(_stepMention)">Insert
+      </ap-button>
+      <mat-icon class="mat-icon-rtl-mirror !ap-mr-[5px]"
+        [svgIcon]="expandSample ? 'custom_expand_less' : 'custom_expand_more'"
+        *ngIf="(result.children && result.children.length>0) || result.value">
+
+      </mat-icon>
     </ng-container>
     <ng-template #noSampleDataNote>
-      <mat-icon class="mat-icon-rtl-mirror !ap-mr-[5px]">
-        {{expandSample ? 'expand_less' : 'expand_more'}}
-      </mat-icon>
       <app-generic-step-mention-item [stepIndex]="stepIndex"
         [stepMention]="_stepMention"></app-generic-step-mention-item>
+      <div class="ap-flex-grow"></div>
+      <mat-icon [svgIcon]="expandSample ? 'custom_expand_less' : 'custom_expand_more'"
+        class="mat-icon-rtl-mirror !ap-mr-[5px]">
+
+      </mat-icon>
     </ng-template>
+
   </div>
-  <ap-button *ngIf="hoverTracker.isHovered && !!(sampleData$ | async)" btnColor="primary" btnStyle="basic" type="button"
-    btnSize="small" class="ap-absolute ap-right-[10px]" [buttonIsInsideAutocomplete]="true"
-    (click)="mentionClicked.emit(_stepMention)">Select
-  </ap-button>
+
 
 </button>
 <ng-container *ngIf="expandSample">
@@ -46,7 +52,7 @@
         <ap-button *ngIf="resultNodeHoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button"
           btnSize="small" class="ap-absolute ap-right-[10px]" [buttonIsInsideAutocomplete]="true"
           [darkLoadingSpinner]="true" (click)="$event.stopPropagation();"
-          (buttonClicked)="mentionClicked.emit(_stepMention)">Select
+          (buttonClicked)="mentionClicked.emit(_stepMention)">Insert
         </ap-button>
       </button>
     </ng-container>
