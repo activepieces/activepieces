@@ -1,18 +1,12 @@
-import { createPiece } from '@activepieces/pieces-framework';
-import { bloomerangUpsertContacts } from './lib/actions/upsert-contact';
-import { bloomerangCreateTransaction } from './lib/actions/create-transaction';
-import { bloomerangGetContacts } from './lib/actions/get-contacts';
-import { bloomerangGetTransactionStuff } from './lib/actions/get-transaction-stuff';
+import { AuthProp, Piece } from '@activepieces/pieces-framework';
 
-export const bloomerang = createPiece({
+export const bloomerang = Piece.create({
   displayName: 'Bloomerang',
   logoUrl: 'https://cdn.activepieces.com/pieces/bloomerang.png',
   authors: ['HKudria'],
-  actions: [
-    bloomerangUpsertContacts,
-    bloomerangCreateTransaction,
-    bloomerangGetContacts,
-    bloomerangGetTransactionStuff,
-  ],
-  triggers: [],
+  auth: AuthProp.SecretText({
+    displayName: "API Key",
+    required: true,
+    description: "API key acquired from your Bloomerang crm"
+  }),
 });

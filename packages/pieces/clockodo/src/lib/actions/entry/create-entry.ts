@@ -1,13 +1,13 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
+import { Property } from "@activepieces/pieces-framework";
 import { clockodoCommon, makeClient, reformatDateTime } from "../../common";
 import { TimeRecordEntry } from "../../common/models/entry";
+import { clockodo } from "../../../";
 
-export default createAction({
+clockodo.addAction({
     name: 'create_entry',
     displayName: 'Create Entry',
     description: 'Creates an entry in clockodo',
     props: {
-        authentication: clockodoCommon.authentication,
         customer_id: clockodoCommon.customer_id(),
         project_id: clockodoCommon.project_id(false),
         service_id: clockodoCommon.service_id(),
@@ -29,17 +29,17 @@ export default createAction({
         }),
         user_id: clockodoCommon.user_id(false)
     },
-    async run(context) {
-        const client = makeClient(context.propsValue);
+    async run({ auth, propsValue }) {
+        const client = makeClient(auth);
         const res = await client.createEntry({
-            customers_id: context.propsValue.customer_id,
-            projects_id: context.propsValue.project_id,
-            services_id: context.propsValue.service_id,
-            time_since: reformatDateTime(context.propsValue.time_since),
-            time_until: reformatDateTime(context.propsValue.time_until),
-            text: context.propsValue.text,
-            hourly_rate: context.propsValue.hourly_rate,
-            users_id: context.propsValue.user_id
+            customers_id: propsValue.customer_id,
+            projects_id: propsValue.project_id,
+            services_id: propsValue.service_id,
+            time_since: reformatDateTime(propsValue.time_since),
+            time_until: reformatDateTime(propsValue.time_until),
+            text: propsValue.text,
+            hourly_rate: propsValue.hourly_rate,
+            users_id: propsValue.user_id
         } as TimeRecordEntry) // For now we only support time records
         return res.entry
     }

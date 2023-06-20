@@ -1,13 +1,13 @@
-import {createAction, Property} from '@activepieces/pieces-framework';
-import {httpClient, HttpMethod} from '@activepieces/pieces-common';
-import {bloomerangCommon} from '../common/common';
+import { Property } from '@activepieces/pieces-framework';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { bloomerangCommon } from '../common/common';
+import { bloomerang } from '../../';
 
-export const bloomerangUpsertContacts = createAction({
+bloomerang.addAction({
     name: 'upsert_contact',
     description: 'Update or create bloomerang contact',
     displayName: 'Upsert Contact (Advanced)',
     props: {
-        authentication: bloomerangCommon.authentication,
         first_name: Property.ShortText({
             displayName: "Firs name",
             description: "Firs name",
@@ -60,24 +60,24 @@ export const bloomerangUpsertContacts = createAction({
             required: true
         })
     },
-    async run(context) {
-        const {authentication, contact_json, street, email_address, phone_number, first_name, last_name, organization_name, type} = context.propsValue
-        if(!street && !email_address && !phone_number && !first_name && !last_name && !organization_name && !type){
+    async run({ auth, propsValue }) {
+        const { contact_json, street, email_address, phone_number, first_name, last_name, organization_name, type } = propsValue
+        if (!street && !email_address && !phone_number && !first_name && !last_name && !organization_name && !type) {
             throw new Error('Missing search parameters');
         }
         let url = `${bloomerangCommon.baseUrl}/constituent/duplicates?`;
-        if(street) url += `street=${street}&`;
-        if(email_address) url += `emailAddress=${email_address}&`;
-        if(phone_number) url += `phoneNumber=${phone_number}&`;
-        if(first_name) url += `firstName=${first_name}`;
-        if(last_name) url += `lastName=${last_name}`;
-        if(organization_name) url += `organizationName=${organization_name}`;
-        if(type) url += `type=${type}`;
+        if (street) url += `street=${street}&`;
+        if (email_address) url += `emailAddress=${email_address}&`;
+        if (phone_number) url += `phoneNumber=${phone_number}&`;
+        if (first_name) url += `firstName=${first_name}`;
+        if (last_name) url += `lastName=${last_name}`;
+        if (organization_name) url += `organizationName=${organization_name}`;
+        if (type) url += `type=${type}`;
         const findContact = (await httpClient.sendRequest({
             method: HttpMethod.GET,
             url,
             headers: {
-                "X-API-KEY": authentication,
+                "X-API-KEY": auth,
             },
         })).body;
         if (findContact.Total > 0) {
@@ -86,7 +86,7 @@ export const bloomerangUpsertContacts = createAction({
                 method: HttpMethod.PUT,
                 url: `${bloomerangCommon.baseUrl}/constituent/${contactID}`,
                 headers: {
-                    "X-API-KEY": authentication,
+                    "X-API-KEY": auth,
                 },
                 body: contact_json
             })).body
@@ -95,7 +95,7 @@ export const bloomerangUpsertContacts = createAction({
                 method: HttpMethod.POST,
                 url: `${bloomerangCommon.baseUrl}/constituent`,
                 headers: {
-                    "X-API-KEY": authentication,
+                    "X-API-KEY": auth,
                 },
                 body: contact_json
             })).body

@@ -1,12 +1,12 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
+import { Property } from "@activepieces/pieces-framework";
 import { clockodoCommon, emptyToNull, makeClient, reformatDate } from "../../common";
+import { clockodo } from "../../../";
 
-export default createAction({
+clockodo.addAction({
     name: 'update_absence',
     displayName: 'Update Absence',
     description: 'Updates an absence in clockodo',
     props: {
-        authentication: clockodoCommon.authentication,
         absence_id: Property.Number({
             displayName: 'Absence ID',
             required: true,
@@ -46,16 +46,16 @@ export default createAction({
             required: false
         })
     },
-    async run(context) {
-        const client = makeClient(context.propsValue);
-        const res = await client.updateAbsence(context.propsValue.absence_id, {
-            date_since: reformatDate(context.propsValue.date_since),
-            date_until: reformatDate(context.propsValue.date_until),
-            type: context.propsValue.type,
-            status: context.propsValue.status,
-            count_days: context.propsValue.half_days ? 0.5 : 1,
-            note: emptyToNull(context.propsValue.note),
-            sick_note: context.propsValue.sick_note
+    async run({ auth, propsValue }) {
+        const client = makeClient(auth);
+        const res = await client.updateAbsence(propsValue.absence_id, {
+            date_since: reformatDate(propsValue.date_since),
+            date_until: reformatDate(propsValue.date_until),
+            type: propsValue.type,
+            status: propsValue.status,
+            count_days: propsValue.half_days ? 0.5 : 1,
+            note: emptyToNull(propsValue.note),
+            sick_note: propsValue.sick_note
         })
         return res.absence
     }

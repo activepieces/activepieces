@@ -1,13 +1,13 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { bloomerangCommon } from '../common/common';
+import { bloomerang } from '../../';
 
-export const bloomerangGetTransactionStuff = createAction({
+bloomerang.addAction({
     name: 'get_transaction_stuff',
     description: 'Get Transaction Stuff',
     displayName: 'Get Transaction Stuff (Advanced)',
     props: {
-        authentication: bloomerangCommon.authentication,
         transaction_stuff: bloomerangCommon.transaction_stuff,
         skip: Property.Number({
             displayName: "The number of items to skip",
@@ -42,8 +42,8 @@ export const bloomerangGetTransactionStuff = createAction({
             required: false,
         })
     },
-    async run(context) {
-        const { authentication, transaction_stuff, skip , limit, take, id, include_inactive, has_goal} = context.propsValue
+    async run({ auth, propsValue }) {
+        const { transaction_stuff, skip , limit, take, id, include_inactive, has_goal} = propsValue
         let url = `${bloomerangCommon.baseUrl}/${transaction_stuff}?`
         if(transaction_stuff === 'campaigns' && has_goal) url += `hasGoal=${has_goal}&`;
         if(skip) url += `skip=${skip}&`;
@@ -58,7 +58,7 @@ export const bloomerangGetTransactionStuff = createAction({
             method: HttpMethod.GET,
             url,
             headers: {
-                "X-API-KEY": authentication,
+                "X-API-KEY": auth,
             },
         })).body;
     }

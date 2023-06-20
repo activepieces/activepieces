@@ -1,10 +1,12 @@
-import { createPiece } from '@activepieces/pieces-framework';
-import { triggers } from './lib/triggers';
+import { AuthProp, Piece } from '@activepieces/pieces-framework';
 
-export const calcom = createPiece({
+export const calcom = Piece.create({
   displayName: 'Cal.com',
   logoUrl: 'https://cdn.activepieces.com/pieces/cal.com.png',
-  actions: [],
-	authors: ['kanarelo'],
-  triggers,
-});
+  authors: ['kanarelo'],
+  auth: AuthProp.SecretText({
+    displayName: 'API Key',
+    description: 'API Key provided by cal.com',
+    required: true
+  })
+})

@@ -1,10 +1,7 @@
-import { createPiece } from '@activepieces/pieces-framework';
-import { fetchCryptoPairPrice } from './lib/actions/fetch-pair-price';
+import { Piece } from '@activepieces/pieces-framework';
 
-export const binance = createPiece({
+export const binance = Piece.create({
   displayName: 'Binance',
   logoUrl: 'https://cdn.activepieces.com/pieces/binance.png',
-  actions: [fetchCryptoPairPrice],
   authors: ['m-tabaza'],
-  triggers: [],
 });

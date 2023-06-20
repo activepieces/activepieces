@@ -1,13 +1,13 @@
-import {createAction, Property} from '@activepieces/pieces-framework';
-import {httpClient, HttpMethod} from '@activepieces/pieces-common';
-import {bloomerangCommon} from '../common/common';
+import { Property } from '@activepieces/pieces-framework';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { bloomerangCommon } from '../common/common';
+import { bloomerang } from '../../';
 
-export const bloomerangCreateTransaction = createAction({
+bloomerang.addAction({
     name: 'create_transaction',
     description: 'Create a transaction',
     displayName: 'Create a transaction (Advanced)',
     props: {
-        authentication: bloomerangCommon.authentication,
         transaction: Property.Json({
             displayName: "Transaction (JSON)",
             description: "The Transaction JSON",
@@ -242,13 +242,13 @@ export const bloomerangCreateTransaction = createAction({
             required: true
         })
     },
-    async run(context) {
-        const {authentication, transaction} = context.propsValue
+    async run({ auth, propsValue }) {
+        const { transaction } = propsValue
         return (await httpClient.sendRequest({
             method: HttpMethod.POST,
             url: `${bloomerangCommon.baseUrl}/transaction`,
             headers: {
-                "X-API-KEY": authentication,
+                "X-API-KEY": auth,
             },
             body: transaction
         })).body

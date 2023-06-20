@@ -28,11 +28,6 @@ export const calendlyCommon = {
         },
 
     }),
-    authentication: Property.SecretText({
-        displayName: "Personal Token",
-        required: true,
-        description: "Get it from https://calendly.com/integrations/api_webhooks"
-    }),
     getUser: async (personalToken: string) => {
         const request: HttpRequest = {
             method: HttpMethod.GET,

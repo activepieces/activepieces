@@ -1,13 +1,13 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
-import { clockodoCommon, makeClient } from "../../common";
+import { Property } from "@activepieces/pieces-framework";
+import { makeClient } from "../../common";
 import { ProjectListFilter } from "../../common/models/project";
+import { clockodo } from "../../../";
 
-export default createAction({
+clockodo.addAction({
     name: 'list_projects',
     displayName: 'Get Projects',
     description: 'Fetches projects from clockodo',
     props: {
-        authentication: clockodoCommon.authentication,
         customer_id_filter: Property.Number({
             displayName: 'Customer ID Filter',
             description: 'Filter projects by their customer',
@@ -25,15 +25,15 @@ export default createAction({
             required: false
         })
     },
-    async run(context) {
-        const client = makeClient(context.propsValue);
+    async run({ auth, propsValue }) {
+        const client = makeClient(auth);
         const filter: ProjectListFilter = {
-            customers_id: context.propsValue.customer_id_filter,
-            active: context.propsValue.active_filter
+            customers_id: propsValue.customer_id_filter,
+            active: propsValue.active_filter
         }
-        if(context.propsValue.page !== undefined) {
+        if(propsValue.page !== undefined) {
             const res = await client.listProjects({
-                page: context.propsValue.page,
+                page: propsValue.page,
                 filter
             })
             return {

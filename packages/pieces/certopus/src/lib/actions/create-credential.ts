@@ -1,5 +1,4 @@
 import {
-  createAction,
   DynamicPropsValue,
   Property,
 } from '@activepieces/pieces-framework';
@@ -14,26 +13,26 @@ import { Organisation } from '../common/models/oranisation';
 import { Event } from '../common/models/event';
 import { Category } from '../common/models/category';
 import { RecipientField } from '../common/models/recipient-field';
+import { certopus } from '../../';
 
-export const createCredential = createAction({
+export const createCredential = certopus.addAction({
   name: 'create_credential',
   displayName: 'Create Credential',
   description: 'Create a credential',
   props: {
-    authentication: certopusCommon.authentication,
     organisation: Property.Dropdown<string>({
       displayName: 'Organisations',
       refreshers: ['authentication'],
       required: true,
-      options: async ({ authentication }) => {
-        if (!authentication) {
+      options: async ({ auth }) => {
+        if (!auth) {
           return {
             disabled: true,
             options: [],
             placeholder: 'Please enter your API key first.',
           };
         }
-        const client = makeClient(authentication as string);
+        const client = makeClient(auth as string);
         const res = await client.listOrganisations();
         console.log(res);
 
@@ -50,8 +49,9 @@ export const createCredential = createAction({
       displayName: 'Event',
       refreshers: ['authentication', 'organisation'],
       required: true,
-      options: async ({ authentication, organisation }) => {
-        if (!authentication) {
+      options: async ({ auth, propsValue }) => {
+        const { organisation } = propsValue
+        if (!auth) {
           return {
             disabled: true,
             options: [],
@@ -65,7 +65,7 @@ export const createCredential = createAction({
             placeholder: 'Please select an organisation first.',
           };
         }
-        const client = makeClient(authentication as string);
+        const client = makeClient(auth as string);
         const res = await client.listEvents(organisation as string);
         console.log(res);
 
@@ -82,8 +82,9 @@ export const createCredential = createAction({
       displayName: 'Category',
       refreshers: ['authentication', 'organisation', 'event'],
       required: true,
-      options: async ({ authentication, organisation, event }) => {
-        if (!authentication) {
+      options: async ({ auth, propsValue }) => {
+        const { organisation, event } = propsValue
+        if (!auth) {
           return {
             disabled: true,
             options: [],
@@ -104,7 +105,7 @@ export const createCredential = createAction({
             placeholder: 'Please select an event first.',
           };
         }
-        const client = makeClient(authentication as string);
+        const client = makeClient(auth as string);
         const res = await client.listCategories(
           organisation as string,
           event as string
@@ -196,7 +197,7 @@ export const createCredential = createAction({
         ],
       },
       headers: {
-        'x-api-key': context.propsValue.authentication,
+        'x-api-key': context.auth,
       },
       queryParams: {},
     };

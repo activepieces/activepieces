@@ -1,6 +1,7 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
+import { Property } from "@activepieces/pieces-framework";
+import { connections } from "../../";
 
-export const readConnection = createAction({
+connections.addAction({
   name: 'read_connection',
   displayName: 'Read Connection',
   description: 'Fetch connection by name',

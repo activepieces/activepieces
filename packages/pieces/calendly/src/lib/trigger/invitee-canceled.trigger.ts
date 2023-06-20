@@ -1,16 +1,15 @@
-import { TriggerStrategy, createTrigger } from "@activepieces/pieces-framework";
+import { TriggerStrategy } from "@activepieces/pieces-framework";
 import { AuthenticationType, httpClient, HttpMethod, HttpRequest } from "@activepieces/pieces-common";
 import { calendlyCommon, CalendlyWebhookInformation } from "../common";
-
+import { calendly } from "../../";
 
 const triggerNameInStore = 'calendly_invitee_canceled_trigger';
 
-export const calendlyInviteeCanceled = createTrigger({
+calendly.addTrigger({
   name: 'invitee_canceled',
   displayName: 'Event Canceled',
   description: 'Triggers when a new Calendly event is canceled',
   props: {
-    authentication: calendlyCommon.authentication,
     scope: calendlyCommon.scope
   },
   sampleData: {
@@ -58,7 +57,7 @@ export const calendlyInviteeCanceled = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
 
-    const calendlyUser = await calendlyCommon.getUser(context.propsValue["authentication"]!);
+    const calendlyUser = await calendlyCommon.getUser(context.auth);
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url: `${calendlyCommon.baseUrl}/webhook_subscriptions`,
@@ -66,11 +65,11 @@ export const calendlyInviteeCanceled = createTrigger({
         url: context.webhookUrl,
         organization: calendlyUser.current_organization,
         user: calendlyUser.uri,
-        scope: context.propsValue["scope"],
+        scope: context.propsValue.scope,
         events: ["invitee.canceled"],
       },
       authentication: {
-        token: context.propsValue["authentication"]!,
+        token: context.auth,
         type: AuthenticationType.BEARER_TOKEN
       },
       queryParams: {},
@@ -87,7 +86,7 @@ export const calendlyInviteeCanceled = createTrigger({
         method: HttpMethod.DELETE,
         url: `${calendlyCommon.baseUrl}/webhook_subscriptions/${response.webhookId}`,
         authentication: {
-          token: context.propsValue["authentication"]!,
+          token: context.auth,
           type: AuthenticationType.BEARER_TOKEN
         },
       };

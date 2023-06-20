@@ -1,13 +1,13 @@
-import { createAction, Property} from "@activepieces/pieces-framework";
-import {  HttpMethod, getAccessTokenOrThrow } from "@activepieces/pieces-common";
+import { Property} from "@activepieces/pieces-framework";
+import { HttpMethod, getAccessTokenOrThrow } from "@activepieces/pieces-common";
 import { clickupCommon, callClickUpApi } from "../../common";
+import { clickup } from "../../../";
 
-export const createClickupFolderlessList = createAction({
+clickup.addAction({
 	name: 'create_folderless_list',
 	description: 'Create a new folderless list in a ClickUp workspace and space',
 	displayName: 'Create Folderless List',
 	props: {
-		authentication: clickupCommon.authentication,
 		workspace_id: clickupCommon.workspace_id(),
 		space_id: clickupCommon.space_id(),
 		name: Property.ShortText({
@@ -17,9 +17,9 @@ export const createClickupFolderlessList = createAction({
 		}),
 	},
 	async run(configValue) {
-		const { space_id, name, authentication } = configValue.propsValue;
+		const { space_id, name } = configValue.propsValue;
 		const response = await callClickUpApi(HttpMethod.POST,
-			`space/${space_id}/list`, getAccessTokenOrThrow(authentication), {
+			`space/${space_id}/list`, getAccessTokenOrThrow(configValue.auth), {
 			name,
 		});
 

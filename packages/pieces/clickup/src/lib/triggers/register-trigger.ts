@@ -1,5 +1,4 @@
 import {
-  createTrigger,
   TriggerStrategy
 } from '@activepieces/pieces-framework';
 import {
@@ -10,6 +9,7 @@ import {
 } from "@activepieces/pieces-common";
 import { callClickupGetTask, clickupCommon } from '../common';
 import { ClickupEventType, ClickupWebhookPayload } from '../common/models';
+import { clickup } from '../../';
 
 export const clickupRegisterTrigger = ({
   name,
@@ -23,18 +23,17 @@ export const clickupRegisterTrigger = ({
   eventType: ClickupEventType,
   description: string,
   sampleData: unknown
-}) => createTrigger({
+}) => clickup.addTrigger({
   name: `clickup_trigger_${name}`,
   displayName,
   description,
   props: {
-    authentication: clickupCommon.authentication,
     workspace_id: clickupCommon.workspace_id(true)
   },
   sampleData,
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    const { authentication, workspace_id } = context.propsValue
+    const { workspace_id } = context.propsValue
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
@@ -45,7 +44,7 @@ export const clickupRegisterTrigger = ({
       },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: authentication.access_token
+        token: context.auth.access_token
       },
       queryParams: {},
     }
@@ -63,7 +62,7 @@ export const clickupRegisterTrigger = ({
         url: `https://api.clickup.com/api/v2/webhook/${webhook.id}`,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: context.propsValue['authentication']['access_token'],
+          token: context.auth.access_token,
         },
       };
       const response = await httpClient.sendRequest(request);
@@ -84,7 +83,7 @@ export const clickupRegisterTrigger = ({
       const enriched = [{
         ...payload,
         task: await callClickupGetTask(
-          context.propsValue['authentication']['access_token'],
+          context.auth.access_token,
           payload.task_id
         )
       }]

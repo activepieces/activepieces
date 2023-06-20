@@ -1,12 +1,12 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
+import { Property } from "@activepieces/pieces-framework";
 import { clockodoCommon, emptyToNull, makeClient } from "../../common";
+import { clockodo } from "../../../";
 
-export default createAction({
+clockodo.addAction({
     name: 'create_project',
     displayName: 'Create Project',
     description: 'Creates a project in clockodo',
     props: {
-        authentication: clockodoCommon.authentication,
         name: Property.ShortText({
             displayName: 'Name',
             required: true
@@ -41,18 +41,18 @@ export default createAction({
             required: false
         })
     },
-    async run(context) {
-        const client = makeClient(context.propsValue);
+    async run({ auth, propsValue }) {
+        const client = makeClient(auth);
         const res = await client.createProject({
-            name: context.propsValue.name,
-            customers_id: context.propsValue.customer_id as number,
-            number: emptyToNull(context.propsValue.number),
-            active: context.propsValue.active,
-            billable_default: context.propsValue.billable,
-            note: emptyToNull(context.propsValue.note),
-            budget_money: context.propsValue.budget,
-            budget_is_hours: context.propsValue.budget_is_hours,
-            budget_is_not_strict: context.propsValue.budget_is_not_strict
+            name: propsValue.name,
+            customers_id: propsValue.customer_id as number,
+            number: emptyToNull(propsValue.number),
+            active: propsValue.active,
+            billable_default: propsValue.billable,
+            note: emptyToNull(propsValue.note),
+            budget_money: propsValue.budget,
+            budget_is_hours: propsValue.budget_is_hours,
+            budget_is_not_strict: propsValue.budget_is_not_strict
         })
         return res.project
     }

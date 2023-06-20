@@ -1,8 +1,8 @@
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
-import { createAction, Property } from "@activepieces/pieces-framework";
+import { Property } from "@activepieces/pieces-framework";
+import { binance } from "../../";
 
-
-export const fetchCryptoPairPrice = createAction({
+binance.addAction({
   name: 'fetch_crypto_pair_price',
   displayName: 'Fetch Pair Price',
   description: 'Fetch the current price of a pair (e.g. BTC/USDT)',

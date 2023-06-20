@@ -2,7 +2,7 @@ import { ITrigger, type Trigger, type TriggerStrategy } from './trigger/trigger'
 import { Action, ActionRunner, IAction } from './action/action'
 import { EventPayload, ParseEventResponse } from '@activepieces/shared'
 import { PieceBase, PieceMetadata } from './piece-metadata'
-import { PieceAuthProperty, PiecePropertyMap } from './property'
+import { DynamicDropdownOptions, DynamicDropdownOptionsContext, PieceAuthProperty, PiecePropertyMap } from './property'
 import { TriggerHookContext } from './context'
 
 type CreateParams<AuthProp> = {

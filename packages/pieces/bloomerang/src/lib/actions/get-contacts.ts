@@ -1,13 +1,13 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { bloomerangCommon } from '../common/common';
+import { bloomerang } from '../../';
 
-export const bloomerangGetContacts = createAction({
+bloomerang.addAction({
     name: 'get_contacts',
     description: 'Get all contacts after date',
     displayName: 'Get contacts',
     props: {
-        authentication: bloomerangCommon.authentication,
         last_modified_date: Property.ShortText({
             displayName: "Last Modified Date",
             description: "The date to search for contacts modified after",
@@ -135,13 +135,13 @@ export const bloomerangGetContacts = createAction({
             ]
         }
     ],
-    async run(context) {
-        const { authentication, last_modified_date } = context.propsValue
+    async run({ auth, propsValue }) {
+        const { last_modified_date } = propsValue
         return (await httpClient.sendRequest({
             method: HttpMethod.GET,
             url: `${bloomerangCommon.baseUrl}/constituents?lastModified=${last_modified_date}`,
             headers: {
-                "X-API-KEY": authentication,
+                "X-API-KEY": auth,
             },
         })).body;
     }

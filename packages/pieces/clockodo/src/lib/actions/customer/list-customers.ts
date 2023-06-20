@@ -1,13 +1,13 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
-import { clockodoCommon, makeClient } from "../../common";
+import { Property } from "@activepieces/pieces-framework";
+import { makeClient } from "../../common";
 import { CustomerListFilter } from "../../common/models/customer";
+import { clockodo } from "../../../";
 
-export default createAction({
+clockodo.addAction({
     name: 'list_customers',
     displayName: 'Get Customers',
     description: 'Fetches customers from clockodo',
     props: {
-        authentication: clockodoCommon.authentication,
         active_filter: Property.Checkbox({
             displayName: 'Active Filter',
             description: 'Filter customers by their active status',
@@ -20,14 +20,14 @@ export default createAction({
             required: false
         })
     },
-    async run(context) {
-        const client = makeClient(context.propsValue);
+    async run({ auth , propsValue }) {
+        const client = makeClient(auth);
         const filter: CustomerListFilter = {
-            active: context.propsValue.active_filter
+            active: propsValue.active_filter
         }
-        if(context.propsValue.page !== undefined) {
+        if(propsValue.page !== undefined) {
             const res = await client.listCustomers({
-                page: context.propsValue.page,
+                page: propsValue.page,
                 filter
             })
             return {

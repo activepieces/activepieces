@@ -8,8 +8,8 @@ export const airtableCommon = {
     displayName: 'Base',
     required: true,
     refreshers: ["authentication"],
-    options: async (props) => {
-      if (!props['authentication']) {
+    options: async ({ auth }) => {
+      if (!auth) {
         return {
           disabled: true,
           options: [],
@@ -23,7 +23,7 @@ export const airtableCommon = {
           url: "https://api.airtable.com/v0/meta/bases",
           authentication: {
             type: AuthenticationType.BEARER_TOKEN,
-            token: props["authentication"] as string
+            token: auth as string
           }
         })
         if (response.status === 200) {
@@ -54,15 +54,15 @@ export const airtableCommon = {
     displayName: 'Table',
     required: true,
     refreshers: ["authentication", "base"],
-    options: async ({ authentication, base }) => {
-      if (!authentication) {
+    options: async ({ auth, propsValue }) => {
+      if (!auth) {
         return {
           disabled: true,
           options: [],
           placeholder: "Please connect your account"
         }
       }
-      if (!base) {
+      if (!propsValue.base) {
         return {
           disabled: true,
           options: [],
@@ -72,8 +72,8 @@ export const airtableCommon = {
 
       try {
         const tables: AirtableTable[] = await airtableCommon.fetchTableList({
-          token: authentication as string,
-          baseId: base as string
+          token: auth as string,
+          baseId: propsValue.base as string
         })
 
         if (tables) {

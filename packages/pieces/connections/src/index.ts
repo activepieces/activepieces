@@ -1,16 +1,10 @@
+import { Piece } from "@activepieces/pieces-framework";
 
-import { createPiece } from '@activepieces/pieces-framework';
-import { readConnection } from './lib/actions/read-connection';
-
-export const connections = createPiece({
+export const connections = Piece.create({
   displayName: 'Connections',
   logoUrl: 'https://cdn.activepieces.com/pieces/connections.png',
   authors: [
     "abuaboud"
   ],
-  actions: [
-    readConnection
-  ],
-  triggers: [
-  ],
+  auth: 
 });

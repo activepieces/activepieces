@@ -1,5 +1,6 @@
-import { createTrigger, Trigger, TriggerStrategy, Property} from "@activepieces/pieces-framework"
+import { Trigger, TriggerStrategy, Property} from "@activepieces/pieces-framework"
 import { httpClient, HttpRequest, HttpMethod } from '@activepieces/pieces-common';
+import { calcom } from "../../";
 
 export const registerWebhooks = ({
   name,
@@ -11,31 +12,26 @@ export const registerWebhooks = ({
   description: string,
   displayName: string,
   sampleData: Record<string, unknown>
-}): Trigger =>
-  createTrigger({
+}) =>
+  calcom.addTrigger({
     name,
     description,
     displayName,
-    props: {
-      api_key: Property.SecretText({
-        displayName: 'API Key',
-        description: 'API Key provided by cal.com',
-        required: true
-      })
-    },
     sampleData: sampleData,
     type: TriggerStrategy.WEBHOOK,
+    props: {},
     async onEnable(context) {
+      const { auth, webhookUrl, store } = context
       const request: HttpRequest = {
         method: HttpMethod.POST,
         url: `https://api.cal.com/v1/hooks`,
         body: {
           eventTriggers: [name],
-          subscriberUrl: context.webhookUrl,
+          subscriberUrl: webhookUrl,
           active: true
         },
         queryParams: {
-          apiKey: context.propsValue.api_key
+          apiKey: auth
         }
       }
 
@@ -43,17 +39,17 @@ export const registerWebhooks = ({
 
       if (response.status === 200) {
         console.debug("trigger.onEnable", response.body.webhook, context)
-        await context.store?.put(`cal_com_trigger_${name}`, response.body.webhook)
+        await store.put(`cal_com_trigger_${name}`, response.body.webhook)
       }
     },
-    async onDisable(context) {
-      const data = await context.store?.get<WebhookInformation>(`cal_com_trigger_${name}`)
+    async onDisable({ auth, store }) {
+      const data = await store.get<WebhookInformation>(`cal_com_trigger_${name}`)
       if (data != null) {
         const request: HttpRequest = {
           method: HttpMethod.DELETE,
           url: `https://api.cal.com/v1/hooks/${data.id}`,
           queryParams: {
-            apiKey: context.propsValue.api_key
+            apiKey: auth
           }
         }
 

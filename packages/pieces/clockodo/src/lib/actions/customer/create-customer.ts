@@ -1,12 +1,12 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
+import { Property } from "@activepieces/pieces-framework";
 import { clockodoCommon, emptyToNull, makeClient } from "../../common";
+import { clockodo } from "../../../";
 
-export default createAction({
+clockodo.addAction({
     name: 'create_customer',
     displayName: 'Create Customer',
     description: 'Creates a customer in clockodo',
     props: {
-        authentication: clockodoCommon.authentication,
         name: Property.ShortText({
             displayName: 'Name',
             required: true
@@ -29,15 +29,15 @@ export default createAction({
         }),
         color: clockodoCommon.color(false)
     },
-    async run(context) {
-        const client = makeClient(context.propsValue);
+    async run({ auth, propsValue }) {
+        const client = makeClient(auth);
         const res = await client.createCustomer({
-            name: context.propsValue.name,
-            number: emptyToNull(context.propsValue.number),
-            active: context.propsValue.active,
-            billable_default: context.propsValue.billable,
-            note: emptyToNull(context.propsValue.note),
-            color: context.propsValue.color
+            name: propsValue.name,
+            number: emptyToNull(propsValue.number),
+            active: propsValue.active,
+            billable_default: propsValue.billable,
+            note: emptyToNull(propsValue.note),
+            color: propsValue.color
         })
         return res.customer
     }

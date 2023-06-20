@@ -1,13 +1,13 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
+import { Property } from "@activepieces/pieces-framework";
 import { clockodoCommon, emptyToNull, makeClient, reformatDate } from "../../common";
 import { AbsenceStatus, AbsenceType } from "../../common/models/absence";
+import { clockodo } from "../../../";
 
-export default createAction({
+clockodo.addAction({
     name: 'create_absence',
     displayName: 'Create Absence',
     description: 'Creates a absence in clockodo',
     props: {
-        authentication: clockodoCommon.authentication,
         date_since: Property.DateTime({
             displayName: 'Start Date',
             required: true
@@ -35,17 +35,17 @@ export default createAction({
             required: false
         })
     },
-    async run(context) {
-        const client = makeClient(context.propsValue);
+    async run({ auth, propsValue}) {
+        const client = makeClient(auth);
         const res = await client.createAbsence({
-            date_since: reformatDate(context.propsValue.date_since) as string,
-            date_until: reformatDate(context.propsValue.date_until) as string,
-            type: context.propsValue.type as AbsenceType,
-            users_id: context.propsValue.user_id,
-            count_days: context.propsValue.half_days ? 0.5 : 1,
-            status: context.propsValue.approved ? AbsenceStatus.APPROVED : AbsenceStatus.REQUESTED,
-            note: emptyToNull(context.propsValue.note),
-            sick_note: context.propsValue.sick_note
+            date_since: reformatDate(propsValue.date_since) as string,
+            date_until: reformatDate(propsValue.date_until) as string,
+            type: propsValue.type as AbsenceType,
+            users_id: propsValue.user_id,
+            count_days: propsValue.half_days ? 0.5 : 1,
+            status: propsValue.approved ? AbsenceStatus.APPROVED : AbsenceStatus.REQUESTED,
+            note: emptyToNull(propsValue.note),
+            sick_note: propsValue.sick_note
         })
         return res.absence
     }

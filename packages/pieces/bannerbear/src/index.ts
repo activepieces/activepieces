@@ -1,11 +1,13 @@
-import { createPiece } from '@activepieces/pieces-framework';
-import { createImageFromTemplate } from './lib/actions/create-image';
+import { AuthProp, Piece } from '@activepieces/pieces-framework';
 
-export const bannerbear = createPiece({
+export const bannerbear = Piece.create({
   displayName: "Bannerbear",
   logoUrl: 'https://cdn.activepieces.com/pieces/bannerbear.png',
-  actions: [createImageFromTemplate],
   authors: ["kanarelo"],
-  triggers: [],
+  auth: AuthProp.SecretText({
+    displayName: 'API Key',
+    description: 'Bannerbear API Key',
+    required: true,
+  }),
 });
 

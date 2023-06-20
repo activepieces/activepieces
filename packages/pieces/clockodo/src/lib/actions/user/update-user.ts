@@ -1,12 +1,12 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
+import { Property } from "@activepieces/pieces-framework";
 import { clockodoCommon, emptyToNull, makeClient } from "../../common";
+import { clockodo } from "../../../";
 
-export default createAction({
+clockodo.addAction({
     name: 'update_user',
     displayName: 'Update User',
     description: 'Updates a user in clockodo',
     props: {
-        authentication: clockodoCommon.authentication,
         user_id: clockodoCommon.user_id(true, null),
         name: Property.ShortText({
             displayName: 'Name',
@@ -53,20 +53,20 @@ export default createAction({
             required: false
         })
     },
-    async run(context) {
-        const client = makeClient(context.propsValue);
-        const res = await client.updateUser(context.propsValue.user_id as number, {
-            name: context.propsValue.name,
-            email: context.propsValue.email,
-            role: context.propsValue.role,
-            number: emptyToNull(context.propsValue.number),
-            active: context.propsValue.active,
-            teams_id: context.propsValue.team_id,
-            language: context.propsValue.language,
-            wage_type: context.propsValue.wage_type,
-            can_generally_see_absences: context.propsValue.can_generally_see_absences,
-            can_generally_manage_absences: context.propsValue.can_generally_manage_absences,
-            can_add_customers: context.propsValue.can_add_customers
+    async run({ auth, propsValue }) {
+        const client = makeClient(auth);
+        const res = await client.updateUser(propsValue.user_id as number, {
+            name: propsValue.name,
+            email: propsValue.email,
+            role: propsValue.role,
+            number: emptyToNull(propsValue.number),
+            active: propsValue.active,
+            teams_id: propsValue.team_id,
+            language: propsValue.language,
+            wage_type: propsValue.wage_type,
+            can_generally_see_absences: propsValue.can_generally_see_absences,
+            can_generally_manage_absences: propsValue.can_generally_manage_absences,
+            can_add_customers: propsValue.can_add_customers
         })
         return res.user
     }

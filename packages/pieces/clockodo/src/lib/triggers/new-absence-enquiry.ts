@@ -1,7 +1,8 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { clockodoCommon, currentYear } from '../common';
+import { currentYear } from '../common';
 import { ClockodoClient } from '../common/client';
+import { clockodo } from "../../";
 
 interface AuthData {
     email: string,
@@ -10,14 +11,14 @@ interface AuthData {
     company_email: string
 }
 
-const polling: Polling<{ authentication: AuthData }> = {
+const polling: Polling<AuthData, unknown> = {
     strategy: DedupeStrategy.LAST_ITEM,
-    items: async ({ propsValue }) => {
+    items: async ({ auth }) => {
         const client = new ClockodoClient(
-            propsValue.authentication.email,
-            propsValue.authentication.token,
-            propsValue.authentication.company_name,
-            propsValue.authentication.company_email
+            auth.email,
+            auth.token,
+            auth.company_name,
+            auth.company_email
         )
         const res = await client.listAbsences({ year: currentYear() })
         return res.absences.sort((a, b) => b.id - a.id).map((a) => ({
@@ -27,35 +28,38 @@ const polling: Polling<{ authentication: AuthData }> = {
     }
 }
 
-export default createTrigger({
+clockodo.addTrigger({
     name: 'new_absence_enquiry',
     displayName: 'New Absence Enquiry',
     description: 'Triggers when a new absence enquiry is created',
     type: TriggerStrategy.POLLING,
     props: {
-        authentication: clockodoCommon.authentication
     },
     sampleData: {},
     onEnable: async (context) => {
         await pollingHelper.onEnable(polling, {
+            auth: context.auth,
             store: context.store,
             propsValue: context.propsValue,
         })
     },
     onDisable: async (context) => {
         await pollingHelper.onDisable(polling, {
+            auth: context.auth,
             store: context.store,
             propsValue: context.propsValue,
         })
     },
     run: async (context) => {
         return await pollingHelper.poll(polling, {
+            auth: context.auth,
             store: context.store,
             propsValue: context.propsValue,
         });
     },
     test: async (context) => {
         return await pollingHelper.test(polling, {
+            auth: context.auth,
             store: context.store,
             propsValue: context.propsValue,
         });

@@ -1,7 +1,8 @@
-import { createAction, Property, DynamicPropsValue } from '@activepieces/pieces-framework';
+import { Property, DynamicPropsValue } from '@activepieces/pieces-framework';
 import { AuthenticationType, httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common';
+import { bannerbear } from '../../';
 
-export const createImageFromTemplate = createAction({
+bannerbear.addAction({
   name: 'bannerbear_create_image', // Must be a unique across the piece, this shouldn't be changed.
   displayName: 'Create Image',
   description: 'Create image from Bannerbear template',
@@ -39,18 +40,13 @@ export const createImageFromTemplate = createAction({
     "pdf_url_compressed": null
   },
   props: {
-    authentication: Property.SecretText({
-      displayName: 'API Key',
-      description: 'Bannerbear API Key',
-      required: true,
-    }),
     template: Property.Dropdown({
       displayName: 'Template',
       description: 'The template to use in image creation.',
       required: true,
       refreshers: ['authentication'],
-      options: async ({ authentication }) => {
-        if (!authentication) {
+      options: async ({ auth }) => {
+        if (!auth) {
           return {
             disabled: true,
             options: [],
@@ -63,7 +59,7 @@ export const createImageFromTemplate = createAction({
           url: `https://api.bannerbear.com/v2/templates`,
           authentication: {
             type: AuthenticationType.BEARER_TOKEN,
-            token: (authentication as string)
+            token: auth as string
           }
         })
 
@@ -99,9 +95,9 @@ export const createImageFromTemplate = createAction({
       props: async ({ authentication, template }) => {
         if (!authentication) return {}
         if (!template) return {}
-  
+
         let fields: DynamicPropsValue = {};
-  
+
         (template as BannerbearTemplate).available_modifications.map((modification) => {
           if ('text' in modification) {
             fields = {
@@ -135,7 +131,7 @@ export const createImageFromTemplate = createAction({
             }
           }
         })
-  
+
         return fields
       }
     }),
@@ -155,7 +151,7 @@ export const createImageFromTemplate = createAction({
       required: false
     }),
   },
-  async run({ propsValue }) {
+  async run({ auth, propsValue }) {
     const body = {
       modifications: Object.keys(propsValue.modifications).length === 0 ? [] : [propsValue.modifications],
       template_version: propsValue.template_version,
@@ -171,7 +167,7 @@ export const createImageFromTemplate = createAction({
       body,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: propsValue.authentication
+        token: auth
       }
     }
 

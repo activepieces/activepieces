@@ -1,6 +1,7 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
-import { clockodoCommon, makeClient, reformatDateTime } from "../../common";
+import { Property } from "@activepieces/pieces-framework";
+import { makeClient, reformatDateTime } from "../../common";
 import { BillableType, EntryListFilter } from "../../common/models/entry";
+import { clockodo } from "../../../";
 
 function calculateBillable(billable?: boolean, billed?: boolean): BillableType|undefined {
     if(billable === undefined && billed === undefined) {
@@ -14,12 +15,11 @@ function calculateBillable(billable?: boolean, billed?: boolean): BillableType|u
     }
 }
 
-export default createAction({
+clockodo.addAction({
     name: 'list_entries',
     displayName: 'Get Entries',
     description: 'Fetches entries from clockodo',
     props: {
-        authentication: clockodoCommon.authentication,
         time_since: Property.DateTime({
             displayName: 'Start Date',
             required: true
@@ -69,23 +69,23 @@ export default createAction({
             required: false
         })
     },
-    async run(context) {
-        const client = makeClient(context.propsValue);
+    async run({ auth, propsValue }) {
+        const client = makeClient(auth);
         const filter: EntryListFilter = {
-            users_id: context.propsValue.user_id_filter,
-            customers_id: context.propsValue.customer_id_filter,
-            projects_id: context.propsValue.project_id_filter,
-            services_id: context.propsValue.service_id_filter,
-            billable: calculateBillable(context.propsValue.billable_filter, context.propsValue.billed_filter)
+            users_id: propsValue.user_id_filter,
+            customers_id: propsValue.customer_id_filter,
+            projects_id: propsValue.project_id_filter,
+            services_id: propsValue.service_id_filter,
+            billable: calculateBillable(propsValue.billable_filter, propsValue.billed_filter)
         }
-        const time_since = reformatDateTime(context.propsValue.time_since) as string
-        const time_until = reformatDateTime(context.propsValue.time_until) as string
-        if(context.propsValue.page !== undefined) {
+        const time_since = reformatDateTime(propsValue.time_since) as string
+        const time_until = reformatDateTime(propsValue.time_until) as string
+        if(propsValue.page !== undefined) {
             const res = await client.listEntries({
                 time_since,
                 time_until,
-                enhanced_list: context.propsValue.enhanced_list,
-                page: context.propsValue.page,
+                enhanced_list: propsValue.enhanced_list,
+                page: propsValue.page,
                 filter
             })
             return {

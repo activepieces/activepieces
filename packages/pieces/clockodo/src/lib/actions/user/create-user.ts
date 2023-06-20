@@ -1,12 +1,12 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
 import { clockodoCommon, emptyToNull, makeClient } from "../../common";
+import { Property } from "@activepieces/pieces-framework";
+import { clockodo } from "../../../";
 
-export default createAction({
+clockodo.addAction({
     name: 'create_user',
     displayName: 'Create User',
     description: 'Creates a user in clockodo',
     props: {
-        authentication: clockodoCommon.authentication,
         name: Property.ShortText({
             displayName: 'Name',
             required: true
@@ -48,19 +48,19 @@ export default createAction({
             required: false
         })
     },
-    async run(context) {
-        const client = makeClient(context.propsValue);
+    async run({ auth, propsValue }) {
+        const client = makeClient(auth);
         const res = await client.createUser({
-            name: context.propsValue.name,
-            email: context.propsValue.email,
-            role: context.propsValue.role,
-            number: emptyToNull(context.propsValue.number),
-            teams_id: context.propsValue.team_id,
-            language: context.propsValue.language,
-            wage_type: context.propsValue.wage_type,
-            can_generally_see_absences: context.propsValue.can_generally_see_absences,
-            can_generally_manage_absences: context.propsValue.can_generally_manage_absences,
-            can_add_customers: context.propsValue.can_add_customers
+            name: propsValue.name,
+            email: propsValue.email,
+            role: propsValue.role,
+            number: emptyToNull(propsValue.number),
+            teams_id: propsValue.team_id,
+            language: propsValue.language,
+            wage_type: propsValue.wage_type,
+            can_generally_see_absences: propsValue.can_generally_see_absences,
+            can_generally_manage_absences: propsValue.can_generally_manage_absences,
+            can_add_customers: propsValue.can_add_customers
         })
         return res.user
     }

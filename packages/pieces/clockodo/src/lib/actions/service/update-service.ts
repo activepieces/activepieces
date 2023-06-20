@@ -1,12 +1,12 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
+import { Property } from "@activepieces/pieces-framework";
 import { clockodoCommon, emptyToNull, makeClient } from "../../common";
+import { clockodo } from "../../../";
 
-export default createAction({
+clockodo.addAction({
     name: 'update_service',
     displayName: 'Update Service',
     description: 'Updates a service in clockodo',
     props: {
-        authentication: clockodoCommon.authentication,
         service_id: clockodoCommon.service_id(true, null),
         name: Property.ShortText({
             displayName: 'Name',
@@ -25,13 +25,13 @@ export default createAction({
             required: false
         })
     },
-    async run(context) {
-        const client = makeClient(context.propsValue);
-        const res = await client.updateService(context.propsValue.service_id as number, {
-            name: context.propsValue.name,
-            number: emptyToNull(context.propsValue.number),
-            active: context.propsValue.active,
-            note: emptyToNull(context.propsValue.note)
+    async run({ auth, propsValue }) {
+        const client = makeClient(auth);
+        const res = await client.updateService(propsValue.service_id as number, {
+            name: propsValue.name,
+            number: emptyToNull(propsValue.number),
+            active: propsValue.active,
+            note: emptyToNull(propsValue.note)
         })
         return res.service
     }

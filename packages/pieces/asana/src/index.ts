@@ -1,10 +1,14 @@
-import { createPiece } from "@activepieces/pieces-framework";
-import { createAsanaTask } from "./lib/actions/create-task";
+import { AuthProp, Piece } from "@activepieces/pieces-framework";
 
-export const asana = createPiece({
+export const asana = Piece.create({
     displayName: "Asana",
     logoUrl: 'https://cdn.activepieces.com/pieces/asana.png',
     authors: ['abuaboud'],
-    actions: [createAsanaTask],
-    triggers: [],
+    auth: AuthProp.OAuth2({
+        description: "",
+        authUrl: "https://app.asana.com/-/oauth_authorize",
+        tokenUrl: "https://app.asana.com/-/oauth_token",
+        required: true,
+        scope: ['default'],
+    }),
 });
