@@ -64,7 +64,7 @@ export class FlowItemContentComponent implements OnInit {
   _flowItem: FlowItem;
   selectedRun$: Observable<FlowRun | undefined>;
 
-  logoTooltipText = '';
+  stepAppName$: Observable<string>;
   isOverflown = isOverflown;
   childStepsIconsUrls: Record<string, Observable<string>> = {};
   StepOutputStatus = StepOutputStatus;
@@ -76,7 +76,7 @@ export class FlowItemContentComponent implements OnInit {
   @Input() readOnly: boolean;
   @Input() set flowItem(newFlowItem: FlowItem) {
     this._flowItem = newFlowItem;
-    this.logoTooltipText = this.getLogoTooltipText();
+    this.stepAppName$ = this.getStepAppName();
     this.childStepsIconsUrls = this.extractChildStepsIconsUrls();
     this.flowItemChanged$.next(true);
     this.fetchFlowItemDetailsAndLoadLogo();
@@ -181,24 +181,28 @@ export class FlowItemContentComponent implements OnInit {
     });
   }
 
-  getLogoTooltipText() {
+  getStepAppName() {
     switch (this._flowItem.type) {
       case ActionType.BRANCH:
-        return 'Branch';
+        return of('Branch');
       case ActionType.MISSING:
-        return 'Missing';
+        return of('Missing');
       case ActionType.CODE:
-        return 'Code';
+        return of('Code');
       case ActionType.LOOP_ON_ITEMS:
-        return 'Loop';
+        return of('Loop');
       case ActionType.PIECE:
       case TriggerType.PIECE:
-        // TODO use human readable name
-        return '';
+        return this.actionMetaDataService
+          .getPieceMetadata(
+            this._flowItem.settings.pieceName,
+            this._flowItem.settings.pieceVersion
+          )
+          .pipe(map((p) => p.displayName));
       case TriggerType.EMPTY:
-        return 'Click to choose a trigger';
+        return of('Choose a trigger');
       case TriggerType.WEBHOOK:
-        return 'Webhook trigger';
+        return of('Webhook trigger');
     }
   }
   extractChildStepsIconsUrls() {
