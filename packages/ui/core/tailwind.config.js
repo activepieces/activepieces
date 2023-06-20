@@ -51,6 +51,7 @@ module.exports = {
           light: '#E1F4E7',
           dark: '#35B45F'
          },
+         black: '#1d1d1d',
         blueLink: '#1890ff',
         sidebar: '#FAFBFC',
         blueBorder: '#6385dc',

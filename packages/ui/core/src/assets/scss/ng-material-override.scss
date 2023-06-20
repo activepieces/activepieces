@@ -687,3 +687,25 @@ app-dashboard-container .mat-drawer {
 {
   overflow:hidden !important;
 }
+
+.data-insertion-search
+{
+  .mdc-text-field--filled:not(.mdc-text-field--disabled) .mdc-line-ripple::before
+  {
+    border-bottom-color: $outline !important;
+  }
+
+}
+
+.mat-mdc-form-field-icon-prefix>.mat-icon, .mat-mdc-form-field-icon-suffix>.mat-icon
+{
+  padding:12px 9px 12px 12px !important;
+  height:16px !important;
+  width: 16px;
+}
+mat-icon[data-mat-icon-name="custom_expand_more"],
+mat-icon[data-mat-icon-name="custom_expand_less"]
+{
+  width: 10px;
+  height: 10px;
+}

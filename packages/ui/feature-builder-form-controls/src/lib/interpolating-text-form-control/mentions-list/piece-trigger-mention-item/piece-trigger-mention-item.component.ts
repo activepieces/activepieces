@@ -67,11 +67,16 @@ export class PieceTriggerMentionItemComponent implements OnInit {
   ) {}
   ngOnInit(): void {
     const cachedResult: undefined | MentionTreeNode = this.getChachedData();
+
     this.isScheduleTrigger$ = this.store.select(
       BuilderSelectors.selectIsSchduleTrigger
     );
     this.isPollingTrigger$ = this.checkIfItIsPollingTrigger();
     if (cachedResult) {
+      this.mentionsTreeCache.setStepMentionsTree(this._stepMention.step.name, {
+        children: cachedResult?.children || [],
+        value: cachedResult?.value,
+      });
       this.sampleData$ = combineLatest({
         stepTree: of({
           children: cachedResult.children,

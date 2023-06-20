@@ -52,7 +52,15 @@ export class CanvasPannerDirective {
   }
   @HostListener('wheel', ['$event'])
   macPanning(event: WheelEvent) {
-    event.preventDefault();
+    if (event.target) {
+      const scrollingWithinDataInsertionPopup = document
+        .getElementById('mentionsDropdownContainer')
+        ?.contains(event.target as Node);
+      if (scrollingWithinDataInsertionPopup) {
+        return;
+      }
+    }
+
     if (!this.flowRendererService.draggingSubject.value) {
       this.pannerService.lastPanningOffset.x -= event.deltaX;
       this.pannerService.lastPanningOffset.y -= event.deltaY;

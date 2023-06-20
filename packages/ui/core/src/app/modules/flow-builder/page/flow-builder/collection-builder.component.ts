@@ -20,10 +20,12 @@ import {
 } from '@activepieces/ui/feature-builder-store';
 import { Store } from '@ngrx/store';
 import {
+  delay,
   distinctUntilChanged,
   EMPTY,
   map,
   Observable,
+  of,
   switchMap,
   take,
   tap,
@@ -58,6 +60,7 @@ import {
   TemplateBlogNotificationComponent,
   BLOG_URL_TOKEN,
 } from '@activepieces/ui/feature-templates';
+import { BuilderAutocompleteMentionsDropdownService } from '@activepieces/ui/feature-builder-form-controls';
 
 @Component({
   selector: 'app-collection-builder',
@@ -84,6 +87,7 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
   graphChanged$: Observable<FlowVersion>;
   showGuessFlowComponent = true;
   importTemplate$: Observable<void>;
+  dataInsertionPopupHidden$: Observable<boolean>;
   constructor(
     private store: Store,
     private actRoute: ActivatedRoute,
@@ -96,9 +100,20 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
     private flowRendererService: FlowRendererService,
     public builderService: CollectionBuilderService,
     private matDialog: MatDialog,
-    private flagService: FlagService
+    private flagService: FlagService,
+    public builderAutocompleteService: BuilderAutocompleteMentionsDropdownService
   ) {
     this.listenToGraphChanges();
+    this.dataInsertionPopupHidden$ =
+      this.builderAutocompleteService.currentAutocompleteInputId$.pipe(
+        switchMap((val) => {
+          if (val === null) {
+            //wait for fade400ms animation to pass
+            return of(true).pipe(delay(400));
+          }
+          return of(false);
+        })
+      );
     this.testingStepSectionIsRendered$ =
       this.testStepService.testingStepSectionIsRendered$.asObservable();
     this.isPanning$ = this.pannerService.isPanning$.asObservable();
