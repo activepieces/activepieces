@@ -10,17 +10,18 @@
 src="https://github.com/activepieces/activepieces/assets/1812998/76c97441-c285-4480-bc75-30a0c73ed340"
       style="width:100%;"
     />
+    
   </a>
 </h1>
-
 
 
 <p align="center">
 <a href="/LICENSE" target="_blank"><img src='https://img.shields.io/badge/license-MIT-green?style=for-the-badge' /></a>&nbsp;<a href='https://discord.gg/2jUXBKDdP8'><img src='https://img.shields.io/discord/966798490984382485?style=for-the-badge' /></a>
 </p>
 <p align="center">
-   A modern open source replacement for Zapier
+   A open source replacement for Zapier
 </p>
+
 <p align="center">
   <a
     href="https://www.activepieces.com/docs"
@@ -38,19 +39,25 @@ src="https://github.com/activepieces/activepieces/assets/1812998/76c97441-c285-4
   </a>
 </p>
 
+<br>
+<br>
+
 # ✨ What Is Activepieces?
 
 Activepieces is a **no-code** workflow builder, designed to be **extensible** through a **strongly typed** pieces framework written in **Typescript**.
+
+<br>
+<br>
 
 # 🔌 Pieces
 
 Activepieces integrates Google Sheets, OpenAI, Discord, and RSS, along with 80+ other integrations. [The list of supported integrations](https://www.activepieces.com/docs/pieces/overview) continues to grow rapidly, thanks to valuable contributions from the community.
 
-Activepieces is an **open ecosystem;** all connector source code is available in the repository, and they are versioned and [published](https://www.npmjs.com/search?q=%40activepieces) directly to npmjs.com upon contributions.
+Activepieces is an **open ecosystem;** all piece source code is available in the repository, and they are versioned and [published](https://www.npmjs.com/search?q=%40activepieces) directly to npmjs.com upon contributions.
 
-If you cannot find a specific connector on the pieces roadmap, please submit a request by visiting the following link: [Request Piece](https://github.com/activepieces/activepieces/issues/new/choose)
+If you cannot find a specific piece on the pieces roadmap, please submit a request by visiting the following link: [Request Piece](https://github.com/activepieces/activepieces/issues/new/choose)
 
-Alternatively, if you are a developer, you can quickly build your own connector using our TypeScript framework. For guidance, please refer to the following guide: [Contributor's Guide](https://www.activepieces.com/docs/contributing/overview)
+Alternatively, if you are a developer, you can quickly build your own piece using our TypeScript framework. For guidance, please refer to the following guide: [Contributor's Guide](https://www.activepieces.com/docs/contributing/overview)
 
 <br>
 <br>
@@ -65,10 +72,10 @@ User-friendly Workflow Builder! Enjoy building fun and interactive flows with su
 <br>
 <br>
 <h1>
-💡 Infinite Usecases</h1>
+💡 Infinite Use Cases</h1>
 <p>
-Get Inspired by the community
-  <br />
+Community templates provide inspiration and enable you to effortlessly build flows in no time.
+<br />
 </p>
 
 ![templates](https://github.com/activepieces/activepieces/assets/1812998/2851f96e-3d9c-42b3-b021-b1cc5153df50)
@@ -83,6 +90,16 @@ Activepieces is open source under the [MIT license](https://github.com/activepie
 <br>
 <br>
 
+
+# 💭 Join Our Community
+
+<a href="https://discord.gg/2jUXBKDdP8" target="_blank">
+<img src="https://discordapp.com/api/guilds/966798490984382485/widget.png?style=banner3" alt="">
+</a>
+
+<br>
+<br>
+
 # 🌐 Contributions
 
 We welcome contributions big or small and in different directions. The best way to do this is to check this [document](https://www.activepieces.com/docs/contributing/building-pieces/create-action) and we are always up to talk on [our Discord Server](https://discord.gg/2jUXBKDdP8).
@@ -90,7 +107,7 @@ We welcome contributions big or small and in different directions. The best way 
 <br>
 <br>
 
-## 🦫 Contributors (Builders)
+## 🦫 Contributors
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
