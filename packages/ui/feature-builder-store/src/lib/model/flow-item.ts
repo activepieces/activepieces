@@ -3,11 +3,6 @@ import { Action, Trigger } from '@activepieces/shared';
 export type FlowItemRenderInfo = {
   boundingBox?: BoundingBox;
   connectionsBox?: BoundingBox;
-  xOffset?: number;
-  yOffset?: number;
-  yOffsetFromLastNode?: number;
-  width?: number;
-  height?: number;
   nextAction?: FlowItem;
   indexInDfsTraversal?: number;
 };

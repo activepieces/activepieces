@@ -119,7 +119,7 @@ function getAllSteps(trigger: Trigger): (Action | Trigger)[] {
   return traverseInternal(trigger);
 }
 
-function getAllStepsAtRootLevel(step: Trigger): (Action | Trigger)[] {
+function getAllStepsAtFirstLevel(step: Trigger): (Action | Trigger)[] {
   const steps: (Action | Trigger)[] = [];
   while (step !== undefined && step !== null) {
     steps.push(step);
@@ -550,6 +550,6 @@ export const flowHelper = {
   getStepFromSubFlow,
   isChildOf,
   getAllChildSteps,
-  getAllStepsAtRootLevel
+  getAllStepsAtFirstLevel
 };
 

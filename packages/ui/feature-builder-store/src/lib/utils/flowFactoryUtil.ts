@@ -35,7 +35,6 @@ export class FlowFactoryUtil {
     const cordDetails = {
       width: FLOW_ITEM_WIDTH,
       height: FLOW_ITEM_HEIGHT,
-      yOffset: 0,
       boundingBox: { width: 0, height: 0 },
     };
     return { ...content, ...cordDetails };
