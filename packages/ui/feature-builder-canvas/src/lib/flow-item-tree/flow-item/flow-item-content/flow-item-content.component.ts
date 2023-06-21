@@ -82,7 +82,7 @@ export class FlowItemContentComponent implements OnInit {
     this.fetchFlowItemDetailsAndLoadLogo();
   }
   isDragging$: Observable<boolean>;
-  stepResult: StepOutput | undefined;
+  stepOutput: StepOutput | undefined;
   flowItemDetails$: Observable<FlowItemDetails | null | undefined>;
   constructor(
     private store: Store,
@@ -105,8 +105,8 @@ export class FlowItemContentComponent implements OnInit {
           return stepNameAndStatus.stepName === this._flowItem.name;
         }),
         map((stepNameAndStatus) => {
-          this.stepResult = stepNameAndStatus.result;
-          return stepNameAndStatus.result?.status;
+          this.stepOutput = stepNameAndStatus.output;
+          return stepNameAndStatus.output?.status;
         })
       );
     this.fetchFlowItemDetailsAndLoadLogo();
@@ -156,7 +156,7 @@ export class FlowItemContentComponent implements OnInit {
             }
             const result = executionState.steps[stepName.toString()];
             if (result) {
-              this.stepResult = result;
+              this.stepOutput = result;
             }
             return result === undefined ? undefined : result.status;
           } else {
@@ -177,7 +177,7 @@ export class FlowItemContentComponent implements OnInit {
     );
     this.runDetailsService.currentStepResult$.next({
       stepName: this._flowItem.name,
-      result: this.stepResult,
+      output: this.stepOutput,
     });
   }
 

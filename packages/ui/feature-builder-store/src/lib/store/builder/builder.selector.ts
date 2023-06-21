@@ -7,11 +7,9 @@ import {
   Flow,
   FlowRun,
   FlowVersionState,
-  StepOutput,
   flowHelper,
 } from '@activepieces/shared';
 import { ViewModeEnum } from '../../model/enums/view-mode.enum';
-
 import { FlowItemsDetailsState } from '../../model/flow-items-details-state.model';
 import { ActionType, TriggerType } from '@activepieces/shared';
 import { FlowItem } from '../../model/flow-item';
@@ -27,6 +25,7 @@ import {
   corePieceIconUrl,
 } from '@activepieces/ui/common';
 import { FlowInstanceState } from './flow-instance/flow-instance.reducer';
+import { StepRunResult } from '../../utils/stepRunResult';
 
 export const BUILDER_STATE_NAME = 'builderState';
 
@@ -235,6 +234,32 @@ export const selectCurrentFlowRunStatus = createSelector(
     return run.status;
   }
 );
+const selectStepDisplayNameAndDfsIndexForIterationOutput = (
+  iteration: Pick<StepRunResult, 'stepName' | 'output'>[]
+) => {
+  return createSelector(selectCurrentFlow, (flow) => {
+    const stepIndicesMap: { [stepName: string]: number } = {};
+    FlowStructureUtil.findDfsOrderForActionsOrTrigger(
+      { ...flow.version.trigger },
+      { value: 1 },
+      stepIndicesMap
+    );
+    const steps = flowHelper.getAllSteps(flow.version.trigger);
+    const results: StepRunResult[] = [];
+    steps.forEach((s) => {
+      const iterationStep = iteration.find((its) => its.stepName === s.name);
+      if (iterationStep) {
+        results.push({
+          output: iterationStep.output,
+          stepName: s.name,
+          displayName: s.displayName,
+          index: stepIndicesMap[s.name],
+        });
+      }
+    });
+    return results;
+  });
+};
 const selectStepResultsAccordion = createSelector(
   selectCurrentFlow,
   selectCurrentFlowRun,
@@ -242,11 +267,14 @@ const selectStepResultsAccordion = createSelector(
     if (!run || run.status === ExecutionOutputStatus.RUNNING) {
       return [];
     }
+    const stepIndicesMap: { [stepName: string]: number } = {};
+    FlowStructureUtil.findDfsOrderForActionsOrTrigger(
+      { ...flow.version.trigger },
+      { value: 1 },
+      stepIndicesMap
+    );
     const steps = flowHelper.getAllSteps(flow.version.trigger);
-    const results: {
-      result: StepOutput;
-      stepName: string;
-    }[] = [];
+    const results: StepRunResult[] = [];
     const executionState = run.executionOutput?.executionState;
     if (!executionState) {
       return [];
@@ -254,11 +282,14 @@ const selectStepResultsAccordion = createSelector(
     steps.forEach((s) => {
       if (executionState?.steps[s.name]) {
         results.push({
-          result: executionState.steps[s.name],
+          output: executionState.steps[s.name],
           stepName: s.name,
+          displayName: s.displayName,
+          index: stepIndicesMap[s.name],
         });
       }
     });
+    console.log(results);
     return results;
   }
 );
@@ -574,4 +605,5 @@ export const BuilderSelectors = {
   selectPublishedFlowVersion,
   selectHasFlowBeenPublished,
   selectStepResultsAccordion,
+  selectStepDisplayNameAndDfsIndexForIterationOutput,
 };

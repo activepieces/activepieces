@@ -1,4 +1,5 @@
 import {
+  Action,
   ActionType,
   BranchAction,
   FlowVersion,
@@ -237,6 +238,41 @@ export class FlowStructureUtil {
     }
     if (action.nextAction) {
       this.findDfsIndicies(action.nextAction, idx);
+    }
+  }
+
+  public static findDfsOrderForActionsOrTrigger(
+    step: Action | Trigger,
+    idx: { value: number },
+    stepsMap: { [stepName: string]: number }
+  ) {
+    stepsMap[step.name] = idx.value;
+    idx.value++;
+    const branchAction: BranchAction = step as BranchAction;
+    if (branchAction.onSuccessAction) {
+      this.findDfsOrderForActionsOrTrigger(
+        branchAction.onSuccessAction,
+        idx,
+        stepsMap
+      );
+    }
+    if (branchAction.onFailureAction) {
+      this.findDfsOrderForActionsOrTrigger(
+        branchAction.onFailureAction,
+        idx,
+        stepsMap
+      );
+    }
+    const loopOnItemsAction: LoopOnItemsAction = step as LoopOnItemsAction;
+    if (loopOnItemsAction.firstLoopAction) {
+      this.findDfsOrderForActionsOrTrigger(
+        loopOnItemsAction.firstLoopAction,
+        idx,
+        stepsMap
+      );
+    }
+    if (step.nextAction) {
+      this.findDfsOrderForActionsOrTrigger(step.nextAction, idx, stepsMap);
     }
   }
 }
