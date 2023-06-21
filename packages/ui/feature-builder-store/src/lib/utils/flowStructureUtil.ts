@@ -1,101 +1,20 @@
 import {
-  Action,
   ActionType,
   BranchAction,
   FlowVersion,
   LoopOnItemsAction,
   Trigger,
-  TriggerType,
+  flowHelper,
 } from '@activepieces/shared';
 import { FlowItem } from '../model/flow-item';
 
+// TODO REMOVE THIS FILE AND REPLACE IT WITH FUNCTIONS IN flowHelper.ts
 export class FlowStructureUtil {
-  static isAction(piece: FlowItem): boolean {
-    const type = piece.type;
-    if (type == undefined) {
-      return false;
-    }
-    return Object.values(ActionType).includes(type as ActionType);
-  }
-
-  static isTrigger(piece: FlowItem): boolean {
-    const type = piece.type;
-    if (type == undefined) {
-      return false;
-    }
-    return Object.values(TriggerType).includes(type as TriggerType);
-  }
-
-  public static findParent(
-    mainPiece: FlowItem | Trigger | undefined,
-    targetStepName: string
-  ): FlowItem | Trigger | undefined {
-    if (mainPiece === undefined) {
-      return undefined;
-    }
-    const branches = FlowStructureUtil.branches(mainPiece);
-    for (let i = 0; i < branches.length; ++i) {
-      const parent = this.findParent(branches[i], targetStepName);
-      if (branches[i].name === targetStepName) {
-        return mainPiece;
-      }
-      if (parent !== undefined) {
-        return parent;
-      }
-    }
-    return undefined;
-  }
-
-  public static traverseAllSteps(
-    mainStep: FlowItem | Trigger | undefined,
-    includeBranches: boolean
-  ): FlowItem[] {
-    if (mainStep === undefined) {
-      return [];
-    }
-    const steps: FlowItem[] = [];
-    if (mainStep.type !== ActionType.BRANCH || includeBranches) {
-      steps.push(mainStep);
-    }
-    const branches = FlowStructureUtil.branches(mainStep);
-    for (let i = 0; i < branches.length; ++i) {
-      const subSteps = this.traverseAllSteps(branches[i], includeBranches);
-      for (let i = 0; i < subSteps.length; ++i) {
-        steps.push(subSteps[i]);
-      }
-    }
-    return steps;
-  }
-
-  public static branches(mainPiece: FlowItem | Trigger): FlowItem[] {
-    const branches: FlowItem[] = [];
-    if (mainPiece.type === ActionType.LOOP_ON_ITEMS) {
-      const loopAction = mainPiece as LoopOnItemsAction;
-      if (loopAction.firstLoopAction) {
-        branches.push(loopAction.firstLoopAction);
-      }
-    }
-    if (mainPiece.type === ActionType.BRANCH) {
-      const branchAction = mainPiece as BranchAction;
-      if (branchAction.onFailureAction) {
-        branches.push(branchAction.onFailureAction);
-      }
-      if (branchAction.onSuccessAction) {
-        branches.push(branchAction.onSuccessAction);
-      }
-    }
-    const nextAction = mainPiece.nextAction;
-    if (nextAction) {
-      branches.push(nextAction);
-    }
-    return branches;
-  }
-
   public static findAvailableName(
     flowVersion: FlowVersion,
     stepPrefix: string
   ) {
-    const steps = FlowStructureUtil.traverseAllSteps(flowVersion.trigger, true);
+    const steps = flowHelper.getAllSteps(flowVersion.trigger);
     let number = 1;
     // eslint-disable-next-line no-constant-condition
     while (true) {
@@ -175,104 +94,18 @@ export class FlowStructureUtil {
     if (!path) {
       throw new Error('Step not found while traversing to find it ');
     }
-    if (trigger.nextAction) {
-      this.findIndeciesForPathInDfsOrder(path, trigger.nextAction, {
-        value: 2,
-      });
-    }
-    return [trigger, ...path];
-  }
-  private static findIndeciesForPathInDfsOrder(
-    path: FlowItem[],
-    action: FlowItem,
-    idx: { value: number }
-  ) {
-    const actionIndexInPath = path.findIndex((a) => a === action);
-    if (actionIndexInPath > -1) {
-      path[actionIndexInPath] = {
-        ...path[actionIndexInPath],
-        indexInDfsTraversal: idx.value,
+    const pathWithIndex = path.map((f) => {
+      return {
+        ...f,
+        indexInDfsTraversal: FlowStructureUtil.findStepIndex(trigger, f.name),
       };
-    }
-    idx.value++;
-    const branchAction: BranchAction = action as BranchAction;
-    if (branchAction.onSuccessAction) {
-      this.findIndeciesForPathInDfsOrder(
-        path,
-        branchAction.onSuccessAction,
-        idx
-      );
-    }
-    if (branchAction.onFailureAction) {
-      this.findIndeciesForPathInDfsOrder(
-        path,
-        branchAction.onFailureAction,
-        idx
-      );
-    }
-    const loopOnItemsAction: LoopOnItemsAction = action as LoopOnItemsAction;
-    if (loopOnItemsAction.firstLoopAction) {
-      this.findIndeciesForPathInDfsOrder(
-        path,
-        loopOnItemsAction.firstLoopAction,
-        idx
-      );
-    }
-    if (action.nextAction) {
-      this.findIndeciesForPathInDfsOrder(path, action.nextAction, idx);
-    }
-  }
-  public static findDfsIndicies(action: FlowItem, idx: { value: number }) {
-    action.indexInDfsTraversal = idx.value;
-    idx.value++;
-    const branchAction: BranchAction = action as BranchAction;
-    if (branchAction.onSuccessAction) {
-      this.findDfsIndicies(branchAction.onSuccessAction, idx);
-    }
-    if (branchAction.onFailureAction) {
-      this.findDfsIndicies(branchAction.onFailureAction, idx);
-    }
-    const loopOnItemsAction: LoopOnItemsAction = action as LoopOnItemsAction;
-    if (loopOnItemsAction.firstLoopAction) {
-      this.findDfsIndicies(loopOnItemsAction.firstLoopAction, idx);
-    }
-    if (action.nextAction) {
-      this.findDfsIndicies(action.nextAction, idx);
-    }
+    });
+    return [trigger, ...pathWithIndex];
   }
 
-  public static findDfsOrderForActionsOrTrigger(
-    step: Action | Trigger,
-    idx: { value: number },
-    stepsMap: { [stepName: string]: number }
-  ) {
-    stepsMap[step.name] = idx.value;
-    idx.value++;
-    const branchAction: BranchAction = step as BranchAction;
-    if (branchAction.onSuccessAction) {
-      this.findDfsOrderForActionsOrTrigger(
-        branchAction.onSuccessAction,
-        idx,
-        stepsMap
-      );
-    }
-    if (branchAction.onFailureAction) {
-      this.findDfsOrderForActionsOrTrigger(
-        branchAction.onFailureAction,
-        idx,
-        stepsMap
-      );
-    }
-    const loopOnItemsAction: LoopOnItemsAction = step as LoopOnItemsAction;
-    if (loopOnItemsAction.firstLoopAction) {
-      this.findDfsOrderForActionsOrTrigger(
-        loopOnItemsAction.firstLoopAction,
-        idx,
-        stepsMap
-      );
-    }
-    if (step.nextAction) {
-      this.findDfsOrderForActionsOrTrigger(step.nextAction, idx, stepsMap);
-    }
+  public static findStepIndex(trigger: Trigger, stepName: string) {
+    return (
+      flowHelper.getAllSteps(trigger).findIndex((f) => stepName === f.name) + 1
+    );
   }
 }

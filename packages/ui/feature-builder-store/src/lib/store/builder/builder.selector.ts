@@ -238,22 +238,20 @@ const selectStepDisplayNameAndDfsIndexForIterationOutput = (
   iteration: Pick<StepRunResult, 'stepName' | 'output'>[]
 ) => {
   return createSelector(selectCurrentFlow, (flow) => {
-    const stepIndicesMap: { [stepName: string]: number } = {};
-    FlowStructureUtil.findDfsOrderForActionsOrTrigger(
-      { ...flow.version.trigger },
-      { value: 1 },
-      stepIndicesMap
-    );
     const steps = flowHelper.getAllSteps(flow.version.trigger);
     const results: StepRunResult[] = [];
     steps.forEach((s) => {
       const iterationStep = iteration.find((its) => its.stepName === s.name);
+      const stepIndex = FlowStructureUtil.findStepIndex(
+        flow.version.trigger,
+        s.name
+      );
       if (iterationStep) {
         results.push({
           output: iterationStep.output,
           stepName: s.name,
           displayName: s.displayName,
-          index: stepIndicesMap[s.name],
+          index: stepIndex,
         });
       }
     });
@@ -267,12 +265,6 @@ const selectStepResultsAccordion = createSelector(
     if (!run || run.status === ExecutionOutputStatus.RUNNING) {
       return [];
     }
-    const stepIndicesMap: { [stepName: string]: number } = {};
-    FlowStructureUtil.findDfsOrderForActionsOrTrigger(
-      { ...flow.version.trigger },
-      { value: 1 },
-      stepIndicesMap
-    );
     const steps = flowHelper.getAllSteps(flow.version.trigger);
     const results: StepRunResult[] = [];
     const executionState = run.executionOutput?.executionState;
@@ -280,16 +272,19 @@ const selectStepResultsAccordion = createSelector(
       return [];
     }
     steps.forEach((s) => {
+      const stepIndex = FlowStructureUtil.findStepIndex(
+        flow.version.trigger,
+        s.name
+      );
       if (executionState?.steps[s.name]) {
         results.push({
           output: executionState.steps[s.name],
           stepName: s.name,
           displayName: s.displayName,
-          index: stepIndicesMap[s.name],
+          index: stepIndex,
         });
       }
     });
-    console.log(results);
     return results;
   }
 );
@@ -434,16 +429,6 @@ const selectAppConnectionsDropdownOptions = createSelector(
   }
 );
 
-const selectAllFlowSteps = createSelector(
-  selectCurrentFlow,
-  (flow: Flow | undefined) => {
-    if (flow && flow.version) {
-      return FlowStructureUtil.traverseAllSteps(flow.version.trigger, false);
-    }
-    return [];
-  }
-);
-
 const selectAppConnectionsForMentionsDropdown = createSelector(
   selectAllAppConnections,
   (connections: AppConnection[]) => {
@@ -543,12 +528,14 @@ const selectCurrentStepPieceVersionAndName = createSelector(
 );
 const selectStepLogoUrl = (stepName: string) => {
   return createSelector(
-    selectAllFlowSteps,
+    selectCurrentFlow,
     selectAllFlowItemsDetails,
-    (steps, flowItemsDetails) => {
-      const step = steps.find((s) => s.name === stepName);
+    (flow, flowItemsDetails) => {
+      const step = flowHelper
+        .getAllSteps(flow?.version?.trigger)
+        .find((s: FlowItem) => s.name === stepName);
       if (!step) {
-        return 'assets/img/custom/piece/branch_mention.png';
+        throw new Error(`Couldn't find the step ${stepName}`);
       }
       const logoUrl = findStepLogoUrlForMentions(step, flowItemsDetails);
       return logoUrl;
@@ -583,7 +570,6 @@ export const BuilderSelectors = {
   selectAppConnectionsDropdownOptions,
   selectFlowItemDetailsForCustomPiecesTriggers,
   selectAllAppConnections,
-  selectAllFlowSteps,
   selectAllStepsForMentionsDropdown,
   selectAppConnectionsForMentionsDropdown,
   selectStepLogoUrl,
