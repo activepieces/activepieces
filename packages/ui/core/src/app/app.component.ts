@@ -167,6 +167,18 @@ export class AppComponent implements OnInit {
         '../assets/img/custom/search.svg'
       )
     );
+    this.maticonRegistry.addSvgIcon(
+      'custom_expand_less',
+      this.domSanitizer.bypassSecurityTrustResourceUrl(
+        '../assets/img/custom/expand_less.svg'
+      )
+    );
+    this.maticonRegistry.addSvgIcon(
+      'custom_expand_more',
+      this.domSanitizer.bypassSecurityTrustResourceUrl(
+        '../assets/img/custom/expand_more.svg'
+      )
+    );
   }
 
   ngOnInit(): void {

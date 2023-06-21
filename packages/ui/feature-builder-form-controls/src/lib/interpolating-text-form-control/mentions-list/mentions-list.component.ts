@@ -28,6 +28,7 @@ import {
   BuilderSelectors,
   FlowItem,
 } from '@activepieces/ui/feature-builder-store';
+import { BuilderAutocompleteMentionsDropdownService } from '../builder-autocomplete-mentions-dropdown/builder-autocomplete-mentions-dropdown.service';
 
 @Component({
   selector: 'app-mentions-list',
@@ -54,7 +55,8 @@ export class MentionsListComponent implements OnInit, AfterViewInit {
   focusSearchInput$?: Observable<boolean>;
   constructor(
     private store: Store,
-    private mentionsTreeCache: MentionsTreeCacheService
+    private mentionsTreeCache: MentionsTreeCacheService,
+    public builderAutocompleteService: BuilderAutocompleteMentionsDropdownService
   ) {
     this.mentionsTreeCache.listSearchBarObs$ =
       this.searchFormControl.valueChanges.pipe(

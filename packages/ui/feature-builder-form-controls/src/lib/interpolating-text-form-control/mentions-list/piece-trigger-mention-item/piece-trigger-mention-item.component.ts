@@ -7,7 +7,7 @@ import {
   Output,
 } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { combineLatest, map, Observable, of, Subject } from 'rxjs';
+import { combineLatest, map, Observable, of, Subject, tap } from 'rxjs';
 import { PieceTrigger, TriggerType } from '@activepieces/shared';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import {
@@ -38,6 +38,7 @@ export class PieceTriggerMentionItemComponent implements OnInit {
   TriggerType = TriggerType;
   CORE_SCHEDULE = CORE_SCHEDULE;
   expandSample = false;
+  search$: Observable<string>;
   @Input()
   set stepMention(val: MentionListItem & { step: FlowItem }) {
     if (val.step.type !== TriggerType.PIECE) {
@@ -67,11 +68,20 @@ export class PieceTriggerMentionItemComponent implements OnInit {
   ) {}
   ngOnInit(): void {
     const cachedResult: undefined | MentionTreeNode = this.getChachedData();
+    this.search$ = this.mentionsTreeCache.listSearchBarObs$.pipe(
+      tap((res) => {
+        this.expandSample = !!res;
+      })
+    );
     this.isScheduleTrigger$ = this.store.select(
       BuilderSelectors.selectIsSchduleTrigger
     );
     this.isPollingTrigger$ = this.checkIfItIsPollingTrigger();
     if (cachedResult) {
+      this.mentionsTreeCache.setStepMentionsTree(this._stepMention.step.name, {
+        children: cachedResult?.children || [],
+        value: cachedResult?.value,
+      });
       this.sampleData$ = combineLatest({
         stepTree: of({
           children: cachedResult.children,

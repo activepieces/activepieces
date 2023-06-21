@@ -91,12 +91,11 @@ export class TestCodeStepComponent extends TestStepCoreComponent {
                 settings: {
                   ...step.settings,
                   inputUiInfo: {
-                    currentSelectedData:
-                      result.output || result.output
-                        ? result.output
-                        : result.output === undefined
-                        ? 'undefined'
-                        : JSON.stringify(result.output),
+                    currentSelectedData: result.output
+                      ? result.output
+                      : result.output === undefined
+                      ? 'undefined'
+                      : JSON.stringify(result.output),
                     lastTestDate: new Date().toString(),
                   },
                 },
