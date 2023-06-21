@@ -1,19 +1,19 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Subject } from 'rxjs';
-import { StepOutput } from '@activepieces/shared';
+
+import { StepRunResult } from '@activepieces/ui/feature-builder-store';
 
 @Injectable({
   providedIn: 'root',
 })
 export class RunDetailsService {
   currentStepResult$: BehaviorSubject<
-    { stepName: string; result: StepOutput | undefined } | undefined
+    Pick<StepRunResult, 'displayName' | 'output' | 'stepName'> | undefined
   > = new BehaviorSubject<
-    { stepName: string; result: StepOutput | undefined } | undefined
+    Pick<StepRunResult, 'displayName' | 'output' | 'stepName'> | undefined
   >(undefined);
-  iterationStepResultState$: Subject<{
-    stepName: string;
-    result: StepOutput | undefined;
-  }> = new Subject();
+  iterationStepResultState$: Subject<
+    Pick<StepRunResult, 'stepName' | 'output'>
+  > = new Subject();
   hideAllIterationsInput$: Subject<boolean> = new Subject();
 }
