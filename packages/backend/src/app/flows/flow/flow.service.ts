@@ -102,7 +102,10 @@ export const flowService = {
             const formattedFlow: Flow = {
                 ...flow,
                 version: versions[idx]!,
-                status: status,
+                status,
+            }
+            if(instance?.schedule){
+                formattedFlow.schedule = instance.schedule
             }
             return formattedFlow
         })
@@ -143,7 +146,7 @@ export const flowService = {
             if (operation.type === FlowOperationType.CHANGE_FOLDER) {
                 await flowRepo.update(flow.id, {
                     ...flow,
-                    folderId: operation.request.folderId ?? null,
+                    folderId: operation.request.folderId ?? undefined,
                 })
             }
             else {

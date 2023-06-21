@@ -29,6 +29,7 @@ import {
   MoveFlowToFolderDialogData,
 } from './move-flow-to-folder-dialog/move-flow-to-folder-dialog.component';
 import { FoldersSelectors } from '../../store/folders/folders.selector';
+import cronstrue from 'cronstrue';
 
 @Component({
   templateUrl: './flows-table.component.html',
@@ -171,9 +172,9 @@ export class FlowsTableComponent implements OnInit {
     const trigger = flow.version.trigger;
     switch (trigger.type) {
       case TriggerType.WEBHOOK:
-        return 'assets/img/custom/triggers/instant.svg';
+        return 'assets/img/custom/triggers/instant-filled.svg';
       case TriggerType.PIECE: {
-        return 'assets/img/custom/triggers/periodic.svg';
+        return 'assets/img/custom/triggers/periodic-filled.svg';
       }
       case TriggerType.EMPTY:
         throw new Error("Flow can't be published with empty trigger");
@@ -186,7 +187,10 @@ export class FlowsTableComponent implements OnInit {
       case TriggerType.WEBHOOK:
         return 'Real time flow';
       case TriggerType.PIECE: {
-        return 'Piece Flow';
+        const cronExpression = flow.schedule?.cronExpression;
+        return cronExpression
+          ? `Runs ${cronstrue.toString(cronExpression)}`
+          : 'Runs Periodically';
       }
       case TriggerType.EMPTY:
         throw new Error("Flow can't be published with empty trigger");

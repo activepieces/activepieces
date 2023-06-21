@@ -43,6 +43,7 @@ import { PieceMetadataEntity } from '../pieces/piece-metadata-entity'
 import { PieceMetadata1685537054805 } from './migration/1685537054805-piece-metadata'
 import { AddProjectIdToPieceMetadata1686090319016 } from './migration/1686090319016-AddProjectIdToPieceMetadata'
 import { UnifyPieceName1686138629812 } from './migration/1686138629812-unifyPieceName'
+import { AddScheduleOptions1687384796637 } from './migration/1687384796637-AddScheduleOptions'
 
 const database = system.getOrThrow(SystemProp.POSTGRES_DATABASE)
 const host = system.getOrThrow(SystemProp.POSTGRES_HOST)
@@ -91,6 +92,7 @@ const getMigrations = () => {
         PieceMetadata1685537054805,
         AddProjectIdToPieceMetadata1686090319016,
         UnifyPieceName1686138629812,
+        AddScheduleOptions1687384796637,
     ]
 }
 

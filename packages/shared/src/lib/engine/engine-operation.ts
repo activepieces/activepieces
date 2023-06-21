@@ -146,7 +146,7 @@ export type ExecuteActionResponse = {
 
 export interface ScheduleOptions {
     cronExpression: string;
-    timezone?: string;
+    timezone: string;
 }
 
 export type EngineResponse<T> = {

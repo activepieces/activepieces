@@ -66,12 +66,7 @@ export const triggerHelper = {
     switch (params.hookType) {
       case TriggerHookType.ON_DISABLE:
         await trigger.onDisable(context);
-        return {
-          scheduleOptions: {
-            cronExpression: ''
-          },
-          listeners: []
-        }
+        return {}
       case TriggerHookType.ON_ENABLE:
         await trigger.onEnable(context);
         return {

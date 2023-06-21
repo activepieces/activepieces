@@ -1,4 +1,4 @@
-import { ActivepiecesError, ErrorCode, FlowInstance, FlowInstanceStatus, FlowOperationType, ProjectId, UpsertFlowInstanceRequest, apId } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, FlowInstance, FlowInstanceStatus, FlowOperationType, ProjectId, ScheduleOptions, ScheduleType, UpsertFlowInstanceRequest, apId } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { FlowInstanceEntity } from './flow-instance.entity'
 import { triggerUtils } from '../../helper/trigger-utils'
@@ -42,11 +42,10 @@ export const flowInstanceService = {
             simulate: false,
         })
         await flowInstanceRepo.upsert(flowInstance, ['projectId', 'flowId'])
-        const savedFlowInstance = (await flowInstanceRepo.findOneBy({
+        return flowInstanceRepo.findOneByOrFail({
             projectId: projectId,
             flowId: request.flowId,
-        }))!
-        return savedFlowInstance
+        })
     },
     async get({ projectId, flowId }: { projectId: ProjectId, flowId: string }): Promise<FlowInstance | null> {
         const flowInstance = await flowInstanceRepo.findOneBy({ projectId, flowId })
@@ -63,15 +62,18 @@ export const flowInstanceService = {
             })
         }
         const flowVersion = await flowVersionService.getOneOrThrow(flowInstance.flowVersionId)
+        let scheduleOptions: ScheduleOptions | undefined
         if (flowInstance.status !== status) {
             switch (status) {
-                case FlowInstanceStatus.ENABLED:
-                    await triggerUtils.enable({
+                case FlowInstanceStatus.ENABLED: {
+                    const response = await triggerUtils.enable({
                         flowVersion: flowVersion,
                         projectId: flowInstance.projectId,
                         simulate: false,
                     })
+                    scheduleOptions = response?.result.scheduleOptions
                     break
+                }
                 case FlowInstanceStatus.DISABLED:
                     await triggerUtils.disable({
                         flowVersion: flowVersion,
@@ -86,33 +88,17 @@ export const flowInstanceService = {
         const updatedInstance: FlowInstance = {
             ...flowInstance,
             status: status,
+            schedule: isNil(scheduleOptions) ? flowInstance.schedule : {
+                type: ScheduleType.CRON_EXPRESSION,
+                timezone: scheduleOptions.timezone,
+                cronExpression: scheduleOptions.cronExpression,
+            },
         }
         await flowInstanceRepo.upsert(updatedInstance, ['projectId', 'flowId'])
-        const savedFlowInstance = (await flowInstanceRepo.findOneBy({
+        return flowInstanceRepo.findOneByOrFail({
             projectId: projectId,
             flowId: flowInstance.flowId,
-        }))!
-        return savedFlowInstance
-    },
-    async delete({ projectId, flowId }: { projectId: ProjectId, flowId: string }): Promise<void> {
-        const flowInstance = await flowInstanceRepo.findOneBy({ projectId, flowId })
-        if (isNil(flowInstance)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.FLOW_INSTANCE_NOT_FOUND,
-                params: {
-                    id: flowId,
-                },
-            })
-        }
-        const flowVersion = await flowVersionService.getOneOrThrow(flowInstance.flowVersionId)
-        if (flowInstance.status === FlowInstanceStatus.ENABLED) {
-            await triggerUtils.disable({
-                flowVersion: flowVersion,
-                projectId: flowInstance.projectId,
-                simulate: false,
-            })
-        }
-        await flowInstanceRepo.delete({ projectId, flowId })
+        })
     },
     async onFlowDelete({ projectId, flowId }: { projectId: ProjectId, flowId: string }): Promise<void> {
         const flowInstance = await flowInstanceRepo.findOneBy({ projectId, flowId })

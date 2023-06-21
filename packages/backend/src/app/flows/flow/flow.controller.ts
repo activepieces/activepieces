@@ -70,13 +70,12 @@ export const flowController = async (fastify: FastifyInstance) => {
                 Querystring: ListFlowsRequest
             }>,
         ) => {
-            const flows = await flowService.list({
+            return flowService.list({
                 projectId: request.principal.projectId,
                 folderId: request.query.folderId,
                 cursorRequest: request.query.cursor ?? null,
                 limit: request.query.limit ?? DEFUALT_PAGE_SIZE,
             })
-            return flows
         },
     )
 
