@@ -43,8 +43,12 @@ function isValid(flowVersion: FlowVersion) {
   return valid;
 }
 
-function isAction(type: ActionType | TriggerType): boolean {
+function isAction(type: ActionType | TriggerType | undefined): boolean {
   return Object.entries(ActionType).some(([, value]) => value === type);
+}
+
+function isTrigger(type: ActionType | TriggerType | undefined): boolean {
+  return Object.entries(TriggerType).some(([, value]) => value === type);
 }
 
 function deleteAction(
@@ -115,7 +119,7 @@ function getAllSteps(trigger: Trigger): (Action | Trigger)[] {
   return traverseInternal(trigger);
 }
 
-function getAllParentSteps(step: Trigger): (Action | Trigger)[] {
+function getAllStepsAtRootLevel(step: Trigger): (Action | Trigger)[] {
   const steps: (Action | Trigger)[] = [];
   while (step !== undefined && step !== null) {
     steps.push(step);
@@ -538,6 +542,7 @@ export const flowHelper = {
   },
   getStep,
   isAction,
+  isTrigger,
   getAllSteps,
   getUsedPieces,
   getImportOperations,
@@ -545,6 +550,6 @@ export const flowHelper = {
   getStepFromSubFlow,
   isChildOf,
   getAllChildSteps,
-  getAllParentSteps
+  getAllStepsAtRootLevel
 };
 
