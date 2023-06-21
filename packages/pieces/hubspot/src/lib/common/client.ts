@@ -111,7 +111,8 @@ export const hubSpotClient = {
                         'hs_task_is_completed_linked_in',
                         'hs_task_is_completed_sequence',
                         'hs_task_repeat_interval',
-                        'hs_updated_by_user_id'
+                        'hs_updated_by_user_id',
+                        'hs_timestamp'
                     ],
                     limit: 100
                 }

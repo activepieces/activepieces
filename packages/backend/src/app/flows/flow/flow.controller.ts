@@ -8,6 +8,7 @@ import {
     FlowViewMode,
     GetFlowRequest,
     ListFlowsRequest,
+    apId,
     flowHelper,
 } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
@@ -116,6 +117,7 @@ export const flowController = async (fastify: FastifyInstance) => {
             }
             const template: FlowTemplate =
             {
+                id: apId(),
                 name: flow.version.displayName,
                 description: '',
                 pieces: flowHelper.getUsedPieces(flow.version.trigger),

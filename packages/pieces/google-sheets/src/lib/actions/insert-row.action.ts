@@ -4,7 +4,7 @@ import { googleSheetsCommon } from '../common/common';
 
 export const insertRowAction = createAction({
     name: 'insert_row',
-    description: 'Append values to an existing sheet',
+    description: 'Append a row of values to an existing sheet',
     displayName: 'Insert Row',
     props: {
         authentication: googleSheetsCommon.authentication,
@@ -12,12 +12,12 @@ export const insertRowAction = createAction({
         sheet_id: googleSheetsCommon.sheet_id,
         as_string: Property.Checkbox({
             displayName: 'As String',
-            description: 'Inserted values that are dates and formulas will be strings and have no affect',
+            description: 'Inserted values that are dates and formulas will be entered strings and have no effect',
             required: false,
         }),
         values: Property.Array({
             displayName: 'Values',
-            description: 'These are the cell values of the row that will be added',
+            description: 'These are the cell values of the row that will be added, beginning with the Value in column A and proceeding with each Value being entered in the next cell.',
             required: true,
         }),
     },

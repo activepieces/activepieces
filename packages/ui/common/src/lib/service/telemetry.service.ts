@@ -14,7 +14,8 @@ export class TelemetryService {
       this.flagService.getAllFlags().subscribe((flags) => {
         if (flags[ApFlagId.TELEMETRY_ENABLED] === true) {
           posthog.init('phc_7F92HoXJPeGnTKmYv0eOw62FurPMRW9Aqr0TPrDzvHh', {
-            api_host: 'https://app.posthog.com',
+            api_host: 'https://track.activepieces.com',
+            ui_host: 'app.posthog.com',
             autocapture: false,
           });
           const currentVersion =
