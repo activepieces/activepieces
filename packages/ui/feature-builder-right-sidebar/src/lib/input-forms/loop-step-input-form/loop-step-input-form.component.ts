@@ -54,6 +54,7 @@ export class LoopStepInputFormComponent implements ControlValueAccessor {
         validators: Validators.required,
       }),
     });
+    this.loopStepForm.controls.items.disable();
     this.loopStepForm.markAllAsTouched();
     this.updateComponentValue$ = this.loopStepForm.valueChanges.pipe(
       tap(() => {

@@ -1,6 +1,4 @@
-import { AddButtonAndFlowItemNameContainer } from '../model/flow-add-button';
-import { FlowItem } from '../model/flow-item';
-import { Point } from '../model/point';
+import { ActionFlowItem, FlowItem } from '../model/flow-item';
 import {
   ARC_LENGTH,
   EMPTY_LOOP_ADD_BUTTON_HEIGHT,
@@ -17,29 +15,13 @@ import {
 } from '@activepieces/shared';
 
 export class FlowRenderUtil {
-  public static isButtonWithinCandidateDistance(
-    addButton: AddButtonAndFlowItemNameContainer,
-    dropPoint: Point
-  ) {
-    if (dropPoint === null) return false;
-    const buttonRect = addButton.htmlElementForButton.getBoundingClientRect();
-    const distance = FlowRenderUtil.dist(buttonRect, dropPoint);
-    return distance <= ACCEPTED_DISTANCE_BETWEEN_DROP_POINT_AND_ADD_BUTTON;
-  }
-
-  public static dist(
-    p1: { x: number; y: number },
-    p2: { x: number; y: number }
-  ) {
-    const dx = p1.x - p2.x;
-    const dy = p1.y - p2.y;
-    return Math.sqrt(dx * dx + dy * dy);
-  }
-
-  public static buildBoxes(flowItem: FlowItem | undefined): void {
-    if (!flowItem) {
-      return;
+  public static buildBoxes(
+    originalFlowItem: FlowItem | undefined
+  ): FlowItem | undefined {
+    if (!originalFlowItem) {
+      return undefined;
     }
+    const flowItem: FlowItem = { ...originalFlowItem };
     if (!flowItem.boundingBox) {
       flowItem.boundingBox = {
         width: FLOW_ITEM_WIDTH,
@@ -55,7 +37,9 @@ export class FlowRenderUtil {
         loopItem.firstLoopAction !== undefined &&
         loopItem.firstLoopAction !== null
       ) {
-        this.buildBoxes(loopItem.firstLoopAction);
+        flowItem.firstLoopAction = this.buildBoxes(
+          loopItem.firstLoopAction
+        ) as ActionFlowItem;
       }
       const subGraph = loopItem.firstLoopAction
         ? (loopItem.firstLoopAction as FlowItem).boundingBox?.height || 0
@@ -84,13 +68,17 @@ export class FlowRenderUtil {
         branchItem.onFailureAction !== undefined &&
         branchItem.onFailureAction !== null
       ) {
-        this.buildBoxes(branchItem.onFailureAction);
+        flowItem.onFailureAction = this.buildBoxes(
+          branchItem.onFailureAction
+        ) as ActionFlowItem;
       }
       if (
         branchItem.onSuccessAction !== undefined &&
         branchItem.onSuccessAction !== null
       ) {
-        this.buildBoxes(branchItem.onSuccessAction);
+        branchItem.onSuccessAction = this.buildBoxes(
+          branchItem.onSuccessAction
+        ) as ActionFlowItem;
       }
 
       let subGraphHeight =
@@ -136,27 +124,16 @@ export class FlowRenderUtil {
       };
     }
     flowItem.boundingBox.height += flowItem.connectionsBox.height;
-    this.buildBoxes(flowItem.nextAction);
+    flowItem.nextAction = this.buildBoxes(flowItem.nextAction);
     if (flowItem.nextAction !== undefined && flowItem.nextAction !== null) {
       flowItem.connectionsBox.height += SPACE_BETWEEN_ITEM_CONTENT_AND_LINE;
       flowItem.boundingBox.height +=
         SPACE_BETWEEN_ITEM_CONTENT_AND_LINE +
           flowItem.nextAction?.boundingBox?.height || 0;
     }
+    return flowItem;
   }
 
-  public static buildCoordinates(step: FlowItem): void {
-    if (!step) {
-      return;
-    }
-
-    const simpleStep = step;
-    if (simpleStep.nextAction) {
-      simpleStep.nextAction.xOffset = 0;
-      /*      simpleAction.nextAction.yOffset = FlowRendererService.SPACING_VERTICAL;*/
-      this.buildCoordinates(simpleStep.nextAction);
-    }
-  }
   public static findNumberOfNestedBranches(step: Action | undefined): number {
     if (!step) return 0;
     if (step.type === ActionType.BRANCH) {

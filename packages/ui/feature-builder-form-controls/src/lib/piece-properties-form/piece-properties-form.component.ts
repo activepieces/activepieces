@@ -178,7 +178,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
         this.requiredProperties[pk] = this.properties[pk];
       } else {
         this.allOptionalProperties[pk] = this.properties[pk];
-        if (propertiesValues[pk]) {
+        if (propertiesValues[pk] !== undefined) {
           this.selectedOptionalProperties[pk] = this.properties[pk];
         }
       }
@@ -416,7 +416,6 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
         );
       }
     });
-
     return controls;
   }
   getControl(configKey: string) {
@@ -450,7 +449,8 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
         new UntypedFormControl(
           property.defaultValue
             ? JSON.stringify(property.defaultValue, null, 2)
-            : undefined
+            : '',
+          [jsonValidator]
         )
       );
     }

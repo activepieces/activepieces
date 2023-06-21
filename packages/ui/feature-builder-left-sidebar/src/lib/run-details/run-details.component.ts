@@ -21,6 +21,7 @@ import {
 import {
   BuilderSelectors,
   LeftSideBarType,
+  StepRunResult,
   canvasActions,
 } from '@activepieces/ui/feature-builder-store';
 
@@ -30,10 +31,7 @@ import {
   styleUrls: ['./run-details.component.scss'],
 })
 export class RunDetailsComponent implements OnInit {
-  runResults: {
-    result: StepOutput;
-    stepName: string;
-  }[] = [];
+  runResults: StepRunResult[] = [];
   selectedRun$: Observable<FlowRun | undefined>;
   accordionRect: DOMRect;
   resizerKnobIsBeingDragged = false;
@@ -41,16 +39,13 @@ export class RunDetailsComponent implements OnInit {
   logs$: Observable<
     | {
         selectedRun: FlowRun | undefined;
-        runResults: {
-          result: StepOutput;
-          stepName: string;
-        }[];
+        runResults: StepRunResult[];
       }
     | undefined
     | null
   >;
   currentStepResult$: Observable<
-    { stepName: string; result: StepOutput | undefined } | undefined
+    Pick<StepRunResult, 'displayName' | 'output' | 'stepName'> | undefined
   >;
   selectedStepName$: Observable<string | null>;
   @ViewChild('stepsResultsAccordion', { read: ElementRef })

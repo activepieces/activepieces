@@ -1,19 +1,21 @@
-<button mat-menu-item apTrackHover #hoverTracker="hoverTrackerDirective" class="!ap-px-[9px]"
+<button mat-menu-item apTrackHover #hoverTracker="hoverTrackerDirective" class="!ap-px-5"
   (click)="_stepMention.step.settings.pieceName !== CORE_SCHEDULE? expandSample? expandSample=false : expandSample=true :mentionClicked.emit(_stepMention) ">
-  <div class="ap-flex">
+  <div class="ap-flex ap-items-center">
 
-    <mat-icon class="mat-icon-rtl-mirror !ap-mr-[5px]"
-      *ngIf="(isScheduleTrigger$ | async) === false || (isScheduleTrigger$ | async) === undefined">
-      {{expandSample ? 'expand_less' : 'expand_more'}}
-    </mat-icon>
+
     <app-generic-step-mention-item [stepIndex]="stepIndex" [stepMention]="_stepMention"
       [indentation]="(isScheduleTrigger$ | async) === true"></app-generic-step-mention-item>
+    <div class="ap-flex-grow"></div>
+    <ap-button *ngIf="hoverTracker.isHovered && !!(sampleData$ | async)" btnColor="primary" btnStyle="basic"
+      type="button" btnSize="small" [buttonIsInsideAutocomplete]="true"
+      (click)="mentionClicked.emit(_stepMention)">Insert
+    </ap-button>
 
+    <mat-icon class="mat-icon-rtl-mirror !ap-mr-[5px]"
+      [svgIcon]="expandSample ? 'custom_expand_less' : 'custom_expand_more'"
+      *ngIf="(isScheduleTrigger$ | async) === false || (isScheduleTrigger$ | async) === undefined">
+    </mat-icon>
   </div>
-  <ap-button *ngIf="hoverTracker.isHovered && !!(sampleData$ | async)" btnColor="primary" btnStyle="basic" type="button"
-    btnSize="small" class="ap-absolute ap-right-[10px]" [buttonIsInsideAutocomplete]="true"
-    (click)="mentionClicked.emit(_stepMention)">Select
-  </ap-button>
 
 </button>
 <ng-container *ngIf="expandSample">
@@ -39,7 +41,7 @@
         <ap-button *ngIf="resultNodeHoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button"
           btnSize="small" class="ap-absolute ap-right-[10px]" [buttonIsInsideAutocomplete]="true"
           [darkLoadingSpinner]="true" (click)="$event.stopPropagation();"
-          (buttonClicked)="mentionClicked.emit(_stepMention)">Select
+          (buttonClicked)="mentionClicked.emit(_stepMention)">Insert
         </ap-button>
       </button>
     </ng-container>
@@ -63,3 +65,4 @@
     </div>
   </ng-container>
 </ng-container>
+<ng-container *ngIf="search$ | async"></ng-container>

@@ -1,13 +1,25 @@
-<div class="ap-typography-headline-6 ap-flex ap-items-center ap-mb-1">Data to Insert<div class="ap-flex-grow">
+<div class="ap-typography-subtitle-1 !ap-font-semibold ap-flex ap-items-center ap-px-5 ap-py-2 ">Data to Insert<div
+    class="ap-flex-grow">
   </div>
-  <ap-icon-button [iconFilename]="'close.svg'" (click)="closeMenu.emit()" [tabIndex]="-1"></ap-icon-button>
+  <app-autocomplete-dropdown-sizes-buttons></app-autocomplete-dropdown-sizes-buttons>
 </div>
-<mat-form-field (click)="$event.stopPropagation();" appearance="outline" class="ap-w-full">
-  <mat-icon matPrefix color="placeholder-icon" svgIcon="search"></mat-icon>
+<mat-form-field (click)="$event.stopPropagation();" appearance="fill"
+  [class.!ap-hidden]="(builderAutocompleteService.dataInsertionPopupSize$ | async) === 'collapse'"
+  [class.!ap-border-none]="(builderAutocompleteService.dataInsertionPopupSize$ | async) === 'collapse'"
+  class="ap-w-full ap-border-t ap-border-solid ap-border-outline data-insertion-search" subscriptSizing="dynamic">
+  <mat-icon class="ap-ml-2.5" matPrefix svgIcon="search"></mat-icon>
+
   <input id="searchInput" #searchInput [formControl]="searchFormControl" matInput placeholder="Search"
     autocomplete="off">
+  <ap-icon-button [class.!ap-visible]="searchFormControl.value" matSuffix class="ap-mr-[4.5rem] ap-invisible"
+    (buttonClicked)="searchFormControl.setValue('')" [iconFilename]="'close.svg'"></ap-icon-button>
 </mat-form-field>
-<div class="ap-max-h-[240px] ap-overflow-scroll ">
+<div class="ap-max-h-[338px] ap-h-[338px] ap-max-w-[357px] ap-w-[357px] ap-overflow-auto"
+  [class.!ap-h-full]="(builderAutocompleteService.dataInsertionPopupSize$ | async) === 'fullscreen'"
+  [class.!ap-w-full]="(builderAutocompleteService.dataInsertionPopupSize$ | async) === 'fullscreen'"
+  [class.!ap-max-h-full]="(builderAutocompleteService.dataInsertionPopupSize$ | async) === 'fullscreen'"
+  [class.!ap-max-w-full]="(builderAutocompleteService.dataInsertionPopupSize$ | async) === 'fullscreen'"
+  [class.!ap-h-0]="(builderAutocompleteService.dataInsertionPopupSize$ | async) === 'collapse'">
 
   <ng-container *ngFor="let stepMention of stepsMentions$|async" #stepsListTemplate>
     <ng-container [ngSwitch]="stepMention.step.type">

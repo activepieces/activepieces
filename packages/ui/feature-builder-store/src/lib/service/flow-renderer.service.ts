@@ -24,10 +24,8 @@ export class FlowRendererService {
     clonedActivePiece: FlowItem | undefined
   ): void {
     if (clonedActivePiece) {
-      clonedActivePiece.xOffset = clonedActivePiece.yOffset = 0;
+      clonedActivePiece = FlowRenderUtil.buildBoxes(clonedActivePiece)!;
       this.rootPiece = clonedActivePiece;
-      FlowRenderUtil.buildBoxes(clonedActivePiece);
-      FlowRenderUtil.buildCoordinates(clonedActivePiece);
     }
 
     this.structureChanged.next(clonedActivePiece);
