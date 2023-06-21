@@ -20,7 +20,7 @@ import {
 } from '@activepieces/ui/feature-builder-store';
 import {
   TestStepService,
-  ActionMetaService,
+  PieceMetadataService,
   isOverflown,
   CORE_SCHEDULE,
 } from '@activepieces/ui/common';
@@ -66,7 +66,7 @@ export class FlowRightSidebarComponent implements OnInit {
     private ngZone: NgZone,
     private testStepService: TestStepService,
     private renderer2: Renderer2,
-    private actionMetaDataService: ActionMetaService,
+    private pieceMetadaService: PieceMetadataService,
     private builderAutocompleteMentionsDropdownService: BuilderAutocompleteMentionsDropdownService
   ) {}
 
@@ -93,7 +93,7 @@ export class FlowRightSidebarComponent implements OnInit {
           step.type === TriggerType.PIECE &&
           step.settings.pieceName !== CORE_SCHEDULE
         ) {
-          return this.actionMetaDataService
+          return this.pieceMetadaService
             .getPieceMetadata(
               step.settings.pieceName,
               step.settings.pieceVersion
@@ -121,7 +121,7 @@ export class FlowRightSidebarComponent implements OnInit {
           step.type === TriggerType.PIECE &&
           step.settings.pieceName !== CORE_SCHEDULE
         ) {
-          return this.actionMetaDataService
+          return this.pieceMetadaService
             .getPieceMetadata(
               step.settings.pieceName,
               step.settings.pieceVersion
@@ -169,7 +169,7 @@ export class FlowRightSidebarComponent implements OnInit {
       .pipe(
         switchMap((res) => {
           if (res) {
-            return this.actionMetaDataService.getPiecesManifest().pipe(
+            return this.pieceMetadaService.getPiecesManifest().pipe(
               map((manifest) => {
                 const piece = manifest.find((p) => p.name === res?.pieceName);
                 if (piece && piece.version === res?.version) {

@@ -44,6 +44,10 @@ export const CloudPieceMetadataService = (): PieceMetadataService => {
             throw new Error('operation not supported')
         },
 
+        async delete(): Promise<void> {
+            throw new Error('operation not supported')
+        },
+        
         async stats(): Promise<AllPiecesStats> {
             return await pieceStatsService.get()
         },

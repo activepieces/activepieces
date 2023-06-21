@@ -18,7 +18,7 @@ import {
   tap,
 } from 'rxjs';
 import {
-  ActionMetaService,
+  PieceMetadataService,
   FlowService,
   InstanceRunService,
   fadeIn400ms,
@@ -91,7 +91,7 @@ export class TestFlowWidgetComponent implements OnInit {
     private dialogService: MatDialog,
     private codeService: CodeService,
     private cd: ChangeDetectorRef,
-    private actionMetaDataService: ActionMetaService
+    private actionMetaDataService: PieceMetadataService
   ) {
     (<any>window).jsonlint = jsonlint;
   }

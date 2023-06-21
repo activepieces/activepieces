@@ -13,7 +13,7 @@ import {
   SeekPage,
 } from '@activepieces/shared';
 import {
-  ActionMetaService,
+  PieceMetadataService,
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
 } from '@activepieces/ui/common';
@@ -38,7 +38,7 @@ export class ConnectionsTableComponent implements OnInit {
   constructor(
     private activatedRoute: ActivatedRoute,
     private store: Store,
-    private actionMetaService: ActionMetaService,
+    private pieceMetadataService: PieceMetadataService,
     private connectionService: AppConnectionsService,
     private dialogService: MatDialog
   ) {}
@@ -48,7 +48,7 @@ export class ConnectionsTableComponent implements OnInit {
       this.activatedRoute.queryParams,
       this.paginator,
       this.store,
-      this.actionMetaService,
+      this.pieceMetadataService,
       this.connectionService,
       this.connectionDeleted$.asObservable().pipe(startWith(true))
     );

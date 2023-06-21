@@ -2,10 +2,10 @@ import {createAction, Property} from '@activepieces/pieces-framework';
 import {httpClient, HttpMethod} from '@activepieces/pieces-common';
 import {bloomerangCommon} from '../common/common';
 
-export const bloomerangUpsertContacts = createAction({
-    name: 'upsert_contact',
-    description: 'Update or create bloomerang contact',
-    displayName: 'Upsert Contact (Advanced)',
+export const bloomerangUpsertContactsDuplicates = createAction({
+    name: 'upsert_contact_duplicates',
+    description: 'Update or create bloomerang contact using duplicates',
+    displayName: 'Upsert Contact (Duplicates)',
     props: {
         authentication: bloomerangCommon.authentication,
         first_name: Property.ShortText({
@@ -21,7 +21,7 @@ export const bloomerangUpsertContacts = createAction({
         organization_name: Property.ShortText({
             displayName: "Organization name",
             description: "Organization name",
-            required: true,
+            required: false,
         }),
         street: Property.ShortText({
             displayName: "Street",
@@ -33,12 +33,12 @@ export const bloomerangUpsertContacts = createAction({
             description: "Phone number",
             required: false,
         }),
-        email_address: Property.Number({
-            displayName: "Email number",
-            description: "Email number",
+        email_address: Property.ShortText({
+            displayName: "Email",
+            description: "Email",
             required: false,
         }),
-        type: Property.Number({
+        type: Property.ShortText({
             displayName: "Type",
             description: "Type",
             required: false,
@@ -81,7 +81,7 @@ export const bloomerangUpsertContacts = createAction({
             },
         })).body;
         if (findContact.Total > 0) {
-            const contactID = findContact.Result[0].id
+            const contactID = findContact.Result[0].Id
             return (await httpClient.sendRequest({
                 method: HttpMethod.PUT,
                 url: `${bloomerangCommon.baseUrl}/constituent/${contactID}`,

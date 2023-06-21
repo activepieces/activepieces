@@ -8,6 +8,8 @@ import {
 import { ConnectionsTableComponent } from './pages/connections-table/connections-table.component';
 import { FoldersResolver } from './resolvers/folders.resolver';
 import { DashboardContainerComponent } from './dashboard-container.component';
+import { CommunityPiecesTableComponent } from './pages/community-pieces-table/community-pieces-table.component';
+
 export const DashboardLayoutRouting: Routes = [
   {
     path: '',
@@ -20,6 +22,12 @@ export const DashboardLayoutRouting: Routes = [
         path: 'runs',
         pathMatch: 'full',
         component: RunsTableComponent,
+      },
+      {
+        title: 'My Pieces - Activepieces',
+        path: 'settings/my-pieces',
+        pathMatch: 'full',
+        component: CommunityPiecesTableComponent,
       },
       {
         title: 'Connections - Activepieces',

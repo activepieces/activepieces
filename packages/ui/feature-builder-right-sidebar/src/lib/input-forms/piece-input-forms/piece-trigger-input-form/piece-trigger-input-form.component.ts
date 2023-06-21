@@ -15,7 +15,7 @@ import { forkJoin, map, Observable, of, shareReplay, take, tap } from 'rxjs';
 import { TriggerType, UpdateTriggerRequest } from '@activepieces/shared';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import {
-  ActionMetaService,
+  PieceMetadataService,
   CORE_SCHEDULE,
   fadeInUp400ms,
 } from '@activepieces/ui/common';
@@ -91,7 +91,7 @@ export class PieceTriggerInputFormComponent {
 
   constructor(
     private fb: UntypedFormBuilder,
-    private actionMetaDataService: ActionMetaService,
+    private actionMetaDataService: PieceMetadataService,
     private cd: ChangeDetectorRef,
     private store: Store
   ) {

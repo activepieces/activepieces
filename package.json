@@ -1,13 +1,15 @@
 {
   "name": "activepieces",
-  "version": "0.3.15",
+  "version": "0.3.17",
   "scripts": {
     "prepare": "husky install",
     "docker": "docker compose -f docker-compose.dev.yml up",
     "frontend": "nx serve ui-core",
     "backend": "wait-on tcp:5432 tcp:6379 && nx serve backend",
     "dev": "concurrently -p \"[{name}]\" -n \"DKR,GUI,API\" -c \"bgBlue.bold,bgMagenta.bold,bgGreen.bold\" \"npm:docker\" \"npm:frontend\" \"npm:backend\"",
-    "start": "npm i && npm run dev"
+    "start": "npm i && npm run dev",
+    "publish-piece": "npx ts-node tools/scripts/utils/publish-piece.ts",
+    "create-piece": "npx ts-node tools/scripts/generate-new-piece.ts"
   },
   "private": true,
   "dependencies": {
@@ -24,7 +26,7 @@
     "@angular/platform-browser-dynamic": "~15.1.0",
     "@angular/router": "~15.1.0",
     "@auth0/angular-jwt": "^5.1.2",
-    "@aws-sdk/client-s3": "^3.347.1",
+    "@aws-sdk/client-s3": "^3.347.0",
     "@babel/runtime": "^7.20.13",
     "@ctrl/ngx-codemirror": "^5.1.1",
     "@fastify/cors": "^8.2.0",

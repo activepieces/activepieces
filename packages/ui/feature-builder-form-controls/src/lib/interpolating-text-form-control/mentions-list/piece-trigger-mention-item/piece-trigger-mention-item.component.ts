@@ -23,7 +23,7 @@ import {
   canvasActions,
 } from '@activepieces/ui/feature-builder-store';
 import {
-  ActionMetaService,
+  PieceMetadataService,
   CORE_SCHEDULE,
   FlowItemDetails,
 } from '@activepieces/ui/common';
@@ -62,7 +62,7 @@ export class PieceTriggerMentionItemComponent implements OnInit {
   isScheduleTrigger$: Observable<boolean>;
   constructor(
     private store: Store,
-    private actionMetaDataService: ActionMetaService,
+    private actionMetaDataService: PieceMetadataService,
     private mentionsTreeCache: MentionsTreeCacheService
   ) {}
   ngOnInit(): void {
