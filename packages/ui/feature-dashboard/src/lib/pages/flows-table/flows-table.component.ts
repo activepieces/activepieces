@@ -3,7 +3,12 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { map, Observable, shareReplay, startWith, Subject, tap } from 'rxjs';
 import { FlowsTableDataSource } from './flows-table.datasource';
 import { MatDialog } from '@angular/material/dialog';
-import { Flow, FlowInstanceStatus, FolderId } from '@activepieces/shared';
+import {
+  Flow,
+  FlowInstanceStatus,
+  FolderId,
+  TriggerType,
+} from '@activepieces/shared';
 
 import {
   ApPaginatorComponent,
@@ -160,6 +165,32 @@ export class FlowsTableComponent implements OnInit {
   }
   duplicate(flow: Flow) {
     this.duplicateFlow$ = this.flowService.duplicate(flow.id);
+  }
+
+  getTriggerIcon(flow: Flow) {
+    const trigger = flow.version.trigger;
+    switch (trigger.type) {
+      case TriggerType.WEBHOOK:
+        return 'assets/img/custom/triggers/instant.svg';
+      case TriggerType.PIECE: {
+        return 'assets/img/custom/triggers/periodic.svg';
+      }
+      case TriggerType.EMPTY:
+        throw new Error("Flow can't be published with empty trigger");
+    }
+  }
+
+  getTriggerToolTip(flow: Flow) {
+    const trigger = flow.version.trigger;
+    switch (trigger.type) {
+      case TriggerType.WEBHOOK:
+        return 'Real time flow';
+      case TriggerType.PIECE: {
+        return 'Piece Flow';
+      }
+      case TriggerType.EMPTY:
+        throw new Error("Flow can't be published with empty trigger");
+    }
   }
 
   moveFlow(flow: Flow) {

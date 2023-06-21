@@ -33,11 +33,19 @@ export const WebhookTrigger = Type.Object({
 
 export type WebhookTrigger = Static<typeof WebhookTrigger>;
 
+export enum ScheduleType {
+  CRON_EXPRESSION = 'CRON_EXPRESSION'
+}
 export const PieceTriggerSettings = Type.Object({
   pieceName: Type.String({}),
   pieceVersion: SemVerType,
   triggerName: Type.String({}),
   input: Type.Record(Type.String({}), Type.Any()),
+  schedule: Type.Optional(Type.Object({
+      type: Type.Literal(ScheduleType.CRON_EXPRESSION),
+      // TODO ADD VALIDATOR
+      cronExpression: Type.String(),
+  })),
   inputUiInfo: SampleDataSettingsObject
 });
 

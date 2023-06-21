@@ -1,6 +1,6 @@
 import { TSchema, Type } from '@sinclair/typebox'
 import { TypeCompiler } from '@sinclair/typebox/compiler'
-import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
+import { PiecePropertyMap, PropertyType, TriggerStrategy } from '@activepieces/pieces-framework'
 import {
     ActionType,
     apId,
@@ -26,7 +26,7 @@ import { databaseConnection } from '../../database/database-connection'
 import { FlowVersionEntity } from './flow-version-entity'
 import { flowVersionSideEffects } from './flow-version-side-effects'
 import { FlowViewMode, DEFAULT_SAMPLE_DATA_SETTINGS } from '@activepieces/shared'
-import { isNil } from 'lodash'
+import { isNil, set } from 'lodash'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 
 const branchSettingsValidator = TypeCompiler.Compile(BranchActionSettingsWithValidation)
@@ -44,26 +44,26 @@ export const flowVersionService = {
         let operations: FlowOperationRequest[] = []
         switch (userOperation.type) {
             case FlowOperationType.IMPORT_FLOW:
-            {
-                const actionsToRemove = flowHelper.getAllParentSteps(flowVersion.trigger).filter(step => flowHelper.isAction(step.type))
-                for (const step of actionsToRemove) {
-                    operations.push({
-                        type: FlowOperationType.DELETE_ACTION,
-                        request: {
-                            name: step.name,
-                        },
-                    })
+                {
+                    const actionsToRemove = flowHelper.getAllParentSteps(flowVersion.trigger).filter(step => flowHelper.isAction(step.type))
+                    for (const step of actionsToRemove) {
+                        operations.push({
+                            type: FlowOperationType.DELETE_ACTION,
+                            request: {
+                                name: step.name,
+                            },
+                        })
+                    }
+                    const trigger = userOperation.request.trigger
+                    if (trigger) {
+                        operations.push({
+                            type: FlowOperationType.UPDATE_TRIGGER,
+                            request: trigger,
+                        })
+                        operations.push(...flowHelper.getImportOperations(trigger))
+                    }
+                    break
                 }
-                const trigger = userOperation.request.trigger
-                if (trigger) {
-                    operations.push({
-                        type: FlowOperationType.UPDATE_TRIGGER,
-                        request: trigger,
-                    })
-                    operations.push(...flowHelper.getImportOperations(trigger))
-                }
-                break
-            }
             default:
                 operations = [userOperation]
                 break
@@ -310,7 +310,7 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
 }
 
 
-async function validateAction({projectId, settings}: {projectId: ProjectId, settings: PieceActionSettings}) {
+async function validateAction({ projectId, settings }: { projectId: ProjectId, settings: PieceActionSettings }) {
 
     if (
         settings.pieceName === undefined ||
@@ -327,17 +327,17 @@ async function validateAction({projectId, settings}: {projectId: ProjectId, sett
         version: settings.pieceVersion,
     })
 
-    if (piece === undefined) {
+    if (isNil(piece)) {
         return false
     }
     const action = piece.actions[settings.actionName]
-    if (action === undefined) {
+    if (isNil(action)) {
         return false
     }
     return validateProps(action.props, settings.input)
 }
 
-async function validateTrigger({settings, projectId}: {settings: PieceTriggerSettings, projectId: ProjectId}) {
+async function validateTrigger({ settings, projectId }: { settings: PieceTriggerSettings, projectId: ProjectId }) {
     if (
         settings.pieceName === undefined ||
         settings.pieceVersion === undefined ||
@@ -353,12 +353,15 @@ async function validateTrigger({settings, projectId}: {settings: PieceTriggerSet
         version: settings.pieceVersion,
     })
 
-    if (piece === undefined) {
+    if (isNil(piece)) {
         return false
     }
     const trigger = piece.triggers[settings.triggerName]
-    if (trigger === undefined) {
+    if (isNil(trigger)) {
         return false
+    }
+    if(trigger.type === TriggerStrategy.POLLING){
+        if(settings.schedule)
     }
     return validateProps(trigger.props, settings.input)
 }
