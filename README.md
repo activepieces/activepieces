@@ -35,7 +35,7 @@ src="https://github.com/activepieces/activepieces/assets/1812998/76c97441-c285-4
     href="https://discord.gg/yvxF5k5AUb"
     target="_blank"
   >
-    <b>Get Instant Support</b>
+    <b>Join Discord</b>
   </a>
 </p>
 
