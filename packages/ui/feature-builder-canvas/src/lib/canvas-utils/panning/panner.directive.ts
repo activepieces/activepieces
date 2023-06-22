@@ -56,7 +56,8 @@ export class CanvasPannerDirective {
       const scrollingWithinDataInsertionPopup = document
         .getElementById('mentionsDropdownContainer')
         ?.contains(event.target as Node);
-      if (scrollingWithinDataInsertionPopup) {
+      const mentionsList = document.getElementById('mentionsList');
+      if (scrollingWithinDataInsertionPopup && mentionsList !== null) {
         return;
       }
     }
