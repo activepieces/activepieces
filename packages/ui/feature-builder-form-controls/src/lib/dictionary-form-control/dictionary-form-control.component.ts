@@ -9,7 +9,7 @@ import {
 } from '@angular/forms';
 import { Observable, tap } from 'rxjs';
 import { InterpolatingTextFormControlComponent } from '../interpolating-text-form-control/interpolating-text-form-control.component';
-import { InsertMentionOperation } from '../interpolating-text-form-control/utils';
+import { InsertMentionOperation } from '@activepieces/ui/common';
 import { BuilderAutocompleteDropdownHandlerComponent } from '../interpolating-text-form-control/builder-autocomplete-dropdown-handler/builder-autocomplete-dropdown-handler.component';
 
 @Component({

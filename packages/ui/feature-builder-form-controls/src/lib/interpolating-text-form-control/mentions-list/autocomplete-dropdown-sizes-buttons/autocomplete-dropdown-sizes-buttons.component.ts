@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { BuilderAutocompleteMentionsDropdownService } from '../../builder-autocomplete-mentions-dropdown/builder-autocomplete-mentions-dropdown.service';
+import { BuilderAutocompleteMentionsDropdownService } from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-autocomplete-dropdown-sizes-buttons',

@@ -22,7 +22,6 @@ import {
   canvasActions,
 } from '@activepieces/ui/feature-builder-store';
 import { FlowItemDetails } from '@activepieces/ui/common';
-import { BuilderAutocompleteMentionsDropdownService } from '../../builder-autocomplete-mentions-dropdown/builder-autocomplete-mentions-dropdown.service';
 
 @Component({
   selector: 'app-piece-step-mention-item',
@@ -57,8 +56,7 @@ export class PieceStepMentionItemComponent implements OnInit {
   search$: Observable<string>;
   constructor(
     private store: Store,
-    private mentionsTreeCache: MentionsTreeCacheService,
-    private builderAutocompleteService: BuilderAutocompleteMentionsDropdownService
+    private mentionsTreeCache: MentionsTreeCacheService
   ) {}
   ngOnInit(): void {
     const cachedResult: undefined | MentionTreeNode = this.getChachedData();
@@ -117,10 +115,6 @@ export class PieceStepMentionItemComponent implements OnInit {
   selectStep() {
     this.store.dispatch(
       canvasActions.selectStepByName({ stepName: this._stepMention.step.name })
-    );
-    this.builderAutocompleteService.currentAutocompleteInputId$.next(null);
-    this.builderAutocompleteService.currentAutoCompleteInputContainer$.next(
-      null
     );
   }
 }

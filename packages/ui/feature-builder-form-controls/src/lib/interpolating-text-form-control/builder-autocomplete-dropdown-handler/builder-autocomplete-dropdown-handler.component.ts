@@ -5,8 +5,10 @@ import {
   Input,
   Output,
 } from '@angular/core';
-import { BuilderAutocompleteMentionsDropdownService } from '../builder-autocomplete-mentions-dropdown/builder-autocomplete-mentions-dropdown.service';
-import { InsertMentionOperation } from '../utils';
+import {
+  BuilderAutocompleteMentionsDropdownService,
+  InsertMentionOperation,
+} from '@activepieces/ui/common';
 import { Observable, filter, tap } from 'rxjs';
 
 @Component({

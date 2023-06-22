@@ -13,4 +13,3 @@ export * from './lib/piece-properties-form/piece-properties-form.component';
 export * from './lib/dictionary-form-control/dictionary-form-control.component';
 export * from './lib/interpolating-text-form-control/fixed-selection-mention';
 export * from './lib/interpolating-text-form-control/builder-autocomplete-mentions-dropdown/builder-autocomplete-mentions-dropdown.component';
-export * from './lib/interpolating-text-form-control/builder-autocomplete-mentions-dropdown/builder-autocomplete-mentions-dropdown.service';
