@@ -346,6 +346,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "asuri0n",
+      "name": "Nathan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/15729117?v=4",
+      "profile": "http://ganapati.fr",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "commitType": "docs"

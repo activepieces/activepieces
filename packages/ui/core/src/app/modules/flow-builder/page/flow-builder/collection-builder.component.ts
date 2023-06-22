@@ -60,7 +60,7 @@ import {
   TemplateBlogNotificationComponent,
   BLOG_URL_TOKEN,
 } from '@activepieces/ui/feature-templates';
-import { BuilderAutocompleteMentionsDropdownService } from '@activepieces/ui/feature-builder-form-controls';
+import { BuilderAutocompleteMentionsDropdownService } from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-collection-builder',

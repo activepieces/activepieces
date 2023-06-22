@@ -22,13 +22,16 @@ import {
   tap,
 } from 'rxjs';
 import { ActionType, TriggerType } from '@activepieces/shared';
-import { InsertMentionOperation, MentionListItem } from '../utils';
+import { MentionListItem } from '../utils';
 import { MentionsTreeCacheService } from './mentions-tree-cache.service';
 import {
   BuilderSelectors,
   FlowItem,
 } from '@activepieces/ui/feature-builder-store';
-import { BuilderAutocompleteMentionsDropdownService } from '../builder-autocomplete-mentions-dropdown/builder-autocomplete-mentions-dropdown.service';
+import {
+  BuilderAutocompleteMentionsDropdownService,
+  InsertMentionOperation,
+} from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-mentions-list',

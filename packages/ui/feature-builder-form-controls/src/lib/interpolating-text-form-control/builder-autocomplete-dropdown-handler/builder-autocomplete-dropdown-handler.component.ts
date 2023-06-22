@@ -6,12 +6,14 @@ import {
   Input,
   Output,
 } from '@angular/core';
-import { BuilderAutocompleteMentionsDropdownService } from '../builder-autocomplete-mentions-dropdown/builder-autocomplete-mentions-dropdown.service';
-import { InsertMentionOperation } from '../utils';
 import { Observable, filter, map, take, tap } from 'rxjs';
 import { Store } from '@ngrx/store';
-import { BuilderSelectors } from '../../../../../feature-builder-store/src';
 import { flowHelper } from '@activepieces/shared';
+import {
+  BuilderAutocompleteMentionsDropdownService,
+  InsertMentionOperation,
+} from '@activepieces/ui/common';
+import { BuilderSelectors } from '@activepieces/ui/feature-builder-store';
 
 @Component({
   selector: 'app-builder-autocomplete-dropdown-handler',

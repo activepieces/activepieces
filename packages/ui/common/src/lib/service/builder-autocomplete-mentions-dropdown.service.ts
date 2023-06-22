@@ -1,7 +1,7 @@
 import { ElementRef } from '@angular/core';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Subject } from 'rxjs';
-import { InsertMentionOperation } from '../utils';
+import { InsertMentionOperation } from '../utils/insert-mention-operation';
 
 @Injectable({
   providedIn: 'root',
