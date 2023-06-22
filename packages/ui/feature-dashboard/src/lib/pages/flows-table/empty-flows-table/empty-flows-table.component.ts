@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, tap } from 'rxjs';
-import { Flow } from '@activepieces/shared';
+import { Observable, switchMap, tap } from 'rxjs';
+import { Flow, FlowOperationType } from '@activepieces/shared';
 import { FlowService } from '@activepieces/ui/common';
 
 @Component({
@@ -26,6 +26,34 @@ export class EmptyFlowsTableComponent {
         .pipe(
           tap((flow) => {
             localStorage.setItem('newFlow', 'true');
+            this.router.navigate(['/flows/', flow.id]);
+          })
+        );
+    }
+  }
+
+  openToDemo()
+  {
+    if (!this.creatingFlow) {
+      this.creatingFlow = true;
+      this.createFlow$ = this.flowService
+        .create({
+          displayName: 'Demo',
+        })
+        .pipe(
+          switchMap((flow) => {
+            return this.flowService
+              .update(flow.id, {
+                type: FlowOperationType.IMPORT_FLOW,
+                request: templateJson.template,
+              })
+              .pipe(
+                tap((updatedFlow: Flow) => {
+                  this.router.navigate([`/flows/${ updatedFlow.id}?sampleFlow=true`]);
+                })
+              );
+          }),
+          tap((flow) => {
             this.router.navigate(['/flows/', flow.id]);
           })
         );
