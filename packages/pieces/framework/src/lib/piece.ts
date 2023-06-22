@@ -1,45 +1,20 @@
-import { ITrigger, type Trigger, type TriggerStrategy } from './trigger/trigger'
-import { Action, ActionRunner, IAction } from './action/action'
+import { Trigger } from './trigger/trigger'
+import { Action } from './action/action'
 import { EventPayload, ParseEventResponse } from '@activepieces/shared'
 import { PieceBase, PieceMetadata } from './piece-metadata'
-import { DynamicDropdownOptions, DynamicDropdownOptionsContext, PieceAuthProperty, PiecePropertyMap } from './property'
-import { TriggerHookContext } from './context'
+import { PieceAuthProperty } from './property'
 
-type CreateParams<AuthProp> = {
+type CreatePieceParams<PieceAuth extends PieceAuthProperty> = {
   displayName: string
   logoUrl: string
   authors?: string[]
   description?: string
+  auth: PieceAuth
   events?: PieceEventProcessors
   minimumSupportedRelease?: string
   maximumSupportedRelease?: string
-  auth: AuthProp
-}
-
-type AddActionParams<AuthProp extends PieceAuthProperty, Props extends PiecePropertyMap> = {
-  name: string
-  displayName: string
-  description: string
-  props: Props
-  run: ActionRunner<AuthProp, Props>
-  sampleData?: unknown
-}
-
-type AddTriggerParams<
-  TS extends TriggerStrategy,
-  AuthProp extends PieceAuthProperty,
-  Props extends PiecePropertyMap,
-> = {
-    name: string
-    displayName: string
-    description: string
-    props: Props
-    type: TS
-    onEnable: (context: TriggerHookContext<TS, AuthProp, Props>) => Promise<void>
-    onDisable: (context: TriggerHookContext<TS, AuthProp, Props>) => Promise<void>
-    run: (context: TriggerHookContext<TS, AuthProp, Props>) => Promise<unknown[]>
-    test?: (context: TriggerHookContext<TS, AuthProp, Props>) => Promise<unknown[]>
-    sampleData: unknown
+  actions: Action<PieceAuth>[]
+  triggers: Trigger<PieceAuth>[]
 }
 
 type PieceEventProcessors = {
@@ -47,66 +22,24 @@ type PieceEventProcessors = {
   verify: (ctx: { webhookSecret: string, payload: EventPayload, appWebhookUrl: string }) => boolean
 }
 
-export class Piece<AuthProp extends PieceAuthProperty = PieceAuthProperty> implements Omit<PieceBase, "version" | "name"> {
+export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty> implements Omit<PieceBase, "version" | "name"> {
   private readonly _actions: Record<string, Action> = {}
   private readonly _triggers: Record<string, Trigger> = {}
 
-  private constructor(
+  constructor(
     public readonly displayName: string,
     public readonly logoUrl: string,
     public readonly authors: string[],
     public readonly events: PieceEventProcessors | undefined,
-    public readonly auth: AuthProp,
+    public readonly auth: PieceAuth,
+    actions: Action<PieceAuth>[],
+    triggers: Trigger<PieceAuth>[],
     public readonly minimumSupportedRelease?: string,
     public readonly maximumSupportedRelease?: string,
     public readonly description: string = '',
-  ) {}
-
-  static create<AuthProp extends PieceAuthProperty>(params: CreateParams<AuthProp>) {
-    return new Piece(
-      params.displayName,
-      params.logoUrl,
-      params.authors ?? [],
-      params.events,
-      params.auth,
-      params.minimumSupportedRelease,
-      params.maximumSupportedRelease,
-      params.description,
-    )
-  }
-
-  addAction<Props extends PiecePropertyMap>(params: AddActionParams<AuthProp, Props>) {
-    const { name, displayName, description, props, run, sampleData } = params
-
-    const action = new IAction(
-      name,
-      displayName,
-      description,
-      props,
-      run,
-      sampleData,
-    )
-
-    this._actions[action.name] = action
-  }
-
-  addTrigger<TS extends TriggerStrategy, Props extends PiecePropertyMap>(
-    params: AddTriggerParams<TS, AuthProp, Props>,
   ) {
-    const trigger = new ITrigger(
-      params.name,
-      params.displayName,
-      params.description,
-      params.props,
-      params.type,
-      params.onEnable,
-      params.onDisable,
-      params.run,
-      params.test ?? (() => Promise.resolve([params.sampleData])),
-      params.sampleData
-    )
-
-    this._triggers[trigger.name] = trigger
+    actions.forEach(action => this._actions[action.name] = action)
+    triggers.forEach(trigger => this._triggers[trigger.name] = trigger)
   }
 
   metadata(): Omit<PieceMetadata, "name" | "version"> {
@@ -137,4 +70,19 @@ export class Piece<AuthProp extends PieceAuthProperty = PieceAuthProperty> imple
   triggers() {
     return this._triggers
   }
+}
+
+export const createPiece = <PieceAuth extends PieceAuthProperty>(params: CreatePieceParams<PieceAuth>) => {
+  return new Piece(
+    params.displayName,
+    params.logoUrl,
+    params.authors ?? [],
+    params.events,
+    params.auth,
+    params.actions,
+    params.triggers,
+    params.minimumSupportedRelease,
+    params.maximumSupportedRelease,
+    params.description,
+  )
 }

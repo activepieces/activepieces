@@ -10,7 +10,7 @@ export interface CustomAuthProps {
 
 export type CustomAuthPropertyValue<T extends CustomAuthProps> = StaticPropsValue<T>;
 
-export type CustomAuthPropertySchema<T> = Omit<BasePropertySchema, 'displayName'> & {
+export type CustomAuthPropertySchema<T> = BasePropertySchema & {
 	props: T
 }
 

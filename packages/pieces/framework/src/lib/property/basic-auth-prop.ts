@@ -1,7 +1,7 @@
 import { PropertyType } from "./property";
 import { BasePropertySchema, TPropertyValue } from "./base-prop";
 
-export type BasicAuthPropertySchema = Omit<BasePropertySchema, 'displayName'> & {
+export type BasicAuthPropertySchema = BasePropertySchema & {
 	username: {
 		displayName: string;
 		description?: string;

@@ -12,7 +12,7 @@ export interface OAuth2Props {
 
 export type OAuthPropsValue<T extends OAuth2Props> = StaticPropsValue<T>;
 
-export type OAuth2PropertySchema = Omit<BasePropertySchema, 'displayName'> & {
+export type OAuth2PropertySchema = BasePropertySchema & {
 	props?: Record<string, OAuthProp>
 	authUrl: string;
 	tokenUrl: string;

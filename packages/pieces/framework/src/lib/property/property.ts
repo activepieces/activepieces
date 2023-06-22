@@ -118,7 +118,7 @@ export const Property = {
 	},
 };
 
-export const AuthProp = {
+export const PieceAuth = {
 	SecretText<R extends boolean>(request: Properties<SecretTextProperty<R>>): R extends true ? SecretTextProperty<true> : SecretTextProperty<false> {
 		return { ...request, valueSchema: undefined, type: PropertyType.SECRET_TEXT } as unknown as R extends true ? SecretTextProperty<true> : SecretTextProperty<false>;
 	},

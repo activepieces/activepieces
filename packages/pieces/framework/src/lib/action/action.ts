@@ -1,27 +1,50 @@
-import type { Piece } from '../piece';
 import { ActionContext } from '../context';
 import { ActionBase } from '../piece-metadata';
 import { PieceAuthProperty, PiecePropertyMap } from '../property/property';
 
-export type ActionRunner<AuthProp extends PieceAuthProperty, Props extends PiecePropertyMap> =
-  (ctx: ActionContext<AuthProp, Props>) => Promise<unknown | void>
+export type ActionRunner<PieceAuth extends PieceAuthProperty, ActionProps extends PiecePropertyMap> =
+  (ctx: ActionContext<PieceAuth, ActionProps>) => Promise<unknown | void>
 
-export class IAction<
-  Props extends PiecePropertyMap,
-  AuthProp extends PieceAuthProperty,
-> implements ActionBase {
-
+type CreateActionParams<PieceAuth extends PieceAuthProperty, ActionProps extends PiecePropertyMap> = {
   /**
-   * Use {@link Piece#addAction} to create actions
+   * A dummy parameter used to infer {@code PieceAuth} type
    */
+  auth: PieceAuth
+  action: {
+    name: string
+    displayName: string
+    description: string
+    props: ActionProps
+    run: ActionRunner<PieceAuth, ActionProps>
+    sampleData?: unknown
+  }
+}
+
+export class IAction<PieceAuth extends PieceAuthProperty, ActionProps extends PiecePropertyMap> implements ActionBase {
   constructor(
     public readonly name: string,
     public readonly displayName: string,
     public readonly description: string,
-    public readonly props: Props,
-    public readonly run: ActionRunner<AuthProp, Props>,
+    public readonly props: ActionProps,
+    public readonly run: ActionRunner<PieceAuth, ActionProps>,
     public readonly sampleData: unknown = {},
   ) {}
 }
 
-export type Action<T extends PiecePropertyMap = any, A extends PieceAuthProperty = any> = IAction<T, A>
+export type Action<
+  PieceAuth extends PieceAuthProperty = any,
+  ActionProps extends PiecePropertyMap = any,
+> = IAction<PieceAuth, ActionProps>
+
+export const createAction = <PieceAuth extends PieceAuthProperty, ActionProps extends PiecePropertyMap>(
+  params: CreateActionParams<PieceAuth, ActionProps>,
+) => {
+  return new IAction(
+    params.action.name,
+    params.action.displayName,
+    params.action.description,
+    params.action.props,
+    params.action.run,
+    params.action.sampleData,
+  )
+}
