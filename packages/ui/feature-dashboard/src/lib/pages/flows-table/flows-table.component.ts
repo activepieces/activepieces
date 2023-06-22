@@ -194,7 +194,7 @@ export class FlowsTableComponent implements OnInit {
       case TriggerType.PIECE: {
         const cronExpression = flow.schedule?.cronExpression;
         return cronExpression
-          ? `Runs ${cronstrue.toString(cronExpression)}`
+          ? `Runs ${cronstrue.toString(cronExpression).toLocaleLowerCase()}`
           : 'Real time flow';
       }
       case TriggerType.EMPTY:
