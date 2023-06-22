@@ -86,6 +86,7 @@
     "jsonrepair": "^3.0.2",
     "jsonwebtoken": "^9.0.0",
     "jszip": "^3.10.1",
+    "jwt-decode": "^3.1.2",
     "kl-angular-mentions": "^1.2.3",
     "langchain": "^0.0.68",
     "lodash": "^4.17.21",
