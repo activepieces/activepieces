@@ -119,6 +119,10 @@ export class VariableService {
   resolve(params: ResolveParams): Promise<any> {
     const { unresolvedInput, executionState, censorConnections } = params
 
+    if (isNil(unresolvedInput)) {
+      return Promise.resolve(unresolvedInput)
+    }
+
     return this.resolveInternally(
       JSON.parse(JSON.stringify(unresolvedInput)),
       this.getExecutionStateObject(executionState),
