@@ -14,7 +14,7 @@ type PnpmCommand = PnpmCoreCommand | PnpmDependencyCommand
 export type PackageManagerDependencies = Record<string, string>
 
 const executePnpm = async (directory: string, command: PnpmCommand, ...args: string[]): Promise<PackageManagerOutput> => {
-    const fullCommand = `pnpm ${command} ${args.join(' ')}`
+    const fullCommand = `npx pnpm ${command} ${args.join(' ')}`
 
     const execOptions: ExecOptions = {
         cwd: directory,
@@ -56,8 +56,8 @@ export const packageManager = {
     async runLocalDependency(directory: string, command: PnpmDependencyCommand): Promise<PackageManagerOutput> {
         return await executePnpm(directory, command)
     },
-
     async linkDependency(directory: string, dependencyDirectory: string) {
-        return await executePnpm(directory, 'link', dependencyDirectory)
+        const result = await executePnpm(directory, 'link', dependencyDirectory)
+        logger.info(`[PackageManager#linkDependency] result: ${JSON.stringify(result)} for directory: ${directory} and dependencyDirectory: ${dependencyDirectory}`)
     },
 }

@@ -82,7 +82,7 @@ export class FlowService {
                 },
               }).pipe(
                 tap((clonedFlow: Flow) => {
-                  window.open(`/flows/${clonedFlow.id}`, '_blank');
+                  window.open(`/flows/${clonedFlow.id}`, '_blank', 'noopener');
                 })
               );
             }),

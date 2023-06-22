@@ -31,7 +31,7 @@ export const triggerHelper = {
       censorConnections: false,
     })
 
-    const { result, errors } = variableService.validateAndCast(resolvedInput, trigger.props);
+    const { result, errors } = await variableService.validateAndCast(resolvedInput, trigger.props);
     if (Object.keys(errors).length > 0) {
       throw new Error(JSON.stringify(errors));
     }
@@ -66,17 +66,12 @@ export const triggerHelper = {
     switch (params.hookType) {
       case TriggerHookType.ON_DISABLE:
         await trigger.onDisable(context);
-        return {
-          scheduleOptions: {
-            cronExpression: ''
-          },
-          listeners: []
-        }
+        return {}
       case TriggerHookType.ON_ENABLE:
         await trigger.onEnable(context);
         return {
           listeners: appListeners,
-          scheduleOptions: scheduleOptions
+          scheduleOptions: trigger.type === TriggerStrategy.POLLING ? scheduleOptions : undefined,
         }
       case TriggerHookType.TEST:
         try {

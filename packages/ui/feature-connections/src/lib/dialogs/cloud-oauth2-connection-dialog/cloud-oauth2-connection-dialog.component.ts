@@ -87,7 +87,9 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
     const propsControls = this.createPropsFormGroup();
     this.settingsForm = this.fb.group({
       name: new FormControl(
-        this.dialogData.pieceName.replace(/[^A-Za-z0-9_\\-]/g, '_'),
+        this.appConnectionsService.getConnectionNameSuggest(
+          this.dialogData.pieceName
+        ),
         {
           nonNullable: true,
           validators: [

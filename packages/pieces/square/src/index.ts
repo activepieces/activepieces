@@ -1,14 +1,11 @@
 
 import { createPiece } from '@activepieces/pieces-framework';
-import packageJson from '../package.json';
 import { squareTriggers } from './lib/triggers';
 import crypto from 'crypto'
 
 export const square = createPiece({
-  name: 'square',
   displayName: 'square',
   logoUrl: 'https://cdn.activepieces.com/pieces/square.png',
-  version: packageJson.version,
   authors: [
     "abuaboud"
   ],

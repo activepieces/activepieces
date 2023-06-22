@@ -198,6 +198,11 @@ const __CanvasReducer = createReducer(
       }
     );
     return clonedState;
+  }),
+  on(FlowsActions.importFlow, (state, { flow }) => {
+    const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
+    clonedState.displayedFlowVersion = flow.version;
+    return clonedState;
   })
 );
 

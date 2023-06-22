@@ -20,6 +20,9 @@ import { MoveFlowToFolderDialogComponent } from './pages/flows-table/move-flow-t
 import { EffectsModule } from '@ngrx/effects';
 import { FoldersEffects } from './store/folders/folders.effects';
 import { RenameFolderDialogComponent } from './pages/flows-table/rename-folder-dialog/rename-folder-dialog.component';
+import { UiFeatureTemplatesModule } from '@activepieces/ui/feature-templates';
+import { CommunityPiecesTableComponent } from './pages/community-pieces-table/community-pieces-table.component';
+import { InstallCommunityPieceModalComponent } from './pages/community-pieces-table/install-community-piece/install-community-piece-modal.component';
 
 @NgModule({
   imports: [
@@ -28,8 +31,10 @@ import { RenameFolderDialogComponent } from './pages/flows-table/rename-folder-d
     RouterModule.forChild(DashboardLayoutRouting),
     StoreModule.forFeature(FOLDERS_STATE_NAME, foldersReducer),
     EffectsModule.forFeature([FoldersEffects]),
+    UiFeatureTemplatesModule,
   ],
   declarations: [
+    InstallCommunityPieceModalComponent,
     DashboardContainerComponent,
     SidenavRoutesListComponent,
     RunsTableComponent,
@@ -38,6 +43,7 @@ import { RenameFolderDialogComponent } from './pages/flows-table/rename-folder-d
     PageTitleComponent,
     ConnectionsTableComponent,
     FlowsTableTitleComponent,
+    CommunityPiecesTableComponent,
     FoldersListComponent,
     NewFolderDialogComponent,
     MoveFlowToFolderDialogComponent,

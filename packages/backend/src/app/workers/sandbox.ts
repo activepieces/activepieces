@@ -87,7 +87,7 @@ export class Sandbox {
     async runCommandLine(commandLine: string): Promise<ExecuteIsolateResult> {
         if (executionMode === ExecutionMode.UNSANDBOXED) {
             const startTime = Date.now()
-            const result = await this.runUnsafeCommand(`cd ${this.getSandboxFolderPath()} && env -i AP_ENVIRONMENT=$AP_ENVIRONMENT ${commandLine}`)
+            const result = await this.runUnsafeCommand(`cd ${this.getSandboxFolderPath()} && env -i AP_ENVIRONMENT=$AP_ENVIRONMENT NODE_OPTIONS='--enable-source-maps' ${commandLine}`)
             let engineResponse
             if (result.verdict === EngineResponseStatus.OK) {
                 engineResponse = await this.parseFunctionOutput()
@@ -108,14 +108,16 @@ export class Sandbox {
             let output
             let verdict
             try {
+                const basePath = path.resolve(__dirname.split('/dist')[0])
                 await Sandbox.runIsolate(
-                    `--dir=/usr/bin/ --dir=/etc/=${etcDir} --dir=/workspace=/workspace:maybe --share-net --box-id=` +
+                    `--dir=/usr/bin/ --dir=/etc/=${etcDir} --dir=${basePath}=/${basePath}:maybe --share-net --box-id=` +
                     this.boxId +
                     ` --processes --wall-time=${Sandbox.sandboxRunTimeSeconds} --meta=` +
                     metaFile +
                     ' --stdout=_standardOutput.txt' +
                     ' --stderr=_standardError.txt --run ' +
                     ' --env=HOME=/tmp/' +
+                    ' --env=NODE_OPTIONS=\'--enable-source-maps\'' +
                     ' --env=AP_ENVIRONMENT ' +
                     commandLine,
                 )

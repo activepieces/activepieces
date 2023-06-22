@@ -26,6 +26,10 @@ export class UserAvatarComponent {
     return `${leftOffset}px`;
   }
 
+  goToDeveloperPage() {
+    this.router.navigate(['settings/my-pieces']);
+  }
+
   logout() {
     this.router.navigate(['sign-in']);
     this.authenticationService.logout();
@@ -41,7 +45,7 @@ export class UserAvatarComponent {
     return this.authenticationService.currentUser.firstName[0];
   }
   goToCommunity() {
-    window.open('https://discord.gg/GHgqTAJy', '_blank');
+    window.open('https://discord.gg/yvxF5k5AUb', '_blank', 'noopener');
   }
   showWhatIsNew() {
     showBeamer();

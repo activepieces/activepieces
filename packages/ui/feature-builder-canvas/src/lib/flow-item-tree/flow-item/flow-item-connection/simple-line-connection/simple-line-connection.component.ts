@@ -50,7 +50,7 @@ export class SimpleLineConnectionComponent
   @ViewChild('addButton') addButtonView: ElementRef;
   addButtonAndFlowItemNameContainer: AddButtonAndFlowItemNameContainer;
   @Input() flowItem: FlowItem;
-  @Input() viewMode: boolean;
+  @Input() readOnly: boolean;
   insideDropArea = false;
   inDraggingMode$: Observable<boolean>;
   showDropArea$: Observable<boolean> = new Observable<boolean>();

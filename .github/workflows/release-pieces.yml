@@ -58,5 +58,4 @@ jobs:
       - name: update pieces metadata
         run: npx nx update-pieces-metadata pieces-apps
         env:
-          DO_SPACES_KEY: ${{ secrets.DO_SPACES_KEY }}
-          DO_SPACES_SECRET: ${{ secrets.DO_SPACES_SECRET }}
+          AP_CLOUD_API_KEY: ${{ secrets.AP_CLOUD_API_KEY }}

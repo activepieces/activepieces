@@ -120,4 +120,12 @@ export class FlagService {
       })
     );
   }
+
+  getTemplatesSourceUrl(): Observable<string> {
+    return this.getAllFlags().pipe(
+      map((flags) => {
+        return flags[ApFlagId.TEMPLATES_SOURCE_URL] as string;
+      })
+    );
+  }
 }

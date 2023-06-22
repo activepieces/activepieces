@@ -20,11 +20,12 @@ import {
 } from '@activepieces/ui/feature-builder-store';
 import {
   TestStepService,
-  ActionMetaService,
+  PieceMetadataService,
   isOverflown,
+  CORE_SCHEDULE,
 } from '@activepieces/ui/common';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
-import { BuilderAutocompleteMentionsDropdownService } from '@activepieces/ui/feature-builder-form-controls';
+import { BuilderAutocompleteMentionsDropdownService } from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-flow-right-sidebar',
@@ -65,7 +66,7 @@ export class FlowRightSidebarComponent implements OnInit {
     private ngZone: NgZone,
     private testStepService: TestStepService,
     private renderer2: Renderer2,
-    private actionMetaDataService: ActionMetaService,
+    private pieceMetadaService: PieceMetadataService,
     private builderAutocompleteMentionsDropdownService: BuilderAutocompleteMentionsDropdownService
   ) {}
 
@@ -90,9 +91,9 @@ export class FlowRightSidebarComponent implements OnInit {
         if (
           step &&
           step.type === TriggerType.PIECE &&
-          step.settings.pieceName !== 'schedule'
+          step.settings.pieceName !== CORE_SCHEDULE
         ) {
-          return this.actionMetaDataService
+          return this.pieceMetadaService
             .getPieceMetadata(
               step.settings.pieceName,
               step.settings.pieceVersion
@@ -118,9 +119,9 @@ export class FlowRightSidebarComponent implements OnInit {
         if (
           step &&
           step.type === TriggerType.PIECE &&
-          step.settings.pieceName !== 'schedule'
+          step.settings.pieceName !== CORE_SCHEDULE
         ) {
-          return this.actionMetaDataService
+          return this.pieceMetadaService
             .getPieceMetadata(
               step.settings.pieceName,
               step.settings.pieceVersion
@@ -168,7 +169,7 @@ export class FlowRightSidebarComponent implements OnInit {
       .pipe(
         switchMap((res) => {
           if (res) {
-            return this.actionMetaDataService.getPiecesManifest().pipe(
+            return this.pieceMetadaService.getPiecesManifest().pipe(
               map((manifest) => {
                 const piece = manifest.find((p) => p.name === res?.pieceName);
                 if (piece && piece.version === res?.version) {
@@ -237,7 +238,8 @@ export class FlowRightSidebarComponent implements OnInit {
   openVersionDocs() {
     window.open(
       'https://www.activepieces.com/docs/pieces/versioning',
-      '_blank'
+      '_blank',
+      'noopener'
     );
   }
   @HostListener('window:resize', ['$event'])

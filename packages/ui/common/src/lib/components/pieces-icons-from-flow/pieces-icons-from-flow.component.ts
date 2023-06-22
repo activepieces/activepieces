@@ -2,38 +2,38 @@ import { Component, Input, OnInit } from '@angular/core';
 import {
   ActionType,
   FlowVersion,
+  FlowVersionTemplate,
   TriggerType,
   flowHelper,
 } from '@activepieces/shared';
 import { Observable, map, of, tap } from 'rxjs';
 import {
-  ActionMetaService,
+  PieceMetadataService,
   CORE_PIECES_ACTIONS_NAMES,
   CORE_PIECES_TRIGGERS,
   corePieceIconUrl,
-} from '../../service/action-meta.service';
+} from '../../service/piece-meta.service';
 
 @Component({
   selector: 'ap-pieces-icons-from-flow',
   templateUrl: './pieces-icons-from-flow.component.html',
 })
 export class PiecesIconsFromFlowComponent implements OnInit {
-  @Input() flowVersion: FlowVersion;
+  @Input() flowVersion: FlowVersionTemplate | FlowVersion;
   numberOfStepsLeft = 0;
   loadedIcons: Record<number, boolean> = {};
   urlsToLoad$: Observable<string>[] = [];
   tooltipText = '';
   stepNamesMap: Record<string, string> = {};
   piecesMetadata$: Observable<string>[] = [];
-  constructor(private actionMetaDataService: ActionMetaService) {}
+  constructor(private actionMetaDataService: PieceMetadataService) {}
   ngOnInit(): void {
     const icons$ = this.extractIconUrlsAndTooltipText();
     this.loadIconUrls(Object.values(icons$));
   }
   extractIconUrlsAndTooltipText() {
-    const steps = flowHelper.getAllSteps(this.flowVersion);
+    const steps = flowHelper.getAllSteps(this.flowVersion.trigger);
     const stepsIconsUrls: Record<string, Observable<string>> = {};
-
     steps.forEach((s) => {
       if (s.type === ActionType.PIECE || s.type === TriggerType.PIECE) {
         const pieceMetaData$ = this.actionMetaDataService
@@ -58,7 +58,7 @@ export class PiecesIconsFromFlowComponent implements OnInit {
         this.stepNamesMap[s.name] = '';
         stepsIconsUrls[s.settings.pieceName] = pieceMetaData$;
       } else if (s.type !== TriggerType.EMPTY) {
-        const icon = this.actionMetaDataService.findNonPieceStepIcon(s);
+        const icon = this.actionMetaDataService.findNonPieceStepIcon(s.type);
         const displayName =
           [
             ...this.actionMetaDataService.coreFlowItemsDetails,

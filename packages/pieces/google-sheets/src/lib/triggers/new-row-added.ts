@@ -2,6 +2,7 @@ import { OAuth2PropertyValue, Property, Store, createTrigger } from '@activepiec
 import { TriggerStrategy } from "@activepieces/pieces-framework";
 import { googleSheetsCommon } from '../common/common';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { isNil } from 'lodash';
 
 const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const sampleData = Array.from(alphabet).map(c => `${c} Value`);
@@ -12,20 +13,17 @@ const polling: Polling<{ authentication: OAuth2PropertyValue, spreadsheet_id: st
     const currentValues = (await googleSheetsCommon.getValues(propsValue.spreadsheet_id, propsValue.authentication.access_token, propsValue.sheet_id)) ?? []
     const items = currentValues.map((item, index) => ({
       id: index + 1,
-      data: {
-        value: item,
-        rowId: index + 1
-      },
-    }));
+      data: item,
+    })).filter(f => isNil(lastItemId) || f.data.row > (lastItemId as number));
     return items.reverse();
   }
 };
 
 
-export const newRowAdded = createTrigger({
-  name: 'new_row_added',
+export const readNewRows = createTrigger({
+  name: 'new_row',
   displayName: 'New Row',
-  description: 'Triggers when there is a new row added',
+  description: 'Trigger when a new row is added, and it can include existing rows as well.',
   props: {
     authentication: googleSheetsCommon.authentication,
     spreadsheet_id: googleSheetsCommon.spreadsheet_id,

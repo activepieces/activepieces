@@ -12,10 +12,13 @@ const config = {
 test('Test Send Slack message', async ({ page }) => {
 
   test.setTimeout(100000);
+  // Add cache-control header to force refresh without cache
+  await page.setExtraHTTPHeaders({ 'Cache-Control': 'no-cache' });
 
   await testSignIn(page, config);
 
   await page.getByRole('button', { name: 'Start building' }).click();
+  await page.getByRole('button', { name: 'Close' }).click();
   await page.getByText('Select Trigger').click();
   await page.getByText('Webhook').click();
 

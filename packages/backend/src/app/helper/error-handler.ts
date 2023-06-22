@@ -1,8 +1,7 @@
 import { FastifyError, FastifyReply, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
-import { captureException } from './logger'
-import { logger } from '@sentry/utils'
+import { captureException, logger } from './logger'
 
 export const errorHandler = async (
     error: FastifyError,
@@ -11,18 +10,15 @@ export const errorHandler = async (
 ): Promise<void> => {
     logger.error('[errorHandler]:', error)
     if (error instanceof ActivepiecesError) {
-        let statusCode = StatusCodes.BAD_REQUEST
-        switch (error.error.code) {
-            case ErrorCode.TASK_QUOTA_EXCEEDED:
-                statusCode = StatusCodes.PAYMENT_REQUIRED
-                break
-            case ErrorCode.INVALID_API_KEY:
-            case ErrorCode.INVALID_BEARER_TOKEN:
-                statusCode = StatusCodes.UNAUTHORIZED
-                break
-            default:
-                break
+        const statusCodeMap: Partial<Record<ErrorCode, StatusCodes>> = {
+            [ErrorCode.INVALID_API_KEY]: StatusCodes.UNAUTHORIZED,
+            [ErrorCode.INVALID_BEARER_TOKEN]: StatusCodes.UNAUTHORIZED,
+            [ErrorCode.TASK_QUOTA_EXCEEDED]: StatusCodes.PAYMENT_REQUIRED,
+            [ErrorCode.ENTITY_NOT_FOUND]: StatusCodes.NOT_FOUND,
         }
+
+        const statusCode = statusCodeMap[error.error.code] ?? StatusCodes.BAD_REQUEST
+
         await reply.status(statusCode).send({
             code: error.error.code,
             params:error.error.params,

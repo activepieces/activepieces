@@ -8,6 +8,8 @@ import {
 import { ConnectionsTableComponent } from './pages/connections-table/connections-table.component';
 import { FoldersResolver } from './resolvers/folders.resolver';
 import { DashboardContainerComponent } from './dashboard-container.component';
+import { CommunityPiecesTableComponent } from './pages/community-pieces-table/community-pieces-table.component';
+
 export const DashboardLayoutRouting: Routes = [
   {
     path: '',
@@ -16,19 +18,25 @@ export const DashboardLayoutRouting: Routes = [
     children: [
       { path: '', pathMatch: 'full', redirectTo: '/flows' },
       {
-        title: 'AP-Runs',
+        title: 'Runs - Activepieces',
         path: 'runs',
         pathMatch: 'full',
         component: RunsTableComponent,
       },
       {
-        title: 'AP-Connections',
+        title: 'My Pieces - Activepieces',
+        path: 'settings/my-pieces',
+        pathMatch: 'full',
+        component: CommunityPiecesTableComponent,
+      },
+      {
+        title: 'Connections - Activepieces',
         path: 'connections',
         pathMatch: 'full',
         component: ConnectionsTableComponent,
       },
       {
-        title: 'AP-Flows',
+        title: 'Flows - Activepieces',
         path: 'flows',
         pathMatch: 'full',
         component: FlowsTableComponent,

@@ -4,11 +4,11 @@ import {
     FlowId,
     FlowOperationRequest,
     FlowTemplate,
-    FlowVersion,
     FlowVersionId,
     FlowViewMode,
     GetFlowRequest,
     ListFlowsRequest,
+    apId,
     flowHelper,
 } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
@@ -70,13 +70,12 @@ export const flowController = async (fastify: FastifyInstance) => {
                 Querystring: ListFlowsRequest
             }>,
         ) => {
-            const flows = await flowService.list({
+            return flowService.list({
                 projectId: request.principal.projectId,
                 folderId: request.query.folderId,
                 cursorRequest: request.query.cursor ?? null,
                 limit: request.query.limit ?? DEFUALT_PAGE_SIZE,
             })
-            return flows
         },
     )
 
@@ -115,12 +114,17 @@ export const flowController = async (fastify: FastifyInstance) => {
             if (!flow) {
                 throw new ActivepiecesError({ code: ErrorCode.FLOW_NOT_FOUND, params: { id: request.params.flowId } })
             }
-            return {
+            const template: FlowTemplate =
+            {
+                id: apId(),
                 name: flow.version.displayName,
                 description: '',
                 pieces: flowHelper.getUsedPieces(flow.version.trigger),
-                template: removeMetaInformation(flow.version),
+                template: flow.version,
+                tags:[],
+                blogUrl:'', 
             }
+            return template
         },
     )
 
@@ -164,13 +168,4 @@ export const flowController = async (fastify: FastifyInstance) => {
         },
     )
 
-}
-
-function removeMetaInformation(flowVersion: FlowVersion) {
-    const sensitiveDataKeys = ['created', 'updated', 'projectId', 'folderId', 'flowId']
-
-    const filteredEntries = Object.entries(flowVersion)
-        .filter(([key]) => !sensitiveDataKeys.includes(key))
-
-    return Object.fromEntries(filteredEntries)
 }

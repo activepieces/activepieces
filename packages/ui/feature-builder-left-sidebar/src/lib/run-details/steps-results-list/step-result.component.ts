@@ -8,15 +8,20 @@ import {
 } from '@angular/core';
 import { UntypedFormControl } from '@angular/forms';
 import { MatExpansionPanel } from '@angular/material/expansion';
-
 import { Store } from '@ngrx/store';
 import {
   BuilderSelectors,
+  StepRunResult,
   canvasActions,
 } from '@activepieces/ui/feature-builder-store';
 import { map, Observable, startWith, tap } from 'rxjs';
 import { RunDetailsService } from '../iteration-details.service';
-import { StepOutput, StepOutputStatus } from '@activepieces/shared';
+import {
+  ActionType,
+  LoopOnItemsStepOutput,
+  StepOutput,
+  StepOutputStatus,
+} from '@activepieces/shared';
 import { fadeInAnimation } from '@activepieces/ui/common';
 
 @Component({
@@ -26,11 +31,11 @@ import { fadeInAnimation } from '@activepieces/ui/common';
   animations: [fadeInAnimation(400, false)],
 })
 export class StepResultComponent implements OnInit, AfterViewInit {
-  @Input() stepNameAndResult: { stepName: string; result: StepOutput };
+  @Input() stepResult: StepRunResult;
   @Input() set selectedStepName(stepName: string | null) {
     this._selectedStepName = stepName;
 
-    if (this._selectedStepName === this.stepNameAndResult.stepName) {
+    if (this._selectedStepName === this.stepResult.stepName) {
       this.runDetailsService.hideAllIterationsInput$.next(true);
       this.childStepSelected.emit();
     }
@@ -43,9 +48,9 @@ export class StepResultComponent implements OnInit, AfterViewInit {
   nestingLevelPadding = '0px';
   finishedBuilding = false;
   iterationIndexControl = new UntypedFormControl(1);
-  iteration$: Observable<{ stepName: string; result: StepOutput }[]>;
-  iterationsAccordionList: { stepName: string; result: StepOutput }[][] = [];
-  private previousIterationIndex = 0;
+  iteration$: Observable<Pick<StepRunResult, 'stepName' | 'output'>[]>;
+  iterationsAccordionList: Pick<StepRunResult, 'stepName' | 'output'>[][] = [];
+  previousIterationIndex = 0;
   hideIterationInput$: Observable<boolean>;
   showIterationInput = false;
   iterationInputMinWidth = '0px';
@@ -65,18 +70,16 @@ export class StepResultComponent implements OnInit, AfterViewInit {
   ngOnInit(): void {
     this.nestingLevelPadding = `${this.nestingLevel * 25}px`;
     this.stepLogoUrl$ = this.store.select(
-      BuilderSelectors.selectStepLogoUrl(this.stepNameAndResult.stepName)
+      BuilderSelectors.selectStepLogoUrl(this.stepResult.stepName)
     );
-    if (this.stepNameAndResult.result.output?.iterations !== undefined) {
+    if (this.stepResult.output?.output?.iterations !== undefined) {
       this.isLoopStep = true;
-      const loopOutput = this.stepNameAndResult.result;
-      loopOutput.output.iterations.forEach(
-        (iteration: Record<string, StepOutput>) => {
-          this.iterationsAccordionList.push(
-            this.createStepResultsForDetailsAccordion(iteration)
-          );
-        }
-      );
+      const loopOutput = this.stepResult.output as LoopOnItemsStepOutput;
+      loopOutput.output?.iterations.forEach((iteration) => {
+        this.iterationsAccordionList.push(
+          this.createStepResultsForDetailsAccordion(iteration)
+        );
+      });
       this.iteration$ = this.iterationIndexControl.valueChanges.pipe(
         startWith(1),
         tap((newIndex: number | null) => {
@@ -107,19 +110,19 @@ export class StepResultComponent implements OnInit, AfterViewInit {
       );
     }
 
-    if (this._selectedStepName === this.stepNameAndResult.stepName) {
+    if (this._selectedStepName === this.stepResult.stepName) {
       this.childStepSelected.emit();
-      this.runDetailsService.currentStepResult$.next(this.stepNameAndResult);
+      this.runDetailsService.currentStepResult$.next(this.stepResult);
     }
   }
 
   private findCurrentStepResultInCurrentIteration(
-    iteration: { stepName: string; result: StepOutput }[]
+    iteration: Pick<StepRunResult, 'stepName' | 'output'>[]
   ) {
     iteration.forEach((st) => {
       const stepNameAndResult = {
         stepName: st.stepName,
-        result: st.result,
+        output: st.output,
       };
       this.runDetailsService.iterationStepResultState$.next(stepNameAndResult);
       if (
@@ -134,9 +137,10 @@ export class StepResultComponent implements OnInit, AfterViewInit {
     if (newIndex === null || newIndex < 1) {
       return 1;
     } else if (
-      newIndex > this.stepNameAndResult.result.output.iterations!.length
+      this.stepResult.output?.output.iterations &&
+      newIndex > this.stepResult.output.output.iterations.length
     ) {
-      return this.stepNameAndResult.result.output.iterations!.length;
+      return this.stepResult.output?.output.iterations!.length;
     }
     return newIndex;
   }
@@ -162,15 +166,15 @@ export class StepResultComponent implements OnInit, AfterViewInit {
     $event: MouseEvent,
     expansionPanel: MatExpansionPanel
   ) {
-    if (this._selectedStepName !== this.stepNameAndResult.stepName) {
+    if (this._selectedStepName !== this.stepResult.stepName) {
       this.store.dispatch(
         canvasActions.selectStepByName({
-          stepName: this.stepNameAndResult.stepName,
+          stepName: this.stepResult.stepName,
         })
       );
       this.runDetailsService.hideAllIterationsInput$.next(true);
       this.childStepSelected.emit();
-      this.runDetailsService.currentStepResult$.next(this.stepNameAndResult);
+      this.runDetailsService.currentStepResult$.next(this.stepResult);
     } else if (expansionPanel) {
       expansionPanel.toggle();
     }
@@ -178,15 +182,14 @@ export class StepResultComponent implements OnInit, AfterViewInit {
     $event.stopPropagation();
   }
 
-  createStepResultsForDetailsAccordion(iteration: Record<string, StepOutput>): {
-    result: StepOutput;
-    stepName: string;
-  }[] {
+  createStepResultsForDetailsAccordion(
+    iteration: Record<string, StepOutput<ActionType, any>>
+  ): Pick<StepRunResult, 'stepName' | 'output'>[] {
     const iterationStepsNames = Object.keys(iteration);
     return iterationStepsNames.map((stepName) => {
       return {
         stepName: stepName,
-        result: iteration[stepName],
+        output: iteration[stepName],
       };
     });
   }
@@ -195,27 +198,28 @@ export class StepResultComponent implements OnInit, AfterViewInit {
     $event.stopPropagation();
   }
 
-  clearStepsThatWereNotReached(parentLoopStepResultAndName: {
-    stepName: string;
-    result: StepOutput;
-  }) {
+  clearStepsThatWereNotReached(
+    stepWithinLoop: Pick<StepRunResult, 'stepName' | 'output'>
+  ) {
     this.runDetailsService.iterationStepResultState$.next({
-      stepName: parentLoopStepResultAndName.stepName,
-      result: undefined,
+      stepName: stepWithinLoop.stepName,
+      output: undefined,
     });
     if (
-      parentLoopStepResultAndName.stepName ===
+      stepWithinLoop.stepName ===
       this.runDetailsService.currentStepResult$.value?.stepName
     ) {
       this.runDetailsService.currentStepResult$.next(undefined);
     }
-    if (parentLoopStepResultAndName.result.output?.iterations) {
-      const firstIterationResult = this.createStepResultsForDetailsAccordion(
-        parentLoopStepResultAndName.result.output.iterations[0]
-      );
-      firstIterationResult.forEach((st) => {
-        this.clearStepsThatWereNotReached(st);
-      });
+    if (stepWithinLoop.output?.output?.iterations) {
+      if (stepWithinLoop.output.output.iterations[0]) {
+        const firstIterationResult = this.createStepResultsForDetailsAccordion(
+          stepWithinLoop.output.output.iterations[0]
+        );
+        firstIterationResult.forEach((st) => {
+          this.clearStepsThatWereNotReached(st);
+        });
+      }
     }
   }
   childStepSelectedHandler() {

@@ -16,12 +16,11 @@ import {
 import {
   BuilderSelectors,
   FlowItem,
-  Point,
-  FlowStructureUtil,
   FlowRendererService,
 } from '@activepieces/ui/feature-builder-store';
 import { PannerService } from '../../canvas-utils/panning/panner.service';
 import { ZoomingService } from '../../canvas-utils/zooming/zooming.service';
+import { flowHelper } from '@activepieces/shared';
 
 @Component({
   selector: 'app-flow-item',
@@ -56,8 +55,7 @@ export class FlowItemComponent implements OnInit {
     this.flowGraphContainer = this.flowGraphContainerCalculator();
   }
   selected$: Observable<boolean> = of(false);
-  viewMode$: Observable<boolean> = of(false);
-  dragDelta: Point | undefined;
+  readOnly$: Observable<boolean> = of(false);
   scale$: Observable<string>;
   isDragging = false;
   anyStepIsDragged$: Observable<boolean>;
@@ -90,8 +88,8 @@ export class FlowItemComponent implements OnInit {
         return `scale(${val})`;
       })
     );
-    this.viewMode$ = this.store.select(BuilderSelectors.selectReadOnly);
-    if (FlowStructureUtil.isTrigger(this._flowItemData)) {
+    this.readOnly$ = this.store.select(BuilderSelectors.selectReadOnly);
+    if (flowHelper.isTrigger(this._flowItemData.type)) {
       const translate$ = this.pannerService.panningOffset$.asObservable().pipe(
         startWith({ x: 0, y: 0 }),
         map((val) => {
@@ -119,7 +117,7 @@ export class FlowItemComponent implements OnInit {
 
   flowGraphContainerCalculator() {
     return {
-      top: FlowStructureUtil.isTrigger(this._flowItemData) ? '50px' : '0px',
+      top: flowHelper.isTrigger(this._flowItemData.type) ? '50px' : '0px',
       width: this._flowItemData.boundingBox!.width + 'px',
       height: this._flowItemData.boundingBox!.height + 'px',
       left: `calc(50% - ${this._flowItemData.boundingBox!.width / 2}px )`,

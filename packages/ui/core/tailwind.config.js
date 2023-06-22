@@ -51,6 +51,7 @@ module.exports = {
           light: '#E1F4E7',
           dark: '#35B45F'
          },
+         black: '#1d1d1d',
         blueLink: '#1890ff',
         sidebar: '#FAFBFC',
         blueBorder: '#6385dc',
@@ -63,7 +64,8 @@ module.exports = {
         graySelect: '#F5F5F5',
         title:'#262626',
         bleachedGray:'#A6B1BF',
-        disable:'#AAAAAA'
+        disable:'#AAAAAA',
+        outline: 'rgba(0, 0, 0, 0.12)'
       },
     },
     container: {

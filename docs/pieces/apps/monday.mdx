@@ -2,20 +2,43 @@
 title: 'Monday'
 ---
 
+##### Authors: [kanarelo](https://github.com/kanarelo)
+
+
 ## Triggers
 
 
-    <CardGroup cols={2}>
-      <Card title="New Item Created">
+      <Card title="New Item Created (Scheduled)" icon="clock">
         Triggered when a new item is created
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Authentication" required type="Oauth2">
+OAuth2.0 Authentication
+</ResponseField>
+            
+<ResponseField name="Workspace" required type="Dropdown">
+The workspace's unique identifier.
+</ResponseField>
+            
+<ResponseField name="Board" required type="Dropdown">
+The board's unique identifier.
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   
-    <CardGroup cols={2}>
-      <Card title="New Update">
+      <Card title="New Update (Scheduled)" icon="clock">
         Triggered when a new update is created
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Authentication" required type="Oauth2">
+OAuth2.0 Authentication
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   
 
 ---
@@ -23,9 +46,39 @@ title: 'Monday'
 ## Actions
 
 
-    <CardGroup cols={2}>
-      <Card title="Create Item">
+      <Card title="Create Item " >
         Create a new item inside a board.
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Authentication" required type="Oauth2">
+OAuth2.0 Authentication
+</ResponseField>
+            
+<ResponseField name="Workspace" required type="Dropdown">
+The workspace's unique identifier.
+</ResponseField>
+            
+<ResponseField name="Board" required type="Dropdown">
+The board's unique identifier.
+</ResponseField>
+            
+<ResponseField name="Group"  type="Dropdown">
+Board Group
+</ResponseField>
+            
+<ResponseField name="Item Name" required type="Short_text">
+Item Name
+</ResponseField>
+            
+<ResponseField name="Column Values"  type="Object">
+The column values of the new item.
+</ResponseField>
+            
+<ResponseField name="Create Labels if Missing"  type="Checkbox">
+Creates status/dropdown labels if they are missing. This requires permission to change the board structure.
+</ResponseField>
+              
+        </Expandable>
       </Card>
-    </CardGroup>
   

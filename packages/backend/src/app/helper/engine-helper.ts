@@ -18,17 +18,19 @@ import {
     ActivepiecesError,
     ErrorCode,
     ExecuteCodeOperation,
+    ExecuteExtractPieceMetadata,
 } from '@activepieces/shared'
 import { Sandbox, sandboxManager } from '../workers/sandbox'
 import { system } from './system/system'
 import { SystemProp } from './system/system-prop'
 import { tokenUtils } from '../authentication/lib/token-utils'
-import { DropdownState, DynamicPropsValue } from '@activepieces/pieces-framework'
+import { DropdownState, DynamicPropsValue, PieceMetadata } from '@activepieces/pieces-framework'
 import { logger } from '../helper/logger'
 import chalk from 'chalk'
 import { getEdition, getWebhookSecret } from './secret-helper'
 import { appEventRoutingService } from '../app-event-routing/app-event-routing.service'
 import { pieceManager } from '../flows/common/piece-installer'
+import { packageManager } from './package-manager'
 
 type InstallPieceParams = {
     path: string
@@ -54,12 +56,14 @@ export type EngineHelperPropResult = DropdownState<unknown> | Record<string, Dyn
 export type EngineHelperActionResult = ExecuteActionResponse
 
 export type EngineHelperCodeResult = ExecuteActionResponse
+export type EngineHelperExtractPieceInformation = Omit<PieceMetadata, 'name' | 'version'>
 
 export type EngineHelperResult =
     | EngineHelperFlowResult
     | EngineHelperTriggerResult
     | EngineHelperPropResult
     | EngineHelperCodeResult
+    | EngineHelperExtractPieceInformation
     | EngineHelperActionResult
 
 export type EngineHelperResponse<Result extends EngineHelperResult> = {
@@ -70,7 +74,6 @@ export type EngineHelperResponse<Result extends EngineHelperResult> = {
 }
 
 
-const nodeExecutablePath = system.getOrThrow(SystemProp.NODE_EXECUTABLE_PATH)
 const engineExecutablePath = system.getOrThrow(SystemProp.ENGINE_EXECUTABLE_PATH)
 
 
@@ -120,6 +123,15 @@ const getSandbox = async ({ pieceName, pieceVersion }: GetSandboxParams): Promis
     return sandbox
 }
 
+function tryParseJson(value: unknown) {
+    try {
+        return JSON.parse(value as string)
+    } 
+    catch (e) {
+        return value
+    }
+}
+
 const execute = async <Result extends EngineHelperResult>(
     operation: EngineOperationType,
     sandbox: Sandbox,
@@ -129,14 +141,16 @@ const execute = async <Result extends EngineHelperResult>(
 
     const sandboxPath = sandbox.getSandboxFolderPath()
 
-    await fs.copyFile(engineExecutablePath, `${sandboxPath}/activepieces-engine.js`)
+    await fs.copyFile(engineExecutablePath, `${sandboxPath}/main.js`)
+    await fs.copyFile(`${engineExecutablePath}.map`, `${sandboxPath}/main.js.map`)
 
     await fs.writeFile(`${sandboxPath}/input.json`, JSON.stringify({
         ...input,
         apiUrl: 'http://127.0.0.1:3000',
     }))
 
-    const sandboxResponse = await sandbox.runCommandLine(`${nodeExecutablePath} activepieces-engine.js ${operation}`)
+    const nodeExecutablePath = process.execPath
+    const sandboxResponse = await sandbox.runCommandLine(`${nodeExecutablePath} main.js ${operation}`)
 
     sandboxResponse.standardOutput.split('\n').forEach(f => {
         if (f.trim().length > 0) logger.info({}, chalk.yellow(f))
@@ -146,16 +160,14 @@ const execute = async <Result extends EngineHelperResult>(
         if (f.trim().length > 0) logger.error({}, chalk.red(f))
     })
 
-    if(sandboxResponse.verdict === EngineResponseStatus.TIMEOUT){
+    if (sandboxResponse.verdict === EngineResponseStatus.TIMEOUT) {
         throw new ActivepiecesError({
             code: ErrorCode.EXECUTION_TIMEOUT,
             params: {},
         })
     }
 
-    const result: Result = typeof sandboxResponse.output === 'string'
-        ? JSON.parse(sandboxResponse.output)
-        : sandboxResponse.output
+    const result: Result = tryParseJson(sandboxResponse.output)
 
     const response = {
         status: sandboxResponse.verdict,
@@ -168,7 +180,6 @@ const execute = async <Result extends EngineHelperResult>(
 
     return response
 }
-
 
 export const engineHelper = {
     async executeFlow(
@@ -199,7 +210,7 @@ export const engineHelper = {
             pieceVersion,
         })
 
-        const input ={
+        const input = {
             ...operation,
             edition: await getEdition(),
             appWebhookUrl: await appEventRoutingService.getAppWebhookUrl({ appName: pieceName }),
@@ -270,6 +281,26 @@ export const engineHelper = {
         }
     },
 
+
+    async extractPieceMetadata(operation: ExecuteExtractPieceMetadata): Promise<EngineHelperResponse<EngineHelperExtractPieceInformation>> {
+        logger.info(operation, '[EngineHelper#ExecuteExtractPieceMetadata] operation')
+        const sandbox = await sandboxManager.obtainSandbox(operation.pieceName)
+        await sandbox.recreate()
+        const packages: Record<string, string> = {}
+        packages[operation.pieceName] = operation.pieceVersion
+        await packageManager.addDependencies(sandbox.getSandboxFolderPath(), packages)
+
+        try {
+            return await execute(
+                EngineOperationType.EXTRACT_PIECE_METADATA,
+                sandbox,
+                operation,
+            )
+        }
+        finally {
+            await sandboxManager.returnSandbox(sandbox.boxId)
+        }
+    },
     async executeAction(operation: ExecuteActionOperation): Promise<EngineHelperResponse<EngineHelperActionResult>> {
         logger.debug(operation, '[EngineHelper#executeAction] operation')
 

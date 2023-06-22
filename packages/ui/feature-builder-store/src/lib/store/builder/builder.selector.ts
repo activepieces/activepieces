@@ -7,11 +7,9 @@ import {
   Flow,
   FlowRun,
   FlowVersionState,
-  StepOutput,
   flowHelper,
 } from '@activepieces/shared';
 import { ViewModeEnum } from '../../model/enums/view-mode.enum';
-
 import { FlowItemsDetailsState } from '../../model/flow-items-details-state.model';
 import { ActionType, TriggerType } from '@activepieces/shared';
 import { FlowItem } from '../../model/flow-item';
@@ -22,10 +20,12 @@ import { BuilderSavingStatusEnum, CanvasState } from '../../model';
 import {
   CORE_PIECES_ACTIONS_NAMES,
   CORE_PIECES_TRIGGERS,
+  CORE_SCHEDULE,
   FlowItemDetails,
   corePieceIconUrl,
 } from '@activepieces/ui/common';
 import { FlowInstanceState } from './flow-instance/flow-instance.reducer';
+import { StepRunResult } from '../../utils/stepRunResult';
 
 export const BUILDER_STATE_NAME = 'builderState';
 
@@ -158,7 +158,9 @@ const selectTriggerSelectedSampleData = createSelector(
 const selectStepTestSampleData = createSelector(selectCurrentStep, (step) => {
   if (
     step &&
-    (step.type === ActionType.PIECE || step.type === ActionType.CODE) &&
+    (step.type === ActionType.PIECE ||
+      step.type === ActionType.CODE ||
+      step.type === TriggerType.PIECE) &&
     step.settings.inputUiInfo
   ) {
     return step.settings.inputUiInfo.currentSelectedData;
@@ -207,7 +209,7 @@ export const selectCurrentFlowVersionId = createSelector(
 export const selectNumberOfInvalidSteps = createSelector(
   selectCurrentFlow,
   (flow) => {
-    const steps = flowHelper.getAllSteps(flow.version);
+    const steps = flowHelper.getAllSteps(flow.version.trigger);
     return steps.reduce((prev, curr) => prev + (curr.valid ? 0 : 1), 0);
   }
 );
@@ -232,6 +234,30 @@ export const selectCurrentFlowRunStatus = createSelector(
     return run.status;
   }
 );
+const selectStepDisplayNameAndDfsIndexForIterationOutput = (
+  iteration: Pick<StepRunResult, 'stepName' | 'output'>[]
+) => {
+  return createSelector(selectCurrentFlow, (flow) => {
+    const steps = flowHelper.getAllSteps(flow.version.trigger);
+    const results: StepRunResult[] = [];
+    steps.forEach((s) => {
+      const iterationStep = iteration.find((its) => its.stepName === s.name);
+      const stepIndex = FlowStructureUtil.findStepIndex(
+        flow.version.trigger,
+        s.name
+      );
+      if (iterationStep) {
+        results.push({
+          output: iterationStep.output,
+          stepName: s.name,
+          displayName: s.displayName,
+          index: stepIndex,
+        });
+      }
+    });
+    return results;
+  });
+};
 const selectStepResultsAccordion = createSelector(
   selectCurrentFlow,
   selectCurrentFlowRun,
@@ -239,20 +265,23 @@ const selectStepResultsAccordion = createSelector(
     if (!run || run.status === ExecutionOutputStatus.RUNNING) {
       return [];
     }
-    const steps = flowHelper.getAllSteps(flow.version);
-    const results: {
-      result: StepOutput;
-      stepName: string;
-    }[] = [];
+    const steps = flowHelper.getAllSteps(flow.version.trigger);
+    const results: StepRunResult[] = [];
     const executionState = run.executionOutput?.executionState;
     if (!executionState) {
       return [];
     }
     steps.forEach((s) => {
+      const stepIndex = FlowStructureUtil.findStepIndex(
+        flow.version.trigger,
+        s.name
+      );
       if (executionState?.steps[s.name]) {
         results.push({
-          result: executionState.steps[s.name],
+          output: executionState.steps[s.name],
           stepName: s.name,
+          displayName: s.displayName,
+          index: stepIndex,
         });
       }
     });
@@ -289,7 +318,7 @@ export const selectCurrentRightSideBarType = createSelector(
 export const selectAllFlowItemsDetails = createSelector(
   selectGlobalBuilderState,
   (state: GlobalBuilderState) => {
-    return state.flowItemsDetailsState;
+    return state?.flowItemsDetailsState;
   }
 );
 export const selectAllFlowItemsDetailsLoadedState = createSelector(
@@ -310,7 +339,8 @@ const selectMissingStepRecommendedFlowItemsDetails = createSelector(
   (core: FlowItemDetails[]) => {
     const recommendations = core.filter(
       (f) =>
-        (f.type === ActionType.PIECE && f.extra?.appName === 'http') ||
+        (f.type === ActionType.PIECE &&
+          f.extra?.appName === '@activepieces/piece-http') ||
         f.type === ActionType.CODE
     );
     return recommendations;
@@ -399,16 +429,6 @@ const selectAppConnectionsDropdownOptions = createSelector(
   }
 );
 
-const selectAllFlowSteps = createSelector(
-  selectCurrentFlow,
-  (flow: Flow | undefined) => {
-    if (flow && flow.version) {
-      return FlowStructureUtil.traverseAllSteps(flow.version.trigger, false);
-    }
-    return [];
-  }
-);
-
 const selectAppConnectionsForMentionsDropdown = createSelector(
   selectAllAppConnections,
   (connections: AppConnection[]) => {
@@ -424,19 +444,19 @@ const selectAppConnectionsForMentionsDropdown = createSelector(
 
 const selectAllStepsForMentionsDropdown = createSelector(
   selectCurrentStep,
-  selectCurrentFlow,
+  selectShownFlowVersion,
   selectAllFlowItemsDetails,
   (
     currentStep,
-    flow,
+    flowVersion,
     flowItemDetails
   ): (MentionListItem & { step: FlowItem })[] => {
-    if (!currentStep || !flow || !flow.version || !flow.version.trigger) {
+    if (!currentStep || !flowVersion || !flowVersion.trigger) {
       return [];
     }
     const path = FlowStructureUtil.findPathToStep(
       currentStep,
-      flow?.version?.trigger
+      flowVersion?.trigger
     );
     return path.map((s) => {
       return {
@@ -490,7 +510,7 @@ function findStepLogoUrlForMentions(
 
 const selectIsSchduleTrigger = createSelector(selectCurrentFlow, (flow) => {
   if (flow?.version?.trigger.type === TriggerType.PIECE) {
-    return flow.version.trigger.settings.pieceName === 'schedule';
+    return flow.version.trigger.settings.pieceName === CORE_SCHEDULE;
   }
   return false;
 });
@@ -508,12 +528,14 @@ const selectCurrentStepPieceVersionAndName = createSelector(
 );
 const selectStepLogoUrl = (stepName: string) => {
   return createSelector(
-    selectAllFlowSteps,
+    selectCurrentFlow,
     selectAllFlowItemsDetails,
-    (steps, flowItemsDetails) => {
-      const step = steps.find((s) => s.name === stepName);
+    (flow, flowItemsDetails) => {
+      const step = flowHelper
+        .getAllSteps(flow?.version?.trigger)
+        .find((s: FlowItem) => s.name === stepName);
       if (!step) {
-        return 'assets/img/custom/piece/branch_mention.png';
+        throw new Error(`Couldn't find the step ${stepName}`);
       }
       const logoUrl = findStepLogoUrlForMentions(step, flowItemsDetails);
       return logoUrl;
@@ -548,7 +570,6 @@ export const BuilderSelectors = {
   selectAppConnectionsDropdownOptions,
   selectFlowItemDetailsForCustomPiecesTriggers,
   selectAllAppConnections,
-  selectAllFlowSteps,
   selectAllStepsForMentionsDropdown,
   selectAppConnectionsForMentionsDropdown,
   selectStepLogoUrl,
@@ -570,4 +591,5 @@ export const BuilderSelectors = {
   selectPublishedFlowVersion,
   selectHasFlowBeenPublished,
   selectStepResultsAccordion,
+  selectStepDisplayNameAndDfsIndexForIterationOutput,
 };
