@@ -57,6 +57,7 @@ export interface ExecutePropsOptions {
     pieceVersion: string;
     propertyName: string;
     stepName: string;
+    auth: string;
     input: Record<string, any>;
     projectId: ProjectId;
     apiUrl?: string;

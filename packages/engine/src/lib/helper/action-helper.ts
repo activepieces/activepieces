@@ -5,7 +5,6 @@ import {
     DropdownProperty,
     DropdownState,
     DynamicProperties,
-    DynamicPropsValue,
     MultiSelectDropdownProperty,
     Piece,
     PieceAuthProperty,
@@ -25,6 +24,7 @@ import {
     ExecutePropsOptions,
     ExecutionState,
     ExecutionType,
+    extractPieceFromModule,
     getPackageAliasForPiece,
 } from "@activepieces/shared";
 import { VariableService } from "../services/variable-service";
@@ -68,8 +68,12 @@ const loadPieceOrThrow = async (pieceName: string, pieceVersion: string): Promis
         pieceVersion,
     })
 
-    const pieceModule = await import(packageName);
-    const piece = Object.values<Piece>(pieceModule)[0];
+    const module = await import(packageName);
+    const piece = extractPieceFromModule<Piece>({
+        module,
+        pieceName,
+        pieceVersion,
+    })
 
     if (isNil(piece)) {
         throw new ActivepiecesError({
@@ -208,13 +212,7 @@ export const pieceHelper = {
 
         const context: ActionContext = {
             executionType: ExecutionType.BEGIN,
-            get auth() {
-                if (isNil(resolvedAuth)) {
-                    return resolvedProps['authentication'] as PiecePropValueSchema<PieceAuthProperty>
-                }
-
-                return resolvedAuth
-            },
+            auth: resolvedAuth ?? resolvedProps['authentication'],
             propsValue: resolvedProps,
             store: createContextStore('', globals.flowId),
             connections: {

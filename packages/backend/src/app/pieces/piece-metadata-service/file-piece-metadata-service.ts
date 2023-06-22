@@ -3,7 +3,7 @@ import { resolve } from 'node:path'
 import { cwd } from 'node:process'
 import sortBy from 'lodash/sortBy'
 import { Piece, PieceMetadata, PieceMetadataSummary } from '@activepieces/pieces-framework'
-import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, extractPieceFromModule } from '@activepieces/shared'
 import { captureException, logger } from '../../helper/logger'
 import { GetParams, PieceMetadataService } from './piece-metadata-service'
 import { isNil } from 'lodash'
@@ -20,12 +20,17 @@ const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
         try {
             const module = await import(`../../../../../pieces/${piecePackage}/src/index.ts`)
             const packageJson = await import(`../../../../../pieces/${piecePackage}/package.json`)
-            const piece = Object.values<Piece>(module)[0]
+            const { name: pieceName, version: pieceVersion } = packageJson
+            const piece = extractPieceFromModule<Piece>({
+                module,
+                pieceName,
+                pieceVersion,
+            })
             piecesMetadata.push({
                 directoryName: piecePackage,
                 ...piece.metadata(),
-                name: packageJson.name,
-                version: packageJson.version,
+                name: pieceName,
+                version: pieceVersion,
             })
         }
         catch(ex) {

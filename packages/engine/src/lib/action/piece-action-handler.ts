@@ -15,7 +15,7 @@ import { pieceHelper } from '../helper/action-helper';
 import { createContextStore } from '../services/storage.service';
 import { connectionManager } from '../services/connections.service';
 import { Utils } from '../utils';
-import { ActionContext, PauseHook, PauseHookParams, PieceAuthProperty, PiecePropValueSchema, PiecePropertyMap, StopHook, StopHookParams } from '@activepieces/pieces-framework';
+import { ActionContext, PauseHook, PauseHookParams, PiecePropertyMap, StopHook, StopHookParams } from '@activepieces/pieces-framework';
 
 type CtorParams = {
   executionType: ExecutionType
@@ -150,7 +150,7 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
     executionState: ExecutionState,
     ancestors: [string, number][],
   ): Promise<StepOutput> {
-    const { input, pieceName, pieceVersion, actionName } = this.currentAction.settings;
+    const { input, pieceName, pieceVersion, actionName, auth } = this.currentAction.settings;
 
     const stepOutput = await this.loadStepOutput({
       executionState,
@@ -176,7 +176,7 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
       })
 
       const resolvedAuth = await this.resolveInput({
-        input,
+        input: auth,
         executionState,
         censorConnections: false,
       })
@@ -184,13 +184,7 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
       const context: ActionContext = {
         executionType: this.executionType,
         store: createContextStore('', globals.flowId),
-        get auth() {
-            if (isNil(resolvedAuth)) {
-                return resolvedProps['authentication']
-            }
-
-            return resolvedAuth
-        },
+        auth: resolvedAuth ?? resolvedProps['authentication'],
         propsValue: resolvedProps,
         connections: connectionManager,
         run: {
