@@ -1,10 +1,10 @@
 import { Store } from "@activepieces/pieces-framework";
 import { isNil } from "lodash";
 
-interface TimebasedPolling<AuthPropValue, PropsValue> {
+interface TimebasedPolling<AuthValue, PropsValue> {
     strategy: DedupeStrategy.TIMEBASED;
     items: (
-        params: { auth: AuthPropValue, propsValue: PropsValue, lastFetchEpochMS: number },
+        params: { auth: AuthValue, propsValue: PropsValue, lastFetchEpochMS: number },
     ) => Promise<{
         epochMilliSeconds: number;
         data: unknown;
@@ -12,10 +12,10 @@ interface TimebasedPolling<AuthPropValue, PropsValue> {
     >;
 }
 
-interface LastItemPolling<AuthPropValue, PropsValue> {
+interface LastItemPolling<AuthValue, PropsValue> {
     strategy: DedupeStrategy.LAST_ITEM;
     items: (
-        params: { auth: AuthPropValue, propsValue: PropsValue, lastItemId: unknown },
+        params: { auth: AuthValue, propsValue: PropsValue, lastItemId: unknown },
     ) => Promise<{
         id: unknown;
         data: unknown;
@@ -28,10 +28,10 @@ export enum DedupeStrategy {
     LAST_ITEM
 }
 
-export type Polling<AuthPropValue, PropsValue> = TimebasedPolling<AuthPropValue, PropsValue> | LastItemPolling<AuthPropValue, PropsValue>
+export type Polling<AuthValue, PropsValue> = TimebasedPolling<AuthValue, PropsValue> | LastItemPolling<AuthValue, PropsValue>
 
 export const pollingHelper = {
-    async poll<AuthPropValue, PropsValue>(polling: Polling<AuthPropValue, PropsValue>, { store, auth, propsValue, maxItemsToPoll }: { store: Store, auth: AuthPropValue, propsValue: PropsValue, maxItemsToPoll?: number }): Promise<unknown[]> {
+    async poll<AuthValue, PropsValue>(polling: Polling<AuthValue, PropsValue>, { store, auth, propsValue, maxItemsToPoll }: { store: Store, auth: AuthValue, propsValue: PropsValue, maxItemsToPoll?: number }): Promise<unknown[]> {
         switch (polling.strategy) {
             case DedupeStrategy.TIMEBASED: {
                 const lastEpochMilliSeconds = (await store.get<number>("lastPoll")) ?? 0;
@@ -64,7 +64,7 @@ export const pollingHelper = {
             }
         }
     },
-    async onEnable<AuthPropValue, PropsValue>(polling: Polling<AuthPropValue, PropsValue>, { store, auth, propsValue }: { store: Store, auth: AuthPropValue, propsValue: PropsValue }): Promise<void> {
+    async onEnable<AuthValue, PropsValue>(polling: Polling<AuthValue, PropsValue>, { store, auth, propsValue }: { store: Store, auth: AuthValue, propsValue: PropsValue }): Promise<void> {
         switch (polling.strategy) {
             case DedupeStrategy.TIMEBASED: {
                 await store.put("lastPoll", Date.now());
@@ -82,14 +82,14 @@ export const pollingHelper = {
             }
         }
     },
-    async onDisable<AuthPropValue, PropsValue>(polling: Polling<AuthPropValue, PropsValue>, params: { store: Store, auth: AuthPropValue, propsValue: PropsValue }): Promise<void> {
+    async onDisable<AuthValue, PropsValue>(polling: Polling<AuthValue, PropsValue>, params: { store: Store, auth: AuthValue, propsValue: PropsValue }): Promise<void> {
         switch (polling.strategy) {
             case DedupeStrategy.TIMEBASED:
             case DedupeStrategy.LAST_ITEM:
                 return;
         }
     },
-    async test<AuthPropValue, PropsValue>(polling: Polling<AuthPropValue, PropsValue>, { auth, propsValue }: { store: Store, auth: AuthPropValue, propsValue: PropsValue }): Promise<unknown[]> {
+    async test<AuthValue, PropsValue>(polling: Polling<AuthValue, PropsValue>, { auth, propsValue }: { store: Store, auth: AuthValue, propsValue: PropsValue }): Promise<unknown[]> {
         let items = [];
         switch (polling.strategy) {
             case DedupeStrategy.TIMEBASED: {
