@@ -4,7 +4,7 @@ import {
   FlowTemplate,
   FlowVersion,
 } from '@activepieces/shared';
-import { FlowService } from '@activepieces/ui/common';
+import { FlagService, FlowService } from '@activepieces/ui/common';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { Meta } from '@angular/platform-browser';
@@ -39,25 +39,30 @@ export class ImportFlowComponent implements OnInit {
     private http: HttpClient,
     private flowService: FlowService,
     private router: Router,
-    private metaService: Meta
+    private metaService: Meta,
+    private flagService: FlagService
   ) {}
 
   ngOnInit(): void {
     this.loadFlow$ = this.route.params.pipe(
       switchMap((params) => {
         const templateId = encodeURIComponent(params['templateId']);
-        return this.http
-          .get<FlowTemplateWithVersion>(
-            `https://activepieces-cdn.fra1.cdn.digitaloceanspaces.com/templates/${templateId}.json`
-          )
-          .pipe(
-            tap((res) => {
-              this.metaService.addTag({
-                name: 'description',
-                content: `Use this Activepieces automation template for yourself: ${res.name}`,
-              });
-            })
-          );
+        return this.flagService.getTemplatesSourceUrl().pipe(
+          switchMap((templateSourceUrl) => {
+            return this.http
+              .get<FlowTemplateWithVersion>(
+                `${templateSourceUrl}/${templateId}`
+              )
+              .pipe(
+                tap((res) => {
+                  this.metaService.addTag({
+                    name: 'description',
+                    content: `Use this Activepieces automation template for yourself: ${res.name}`,
+                  });
+                })
+              );
+          })
+        );
       }),
       catchError((error) => {
         console.error(error);
