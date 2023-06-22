@@ -69,7 +69,7 @@ export const typeformNewSubmission = createTrigger({
     },
     async onDisable(context) {
         const response = await context.store?.get<WebhookInformation>(
-            '_new_customer_trigger'
+            '_new_submission_trigger'
         );
         if (response !== null && response !== undefined) {
             await typeformCommon.unsubscribeWebhook(
