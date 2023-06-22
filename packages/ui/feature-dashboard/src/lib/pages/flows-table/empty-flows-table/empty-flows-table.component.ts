@@ -1,8 +1,12 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, switchMap, tap } from 'rxjs';
-import { Flow, FlowOperationType } from '@activepieces/shared';
-import { FlowService } from '@activepieces/ui/common';
+import {
+  Flow,
+  FlowOperationType,
+  TelemetryEventName,
+} from '@activepieces/shared';
+import { FlowService, TelemetryService } from '@activepieces/ui/common';
 import { demoTemplate } from './demo-flow-template';
 
 @Component({
@@ -14,7 +18,11 @@ import { demoTemplate } from './demo-flow-template';
 export class EmptyFlowsTableComponent {
   creatingFlow = false;
   createFlow$: Observable<Flow>;
-  constructor(private router: Router, private flowService: FlowService) {}
+  constructor(
+    private router: Router,
+    private flowService: FlowService,
+    private telemetryService: TelemetryService
+  ) {}
 
   createFlow() {
     if (!this.creatingFlow) {
@@ -49,6 +57,10 @@ export class EmptyFlowsTableComponent {
               })
               .pipe(
                 tap((updatedFlow: Flow) => {
+                  this.telemetryService.capture({
+                    name: TelemetryEventName.DEMO_IMPORTED,
+                    payload: {},
+                  });
                   this.router.navigate([
                     `/flows/${updatedFlow.id}?sampleFlow=true`,
                   ]);
