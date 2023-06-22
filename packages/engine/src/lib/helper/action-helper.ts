@@ -253,25 +253,32 @@ export const pieceHelper = {
         const property = await getPropOrThrow(params);
 
         try {
-            const resolvedInput = await resolveInput({
+            const resolvedProps = await resolveInput<StaticPropsValue<PiecePropertyMap>>({
                 input: params.input,
+            })
+
+            const resolvedAuth = await resolveInput<PiecePropValueSchema<PieceAuthProperty>>({
+                input: params.auth,
             })
 
             if (property.type === PropertyType.DYNAMIC) {
                 const dynamicProperty = property as DynamicProperties<boolean>
-                const dynamicInput = resolvedInput as Record<string, DynamicPropsValue>
-                return await dynamicProperty.props(dynamicInput);
+                return await dynamicProperty.props(resolvedProps);
             }
 
             if (property.type === PropertyType.MULTI_SELECT_DROPDOWN) {
                 const multiSelectProperty = property as MultiSelectDropdownProperty<unknown, boolean>
-                const multiSelectInput = resolvedInput as Record<string, any>
-                return await multiSelectProperty.options(multiSelectInput);
+                return await multiSelectProperty.options({
+                    auth: resolvedAuth,
+                    propsValue: resolvedProps,
+                });
             }
 
             const dropdownProperty = property as DropdownProperty<unknown, boolean>
-            const dropdownInput = resolvedInput as Record<string, any>;
-            return await dropdownProperty.options(dropdownInput);
+            return await dropdownProperty.options({
+                auth: resolvedAuth,
+                propsValue: resolvedProps,
+            })
         } catch (e) {
             console.error(e);
             return {
