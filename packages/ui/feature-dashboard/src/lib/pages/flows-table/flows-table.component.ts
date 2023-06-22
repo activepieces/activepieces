@@ -174,7 +174,12 @@ export class FlowsTableComponent implements OnInit {
       case TriggerType.WEBHOOK:
         return 'assets/img/custom/triggers/instant-filled.svg';
       case TriggerType.PIECE: {
-        return 'assets/img/custom/triggers/periodic-filled.svg';
+        const cronExpression = flow.schedule?.cronExpression;
+        if (cronExpression) {
+          return 'assets/img/custom/triggers/periodic-filled.svg';
+        } else {
+          return 'assets/img/custom/triggers/instant-filled.svg';
+        }
       }
       case TriggerType.EMPTY:
         throw new Error("Flow can't be published with empty trigger");
@@ -190,7 +195,7 @@ export class FlowsTableComponent implements OnInit {
         const cronExpression = flow.schedule?.cronExpression;
         return cronExpression
           ? `Runs ${cronstrue.toString(cronExpression)}`
-          : 'Runs Periodically';
+          : 'Real time flow';
       }
       case TriggerType.EMPTY:
         throw new Error("Flow can't be published with empty trigger");
