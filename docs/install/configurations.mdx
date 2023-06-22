@@ -47,6 +47,12 @@ The default URL is set to the machine's IP address. To ensure proper operation, 
 
 One possible solution for this is using a service like ngrok (https://ngrok.com/), which can be used to expose the frontend port (4200) to the internet.
 
+### Enabling Sign-Up: Update
+
+To enable the sign-up feature, you need to ensure the code runs safely on the machine, especially if you don't trust the users. Follow these two steps:
+
+1. Make the Docker container privileged: Edit the `docker-compose.yml` file and add `privileged: true`. This allows the container to have additional permissions to sandbox.
+2. Change the execution mode to sandboxing: Modify the `AP_EXECUTION_MODE` setting to `SANDBOXED`. This ensures the code runs within a secure environment, isolated from the rest of the system.
 
 ### Setting Sandbox mode:
 

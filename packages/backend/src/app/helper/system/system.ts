@@ -71,7 +71,7 @@ export const validateEnvPropsOnStartup = () => {
             params: {
                 prop: SystemProp.EXECUTION_MODE,
             },
-        }, `Allowing users to sign up is not allowed in unsandboxed mode, please change the value of AP_${SystemProp.EXECUTION_MODE}, please check the documentation`)
+        }, 'Allowing users to sign up is not allowed in unsandboxed mode, please check the configuration section in the documentation')
     }
 }
 
