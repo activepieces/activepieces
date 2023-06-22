@@ -8,8 +8,10 @@ import {
 
 import { Observable, of, switchMap, take, tap, map } from 'rxjs';
 import { fadeIn400ms } from '@activepieces/ui/common';
-import { BuilderAutocompleteMentionsDropdownService } from './builder-autocomplete-mentions-dropdown.service';
-import { InsertMentionOperation } from '../utils';
+import {
+  BuilderAutocompleteMentionsDropdownService,
+  InsertMentionOperation,
+} from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
 import {
   BuilderSelectors,

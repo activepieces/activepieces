@@ -15,9 +15,8 @@ import {
   singleValueConditions,
 } from '@activepieces/shared';
 import { InterpolatingTextFormControlComponent } from '../interpolating-text-form-control/interpolating-text-form-control.component';
-import { InsertMentionOperation } from '../interpolating-text-form-control/utils';
 import { DropdownOption } from '@activepieces/pieces-framework';
-
+import { InsertMentionOperation } from '@activepieces/ui/common';
 interface BranchForm {
   firstValue: FormControl<string | null>;
   operator: FormControl<BranchOperator | null>;

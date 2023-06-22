@@ -48,13 +48,14 @@ import {
   jsonValidator,
   fadeInUp400ms,
   PieceMetadataService,
+  InsertMentionOperation,
 } from '@activepieces/ui/common';
 import {
   BuilderSelectors,
   CodeService,
   ConnectionDropdownItem,
 } from '@activepieces/ui/feature-builder-store';
-import { InsertMentionOperation } from '../interpolating-text-form-control/utils';
+
 import { InterpolatingTextFormControlComponent } from '../interpolating-text-form-control/interpolating-text-form-control.component';
 import { PiecePropertiesFormValue } from '../models/piece-properties-form-value';
 import { AddEditConnectionButtonComponent } from '@activepieces/ui/feature-connections';
