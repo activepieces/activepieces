@@ -1,6 +1,7 @@
 import {
   OAuth2PropertyValue,
   Property,
+  createAction,
 } from '@activepieces/pieces-framework'
 import {
   assertNotNullOrUndefined,
@@ -10,78 +11,79 @@ import {
   HttpRequest,
 } from '@activepieces/pieces-common'
 import { slackSendMessage } from '../common/utils'
-import { slack } from "../../";
+import { slackAuth } from "../../";
 
-slack.addAction({
-  name: 'send_direct_message',
-  displayName: 'Send Message To A User',
-  description: 'Send message to a user',
-  sampleData: {
-    success: true,
-    message: 'sample message',
-    results: [1, 2, 3, 4],
-  },
-  props: {
-    userId: Property.Dropdown<string>({
-      displayName: 'User',
-      description: 'Message receiver',
-      required: true,
-      refreshers: ['authentication'],
-      async options(propsValue) {
-        const auth = propsValue['authentication'] as OAuth2PropertyValue
-
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'connect slack account',
-            options: [],
+export const slackSendDirectMessageAction = createAction({
+  auth: slackAuth,
+  action: {
+    name: 'send_direct_message',
+    displayName: 'Send Message To A User',
+    description: 'Send message to a user',
+    sampleData: {
+      success: true,
+      message: 'sample message',
+      results: [1, 2, 3, 4],
+    },
+    props: {
+      userId: Property.Dropdown<string>({
+        displayName: 'User',
+        description: 'Message receiver',
+        required: true,
+        refreshers: ['authentication'],
+        async options({ auth }) {
+          if (!auth) {
+            return {
+              disabled: true,
+              placeholder: 'connect slack account',
+              options: [],
+            }
           }
-        }
 
-        const accessToken = auth.access_token
+          const accessToken = (auth as OAuth2PropertyValue).access_token
 
-        const request: HttpRequest = {
-          method: HttpMethod.GET,
-          url: 'https://slack.com/api/users.list',
-          authentication: {
-            type: AuthenticationType.BEARER_TOKEN,
-            token: accessToken,
-          },
-        }
+          const request: HttpRequest = {
+            method: HttpMethod.GET,
+            url: 'https://slack.com/api/users.list',
+            authentication: {
+              type: AuthenticationType.BEARER_TOKEN,
+              token: accessToken,
+            },
+          }
 
-        const response = await httpClient.sendRequest<UserListResponse>(request)
+          const response = await httpClient.sendRequest<UserListResponse>(request)
 
-        const options = response.body.members.map(member => ({
-          label: member.name,
-          value: member.id,
-        }))
+          const options = response.body.members.map(member => ({
+            label: member.name,
+            value: member.id,
+          }))
 
-        return {
-          disabled: false,
-          placeholder: 'Select channel',
-          options,
-        }
-      },
-    }),
-    text: Property.LongText({
-      displayName: 'Message',
-      description: 'The text of your message',
-      required: true,
-    }),
-  },
-  async run(context) {
-    const token = context.auth.access_token
-    const { text, userId } = context.propsValue
+          return {
+            disabled: false,
+            placeholder: 'Select channel',
+            options,
+          }
+        },
+      }),
+      text: Property.LongText({
+        displayName: 'Message',
+        description: 'The text of your message',
+        required: true,
+      }),
+    },
+    async run(context) {
+      const token = context.auth.access_token
+      const { text, userId } = context.propsValue
 
-    assertNotNullOrUndefined(token, 'token')
-    assertNotNullOrUndefined(text, 'text')
-    assertNotNullOrUndefined(userId, 'userId')
+      assertNotNullOrUndefined(token, 'token')
+      assertNotNullOrUndefined(text, 'text')
+      assertNotNullOrUndefined(userId, 'userId')
 
-    return slackSendMessage({
-      token,
-      text,
-      conversationId: userId,
-    })
+      return slackSendMessage({
+        token,
+        text,
+        conversationId: userId,
+      })
+    },
   },
 })
 

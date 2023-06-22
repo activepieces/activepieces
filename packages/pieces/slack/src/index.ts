@@ -1,25 +1,32 @@
 import crypto from 'node:crypto'
-import { AuthProp, Piece } from '@activepieces/pieces-framework'
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
+import { slackSendDirectMessageAction } from './lib/actions/send-direct-message-action'
+import { slackSendMessageAction } from './lib/actions/send-message-action';
+import { slackNewMessageTrigger } from './lib/triggers/new-message';
+import { slackNewReactionAddedTrigger } from './lib/triggers/new-reaction-added';
 
-export const slack = Piece.create({
+export const slackAuth = PieceAuth.OAuth2({
+  displayName: '',
+  description: '',
+  authUrl: 'https://slack.com/oauth/authorize',
+  tokenUrl: 'https://slack.com/api/oauth.access',
+  required: true,
+  scope: [
+    'channels:read',
+    'channels:write',
+    'channels:history',
+    'chat:write:bot',
+    'groups:read',
+    'reactions:read',
+    'mpim:read',
+    'users:read',
+  ],
+})
+
+export const slack = createPiece({
   displayName: 'Slack',
   logoUrl: 'https://cdn.activepieces.com/pieces/slack.png',
-  auth: AuthProp.OAuth2({
-    description: '',
-    authUrl: 'https://slack.com/oauth/authorize',
-    tokenUrl: 'https://slack.com/api/oauth.access',
-    required: true,
-    scope: [
-      'channels:read',
-      'channels:write',
-      'channels:history',
-      'chat:write:bot',
-      'groups:read',
-      'reactions:read',
-      'mpim:read',
-      'users:read',
-    ],
-  }),
+  auth: slackAuth,
   events: {
     parseAndReply: ({ payload }) => {
       if (payload.body['challenge']) {
@@ -42,5 +49,13 @@ export const slack = Piece.create({
       const computedSignature = `v0=${hmac.digest('hex')}`;
       return signature === computedSignature;
     }
-  }
+  },
+  actions: [
+    slackSendDirectMessageAction,
+    slackSendMessageAction,
+  ],
+  triggers: [
+    slackNewMessageTrigger,
+    slackNewReactionAddedTrigger,
+  ],
 })

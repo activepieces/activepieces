@@ -6,17 +6,15 @@ export const slackChannel = Property.Dropdown({
   description: 'Channel, private group, or IM channel to send message to.',
   required: true,
   refreshers: ['authentication'],
-  async options(value) {
-    if (!value['authentication']) {
+  async options({ auth }) {
+    if (!auth) {
       return {
         disabled: true,
         placeholder: 'connect slack account',
         options: [],
       }
     }
-    const authentication: OAuth2PropertyValue = value[
-      'authentication'
-    ] as OAuth2PropertyValue
+    const authentication = auth as OAuth2PropertyValue
     const accessToken = authentication['access_token']
     const request: HttpRequest = {
       method: HttpMethod.GET,

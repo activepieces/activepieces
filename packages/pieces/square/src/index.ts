@@ -1,31 +1,35 @@
-import { AuthProp, Piece } from '@activepieces/pieces-framework'
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
 import crypto from 'crypto'
+import { triggers } from './lib/triggers';
 
-export const square = Piece.create({
+export const squareAuth = PieceAuth.OAuth2({
+  displayName: '',
+  description: 'Authentication',
+  authUrl: 'https://connect.squareup.com/oauth2/authorize',
+  tokenUrl: 'https://connect.squareup.com/oauth2/token',
+  required: true,
+  scope: [
+    'MERCHANT_PROFILE_READ',
+    'CUSTOMERS_READ',
+    'CUSTOMERS_WRITE',
+    'ITEMS_READ',
+    'ITEMS_WRITE',
+    'ORDERS_READ',
+    'ORDERS_WRITE',
+    'PAYMENTS_READ',
+    'INVOICES_READ',
+    'APPOINTMENTS_READ',
+    'APPOINTMENTS_WRITE',
+  ]
+})
+
+export const square = createPiece({
   displayName: 'square',
   logoUrl: 'https://cdn.activepieces.com/pieces/square.png',
   authors: [
     "abuaboud"
   ],
-  auth: AuthProp.OAuth2({
-    description: 'Authentication',
-    authUrl: 'https://connect.squareup.com/oauth2/authorize',
-    tokenUrl: 'https://connect.squareup.com/oauth2/token',
-    required: true,
-    scope: [
-      'MERCHANT_PROFILE_READ',
-      'CUSTOMERS_READ',
-      'CUSTOMERS_WRITE',
-      'ITEMS_READ',
-      'ITEMS_WRITE',
-      'ORDERS_READ',
-      'ORDERS_WRITE',
-      'PAYMENTS_READ',
-      'INVOICES_READ',
-      'APPOINTMENTS_READ',
-      'APPOINTMENTS_WRITE',
-    ]
-  }),
+  auth: squareAuth,
   events: {
     verify: ({ webhookSecret, payload, appWebhookUrl }) => {
       const signature = payload.headers['x-square-hmacsha256-signature'];
@@ -37,5 +41,8 @@ export const square = Piece.create({
     parseAndReply: ({ payload }) => {
       return { event: payload.body?.type, identifierValue: payload.body.merchant_id }
     }
-  }
+  },
+  actions: [
+  ],
+  triggers,
 });

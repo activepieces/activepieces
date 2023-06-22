@@ -1,7 +1,7 @@
-import { square } from "../../";
-import { TriggerStrategy } from "@activepieces/pieces-framework";
+import { squareAuth } from "../../";
+import { TriggerStrategy, createTrigger } from "@activepieces/pieces-framework";
 
-const tirggerData = [
+const triggerData = [
     {
         name: "new_order",
         displayName: "New Order",
@@ -374,22 +374,25 @@ const tirggerData = [
     }
 ]
 
-tirggerData.forEach((trigger) => {
-    square.addTrigger({
-        name: trigger.name,
-        displayName: trigger.displayName,
-        description: trigger.description,
-        props: {},
-        type: TriggerStrategy.APP_WEBHOOK,
-        sampleData: trigger.sampleData,
-        onEnable: async (context) => {
-            context.app.createListeners({ events: [trigger.event], identifierValue: context.auth.data['merchant_id'] })
+export const triggers = triggerData.map((trigger) =>
+    createTrigger({
+        auth: squareAuth,
+        trigger: {
+            name: trigger.name,
+            displayName: trigger.displayName,
+            description: trigger.description,
+            props: {},
+            type: TriggerStrategy.APP_WEBHOOK,
+            sampleData: trigger.sampleData,
+            onEnable: async (context) => {
+                context.app.createListeners({ events: [trigger.event], identifierValue: context.auth.data['merchant_id'] })
+            },
+            onDisable: async () => {
+                // Ignored
+            },
+            run: async (context) => {
+                return [context.payload.body]
+            },
         },
-        onDisable: async () => {
-            // Ignored
-        },
-        run: async (context) => {
-            return [context.payload.body]
-        }
-    });
-});
+    })
+)
