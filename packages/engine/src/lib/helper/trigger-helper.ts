@@ -71,7 +71,7 @@ export const triggerHelper = {
         await trigger.onEnable(context);
         return {
           listeners: appListeners,
-          scheduleOptions: scheduleOptions
+          scheduleOptions: trigger.type === TriggerStrategy.POLLING ? scheduleOptions : undefined,
         }
       case TriggerHookType.TEST:
         try {

@@ -130,7 +130,7 @@ interface ExecuteTestOrRunTriggerResponse {
 
 interface ExecuteOnEnableTriggerResponse {
     listeners: AppEventListener[];
-    scheduleOptions: ScheduleOptions;
+    scheduleOptions?: ScheduleOptions;
 }
 
 export type ExecuteTriggerResponse<H extends TriggerHookType> = H extends TriggerHookType.RUN ? ExecuteTestOrRunTriggerResponse :

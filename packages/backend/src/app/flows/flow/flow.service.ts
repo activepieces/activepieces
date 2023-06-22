@@ -103,9 +103,7 @@ export const flowService = {
                 ...flow,
                 version: versions[idx]!,
                 status,
-            }
-            if(instance?.schedule){
-                formattedFlow.schedule = instance.schedule
+                schedule: instance?.schedule,
             }
             return formattedFlow
         })

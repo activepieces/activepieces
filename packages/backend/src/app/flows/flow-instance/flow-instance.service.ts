@@ -5,6 +5,7 @@ import { triggerUtils } from '../../helper/trigger-utils'
 import { flowService } from '../flow/flow.service'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { isNil } from 'lodash'
+import { logger } from '../../helper/logger'
 
 
 export const flowInstanceRepo = databaseConnection.getRepository<FlowInstance>(FlowInstanceEntity)
@@ -36,11 +37,17 @@ export const flowInstanceService = {
             })
         }
 
-        await triggerUtils.enable({
+        const enableResult = await triggerUtils.enable({
             flowVersion: flow.version,
             projectId: projectId,
             simulate: false,
         })
+        const scheduleOptions = enableResult?.result.scheduleOptions
+        flowInstance.schedule = isNil(scheduleOptions) ? undefined : {
+            type: ScheduleType.CRON_EXPRESSION,
+            timezone: scheduleOptions.timezone,
+            cronExpression: scheduleOptions.cronExpression,
+        }
         await flowInstanceRepo.upsert(flowInstance, ['projectId', 'flowId'])
         return flowInstanceRepo.findOneByOrFail({
             projectId: projectId,
@@ -88,7 +95,7 @@ export const flowInstanceService = {
         const updatedInstance: FlowInstance = {
             ...flowInstance,
             status: status,
-            schedule: isNil(scheduleOptions) ? flowInstance.schedule : {
+            schedule: isNil(scheduleOptions) ? undefined : {
                 type: ScheduleType.CRON_EXPRESSION,
                 timezone: scheduleOptions.timezone,
                 cronExpression: scheduleOptions.cronExpression,
