@@ -7,7 +7,7 @@ import { flowVersionService } from '../flow-version/flow-version.service'
 import { isNil } from 'lodash'
 
 
-export const flowInstanceRepo = databaseConnection.getRepository(FlowInstanceEntity)
+export const flowInstanceRepo = databaseConnection.getRepository<FlowInstance>(FlowInstanceEntity)
 
 export const flowInstanceService = {
     async upsert({ projectId, request }: { projectId: ProjectId, request: UpsertFlowInstanceRequest }): Promise<FlowInstance> {
