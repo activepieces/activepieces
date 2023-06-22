@@ -120,7 +120,11 @@ export class TestPieceStepComponent extends TestStepCoreComponent {
                 ...step.settings,
                 inputUiInfo: {
                   customizedInputs: step.settings.inputUiInfo.customizedInputs,
-                  currentSelectedData: testResult,
+                  currentSelectedData: testResult
+                    ? testResult
+                    : testResult === undefined
+                    ? 'undefined'
+                    : JSON.stringify(testResult),
                   lastTestDate: new Date().toString(),
                 },
               },

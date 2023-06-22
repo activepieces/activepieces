@@ -2,7 +2,7 @@
     <div class="ap-typography-headline-6 ap-mb-6 ap-flex">
         Create a flow
         <div class="ap-flex-grow"></div>
-        <div>
+        <div *ngIf="showTemplates$ | async">
             <ap-button btnColor="primary" btnSize="medium" btnStyle="basic" (buttonClicked)="openTemplateDialog()">Show
                 all</ap-button>
         </div>

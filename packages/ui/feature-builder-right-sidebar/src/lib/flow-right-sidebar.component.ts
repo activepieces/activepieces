@@ -25,7 +25,7 @@ import {
   CORE_SCHEDULE,
 } from '@activepieces/ui/common';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
-import { BuilderAutocompleteMentionsDropdownService } from '@activepieces/ui/feature-builder-form-controls';
+import { BuilderAutocompleteMentionsDropdownService } from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-flow-right-sidebar',

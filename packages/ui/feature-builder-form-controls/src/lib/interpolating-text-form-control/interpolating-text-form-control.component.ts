@@ -32,7 +32,6 @@ import {
   fromOpsToText,
   fromTextToOps,
   getImageTemplateForStepLogo,
-  InsertMentionOperation,
   keysWithinPath,
   MentionListItem,
   QuillEditorOperationsObject,
@@ -47,6 +46,7 @@ import {
   BuilderSelectors,
   FlowItem,
 } from '@activepieces/ui/feature-builder-store';
+import { InsertMentionOperation } from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-interpolating-text-form-control',
