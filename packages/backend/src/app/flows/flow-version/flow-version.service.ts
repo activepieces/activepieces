@@ -310,7 +310,7 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
 }
 
 
-async function validateAction({projectId, settings}: {projectId: ProjectId, settings: PieceActionSettings}) {
+async function validateAction({ projectId, settings }: { projectId: ProjectId, settings: PieceActionSettings }) {
 
     if (
         settings.pieceName === undefined ||
@@ -327,17 +327,17 @@ async function validateAction({projectId, settings}: {projectId: ProjectId, sett
         version: settings.pieceVersion,
     })
 
-    if (piece === undefined) {
+    if (isNil(piece)) {
         return false
     }
     const action = piece.actions[settings.actionName]
-    if (action === undefined) {
+    if (isNil(action)) {
         return false
     }
     return validateProps(action.props, settings.input)
 }
 
-async function validateTrigger({settings, projectId}: {settings: PieceTriggerSettings, projectId: ProjectId}) {
+async function validateTrigger({ settings, projectId }: { settings: PieceTriggerSettings, projectId: ProjectId }) {
     if (
         settings.pieceName === undefined ||
         settings.pieceVersion === undefined ||
@@ -353,11 +353,11 @@ async function validateTrigger({settings, projectId}: {settings: PieceTriggerSet
         version: settings.pieceVersion,
     })
 
-    if (piece === undefined) {
+    if (isNil(piece)) {
         return false
     }
     const trigger = piece.triggers[settings.triggerName]
-    if (trigger === undefined) {
+    if (isNil(trigger)) {
         return false
     }
     return validateProps(trigger.props, settings.input)

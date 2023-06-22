@@ -3,8 +3,7 @@
   <div class="ap-flex ap-items-center">
 
 
-    <app-generic-step-mention-item [stepIndex]="stepIndex" [stepMention]="_stepMention"
-      [indentation]="(isScheduleTrigger$ | async) === true"></app-generic-step-mention-item>
+    <app-generic-step-mention-item [stepIndex]="stepIndex" [stepMention]="_stepMention"></app-generic-step-mention-item>
     <div class="ap-flex-grow"></div>
     <ap-button *ngIf="hoverTracker.isHovered && !!(sampleData$ | async)" btnColor="primary" btnStyle="basic"
       type="button" btnSize="small" [buttonIsInsideAutocomplete]="true"

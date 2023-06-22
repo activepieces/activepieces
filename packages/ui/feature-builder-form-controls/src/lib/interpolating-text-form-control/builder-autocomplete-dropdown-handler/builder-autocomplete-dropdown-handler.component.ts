@@ -1,15 +1,19 @@
 import {
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   EventEmitter,
   Input,
   Output,
 } from '@angular/core';
+import { Observable, filter, map, take, tap } from 'rxjs';
+import { Store } from '@ngrx/store';
+import { flowHelper } from '@activepieces/shared';
 import {
   BuilderAutocompleteMentionsDropdownService,
   InsertMentionOperation,
 } from '@activepieces/ui/common';
-import { Observable, filter, tap } from 'rxjs';
+import { BuilderSelectors } from '@activepieces/ui/feature-builder-store';
 
 @Component({
   selector: 'app-builder-autocomplete-dropdown-handler',
@@ -24,8 +28,11 @@ export class BuilderAutocompleteDropdownHandlerComponent {
   @Output() mentionEmitted: EventEmitter<InsertMentionOperation> =
     new EventEmitter();
   listenToMentions$: Observable<{ id: number; insert: InsertMentionOperation }>;
+  showDataInsertionPopup$: Observable<boolean>;
   constructor(
-    private builderAutocompleteService: BuilderAutocompleteMentionsDropdownService
+    private builderAutocompleteService: BuilderAutocompleteMentionsDropdownService,
+    private store: Store,
+    private cd: ChangeDetectorRef
   ) {
     this.listenToMentions$ = this.builderAutocompleteService.mentionEmitted
       .asObservable()
@@ -35,11 +42,27 @@ export class BuilderAutocompleteDropdownHandlerComponent {
       );
   }
   showMentionsDropdown() {
-    this.builderAutocompleteService.currentAutocompleteInputId$.next(this.id);
-    this.builderAutocompleteService.currentAutoCompleteInputContainer$.next(
-      this.container
-    );
-    this.builderAutocompleteService.currentInputCanHaveOnlyOneMention =
-      this.currentInputCanHaveOnlyOneMention;
+    this.showDataInsertionPopup$ = this.store
+      .select(BuilderSelectors.selectCurrentStep)
+      .pipe(
+        take(1),
+        map((step) => {
+          if (step) return flowHelper.isTrigger(step.type);
+          return true;
+        }),
+        tap((isTrigger) => {
+          if (!isTrigger) {
+            this.builderAutocompleteService.currentAutocompleteInputId$.next(
+              this.id
+            );
+            this.builderAutocompleteService.currentAutoCompleteInputContainer$.next(
+              this.container
+            );
+            this.builderAutocompleteService.currentInputCanHaveOnlyOneMention =
+              this.currentInputCanHaveOnlyOneMention;
+          }
+        })
+      );
+    this.cd.markForCheck();
   }
 }
