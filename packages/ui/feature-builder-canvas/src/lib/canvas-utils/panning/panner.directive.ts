@@ -13,6 +13,15 @@ export class CanvasPannerDirective {
 
   @HostListener('mousedown', ['$event'])
   mouseDown(event: MouseEvent) {
+    if (event.target) {
+      const scrollingWithinDataInsertionPopup = document
+        .getElementById('mentionsDropdownContainer')
+        ?.contains(event.target as Node);
+      const mentionsList = document.getElementById('mentionsList');
+      if (scrollingWithinDataInsertionPopup && mentionsList !== null) {
+        return;
+      }
+    }
     if (event.which === 2 && !this.flowRendererService.draggingSubject.value) {
       this.pannerService.dragState.currentOffset.x = event.clientX;
       this.pannerService.dragState.currentOffset.y = event.clientY;
