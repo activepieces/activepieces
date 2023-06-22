@@ -163,6 +163,7 @@ We welcome contributions big or small and in different directions. The best way 
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/BastienMe"><img src="https://avatars.githubusercontent.com/u/71411115?v=4?s=100" width="100px;" alt="BastienMe"/><br /><sub><b>BastienMe</b></sub></a><br /><a href="#plugin-BastienMe" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://blog.fosketts.net"><img src="https://avatars.githubusercontent.com/u/8627862?v=4?s=100" width="100px;" alt="Stephen Foskett"/><br /><sub><b>Stephen Foskett</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=SFoskett" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://ganapati.fr"><img src="https://avatars.githubusercontent.com/u/15729117?v=4?s=100" width="100px;" alt="Nathan"/><br /><sub><b>Nathan</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=asuri0n" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.n-soft.pl"><img src="https://avatars.githubusercontent.com/u/4056319?v=4?s=100" width="100px;" alt="Marcin Natanek"/><br /><sub><b>Marcin Natanek</b></sub></a><br /><a href="#plugin-mnatanek" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>
