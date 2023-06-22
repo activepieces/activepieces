@@ -29,12 +29,17 @@ You can publish the piece as an npm package directly by following these steps:
 
 Make sure you are logged in to npm. If not, please run:
 ```bash
-npm add user
+npm login
 ```
 
 ### Step 2:
 
-Rename the piece name in `package.json` to something unique or related to your organization's scope. You can find it at `packages/pieces/PIECE_NAME/package.json`.
+Rename the piece name in `package.json` to something unique or related to your organization's scope (Ex: `@my-org/piece-PIECE_NAME`). You can find it at `packages/pieces/PIECE_NAME/package.json`.
+
+<Tip>
+Don't forget to increase the version number in `package.json` for each new release.
+</Tip>
+
 
 ### Step 3:
 

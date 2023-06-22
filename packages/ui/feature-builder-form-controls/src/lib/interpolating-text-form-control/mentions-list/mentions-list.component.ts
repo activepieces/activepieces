@@ -22,12 +22,16 @@ import {
   tap,
 } from 'rxjs';
 import { ActionType, TriggerType } from '@activepieces/shared';
-import { InsertMentionOperation, MentionListItem } from '../utils';
+import { MentionListItem } from '../utils';
 import { MentionsTreeCacheService } from './mentions-tree-cache.service';
 import {
   BuilderSelectors,
   FlowItem,
 } from '@activepieces/ui/feature-builder-store';
+import {
+  BuilderAutocompleteMentionsDropdownService,
+  InsertMentionOperation,
+} from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-mentions-list',
@@ -54,7 +58,8 @@ export class MentionsListComponent implements OnInit, AfterViewInit {
   focusSearchInput$?: Observable<boolean>;
   constructor(
     private store: Store,
-    private mentionsTreeCache: MentionsTreeCacheService
+    private mentionsTreeCache: MentionsTreeCacheService,
+    public builderAutocompleteService: BuilderAutocompleteMentionsDropdownService
   ) {
     this.mentionsTreeCache.listSearchBarObs$ =
       this.searchFormControl.valueChanges.pipe(

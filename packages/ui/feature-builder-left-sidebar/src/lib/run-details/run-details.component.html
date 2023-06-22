@@ -17,7 +17,7 @@
         </div>
         <div class="top-resizer-section" #stepsResultsAccordion>
           <ng-container *ngFor="let stepResult of logs.runResults; let stepIndex = index">
-            <app-step-result [isTrigger]="stepIndex === 0" [stepNameAndResult]="stepResult"
+            <app-step-result [isTrigger]="stepIndex === 0" [stepResult]="stepResult"
               [selectedStepName]="selectedStepName$ | async">
             </app-step-result>
           </ng-container>
@@ -28,7 +28,7 @@
                 currentStepResult$ | async as currentStepResult
               ">
             <div class="px-3">
-              <app-selected-step-result *ngIf="currentStepResult.result" [selectedStepResult]="currentStepResult.result"
+              <app-selected-step-result *ngIf="currentStepResult.output" [selectedStepResult]="currentStepResult.output"
                 [selectedStepName]="currentStepResult.stepName"></app-selected-step-result>
             </div>
           </ng-container>

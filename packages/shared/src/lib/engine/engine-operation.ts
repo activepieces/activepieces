@@ -130,7 +130,7 @@ interface ExecuteTestOrRunTriggerResponse {
 
 interface ExecuteOnEnableTriggerResponse {
     listeners: AppEventListener[];
-    scheduleOptions: ScheduleOptions;
+    scheduleOptions?: ScheduleOptions;
 }
 
 export type ExecuteTriggerResponse<H extends TriggerHookType> = H extends TriggerHookType.RUN ? ExecuteTestOrRunTriggerResponse :
@@ -146,7 +146,7 @@ export type ExecuteActionResponse = {
 
 export interface ScheduleOptions {
     cronExpression: string;
-    timezone?: string;
+    timezone: string;
 }
 
 export type EngineResponse<T> = {

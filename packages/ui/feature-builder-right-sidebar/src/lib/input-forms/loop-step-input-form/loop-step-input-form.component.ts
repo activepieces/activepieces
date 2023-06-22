@@ -12,11 +12,8 @@ import {
 import { Observable, tap } from 'rxjs';
 import { ActionType } from '@activepieces/shared';
 import { LoopStepInputFormSchema } from '../input-forms-schema';
-import { fadeInUp400ms } from '@activepieces/ui/common';
-import {
-  InsertMentionOperation,
-  InterpolatingTextFormControlComponent,
-} from '@activepieces/ui/feature-builder-form-controls';
+import { fadeInUp400ms, InsertMentionOperation } from '@activepieces/ui/common';
+import { InterpolatingTextFormControlComponent } from '@activepieces/ui/feature-builder-form-controls';
 
 @Component({
   selector: 'app-loop-step-input-form',
@@ -54,6 +51,7 @@ export class LoopStepInputFormComponent implements ControlValueAccessor {
         validators: Validators.required,
       }),
     });
+    this.loopStepForm.controls.items.disable();
     this.loopStepForm.markAllAsTouched();
     this.updateComponentValue$ = this.loopStepForm.valueChanges.pipe(
       tap(() => {
