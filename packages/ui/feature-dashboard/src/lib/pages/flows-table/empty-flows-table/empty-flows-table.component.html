@@ -6,12 +6,12 @@
       Put Activepieces to work by creating your first flow.<br> It's easy to build!
     </div>
   </div>
-  <ap-button class="text-center" [loading]="creatingFlow" (buttonClicked)="createFlow()">Create demo flow</ap-button>
+  <ap-button class="text-center" [loading]="creatingFlow" (buttonClicked)=" openToDemo()">Create demo flow</ap-button>
   <ng-container *ngIf="createFlow$ | async"> </ng-container>
   <div class="ap-typography-subtitle-2">
     Or
   </div>
-  <a (click)="openToDemo()" class="!ap-cursor-pointer !ap-typography-subtitle-2 !ap-text-body">
+  <a (click)="createFlow()" class="!ap-cursor-pointer !ap-typography-subtitle-2 !ap-text-body">
     build your own flow
   </a>
 

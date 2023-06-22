@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { Observable, switchMap, tap } from 'rxjs';
 import { Flow, FlowOperationType } from '@activepieces/shared';
 import { FlowService } from '@activepieces/ui/common';
+import { demoTemplate } from './demo-flow-template';
 
 @Component({
   selector: 'app-empty-flows-table',
@@ -32,8 +33,7 @@ export class EmptyFlowsTableComponent {
     }
   }
 
-  openToDemo()
-  {
+  openToDemo() {
     if (!this.creatingFlow) {
       this.creatingFlow = true;
       this.createFlow$ = this.flowService
@@ -45,17 +45,16 @@ export class EmptyFlowsTableComponent {
             return this.flowService
               .update(flow.id, {
                 type: FlowOperationType.IMPORT_FLOW,
-                request: templateJson.template,
+                request: demoTemplate,
               })
               .pipe(
                 tap((updatedFlow: Flow) => {
-                  this.router.navigate([`/flows/${ updatedFlow.id}?sampleFlow=true`]);
+                  this.router.navigate([
+                    `/flows/${updatedFlow.id}?sampleFlow=true`,
+                  ]);
                 })
               );
           }),
-          tap((flow) => {
-            this.router.navigate(['/flows/', flow.id]);
-          })
         );
     }
   }
