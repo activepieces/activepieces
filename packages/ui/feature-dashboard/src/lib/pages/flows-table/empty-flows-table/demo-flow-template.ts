@@ -5,7 +5,7 @@ import {
 } from '@activepieces/shared';
 
 export const demoTemplate: FlowVersionTemplate = {
-  displayName: 'The Gelato Factory 🍦',
+  displayName: 'Demo: The Gelato Factory 🍦',
   trigger: {
     name: 'trigger',
     valid: true,

@@ -38,7 +38,7 @@ export class EmptyFlowsTableComponent {
       this.creatingFlow = true;
       this.createFlow$ = this.flowService
         .create({
-          displayName: 'Demo',
+          displayName: demoTemplate.displayName,
         })
         .pipe(
           switchMap((flow) => {
