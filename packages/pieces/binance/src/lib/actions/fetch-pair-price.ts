@@ -1,29 +1,31 @@
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
-import { Property } from "@activepieces/pieces-framework";
-import { binance } from "../../";
+import { createAction, Property } from "@activepieces/pieces-framework";
 
-binance.addAction({
-  name: 'fetch_crypto_pair_price',
-  displayName: 'Fetch Pair Price',
-  description: 'Fetch the current price of a pair (e.g. BTC/USDT)',
-  props: {
-    first_coin: Property.ShortText({
-      displayName: 'First Coin Symbol',
-      description:
-        "The currency to fetch the price for (e.g. 'BTC' in 'BTC/USDT')",
-      required: true,
-    }),
-    second_coin: Property.ShortText({
-      displayName: 'Second Coin Symbol',
-      description:
-        "The currency to fetch the price in (e.g. 'USDT' in 'BTC/USDT')",
-      required: true,
-    }),
-  },
-  async run(context) {
-    const { first_coin, second_coin } = context.propsValue;
-    if (first_coin && second_coin) return await fetchCryptoPairPriceImpl(`${first_coin}${second_coin}`);
-    throw Error('Missing parameter(s)');
+
+export const fetchCryptoPairPrice = createAction({
+  action: {
+    name: 'fetch_crypto_pair_price',
+    displayName: 'Fetch Pair Price',
+    description: 'Fetch the current price of a pair (e.g. BTC/USDT)',
+    props: {
+      first_coin: Property.ShortText({
+        displayName: 'First Coin Symbol',
+        description:
+          "The currency to fetch the price for (e.g. 'BTC' in 'BTC/USDT')",
+        required: true,
+      }),
+      second_coin: Property.ShortText({
+        displayName: 'Second Coin Symbol',
+        description:
+          "The currency to fetch the price in (e.g. 'USDT' in 'BTC/USDT')",
+        required: true,
+      }),
+    },
+    async run(context) {
+      const { first_coin, second_coin } = context.propsValue;
+      if (first_coin && second_coin) return await fetchCryptoPairPriceImpl(`${first_coin}${second_coin}`);
+      throw Error('Missing parameter(s)');
+    },
   },
 });
 
