@@ -4,12 +4,12 @@ import { EventPayload, ParseEventResponse } from '@activepieces/shared'
 import { PieceBase, PieceMetadata } from './piece-metadata'
 import { PieceAuthProperty } from './property'
 
-type CreatePieceParams<PieceAuth extends PieceAuthProperty> = {
+type CreatePieceParams<PieceAuth extends PieceAuthProperty = PieceAuthProperty> = {
   displayName: string
   logoUrl: string
   authors?: string[]
   description?: string
-  auth: PieceAuth
+  auth?: PieceAuth
   events?: PieceEventProcessors
   minimumSupportedRelease?: string
   maximumSupportedRelease?: string

@@ -9,7 +9,7 @@ type CreateActionParams<PieceAuth extends PieceAuthProperty, ActionProps extends
   /**
    * A dummy parameter used to infer {@code PieceAuth} type
    */
-  auth: PieceAuth
+  auth?: PieceAuth
   action: {
     name: string
     displayName: string
@@ -36,7 +36,10 @@ export type Action<
   ActionProps extends PiecePropertyMap = any,
 > = IAction<PieceAuth, ActionProps>
 
-export const createAction = <PieceAuth extends PieceAuthProperty, ActionProps extends PiecePropertyMap>(
+export const createAction = <
+  PieceAuth extends PieceAuthProperty = PieceAuthProperty,
+  ActionProps extends PiecePropertyMap = PiecePropertyMap
+>(
   params: CreateActionParams<PieceAuth, ActionProps>,
 ) => {
   return new IAction(
