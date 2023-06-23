@@ -1,6 +1,8 @@
-import { AuthProp, Piece } from '@activepieces/pieces-framework';
+import { PieceAuth, Piece, createPiece } from '@activepieces/pieces-framework';
+import { airtableCreateRecordAction } from './lib/actions/create-record';
+import { airtableNewRecordTrigger } from './lib/trigger/new-record.trigger';
 
-const auth = AuthProp.SecretText({
+export const airtableAuth = PieceAuth.SecretText({
     displayName: 'Personal Token',
     required: true,
     description: `
@@ -14,9 +16,15 @@ const auth = AuthProp.SecretText({
     `,
 })
 
-export const airtable = Piece.create({
+export const airtable = createPiece({
     displayName: 'Airtable',
     logoUrl: 'https://cdn.activepieces.com/pieces/airtable.png',
     authors: ['AbdulTheActivePiecer', 'kanarelo'],
-    auth,
+    auth: airtableAuth,
+    actions: [
+        airtableCreateRecordAction,
+    ],
+    triggers: [
+        airtableNewRecordTrigger,
+    ],
 })
