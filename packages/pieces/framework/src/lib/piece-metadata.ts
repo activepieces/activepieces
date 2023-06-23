@@ -7,7 +7,7 @@ export type PieceBase = {
   logoUrl: string;
   description: string;
   directoryName?: string;
-  auth: PieceAuthProperty;
+  auth?: PieceAuthProperty;
   version: string;
   minimumSupportedRelease?: string;
   maximumSupportedRelease?: string;
