@@ -88,6 +88,7 @@
       ],
       "@activepieces/piece-http": ["packages/pieces/http/src/index.ts"],
       "@activepieces/piece-hubspot": ["packages/pieces/hubspot/src/index.ts"],
+      "@activepieces/piece-imap": ["packages/pieces/imap/src/index.ts"],
       "@activepieces/piece-instagram-business": [
         "packages/pieces/instagram-business/src/index.ts"
       ],
