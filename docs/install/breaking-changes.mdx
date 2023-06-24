@@ -1,17 +1,20 @@
 ---
 title: "Breaking Changes"
+icon: 'triangle-exclamation'
 description: ""
 ---
 
-# V0.3.17
+## 0.3.17
 
 **What's changed?**
-The default mode is not to use sandbox.
+1. The default mode is not to use sandbox.
+2. Templates URL needed to be added manually in order to load the templates.
 
 **How to Upgrade?**
-Set the AP_EXECUTION_MODE in `.env` to `UNSANDBOXED`, or refer to configuration If you want to enable sign up.
+1. Set the `AP_EXECUTION_MODE` in `.env` to `UNSANDBOXED`, or refer to configuration If you want to enable sign up.
+2. Set the `AP_TEMPLATES_SOURCE_URL` in `.env` to `https://cloud.activepieces.com/api/v1/flow-templates`.
 
-# V0.3.2
+## 0.3.2
 
 **What's changed?**
 
