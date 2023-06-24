@@ -1,8 +1,8 @@
-import { TriggerStrategy } from '@activepieces/pieces-framework';
+import { TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { currentYear } from '../common';
 import { ClockodoClient } from '../common/client';
-import { clockodo } from "../../";
+import { clockodoAuth } from "../../";
 
 interface AuthData {
     email: string,
@@ -28,40 +28,43 @@ const polling: Polling<AuthData, unknown> = {
     }
 }
 
-clockodo.addTrigger({
-    name: 'new_absence_enquiry',
-    displayName: 'New Absence Enquiry',
-    description: 'Triggers when a new absence enquiry is created',
-    type: TriggerStrategy.POLLING,
-    props: {
+export default createTrigger({
+    auth: clockodoAuth,
+    trigger: {
+        name: 'new_absence_enquiry',
+        displayName: 'New Absence Enquiry',
+        description: 'Triggers when a new absence enquiry is created',
+        type: TriggerStrategy.POLLING,
+        props: {
+        },
+        sampleData: {},
+        onEnable: async (context) => {
+            await pollingHelper.onEnable(polling, {
+                auth: context.auth,
+                store: context.store,
+                propsValue: context.propsValue,
+            })
+        },
+        onDisable: async (context) => {
+            await pollingHelper.onDisable(polling, {
+                auth: context.auth,
+                store: context.store,
+                propsValue: context.propsValue,
+            })
+        },
+        run: async (context) => {
+            return await pollingHelper.poll(polling, {
+                auth: context.auth,
+                store: context.store,
+                propsValue: context.propsValue,
+            });
+        },
+        test: async (context) => {
+            return await pollingHelper.test(polling, {
+                auth: context.auth,
+                store: context.store,
+                propsValue: context.propsValue,
+            });
+        }
     },
-    sampleData: {},
-    onEnable: async (context) => {
-        await pollingHelper.onEnable(polling, {
-            auth: context.auth,
-            store: context.store,
-            propsValue: context.propsValue,
-        })
-    },
-    onDisable: async (context) => {
-        await pollingHelper.onDisable(polling, {
-            auth: context.auth,
-            store: context.store,
-            propsValue: context.propsValue,
-        })
-    },
-    run: async (context) => {
-        return await pollingHelper.poll(polling, {
-            auth: context.auth,
-            store: context.store,
-            propsValue: context.propsValue,
-        });
-    },
-    test: async (context) => {
-        return await pollingHelper.test(polling, {
-            auth: context.auth,
-            store: context.store,
-            propsValue: context.propsValue,
-        });
-    }
 });

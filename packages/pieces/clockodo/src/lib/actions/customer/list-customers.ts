@@ -1,44 +1,47 @@
-import { Property } from "@activepieces/pieces-framework";
+import { Property, createAction } from "@activepieces/pieces-framework";
 import { makeClient } from "../../common";
 import { CustomerListFilter } from "../../common/models/customer";
-import { clockodo } from "../../../";
+import { clockodoAuth } from "../../../";
 
-clockodo.addAction({
-    name: 'list_customers',
-    displayName: 'Get Customers',
-    description: 'Fetches customers from clockodo',
-    props: {
-        active_filter: Property.Checkbox({
-            displayName: 'Active Filter',
-            description: 'Filter customers by their active status',
-            required: false,
-            defaultValue: true
-        }),
-        page: Property.Number({
-            displayName: 'Page',
-            description: 'Reads only the specified page',
-            required: false
-        })
-    },
-    async run({ auth , propsValue }) {
-        const client = makeClient(auth);
-        const filter: CustomerListFilter = {
-            active: propsValue.active_filter
-        }
-        if(propsValue.page !== undefined) {
-            const res = await client.listCustomers({
-                page: propsValue.page,
-                filter
+export default createAction({
+    auth: clockodoAuth,
+    action: {
+        name: 'list_customers',
+        displayName: 'Get Customers',
+        description: 'Fetches customers from clockodo',
+        props: {
+            active_filter: Property.Checkbox({
+                displayName: 'Active Filter',
+                description: 'Filter customers by their active status',
+                required: false,
+                defaultValue: true
+            }),
+            page: Property.Number({
+                displayName: 'Page',
+                description: 'Reads only the specified page',
+                required: false
             })
-            return {
-                pagination: res.paging,
-                customers: res.customers
+        },
+        async run({ auth , propsValue }) {
+            const client = makeClient(auth);
+            const filter: CustomerListFilter = {
+                active: propsValue.active_filter
             }
-        } else {
-            const customers = await client.listAllCustomers(filter)
-            return {
-                customers
+            if(propsValue.page !== undefined) {
+                const res = await client.listCustomers({
+                    page: propsValue.page,
+                    filter
+                })
+                return {
+                    pagination: res.paging,
+                    customers: res.customers
+                }
+            } else {
+                const customers = await client.listAllCustomers(filter)
+                return {
+                    customers
+                }
             }
         }
-    }
+    },
 })

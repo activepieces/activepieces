@@ -1,19 +1,22 @@
-import { Property } from "@activepieces/pieces-framework";
+import { Property, createAction } from "@activepieces/pieces-framework";
 import { makeClient } from "../../common";
-import { clockodo } from "../../../";
+import { clockodoAuth } from "../../../";
 
-clockodo.addAction({
-    name: 'delete_entry',
-    displayName: 'Delete Entry',
-    description: 'Deletes an entry in clockodo',
-    props: {
-        entry_id: Property.Number({
-            displayName: 'Entry ID',
-            required: true
-        })
+export default createAction({
+    auth: clockodoAuth,
+    action: {
+        name: 'delete_entry',
+        displayName: 'Delete Entry',
+        description: 'Deletes an entry in clockodo',
+        props: {
+            entry_id: Property.Number({
+                displayName: 'Entry ID',
+                required: true
+            })
+        },
+        async run({ auth, propsValue }) {
+            const client = makeClient(auth);
+            await client.deleteEntry(propsValue.entry_id)
+        }
     },
-    async run({ auth, propsValue }) {
-        const client = makeClient(auth);
-        await client.deleteEntry(propsValue.entry_id)
-    }
 })
