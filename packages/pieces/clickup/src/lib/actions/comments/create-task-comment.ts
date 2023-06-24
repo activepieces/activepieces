@@ -1,39 +1,43 @@
-import { Property } from "@activepieces/pieces-framework";
+import { Property, createAction } from "@activepieces/pieces-framework";
 import {HttpMethod, getAccessTokenOrThrow } from "@activepieces/pieces-common";
 import { clickupCommon, callClickUpApi } from "../../common";
-import { clickup } from "../../../";
+import { clickupAuth } from "../../../";
 
-clickup.addAction({
-	name: 'create_task_comments',
-	description: 'Creates a comment on a task in ClickUp',
-	displayName: 'Create Task Comment',
-	props: {
-		workspace_id: clickupCommon.workspace_id(),
-		space_id: clickupCommon.space_id(),
-		list_id: clickupCommon.list_id(),
-		task_id: clickupCommon.task_id(),
-		comment: Property.LongText({
-			description: 'Comment to make on the task',
-			displayName: 'Comment',
-			required: true,
-		})
-	},
-	async run(configValue) {
-		const { task_id, comment } = configValue.propsValue;
 
-		const user_request = await callClickUpApi(HttpMethod.GET, `/user`, getAccessTokenOrThrow(configValue.auth), {});
+export const createClickupTaskComment = createAction({
+    auth: clickupAuth,
+    action: {
+        name: 'create_task_comments',
+        description: 'Creates a comment on a task in ClickUp',
+        displayName: 'Create Task Comment',
+        props: {
+            workspace_id: clickupCommon.workspace_id(),
+            space_id: clickupCommon.space_id(),
+            list_id: clickupCommon.list_id(),
+            task_id: clickupCommon.task_id(),
+            comment: Property.LongText({
+                description: 'Comment to make on the task',
+                displayName: 'Comment',
+                required: true,
+            })
+        },
+        async run(configValue) {
+            const { task_id, comment } = configValue.propsValue;
 
-		if (user_request.body['user'] === undefined) {
-			throw ('Please connect to your ClickUp account')
-		}
+            const user_request = await callClickUpApi(HttpMethod.GET, `/user`, getAccessTokenOrThrow(configValue.auth), {});
 
-		const response = await callClickUpApi(HttpMethod.POST,
-			`/task/${task_id}/comment`, getAccessTokenOrThrow(configValue.auth), {
-			"comment_text": comment,
-			"assignee": user_request.body['user']['id'],
-			"notify_all": true
-		});
+            if (user_request.body['user'] === undefined) {
+                throw ('Please connect to your ClickUp account')
+            }
 
-		return response.body;
-	},
+            const response = await callClickUpApi(HttpMethod.POST,
+                `/task/${task_id}/comment`, getAccessTokenOrThrow(configValue.auth), {
+                "comment_text": comment,
+                "assignee": user_request.body['user']['id'],
+                "notify_all": true
+            });
+
+            return response.body;
+        },
+    },
 })

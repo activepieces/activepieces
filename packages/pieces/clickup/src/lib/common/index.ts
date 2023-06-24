@@ -40,7 +40,7 @@ export const clickupCommon = {
         required,
         refreshers: ['authentication', 'workspace_id'],
         defaultValue: null,
-        options: async ({ auth, propsValue }) => {
+        options: async ({ auth , propsValue }) => {
             const { workspace_id } = propsValue;
             if (!auth || !workspace_id) {
                 return {
@@ -68,8 +68,8 @@ export const clickupCommon = {
         required,
         refreshers: ['authentication', 'space_id'],
         defaultValue: null,
-        options: async ({ auth, propsValue }) => {
-            const { space_id } = propsValue
+        options: async ({ auth , propsValue }) => {
+            const { space_id } = propsValue;
             if (!auth || !space_id) {
                 return {
                     disabled: true,
@@ -108,8 +108,8 @@ export const clickupCommon = {
         required,
         defaultValue: null,
         refreshers: ['authentication', 'space_id', 'list_id'],
-        options: async ({ auth, propsValue }) => {
-            const { list_id, space_id } = propsValue
+        options: async ({ auth , propsValue }) => {
+            const { list_id, space_id } = propsValue;
             if (!auth || !list_id || !space_id) {
                 return {
                     disabled: true,
@@ -137,7 +137,7 @@ export const clickupCommon = {
         defaultValue: null,
         required,
         options: async ({ auth, propsValue }) => {
-            const { space_id, workplace_id } = propsValue
+            const { space_id, workplace_id } = propsValue;
             if (auth === undefined || workplace_id === undefined || space_id === undefined) {
                 return {
                     disabled: true,
