@@ -34,7 +34,7 @@ export const registerWebhooks = ({
     async onEnable(context) {
       const request: HttpRequest = {
         method: HttpMethod.POST,
-        url: `https://api.cal.com/v1/hooks`,
+        url: `https://api.cal.com/v1/webhooks`,
         body: {
           eventTriggers: [name],
           subscriberUrl: context.webhookUrl,
@@ -57,7 +57,7 @@ export const registerWebhooks = ({
       if (data != null) {
         const request: HttpRequest = {
           method: HttpMethod.DELETE,
-          url: `https://api.cal.com/v1/hooks/${data.id}`,
+          url: `https://api.cal.com/v1/webhooks/${data.id}`,
           queryParams: {
             apiKey: context.propsValue.api_key
           }

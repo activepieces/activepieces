@@ -13,8 +13,9 @@ import {
   FlowOperationType,
   FlowTemplate,
   FolderId,
+  TelemetryEventName,
 } from '@activepieces/shared';
-import { FlowService } from '@activepieces/ui/common';
+import { FlowService, TelemetryService } from '@activepieces/ui/common';
 import { Observable, switchMap, tap } from 'rxjs';
 import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
@@ -41,6 +42,7 @@ export class TemplateCardComponent implements AfterViewInit {
     private router: Router,
     private cd: ChangeDetectorRef,
     private matDialog: MatDialog,
+    private telemetryService: TelemetryService,
     private builderService: CollectionBuilderService
   ) {}
   useTemplate() {
@@ -59,6 +61,16 @@ export class TemplateCardComponent implements AfterViewInit {
               })
               .pipe(
                 tap((updatedFlow: Flow) => {
+                  this.telemetryService.capture({
+                    name: TelemetryEventName.FLOW_IMPORTED,
+                    payload: {
+                      id: this.template.id,
+                      name: this.template.name,
+                      location: this.template.pinnedOrder
+                        ? 'Pins in dashboard'
+                        : 'See all dialog in dashboard',
+                    },
+                  });
                   if (this.template.blogUrl) {
                     this.builderService.componentToShowInsidePortal$.next(
                       new ComponentPortal(
