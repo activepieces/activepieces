@@ -7,7 +7,7 @@ export const linkedinCommon = {
     baseUrl: 'https://api.linkedin.com',
     linkedinHeaders: {
         'X-Restli-Protocol-Version': '2.0.0',
-        // 'LinkedIn-Version': '202211'
+        // 'LinkedIn-Version': '202306'
     },
 
     authentication: Property.OAuth2({
@@ -22,7 +22,7 @@ export const linkedinCommon = {
         required: true
     }),
     imageUrl: Property.File({
-        displayName: 'Image URL',
+        displayName: 'Link Thumbnail URL',
         required: false
     }),
     link: Property.ShortText({
@@ -30,11 +30,11 @@ export const linkedinCommon = {
         required: false
     }),
     linkTitle: Property.ShortText({
-        displayName: 'Content Title',
+        displayName: 'Link Title',
         required: false
     }),
     linkDescription: Property.ShortText({
-        displayName: 'Content Description',
+        displayName: 'Link Description',
         required: false
     }),
 
@@ -119,99 +119,62 @@ export const linkedinCommon = {
 
     generatePostRequestBody: (data: {
         urn: string,
-        text?: string | undefined,
+        text: string,
         link?: string | undefined,
         linkTitle?: string | undefined,
         linkDescription?: string | undefined,
         visibility: string,
-        image?: Asset | undefined
+        image?: Image | undefined
     }) => {
-        const requestObject: UgcPost = {
+        const requestObject: Post = {
             author: `urn:li:${data.urn}`,
             lifecycleState: 'PUBLISHED',
-            specificContent: {
-                "com.linkedin.ugc.ShareContent": {
-                    shareCommentary: {},
-                    shareMediaCategory: '',
-                },
+            commentary: data.text,
+            distribution: {
+                feedDistribution: 'MAIN_FEED'
             },
-            visibility: {
-                "com.linkedin.ugc.MemberNetworkVisibility": data.visibility
+            visibility: data.visibility,
+            isReshareDisabledByAuthor: false
+        }
+
+        if (data.link) {
+            requestObject.content = {
+                article: {
+                    source: data.link,
+                    title: data.linkTitle,
+                    description: data.linkDescription,
+                    thumbnail: data.image?.value.image
+                }
             }
-        }
-
-        if (data.text) {
-            requestObject.specificContent["com.linkedin.ugc.ShareContent"].shareCommentary.text = data.text;
-        }
-
-        if (data.image) {
-            requestObject.specificContent["com.linkedin.ugc.ShareContent"].shareMediaCategory = 'IMAGE'
-            requestObject.specificContent["com.linkedin.ugc.ShareContent"].media = [
-                {
-                    status: 'READY',
-                    description: {
-                        text: data.linkDescription ?? ''
-                    },
-                    media: data.image.value.asset,
-                    title: {
-                        text: data.linkTitle ?? ''
-                    }
-                }
-            ]
-        }
-        else if (data.link) {
-            requestObject.specificContent["com.linkedin.ugc.ShareContent"].shareMediaCategory = 'ARTICLE'
-            requestObject.specificContent["com.linkedin.ugc.ShareContent"].media = [
-                {
-                    status: 'READY',
-                    description: {
-                        text: data.linkDescription ?? ''
-                    },
-                    originalUrl: data.link,
-                    title: {
-                        text: data.linkTitle ?? ''
-                    }
-                }
-            ]
-        }
-        else {
-            requestObject.specificContent["com.linkedin.ugc.ShareContent"].shareMediaCategory = 'NONE'
         }
 
         return requestObject;
     },
 
-    uploadImage: async (accessToken: string, urn: string, image: ApFile): Promise<Asset> => {
+    uploadImage: async (accessToken: string, urn: string, image: ApFile): Promise<Image> => {
         const uploadData = (await httpClient.sendRequest({
             method: HttpMethod.POST,
-            url: `${linkedinCommon.baseUrl}/v2/assets`,
+            url: `${linkedinCommon.baseUrl}/v2/images`,
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
                 token: accessToken
             },
             queryParams: {
-                action: 'registerUpload'
+                action: 'initializeUpload'
             },
             body: {
-                registerUploadRequest: {
-                    recipes: ['urn:li:digitalmediaRecipe:feedshare-image'],
+                initializeUploadRequest: {
                     owner: `urn:li:${urn}`,
-                    serviceRelationships: [
-                        {
-                            relationshipType: 'OWNER',
-                            identifier: 'urn:li:userGeneratedContent'
-                        }
-                    ]
                 }
             }
-        })).body as Asset;
+        })).body as Image;
 
         const uploadFormData = new FormData();
         const { filename, base64 } = image;
         uploadFormData.append('file', Buffer.from(base64, "base64"), filename);
 
         await httpClient.sendRequest({
-            url: uploadData.value.uploadMechanism["com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest"].uploadUrl,
+            url: uploadData.value.uploadUrl,
             method: HttpMethod.POST,
             body: uploadFormData,
             authentication: {
@@ -258,7 +221,7 @@ export interface UgcPost {
                         text: string
                     }
                     originalUrl?: string
-                    media?: string
+                    thumbnail?: string
                     title?: {
                         text: string
                     }
@@ -271,15 +234,29 @@ export interface UgcPost {
     }
 }
 
-export interface Asset {
+export interface Post {
+    author: string
+    commentary: string
+    lifecycleState: string
+    visibility: string
+    distribution: {
+        feedDistribution: string
+    }
+    content?: {
+        article?: {
+            source: string
+            thumbnail?: string | undefined
+            title?: string | undefined
+            description?: string | undefined
+        }
+    }
+    isReshareDisabledByAuthor: boolean
+}
+
+export interface Image {
     value: {
-        uploadMechanism: {
-            "com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest": {
-                headers: object,
-                uploadUrl: string
-            }
-        },
-        mediaArtifact: string,
-        asset: string
+        uploadUrlExpiresAt: number,
+        uploadUrl: string,
+        image: string
     }
 }
