@@ -1,19 +1,20 @@
-import { Property } from "@activepieces/pieces-framework";
-import { connections } from "../../";
+import { Property, createAction } from "@activepieces/pieces-framework";
 
-connections.addAction({
-  name: 'read_connection',
-  displayName: 'Read Connection',
-  description: 'Fetch connection by name',
-  props: {
-    connection_name: Property.ShortText({
-      displayName: 'Connection Name',
-      description: undefined,
-      required: true,
-    })
-  },
-  async run(ctx) {
-    return await ctx.connections.get(ctx.propsValue.connection_name);
+export const readConnection = createAction({
+  action: {
+    name: 'read_connection',
+    displayName: 'Read Connection',
+    description: 'Fetch connection by name',
+    props: {
+      connection_name: Property.ShortText({
+        displayName: 'Connection Name',
+        description: undefined,
+        required: true,
+      })
+    },
+    async run(ctx) {
+      return await ctx.connections.get(ctx.propsValue.connection_name);
+    },
   },
 });
 
