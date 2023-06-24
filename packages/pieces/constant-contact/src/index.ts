@@ -1,8 +1,20 @@
-import { Piece } from "@activepieces/pieces-framework";
 
-export const constantContact = Piece.create({
+import { PieceAuth, createPiece } from "@activepieces/pieces-framework";
+import { createOrUpdateContact } from "./lib/actions/create-or-update-contact";
+
+export const constantContactAuth = PieceAuth.OAuth2({
+  displayName: "Authentication",
+  required: true,
+  tokenUrl: "https://authz.constantcontact.com/oauth2/default/v1/token",
+  authUrl: "https://authz.constantcontact.com/oauth2/default/v1/authorize",
+  scope: ["contact_data"]
+})
+
+export const constantContact = createPiece({
   displayName: "Constant Contact",
   logoUrl: "https://cdn.activepieces.com/pieces/constant-contact.png",
   authors: ["abuaboud"],
-  auth:
+  auth: constantContactAuth,
+  actions: [createOrUpdateContact],
+  triggers: [],
 });
