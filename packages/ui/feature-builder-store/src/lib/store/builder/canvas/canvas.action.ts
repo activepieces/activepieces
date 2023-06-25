@@ -20,6 +20,8 @@ export enum CanvasActionType {
   CLOSE_GENERATE_FLOW_COMPONENT = '[CANVAS] CLOSE_GENERATE_FLOW_COMPONENT',
   SET_RUN = '[CANVAS] SET_RUN',
   EXIT_RUN = '[CANVAS] EXIT_RUN',
+  SET_ADD_BUTTON_ID = '[CANVAS] SET_ADD_BUTTON_ID',
+  CLEAR_ADD_BUTTON_ID = '[CANVAS] CLEAR_ADD_BUTTON_ID',
 }
 
 const setInitial = createAction(
@@ -31,6 +33,11 @@ const setLeftSidebar = createAction(
   props<{ sidebarType: LeftSideBarType }>()
 );
 
+const setAddButtonId = createAction(
+  CanvasActionType.SET_ADD_BUTTON_ID,
+  props<{ id: number }>()
+);
+const clearAddButtonId = createAction(CanvasActionType.SET_ADD_BUTTON_ID);
 const setRightSidebar = createAction(
   CanvasActionType.SET_RIGHT_SIDEBAR,
   props<{
@@ -84,4 +91,6 @@ export const canvasActions = {
   closeGenerateFlowComponent,
   setRun,
   exitRun,
+  setAddButtonId,
+  clearAddButtonId,
 };

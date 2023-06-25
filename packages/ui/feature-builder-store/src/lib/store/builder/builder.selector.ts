@@ -542,6 +542,9 @@ const selectStepLogoUrl = (stepName: string) => {
     }
   );
 };
+const selectLastClickedAddBtnId = createSelector(selectCanvasState, (state) => {
+  return state.clickedAddBtnId;
+});
 export const BuilderSelectors = {
   selectReadOnly,
   selectViewMode,
@@ -592,4 +595,5 @@ export const BuilderSelectors = {
   selectHasFlowBeenPublished,
   selectStepResultsAccordion,
   selectStepDisplayNameAndDfsIndexForIterationOutput,
+  selectLastClickedAddBtnId,
 };
