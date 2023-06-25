@@ -1,6 +1,4 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
-import { FlowRendererService } from '@activepieces/ui/feature-builder-store';
-import { Observable } from 'rxjs';
 import { AddButtonCore } from '../add-button-core';
 import { Store } from '@ngrx/store';
 
@@ -13,10 +11,8 @@ export class SmallAddButtonComponent extends AddButtonCore {
   @Input() left = '';
   @Input() top = '';
   @Input() showDropzoneIndicator = false;
-  isInDraggingMode$: Observable<boolean>;
-  constructor(private flowRendererService: FlowRendererService, store: Store) {
+
+  constructor(store: Store) {
     super(store);
-    this.isInDraggingMode$ =
-      this.flowRendererService.draggingSubject.asObservable();
   }
 }
