@@ -1,15 +1,6 @@
-import { Property } from "@activepieces/pieces-framework";
 import { AuthenticationType, httpClient, HttpMethod, HttpRequest } from "@activepieces/pieces-common";
 
 export const pipedriveCommon = {
-    authentication: Property.OAuth2({
-        description: "",
-        displayName: 'Authentication',
-        authUrl: "https://oauth.pipedrive.com/oauth/authorize",
-        tokenUrl: "https://oauth.pipedrive.com/oauth/token",
-        required: true,
-        scope: ["admin", "contacts:full", "users:read"]
-    }),
     subscribeWebhook: async (object: string, action: string, webhookUrl: string, apiDomain: string, accessToken: string) => {
         const request: HttpRequest = {
             method: HttpMethod.POST,
