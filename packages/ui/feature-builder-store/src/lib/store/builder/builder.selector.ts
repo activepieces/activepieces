@@ -542,6 +542,24 @@ const selectStepLogoUrl = (stepName: string) => {
     }
   );
 };
+
+const selectFlowTriggerIsTested = createSelector(selectCurrentFlow, (flow) => {
+  if (
+    (flow.version.trigger.type === TriggerType.PIECE &&
+      flow.version.trigger.settings.pieceName === CORE_SCHEDULE) ||
+    flow.version.trigger.settings.pieceName === 'schedule'
+  ) {
+    return true;
+  }
+  switch (flow.version.trigger.type) {
+    case TriggerType.EMPTY:
+      return false;
+    case TriggerType.WEBHOOK:
+      return !!flow.version.trigger.settings.inputUiInfo.currentSelectedData;
+    case TriggerType.PIECE:
+      return !!flow.version.trigger.settings.inputUiInfo.currentSelectedData;
+  }
+});
 export const BuilderSelectors = {
   selectReadOnly,
   selectViewMode,
@@ -592,4 +610,5 @@ export const BuilderSelectors = {
   selectHasFlowBeenPublished,
   selectStepResultsAccordion,
   selectStepDisplayNameAndDfsIndexForIterationOutput,
+  selectFlowTriggerIsTested,
 };
