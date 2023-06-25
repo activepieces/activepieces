@@ -1,6 +1,18 @@
 
-import { createPiece } from '@activepieces/pieces-framework';
+import { OAuth2AuthorizationMethod, PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { newDatabaseItem } from './lib/triggers/new-database-item';
+
+export const notionAuth = PieceAuth.OAuth2({
+  displayName: "Notion Account",
+  authUrl: "https://api.notion.com/v1/oauth/authorize",
+  tokenUrl: "https://api.notion.com/v1/oauth/token",
+  scope: [],
+  extra: {
+      owner: "user"
+  },
+  authorizationMethod: OAuth2AuthorizationMethod.HEADER,
+  required: true,
+})
 
 export const notion = createPiece({
   displayName: 'Notion',
@@ -9,6 +21,7 @@ export const notion = createPiece({
   authors: [
     'ShayPunter', 'abuaboud'
   ],
+  auth: notionAuth,
   actions: [
 
   ],
