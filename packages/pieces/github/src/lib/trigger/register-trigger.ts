@@ -9,6 +9,7 @@ import {
   AuthenticationType
 } from "@activepieces/pieces-common";
 import { githubCommon } from '../common';
+import { githubAuth } from '../../';
 
 export const githubRegisterTrigger = ({
   name,
@@ -21,66 +22,68 @@ export const githubRegisterTrigger = ({
   description: string,
   sampleData: object
 }) => createTrigger({
-  name: `trigger_${name}`,
-  displayName,
-  description,
-  props: {
-    authentication: githubCommon.authentication,
-    repository: githubCommon.repositoryDropdown
-  },
-  sampleData,
-  type: TriggerStrategy.WEBHOOK,
-  async onEnable(context) {
-    const { repo, owner } = context.propsValue['repository']!;
-    const request: HttpRequest = {
-      method: HttpMethod.POST,
-      url: `${githubCommon.baseUrl}/repos/${owner}/${repo}/hooks`,
-      body: {
-        owner: owner,
-        repo: repo,
-        active: true,
-        events: [name],
-        config: {
-          url: context.webhookUrl,
-          content_type: 'json',
-          insecure_ssl: '0',
-        },
-      },
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.propsValue['authentication']['access_token'],
-      },
-      queryParams: {},
-    };
-    const { body: webhook } = await httpClient.sendRequest<{ id: string }>(request);
-    await context.store.put<WebhookInformation>(`github_${name}_trigger`, {
-      webhookId: webhook.id,
-      owner: owner,
-      repo: repo,
-    });
-  },
-  async onDisable(context) {
-    const response = await context.store.get<WebhookInformation>(`github_${name}_trigger`);
-    if (response !== null && response !== undefined) {
+  auth: githubAuth,
+  trigger: {
+    name: `trigger_${name}`,
+    displayName,
+    description,
+    props: {
+      repository: githubCommon.repositoryDropdown
+    },
+    sampleData,
+    type: TriggerStrategy.WEBHOOK,
+    async onEnable(context) {
+      const { repo, owner } = context.propsValue['repository']!;
       const request: HttpRequest = {
-        method: HttpMethod.DELETE,
-        url: `${githubCommon.baseUrl}/repos/${response.owner}/${response.repo}/hooks/${response.webhookId}`,
+        method: HttpMethod.POST,
+        url: `${githubCommon.baseUrl}/repos/${owner}/${repo}/hooks`,
+        body: {
+          owner: owner,
+          repo: repo,
+          active: true,
+          events: [name],
+          config: {
+            url: context.webhookUrl,
+            content_type: 'json',
+            insecure_ssl: '0',
+          },
+        },
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: context.propsValue['authentication']['access_token'],
+          token: context.auth.access_token,
         },
+        queryParams: {},
       };
-      await httpClient.sendRequest(request);
-    }
-  },
-  async run(context) {
-    console.debug("payload received", context.payload.body)
+      const { body: webhook } = await httpClient.sendRequest<{ id: string }>(request);
+      await context.store.put<WebhookInformation>(`github_${name}_trigger`, {
+        webhookId: webhook.id,
+        owner: owner,
+        repo: repo,
+      });
+    },
+    async onDisable(context) {
+      const response = await context.store.get<WebhookInformation>(`github_${name}_trigger`);
+      if (response !== null && response !== undefined) {
+        const request: HttpRequest = {
+          method: HttpMethod.DELETE,
+          url: `${githubCommon.baseUrl}/repos/${response.owner}/${response.repo}/hooks/${response.webhookId}`,
+          authentication: {
+            type: AuthenticationType.BEARER_TOKEN,
+            token: context.auth.access_token,
+          },
+        };
+        await httpClient.sendRequest(request);
+      }
+    },
+    async run(context) {
+      console.debug("payload received", context.payload.body)
 
-    if (isVerficationCall(context.payload.body)) {
-      return [];
-    }
-    return [context.payload.body];
-  },
+      if (isVerficationCall(context.payload.body)) {
+        return [];
+      }
+      return [context.payload.body];
+    },
+  }
 });
 
 function isVerficationCall(payload: Record<string, any>) {

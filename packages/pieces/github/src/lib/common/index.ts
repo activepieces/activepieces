@@ -3,26 +3,19 @@ import { HttpRequest, HttpMethod, AuthenticationType, httpClient } from "@active
 
 export const githubCommon = {
     baseUrl: "https://api.github.com",
-    authentication: Property.OAuth2({
-        displayName: "Authentication",
-        required: true,
-        authUrl: 'https://github.com/login/oauth/authorize',
-        tokenUrl: 'https://github.com/login/oauth/access_token',
-        scope: ['admin:repo_hook', 'admin:org', 'repo'],
-    }),
     repositoryDropdown: Property.Dropdown<{ repo: string, owner: string }>({
         displayName: "Repository",
         refreshers: ['authentication'],
         required: true,
-        options: async (propsValue) => {
-            if (!propsValue['authentication']) {
+        options: async ({ auth, propsValue }) => {
+            if (!auth) {
                 return {
                     disabled: true,
                     options: [],
                     placeholder: "please authenticate first"
                 }
             }
-            const authProp: OAuth2PropertyValue = propsValue['authentication'] as OAuth2PropertyValue;
+            const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
             const repositories = await getUserRepo(authProp);
             return {
                 disabled: false,
