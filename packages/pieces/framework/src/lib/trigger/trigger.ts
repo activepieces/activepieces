@@ -16,7 +16,7 @@ type CreateTriggerParams<
   /**
    * A dummy parameter used to infer {@code PieceAuth} type
    */
-  auth: PieceAuth
+  auth?: PieceAuth
   trigger: {
     name: string
     displayName: string
