@@ -120,7 +120,12 @@ export const selectCurrentFlowFolderName = createSelector(
     return state.folder.displayName;
   }
 );
-
+const selectCurrentFlowFolderId = createSelector(selectFlowState, (state) => {
+  if (!state.folder) {
+    return 'NULL';
+  }
+  return state.folder.id;
+});
 export const selectCurrentFlowValidity = createSelector(
   selectCurrentFlow,
   (flow: Flow | undefined) => {
@@ -592,4 +597,5 @@ export const BuilderSelectors = {
   selectHasFlowBeenPublished,
   selectStepResultsAccordion,
   selectStepDisplayNameAndDfsIndexForIterationOutput,
+  selectCurrentFlowFolderId,
 };
