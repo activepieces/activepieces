@@ -1,28 +1,9 @@
 import { Property } from '@activepieces/pieces-framework';
-import { getFields, markdownDescription } from "./helper";
+import { getFields } from "./helper";
 import { httpClient, HttpMethod, HttpRequest } from "@activepieces/pieces-common";
 
 
 export const mauticCommon= {
-    authentication: Property.CustomAuth({
-        displayName: "Authentication",
-        description: markdownDescription,
-        props: {
-            base_url: Property.ShortText({
-                displayName: 'Base URL',
-                required: true,
-            }),
-            username: Property.ShortText({
-                displayName: 'Username',
-                required: true
-            }),
-            password: Property.SecretText({
-                displayName: 'Password',
-                required: true
-            })
-        },
-        required: true
-    }),
     contactFields: getFields("contact"),
     companyFields: getFields("company"),
     id: Property.ShortText({

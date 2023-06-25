@@ -103,13 +103,3 @@ export const getFields = (type:"contact"|"company") => Property.DynamicPropertie
         );
     },
 });
-
-// Constant Section
-export const markdownDescription = `
-Follow these steps:
-
-1. **Enter the Base URL:** Open your Mautic instance and copy the URL from the address bar. If your dashboard link is "https://mautic.ddev.site/s/dashboard", set your base URL as "https://mautic.ddev.site/".
-
-2. **Enable Basic Authentication:** Log in to Mautic, go to **Settings** > **Configuration** > **API Settings**, and ensure that Basic Authentication is enabled.
-
-`;
