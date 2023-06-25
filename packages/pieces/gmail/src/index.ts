@@ -1,5 +1,15 @@
-import { createPiece } from '@activepieces/pieces-framework';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { gmailSendEmailAction } from './lib/actions/send-email-action';
+
+export const gmailAuth = PieceAuth.OAuth2({
+    description: "",
+    displayName: 'Authentication',
+    authUrl: "https://accounts.google.com/o/oauth2/auth",
+    tokenUrl: "https://oauth2.googleapis.com/token",
+    required: true,
+    // TODO add https://www.googleapis.com/auth/gmail.readonly when we have the permission
+    scope: ["https://www.googleapis.com/auth/gmail.send"]
+})
 
 export const gmail = createPiece({
 	logoUrl: 'https://cdn.activepieces.com/pieces/gmail.png',
@@ -7,4 +17,5 @@ export const gmail = createPiece({
 	displayName: 'Gmail',
 	authors: ['AbdulTheActivePiecer', 'kanarelo'],
 	triggers: [],
+    auth: gmailAuth,
 });
