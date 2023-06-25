@@ -2,28 +2,20 @@ import { OAuth2PropertyValue, Property } from "@activepieces/pieces-framework";
 import { AuthenticationType, httpClient, HttpMessageBody, HttpMethod, HttpResponse } from "@activepieces/pieces-common";
 
 export const salesforcesCommon = {
-    authentication: Property.OAuth2({
-        displayName: "Authentication",
-        required: true,
-        description: "Authenticate with Salesforce Production",
-        authUrl: "https://login.salesforce.com/services/oauth2/authorize",
-        tokenUrl: "https://login.salesforce.com/services/oauth2/token",
-        scope: ["refresh_token+full"],
-    }),
     object: Property.Dropdown<string>({
         displayName: "Object",
         required: true,
         description: "Select the Object",
         refreshers: ['authentication'],
-        options: async (value) => {
-            if(value['authentication'] === undefined){
+        options: async ({ auth }) => {
+            if(auth === undefined){
                 return {
                     disabled: true,
                     placeholder: 'connect your account first',
                     options: [],
                 }
-            }   
-            const options = await getSalesforceObjects(value['authentication'] as OAuth2PropertyValue);
+            }
+            const options = await getSalesforceObjects(auth as OAuth2PropertyValue);
             return {
                 disabled: false,
                 options: options.body['sobjects'].map((object: any) => {
@@ -41,15 +33,15 @@ export const salesforcesCommon = {
         description: "Select the Field",
         required: true,
         refreshers: ['authentication', 'object'],
-        options: async (value) => {
-            if(value['authentication'] === undefined || !value['object']){
+        options: async ({ auth, propsValue }) => {
+            if(auth === undefined || !propsValue.object){
                 return {
                     disabled: true,
                     placeholder: 'connect your account first',
                     options: [],
                 }
-            }   
-            const options = await getSalesforceFields(value['authentication'] as OAuth2PropertyValue, value['object'] as string);
+            }
+            const options = await getSalesforceFields(auth as OAuth2PropertyValue, propsValue.object as string);
             return {
                 disabled: false,
                 options: options.body['fields'].map((field: any) => {
@@ -65,7 +57,7 @@ export const salesforcesCommon = {
 
 
 export async function callSalesforceApi<T extends HttpMessageBody>(method: HttpMethod,
-    authentication: OAuth2PropertyValue, 
+    authentication: OAuth2PropertyValue,
     url: string,
     body: Record<string,unknown> | undefined): Promise<HttpResponse<T>> {
     return await httpClient.sendRequest<T>({
@@ -80,7 +72,7 @@ export async function callSalesforceApi<T extends HttpMessageBody>(method: HttpM
 }
 
 export async function querySalesforceApi<T extends HttpMessageBody>(method: HttpMethod,
-    authentication: OAuth2PropertyValue, 
+    authentication: OAuth2PropertyValue,
     query: string): Promise<HttpResponse<T>> {
     return await httpClient.sendRequest<T>({
         method: method,
