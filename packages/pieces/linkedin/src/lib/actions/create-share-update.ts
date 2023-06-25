@@ -1,8 +1,7 @@
 import { createAction } from "@activepieces/pieces-framework";
 import { AuthenticationType, httpClient, HttpMethod, HttpRequest } from "@activepieces/pieces-common";
-import { Image, LinkedinJwtObject, linkedinCommon } from "../common";
-
-import jwtDecode from "jwt-decode";
+import { Image, linkedinCommon } from "../common";
+import jwt, { JwtPayload } from 'jsonwebtoken'
 
 export const createShareUpdate = createAction({
     name: "create_share_update",
@@ -21,7 +20,7 @@ export const createShareUpdate = createAction({
 
     run: async (context) => {
         const token = context.propsValue.authentication.data.id_token;
-        const decoded: LinkedinJwtObject = jwtDecode(token);
+        const decoded: JwtPayload = jwt.decode(token) as JwtPayload;
         const imageUrl = context.propsValue.imageUrl;
         const bodyConfig: {
             urn: string,

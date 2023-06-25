@@ -189,22 +189,6 @@ export const linkedinCommon = {
         return uploadData;
     },
 }
-
-export interface LinkedinJwtObject {
-    iss: string
-    aud: string
-    iat: number
-    exp: number
-    sub: string
-    name: string
-    given_name: string
-    family_name: string
-    picture: string
-    email: string
-    email_verified: string
-    locale: string
-}
-
 export interface UgcPost {
     author: string
     lifecycleState: string
