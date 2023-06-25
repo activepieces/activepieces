@@ -4,32 +4,18 @@ import { getBoards, getItems, mondayMakeRequest } from "./data";
 import { Board, BoardResponse, BoardType, Item, WorkspaceResponse } from "./types";
 
 export const mondayProps = {
-  authentication: Property.OAuth2({
-    displayName: "Authentication",
-    description: "OAuth2.0 Authentication",
-    authUrl: "https://auth.monday.com/oauth2/authorize",
-    tokenUrl: "https://auth.monday.com/oauth2/token",
-    required: true,
-    scope: [
-      'workspaces:read',
-      'boards:read',
-      'boards:write',
-      'updates:read',
-      'updates:write',
-    ]
-  }),
   workspace_id: (required = false) => Property.Dropdown({
     displayName: "Workspace",
     description: "The workspace's unique identifier.",
     required: required,
     defaultValue: 'main',
     refreshers: ['authentication'],
-    options: async ({ authentication }) => {
-      if (!authentication) return { disabled: true, placeholder: 'connect your account first', options: [] }
+    options: async ({ auth }) => {
+      if (!auth) return { disabled: true, placeholder: 'connect your account first', options: [] }
 
       const response: HttpResponse<WorkspaceResponse> =
         await mondayMakeRequest<WorkspaceResponse>(
-          (authentication as OAuth2PropertyValue).access_token,
+          (auth as OAuth2PropertyValue).access_token,
           `query { workspaces(limit:50) { id name } }`,
           HttpMethod.GET
         )
@@ -48,11 +34,12 @@ export const mondayProps = {
     description: "The board's unique identifier.",
     required: required,
     refreshers: refreshers,
-    options: async ({ authentication, workspace_id }) => {
-      if (!authentication) return { disabled: true, placeholder: 'connect your account first', options: [] }
+    options: async ({ auth, propsValue }) => {
+      const { workspace_id } = propsValue
+      if (!auth) return { disabled: true, placeholder: 'connect your account first', options: [] }
 
       const boards: Board[] = await getBoards(
-        (authentication as OAuth2PropertyValue).access_token,
+        (auth as OAuth2PropertyValue).access_token,
         workspace_id as string
       )
 
@@ -69,19 +56,20 @@ export const mondayProps = {
     displayName: 'Group',
     required: required,
     refreshers: ['authentication', 'board_id'],
-    options: async ({ authentication, board_id }) => {
-      if (!authentication)
+    options: async ({ auth, propsValue }) => {
+      const { board_id } = propsValue
+      if (!auth)
         return { disabled: true, placeholder: 'connect your account first', options: [] }
       if (!board_id)
         return { disabled: true, placeholder: 'Select a board first', options: [] }
 
       const response: HttpResponse<BoardResponse> = await mondayMakeRequest<BoardResponse>(
-        (authentication as OAuth2PropertyValue).access_token,
-        `query { 
+        (auth as OAuth2PropertyValue).access_token,
+        `query {
           boards(
-            ids: ${board_id}, 
+            ids: ${board_id},
             limit:50
-          ) 
+          )
           { groups { id title } } }
         `,
         HttpMethod.GET
@@ -106,14 +94,15 @@ export const mondayProps = {
     displayName: 'Item',
     required: required,
     refreshers: ['authentication', 'board_id'],
-    options: async ({ authentication, board_id }) => {
-      if (!authentication)
+    options: async ({ auth, propsValue }) => {
+      const { board_id } = propsValue
+      if (!auth)
         return { disabled: true, placeholder: 'connect your account first', options: [] }
       if (!board_id)
         return { disabled: true, placeholder: 'Select a board first', options: [] }
 
       const items: Item[] = await getItems({
-        access_token: (authentication as OAuth2PropertyValue).access_token,
+        access_token: (auth as OAuth2PropertyValue).access_token,
         board_id: board_id as string
       })
 
