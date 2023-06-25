@@ -709,3 +709,7 @@ mat-icon[data-mat-icon-name="custom_expand_less"]
   width: 10px;
   height: 10px;
 }
+.mat-mdc-dialog-content
+{
+  max-height: 1150px !important;
+}
