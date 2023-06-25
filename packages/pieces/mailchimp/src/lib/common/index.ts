@@ -2,22 +2,13 @@ import { Property, OAuth2PropertyValue } from "@activepieces/pieces-framework";
 import { HttpRequest, HttpMethod, httpClient } from "@activepieces/pieces-common";
 import mailchimp from "@mailchimp/mailchimp_marketing";
 
-export const mailChimpAuth = Property.OAuth2({
-  description: "",
-  displayName: 'Authentication',
-  authUrl: "https://login.mailchimp.com/oauth2/authorize",
-  tokenUrl: "https://login.mailchimp.com/oauth2/token",
-  required: true,
-  scope: []
-});
-
 export const mailChimpListIdDropdown = Property.Dropdown<string>({
   displayName: "Audience",
   refreshers: ["authentication"],
   description: "Audience you want to add the contact to",
   required: true,
-  options: async (propsValue) => {
-    if (!propsValue['authentication']) {
+  options: async ({ auth }) => {
+    if (!auth) {
       return {
         disabled: true,
         options: [],
@@ -25,7 +16,7 @@ export const mailChimpListIdDropdown = Property.Dropdown<string>({
       }
     }
 
-    const authProp = propsValue['authentication'] as OAuth2PropertyValue;
+    const authProp = auth as OAuth2PropertyValue;
     const listResponse = await getUserLists(authProp);
     const options = listResponse.lists.map(list => ({
       label: list.name,
