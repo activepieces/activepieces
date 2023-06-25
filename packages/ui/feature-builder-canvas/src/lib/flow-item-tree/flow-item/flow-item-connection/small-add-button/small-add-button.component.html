@@ -1,4 +1,4 @@
 <div class="add-button ap-cursor-pointer ap-absolute" tabindex="1"
-    [class.add-button-drop-indicator]="showDropzoneIndicator && (isInDraggingMode$ | async)" [style.top]="top"
-    [style.left]="left">
+    [class.add-button-drop-indicator]="showDropzoneIndicator && (isInDraggingMode$ | async) || (selectedAddBtnId$ | async) === addButtonId"
+    (click)="setSelectedAddBtnId()" [style.top]="top" [style.left]="left">
 </div>
