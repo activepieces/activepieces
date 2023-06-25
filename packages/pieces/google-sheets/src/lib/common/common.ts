@@ -3,27 +3,19 @@ import { httpClient, HttpMethod, AuthenticationType, HttpRequest } from "@active
 
 export const googleSheetsCommon = {
     baseUrl: "https://sheets.googleapis.com/v4/spreadsheets",
-    authentication: Property.OAuth2({
-        description: "",
-        displayName: 'Authentication',
-        authUrl: "https://accounts.google.com/o/oauth2/auth",
-        tokenUrl: "https://oauth2.googleapis.com/token",
-        required: true,
-        scope: ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive.readonly"]
-    }),
     spreadsheet_id: Property.Dropdown({
         displayName: "Spreadsheet",
         required: true,
         refreshers: ['authentication'],
-        options: async (propsValue) => {
-            if (!propsValue['authentication']) {
+        options: async ({ auth }) => {
+            if (!auth) {
                 return {
                     disabled: true,
                     options: [],
                     placeholder: 'Please authenticate first'
                 }
             }
-            const authProp: OAuth2PropertyValue = propsValue['authentication'] as OAuth2PropertyValue;
+            const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
             const spreadsheets = (await httpClient.sendRequest<{ files: { id: string, name: string }[] }>({
                 method: HttpMethod.GET,
                 url: `https://www.googleapis.com/drive/v3/files`,
@@ -50,15 +42,15 @@ export const googleSheetsCommon = {
         displayName: "Sheet",
         required: true,
         refreshers: ['authentication', 'spreadsheet_id'],
-        options: async (propsValue) => {
-            if (!propsValue['authentication'] || (propsValue['spreadsheet_id'] ?? '').toString().length === 0) {
+        options: async ({ auth, propsValue }) => {
+            if (!auth || (propsValue['spreadsheet_id'] ?? '').toString().length === 0) {
                 return {
                     disabled: true,
                     options: [],
                     placeholder: 'Please select a spreadsheet first'
                 }
             }
-            const authProp: OAuth2PropertyValue = propsValue['authentication'] as OAuth2PropertyValue;
+            const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
             const sheets = (await listSheetsName(authProp['access_token'], propsValue['spreadsheet_id'] as string));
             return {
                 disabled: false,
