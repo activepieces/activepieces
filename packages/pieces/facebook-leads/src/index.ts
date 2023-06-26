@@ -13,7 +13,7 @@ export const facebookLeads = createPiece({
     events: {
         parseAndReply: (context) => {
             const payload = context.payload;
-            if (payload.queryParams['hub.verify_token'] == 'testToken123') {
+            if (payload.queryParams['hub.verify_token'] == 'activepieces') {
                 return {
                     reply: {
                         body: payload.queryParams['hub.challenge'],
@@ -21,10 +21,10 @@ export const facebookLeads = createPiece({
                     }
                 };
             }
-            
             return { event: 'lead', identifierValue: payload.body.entry[0].changes[0].value.page_id }
         },
         verify: () => {
+            // TODO IMPLEMENT VALIDATION AFTER APP VERIFICATION
             return true;
         }
     }
