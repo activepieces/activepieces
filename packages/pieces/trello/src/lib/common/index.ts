@@ -1,37 +1,15 @@
 import { BasicAuthPropertyValue, Property } from '@activepieces/pieces-framework';
 import {httpClient, HttpRequest, HttpMethod } from '@activepieces/pieces-common';
-const markdownProperty = `
-To obtain your API key and token, follow these steps:
-
-1. Go to https://trello.com/app-key
-2. Copy **Personal Key** and enter it into the Trello API Key connection
-3. Click **generate a Token** in trello
-4. Copy the token and paste it into the Trello Token connection
-5. Your connection should now work!
-`
 
 export const trelloCommon = {
     baseUrl: "https://api.trello.com/1/",
-    authentication: Property.BasicAuth({
-        description: markdownProperty,
-        displayName: "Trello Connection",
-        required: true,
-        username: {
-            displayName: "API Key",
-            description: "Trello API Key",
-        },
-        password: {
-            displayName: "Token",
-            description: "Trello Token",
-        }
-    }),
     board_id: Property.Dropdown({
         displayName: 'Boards',
         description: 'List of boards',
         required: true,
         refreshers: ['authentication'],
-        options: async (propsValue) => {
-            if (propsValue['authentication'] === undefined) {
+        options: async ({ auth }) => {
+            if (auth === undefined) {
                 return {
                     disabled: true,
                     placeholder: 'connect your account first',
@@ -39,7 +17,7 @@ export const trelloCommon = {
                 };
             }
 
-            const basicAuthProperty = propsValue['authentication'] as BasicAuthPropertyValue;
+            const basicAuthProperty = auth as BasicAuthPropertyValue;
             const user = await getAuthorisedUser(basicAuthProperty.username, basicAuthProperty.password);
             const boards = await listBoards(basicAuthProperty.username, basicAuthProperty.password, user['id']);
 
@@ -56,8 +34,8 @@ export const trelloCommon = {
         description: 'Get lists from a board',
         required: true,
         refreshers: ['authentication', 'board_id'],
-        options: async (propsValue) => {
-            if (propsValue['authentication'] === undefined || propsValue['board_id'] === undefined) {
+        options: async ({ auth, propsValue }) => {
+            if (auth === undefined || propsValue['board_id'] === undefined) {
                 return {
                     disabled: true,
                     placeholder: 'connect your account first and select board',
@@ -65,7 +43,7 @@ export const trelloCommon = {
                 };
             }
 
-            const basicAuthProperty = propsValue['authentication'] as BasicAuthPropertyValue;
+            const basicAuthProperty = auth as BasicAuthPropertyValue;
             const lists = await listBoardLists(basicAuthProperty.username, basicAuthProperty.password, propsValue['board_id'] as string);
 
             console.log(lists);

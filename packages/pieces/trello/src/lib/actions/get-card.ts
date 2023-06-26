@@ -1,34 +1,37 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {httpClient, HttpRequest, HttpMethod } from '@activepieces/pieces-common';
+import { httpClient, HttpRequest, HttpMethod } from '@activepieces/pieces-common';
 import { trelloCommon } from '../common';
 import { TrelloCard } from '../common/props/card';
+import { trelloAuth } from '../..';
 
 export const getCard = createAction({
-    name: 'get_card',
-    displayName: 'Get Card',
-    description: 'Get a card in Trello',
-    props: {
-        authentication: trelloCommon.authentication,
-        cardId: Property.ShortText({
-            description: 'The card ID',
-            displayName: 'Card ID',
-            required: true,
-        }),
-    },
+    auth: trelloAuth,
+    action: {
+        name: 'get_card',
+        displayName: 'Get Card',
+        description: 'Get a card in Trello',
+        props: {
+            cardId: Property.ShortText({
+                description: 'The card ID',
+                displayName: 'Card ID',
+                required: true,
+            }),
+        },
 
-    async run(context) {
-        const request: HttpRequest = {
-            method: HttpMethod.GET,
-            url: `${trelloCommon.baseUrl}cards/` +
-                context.propsValue['cardId']
-                + `?key=` + context.propsValue.authentication.username
-                + `&token=` + context.propsValue.authentication.password,
-            headers: {
-                Accept: 'application/json'
-            },
-            body: {},
-            queryParams: {},
-        };
-        return (await httpClient.sendRequest<TrelloCard>(request)).body;
-    },
+        async run(context) {
+            const request: HttpRequest = {
+                method: HttpMethod.GET,
+                url: `${trelloCommon.baseUrl}cards/` +
+                    context.propsValue['cardId']
+                    + `?key=` + context.auth.username
+                    + `&token=` + context.auth.password,
+                headers: {
+                    Accept: 'application/json'
+                },
+                body: {},
+                queryParams: {},
+            };
+            return (await httpClient.sendRequest<TrelloCard>(request)).body;
+        },
+    }
 });
