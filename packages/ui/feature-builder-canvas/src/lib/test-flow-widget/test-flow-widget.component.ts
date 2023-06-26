@@ -102,7 +102,7 @@ export class TestFlowWidgetComponent implements OnInit {
 
   testFlowButtonClicked(flow: Flow) {
     const realSampleData =
-      flow.version.trigger.settings.inputUiInfo.currentSelectedData;
+      flow.version.trigger.settings.inputUiInfo.currentSelectedData || {};
     this.executeTest$ = this.executeTest(flow, realSampleData);
   }
 
