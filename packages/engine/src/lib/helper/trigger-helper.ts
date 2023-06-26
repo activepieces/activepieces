@@ -66,17 +66,12 @@ export const triggerHelper = {
     switch (params.hookType) {
       case TriggerHookType.ON_DISABLE:
         await trigger.onDisable(context);
-        return {
-          scheduleOptions: {
-            cronExpression: ''
-          },
-          listeners: []
-        }
+        return {}
       case TriggerHookType.ON_ENABLE:
         await trigger.onEnable(context);
         return {
           listeners: appListeners,
-          scheduleOptions: scheduleOptions
+          scheduleOptions: trigger.type === TriggerStrategy.POLLING ? scheduleOptions : undefined,
         }
       case TriggerHookType.TEST:
         try {

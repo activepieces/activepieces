@@ -40,9 +40,9 @@
       "url": "pieces"
     },
     {
-      "name": "Contributing",
+      "name": "Developers",
       "icon": "code",
-      "url": "contributing"
+      "url": "developers"
     },
     {
       "name": "Discord",
@@ -52,10 +52,9 @@
   ],
   "navigation": [
     {
-      "group": "Overview",
+      "group": "Introduction",
       "pages": [
-        "getting-started/introduction",
-        "getting-started/quickstart"
+        "getting-started/introduction"
       ]
     },
     {
@@ -105,6 +104,7 @@
         "pieces/apps/hackernews",
         "pieces/apps/http",
         "pieces/apps/hubspot",
+        "pieces/apps/instagram-business",
         "pieces/apps/intercom",
         "pieces/apps/jotform",
         "pieces/apps/kizeo-forms",
@@ -125,6 +125,7 @@
         "pieces/apps/postgres",
         "pieces/apps/posthog",
         "pieces/apps/pushover",
+        "pieces/apps/resend",
         "pieces/apps/rss",
         "pieces/apps/salesforce",
         "pieces/apps/schedule",
@@ -170,64 +171,77 @@
       ]
     },
     {
-      "group": "Installing",
+      "group": "Self Host",
       "pages": [
-        "install/overview",
-        "install/docker",
-        "install/easypanel",
+        {
+          "group": "Install Options",
+          "icon": "server",
+          "pages": [
+            "install/options/overview",
+            "install/options/docker",
+            "install/options/easypanel"
+          ]
+        },
         "install/configurations",
         "install/breaking-changes"
       ]
     },
     {
-      "group": "Building Flows",
+      "group": "Building Flow",
       "pages": [
-        "building-flows/overview",
-        "building-flows/triggers",
+        "building-flows/building-flow",
         "building-flows/passing-data",
+        "building-flows/publishing-flow",
         "building-flows/debugging"
       ]
     },
     {
       "group": "Getting Started",
       "pages": [
-        "contributing/overview"
-      ]
-    },
-    {
-      "group": "Development Setup",
-      "pages": [
-        "contributing/development-setup/getting-started",
-        "contributing/development-setup/codespaces",
-        "contributing/development-setup/local",
-        "contributing/development-setup/dev-container"
+        "developers/overview"
       ]
     },
     {
       "group": "Tutorials",
       "pages": [
-        "contributing/building-pieces/create-action",
-        "contributing/building-pieces/triggers",
-        "contributing/building-pieces/create-polling-trigger",
-        "contributing/building-pieces/create-webhook-trigger",
-        "contributing/building-pieces/publish-piece",
-        "contributing/building-pieces/examples"
+        {
+          "group": "Development Setup",
+          "icon": "circle-1",
+          "pages": [
+            "developers/development-setup/getting-started",
+            "developers/development-setup/codespaces",
+            "developers/development-setup/local",
+            "developers/development-setup/dev-container"
+          ]
+        },
+        "developers/building-pieces/create-action",
+        {
+          "group": "Create Triggers",
+          "icon": "circle-3",
+          "pages": [
+            "developers/building-pieces/triggers/overview",
+            "developers/building-pieces/triggers/create-polling-trigger",
+            "developers/building-pieces/triggers/create-webhook-trigger"
+          ]
+        },
+        "developers/building-pieces/publish-piece"
       ]
     },
     {
       "group": "Piece Reference",
       "pages": [
-        "contributing/piece-reference/properties",
-        "contributing/piece-reference/flow-hooks",
-        "contributing/piece-reference/persistent-storage"
+        "developers/piece-reference/properties",
+        "developers/piece-reference/flow-control",
+        "developers/piece-reference/persistent-storage",
+        "developers/piece-reference/examples"
       ]
     },
     {
       "group": "Worker Architecture",
       "pages": [
-        "contributing/architecture/repo-structure",
-        "contributing/architecture/flow-worker",
-        "contributing/architecture/code-worker"
+        "developers/architecture/repo-structure",
+        "developers/architecture/flow-worker",
+        "developers/architecture/code-worker"
       ]
     },
     {

@@ -32,7 +32,11 @@ import { RightSideBarType } from '../../model/enums/right-side-bar-type.enum';
 import { LeftSideBarType } from '../../model/enums/left-side-bar-type.enum';
 import { NO_PROPS } from '../../model/canvas-state';
 import { CollectionBuilderService } from '../../service/collection-builder.service';
-import { FlowService, environment } from '@activepieces/ui/common';
+import {
+  BuilderAutocompleteMentionsDropdownService,
+  FlowService,
+  environment,
+} from '@activepieces/ui/common';
 import { canvasActions } from '../builder/canvas/canvas.action';
 import { ViewModeActions } from '../builder/viewmode/view-mode.action';
 import { ViewModeEnum } from '../../model';
@@ -152,6 +156,12 @@ export class FlowsEffects {
         this.store.select(BuilderSelectors.selectCurrentStep),
         this.store.select(BuilderSelectors.selectCurrentFlowRun),
       ]),
+      tap(() => {
+        this.builderAutocompleteService.currentAutocompleteInputId$.next(null);
+        this.builderAutocompleteService.currentAutoCompleteInputContainer$.next(
+          null
+        );
+      }),
       switchMap(([{ stepName }, step, run]) => {
         if (step) {
           switch (step.type) {
@@ -340,6 +350,7 @@ export class FlowsEffects {
     private flowService: FlowService,
     private store: Store,
     private actions$: Actions,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private builderAutocompleteService: BuilderAutocompleteMentionsDropdownService
   ) {}
 }

@@ -107,7 +107,7 @@ const consumeRepeatingJob = async (job: Job<RepeatingJobData, void>): Promise<vo
     catch (e) {
         if (e instanceof ActivepiecesError && e.error.code === ErrorCode.TASK_QUOTA_EXCEEDED) {
             logger.info(`[repeatableJobConsumer] removing job.id=${job.name} run out of flow quota`)
-            await flowInstanceService.delete({ projectId: data.projectId, flowId: data.flowId })
+            await flowInstanceService.update({ projectId: data.projectId, flowId: data.flowId, status: FlowInstanceStatus.DISABLED })
         }
         else {
             captureException(e)

@@ -18,7 +18,7 @@ import { appEventRoutingService } from '../app-event-routing/app-event-routing.s
 import { isNil } from 'lodash'
 import { LATEST_JOB_DATA_SCHEMA_VERSION } from '../workers/flow-worker/job-data'
 import { pieceMetadataService } from '../pieces/piece-metadata-service'
-import { logger } from './logger'
+import { captureException, logger } from './logger'
 
 export const triggerUtils = {
     async executeTrigger(params: ExecuteTrigger): Promise<unknown[]> {
@@ -69,7 +69,7 @@ export const triggerUtils = {
             return null
         }
 
-        return await enablePieceTrigger({
+        return enablePieceTrigger({
             projectId,
             flowVersion,
             simulate,
@@ -168,7 +168,11 @@ const enablePieceTrigger = async (params: EnableOrDisableParams) => {
         case TriggerStrategy.WEBHOOK:
             break
         case TriggerStrategy.POLLING: {
-            const { scheduleOptions } = engineHelperResponse.result
+            const scheduleOptions = engineHelperResponse.result.scheduleOptions
+            if(isNil(scheduleOptions)){
+                captureException(new Error('ScheduleOptions can\'t be null in engine response when trigger is polling'))
+                return null
+            }
             await flowQueue.add({
                 id: flowVersion.id,
                 type: JobType.REPEATING,

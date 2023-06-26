@@ -88,6 +88,10 @@
       ],
       "@activepieces/piece-http": ["packages/pieces/http/src/index.ts"],
       "@activepieces/piece-hubspot": ["packages/pieces/hubspot/src/index.ts"],
+      "@activepieces/piece-imap": ["packages/pieces/imap/src/index.ts"],
+      "@activepieces/piece-instagram-business": [
+        "packages/pieces/instagram-business/src/index.ts"
+      ],
       "@activepieces/piece-intercom": ["packages/pieces/intercom/src/index.ts"],
       "@activepieces/piece-jotform": ["packages/pieces/jotform/src/index.ts"],
       "@activepieces/piece-kizeo-forms": [
@@ -112,6 +116,7 @@
       "@activepieces/piece-ntfy": ["packages/pieces/ntfy/src/index.ts"],
       "@activepieces/piece-openai": ["packages/pieces/openai/src/index.ts"],
       "@activepieces/piece-pastebin": ["packages/pieces/pastebin/src/index.ts"],
+      "@activepieces/piece-pastefy": ["packages/pieces/pastefy/src/index.ts"],
       "@activepieces/piece-pipedrive": [
         "packages/pieces/pipedrive/src/index.ts"
       ],
@@ -119,6 +124,7 @@
       "@activepieces/piece-posthog": ["packages/pieces/posthog/src/index.ts"],
       "@activepieces/piece-pushover": ["packages/pieces/pushover/src/index.ts"],
       "@activepieces/piece-rss": ["packages/pieces/rss/src/index.ts"],
+      "@activepieces/piece-salsa": ["packages/pieces/salsa/src/index.ts"],
       "@activepieces/piece-salesforce": [
         "packages/pieces/salesforce/src/index.ts"
       ],

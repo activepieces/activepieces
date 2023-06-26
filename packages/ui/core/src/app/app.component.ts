@@ -17,7 +17,11 @@ import {
   FlowService,
 } from '@activepieces/ui/common';
 import { compareVersions } from 'compare-versions';
-import { ApFlagId, FlowOperationType } from '@activepieces/shared';
+import {
+  ApFlagId,
+  FlowOperationType,
+  TelemetryEventName,
+} from '@activepieces/shared';
 import { TelemetryService } from '@activepieces/ui/common';
 import { AuthenticationService, fadeInUp400ms } from '@activepieces/ui/common';
 import { MatDialog } from '@angular/material/dialog';
@@ -128,7 +132,15 @@ export class AppComponent implements OnInit {
     this.importTemplate$ = this.builderService.importTemplate$
       .asObservable()
       .pipe(
-        tap(() => {
+        tap((res) => {
+          this.telemetryService.capture({
+            name: TelemetryEventName.FLOW_IMPORTED,
+            payload: {
+              id: res.template.id,
+              name: res.template.name,
+              location: 'Inside the builder after creation',
+            },
+          });
           this.loading$.next(true);
         }),
         switchMap((res) => {
@@ -165,6 +177,18 @@ export class AppComponent implements OnInit {
       'search',
       this.domSanitizer.bypassSecurityTrustResourceUrl(
         '../assets/img/custom/search.svg'
+      )
+    );
+    this.maticonRegistry.addSvgIcon(
+      'custom_expand_less',
+      this.domSanitizer.bypassSecurityTrustResourceUrl(
+        '../assets/img/custom/expand_less.svg'
+      )
+    );
+    this.maticonRegistry.addSvgIcon(
+      'custom_expand_more',
+      this.domSanitizer.bypassSecurityTrustResourceUrl(
+        '../assets/img/custom/expand_more.svg'
       )
     );
   }

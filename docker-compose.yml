@@ -4,7 +4,8 @@ services:
     image: activepieces/activepieces:0.3.17
     container_name: activepieces
     restart: unless-stopped
-    privileged: true
+    ## Enable the following line if you already use AP_EXECUTION_MODE with SANDBOXED or old activepieces, checking the breaking change documentation for more info.
+    ## privileged: true
     ports:
       - '8080:80'
     depends_on:

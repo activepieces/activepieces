@@ -7,11 +7,9 @@ import {
   Flow,
   FlowRun,
   FlowVersionState,
-  StepOutput,
   flowHelper,
 } from '@activepieces/shared';
 import { ViewModeEnum } from '../../model/enums/view-mode.enum';
-
 import { FlowItemsDetailsState } from '../../model/flow-items-details-state.model';
 import { ActionType, TriggerType } from '@activepieces/shared';
 import { FlowItem } from '../../model/flow-item';
@@ -27,6 +25,7 @@ import {
   corePieceIconUrl,
 } from '@activepieces/ui/common';
 import { FlowInstanceState } from './flow-instance/flow-instance.reducer';
+import { StepRunResult } from '../../utils/stepRunResult';
 
 export const BUILDER_STATE_NAME = 'builderState';
 
@@ -121,7 +120,12 @@ export const selectCurrentFlowFolderName = createSelector(
     return state.folder.displayName;
   }
 );
-
+const selectCurrentFlowFolderId = createSelector(selectFlowState, (state) => {
+  if (!state.folder) {
+    return 'NULL';
+  }
+  return state.folder.id;
+});
 export const selectCurrentFlowValidity = createSelector(
   selectCurrentFlow,
   (flow: Flow | undefined) => {
@@ -235,6 +239,30 @@ export const selectCurrentFlowRunStatus = createSelector(
     return run.status;
   }
 );
+const selectStepDisplayNameAndDfsIndexForIterationOutput = (
+  iteration: Pick<StepRunResult, 'stepName' | 'output'>[]
+) => {
+  return createSelector(selectCurrentFlow, (flow) => {
+    const steps = flowHelper.getAllSteps(flow.version.trigger);
+    const results: StepRunResult[] = [];
+    steps.forEach((s) => {
+      const iterationStep = iteration.find((its) => its.stepName === s.name);
+      const stepIndex = FlowStructureUtil.findStepIndex(
+        flow.version.trigger,
+        s.name
+      );
+      if (iterationStep) {
+        results.push({
+          output: iterationStep.output,
+          stepName: s.name,
+          displayName: s.displayName,
+          index: stepIndex,
+        });
+      }
+    });
+    return results;
+  });
+};
 const selectStepResultsAccordion = createSelector(
   selectCurrentFlow,
   selectCurrentFlowRun,
@@ -243,19 +271,22 @@ const selectStepResultsAccordion = createSelector(
       return [];
     }
     const steps = flowHelper.getAllSteps(flow.version.trigger);
-    const results: {
-      result: StepOutput;
-      stepName: string;
-    }[] = [];
+    const results: StepRunResult[] = [];
     const executionState = run.executionOutput?.executionState;
     if (!executionState) {
       return [];
     }
     steps.forEach((s) => {
+      const stepIndex = FlowStructureUtil.findStepIndex(
+        flow.version.trigger,
+        s.name
+      );
       if (executionState?.steps[s.name]) {
         results.push({
-          result: executionState.steps[s.name],
+          output: executionState.steps[s.name],
           stepName: s.name,
+          displayName: s.displayName,
+          index: stepIndex,
         });
       }
     });
@@ -403,16 +434,6 @@ const selectAppConnectionsDropdownOptions = createSelector(
   }
 );
 
-const selectAllFlowSteps = createSelector(
-  selectCurrentFlow,
-  (flow: Flow | undefined) => {
-    if (flow && flow.version) {
-      return FlowStructureUtil.traverseAllSteps(flow.version.trigger, false);
-    }
-    return [];
-  }
-);
-
 const selectAppConnectionsForMentionsDropdown = createSelector(
   selectAllAppConnections,
   (connections: AppConnection[]) => {
@@ -428,19 +449,19 @@ const selectAppConnectionsForMentionsDropdown = createSelector(
 
 const selectAllStepsForMentionsDropdown = createSelector(
   selectCurrentStep,
-  selectCurrentFlow,
+  selectShownFlowVersion,
   selectAllFlowItemsDetails,
   (
     currentStep,
-    flow,
+    flowVersion,
     flowItemDetails
   ): (MentionListItem & { step: FlowItem })[] => {
-    if (!currentStep || !flow || !flow.version || !flow.version.trigger) {
+    if (!currentStep || !flowVersion || !flowVersion.trigger) {
       return [];
     }
     const path = FlowStructureUtil.findPathToStep(
       currentStep,
-      flow?.version?.trigger
+      flowVersion?.trigger
     );
     return path.map((s) => {
       return {
@@ -512,18 +533,41 @@ const selectCurrentStepPieceVersionAndName = createSelector(
 );
 const selectStepLogoUrl = (stepName: string) => {
   return createSelector(
-    selectAllFlowSteps,
+    selectCurrentFlow,
     selectAllFlowItemsDetails,
-    (steps, flowItemsDetails) => {
-      const step = steps.find((s) => s.name === stepName);
+    (flow, flowItemsDetails) => {
+      const step = flowHelper
+        .getAllSteps(flow?.version?.trigger)
+        .find((s: FlowItem) => s.name === stepName);
       if (!step) {
-        return 'assets/img/custom/piece/branch_mention.png';
+        throw new Error(`Couldn't find the step ${stepName}`);
       }
       const logoUrl = findStepLogoUrlForMentions(step, flowItemsDetails);
       return logoUrl;
     }
   );
 };
+const selectLastClickedAddBtnId = createSelector(selectCanvasState, (state) => {
+  return state.clickedAddBtnId;
+});
+
+const selectFlowTriggerIsTested = createSelector(selectCurrentFlow, (flow) => {
+  if (
+    (flow.version.trigger.type === TriggerType.PIECE &&
+      flow.version.trigger.settings.pieceName === CORE_SCHEDULE) ||
+    flow.version.trigger.settings.pieceName === 'schedule'
+  ) {
+    return true;
+  }
+  switch (flow.version.trigger.type) {
+    case TriggerType.EMPTY:
+      return false;
+    case TriggerType.WEBHOOK:
+      return !!flow.version.trigger.settings.inputUiInfo.currentSelectedData;
+    case TriggerType.PIECE:
+      return !!flow.version.trigger.settings.inputUiInfo.currentSelectedData;
+  }
+});
 export const BuilderSelectors = {
   selectReadOnly,
   selectViewMode,
@@ -552,7 +596,6 @@ export const BuilderSelectors = {
   selectAppConnectionsDropdownOptions,
   selectFlowItemDetailsForCustomPiecesTriggers,
   selectAllAppConnections,
-  selectAllFlowSteps,
   selectAllStepsForMentionsDropdown,
   selectAppConnectionsForMentionsDropdown,
   selectStepLogoUrl,
@@ -574,4 +617,8 @@ export const BuilderSelectors = {
   selectPublishedFlowVersion,
   selectHasFlowBeenPublished,
   selectStepResultsAccordion,
+  selectStepDisplayNameAndDfsIndexForIterationOutput,
+  selectLastClickedAddBtnId,
+  selectCurrentFlowFolderId,
+  selectFlowTriggerIsTested,
 };
