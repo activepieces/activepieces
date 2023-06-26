@@ -73,6 +73,9 @@
       "@activepieces/piece-google-contacts": [
         "packages/pieces/google-contacts/src/index.ts"
       ],
+      "@activepieces/piece-google-docs": [
+        "packages/pieces/google-docs/src/index.ts"
+      ],
       "@activepieces/piece-google-drive": [
         "packages/pieces/google-drive/src/index.ts"
       ],
