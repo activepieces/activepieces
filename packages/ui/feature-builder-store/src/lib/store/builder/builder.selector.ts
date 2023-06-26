@@ -547,6 +547,9 @@ const selectStepLogoUrl = (stepName: string) => {
     }
   );
 };
+const selectLastClickedAddBtnId = createSelector(selectCanvasState, (state) => {
+  return state.clickedAddBtnId;
+});
 
 const selectFlowTriggerIsTested = createSelector(selectCurrentFlow, (flow) => {
   if (
@@ -615,6 +618,7 @@ export const BuilderSelectors = {
   selectHasFlowBeenPublished,
   selectStepResultsAccordion,
   selectStepDisplayNameAndDfsIndexForIterationOutput,
+  selectLastClickedAddBtnId,
   selectCurrentFlowFolderId,
   selectFlowTriggerIsTested,
 };
