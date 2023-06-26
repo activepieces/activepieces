@@ -1,11 +1,24 @@
 
-import { createPiece } from "@activepieces/pieces-framework";
+import { PieceAuth, Property, createPiece } from "@activepieces/pieces-framework";
 import { textToImage } from "./lib/actions/text-to-image";
+
+export const stabilityAiAuth = PieceAuth.CustomAuth({
+  displayName: 'Authentication',
+  props: {
+    api_key: Property.ShortText({
+      displayName: 'StabilityAI API Key',
+      required: true,
+      description: 'The api key of Stability AI',
+    }),
+  },
+  required: true,
+})
 
 export const stabilityAi = createPiece({
   displayName: "Stability AI",
   logoUrl: "https://cdn.activepieces.com/pieces/stability-ai.png",
   authors: ["Willianwg"],
+  auth: stabilityAiAuth,
   actions: [textToImage],
   triggers: [],
 });
