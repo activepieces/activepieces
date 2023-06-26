@@ -230,7 +230,8 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
                 const emptyDropdownState: DropdownState<unknown> = {
                   options: [],
                   disabled: true,
-                  placeholder: `No ${property.displayName} Available`,
+                  placeholder:
+                    res.placeholder ?? `No ${property.displayName} Available`,
                 };
                 return emptyDropdownState;
               }
@@ -240,7 +241,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
               return of({
                 options: [],
                 disabled: true,
-                placeholder: 'unknown server erro happend, check console',
+                placeholder: 'unknown server error happened, check console',
               });
             })
           );
