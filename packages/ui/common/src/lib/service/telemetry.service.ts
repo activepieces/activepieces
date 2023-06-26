@@ -1,8 +1,13 @@
 import { Injectable } from '@angular/core';
 import posthog from 'posthog-js';
-import { ApEnvironment, ApFlagId, User } from '@activepieces/shared';
+import {
+  ApEnvironment,
+  ApFlagId,
+  TelemetryEvent,
+  User,
+} from '@activepieces/shared';
 import { FlagService } from '../service/flag.service';
-import { Observable, map } from 'rxjs';
+import { Observable, map, take } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -30,6 +35,17 @@ export class TelemetryService {
         }
       });
     }
+  }
+
+  capture(event: TelemetryEvent) {
+    this.flagService
+      .getAllFlags()
+      .pipe(take(1))
+      .subscribe((flags) => {
+        if (flags[ApFlagId.TELEMETRY_ENABLED] === true) {
+          posthog.capture(event.name, event.payload);
+        }
+      });
   }
 
   isFeatureEnabled(feature: string): Observable<boolean> {

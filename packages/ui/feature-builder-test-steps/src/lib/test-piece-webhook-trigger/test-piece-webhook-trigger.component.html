@@ -15,7 +15,7 @@
                     [disabled]="(isValid$ | async) === false || (isSaving$ | async) === true">Test
                     Trigger </ap-button>
             </div>
-            <div>
+            <div class="ap-typography-subtitle-2 ap-text-description">
                 Or
             </div>
             <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium" (buttonClicked)="useMockData()"
@@ -26,7 +26,8 @@
             <div class="ap-flex ap-items-center">
                 <div class="ap-min-h-[48px] ap-gap-2  ap-flex ap-items-center">
                     <svg-icon src="assets/img/custom/success-step-result.svg"
-                        [svgStyle]="{ width: '21px', height: '20px' }" matTooltip="Step succeeded"></svg-icon> Tested
+                        [svgStyle]="{ width: '21px', height: '20px' }" matTooltip="Step succeeded"></svg-icon>
+                    Tested
                     Successfully
                 </div>
                 <div class="ap-flex-grow">

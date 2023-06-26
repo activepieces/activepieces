@@ -1,13 +1,13 @@
 import { Injectable } from '@angular/core';
 import { Actions, concatLatestFrom, createEffect, ofType } from '@ngrx/effects';
-import { map, switchMap, tap } from 'rxjs/operators';
+import { filter, map, switchMap, tap } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { BuilderActions } from '../builder.action';
 import { canvasActions } from './canvas.action';
 import { EMPTY, of } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { BuilderSelectors } from '../builder.selector';
-import { LeftSideBarType } from '../../../model';
+import { LeftSideBarType, RightSideBarType } from '../../../model';
 import { RunDetailsService } from '../../../service/run-details.service';
 
 @Injectable()
@@ -20,6 +20,23 @@ export class CanvasEffects {
           displayedFlowVersion: action.flow.version,
           run: action.run,
         });
+      })
+    );
+  });
+  clearAddBtnIdOnClosingRightSidebar$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(canvasActions.setRightSidebar),
+      filter((action) => action.sidebarType === RightSideBarType.NONE),
+      switchMap(() => {
+        return of(canvasActions.clearAddButtonId());
+      })
+    );
+  });
+  clearAddBtnIdOnStepSelection$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(canvasActions.selectStepByName),
+      switchMap(() => {
+        return of(canvasActions.clearAddButtonId());
       })
     );
   });
