@@ -53,6 +53,3 @@ packages/backend/.env
 
 # produced by backend tests
 .npm-cache
-
-# Next.js
-.next
