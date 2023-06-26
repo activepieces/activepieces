@@ -9,15 +9,18 @@ import { AppEventRouting } from './app-event-routing.entity'
 import { slack } from '@activepieces/piece-slack'
 import { square } from '@activepieces/piece-square'
 import { Piece } from '@activepieces/pieces-framework'
+import { facebookLeads } from '@activepieces/piece-facebook-leads'
 
-// TODO CLEAN UP
 const appWebhooks: Record<string, Piece> = {
     slack: slack,
     square: square,
+    'facebook-leads': facebookLeads,
 }
+
 const pieceNames: Record<string, string> = {
     slack: '@activepieces/piece-slack',
     square: '@activepieces/piece-square',
+    'facebook-leads': '@activepieces/piece-facebook-leads',
 }
 
 export const appEventRoutingModule = async (app: FastifyInstance) => {
