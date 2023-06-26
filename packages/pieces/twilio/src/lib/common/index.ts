@@ -2,26 +2,13 @@ import { Property, BasicAuthPropertyValue } from "@activepieces/pieces-framework
 import { HttpMethod, HttpMessageBody, httpClient, AuthenticationType } from "@activepieces/pieces-common";
 
 export const twilioCommon = {
-    authentication: Property.BasicAuth({
-        description: 'The authentication to use to connect to Twilio',
-        displayName: 'Authentication',
-        required: true,
-        username: {
-            displayName: 'Account SID',
-            description: 'The account SID to use to connect to Twilio',
-        },
-        password: {
-            displayName: 'Auth token',
-            description: 'The auth token to use to connect to Twilio',
-        }
-    }),
     phone_number: Property.Dropdown({
         description: 'The phone number to send the message from',
         displayName: 'From',
         required: true,
         refreshers: ['authentication'],
-        options: async (propsValue) => {
-            if (!propsValue['authentication']) {
+        options: async ({ auth }) => {
+            if (!auth) {
                 return {
                     disabled: true,
                     placeholder: 'connect your account first',
@@ -29,7 +16,7 @@ export const twilioCommon = {
                 };
             }
 
-            const basicAuthProperty = propsValue['authentication'] as BasicAuthPropertyValue;
+            const basicAuthProperty = auth as BasicAuthPropertyValue;
             const response = await callTwilioApi<{ incoming_phone_numbers: { phone_number: string, friendly_name: string }[] }>(HttpMethod.GET, 'IncomingPhoneNumbers.json', {
                 account_sid: basicAuthProperty.username,
                 auth_token: basicAuthProperty.password
