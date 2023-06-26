@@ -47,14 +47,15 @@ import {
 import {
   jsonValidator,
   fadeInUp400ms,
-  ActionMetaService,
+  PieceMetadataService,
+  InsertMentionOperation,
 } from '@activepieces/ui/common';
 import {
   BuilderSelectors,
   CodeService,
   ConnectionDropdownItem,
 } from '@activepieces/ui/feature-builder-store';
-import { InsertMentionOperation } from '../interpolating-text-form-control/utils';
+
 import { InterpolatingTextFormControlComponent } from '../interpolating-text-form-control/interpolating-text-form-control.component';
 import { PiecePropertiesFormValue } from '../models/piece-properties-form-value';
 import { AddEditConnectionButtonComponent } from '@activepieces/ui/feature-connections';
@@ -128,7 +129,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
 
   constructor(
     private fb: UntypedFormBuilder,
-    private actionMetaDataService: ActionMetaService,
+    private actionMetaDataService: PieceMetadataService,
     private store: Store,
     private codeService: CodeService,
     private cd: ChangeDetectorRef
@@ -178,7 +179,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
         this.requiredProperties[pk] = this.properties[pk];
       } else {
         this.allOptionalProperties[pk] = this.properties[pk];
-        if (propertiesValues[pk]) {
+        if (propertiesValues[pk] !== undefined) {
           this.selectedOptionalProperties[pk] = this.properties[pk];
         }
       }
@@ -416,7 +417,6 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
         );
       }
     });
-
     return controls;
   }
   getControl(configKey: string) {
@@ -450,7 +450,8 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
         new UntypedFormControl(
           property.defaultValue
             ? JSON.stringify(property.defaultValue, null, 2)
-            : undefined
+            : '',
+          [jsonValidator]
         )
       );
     }

@@ -36,9 +36,9 @@ import {
 import { PiecePropertiesFormValue } from '@activepieces/ui/feature-builder-form-controls';
 import { PieceActionInputFormSchema } from '../../input-forms-schema';
 import {
-  ActionMetaService,
   fadeInUp400ms,
   isOverflown,
+  PieceMetadataService,
 } from '@activepieces/ui/common';
 import {
   BuilderSelectors,
@@ -121,7 +121,7 @@ export class PieceActionInputFormComponent
   };
   constructor(
     private fb: UntypedFormBuilder,
-    private actionMetaDataService: ActionMetaService,
+    private pieceMetadataService: PieceMetadataService,
     private cd: ChangeDetectorRef,
     private store: Store
   ) {
@@ -165,7 +165,7 @@ export class PieceActionInputFormComponent
   }
 
   fetchActions(pieceName: string, pieceVersion: string) {
-    const pieceMetadata$ = this.actionMetaDataService.getPieceMetadata(
+    const pieceMetadata$ = this.pieceMetadataService.getPieceMetadata(
       pieceName,
       pieceVersion
     );

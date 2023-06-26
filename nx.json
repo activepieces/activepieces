@@ -41,7 +41,7 @@
       "!{projectRoot}/**/*.spec.[jt]s",
       "!{projectRoot}/karma.conf.js"
     ],
-    "sharedGlobals": []
+    "sharedGlobals": ["{workspaceRoot}/babel.config.json"]
   },
   "workspaceLayout": {
     "appsDir": "packages",
@@ -60,6 +60,17 @@
     },
     "@nrwl/angular:component": {
       "style": "scss"
+    },
+    "@nrwl/react": {
+      "application": {
+        "babel": true
+      }
+    },
+    "@nrwl/next": {
+      "application": {
+        "style": "css",
+        "linter": "eslint"
+      }
     }
   }
 }

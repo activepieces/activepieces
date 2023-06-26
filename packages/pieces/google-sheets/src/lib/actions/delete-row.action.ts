@@ -30,8 +30,7 @@ export const deleteRowAction = createAction({
             context.propsValue['authentication']['access_token'])
 
         return {
-            success: true,
-            body: response
-        };
+            deletedRow: context.propsValue.row_id,
+        }
     },
 });

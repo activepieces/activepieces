@@ -12,6 +12,8 @@ const config = {
 test('Test Send Slack message', async ({ page }) => {
 
   test.setTimeout(100000);
+  // Add cache-control header to force refresh without cache
+  await page.setExtraHTTPHeaders({ 'Cache-Control': 'no-cache' });
 
   await testSignIn(page, config);
 

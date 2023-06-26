@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { Store } from '@ngrx/store';
 import {
   BehaviorSubject,
+  delay,
   distinctUntilChanged,
   forkJoin,
   interval,
@@ -19,7 +20,7 @@ import { TriggerType } from '@activepieces/shared';
 import { FormControl } from '@angular/forms';
 import deepEqual from 'deep-equal';
 import { TestStepCoreComponent } from '../test-steps-core.component';
-import { ActionMetaService, TestStepService } from '@activepieces/ui/common';
+import { PieceMetadataService, TestStepService } from '@activepieces/ui/common';
 import {
   BuilderSelectors,
   FlowsActions,
@@ -37,7 +38,8 @@ export class TestPieceWebhookTriggerComponent extends TestStepCoreComponent {
   currentResults$: BehaviorSubject<TriggerHistoricalData[]>;
   testStep$: Observable<TriggerHistoricalData[]>;
   foundNewResult$: Subject<boolean> = new Subject();
-  loading = false;
+  testing = false;
+  savingMockData = false;
   selectedDataControl: FormControl<unknown> = new FormControl();
   saveNewSelectedData$: Observable<void>;
   initialHistoricalData$: Observable<TriggerHistoricalData[]>;
@@ -50,10 +52,12 @@ export class TestPieceWebhookTriggerComponent extends TestStepCoreComponent {
   isValid$: Observable<boolean>;
   deleteWebhookSimulation$: Observable<void>;
   lastTestDate$: Observable<string | undefined>;
+  useMockData$: Observable<void>;
+  test: Observable<unknown>;
   constructor(
     testStepService: TestStepService,
     store: Store,
-    private actionMetaService: ActionMetaService
+    private actionMetaService: PieceMetadataService
   ) {
     super(testStepService, store);
     this.initialObservables();
@@ -73,6 +77,7 @@ export class TestPieceWebhookTriggerComponent extends TestStepCoreComponent {
     this.initialHistoricalData$ = this.store
       .select(BuilderSelectors.selectCurrentFlow)
       .pipe(
+        take(1),
         switchMap((flow) => {
           if (flow && flow.id) {
             return this.testStepService.getTriggerEventsResults(
@@ -113,7 +118,7 @@ export class TestPieceWebhookTriggerComponent extends TestStepCoreComponent {
   }
 
   testStep() {
-    this.loading = true;
+    this.testing = true;
     this.testStep$ = this.store.select(BuilderSelectors.selectCurrentFlow).pipe(
       take(1),
       tap((flow) => {
@@ -149,14 +154,13 @@ export class TestPieceWebhookTriggerComponent extends TestStepCoreComponent {
         ];
 
         if (newResults.length > 0) {
-          this.loading = false;
+          this.testing = false;
           this.selectedDataControl.setValue(
             newResults[newResults.length - 1].payload
           );
           this.foundNewResult$.next(true);
           const resultsList = [...newResults, ...res.currentResults];
           this.currentResults$.next(resultsList);
-
           this.testStepService.elevateResizer$.next(true);
           return resultsList;
         }
@@ -193,7 +197,7 @@ export class TestPieceWebhookTriggerComponent extends TestStepCoreComponent {
     return formControlValue !== undefined && deepEqual(opt, formControlValue);
   };
   cancelTesting() {
-    this.loading = false;
+    this.testing = false;
     this.cancelTesting$.next(true);
     this.deleteWebhookSimulation$ = this.store
       .select(BuilderSelectors.selectCurrentFlow)
@@ -206,7 +210,7 @@ export class TestPieceWebhookTriggerComponent extends TestStepCoreComponent {
           }
           throw new Error('flow Id is null');
         }),
-        map((res) => {
+        map(() => {
           return void 0;
         })
       );
@@ -233,5 +237,56 @@ export class TestPieceWebhookTriggerComponent extends TestStepCoreComponent {
           return of(null);
         })
       );
+  }
+
+  useMockData() {
+    this.testing = true;
+    this.savingMockData = true;
+    this.testStep$ = this.store.select(BuilderSelectors.selectCurrentFlow).pipe(
+      take(1),
+      switchMap((flow) => {
+        return this.store.select(BuilderSelectors.selectCurrentStep).pipe(
+          take(1),
+          switchMap((step) => {
+            if (step && step.type === TriggerType.PIECE) {
+              return this.actionMetaService
+                .getPieceMetadata(
+                  step.settings.pieceName,
+                  step.settings.pieceVersion
+                )
+                .pipe(
+                  map((piece) => {
+                    return piece.triggers[step.settings.triggerName].sampleData;
+                  }),
+                  switchMap((mockdata) => {
+                    if (step && step.type === TriggerType.PIECE) {
+                      return this.testStepService
+                        .savePieceWebhookTriggerMockdata(flow.id, mockdata)
+                        .pipe(
+                          delay(1500),
+                          map((serverSavedMockdata) => [serverSavedMockdata]),
+                          tap((resultsList) => {
+                            this.currentResults$.next(resultsList);
+                            this.selectedDataControl.setValue(
+                              resultsList[0].payload
+                            );
+                            this.testStepService.elevateResizer$.next(true);
+                            this.testing = false;
+                            this.savingMockData = false;
+                          })
+                        );
+                    }
+                    return of([]);
+                  })
+                );
+            }
+            console.error(
+              'trying to use mock data for a trigger that is not a webhook piece tirgger'
+            );
+            return of([]);
+          })
+        );
+      })
+    );
   }
 }

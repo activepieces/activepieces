@@ -1,6 +1,12 @@
 import { createTrigger, Trigger, TriggerStrategy, Property} from "@activepieces/pieces-framework"
 import { httpClient, HttpRequest, HttpMethod } from '@activepieces/pieces-common';
 
+const markdown = `
+To obtain the API Key, please follow these steps:
+1. Go to https://app.cal.com/settings/developer/api-keys
+2. Generate an API Key and copy it.
+3. Paste the copied API Key.
+`
 export const registerWebhooks = ({
   name,
   description,
@@ -19,7 +25,7 @@ export const registerWebhooks = ({
     props: {
       api_key: Property.SecretText({
         displayName: 'API Key',
-        description: 'API Key provided by cal.com',
+        description: markdown,
         required: true
       })
     },
@@ -28,7 +34,7 @@ export const registerWebhooks = ({
     async onEnable(context) {
       const request: HttpRequest = {
         method: HttpMethod.POST,
-        url: `https://api.cal.com/v1/hooks`,
+        url: `https://api.cal.com/v1/webhooks`,
         body: {
           eventTriggers: [name],
           subscriberUrl: context.webhookUrl,
@@ -51,7 +57,7 @@ export const registerWebhooks = ({
       if (data != null) {
         const request: HttpRequest = {
           method: HttpMethod.DELETE,
-          url: `https://api.cal.com/v1/hooks/${data.id}`,
+          url: `https://api.cal.com/v1/webhooks/${data.id}`,
           queryParams: {
             apiKey: context.propsValue.api_key
           }

@@ -3,7 +3,7 @@ import { argv } from 'node:process'
 import { rm, writeFile } from 'node:fs/promises'
 import { getAvailablePieceNames } from './utils/get-available-piece-names'
 import { exec } from './utils/exec'
-import { readProjectJson, writeProjectJson } from './utils/files'
+import { readPackageJson, readProjectJson, writeProjectJson } from './utils/files'
 import chalk from 'chalk';
 
 const validatePieceName = async (pieceName: string) => {
@@ -51,13 +51,10 @@ const generateIndexTsFile = async (pieceName: string) => {
 
   const indexTemplate = `
 import { createPiece } from "@activepieces/pieces-framework";
-import packageJson from "../package.json";
 
 export const ${pieceNameCamelCase} = createPiece({
-  name: "${pieceName}",
   displayName: "${capitalizeFirstLetter(pieceName)}",
   logoUrl: "https://cdn.activepieces.com/pieces/${pieceName}.png",
-  version: packageJson.version,
   authors: [],
   actions: [],
   triggers: [],
@@ -81,6 +78,13 @@ const updateProjectJsonConfig = async (pieceName: string) => {
   await writeProjectJson(`packages/pieces/${pieceName}`, projectJson)
 }
 
+
+const updatePackageJsonConfig = async (pieceName: string) => {
+  const projectJson = await readPackageJson(`packages/pieces/${pieceName}`)
+  projectJson.keywords = ['activepieces'];
+  await writeProjectJson(`packages/pieces/${pieceName}`, projectJson)
+}
+
 const setupGeneratedLibrary = async (pieceName: string) => {
   await removeUnusedFiles(pieceName)
   await generateIndexTsFile(pieceName)
@@ -95,7 +99,6 @@ const main = async () => {
   await setupGeneratedLibrary(pieceName)
   console.log(chalk.green('✨  Done!'));
   console.log(chalk.yellow(`The piece has been generated at: packages/pieces/${pieceName}`));
-  console.log(chalk.blue("Don't forget to add the piece to the list of pieces in packages/pieces/apps/src/index.ts"));
 }
 
 main()

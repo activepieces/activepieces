@@ -72,6 +72,7 @@ export class TestCodeStepComponent extends TestStepCoreComponent {
       tap((result) => {
         this.saveTestResult(result);
         this.testing$.next(false);
+        this.testStepService.elevateResizer$.next(true);
       }),
       shareReplay(1)
     );
@@ -90,12 +91,11 @@ export class TestCodeStepComponent extends TestStepCoreComponent {
                 settings: {
                   ...step.settings,
                   inputUiInfo: {
-                    currentSelectedData:
-                      result.output || result.output
-                        ? result.output
-                        : result.output === undefined
-                        ? 'undefined'
-                        : JSON.stringify(result.output),
+                    currentSelectedData: result.output
+                      ? result.output
+                      : result.output === undefined
+                      ? 'undefined'
+                      : JSON.stringify(result.output),
                     lastTestDate: new Date().toString(),
                   },
                 },

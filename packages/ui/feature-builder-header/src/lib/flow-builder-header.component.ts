@@ -17,6 +17,7 @@ import {
   FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
 import { ApEdition, Flow, FlowInstance } from '@activepieces/shared';
+import { ImportFlowDialogueComponent } from './import-flow-dialogue/import-flow-dialogue.component';
 
 @Component({
   selector: 'app-flow-builder-header',
@@ -36,14 +37,15 @@ export class FlowBuilderHeaderComponent implements OnInit {
   folderDisplayName$: Observable<string>;
   duplicateFlow$: Observable<void>;
   showGuessFlowBtn$: Observable<boolean>;
-
+  openDashboardOnFolder$: Observable<string>;
   constructor(
     public dialogService: MatDialog,
     private store: Store,
     private router: Router,
     public collectionBuilderService: CollectionBuilderService,
     private flowService: FlowService,
-    private flagsService: FlagService
+    private flagsService: FlagService,
+    private matDialog: MatDialog
   ) {
     this.isGeneratingFlowComponentOpen$ = this.store.select(
       BuilderSelectors.selectIsGeneratingFlowComponentOpen
@@ -116,6 +118,10 @@ export class FlowBuilderHeaderComponent implements OnInit {
     );
   }
 
+  import() {
+    this.matDialog.open(ImportFlowDialogueComponent);
+  }
+
   deleteFlow(flow: Flow) {
     const dialogData: DeleteEntityDialogData = {
       deleteEntity$: this.flowService.delete(flow.id),
@@ -136,5 +142,20 @@ export class FlowBuilderHeaderComponent implements OnInit {
         return void 0;
       })
     );
+  }
+
+  openDashboardToFolder() {
+    this.openDashboardOnFolder$ = this.store
+      .select(BuilderSelectors.selectCurrentFlowFolderId)
+      .pipe(
+        take(1),
+        tap((folderId) => {
+          this.router.navigate(['/flows'], {
+            queryParams: {
+              folderId,
+            },
+          });
+        })
+      );
   }
 }

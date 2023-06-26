@@ -114,3 +114,7 @@ mat-drawer[position='start'] {
     width: 4px;
   }
 }
+
+.transition-ease{
+  transition: width 0.2s ease, height 0.2s ease;
+}

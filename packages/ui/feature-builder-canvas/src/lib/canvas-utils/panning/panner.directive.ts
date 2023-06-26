@@ -13,6 +13,15 @@ export class CanvasPannerDirective {
 
   @HostListener('mousedown', ['$event'])
   mouseDown(event: MouseEvent) {
+    if (event.target) {
+      const scrollingWithinDataInsertionPopup = document
+        .getElementById('mentionsDropdownContainer')
+        ?.contains(event.target as Node);
+      const mentionsList = document.getElementById('mentionsList');
+      if (scrollingWithinDataInsertionPopup && mentionsList !== null) {
+        return;
+      }
+    }
     if (event.which === 2 && !this.flowRendererService.draggingSubject.value) {
       this.pannerService.dragState.currentOffset.x = event.clientX;
       this.pannerService.dragState.currentOffset.y = event.clientY;
@@ -52,7 +61,16 @@ export class CanvasPannerDirective {
   }
   @HostListener('wheel', ['$event'])
   macPanning(event: WheelEvent) {
-    event.preventDefault();
+    if (event.target) {
+      const scrollingWithinDataInsertionPopup = document
+        .getElementById('mentionsDropdownContainer')
+        ?.contains(event.target as Node);
+      const mentionsList = document.getElementById('mentionsList');
+      if (scrollingWithinDataInsertionPopup && mentionsList !== null) {
+        return;
+      }
+    }
+
     if (!this.flowRendererService.draggingSubject.value) {
       this.pannerService.lastPanningOffset.x -= event.deltaX;
       this.pannerService.lastPanningOffset.y -= event.deltaY;

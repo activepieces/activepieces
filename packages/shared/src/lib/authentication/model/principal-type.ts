@@ -1,4 +1,5 @@
 export enum PrincipalType {
     USER = 'USER',
-    WORKER = 'WORKER'
+    WORKER = 'WORKER',
+    UNKNOWN = 'UNKNOWN'
 }

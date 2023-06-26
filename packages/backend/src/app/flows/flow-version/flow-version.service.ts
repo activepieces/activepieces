@@ -2,7 +2,6 @@ import { TSchema, Type } from '@sinclair/typebox'
 import { TypeCompiler } from '@sinclair/typebox/compiler'
 import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
 import {
-    Action,
     ActionType,
     apId,
     BranchActionSettingsWithValidation,
@@ -18,8 +17,6 @@ import {
     PieceActionSettings,
     PieceTriggerSettings,
     ProjectId,
-    StepLocationRelativeToParent,
-    Trigger,
     TriggerType,
 } from '@activepieces/shared'
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity'
@@ -48,7 +45,7 @@ export const flowVersionService = {
         switch (userOperation.type) {
             case FlowOperationType.IMPORT_FLOW:
             {
-                const actionsToRemove = flowHelper.getAllSteps(flowVersion.trigger).filter(step => flowHelper.isAction(step.type))
+                const actionsToRemove = flowHelper.getAllStepsAtFirstLevel(flowVersion.trigger).filter(step => flowHelper.isAction(step.type))
                 for (const step of actionsToRemove) {
                     operations.push({
                         type: FlowOperationType.DELETE_ACTION,
@@ -63,7 +60,7 @@ export const flowVersionService = {
                         type: FlowOperationType.UPDATE_TRIGGER,
                         request: trigger,
                     })
-                    operations.push(...getImportOperations(trigger))
+                    operations.push(...flowHelper.getImportOperations(trigger))
                 }
                 break
             }
@@ -140,106 +137,6 @@ export const flowVersionService = {
         }
         return await flowVersionRepo.save(flowVersion)
     },
-}
-
-function getImportOperations(step: Action | Trigger | undefined): (FlowOperationRequest)[] {
-    const steps: FlowOperationRequest[] = []
-    while (step) {
-        if (step.nextAction) {
-            steps.push({
-                type: FlowOperationType.ADD_ACTION,
-                request: {
-                    parentStep: step.name,
-                    action: keepBaseAction(step.nextAction),
-                },
-            })
-        }
-        if (step.type === ActionType.BRANCH) {
-            if (step.onFailureAction) {
-                steps.push({
-                    type: FlowOperationType.ADD_ACTION,
-                    request: {
-                        parentStep: step.name,
-                        stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_FALSE_BRANCH,
-                        action: keepBaseAction(step.onFailureAction),
-                    },
-                })
-                steps.push(...getImportOperations(step.onFailureAction))
-            }
-            if (step.onSuccessAction) {
-                steps.push({
-                    type: FlowOperationType.ADD_ACTION,
-                    request: {
-                        parentStep: step.name,
-                        stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_TRUE_BRANCH,
-                        action: keepBaseAction(step.onSuccessAction),
-                    },
-                })
-                steps.push(...getImportOperations(step.onSuccessAction))
-            }
-        }
-        if (step.type === ActionType.LOOP_ON_ITEMS && step.firstLoopAction) {
-            steps.push({
-                type: FlowOperationType.ADD_ACTION,
-                request: {
-                    parentStep: step.name,
-                    stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_LOOP,
-                    action: keepBaseAction(step.firstLoopAction),
-                },
-
-            })
-            steps.push(...getImportOperations(step.firstLoopAction))
-        }
-        step = step.nextAction
-    }
-    return steps
-}
-
-// It's better to use switch case, to enforce that all actions are covered
-// TODO this can be simplified
-function keepBaseAction(action: Action): Action {
-    const commonProps = {
-        name: action.name,
-        displayName: action.displayName,
-        valid: action.valid,
-    }
-    switch(action.type) {
-        case ActionType.BRANCH:
-            // PICK type and settings from action
-            return {
-                type: ActionType.BRANCH,
-                settings: action.settings,
-                ...commonProps,
-            }
-        case ActionType.LOOP_ON_ITEMS:
-            return {
-                type: ActionType.LOOP_ON_ITEMS,
-                settings: action.settings,
-                ...commonProps,
-            }
-        case ActionType.CODE:
-            return {
-                type: action.type,
-                settings: {
-                    ...action.settings,
-                    artifactPackagedId: undefined,
-                    artifactSourceId: undefined,
-                },
-                ...commonProps,
-            }
-        case ActionType.PIECE:
-            return {
-                type: action.type,
-                settings: action.settings,
-                ...commonProps,
-            }
-        case ActionType.MISSING:
-            return {
-                type: action.type,
-                settings: action.settings,
-                ...commonProps,
-            }
-    }
 }
 
 async function applySingleOperation(projectId: ProjectId, flowVersion: FlowVersion, operation: FlowOperationRequest): Promise<FlowVersion> {
@@ -337,7 +234,10 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
                     clonedRequest.request.action.valid = branchSettingsValidator.Check(clonedRequest.request.action.settings)
                     break
                 case ActionType.PIECE:
-                    clonedRequest.request.action.valid = await validateAction(clonedRequest.request.action.settings)
+                    clonedRequest.request.action.valid = await validateAction({
+                        settings: clonedRequest.request.action.settings,
+                        projectId: projectId,
+                    })
                     break
                 case ActionType.CODE: {
                     const codeSettings: CodeActionSettings = clonedRequest.request.action.settings
@@ -359,7 +259,10 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
                     clonedRequest.request.valid = branchSettingsValidator.Check(clonedRequest.request.settings)
                     break
                 case ActionType.PIECE:
-                    clonedRequest.request.valid = await validateAction(clonedRequest.request.settings)
+                    clonedRequest.request.valid = await validateAction({
+                        settings: clonedRequest.request.settings,
+                        projectId: projectId,
+                    })
                     break
                 case ActionType.CODE: {
                     const codeSettings: CodeActionSettings = clonedRequest.request.settings
@@ -390,7 +293,10 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
                     clonedRequest.request.valid = false
                     break
                 case TriggerType.PIECE:
-                    clonedRequest.request.valid = await validateTrigger(clonedRequest.request.settings)
+                    clonedRequest.request.valid = await validateTrigger({
+                        settings: clonedRequest.request.settings,
+                        projectId: projectId,
+                    })
                     break
                 default:
                     clonedRequest.request.valid = true
@@ -404,7 +310,8 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
 }
 
 
-async function validateAction(settings: PieceActionSettings) {
+async function validateAction({ projectId, settings }: { projectId: ProjectId, settings: PieceActionSettings }) {
+
     if (
         settings.pieceName === undefined ||
         settings.pieceVersion === undefined ||
@@ -415,21 +322,22 @@ async function validateAction(settings: PieceActionSettings) {
     }
 
     const piece = await pieceMetadataService.get({
+        projectId: projectId,
         name: settings.pieceName,
         version: settings.pieceVersion,
     })
 
-    if (piece === undefined) {
+    if (isNil(piece)) {
         return false
     }
     const action = piece.actions[settings.actionName]
-    if (action === undefined) {
+    if (isNil(action)) {
         return false
     }
     return validateProps(action.props, settings.input)
 }
 
-async function validateTrigger(settings: PieceTriggerSettings) {
+async function validateTrigger({ settings, projectId }: { settings: PieceTriggerSettings, projectId: ProjectId }) {
     if (
         settings.pieceName === undefined ||
         settings.pieceVersion === undefined ||
@@ -440,15 +348,16 @@ async function validateTrigger(settings: PieceTriggerSettings) {
     }
 
     const piece = await pieceMetadataService.get({
+        projectId: projectId,
         name: settings.pieceName,
         version: settings.pieceVersion,
     })
 
-    if (piece === undefined) {
+    if (isNil(piece)) {
         return false
     }
     const trigger = piece.triggers[settings.triggerName]
-    if (trigger === undefined) {
+    if (isNil(trigger)) {
         return false
     }
     return validateProps(trigger.props, settings.input)
@@ -549,8 +458,4 @@ async function uploadArtifact(projectId: ProjectId, codeSettings: CodeActionSett
         codeSettings.artifactPackagedId = undefined
     }
     return codeSettings
-}
-
-export const exportedFlowVersionTesting = {
-    getImportOperations,
 }

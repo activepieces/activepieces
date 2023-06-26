@@ -28,7 +28,6 @@
     <ng-container *ngTemplateOutlet="formFieldsTemplate;context:{$implicit:property, propertyIndex:i, formGroup:form}">
     </ng-container>
   </div>
-
 </form>
 
 <ng-template let-property let-propertyIndex="propertyIndex" #formFieldsTemplate let-formGroup="formGroup">
@@ -41,9 +40,12 @@
       </ng-container>
 
       <ng-template #checkboxInputTemplate>
-        <div class="ap-flex ap-mb-[20px] ap-mr-[5px]">
-          <mat-slide-toggle [formControlName]="property.key" color="primary"
-            [matTooltip]="property.value.description">{{property.value.displayName}}</mat-slide-toggle>
+        <div class="ap-flex ap-mb-[20px] ap-mr-[5px] ap-items-center ap-gap-2">
+
+          <mat-slide-toggle apTrackHover #slider="hoverTrackerDirective" [formControlName]="property.key"
+            color="primary" [matTooltip]="property.value.description">{{property.value.displayName}}</mat-slide-toggle>
+          <ng-container
+            *ngTemplateOutlet="removeOptionalPropertyIcon; context{$implicit:property, propertyUiContainer:slider}"></ng-container>
           <div class="ap-flex-grow"></div>
           <div class="ap-cursor-pointer">
             <ng-container
@@ -53,10 +55,10 @@
         </div>
       </ng-template>
       <ng-template #dynamicValueTemplate let-property>
-        <span class="ap-float-right ap-mb-1 ap-mr-1 ap-text-primary ap-cursor-pointer">
+        <div class="ap-flex ap-justify-end ap-mb-1 ap-mr-1 ap-text-primary">
           <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:property} ">
           </ng-container>
-        </span>
+        </div>
         <ng-container>
           <ng-container *ngTemplateOutlet="textInputTemplate;context:{$implicit:property, formGroup:formGroup}">
           </ng-container>
@@ -72,34 +74,43 @@
 
     <ng-container *ngSwitchCase="PropertyType.DROPDOWN">
       <div>
-        <span class="ap-float-right ap-mb-1 ap-mr-1 ap-text-primary ap-cursor-pointer">
-          <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:property} ">
+        <div class="ap-flex ap-justify-end ap-mb-1 ap-mr-1 ap-text-primary ">
+          <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:property}">
           </ng-container>
-        </span>
+        </div>
         <ng-container
           *ngTemplateOutlet="customizedInputs && customizedInputs[property.key]? textInputTemplate:dropdownInputTemplate ;context:{$implicit:property, formGroup:formGroup}">
         </ng-container>
         <ng-template #dropdownInputTemplate>
-          <mat-form-field class="ap-w-full" appearance="outline">
-            <mat-label> {{ (refreshableConfigsLoadingFlags$[property.key] | async)? 'Loading...' :
-              property.value.displayName
-              }}</mat-label>
-            <mat-select [formControlName]="property.key" [compareWith]="dropdownCompareWithFunction">
-              <ng-container *ngIf="dropdownOptionsObservables$[property.key]| async as state">
+          <div class="ap-relative">
+            <div class="ap-absolute -ap-left-[20px]"
+              [style.top]="dropdown._elementRef.nativeElement.clientHeight/2-15+'px'">
+              <ng-container
+                *ngTemplateOutlet="removeOptionalPropertyIcon; context{$implicit:property, propertyUiContainer:dropdownUiContainer}"></ng-container>
+            </div>
+            <mat-form-field class="ap-w-full" appearance="outline" #dropdown
+              #dropdownUiContainer="hoverTrackerDirective" apTrackHover>
+              <mat-label> {{ (refreshableConfigsLoadingFlags$[property.key] | async)? 'Loading...' :
+                property.value.displayName
+                }}</mat-label>
+              <mat-select [formControlName]="property.key" [compareWith]="dropdownCompareWithFunction">
+                <ng-container *ngIf="dropdownOptionsObservables$[property.key]| async as state">
 
-                <mat-option *ngFor="let opt of state.options" [value]="opt.value">
-                  {{opt.label}}
-                </mat-option>
-                <mat-option [disabled]="true"
-                  *ngIf="state.disabled && ((refreshableConfigsLoadingFlags$[property.key] | async) === false || !refreshableConfigsLoadingFlags$[property.key])">
-                  <div> {{state.placeholder}} </div>
-                </mat-option>
-              </ng-container>
-            </mat-select>
-            <mat-error *ngIf="formGroup.get(property.key)?.invalid">
-              {{property.value.displayName}} is required
-            </mat-error>
-          </mat-form-field>
+                  <mat-option *ngFor="let opt of state.options" [value]="opt.value">
+                    {{opt.label}}
+                  </mat-option>
+                  <mat-option [disabled]="true"
+                    *ngIf="state.disabled && ((refreshableConfigsLoadingFlags$[property.key] | async) === false || !refreshableConfigsLoadingFlags$[property.key])">
+                    <div> {{state.placeholder}} </div>
+                  </mat-option>
+                </ng-container>
+              </mat-select>
+              <mat-error *ngIf="formGroup.get(property.key)?.invalid">
+                {{property.value.displayName}} is required
+              </mat-error>
+            </mat-form-field>
+          </div>
+
         </ng-template>
 
       </div>
@@ -107,7 +118,7 @@
     </ng-container>
     <ng-container *ngSwitchCase="PropertyType.MULTI_SELECT_DROPDOWN">
       <div>
-        <span class="ap-float-right ap-mb-1 ap-mr-1 ap-text-primary ap-cursor-pointer">
+        <span class="ap-flex ap-justify-end ap-mb-1 ap-mr-1 ap-text-primary r">
           <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:property} ">
           </ng-container>
         </span>
@@ -115,35 +126,45 @@
           *ngTemplateOutlet="customizedInputs && customizedInputs[property.key]? textInputTemplate:multiDropdownInputTemplate ;context:{$implicit:property, formGroup:formGroup}">
         </ng-container>
         <ng-template #multiDropdownInputTemplate>
-          <mat-form-field class="ap-w-full" appearance="outline">
-            <mat-label> {{ (refreshableConfigsLoadingFlags$[property.key] | async)? 'Loading...' :
-              property.value.displayName
-              }}</mat-label>
-            <mat-select
-              [style.display]="((dropdownOptionsObservables$[property.key] | async) === undefined || (dropdownOptionsObservables$[property.key] | async) === null ||  (dropdownOptionsObservables$[property.key] | async)?.disabled === true)? 'none':'block' "
-              multiple [formControlName]="property.key" [compareWith]="dropdownCompareWithFunction">
-              <ng-container *ngIf="dropdownOptionsObservables$[property.key]| async as state">
+          <div class="ap-relative">
+            <div class="ap-absolute -ap-left-[20px]"
+              [style.top]="dropdown._elementRef.nativeElement.clientHeight/2-15+'px'">
 
-                <mat-option *ngFor="let opt of state.options" [value]="opt.value">
-                  {{opt.label}}
-                </mat-option>
-              </ng-container>
-            </mat-select>
-            <ng-container
-              *ngIf="!!(dropdownOptionsObservables$[property.key] | async) &&  (dropdownOptionsObservables$[property.key] | async)?.disabled === true; ">
-              <mat-select [formControlName]="property.key" [compareWith]="dropdownCompareWithFunction">
+              <ng-container
+                *ngTemplateOutlet="removeOptionalPropertyIcon; context{$implicit:property, propertyUiContainer:dropdownUiContainer}"></ng-container>
+            </div>
+            <mat-form-field class="ap-w-full" appearance="outline" #dropdown
+              #dropdownUiContainer="hoverTrackerDirective" apTrackHover>
+              <mat-label> {{ (refreshableConfigsLoadingFlags$[property.key] | async)? 'Loading...' :
+                property.value.displayName
+                }}</mat-label>
+              <mat-select
+                [style.display]="((dropdownOptionsObservables$[property.key] | async) === undefined || (dropdownOptionsObservables$[property.key] | async) === null ||  (dropdownOptionsObservables$[property.key] | async)?.disabled === true)? 'none':'block' "
+                multiple [formControlName]="property.key" [compareWith]="dropdownCompareWithFunction">
                 <ng-container *ngIf="dropdownOptionsObservables$[property.key]| async as state">
-                  <mat-option [disabled]="true"
-                    *ngIf="state.disabled && ((refreshableConfigsLoadingFlags$[property.key] | async) === false || !refreshableConfigsLoadingFlags$[property.key])">
-                    <div> {{state.placeholder}} </div>
+
+                  <mat-option *ngFor="let opt of state.options" [value]="opt.value">
+                    {{opt.label}}
                   </mat-option>
                 </ng-container>
               </mat-select>
-            </ng-container>
-            <mat-error *ngIf="formGroup.get(property.key)?.invalid">
-              {{property.value.displayName}} is required
-            </mat-error>
-          </mat-form-field>
+              <ng-container
+                *ngIf="!!(dropdownOptionsObservables$[property.key] | async) &&  (dropdownOptionsObservables$[property.key] | async)?.disabled === true; ">
+                <mat-select [formControlName]="property.key" [compareWith]="dropdownCompareWithFunction">
+                  <ng-container *ngIf="dropdownOptionsObservables$[property.key]| async as state">
+                    <mat-option [disabled]="true"
+                      *ngIf="state.disabled && ((refreshableConfigsLoadingFlags$[property.key] | async) === false || !refreshableConfigsLoadingFlags$[property.key])">
+                      <div> {{state.placeholder}} </div>
+                    </mat-option>
+                  </ng-container>
+                </mat-select>
+              </ng-container>
+              <mat-error *ngIf="formGroup.get(property.key)?.invalid">
+                {{property.value.displayName}} is required
+              </mat-error>
+            </mat-form-field>
+          </div>
+
         </ng-template>
 
       </div>
@@ -153,26 +174,34 @@
 
     <ng-container *ngSwitchCase="PropertyType.STATIC_DROPDOWN">
       <div>
-        <span class="ap-float-right ap-mb-1 ap-mr-1 ap-text-primary ap-cursor-pointer">
+        <div class="ap-mb-1 ap-mr-1 ap-text-primary ap-flex ap-justify-end">
           <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:property} ">
           </ng-container>
-        </span>
+        </div>
         <ng-container
           *ngTemplateOutlet="customizedInputs && customizedInputs[property.key]? textInputTemplate:staticDropdownInputTemplate ;context:{$implicit:property, formGroup:formGroup}">
         </ng-container>
         <ng-template #staticDropdownInputTemplate>
-          <mat-form-field class="ap-w-full" appearance="outline">
-            <mat-label> {{ property.value.displayName }} </mat-label>
-            <mat-select [matTooltip]="property.value.description" [formControlName]="property.key"
-              [compareWith]="dropdownCompareWithFunction">
-              <mat-option *ngFor="let opt of property.value.options.options" [value]="opt.value">
-                {{opt.label}}
-              </mat-option>
-            </mat-select>
-            <mat-error *ngIf="formGroup.get(property.key)?.invalid">
-              {{property.value.displayName}} is required
-            </mat-error>
-          </mat-form-field>
+          <div class="ap-relative">
+            <div class="ap-absolute -ap-left-[20px]"
+              [style.top]="dropdown._elementRef.nativeElement.clientHeight/2 -15 +'px'">
+              <ng-container
+                *ngTemplateOutlet="removeOptionalPropertyIcon; context{$implicit:property, propertyUiContainer:dropdownUiContainer}"></ng-container>
+            </div>
+            <mat-form-field class="ap-w-full" appearance="outline" apTrackHover
+              #dropdownUiContainer="hoverTrackerDirective" #dropdown>
+              <mat-label> {{ property.value.displayName }} </mat-label>
+              <mat-select [matTooltip]="property.value.description" [formControlName]="property.key"
+                [compareWith]="dropdownCompareWithFunction">
+                <mat-option *ngFor="let opt of property.value.options.options" [value]="opt.value">
+                  {{opt.label}}
+                </mat-option>
+              </mat-select>
+              <mat-error *ngIf="formGroup.get(property.key)?.invalid">
+                {{property.value.displayName}} is required
+              </mat-error>
+            </mat-form-field>
+          </div>
         </ng-template>
 
       </div>
@@ -181,7 +210,7 @@
 
     <ng-container *ngSwitchCase="PropertyType.STATIC_MULTI_SELECT_DROPDOWN">
       <div>
-        <span class="ap-float-right ap-mb-1 ap-mr-1 ap-text-primary ap-cursor-pointer">
+        <span class="ap-flex ap-justify-end ap-mb-1 ap-mr-1 ap-text-primary ">
           <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:property} ">
           </ng-container>
         </span>
@@ -189,25 +218,34 @@
           *ngTemplateOutlet="customizedInputs && customizedInputs[property.key]? textInputTemplate:staticMultiSelectDropdownInputTemplate ;context:{$implicit:property, formGroup:formGroup}">
         </ng-container>
         <ng-template #staticMultiSelectDropdownInputTemplate>
-          <mat-form-field class="ap-w-full" appearance="outline">
-            <mat-label> {{ property.value.displayName }} </mat-label>
-            <mat-select [matTooltip]="property.value.description" [formControlName]="property.key" multiple
-              [compareWith]="dropdownCompareWithFunction">
-              <mat-option *ngFor="let opt of property.value.options.options" [value]="opt.value">
-                {{opt.label}}
-              </mat-option>
-            </mat-select>
-            <mat-error *ngIf="formGroup.get(property.key)?.invalid">
-              {{property.value.displayName}} is required
-            </mat-error>
-          </mat-form-field>
+          <div class="ap-relative">
+            <div class="ap-absolute -ap-left-[20px]"
+              [style.top]="dropdown._elementRef.nativeElement.clientHeight/2 - 15 +'px'">
+              <ng-container
+                *ngTemplateOutlet="removeOptionalPropertyIcon; context{$implicit:property, propertyUiContainer:dropdownUiContainer}"></ng-container>
+            </div>
+            <mat-form-field #dropdown class="ap-w-full" appearance="outline"
+              #dropdownUiContainer="hoverTrackerDirective" apTrackHover>
+              <mat-label> {{ property.value.displayName }} </mat-label>
+              <mat-select [matTooltip]="property.value.description" [formControlName]="property.key" multiple
+                [compareWith]="dropdownCompareWithFunction">
+                <mat-option *ngFor="let opt of property.value.options.options" [value]="opt.value">
+                  {{opt.label}}
+                </mat-option>
+              </mat-select>
+              <mat-error *ngIf="formGroup.get(property.key)?.invalid">
+                {{property.value.displayName}} is required
+              </mat-error>
+            </mat-form-field>
+          </div>
+
         </ng-template>
       </div>
     </ng-container>
 
 
     <ng-container *ngSwitchCase="PropertyType.ARRAY">
-      <span class="ap-float-right ap-mb-1 ap-mr-1 ap-text-primary ap-cursor-pointer">
+      <span class="ap-flex ap-justify-end ap-mr-1 ap-text-primary">
         <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:property} ">
         </ng-container>
       </span>
@@ -216,16 +254,19 @@
       </ng-container>
 
       <ng-template #arrayInputTemplate>
-        <div [class.ap-mb-5]="form.disabled">
-          <div class="ap-mb-2 ap-pointer-events-none" [matTooltip]="property.value.description">
-            {{property.value.displayName}}</div>
-          <app-array-form-control [formControlName]="property.key"></app-array-form-control>
+        <div [class.ap-mb-5]="form.disabled" #hoverContainer="hoverTrackerDirective" apTrackHover>
+          <div class="ap-mb-2 ap-flex ap-gap-2 ap-items-center" [matTooltip]="property.value.description">
+            <div class="ap-cursor-pointer" (click)="array.focusFirstInput()">{{property.value.displayName}}
+            </div><ng-container
+              *ngTemplateOutlet="removeOptionalPropertyIcon; context{$implicit:property, propertyUiContainer:hoverContainer}"></ng-container>
+          </div>
+          <app-array-form-control #array [formControlName]="property.key"></app-array-form-control>
         </div>
       </ng-template>
 
     </ng-container>
     <ng-container *ngSwitchCase="PropertyType.OBJECT">
-      <span class="ap-float-right ap-mb-1 ap-mr-1 ap-text-primary ap-cursor-pointer">
+      <span class="ap-justify-end ap-flex ap-mb-1 ap-mr-1 ap-text-primary ">
         <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:property} ">
         </ng-container>
       </span>
@@ -235,10 +276,14 @@
       </ng-container>
 
       <ng-template #objectInputTemplate>
-        <div [class.ap-mb-5]="form.disabled">
-          <div class="ap-mb-2 ap-pointer-events-none" [matTooltip]="property.value.description">
-            {{property.value.displayName}}</div>
-          <app-dictonary-form-control [formControlName]="property.key"></app-dictonary-form-control>
+        <div [class.ap-mb-5]="form.disabled" #hoverContainer="hoverTrackerDirective" apTrackHover>
+          <div class="ap-mb-2 ap-flex ap-gap-2 ap-items-center" [matTooltip]="property.value.description">
+            <div class="ap-cursor-pointer" (click)="dictonary.focusFirstKeyInput()">{{property.value.displayName}}
+            </div>
+            <ng-container
+              *ngTemplateOutlet="removeOptionalPropertyIcon; context{$implicit:property, propertyUiContainer:hoverContainer}"></ng-container>
+          </div>
+          <app-dictonary-form-control #dictonary [formControlName]="property.key"></app-dictonary-form-control>
         </div>
       </ng-template>
 
@@ -247,12 +292,11 @@
 
     <ng-container
       *ngIf="property.value.type === PropertyType.OAUTH2 || property.value.type === PropertyType.SECRET_TEXT || property.value.type === PropertyType.BASIC_AUTH || property.value.type === PropertyType.CUSTOM_AUTH">
-      <div class="ap-flex">
-        <div class="ap-flex-grow"></div>
-        <div class="ap-cursor-pointer">
-          <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:property} ">
-          </ng-container>
-        </div>
+      <div class="ap-flex ap-justify-end">
+
+        <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:property} ">
+        </ng-container>
+
       </div>
 
       <ng-container
@@ -260,6 +304,11 @@
       </ng-container>
       <ng-template #connectionDropdownInputTemplate>
         <div class="ap-relative">
+          <div class="ap-absolute -ap-left-[20px]"
+            [style.top]="dropdown._elementRef.nativeElement.clientHeight/2 - 15+'px'">
+            <ng-container
+              *ngTemplateOutlet="removeOptionalPropertyIcon; context{$implicit:property, propertyUiContainer:dropdownUiContainer}"></ng-container>
+          </div>
           <app-add-edit-connection-button class="edit-selected-auth ap-z-40"
             *ngIf="formGroup.enabled && formGroup.get(property.key)!.value" btnSize="extraSmall"
             [isEditConnectionButton]="true" [authProperty]="property.value" [pieceName]="pieceName"
@@ -268,7 +317,8 @@
             (connectionPropertyValueChanged)="connectionValueChanged($event)" [triggerName]="actionOrTriggerName">
             Edit
           </app-add-edit-connection-button>
-          <mat-form-field class="ap-w-full" appearance="outline">
+          <mat-form-field class="ap-w-full" appearance="outline" #dropdown #dropdownUiContainer="hoverTrackerDirective"
+            apTrackHover>
             <mat-label> {{ property.value.displayName }} </mat-label>
             <mat-select [formControlName]="property.key" [compareWith]="dropdownCompareWithFunction">
               <mat-option *ngFor="let opt of ((allAuthConfigs$ | async)!| authConfigsForPiece:pieceName)"
@@ -307,12 +357,9 @@
 
     </ng-container>
     <ng-container *ngSwitchCase="PropertyType.JSON">
-      <div class="ap-flex">
-        <div class="ap-flex-grow"></div>
-        <span class="ap-mb-1 ap-mr-1 ap-text-primary ap-cursor-pointer">
-          <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:property} ">
-          </ng-container>
-        </span>
+      <div class="ap-flex ap-justify-end">
+        <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:property} ">
+        </ng-container>
       </div>
 
       <ng-container
@@ -321,10 +368,12 @@
 
       <ng-template #jsonInputTemplate>
         <div class="code-font-sm code-size-200 code-block" #interpolatingTextControlContainer
-          (click)="$event.stopImmediatePropagation()">
+          #hoverContainer="hoverTrackerDirective" apTrackHover (click)="$event.stopImmediatePropagation()">
           <div class="ap-py-2 ap-px-4 ap-flex bar-containing-beautify-button">
             <div class="ap-flex-grow">
-              <span class="ap-text-white">{{property.value.displayName}}</span>
+              <span class="ap-text-white ap-flex ap-gap-2 ap-items-center">{{property.value.displayName}} <ng-container
+                  *ngTemplateOutlet="removeOptionalPropertyIcon; context{$implicit:property, propertyUiContainer:hoverContainer, isWhite:true}"></ng-container>
+              </span>
             </div>
             <div>
               <svg-icon src="/assets/img/custom/beautify.svg" [svgStyle]="{width:'16px', height:'16px'}"
@@ -332,9 +381,10 @@
             </div>
           </div>
           <ngx-codemirror [formControlName]="property.key" #jsonControl [options]="editorOptions"
-            (focusChange)="$event? mentionsDropdown.showMenuSubject$.next(true): null"></ngx-codemirror>
-          <app-builder-autocomplete-mentions-dropdown #mentionsDropdown [container]="interpolatingTextControlContainer"
-            (addMention)="addMentionToJsonControl(jsonControl,$event)"></app-builder-autocomplete-mentions-dropdown>
+            (focusChange)="$event? handler.showMentionsDropdown(): null"></ngx-codemirror>
+          <app-builder-autocomplete-dropdown-handler #handler [container]="interpolatingTextControlContainer"
+            (mentionEmitted)="addMentionToJsonControl(jsonControl,$event)">
+          </app-builder-autocomplete-dropdown-handler>
         </div>
         <div *ngIf="getControl(property.key)!.invalid" class="ap-p-2">
           <p @fadeInUp *ngIf="getControl(property.key)!.hasError('required');else invalidJson"
@@ -354,7 +404,6 @@
       <ng-container *ngIf="(refreshableConfigsLoadingFlags$[property.key] | async) === false ||
         (refreshableConfigsLoadingFlags$[property.key] | async) === undefined ||
         (refreshableConfigsLoadingFlags$[property.key] | async) === null; else loading">
-
         <div class="ap-flex ap-flex-col ap-gap-2">
           <div *ngFor="let cp of (dynamicPropsObservables$[property.key] | async)| objectToArray; let i = index">
             <ng-container
@@ -386,31 +435,47 @@
 <ng-container *ngIf="configDropdownChanged$  | keyvalue"></ng-container>
 
 <ng-template #textInputTemplate let-property let-formGroup="formGroup">
-  <div [formGroup]="formGroup" #interpolatingTextComponentContainer (click)="$event.stopImmediatePropagation()">
-    <mat-form-field class="ap-w-full" appearance="outline"
-      (click)="isTriggerPieceForm?null: mentionsDropdown.showMenuSubject$.next(true)">
+
+  <div [formGroup]="formGroup" #interpolatingTextComponentContainer (click)="$event.stopImmediatePropagation()"
+    class="ap-relative" apTrackHover #textInputContainer="hoverTrackerDirective">
+    <div class="ap-absolute -ap-left-[20px]" [style.top]="textInput._elementRef.nativeElement.clientHeight/2-15+'px'">
+      <ng-container
+        *ngTemplateOutlet="removeOptionalPropertyIcon; context{$implicit:property, propertyUiContainer:textInputContainer}"></ng-container>
+    </div>
+    <mat-form-field class="ap-w-full" appearance="outline" #textInput
+      (click)="isTriggerPieceForm?null: handler.showMentionsDropdown()">
       <mat-label>{{property.value.displayName}}</mat-label>
       <app-interpolating-text-form-control #textControl [matTooltip]="property.value.description"
         [formControlName]="property.key" [attr.name]="property.key"
-        (editorFocused)="mentionsDropdown.showMenuSubject$.next(true)"
-        (keyup.escape)="mentionsDropdown.close()"></app-interpolating-text-form-control>
+        (editorFocused)="handler.showMentionsDropdown()"></app-interpolating-text-form-control>
       <mat-error *ngIf="formGroup.get(property.key)?.invalid">
         {{property.value.displayName}} is required
       </mat-error>
     </mat-form-field>
-    <app-builder-autocomplete-mentions-dropdown #mentionsDropdown (menuClosed)="textControl.focusEditor()"
-      [container]="interpolatingTextComponentContainer" marginTop="-20px"
-      (addMention)="addMention(textControl,$event)"></app-builder-autocomplete-mentions-dropdown>
+    <app-builder-autocomplete-dropdown-handler #handler [container]="interpolatingTextComponentContainer"
+      (mentionEmitted)="addMention(textControl,$event)">
+    </app-builder-autocomplete-dropdown-handler>
+
   </div>
 </ng-template>
 
 
 <ng-template #dynamicVariableIcon let-config>
-  <svg-icon [svgStyle]="{width:'22px', height:'22px'}" *ngIf="form.enabled" class="ap-mb-[3px]" apTrackHover
-    [class.!ap-opacity-100]="hoverTracker.isHovered" #hoverTracker="hoverTrackerDirective"
+  <svg-icon [svgStyle]="{width:'22px', height:'22px'}" *ngIf="form.enabled" class="ap-mb-[3px] ap-cursor-pointer"
+    apTrackHover [class.!ap-opacity-100]="hoverTracker.isHovered" #hoverTracker="hoverTrackerDirective"
     [class.ap-opacity-40]="customizedInputs && !customizedInputs[config.key]" src="assets/img/custom/variable.svg"
     matTooltip="Dynamic Value" (click)="toggleCustomizedInputFlag(config.key)">
   </svg-icon>
 </ng-template>
 
 <ng-container *ngIf="setDefaultValue$ | async"></ng-container>
+
+
+<ng-template #removeOptionalPropertyIcon let-property let-propertyUiContainer="propertyUiContainer"
+  let-isWhite="isWhite">
+  <svg-icon [matTooltip]="'Remove ' + property.value.displayName" (click)="removeConfig(property.key)"
+    src="/assets/img/custom/close.svg" apTrackHover #removeIcon="hoverTrackerDirective"
+    *ngIf="!property.value.required && form.enabled" class="ap-w-[13px] ap-h-[13px] !ap-cursor-pointer ap-mt-[1px]"
+    [class.ap-fill-white]="isWhite" [class.ap-opacity-0]="!removeIcon.isHovered && !propertyUiContainer.isHovered"
+    [applyClass]="true"></svg-icon>
+</ng-template>

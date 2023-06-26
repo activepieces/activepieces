@@ -1,4 +1,4 @@
-import { AppConnectionValue, ExecutionType, PauseMetadata, ScheduleOptions, StopResponse, TriggerPayload } from "@activepieces/shared";
+import { AppConnectionValue, ExecutionType, PauseMetadata, StopResponse, TriggerPayload } from "@activepieces/shared";
 import { TriggerStrategy } from "./trigger/trigger";
 
 export type TriggerHookContext<T, S extends TriggerStrategy> =
@@ -11,7 +11,10 @@ export type TriggerHookContext<T, S extends TriggerStrategy> =
         store: Store
     } : S extends TriggerStrategy.POLLING ? {
         propsValue: T,
-        setSchedule(schedule: ScheduleOptions): void,
+        setSchedule(schedule: {
+            cronExpression: string,
+            timezone?: string
+        }): void,
         store: Store
     } : {
         webhookUrl: string,

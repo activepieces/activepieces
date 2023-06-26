@@ -21,6 +21,8 @@ import { EffectsModule } from '@ngrx/effects';
 import { FoldersEffects } from './store/folders/folders.effects';
 import { RenameFolderDialogComponent } from './pages/flows-table/rename-folder-dialog/rename-folder-dialog.component';
 import { UiFeatureTemplatesModule } from '@activepieces/ui/feature-templates';
+import { CommunityPiecesTableComponent } from './pages/community-pieces-table/community-pieces-table.component';
+import { InstallCommunityPieceModalComponent } from './pages/community-pieces-table/install-community-piece/install-community-piece-modal.component';
 
 @NgModule({
   imports: [
@@ -32,6 +34,7 @@ import { UiFeatureTemplatesModule } from '@activepieces/ui/feature-templates';
     UiFeatureTemplatesModule,
   ],
   declarations: [
+    InstallCommunityPieceModalComponent,
     DashboardContainerComponent,
     SidenavRoutesListComponent,
     RunsTableComponent,
@@ -40,6 +43,7 @@ import { UiFeatureTemplatesModule } from '@activepieces/ui/feature-templates';
     PageTitleComponent,
     ConnectionsTableComponent,
     FlowsTableTitleComponent,
+    CommunityPiecesTableComponent,
     FoldersListComponent,
     NewFolderDialogComponent,
     MoveFlowToFolderDialogComponent,

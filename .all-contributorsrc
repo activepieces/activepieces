@@ -319,6 +319,51 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "VrajGohil",
+      "name": "Vraj Gohil",
+      "avatar_url": "https://avatars.githubusercontent.com/u/40790016?v=4",
+      "profile": "https://certopus.com",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "BastienMe",
+      "name": "BastienMe",
+      "avatar_url": "https://avatars.githubusercontent.com/u/71411115?v=4",
+      "profile": "https://github.com/BastienMe",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "SFoskett",
+      "name": "Stephen Foskett",
+      "avatar_url": "https://avatars.githubusercontent.com/u/8627862?v=4",
+      "profile": "http://blog.fosketts.net",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "asuri0n",
+      "name": "Nathan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/15729117?v=4",
+      "profile": "http://ganapati.fr",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "mnatanek",
+      "name": "Marcin Natanek",
+      "avatar_url": "https://avatars.githubusercontent.com/u/4056319?v=4",
+      "profile": "https://www.n-soft.pl",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

@@ -7,7 +7,7 @@ import {
   Output,
 } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { combineLatest, map, Observable, of, Subject } from 'rxjs';
+import { combineLatest, map, Observable, of, Subject, tap } from 'rxjs';
 import { ActionType, PieceAction, PieceTrigger } from '@activepieces/shared';
 import {
   FIRST_LEVEL_PADDING_IN_MENTIONS_LIST,
@@ -53,7 +53,7 @@ export class PieceStepMentionItemComponent implements OnInit {
   }>;
   fetching$: Subject<boolean> = new Subject();
   noSampleDataNote$: Observable<string>;
-
+  search$: Observable<string>;
   constructor(
     private store: Store,
     private mentionsTreeCache: MentionsTreeCacheService
@@ -65,7 +65,11 @@ export class PieceStepMentionItemComponent implements OnInit {
         children: cachedResult?.children || [],
         value: cachedResult?.value,
       });
-
+      this.search$ = this.mentionsTreeCache.listSearchBarObs$.pipe(
+        tap((res) => {
+          this.expandSample = !!res;
+        })
+      );
       this.sampleData$ = combineLatest({
         stepTree: of({
           children: cachedResult.children,

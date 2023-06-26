@@ -1,6 +1,5 @@
 
 import { createPiece } from "@activepieces/pieces-framework";
-import packageJson from "../package.json";
 import { getProductById } from "./lib/actions/Product/get-product-by-id";
 import { createProduct } from "./lib/actions/Product/create-product";
 import { updateProduct } from "./lib/actions/Product/update-product";
@@ -19,10 +18,8 @@ import { getOrderById } from "./lib/actions/Order/get-order-by-id";
 import { getOrderList } from "./lib/actions/Order/get-order-list";
 
 export const vtex = createPiece({
-  name: "vtex",
   displayName: "VTEX",
   logoUrl: "https://cdn.activepieces.com/pieces/vtex.png",
-  version: packageJson.version,
   authors: ["Willianwg"],
   actions: [
     getProductById, createProduct, updateProduct, getBrandList, getBrandById, createBrand, updateBrand, deleteBrand,
