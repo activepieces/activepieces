@@ -8,6 +8,7 @@ export const findRowsAction = createAction({
     props: {
         authentication: googleSheetsCommon.authentication,
         spreadsheet_id: googleSheetsCommon.spreadsheet_id,
+        include_team_drives: googleSheetsCommon.include_team_drives,
         sheet_id: googleSheetsCommon.sheet_id,
         column_name: Property.ShortText({
             displayName: 'Column Name',
