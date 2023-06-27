@@ -174,7 +174,8 @@ async function getValues(spreadsheetId: string, accessToken: string, sheetId: nu
         authentication: {
             type: AuthenticationType.BEARER_TOKEN,
             token: accessToken,
-        }
+        },
+        queryParams: {}
     };
     const response = await httpClient.sendRequest<{ values: [string[]][] }>(request);
     if (response.body.values === undefined) return [];

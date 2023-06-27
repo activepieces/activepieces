@@ -1,4 +1,4 @@
-import { Equal, IsNull, LessThanOrEqual, MoreThanOrEqual } from 'typeorm'
+import { Equal, IsNull, LessThan, LessThanOrEqual, MoreThanOrEqual } from 'typeorm'
 import { databaseConnection } from '../../database/database-connection'
 import { PieceMetadataEntity, PieceMetadataSchema } from '../piece-metadata-entity'
 import { GetParams, ListParams, PieceMetadataService } from './piece-metadata-service'
@@ -6,6 +6,7 @@ import { PieceMetadata, PieceMetadataSummary } from '@activepieces/pieces-framew
 import { isNil, isNull } from 'lodash'
 import { ActivepiecesError, ErrorCode, apId } from '@activepieces/shared'
 import { AllPiecesStats, pieceStatsService } from './piece-stats-service'
+import * as semver from 'semver'
 
 const repo = databaseConnection.getRepository(PieceMetadataEntity)
 
@@ -56,18 +57,18 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
         },
 
         async get({ name, version, projectId }: GetParams): Promise<PieceMetadata> {
-            const pieceMetadataEntity = await repo.findOneBy([
+            const pieceMetadataEntity = await repo.createQueryBuilder().where([
                 {
                     name,
-                    version,
+                    version: findSearchOperation(version),
                     projectId: Equal(projectId),
                 },
                 {
                     name,
-                    version,
+                    version: findSearchOperation(version),
                     projectId: IsNull(),
                 },
-            ])
+            ]).distinctOn(['name']).orderBy({ name: 'ASC', version: 'DESC' }).getOne()
 
             if (isNil(pieceMetadataEntity)) {
                 throw new ActivepiecesError({
@@ -87,7 +88,7 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
                 version: pieceMetadata.version,
                 projectId: projectId ?? IsNull(),
             })
-            if(!isNull(existingMetadata)) {
+            if (!isNull(existingMetadata)) {
                 throw new ActivepiecesError({
                     code: ErrorCode.VALIDATION,
                     params: {
@@ -102,12 +103,12 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
             })
         },
 
-        async delete({projectId, id}): Promise<void> {
+        async delete({ projectId, id }): Promise<void> {
             const existingMetadata = await repo.findOneBy({
                 id,
                 projectId: projectId ?? IsNull(),
             })
-            if(isNull(existingMetadata)) {
+            if (isNull(existingMetadata)) {
                 throw new ActivepiecesError({
                     code: ErrorCode.ENTITY_NOT_FOUND,
                     params: {
@@ -124,5 +125,20 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
         async stats(): Promise<AllPiecesStats> {
             return await pieceStatsService.get()
         },
+    }
+
+    function findSearchOperation(version: string) {
+        if (version.startsWith('^')) {
+            return LessThan(increaseMajorVersion(version.substring(1)))
+        }
+        return Equal(version)
+    }
+
+    function increaseMajorVersion(version: string): string {
+        const incrementedVersion = semver.inc(version, 'major')
+        if (isNil(incrementedVersion)) {
+            throw new Error(`Failed to increase major version ${version}`)
+        }
+        return incrementedVersion
     }
 }

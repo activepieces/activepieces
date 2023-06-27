@@ -1,0 +1,34 @@
+---
+title: 'Piece Versioning'
+icon: 'code-compare'
+description: 'Learn how to version your pieces'
+---
+
+Pieces are npm packages and follows **semantic versioning**.
+
+## Semantic Versioning
+
+The version number consists of three numbers: `MAJOR.MINOR.PATCH`, where:
+
+- **MAJOR** It should be incremented when there are breaking changes to the piece.
+- **MINOR** It should be incremented for new features or functionality that is compatible with the previous version.
+- **PATCH** It should be incremented for bug fixes and small changes that do not introduce new features or break backward compatibility.
+
+## Engine
+The engine will always try to use latest **major** version when the user selected the piece.
+
+## Examples
+<Tip>
+when you make a change, remember to increment the version accordingly.
+</Tip>
+
+Changes that are **not backward compatible** include:
+- Changing the logical behavior of actions or triggers.
+- Removing or modifying properties types.
+
+Changes that are **backward compatible** include:
+
+- Adding optional parameters.
+- Fixing bugs.
+- Fixing typos or updating descriptions.
+
