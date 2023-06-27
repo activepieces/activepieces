@@ -19,7 +19,6 @@ const polling: Polling<{ authentication: OAuth2PropertyValue, spreadsheet_id: st
   }
 };
 
-
 export const readNewRows = createTrigger({
   name: 'new_row',
   displayName: 'New Row',
@@ -27,6 +26,7 @@ export const readNewRows = createTrigger({
   props: {
     authentication: googleSheetsCommon.authentication,
     spreadsheet_id: googleSheetsCommon.spreadsheet_id,
+    include_team_drives: googleSheetsCommon.include_team_drives,
     sheet_id: googleSheetsCommon.sheet_id,
     max_rows_to_poll: Property.Number({
       displayName: 'Max Rows to Poll',

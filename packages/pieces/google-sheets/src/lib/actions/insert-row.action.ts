@@ -9,6 +9,7 @@ export const insertRowAction = createAction({
     props: {
         authentication: googleSheetsCommon.authentication,
         spreadsheet_id: googleSheetsCommon.spreadsheet_id,
+        include_team_drives: googleSheetsCommon.include_team_drives,
         sheet_id: googleSheetsCommon.sheet_id,
         as_string: Property.Checkbox({
             displayName: 'As String',
