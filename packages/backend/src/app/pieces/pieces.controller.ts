@@ -64,7 +64,7 @@ export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done)
             querystring: ListPiecesRequestQuery,
         },
     }, async (req): Promise<PieceMetadataSummary[]> => {
-        const latestRelease = await flagService.getCurrentVersion();
+        const latestRelease = await flagService.getCurrentVersion()
         const release = req.query.release ?? latestRelease
         return await pieceMetadataService.list({
             release: release,
