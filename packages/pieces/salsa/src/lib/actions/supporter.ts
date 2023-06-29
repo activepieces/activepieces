@@ -1,10 +1,9 @@
 import { HttpMethod, httpClient } from "@activepieces/pieces-common";
-import { salsaCommon } from "../common/common";
 
 export async function searchSupporter(propsValue: Record<string, unknown>): Promise<Record<string, unknown>> {    
     const response = await httpClient.sendRequest({
         method: HttpMethod.POST,
-        url: `${salsaCommon.baseUrl}/integration/ext/v1/supporters/search`,
+        url: `${propsValue['baseUrl']}/integration/ext/v1/supporters/search`,
         headers: {
             'authToken': propsValue['authentication'] as string,
             'Content-Type': 'application/json',
@@ -21,14 +20,16 @@ export async function searchSupporter(propsValue: Record<string, unknown>): Prom
 export async function upsertSupporter(propsValue: Record<string, unknown>): Promise<Record<string, unknown>> {    
     const response = await httpClient.sendRequest({
         method: HttpMethod.PUT,
-        url: `${salsaCommon.baseUrl}/integration/ext/v1/supporters`,
+        url: `${propsValue['baseUrl']}/integration/ext/v1/supporters`,
         headers: {
             'authToken': propsValue['authentication'] as string,
             'Content-Type': 'application/json',
             'Accept': 'application/json'
         },
         body: {
-            payload: propsValue
+            payload: {
+                supporters: propsValue['supporters']
+            }
         },
     });
 

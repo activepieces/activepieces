@@ -8,6 +8,7 @@ export const salsaSupporterSearch = createAction({
     displayName: 'Get supporters',
     props: {
         authentication: salsaCommon.authentication,
+        baseUrl: salsaCommon.baseUrl,
         identifiers: Property.Array({
             displayName: "A list of ids to search for",
             description: "Filters results based on the ID for the supporters",
