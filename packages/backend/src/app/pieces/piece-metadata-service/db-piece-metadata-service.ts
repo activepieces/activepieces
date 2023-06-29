@@ -56,18 +56,29 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
         },
 
         async get({ name, version, projectId }: GetParams): Promise<PieceMetadata> {
-            const pieceMetadataEntity = await repo.findOneBy([
-                {
-                    name,
-                    version,
-                    projectId: Equal(projectId),
-                },
-                {
-                    name,
-                    version,
-                    projectId: IsNull(),
-                },
-            ])
+            const projectPiece: Record<string, unknown> = {
+                name,
+                projectId: Equal(projectId),
+            }
+            const officialPiece: Record<string, unknown> = {
+                name,
+                projectId: IsNull(),
+            }
+            if (version) {
+                projectPiece.version = version
+                officialPiece.version = version
+            }
+            const pieceMetadataEntity = await repo.createQueryBuilder()
+                .where([
+                    projectPiece,
+                    officialPiece,
+                ])
+                .distinctOn(['name'])
+                .orderBy({
+                    name: 'ASC',
+                    version: 'DESC',
+                } as const)
+                .getOne()
 
             if (isNil(pieceMetadataEntity)) {
                 throw new ActivepiecesError({
@@ -87,7 +98,7 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
                 version: pieceMetadata.version,
                 projectId: projectId ?? IsNull(),
             })
-            if(!isNil(existingMetadata)) {
+            if (!isNil(existingMetadata)) {
                 throw new ActivepiecesError({
                     code: ErrorCode.VALIDATION,
                     params: {
@@ -102,12 +113,12 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
             })
         },
 
-        async delete({projectId, id}): Promise<void> {
+        async delete({ projectId, id }): Promise<void> {
             const existingMetadata = await repo.findOneBy({
                 id,
                 projectId: projectId ?? IsNull(),
             })
-            if(isNil(existingMetadata)) {
+            if (isNil(existingMetadata)) {
                 throw new ActivepiecesError({
                     code: ErrorCode.ENTITY_NOT_FOUND,
                     params: {
