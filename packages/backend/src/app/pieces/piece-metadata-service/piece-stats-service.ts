@@ -1,5 +1,5 @@
 import { FlowId, ProjectId, flowHelper, TriggerType, ActionType } from '@activepieces/shared'
-import { isNil } from 'lodash'
+import { isNil } from '@activepieces/shared'
 import { flowInstanceService } from '../../flows/flow-instance/flow-instance.service'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowService } from '../../flows/flow/flow.service'

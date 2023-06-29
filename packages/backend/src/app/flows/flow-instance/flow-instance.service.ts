@@ -4,7 +4,7 @@ import { FlowInstanceEntity } from './flow-instance.entity'
 import { triggerUtils } from '../../helper/trigger-utils'
 import { flowService } from '../flow/flow.service'
 import { flowVersionService } from '../flow-version/flow-version.service'
-import { isNil } from 'lodash'
+import { isNil } from '@activepieces/shared'
 
 export const flowInstanceRepo = databaseConnection.getRepository<FlowInstance>(FlowInstanceEntity)
 

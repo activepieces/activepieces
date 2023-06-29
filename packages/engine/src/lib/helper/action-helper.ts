@@ -29,13 +29,12 @@ import {
     getPackageAliasForPiece,
 } from "@activepieces/shared";
 import { VariableService } from "../services/variable-service";
-import { isNil } from 'lodash';
+import { isNil } from '@activepieces/shared'
 import { createContextStore } from '../services/storage.service';
 import { globals } from '../globals';
 import { connectionService } from '../services/connections.service';
 import { Utils } from '../utils';
 import { codeExecutor } from '../executors/code-executer';
-import { resolve } from 'node:path';
 
 type GetPackageNameParams = {
     pieceName: string

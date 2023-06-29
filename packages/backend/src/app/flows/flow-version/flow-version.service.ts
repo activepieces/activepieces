@@ -26,7 +26,7 @@ import { databaseConnection } from '../../database/database-connection'
 import { FlowVersionEntity } from './flow-version-entity'
 import { flowVersionSideEffects } from './flow-version-side-effects'
 import { FlowViewMode, DEFAULT_SAMPLE_DATA_SETTINGS } from '@activepieces/shared'
-import { isNil } from 'lodash'
+import { isNil } from '@activepieces/shared'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 
 const branchSettingsValidator = TypeCompiler.Compile(BranchActionSettingsWithValidation)

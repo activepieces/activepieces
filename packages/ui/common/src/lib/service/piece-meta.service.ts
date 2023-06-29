@@ -28,7 +28,7 @@ import {
   PieceMetadataSummary,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { isNil } from 'lodash';
+import { isNil } from '@activepieces/shared';
 
 type TriggersMetadata = Record<string, TriggerBase>;
 

@@ -11,7 +11,7 @@ import { system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { flowInstanceService } from '../../flows/flow-instance/flow-instance.service'
-import { isNil } from 'lodash'
+import { isNil } from '@activepieces/shared'
 
 const oneTimeJobConsumer = new Worker<OneTimeJobData, unknown, ApId>(
     ONE_TIME_JOB_QUEUE,

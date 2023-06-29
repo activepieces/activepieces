@@ -8,6 +8,7 @@
       "executor": "@nrwl/webpack:webpack",
       "outputs": ["{options.outputPath}"],
       "options": {
+        "statsJson": true,
         "target": "node",
         "compiler": "tsc",
         "outputPath": "dist/packages/engine",

@@ -1,4 +1,4 @@
-import { isNil } from 'lodash'
+import { isNil } from '@activepieces/shared'
 import { flowInstanceRepo } from '../../flows/flow-instance/flow-instance.service'
 import { ExecutionType, RunEnvironment, ScheduleType } from '@activepieces/shared'
 import { logger } from '../../helper/logger'
