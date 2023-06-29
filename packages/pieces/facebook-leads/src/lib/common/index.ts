@@ -10,7 +10,7 @@ export const facebookLeadsCommon = {
         authUrl: "https://graph.facebook.com/oauth/authorize",
         tokenUrl: "https://graph.facebook.com/oauth/access_token",
         required: true,
-        scope: ['ads_management', 'pages_show_list', 'pages_read_engagement', 'pages_manage_ads', 'leads_retrieval', 'pages_manage_metadata'],
+        scope: ['pages_show_list', 'pages_manage_ads', 'leads_retrieval', 'pages_manage_metadata'],
     }),
 
     page: Property.Dropdown({
