@@ -15,7 +15,7 @@ import { engineHelper } from '../../helper/engine-helper'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { fileService } from '../../file/file.service'
 import { codeBuilder } from '../../workers/code-worker/code-builder'
-import { isNil } from 'lodash'
+import { isNil } from '@activepieces/shared'
 
 type CreateParams = {
     projectId: ProjectId

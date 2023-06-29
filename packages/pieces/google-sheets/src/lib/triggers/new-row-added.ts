@@ -2,7 +2,7 @@ import { OAuth2PropertyValue, Property, Store, createTrigger } from '@activepiec
 import { TriggerStrategy } from "@activepieces/pieces-framework";
 import { googleSheetsCommon } from '../common/common';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { isNil } from 'lodash';
+import { isNil } from '@activepieces/shared'
 
 const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const sampleData = Array.from(alphabet).map(c => `${c} Value`);

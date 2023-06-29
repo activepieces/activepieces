@@ -9,7 +9,7 @@ export class Utils {
       throw Error((e as Error).message);
     }
   }
-
+  
   public static writeToJsonFile(filePath: string, obj: any) {
     writeFileSync(
       filePath,

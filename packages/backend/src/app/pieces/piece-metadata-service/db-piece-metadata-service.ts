@@ -3,7 +3,7 @@ import { databaseConnection } from '../../database/database-connection'
 import { PieceMetadataEntity, PieceMetadataSchema } from '../piece-metadata-entity'
 import { GetParams, ListParams, PieceMetadataService } from './piece-metadata-service'
 import { PieceMetadata, PieceMetadataSummary } from '@activepieces/pieces-framework'
-import { isNil, isNull } from 'lodash'
+import { isNil } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode, apId } from '@activepieces/shared'
 import { AllPiecesStats, pieceStatsService } from './piece-stats-service'
 
@@ -87,7 +87,7 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
                 version: pieceMetadata.version,
                 projectId: projectId ?? IsNull(),
             })
-            if(!isNull(existingMetadata)) {
+            if(!isNil(existingMetadata)) {
                 throw new ActivepiecesError({
                     code: ErrorCode.VALIDATION,
                     params: {
@@ -107,7 +107,7 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
                 id,
                 projectId: projectId ?? IsNull(),
             })
-            if(isNull(existingMetadata)) {
+            if(isNil(existingMetadata)) {
                 throw new ActivepiecesError({
                     code: ErrorCode.ENTITY_NOT_FOUND,
                     params: {

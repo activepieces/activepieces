@@ -5,7 +5,7 @@ import { CreateOrRenameFolderRequest, FolderId, apId } from '@activepieces/share
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { flowService } from '../flow/flow.service'
-import { isNil } from 'lodash'
+import { isNil } from '@activepieces/shared'
 
 export const folderRepo = databaseConnection.getRepository(FolderEntity)
 
