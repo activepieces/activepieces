@@ -25,7 +25,7 @@ export type ListPiecesRequestQuery = Static<typeof ListPiecesRequestQuery>;
 
 
 export const GetPieceRequestQuery = Type.Object({
-    version: SemVerType,
+    version: Type.Optional(SemVerType),
 });
 
 export type GetPieceRequestQuery = Static<typeof GetPieceRequestQuery>;
