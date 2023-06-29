@@ -4,7 +4,7 @@ import { createRedisClient } from '../../database/redis-connection'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { DelayedJobData, OneTimeJobData, RepeatingJobData, ScheduledJobData, JobData } from './job-data'
 import { logger } from '../../helper/logger'
-import { isNil } from 'lodash'
+import { isNil } from '@activepieces/shared'
 
 export enum JobType {
     ONE_TIME = 'ONE_TIME',

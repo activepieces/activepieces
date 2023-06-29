@@ -1,7 +1,7 @@
 import { ActivepiecesError, EngineResponseStatus, ErrorCode, Flow, FlowId, ProjectId } from '@activepieces/shared'
 import { flowService } from '../../flows/flow/flow.service'
 import { triggerUtils } from '../../helper/trigger-utils'
-import { isNil } from 'lodash'
+import { isNil } from '@activepieces/shared'
 
 type BaseParams = {
     projectId: ProjectId

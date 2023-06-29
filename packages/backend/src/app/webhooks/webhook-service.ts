@@ -19,7 +19,7 @@ import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
 import { getPublicIp } from '../helper/public-ip-utils'
 import { triggerEventService } from '../flows/trigger-events/trigger-event.service'
-import { isEmpty, isNil } from 'lodash'
+import { isNil } from '@activepieces/shared'
 import { logger } from '../helper/logger'
 import { webhookSimulationService } from './webhook-simulation/webhook-simulation-service'
 import { flowInstanceService } from '../flows/flow-instance/flow-instance.service'
@@ -84,7 +84,7 @@ export const webhookService = {
             simulate: true,
         })
 
-        if (isEmpty(events)) {
+        if (events.length === 0) {
             return
         }
 
