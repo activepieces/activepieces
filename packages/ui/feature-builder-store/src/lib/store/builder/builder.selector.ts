@@ -120,7 +120,12 @@ export const selectCurrentFlowFolderName = createSelector(
     return state.folder.displayName;
   }
 );
-
+const selectCurrentFlowFolderId = createSelector(selectFlowState, (state) => {
+  if (!state.folder) {
+    return 'NULL';
+  }
+  return state.folder.id;
+});
 export const selectCurrentFlowValidity = createSelector(
   selectCurrentFlow,
   (flow: Flow | undefined) => {
@@ -542,6 +547,27 @@ const selectStepLogoUrl = (stepName: string) => {
     }
   );
 };
+const selectLastClickedAddBtnId = createSelector(selectCanvasState, (state) => {
+  return state.clickedAddBtnId;
+});
+
+const selectFlowTriggerIsTested = createSelector(selectCurrentFlow, (flow) => {
+  if (
+    (flow.version.trigger.type === TriggerType.PIECE &&
+      flow.version.trigger.settings.pieceName === CORE_SCHEDULE) ||
+    flow.version.trigger.settings.pieceName === 'schedule'
+  ) {
+    return true;
+  }
+  switch (flow.version.trigger.type) {
+    case TriggerType.EMPTY:
+      return false;
+    case TriggerType.WEBHOOK:
+      return !!flow.version.trigger.settings.inputUiInfo.currentSelectedData;
+    case TriggerType.PIECE:
+      return !!flow.version.trigger.settings.inputUiInfo.currentSelectedData;
+  }
+});
 export const BuilderSelectors = {
   selectReadOnly,
   selectViewMode,
@@ -592,4 +618,7 @@ export const BuilderSelectors = {
   selectHasFlowBeenPublished,
   selectStepResultsAccordion,
   selectStepDisplayNameAndDfsIndexForIterationOutput,
+  selectLastClickedAddBtnId,
+  selectCurrentFlowFolderId,
+  selectFlowTriggerIsTested,
 };

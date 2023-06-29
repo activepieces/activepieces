@@ -1,5 +1,5 @@
 import { Property, OAuth2PropertyValue } from "@activepieces/pieces-framework";
-import { httpClient, HttpMethod, AuthenticationType, HttpRequest } from "@activepieces/pieces-common";
+import { httpClient, HttpMethod, AuthenticationType, HttpRequest, getAccessTokenOrThrow } from "@activepieces/pieces-common";
 
 export const googleSheetsCommon = {
     baseUrl: "https://sheets.googleapis.com/v4/spreadsheets",
@@ -11,10 +11,16 @@ export const googleSheetsCommon = {
         required: true,
         scope: ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive.readonly"]
     }),
+    include_team_drives: Property.Checkbox({
+        displayName: 'Include Team Drive Sheets',
+        description: 'Determines if sheets from Team Drives should be included in the results.',
+        defaultValue: false,
+        required: true,
+    }),
     spreadsheet_id: Property.Dropdown({
         displayName: "Spreadsheet",
         required: true,
-        refreshers: ['authentication'],
+        refreshers: ['authentication', 'include_team_drives'],
         options: async (propsValue) => {
             if (!propsValue['authentication']) {
                 return {
@@ -28,7 +34,9 @@ export const googleSheetsCommon = {
                 method: HttpMethod.GET,
                 url: `https://www.googleapis.com/drive/v3/files`,
                 queryParams: {
-                    q: "mimeType='application/vnd.google-apps.spreadsheet'"
+                    q: "mimeType='application/vnd.google-apps.spreadsheet'",
+                    includeItemsFromAllDrives: propsValue['include_team_drives'] ? "true" : "false",
+                    supportsAllDrives: "true"
                 },
                 authentication: {
                     type: AuthenticationType.BEARER_TOKEN,

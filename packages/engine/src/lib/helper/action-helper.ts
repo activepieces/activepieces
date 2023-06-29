@@ -13,6 +13,7 @@ import {
 } from "@activepieces/pieces-framework";
 import fs from 'node:fs/promises';
 import {
+    ActionType,
     ActivepiecesError,
     ApEnvironment,
     ErrorCode,
@@ -22,6 +23,9 @@ import {
     ExecutePropsOptions,
     ExecutionState,
     ExecutionType,
+    FlowVersion,
+    TriggerType,
+    flowHelper,
     getPackageAliasForPiece,
 } from "@activepieces/shared";
 import { VariableService } from "../services/variable-service";
@@ -31,6 +35,7 @@ import { globals } from '../globals';
 import { connectionService } from '../services/connections.service';
 import { Utils } from '../utils';
 import { codeExecutor } from '../executors/code-executer';
+import { resolve } from 'node:path';
 
 type GetPackageNameParams = {
     pieceName: string
@@ -160,10 +165,12 @@ const resolveInput = async ({ input, executionContext = {} }: ResolveInputParams
 
 export const pieceHelper = {
     async executeCode(params: ExecuteCodeOperation): Promise<ExecuteActionResponse> {
-        const { codeBase64, input, testExecutionContext } = params;
+        const { codeBase64, input, flowVersion } = params;
+
+        const executionContext = await generateTestExecutionContext(flowVersion)
         const resolvedInput = await resolveInput({
             input,
-            executionContext: testExecutionContext,
+            executionContext,
         })
         try {
             const code = Buffer.from(codeBase64, 'base64').toString('utf-8');
@@ -185,7 +192,7 @@ export const pieceHelper = {
         }
     },
     async executeAction(params: ExecuteActionOperation): Promise<ExecuteActionResponse> {
-        const { actionName, pieceName, pieceVersion, input, testExecutionContext } = params;
+        const { actionName, pieceName, pieceVersion, input, flowVersion } = params;
 
         const action = await getActionOrThrow({
             pieceName,
@@ -193,9 +200,10 @@ export const pieceHelper = {
             actionName,
         })
 
+        const executionContext = await generateTestExecutionContext(flowVersion)
         const resolvedInput = await resolveInput({
             input,
-            executionContext: testExecutionContext,
+            executionContext,
         })
         const variableService = new VariableService()
         const { result, errors } = await variableService.validateAndCast(resolvedInput, action.props);
@@ -273,3 +281,31 @@ export const pieceHelper = {
 
     loadPieceOrThrow,
 };
+
+
+const generateTestExecutionContext = async (flowVersion: FlowVersion): Promise<Record<string, unknown>> => {
+    const flowSteps = flowHelper.getAllSteps(flowVersion.trigger)
+    const testContext: Record<string, unknown> = {}
+
+    for (const step of flowSteps) {
+        const stepsWithSampleData = [ActionType.CODE, ActionType.PIECE, TriggerType.PIECE, TriggerType.WEBHOOK]
+        if (stepsWithSampleData.includes(step.type)) {
+            const { name, settings: { inputUiInfo } } = step
+            testContext[name] = inputUiInfo?.currentSelectedData
+        }
+
+        if (step.type === ActionType.LOOP_ON_ITEMS) {
+            const resolvedLoopOutput: { items: any[] } = (await resolveInput({
+                input: step.settings,
+                executionContext: testContext
+            })) as { items: any[] };
+            const items = resolvedLoopOutput.items;
+            testContext[step.name] = {
+                index: 1,
+                item: items?.[0],
+            }
+        }
+    }
+
+    return testContext
+}

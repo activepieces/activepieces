@@ -8,6 +8,7 @@ export const salsaOfflineDonationUpsert = createAction({
     displayName: 'Upsert Offline Donation',
     props: {
         authentication: salsaCommon.authentication,
+        baseUrl: salsaCommon.baseUrl,
         offlineDontions: Property.Json({
             displayName: "Offline Donation (JSON Array)",
             description: "The Offline Donation JSON Array",
