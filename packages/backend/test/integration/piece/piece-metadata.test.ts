@@ -5,6 +5,7 @@ jest.setTimeout(100000)
 
 describe('Piece endpoints', () => {
     describe('List pieces metadata endpoint', () => {
+        // TODO fix this test and enable
         it('Allow to list without release parameter', async () => {
             // act
             const response = await app.inject({
