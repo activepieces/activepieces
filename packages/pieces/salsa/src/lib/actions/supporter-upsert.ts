@@ -10,7 +10,6 @@ export const salsaSupporterUpsert = createAction({
         authentication: salsaCommon.authentication,
         baseUrl: salsaCommon.baseUrl,
         supporters: Property.Json({
-
             displayName: "Supporters (JSON Array)",
             description: "The Supporters JSON Array",
             required: true

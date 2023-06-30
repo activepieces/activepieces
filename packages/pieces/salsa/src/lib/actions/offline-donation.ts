@@ -10,7 +10,9 @@ export async function upsertOfflineDonation(propsValue: Record<string, unknown>)
             'Accept': 'application/json'
         },
         body: {
-            payload: propsValue
+            payload: {
+                donations: propsValue['donations']
+            }
         },
     });
 
