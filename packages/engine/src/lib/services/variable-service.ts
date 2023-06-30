@@ -51,13 +51,15 @@ export class VariableService {
     // Need to be resolved dynamically
     const connectionName = paths[1];
     paths.splice(0, 1);
+    // Replace connection name with something that doesn't contain - or _, otherwise evalInScope would break
+    paths[0] = 'connection';
     const newPath = paths.join(".");
     const connection = (await connectionService.obtain(connectionName));
-    if (paths.length === 0) {
+    if (paths.length === 1) {
       return connection;
     }
     const context: Record<string, unknown> = {};
-    context[connectionName] = connection;
+    context['connection'] = connection;
     return this.evalInScope(newPath, context);
   }
 

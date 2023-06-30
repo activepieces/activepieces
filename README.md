@@ -19,7 +19,7 @@ src="https://github.com/activepieces/activepieces/assets/1812998/76c97441-c285-4
 <a href="/LICENSE" target="_blank"><img src='https://img.shields.io/badge/license-MIT-green?style=for-the-badge' /></a>&nbsp;<img src='https://img.shields.io/github/commit-activity/w/activepieces/activepieces/main?style=for-the-badge' />&nbsp;<a href='https://discord.gg/2jUXBKDdP8'><img src='https://img.shields.io/discord/966798490984382485?style=for-the-badge' /></a>
 </p>
 <p align="center">
-   A open source replacement for Zapier
+   An open source replacement for Zapier
 </p>
 
 <p align="center">

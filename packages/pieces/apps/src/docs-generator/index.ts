@@ -126,7 +126,7 @@ const writeAppsOverView = async (pieces: PieceInfo[]) => {
       <Card>
           <p align="center">
             <strong>${piece.displayName}</strong>
-            <img height="75px" width="75px" src="https://cdn.activepieces.com/pieces/${piece.directoryName}.png" />
+            <img height="75px" width="75px" src="${piece.logoUrl}" />
           </p>
       </Card>
     </a>
