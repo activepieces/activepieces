@@ -43,7 +43,6 @@ export class MentionsListComponent implements OnInit, AfterViewInit {
     nonNullable: true,
   });
   stepsMentions$: Observable<(MentionListItem & { step: FlowItem })[]>;
-  connectionsMentions$: Observable<MentionListItem[]>;
   expandConfigs = false;
   expandConnections = false;
   readonly ActionType = ActionType;
@@ -83,19 +82,6 @@ export class MentionsListComponent implements OnInit, AfterViewInit {
             )
         );
       })
-    );
-    this.connectionsMentions$ = combineLatest({
-      connections: this.store
-        .select(BuilderSelectors.selectAppConnectionsForMentionsDropdown)
-        .pipe(take(1)),
-      search: this.mentionsTreeCache.listSearchBarObs$,
-    }).pipe(
-      map((res) => {
-        return res.connections.filter((item) =>
-          item.label.toLowerCase().includes(res.search.toLowerCase())
-        );
-      }),
-      shareReplay(1)
     );
   }
   ngAfterViewInit(): void {
