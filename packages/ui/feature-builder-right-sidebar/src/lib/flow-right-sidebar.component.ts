@@ -102,8 +102,10 @@ export class FlowRightSidebarComponent implements OnInit {
               map((res) => {
                 return (
                   res.triggers[step.settings.triggerName] &&
-                  res.triggers[step.settings.triggerName].type ===
-                    TriggerStrategy.POLLING
+                  (res.triggers[step.settings.triggerName].type ===
+                    TriggerStrategy.POLLING ||
+                    res.triggers[step.settings.triggerName].type ===
+                      TriggerStrategy.APP_WEBHOOK)
                 );
               })
             );

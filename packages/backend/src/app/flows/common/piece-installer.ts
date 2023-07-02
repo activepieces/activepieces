@@ -25,6 +25,13 @@ const log = logger.child({ file: 'PieceManager' })
 
 const env = system.getOrThrow(SystemProp.ENVIRONMENT)
 
+const linkFrameworkPackages = async (projectPath: string, baseLinkPath: string, frameworkPackages: Record<string, string>) => {
+    await updatePackageJson('framework', baseLinkPath, frameworkPackages)
+    await packageManager.linkDependency(projectPath, `${baseLinkPath}/framework`)
+    await updatePackageJson('common', baseLinkPath, frameworkPackages)
+    await packageManager.linkDependency(projectPath, `${baseLinkPath}/common`)
+}
+
 const linkDependencies = async (params: LinkDependenciesParams) => {
     log.debug(params, '[linkDependencies] params')
 
@@ -33,30 +40,36 @@ const linkDependencies = async (params: LinkDependenciesParams) => {
     const uniquePieces = removeDuplicatedPieces(pieces)
     const basePath = path.resolve(__dirname.split('/dist')[0])
     const baseLinkPath = path.join(basePath, 'dist', 'packages', 'pieces')
+
     const frameworkPackages = {
         '@activepieces/pieces-common': `link:${baseLinkPath}/common`,
         '@activepieces/pieces-framework': `link:${baseLinkPath}/framework`,
         '@activepieces/shared': `link:${basePath}/dist/packages/shared`,
     }
+    await linkFrameworkPackages(projectPath, baseLinkPath, frameworkPackages)
     for (const piece of uniquePieces) {
-        const pieceMetadata =( await FilePieceMetadataService().get({
+        const pieceMetadata = (await FilePieceMetadataService().get({
             projectId: null,
             name: piece.name,
             version: piece.version,
         }))
-        const packageJsonForPiece = `${baseLinkPath}/${pieceMetadata.directoryName}/package.json`
-
-        const packageJson = await fs.readFile(packageJsonForPiece, 'utf-8').then(JSON.parse)
-        for(const [key, value] of Object.entries(frameworkPackages)) {
-            if(Object.keys(packageJson.dependencies).includes(key)) {
-                packageJson.dependencies[key] = value
-            }
-        }
-        await fs.writeFile(packageJsonForPiece, JSON.stringify(packageJson, null, 2))
-
+        await updatePackageJson(pieceMetadata.directoryName!, baseLinkPath, frameworkPackages)
         await packageManager.linkDependency(projectPath, `${baseLinkPath}/${pieceMetadata.directoryName}`)
     }
 }
+
+const updatePackageJson = async (directoryName: string, baseLinkPath: string, frameworkPackages: Record<string, string>) => {
+    const packageJsonForPiece = `${baseLinkPath}/${directoryName}/package.json`
+
+    const packageJson = await fs.readFile(packageJsonForPiece, 'utf-8').then(JSON.parse)
+    for (const [key, value] of Object.entries(frameworkPackages)) {
+        if (Object.keys(packageJson.dependencies).includes(key)) {
+            packageJson.dependencies[key] = value
+        }
+    }
+    await fs.writeFile(packageJsonForPiece, JSON.stringify(packageJson, null, 2))
+}
+
 
 const installDependencies = async (params: InstallDependenciesParams) => {
     log.debug(params, '[InstallDependencies] params')
