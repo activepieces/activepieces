@@ -15,20 +15,23 @@ The version number consists of three numbers: `MAJOR.MINOR.PATCH`, where:
 - **PATCH** It should be incremented for bug fixes and small changes that do not introduce new features or break backward compatibility.
 
 ## Engine
-The engine will always try to use latest **major** version when the user selected the piece.
+The engine will use the latest compatible version for a given piece version, i.e. latest version with the same **major** version number
 
 ## Examples
 <Tip>
 when you make a change, remember to increment the version accordingly.
 </Tip>
 
-Changes that are **not backward compatible** include:
-- Changing the logical behavior of actions or triggers.
-- Removing or modifying properties types.
+### Breaking changes
+- Remove an existing action.
+- Add a required `action` prop.
+- Remove an existing action prop, whether required or optional.
+- Remove an attribute from an action output.
+- Change the existing behavior of an action/trigger.
 
-Changes that are **backward compatible** include:
+### Non-breaking changes
+- Add a new action.
+- Add an optional `action` prop.
+- Add an attribute to an action output.
 
-- Adding optional parameters.
-- Fixing bugs.
-- Fixing typos or updating descriptions.
-
+i.e., any removal is breaking, any required addition is breaking, everything else is not breaking.
