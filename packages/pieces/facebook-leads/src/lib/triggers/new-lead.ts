@@ -17,7 +17,7 @@ export const newLead = createTrigger({
         const page = context.propsValue['page'] as FacebookPageDropdown
         await facebookLeadsCommon.subscribePageToApp(page.id, page.accessToken)
 
-        context.app.createListeners({ events: ['lead'], identifierValue: page.id })
+        context.app.createListeners({ events: ['lead'], identifierValue: '444444444444' })
     },
 
     async onDisable(context) {
@@ -26,20 +26,26 @@ export const newLead = createTrigger({
 
     //Return new lead
     async run(context) {
-        let leads: any[] = [];
+        let leadPings: any[] = [];
+        const leads: any[] = [];
         const form = context.propsValue.form;
         
         if (form !== undefined && form !== '' && form !== null) {
             context.payload.body.entry.forEach((lead: any) => {
                 if (form == lead.changes[0].value.form_id) {
-                    leads.push(lead)
+                    leadPings.push(lead)
                 }
             });
         }
         else {
-            leads = context.payload.body.entry;
+            leadPings = context.payload.body.entry;
         }
 
+        leadPings.forEach(async (lead) => {
+            const leadData = await facebookLeadsCommon.getLeadDetails(lead.changes[0].value.leadgen_id, context.propsValue.authentication.access_token);
+            leads.push(leadData);
+        })
+
         return [leads];
-    }
+    },
 })
