@@ -1,10 +1,11 @@
-<div class="ap-typography-subtitle-1 !ap-font-semibold ap-flex ap-items-center ap-px-5 ap-py-2 ">Data to Insert<div
-    class="ap-flex-grow">
+<div (click)="builderAutocompleteService.revertDataInsertionPopupSize(); searchInput.focus();"
+  class="ap-typography-subtitle-1 !ap-font-semibold ap-flex ap-items-center ap-px-5 ap-py-2 ap-cursor-pointer">Data to
+  Insert<div class="ap-flex-grow">
   </div>
   <app-autocomplete-dropdown-sizes-buttons></app-autocomplete-dropdown-sizes-buttons>
 </div>
 <mat-form-field (click)="$event.stopPropagation();" appearance="fill"
-  [class.!ap-hidden]="(builderAutocompleteService.dataInsertionPopupSize$ | async) === 'collapse'"
+  [class.cdk-visually-hidden]="(builderAutocompleteService.dataInsertionPopupSize$ | async) === 'collapse'"
   [class.!ap-border-none]="(builderAutocompleteService.dataInsertionPopupSize$ | async) === 'collapse'"
   class="ap-w-full ap-border-t ap-border-solid ap-border-outline data-insertion-search" subscriptSizing="dynamic">
   <mat-icon class="ap-ml-2.5" matPrefix svgIcon="search"></mat-icon>
