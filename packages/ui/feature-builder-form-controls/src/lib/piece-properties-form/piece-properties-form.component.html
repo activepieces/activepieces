@@ -499,6 +499,7 @@
   <mat-form-field subscriptSizing="dynamic" appearance="fill" (click)="$event.stopPropagation();"
     #searchField="elementDirective" class="ap-w-full ap-mb-2" apElementDirective>
     <mat-icon matPrefix color="placeholder-icon" svgIcon="search"></mat-icon>
-    <input #searchInput [formControl]="searchControl" matInput placeholder="Search" autocomplete="off">
+    <input #searchInput [formControl]="searchControl" matInput placeholder="Search" autocomplete="off"
+      (keydown.Space)="$event.stopPropagation()">
   </mat-form-field>
 </ng-template>
