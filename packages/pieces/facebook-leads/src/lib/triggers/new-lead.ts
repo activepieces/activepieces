@@ -17,7 +17,7 @@ export const newLead = createTrigger({
         const page = context.propsValue['page'] as FacebookPageDropdown
         await facebookLeadsCommon.subscribePageToApp(page.id, page.accessToken)
 
-        context.app.createListeners({ events: ['lead'], identifierValue: '444444444444' })
+        context.app.createListeners({ events: ['lead'], identifierValue: page.id })
     },
 
     async onDisable(context) {
