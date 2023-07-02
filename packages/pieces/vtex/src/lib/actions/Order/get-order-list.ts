@@ -1,15 +1,16 @@
 import { Property, createAction } from "@activepieces/pieces-framework";
 import { Order } from "../../common/Order";
-import { auth } from "../../common/auth";
+import { vtexAuth } from "../../..";
 
 const year = new Date().getFullYear().toString();
 
 export const getOrderList = createAction({
+    auth: vtexAuth,
+    action: {
     name: "get-order-list",
     displayName: "Get Orders List",
     description: "Find Orders",
     props: {
-        authentication: auth,
         fromYear: Property.Number({
             displayName: "From (Year)",
             required: true
@@ -41,9 +42,9 @@ export const getOrderList = createAction({
         }),
     },
     async run(context) {
-        const { hostUrl, appKey, appToken } = context.propsValue.authentication;
+        const { hostUrl, appKey, appToken } = context.auth;
         const { fromYear, toYear, fromMonth, toMonth, fromDay, toDay } = context.propsValue;
-        
+
         const order = new Order(hostUrl, appKey, appToken);
 
         const fromDate = new Date(`${fromYear}-${fromMonth || "01"}-${fromDay || "01"}`);
@@ -52,4 +53,5 @@ export const getOrderList = createAction({
         return await order.getOrderList(fromDate, toDate);
 
     },
+},
 });

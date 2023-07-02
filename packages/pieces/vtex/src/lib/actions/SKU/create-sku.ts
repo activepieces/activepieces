@@ -1,14 +1,15 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { Sku } from "../../common/SKU";
 import { Replace } from "../../common/types";
-import { auth } from "../../common/auth";
+import { vtexAuth } from "../../..";
 
 export const createSku = createAction({
+    auth: vtexAuth,
+    action: {
     name: "create-sku",
     displayName: "Create New Sku",
     description: "Create a new SKU to your catalog",
     props: {
-        authentication: auth,
         ProductId: Property.Number({
             displayName: "Product ID",
             description: "ID of the product to be associated with this SKU",
@@ -50,8 +51,8 @@ export const createSku = createAction({
         })
     },
     async run(context) {
-        const { hostUrl, appKey, appToken } = context.propsValue.authentication;
-        const skuData: Replace<typeof context.propsValue, { authentication?: typeof context.propsValue.authentication }> = { ...context.propsValue };
+        const { hostUrl, appKey, appToken } = context.auth;
+        const skuData: Replace<typeof context.propsValue, { authentication?: typeof context.auth }> = { ...context.propsValue };
         delete skuData.authentication;
 
         const sku = new Sku(hostUrl, appKey, appToken);
@@ -59,4 +60,5 @@ export const createSku = createAction({
         return await sku.createSku(skuData);
 
     },
+},
 });

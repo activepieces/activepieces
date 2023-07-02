@@ -1,13 +1,14 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { Brand } from "../../common/Brand";
-import { auth } from "../../common/auth";
+import { vtexAuth } from "../../..";
 
 export const getBrandById = createAction({
+    auth: vtexAuth,
+    action: {
     name: "get-brand-by-id",
     displayName: "Get Brand By ID",
     description: "Find a Brand in your catalog by it's id",
     props: {
-        authentication: auth,
         BrandId: Property.Number({
             displayName: "Brand ID",
             description: "The Brand ID",
@@ -15,7 +16,7 @@ export const getBrandById = createAction({
         })
     },
     async run(context) {
-        const { hostUrl, appKey, appToken } = context.propsValue.authentication;
+        const { hostUrl, appKey, appToken } = context.auth;
         const { BrandId } = context.propsValue;
 
         const brand = new Brand(hostUrl, appKey, appToken);
@@ -23,4 +24,5 @@ export const getBrandById = createAction({
         return await brand.getBrandById(BrandId);
 
     },
+},
 });

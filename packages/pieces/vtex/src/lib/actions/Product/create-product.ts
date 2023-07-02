@@ -1,14 +1,15 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { Product } from "../../common/Product";
 import { Replace } from "../../common/types";
-import { auth } from "../../common/auth";
+import { vtexAuth } from "../../..";
 
 export const createProduct = createAction({
+    auth: vtexAuth,
+    action: {
     name: "create-product",
     displayName: "Create New Product",
     description: "Create a new product to your catalog",
     props: {
-        authentication: auth,
         Name: Property.ShortText({
             displayName: "Name",
             required: true,
@@ -81,12 +82,13 @@ export const createProduct = createAction({
         }),
     },
     async run(context) {
-        const { hostUrl, appKey, appToken } = context.propsValue.authentication;
-        const productData: Replace<typeof context.propsValue, { authentication?: typeof context.propsValue.authentication }> = { ...context.propsValue };
+        const { hostUrl, appKey, appToken } = context.auth;
+        const productData: Replace<typeof context.propsValue, { authentication?: typeof context.auth }> = { ...context.propsValue };
         delete productData.authentication;
-        
+
         const product = new Product(hostUrl, appKey, appToken);
 
         return await product.createProduct(productData);
     },
+},
 });

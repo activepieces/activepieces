@@ -1,13 +1,14 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { Product } from "../../common/Product";
-import { auth } from "../../common/auth";
+import { vtexAuth } from "../../..";
 
 export const getProductById = createAction({
+    auth: vtexAuth,
+    action: {
     name: "get-product-by-id",
     displayName: "Get Product By ID",
     description: "Find a product in your catalog by it's id",
     props: {
-        authentication: auth,
         productId: Property.Number({
             displayName: "Product ID",
             description: "The product ID",
@@ -15,7 +16,7 @@ export const getProductById = createAction({
         })
     },
     async run(context) {
-        const { hostUrl, appKey, appToken } = context.propsValue.authentication;
+        const { hostUrl, appKey, appToken } = context.auth;
         const { productId } = context.propsValue;
 
         const product = new Product(hostUrl, appKey, appToken);
@@ -23,4 +24,5 @@ export const getProductById = createAction({
         return await product.getProductById(productId);
 
     },
+},
 });

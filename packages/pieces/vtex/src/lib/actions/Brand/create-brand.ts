@@ -1,9 +1,11 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { Brand } from "../../common/Brand";
 import { Replace } from "../../common/types";
-import { auth } from "../../common/auth";
+import { vtexAuth } from "../../..";
 
 export const createBrand = createAction({
+    auth: vtexAuth,
+    action: {
     name: "create-brand",
     displayName: "Create new Brand",
     description: "Create a new Brand to your catalog",
@@ -22,7 +24,6 @@ export const createBrand = createAction({
     }
     ,
     props: {
-        authentication: auth,
         Name: Property.ShortText({
             displayName: "Name",
             required: true,
@@ -63,13 +64,14 @@ export const createBrand = createAction({
         }),
     },
     async run(context) {
-        const { hostUrl, appKey, appToken } = context.propsValue.authentication;
-        const brandData: Replace<typeof context.propsValue, { authentication?: typeof context.propsValue.authentication }> = { ...context.propsValue };
+        const { hostUrl, appKey, appToken } = context.auth;
+        const brandData: Replace<typeof context.propsValue, { authentication?: typeof context.auth }> = { ...context.propsValue };
         delete brandData.authentication;
-       
+
         const brand = new Brand(hostUrl, appKey, appToken);
 
         return await brand.createBrand(brandData);
 
     },
+},
 });

@@ -1,13 +1,14 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { Brand } from "../../common/Brand";
-import { auth } from "../../common/auth";
+import { vtexAuth } from "../../..";
 
 export const deleteBrand = createAction({
+    auth: vtexAuth,
+    action: {
     name: "delete-brand",
     displayName: "Delete Brand",
     description: "Delete a Brand in your catalog by it's id",
     props: {
-        authentication: auth,
         brandId: Property.Number({
             displayName: "Brand ID",
             description: "The Brand ID",
@@ -15,7 +16,7 @@ export const deleteBrand = createAction({
         })
     },
     async run(context) {
-        const { hostUrl, appKey, appToken } = context.propsValue.authentication;
+        const { hostUrl, appKey, appToken } = context.auth;
         const { brandId } = context.propsValue;
 
         const brand = new Brand(hostUrl, appKey, appToken);
@@ -23,4 +24,5 @@ export const deleteBrand = createAction({
         return await brand.deleteBrand(brandId);
 
     },
+},
 });

@@ -1,14 +1,15 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { Product } from "../../common/Product";
 import { Replace } from "../../common/types";
-import { auth } from "../../common/auth";
+import { vtexAuth } from "../../..";
 
 export const updateProduct = createAction({
+    auth: vtexAuth,
+    action: {
     name: "Update-product",
     displayName: "Update a Product",
     description: "Update a product in your catalog",
     props: {
-        authentication: auth,
         productId: Property.Number({
             displayName: "Product ID",
             description: "Set the product ID",
@@ -89,13 +90,14 @@ export const updateProduct = createAction({
         }),
     },
     async run(context) {
-        const { hostUrl, appKey, appToken } = context.propsValue.authentication;
+        const { hostUrl, appKey, appToken } = context.auth;
         const { productId } = context.propsValue;
-        const productData: Replace<typeof context.propsValue, { authentication?: typeof context.propsValue.authentication}> = { ...context.propsValue };
+        const productData: Replace<typeof context.propsValue, { authentication?: typeof context.auth}> = { ...context.propsValue };
         delete productData.authentication;
-        
+
         const product = new Product(hostUrl, appKey, appToken);
 
         return await product.updateProduct(productId, productData);
     },
+},
 });
