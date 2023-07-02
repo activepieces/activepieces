@@ -17,6 +17,7 @@ import {
   NG_VALUE_ACCESSOR,
   ValidatorFn,
   Validators,
+  FormControl,
 } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import {
@@ -84,6 +85,9 @@ type ConfigKey = string;
 export class PiecePropertiesFormComponent implements ControlValueAccessor {
   updateValueOnChange$: Observable<void> = new Observable<void>();
   PropertyType = PropertyType;
+  searchControl: FormControl<string> = new FormControl('', {
+    nonNullable: true,
+  });
   dropdownOptionsObservables$: {
     [key: ConfigKey]: Observable<DropdownState<unknown>>;
   } = {};
@@ -236,13 +240,15 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
               }
               return res;
             }),
-            catchError(() => {
+            catchError((err) => {
+              console.error(err);
               return of({
                 options: [],
                 disabled: true,
-                placeholder: 'unknown server erro happend, check console',
+                placeholder: 'unknown server error happend, check console',
               });
-            })
+            }),
+            shareReplay(1)
           );
       }
     });
