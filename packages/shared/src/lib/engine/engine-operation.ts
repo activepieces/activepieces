@@ -30,10 +30,10 @@ export type EngineOperation =
 
 export type ExecuteActionOperation = {
     actionName: string
+    flowVersion: FlowVersion
     pieceName: string
     pieceVersion: string
     input: Record<string, unknown>
-    testExecutionContext: Record<string, unknown>
     projectId: ProjectId
     workerToken?: string
     apiUrl?: string
@@ -46,7 +46,7 @@ export type ExecuteExtractPieceMetadata = {
 
 export type ExecuteCodeOperation = {
     codeBase64: string
-    testExecutionContext: Record<string, unknown>
+    flowVersion: FlowVersion,
     input: Record<string, unknown>
     projectId: ProjectId
 }

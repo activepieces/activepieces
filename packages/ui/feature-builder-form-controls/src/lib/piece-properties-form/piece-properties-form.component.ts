@@ -234,7 +234,8 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
                 const emptyDropdownState: DropdownState<unknown> = {
                   options: [],
                   disabled: true,
-                  placeholder: `No ${property.displayName} Available`,
+                  placeholder:
+                    res.placeholder ?? `No ${property.displayName} Available`,
                 };
                 return emptyDropdownState;
               }

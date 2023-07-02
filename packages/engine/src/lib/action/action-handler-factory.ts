@@ -4,7 +4,7 @@ import { CodeActionHandler } from './code-action-handler'
 import { PieceActionHandler } from './piece-action-handler'
 import { LoopOnItemActionHandler } from './loop-action-handler'
 import { BranchActionHandler } from './branch-action-handler'
-import { isNil } from 'lodash'
+import { isNil } from '@activepieces/shared'
 
 type CreateActionHandlerParams = {
   action: Action | Trigger | undefined

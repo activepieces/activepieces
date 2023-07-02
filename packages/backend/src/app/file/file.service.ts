@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, ErrorCode, File, FileId, ProjectId } from '@activepieces/shared'
-import { isNil } from 'lodash'
+import { isNil } from '@activepieces/shared'
 import { databaseConnection } from '../database/database-connection'
 import { logger } from '../helper/logger'
 import { FileEntity } from './file.entity'

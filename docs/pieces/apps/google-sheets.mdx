@@ -21,6 +21,10 @@ title: 'Google Sheets'
 
 </ResponseField>
             
+<ResponseField name="Include Team Drive Sheets" required type="Checkbox">
+Determines if sheets from Team Drives should be included in the results.
+</ResponseField>
+            
 <ResponseField name="Sheet" required type="Dropdown">
 
 </ResponseField>
@@ -51,6 +55,10 @@ The maximum number of rows to poll, the rest will be polled on the next run
 
 </ResponseField>
             
+<ResponseField name="Include Team Drive Sheets" required type="Checkbox">
+Determines if sheets from Team Drives should be included in the results.
+</ResponseField>
+            
 <ResponseField name="Sheet" required type="Dropdown">
 
 </ResponseField>
@@ -79,6 +87,10 @@ These are the cell values of the row that will be added, beginning with the Valu
 
 </ResponseField>
             
+<ResponseField name="Include Team Drive Sheets" required type="Checkbox">
+Determines if sheets from Team Drives should be included in the results.
+</ResponseField>
+            
 <ResponseField name="Sheet" required type="Dropdown">
 
 </ResponseField>
@@ -101,6 +113,10 @@ The row number to remove
             
 <ResponseField name="Spreadsheet" required type="Dropdown">
 
+</ResponseField>
+            
+<ResponseField name="Include Team Drive Sheets" required type="Checkbox">
+Determines if sheets from Team Drives should be included in the results.
 </ResponseField>
             
 <ResponseField name="Sheet" required type="Dropdown">
@@ -131,32 +147,8 @@ These are the cell values of the row that will be updated, begining with column 
 
 </ResponseField>
             
-<ResponseField name="Sheet" required type="Dropdown">
-
-</ResponseField>
-            
-<ResponseField name="Column Name" required type="Short_text">
-The name of the column to search in, e.g. "A"
-</ResponseField>
-            
-<ResponseField name="Search Value" required type="Short_text">
-The value to search for
-</ResponseField>
-              
-        </Expandable>
-      </Card>
-  
-      <Card title="Find Rows " >
-        Find rows in a Google Sheet
-
-        <Expandable title="Properties">
-          
-<ResponseField name="Authentication" required type="Oauth2">
-
-</ResponseField>
-            
-<ResponseField name="Spreadsheet" required type="Dropdown">
-
+<ResponseField name="Include Team Drive Sheets" required type="Checkbox">
+Determines if sheets from Team Drives should be included in the results.
 </ResponseField>
             
 <ResponseField name="Sheet" required type="Dropdown">

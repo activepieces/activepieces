@@ -1,6 +1,6 @@
 {
   "name": "activepieces",
-  "version": "0.3.17",
+  "version": "0.4.0",
   "scripts": {
     "prepare": "husky install",
     "docker": "docker compose -f docker-compose.dev.yml up",
@@ -89,7 +89,6 @@
     "jszip": "^3.10.1",
     "kl-angular-mentions": "^1.2.3",
     "langchain": "^0.0.68",
-    "lodash": "^4.17.21",
     "lottie-web": "^5.11.0",
     "mailparser": "^3.6.4",
     "marked": "^4.3.0",

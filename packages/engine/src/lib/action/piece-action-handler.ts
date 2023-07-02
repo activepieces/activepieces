@@ -10,7 +10,7 @@ import {
 } from '@activepieces/shared';
 import { BaseActionHandler, InitStepOutputParams } from './action-handler';
 import { globals } from '../globals';
-import { isNil } from 'lodash';
+import { isNil } from '@activepieces/shared'
 import { pieceHelper } from '../helper/action-helper';
 import { createContextStore } from '../services/storage.service';
 import { connectionManager } from '../services/connections.service';

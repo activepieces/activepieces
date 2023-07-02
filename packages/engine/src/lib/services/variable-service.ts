@@ -1,11 +1,9 @@
-import { get, isNil, isString } from "lodash";
-import { ExecutionState } from "@activepieces/shared";
+import { ExecutionState, isNil, isString } from "@activepieces/shared";
 import { connectionService } from "./connections.service";
 import { ApFile, PiecePropertyMap, PropertyType } from "@activepieces/pieces-framework";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
-import axios from "axios";
 import path from "path";
 import isBase64 from 'is-base64';
 
@@ -51,22 +49,18 @@ export class VariableService {
       return "**CENSORED**";
     }
     // Need to be resolved dynamically
-    const connectioName = paths[1];
-    paths.splice(0, 2);
+    const connectionName = paths[1];
+    paths.splice(0, 1);
+    // Replace connection name with something that doesn't contain - or _, otherwise evalInScope would break
+    paths[0] = 'connection';
     const newPath = paths.join(".");
-    const connection = (await connectionService.obtain(connectioName));
-    if (paths.length === 0) {
+    const connection = (await connectionService.obtain(connectionName));
+    if (paths.length === 1) {
       return connection;
     }
-    return VariableService.copyFromMap(connection, newPath);
-  }
-
-  private static copyFromMap(valuesMap: any, path: string) {
-    const value = get(valuesMap, path);
-    if (value === undefined) {
-      return '';
-    }
-    return value;
+    const context: Record<string, unknown> = {};
+    context['connection'] = connection;
+    return this.evalInScope(newPath, context);
   }
 
   private evalInScope(js: string, contextAsScope: Record<string, unknown>) {
@@ -134,11 +128,7 @@ export class VariableService {
     if (isNil(urlOrBase64) || !isString(urlOrBase64)) {
       return null;
     }
-    // Get the file from the URL
     try {
-
-
-      // Check if the string is a Base64 string
       if (isBase64(urlOrBase64, { allowMime: true })) {
         const matches = urlOrBase64.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
         let base64 = urlOrBase64;
@@ -148,7 +138,6 @@ export class VariableService {
           contentType = matches[1];
           base64 = matches[2];
 
-          // You need to provide how you decide filename and extension in case of base64 string
           const filename = 'unknown';
           const extension = contentType.split('/')[1];
 
@@ -158,27 +147,22 @@ export class VariableService {
             base64,
           };
         }
-
       }
-      const response = await axios.head(urlOrBase64);
-      const contentType = response.headers['content-type'];
 
-      // Check if content type is file
+      const response = await fetch(urlOrBase64, { method: 'HEAD' });
+      const contentType = response.headers.get('content-type');
+
       if (!contentType || !(contentType.startsWith('application/') || contentType.startsWith("image") || contentType === 'application/octet-stream')) {
         return null;
       }
-      const fileResponse = await axios.get(urlOrBase64, {
-        responseType: 'arraybuffer',
-      });
 
-      // Get filename and extension
+      const fileResponse = await fetch(urlOrBase64);
+      const fileData = await fileResponse.arrayBuffer();
+      const base64 = btoa(String.fromCharCode(...new Uint8Array(fileData)));
+
       const filename = path.basename(urlOrBase64);
-      // Remove dot from extension
       const extension = path.extname(urlOrBase64)?.substring(1);
-      // Convert file data to base64
-      const base64 = Buffer.from(fileResponse.data, 'binary').toString('base64');
 
-      // Return the ApFile object
       return {
         filename,
         extension,
