@@ -391,6 +391,9 @@ export const squareTriggers = tirggerData.map((trigger) => {
         onDisable: async (context) => {
             // Ignored
         },
+        test: async (context) => {
+            return [trigger.sampleData]
+        },
         run: async (context) => {
             return [context.payload.body]
         }
