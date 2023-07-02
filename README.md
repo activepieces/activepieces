@@ -19,7 +19,7 @@ src="https://github.com/activepieces/activepieces/assets/1812998/76c97441-c285-4
 <a href="/LICENSE" target="_blank"><img src='https://img.shields.io/badge/license-MIT-green?style=for-the-badge' /></a>&nbsp;<img src='https://img.shields.io/github/commit-activity/w/activepieces/activepieces/main?style=for-the-badge' />&nbsp;<a href='https://discord.gg/2jUXBKDdP8'><img src='https://img.shields.io/discord/966798490984382485?style=for-the-badge' /></a>
 </p>
 <p align="center">
-   A open source replacement for Zapier
+   An open source replacement for Zapier
 </p>
 
 <p align="center">
@@ -164,6 +164,7 @@ We welcome contributions big or small and in different directions. The best way 
       <td align="center" valign="top" width="14.28%"><a href="http://blog.fosketts.net"><img src="https://avatars.githubusercontent.com/u/8627862?v=4?s=100" width="100px;" alt="Stephen Foskett"/><br /><sub><b>Stephen Foskett</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=SFoskett" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://ganapati.fr"><img src="https://avatars.githubusercontent.com/u/15729117?v=4?s=100" width="100px;" alt="Nathan"/><br /><sub><b>Nathan</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=asuri0n" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://www.n-soft.pl"><img src="https://avatars.githubusercontent.com/u/4056319?v=4?s=100" width="100px;" alt="Marcin Natanek"/><br /><sub><b>Marcin Natanek</b></sub></a><br /><a href="#plugin-mnatanek" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://all-tech-plus.com"><img src="https://avatars.githubusercontent.com/u/23551912?v=4?s=100" width="100px;" alt="Mark van Bellen"/><br /><sub><b>Mark van Bellen</b></sub></a><br /><a href="#plugin-buttonsbond" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>

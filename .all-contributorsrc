@@ -364,6 +364,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "buttonsbond",
+      "name": "Mark van Bellen",
+      "avatar_url": "https://avatars.githubusercontent.com/u/23551912?v=4",
+      "profile": "http://all-tech-plus.com",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

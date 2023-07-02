@@ -15,7 +15,7 @@ export const linkedinCommon = {
         tokenUrl: 'https://www.linkedin.com/oauth/v2/accessToken',
         displayName: 'Authentication',
         required: true,
-        scope: ['w_member_social', 'openid', 'email', 'profile', 'w_organization_social', 'rw_organization_admin']
+        scope: ['w_member_social', 'w_organization_social', 'rw_organization_admin', 'openid', 'email', 'profile']
     }),
     text: Property.LongText({
         displayName: 'Text',

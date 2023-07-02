@@ -5,7 +5,7 @@ import { Image, linkedinCommon } from "../common";
 export const createCompanyUpdate = createAction({
     name: "create_company_update",
     displayName: "Create Company Update",
-    description: 'Create a company update on LinkedIn',
+    description: 'Create a new company update for Company Page',
     sampleData: {},
     props: {
         authentication: linkedinCommon.authentication,

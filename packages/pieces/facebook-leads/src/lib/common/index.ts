@@ -10,7 +10,7 @@ export const facebookLeadsCommon = {
         authUrl: "https://graph.facebook.com/oauth/authorize",
         tokenUrl: "https://graph.facebook.com/oauth/access_token",
         required: true,
-        scope: ['ads_management', 'pages_show_list', 'pages_read_engagement', 'pages_manage_ads', 'leads_retrieval', 'pages_manage_metadata'],
+        scope: ['pages_show_list', 'pages_manage_ads', 'leads_retrieval', 'pages_manage_metadata'],
     }),
 
     page: Property.Dropdown({
@@ -135,6 +135,18 @@ export const facebookLeadsCommon = {
         const response = await httpClient.sendRequest(request);
         return response.body.data;
     },
+
+    getLeadDetails: async (leadId: string, accessToken: string) => {
+        const response = await httpClient.sendRequest({
+            method: HttpMethod.GET,
+            url: `${facebookLeadsCommon.baseUrl}/${leadId}`,
+            queryParams: {
+                access_token: accessToken
+            }
+        });
+
+        return response.body;
+    }
 }
 
 export interface FacebookOAuth2 {

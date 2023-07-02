@@ -2,7 +2,6 @@ import { readdir, writeFile, readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { cwd } from "node:process";
-import sortBy from "lodash/sortBy";
 import { Piece, ActionBase, PieceMetadata, PiecePropertyMap, TriggerBase, TriggerStrategy} from '@activepieces/pieces-framework';
 
 type PieceInfo = PieceMetadata & {
@@ -31,7 +30,7 @@ const loadPiecesMetadata = async (): Promise<PieceInfo[]> => {
     })
   }
 
-  return sortBy(piecesMetadata, [p => p.displayName.toUpperCase()])
+  return piecesMetadata.sort((a, b) => a.displayName.toUpperCase().localeCompare(b.displayName.toUpperCase()));
 }
 
 const capitilizeFirstLetter = (str: string) => {
@@ -127,7 +126,7 @@ const writeAppsOverView = async (pieces: PieceInfo[]) => {
       <Card>
           <p align="center">
             <strong>${piece.displayName}</strong>
-            <img height="75px" width="75px" src="https://cdn.activepieces.com/pieces/${piece.directoryName}.png" />
+            <img height="75px" width="75px" src="${piece.logoUrl}" />
           </p>
       </Card>
     </a>

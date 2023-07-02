@@ -24,7 +24,7 @@ import { decryptObject, encryptObject } from '../helper/encryption'
 import { getEdition } from '../helper/secret-helper'
 import { logger } from '../helper/logger'
 import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
-import { isNil } from 'lodash'
+import { isNil } from '@activepieces/shared'
 
 type GetOneParams = {
     projectId: ProjectId

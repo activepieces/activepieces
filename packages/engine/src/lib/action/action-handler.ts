@@ -1,5 +1,5 @@
 import { StepOutput, Action, ExecutionState, ResumeStepMetadata, ExecutionOutput, ExecutionOutputStatus, StepOutputStatus, StepOutputForActionType } from '@activepieces/shared';
-import { isNil } from 'lodash';
+import { isNil } from '@activepieces/shared'
 
 export type ActionHandler = BaseActionHandler
 

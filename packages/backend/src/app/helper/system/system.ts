@@ -47,8 +47,7 @@ export const system = {
 }
 
 const getEnvVar = (prop: SystemProp): string | undefined => {
-    const value = process.env[`AP_${prop}`]
-    return value
+    return process.env[`AP_${prop}`]
 }
 
 export const validateEnvPropsOnStartup = () => {

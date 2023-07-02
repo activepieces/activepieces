@@ -1,5 +1,5 @@
 import { AuthenticationType, httpClient, HttpMethod, HttpRequest, isNotUndefined } from '@activepieces/pieces-common'
-import { pickBy } from 'lodash'
+import { pickBy } from '@activepieces/shared';
 import { TodoistCompletedListResponse } from '../models'
 
 const API = 'https://api.todoist.com/sync/v9'

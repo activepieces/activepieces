@@ -1,37 +1,45 @@
 import { TriggerStrategy } from "@activepieces/pieces-framework";
 import { createTrigger, Property } from "@activepieces/pieces-framework";
-import { DAY_HOURS, MONTH_DAYS,  validateHours,  validateMonthDays  } from "../common";
+import { DAY_HOURS, MONTH_DAYS, timezoneOptions, validateHours, validateMonthDays } from "../common";
 
-export const everyMonthTrigger= createTrigger({
+export const everyMonthTrigger = createTrigger({
     name: 'every_month',
     displayName: 'Every Month',
     description: 'Triggers the current flow every month',
     type: TriggerStrategy.POLLING,
     sampleData: {},
-    props:{
+    props: {
         day_of_the_month: Property.StaticDropdown({
-            displayName:'Day of the month',
-            options:{
-                options: MONTH_DAYS.map((d,idx)=>{
+            displayName: 'Day of the month',
+            options: {
+                options: MONTH_DAYS.map((d, idx) => {
                     return {
-                        label:(1+d).toString(),
-                        value:(idx+1)
+                        label: (1 + d).toString(),
+                        value: (idx + 1)
                     }
                 })
             },
-            required:true,
+            required: true,
         }),
         hour_of_the_day: Property.StaticDropdown({
-            displayName:'Hour of the day (UTC)',
-            options:{
-                options: DAY_HOURS.map((d,idx)=>{
+            displayName: 'Hour of the day',
+            options: {
+                options: DAY_HOURS.map((d, idx) => {
                     return {
-                        label:d,
-                        value:idx
+                        label: d,
+                        value: idx
                     }
                 })
             },
-            required:true,
+            required: true,
+        }),
+        timezone: Property.StaticDropdown<string>({
+            displayName: "Timezone",
+            options: {
+                options: timezoneOptions,
+            },
+            required: true,
+            defaultValue: "UTC"
         }),
     },
     onEnable: async (ctx) => {
@@ -40,7 +48,8 @@ export const everyMonthTrigger= createTrigger({
         const cronExpression = `0 ${hourOfTheDay} ${dayOfTheMonth} * *`
         ctx.setSchedule({
             cronExpression: cronExpression,
-        });       
+            timezone: ctx.propsValue.timezone
+        });
     },
     run(ctx) {
         const hourOfTheDay = validateHours(ctx.propsValue.hour_of_the_day);
@@ -49,7 +58,8 @@ export const everyMonthTrigger= createTrigger({
         return Promise.resolve([{
             hour_of_the_day: hourOfTheDay,
             day_of_the_month: dayOfTheMonth,
-            cron_expression: cronExpression
+            cron_expression: cronExpression,
+            timezone: ctx.propsValue.timezone
         }]);
     },
     onDisable: async () => {

@@ -3,7 +3,7 @@ import { databaseConnection } from '../../database/database-connection'
 import { PieceMetadataEntity, PieceMetadataSchema } from '../piece-metadata-entity'
 import { GetParams, ListParams, PieceMetadataService } from './piece-metadata-service'
 import { PieceMetadata, PieceMetadataSummary } from '@activepieces/pieces-framework'
-import { isNil, isNull } from 'lodash'
+import { isNil } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode, apId } from '@activepieces/shared'
 import { AllPiecesStats, pieceStatsService } from './piece-stats-service'
 import * as semver from 'semver'
@@ -57,18 +57,29 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
         },
 
         async get({ name, version, projectId }: GetParams): Promise<PieceMetadata> {
-            const pieceMetadataEntity = await repo.createQueryBuilder().where([
-                {
-                    name,
-                    version: findSearchOperation(version),
-                    projectId: Equal(projectId),
-                },
-                {
-                    name,
-                    version: findSearchOperation(version),
-                    projectId: IsNull(),
-                },
-            ]).distinctOn(['name']).orderBy({ name: 'ASC', version: 'DESC' }).getOne()
+            const projectPiece: Record<string, unknown> = {
+                name,
+                projectId: Equal(projectId),
+            }
+            const officialPiece: Record<string, unknown> = {
+                name,
+                projectId: IsNull(),
+            }
+            if (version) {
+                projectPiece.version = findSearchOperation(version)
+                officialPiece.version = findSearchOperation(version)
+            }
+            const pieceMetadataEntity = await repo.createQueryBuilder()
+                .where([
+                    projectPiece,
+                    officialPiece,
+                ])
+                .distinctOn(['name'])
+                .orderBy({
+                    name: 'ASC',
+                    version: 'DESC',
+                } as const)
+                .getOne()
 
             if (isNil(pieceMetadataEntity)) {
                 throw new ActivepiecesError({
@@ -88,7 +99,7 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
                 version: pieceMetadata.version,
                 projectId: projectId ?? IsNull(),
             })
-            if (!isNull(existingMetadata)) {
+            if (!isNil(existingMetadata)) {
                 throw new ActivepiecesError({
                     code: ErrorCode.VALIDATION,
                     params: {
@@ -108,7 +119,7 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
                 id,
                 projectId: projectId ?? IsNull(),
             })
-            if (isNull(existingMetadata)) {
+            if (isNil(existingMetadata)) {
                 throw new ActivepiecesError({
                     code: ErrorCode.ENTITY_NOT_FOUND,
                     params: {

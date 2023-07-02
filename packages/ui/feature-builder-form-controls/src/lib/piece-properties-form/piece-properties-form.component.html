@@ -93,12 +93,16 @@
               <mat-label> {{ (refreshableConfigsLoadingFlags$[property.key] | async)? 'Loading...' :
                 property.value.displayName
                 }}</mat-label>
-              <mat-select [formControlName]="property.key" [compareWith]="dropdownCompareWithFunction">
+              <mat-select [formControlName]="property.key" (closed)="searchControl.setValue('')"
+                [compareWith]="dropdownCompareWithFunction">
                 <ng-container *ngIf="dropdownOptionsObservables$[property.key]| async as state">
-
-                  <mat-option *ngFor="let opt of state.options" [value]="opt.value">
-                    {{opt.label}}
-                  </mat-option>
+                  <ng-container *ngTemplateOutlet="searchInputForDropdowns"></ng-container>
+                  <div class="thin-scrollbars ap-max-h-[190px] ap-overflow-y-auto">
+                    <mat-option *ngFor="let opt of (state.options | dropdownSearch:searchControl.value)"
+                      [class.!ap-h-0]="!opt.show" [class.!ap-min-h-0]="!opt.show" [value]="opt.item.value">
+                      {{opt.item.label}}
+                    </mat-option>
+                  </div>
                   <mat-option [disabled]="true"
                     *ngIf="state.disabled && ((refreshableConfigsLoadingFlags$[property.key] | async) === false || !refreshableConfigsLoadingFlags$[property.key])">
                     <div> {{state.placeholder}} </div>
@@ -129,7 +133,6 @@
           <div class="ap-relative">
             <div class="ap-absolute -ap-left-[20px]"
               [style.top]="dropdown._elementRef.nativeElement.clientHeight/2-15+'px'">
-
               <ng-container
                 *ngTemplateOutlet="removeOptionalPropertyIcon; context{$implicit:property, propertyUiContainer:dropdownUiContainer}"></ng-container>
             </div>
@@ -138,14 +141,17 @@
               <mat-label> {{ (refreshableConfigsLoadingFlags$[property.key] | async)? 'Loading...' :
                 property.value.displayName
                 }}</mat-label>
-              <mat-select
+              <mat-select (closed)="searchControl.setValue('')"
                 [style.display]="((dropdownOptionsObservables$[property.key] | async) === undefined || (dropdownOptionsObservables$[property.key] | async) === null ||  (dropdownOptionsObservables$[property.key] | async)?.disabled === true)? 'none':'block' "
                 multiple [formControlName]="property.key" [compareWith]="dropdownCompareWithFunction">
                 <ng-container *ngIf="dropdownOptionsObservables$[property.key]| async as state">
-
-                  <mat-option *ngFor="let opt of state.options" [value]="opt.value">
-                    {{opt.label}}
-                  </mat-option>
+                  <ng-container *ngTemplateOutlet="searchInputForDropdowns"></ng-container>
+                  <div class="thin-scrollbars ap-max-h-[190px] ap-overflow-y-auto">
+                    <mat-option *ngFor="let opt of state.options| dropdownSearch:searchControl.value"
+                      [class.!ap-h-0]="!opt.show" [class.!ap-min-h-0]="!opt.show" [value]="opt.item.value">
+                      {{opt.item.label}}
+                    </mat-option>
+                  </div>
                 </ng-container>
               </mat-select>
               <ng-container
@@ -192,10 +198,15 @@
               #dropdownUiContainer="hoverTrackerDirective" #dropdown>
               <mat-label> {{ property.value.displayName }} </mat-label>
               <mat-select [matTooltip]="property.value.description" [formControlName]="property.key"
-                [compareWith]="dropdownCompareWithFunction">
-                <mat-option *ngFor="let opt of property.value.options.options" [value]="opt.value">
-                  {{opt.label}}
-                </mat-option>
+                (closed)="searchControl.setValue('')" [compareWith]="dropdownCompareWithFunction">
+                <ng-container *ngTemplateOutlet="searchInputForDropdowns"></ng-container>
+                <div class="thin-scrollbars ap-max-h-[190px] ap-overflow-y-auto">
+                  <mat-option *ngFor="let opt of property.value.options.options | dropdownSearch:searchControl.value"
+                    [value]="opt.item.value" [class.!ap-h-0]="!opt.show" [class.!ap-min-h-0]="!opt.show">
+                    {{opt.item.label}}
+                  </mat-option>
+                </div>
+
               </mat-select>
               <mat-error *ngIf="formGroup.get(property.key)?.invalid">
                 {{property.value.displayName}} is required
@@ -211,7 +222,7 @@
     <ng-container *ngSwitchCase="PropertyType.STATIC_MULTI_SELECT_DROPDOWN">
       <div>
         <span class="ap-flex ap-justify-end ap-mb-1 ap-mr-1 ap-text-primary ">
-          <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:property} ">
+          <ng-container *ngTemplateOutlet="customizedInputs? dynamicVariableIcon: null; context:{$implicit:property}">
           </ng-container>
         </span>
         <ng-container
@@ -227,11 +238,15 @@
             <mat-form-field #dropdown class="ap-w-full" appearance="outline"
               #dropdownUiContainer="hoverTrackerDirective" apTrackHover>
               <mat-label> {{ property.value.displayName }} </mat-label>
-              <mat-select [matTooltip]="property.value.description" [formControlName]="property.key" multiple
-                [compareWith]="dropdownCompareWithFunction">
-                <mat-option *ngFor="let opt of property.value.options.options" [value]="opt.value">
-                  {{opt.label}}
-                </mat-option>
+              <mat-select (closed)="searchControl.setValue('')" [matTooltip]="property.value.description"
+                [formControlName]="property.key" multiple [compareWith]="dropdownCompareWithFunction">
+                <ng-container *ngTemplateOutlet="searchInputForDropdowns"></ng-container>
+                <div class="thin-scrollbars ap-max-h-[190px] ap-overflow-y-auto">
+                  <mat-option *ngFor="let opt of property.value.options.options | dropdownSearch:searchControl.value"
+                    [class.!ap-h-0]="!opt.show" [class.!ap-min-h-0]="!opt.show" [value]="opt.item.value">
+                    {{opt.item.label}}
+                  </mat-option>
+                </div>
               </mat-select>
               <mat-error *ngIf="formGroup.get(property.key)?.invalid">
                 {{property.value.displayName}} is required
@@ -478,4 +493,13 @@
     *ngIf="!property.value.required && form.enabled" class="ap-w-[13px] ap-h-[13px] !ap-cursor-pointer ap-mt-[1px]"
     [class.ap-fill-white]="isWhite" [class.ap-opacity-0]="!removeIcon.isHovered && !propertyUiContainer.isHovered"
     [applyClass]="true"></svg-icon>
+</ng-template>
+
+<ng-template #searchInputForDropdowns>
+  <mat-form-field subscriptSizing="dynamic" appearance="fill" (click)="$event.stopPropagation();"
+    #searchField="elementDirective" class="ap-w-full ap-mb-2" apElementDirective>
+    <mat-icon matPrefix color="placeholder-icon" svgIcon="search"></mat-icon>
+    <input #searchInput [formControl]="searchControl" matInput placeholder="Search" autocomplete="off"
+      (keydown.Space)="$event.stopPropagation()">
+  </mat-form-field>
 </ng-template>

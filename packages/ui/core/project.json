@@ -9,6 +9,7 @@
       "executor": "@nrwl/angular:webpack-browser",
       "outputs": ["{options.outputPath}"],
       "options": {
+        "statsJson": true,
         "outputPath": "dist/packages/ui/core",
         "index": "packages/ui/core/src/index.html",
         "main": "packages/ui/core/src/main.ts",

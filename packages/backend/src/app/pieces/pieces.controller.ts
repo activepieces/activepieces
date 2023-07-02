@@ -7,10 +7,11 @@ import { pieceMetadataService } from './piece-metadata-service'
 import { PieceMetadata, PieceMetadataSummary } from '@activepieces/pieces-framework'
 import { FastifyRequest } from 'fastify'
 import { logger } from '../helper/logger'
+import { flagService } from '../flags/flag.service'
 
 const statsEnabled = system.get(SystemProp.STATS_ENABLED) ?? false
 
-const getPieceMetaData=async(pieceName:string, pieceVersion:string)=>{
+const getPieceMetaData = async (pieceName: string, pieceVersion: string) => {
     try {
         const { result } = await engineHelper.extractPieceMetadata({
             pieceName: pieceName,
@@ -18,7 +19,7 @@ const getPieceMetaData=async(pieceName:string, pieceVersion:string)=>{
         })
         return result
     }
-    catch(err) {
+    catch (err) {
         logger.error(JSON.stringify(err))
         throw new ActivepiecesError({
             code: ErrorCode.VALIDATION,
@@ -27,7 +28,7 @@ const getPieceMetaData=async(pieceName:string, pieceVersion:string)=>{
             },
         })
     }
-  
+
 }
 export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done) => {
 
@@ -44,7 +45,7 @@ export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done)
             }>,
         ) => {
 
-            const  result  = await getPieceMetaData(request.body.pieceName, request.body.pieceVersion)
+            const result = await getPieceMetaData(request.body.pieceName, request.body.pieceVersion)
             return pieceMetadataService.create({
                 projectId: request.principal.projectId,
                 pieceMetadata: {
@@ -63,10 +64,10 @@ export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done)
             querystring: ListPiecesRequestQuery,
         },
     }, async (req): Promise<PieceMetadataSummary[]> => {
-        const { release } = req.query
-
+        const latestRelease = await flagService.getCurrentVersion()
+        const release = req.query.release ?? latestRelease
         return await pieceMetadataService.list({
-            release,
+            release: release,
             projectId: req.principal.projectId,
         })
     })

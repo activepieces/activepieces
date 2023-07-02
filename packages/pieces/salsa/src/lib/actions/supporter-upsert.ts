@@ -8,13 +8,14 @@ export const salsaSupporterUpsert = createAction({
     displayName: 'Upsert Supporter on Email',
     props: {
         authentication: salsaCommon.authentication,
+        baseUrl: salsaCommon.baseUrl,
         supporters: Property.Json({
-            displayName: "Contact (JSON Array)",
-            description: "The Contact JSON Array",
+            displayName: "Supporters (JSON Array)",
+            description: "The Supporters JSON Array",
             required: true
         })
     },
     async run(context) {
-        return await upsertSupporter(context.propsValue['supporters']);
+        return await upsertSupporter(context.propsValue);
     },
 });
