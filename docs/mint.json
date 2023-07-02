@@ -239,6 +239,7 @@
         "developers/piece-reference/properties",
         "developers/piece-reference/flow-control",
         "developers/piece-reference/persistent-storage",
+        "developers/piece-reference/piece-versioning",
         "developers/piece-reference/examples"
       ]
     },

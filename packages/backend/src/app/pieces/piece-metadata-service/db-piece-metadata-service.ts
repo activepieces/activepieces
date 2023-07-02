@@ -1,4 +1,4 @@
-import { Equal, IsNull, LessThanOrEqual, MoreThanOrEqual } from 'typeorm'
+import { Equal, IsNull, LessThan, LessThanOrEqual, MoreThanOrEqual } from 'typeorm'
 import { databaseConnection } from '../../database/database-connection'
 import { PieceMetadataEntity, PieceMetadataSchema } from '../piece-metadata-entity'
 import { GetParams, ListParams, PieceMetadataService } from './piece-metadata-service'
@@ -6,6 +6,7 @@ import { PieceMetadata, PieceMetadataSummary } from '@activepieces/pieces-framew
 import { isNil } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode, apId } from '@activepieces/shared'
 import { AllPiecesStats, pieceStatsService } from './piece-stats-service'
+import * as semver from 'semver'
 
 const repo = databaseConnection.getRepository(PieceMetadataEntity)
 
@@ -65,8 +66,8 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
                 projectId: IsNull(),
             }
             if (version) {
-                projectPiece.version = version
-                officialPiece.version = version
+                projectPiece.version = findSearchOperation(version)
+                officialPiece.version = findSearchOperation(version)
             }
             const pieceMetadataEntity = await repo.createQueryBuilder()
                 .where([
@@ -135,5 +136,20 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
         async stats(): Promise<AllPiecesStats> {
             return await pieceStatsService.get()
         },
+    }
+
+    function findSearchOperation(version: string) {
+        if (version.startsWith('^')) {
+            return LessThan(increaseMajorVersion(version.substring(1)))
+        }
+        return Equal(version)
+    }
+
+    function increaseMajorVersion(version: string): string {
+        const incrementedVersion = semver.inc(version, 'major')
+        if (isNil(incrementedVersion)) {
+            throw new Error(`Failed to increase major version ${version}`)
+        }
+        return incrementedVersion
     }
 }

@@ -1,7 +1,10 @@
 import { Static, Type } from "@sinclair/typebox";
-import { semVerRegex } from "../../common";
+ 
+const semVerRegex = /^[0-9]+\.[0-9]+\.[0-9]+$/;
+const queryVersionRegex = /^(\^)?[0-9]+\.[0-9]+\.[0-9]+$/;
 
 export const SemVerType = Type.RegEx(semVerRegex);
+export const QueryVerType = Type.RegEx(queryVersionRegex);
 
 export const GetPieceRequestWithScopeParams = Type.Object({
     name: Type.String(),
@@ -25,13 +28,13 @@ export type ListPiecesRequestQuery = Static<typeof ListPiecesRequestQuery>;
 
 
 export const GetPieceRequestQuery = Type.Object({
-    version: Type.Optional(SemVerType),
+    version: Type.Optional(QueryVerType),
 });
 
 export type GetPieceRequestQuery = Static<typeof GetPieceRequestQuery>;
 
 export const PieceOptionRequest = Type.Object({
-    pieceVersion: SemVerType,
+    pieceVersion: QueryVerType,
     pieceName: Type.String({}),
     stepName: Type.String({}),
     propertyName: Type.String({}),

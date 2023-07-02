@@ -1,5 +1,5 @@
 import { Type, Static } from '@sinclair/typebox';
-import { SemVerType } from '../../pieces';
+import { QueryVerType } from '../../pieces';
 import { SampleDataSettingsObject } from '../sample-data';
 
 export enum TriggerType {
@@ -35,7 +35,7 @@ export type WebhookTrigger = Static<typeof WebhookTrigger>;
 
 export const PieceTriggerSettings = Type.Object({
   pieceName: Type.String({}),
-  pieceVersion: SemVerType,
+  pieceVersion: QueryVerType,
   triggerName: Type.String({}),
   input: Type.Record(Type.String({}), Type.Any()),
   inputUiInfo: SampleDataSettingsObject
