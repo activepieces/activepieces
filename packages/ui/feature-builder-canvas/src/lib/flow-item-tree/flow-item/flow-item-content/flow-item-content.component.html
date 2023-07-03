@@ -31,8 +31,7 @@
             #stepTitle [matTooltip]="isOverflown(stepTitle)?_flowItem.displayName:''">
             {{_flowItem.indexInDfsTraversal}}. {{ _flowItem.displayName }}
           </div>
-          <div
-            class="ap-pointer-events-none ap-select-none ap-typography-caption ap-flex ap-text-description ap-items-center">
+          <div class="ap-select-none ap-typography-caption ap-flex ap-text-description ap-items-center">
             <div>{{ stepAppName$ | async}}</div>
             <div #spacer class="ap-flex-grow"></div>
             <div class="ap-justify-self-end" @fadeIn *ngIf="!_flowItem.valid || (selectedRun$ | async)">
