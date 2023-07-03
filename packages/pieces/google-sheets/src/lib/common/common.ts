@@ -200,6 +200,7 @@ export const googleSheetsCommon = {
     updateGoogleSheetRow: updateGoogleSheetRow,
     findSheetName: findSheetName,
     deleteRow: deleteRow,
+    clearSheet: clearSheet,
 }
 
 
@@ -262,12 +263,13 @@ async function updateGoogleSheetRow(params: UpdateGoogleSheetRowParams) {
 async function appendGoogleSheetValues(params: AppendGoogleSheetValuesParams) {
     const requestBody = {
         majorDimension: params.majorDimension,
-        range: params.range,
+        range: params.range + "!A:A",
         values: params.values.map(val => ({ values: val })),
     };
+   
     const request: HttpRequest<typeof requestBody> = {
         method: HttpMethod.POST,
-        url: `https://sheets.googleapis.com/v4/spreadsheets/${params.spreadSheetId}/values/${params.range}:append`,
+        url: `https://sheets.googleapis.com/v4/spreadsheets/${params.spreadSheetId}/values/${params.range}!A:A:append`,
         body: requestBody,
         authentication: {
             type: AuthenticationType.BEARER_TOKEN,
@@ -342,6 +344,33 @@ async function deleteRow(spreadsheetId: string, sheetId: number, rowIndex: numbe
                             dimension: "ROWS",
                             startIndex: rowIndex,
                             endIndex: rowIndex + 1,
+                        },
+                    },
+                },
+            ],
+        },
+    };
+    await httpClient.sendRequest(request);
+}
+
+
+async function clearSheet(spreadsheetId: string, sheetId: number, accessToken: string, rowIndex: number, numOfRows: number) {
+    const request: HttpRequest = {
+        method: HttpMethod.POST,
+        url: `${googleSheetsCommon.baseUrl}/${spreadsheetId}/:batchUpdate`,
+        authentication: {
+            type: AuthenticationType.BEARER_TOKEN,
+            token: accessToken,
+        },
+        body: {
+            requests: [
+                {
+                    deleteDimension: {
+                        range: {
+                            sheetId: sheetId,
+                            dimension: "ROWS",
+                            startIndex: rowIndex,
+                            endIndex: rowIndex + numOfRows + 1,
                         },
                     },
                 },

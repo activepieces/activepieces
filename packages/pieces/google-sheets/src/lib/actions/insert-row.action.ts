@@ -40,7 +40,7 @@ export const insertRowAction = createAction({
                 valueInputOption: context.propsValue['as_string']
                     ? ValueInputOption.RAW
                     : ValueInputOption.USER_ENTERED,
-                values: formattedValues as string[],
+                values: formattedValues,
             });
 
             return res.body;

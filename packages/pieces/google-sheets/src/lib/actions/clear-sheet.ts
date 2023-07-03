@@ -35,7 +35,7 @@ export const clearSheetAction = createAction({
         }
 
         for (let i = 0; i < rowsToDelete.length; i++) {
-            await googleSheetsCommon.deleteRow(context.propsValue.spreadsheet_id, context.propsValue.sheet_id, context.propsValue.ignore_first_row ? 1 : 0, context.propsValue['authentication']['access_token'])
+            await googleSheetsCommon.clearSheet(context.propsValue.spreadsheet_id, context.propsValue.sheet_id, context.propsValue['authentication']['access_token'], context.propsValue.ignore_first_row ? 1 : 0, rowsToDelete.length)
         }
 
         return {
