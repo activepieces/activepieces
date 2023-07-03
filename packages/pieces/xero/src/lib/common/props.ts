@@ -2,30 +2,12 @@ import { OAuth2PropertyValue, Property } from "@activepieces/pieces-framework";
 import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from "@activepieces/pieces-common";
 
 export const props = {
-  authentication: Property.OAuth2({
-    description: `
-    1. Log in to Xero
-    2. Go to (Developer portal)[https://developer.xero.com/app/manage/]
-    3. Click on the App you want to integrate
-    4. On the left, click on \`Configuration\`
-    5. Enter your \`redirect url\`
-    6. Copy the \`Client Id\` and \`Client Secret\`
-    `,
-    displayName: 'Authentication',
-    authUrl: "https://login.xero.com/identity/connect/authorize",
-    tokenUrl: "https://identity.xero.com/connect/token",
-    required: true,
-    scope: [
-      'accounting.contacts',
-      'accounting.transactions'
-    ]
-  }),
   tenant_id: Property.Dropdown({
     displayName: 'Organization',
     refreshers: ['authentication'],
     required: true,
-    options: async ({ authentication }) => {
-      if (!authentication)
+    options: async ({ auth }) => {
+      if (!auth)
         return {
           disabled: true,
           options: [],
@@ -37,10 +19,10 @@ export const props = {
         url: 'https://api.xero.com/connections',
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: (authentication as OAuth2PropertyValue).access_token
+          token: (auth as OAuth2PropertyValue).access_token
         }
       }
-  
+
       const result = await httpClient.sendRequest<{
         id: string,
         authEventId: string,
@@ -55,7 +37,7 @@ export const props = {
         return {
           disabled: false,
           options: [{
-            label: result.body?.[0].tenantName, 
+            label: result.body?.[0].tenantName,
             value: result.body?.[0].tenantId
           }]
         }
