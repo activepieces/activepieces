@@ -1,136 +1,104 @@
 import { AuthenticationType, DedupeStrategy, httpClient, HttpMethod, Polling, pollingHelper, } from "@activepieces/pieces-common";
-import { createTrigger, OAuth2PropertyValue, Property, TriggerStrategy } from "@activepieces/pieces-framework";
+import { createTrigger, OAuth2PropertyValue, TriggerStrategy } from "@activepieces/pieces-framework";
 import dayjs from "dayjs";
+import { zohoCrmAuth } from "../..";
 
 export const newContact = createTrigger({
-    name: "new_contact",
-    displayName: "New Contact",
-    description: "Triggers when a new contact is created",
-    sampleData: {
-        "Owner": {
-            "name": "Activepieces Apps",
-            "id": "560094000000343001",
-            "email": "apps@activepieces.com"
-        },
-        "Email": "capla-paprocki@yahoo.com",
-        "Description": null,
-        "$currency_symbol": "$",
-        "Vendor_Name": null,
-        "Mailing_Zip": "99501",
-        "$field_states": null,
-        "Other_Phone": null,
-        "Mailing_State": "AK",
-        "$review_process": {
-            "approve": false,
-            "reject": false,
-            "resubmit": false
-        },
-        "Twitter": "lpaprocki_sample",
-        "Other_Zip": null,
-        "Mailing_Street": "639 Main St",
-        "Other_State": null,
-        "$sharing_permission": "full_access",
-        "Salutation": null,
-        "Other_Country": null,
-        "Last_Activity_Time": "2023-03-26T00:02:28+01:00",
-        "First_Name": "Capla",
-        "Full_Name": "Capla Paprocki (Sample)",
-        "Asst_Phone": null,
-        "Record_Image": "d7d6bec0cbbfd9f3b84ebcd2eba41e9fa432f48560f9ed267b2e5b26eb58a07f5451e24ca9042b39f05459c41291c005b0dea6b224d375a6030f4096eb631fa3d4dcabb97393f1dc2470eb1658164f05",
-        "Department": "Admin",
-        "Modified_By": {
-            "name": "Activepieces Apps",
-            "id": "560094000000343001",
-            "email": "apps@activepieces.com"
-        },
-        "$review": null,
-        "$state": "save",
-        "Skype_ID": "lpaprocki",
-        "Unsubscribed_Mode": null,
-        "$process_flow": false,
-        "Assistant": null,
-        "Phone": "555-555-5555",
-        "Mailing_Country": "United States",
-        "id": "560094000000349199",
-        "Reporting_To": null,
-        "$approval": {
-            "delegate": false,
-            "approve": false,
-            "reject": false,
-            "resubmit": false
-        },
-        "Enrich_Status__s": null,
-        "Other_City": null,
-        "Created_Time": "2023-03-26T00:01:56+01:00",
-        "$wizard_connection_path": null,
-        "$editable": true,
-        "Home_Phone": null,
-        "Created_By": {
-            "name": "Activepieces Apps",
-            "id": "560094000000343001",
-            "email": "apps@activepieces.com"
-        },
-        "$zia_owner_assignment": "owner_recommendation_unavailable",
-        "Secondary_Email": null
-    },
-    type: TriggerStrategy.POLLING,
-    props: {
-        authentication: Property.OAuth2({
-            props: {
-                location: Property.StaticDropdown({
-                    displayName: "Location",
-                    description: "The location of your Zoho CRM account",
-                    required: true,
-                    options: {
-                        options: [
-                            {
-                                label: "zoho.eu",
-                                value: "zoho.eu"
-                            },
-                            {
-                                label: "zoho.com",
-                                value: "zoho.com"
-                            },
-                            {
-                                label: "zoho.com.au",
-                                value: "zoho.com.au"
-                            },
-                            {
-                                label: "zoho.jp",
-                                value: "zoho.jp"
-                            }
-                        ]
-                    }
-                })
+    auth: zohoCrmAuth,
+    trigger: {
+        name: "new_contact",
+        displayName: "New Contact",
+        description: "Triggers when a new contact is created",
+        sampleData: {
+            "Owner": {
+                "name": "Activepieces Apps",
+                "id": "560094000000343001",
+                "email": "apps@activepieces.com"
             },
-            displayName: "Authentication",
-            description: "Authentication for Zoho CRM",
-            scope: ["ZohoCRM.modules.READ"],
-            authUrl: "https://accounts.{location}/oauth/v2/auth",
-            tokenUrl: "https://accounts.{location}/oauth/v2/token",
-            required: true,
-        })
-    },
-    async run(context) {
-        return await pollingHelper.poll(polling, { store: context.store, propsValue: context.propsValue });
-    },
-    async test({ propsValue, store }): Promise<unknown[]> {
-        return await pollingHelper.test(polling, { store: store, propsValue: propsValue });
-    },
-    async onEnable({ propsValue, store }): Promise<void> {
-        await pollingHelper.onEnable(polling, { store: store, propsValue: propsValue });
-    },
-    async onDisable({ propsValue, store }): Promise<void> {
-        await pollingHelper.onDisable(polling, { store: store, propsValue: propsValue });
+            "Email": "capla-paprocki@yahoo.com",
+            "Description": null,
+            "$currency_symbol": "$",
+            "Vendor_Name": null,
+            "Mailing_Zip": "99501",
+            "$field_states": null,
+            "Other_Phone": null,
+            "Mailing_State": "AK",
+            "$review_process": {
+                "approve": false,
+                "reject": false,
+                "resubmit": false
+            },
+            "Twitter": "lpaprocki_sample",
+            "Other_Zip": null,
+            "Mailing_Street": "639 Main St",
+            "Other_State": null,
+            "$sharing_permission": "full_access",
+            "Salutation": null,
+            "Other_Country": null,
+            "Last_Activity_Time": "2023-03-26T00:02:28+01:00",
+            "First_Name": "Capla",
+            "Full_Name": "Capla Paprocki (Sample)",
+            "Asst_Phone": null,
+            "Record_Image": "d7d6bec0cbbfd9f3b84ebcd2eba41e9fa432f48560f9ed267b2e5b26eb58a07f5451e24ca9042b39f05459c41291c005b0dea6b224d375a6030f4096eb631fa3d4dcabb97393f1dc2470eb1658164f05",
+            "Department": "Admin",
+            "Modified_By": {
+                "name": "Activepieces Apps",
+                "id": "560094000000343001",
+                "email": "apps@activepieces.com"
+            },
+            "$review": null,
+            "$state": "save",
+            "Skype_ID": "lpaprocki",
+            "Unsubscribed_Mode": null,
+            "$process_flow": false,
+            "Assistant": null,
+            "Phone": "555-555-5555",
+            "Mailing_Country": "United States",
+            "id": "560094000000349199",
+            "Reporting_To": null,
+            "$approval": {
+                "delegate": false,
+                "approve": false,
+                "reject": false,
+                "resubmit": false
+            },
+            "Enrich_Status__s": null,
+            "Other_City": null,
+            "Created_Time": "2023-03-26T00:01:56+01:00",
+            "$wizard_connection_path": null,
+            "$editable": true,
+            "Home_Phone": null,
+            "Created_By": {
+                "name": "Activepieces Apps",
+                "id": "560094000000343001",
+                "email": "apps@activepieces.com"
+            },
+            "$zia_owner_assignment": "owner_recommendation_unavailable",
+            "Secondary_Email": null
+        },
+        type: TriggerStrategy.POLLING,
+        props: {
+        },
+        async run(context) {
+            return await pollingHelper.poll(polling, { auth: context.auth, store: context.store, propsValue: context.propsValue });
+        },
+        async test({ auth, propsValue, store }): Promise<unknown[]> {
+            return await pollingHelper.test(polling, { auth, store: store, propsValue: propsValue });
+        },
+        async onEnable({ auth, propsValue, store }): Promise<void> {
+            await pollingHelper.onEnable(polling, { auth, store: store, propsValue: propsValue });
+        },
+        async onDisable({ auth, propsValue, store }): Promise<void> {
+            await pollingHelper.onDisable(polling, { auth, store: store, propsValue: propsValue });
+        }
     }
 })
 
-
-const polling: Polling<{ authentication: OAuth2PropertyValue }> = {
+const polling: Polling<OAuth2PropertyValue, unknown> = {
     strategy: DedupeStrategy.TIMEBASED,
-    items: async ({ propsValue }) => {
+    items: async ({ auth }) => {
         const response = await httpClient.sendRequest<{ data: { Created_Time: string }[] }>({
-            url: `${propsValue.authentication['data']['api_domain']}/crm/v4/Contacts`,
+            url: `${auth.data.api_domain}/crm/v4/Contacts`,
             method: HttpMethod.GET,
             queryParams: {
                 perPage: "200",
@@ -140,7 +108,7 @@ const polling: Polling<{ authentication: OAuth2PropertyValue }> = {
             },
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
-                token: propsValue.authentication.access_token
+                token: auth.access_token
             }
         });
         return response.body.data.map((record) => ({
