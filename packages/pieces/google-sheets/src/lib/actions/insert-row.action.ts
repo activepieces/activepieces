@@ -40,13 +40,31 @@ export const insertRowAction = createAction({
                 const properties: {
                     [key: string]: any
                 } = { }
-                for (const key in firstRow) {
-                    for (const Letter in firstRow[key]) {
-                        properties[Letter] = Property.ShortText({
-                            displayName: firstRow[key][Letter].toString(),
-                            description: firstRow[key][Letter].toString(),
+                if (firstRow.length === 0) {
+                    let ColumnSize = 1;
+
+                    for (const row of values) {
+                        ColumnSize = Math.max(ColumnSize, row.values.length);
+                    }
+
+                    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+                    for (let i = 0; i < ColumnSize; i++) {
+                        properties[alphabet[i]] = Property.ShortText({
+                            displayName: alphabet[i].toUpperCase(),
+                            description: alphabet[i].toUpperCase(),
                             required: true
-                        })
+                        });
+                    }
+                }else {
+                    for (const key in firstRow) {
+                        for (const Letter in firstRow[key]) {
+                            properties[Letter] = Property.ShortText({
+                                displayName: firstRow[key][Letter].toString(),
+                                description: firstRow[key][Letter].toString(),
+                                required: true
+                            })
+                        }
                     }
                 }
                 

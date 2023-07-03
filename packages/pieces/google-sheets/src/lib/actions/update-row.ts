@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { ValueInputOption } from '../common/common';
 import { googleSheetsCommon } from '../common/common';
 export const updateRowAction = createAction({
@@ -15,11 +15,62 @@ export const updateRowAction = createAction({
             description: 'The row number to update',
             required: true,
         }),
-        values: Property.Array({
+        values: Property.DynamicProperties({
             displayName: 'Values',
-            description: 'These are the cell values of the row that will be updated, begining with column A and continuing with each Value entered into the next column. For example, to update column C, you must enter Values for columns A, B, and C. It is likely that you will update these columns using Values selected from a previous Google Sheets operation so they will remain the same. If they are left blank they will be blanked out when updating. You do not need to enter Values for all of the columns, just those to the left of the Value you wish to update.',
+            description: 'The values to insert',
             required: true,
-        }),
+            refreshers: ['authentication', 'sheet_id', 'spreadsheet_id'],
+            props: async (context) => {
+                
+                const authentication = context.authentication as OAuth2PropertyValue;
+                const spreadsheet_id = context.spreadsheet_id as unknown as string;
+                const sheet_id = context.sheet_id as unknown as number;
+                const accessToken = authentication['access_token'] ?? '';
+
+                const sheetName = await googleSheetsCommon.findSheetName(accessToken, spreadsheet_id, sheet_id);
+
+                if (!sheetName) {
+                    throw Error("Sheet not found in spreadsheet");
+                }
+
+                const values = await googleSheetsCommon.getValues(spreadsheet_id, accessToken, sheet_id);
+
+                
+                const firstRow = values[0].values;
+                const properties: {
+                    [key: string]: any
+                } = { }
+                if (firstRow.length === 0) {
+                    let ColumnSize = 1;
+
+                    for (const row of values) {
+                        ColumnSize = Math.max(ColumnSize, row.values.length);
+                    }
+
+                    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+                    for (let i = 0; i < ColumnSize; i++) {
+                        properties[alphabet[i]] = Property.ShortText({
+                            displayName: alphabet[i].toUpperCase(),
+                            description: alphabet[i].toUpperCase(),
+                            required: true
+                        });
+                    }
+                }else {
+                    for (const key in firstRow) {
+                        for (const Letter in firstRow[key]) {
+                            properties[Letter] = Property.ShortText({
+                                displayName: firstRow[key][Letter].toString(),
+                                description: firstRow[key][Letter].toString(),
+                                required: true
+                            })
+                        }
+                    }
+                }
+                
+                return properties;
+            }
+        })
     },
     async run(context) {
         const values = context.propsValue['values'];
@@ -28,14 +79,21 @@ export const updateRowAction = createAction({
         if (!sheetName) {
             throw Error("Sheet not found in spreadsheet");
         }
-        if (Array.isArray(values)) {
+
+        const formattedValues = [];
+        for (const key in values) {
+            formattedValues.push(values[key]);
+
+        }
+
+        if (formattedValues.length > 0) {
             const res = await googleSheetsCommon.updateGoogleSheetRow({
                 accessToken: context.propsValue['authentication']['access_token'],
                 rowIndex:  Number(context.propsValue.row_id),
                 sheetName: sheetName,
                 spreadSheetId: context.propsValue['spreadsheet_id'],
                 valueInputOption: ValueInputOption.USER_ENTERED,
-                values: values as string[],
+                values: formattedValues as string[],
             });
 
             

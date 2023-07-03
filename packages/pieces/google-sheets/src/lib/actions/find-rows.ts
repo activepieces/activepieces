@@ -32,13 +32,30 @@ export const findRowsAction = createAction({
                 const ret = [];
                 
                 const firstRow = values[0].values;
+                console.log(values);
+                if (firstRow.length === 0) {
+                    let ColumnSize = 1;
 
-                for (const key in firstRow) {
-                    for (const Letter in firstRow[key]) {
+                    for (const row of values) {
+                        ColumnSize = Math.max(ColumnSize, row.values.length);
+                    }
+
+                    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+                    for (let i = 0; i < ColumnSize; i++) {
                         ret.push({
-                            label: firstRow[key][Letter].toString(),
-                            value: Letter,
+                            label: alphabet[i].toUpperCase(),
+                            value: alphabet[i],
                         });
+                    }
+                }else {
+                    for (const key in firstRow) {
+                        for (const Letter in firstRow[key]) {
+                            ret.push({
+                                label: firstRow[key][Letter].toString(),
+                                value: Letter,
+                            });
+                        }
                     }
                 }
                 
