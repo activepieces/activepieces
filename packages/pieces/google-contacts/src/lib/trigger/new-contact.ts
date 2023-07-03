@@ -1,6 +1,38 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { getAccessTokenOrThrow, HttpResponse, httpClient, HttpMethod, AuthenticationType } from "@activepieces/pieces-common"
+import { createTrigger, OAuth2Property, OAuth2PropertyValue, OAuth2Props, StaticPropsValue, TriggerContext, TriggerStrategy } from '@activepieces/pieces-framework';
+import { getAccessTokenOrThrow, HttpResponse, httpClient, HttpMethod, AuthenticationType, Polling, DedupeStrategy, pollingHelper } from "@activepieces/pieces-common"
 import { googleContactsCommon } from '../common';
+import { OAuth2AppConnection } from '@activepieces/shared';
+
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const polling: Polling<{ authentication: OAuth2PropertyValue, context: TriggerContext<StaticPropsValue<any>> }> = {
+    strategy: DedupeStrategy.LAST_ITEM,
+    items: async ({ propsValue: { authentication , context} }) => {
+        let newContacts: Connection[] = [];
+        let fetchMore = true;
+        while (fetchMore) {
+            const syncToken: string = (await context.store?.get("syncToken"))!;
+            const response = await listContacts(getAccessTokenOrThrow(authentication), syncToken);
+            const newConnections = response.body.connections;
+            await context.store?.put("syncToken", response.body.nextSyncToken);
+            if (newConnections === undefined || newConnections.length == 0) {
+                fetchMore = false;
+            }
+            if (newConnections !== undefined) {
+                newContacts = [...newContacts, ...newConnections];
+            }
+        }
+        console.log(`Found ${newContacts.length} new contacts`);
+        newContacts = newContacts.filter(f => {
+            return f.metadata.deleted !== true;
+        });
+
+        return newContacts.map((item) => ({
+            id: newContacts.indexOf(item),
+            data: item,
+        }));
+    }
+};
 
 export const googleContactNewOrUpdatedContact = createTrigger({
     name: 'new_or_updated_contact',
@@ -69,40 +101,49 @@ export const googleContactNewOrUpdatedContact = createTrigger({
     },
     type: TriggerStrategy.POLLING,
     async onEnable(ctx) {
-        const response = await listContacts(getAccessTokenOrThrow(ctx.propsValue['authentication']), undefined);
-        await ctx.store?.put("syncToken", response.body.nextSyncToken);
-    },
-    async onDisable(ctx) {
-        console.log("Disabling google contact trigger");
-    },
-    async run(ctx) {
-        let newContacts: Connection[] = [];
-        let fetchMore = true;
-        while (fetchMore) {
-            const syncToken: string = (await ctx.store?.get("syncToken"))!;
-            const response = await listContacts(getAccessTokenOrThrow(ctx.propsValue['authentication']), syncToken);
-            const newConnections = response.body.connections;
-            await ctx.store?.put("syncToken", response.body.nextSyncToken);
-            if (newConnections === undefined || newConnections.length == 0) {
-                fetchMore = false;
-            }
-            if (newConnections !== undefined) {
-                newContacts = [...newContacts, ...newConnections];
-            }
-        }
-        console.log(`Found ${newContacts.length} new contacts`);
-        return newContacts.filter(f => {
-            return f.metadata.deleted !== true;
+        return await pollingHelper.onEnable(polling, {
+            store: ctx.store,
+            propsValue: {
+                authentication: ctx.propsValue['authentication'],
+                context: ctx as any,
+            },
         });
     },
+    async onDisable(ctx) {
+        return await pollingHelper.onEnable(polling, {
+            store: ctx.store,
+            propsValue: {
+                authentication: ctx.propsValue['authentication'],
+                context: ctx as any,
+            },
+        });
+    },
+    async run(ctx) {
+        return await pollingHelper.poll(polling, {
+            store: ctx.store,
+            propsValue: {
+                authentication: ctx.propsValue['authentication'],
+                context: ctx,
+            },
+        });
+    },
+    test: async (ctx) => {
+        return await pollingHelper.poll(polling, {
+            store: ctx.store,
+            propsValue: {
+                authentication: ctx.propsValue['authentication'],
+                context: ctx,
+            },
+        });
+    }
 });
 
 function listContacts(access_token: string, syncToken: string | undefined): Promise<HttpResponse<{ connections: Connection[], nextSyncToken: string }>> {
     let qParams: Record<string, string> = {
-        personFields: "Addresses,ageRanges,biographies,birthdays,calendarUrls,clientData,coverPhotos,emailAddresses,events,externalIds,genders,imClients,interests,locales,locations,memberships,metadata,miscKeywords,names,nicknames,occupations,organizations,phoneNumbers,photos,relations,sipAddresses,skills,urls,userDefined",
+        personFields: "addresses,ageRanges,biographies,birthdays,calendarUrls,clientData,coverPhotos,emailAddresses,events,externalIds,genders,imClients,interests,locales,locations,memberships,metadata,miscKeywords,names,nicknames,occupations,organizations,phoneNumbers,photos,relations,sipAddresses,skills,urls,userDefined",
         requestSyncToken: "true"
     };
-    if (syncToken !== undefined) {
+    if (syncToken !== undefined && syncToken !== null) {
         qParams = {
             ...qParams,
             syncToken: syncToken
