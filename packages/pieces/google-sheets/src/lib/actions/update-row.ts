@@ -1,4 +1,4 @@
-import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { ValueInputOption } from '../common/common';
 import { googleSheetsCommon } from '../common/common';
 export const updateRowAction = createAction({
@@ -18,18 +18,11 @@ export const updateRowAction = createAction({
         values: googleSheetsCommon.values,
     },
     async run(context) {
-        const values = context.propsValue['values'];
-
         const sheetName = await googleSheetsCommon.findSheetName(context.propsValue['authentication']['access_token'], context.propsValue['spreadsheet_id'], context.propsValue['sheet_id']);
         if (!sheetName) {
             throw Error("Sheet not found in spreadsheet");
         }
-
-        const formattedValues = [];
-        for (const key in values) {
-            formattedValues.push(values[key]);
-        }
-
+        const formattedValues = Object.values(context.propsValue['values']);
         if (formattedValues.length > 0) {
             const res = await googleSheetsCommon.updateGoogleSheetRow({
                 accessToken: context.propsValue['authentication']['access_token'],

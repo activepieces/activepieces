@@ -83,55 +83,35 @@ export const googleSheetsCommon = {
         displayName: 'Values',
         description: 'The values to insert',
         required: true,
-        refreshers: ['authentication', 'sheet_id', 'spreadsheet_id'],
+        refreshers: ['authentication', 'sheet_id', 'spreadsheet_id', 'is_first_row_headers'],
         props: async (context) => {
-            
+
             const authentication = context.authentication as OAuth2PropertyValue;
             const spreadsheet_id = context.spreadsheet_id as unknown as string;
             const sheet_id = context.sheet_id as unknown as number;
-            const accessToken = authentication['access_token'] ?? '';
+            const values = await googleSheetsCommon.getValues(spreadsheet_id, getAccessTokenOrThrow(authentication), sheet_id);
 
-            const sheetName = await googleSheetsCommon.findSheetName(accessToken, spreadsheet_id, sheet_id);
-
-            if (!sheetName) {
-                throw Error("Sheet not found in spreadsheet");
+            if (!context.is_first_row_headers) {
+                return {
+                    values: Property.Array({
+                        displayName: 'Values',
+                        required: true,
+                    })
+                }
             }
-
-            const values = await googleSheetsCommon.getValues(spreadsheet_id, accessToken, sheet_id);
-
-            
-            const firstRow = values[0].values;
+            const firstRow = (values?.[0]?.values ?? [])
             const properties: {
                 [key: string]: any
-            } = { }
-            if (firstRow.length === 0) {
-                let ColumnSize = 1;
-
-                for (const row of values) {
-                    ColumnSize = Math.max(ColumnSize, row.values.length);
-                }
-
-                const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
-                for (let i = 0; i < ColumnSize; i++) {
-                    properties[alphabet[i]] = Property.ShortText({
-                        displayName: alphabet[i].toUpperCase(),
-                        description: alphabet[i].toUpperCase(),
+            } = {}
+            for (const key in firstRow) {
+                for (const Letter in firstRow[key]) {
+                    properties[Letter] = Property.ShortText({
+                        displayName: firstRow[key][Letter].toString(),
+                        description: firstRow[key][Letter].toString(),
                         required: true
-                    });
-                }
-            }else {
-                for (const key in firstRow) {
-                    for (const Letter in firstRow[key]) {
-                        properties[Letter] = Property.ShortText({
-                            displayName: firstRow[key][Letter].toString(),
-                            description: firstRow[key][Letter].toString(),
-                            required: true
-                        })
-                    }
+                    })
                 }
             }
-            
             return properties;
         }
     }),
@@ -160,7 +140,7 @@ export const googleSheetsCommon = {
             }[] = await googleSheetsCommon.getValues(spreadsheet_id, accessToken, sheet_id);
 
             const ret = [];
-            
+
             const firstRow = values[0].values;
 
             if (firstRow.length === 0) {
@@ -178,7 +158,7 @@ export const googleSheetsCommon = {
                         value: alphabet[i],
                     });
                 }
-            }else {
+            } else {
                 for (const key in firstRow) {
                     for (const letter in firstRow[key]) {
                         ret.push({
@@ -188,7 +168,7 @@ export const googleSheetsCommon = {
                     }
                 }
             }
-            
+
             return {
                 options: ret,
                 disabled: false,
@@ -266,7 +246,7 @@ async function appendGoogleSheetValues(params: AppendGoogleSheetValuesParams) {
         range: params.range + "!A:A",
         values: params.values.map(val => ({ values: val })),
     };
-   
+
     const request: HttpRequest<typeof requestBody> = {
         method: HttpMethod.POST,
         url: `https://sheets.googleapis.com/v4/spreadsheets/${params.spreadSheetId}/values/${params.range}!A:A:append`,
@@ -286,6 +266,9 @@ async function getValues(spreadsheetId: string, accessToken: string, sheetId: nu
     // Define the API endpoint and headers
     // Send the API request
     const sheetName = await findSheetName(accessToken, spreadsheetId, sheetId);
+    if(!sheetName){
+        return [];
+    }
     const request: HttpRequest = {
         method: HttpMethod.GET,
         url: `${googleSheetsCommon.baseUrl}/${spreadsheetId}/values/${sheetName}`,
