@@ -14,7 +14,7 @@ export const clearSheetAction = createAction({
             displayName: 'Is First row Headers?',
             description: 'If the first row is headers',
             required: false,
-            defaultValue: false,
+            defaultValue: true,
         }),
     },
     async run(context) {
@@ -25,21 +25,21 @@ export const clearSheetAction = createAction({
             throw Error("Sheet not found in spreadsheet");
         }
      
-        const RowsToDelete: number[] = [];
+        const rowsToDelete: number[] = [];
         const values = await googleSheetsCommon.getValues(context.propsValue.spreadsheet_id, context.propsValue['authentication']['access_token'], context.propsValue.sheet_id);
         for (const key in values) {
             if (key === '0' && context.propsValue.ignore_first_row) {
                 continue;
             }
-            RowsToDelete.push(parseInt(key) + 1);
+            rowsToDelete.push(parseInt(key) + 1);
         }
 
-        for (let i = 0; i < RowsToDelete.length; i++) {
+        for (let i = 0; i < rowsToDelete.length; i++) {
             await googleSheetsCommon.deleteRow(context.propsValue.spreadsheet_id, context.propsValue.sheet_id, context.propsValue.ignore_first_row ? 1 : 0, context.propsValue['authentication']['access_token'])
         }
 
         return {
-            deletedRow: RowsToDelete,
+            deletedRow: rowsToDelete,
         }
     },
 });

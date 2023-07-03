@@ -10,61 +10,7 @@ export const findRowsAction = createAction({
         spreadsheet_id: googleSheetsCommon.spreadsheet_id,
         include_team_drives: googleSheetsCommon.include_team_drives,
         sheet_id: googleSheetsCommon.sheet_id,
-        column_name: Property.Dropdown<string>({
-            description: 'Column Name',
-            displayName: 'The name of the column to search in',
-            required: true,
-            refreshers: ['authentication', 'sheet_id', 'spreadsheet_id'],
-            options: async (context) => {
-                const authentication = context.authentication as OAuth2PropertyValue;
-                const spreadsheet_id = context.spreadsheet_id as string;
-                const sheet_id = context.sheet_id as number;
-                const accessToken = authentication['access_token'] ?? '';
-
-                const sheetName = await googleSheetsCommon.findSheetName(accessToken, spreadsheet_id, sheet_id);
-
-                if (!sheetName) {
-                    throw Error("Sheet not found in spreadsheet");
-                }
-
-                const values = await googleSheetsCommon.getValues(spreadsheet_id, accessToken, sheet_id);
-
-                const ret = [];
-                
-                const firstRow = values[0].values;
-                console.log(values);
-                if (firstRow.length === 0) {
-                    let ColumnSize = 1;
-
-                    for (const row of values) {
-                        ColumnSize = Math.max(ColumnSize, row.values.length);
-                    }
-
-                    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
-                    for (let i = 0; i < ColumnSize; i++) {
-                        ret.push({
-                            label: alphabet[i].toUpperCase(),
-                            value: alphabet[i],
-                        });
-                    }
-                }else {
-                    for (const key in firstRow) {
-                        for (const Letter in firstRow[key]) {
-                            ret.push({
-                                label: firstRow[key][Letter].toString(),
-                                value: Letter,
-                            });
-                        }
-                    }
-                }
-                
-                return {
-                    options: ret,
-                    disabled: false,
-                };
-            }
-        }),        
+        column_name: googleSheetsCommon.column_name,
         search_value: Property.ShortText({
             displayName: 'Search Value',
             description: 'The value to search for',

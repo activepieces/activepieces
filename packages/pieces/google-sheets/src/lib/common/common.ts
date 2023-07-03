@@ -79,6 +79,122 @@ export const googleSheetsCommon = {
             };
         }
     }),
+    values: Property.DynamicProperties({
+        displayName: 'Values',
+        description: 'The values to insert',
+        required: true,
+        refreshers: ['authentication', 'sheet_id', 'spreadsheet_id'],
+        props: async (context) => {
+            
+            const authentication = context.authentication as OAuth2PropertyValue;
+            const spreadsheet_id = context.spreadsheet_id as unknown as string;
+            const sheet_id = context.sheet_id as unknown as number;
+            const accessToken = authentication['access_token'] ?? '';
+
+            const sheetName = await googleSheetsCommon.findSheetName(accessToken, spreadsheet_id, sheet_id);
+
+            if (!sheetName) {
+                throw Error("Sheet not found in spreadsheet");
+            }
+
+            const values = await googleSheetsCommon.getValues(spreadsheet_id, accessToken, sheet_id);
+
+            
+            const firstRow = values[0].values;
+            const properties: {
+                [key: string]: any
+            } = { }
+            if (firstRow.length === 0) {
+                let ColumnSize = 1;
+
+                for (const row of values) {
+                    ColumnSize = Math.max(ColumnSize, row.values.length);
+                }
+
+                const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+                for (let i = 0; i < ColumnSize; i++) {
+                    properties[alphabet[i]] = Property.ShortText({
+                        displayName: alphabet[i].toUpperCase(),
+                        description: alphabet[i].toUpperCase(),
+                        required: true
+                    });
+                }
+            }else {
+                for (const key in firstRow) {
+                    for (const Letter in firstRow[key]) {
+                        properties[Letter] = Property.ShortText({
+                            displayName: firstRow[key][Letter].toString(),
+                            description: firstRow[key][Letter].toString(),
+                            required: true
+                        })
+                    }
+                }
+            }
+            
+            return properties;
+        }
+    }),
+    column_name: Property.Dropdown<string>({
+        description: 'Column Name',
+        displayName: 'The name of the column to search in',
+        required: true,
+        refreshers: ['authentication', 'sheet_id', 'spreadsheet_id'],
+        options: async (context) => {
+            const authentication = context.authentication as OAuth2PropertyValue;
+            const spreadsheet_id = context.spreadsheet_id as string;
+            const sheet_id = context.sheet_id as number;
+            const accessToken = authentication['access_token'] ?? '';
+
+            const sheetName = await googleSheetsCommon.findSheetName(accessToken, spreadsheet_id, sheet_id);
+
+            if (!sheetName) {
+                throw Error("Sheet not found in spreadsheet");
+            }
+
+            const values: {
+                row: number;
+                values: {
+                    [x: string]: string[];
+                }[];
+            }[] = await googleSheetsCommon.getValues(spreadsheet_id, accessToken, sheet_id);
+
+            const ret = [];
+            
+            const firstRow = values[0].values;
+
+            if (firstRow.length === 0) {
+                let columnSize = 1;
+
+                for (const row of values) {
+                    columnSize = Math.max(columnSize, row.values.length);
+                }
+
+                const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+                for (let i = 0; i < columnSize; i++) {
+                    ret.push({
+                        label: alphabet[i].toUpperCase(),
+                        value: alphabet[i],
+                    });
+                }
+            }else {
+                for (const key in firstRow) {
+                    for (const letter in firstRow[key]) {
+                        ret.push({
+                            label: firstRow[key][letter].toString(),
+                            value: letter,
+                        });
+                    }
+                }
+            }
+            
+            return {
+                options: ret,
+                disabled: false,
+            };
+        }
+    }),
     getValues: getValues,
     appendGoogleSheetValues: appendGoogleSheetValues,
     updateGoogleSheetRow: updateGoogleSheetRow,
