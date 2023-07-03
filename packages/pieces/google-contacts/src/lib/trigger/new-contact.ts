@@ -1,20 +1,18 @@
-import { createTrigger, OAuth2Property, OAuth2PropertyValue, OAuth2Props, StaticPropsValue, TriggerContext, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, OAuth2PropertyValue, TriggerStrategy } from '@activepieces/pieces-framework';
 import { getAccessTokenOrThrow, HttpResponse, httpClient, HttpMethod, AuthenticationType, Polling, DedupeStrategy, pollingHelper } from "@activepieces/pieces-common"
 import { googleContactsCommon } from '../common';
-import { OAuth2AppConnection } from '@activepieces/shared';
 
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const polling: Polling<{ authentication: OAuth2PropertyValue, context: TriggerContext<StaticPropsValue<any>> }> = {
+const polling: Polling<{ authentication: OAuth2PropertyValue }> = {
     strategy: DedupeStrategy.LAST_ITEM,
-    items: async ({ propsValue: { authentication , context} }) => {
+    items: async ({ store, propsValue: { authentication } }) => {
         let newContacts: Connection[] = [];
         let fetchMore = true;
         while (fetchMore) {
-            const syncToken: string = (await context.store?.get("syncToken"))!;
+            const syncToken = (await store.get<string>("syncToken"))!;
             const response = await listContacts(getAccessTokenOrThrow(authentication), syncToken);
             const newConnections = response.body.connections;
-            await context.store?.put("syncToken", response.body.nextSyncToken);
+            await store.put("syncToken", response.body.nextSyncToken);
             if (newConnections === undefined || newConnections.length == 0) {
                 fetchMore = false;
             }
@@ -105,7 +103,6 @@ export const googleContactNewOrUpdatedContact = createTrigger({
             store: ctx.store,
             propsValue: {
                 authentication: ctx.propsValue['authentication'],
-                context: ctx as any,
             },
         });
     },
@@ -114,7 +111,6 @@ export const googleContactNewOrUpdatedContact = createTrigger({
             store: ctx.store,
             propsValue: {
                 authentication: ctx.propsValue['authentication'],
-                context: ctx as any,
             },
         });
     },
@@ -123,7 +119,6 @@ export const googleContactNewOrUpdatedContact = createTrigger({
             store: ctx.store,
             propsValue: {
                 authentication: ctx.propsValue['authentication'],
-                context: ctx,
             },
         });
     },
@@ -132,7 +127,6 @@ export const googleContactNewOrUpdatedContact = createTrigger({
             store: ctx.store,
             propsValue: {
                 authentication: ctx.propsValue['authentication'],
-                context: ctx,
             },
         });
     }
