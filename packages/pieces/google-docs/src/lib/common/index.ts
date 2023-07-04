@@ -1,15 +1,8 @@
 import { Property } from "@activepieces/pieces-framework";
-import { HttpRequest, HttpMethod, httpClient, AuthenticationType } from "@activepieces/pieces-common";
+import { HttpMethod, httpClient, AuthenticationType } from "@activepieces/pieces-common";
 
 export const docsCommon = {
     baseUrl: 'https://docs.googleapis.com/v1',
-    authentication: Property.OAuth2({
-        displayName: 'Authentication',
-        authUrl: "https://accounts.google.com/o/oauth2/auth",
-        tokenUrl: "https://oauth2.googleapis.com/token",
-        required: true,
-        scope: ["https://www.googleapis.com/auth/documents"]
-    }),
     title: Property.ShortText({
         displayName: 'Document Title',
         required: true
