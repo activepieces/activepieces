@@ -123,7 +123,7 @@ export const flowController = async (fastify: FastifyInstance) => {
                 template: flow.version,
                 tags:[],
                 blogUrl:'', 
-                pinnedOrder:null
+                pinnedOrder:null,
             }
             return template
         },
