@@ -2,8 +2,8 @@ import crypto from 'node:crypto'
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
 import { slackSendDirectMessageAction } from './lib/actions/send-direct-message-action'
 import { slackSendMessageAction } from './lib/actions/send-message-action';
-import { slackNewMessageTrigger } from './lib/triggers/new-message';
-import { slackNewReactionAddedTrigger } from './lib/triggers/new-reaction-added';
+import { newMessage } from './lib/triggers/new-message';
+import { newReactionAdded } from './lib/triggers/new-reaction-added';
 
 export const slackAuth = PieceAuth.OAuth2({
   displayName: '',
@@ -55,7 +55,7 @@ export const slack = createPiece({
     slackSendMessageAction,
   ],
   triggers: [
-    slackNewMessageTrigger,
-    slackNewReactionAddedTrigger,
+    newMessage,
+    newReactionAdded,
   ],
 })
