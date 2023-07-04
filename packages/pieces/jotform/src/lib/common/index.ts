@@ -1,62 +1,27 @@
 import { Property } from "@activepieces/pieces-framework";
 import { HttpRequest, HttpMethod, httpClient } from "@activepieces/pieces-common";
 
-const markdownDescription = `
-To obtain api key, follow the steps below:
-1. Go to Settings -> API
-2. Click on "Create New Key" button
-3. Change the permissions to "Full Access"
-4. Copy the API Key and paste it in the API Key field
-`;
-
 export const jotformCommon = {
     baseUrl: (region: string) => {
         if (region === 'eu') {
             return 'https://eu-api.jotform.com';
         }
-        return 'https://api.jotform.com';  
+        return 'https://api.jotform.com';
     },
-    authentication: Property.CustomAuth({
-        displayName: "Authentication",
-        required: true,
-        description: markdownDescription,
-        props: {
-            apiKey: Property.SecretText({
-                displayName: 'API Key',
-                required: true,
-            }),
-            region: Property.StaticDropdown({
-                displayName: 'Region',
-                required: true,
-                options: {
-                    options: [
-                        {
-                            label: 'US (jotform.com)',
-                            value: 'us'
-                        },
-                        {
-                            label: 'EU (eu.jotform.com)',
-                            value: 'eu'
-                        }
-                    ]
-                }
-            })
-        }
-    }),
     form: Property.Dropdown({
         displayName: 'Form',
         required: true,
         refreshers: ['authentication'],
-        options: async (props) => {
-            if (!props['authentication']) {
+        options: async ({ auth }) => {
+            if (!auth) {
                 return {
                     disabled: true,
                     options: [],
                     placeholder: 'Enter API Key'
                 }
             }
-            const auth = props['authentication'] as { apiKey: string, region: string };
-            const options: any[] = await jotformCommon.getUserForms(auth.apiKey, auth.region);
+            const authProp = auth as { apiKey: string, region: string };
+            const options: any[] = await jotformCommon.getUserForms(authProp.apiKey, authProp.region);
             return {
                 options: options,
                 placeholder: 'Choose form to connect'
