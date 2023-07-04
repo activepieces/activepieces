@@ -6,10 +6,10 @@ export const sitesDropdown = Property.Dropdown<string>({
     description: 'Site Name',
     required: true,
     refreshers: ['authentication'],
-    async options(propsValue) {
-        const auth = propsValue['authentication'] as OAuth2PropertyValue;
+    async options({ auth }) {
+        const authProp = auth as OAuth2PropertyValue;
 
-        if (!auth) {
+        if (!authProp) {
             return {
                 disabled: true,
                 placeholder: 'Connect Webflow account',
@@ -17,7 +17,7 @@ export const sitesDropdown = Property.Dropdown<string>({
             };
         }
 
-        const accessToken = auth.access_token;
+        const accessToken = authProp.access_token;
 
         const request: HttpRequest = {
             method: HttpMethod.GET,
@@ -43,15 +43,7 @@ export const sitesDropdown = Property.Dropdown<string>({
 });
 
 export const webflowCommon = {
-        baseUrl: "https://api.webflow.com/",
-        authentication: Property.OAuth2({
-        description: "",
-        displayName: 'Authentication',
-        authUrl: "https://webflow.com/oauth/authorize",
-        tokenUrl: "https://api.webflow.com/oauth/access_token",
-        required: true,
-        scope: ['webhooks:write', 'forms:read'],
-    }),
+    baseUrl: "https://api.webflow.com/",
     subscribeWebhook: async (siteId: string, tag: string, webhookUrl: string, accessToken: string) => {
         const request: HttpRequest = {
             method: HttpMethod.POST,
@@ -69,9 +61,9 @@ export const webflowCommon = {
             },
             queryParams: {},
         };
-       
-       const res = await httpClient.sendRequest(request);
-       return res;
+
+        const res = await httpClient.sendRequest(request);
+        return res;
     },
     unsubscribeWebhook: async (siteId: string, webhookId: string, accessToken: string) => {
         const request: HttpRequest = {
