@@ -149,6 +149,7 @@ export const flowService = {
             id: apId(),
             name: flowVersion.displayName,
             description: '',
+            pinnedOrder: null,
             pieces: flowHelper.getUsedPieces(flowVersion.trigger),
             template: flowVersion,
             tags: [],
