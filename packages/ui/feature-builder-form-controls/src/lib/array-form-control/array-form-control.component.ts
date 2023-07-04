@@ -51,7 +51,10 @@ export class ArrayFormControlComponent implements ControlValueAccessor {
       obj.forEach((val) => {
         this.formArray.push(new FormControl(val), { emitEvent: false });
       });
-      if (this.formArray.controls[this.formArray.length - 1].value) {
+      if (
+        this.formArray.length > 0 &&
+        this.formArray.controls[this.formArray.length - 1].value
+      ) {
         this.formArray.push(new FormControl(''));
       }
     }
