@@ -127,7 +127,7 @@ export const flowVersionService = {
 
 async function lockPieceVersions(projectId: ProjectId, mutatedFlowVersion: FlowVersion): Promise<FlowVersion> {
     return await flowHelper.transferFlowAsync(mutatedFlowVersion, async (step) => {
-        const clonedStep = JSON.parse(JSON.stringify(step));
+        const clonedStep = JSON.parse(JSON.stringify(step))
         switch (step.type) {
             case ActionType.PIECE:
             case TriggerType.PIECE: {
@@ -135,15 +135,15 @@ async function lockPieceVersions(projectId: ProjectId, mutatedFlowVersion: FlowV
                     projectId,
                     name: step.settings.pieceName,
                     version: step.settings.pieceVersion,
-                });
+                })
                 clonedStep.settings.pieceVersion = newVersion.version
                 break
             }
             default:
                 break
         }
-        return clonedStep;
-    });
+        return clonedStep
+    })
 }
 
 async function applySingleOperation(projectId: ProjectId, flowVersion: FlowVersion, operation: FlowOperationRequest): Promise<FlowVersion> {

@@ -1,7 +1,5 @@
 import { TriggerStrategy } from "@activepieces/pieces-framework";
 import { createTrigger, Property } from "@activepieces/pieces-framework";
-import { timezoneOptions } from "../common";
-
 
 export const everyHourTrigger = createTrigger({
     name: 'every_hour',
@@ -14,28 +12,20 @@ export const everyHourTrigger = createTrigger({
             displayName: "Run on weekends (Sat,Sun)",
             required: true,
             defaultValue: false
-        }),
-        timezone: Property.StaticDropdown<string>({
-            displayName: "Timezone",
-            options: {
-                options: timezoneOptions,
-            },
-            required: true,
-            defaultValue: "UTC"
-        }),
+        })
     },
     onEnable: async (ctx) => {
         const cronExpression = ctx.propsValue.run_on_weekends ? `0 * * * *` : `0 * * * 1-5`
         ctx.setSchedule({
             cronExpression: cronExpression,
-            timezone: ctx.propsValue.timezone
+            timezone: 'UTC'
         });
     },
     run(ctx) {
         const cronExpression = ctx.propsValue.run_on_weekends ? `0 * * * *` : `0 * * * 1-5`
         return Promise.resolve([{
             cron_expression: cronExpression,
-            timezone: ctx.propsValue.timezone
+            timezone: 'UTC'
         }]);
     },
     onDisable: async () => {

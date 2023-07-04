@@ -32,7 +32,7 @@ import { isNil } from '@activepieces/shared'
 
 export const flowService = {
     async create({ projectId, request }: { projectId: ProjectId, request: CreateFlowRequest }): Promise<Flow> {
-        const newFlowId = apId();
+        const newFlowId = apId()
         const flow: Partial<Flow> = {
             id: newFlowId,
             projectId: projectId,
@@ -149,6 +149,7 @@ export const flowService = {
             id: apId(),
             name: flowVersion.displayName,
             description: '',
+            pinnedOrder: null,
             pieces: flowHelper.getUsedPieces(flowVersion.trigger),
             template: flowVersion,
             tags: [],
