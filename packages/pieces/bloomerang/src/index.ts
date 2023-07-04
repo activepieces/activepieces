@@ -2,7 +2,8 @@ import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { bloomerangCreateTransaction } from './lib/actions/create-transaction';
 import { bloomerangGetContacts } from './lib/actions/get-contacts';
 import { bloomerangGetTransactionStuff } from './lib/actions/get-transaction-stuff';
-import {bloomerangUpsertContact} from './lib/actions/upsert-contact';
+import {bloomerangUpsertContactsDuplicates} from './lib/actions/upsert-contact_duplicates';
+import {bloomerangUpsertContactsSearch} from './lib/actions/upsert-contact_search';
 
 export const bloomerangAuth = PieceAuth.SecretText({
   displayName: "API Key",
@@ -16,10 +17,11 @@ export const bloomerang = createPiece({
   authors: ['HKudria'],
   auth: bloomerangAuth,
   actions: [
+    bloomerangUpsertContactsDuplicates,
+    bloomerangUpsertContactsSearch,
     bloomerangCreateTransaction,
     bloomerangGetContacts,
     bloomerangGetTransactionStuff,
-    bloomerangUpsertContact,
   ],
   triggers: [],
 });

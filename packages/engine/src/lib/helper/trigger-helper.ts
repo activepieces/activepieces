@@ -45,7 +45,7 @@ export const triggerHelper = {
 
     const appListeners: Listener[] = [];
     const prefix = (params.hookType === TriggerHookType.TEST) ? 'test' : '';
-    let scheduleOptions: ScheduleOptions = {
+    const scheduleOptions: ScheduleOptions = {
       cronExpression: "*/5 * * * *",
       timezone: "UTC"
     }
@@ -60,31 +60,23 @@ export const triggerHelper = {
         if (!isValidCron(request.cronExpression)) {
           throw new Error(`Invalid cron expression: ${request.cronExpression}`);
         }
-        scheduleOptions = {
-          cronExpression: request.cronExpression,
-          timezone: request.timezone ?? "UTC"
-        };
+        scheduleOptions.cronExpression = request.cronExpression;
+        scheduleOptions.timezone = request.timezone ?? "UTC";
       },
       webhookUrl: params.webhookUrl,
       auth: resolvedAuth,
       propsValue: validatedProps,
       payload: params.triggerPayload ?? {},
     };
-
     switch (params.hookType) {
       case TriggerHookType.ON_DISABLE:
         await trigger.onDisable(context);
-        return {
-          scheduleOptions: {
-            cronExpression: ''
-          },
-          listeners: []
-        }
+        return {}
       case TriggerHookType.ON_ENABLE:
         await trigger.onEnable(context);
         return {
           listeners: appListeners,
-          scheduleOptions: scheduleOptions
+          scheduleOptions: trigger.type === TriggerStrategy.POLLING ? scheduleOptions : undefined,
         }
       case TriggerHookType.TEST:
         try {

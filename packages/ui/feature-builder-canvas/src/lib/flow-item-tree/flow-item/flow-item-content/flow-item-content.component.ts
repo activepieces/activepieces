@@ -13,6 +13,7 @@ import {
   map,
   Observable,
   of,
+  shareReplay,
   Subject,
   switchMap,
   takeUntil,
@@ -30,7 +31,7 @@ import {
   flowHelper,
 } from '@activepieces/shared';
 import {
-  ActionMetaService,
+  PieceMetadataService,
   CORE_PIECES_ACTIONS_NAMES,
   CORE_PIECES_TRIGGERS,
   FlowItemDetails,
@@ -63,7 +64,7 @@ export class FlowItemContentComponent implements OnInit {
   _flowItem: FlowItem;
   selectedRun$: Observable<FlowRun | undefined>;
 
-  logoTooltipText = '';
+  stepAppName$: Observable<string>;
   isOverflown = isOverflown;
   childStepsIconsUrls: Record<string, Observable<string>> = {};
   StepOutputStatus = StepOutputStatus;
@@ -75,25 +76,24 @@ export class FlowItemContentComponent implements OnInit {
   @Input() readOnly: boolean;
   @Input() set flowItem(newFlowItem: FlowItem) {
     this._flowItem = newFlowItem;
-    this.logoTooltipText = this.getLogoTooltipText();
+    this.stepAppName$ = this.getStepAppName();
     this.childStepsIconsUrls = this.extractChildStepsIconsUrls();
     this.flowItemChanged$.next(true);
     this.fetchFlowItemDetailsAndLoadLogo();
   }
   isDragging$: Observable<boolean>;
-  stepResult: StepOutput | undefined;
+  stepOutput: StepOutput | undefined;
   flowItemDetails$: Observable<FlowItemDetails | null | undefined>;
   constructor(
     private store: Store,
     private cd: ChangeDetectorRef,
     private runDetailsService: RunDetailsService,
     private flowRendererService: FlowRendererService,
-    private actionMetaDataService: ActionMetaService
+    private actionMetaDataService: PieceMetadataService
   ) {}
 
   ngOnInit(): void {
     this.isDragging$ = this.flowRendererService.draggingSubject.asObservable();
-
     this.selectedRun$ = this.store.select(
       BuilderSelectors.selectCurrentFlowRun
     );
@@ -105,8 +105,8 @@ export class FlowItemContentComponent implements OnInit {
           return stepNameAndStatus.stepName === this._flowItem.name;
         }),
         map((stepNameAndStatus) => {
-          this.stepResult = stepNameAndStatus.result;
-          return stepNameAndStatus.result?.status;
+          this.stepOutput = stepNameAndStatus.output;
+          return stepNameAndStatus.output?.status;
         })
       );
     this.fetchFlowItemDetailsAndLoadLogo();
@@ -147,7 +147,6 @@ export class FlowItemContentComponent implements OnInit {
     return this.selectedRun$.pipe(
       distinctUntilChanged(),
       map((selectedRun) => {
-        this.stepResult = undefined;
         if (selectedRun) {
           if (selectedRun.status !== ExecutionOutputStatus.RUNNING) {
             const stepName = this._flowItem.name;
@@ -157,7 +156,7 @@ export class FlowItemContentComponent implements OnInit {
             }
             const result = executionState.steps[stepName.toString()];
             if (result) {
-              this.stepResult = result;
+              this.stepOutput = result;
             }
             return result === undefined ? undefined : result.status;
           } else {
@@ -165,7 +164,8 @@ export class FlowItemContentComponent implements OnInit {
           }
         }
         return undefined;
-      })
+      }),
+      shareReplay(1)
     );
   }
 
@@ -177,28 +177,32 @@ export class FlowItemContentComponent implements OnInit {
     );
     this.runDetailsService.currentStepResult$.next({
       stepName: this._flowItem.name,
-      result: this.stepResult,
+      output: this.stepOutput,
     });
   }
 
-  getLogoTooltipText() {
+  getStepAppName() {
     switch (this._flowItem.type) {
       case ActionType.BRANCH:
-        return 'Branch';
+        return of('Branch');
       case ActionType.MISSING:
-        return 'Missing';
+        return of('Missing');
       case ActionType.CODE:
-        return 'Code';
+        return of('Code');
       case ActionType.LOOP_ON_ITEMS:
-        return 'Loop';
+        return of('Loop');
       case ActionType.PIECE:
       case TriggerType.PIECE:
-        // TODO use human readable name
-        return '';
+        return this.actionMetaDataService
+          .getPieceMetadata(
+            this._flowItem.settings.pieceName,
+            this._flowItem.settings.pieceVersion
+          )
+          .pipe(map((p) => p.displayName));
       case TriggerType.EMPTY:
-        return 'Click to choose a trigger';
+        return of('Choose a trigger');
       case TriggerType.WEBHOOK:
-        return 'Webhook trigger';
+        return of('Webhook trigger');
     }
   }
   extractChildStepsIconsUrls() {

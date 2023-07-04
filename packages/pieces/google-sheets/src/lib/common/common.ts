@@ -1,13 +1,19 @@
 import { Property, OAuth2PropertyValue } from "@activepieces/pieces-framework";
-import { httpClient, HttpMethod, AuthenticationType, HttpRequest } from "@activepieces/pieces-common";
+import { httpClient, HttpMethod, AuthenticationType, HttpRequest, getAccessTokenOrThrow } from "@activepieces/pieces-common";
 
 export const googleSheetsCommon = {
     baseUrl: "https://sheets.googleapis.com/v4/spreadsheets",
+    include_team_drives: Property.Checkbox({
+        displayName: 'Include Team Drive Sheets',
+        description: 'Determines if sheets from Team Drives should be included in the results.',
+        defaultValue: false,
+        required: true,
+    }),
     spreadsheet_id: Property.Dropdown({
         displayName: "Spreadsheet",
         required: true,
         refreshers: ['authentication'],
-        options: async ({ auth }) => {
+        options: async ({ auth, propsValue }) => {
             if (!auth) {
                 return {
                     disabled: true,
@@ -20,7 +26,9 @@ export const googleSheetsCommon = {
                 method: HttpMethod.GET,
                 url: `https://www.googleapis.com/drive/v3/files`,
                 queryParams: {
-                    q: "mimeType='application/vnd.google-apps.spreadsheet'"
+                    q: "mimeType='application/vnd.google-apps.spreadsheet'",
+                    includeItemsFromAllDrives: propsValue['include_team_drives'] ? "true" : "false",
+                    supportsAllDrives: "true"
                 },
                 authentication: {
                     type: AuthenticationType.BEARER_TOKEN,
@@ -148,7 +156,7 @@ async function appendGoogleSheetValues(params: AppendGoogleSheetValuesParams) {
     return httpClient.sendRequest(request);
 }
 
-async function getValues(spreadsheetId: string, accessToken: string, sheetId: number): Promise<[string[]][]> {
+async function getValues(spreadsheetId: string, accessToken: string, sheetId: number): Promise<{ row: number; values: { [x: string]: string[]; }[]; }[]> {
     // Define the API endpoint and headers
     // Send the API request
     const sheetName = await findSheetName(accessToken, spreadsheetId, sheetId);
@@ -161,9 +169,37 @@ async function getValues(spreadsheetId: string, accessToken: string, sheetId: nu
         }
     };
     const response = await httpClient.sendRequest<{ values: [string[]][] }>(request);
-    // Get the rows from the response
-    return response.body.values;
+    if (response.body.values === undefined) return [];
+
+
+    const res = [];
+    for (let i = 0; i < response.body.values.length; i++) {
+        res.push({
+            row: i + 1,
+            values: response.body.values[i].map((value, index) => {
+                return {
+                    [columnToLabel(index)]: value
+                }
+            })
+        });
+
+    }
+
+    return res;
 }
+
+const columnToLabel = (columnIndex: number) => {
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    let label = '';
+
+    while (columnIndex >= 0) {
+        label = alphabet[columnIndex % 26] + label;
+        columnIndex = Math.floor(columnIndex / 26) - 1;
+    }
+
+    return label;
+};
+
 
 async function deleteRow(spreadsheetId: string, sheetId: number, rowIndex: number, accessToken: string) {
     const request: HttpRequest = {

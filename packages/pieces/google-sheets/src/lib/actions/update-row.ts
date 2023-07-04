@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { ValueInputOption } from '../common/common';
 import { googleSheetsCommon } from '../common/common';
-import { googleSheetsAuth } from '../../';
+import { googleSheetsAuth } from '../..';
 
 export const updateRowAction = createAction({
     auth: googleSheetsAuth,
@@ -11,6 +11,7 @@ export const updateRowAction = createAction({
         displayName: 'Update Row',
         props: {
             spreadsheet_id: googleSheetsCommon.spreadsheet_id,
+            include_team_drives: googleSheetsCommon.include_team_drives,
             sheet_id: googleSheetsCommon.sheet_id,
             row_id: Property.Number({
                 displayName: 'Row Number',
@@ -19,7 +20,7 @@ export const updateRowAction = createAction({
             }),
             values: Property.Array({
                 displayName: 'Values',
-                description: 'These are the cell values of the row that will be updated',
+                description: 'These are the cell values of the row that will be updated, begining with column A and continuing with each Value entered into the next column. For example, to update column C, you must enter Values for columns A, B, and C. It is likely that you will update these columns using Values selected from a previous Google Sheets operation so they will remain the same. If they are left blank they will be blanked out when updating. You do not need to enter Values for all of the columns, just those to the left of the Value you wish to update.',
                 required: true,
             }),
         },
@@ -31,20 +32,28 @@ export const updateRowAction = createAction({
                 throw Error("Sheet not found in spreadsheet");
             }
             if (Array.isArray(values)) {
-                await googleSheetsCommon.updateGoogleSheetRow({
+                const res = await googleSheetsCommon.updateGoogleSheetRow({
                     accessToken: context.auth.access_token,
-                    rowIndex:  Number(context.propsValue.row_id),
+                    rowIndex: Number(context.propsValue.row_id),
                     sheetName: sheetName,
                     spreadSheetId: context.propsValue['spreadsheet_id'],
                     valueInputOption: ValueInputOption.USER_ENTERED,
                     values: values as string[],
                 });
+
+
+                res.body.updatedRange = res.body.updatedRange.replace(sheetName + "!", "");
+                res.body.updatedRange = res.body.updatedRange.split(":");
+                const UpdatedRows = [];
+
+                for (let i = 0; i < res.body.updatedRange.length; i++)
+                    UpdatedRows.push({ [res.body.updatedRange[i].charAt(0)]: parseInt(res.body.updatedRange[i].slice(1)) });
+
+
+                return UpdatedRows;
             } else {
                 throw Error("Values passed are not an array")
             }
-            return {
-                success: true,
-            };
         },
     }
 });

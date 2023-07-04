@@ -1,5 +1,5 @@
 import { Store } from "@activepieces/pieces-framework";
-import { isNil } from "lodash";
+import { isNil } from '@activepieces/shared'
 
 interface TimebasedPolling<AuthValue, PropsValue> {
     strategy: DedupeStrategy.TIMEBASED;

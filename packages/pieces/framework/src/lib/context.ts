@@ -1,4 +1,4 @@
-import { AppConnectionValue, ExecutionType, PauseMetadata, ScheduleOptions, StopResponse, TriggerPayload } from "@activepieces/shared";
+import { AppConnectionValue, ExecutionType, PauseMetadata, StopResponse, TriggerPayload } from "@activepieces/shared";
 import { TriggerStrategy } from "./trigger/trigger";
 import { PieceAuthProperty, PiecePropValueSchema, PiecePropertyMap, StaticPropsValue } from "./property";
 
@@ -19,7 +19,10 @@ type AppWebhookTriggerHookContext<PieceAuth extends PieceAuthProperty, TriggerPr
 
 type PollingTriggerHookContext<PieceAuth extends PieceAuthProperty, TriggerProps extends PiecePropertyMap> =
     BaseContext<PieceAuth, TriggerProps> & {
-        setSchedule(schedule: ScheduleOptions): void
+        setSchedule(schedule: {
+            cronExpression: string,
+            timezone?: string
+        }): void
     }
 
 type WebhookTriggerHookContext<PieceAuth extends PieceAuthProperty, TriggerProps extends PiecePropertyMap> =

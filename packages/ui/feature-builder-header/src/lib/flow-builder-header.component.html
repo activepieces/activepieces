@@ -9,7 +9,8 @@
       <ap-icon-button [width]="7" [height]="14" iconFilename="back.svg" [tooltipText]="'Home'"
         (buttonClicked)="redirectHome(false)" (auxclick)="redirectHome(true)"></ap-icon-button>
       <div class="ap-flex-grow ap-flex ap-items-center ap-gap-2" #spacer>
-        <div class="ap-typography-body-1 ap-truncate ap-max-w-[150px]" #folderName
+        <div class="ap-typography-body-1 ap-truncate ap-max-w-[150px] ap-cursor-pointer hover:ap-text-[#000000]"
+          #folderName (click)="openDashboardToFolder()"
           [matTooltip]="folderName.scrollWidth > folderName.clientWidth? (folderDisplayName$|async) || '' : ''">
           {{folderDisplayName$ | async}}
         </div>
@@ -61,3 +62,4 @@
 <ng-container *ngIf="deleteFlowDialogClosed$|async"></ng-container>
 <ng-container *ngIf="downloadFile$ | async"></ng-container>
 <ng-container *ngIf="duplicateFlow$|async"></ng-container>
+<ng-container *ngIf="openDashboardOnFolder$ | async"></ng-container>

@@ -59,7 +59,7 @@ export const twitterAuth = PieceAuth.CustomAuth({
 export const twitter = createPiece({
   displayName: "Twitter",
   logoUrl: "https://cdn.activepieces.com/pieces/twitter.png",
-  authors: ["abuaboud"],
+  authors: ["abuaboud", "Abdallah-Alwarawreh"],
   auth: twitterAuth,
   actions: [createTweet],
   triggers: [],

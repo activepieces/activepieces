@@ -1,5 +1,5 @@
 import { HttpRequest, HttpMethod, AuthenticationType, httpClient, isNotUndefined } from '@activepieces/pieces-common';
-import { pickBy } from 'lodash';
+import { pickBy } from '@activepieces/shared';
 import { TodoistCreateTaskRequest, TodoistProject, TodoistTask } from '../models';
 
 const API = 'https://api.todoist.com/rest/v2';

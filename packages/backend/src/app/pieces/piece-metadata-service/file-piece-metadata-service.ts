@@ -1,12 +1,11 @@
 import { readdir } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { cwd } from 'node:process'
-import sortBy from 'lodash/sortBy'
 import { Piece, PieceMetadata, PieceMetadataSummary } from '@activepieces/pieces-framework'
 import { ActivepiecesError, ErrorCode, extractPieceFromModule } from '@activepieces/shared'
-import { captureException, logger } from '../../helper/logger'
+import { captureException } from '../../helper/logger'
 import { GetParams, PieceMetadataService } from './piece-metadata-service'
-import { isNil } from 'lodash'
+import { isNil } from '@activepieces/shared'
 
 const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
     const ignoredPackages = ['framework', 'apps', 'dist', 'common']
@@ -35,11 +34,10 @@ const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
         }
         catch(ex) {
             captureException(ex)
-            logger.error(ex)
         }
     }
 
-    return sortBy(piecesMetadata, [p => p.displayName.toUpperCase()])
+    return piecesMetadata.sort((a, b) => a.displayName.toUpperCase().localeCompare(b.displayName.toUpperCase()))
 }
 
 export const FilePieceMetadataService = (): PieceMetadataService => {
@@ -78,6 +76,9 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
             return pieceMetadata
         },
 
+        async delete(){
+            throw new Error('Deleting pieces is not supported in development mode')
+        },
         async create() {
             throw new Error('Creating pieces is not supported in development mode')
         },

@@ -20,7 +20,7 @@ import {
   StopResponse,
 } from '@activepieces/shared';
 import { createActionHandler } from '../action/action-handler-factory';
-import { isNil } from 'lodash';
+import { isNil } from '@activepieces/shared'
 
 type FlowExecutorCtor = {
   executionState: ExecutionState
@@ -73,7 +73,7 @@ type GeneratePauseMetadata = {
 }
 
 type ExecuteParams = {
-  ancestors?: [string, number][]
+  ancestors: [string, number][]
 }
 
 export class FlowExecutor {
@@ -182,7 +182,7 @@ export class FlowExecutor {
    * @param ancestors holds previous iterations output for loop steps
    * @returns execution output
    */
-  public async execute({ ancestors }: ExecuteParams = {}): Promise<ExecutionOutput> {
+  public async execute({ ancestors }: ExecuteParams): Promise<ExecutionOutput> {
     const startTime = dayjs()
 
     const startStep = this.getStartStep()
@@ -194,7 +194,7 @@ export class FlowExecutor {
 
     const iterateFlowResponse = await this.iterateFlow({
       actionHandler: startActionHandler,
-      ancestors: ancestors ?? [],
+      ancestors: ancestors,
     })
 
     const endTime = dayjs()
@@ -211,7 +211,9 @@ export class FlowExecutor {
    */
   public async safeExecute(): Promise<ExecutionOutput> {
     try {
-      return await this.execute()
+      return await this.execute({
+        ancestors: [],
+      })
     }
     catch (e) {
       console.error(e)

@@ -28,8 +28,7 @@ import { flowRunSideEffects } from './flow-run-side-effects'
 import { logger } from '../../helper/logger'
 import { notifications } from '../../helper/notifications'
 import { flowService } from '../flow/flow.service'
-import { isNil } from 'lodash'
-
+import { isNil } from '@activepieces/shared'
 
 export const repo = databaseConnection.getRepository(FlowRunEntity)
 

@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { ChatCompletionRequestMessage, Configuration, OpenAIApi } from 'openai';
+import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { openaiAuth } from '../..';
 
 export const askOpenAI = createAction({
@@ -9,28 +10,54 @@ export const askOpenAI = createAction({
     displayName: 'Ask ChatGPT',
     description: 'Ask ChatGPT anything you want!',
     props: {
+      model: Property.Dropdown({
+        displayName: 'Model',
+        required: true,
+        description:
+          'The model which will generate the completion. Some models are suitable for natural language tasks, others specialize in code.',
+        refreshers: ['apiKey'],
+        defaultValue: "gpt-3.5-turbo",
+        options: async ({ auth }) => {
+          if (!auth) {
+            return {
+              disabled: true,
+              placeholder: 'Enter your api key first',
+              options: [],
+            };
+          }
+          try {
+            const response = await httpClient.sendRequest<{
+              data: { id: string }[]
+            }>({
+              url: 'https://api.openai.com/v1/models',
+              method: HttpMethod.GET,
+              authentication: {
+                type: AuthenticationType.BEARER_TOKEN,
+                token: auth as string
+              }
+            })
+            return {
+              disabled: false,
+              options: response.body.data.map((model) => {
+                return {
+                  label: model.id,
+                  value: model.id
+                }
+              }),
+            };
+          } catch (error) {
+            return {
+              disabled: true,
+              options: [],
+              placeholder: 'Couldn\'t Load Models, API Key is Invalid'
+            }
+          }
+        }
+      }),
       prompt: Property.LongText({
         displayName: 'Question',
         required: true,
         description: 'The question to ask OpenAI.',
-      }),
-      model: Property.StaticDropdown({
-        displayName: 'Model',
-        required: false,
-        description:
-          'The model which will generate the completion. Some models are suitable for natural language tasks, others specialize in code.',
-        options: {
-          options: [
-            {
-              label: 'gpt-3.5-turbo',
-              value: 'gpt-3.5-turbo',
-            },
-            {
-              label: 'gpt-3.5-turbo-0301',
-              value: 'gpt-3.5-turbo-0301',
-            },
-          ],
-        },
       }),
       temperature: Property.Number({
         displayName: 'Temperature',

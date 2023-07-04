@@ -17,6 +17,10 @@ export const FlowInstanceEntity = new EntitySchema<FlowInstanceSchema>({
         status: {
             type: String,
         },
+        schedule: {
+            type: 'jsonb',
+            nullable: true,
+        },
     },
     indices: [
         {

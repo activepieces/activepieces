@@ -1,5 +1,5 @@
 import { Lock } from 'redlock'
-import { isNil } from 'lodash'
+import { isNil } from '@activepieces/shared'
 import { ActivepiecesError, apId, ErrorCode, FlowId, ProjectId, WebhookSimulation } from '@activepieces/shared'
 import { acquireLock } from '../../database/redis-connection'
 import { databaseConnection } from '../../database/database-connection'

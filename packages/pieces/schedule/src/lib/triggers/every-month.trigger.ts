@@ -1,6 +1,6 @@
 import { TriggerStrategy } from "@activepieces/pieces-framework";
 import { createTrigger, Property } from "@activepieces/pieces-framework";
-import { DAY_HOURS, MONTH_DAYS, validateHours, validateMonthDays } from "../common";
+import { DAY_HOURS, MONTH_DAYS, timezoneOptions, validateHours, validateMonthDays } from "../common";
 
 export const everyMonthTrigger = createTrigger({
     trigger: {
@@ -23,7 +23,7 @@ export const everyMonthTrigger = createTrigger({
                 required: true,
             }),
             hour_of_the_day: Property.StaticDropdown({
-                displayName: 'Hour of the day (UTC)',
+                displayName: 'Hour of the day',
                 options: {
                     options: DAY_HOURS.map((d, idx) => {
                         return {
@@ -34,6 +34,14 @@ export const everyMonthTrigger = createTrigger({
                 },
                 required: true,
             }),
+            timezone: Property.StaticDropdown<string>({
+                displayName: "Timezone",
+                options: {
+                    options: timezoneOptions,
+                },
+                required: true,
+                defaultValue: "UTC"
+            }),
         },
         onEnable: async (ctx) => {
             const hourOfTheDay = validateHours(ctx.propsValue.hour_of_the_day);
@@ -41,6 +49,7 @@ export const everyMonthTrigger = createTrigger({
             const cronExpression = `0 ${hourOfTheDay} ${dayOfTheMonth} * *`
             ctx.setSchedule({
                 cronExpression: cronExpression,
+                timezone: ctx.propsValue.timezone
             });
         },
         run(ctx) {
@@ -50,7 +59,8 @@ export const everyMonthTrigger = createTrigger({
             return Promise.resolve([{
                 hour_of_the_day: hourOfTheDay,
                 day_of_the_month: dayOfTheMonth,
-                cron_expression: cronExpression
+                cron_expression: cronExpression,
+                timezone: ctx.propsValue.timezone
             }]);
         },
         onDisable: async () => {

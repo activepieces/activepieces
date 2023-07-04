@@ -26,6 +26,10 @@ export class UserAvatarComponent {
     return `${leftOffset}px`;
   }
 
+  goToDeveloperPage() {
+    this.router.navigate(['settings/my-pieces']);
+  }
+
   logout() {
     this.router.navigate(['sign-in']);
     this.authenticationService.logout();

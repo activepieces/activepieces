@@ -10,6 +10,7 @@ export const deleteRowAction = createAction({
         displayName: 'Delete Row',
         props: {
             spreadsheet_id: googleSheetsCommon.spreadsheet_id,
+            include_team_drives: googleSheetsCommon.include_team_drives,
             sheet_id: googleSheetsCommon.sheet_id,
             row_id: Property.Number({
                 displayName: 'Row Number',
@@ -25,16 +26,16 @@ export const deleteRowAction = createAction({
                 throw Error("Sheet not found in spreadsheet");
             }
 
-            // Subtract 1 from the row_id to convert it to 0-indexed
-            const adjustedRowIndex = context.propsValue.row_id - 1;
+                // Subtract 1 from the row_id to convert it to 0-indexed
+                const adjustedRowIndex = context.propsValue.row_id - 1;
 
-            const response = await googleSheetsCommon.deleteRow(context.propsValue.spreadsheet_id, context.propsValue.sheet_id, adjustedRowIndex,
-                context.auth.access_token)
+                const response = await googleSheetsCommon.deleteRow(context.propsValue.spreadsheet_id, context.propsValue.sheet_id, adjustedRowIndex,
+                    context.auth.access_token)
 
             return {
                 success: true,
                 body: response
             };
         },
-    }
+    },
 });

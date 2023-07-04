@@ -1,6 +1,6 @@
-import { Trigger, TriggerStrategy, createTrigger } from "@activepieces/pieces-framework"
+import { createTrigger, Trigger, TriggerStrategy, Property} from "@activepieces/pieces-framework"
 import { httpClient, HttpRequest, HttpMethod } from '@activepieces/pieces-common';
-import { calcomAuth } from "../../";
+import { calcomAuth } from "../..";
 
 export const registerWebhooks = ({
   name,
@@ -19,14 +19,13 @@ export const registerWebhooks = ({
       name,
       description,
       displayName,
-      props: {
-      },
+      props: {},
       sampleData: sampleData,
       type: TriggerStrategy.WEBHOOK,
       async onEnable(context) {
         const request: HttpRequest = {
           method: HttpMethod.POST,
-          url: `https://api.cal.com/v1/hooks`,
+          url: `https://api.cal.com/v1/webhooks`,
           body: {
             eventTriggers: [name],
             subscriberUrl: context.webhookUrl,
@@ -49,9 +48,9 @@ export const registerWebhooks = ({
         if (data != null) {
           const request: HttpRequest = {
             method: HttpMethod.DELETE,
-            url: `https://api.cal.com/v1/hooks/${data.id}`,
+            url: `https://api.cal.com/v1/webhooks/${data.id}`,
             queryParams: {
-              apiKey: context.auth,
+              apiKey: context.auth
             }
           }
 
@@ -64,8 +63,8 @@ export const registerWebhooks = ({
       async run(context) {
         console.debug("trigger running", context)
         return [context.payload.body]
-      },
-    },
+      }
+    }
   })
 
 interface WebhookInformation {

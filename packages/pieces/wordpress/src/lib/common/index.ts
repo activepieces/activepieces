@@ -6,14 +6,19 @@ export type WordpressMedia = { id: string, title: { rendered: string } }
 const PAGE_HEADER = 'x-wp-totalpages';
 
 export const wordpressCommon = {
+    featured_media_file: Property.File({
+        displayName: "Featured Media (URL)",
+        required: false,
+        description: "URL of featured media"
+    }),
     authors: Property.Dropdown({
         displayName: 'Authors',
         required: false,
         refreshers: ['connection', 'website_url'],
         options: async ({ auth }) => {
-            const authentication = auth as PiecePropValueSchema<typeof wordpressAuth>
-            const websiteUrl = authentication.website_url as string;
-            if (!authentication.username || !authentication.password || !websiteUrl) {
+            const connection = auth as PiecePropValueSchema<typeof wordpressAuth>
+            const websiteUrl = connection.website_url
+            if (!connection?.username || !connection?.password || !websiteUrl) {
                 return {
                     disabled: true,
                     placeholder: 'Connect your account first',
@@ -32,8 +37,8 @@ export const wordpressCommon = {
                 url: `${websiteUrl.trim()}/wp-json/wp/v2/users`,
                 authentication: {
                     type: AuthenticationType.BASIC,
-                    username: authentication.username,
-                    password: authentication.password
+                    username: connection.username,
+                    password: connection.password
                 }
             };
             const response = await httpClient.sendRequest<{ id: string, name: string }[]>(request);

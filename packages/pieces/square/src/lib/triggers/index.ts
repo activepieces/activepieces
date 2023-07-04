@@ -390,6 +390,9 @@ export const triggers = triggerData.map((trigger) =>
             onDisable: async () => {
                 // Ignored
             },
+            test: async () => {
+                return [trigger.sampleData]
+            },
             run: async (context) => {
                 return [context.payload.body]
             },

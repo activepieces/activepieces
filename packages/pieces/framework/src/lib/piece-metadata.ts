@@ -1,11 +1,14 @@
+import { ProjectId } from "@activepieces/shared";
 import { PieceAuthProperty, PiecePropertyMap } from "./property";
 import { TriggerStrategy } from "./trigger/trigger";
 
 export type PieceBase = {
+  id?: string;
   name: string;
   displayName: string;
   logoUrl: string;
   description: string;
+  projectId?: ProjectId;
   directoryName?: string;
   auth?: PieceAuthProperty;
   version: string;

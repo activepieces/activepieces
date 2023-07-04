@@ -2,9 +2,9 @@
     <div class="ap-typography-body-1 !ap-font-semibold">
         Generate Sample Data
     </div>
-    <ng-container *ngIf="currentResults$ |async as currentResults; else loadingSpinner">
+    <ng-container *ngIf="currentResults$ | async as currentResults; else loadingSpinner">
         <div class="ap-flex ap-flex-col ap-gap-2 ap-items-center ap-justify-center ap-h-[132px]"
-            *ngIf="currentResults.length === 0 && !loading ">
+            *ngIf="currentResults.length === 0 && !testing ">
             <div class="ap-relative">
                 <ap-hotspot class="ap-absolute ap-top-[13px] ap-left-[-27px]"
                     matTooltip="Test this trigger to generate sample data that can be used in the next steps"
@@ -15,13 +15,19 @@
                     [disabled]="(isValid$ | async) === false || (isSaving$ | async) === true">Test
                     Trigger </ap-button>
             </div>
+            <div class="ap-typography-subtitle-2 ap-text-description">
+                Or
+            </div>
+            <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium" (buttonClicked)="useMockData()"
+                [disabled]="(isValid$ | async) === false || (isSaving$ | async) === true">Use Mock Data </ap-button>
         </div>
 
-        <ng-container *ngIf="currentResults.length >0 && !loading">
+        <ng-container *ngIf="currentResults.length >0 && !testing">
             <div class="ap-flex ap-items-center">
                 <div class="ap-min-h-[48px] ap-gap-2  ap-flex ap-items-center">
                     <svg-icon src="assets/img/custom/success-step-result.svg"
-                        [svgStyle]="{ width: '21px', height: '20px' }" matTooltip="Step succeeded"></svg-icon> Tested
+                        [svgStyle]="{ width: '21px', height: '20px' }" matTooltip="Step succeeded"></svg-icon>
+                    Tested
                     Successfully
                 </div>
                 <div class="ap-flex-grow">
@@ -50,27 +56,30 @@
 
 
         </ng-container>
-        <ng-container *ngIf="loading">
-            <div class="ap-flex ap-flex-col ap-gap-2.5">
-                <div class="ap-flex ap-gap-2 ap-items-center">
-                    <div class="spinner-border dark-spinner" role="status"></div> Testing trigger
-                    <div class="ap-flex-grow"></div>
-                    <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium"
-                        (buttonClicked)="cancelTesting()">Cancel</ap-button>
-                </div>
-
-                <ap-warning-box>
-                    <div class="ap-flex ap-items-center ap-gap-2 ap-ml-[-3px] ">
-                        <svg-icon [svgStyle]="{ width: '20px', height: '20px' }" src="assets/img/custom/warn.svg">
-                        </svg-icon> Action Required
+        <ng-container *ngIf="testing">
+            <ng-container *ngIf="!savingMockData; else loadingSpinner">
+                <div class="ap-flex ap-flex-col ap-gap-2.5">
+                    <div class="ap-flex ap-gap-2 ap-items-center">
+                        <div class="spinner-border dark-spinner" role="status"></div> Testing trigger
+                        <div class="ap-flex-grow"></div>
+                        <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium"
+                            (buttonClicked)="cancelTesting()">Cancel</ap-button>
                     </div>
-                    <p>
-                        {{ simulationMessage$|async }}
-                    </p>
-                </ap-warning-box>
+
+                    <ap-warning-box>
+                        <div class="ap-flex ap-items-center ap-gap-2 ap-ml-[-3px] ">
+                            <svg-icon [svgStyle]="{ width: '20px', height: '20px' }" src="assets/img/custom/warn.svg">
+                            </svg-icon> Action Required
+                        </div>
+                        <p>
+                            {{ simulationMessage$|async }}
+                        </p>
+                    </ap-warning-box>
 
 
-            </div>
+                </div>
+            </ng-container>
+
         </ng-container>
     </ng-container>
 
@@ -87,3 +96,5 @@
 <ng-container *ngIf="saveAfterNewDataIsLoaded$ | async"></ng-container>
 <ng-container *ngIf="startSimulating$ | async"></ng-container>
 <ng-container *ngIf="deleteWebhookSimulation$ | async"></ng-container>
+<ng-container *ngIf="useMockData$ | async"></ng-container>
+<ng-container *ngIf="test | async"></ng-container>

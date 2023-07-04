@@ -2,15 +2,26 @@
     Apps
 </div>
 <mat-form-field subscriptSizing="dynamic">
-    <mat-select [formControl]="dropdownControl" placeholder="Select">
-        <mat-option *ngFor="let piece of (piecesToShowInDropdown$ | async)" [value]="piece.name">
-            <div class="ap-flex ap-gap-2.5 ap-items-center">
-                <ap-piece-icon-container [url]="piece.logoUrl"></ap-piece-icon-container>
-                <div class="ap-typography-body-2">
-                    {{ piece.displayName }}
+    <div class="ap-p-2" matPrefix></div>
+    <mat-select [formControl]="dropdownControl" placeholder="Select" (closed)="searchControl.setValue('')">
+        <mat-form-field subscriptSizing="dynamic" appearance="fill" (click)="$event.stopPropagation();"
+            #searchField="elementDirective" class="ap-w-full ap-mb-2" apElementDirective>
+            <mat-icon matPrefix color="placeholder-icon" svgIcon="search"></mat-icon>
+            <input #searchInput [formControl]="searchControl" matInput placeholder="Search" autocomplete="off"
+                (keydown.Space)="$event.stopPropagation()">
+        </mat-form-field>
+        <div class="ap-overflow-y-scroll"
+            [style.height]="'calc(100% - '+ searchField.elementRef.nativeElement.clientHeight + 'px '+ '- 0.5rem '+ ')'">
+            <mat-option *ngFor="let piece of (filteredBySearchPieces$ | async)" [value]="piece.name">
+                <div class="ap-flex ap-gap-2.5 ap-items-center">
+                    <ap-piece-icon-container [url]="piece.logoUrl"></ap-piece-icon-container>
+                    <div class="ap-typography-body-2">
+                        {{ piece.displayName }}
+                    </div>
                 </div>
-            </div>
-        </mat-option>
+            </mat-option>
+        </div>
+
     </mat-select>
 </mat-form-field>
 

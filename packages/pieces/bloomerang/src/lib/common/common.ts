@@ -26,4 +26,28 @@ export const bloomerangCommon = {
             }
         }
     }),
+    contact_type: Property.Dropdown<string>({
+        displayName: "Contact type",
+        required: false,
+        description: "Select the object",
+        refreshers: [],
+        options: async () => {
+            return {
+                options: [
+                    {
+                        label: "Individual",
+                        value: "Individual",
+                    },
+                    {
+                        label: "Organization",
+                        value: "Organization",
+                    },
+                    {
+                        label: "Household",
+                        value: "Household",
+                    }
+                ]
+            }
+        }
+    }),
 }

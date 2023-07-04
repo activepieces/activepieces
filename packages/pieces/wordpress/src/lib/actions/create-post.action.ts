@@ -1,6 +1,7 @@
-import { BasicAuthPropertyValue, createAction, PiecePropValueSchema, Property } from "@activepieces/pieces-framework";
+import { createAction, PiecePropValueSchema, Property } from "@activepieces/pieces-framework";
 import { wordpressCommon, WordpressMedia } from "../common";
-import { httpClient, HttpMethod, HttpRequest, AuthenticationType } from "@activepieces/pieces-common";
+import { httpClient, HttpMethod, AuthenticationType } from "@activepieces/pieces-common";
+import FormData from "form-data";
 import { wordpressAuth } from "../..";
 
 export const createWordpressPost = createAction({
@@ -29,13 +30,14 @@ export const createWordpressPost = createAction({
                 displayName: 'Date',
                 required: false,
             }),
+            featured_media_file: wordpressCommon.featured_media_file,
             tags: Property.MultiSelectDropdown<string, false>({
                 description: 'Post tags',
                 displayName: 'Tags',
                 required: false,
                 refreshers: ["connection", "website_url"],
-                options: async (context) => {
-                    const connection = context.auth as PiecePropValueSchema<typeof wordpressAuth>
+                options: async ({ auth }) => {
+                    const connection = auth as PiecePropValueSchema<typeof wordpressAuth>
                     if (!connection) {
                         return {
                             disabled: true,
@@ -96,8 +98,8 @@ export const createWordpressPost = createAction({
                 displayName: 'Categories',
                 required: false,
                 refreshers: ["connection", "website_url"],
-                options: async (context) => {
-                    const connection = context.auth as PiecePropValueSchema<typeof wordpressAuth>
+                options: async ({ auth }) => {
+                    const connection = auth as PiecePropValueSchema<typeof wordpressAuth>
                     if (!connection) {
                         return {
                             disabled: true,
@@ -159,9 +161,8 @@ export const createWordpressPost = createAction({
                 displayName: 'Featured Media (image)',
                 required: false,
                 refreshers: ['connection', 'website_url'],
-                options: async (context) => {
-
-                    const connection = context.auth as PiecePropValueSchema<typeof wordpressAuth>;
+                options: async ({ auth }) => {
+                    const connection = auth as PiecePropValueSchema<typeof wordpressAuth>
                     if (!connection) {
                         return {
                             disabled: true,
@@ -179,7 +180,7 @@ export const createWordpressPost = createAction({
 
                     let pageCursor = 1;
                     const getMediaParams = {
-                        websiteUrl: context.auth as string,
+                        websiteUrl: connection.website_url,
                         username: connection.username,
                         password: connection.password,
                         page: pageCursor
@@ -273,9 +274,31 @@ export const createWordpressPost = createAction({
             if (context.propsValue.featured_media !== undefined) {
                 requestBody['featured_media'] = context.propsValue.featured_media;
             }
+
+
+            if (context.propsValue.featured_media_file !== undefined) {
+                const formData = new FormData();
+                const { filename, base64 } = context.propsValue.featured_media_file;
+                formData.append('file', Buffer.from(base64, "base64"), filename);
+                console.log(context.propsValue.featured_media_file.filename);
+                const uploadMediaResponse = await httpClient.sendRequest<{ id: string }>({
+                    method: HttpMethod.POST,
+                    url: `${context.auth.website_url.trim()}/wp-json/wp/v2/media`,
+                    body: formData,
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                    authentication: {
+                        type: AuthenticationType.BASIC,
+                        username: context.auth.username,
+                        password: context.auth.password,
+                    },
+                });
+                requestBody['feature_media'] = uploadMediaResponse.body.id;
+            }
             requestBody['content'] = context.propsValue.content;
             requestBody['title'] = context.propsValue.title;
-            const request: HttpRequest = {
+            return await httpClient.sendRequest<{ id: string, name: string }[]>({
                 method: HttpMethod.POST,
                 url: `${context.auth.website_url.trim()}/wp-json/wp/v2/posts`,
                 authentication: {
@@ -284,9 +307,7 @@ export const createWordpressPost = createAction({
                     password: context.auth.password,
                 },
                 body: requestBody
-            };
-            const response = await httpClient.sendRequest<{ id: string, name: string }[]>(request);
-            return response;
+            });
         }
     }
 });

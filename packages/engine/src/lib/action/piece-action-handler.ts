@@ -10,12 +10,12 @@ import {
 } from '@activepieces/shared';
 import { BaseActionHandler, InitStepOutputParams } from './action-handler';
 import { globals } from '../globals';
-import { isNil } from 'lodash';
+import { isNil } from '@activepieces/shared'
 import { pieceHelper } from '../helper/action-helper';
 import { createContextStore } from '../services/storage.service';
 import { connectionManager } from '../services/connections.service';
 import { Utils } from '../utils';
-import { ActionContext, PauseHook, PauseHookParams, PiecePropertyMap, StopHook, StopHookParams } from '@activepieces/pieces-framework';
+import { ActionContext, PauseHook, PauseHookParams, PieceAuthProperty, PiecePropValueSchema, PiecePropertyMap, StaticPropsValue, StopHook, StopHookParams } from '@activepieces/pieces-framework';
 
 type CtorParams = {
   executionType: ExecutionType
@@ -27,16 +27,6 @@ type LoadActionParams = {
   pieceName: string
   pieceVersion: string
   actionName: string
-}
-
-type ResolveInputParams = {
-  input: unknown
-  executionState: ExecutionState
-  censorConnections: boolean
-}
-
-type ResolveAndValidateInputParams = ResolveInputParams & {
-  actionProps: PiecePropertyMap
 }
 
 type GenerateStopHookParams = {
@@ -77,34 +67,6 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
     }
 
     return action
-  }
-
-  private async resolveInput(params: ResolveInputParams) {
-    const { input, executionState, censorConnections } = params
-
-    return await this.variableService.resolve({
-      unresolvedInput: input,
-      executionState,
-      censorConnections,
-    })
-  }
-
-  private async resolveAndValidateInput(params: ResolveAndValidateInputParams) {
-    const { actionProps, input, executionState, censorConnections } = params
-
-    const resolvedInput = await this.resolveInput({
-      input,
-      executionState,
-      censorConnections,
-    })
-
-    const { result, errors } = await this.variableService.validateAndCast(resolvedInput, actionProps);
-
-    if (Object.keys(errors).length > 0) {
-      throw new Error(JSON.stringify(errors));
-    }
-
-    return result
   }
 
   private generateStopHook({ stepOutput }: GenerateStopHookParams): StopHook {
@@ -168,15 +130,15 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
         actionName,
       })
 
-      const resolvedProps = await this.resolveAndValidateInput({
+      const resolvedProps = await this.variableService.resolveAndValidate<StaticPropsValue<PiecePropertyMap>>({
         actionProps: action.props,
-        input,
+        unresolvedInput: input,
         executionState,
         censorConnections: false,
       })
 
-      const resolvedAuth = await this.resolveInput({
-        input: auth,
+      const resolvedAuth = await this.variableService.resolve<PiecePropValueSchema<PieceAuthProperty>>({
+        unresolvedInput: auth,
         executionState,
         censorConnections: false,
       })
