@@ -1,9 +1,9 @@
-import {AuthProp, OAuth2PropertyValue, Property} from "@activepieces/pieces-framework";
+import {OAuth2PropertyValue, Property} from "@activepieces/pieces-framework";
 
 export const blackbaudCommon = {
     baseUrl: "https://api.sky.blackbaud.com",
     auth_props: {
-        authentication: AuthProp.OAuth2({
+        authentication: Property.OAuth2({
             description: "",
             displayName: 'Authentication',
             authUrl: "https://app.blackbaud.com/oauth/authorize",
