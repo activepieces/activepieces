@@ -1,10 +1,20 @@
-import { createPiece } from "@activepieces/pieces-framework";
+import { PieceAuth, createPiece } from "@activepieces/pieces-framework";
 import { newLead } from "./lib/triggers/new-lead";
+
+export const facebookLeadsAuth = PieceAuth.OAuth2({
+    displayName: 'Authentication',
+    description: '',
+    authUrl: "https://graph.facebook.com/oauth/authorize",
+    tokenUrl: "https://graph.facebook.com/oauth/access_token",
+    required: true,
+    scope: ['pages_show_list', 'pages_manage_ads', 'leads_retrieval', 'pages_manage_metadata'],
+})
 
 export const facebookLeads = createPiece({
     displayName: "Facebook Leads",
     logoUrl: "https://cdn.activepieces.com/pieces/facebook.png",
     authors: ['MoShizzle'],
+    auth: facebookLeadsAuth,
     actions: [],
     triggers: [newLead],
     events: {
