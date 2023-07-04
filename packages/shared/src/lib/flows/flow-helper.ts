@@ -559,7 +559,10 @@ function keepBaseAction(action: Action): Action {
   }
 }
 
-function upgradePieces(step: Step): Step {
+function upgradePiece(step: Step, stepName: string): Step {
+  if (step.name !== stepName) {
+    return step;
+  }
   const clonedStep: Step = JSON.parse(JSON.stringify(step));
   switch (step.type) {
     case ActionType.PIECE:
@@ -591,11 +594,11 @@ export const flowHelper = {
         clonedVersion = deleteAction(clonedVersion, operation.request);
         break;
       case FlowOperationType.ADD_ACTION: {
-        clonedVersion = transferFlow(addAction(clonedVersion, operation.request), upgradePieces);
+        clonedVersion = transferFlow(addAction(clonedVersion, operation.request), (step) => upgradePiece(step, operation.request.action.name));
         break;
       }
       case FlowOperationType.UPDATE_ACTION:
-        clonedVersion = transferFlow(updateAction(clonedVersion, operation.request), upgradePieces);
+        clonedVersion = transferFlow(updateAction(clonedVersion, operation.request), (step) => upgradePiece(step, operation.request.name));
         break;
       case FlowOperationType.UPDATE_TRIGGER:
         clonedVersion.trigger = createTrigger(
@@ -603,7 +606,7 @@ export const flowHelper = {
           operation.request,
           clonedVersion.trigger.nextAction
         );
-        clonedVersion = transferFlow(clonedVersion, (step) => upgradePieces(step));
+        clonedVersion = transferFlow(clonedVersion, (step) => upgradePiece(step, operation.request.name));
         break;
     }
     clonedVersion.valid = isValid(clonedVersion);
