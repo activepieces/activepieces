@@ -2,24 +2,14 @@ import { DynamicPropsValue, Property } from "@activepieces/pieces-framework";
 import { HttpMethod, httpClient } from "@activepieces/pieces-common";
 import { KizeoFormsDataUsers, KizeoFormsExports, KizeoFormsForms } from "./models";
 
-
-const markdownDescription = `
-To connect to Kizeo Forms, you need an API Token provided by our support team.
-`
 export const endpoint = 'https://forms.kizeo.com/rest/'
 export const kizeoFormsCommon = {
-  authentication: Property.SecretText({
-    displayName: "Kizeo Forms API Key",
-    required: true,
-    description: markdownDescription
-  }),
-
   formId: Property.Dropdown<string>({
     displayName: 'Form',
     required: true,
-    refreshers: ["authentication"],
-    options: async ({ authentication }) => {
-      if (!authentication) {
+    refreshers: ["auth"],
+    options: async ({ auth }) => {
+      if (!auth) {
         return {
           disabled: true,
           options: [],
@@ -29,7 +19,7 @@ export const kizeoFormsCommon = {
 
       try {
         const forms: KizeoFormsForms[] = await kizeoFormsCommon.fetchForms({
-          token: authentication as string
+          token: auth as string
         })
 
         if (forms) {
@@ -59,9 +49,9 @@ export const kizeoFormsCommon = {
   userId: Property.Dropdown<string>({
     displayName: 'User',
     required: true,
-    refreshers: ["authentication"],
-    options: async ({ authentication }) => {
-      if (!authentication) {
+    refreshers: ["auth"],
+    options: async ({ auth }) => {
+      if (!auth) {
         return {
           disabled: true,
           options: [],
@@ -71,7 +61,7 @@ export const kizeoFormsCommon = {
 
       try {
         const dataUsers: KizeoFormsDataUsers = await kizeoFormsCommon.fetchUsers({
-          token: authentication as string
+          token: auth as string
         })
         if (dataUsers) {
           return {
@@ -100,16 +90,16 @@ export const kizeoFormsCommon = {
   exportId: Property.Dropdown<string>({
     displayName: 'Export',
     required: true,
-    refreshers: ["authentication","formId"],
-    options: async ({ authentication, formId }) => {
-        if (!authentication){
+    refreshers: ["auth","formId"],
+    options: async ({ auth, propsValue }) => {
+        if (!auth){
             return {
                 disabled: true,
                 options: [],
                 placeholder: "Please connect your account"
             }
         }
-        if (!formId){
+        if (!propsValue.formId){
             return {
                 disabled: true,
                 options: [],
@@ -118,8 +108,8 @@ export const kizeoFormsCommon = {
         }
         try {
             const exportList: KizeoFormsExports[] = await kizeoFormsCommon.fetchExports({
-                token: authentication as string,
-                formId: formId as unknown as string
+                token: auth as string,
+                formId: propsValue.formId as string
             })
             if (exportList) {
 
@@ -149,17 +139,17 @@ export const kizeoFormsCommon = {
   fields: Property.DynamicProperties({
     displayName: 'Form',
     required: true,
-    refreshers: ["authentication", "formId"],
+    refreshers: ["auth", "formId"],
 
-    props: async ({ authentication, formId }) => {
-        if (!authentication) return {}
+    props: async ({ auth, formId }) => {
+        if (!auth) return {}
         if (!formId) return {}
 
         const fields: DynamicPropsValue = {};
 
         try {
             const form: KizeoFormsForms = await kizeoFormsCommon.fetchForm({
-                token: authentication as unknown as string,
+                token: auth as unknown as string,
                 formId: formId as unknown as string
             });
 
