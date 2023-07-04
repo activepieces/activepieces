@@ -1,32 +1,14 @@
 import { HttpMethod, httpClient, getAccessTokenOrThrow } from "@activepieces/pieces-common";
 import { OAuth2PropertyValue, Property } from "@activepieces/pieces-framework";
 
-const markdown = `
-To Obtain the following credentials:
-1. Visit https://developers.facebook.com/
-2. Create an application, Select Other for Usecase.
-3. Select Business as App Type.
-4. Copy App Id and App Secret from Basic Settings.
-`
-
 export const facebookPagesCommon = {
     baseUrl: 'https://graph.facebook.com/v17.0',
-
-    authentication: Property.OAuth2({
-        displayName: 'Authentication',
-        description: markdown,
-        authUrl: "https://graph.facebook.com/oauth/authorize",
-        tokenUrl: "https://graph.facebook.com/oauth/access_token",
-        required: true,
-        scope: ['pages_show_list', 'pages_manage_posts', 'pages_read_engagement'],
-    }),
-
     page: Property.Dropdown<FacebookPageDropdown>({
         displayName: 'Page',
         required: true,
         refreshers: ['authentication'],
-        options: async (props) => {
-            if (!props['authentication']) {
+        options: async ({ auth }) => {
+            if (!auth) {
                 return {
                     disabled: true,
                     options: [],
@@ -35,7 +17,7 @@ export const facebookPagesCommon = {
             }
 
             try {
-                const accessToken: string = getAccessTokenOrThrow(props['authentication'] as OAuth2PropertyValue)
+                const accessToken: string = getAccessTokenOrThrow(auth as OAuth2PropertyValue)
                 const pages: any[] = (await facebookPagesCommon.getPages(accessToken)).map((page: FacebookPage) => {
                     return {
                         label: page.name,
