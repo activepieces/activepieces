@@ -54,42 +54,38 @@ function isTrigger(type: ActionType | TriggerType | undefined): boolean {
 function deleteAction(
   flowVersion: FlowVersion,
   request: DeleteActionRequest
-): void {
-  const steps = getAllSteps(flowVersion.trigger);
-  let deleted = false;
-  for (let i = 0; i < steps.length; i++) {
-    const parentStep = steps[i];
+): FlowVersion {
+  return transferFlow(flowVersion, (parentStep) => {
     if (parentStep.nextAction && parentStep.nextAction.name === request.name) {
       const stepToUpdate: Action = parentStep.nextAction;
       parentStep.nextAction = stepToUpdate.nextAction;
-      deleted = true;
     }
-    if (parentStep.type === ActionType.BRANCH) {
-      if (parentStep.onFailureAction && parentStep.onFailureAction.name === request.name) {
-        const stepToUpdate: Action = parentStep.onFailureAction;
-        parentStep.onFailureAction = stepToUpdate.nextAction;
-        deleted = true;
+    switch (parentStep.type) {
+      case ActionType.BRANCH: {
+        if (parentStep.onFailureAction && parentStep.onFailureAction.name === request.name) {
+          const stepToUpdate: Action = parentStep.onFailureAction;
+          parentStep.onFailureAction = stepToUpdate.nextAction;
+        }
+        if (parentStep.onSuccessAction && parentStep.onSuccessAction.name === request.name) {
+          const stepToUpdate: Action = parentStep.onSuccessAction;
+          parentStep.onSuccessAction = stepToUpdate.nextAction;
+        }
+        break;
       }
-      if (parentStep.onSuccessAction && parentStep.onSuccessAction.name === request.name) {
-        const stepToUpdate: Action = parentStep.onSuccessAction;
-        parentStep.onSuccessAction = stepToUpdate.nextAction;
-        deleted = true;
+      case ActionType.LOOP_ON_ITEMS: {
+        if (parentStep.firstLoopAction && parentStep.firstLoopAction.name === request.name) {
+          const stepToUpdate: Action = parentStep.firstLoopAction;
+          parentStep.firstLoopAction = stepToUpdate.nextAction;
+        }
+        break;
       }
+      case ActionType.CODE:
+      case ActionType.MISSING:
+      case ActionType.PIECE:
+        break;
     }
-    if (parentStep.type === ActionType.LOOP_ON_ITEMS) {
-      if (parentStep.firstLoopAction && parentStep.firstLoopAction.name === request.name) {
-        const stepToUpdate: Action = parentStep.firstLoopAction;
-        parentStep.firstLoopAction = stepToUpdate.nextAction;
-        deleted = true;
-      }
-    }
-  }
-  if (!deleted) {
-    throw new ActivepiecesError({
-      code: ErrorCode.FLOW_OPERATION_INVALID,
-      params: {}
-    }, `Action ${request.name} not found`);
-  }
+    return parentStep;
+  });
 }
 
 function getUsedPieces(trigger: Trigger): string[] {
@@ -115,6 +111,79 @@ function traverseInternal(step: Trigger | Action | undefined): (Action | Trigger
   return steps;
 }
 
+async function transferStepAsync<T extends Step>(
+  step: Step,
+  transferFunction: (step: T) => Promise<T>
+): Promise<Step> {
+  const updatedStep = await transferFunction(step as T);
+
+  if (updatedStep.type === ActionType.BRANCH) {
+    const { onSuccessAction, onFailureAction } = updatedStep;
+    if (onSuccessAction) {
+      updatedStep.onSuccessAction = await transferStepAsync(onSuccessAction, transferFunction) as Action;
+    }
+    if (onFailureAction) {
+      updatedStep.onFailureAction = await transferStepAsync(onFailureAction, transferFunction) as Action;
+    }
+  } else if (updatedStep.type === ActionType.LOOP_ON_ITEMS) {
+    const { firstLoopAction } = updatedStep;
+    if (firstLoopAction) {
+      updatedStep.firstLoopAction = await transferStepAsync(firstLoopAction, transferFunction) as Action;
+    }
+  }
+
+  if (updatedStep.nextAction) {
+    updatedStep.nextAction = await transferStepAsync(updatedStep.nextAction, transferFunction) as Action;
+  }
+
+  return updatedStep;
+}
+
+function transferStep<T extends Step>(
+  step: Step,
+  transferFunction: (step: T) => T
+): Step {
+  const updatedStep = transferFunction(step as T);
+
+  if (updatedStep.type === ActionType.BRANCH) {
+    const { onSuccessAction, onFailureAction } = updatedStep;
+    if (onSuccessAction) {
+      updatedStep.onSuccessAction = transferStep(onSuccessAction, transferFunction) as Action;
+    }
+    if (onFailureAction) {
+      updatedStep.onFailureAction = transferStep(onFailureAction, transferFunction) as Action;
+    }
+  } else if (updatedStep.type === ActionType.LOOP_ON_ITEMS) {
+    const { firstLoopAction } = updatedStep;
+    if (firstLoopAction) {
+      updatedStep.firstLoopAction = transferStep(firstLoopAction, transferFunction) as Action;
+    }
+  }
+
+  if (updatedStep.nextAction) {
+    updatedStep.nextAction = transferStep(updatedStep.nextAction, transferFunction) as Action;
+  }
+
+  return updatedStep;
+}
+
+async function transferFlowAsync<T extends Step>(
+  flowVersion: FlowVersion,
+  transferFunction: (step: T) => Promise<T>
+): Promise<FlowVersion> {
+  const clonedFlow = JSON.parse(JSON.stringify(flowVersion));
+  clonedFlow.trigger = await transferStepAsync(clonedFlow.trigger, transferFunction) as Trigger;
+  return clonedFlow;
+}
+
+function transferFlow<T extends Step>(
+  flowVersion: FlowVersion,
+  transferFunction: (step: T) => T
+): FlowVersion {
+  const clonedFlow = JSON.parse(JSON.stringify(flowVersion));
+  clonedFlow.trigger = transferStep(clonedFlow.trigger, transferFunction) as Trigger;
+  return clonedFlow;
+}
 function getAllSteps(trigger: Trigger): (Action | Trigger)[] {
   return traverseInternal(trigger);
 }
@@ -159,26 +228,20 @@ const getStepFromSubFlow = ({ subFlowStartStep, stepName }: GetStepFromSubFlow):
 function updateAction(
   flowVersion: FlowVersion,
   request: UpdateActionRequest
-): void {
-  const steps = getAllSteps(flowVersion.trigger);
-  let updated = false;
-  for (let i = 0; i < steps.length; i++) {
-    const parentStep = steps[i];
+): FlowVersion {
+  return transferFlow(flowVersion, (parentStep) => {
     if (parentStep.nextAction && parentStep.nextAction.name === request.name) {
       const actions = extractActions(parentStep.nextAction);
       parentStep.nextAction = createAction(request, actions);
-      updated = true;
     }
     if (parentStep.type === ActionType.BRANCH) {
       if (parentStep.onFailureAction && parentStep.onFailureAction.name === request.name) {
         const actions = extractActions(parentStep.onFailureAction);
         parentStep.onFailureAction = createAction(request, actions);
-        updated = true;
       }
       if (parentStep.onSuccessAction && parentStep.onSuccessAction.name === request.name) {
         const actions = extractActions(parentStep.onSuccessAction);
         parentStep.onSuccessAction = createAction(request, actions);
-        updated = true;
       }
     }
     if (parentStep.type === ActionType.LOOP_ON_ITEMS) {
@@ -186,16 +249,10 @@ function updateAction(
       if (parentStep.firstLoopAction && parentStep.firstLoopAction.name === request.name) {
         const actions = extractActions(parentStep.firstLoopAction);
         parentStep.firstLoopAction = createAction(request, actions);
-        updated = true;
       }
     }
-  }
-  if (!updated) {
-    throw new ActivepiecesError({
-      code: ErrorCode.FLOW_OPERATION_INVALID,
-      params: {}
-    }, `Action ${request.name} not found`);
-  }
+    return parentStep;
+  });
 }
 
 function extractActions(step: Trigger | Action): { nextAction?: Action, onSuccessAction?: Action, onFailureAction?: Action, firstLoopAction?: Action } {
@@ -229,8 +286,8 @@ function moveAction(flowVersion: FlowVersion, request: MoveActionRequest): FlowV
     clonedSourceStep.nextAction = undefined;
     childOperation.push(...getImportOperations(clonedSourceStep));
   }
-  deleteAction(flowVersion, { name: request.name });
-  addAction(flowVersion, {
+  flowVersion = deleteAction(flowVersion, { name: request.name });
+  flowVersion = addAction(flowVersion, {
     action: sourceStep as Action,
     parentStep: request.newParentStep,
     stepLocationRelativeToParent: request.stepLocationRelativeToNewParent
@@ -242,55 +299,54 @@ function moveAction(flowVersion: FlowVersion, request: MoveActionRequest): FlowV
   return flowVersion;
 }
 
-function addAction(flowVersion: FlowVersion, request: AddActionRequest): void {
-  const parentStep = getAllSteps(flowVersion.trigger).find(step => step.name === request.parentStep);
-  if (parentStep === undefined) {
-    throw new ActivepiecesError({
-      code: ErrorCode.FLOW_OPERATION_INVALID,
-      params: {}
-    }, `Parent step ${request.parentStep} not found`);
-  }
-  if (parentStep.type === ActionType.LOOP_ON_ITEMS && request.stepLocationRelativeToParent) {
-    if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_LOOP) {
-      parentStep.firstLoopAction = createAction(request.action, {
-        nextAction: parentStep.firstLoopAction
-      });
-    } else if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.AFTER) {
-      parentStep.nextAction = createAction(request.action, {
-        nextAction: parentStep.nextAction
-      });
+function addAction(flowVersion: FlowVersion, request: AddActionRequest): FlowVersion {
+  return transferFlow(flowVersion, (parentStep: Step) => {
+    if (parentStep.name !== request.parentStep) {
+      return parentStep;
+    }
+    if (parentStep.type === ActionType.LOOP_ON_ITEMS && request.stepLocationRelativeToParent) {
+      if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_LOOP) {
+        parentStep.firstLoopAction = createAction(request.action, {
+          nextAction: parentStep.firstLoopAction
+        });
+      } else if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.AFTER) {
+        parentStep.nextAction = createAction(request.action, {
+          nextAction: parentStep.nextAction
+        });
+      } else {
+        throw new ActivepiecesError({
+          code: ErrorCode.FLOW_OPERATION_INVALID,
+          params: {}
+        }, `Loop step parent ${request.stepLocationRelativeToParent} not found`);
+      }
+    } else if (parentStep.type === ActionType.BRANCH && request.stepLocationRelativeToParent) {
+      if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_TRUE_BRANCH) {
+        parentStep.onSuccessAction = createAction(request.action, {
+          nextAction: parentStep.onSuccessAction
+        });
+      } else if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_FALSE_BRANCH) {
+        parentStep.onFailureAction = createAction(request.action, {
+          nextAction: parentStep.onFailureAction
+        });
+      }
+      else if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.AFTER) {
+        parentStep.nextAction = createAction(request.action, {
+          nextAction: parentStep.nextAction
+        });
+      }
+      else {
+        throw new ActivepiecesError({
+          code: ErrorCode.FLOW_OPERATION_INVALID,
+          params: {}
+        }, `Branch step parernt ${request.stepLocationRelativeToParent} not found`);
+      }
     } else {
-      throw new ActivepiecesError({
-        code: ErrorCode.FLOW_OPERATION_INVALID,
-        params: {}
-      }, `Loop step parent ${request.stepLocationRelativeToParent} not found`);
-    }
-  } else if (parentStep.type === ActionType.BRANCH && request.stepLocationRelativeToParent) {
-    if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_TRUE_BRANCH) {
-      parentStep.onSuccessAction = createAction(request.action, {
-        nextAction: parentStep.onSuccessAction
-      });
-    } else if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_FALSE_BRANCH) {
-      parentStep.onFailureAction = createAction(request.action, {
-        nextAction: parentStep.onFailureAction
-      });
-    }
-    else if (request.stepLocationRelativeToParent === StepLocationRelativeToParent.AFTER) {
       parentStep.nextAction = createAction(request.action, {
         nextAction: parentStep.nextAction
       });
     }
-    else {
-      throw new ActivepiecesError({
-        code: ErrorCode.FLOW_OPERATION_INVALID,
-        params: {}
-      }, `Branch step parernt ${request.stepLocationRelativeToParent} not found`);
-    }
-  } else {
-    parentStep.nextAction = createAction(request.action, {
-      nextAction: parentStep.nextAction
-    });
-  }
+    return parentStep;
+  });
 }
 
 function createAction(
@@ -503,6 +559,17 @@ function keepBaseAction(action: Action): Action {
   }
 }
 
+function upgradePieces(step: Step): Step {
+  const clonedStep: Step = JSON.parse(JSON.stringify(step));
+  switch (step.type) {
+    case ActionType.PIECE:
+    case TriggerType.PIECE:
+      clonedStep.settings.pieceVersion = step.settings.pieceVersion.startsWith("^") ? step.settings.pieceVersion : '^' + step.settings.pieceVersion;
+      break;
+  }
+  return clonedStep;
+}
+
 export const flowHelper = {
   isValid: isValid,
   apply(
@@ -521,13 +588,14 @@ export const flowHelper = {
         clonedVersion.displayName = operation.request.displayName;
         break;
       case FlowOperationType.DELETE_ACTION:
-        deleteAction(clonedVersion, operation.request);
+        clonedVersion = deleteAction(clonedVersion, operation.request);
         break;
-      case FlowOperationType.ADD_ACTION:
-        addAction(clonedVersion, operation.request);
+      case FlowOperationType.ADD_ACTION: {
+        clonedVersion = transferFlow(addAction(clonedVersion, operation.request), upgradePieces);
         break;
+      }
       case FlowOperationType.UPDATE_ACTION:
-        updateAction(clonedVersion, operation.request);
+        clonedVersion = transferFlow(updateAction(clonedVersion, operation.request), upgradePieces);
         break;
       case FlowOperationType.UPDATE_TRIGGER:
         clonedVersion.trigger = createTrigger(
@@ -535,6 +603,7 @@ export const flowHelper = {
           operation.request,
           clonedVersion.trigger.nextAction
         );
+        clonedVersion = transferFlow(clonedVersion, (step) => upgradePieces(step));
         break;
     }
     clonedVersion.valid = isValid(clonedVersion);
@@ -549,6 +618,7 @@ export const flowHelper = {
   getAllSubFlowSteps,
   getStepFromSubFlow,
   isChildOf,
+  transferFlowAsync,
   getAllChildSteps,
   getAllStepsAtFirstLevel
 };
