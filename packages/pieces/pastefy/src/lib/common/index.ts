@@ -1,7 +1,8 @@
-import { Property, StaticPropsValue } from "@activepieces/pieces-framework";
+import { PiecePropValueSchema, PiecePropertyMap, Property, StaticPropsValue } from "@activepieces/pieces-framework";
 import { PastefyClient } from "./client";
 import { FolderHierarchy } from "./models/folder";
 import { PasteVisibility } from "./models/paste";
+import { pastefyAuth } from "../..";
 
 interface FlatFolder {
     id: string,
@@ -28,41 +29,21 @@ export function formatDate(date?: string): string|undefined {
     return date.replace('T', ' ').replace('Z', '').replace(/\.[0-9]{3}/, '')
 }
 
-const markdown = `
-Create an account and obtain the API Key from Pastefy.
-`
-
 export const pastefyCommon = {
-    authentication: (required = true) => Property.CustomAuth({
-        displayName: 'Authentication',
-        description: markdown,
-        required,
-        props: {
-            instance_url: Property.ShortText({
-                displayName: 'Pastefy Instance URL',
-                required: false,
-                defaultValue: 'https://pastefy.app'
-            }),
-            token: Property.SecretText({
-                displayName: 'API-Token',
-                required: false
-            })   
-        }
-    }),
     folder_id: (required = true, displayName = 'Folder') => Property.Dropdown({
         description: 'A folder',
         displayName: displayName,
         required,
         refreshers: ['authentication'],
-        options: async (value) => {
-            if (!value['authentication']) {
+        options: async ({ auth, propsValue }) => {
+            if (!auth) {
                 return {
                     disabled: true,
                     placeholder: 'setup authentication first',
                     options: []
                 };
             }
-            const client = makeClient(value)
+            const client = makeClient(auth as PiecePropValueSchema<typeof pastefyAuth>, propsValue)
             const folders = await client.getFolderHierarchy()
 
             return {
@@ -89,6 +70,6 @@ export const pastefyCommon = {
     })
 }
 
-export function makeClient(propsValue: StaticPropsValue<any>): PastefyClient {
-    return new PastefyClient(propsValue.authentication.token || undefined, propsValue.instance_url)
+export function makeClient(auth: PiecePropValueSchema<typeof pastefyAuth>, propsValue: StaticPropsValue<PiecePropertyMap>): PastefyClient {
+    return new PastefyClient(auth.token || undefined, propsValue.instance_url)
 }
