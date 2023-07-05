@@ -1,4 +1,4 @@
-@import '../../../../../core/src/assets/scss/variables.scss';
+@import "../../../../../core/src/assets/scss/variables.scss";
 
 .step-result-accordion {
   .mat-expansion-panel-header-title {
@@ -36,7 +36,7 @@
       }
     }
     &.selected-step {
-      background-color: $graySelect !important;
+      background-color: $gray-select !important;
       font-weight: 700;
       .step-icon {
         opacity: 1;
@@ -46,7 +46,7 @@
       }
     }
     &:hover {
-      background-color: $grayCard;
+      background-color: $gray-card;
     }
     .mat-expansion-panel-header-title {
       padding: 0px 0.9375rem 0px 1.5625rem;
@@ -129,8 +129,7 @@
     padding: 0px 5px;
     pointer-events: all;
   }
-  animation: done-iteration-animation 1000ms cubic-bezier(0.35, 0, 0.25, 1) 0ms
-    1 forwards;
+  animation: done-iteration-animation 1000ms cubic-bezier(0.35, 0, 0.25, 1) 0ms 1 forwards;
 }
 
 .done-iteration-container {

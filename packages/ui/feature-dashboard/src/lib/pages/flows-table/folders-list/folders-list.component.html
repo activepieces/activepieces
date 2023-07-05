@@ -6,7 +6,7 @@
     <div class="ap-flex ap-items-center ap-gap-4 ap-p-4 ap-cursor-pointer hover:ap-bg-hover "
         [class.selected-folder-item]="(showAllFlows$|async) === true" (click)="showAllFlows()">
         <svg-icon src="assets/img/custom/all-flows.svg"
-            class="ap-h-[15px] ap-w-[15px] ap-fill-bleachedGray  folder-icon" [applyClass]="true"></svg-icon>
+            class="ap-h-[15px] ap-w-[15px] ap-fill-bleached-gray  folder-icon" [applyClass]="true"></svg-icon>
         <div class="ap-body-1 ap-flex-grow">
             All flows
         </div>
@@ -18,7 +18,7 @@
         [class.selected-folder-item]="(selectedFolder$| async) === undefined && (showAllFlows$|async) === false"
         (click)="setSelectedFolder('NULL')">
         <svg-icon src="assets/img/custom/uncategorized-folder.svg"
-            class="ap-h-[15px] ap-w-[15px] ap-fill-bleachedGray hover:ap-fill-title  folder-icon"
+            class="ap-h-[15px] ap-w-[15px] ap-fill-bleached-gray hover:ap-fill-title  folder-icon"
             [applyClass]="true"></svg-icon>
         <div class="ap-body-1 ap-flex-grow">
             Uncategorized
@@ -32,7 +32,7 @@
         class="ap-flex ap-items-center ap-gap-4 ap-p-4 ap-cursor-pointer hover:ap-bg-hover ap-group folder-list-item ap-h-[58px]"
         [class.selected-folder-item]="folder.id === (selectedFolder$| async)?.id">
         <svg-icon src="assets/img/custom/folder.svg"
-            class="ap-h-[15px] ap-w-[15px] ap-fill-bleachedGray hover:ap-fill-title  folder-icon"
+            class="ap-h-[15px] ap-w-[15px] ap-fill-bleached-gray hover:ap-fill-title  folder-icon"
             [applyClass]="true"></svg-icon>
         <div class="ap-body-1 ap-flex-grow ap-break-all">
             {{folder.displayName}}
