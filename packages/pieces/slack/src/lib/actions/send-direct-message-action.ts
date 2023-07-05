@@ -15,7 +15,6 @@ import { slackAuth } from "../../";
 
 export const slackSendDirectMessageAction = createAction({
   auth: slackAuth,
-  action: {
     name: 'send_direct_message',
     displayName: 'Send Message To A User',
     description: 'Send message to a user',
@@ -84,7 +83,6 @@ export const slackSendDirectMessageAction = createAction({
         conversationId: userId,
       })
     },
-  },
 })
 
 type UserListResponse = {

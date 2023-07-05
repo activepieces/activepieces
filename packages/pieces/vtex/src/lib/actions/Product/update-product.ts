@@ -5,7 +5,6 @@ import { vtexAuth } from "../../..";
 
 export const updateProduct = createAction({
     auth: vtexAuth,
-    action: {
     name: "Update-product",
     displayName: "Update a Product",
     description: "Update a product in your catalog",
@@ -99,5 +98,4 @@ export const updateProduct = createAction({
 
         return await product.updateProduct(productId, productData);
     },
-},
 });

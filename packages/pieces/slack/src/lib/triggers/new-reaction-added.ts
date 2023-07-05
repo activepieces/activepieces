@@ -32,36 +32,34 @@ const sampleData = {
 
 export const newReactionAdded = createTrigger({
     auth: slackAuth,
-    trigger: {
-        name: 'new_reaction_added',
-        displayName: 'New Reaction',
-        description: 'Triggers when a new reaction is added to a message',
-        props: {
-            authentication: slackAuth,
-            emoj: Property.Array({
-                displayName: 'Emojis (E.g fire, smile)',
-                description: 'Select emojs to trigger on',
-                required: false,
-            }),
-        },
-        type: TriggerStrategy.APP_WEBHOOK,
-        sampleData: sampleData,
-        onEnable: async (context) => {
-            context.app.createListeners({ events: ['reaction_added'], identifierValue: context.propsValue.authentication.data['team_id'] })
-        },
-        onDisable: async (context) => {
-            // Ignored
-        },
-        test: async (context) => {
-            return [sampleData]
-        },
-        run: async (context) => {
-            if (context.propsValue.emoj) {
-                if (context.propsValue.emoj.includes(context.payload.body.reaction)) {
-                    return [];
-                }
+    name: 'new_reaction_added',
+    displayName: 'New Reaction',
+    description: 'Triggers when a new reaction is added to a message',
+    props: {
+        authentication: slackAuth,
+        emoj: Property.Array({
+            displayName: 'Emojis (E.g fire, smile)',
+            description: 'Select emojs to trigger on',
+            required: false,
+        }),
+    },
+    type: TriggerStrategy.APP_WEBHOOK,
+    sampleData: sampleData,
+    onEnable: async (context) => {
+        context.app.createListeners({ events: ['reaction_added'], identifierValue: context.propsValue.authentication.data['team_id'] })
+    },
+    onDisable: async (context) => {
+        // Ignored
+    },
+    test: async (context) => {
+        return [sampleData]
+    },
+    run: async (context) => {
+        if (context.propsValue.emoj) {
+            if (context.propsValue.emoj.includes(context.payload.body.reaction)) {
+                return [];
             }
-            return [context.payload.body.event]
         }
+        return [context.payload.body.event]
     }
 });

@@ -1,7 +1,7 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 
 export const advancedMapping = createAction({
-    action: {
+    
         name: 'advanced_mapping',
         displayName: 'Advanced Mapping',
         description: 'Map data from one format to another',
@@ -18,5 +18,4 @@ export const advancedMapping = createAction({
         async run(ctx) {
             return ctx.propsValue.mapping;
         },
-    },
 });

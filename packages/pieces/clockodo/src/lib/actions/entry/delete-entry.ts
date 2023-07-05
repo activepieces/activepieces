@@ -4,7 +4,6 @@ import { clockodoAuth } from "../../../";
 
 export default createAction({
     auth: clockodoAuth,
-    action: {
         name: 'delete_entry',
         displayName: 'Delete Entry',
         description: 'Deletes an entry in clockodo',
@@ -18,5 +17,4 @@ export default createAction({
             const client = makeClient(auth);
             await client.deleteEntry(propsValue.entry_id)
         }
-    },
 })

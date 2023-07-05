@@ -4,7 +4,6 @@ import { mysqlAuth } from "../..";
 
 export default createAction({
     auth: mysqlAuth,
-    action: {
         name: 'insert_row',
         displayName: 'Insert Row',
         description: 'Inserts a new row into a table',
@@ -31,5 +30,4 @@ export default createAction({
                 await conn.end()
             }
         }
-    }
 })

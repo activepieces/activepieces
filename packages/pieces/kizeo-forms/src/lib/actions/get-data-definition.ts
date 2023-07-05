@@ -6,7 +6,7 @@ import { kizeoFormsAuth } from '../..';
 
 export const getDataDefinition = createAction({
   auth: kizeoFormsAuth,
-  action: {
+  
     name: 'get_data_definition', // Must be a unique across the piece, this shouldn't be changed.
     displayName: 'Get Data Definition',
     description: 'Get the definition of a data',
@@ -34,5 +34,4 @@ export const getDataDefinition = createAction({
 
       return []
     },
-  },
 });

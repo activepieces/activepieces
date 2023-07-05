@@ -5,7 +5,6 @@ import { upsertOfflineDonation } from './offline-donation';
 
 export const salsaOfflineDonationUpsert = createAction({
     auth: salsaAuth,
-    action: {
         name: 'offline_donation_upsert',
         description: 'Upsert Offline Donation based on Email',
         displayName: 'Upsert Offline Donation',
@@ -20,5 +19,4 @@ export const salsaOfflineDonationUpsert = createAction({
         async run(context) {
             return await upsertOfflineDonation(context.propsValue);
         },
-    },
 });

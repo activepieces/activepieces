@@ -5,7 +5,6 @@ import { sendgridAuth } from "../..";
 
 export const sendEmail = createAction({
     auth: sendgridAuth,
-    action: {
     name: 'send_email',
     displayName: "Send Email",
     description: "Send a text or HTML email",
@@ -99,5 +98,4 @@ export const sendEmail = createAction({
     sampleData: {
         success: true
     }
-}
 });

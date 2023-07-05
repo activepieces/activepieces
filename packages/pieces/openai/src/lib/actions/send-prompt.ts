@@ -5,7 +5,6 @@ import { openaiAuth } from '../..';
 
 export const askOpenAI = createAction({
   auth: openaiAuth,
-  action: {
     name: 'ask_chatgpt',
     displayName: 'Ask ChatGPT',
     description: 'Ask ChatGPT anything you want!',
@@ -189,7 +188,6 @@ export const askOpenAI = createAction({
       }
       return response;
     },
-  }
 });
 
 function sleep(ms: number) {

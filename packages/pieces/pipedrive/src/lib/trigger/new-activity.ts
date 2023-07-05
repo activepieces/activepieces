@@ -5,7 +5,6 @@ import { pipedriveAuth } from '../..';
 
 export const newActivity = createTrigger({
   auth: pipedriveAuth,
-  trigger: {
     name: 'new_activity',
     displayName: 'New Activity',
     description: 'Triggers when a new activity is added',
@@ -112,7 +111,6 @@ export const newActivity = createTrigger({
         "url": "https://pipedrive-files.s3-eu-west-1.amazonaws.com/Audio-recording.m4a"
       }
     }
-  }
 });
 
 interface WebhookInformation {

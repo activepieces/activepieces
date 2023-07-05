@@ -9,16 +9,14 @@ type CreateActionParams<PieceAuth extends PieceAuthProperty, ActionProps extends
   /**
    * A dummy parameter used to infer {@code PieceAuth} type
    */
+  name: string
   auth?: PieceAuth
-  action: {
-    name: string
-    displayName: string
-    description: string
-    props: ActionProps
-    run: ActionRunner<PieceAuth, ActionProps>
-    requireAuth?: boolean
-    sampleData?: unknown
-  }
+  displayName: string
+  description: string
+  props: ActionProps
+  run: ActionRunner<PieceAuth, ActionProps>
+  requireAuth?: boolean
+  sampleData?: unknown
 }
 
 export class IAction<PieceAuth extends PieceAuthProperty, ActionProps extends PiecePropertyMap> implements ActionBase {
@@ -30,7 +28,7 @@ export class IAction<PieceAuth extends PieceAuthProperty, ActionProps extends Pi
     public readonly run: ActionRunner<PieceAuth, ActionProps>,
     public readonly requireAuth: boolean = true,
     public readonly sampleData: unknown = {},
-  ) {}
+  ) { }
 }
 
 export type Action<
@@ -45,12 +43,12 @@ export const createAction = <
   params: CreateActionParams<PieceAuth, ActionProps>,
 ) => {
   return new IAction(
-    params.action.name,
-    params.action.displayName,
-    params.action.description,
-    params.action.props,
-    params.action.run,
-    params.action.requireAuth,
-    params.action.sampleData,
+    params.name,
+    params.displayName,
+    params.description,
+    params.props,
+    params.run,
+    params.requireAuth,
+    params.sampleData,
   )
 }

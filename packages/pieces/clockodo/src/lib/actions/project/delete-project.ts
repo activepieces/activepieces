@@ -4,7 +4,6 @@ import { createAction } from "@activepieces/pieces-framework";
 
 export default createAction({
     auth: clockodoAuth,
-    action: {
         name: 'delete_project',
         displayName: 'Delete Project',
         description: 'Deletes a project in clockodo',
@@ -15,5 +14,4 @@ export default createAction({
             const client = makeClient(auth);
             await client.deleteProject(propsValue.project_id as number)
         }
-    },
 })

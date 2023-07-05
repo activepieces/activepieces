@@ -4,7 +4,6 @@ import { vtexAuth } from "../../..";
 
 export const deleteBrand = createAction({
     auth: vtexAuth,
-    action: {
     name: "delete-brand",
     displayName: "Delete Brand",
     description: "Delete a Brand in your catalog by it's id",
@@ -24,5 +23,4 @@ export const deleteBrand = createAction({
         return await brand.deleteBrand(brandId);
 
     },
-},
 });

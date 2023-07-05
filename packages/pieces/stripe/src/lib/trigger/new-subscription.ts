@@ -5,7 +5,6 @@ import { stripeAuth } from '../..';
 
 export const stripeNewSubscription = createTrigger({
   auth: stripeAuth,
-  trigger: {
     name: 'new_subscription',
     displayName: 'New Subscription',
     description: 'Triggers when a new subscription is made',
@@ -163,7 +162,6 @@ export const stripeNewSubscription = createTrigger({
     async run(context) {
       return [context.payload.body.data.object];
     },
-  }
 });
 
 interface WebhookInformation {

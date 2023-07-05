@@ -4,17 +4,15 @@ import { pastefyAuth } from "../..";
 
 export default createAction({
     auth: pastefyAuth,
-    action: {
-        name: 'delete_folder',
-        displayName: 'Delete Folder',
-        description: 'Deletes a folder',
-        props: {
-            folder_id: pastefyCommon.folder_id(true)
-        },
-        async run(context) {
-            const client = makeClient(context.auth, context.propsValue)
-            const res = await client.deleteFolder(context.propsValue.folder_id as string)
-            return res
-        }
+    name: 'delete_folder',
+    displayName: 'Delete Folder',
+    description: 'Deletes a folder',
+    props: {
+        folder_id: pastefyCommon.folder_id(true)
+    },
+    async run(context) {
+        const client = makeClient(context.auth, context.propsValue)
+        const res = await client.deleteFolder(context.propsValue.folder_id as string)
+        return res
     }
 })

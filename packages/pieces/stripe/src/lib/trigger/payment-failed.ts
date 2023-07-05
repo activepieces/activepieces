@@ -5,7 +5,6 @@ import { stripeAuth } from '../..';
 
 export const stripePaymentFailed = createTrigger({
   auth: stripeAuth,
-  trigger: {
     name: 'payment_failed',
     displayName: 'Payment Failed',
     description: 'Triggers when a payment fails',
@@ -169,7 +168,6 @@ export const stripePaymentFailed = createTrigger({
     async run(context) {
       return [context.payload.body.data.object];
     },
-  }
 });
 
 interface WebhookInformation {

@@ -1,5 +1,5 @@
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common'
-import { Property, StaticPropsValue } from '@activepieces/pieces-framework'
+import { PieceAuth, Property, StaticPropsValue } from '@activepieces/pieces-framework'
 import { SpotifyWebApi } from './client'
 
 
@@ -15,7 +15,7 @@ To obtain a client ID and client secret for Spotify, follow these simple steps:
 `
 
 export const spotifyCommon = {
-    authentication: Property.OAuth2({
+    authentication: PieceAuth.OAuth2({
         displayName: 'Authentication',
         description: markdownDescription,
         required: true,
@@ -36,9 +36,9 @@ export const spotifyCommon = {
     device_id: (required = true) => Property.Dropdown({
         displayName: 'Device',
         required,
-        refreshers: ['authentication'],
+        refreshers: [],
         options: async (value) => {
-            if (!value['authentication']) {
+            if (!value.auth) {
                 return {
                     disabled: true,
                     placeholder: 'setup authentication first',
@@ -61,9 +61,9 @@ export const spotifyCommon = {
     playlist_id: (required = true) => Property.Dropdown({
         displayName: 'Playlist',
         required,
-        refreshers: ['authentication'],
+        refreshers: [],
         options: async (value) => {
-            if (!value['authentication']) {
+            if (!value.auth) {
                 return {
                     disabled: true,
                     placeholder: 'setup authentication first',

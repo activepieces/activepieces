@@ -4,7 +4,6 @@ import { freshsalesAuth } from "../../"
 
 export const freshSalesCreateContact = createAction({
   auth: freshsalesAuth,
-  action: {
     name: "freshsales_create_contact",
     displayName: "Create Contact",
     description: "Add new contact in Freshsales CRM",
@@ -230,5 +229,5 @@ export const freshSalesCreateContact = createAction({
         return result
       }
     }
-  }
+  
 })

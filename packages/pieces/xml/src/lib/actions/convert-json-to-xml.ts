@@ -2,7 +2,6 @@ import { createAction, Property } from "@activepieces/pieces-framework";
 import js2xml from "json2xml";
 
 export const convertJsonToXml = createAction({
-    action: {
         name: 'convert-json-to-xml',
         displayName: "Convert JSON to XML",
         description: "Convert JSON to XML",
@@ -31,5 +30,4 @@ export const convertJsonToXml = createAction({
             return js2xml(JSON.parse(JSON.stringify(json)), { attributes_key, header });
 
         },
-    }
 });

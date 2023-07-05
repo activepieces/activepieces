@@ -17,7 +17,6 @@ export const createShopifyWebhookTrigger = ({
 }): Trigger =>
     createTrigger({
         auth: shopifyAuth,
-        trigger: {
             name,
             description,
             displayName,
@@ -68,6 +67,5 @@ export const createShopifyWebhookTrigger = ({
                 console.debug("trigger running", context)
                 return [context.payload.body]
             }
-        }
     })
 

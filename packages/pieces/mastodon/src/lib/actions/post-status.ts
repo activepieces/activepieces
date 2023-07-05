@@ -4,7 +4,6 @@ import { mastodonAuth } from "../..";
 
 export const postStatus = createAction({
     auth: mastodonAuth,
-    action: {
         name: 'post_status',
         displayName: 'Post Status',
         description: 'Post a status to Mastodon',
@@ -33,5 +32,4 @@ export const postStatus = createAction({
                 }
             })
         },
-    }
 });

@@ -6,7 +6,6 @@ import { hubspotAuth } from '../../';
 
 export const hubSpotListsAddContactAction = createAction({
   auth: hubspotAuth,
-  action: {
     name: 'add_contact_to_list',
     displayName: 'Add contact To List',
     description: 'Add contact to list',
@@ -39,5 +38,4 @@ export const hubSpotListsAddContactAction = createAction({
         email,
       });
     },
-  }
 });

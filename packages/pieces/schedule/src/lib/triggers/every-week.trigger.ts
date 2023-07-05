@@ -3,7 +3,6 @@ import { createTrigger, Property } from "@activepieces/pieces-framework";
 import { DAY_HOURS, validateWeekDays, validateHours, WEEK_DAYS, timezoneOptions, } from "../common";
 
 export const everyWeekTrigger = createTrigger({
-    trigger: {
         name: 'every_week',
         displayName: 'Every Week',
         description: 'Triggers the current flow every week',
@@ -66,5 +65,4 @@ export const everyWeekTrigger = createTrigger({
         onDisable: async () => {
             console.log('onDisable');
         }
-    }
 });

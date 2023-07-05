@@ -5,7 +5,6 @@ import { bloomerangAuth } from '../../';
 
 export const bloomerangCreateTransaction = createAction({
     auth: bloomerangAuth,
-    action: {
         name: 'create_transaction',
         description: 'Create a transaction',
         displayName: 'Create a transaction (Advanced)',
@@ -255,5 +254,4 @@ export const bloomerangCreateTransaction = createAction({
                 body: transaction
             })).body
         },
-    },
 });

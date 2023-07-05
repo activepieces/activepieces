@@ -7,7 +7,7 @@ const triggerNameInStore = 'webflow_created_form_submissions_trigger';
 
 export const webflowNewSubmission = createTrigger({
     auth: webflowAuth,
-    trigger: {
+    
         name: 'new_submission',
         displayName: 'New Submission',
         description: 'Triggers when Webflow Site receives a new submission',
@@ -67,7 +67,6 @@ export const webflowNewSubmission = createTrigger({
                 return [body];
             }
         },
-    }
 });
 
 interface WebhookInformation {

@@ -6,7 +6,6 @@ import { googleFormsAuth } from "../../";
 
 export const newResponse = createTrigger({
     auth: googleFormsAuth,
-    trigger: {
         name: 'new_response',
         displayName: 'New Response',
         description: 'Triggers when there is new response',
@@ -79,7 +78,6 @@ export const newResponse = createTrigger({
                 propsValue: ctx.propsValue
             });
         }
-    }
 });
 
 

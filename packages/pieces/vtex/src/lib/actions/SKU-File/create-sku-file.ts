@@ -5,7 +5,6 @@ import { Replace } from "../../common/types";
 
 export const createSkuFile = createAction({
     auth: vtexAuth,
-    action: {
     name: "create-sku-file",
     displayName: "Create New Sku File",
     description: "Create a new SKU File to your catalog",
@@ -48,5 +47,4 @@ export const createSkuFile = createAction({
         return await skuFile.createSkuFile(context.propsValue.SkuId, skuFileData);
 
     },
-},
 });

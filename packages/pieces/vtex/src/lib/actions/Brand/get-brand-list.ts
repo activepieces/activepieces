@@ -4,7 +4,6 @@ import { vtexAuth } from "../../..";
 
 export const getBrandList = createAction({
     auth: vtexAuth,
-    action: {
     name: "get-brand-list",
     displayName: "Get Brand List",
     description: "Find all Brands in your catalog",
@@ -18,5 +17,4 @@ export const getBrandList = createAction({
         return await brand.getBrandList();
 
     },
-},
 });

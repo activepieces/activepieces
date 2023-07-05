@@ -4,7 +4,6 @@ import { hubspotAuth } from "../../";
 
 export const createHubspotContact = createAction({
     auth: hubspotAuth,
-    action: {
         name: 'create_contact',
         displayName: "Create Contact",
         description: "Fails on duplicate email addresses",
@@ -60,5 +59,4 @@ export const createHubspotContact = createAction({
                 response_body: result.body,
             };
         },
-    }
 });

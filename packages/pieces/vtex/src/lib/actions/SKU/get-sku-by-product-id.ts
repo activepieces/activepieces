@@ -4,7 +4,6 @@ import { vtexAuth } from "../../..";
 
 export const getSkuByProductId = createAction({
     auth: vtexAuth,
-    action: {
     name: "get-sku-by-product-id",
     displayName: "Get SKU By Product ID",
     description: "Find a Sku in your catalog by a Product id",
@@ -24,5 +23,4 @@ export const getSkuByProductId = createAction({
         return await sku.getSkuListByProductId(productId);
 
     },
-},
 });

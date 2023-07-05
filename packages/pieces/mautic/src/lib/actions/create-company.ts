@@ -9,7 +9,6 @@ import { mauticAuth } from '../..';
 
 export const createCompany = createAction({
     auth: mauticAuth,
-    action: {
         description: 'Creates a new company in Mautic CRM', // Must be a unique across the piece, this shouldn't be changed.
         displayName: 'Create Company',
         name: 'create_mautic_company',
@@ -29,5 +28,4 @@ export const createCompany = createAction({
             }
             return await httpClient.sendRequest(request);
         },
-    }
 });

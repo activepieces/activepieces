@@ -5,7 +5,6 @@ import { vtexAuth } from "../../..";
 
 export const createSku = createAction({
     auth: vtexAuth,
-    action: {
     name: "create-sku",
     displayName: "Create New Sku",
     description: "Create a new SKU to your catalog",
@@ -60,5 +59,4 @@ export const createSku = createAction({
         return await sku.createSku(skuData);
 
     },
-},
 });

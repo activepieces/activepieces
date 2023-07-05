@@ -6,7 +6,6 @@ import { salesforceAuth } from "../..";
 
 export const newRecord = createTrigger({
   auth: salesforceAuth,
-  trigger: {
     name: 'new_record',
     displayName: 'New Record',
     description: 'Triggers when there is new record',
@@ -44,7 +43,6 @@ export const newRecord = createTrigger({
         propsValue: ctx.propsValue,
       });
     }
-  }
 });
 
 const polling: Polling<OAuth2PropertyValue, { object: string | undefined }> = {

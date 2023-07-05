@@ -4,7 +4,6 @@ import { constantContactAuth } from "../../";
 
 export const createOrUpdateContact = createAction({
     auth: constantContactAuth,
-    action: {
         name: "create_or_update_contact",
         displayName: "Create or Update Contact",
         description: "Create or Update a contact in Constant Contact",
@@ -95,5 +94,4 @@ export const createOrUpdateContact = createAction({
                 }
             })).body;
         },
-    },
 });

@@ -13,7 +13,6 @@ import { githubAuth } from '../../';
 
 export const githubNewRepoEvent = createTrigger({
   auth: githubAuth,
-  trigger: {
     name: 'new_star',
     displayName: 'New Star',
     description: 'Triggers when there is a new star on the repository',
@@ -105,7 +104,6 @@ export const githubNewRepoEvent = createTrigger({
       }
       return [context.payload.body];
     },
-  }
 });
 
 function isVerficationCall(payload: Record<string, any>) {

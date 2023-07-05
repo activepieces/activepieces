@@ -53,7 +53,7 @@ export const airtableCommon = {
   tableId: Property.Dropdown<string>({
     displayName: 'Table',
     required: true,
-    refreshers: ["authentication", "base"],
+    refreshers: ["base"],
     options: async ({ auth, propsValue }) => {
       if (!auth) {
         return {
@@ -104,7 +104,7 @@ export const airtableCommon = {
   fields: Property.DynamicProperties({
     displayName: 'Table',
     required: true,
-    refreshers: ["authentication", "base", "tableId"],
+    refreshers: ["base", "tableId"],
 
     props: async ({ authentication, base, tableId }) => {
       if (!authentication) return {}

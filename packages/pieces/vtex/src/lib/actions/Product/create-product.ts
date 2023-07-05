@@ -5,7 +5,7 @@ import { vtexAuth } from "../../..";
 
 export const createProduct = createAction({
     auth: vtexAuth,
-    action: {
+
     name: "create-product",
     displayName: "Create New Product",
     description: "Create a new product to your catalog",
@@ -90,5 +90,4 @@ export const createProduct = createAction({
 
         return await product.createProduct(productData);
     },
-},
 });

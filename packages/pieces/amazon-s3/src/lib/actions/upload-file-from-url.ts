@@ -5,7 +5,6 @@ import { amazonS3Auth } from "../../";
 
 export const amazonS3UploadFileFromUrlAction = createAction({
     auth: amazonS3Auth,
-    action: {
         name: 'upload-file-from-url',
         displayName: "Upload File from URL",
         description: "Upload an file to S3 by using it's url",
@@ -89,6 +88,5 @@ export const amazonS3UploadFileFromUrlAction = createAction({
                 url: `https://${bucket}.s3.${region}.amazonaws.com/${finalFileName}`,
                 etag: uploadResponse.ETag,
             };
-        }
     },
 });

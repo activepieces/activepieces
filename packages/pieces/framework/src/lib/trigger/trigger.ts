@@ -16,20 +16,18 @@ type CreateTriggerParams<
   /**
    * A dummy parameter used to infer {@code PieceAuth} type
    */
+  name: string
+  displayName: string
+  description: string
   auth?: PieceAuth
-  trigger: {
-    name: string
-    displayName: string
-    description: string
-    props: TriggerProps
-    type: TS
-    onEnable: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>
-    onDisable: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>
-    run: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>
-    test?: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>
-    requireAuth?: boolean
-    sampleData: unknown
-  }
+  props: TriggerProps
+  type: TS
+  onEnable: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>
+  onDisable: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>
+  run: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>
+  test?: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>
+  requireAuth?: boolean
+  sampleData: unknown
 }
 
 export class ITrigger<
@@ -64,16 +62,16 @@ export const createTrigger = <
   TriggerProps extends PiecePropertyMap,
 >(params: CreateTriggerParams<PieceAuth, TriggerProps, TS>) => {
   return new ITrigger(
-    params.trigger.name,
-    params.trigger.displayName,
-    params.trigger.description,
-    params.trigger.props,
-    params.trigger.type,
-    params.trigger.onEnable,
-    params.trigger.onDisable,
-    params.trigger.run,
-    params.trigger.test ?? (() => Promise.resolve([params.trigger.sampleData])),
-    params.trigger.sampleData,
-    params.trigger.requireAuth,
+    params.name,
+    params.displayName,
+    params.description,
+    params.props,
+    params.type,
+    params.onEnable,
+    params.onDisable,
+    params.run,
+    params.test ?? (() => Promise.resolve([params.sampleData])),
+    params.sampleData,
+    params.requireAuth,
   )
 }

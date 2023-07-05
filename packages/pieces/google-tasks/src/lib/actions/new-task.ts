@@ -4,7 +4,6 @@ import { googleTasksAuth } from "../../";
 
 export const googleTasksAddNewTaskAction = createAction({
     auth: googleTasksAuth,
-    action: {
         name: 'add_task',
         description: 'Add a new task to a specified task list',
         displayName: 'Add Task',
@@ -25,5 +24,5 @@ export const googleTasksAddNewTaskAction = createAction({
 
             return createTask(auth, propsValue.tasks_list!, task);
         },
-    }
+    
 });

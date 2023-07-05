@@ -5,7 +5,6 @@ import { mailchimpAuth } from "../../..";
 
 export const addMemberToList = createAction({
     auth: mailchimpAuth,
-    action: {
         name: 'add_member_to_list',
         displayName: "Add Member to an Audience (List)",
         description: "Add a member to an existing Mailchimp audience (list)",
@@ -41,5 +40,4 @@ export const addMemberToList = createAction({
 
             return await mailchimp.lists.addListMember(context.propsValue.list_id!, { email_address: context.propsValue.email!, status: context.propsValue.status! })
         },
-    }
 });

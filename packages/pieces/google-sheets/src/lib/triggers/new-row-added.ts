@@ -22,7 +22,6 @@ const polling: Polling<OAuth2PropertyValue, { spreadsheet_id: string, sheet_id: 
 
 export const readNewRows = createTrigger({
   auth: googleSheetsAuth,
-  trigger: {
     name: 'new_row',
     displayName: 'New Row',
     description: 'Trigger when a new row is added, and it can include existing rows as well.',
@@ -70,5 +69,4 @@ export const readNewRows = createTrigger({
         propsValue: context.propsValue,
       });
     },
-  },
 });

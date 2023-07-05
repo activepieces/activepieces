@@ -5,7 +5,6 @@ import { pastebinAuth } from "../..";
 
 export default createAction({
     auth: pastebinAuth,
-    action: {
         name: 'create_paste',
         displayName: 'Create Paste',
         description: 'Creates a new paste',
@@ -68,5 +67,4 @@ export default createAction({
                 url
             }
         }
-    }
 })

@@ -4,7 +4,6 @@ import { sendinblueAuth } from "../..";
 
 export const createOrUpdateContact = createAction({
   auth: sendinblueAuth,
-  action: {
     name: 'create_or_update_contact',
     displayName: 'Create or Update Contact',
     description: 'Create or update an existing contact',
@@ -123,5 +122,4 @@ export const createOrUpdateContact = createAction({
       })
       return contactREsponse.body;
     }
-  }
 });

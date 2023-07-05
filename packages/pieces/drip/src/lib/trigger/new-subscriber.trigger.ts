@@ -6,7 +6,6 @@ import { dripAuth } from '../../';
 const triggerNameInStore = 'drip_new_subscriber_trigger';
 export const dripNewSubscriberEvent = createTrigger({
   auth: dripAuth,
-  trigger: {
     name: 'new_subscriber',
     displayName: 'New Subscriber',
     description: 'Triggers when a subscriber is created in your Drip account.',
@@ -59,7 +58,6 @@ export const dripNewSubscriberEvent = createTrigger({
     async run(context) {
       return [context.payload.body];
     },
-  },
 });
 
 

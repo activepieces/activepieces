@@ -7,7 +7,6 @@ const triggerNameInStore = 'calendly_invitee_canceled_trigger';
 
 export const calendlyInviteeCanceled = createTrigger({
   auth: calendlyAuth,
-  trigger: {
     name: 'invitee_canceled',
     displayName: 'Event Canceled',
     description: 'Triggers when a new Calendly event is canceled',
@@ -98,6 +97,5 @@ export const calendlyInviteeCanceled = createTrigger({
     async run(context) {
       return [context.payload.body];
     },
-  },
 });
 

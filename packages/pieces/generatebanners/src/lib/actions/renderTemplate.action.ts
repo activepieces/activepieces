@@ -13,7 +13,6 @@ import { generatebannersAuth } from '../../';
 
 export const renderTemplate = createAction({
   auth: generatebannersAuth,
-  action: {
     name: 'render_template',
     description: 'Render a GenerateBanners template',
     displayName: 'Render Template',
@@ -172,7 +171,7 @@ export const renderTemplate = createAction({
         return {};
       }
     },
-  }
+  
 });
 
 interface GenerateBannersTemplateList {

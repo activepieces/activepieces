@@ -1,4 +1,4 @@
-import { PieceAuth, Piece, createPiece } from '@activepieces/pieces-framework';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { airtableCreateRecordAction } from './lib/actions/create-record';
 import { airtableNewRecordTrigger } from './lib/trigger/new-record.trigger';
 

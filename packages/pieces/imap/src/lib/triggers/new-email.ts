@@ -39,76 +39,74 @@ const polling: Polling<PiecePropValueSchema<typeof imapAuth>, { subject: string 
 
 export const newEmail = createTrigger({
     auth: imapAuth,
-    trigger: {
-        name: 'new_email',
-        displayName: 'New Email',
-        description: 'Trigger when a new email is received.',
-        props: {
-            subject: imapCommon.subject,
-            to: imapCommon.to,
-            from: imapCommon.from
-        },
-        type: TriggerStrategy.POLLING,
-        onEnable: async (context) => {
-            await pollingHelper.onEnable(polling, {
-                auth: context.auth,
-                store: context.store,
-                propsValue: context.propsValue,
-            })
-        },
-        onDisable: async (context) => {
-            await pollingHelper.onDisable(polling, {
-                auth: context.auth,
-                store: context.store,
-                propsValue: context.propsValue,
-            })
-        },
-        run: async (context) => {
-            return await pollingHelper.poll(polling, {
-                auth: context.auth,
-                store: context.store,
-                propsValue: context.propsValue,
-            });
-        },
-        test: async (context) => {
-            return await pollingHelper.test(polling, {
-                auth: context.auth,
-                store: context.store,
-                propsValue: context.propsValue,
-            });
-        },
+    name: 'new_email',
+    displayName: 'New Email',
+    description: 'Trigger when a new email is received.',
+    props: {
+        subject: imapCommon.subject,
+        to: imapCommon.to,
+        from: imapCommon.from
+    },
+    type: TriggerStrategy.POLLING,
+    onEnable: async (context) => {
+        await pollingHelper.onEnable(polling, {
+            auth: context.auth,
+            store: context.store,
+            propsValue: context.propsValue,
+        })
+    },
+    onDisable: async (context) => {
+        await pollingHelper.onDisable(polling, {
+            auth: context.auth,
+            store: context.store,
+            propsValue: context.propsValue,
+        })
+    },
+    run: async (context) => {
+        return await pollingHelper.poll(polling, {
+            auth: context.auth,
+            store: context.store,
+            propsValue: context.propsValue,
+        });
+    },
+    test: async (context) => {
+        return await pollingHelper.test(polling, {
+            auth: context.auth,
+            store: context.store,
+            propsValue: context.propsValue,
+        });
+    },
 
-        sampleData: {
-            html: 'My email body',
-            text: 'My email body',
-            textAsHtml: '<p>My email body</p>',
-            subject: 'Email Subject',
-            date: '2023-06-18T11:30:09.000Z',
-            to: {
-                value: [
-                    {
-                        address: 'email@address.com',
-                        name: 'Name'
-                    }
-                ]
-            },
-            from: {
-                value: [
-                    {
-                        address: 'email@address.com',
-                        name: 'Name'
-                    }
-                ]
-            },
-            cc: {
-                value: [
-                    {
-                        address: 'email@address.com',
-                        name: 'Name'
-                    }
-                ]
-            },
-            messageId: '<CxE49ifJT5YZN9OE2O6j6Ef+BYgkKWq7X-deg483GkM1ui1xj3g@mail.gmail.com>'
-        }
+    sampleData: {
+        html: 'My email body',
+        text: 'My email body',
+        textAsHtml: '<p>My email body</p>',
+        subject: 'Email Subject',
+        date: '2023-06-18T11:30:09.000Z',
+        to: {
+            value: [
+                {
+                    address: 'email@address.com',
+                    name: 'Name'
+                }
+            ]
+        },
+        from: {
+            value: [
+                {
+                    address: 'email@address.com',
+                    name: 'Name'
+                }
+            ]
+        },
+        cc: {
+            value: [
+                {
+                    address: 'email@address.com',
+                    name: 'Name'
+                }
+            ]
+        },
+        messageId: '<CxE49ifJT5YZN9OE2O6j6Ef+BYgkKWq7X-deg483GkM1ui1xj3g@mail.gmail.com>'
     }
 });

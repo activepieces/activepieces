@@ -6,7 +6,7 @@ import { clickupAuth } from "../../../";
 
 export const getClickupList = createAction({
     auth: clickupAuth,
-    action: {
+    
         name: 'get_list',
         description: 'Gets a list in a ClickUp',
         displayName: 'Get List',
@@ -25,5 +25,4 @@ export const getClickupList = createAction({
 
             return response.body;
         },
-    },
 });

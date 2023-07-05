@@ -4,7 +4,6 @@ import { gmailAuth } from "../../";
 
 export const gmailSendEmailAction = createAction({
     auth: gmailAuth,
-    action: {
         name: 'send_email',
         description: 'Send an email through a Gmail account',
         displayName: 'Send Email',
@@ -64,7 +63,7 @@ export const gmailSendEmailAction = createAction({
             };
             return await httpClient.sendRequest(request);
         },
-    },
+    
 });
 
 type SendEmailRequestBody = {

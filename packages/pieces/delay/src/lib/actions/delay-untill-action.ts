@@ -3,7 +3,6 @@ import { ExecutionType, PauseType } from "@activepieces/shared";
 import dayjs from "dayjs";
 
 export const delayUntilAction = createAction({
-    action: {
         name: 'delay_until',
         displayName: 'Delay Until',
         description: 'Delays the execution of the next action until a given timestamp',
@@ -48,5 +47,4 @@ export const delayUntilAction = createAction({
                 };
             }
         },
-    },
 });

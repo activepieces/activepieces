@@ -5,7 +5,6 @@ import { clockodoAuth } from "../../../";
 
 export default createAction({
     auth: clockodoAuth,
-    action: {
         name: 'create_entry',
         displayName: 'Create Entry',
         description: 'Creates an entry in clockodo',
@@ -45,5 +44,4 @@ export default createAction({
             } as TimeRecordEntry) // For now we only support time records
             return res.entry
         }
-    },
 })

@@ -4,7 +4,6 @@ import { dropboxAuth } from "../../"
 
 export const dropboxCreateNewFolder = createAction({
   auth: dropboxAuth,
-  action: {
     name: 'create_new_dropbox_folder',
     description: 'Create a new empty folder in your Dropbox',
     displayName: 'Create New Folder',
@@ -70,5 +69,4 @@ export const dropboxCreateNewFolder = createAction({
         return result
       }
     }
-  }
 })

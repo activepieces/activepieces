@@ -5,7 +5,6 @@ import { xeroAuth } from "../..";
 
 export const xeroCreateContact = createAction({
   auth: xeroAuth,
-  action: {
     name: 'xero_create_contact',
     description: 'Create Xero Contact',
     displayName: 'Create or Update Contact',
@@ -61,5 +60,4 @@ export const xeroCreateContact = createAction({
 
       return result
     }
-  }
 });

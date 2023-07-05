@@ -8,7 +8,6 @@ import { googleCalendarAuth } from '../../';
 export const calendarEventChanged = createTrigger({
   // docs: https://developers.google.com/calendar/api/guides/push
   auth: googleCalendarAuth,
-  trigger: {
     name: 'new_or_updated_event',
     displayName: 'New Or updated Event',
     description: 'Triggers when there is an event added or updated',
@@ -90,5 +89,4 @@ export const calendarEventChanged = createTrigger({
       );
       return [event];
     },
-  }
 });

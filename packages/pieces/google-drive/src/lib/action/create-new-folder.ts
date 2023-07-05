@@ -4,7 +4,6 @@ import { googleDriveAuth } from "../../";
 
 export const googleDriveCreateNewFolder = createAction({
   auth: googleDriveAuth,
-  action: {
     name: 'create_new_gdrive_folder',
     description: 'Create a new empty folder in your Google Drive',
     displayName: 'Create new folder',
@@ -83,5 +82,4 @@ export const googleDriveCreateNewFolder = createAction({
         return result;
       }
     }
-  }
 });

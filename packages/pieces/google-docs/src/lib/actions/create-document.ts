@@ -4,7 +4,6 @@ import { googleDocsAuth } from "../..";
 
 export const createDocument = createAction({
     auth: googleDocsAuth,
-    action: {
         name: 'create_document',
         description: 'Create a document on Google Docs',
         displayName: 'Create Document',
@@ -18,5 +17,4 @@ export const createDocument = createAction({
 
             return response;
         }
-    }
 });

@@ -5,7 +5,6 @@ import { hubspotAuth } from '../../';
 
 export const hubSpotContactsCreateOrUpdateAction = createAction({
   auth: hubspotAuth,
-  action: {
     name: 'create_or_update_contact',
     displayName: 'Create or Update Contact',
     description: 'Updates contact if email address already exists',
@@ -53,5 +52,4 @@ export const hubSpotContactsCreateOrUpdateAction = createAction({
         },
       });
     },
-  }
 });

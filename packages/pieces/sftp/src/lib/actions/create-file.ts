@@ -4,7 +4,6 @@ import { sftpAuth } from "../..";
 
 export const createFile = createAction({
     auth: sftpAuth,
-    action: {
         name: 'create_file',
         displayName: 'Create new file',
         description: 'Create a new file in the given path',
@@ -51,5 +50,4 @@ export const createFile = createAction({
                 }
             }
         },
-    }
 });

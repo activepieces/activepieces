@@ -5,7 +5,6 @@ import { googleContactsAuth } from '../../';
 
 export const googleContactNewOrUpdatedContact = createTrigger({
     auth: googleContactsAuth,
-    trigger: {
         name: 'new_or_updated_contact',
         displayName: 'New Or Updated Contact',
         description: 'Triggers when there is a new or updated contact',
@@ -97,7 +96,6 @@ export const googleContactNewOrUpdatedContact = createTrigger({
                 return f.metadata.deleted !== true;
             });
         },
-    }
 });
 
 function listContacts(access_token: string, syncToken: string | undefined): Promise<HttpResponse<{ connections: Connection[], nextSyncToken: string }>> {

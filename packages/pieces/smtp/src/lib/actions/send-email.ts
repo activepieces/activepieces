@@ -4,7 +4,6 @@ import { smtpAuth } from '../..';
 
 export const sendEmail = createAction({
     auth: smtpAuth,
-    action: {
         name: 'send-email',
         displayName: 'Send Email',
         description: 'Send an email using a custom SMTP server.',
@@ -61,5 +60,4 @@ export const sendEmail = createAction({
 
             return info;
         },
-    }
 });

@@ -6,7 +6,6 @@ import { clickupAuth } from "../../../";
 
 export const createClickupTaskComment = createAction({
     auth: clickupAuth,
-    action: {
         name: 'create_task_comments',
         description: 'Creates a comment on a task in ClickUp',
         displayName: 'Create Task Comment',
@@ -39,5 +38,4 @@ export const createClickupTaskComment = createAction({
 
             return response.body;
         },
-    },
 })

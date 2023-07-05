@@ -4,19 +4,17 @@ import { clockodoAuth } from "../../../";
 
 export default createAction({
     auth: clockodoAuth,
-    action: {
-        name: 'delete_absence',
-        displayName: 'Delete Absence',
-        description: 'Deletes an absence in clockodo',
-        props: {
-            absence_id: Property.Number({
-                displayName: 'Absence ID',
-                required: true
-            })
-        },
-        async run({ auth, propsValue }) {
-            const client = makeClient(auth);
-            await client.deleteAbsence(propsValue.absence_id)
-        }
+    name: 'delete_absence',
+    displayName: 'Delete Absence',
+    description: 'Deletes an absence in clockodo',
+    props: {
+        absence_id: Property.Number({
+            displayName: 'Absence ID',
+            required: true
+        })
     },
+    async run({ auth, propsValue }) {
+        const client = makeClient(auth);
+        await client.deleteAbsence(propsValue.absence_id)
+    }
 })

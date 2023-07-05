@@ -6,7 +6,6 @@ import { wordpressAuth } from '../..';
 
 export const wordpressNewPost = createTrigger({
   auth: wordpressAuth,
-  trigger: {
     name: 'new_post',
     displayName: 'New Post',
     sampleData: {
@@ -144,7 +143,6 @@ export const wordpressNewPost = createTrigger({
         propsValue: ctx.propsValue
       });
     }
-  }
 });
 
 

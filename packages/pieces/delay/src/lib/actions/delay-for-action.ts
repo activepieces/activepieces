@@ -2,7 +2,6 @@ import { createAction, Property } from "@activepieces/pieces-framework";
 import { ExecutionType, PauseType } from "@activepieces/shared";
 
 export const delayForAction = createAction({
-    action: {
         name: 'delayFor',
         displayName: 'Delay For',
         description: 'Delays the execution of the next action for a given duration',
@@ -43,5 +42,4 @@ export const delayForAction = createAction({
                 };
             }
         },
-    },
 });

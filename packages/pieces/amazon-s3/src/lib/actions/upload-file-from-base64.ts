@@ -4,7 +4,6 @@ import { amazonS3Auth } from "../../";
 
 export const amazonS3UploadBase64FileAction = createAction({
     auth: amazonS3Auth,
-    action: {
         name: 'upload-base64-file',
         displayName: "Upload base64 File",
         description: "Upload an File to S3 by using it's base64 string",
@@ -138,6 +137,5 @@ export const amazonS3UploadBase64FileAction = createAction({
                 url: `https://${bucket}.s3.${region}.amazonaws.com/${finalFileName}`,
                 etag: uploadResponse.ETag,
             };
-        }
     },
 });

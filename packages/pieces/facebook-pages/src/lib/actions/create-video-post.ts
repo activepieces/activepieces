@@ -4,7 +4,6 @@ import { facebookPagesAuth } from "../..";
 
 export const createVideoPost = createAction({
     auth: facebookPagesAuth,
-    action: {
         name: 'create_video_post',
         displayName: 'Create Page Video',
         description: 'Create a video on a Facebook Page you manage',
@@ -23,5 +22,4 @@ export const createVideoPost = createAction({
 
             return result;
         }
-    }
 });

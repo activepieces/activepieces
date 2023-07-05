@@ -5,7 +5,6 @@ import { dripAuth } from "../../"
 
 export const dripUpsertSubscriberAction = createAction({
     auth: dripAuth,
-    action: {
         name: 'upsert_subscriber',
         description: 'Create or Update Subscriber',
         displayName: 'Create or Update Subscriber',
@@ -93,5 +92,4 @@ export const dripUpsertSubscriberAction = createAction({
             };
             return await httpClient.sendRequest<Record<string, never>>(request);
         }
-    }
 });

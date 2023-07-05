@@ -35,7 +35,6 @@ const polling: Polling<AuthData, unknown> = {
 
 export default createTrigger({
     auth: clockodoAuth,
-    trigger: {
         name: 'new_entry',
         displayName: 'New Entry',
         description: 'Triggers when a new time entry is created',
@@ -71,5 +70,4 @@ export default createTrigger({
                 propsValue: context.propsValue,
             });
         }
-    },
 });

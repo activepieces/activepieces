@@ -4,7 +4,6 @@ import { postgresAuth } from "../..";
 
 export const runQuery = createAction({
     auth: postgresAuth,
-    action: {
         name: 'run-query',
         displayName: "Run Query",
         description: "Run Query",
@@ -63,5 +62,4 @@ export const runQuery = createAction({
                 });
             })
         },
-    }
 });

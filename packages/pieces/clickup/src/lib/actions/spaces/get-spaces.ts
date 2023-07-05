@@ -6,7 +6,6 @@ import { createAction } from "@activepieces/pieces-framework";
 
 export const getClickupSpaces = createAction({
     auth: clickupAuth,
-    action: {
         name: 'get_spaces',
         description: 'Gets spaces in a ClickUp workspace',
         displayName: 'Get Spaces',
@@ -21,5 +20,4 @@ export const getClickupSpaces = createAction({
 
             return response.body;
         },
-    },
 });

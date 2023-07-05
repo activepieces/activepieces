@@ -7,7 +7,6 @@ import { clickupAuth } from "../../../";
 
 export const getClickupSpace = createAction({
     auth: clickupAuth,
-    action: {
         name: 'get_space',
         description: 'Gets a space in a ClickUp',
         displayName: 'Get Space',
@@ -25,5 +24,4 @@ export const getClickupSpace = createAction({
             });
             return response.body;
         },
-    },
 });

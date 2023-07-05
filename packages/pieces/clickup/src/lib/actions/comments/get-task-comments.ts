@@ -6,7 +6,6 @@ import { clickupAuth } from "../../../";
 
 export const getClickupTaskComments = createAction({
     auth: clickupAuth,
-    action: {
         name: 'get_task_comments',
         description: 'Gets comments from a task in ClickUp',
         displayName: 'Get Task Comments',
@@ -25,5 +24,4 @@ export const getClickupTaskComments = createAction({
 
             return response.body;
         },
-    },
 });

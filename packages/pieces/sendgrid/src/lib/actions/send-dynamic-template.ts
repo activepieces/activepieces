@@ -5,7 +5,6 @@ import { sendgridAuth } from "../..";
 
 export const sendDynamicTemplate = createAction({
     auth: sendgridAuth,
-    action: {
         name: 'send_dynamic_template',
         displayName: "Send Dynamic Template",
         description: "Send an email using a dynamic template",
@@ -70,5 +69,4 @@ export const sendDynamicTemplate = createAction({
         sampleData: {
             success: true
         }
-    }
 });

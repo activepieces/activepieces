@@ -2,7 +2,6 @@ import { createAction, Property } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
 
 export const fetchTopStories = createAction({
-  action: {
     name: 'fetch_top_stories', // Must be a unique across the piece, this shouldn't be changed.
     displayName: 'Fetch Top Stories',
     description: 'Fetch top stories from hackernews',
@@ -32,7 +31,6 @@ export const fetchTopStories = createAction({
       }
       return topStories;
     },
-  }
 });
 
 

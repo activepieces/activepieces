@@ -4,7 +4,6 @@ import { vtexAuth } from "../../..";
 
 export const getClientList = createAction({
     auth: vtexAuth,
-    action: {
     name: "get-client-list",
     displayName: "Get Client List",
     description: "Find all Clients",
@@ -18,5 +17,4 @@ export const getClientList = createAction({
         return await client.getClientList();
 
     },
-},
 });

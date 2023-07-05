@@ -7,7 +7,6 @@ import { todoistAuth } from '../..';
 
 export const todoistCreateTaskAction = createAction({
   auth: todoistAuth,
-  action: {
     name: 'create_task',
     displayName: 'Create Task',
     description: 'Create task',
@@ -82,5 +81,4 @@ export const todoistCreateTaskAction = createAction({
         due_date
       });
     },
-  }
 });

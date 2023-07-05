@@ -4,7 +4,6 @@ import { invoiceninjaAuth } from "../..";
 
 export const createTask = createAction({
     auth: invoiceninjaAuth,
-    action: {
         name: 'create_task',
         displayName: 'Create Task',
         description: 'Creates a task instance in Invoice Ninja for billing purposes.',
@@ -62,5 +61,4 @@ export const createTask = createAction({
             const response = await httpClient.sendRequest(httprequestdata);
             return response.body;
         }
-    }
 })

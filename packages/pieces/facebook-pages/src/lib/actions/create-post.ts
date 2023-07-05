@@ -4,7 +4,6 @@ import { facebookPagesAuth } from "../..";
 
 export const createPost = createAction({
     auth: facebookPagesAuth,
-    action: {
         name: 'create_post',
         displayName: 'Create Page Post',
         description: 'Create a post on a Facebook Page you manage',
@@ -22,5 +21,4 @@ export const createPost = createAction({
 
             return result;
         }
-    }
 });

@@ -6,48 +6,47 @@ import { mondayAuth } from "../.."
 
 export const mondayCreateAnItem = createAction({
   auth: mondayAuth,
-  action: {
-    name: 'monday_create_an_item',
-    displayName: 'Create Item',
-    description: 'Create a new item inside a board.',
-    sampleData: {
-      "data": {
-        "create_item": {
-          "id": "1175651821"
-        }
-      },
-      "account_id": 16284131
+  name: 'monday_create_an_item',
+  displayName: 'Create Item',
+  description: 'Create a new item inside a board.',
+  sampleData: {
+    "data": {
+      "create_item": {
+        "id": "1175651821"
+      }
     },
-    props: {
-      workspace_id: mondayProps.workspace_id(true),
-      board_id: mondayProps.board_id(true),
-      group_id: mondayProps.group_id(false),
-      item_name: Property.ShortText({
-        displayName: "Item Name",
-        description: "Item Name",
-        required: true
-      }),
-      column_values: Property.Object({
-        displayName: "Column Values",
-        description: "The column values of the new item.",
-        required: false
-      }),
-      create_labels_if_missing: Property.Checkbox({
-        displayName: "Create Labels if Missing",
-        description: "Creates status/dropdown labels if they are missing. This requires permission to change the board structure.",
-        defaultValue: false,
-        required: false
-      })
-    },
-    async run(context) {
-      const { ...itemValues } = context.propsValue
+    "account_id": 16284131
+  },
+  props: {
+    workspace_id: mondayProps.workspace_id(true),
+    board_id: mondayProps.board_id(true),
+    group_id: mondayProps.group_id(false),
+    item_name: Property.ShortText({
+      displayName: "Item Name",
+      description: "Item Name",
+      required: true
+    }),
+    column_values: Property.Object({
+      displayName: "Column Values",
+      description: "The column values of the new item.",
+      required: false
+    }),
+    create_labels_if_missing: Property.Checkbox({
+      displayName: "Create Labels if Missing",
+      description: "Creates status/dropdown labels if they are missing. This requires permission to change the board structure.",
+      defaultValue: false,
+      required: false
+    })
+  },
+  async run(context) {
+    const { ...itemValues } = context.propsValue
 
-      const item: string = Object
-        .entries(itemValues.column_values ?? {})
-        .map(value => `${value[0]}: "${value[1]}"`)
-        .join(', ')
+    const item: string = Object
+      .entries(itemValues.column_values ?? {})
+      .map(value => `${value[0]}: "${value[1]}"`)
+      .join(', ')
 
-      const query = `
+    const query = `
       mutation {
         create_item (
           item_name: "${itemValues.item_name}",
@@ -60,16 +59,15 @@ export const mondayCreateAnItem = createAction({
       }
     `
 
-      const result = await mondayMakeRequest(
-        context.auth.access_token,
-        query,
-        HttpMethod.POST
-      )
+    const result = await mondayMakeRequest(
+      context.auth.access_token,
+      query,
+      HttpMethod.POST
+    )
 
-      if (result.status === 200) {
-        return result.body
-      }
-      return result
+    if (result.status === 200) {
+      return result.body
     }
+    return result
   }
 })

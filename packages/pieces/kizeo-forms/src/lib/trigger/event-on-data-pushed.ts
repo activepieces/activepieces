@@ -6,7 +6,6 @@ import { kizeoFormsAuth } from '../..';
 const triggerNameInStore = 'event_on_data_pushed_trigger';
 export const eventOnDataPushed = createTrigger({
   auth: kizeoFormsAuth,
-  trigger: {
     name: 'event_on_data_pushed',
     displayName: 'Event On Data Pushed',
     description: 'Handle EventOnData push event via webhooks',
@@ -81,7 +80,6 @@ export const eventOnDataPushed = createTrigger({
     async run(context) {
       return [context.payload.body];
     },
-  },
 });
 
 

@@ -5,7 +5,6 @@ import CryptoJS from 'crypto-js';
 
 export default createAction({
     auth: pastefyAuth,
-    action: {
         name: 'get_paste',
         displayName: 'Get Paste',
         description: 'Retrieves a paste',
@@ -32,5 +31,4 @@ export default createAction({
             }
             return paste
         }
-    }
 })

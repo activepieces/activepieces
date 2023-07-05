@@ -5,7 +5,6 @@ import { clickupAuth } from "../../../";
 
 export const createClickupFolderlessList = createAction({
     auth: clickupAuth,
-    action: {
         name: 'create_folderless_list',
         description: 'Create a new folderless list in a ClickUp workspace and space',
         displayName: 'Create Folderless List',
@@ -27,5 +26,4 @@ export const createClickupFolderlessList = createAction({
 
             return response.body;
         },
-    },
 });

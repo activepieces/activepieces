@@ -6,7 +6,6 @@ import { googleCalendarAuth } from '../../';
 
 export const createEvent = createAction({
     auth: googleCalendarAuth,
-    action: {
         name: 'create_google_calendar_event',
         description: 'Add Event',
         displayName: 'Create Event',
@@ -58,5 +57,5 @@ export const createEvent = createAction({
             };
             return await httpClient.sendRequest(request);
         },
-    }
+    
 });

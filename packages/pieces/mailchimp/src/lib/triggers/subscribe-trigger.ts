@@ -8,7 +8,6 @@ const WEBHOOK_DATA_STORE_KEY = 'mail_chimp_webhook_data';
 
 export const mailChimpSubscribeTrigger = createTrigger({
   auth: mailchimpAuth,
-  trigger: {
     name: 'subscribe',
     displayName: 'Member Subscribed to Audience',
     description: 'Runs when an Audience subscriber is added.',
@@ -82,7 +81,6 @@ export const mailChimpSubscribeTrigger = createTrigger({
 
       return [request];
     },
-  }
 });
 
 const enableWebhookRequest = async ({ server, token, listId, webhookUrl }: EnableTriggerRequestParams): Promise<string> => {

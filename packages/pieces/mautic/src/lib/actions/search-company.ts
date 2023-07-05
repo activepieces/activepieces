@@ -4,7 +4,6 @@ import { mauticAuth } from '../..';
 
 export const searchCompany = createAction({
     auth: mauticAuth,
-    action: {
         description: 'Search for a company in Mautic CRM', // Must be a unique across the piece, this shouldn't be changed.
         displayName: 'Search Company',
         name: 'search_mautic_company',
@@ -30,5 +29,4 @@ export const searchCompany = createAction({
             );
             return Object.values(response.body.companies)[0];
         },
-    }
 });

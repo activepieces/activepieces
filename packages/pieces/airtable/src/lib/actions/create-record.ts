@@ -4,7 +4,6 @@ import { airtableAuth } from "../../index";
 
 export const airtableCreateRecordAction = createAction({
   auth: airtableAuth,
-  action: {
     name: 'airtable_create_record',
     displayName: 'Create Airtable Record',
     description: 'Adds a record into an airtable',
@@ -37,6 +36,5 @@ export const airtableCreateRecordAction = createAction({
         tableId: tableId as string,
         fields: fieldsWithoutEmptyStrings,
       })
-    },
   },
 })

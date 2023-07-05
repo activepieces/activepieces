@@ -5,7 +5,6 @@ import { googleSheetsAuth } from '../..';
 
 export const insertRowAction = createAction({
     auth: googleSheetsAuth,
-    action: {
         name: 'insert_row',
         description: 'Append a row of values to an existing sheet',
         displayName: 'Insert Row',
@@ -49,5 +48,5 @@ export const insertRowAction = createAction({
                 throw Error("Values passed are not an array")
             }
         },
-    },
+    
 });

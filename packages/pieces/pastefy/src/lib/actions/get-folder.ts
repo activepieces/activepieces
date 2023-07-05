@@ -4,7 +4,6 @@ import { pastefyAuth } from "../..";
 
 export default createAction({
     auth: pastefyAuth,
-    action: {
         name: 'get_folder',
         displayName: 'Get Folder',
         description: 'Retrieves information about a folder',
@@ -16,5 +15,4 @@ export default createAction({
             const folder = await client.getFolder(context.propsValue.folder_id as string)
             return folder
         }
-    }
 })

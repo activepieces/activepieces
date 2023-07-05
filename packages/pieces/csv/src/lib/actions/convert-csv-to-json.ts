@@ -3,7 +3,6 @@ import { UnparseConfig } from "papaparse";
 import { unparseCSVObject } from "../utils";
 
 export const unparseCSVTextAction = createAction({
-  action: {
     name: "convert_json_to_csv",
     displayName: "Convert JSON to CSV",
     description: "This function reads a JSON file and converts it into a CSV file format.",
@@ -49,5 +48,4 @@ export const unparseCSVTextAction = createAction({
 
       return results
     },
-  },
 });

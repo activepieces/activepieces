@@ -4,7 +4,6 @@ import { facebookLeadsAuth } from "../..";
 
 export const newLead = createTrigger({
     auth: facebookLeadsAuth,
-    trigger: {
         name: 'new_lead',
         displayName: 'New Lead',
         description: 'Triggers when a new lead is created',
@@ -50,5 +49,4 @@ export const newLead = createTrigger({
 
             return [leads];
         },
-    }
 })

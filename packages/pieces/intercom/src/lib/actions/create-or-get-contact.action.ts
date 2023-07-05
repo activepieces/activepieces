@@ -9,7 +9,6 @@ enum ContactRole {
 }
 export const getOrCreateContact = createAction({
   auth: intercomAuth,
-  action: {
     description: 'Get or create a contact (ie. user or lead) if it isn\'t found',
     displayName: "Get or Create Contact",
     name: "get_or_create_contact",
@@ -185,5 +184,4 @@ export const getOrCreateContact = createAction({
         throw ex;
       }
     }
-  }
 })

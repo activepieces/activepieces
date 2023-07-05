@@ -4,7 +4,6 @@ import { createAction } from "@activepieces/pieces-framework";
 
 export default createAction({
     auth: clockodoAuth,
-    action: {
         name: 'get_project',
         displayName: 'Get Project',
         description: 'Retrieves a single project from clockodo',
@@ -16,5 +15,4 @@ export default createAction({
             const res = await client.getProject(propsValue.project_id as number)
             return res.project
         }
-    },
 })

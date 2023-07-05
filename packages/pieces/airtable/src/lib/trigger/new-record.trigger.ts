@@ -25,7 +25,6 @@ const polling: Polling<string, StaticPropsValue<typeof props>> = {
 
 export const airtableNewRecordTrigger = createTrigger({
   auth: airtableAuth,
-  trigger: {
     name: 'new_record',
     displayName: 'New Record',
     description: 'Triggers when a new record is added to the selected table.',
@@ -51,5 +50,4 @@ export const airtableNewRecordTrigger = createTrigger({
       const { store, auth, propsValue } = context
       return await pollingHelper.poll(polling, { store, auth, propsValue });
     },
-  },
 });

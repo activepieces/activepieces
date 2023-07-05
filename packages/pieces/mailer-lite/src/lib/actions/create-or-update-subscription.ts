@@ -4,7 +4,6 @@ import { mailerListAuth } from "../..";
 
 export const createOrUpdateSubscriber = createAction({
     auth: mailerListAuth,
-    action: {
         name: 'add_or_update_subscriber',
         displayName: "Add or Update subscriber",
         description: "Create or update a existing subscription",
@@ -65,7 +64,6 @@ export const createOrUpdateSubscriber = createAction({
             return response.data.data;
 
         },
-    }
 });
 
 

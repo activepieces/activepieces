@@ -5,7 +5,6 @@ import { pipedriveAuth } from "../../..";
 
 export const addPerson = createAction({
     auth: pipedriveAuth,
-    action: {
         name: 'add_person',
         displayName: "Add Person",
         description: "Add a new person to the account",
@@ -215,7 +214,6 @@ export const addPerson = createAction({
             "owner_name": "Jane Doe",
             "cc_email": "org@pipedrivemail.com"
         }
-    }
 });
 async function getUsers(authProp: OAuth2PropertyValue): Promise<{ users: PipedriveUser[] }> {
     const request: HttpRequest = {

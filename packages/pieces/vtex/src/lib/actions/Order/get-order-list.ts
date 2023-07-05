@@ -6,7 +6,6 @@ const year = new Date().getFullYear().toString();
 
 export const getOrderList = createAction({
     auth: vtexAuth,
-    action: {
     name: "get-order-list",
     displayName: "Get Orders List",
     description: "Find Orders",
@@ -53,5 +52,4 @@ export const getOrderList = createAction({
         return await order.getOrderList(fromDate, toDate);
 
     },
-},
 });

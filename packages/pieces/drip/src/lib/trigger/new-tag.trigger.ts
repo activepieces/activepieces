@@ -6,7 +6,6 @@ import { dripAuth } from '../../';
 const triggerNameInStore = 'drip_tag_applied_to_subscriber_trigger';
 export const dripTagAppliedEvent = createTrigger({
   auth: dripAuth,
-  trigger: {
     name: 'tag_applied_to_subscribers',
     displayName: 'Tag Applied',
     description: 'Triggers when a tag is applied.',
@@ -62,7 +61,6 @@ export const dripTagAppliedEvent = createTrigger({
     async run(context) {
       return [context.payload.body];
     },
-  }
 });
 
 

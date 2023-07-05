@@ -6,7 +6,6 @@ import { kizeoFormsAuth } from '../..';
 const triggerNameInStore = 'event_on_data_deleted_trigger';
 export const eventOnDataDeleted = createTrigger({
   auth: kizeoFormsAuth,
-  trigger: {
     name: 'event_on_data_deleted',
     displayName: 'Event On Data Deleted',
     description: 'Handle EventOnData delete event via webhooks',
@@ -81,7 +80,6 @@ export const eventOnDataDeleted = createTrigger({
     async run(context) {
       return [context.payload.body];
     },
-  },
 });
 
 

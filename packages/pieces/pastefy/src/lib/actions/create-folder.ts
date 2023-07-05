@@ -4,7 +4,6 @@ import { pastefyAuth } from "../..";
 
 export default createAction({
     auth: pastefyAuth,
-    action: {
         name: 'create_folder',
         displayName: 'Create Folder',
         description: 'Creates a new folder',
@@ -23,5 +22,4 @@ export default createAction({
             })
             return res.folder
         }
-    }
 })

@@ -6,7 +6,6 @@ import { salesforceAuth } from "../..";
 
 export const newOrUpdatedRecord = createTrigger({
   auth: salesforceAuth,
-  trigger: {
     name: 'new_or_updated_record',
     displayName: 'New or Updated Record',
     description: 'Triggers when there is new or updated record',
@@ -44,7 +43,6 @@ export const newOrUpdatedRecord = createTrigger({
         propsValue: ctx.propsValue,
       });
     }
-  }
 });
 
 

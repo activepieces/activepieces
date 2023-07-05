@@ -5,7 +5,6 @@ import { linkedinAuth } from "../..";
 
 export const createCompanyUpdate = createAction({
     auth: linkedinAuth,
-    action: {
         name: "create_company_update",
         displayName: "Create Company Update",
         description: 'Create a new company update for Company Page',
@@ -60,5 +59,4 @@ export const createCompanyUpdate = createAction({
             const response = await httpClient.sendRequest(request);
             return response.body;
         }
-    }
 })

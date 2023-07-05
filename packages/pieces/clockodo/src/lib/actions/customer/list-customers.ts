@@ -5,7 +5,6 @@ import { clockodoAuth } from "../../../";
 
 export default createAction({
     auth: clockodoAuth,
-    action: {
         name: 'list_customers',
         displayName: 'Get Customers',
         description: 'Fetches customers from clockodo',
@@ -43,5 +42,4 @@ export default createAction({
                 }
             }
         }
-    },
 })

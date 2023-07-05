@@ -1,7 +1,6 @@
 import { Property, createAction } from "@activepieces/pieces-framework";
 
 export const readConnection = createAction({
-  action: {
     name: 'read_connection',
     displayName: 'Read Connection',
     description: 'Fetch connection by name',
@@ -15,7 +14,6 @@ export const readConnection = createAction({
     async run(ctx) {
       return await ctx.connections.get(ctx.propsValue.connection_name);
     },
-  },
 });
 
 

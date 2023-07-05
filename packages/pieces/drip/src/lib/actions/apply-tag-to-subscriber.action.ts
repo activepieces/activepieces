@@ -5,7 +5,6 @@ import { dripAuth } from "../../"
 
 export const dripApplyTagToSubscriber = createAction({
     auth: dripAuth,
-    action: {
         name: 'apply_tag_to_subscriber',
         description: 'Apply a tag to a subscriber',
         displayName: 'Apply a tag to subscriber',
@@ -37,5 +36,4 @@ export const dripApplyTagToSubscriber = createAction({
             };
             return await httpClient.sendRequest<Record<string, never>>(request);
         }
-    }
 });

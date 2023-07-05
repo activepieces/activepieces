@@ -65,7 +65,6 @@ const polling: Polling<string, { channel: string | undefined; limit: number }> =
 
 export const newMessage = createTrigger({
     auth: discordAuth,
-    trigger: {
         name: 'new_message',
         displayName: 'New message',
         description: 'Triggers when a message is sent in a channel',
@@ -158,5 +157,4 @@ export const newMessage = createTrigger({
                 },
             });
         }
-    }
 });

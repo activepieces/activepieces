@@ -5,7 +5,6 @@ import { kizeoFormsAuth } from '../..';
 
 export const downloadCustomExportInItsOriginalFormat = createAction({
     auth: kizeoFormsAuth,
-    action: {
         name: 'download_custom_export_in_its_original_format', // Must be a unique across the piece, this shouldn't be changed.
         displayName: 'Download custom export in its original format',
         description: 'Download a custom export in its original format',
@@ -52,5 +51,4 @@ export const downloadCustomExportInItsOriginalFormat = createAction({
 
             return []
         },
-    },
 });

@@ -5,7 +5,6 @@ import { salesforceAuth } from "../..";
 
 export const upsertByExternalId = createAction({
     auth: salesforceAuth,
-    action: {
         name: 'upsert_by_external_id',
         displayName: 'Batch Upsert (Advanced)',
         description: 'Batch upsert a record by external id',
@@ -39,5 +38,4 @@ export const upsertByExternalId = createAction({
             });
             return response;
         }
-    }
 })

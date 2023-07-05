@@ -10,7 +10,6 @@ import {
 import { httpMethodDropdown } from '../common/props';
 
 export const httpSendRequestAction = createAction({
-  action: {
     name: 'send_request',
     displayName: 'Send HTTP request',
     description: 'Send HTTP request',
@@ -67,5 +66,4 @@ export const httpSendRequestAction = createAction({
         throw error;
       }
     },
-  }
 });

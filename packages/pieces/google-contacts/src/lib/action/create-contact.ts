@@ -5,7 +5,6 @@ import { googleContactsAuth } from "../../";
 
 export const googleContactsAddContactAction = createAction({
     auth: googleContactsAuth,
-    action: {
         name: 'add_contact',
         description: 'Add a contact to a Google Contacts account',
         displayName: 'Add Contact',
@@ -80,5 +79,5 @@ export const googleContactsAddContactAction = createAction({
             }
             return (await httpClient.sendRequest(request)).body;
         }
-    }
+    
 });

@@ -9,7 +9,6 @@ enum MessageType {
 }
 export const sendMessage = createAction({
     auth: intercomAuth,
-    action: {
         description: "Send a message to a contact (only allowed by admins)",
         displayName: "Send Message",
         name: "send_message",
@@ -190,5 +189,4 @@ export const sendMessage = createAction({
             });
             return response.body;
         }
-    }
 })

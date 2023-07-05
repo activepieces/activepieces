@@ -5,7 +5,6 @@ import { pipedriveAuth } from '../..';
 
 export const updatedPerson = createTrigger({
   auth: pipedriveAuth,
-  trigger: {
     name: 'updated_person',
     displayName: 'Updated Person',
     description: 'Triggers when a person is updated',
@@ -116,7 +115,6 @@ export const updatedPerson = createTrigger({
       "owner_name": "Jane Doe",
       "cc_email": "org@pipedrivemail.com"
     }
-  }
 });
 
 interface WebhookInformation {

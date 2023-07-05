@@ -5,7 +5,6 @@ import { pastefyAuth } from '../..';
 
 export default createTrigger({
     auth: pastefyAuth,
-    trigger: {
         name: 'paste_changed',
         displayName: 'Paste Changed',
         description: 'Triggers when the content (or title) of the paste changes',
@@ -46,5 +45,4 @@ export default createTrigger({
             const paste = await client.getPaste(context.propsValue.paste_id)
             return [paste]
         }
-    }
 })

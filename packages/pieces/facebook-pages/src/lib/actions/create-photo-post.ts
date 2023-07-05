@@ -5,23 +5,22 @@ import { facebookPagesAuth } from "../..";
 
 export const createPhotoPost = createAction({
     auth: facebookPagesAuth,
-    action: {
-        name: 'create_photo_post',
-        displayName: 'Create Page Photo',
-        description: 'Create a photo on a Facebook Page you manage',
-        props: {
-            page: facebookPagesCommon.page,
-            photo: facebookPagesCommon.photo,
-            caption: facebookPagesCommon.caption
-        },
-        sampleData: {},
 
-        async run(context) {
-            const page: FacebookPageDropdown = context.propsValue.page!
+    name: 'create_photo_post',
+    displayName: 'Create Page Photo',
+    description: 'Create a photo on a Facebook Page you manage',
+    props: {
+        page: facebookPagesCommon.page,
+        photo: facebookPagesCommon.photo,
+        caption: facebookPagesCommon.caption
+    },
+    sampleData: {},
 
-            const result = await facebookPagesCommon.createPhotoPost(page, context.propsValue.caption, context.propsValue.photo)
+    async run(context) {
+        const page: FacebookPageDropdown = context.propsValue.page!
 
-            return result;
-        }
+        const result = await facebookPagesCommon.createPhotoPost(page, context.propsValue.caption, context.propsValue.photo)
+
+        return result;
     }
 });

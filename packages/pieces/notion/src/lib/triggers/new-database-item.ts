@@ -7,7 +7,6 @@ import { notionAuth } from '../..';
 
 export const newDatabaseItem = createTrigger({
     auth: notionAuth,
-    trigger: {
         name: 'new_database_item',
         displayName: 'New Database Item',
         description: 'Triggers when a new item is added to a database',
@@ -107,7 +106,6 @@ export const newDatabaseItem = createTrigger({
                 propsValue: ctx.propsValue
             });
         }
-    }
 });
 
 

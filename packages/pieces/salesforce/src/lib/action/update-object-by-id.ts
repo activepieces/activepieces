@@ -5,7 +5,7 @@ import { salesforceAuth } from "../..";
 
 export const UpdateObjectById = createAction({
     auth: salesforceAuth,
-    action: {
+    
         name: 'update_object_by_id',
         displayName: 'Update Object (Advanced)',
         description: 'Update object by Id',
@@ -34,5 +34,4 @@ export const UpdateObjectById = createAction({
             });
             return response;
         }
-    }
 })

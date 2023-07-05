@@ -33,7 +33,6 @@ const sampleData = {
 
 export const newMessage = createTrigger({
     auth: slackAuth,
-    trigger: {
         name: 'new_message',
         displayName: 'New Message',
         description: 'Triggers when a new message is received',
@@ -59,5 +58,4 @@ export const newMessage = createTrigger({
 
             return []
         }
-    }
 });

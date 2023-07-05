@@ -7,7 +7,6 @@ import { xeroAuth } from "../..";
 
 export const xeroCreateInvoice = createAction({
   auth: xeroAuth,
-  action: {
     name: 'xero_create_invoice',
     description: 'Create Xero Invoice',
     displayName: 'Create or Update Invoice',
@@ -209,5 +208,4 @@ export const xeroCreateInvoice = createAction({
 
       return result
     }
-  }
 });

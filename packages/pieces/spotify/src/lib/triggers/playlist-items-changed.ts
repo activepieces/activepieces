@@ -6,6 +6,7 @@ export default createTrigger({
     name: 'playlist_items_changed',
     displayName: 'Playlist Items Changed',
     description: 'Triggers when the items of a playlist change',
+    auth: spotifyCommon.authentication,
     type: TriggerStrategy.POLLING,
     props: {
         authentication: spotifyCommon.authentication,
@@ -26,7 +27,7 @@ export default createTrigger({
         const client = makeClient(context.propsValue)
         const items = await client.getAllPlaylistItems(context.propsValue.playlist_id as string)
         const newHash = createHash('md5').update(items.map(item => item.track.id).join(',')).digest('hex')
-        if(oldHash != newHash) {
+        if (oldHash != newHash) {
             await context.store.put('playlist_changed_trigger_hash', newHash, StoreScope.FLOW)
             return [{ total: items.length, items }]
         }
@@ -35,6 +36,6 @@ export default createTrigger({
     test: async (context) => {
         const client = makeClient(context.propsValue)
         const items = await client.getAllPlaylistItems(context.propsValue.playlist_id as string)
-        return [ { total: items.length, items } ]
+        return [{ total: items.length, items }]
     }
 })

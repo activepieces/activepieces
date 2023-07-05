@@ -6,7 +6,6 @@ import { typeformAuth } from '../..';
 
 export const typeformNewSubmission = createTrigger({
     auth: typeformAuth,
-    trigger: {
         name: 'new_submission',
         displayName: 'New Submission',
         description: 'Triggers when Typeform receives a new submission',
@@ -85,7 +84,6 @@ export const typeformNewSubmission = createTrigger({
             const body = context.payload.body as { form_response: unknown };
             return [body.form_response];
         },
-    }
 });
 
 interface WebhookInformation {

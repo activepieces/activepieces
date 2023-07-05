@@ -5,7 +5,6 @@ import { gmailAuth } from "../../";
 
 export const gmailGetThread = createAction({
   auth: gmailAuth,
-  action: {
     name: 'gmail_get_thread',
     description: 'Get a thread from your Gmail account via Id',
     displayName: 'Get Thread',
@@ -59,5 +58,5 @@ export const gmailGetThread = createAction({
         thread_id,
         format: (format ?? GmailMessageFormat.FULL)
       })
-  }
+  
 })

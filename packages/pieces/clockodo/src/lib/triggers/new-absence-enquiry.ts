@@ -30,7 +30,6 @@ const polling: Polling<AuthData, unknown> = {
 
 export default createTrigger({
     auth: clockodoAuth,
-    trigger: {
         name: 'new_absence_enquiry',
         displayName: 'New Absence Enquiry',
         description: 'Triggers when a new absence enquiry is created',
@@ -66,5 +65,4 @@ export default createTrigger({
                 propsValue: context.propsValue,
             });
         }
-    },
 });

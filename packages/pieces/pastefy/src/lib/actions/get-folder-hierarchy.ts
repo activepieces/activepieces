@@ -4,7 +4,6 @@ import { pastefyAuth } from "../..";
 
 export default createAction({
     auth: pastefyAuth,
-    action: {
         name: 'get_folder_hierarchy',
         displayName: 'Get Folder Hierarchy',
         description: 'Retrieves a hierarchy of all folders',
@@ -16,5 +15,4 @@ export default createAction({
             const hierarchy = await client.getFolderHierarchy(context.propsValue.parent_id)
             return hierarchy
         }
-    }
 })

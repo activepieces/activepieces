@@ -12,7 +12,7 @@ export const googleSheetsCommon = {
     spreadsheet_id: Property.Dropdown({
         displayName: "Spreadsheet",
         required: true,
-        refreshers: ['authentication'],
+        refreshers: [],
         options: async ({ auth, propsValue }) => {
             if (!auth) {
                 return {

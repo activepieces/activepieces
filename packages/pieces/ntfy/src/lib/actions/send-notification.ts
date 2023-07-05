@@ -4,7 +4,6 @@ import { ntfyAuth } from "../..";
 
 export const sendNotification = createAction({
     auth: ntfyAuth,
-    action: {
         name: "send_notification",
         displayName: "Send Notification",
         description: "Send a notification to ntfy",
@@ -90,5 +89,4 @@ export const sendNotification = createAction({
                 },
             });
         }
-    }
 })

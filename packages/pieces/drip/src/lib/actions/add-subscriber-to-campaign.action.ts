@@ -5,7 +5,6 @@ import { dripAuth } from "../../"
 
 export const dripAddSubscriberToCampaign = createAction({
     auth: dripAuth,
-    action: {
         name: 'add_subscriber_to_campaign',
         description: 'Add a subscriber to a campaign (Email series)',
         displayName: 'Add a subscriber to a campaign',
@@ -120,5 +119,5 @@ export const dripAddSubscriberToCampaign = createAction({
             };
             return await httpClient.sendRequest<Record<string, never>>(request);
         }
-    }
+    
 });

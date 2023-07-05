@@ -4,7 +4,6 @@ import { telegramBotAuth } from '../..';
 
 export const telegramNewMessage = createTrigger({
     auth: telegramBotAuth,
-    trigger: {
         name: 'new_telegram_message',
         displayName: 'New message',
         description: 'Triggers when Telegram receives a new message',
@@ -53,5 +52,4 @@ export const telegramNewMessage = createTrigger({
         async test(context) {
             return [context.payload.body];
         },
-    }
 });

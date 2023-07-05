@@ -5,7 +5,6 @@ import { searchSupporter } from './supporter';
 
 export const salsaSupporterSearch = createAction({
     auth: salsaAuth,
-    action: {
         name: 'supporter-search',
         description: 'Get all supporters after date',
         displayName: 'Get supporters',
@@ -102,6 +101,5 @@ export const salsaSupporterSearch = createAction({
         async run(context) {
             return await searchSupporter(context.propsValue);
         }
-    }
 });
 

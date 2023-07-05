@@ -5,7 +5,6 @@ import { posthogAuth } from "../..";
 
 export const posthogCreateProject = createAction({
   auth: posthogAuth,
-  action: {
     name: 'create_project',
     displayName: 'Create Project',
     description: 'Create a posthog project',
@@ -109,5 +108,4 @@ export const posthogCreateProject = createAction({
 
       return result
     }
-  }
 });

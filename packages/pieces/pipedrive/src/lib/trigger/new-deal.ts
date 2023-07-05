@@ -5,7 +5,6 @@ import { pipedriveAuth } from '../..';
 
 export const newDeal = createTrigger({
   auth: pipedriveAuth,
-  trigger: {
     name: 'new_deal',
     displayName: 'New Deal',
     description: 'Triggers when a new deal is created',
@@ -166,7 +165,6 @@ export const newDeal = createTrigger({
       "last_activity": null,
       "next_activity": null
     }
-  }
 });
 
 interface WebhookInformation {

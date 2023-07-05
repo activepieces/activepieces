@@ -13,7 +13,6 @@ const TRIGGER_DATA_STORE_KEY = 'figma_new_comment_trigger_data'
 
 export const newCommentTrigger = createTrigger({
   auth: figmaAuth,
-  trigger: {
     name: 'new_comment',
     displayName: 'New Comment (Figma Professional plan only)',
     description: 'Triggers when a new comment is posted',
@@ -74,5 +73,4 @@ export const newCommentTrigger = createTrigger({
       }
       return [context.payload.body];
     },
-  },
 })

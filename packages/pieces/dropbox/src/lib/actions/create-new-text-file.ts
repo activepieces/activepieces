@@ -4,7 +4,6 @@ import { dropboxAuth } from "../../"
 
 export const dropboxCreateNewTextFile = createAction({
   auth: dropboxAuth,
-  action: {
     name: 'create_new_dropbox_text_file',
     description: 'Create a new text file in your Dropbox from text input',
     displayName: 'Create New Text File',
@@ -101,5 +100,4 @@ export const dropboxCreateNewTextFile = createAction({
         return result
       }
     },
-  }
 })

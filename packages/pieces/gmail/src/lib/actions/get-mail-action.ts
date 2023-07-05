@@ -5,7 +5,6 @@ import { gmailAuth } from "../../";
 
 export const gmailGetEmail = createAction({
   auth: gmailAuth,
-  action: {
     name: 'gmail_get_mail',
     description: 'Get an email from your Gmail account via Id',
     displayName: 'Get Email',
@@ -56,5 +55,5 @@ export const gmailGetEmail = createAction({
         message_id,
         format: (format ?? GmailMessageFormat.FULL)
       })
-  }
+  
 })

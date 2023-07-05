@@ -2,7 +2,6 @@ import { TriggerStrategy } from "@activepieces/pieces-framework";
 import { createTrigger, Property } from "@activepieces/pieces-framework";
 
 export const everyHourTrigger = createTrigger({
-    trigger: {
         name: 'every_hour',
         displayName: 'Every Hour',
         description: 'Triggers the current flow every hour',
@@ -32,5 +31,4 @@ export const everyHourTrigger = createTrigger({
         onDisable: async () => {
             console.log('onDisable');
         }
-    }
 });

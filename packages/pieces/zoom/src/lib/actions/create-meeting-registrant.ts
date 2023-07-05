@@ -6,7 +6,6 @@ import { zoomAuth } from "../..";
 
 export const zoomCreateMeetingRegistrant = createAction({
   auth: zoomAuth,
-  action: {
     name: 'zoom_create_meeting_registrant',
     displayName: 'Create Zoom Meeting Registrant',
     description: "Create and submit a user's registration to a meeting.",
@@ -53,5 +52,4 @@ export const zoomCreateMeetingRegistrant = createAction({
         return result;
       }
     }
-  }
 })

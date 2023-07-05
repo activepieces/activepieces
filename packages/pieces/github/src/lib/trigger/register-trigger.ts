@@ -23,7 +23,6 @@ export const githubRegisterTrigger = ({
   sampleData: object
 }) => createTrigger({
   auth: githubAuth,
-  trigger: {
     name: `trigger_${name}`,
     displayName,
     description,
@@ -83,7 +82,6 @@ export const githubRegisterTrigger = ({
       }
       return [context.payload.body];
     },
-  }
 });
 
 function isVerficationCall(payload: Record<string, any>) {

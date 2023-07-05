@@ -9,7 +9,6 @@ enum ContactRole {
 }
 export const createContact = createAction({
   auth: intercomAuth,
-  action: {
     description: 'Create a contact (ie. user or lead)',
     displayName: "Create Contact",
     name: "create_contact",
@@ -169,5 +168,4 @@ export const createContact = createAction({
       });
       return response.body;
     }
-  }
 })

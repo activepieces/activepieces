@@ -5,7 +5,6 @@ import { googleDriveAuth } from "../../";
 
 export const googleDriveCreateNewTextFile = createAction({
   auth: googleDriveAuth,
-  action: {
     name: 'create_new_gdrive_file',
     description: 'Create a new text file in your Google Drive from text',
     displayName: 'Create new file',
@@ -93,5 +92,4 @@ export const googleDriveCreateNewTextFile = createAction({
       console.debug("File creation response", result)
       return result.body;
     }
-  }
 });

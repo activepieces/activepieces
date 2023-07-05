@@ -2,7 +2,6 @@ import { createAction, Property } from "@activepieces/pieces-framework";
 import { parseCSVFile } from "../utils";
 
 export const parseCSVTextAction = createAction({
-  action: {
     name: "convert_csv_to_json",
     displayName: "Convert CSV to JSON",
     description: "This function reads a CSV string and converts it into JSON array format.",
@@ -52,5 +51,4 @@ export const parseCSVTextAction = createAction({
       }
       return parseCSVFile(csv_text, config)
     }
-  },
 });

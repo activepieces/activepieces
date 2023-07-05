@@ -5,28 +5,26 @@ import { salesforceAuth } from "../..";
 
 export const createNewObject = createAction({
     auth: salesforceAuth,
-    action: {
-        name: 'create_new_object',
-        displayName: 'Create Object (Advanced)',
-        description: 'Create new object',
-        sampleData: {
-        },
-        props: {
-            object: salesforcesCommon.object,
-            data: Property.Json({
-                displayName: "Data",
-                description: "Select mapped object",
-                required: true,
-                defaultValue: {
-                }
-            })
-        },
-        async run(context) {
-            const { data, object } = context.propsValue;
-            const response = await callSalesforceApi(HttpMethod.POST, context.auth, `/services/data/v56.0/sobjects/${object}`, {
-                ...data
-            });
-            return response;
-        }
+    name: 'create_new_object',
+    displayName: 'Create Object (Advanced)',
+    description: 'Create new object',
+    sampleData: {
+    },
+    props: {
+        object: salesforcesCommon.object,
+        data: Property.Json({
+            displayName: "Data",
+            description: "Select mapped object",
+            required: true,
+            defaultValue: {
+            }
+        })
+    },
+    async run(context) {
+        const { data, object } = context.propsValue;
+        const response = await callSalesforceApi(HttpMethod.POST, context.auth, `/services/data/v56.0/sobjects/${object}`, {
+            ...data
+        });
+        return response;
     }
 })

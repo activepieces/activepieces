@@ -5,7 +5,6 @@ import { mondayAuth } from "../.."
 
 export const mondayNewUpdatesTrigger = createTrigger({
   auth: mondayAuth,
-  trigger: {
     name: `monday_new_updates`,
     displayName: 'New Update',
     description: 'Triggered when a new update is created',
@@ -36,5 +35,4 @@ export const mondayNewUpdatesTrigger = createTrigger({
         auth, store, propsValue
       })
     }
-  },
 })

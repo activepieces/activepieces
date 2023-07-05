@@ -6,7 +6,6 @@ import { salesforceAuth } from "../..";
 
 export const runQuery = createAction({
     auth: salesforceAuth,
-    action: {
         name: 'run_query',
         displayName: 'Run Query (Advanced)',
         description: 'Run a salesforce query',
@@ -27,5 +26,4 @@ export const runQuery = createAction({
                 query);
             return response;
         }
-    }
 })

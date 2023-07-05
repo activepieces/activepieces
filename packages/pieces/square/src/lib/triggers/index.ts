@@ -377,25 +377,23 @@ const triggerData = [
 export const triggers = triggerData.map((trigger) =>
     createTrigger({
         auth: squareAuth,
-        trigger: {
-            name: trigger.name,
-            displayName: trigger.displayName,
-            description: trigger.description,
-            props: {},
-            type: TriggerStrategy.APP_WEBHOOK,
-            sampleData: trigger.sampleData,
-            onEnable: async (context) => {
-                context.app.createListeners({ events: [trigger.event], identifierValue: context.auth.data['merchant_id'] })
-            },
-            onDisable: async () => {
-                // Ignored
-            },
-            test: async () => {
-                return [trigger.sampleData]
-            },
-            run: async (context) => {
-                return [context.payload.body]
-            },
+        name: trigger.name,
+        displayName: trigger.displayName,
+        description: trigger.description,
+        props: {},
+        type: TriggerStrategy.APP_WEBHOOK,
+        sampleData: trigger.sampleData,
+        onEnable: async (context) => {
+            context.app.createListeners({ events: [trigger.event], identifierValue: context.auth.data['merchant_id'] })
+        },
+        onDisable: async () => {
+            // Ignored
+        },
+        test: async () => {
+            return [trigger.sampleData]
+        },
+        run: async (context) => {
+            return [context.payload.body]
         },
     })
 )

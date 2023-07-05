@@ -6,7 +6,6 @@ import { gmailAuth } from "../../";
 
 export const gmailSearchMail = createAction({
   auth: gmailAuth,
-  action: {
     name: 'gmail_search_mail',
     description: 'Find for an email in your Gmail account',
     displayName: 'Find Email',
@@ -77,5 +76,5 @@ export const gmailSearchMail = createAction({
         label: label as GmailLabel,
         category: category as string
       })
-  }
+  
 })

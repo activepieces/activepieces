@@ -4,7 +4,6 @@ import { discordAuth } from "../..";
 
 export const discordSendMessageWebhook = createAction({
   auth: discordAuth,
-  action: {
     name: 'send_message_webhook',
     description: 'Send a discord message via webhook',
     displayName: 'Send Message Webhook',
@@ -59,5 +58,5 @@ export const discordSendMessageWebhook = createAction({
       };
         return await httpClient.sendRequest<never>(request);
     },
-  },
+  
 });

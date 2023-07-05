@@ -5,7 +5,6 @@ import { bloomerangAuth } from '../../';
 
 export const bloomerangGetContacts = createAction({
     auth: bloomerangAuth,
-    action: {
         name: 'get_contacts',
         description: 'Get all contacts after date',
         displayName: 'Get contacts',
@@ -190,5 +189,4 @@ export const bloomerangGetContacts = createAction({
                 },
             })).body;
         }
-    }
 });

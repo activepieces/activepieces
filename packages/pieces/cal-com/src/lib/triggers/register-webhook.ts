@@ -15,7 +15,6 @@ export const registerWebhooks = ({
 }): Trigger =>
   createTrigger({
     auth: calcomAuth,
-    trigger: {
       name,
       description,
       displayName,
@@ -64,7 +63,6 @@ export const registerWebhooks = ({
         console.debug("trigger running", context)
         return [context.payload.body]
       }
-    }
   })
 
 interface WebhookInformation {

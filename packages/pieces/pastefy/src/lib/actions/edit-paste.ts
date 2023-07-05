@@ -5,7 +5,6 @@ import CryptoJS from 'crypto-js';
 
 export default createAction({
     auth: pastefyAuth,
-    action: {
         name: 'edit_paste',
         displayName: 'Edit Paste',
         description: 'Edits an existing private paste',
@@ -57,5 +56,4 @@ export default createAction({
             })
             return res
         }
-    }
 })

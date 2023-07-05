@@ -5,7 +5,6 @@ import { slackAuth } from "../../";
 
 export const slackSendMessageAction = createAction({
   auth: slackAuth,
-    action: {
     name: 'send_channel_message',
     displayName: 'Send Message To A Channel',
     description: 'Send message to a channel',
@@ -32,5 +31,4 @@ export const slackSendMessageAction = createAction({
         conversationId: channel,
       })
     },
-  },
 })

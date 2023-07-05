@@ -1,5 +1,5 @@
 import { HttpMethod, httpClient, getAccessTokenOrThrow } from "@activepieces/pieces-common";
-import { OAuth2PropertyValue, Property } from "@activepieces/pieces-framework";
+import { OAuth2PropertyValue, PieceAuth, Property } from "@activepieces/pieces-framework";
 
 const markdown = `
 To Obtain the following credentials:
@@ -12,7 +12,7 @@ To Obtain the following credentials:
 export const instagramCommon = {
     baseUrl: 'https://graph.facebook.com/v17.0',
 
-    authentication: Property.OAuth2({
+    authentication: PieceAuth.OAuth2({
         displayName: 'Authentication',
         description: markdown,
         authUrl: "https://graph.facebook.com/oauth/authorize",
@@ -26,7 +26,7 @@ export const instagramCommon = {
         required: true,
         refreshers: ['authentication'],
         options: async (props) => {
-            if (!props['authentication']) {
+            if (!props.auth) {
                 return {
                     disabled: true,
                     options: [],
@@ -34,7 +34,7 @@ export const instagramCommon = {
                 }
             }
 
-            const accessToken: string = getAccessTokenOrThrow(props['authentication'] as OAuth2PropertyValue)
+            const accessToken: string = getAccessTokenOrThrow(props.auth as OAuth2PropertyValue)
             const pages: any[] = (await instagramCommon.getPages(accessToken)).map((page: FacebookPage) => {
                 if (!page.instagram_business_account) {
                     return null;

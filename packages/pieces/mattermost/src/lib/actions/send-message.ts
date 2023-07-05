@@ -4,7 +4,6 @@ import { mattermostAuth } from "../..";
 
 export const sendMessage = createAction({
     auth: mattermostAuth,
-    action: {
         name: "send_message",
         displayName: "Send Message",
         description: "Send a message to a Mattermost channel",
@@ -49,5 +48,4 @@ export const sendMessage = createAction({
                 throw e;
             }
         }
-    }
 })

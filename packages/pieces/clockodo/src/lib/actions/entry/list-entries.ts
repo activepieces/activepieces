@@ -17,7 +17,6 @@ function calculateBillable(billable?: boolean, billed?: boolean): BillableType|u
 
 export default createAction({
     auth: clockodoAuth,
-    action: {
         name: 'list_entries',
         displayName: 'Get Entries',
         description: 'Fetches entries from clockodo',
@@ -101,5 +100,4 @@ export default createAction({
                 }
             }
         }
-    },
 })

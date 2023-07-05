@@ -5,7 +5,6 @@ import { upsertSupporter } from './supporter';
 
 export const salsaSupporterUpsert = createAction({
     auth: salsaAuth,
-    action: {
         name: 'supporter_upsert',
         description: 'Upsert Supporter based on Email',
         displayName: 'Upsert Supporter on Email',
@@ -20,5 +19,4 @@ export const salsaSupporterUpsert = createAction({
         async run(context) {
             return await upsertSupporter(context.propsValue);
         },
-    },
 });

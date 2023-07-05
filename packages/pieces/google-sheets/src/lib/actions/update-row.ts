@@ -5,7 +5,6 @@ import { googleSheetsAuth } from '../..';
 
 export const updateRowAction = createAction({
     auth: googleSheetsAuth,
-    action: {
         name: 'update_row',
         description: 'Overwrite values in an existing row',
         displayName: 'Update Row',
@@ -55,5 +54,5 @@ export const updateRowAction = createAction({
                 throw Error("Values passed are not an array")
             }
         },
-    }
+    
 });

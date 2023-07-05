@@ -4,7 +4,6 @@ import { clockodoAuth } from "../../../";
 
 export default createAction({
     auth: clockodoAuth,
-    action: {
         name: 'get_entry',
         displayName: 'Get Entry',
         description: 'Retrieves a single entry from clockodo',
@@ -19,5 +18,4 @@ export default createAction({
             const res = await client.getEntry(propsValue.entry_id)
             return res.entry
         }
-    },
 })

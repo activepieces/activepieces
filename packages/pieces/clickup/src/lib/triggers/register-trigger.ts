@@ -25,7 +25,6 @@ export const clickupRegisterTrigger = ({
   sampleData: unknown
 }) => createTrigger({
   auth: clickupAuth,
-  trigger: {
     name: `clickup_trigger_${name}`,
     displayName,
     description,
@@ -96,7 +95,6 @@ export const clickupRegisterTrigger = ({
 
       return [context.payload.body]
     },
-  },
 });
 
 interface WebhookInformation {
