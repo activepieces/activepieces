@@ -6,29 +6,21 @@
   "targets": {
     "build": {
       "executor": "@nrwl/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/bloomerang",
         "tsConfig": "packages/pieces/bloomerang/tsconfig.lib.json",
         "packageJson": "packages/pieces/bloomerang/package.json",
         "main": "packages/pieces/bloomerang/src/index.ts",
-        "assets": [
-          "packages/pieces/bloomerang/*.md"
-        ],
+        "assets": ["packages/pieces/bloomerang/*.md"],
         "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {
       "executor": "@nrwl/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": [
-          "packages/pieces/bloomerang/**/*.ts"
-        ]
+        "lintFilePatterns": ["packages/pieces/bloomerang/**/*.ts"]
       }
     }
   },

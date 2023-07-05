@@ -6,29 +6,21 @@
   "targets": {
     "build": {
       "executor": "@nrwl/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/pastebin",
         "tsConfig": "packages/pieces/pastebin/tsconfig.lib.json",
         "packageJson": "packages/pieces/pastebin/package.json",
         "main": "packages/pieces/pastebin/src/index.ts",
-        "assets": [
-          "packages/pieces/pastebin/*.md"
-        ],
+        "assets": ["packages/pieces/pastebin/*.md"],
         "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {
       "executor": "@nrwl/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": [
-          "packages/pieces/pastebin/**/*.ts"
-        ]
+        "lintFilePatterns": ["packages/pieces/pastebin/**/*.ts"]
       }
     }
   },

@@ -6,29 +6,21 @@
   "targets": {
     "build": {
       "executor": "@nrwl/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/salsa",
         "tsConfig": "packages/pieces/salsa/tsconfig.lib.json",
         "packageJson": "packages/pieces/salsa/package.json",
         "main": "packages/pieces/salsa/src/index.ts",
-        "assets": [
-          "packages/pieces/salsa/*.md"
-        ],
+        "assets": ["packages/pieces/salsa/*.md"],
         "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {
       "executor": "@nrwl/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": [
-          "packages/pieces/salsa/**/*.ts"
-        ]
+        "lintFilePatterns": ["packages/pieces/salsa/**/*.ts"]
       }
     }
   },
