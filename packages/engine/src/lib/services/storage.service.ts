@@ -74,10 +74,6 @@ export function createContextStore(prefix: string, flowId: FlowId): Store {
             const modifiedKey = createKey(prefix, scope, flowId, key);
             const storeEntry = await storageService.get(modifiedKey);
             if (storeEntry === null) {
-                // TODO remove in three months (May) as old triggers are storing as collection, while it should store as flow
-                if (scope === StoreScope.FLOW) {
-                    return this.get(key, StoreScope.PROJECT);
-                }
                 return null;
             }
             return storeEntry.value as T;

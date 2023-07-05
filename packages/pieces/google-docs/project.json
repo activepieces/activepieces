@@ -6,29 +6,21 @@
   "targets": {
     "build": {
       "executor": "@nrwl/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/google-docs",
         "tsConfig": "packages/pieces/google-docs/tsconfig.lib.json",
         "packageJson": "packages/pieces/google-docs/package.json",
         "main": "packages/pieces/google-docs/src/index.ts",
-        "assets": [
-          "packages/pieces/google-docs/*.md"
-        ],
+        "assets": ["packages/pieces/google-docs/*.md"],
         "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {
       "executor": "@nrwl/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": [
-          "packages/pieces/google-docs/**/*.ts"
-        ]
+        "lintFilePatterns": ["packages/pieces/google-docs/**/*.ts"]
       }
     }
   },

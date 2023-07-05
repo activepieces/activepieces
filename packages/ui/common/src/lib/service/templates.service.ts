@@ -3,6 +3,7 @@ import { map, switchMap } from 'rxjs';
 import { FlowTemplate, ListFlowTemplatesRequest } from '@activepieces/shared';
 import { FlagService } from './flag.service';
 import { HttpClient, HttpParams } from '@angular/common/http';
+import { environment } from '../environments/environment';
 
 @Injectable({
   providedIn: 'root',
@@ -41,6 +42,16 @@ export class TemplatesService {
       switchMap((url) => {
         return this.http.get<FlowTemplate[]>(url, { params: httpParams });
       })
+    );
+  }
+  getTemplate(flowId: string) {
+    return this.http.get<FlowTemplate>(
+      environment.apiUrl + `/flow-templates/${flowId}`
+    );
+  }
+  getTemplateDeprecated(templateId: string) {
+    return this.http.get<FlowTemplate>(
+      `https://activepieces-cdn.fra1.cdn.digitaloceanspaces.com/templates/${templateId}.json`
     );
   }
 }

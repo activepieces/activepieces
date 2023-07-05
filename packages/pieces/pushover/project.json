@@ -6,29 +6,21 @@
   "targets": {
     "build": {
       "executor": "@nrwl/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/pushover",
         "tsConfig": "packages/pieces/pushover/tsconfig.lib.json",
         "packageJson": "packages/pieces/pushover/package.json",
         "main": "packages/pieces/pushover/src/index.ts",
-        "assets": [
-          "packages/pieces/pushover/*.md"
-        ],
+        "assets": ["packages/pieces/pushover/*.md"],
         "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {
       "executor": "@nrwl/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": [
-          "packages/pieces/pushover/**/*.ts"
-        ]
+        "lintFilePatterns": ["packages/pieces/pushover/**/*.ts"]
       }
     }
   },

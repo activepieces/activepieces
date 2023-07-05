@@ -1,7 +1,6 @@
 import {
   ActionType,
   BranchAction,
-  FlowVersion,
   LoopOnItemsAction,
   Trigger,
   flowHelper,
@@ -10,31 +9,6 @@ import { FlowItem } from '../model/flow-item';
 
 // TODO REMOVE THIS FILE AND REPLACE IT WITH FUNCTIONS IN flowHelper.ts
 export class FlowStructureUtil {
-  public static findAvailableName(
-    flowVersion: FlowVersion,
-    stepPrefix: string
-  ) {
-    const steps = flowHelper.getAllSteps(flowVersion.trigger);
-    let number = 1;
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-      let exist = false;
-      for (let i = 0; i < steps.length; ++i) {
-        const step = steps[i];
-        if (step.name === stepPrefix.toString().toLowerCase() + '_' + number) {
-          exist = true;
-          break;
-        }
-      }
-      if (exist) {
-        number++;
-      } else {
-        break;
-      }
-    }
-    return stepPrefix.toString().toLowerCase() + '_' + number;
-  }
-
   private static _findPathToStep(
     stepToFind: FlowItem,
     stepToSearch: FlowItem | undefined
