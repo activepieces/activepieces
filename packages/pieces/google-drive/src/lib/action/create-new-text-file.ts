@@ -22,7 +22,7 @@ export const googleDriveCreateNewTextFile = createAction({
       parentFolder: Property.Dropdown({
         displayName: "Parent Folder",
         required: false,
-        refreshers: ['authentication'],
+        refreshers: [],
         options: async ({ auth }) => {
           if (!auth) {
             return {

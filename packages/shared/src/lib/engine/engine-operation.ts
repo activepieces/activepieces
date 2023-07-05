@@ -33,8 +33,7 @@ export type ExecuteActionOperation = {
     flowVersion: FlowVersion
     pieceName: string
     pieceVersion: string
-    authValue?: unknown
-    propsValue: Record<string, unknown>
+    input: Record<string, unknown>
     projectId: ProjectId
     workerToken?: string
     apiUrl?: string
@@ -57,7 +56,6 @@ export interface ExecutePropsOptions {
     pieceVersion: string;
     propertyName: string;
     stepName: string;
-    auth: string;
     input: Record<string, any>;
     projectId: ProjectId;
     apiUrl?: string;

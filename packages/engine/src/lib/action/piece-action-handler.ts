@@ -112,7 +112,7 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
     executionState: ExecutionState,
     ancestors: [string, number][],
   ): Promise<StepOutput> {
-    const { input, pieceName, pieceVersion, actionName, auth } = this.currentAction.settings;
+    const { input, pieceName, pieceVersion, actionName } = this.currentAction.settings;
 
     const stepOutput = await this.loadStepOutput({
       executionState,
@@ -137,16 +137,11 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
         censorConnections: false,
       })
 
-      const resolvedAuth = await this.variableService.resolve<PiecePropValueSchema<PieceAuthProperty>>({
-        unresolvedInput: auth,
-        executionState,
-        censorConnections: false,
-      })
-
       const context: ActionContext = {
         executionType: this.executionType,
         store: createContextStore('', globals.flowId),
-        auth: resolvedAuth ?? resolvedProps['authentication'],
+        // TODO URGENT
+        auth: resolvedProps['authentication'],
         propsValue: resolvedProps,
         connections: connectionManager,
         run: {

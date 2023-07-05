@@ -5,7 +5,7 @@ export const githubCommon = {
     baseUrl: "https://api.github.com",
     repositoryDropdown: Property.Dropdown<{ repo: string, owner: string }>({
         displayName: "Repository",
-        refreshers: ['authentication'],
+        refreshers: [],
         required: true,
         options: async ({ auth, propsValue }) => {
             if (!auth) {

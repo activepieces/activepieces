@@ -46,7 +46,7 @@ export const bannerbearCreateImageAction = createAction({
       displayName: 'Template',
       description: 'The template to use in image creation.',
       required: true,
-      refreshers: ['authentication'],
+      refreshers: [],
       options: async ({ auth }) => {
         if (!auth) {
           return {
@@ -93,7 +93,7 @@ export const bannerbearCreateImageAction = createAction({
       displayName: 'Template modifications',
       description: 'A list of modifications you want to make on the template.',
       required: true,
-      refreshers: ["authentication", "template"],
+      refreshers: ["template"],
       props: async ({ authentication, template }) => {
         if (!authentication) return {}
         if (!template) return {}

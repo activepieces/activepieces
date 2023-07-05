@@ -14,7 +14,7 @@ export const wordpressCommon = {
     authors: Property.Dropdown({
         displayName: 'Authors',
         required: false,
-        refreshers: ['connection', 'website_url'],
+        refreshers: ['website_url'],
         options: async ({ auth }) => {
             const connection = auth as PiecePropValueSchema<typeof wordpressAuth>
             const websiteUrl = connection.website_url

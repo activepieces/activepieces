@@ -6,7 +6,7 @@ export const googleCalendarCommon = {
   calendarDropdown: (minAccessRole?: 'writer') => {
     return Property.Dropdown<string>({
       displayName: 'Calendar',
-      refreshers: ['authentication'],
+      refreshers: [],
       required: true,
       options: async ({ auth }) => {
         if (!auth) {

@@ -7,7 +7,7 @@ export const kizeoFormsCommon = {
   formId: Property.Dropdown<string>({
     displayName: 'Form',
     required: true,
-    refreshers: ["auth"],
+    refreshers: [],
     options: async ({ auth }) => {
       if (!auth) {
         return {
@@ -49,7 +49,7 @@ export const kizeoFormsCommon = {
   userId: Property.Dropdown<string>({
     displayName: 'User',
     required: true,
-    refreshers: ["auth"],
+    refreshers: [],
     options: async ({ auth }) => {
       if (!auth) {
         return {
@@ -90,7 +90,7 @@ export const kizeoFormsCommon = {
   exportId: Property.Dropdown<string>({
     displayName: 'Export',
     required: true,
-    refreshers: ["auth","formId"],
+    refreshers: ["formId"],
     options: async ({ auth, propsValue }) => {
         if (!auth){
             return {
@@ -139,7 +139,7 @@ export const kizeoFormsCommon = {
   fields: Property.DynamicProperties({
     displayName: 'Form',
     required: true,
-    refreshers: ["auth", "formId"],
+    refreshers: ["formId"],
 
     props: async ({ auth, formId }) => {
         if (!auth) return {}

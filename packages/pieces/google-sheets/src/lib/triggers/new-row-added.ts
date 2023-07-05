@@ -22,51 +22,51 @@ const polling: Polling<OAuth2PropertyValue, { spreadsheet_id: string, sheet_id: 
 
 export const readNewRows = createTrigger({
   auth: googleSheetsAuth,
-    name: 'new_row',
-    displayName: 'New Row',
-    description: 'Trigger when a new row is added, and it can include existing rows as well.',
-    props: {
-      spreadsheet_id: googleSheetsCommon.spreadsheet_id,
-      include_team_drives: googleSheetsCommon.include_team_drives,
-      sheet_id: googleSheetsCommon.sheet_id,
-      max_rows_to_poll: Property.Number({
-        displayName: 'Max Rows to Poll',
-        description: 'The maximum number of rows to poll, the rest will be polled on the next run',
-        required: false,
-      })
-    },
-    type: TriggerStrategy.POLLING,
-    sampleData: {
-      "value": sampleData,
-      "rowId": 1
-    },
-    onEnable: async (context) => {
-      await pollingHelper.onEnable(polling, {
-        auth: context.auth,
-        store: context.store,
-        propsValue: context.propsValue,
-      })
-    },
-    onDisable: async (context) => {
-      await pollingHelper.onDisable(polling, {
-        auth: context.auth,
-        store: context.store,
-        propsValue: context.propsValue,
-      })
-    },
-    run: async (context) => {
-      return await pollingHelper.poll(polling, {
-        auth: context.auth,
-        store: context.store,
-        maxItemsToPoll: context.propsValue.max_rows_to_poll,
-        propsValue: context.propsValue,
-      });
-    },
-    test: async (context) => {
-      return await pollingHelper.test(polling, {
-        auth: context.auth,
-        store: context.store,
-        propsValue: context.propsValue,
-      });
-    },
+  name: 'new_row',
+  displayName: 'New Row',
+  description: 'Trigger when a new row is added, and it can include existing rows as well.',
+  props: {
+    spreadsheet_id: googleSheetsCommon.spreadsheet_id,
+    include_team_drives: googleSheetsCommon.include_team_drives,
+    sheet_id: googleSheetsCommon.sheet_id,
+    max_rows_to_poll: Property.Number({
+      displayName: 'Max Rows to Poll',
+      description: 'The maximum number of rows to poll, the rest will be polled on the next run',
+      required: false,
+    })
+  },
+  type: TriggerStrategy.POLLING,
+  sampleData: {
+    "value": sampleData,
+    "rowId": 1
+  },
+  onEnable: async (context) => {
+    await pollingHelper.onEnable(polling, {
+      auth: context.auth,
+      store: context.store,
+      propsValue: context.propsValue,
+    })
+  },
+  onDisable: async (context) => {
+    await pollingHelper.onDisable(polling, {
+      auth: context.auth,
+      store: context.store,
+      propsValue: context.propsValue,
+    })
+  },
+  run: async (context) => {
+    return await pollingHelper.poll(polling, {
+      auth: context.auth,
+      store: context.store,
+      maxItemsToPoll: context.propsValue.max_rows_to_poll,
+      propsValue: context.propsValue,
+    });
+  },
+  test: async (context) => {
+    return await pollingHelper.test(polling, {
+      auth: context.auth,
+      store: context.store,
+      propsValue: context.propsValue,
+    });
+  },
 });

@@ -7,7 +7,7 @@ export const airtableCommon = {
   base: Property.Dropdown({
     displayName: 'Base',
     required: true,
-    refreshers: ["authentication"],
+    refreshers: [],
     options: async ({ auth }) => {
       if (!auth) {
         return {

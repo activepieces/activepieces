@@ -5,7 +5,7 @@ export const googleFormsCommon = {
     form_id: Property.Dropdown({
         displayName: "Form",
         required: true,
-        refreshers: ['authentication'],
+        refreshers: [],
         options: async ({ auth }) => {
             if (!auth) {
                 return {

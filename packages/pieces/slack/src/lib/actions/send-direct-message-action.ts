@@ -28,7 +28,7 @@ export const slackSendDirectMessageAction = createAction({
         displayName: 'User',
         description: 'Message receiver',
         required: true,
-        refreshers: ['authentication'],
+        refreshers: [],
         async options({ auth }) {
           if (!auth) {
             return {

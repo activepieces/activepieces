@@ -29,7 +29,7 @@ export const mysqlCommon = {
         description: 'The name of the table',
         displayName: 'Table',
         required,
-        refreshers: ['authentication'],
+        refreshers: [],
         options: async ({ auth, propsValue }) => {
             if (!auth) {
                 return {

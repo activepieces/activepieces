@@ -80,7 +80,7 @@ export const newMessage = createTrigger({
                 displayName: 'Channel',
                 description: 'List of channels',
                 required: true,
-                refreshers: ['token'],
+                refreshers: [],
                 options: async ({ auth }) => {
                     const request = {
                         method: HttpMethod.GET,

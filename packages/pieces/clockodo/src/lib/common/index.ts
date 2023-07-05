@@ -42,7 +42,7 @@ export const clockodoCommon = {
         description: 'The ID of the customer',
         displayName: 'Customer',
         required,
-        refreshers: ['authentication'],
+        refreshers: [],
         options: async ({ auth }) => {
             if (isNil(auth)) {
                 return {
@@ -68,7 +68,7 @@ export const clockodoCommon = {
         description: 'The ID of the project',
         displayName: 'Project',
         required,
-        refreshers: ['authentication', ...(requiresCustomer ? ['customer_id'] : [])],
+        refreshers: [ ...(requiresCustomer ? ['customer_id'] : [])],
         options: async ({ auth, propsValue }) => {
             if (isNil(auth)) {
                 return {
@@ -104,7 +104,7 @@ export const clockodoCommon = {
         description: 'The ID of the user',
         displayName: 'User',
         required,
-        refreshers: ['authentication'],
+        refreshers: [],
         options: async ({ auth }) => {
             if (isNil(auth)) {
                 return {
@@ -130,7 +130,7 @@ export const clockodoCommon = {
         description: 'The ID of the team',
         displayName: 'Team',
         required,
-        refreshers: ['authentication'],
+        refreshers: [],
         options: async ({ auth }) => {
             if (isNil(auth)) {
                 return {
@@ -156,7 +156,7 @@ export const clockodoCommon = {
         description: 'The ID of the service',
         displayName: 'Service',
         required,
-        refreshers: ['authentication'],
+        refreshers: [],
         options: async ({ auth }) => {
             if (isNil(auth)) {
                 return {

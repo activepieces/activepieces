@@ -12,7 +12,7 @@ export const dripAddSubscriberToCampaign = createAction({
             account_id: dripCommon.account_id,
             campaign_id: Property.Dropdown({
                 displayName: "Email Series Campaign",
-                refreshers: ["authentication", "account_id"],
+                refreshers: ["account_id"],
                 required: true,
                 options: async ({ auth, propsValue }) => {
                     if (!auth) {

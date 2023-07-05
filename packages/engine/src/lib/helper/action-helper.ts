@@ -192,7 +192,7 @@ export const pieceHelper = {
         }
     },
     async executeAction(params: ExecuteActionOperation): Promise<ExecuteActionResponse> {
-        const { actionName, pieceName, pieceVersion, authValue, propsValue, flowVersion } = params;
+        const { actionName, pieceName, pieceVersion, input, flowVersion } = params;
 
         const action = await getActionOrThrow({
             pieceName,
@@ -204,21 +204,16 @@ export const pieceHelper = {
         const executionState = executionStateFromExecutionContext(executionContext)
 
         const resolvedProps = await variableService.resolveAndValidate<StaticPropsValue<PiecePropertyMap>>({
-            unresolvedInput: propsValue,
+            unresolvedInput: input,
             executionState,
             censorConnections: false,
             actionProps: action.props,
         })
 
-        const resolvedAuth = await variableService.resolve<PiecePropValueSchema<PieceAuthProperty>>({
-            unresolvedInput: authValue,
-            executionState,
-            censorConnections: false,
-        })
-
         const context: ActionContext = {
             executionType: ExecutionType.BEGIN,
-            auth: resolvedAuth ?? resolvedProps['authentication'],
+            // TODO URGENT
+            auth: resolvedProps['authentication'],
             propsValue: resolvedProps,
             store: createContextStore('', globals.flowId),
             connections: {
@@ -263,11 +258,8 @@ export const pieceHelper = {
                 censorConnections: false,
             })
 
-            const resolvedAuth = await variableService.resolve<PiecePropValueSchema<PieceAuthProperty>>({
-                unresolvedInput: params.auth,
-                executionState: new ExecutionState(),
-                censorConnections: false,
-            })
+            // TODO FIX URGENTLY
+            const resolvedAuth = resolvedProps['authentication'];
 
             if (property.type === PropertyType.DYNAMIC) {
                 const dynamicProperty = property as DynamicProperties<boolean>

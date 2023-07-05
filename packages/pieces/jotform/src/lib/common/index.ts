@@ -11,7 +11,7 @@ export const jotformCommon = {
     form: Property.Dropdown({
         displayName: 'Form',
         required: true,
-        refreshers: ['authentication'],
+        refreshers: [],
         options: async ({ auth }) => {
             if (!auth) {
                 return {

@@ -12,7 +12,7 @@ export const formsDropdown = Property.Dropdown<string>({
     displayName: 'Form',
     description: 'Form Name',
     required: true,
-    refreshers: ['authentication'],
+    refreshers: [],
     async options({ auth: authentication }) {
         const auth = authentication as OAuth2PropertyValue;
 

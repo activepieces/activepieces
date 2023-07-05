@@ -34,7 +34,7 @@ export const pastefyCommon = {
         description: 'A folder',
         displayName: displayName,
         required,
-        refreshers: ['authentication'],
+        refreshers: [],
         options: async ({ auth, propsValue }) => {
             if (!auth) {
                 return {

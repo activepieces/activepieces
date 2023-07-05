@@ -6,7 +6,7 @@ export const twilioCommon = {
         description: 'The phone number to send the message from',
         displayName: 'From',
         required: true,
-        refreshers: ['authentication'],
+        refreshers: [],
         options: async ({ auth }) => {
             if (!auth) {
                 return {

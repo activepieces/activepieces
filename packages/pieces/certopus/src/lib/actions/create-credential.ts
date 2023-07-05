@@ -24,7 +24,7 @@ export const createCredential = createAction({
   props: {
     organisation: Property.Dropdown<string>({
       displayName: 'Organisations',
-      refreshers: ['authentication'],
+      refreshers: [],
       required: true,
       options: async ({ auth }) => {
         if (!auth) {
@@ -49,7 +49,7 @@ export const createCredential = createAction({
     }),
     event: Property.Dropdown<string>({
       displayName: 'Event',
-      refreshers: ['authentication', 'organisation'],
+      refreshers: ['organisation'],
       required: true,
       options: async ({ auth, propsValue }) => {
         const { organisation } = propsValue
@@ -82,7 +82,7 @@ export const createCredential = createAction({
     }),
     category: Property.Dropdown<string>({
       displayName: 'Category',
-      refreshers: ['authentication', 'organisation', 'event'],
+      refreshers: ['organisation', 'event'],
       required: true,
       options: async ({ auth, propsValue }) => {
         const { organisation, event } = propsValue
@@ -143,7 +143,7 @@ export const createCredential = createAction({
     fields: Property.DynamicProperties({
       displayName: 'Recipient Data',
       required: true,
-      refreshers: ['authentication', 'organisation', 'event', 'category'],
+      refreshers: ['organisation', 'event', 'category'],
 
       props: async ({ authentication, organisation, event, category }) => {
         if (!authentication) return {};

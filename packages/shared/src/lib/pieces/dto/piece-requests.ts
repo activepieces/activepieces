@@ -39,7 +39,6 @@ export const PieceOptionRequest = Type.Object({
     stepName: Type.String({}),
     propertyName: Type.String({}),
     input: Type.Any({}),
-    auth: Type.String(),
 });
 
 export type PieceOptionRequest = Static<typeof PieceOptionRequest>;

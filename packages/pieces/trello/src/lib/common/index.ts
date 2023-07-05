@@ -7,7 +7,7 @@ export const trelloCommon = {
         displayName: 'Boards',
         description: 'List of boards',
         required: true,
-        refreshers: ['authentication'],
+        refreshers: [],
         options: async ({ auth }) => {
             if (auth === undefined) {
                 return {
@@ -33,7 +33,7 @@ export const trelloCommon = {
         displayName: 'Lists',
         description: 'Get lists from a board',
         required: true,
-        refreshers: ['authentication', 'board_id'],
+        refreshers: ['board_id'],
         options: async ({ auth, propsValue }) => {
             if (auth === undefined || propsValue['board_id'] === undefined) {
                 return {

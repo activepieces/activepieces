@@ -1,6 +1,5 @@
 import { createAction, Property, OAuth2PropertyValue } from "@activepieces/pieces-framework";
 import { HttpRequest, HttpMethod, AuthenticationType, httpClient } from "@activepieces/pieces-common";
-import { pipedriveCommon } from "../../common";
 import { pipedriveAuth } from "../../..";
 
 export const addPerson = createAction({
@@ -16,7 +15,7 @@ export const addPerson = createAction({
             }),
             owner_id: Property.Dropdown<string>({
                 displayName: "Owner",
-                refreshers: ["authentication"],
+                refreshers: [],
                 description: "The user who owns this Person's record",
                 required: false,
                 options: async ({ auth }) => {
@@ -42,7 +41,7 @@ export const addPerson = createAction({
             }),
             org_id: Property.Dropdown<string>({
                 displayName: "Organization",
-                refreshers: ["authentication"],
+                refreshers: [],
                 description: "The Org of this Person",
                 required: false,
                 options: async ({ auth }) => {

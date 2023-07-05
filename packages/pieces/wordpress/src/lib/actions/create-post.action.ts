@@ -34,7 +34,7 @@ export const createWordpressPost = createAction({
             description: 'Post tags',
             displayName: 'Tags',
             required: false,
-            refreshers: ["connection", "website_url"],
+            refreshers: ["website_url"],
             options: async ({ auth }) => {
                 const connection = auth as PiecePropValueSchema<typeof wordpressAuth>
                 if (!connection) {
@@ -96,7 +96,7 @@ export const createWordpressPost = createAction({
             description: 'Post categories',
             displayName: 'Categories',
             required: false,
-            refreshers: ["connection", "website_url"],
+            refreshers: ["website_url"],
             options: async ({ auth }) => {
                 const connection = auth as PiecePropValueSchema<typeof wordpressAuth>
                 if (!connection) {
@@ -159,7 +159,7 @@ export const createWordpressPost = createAction({
             description: 'Choose from one of your uploaded media files',
             displayName: 'Featured Media (image)',
             required: false,
-            refreshers: ['connection', 'website_url'],
+            refreshers: ['website_url'],
             options: async ({ auth }) => {
                 const connection = auth as PiecePropValueSchema<typeof wordpressAuth>
                 if (!connection) {

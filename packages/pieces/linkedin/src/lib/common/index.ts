@@ -53,7 +53,7 @@ export const linkedinCommon = {
     company: Property.Dropdown({
         displayName: 'Company Page',
         required: true,
-        refreshers: ['authentication'],
+        refreshers: [],
         options: async ({ auth }) => {
             if (!auth) {
                 return {

@@ -6,7 +6,7 @@ import { newMessage } from './lib/triggers/new-message';
 import { newReactionAdded } from './lib/triggers/new-reaction-added';
 
 export const slackAuth = PieceAuth.OAuth2({
-  displayName: '',
+  displayName: 'Authentication',
   description: '',
   authUrl: 'https://slack.com/oauth/authorize',
   tokenUrl: 'https://slack.com/api/oauth.access',

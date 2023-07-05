@@ -46,10 +46,14 @@ import {
   FlowsActions,
   FlowItemsDetailsState,
 } from '@activepieces/ui/feature-builder-store';
-import { PiecePropertyMap } from '@activepieces/pieces-framework';
+import {
+  PieceAuthProperty,
+  PiecePropertyMap,
+} from '@activepieces/pieces-framework';
 
 declare type ActionDropdownOptionValue = {
   actionName: string;
+  auth?: PieceAuthProperty;
   properties: PiecePropertyMap;
 };
 
@@ -106,10 +110,7 @@ export class PieceActionInputFormComponent
   selectedAction$: Observable<ActionDropdownOption | undefined>;
   actions$: Observable<ActionDropdownOption[]>;
   valueChanges$: Observable<void>;
-  actionDropdownValueChanged$: Observable<{
-    actionName: string;
-    properties: PiecePropertyMap;
-  }>;
+  actionDropdownValueChanged$: Observable<ActionDropdownOptionValue>;
   allAuthConfigs$: Observable<ConnectionDropdownItem[]>;
   flowItemDetails$: Observable<FlowItemsDetailsState>;
   isOverflown = isOverflown;
@@ -180,6 +181,7 @@ export class PieceActionInputFormComponent
               },
               value: {
                 actionName: actionName,
+                auth: pieceMetadata.auth,
                 properties: action.props,
               },
             };
@@ -237,7 +239,16 @@ export class PieceActionInputFormComponent
     selectedAction: ActionDropdownOption | undefined
   ) {
     if (selectedAction && this.intialComponentInputFormValue?.input) {
-      const properties = { ...selectedAction.value.properties };
+      let properties = {
+        ...selectedAction.value.properties,
+      };
+      // TODO FIX URGENT
+      if (selectedAction.value.auth) {
+        properties = {
+          authentication: selectedAction.value.auth,
+          ...properties,
+        };
+      }
       const propertiesValues = this.intialComponentInputFormValue.input;
       const propertiesFormValue: PiecePropertiesFormValue = {
         properties: properties,
@@ -304,19 +315,25 @@ export class PieceActionInputFormComponent
     }
   }
 
-  private actionSelected(selectedActionValue: {
-    actionName: string;
-    properties: PiecePropertyMap;
-  }) {
+  private actionSelected(selectedActionValue: ActionDropdownOptionValue) {
     const piecePropertiesForm = this.pieceActionForm.get(
       PIECE_PROPERTIES_FORM_CONTROL_NAME
     );
     const propertiesFormValue: PiecePropertiesFormValue = {
-      properties: selectedActionValue.properties,
+      properties: {
+        ...selectedActionValue.properties,
+      },
       setDefaultValues: true,
       customizedInputs: {},
       propertiesValues: {},
     };
+    if (selectedActionValue.auth) {
+      // TODO FIX URGENT
+      propertiesFormValue.properties = {
+        authentication: selectedActionValue.auth,
+        ...propertiesFormValue.properties,
+      };
+    }
     if (!piecePropertiesForm) {
       this.pieceActionForm.addControl(
         PIECE_PROPERTIES_FORM_CONTROL_NAME,

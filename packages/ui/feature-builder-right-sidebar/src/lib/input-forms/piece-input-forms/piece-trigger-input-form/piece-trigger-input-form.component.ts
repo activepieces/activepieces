@@ -13,7 +13,10 @@ import {
 } from '@angular/forms';
 import { forkJoin, map, Observable, of, shareReplay, take, tap } from 'rxjs';
 import { TriggerType, UpdateTriggerRequest } from '@activepieces/shared';
-import { TriggerStrategy } from '@activepieces/pieces-framework';
+import {
+  PieceAuthProperty,
+  TriggerStrategy,
+} from '@activepieces/pieces-framework';
 import {
   PieceMetadataService,
   CORE_SCHEDULE,
@@ -35,7 +38,11 @@ declare type TriggerDropdownOption = {
     description: string;
     isWebhook: boolean;
   };
-  value: { triggerName: string; properties: PiecePropertyMap };
+  value: {
+    triggerName: string;
+    properties: PiecePropertyMap;
+    auth?: PieceAuthProperty;
+  };
   disabled?: boolean;
 };
 
@@ -150,6 +157,7 @@ export class PieceTriggerInputFormComponent {
               },
               value: {
                 triggerName: triggerName,
+                auth: pieceMetadata.auth,
                 properties: trigger.props,
               },
             };
@@ -190,7 +198,16 @@ export class PieceTriggerInputFormComponent {
       ).pipe(
         tap((selectedTrigger) => {
           if (selectedTrigger) {
-            const properties = { ...selectedTrigger.value.properties };
+            let properties = {
+              ...selectedTrigger.value.properties,
+            };
+            if (selectedTrigger.value.auth) {
+              properties = {
+                // TODO FIX URGENT
+                authentication: selectedTrigger.value.auth!,
+                ...properties,
+              };
+            }
             const propertiesValues =
               this.intialComponentTriggerInputFormValue!.input;
             const propertiesFormValue: PiecePropertiesFormValue = {
@@ -265,12 +282,22 @@ export class PieceTriggerInputFormComponent {
   }
   private triggerSelected(selectedValue: {
     triggerName: string;
+    auth?: PieceAuthProperty;
     properties: PiecePropertyMap;
   }) {
     const propertiesForm = this.pieceTriggerInputForm.get(
       PIECE_PROPERTIES_FORM_CONTROL_NAME
     );
-    const properties = { ...selectedValue.properties };
+    let properties = {
+      ...selectedValue.properties,
+    };
+    if (selectedValue.auth) {
+      properties = {
+        // TODO FIX URGENT
+        authentication: selectedValue.auth!,
+        ...properties,
+      };
+    }
     const propertiesFormValue: PiecePropertiesFormValue = {
       properties: properties,
       propertiesValues: {},

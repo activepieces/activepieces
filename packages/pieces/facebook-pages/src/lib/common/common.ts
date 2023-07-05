@@ -6,7 +6,7 @@ export const facebookPagesCommon = {
     page: Property.Dropdown<FacebookPageDropdown>({
         displayName: 'Page',
         required: true,
-        refreshers: ['authentication'],
+        refreshers: [],
         options: async ({ auth }) => {
             if (!auth) {
                 return {

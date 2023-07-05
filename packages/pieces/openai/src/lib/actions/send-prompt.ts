@@ -14,7 +14,7 @@ export const askOpenAI = createAction({
         required: true,
         description:
           'The model which will generate the completion. Some models are suitable for natural language tasks, others specialize in code.',
-        refreshers: ['apiKey'],
+        refreshers: [],
         defaultValue: "gpt-3.5-turbo",
         options: async ({ auth }) => {
           if (!auth) {

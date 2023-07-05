@@ -6,7 +6,7 @@ export const dripCommon = {
     account_id: Property.Dropdown({
         displayName: 'Account',
         required: true,
-        refreshers: ["authentication"],
+        refreshers: [],
         options: async ({ auth }) => {
             if (!auth) {
                 return {

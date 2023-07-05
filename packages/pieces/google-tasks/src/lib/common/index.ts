@@ -57,7 +57,7 @@ export const googleTasksCommon = {
      */
     tasksList: Property.Dropdown<string>({
         displayName: 'Tasks List',
-        refreshers: ['authentication'],
+        refreshers: [],
         required: true,
         options: async ({ auth }) => {
             if (!auth) {

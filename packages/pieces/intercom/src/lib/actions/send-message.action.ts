@@ -104,7 +104,7 @@ export const sendMessage = createAction({
                         })
                     }
                 },
-                refreshers: ["connection"],
+                refreshers: [],
                 required: true
             }),
             to: Property.Dropdown({
@@ -145,7 +145,7 @@ export const sendMessage = createAction({
                         })
                     }
                 },
-                refreshers: ["connection"],
+                refreshers: [],
                 required: true
             }),
             body: Property.ShortText({

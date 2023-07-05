@@ -44,7 +44,6 @@ export const PieceActionSettings = Type.Object({
   pieceName: Type.String({}),
   pieceVersion: QueryVerType,
   actionName: Type.Optional(Type.String({})),
-  auth: Type.Optional(Type.String()),
   input: Type.Record(Type.String({}), Type.Any()),
   inputUiInfo: SampleDataSettingsObject,
 });

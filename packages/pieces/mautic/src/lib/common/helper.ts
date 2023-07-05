@@ -91,7 +91,7 @@ export const getFields = (type:"contact"|"company") => Property.DynamicPropertie
     displayName: 'All Fields',
     description: 'List of all possible fields present',
     required: true,
-    refreshers: ['authentication'],
+    refreshers: [],
     props: async ({ authentication }) => {
         if (!authentication) return {};
         const { base_url, username, password } = authentication;

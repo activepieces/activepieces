@@ -4,7 +4,7 @@ import mailchimp from "@mailchimp/mailchimp_marketing";
 
 export const mailChimpListIdDropdown = Property.Dropdown<string>({
   displayName: "Audience",
-  refreshers: ["authentication"],
+  refreshers: [],
   description: "Audience you want to add the contact to",
   required: true,
   options: async ({ auth }) => {

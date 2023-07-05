@@ -12,7 +12,7 @@ export const createOrUpdateContact = createAction({
                 displayName: "List",
                 description: "The list of the contact",
                 required: true,
-                refreshers: ['authentication'],
+                refreshers: [],
                 options: async ({ auth }) => {
                     if (!auth) {
                         return {

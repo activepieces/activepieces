@@ -7,7 +7,7 @@ export const clickupCommon = {
         description: 'The ID of the ClickUp workspace to create the task in',
         displayName: 'Workspace',
         required,
-        refreshers: ['authentication'],
+        refreshers: [],
         options: async ({ auth }) => {
             if (!auth) {
                 return {
@@ -38,9 +38,9 @@ export const clickupCommon = {
         description: 'The ID of the ClickUp space to create the task in',
         displayName: 'Space',
         required,
-        refreshers: ['authentication', 'workspace_id'],
+        refreshers: ['workspace_id'],
         defaultValue: null,
-        options: async ({ auth , propsValue }) => {
+        options: async ({ auth, propsValue }) => {
             const { workspace_id } = propsValue;
             if (!auth || !workspace_id) {
                 return {
@@ -66,9 +66,9 @@ export const clickupCommon = {
         description: 'The ID of the ClickUp space to create the task in',
         displayName: 'List',
         required,
-        refreshers: ['authentication', 'space_id'],
+        refreshers: ['space_id'],
         defaultValue: null,
-        options: async ({ auth , propsValue }) => {
+        options: async ({ auth, propsValue }) => {
             const { space_id } = propsValue;
             if (!auth || !space_id) {
                 return {
@@ -107,8 +107,8 @@ export const clickupCommon = {
         displayName: 'Task Id',
         required,
         defaultValue: null,
-        refreshers: ['authentication', 'space_id', 'list_id'],
-        options: async ({ auth , propsValue }) => {
+        refreshers: ['space_id', 'list_id'],
+        options: async ({ auth, propsValue }) => {
             const { list_id, space_id } = propsValue;
             if (!auth || !list_id || !space_id) {
                 return {
@@ -133,7 +133,7 @@ export const clickupCommon = {
     folder_id: (required = false) => Property.Dropdown({
         description: 'The ID of the ClickUp folder',
         displayName: 'Folder Id',
-        refreshers: ['authentication', 'space_id', 'workplace_id'],
+        refreshers: ['space_id', 'workplace_id'],
         defaultValue: null,
         required,
         options: async ({ auth, propsValue }) => {

@@ -6,7 +6,7 @@ export const asanaCommon = {
         description: 'Asana workspace to create the task in',
         displayName: 'Workspace',
         required: true,
-        refreshers: ['authentication'],
+        refreshers: [],
         options: async ({ auth }) => {
             if (!auth) {
                 return {
@@ -37,7 +37,7 @@ export const asanaCommon = {
         description: 'Asana Project to create the task in',
         displayName: 'Project',
         required: true,
-        refreshers: ['authentication', 'workspace'],
+        refreshers: ['workspace'],
         options: async ({ auth, propsValue }) => {
             if (!auth) {
                 return {
@@ -75,7 +75,7 @@ export const asanaCommon = {
         description: 'Assignee for the task',
         displayName: 'Assignee',
         required: false,
-        refreshers: ['authentication', 'workspace'],
+        refreshers: ['workspace'],
         options: async ({ auth, propsValue }) => {
             if (!auth) {
                 return {
@@ -108,7 +108,7 @@ export const asanaCommon = {
         description: 'Tags to add to the task',
         displayName: 'Tags',
         required: false,
-        refreshers: ['authentication', 'workspace'],
+        refreshers: ['workspace'],
         options: async ({ auth, propsValue }) => {
             if (!auth) {
                 return {

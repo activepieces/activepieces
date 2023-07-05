@@ -5,7 +5,7 @@ export const slackChannel = Property.Dropdown({
   displayName: 'Channel',
   description: 'Channel, private group, or IM channel to send message to.',
   required: true,
-  refreshers: ['authentication'],
+  refreshers: [],
   async options({ auth }) {
     if (!auth) {
       return {

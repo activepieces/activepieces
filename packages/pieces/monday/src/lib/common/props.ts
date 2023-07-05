@@ -9,7 +9,7 @@ export const mondayProps = {
     description: "The workspace's unique identifier.",
     required: required,
     defaultValue: 'main',
-    refreshers: ['authentication'],
+    refreshers: [],
     options: async ({ auth }) => {
       if (!auth) return { disabled: true, placeholder: 'connect your account first', options: [] }
 
@@ -29,7 +29,7 @@ export const mondayProps = {
       }
     }
   }),
-  board_id: (required = false, refreshers = ['authentication', 'workspace_id']) => Property.Dropdown({
+  board_id: (required = false, refreshers = ['workspace_id']) => Property.Dropdown({
     displayName: "Board",
     description: "The board's unique identifier.",
     required: required,
@@ -55,7 +55,7 @@ export const mondayProps = {
     description: 'Board Group',
     displayName: 'Group',
     required: required,
-    refreshers: ['authentication', 'board_id'],
+    refreshers: [ 'board_id'],
     options: async ({ auth, propsValue }) => {
       const { board_id } = propsValue
       if (!auth)
@@ -93,7 +93,7 @@ export const mondayProps = {
     description: 'Board Item',
     displayName: 'Item',
     required: required,
-    refreshers: ['authentication', 'board_id'],
+    refreshers: [ 'board_id'],
     options: async ({ auth, propsValue }) => {
       const { board_id } = propsValue
       if (!auth)

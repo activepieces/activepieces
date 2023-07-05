@@ -7,7 +7,7 @@ export const notionCommon = {
         displayName: "Database",
         required: true,
         description: "Select the database you want to use",
-        refreshers: ['authentication'],
+        refreshers: [],
         options: async ({ auth }) => {
             if (!auth) {
                 return {

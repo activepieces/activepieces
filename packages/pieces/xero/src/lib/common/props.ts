@@ -4,7 +4,7 @@ import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from "@active
 export const props = {
   tenant_id: Property.Dropdown({
     displayName: 'Organization',
-    refreshers: ['authentication'],
+    refreshers: [],
     required: true,
     options: async ({ auth }) => {
       if (!auth)

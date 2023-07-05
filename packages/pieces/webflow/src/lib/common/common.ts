@@ -5,7 +5,7 @@ export const sitesDropdown = Property.Dropdown<string>({
     displayName: 'Site',
     description: 'Site Name',
     required: true,
-    refreshers: ['authentication'],
+    refreshers: [],
     async options({ auth }) {
         const authProp = auth as OAuth2PropertyValue;
 

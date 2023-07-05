@@ -11,7 +11,7 @@ const buildEmptyList = ({ placeholder }: { placeholder: string }) => {
 
 export const hubSpotListIdDropdown = Property.Dropdown<number>({
   displayName: 'List',
-  refreshers: ['authentication'],
+  refreshers: [],
   description: 'List to add contact to',
   required: true,
   options: async ({ auth }) => {

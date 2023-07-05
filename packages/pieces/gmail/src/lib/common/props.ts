@@ -43,7 +43,7 @@ export const GmailProps = {
     description: "The label tagged to the mail",
     required: false,
     defaultValue: "",
-    refreshers: ["authentication"],
+    refreshers: [],
     options: async ({ auth }) => {
       if (!auth) {
         return {

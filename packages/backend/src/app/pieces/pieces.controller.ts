@@ -117,7 +117,6 @@ export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done)
             pieceVersion: req.body.pieceVersion,
             propertyName: req.body.propertyName,
             stepName: req.body.stepName,
-            auth: req.body.auth,
             input: req.body.input,
             projectId: req.principal.projectId,
         })

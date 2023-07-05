@@ -6,7 +6,7 @@ export const salesforcesCommon = {
         displayName: "Object",
         required: true,
         description: "Select the Object",
-        refreshers: ['authentication'],
+        refreshers: [],
         options: async ({ auth }) => {
             if(auth === undefined){
                 return {
@@ -32,7 +32,7 @@ export const salesforcesCommon = {
         displayName: "Field",
         description: "Select the Field",
         required: true,
-        refreshers: ['authentication', 'object'],
+        refreshers: ['object'],
         options: async ({ auth, propsValue }) => {
             if(auth === undefined || !propsValue.object){
                 return {

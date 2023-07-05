@@ -24,7 +24,7 @@ export const instagramCommon = {
     page: Property.Dropdown<FacebookPageDropdown>({
         displayName: 'Page',
         required: true,
-        refreshers: ['authentication'],
+        refreshers: [],
         options: async (props) => {
             if (!props.auth) {
                 return {

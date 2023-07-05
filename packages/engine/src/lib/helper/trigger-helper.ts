@@ -13,7 +13,7 @@ type Listener = {
 
 export const triggerHelper = {
   async executeTrigger(params: ExecuteTriggerOperation<TriggerHookType>): Promise<ExecuteTriggerResponse<TriggerHookType>> {
-    const { pieceName, pieceVersion, triggerName, input, auth } = (params.flowVersion.trigger as PieceTrigger).settings;
+    const { pieceName, pieceVersion, triggerName, input } = (params.flowVersion.trigger as PieceTrigger).settings;
 
     const piece = await pieceHelper.loadPieceOrThrow(pieceName, pieceVersion);
     const trigger = piece.getTrigger(triggerName);
@@ -27,12 +27,6 @@ export const triggerHelper = {
 
     const resolvedProps = await variableService.resolve({
       unresolvedInput: input,
-      executionState,
-      censorConnections: false,
-    })
-
-    const resolvedAuth = await variableService.resolve({
-      unresolvedInput: auth,
       executionState,
       censorConnections: false,
     })
@@ -64,7 +58,8 @@ export const triggerHelper = {
         scheduleOptions.timezone = request.timezone ?? "UTC";
       },
       webhookUrl: params.webhookUrl,
-      auth: resolvedAuth,
+      // TODO FIX URGENT
+      auth: validatedProps['authentication'],
       propsValue: validatedProps,
       payload: params.triggerPayload ?? {},
     };

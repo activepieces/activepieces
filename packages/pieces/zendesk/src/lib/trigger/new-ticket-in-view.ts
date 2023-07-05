@@ -12,7 +12,7 @@ export const newTicketInView = createTrigger({
         view_id: Property.Dropdown({
             displayName: 'View',
             description: 'The view to monitor for new tickets',
-            refreshers: ['authentication'],
+            refreshers: [],
             required: true,
             options: async ({ auth }) => {
                 const authentication = auth as AuthProps;
