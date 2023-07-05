@@ -5,6 +5,7 @@ import {
     FileProperty,
     JsonProperty,
     LongTextProperty,
+    MarkDownProperty,
     NumberProperty,
     ObjectProperty,
     SecretTextProperty,
@@ -19,6 +20,7 @@ import { OAuth2Property, OAuth2Props } from "./oauth2-prop";
 export enum PropertyType {
 	SHORT_TEXT = 'SHORT_TEXT',
 	LONG_TEXT = 'LONG_TEXT',
+	MARKDOWN = 'MARKDOWN',
 	DROPDOWN = 'DROPDOWN',
 	STATIC_DROPDOWN = "STATIC_DROPDOWN",
 	NUMBER = 'NUMBER',
@@ -40,6 +42,7 @@ export enum PropertyType {
 
 export type PieceProperty = ShortTextProperty<boolean>
 | LongTextProperty<boolean>
+| MarkDownProperty<boolean>
 | OAuth2Property<boolean, OAuth2Props>
 | CheckboxProperty<boolean>
 | DropdownProperty<any, boolean>
@@ -75,6 +78,9 @@ export const Property = {
 	},
 	LongText<R extends boolean>(request: Properties<LongTextProperty<R>>): R extends true ? LongTextProperty<true> : LongTextProperty<false> {
 		return { ...request, valueSchema: undefined, type: PropertyType.LONG_TEXT } as unknown as R extends true ? LongTextProperty<true> : LongTextProperty<false>;
+	},
+	MarkDown<R extends boolean>(request: Properties<MarkDownProperty<R>>): R extends true ? MarkDownProperty<true> : MarkDownProperty<false> {
+		return { ...request, valueSchema: undefined, type: PropertyType.MARKDOWN } as unknown as R extends true ? MarkDownProperty<true> : MarkDownProperty<false>;
 	},
 	Number<R extends boolean>(request: Properties<NumberProperty<R>>): R extends true ? NumberProperty<true> : NumberProperty<false> {
 		return { ...request, valueSchema: undefined, type: PropertyType.NUMBER } as unknown as R extends true ? NumberProperty<true> : NumberProperty<false>;

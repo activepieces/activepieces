@@ -71,7 +71,11 @@
       <ng-container *ngTemplateOutlet="textInputTemplate;context:{$implicit:property, formGroup:formGroup}">
       </ng-container>
     </div>
-
+    
+    <ng-container *ngSwitchCase="PropertyType.MARKDOWN">
+      <ap-markdown [fullWidth]="true" data={{property.value.description}}> </ap-markdown>
+    </ng-container>
+    
     <ng-container *ngSwitchCase="PropertyType.DROPDOWN">
       <div>
         <div class="ap-flex ap-justify-end ap-mb-1 ap-mr-1 ap-text-primary ">

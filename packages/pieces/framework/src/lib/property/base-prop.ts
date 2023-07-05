@@ -5,6 +5,18 @@ export type BasePropertySchema = {
 	description?: string;
 }
 
+export type MarkDownPropertySchema = {
+	readonly displayName?: "MarkDown"
+	description: string;
+}
+
+export type MarkDownPropertyValue<T, U extends PropertyType, REQUIRED extends boolean> = {
+	valueSchema: T;
+	type: U;
+	readonly required?: true;
+	readonly defaultValue?: any;
+};
+
 export type TPropertyValue<T, U extends PropertyType, REQUIRED extends boolean> = {
 	valueSchema: T;
 	type: U;
@@ -27,6 +39,8 @@ export type TPropertyValue<T, U extends PropertyType, REQUIRED extends boolean> 
 export type ShortTextProperty<R extends boolean> = BasePropertySchema & TPropertyValue<string, PropertyType.SHORT_TEXT, R>;
 
 export type LongTextProperty<R extends boolean> = BasePropertySchema & TPropertyValue<string, PropertyType.LONG_TEXT, R>;
+
+export type MarkDownProperty<R extends boolean> = MarkDownPropertySchema & MarkDownPropertyValue<string, PropertyType.MARKDOWN, R>;
 
 export type SecretTextProperty<R extends boolean> = BasePropertySchema & TPropertyValue<string, PropertyType.SECRET_TEXT, R>;
 
