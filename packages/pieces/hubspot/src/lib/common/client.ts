@@ -121,7 +121,135 @@ export const hubSpotClient = {
             const response = await httpClient.sendRequest(request);
             return response.body;
         }
-    }
+    },
+
+    async searchCompanies(accessToken: string, filters?: {
+        createdAt?: number,
+        createdAtOperator?: string
+    }) {
+        const searchParams = [];
+
+        if (filters && filters.createdAt) {
+            searchParams.push({
+                propertyName: 'createdate',
+                operator: filters.createdAtOperator ?? 'GT',
+                value: filters.createdAt
+            })
+        }
+
+        const response = await httpClient.sendRequest({
+            method: HttpMethod.POST,
+            url: `${API}/crm/v3/objects/companies/search`,
+            authentication: {
+                type: AuthenticationType.BEARER_TOKEN,
+                token: accessToken,
+            },
+            headers: {
+                "Content-Type": 'application/json'
+            },
+            body: {
+                filters: searchParams
+            }
+        });
+
+        return response.body;
+    },
+
+    async searchContacts(accessToken: string, filters?: {
+        createdAt?: number,
+        createdAtOperator?: string
+    }) {
+        const searchParams = [];
+
+        if (filters && filters.createdAt) {
+            searchParams.push({
+                propertyName: 'createdate',
+                operator: filters.createdAtOperator ?? 'GT',
+                value: filters.createdAt
+            })
+        }
+
+        const response = await httpClient.sendRequest({
+            method: HttpMethod.POST,
+            url: `${API}/crm/v3/objects/contacts/search`,
+            authentication: {
+                type: AuthenticationType.BEARER_TOKEN,
+                token: accessToken,
+            },
+            headers: {
+                "Content-Type": 'application/json'
+            },
+            body: {
+                filters: searchParams
+            }
+        });
+
+        return response.body;
+    },
+
+    async searchDeals(accessToken: string, filters?: {
+        createdAt?: number,
+        createdAtOperator?: string
+    }) {
+        const searchParams = [];
+
+        if (filters && filters.createdAt) {
+            searchParams.push({
+                propertyName: 'createdate',
+                operator: filters.createdAtOperator ?? 'GT',
+                value: filters.createdAt
+            })
+        }
+
+        const response = await httpClient.sendRequest({
+            method: HttpMethod.POST,
+            url: `${API}/crm/v3/objects/deals/search`,
+            authentication: {
+                type: AuthenticationType.BEARER_TOKEN,
+                token: accessToken,
+            },
+            headers: {
+                "Content-Type": 'application/json'
+            },
+            body: {
+                filters: searchParams
+            }
+        });
+
+        return response.body;
+    },
+
+    async searchTickets(accessToken: string, filters?: {
+        createdAt?: number,
+        createdAtOperator?: string
+    }) {
+        const searchParams = [];
+
+        if (filters && filters.createdAt) {
+            searchParams.push({
+                propertyName: 'createdate',
+                operator: filters.createdAtOperator ?? 'GT',
+                value: filters.createdAt
+            })
+        }
+
+        const response = await httpClient.sendRequest({
+            method: HttpMethod.POST,
+            url: `${API}/crm/v3/objects/tickets/search`,
+            authentication: {
+                type: AuthenticationType.BEARER_TOKEN,
+                token: accessToken,
+            },
+            headers: {
+                "Content-Type": 'application/json'
+            },
+            body: {
+                filters: searchParams
+            }
+        });
+
+        return response.body;
+    },
 };
 
 type ContactsCreateOrUpdateParams = {
