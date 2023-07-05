@@ -104,16 +104,15 @@ export class BranchConditionFormControlComponent
           this.form.controls.secondValue.enable();
           this.showSecondValue = true;
         }
-        this.showCaseSensitive= !!textConditions.find(c => c === secondValue);
-        if(!this.showCaseSensitive){
+        this.showCaseSensitive = !!textConditions.find(
+          (c) => c === secondValue
+        );
+        if (!this.showCaseSensitive) {
           this.form.controls.caseSensitive.setValue(null);
           this.form.controls.caseSensitive.disable();
-          }
-          else
-          {
-            this.form.controls.caseSensitive.enable();
-          }
-          
+        } else {
+          this.form.controls.caseSensitive.enable();
+        }
       })
     );
     this.createConditionsDropdownOptions();
@@ -125,25 +124,26 @@ export class BranchConditionFormControlComponent
           firstValue: val.firstValue || '',
           secondValue: val.secondValue || '',
           operator: val.operator || undefined,
-          caseSensitive: val.caseSensitive?? undefined,
-        }); 
+          caseSensitive: val.caseSensitive ?? false,
+        });
       }),
       map(() => void 0)
     );
   }
   writeValue(obj: BranchCondition): void {
     this.form.patchValue(obj);
-    this.showSecondValue = !singleValueConditions.find((c) => c === obj.operator);
+    this.showSecondValue = !singleValueConditions.find(
+      (c) => c === obj.operator
+    );
     if (!this.showSecondValue) {
       this.form.controls.secondValue.setValue('');
       this.form.controls.secondValue.disable();
     }
-    this.showCaseSensitive = !!textConditions.find(c => c === obj.operator);
-    if(!this.showCaseSensitive){
-     this.form.controls.caseSensitive.setValue(null);
-     this.form.controls.caseSensitive.disable();
+    this.showCaseSensitive = !!textConditions.find((c) => c === obj.operator);
+    if (!this.showCaseSensitive) {
+      this.form.controls.caseSensitive.setValue(null);
+      this.form.controls.caseSensitive.disable();
     }
-  
   }
   registerOnChange(fn: (val: BranchCondition) => void): void {
     this.onChange = fn;
