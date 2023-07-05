@@ -16,10 +16,6 @@ $avatar: #515151;
 $blue-link: #1890ff;
 $gray-select: #f5f5f5;
 $add-piece: #a6b1bf;
-//these two are only used for the input in loops iterations after a flow has run
-$focused-form-control-border: #c5b3f3;
-$focused-form-control-shadow: #e2d9f9;
-//
 $green-border: #5fd2b0;
 $purple-border: #af6cd9;
 $blue-border: #6385dc;
@@ -31,7 +27,19 @@ $primary-color: (
     "default": #6e41e2,
     "dark": #6838e0,
     "light": #eee9fc,
+    "medium": #c5b3f3,
 );
+$warn-color: (
+    "default": #f78a3b,
+    "light": #fff6e4,
+    "dark": #cc8805,
+    "medium": #f0d6a1,
+);
+$success-color: (
+    "default": #14ae5c,
+    "light": #3cad71,
+);
+
 $selection-color: #8965e6;
 $drop-point-height: 125px;
 $drop-point-width: 300px;

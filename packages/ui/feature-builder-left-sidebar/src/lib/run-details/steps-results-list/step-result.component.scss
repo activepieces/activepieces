@@ -73,7 +73,7 @@
       cursor: text;
     }
     &:focus {
-      border-color: $focused-form-control-border;
+      border-color: map-get($map: $primary-color, $key: "medium");
     }
   }
   .nested-level-padding {

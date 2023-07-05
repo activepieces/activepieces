@@ -58,11 +58,14 @@ module.exports = {
          light: 'var(--primary-light)', 
          dark: 'var(--primary-dark)' },
         warn: {
-         DEFAULT:'#f78a3b',
-         light:"#FFF6E4",
-         dark:"#CC8805",
-         medium:"#F0D6A1"},
-        success: '#209e34',
+         DEFAULT:'var(--warn-default)',
+         light:"var(--warn-light)",
+         dark:"var(--warn-dark)",
+         medium:"var(--warn-medium)"},
+        success: {
+          DEFAULT:'var(--success-default)',
+          light:'var(--success-light)'
+        },
        'bleached-gray':'var(--bleached-gray)',
       },
     },

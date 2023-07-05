@@ -39,4 +39,10 @@
     @each $shadeName, $shadeValue in $primary-color {
         --primary-#{$shadeName}: #{$shadeValue};
     }
+    @each $shadeName, $shadeValue in $warn-color {
+        --warn-#{$shadeName}: #{$shadeValue};
+    }
+    @each $shadeName, $shadeValue in $success-color {
+        --success-#{$shadeName}: #{$shadeValue};
+    }
 }

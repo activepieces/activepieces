@@ -1,4 +1,4 @@
-@import '../../../../../core/src/assets/scss/variables.scss';
+@import "../../../../../core/src/assets/scss/variables.scss";
 .loading-spinner-size-and-position {
   width: 1rem;
   height: 1rem;
@@ -36,26 +36,26 @@
 .mat-button.mat-success,
 .mat-stroked-button.mat-success:not([disabled]) {
   &:not([disabled]) {
-    color: #14ae5c;
+    color: map-get($map: $success-color, $key: "default");
   }
 }
 .mdc-button.mat-success:hover,
 .mat-stroked-button.mat-success:hover:not([disabled]) {
   &:not([disabled]) {
-    background-color: #3cad71;
+    background-color: map-get($map: $success-color, $key: "light");
   }
 }
 
 .mdc-button.mat-success {
   &:not([disabled]) {
     color: white;
-    background-color: #14ae5c;
+    background-color: map-get($map: $success-color, $key: "default");
   }
 }
 
 .mat-icon-button.mat-success {
   &:not([disabled]) {
-    color: #14ae5c;
+    background-color: map-get($map: $success-color, $key: "default");
   }
 }
 .mat-button.mat-white,
