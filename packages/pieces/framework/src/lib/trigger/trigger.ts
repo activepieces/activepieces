@@ -27,6 +27,7 @@ type CreateTriggerParams<
     onDisable: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>
     run: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>
     test?: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>
+    requireAuth?: boolean
     sampleData: unknown
   }
 }
@@ -47,6 +48,7 @@ export class ITrigger<
     public readonly run: (ctx: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>,
     public readonly test: (ctx: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>,
     public sampleData: unknown,
+    public readonly requireAuth: boolean = true,
   ) { }
 }
 
@@ -72,5 +74,6 @@ export const createTrigger = <
     params.trigger.run,
     params.trigger.test ?? (() => Promise.resolve([params.trigger.sampleData])),
     params.trigger.sampleData,
+    params.trigger.requireAuth,
   )
 }

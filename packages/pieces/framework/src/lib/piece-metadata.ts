@@ -22,6 +22,7 @@ export type ActionBase = {
   description: string,
   sampleData: unknown,
   props: PiecePropertyMap,
+  requireAuth: boolean;
 }
 
 export type TriggerBase = ActionBase & {
