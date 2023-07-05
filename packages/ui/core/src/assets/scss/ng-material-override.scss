@@ -414,18 +414,6 @@ $main-theme: material-theme-helper.modify-background(
   flex-grow: 1;
 }
 
-.trial-progress-background.mat-progress-spinner circle,
-.trial-progress-background.mat-spinner circle {
-  stroke: $primary-light !important;
-  stroke-width: 15% !important;
-}
-
-.trial-progress-actual.mat-progress-spinner circle,
-.trial-progress-actual.mat-spinner circle {
-  stroke: $primary-hover !important;
-  stroke-width: 15% !important;
-}
-
 .mat-mdc-snack-bar-container {
   button {
     color: $white !important;
