@@ -13,6 +13,7 @@ import {
   BranchCondition,
   BranchOperator,
   singleValueConditions,
+  textConditions,
 } from '@activepieces/shared';
 import { InterpolatingTextFormControlComponent } from '../interpolating-text-form-control/interpolating-text-form-control.component';
 import { DropdownOption } from '@activepieces/pieces-framework';
@@ -21,6 +22,7 @@ interface BranchForm {
   firstValue: FormControl<string | null>;
   operator: FormControl<BranchOperator | null>;
   secondValue: FormControl<string | null>;
+  caseSensitive: FormControl<boolean | null>;
 }
 export interface BranchFormValue {
   firstValue: string;
@@ -54,6 +56,8 @@ export class BranchConditionFormControlComponent
   valueChanges$: Observable<void>;
   operatorChanged$: Observable<[BranchOperator | null, BranchOperator | null]>;
   conditionsDropdownOptions: DropdownOption<BranchOperator>[] = [];
+  showCaseSensitive = false;
+  showSecondValue = false;
   onChange: (val: BranchCondition) => void = () => {
     //ignored
   };
@@ -76,6 +80,7 @@ export class BranchConditionFormControlComponent
         nonNullable: false,
         validators: Validators.required,
       }),
+      caseSensitive: new FormControl(false),
     });
     this.operatorChanged$ = this.form.controls.operator.valueChanges.pipe(
       startWith(null),
@@ -94,9 +99,21 @@ export class BranchConditionFormControlComponent
         ) {
           this.form.controls.secondValue.setValue('');
           this.form.controls.secondValue.disable();
+          this.showSecondValue = false;
         } else if (!isSecondValueSingleValueCondition) {
           this.form.controls.secondValue.enable();
+          this.showSecondValue = true;
         }
+        this.showCaseSensitive= !!textConditions.find(c => c === secondValue);
+        if(!this.showCaseSensitive){
+          this.form.controls.caseSensitive.setValue(null);
+          this.form.controls.caseSensitive.disable();
+          }
+          else
+          {
+            this.form.controls.caseSensitive.enable();
+          }
+          
       })
     );
     this.createConditionsDropdownOptions();
@@ -108,17 +125,25 @@ export class BranchConditionFormControlComponent
           firstValue: val.firstValue || '',
           secondValue: val.secondValue || '',
           operator: val.operator || undefined,
-        });
+          caseSensitive: val.caseSensitive?? undefined,
+        }); 
       }),
       map(() => void 0)
     );
   }
   writeValue(obj: BranchCondition): void {
     this.form.patchValue(obj);
-    if (singleValueConditions.find((c) => c === obj.operator)) {
+    this.showSecondValue = !singleValueConditions.find((c) => c === obj.operator);
+    if (!this.showSecondValue) {
       this.form.controls.secondValue.setValue('');
       this.form.controls.secondValue.disable();
     }
+    this.showCaseSensitive = !!textConditions.find(c => c === obj.operator);
+    if(!this.showCaseSensitive){
+     this.form.controls.caseSensitive.setValue(null);
+     this.form.controls.caseSensitive.disable();
+    }
+  
   }
   registerOnChange(fn: (val: BranchCondition) => void): void {
     this.onChange = fn;
@@ -163,10 +188,6 @@ export class BranchConditionFormControlComponent
     mentionOp: InsertMentionOperation
   ) {
     await textControl.addMention(mentionOp);
-  }
-  showSecondValue() {
-    const currentBranchCondition = this.form.value.operator;
-    return !singleValueConditions.find((c) => c === currentBranchCondition);
   }
   validate() {
     if (this.form.invalid) {

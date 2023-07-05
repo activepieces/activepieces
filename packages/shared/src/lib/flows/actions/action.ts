@@ -107,6 +107,16 @@ export const singleValueConditions = [
   BranchOperator.BOOLEAN_IS_FALSE
 ]
 
+export const textConditions =[
+  BranchOperator.TEXT_CONTAINS,
+  BranchOperator.TEXT_DOES_NOT_CONTAIN,
+  BranchOperator.TEXT_EXACTLY_MATCHES,
+  BranchOperator.TEXT_DOES_NOT_EXACTLY_MATCH,
+  BranchOperator.TEXT_STARTS_WITH,
+  BranchOperator.TEXT_DOES_NOT_START_WITH,
+  BranchOperator.TEXT_ENDS_WITH,
+  BranchOperator.TEXT_DOES_NOT_END_WITH,
+]
 const BranchConditionValid = (addMinLength: boolean) => Type.Union([
   Type.Object({
     firstValue: addMinLength ? Type.String({ minLength: 1 }) : Type.String(),
