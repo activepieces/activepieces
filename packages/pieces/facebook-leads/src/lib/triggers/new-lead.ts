@@ -48,4 +48,17 @@ export const newLead = createTrigger({
 
         return [leads];
     },
+
+    async test(context) {
+        let form = context.propsValue.form as string;
+        const page = context.propsValue.page as FacebookPageDropdown;
+        if (form == undefined || form == '' || form == null) {
+            const forms = await facebookLeadsCommon.getPageForms(page.id, page.accessToken);
+
+            form = forms[0].id;
+        }
+
+        const data = await facebookLeadsCommon.loadSampleData(form, context.propsValue.authentication.access_token)
+        return [data.data]
+    }
 })

@@ -6,29 +6,21 @@
   "targets": {
     "build": {
       "executor": "@nrwl/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/imap",
         "tsConfig": "packages/pieces/imap/tsconfig.lib.json",
         "packageJson": "packages/pieces/imap/package.json",
         "main": "packages/pieces/imap/src/index.ts",
-        "assets": [
-          "packages/pieces/imap/*.md"
-        ],
+        "assets": ["packages/pieces/imap/*.md"],
         "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {
       "executor": "@nrwl/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": [
-          "packages/pieces/imap/**/*.ts"
-        ]
+        "lintFilePatterns": ["packages/pieces/imap/**/*.ts"]
       }
     }
   },

@@ -6,29 +6,21 @@
   "targets": {
     "build": {
       "executor": "@nrwl/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/jotform",
         "tsConfig": "packages/pieces/jotform/tsconfig.lib.json",
         "packageJson": "packages/pieces/jotform/package.json",
         "main": "packages/pieces/jotform/src/index.ts",
-        "assets": [
-          "packages/pieces/jotform/*.md"
-        ],
+        "assets": ["packages/pieces/jotform/*.md"],
         "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {
       "executor": "@nrwl/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": [
-          "packages/pieces/jotform/**/*.ts"
-        ]
+        "lintFilePatterns": ["packages/pieces/jotform/**/*.ts"]
       }
     }
   },

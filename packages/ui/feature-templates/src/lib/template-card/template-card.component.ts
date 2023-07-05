@@ -34,6 +34,7 @@ export class TemplateCardComponent implements AfterViewInit {
   useTemplate$: Observable<Flow>;
   @Output() useTemplateClicked = new EventEmitter<FlowTemplate>();
   @Input() template: FlowTemplate;
+  loading = false;
   @Input() insideBuilder = true;
   @Input() showBtnOnHover = false;
   @Input() folderId?: FolderId | null;
@@ -46,7 +47,8 @@ export class TemplateCardComponent implements AfterViewInit {
     private builderService: CollectionBuilderService
   ) {}
   useTemplate() {
-    if (!this.useTemplate$ && !this.insideBuilder) {
+    if (!this.loading && !this.insideBuilder) {
+      this.loading = true;
       this.useTemplate$ = this.flowService
         .create({
           displayName: this.template.name,
@@ -61,6 +63,7 @@ export class TemplateCardComponent implements AfterViewInit {
               })
               .pipe(
                 tap((updatedFlow: Flow) => {
+                  this.loading = false;
                   this.telemetryService.capture({
                     name: TelemetryEventName.FLOW_IMPORTED,
                     payload: {
