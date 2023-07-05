@@ -6,29 +6,21 @@
   "targets": {
     "build": {
       "executor": "@nrwl/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/webflow",
         "tsConfig": "packages/pieces/webflow/tsconfig.lib.json",
         "packageJson": "packages/pieces/webflow/package.json",
         "main": "packages/pieces/webflow/src/index.ts",
-        "assets": [
-          "packages/pieces/webflow/*.md"
-        ],
+        "assets": ["packages/pieces/webflow/*.md"],
         "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {
       "executor": "@nrwl/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": [
-          "packages/pieces/webflow/**/*.ts"
-        ]
+        "lintFilePatterns": ["packages/pieces/webflow/**/*.ts"]
       }
     }
   },

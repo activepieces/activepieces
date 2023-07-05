@@ -28,7 +28,6 @@ import { ImportFlowDialogueComponent } from './import-flow-dialogue/import-flow-
 export class FlowBuilderHeaderComponent implements OnInit {
   isInDebugMode$: Observable<boolean>;
   isInReadOnlyMode$: Observable<boolean>;
-  isGeneratingFlowComponentOpen$: Observable<boolean>;
   instance$: Observable<FlowInstance | undefined>;
   flow$: Observable<Flow>;
   editingFlowName = false;
@@ -46,11 +45,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
     private flowService: FlowService,
     private flagsService: FlagService,
     private matDialog: MatDialog
-  ) {
-    this.isGeneratingFlowComponentOpen$ = this.store.select(
-      BuilderSelectors.selectIsGeneratingFlowComponentOpen
-    );
-  }
+  ) {}
 
   ngOnInit(): void {
     initialiseBeamer();
