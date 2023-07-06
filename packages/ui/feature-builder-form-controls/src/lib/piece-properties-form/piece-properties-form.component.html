@@ -96,7 +96,11 @@
               <mat-select [formControlName]="property.key" (closed)="searchControl.setValue('')"
                 [compareWith]="dropdownCompareWithFunction">
                 <ng-container *ngIf="dropdownOptionsObservables$[property.key]| async as state">
-                  <ng-container *ngTemplateOutlet="searchInputForDropdowns"></ng-container>
+                  <ng-container
+                    *ngIf="!(state.disabled && ((refreshableConfigsLoadingFlags$[property.key] | async) === false || !refreshableConfigsLoadingFlags$[property.key]))">
+                    <ng-container *ngTemplateOutlet="searchInputForDropdowns"></ng-container>
+                  </ng-container>
+
                   <div class="thin-scrollbars ap-max-h-[190px] ap-overflow-y-auto">
                     <mat-option *ngFor="let opt of (state.options | dropdownSearch:searchControl.value)"
                       [class.!ap-h-0]="!opt.show" [class.!ap-min-h-0]="!opt.show" [value]="opt.item.value">
@@ -155,7 +159,7 @@
                 </ng-container>
               </mat-select>
               <ng-container
-                *ngIf="!!(dropdownOptionsObservables$[property.key] | async) &&  (dropdownOptionsObservables$[property.key] | async)?.disabled === true; ">
+                *ngIf="!!(dropdownOptionsObservables$[property.key] | async) &&  (dropdownOptionsObservables$[property.key] | async)?.disabled === true">
                 <mat-select [formControlName]="property.key" [compareWith]="dropdownCompareWithFunction">
                   <ng-container *ngIf="dropdownOptionsObservables$[property.key]| async as state">
                     <mat-option [disabled]="true"

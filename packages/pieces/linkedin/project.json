@@ -6,29 +6,21 @@
   "targets": {
     "build": {
       "executor": "@nrwl/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/linkedin",
         "tsConfig": "packages/pieces/linkedin/tsconfig.lib.json",
         "packageJson": "packages/pieces/linkedin/package.json",
         "main": "packages/pieces/linkedin/src/index.ts",
-        "assets": [
-          "packages/pieces/linkedin/*.md"
-        ],
+        "assets": ["packages/pieces/linkedin/*.md"],
         "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {
       "executor": "@nrwl/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": [
-          "packages/pieces/linkedin/**/*.ts"
-        ]
+        "lintFilePatterns": ["packages/pieces/linkedin/**/*.ts"]
       }
     }
   },

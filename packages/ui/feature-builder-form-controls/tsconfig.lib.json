@@ -3,8 +3,7 @@
   "compilerOptions": {
     "outDir": "../../../dist/out-tsc",
     "declaration": true,
-    // TODO REMOVE THIS LINE
-    "strict": false,
+    "strict": true,
     "declarationMap": true,
     "inlineSources": true,
     "types": []

@@ -6,29 +6,21 @@
   "targets": {
     "build": {
       "executor": "@nrwl/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/ntfy",
         "tsConfig": "packages/pieces/ntfy/tsconfig.lib.json",
         "packageJson": "packages/pieces/ntfy/package.json",
         "main": "packages/pieces/ntfy/src/index.ts",
-        "assets": [
-          "packages/pieces/ntfy/*.md"
-        ],
+        "assets": ["packages/pieces/ntfy/*.md"],
         "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {
       "executor": "@nrwl/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": [
-          "packages/pieces/ntfy/**/*.ts"
-        ]
+        "lintFilePatterns": ["packages/pieces/ntfy/**/*.ts"]
       }
     }
   },

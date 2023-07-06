@@ -6,29 +6,21 @@
   "targets": {
     "build": {
       "executor": "@nrwl/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/clockodo",
         "tsConfig": "packages/pieces/clockodo/tsconfig.lib.json",
         "packageJson": "packages/pieces/clockodo/package.json",
         "main": "packages/pieces/clockodo/src/index.ts",
-        "assets": [
-          "packages/pieces/clockodo/*.md"
-        ],
+        "assets": ["packages/pieces/clockodo/*.md"],
         "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {
       "executor": "@nrwl/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": [
-          "packages/pieces/clockodo/**/*.ts"
-        ]
+        "lintFilePatterns": ["packages/pieces/clockodo/**/*.ts"]
       }
     }
   },
