@@ -64,7 +64,7 @@ export class BranchConditionsGroupFormControlComponent
         firstValue: c.firstValue,
         operator: c.operator || undefined,
         caseSensitive: (c as any).caseSensitive,
-        secondValue: (c as any).secondValue
+        secondValue: (c as any).secondValue,
       };
       this.conditionsForm.controls.conditions.push(
         new FormControl(conditionValue, {
