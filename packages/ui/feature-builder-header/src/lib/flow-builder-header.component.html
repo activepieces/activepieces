@@ -1,56 +1,101 @@
 <nav class="navbar-container navbar-expand ap-relative">
-  <svg-icon [svgStyle]="{ width: '125px', height: '20px' }" src="assets/img/custom/logo/full-logo.svg" class="ap-logo">
+  <svg-icon
+    [svgStyle]="{ width: '125px', height: '20px' }"
+    src="assets/img/custom/logo/full-logo.svg"
+    class="ap-logo"
+  >
   </svg-icon>
-  <div class="ap-text-center ap-flex ap-items-center ap-justify-center">
-  </div>
+  <div class="ap-text-center ap-flex ap-items-center ap-justify-center"></div>
 
   <div class="ap-flex ap-items-center">
     <div class="ap-flex ap-items-center ap-gap-2">
-      <ap-icon-button [width]="7" [height]="14" iconFilename="back.svg" [tooltipText]="'Home'"
-        (buttonClicked)="redirectHome(false)" (auxclick)="redirectHome(true)"></ap-icon-button>
+      <ap-icon-button
+        [width]="7"
+        [height]="14"
+        iconFilename="back.svg"
+        [tooltipText]="'Home'"
+        (buttonClicked)="redirectHome(false)"
+        (auxclick)="redirectHome(true)"
+      ></ap-icon-button>
       <div class="ap-flex-grow ap-flex ap-items-center ap-gap-2" #spacer>
-        <div class="ap-typography-body-1 ap-truncate ap-max-w-[150px] ap-cursor-pointer hover:ap-text-[#000000]"
-          #folderName (click)="openDashboardToFolder()"
-          [matTooltip]="folderName.scrollWidth > folderName.clientWidth? (folderDisplayName$|async) || '' : ''">
-          {{folderDisplayName$ | async}}
+        <div
+          class="ap-typography-body-1 ap-truncate ap-max-w-[150px] ap-cursor-pointer hover:ap-text-[#000000]"
+          #folderName
+          (click)="openDashboardToFolder()"
+          [matTooltip]="
+            folderName.scrollWidth > folderName.clientWidth
+              ? (folderDisplayName$ | async) || ''
+              : ''
+          "
+        >
+          {{ folderDisplayName$ | async }}
         </div>
-        <div class="ap-typography-body-1 ap-text-placeholder">
-          /
-        </div>
-        <ap-editable-text [editing]="editingFlowName" (editingChanges)="changeEditValue($event)"
-          [value]="(flow$ |async)?.version?.displayName || ''" (valueChanges)="saveFlowName($event)"
-          [disableEditing]="(isInDebugMode$ | async | defaultTrue) || (isInReadOnlyMode$ | async | defaultTrue) "
-          [allowClick]="true" [cssClasses]="'ap-typography-body-1 !ap-font-semibold'"
-          class="ap-text-title"></ap-editable-text>
+        <div class="ap-typography-body-1 ap-text-placeholder">/</div>
+        <ap-editable-text
+          [editing]="editingFlowName"
+          (editingChanges)="changeEditValue($event)"
+          [value]="(flow$ | async)?.version?.displayName || ''"
+          (valueChanges)="saveFlowName($event)"
+          [disableEditing]="
+            (isInDebugMode$ | async | defaultTrue) ||
+            (isInReadOnlyMode$ | async | defaultTrue)
+          "
+          [allowClick]="true"
+          [cssClasses]="'ap-typography-body-1 !ap-font-semibold'"
+          class="ap-text-title"
+        ></ap-editable-text>
       </div>
-      <div class="ap-p-1 ap-cursor-pointer" [matMenuTriggerFor]="menu" xPosition="after">
-        <svg-icon [svgStyle]="{ width: '12px', height: '7px' }" src="assets/img/custom/chevron.svg">
+      <div
+        class="ap-p-1 ap-cursor-pointer"
+        [matMenuTriggerFor]="menu"
+        xPosition="after"
+      >
+        <svg-icon
+          [svgStyle]="{ width: '12px', height: '7px' }"
+          src="assets/img/custom/chevron.svg"
+        >
         </svg-icon>
       </div>
       <mat-menu #menu="matMenu">
         <button mat-menu-item (click)="editingFlowName = true">Rename</button>
-        <button mat-menu-item *ngIf="flow$ | async as flow" (click)="duplicate()">Duplicate</button>
-        <button mat-menu-item *ngIf="flow$ | async as flow" (click)="import()"> Import </button>
-        <button mat-menu-item *ngIf="flow$ | async as flow" (click)="download(flow.id)"> Export </button>
-        <button mat-menu-item *ngIf="flow$ | async as flow" (click)="deleteFlow(flow)">
-          <div class="ap-text-danger">
-            Delete
-          </div>
+        <button
+          mat-menu-item
+          *ngIf="flow$ | async as flow"
+          (click)="duplicate()"
+        >
+          Duplicate
+        </button>
+        <button mat-menu-item *ngIf="flow$ | async as flow" (click)="import()">
+          Import
+        </button>
+        <button
+          mat-menu-item
+          *ngIf="flow$ | async as flow"
+          (click)="download(flow.id)"
+        >
+          Export
+        </button>
+        <button
+          mat-menu-item
+          *ngIf="flow$ | async as flow"
+          (click)="deleteFlow(flow)"
+        >
+          <div class="ap-text-danger">Delete</div>
         </button>
       </mat-menu>
-
     </div>
 
-    <div class="ap-flex-grow">
-    </div>
+    <div class="ap-flex-grow"></div>
     <div class="ap-flex ap-items-center ap-gap-2">
       <app-feedback class="ap-z-50 ap-flex ap-items-center"></app-feedback>
 
-      <ng-container *ngIf=" (isInDebugMode$ | async)===false && (isGeneratingFlowComponentOpen$|async) === false ">
+      <ng-container *ngIf="(isInDebugMode$ | async) === false">
         <div class="ap-flex ap-items-center ap-gap-1">
           <app-draft-status></app-draft-status>
-          <ng-container *ngIf="(instance$ | async) as instance">
-            <app-toggle-instance-state [instance]="instance"></app-toggle-instance-state>
+          <ng-container *ngIf="instance$ | async as instance">
+            <app-toggle-instance-state
+              [instance]="instance"
+            ></app-toggle-instance-state>
           </ng-container>
         </div>
         <app-publish-button></app-publish-button>
@@ -59,7 +104,7 @@
     </div>
   </div>
 </nav>
-<ng-container *ngIf="deleteFlowDialogClosed$|async"></ng-container>
+<ng-container *ngIf="deleteFlowDialogClosed$ | async"></ng-container>
 <ng-container *ngIf="downloadFile$ | async"></ng-container>
-<ng-container *ngIf="duplicateFlow$|async"></ng-container>
+<ng-container *ngIf="duplicateFlow$ | async"></ng-container>
 <ng-container *ngIf="openDashboardOnFolder$ | async"></ng-container>

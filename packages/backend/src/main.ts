@@ -11,6 +11,7 @@ import { app } from './app/app'
 
 const start = async () => {
     try {
+        setupTimeZone()
         validateEnvPropsOnStartup()
         await databaseConnection.initialize()
         await databaseConnection.runMigrations()
@@ -48,6 +49,13 @@ start()
 
 // This might be needed as it can be called twice
 let shuttingDown = false
+
+function setupTimeZone() {
+    // It's important to set the time zone to UTC when working with dates in PostgreSQL.
+    // If the time zone is not set to UTC, there can be problems when storing dates in UTC but not considering the UTC offset when converting them back to local time. This can lead to incorrect fields being displayed for the created 
+    // https://stackoverflow.com/questions/68240368/typeorm-find-methods-returns-wrong-timestamp-time
+    process.env.TZ = 'UTC'
+}
 
 const stop = async () => {
     if (shuttingDown) return

@@ -43,12 +43,20 @@ export const newLead = createTrigger({
                 leadPings = context.payload.body.entry;
             }
 
-            leadPings.forEach(async (lead) => {
-                const leadData = await facebookLeadsCommon.getLeadDetails(lead.changes[0].value.leadgen_id, context.auth.access_token);
-                leads.push(leadData);
-            })
-
             return [leads];
         },
+
+        async test(context) {
+            let form = context.propsValue.form as string;
+            const page = context.propsValue.page as FacebookPageDropdown;
+            if (form == undefined || form == '' || form == null) {
+                const forms = await facebookLeadsCommon.getPageForms(page.id, page.accessToken);
+
+                form = forms[0].id;
+            }
+
+            const data = await facebookLeadsCommon.loadSampleData(form, context.auth.access_token)
+            return [data.data]
+        }
     }
 })

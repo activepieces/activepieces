@@ -6,29 +6,21 @@
   "targets": {
     "build": {
       "executor": "@nrwl/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/facebook-leads",
         "tsConfig": "packages/pieces/facebook-leads/tsconfig.lib.json",
         "packageJson": "packages/pieces/facebook-leads/package.json",
         "main": "packages/pieces/facebook-leads/src/index.ts",
-        "assets": [
-          "packages/pieces/facebook-leads/*.md"
-        ],
+        "assets": ["packages/pieces/facebook-leads/*.md"],
         "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {
       "executor": "@nrwl/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": [
-          "packages/pieces/facebook-leads/**/*.ts"
-        ]
+        "lintFilePatterns": ["packages/pieces/facebook-leads/**/*.ts"]
       }
     }
   },

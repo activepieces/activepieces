@@ -299,12 +299,6 @@ export const selectCurrentLeftSidebarType = createSelector(
     return state.leftSidebar.type;
   }
 );
-export const selectIsGeneratingFlowComponentOpen = createSelector(
-  selectCanvasState,
-  (state: CanvasState) => {
-    return state.isGeneratingFlowComponentOpen;
-  }
-);
 
 export const selectCurrentRightSideBar = createSelector(
   selectCanvasState,
@@ -610,7 +604,6 @@ export const BuilderSelectors = {
   selectStepTestSampleData,
   selectLastTestDate,
   selectNumberOfInvalidSteps,
-  selectIsGeneratingFlowComponentOpen,
   selectMissingStepRecommendedFlowItemsDetails,
   selectStepTestSampleDataStringified,
   selectIsCurrentVersionPublished,

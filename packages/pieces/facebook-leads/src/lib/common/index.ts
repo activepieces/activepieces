@@ -136,6 +136,18 @@ export const facebookLeadsCommon = {
         });
 
         return response.body;
+    },
+
+    loadSampleData: async (formId: string, accessToken: string) => {
+        const response = await httpClient.sendRequest({
+            method: HttpMethod.GET,
+            url: `${facebookLeadsCommon.baseUrl}/${formId}/leads`,
+            queryParams: {
+                access_token: accessToken
+            }
+        });
+
+        return response.body;
     }
 }
 
