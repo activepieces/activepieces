@@ -12,7 +12,11 @@ import {
   Validators,
 } from '@angular/forms';
 import { forkJoin, map, Observable, of, shareReplay, take, tap } from 'rxjs';
-import { TriggerType, UpdateTriggerRequest, AUTHENTICATION_PROPERTY_NAME } from '@activepieces/shared';
+import {
+  TriggerType,
+  UpdateTriggerRequest,
+  AUTHENTICATION_PROPERTY_NAME,
+} from '@activepieces/shared';
 import {
   PieceAuthProperty,
   TriggerStrategy,
@@ -295,7 +299,6 @@ export class PieceTriggerInputFormComponent {
         [AUTHENTICATION_PROPERTY_NAME]: selectedValue.auth!,
         ...properties,
       };
-      
     }
     const propertiesFormValue: PiecePropertiesFormValue = {
       properties: properties,

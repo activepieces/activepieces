@@ -1,5 +1,5 @@
 
-import { createPiece } from '@activepieces/pieces-framework';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { cronExpressionTrigger } from './lib/triggers/cron-expression.trigger';
 import { everyDayTrigger } from './lib/triggers/every-day.trigger';
 import { everyHourTrigger } from './lib/triggers/every-hour.trigger';
@@ -10,6 +10,7 @@ export const schedule = createPiece({
   displayName: 'Schedule',
   logoUrl: 'https://cdn.activepieces.com/pieces/schedule.png',
   description:"Trigger flow with fixed schedule",
+  auth: PieceAuth.None(),
   minimumSupportedRelease: "0.3.8",
   authors: [
     "abuaboud", "AbdulTheActivePiecer"

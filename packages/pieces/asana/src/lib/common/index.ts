@@ -117,7 +117,7 @@ export const asanaCommon = {
                     options: [],
                 };
             }
-            if (!'workspace') {
+            if (!workspace) {
                 return {
                     disabled: true,
                     placeholder: 'Select workspace first',

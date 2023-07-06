@@ -65,6 +65,7 @@ export interface PiecePropertyMap {
 }
 
 export type PiecePropValueSchema<T extends PieceProperty | PieceAuthProperty> =
+	T extends undefined ? undefined :
     T extends { required: true }
         ? T['valueSchema']
         : T['valueSchema'] | undefined
@@ -132,6 +133,9 @@ export const PieceAuth = {
 	OAuth2<R extends boolean, T extends OAuth2Props>(request: Properties<OAuth2Property<R, T>>): R extends true ? OAuth2Property<true, T> : OAuth2Property<false, T> {
 		return { ...request, valueSchema: undefined, type: PropertyType.OAUTH2 } as unknown as R extends true ? OAuth2Property<true, T> : OAuth2Property<false, T>;
 	},
+	None() {
+		return undefined;
+	}
 };
 
 type Properties<T> = Omit<T, "valueSchema" | "type">;

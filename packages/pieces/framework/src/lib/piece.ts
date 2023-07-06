@@ -9,7 +9,7 @@ type CreatePieceParams<PieceAuth extends PieceAuthProperty = PieceAuthProperty> 
   logoUrl: string
   authors?: string[]
   description?: string
-  auth?: PieceAuth
+  auth: PieceAuth  | undefined
   events?: PieceEventProcessors
   minimumSupportedRelease?: string
   maximumSupportedRelease?: string
@@ -80,7 +80,7 @@ export const createPiece = <PieceAuth extends PieceAuthProperty>(params: CreateP
     params.events,
     params.actions,
     params.triggers,
-    params.auth,
+    params.auth ?? undefined,
     params.minimumSupportedRelease,
     params.maximumSupportedRelease,
     params.description,
