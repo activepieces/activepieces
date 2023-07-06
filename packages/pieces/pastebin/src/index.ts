@@ -32,7 +32,8 @@ export const pastebinAuth = PieceAuth.CustomAuth({
 
 export const pastebin = createPiece({
   displayName: "Pastebin",
-  logoUrl: "https://cdn.activepieces.com/pieces/pastebin.png",
+      minimumSupportedRelease: '0.5.0',
+    logoUrl: "https://cdn.activepieces.com/pieces/pastebin.png",
   authors: ['JanHolger'],
   auth: pastebinAuth,
   actions,

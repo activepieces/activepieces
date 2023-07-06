@@ -9,33 +9,32 @@ export default createTrigger({
     auth: spotifyCommon.authentication,
     type: TriggerStrategy.POLLING,
     props: {
-        authentication: spotifyCommon.authentication,
         playlist_id: spotifyCommon.playlist_id(true)
     },
     sampleData: {},
-    onEnable: async (context) => {
-        const client = makeClient(context.propsValue)
-        const items = await client.getAllPlaylistItems(context.propsValue.playlist_id as string)
+    onEnable: async ({store, auth,propsValue}) => {
+        const client = makeClient({auth})
+        const items = await client.getAllPlaylistItems(propsValue.playlist_id as string)
         const hash = createHash('md5').update(items.map(item => item.track.id).join(',')).digest('hex')
-        await context.store.put('playlist_changed_trigger_hash', hash, StoreScope.FLOW)
+        await store.put('playlist_changed_trigger_hash', hash, StoreScope.FLOW)
     },
-    onDisable: async (context) => {
-        await context.store.delete('playlist_changed_trigger_hash', StoreScope.FLOW)
+    onDisable: async ({store, auth,propsValue}) => {
+        await store.delete('playlist_changed_trigger_hash', StoreScope.FLOW)
     },
-    run: async (context) => {
-        const oldHash = await context.store.get('playlist_changed_trigger_hash', StoreScope.FLOW)
-        const client = makeClient(context.propsValue)
-        const items = await client.getAllPlaylistItems(context.propsValue.playlist_id as string)
+    run: async ({store, auth,propsValue}) => {
+        const oldHash = await store.get('playlist_changed_trigger_hash', StoreScope.FLOW)
+        const client = makeClient({auth})
+        const items = await client.getAllPlaylistItems(propsValue.playlist_id as string)
         const newHash = createHash('md5').update(items.map(item => item.track.id).join(',')).digest('hex')
         if (oldHash != newHash) {
-            await context.store.put('playlist_changed_trigger_hash', newHash, StoreScope.FLOW)
+            await store.put('playlist_changed_trigger_hash', newHash, StoreScope.FLOW)
             return [{ total: items.length, items }]
         }
         return []
     },
-    test: async (context) => {
-        const client = makeClient(context.propsValue)
-        const items = await client.getAllPlaylistItems(context.propsValue.playlist_id as string)
+    test: async ({auth,propsValue}) => {
+        const client = makeClient({auth})
+        const items = await client.getAllPlaylistItems(propsValue.playlist_id as string)
         return [{ total: items.length, items }]
     }
 })

@@ -142,7 +142,7 @@ export const renderTemplate = createAction({
         const props = Object.entries(propsValue.variables);
         for (const [propertyKey, propertyValue] of props) {
           if (propertyValue) {
-            query.push(`${propertyKey}=${encodeURIComponent(propertyValue)}`);
+            query.push(`${propertyKey}=${encodeURIComponent(propertyValue as string)}`);
           }
         }
       }

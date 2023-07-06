@@ -9,7 +9,8 @@ export const calcomAuth = PieceAuth.SecretText({
 
 export const calcom = createPiece({
   displayName: 'Cal.com',
-  logoUrl: 'https://cdn.activepieces.com/pieces/cal.com.png',
+      minimumSupportedRelease: '0.5.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/cal.com.png',
 	authors: ['kanarelo'],
   auth: calcomAuth,
   actions: [],

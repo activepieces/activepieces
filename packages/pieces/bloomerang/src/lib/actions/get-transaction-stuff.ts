@@ -52,7 +52,7 @@ export const bloomerangGetTransactionStuff = createAction({
             if(take) url += `take=${take}`;
             if(include_inactive) url += `isActive=${include_inactive}`;
             if(id && id.length > 0) {
-                const parserId = id.map(el => `id=${el}`)
+                const parserId = id.map((el: any) => `id=${el}`)
                 url += parserId.join('&')
             }
             return (await httpClient.sendRequest({

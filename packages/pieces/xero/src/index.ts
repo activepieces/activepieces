@@ -24,7 +24,8 @@ export const xeroAuth = PieceAuth.OAuth2({
 
 export const xero = createPiece({
   displayName: "Xero",
-  logoUrl: "https://cdn.activepieces.com/pieces/xero.png",
+      minimumSupportedRelease: '0.5.0',
+    logoUrl: "https://cdn.activepieces.com/pieces/xero.png",
   authors: ['kanarelo'],
   auth: xeroAuth,
   actions: [xeroCreateContact, xeroCreateInvoice],

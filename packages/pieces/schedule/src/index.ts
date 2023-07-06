@@ -8,10 +8,10 @@ import { everyWeekTrigger } from './lib/triggers/every-week.trigger';
 
 export const schedule = createPiece({
   displayName: 'Schedule',
-  logoUrl: 'https://cdn.activepieces.com/pieces/schedule.png',
+    logoUrl: 'https://cdn.activepieces.com/pieces/schedule.png',
   description:"Trigger flow with fixed schedule",
   auth: PieceAuth.None(),
-  minimumSupportedRelease: "0.3.8",
+  minimumSupportedRelease: '0.5.0',
   authors: [
     "abuaboud", "AbdulTheActivePiecer"
   ],

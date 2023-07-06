@@ -29,7 +29,8 @@ export const freshsalesAuth = PieceAuth.BasicAuth({
 
 export const freshsales = createPiece({
   displayName: "Freshsales",
-  logoUrl: 'https://cdn.activepieces.com/pieces/freshsales.png',
+      minimumSupportedRelease: '0.5.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/freshsales.png',
   authors: ['kanarelo'],
   auth: freshsalesAuth,
   actions: [freshSalesCreateContact],

@@ -7,7 +7,8 @@ import { spotifyCommon } from "./lib/common";
 export const spotify = createPiece({
   displayName: "Spotify",
   auth: spotifyCommon.authentication,
-  logoUrl: "https://cdn.activepieces.com/pieces/spotify.png",
+      minimumSupportedRelease: '0.5.0',
+    logoUrl: "https://cdn.activepieces.com/pieces/spotify.png",
   authors: ['JanHolger'],
   actions,
   triggers,

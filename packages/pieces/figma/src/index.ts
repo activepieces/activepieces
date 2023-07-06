@@ -17,6 +17,7 @@ export const figmaAuth = PieceAuth.OAuth2({
 
 export const figma = createPiece({
     displayName: "Figma",
+        minimumSupportedRelease: '0.5.0',
     logoUrl: 'https://cdn.activepieces.com/pieces/figma.png',
     auth: figmaAuth,
     actions: [

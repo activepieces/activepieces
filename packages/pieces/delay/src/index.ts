@@ -4,7 +4,8 @@ import { delayUntilAction } from './lib/actions/delay-untill-action';
 
 export const delay = createPiece({
   displayName: 'Delay',
-  logoUrl: 'https://cdn.activepieces.com/pieces/delay.png',
+      minimumSupportedRelease: '0.5.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/delay.png',
   authors: [
     "abuaboud",
     "nileshtrivedi"

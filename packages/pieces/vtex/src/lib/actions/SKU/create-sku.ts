@@ -51,12 +51,19 @@ export const createSku = createAction({
     },
     async run(context) {
         const { hostUrl, appKey, appToken } = context.auth;
-        const skuData: Replace<typeof context.propsValue, { authentication?: typeof context.auth }> = { ...context.propsValue };
-        delete skuData.authentication;
-
         const sku = new Sku(hostUrl, appKey, appToken);
 
-        return await sku.createSku(skuData);
+        return await sku.createSku({
+            ProductId: context.propsValue.ProductId,
+            Name: context.propsValue.Name,
+            PackagedHeight: context.propsValue.PackagedHeight,
+            PackagedLength: context.propsValue.PackagedLength,
+            PackagedWidth: context.propsValue.PackagedWidth,
+            PackagedWeightKg: context.propsValue.PackagedWeightKg,
+            IsActive: context.propsValue.IsActive,
+            IsKit: context.propsValue.IsKit,
+            Id: context.propsValue.Id,
+        });
 
     },
 });

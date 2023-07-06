@@ -17,7 +17,8 @@ export const pipedriveAuth = PieceAuth.OAuth2({
 
 export const pipedrive = createPiece({
 	displayName: "Pipedrive",
-	logoUrl: 'https://cdn.activepieces.com/pieces/pipedrive.png',
+	    minimumSupportedRelease: '0.5.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/pipedrive.png',
     auth: pipedriveAuth,
 	actions: [addPerson],
 	authors: ['ashrafsamhouri'],

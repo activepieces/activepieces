@@ -15,7 +15,8 @@ export const googleSheetsAuth = PieceAuth.OAuth2({
 })
 
 export const googleSheets = createPiece({
-	logoUrl: 'https://cdn.activepieces.com/pieces/google-sheets.png',
+	    minimumSupportedRelease: '0.5.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/google-sheets.png',
 	authors: ['abuaboud', 'AbdulTheActivepiecer', 'Shay Punter', 'Abdallah-Alwarawreh'],
 	actions: [insertRowAction, deleteRowAction, updateRowAction, findRowsAction],
 	displayName: "Google Sheets",

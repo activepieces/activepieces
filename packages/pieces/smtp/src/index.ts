@@ -32,7 +32,8 @@ export const smtpAuth = PieceAuth.CustomAuth({
 
 export const smtp = createPiece({
   displayName: 'SMTP',
-  logoUrl: 'https://cdn.activepieces.com/pieces/smtp.png',
+      minimumSupportedRelease: '0.5.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/smtp.png',
   authors: [
     'abaza738'
   ],

@@ -69,7 +69,17 @@ export const createBrand = createAction({
 
         const brand = new Brand(hostUrl, appKey, appToken);
 
-        return await brand.createBrand(brandData);
+        return await brand.createBrand({
+            Id: context.propsValue.Id,
+            Name: context.propsValue.Name,
+            Text: context.propsValue.Text,
+            Keywords: context.propsValue.Keywords,
+            SiteTitle: context.propsValue.SiteTitle,
+            Active: context.propsValue.Active,
+            MenuHome: context.propsValue.MenuHome,
+            Score: context.propsValue.Score,
+            LinkId: context.propsValue.LinkId,
+          });
 
     },
 });

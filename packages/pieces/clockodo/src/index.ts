@@ -32,7 +32,8 @@ export const clockodoAuth = PieceAuth.CustomAuth({
 
 export const clockodo = createPiece({
   displayName: "Clockodo",
-  logoUrl: "https://cdn.activepieces.com/pieces/clockodo.png",
+      minimumSupportedRelease: '0.5.0',
+    logoUrl: "https://cdn.activepieces.com/pieces/clockodo.png",
   authors: ["JanHolger"],
   auth: clockodoAuth,
   actions,

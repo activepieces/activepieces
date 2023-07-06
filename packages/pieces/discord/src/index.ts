@@ -18,6 +18,7 @@ export const discordAuth = PieceAuth.SecretText({
 
 export const discord = createPiece({
     displayName: "Discord",
+        minimumSupportedRelease: '0.5.0',
     logoUrl: 'https://cdn.activepieces.com/pieces/discord.png',
     auth: discordAuth,
     actions: [discordSendMessageWebhook],

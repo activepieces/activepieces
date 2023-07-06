@@ -25,7 +25,8 @@ export const pastefyAuth = PieceAuth.CustomAuth({
 
 export const pastefy = createPiece({
   displayName: "Pastefy",
-  logoUrl: "https://cdn.activepieces.com/pieces/pastefy.png",
+      minimumSupportedRelease: '0.5.0',
+    logoUrl: "https://cdn.activepieces.com/pieces/pastefy.png",
   authors: ['JanHolger'],
   auth: pastefyAuth,
   actions,

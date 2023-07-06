@@ -37,13 +37,12 @@ export const newMessage = createTrigger({
         displayName: 'New Message',
         description: 'Triggers when a new message is received',
         props: {
-            authentication: slackAuth,
             channel: slackChannel
         },
         type: TriggerStrategy.APP_WEBHOOK,
         sampleData: sampleData,
         onEnable: async (context) => {
-            context.app.createListeners({ events: ['message'], identifierValue: context.propsValue.authentication.data['team_id'] })
+            context.app.createListeners({ events: ['message'], identifierValue: context.auth.data['team_id'] })
         },
         onDisable: async (context) => {
             // Ignored

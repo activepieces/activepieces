@@ -37,7 +37,8 @@ export const mysqlAuth = PieceAuth.CustomAuth({
 
 export const mysql = createPiece({
   displayName: "MySQL",
-  logoUrl: "https://cdn.activepieces.com/pieces/mysql.png",
+      minimumSupportedRelease: '0.5.0',
+    logoUrl: "https://cdn.activepieces.com/pieces/mysql.png",
   authors: ["JanHolger"],
   auth: mysqlAuth,
   actions,

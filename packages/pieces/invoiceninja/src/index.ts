@@ -20,7 +20,8 @@ export const invoiceninjaAuth = PieceAuth.CustomAuth({
 
 export const invoiceninja = createPiece({
   displayName: "Invoice Ninja",
-  logoUrl: "https://cdn.activepieces.com/pieces/invoiceninja.png",
+      minimumSupportedRelease: '0.5.0',
+    logoUrl: "https://cdn.activepieces.com/pieces/invoiceninja.png",
   authors: ["buttonsbond"],
   auth: invoiceninjaAuth,
   actions: [createTask],

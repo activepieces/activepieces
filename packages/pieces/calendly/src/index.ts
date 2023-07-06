@@ -10,7 +10,8 @@ export const calendlyAuth = PieceAuth.SecretText({
 
 export const calendly = createPiece({
 	displayName: 'Calendly',
-	logoUrl: 'https://cdn.activepieces.com/pieces/calendly.png',
+	    minimumSupportedRelease: '0.5.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/calendly.png',
 	authors: ['AbdulTheActivePiecer'],
     auth: calendlyAuth,
 	actions: [],

@@ -12,7 +12,8 @@ export const salsaAuth = PieceAuth.SecretText({
 
 export const salsa = createPiece({
   displayName: "Salsa",
-  logoUrl: "https://cdn.activepieces.com/pieces/salsa.png",
+      minimumSupportedRelease: '0.5.0',
+    logoUrl: "https://cdn.activepieces.com/pieces/salsa.png",
   authors: ['mnatanek'],
   auth: salsaAuth,
   actions: [

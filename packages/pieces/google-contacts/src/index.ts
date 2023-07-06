@@ -12,7 +12,8 @@ export const googleContactsAuth = PieceAuth.OAuth2({
 })
 
 export const googleContacts = createPiece({
-	logoUrl: 'https://cdn.activepieces.com/pieces/google-contacts.png',
+	    minimumSupportedRelease: '0.5.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/google-contacts.png',
 	actions: [googleContactsAddContactAction],
 	displayName: "Google Contacts",
 	authors: ['abuaboud', 'abdallah-alwarawreh'],

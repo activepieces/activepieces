@@ -16,6 +16,7 @@ export const blackbaudAuth = PieceAuth.OAuth2({
 
 export const blackbaud = createPiece({
     displayName: "Blackbaud",
+        minimumSupportedRelease: '0.5.0',
     logoUrl: 'https://cdn.activepieces.com/pieces/blackbaud.png',
     authors: ['abuaboud', 'HKudria'],
     auth: blackbaudAuth,

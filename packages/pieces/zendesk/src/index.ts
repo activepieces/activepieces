@@ -35,7 +35,8 @@ export const zendeskAuth = PieceAuth.CustomAuth({
 
 export const zendesk = createPiece({
   displayName: 'Zendesk',
-  logoUrl: 'https://cdn.activepieces.com/pieces/zendesk.png',
+      minimumSupportedRelease: '0.5.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/zendesk.png',
   authors: [
     "abuaboud"
   ],

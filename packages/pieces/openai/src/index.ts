@@ -19,7 +19,8 @@ export const openaiAuth = PieceAuth.SecretText({
 export const openai = createPiece({
   displayName: 'OpenAI',
   description: 'Use ChatGPT to generate text',
-  logoUrl: 'https://cdn.activepieces.com/pieces/openai.png',
+      minimumSupportedRelease: '0.5.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/openai.png',
   auth: openaiAuth,
   actions: [askOpenAI],
   authors: ['aboudzein', 'creed983', 'astorozhevsky',],

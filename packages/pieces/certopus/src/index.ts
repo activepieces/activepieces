@@ -9,7 +9,8 @@ export const certopusAuth = PieceAuth.SecretText({
 
 export const certopus = createPiece({
   displayName: 'Certopus',
-  logoUrl: 'https://cdn.activepieces.com/pieces/certopus.png',
+      minimumSupportedRelease: '0.5.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/certopus.png',
   authors: ['VrajGohil'],
   auth: certopusAuth,
   actions: [createCredential],

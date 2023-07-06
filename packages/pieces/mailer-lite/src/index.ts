@@ -19,7 +19,8 @@ export const mailerListAuth = PieceAuth.SecretText({
 
 export const mailerLite = createPiece({
   displayName: "MailerLite",
-  logoUrl: "https://cdn.activepieces.com/pieces/mailer-lite.png",
+      minimumSupportedRelease: '0.5.0',
+    logoUrl: "https://cdn.activepieces.com/pieces/mailer-lite.png",
   authors: ["Willianwg"],
   auth: mailerListAuth,
   actions: [createOrUpdateSubscriber],

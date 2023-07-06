@@ -39,7 +39,8 @@ export const jotformAuth = PieceAuth.CustomAuth({
 
 export const jotform = createPiece({
 	displayName: "Jotform",
-	logoUrl: "https://cdn.activepieces.com/pieces/jotform.svg",
+	    minimumSupportedRelease: '0.5.0',
+    logoUrl: "https://cdn.activepieces.com/pieces/jotform.svg",
 	authors: ['MoShizzle'],
     auth: jotformAuth,
 	actions: [],

@@ -13,6 +13,7 @@ export const intercomAuth = PieceAuth.OAuth2({
 
 export const intercom = createPiece({
     displayName: "Intercom",
+        minimumSupportedRelease: '0.5.0',
     logoUrl: "https://cdn.activepieces.com/pieces/intercom.png",
     auth: intercomAuth,
     triggers: [],

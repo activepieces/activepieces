@@ -29,8 +29,9 @@ export const gotifyAuth = PieceAuth.CustomAuth({
 
 export const gotify = createPiece({
   displayName: "Gotify",
-  logoUrl: "https://cdn.activepieces.com/pieces/gotify.png",
-  minimumSupportedRelease: "0.0.1",
+
+    logoUrl: "https://cdn.activepieces.com/pieces/gotify.png",
+    minimumSupportedRelease: '0.5.0',
   authors: ["MyWay"],
   auth: gotifyAuth,
   actions: [sendNotification],

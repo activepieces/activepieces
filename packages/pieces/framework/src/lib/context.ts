@@ -1,6 +1,6 @@
 import { AppConnectionValue, ExecutionType, PauseMetadata, StopResponse, TriggerPayload } from "@activepieces/shared";
 import { TriggerStrategy } from "./trigger/trigger";
-import { PieceAuthProperty, PiecePropValueSchema, PiecePropertyMap, StaticPropsValue } from "./property";
+import { NonAuthPiecePropertyMap, PieceAuthProperty, PiecePropValueSchema, PiecePropertyMap, StaticPropsValue } from "./property";
 
 type BaseContext<PieceAuth extends PieceAuthProperty, Props extends PiecePropertyMap> = {
     auth: PiecePropValueSchema<PieceAuth>,
@@ -59,7 +59,7 @@ export type PauseHook = (params: PauseHookParams) => void
 
 export type ActionContext<
     PieceAuth extends PieceAuthProperty = PieceAuthProperty,
-    ActionProps extends PiecePropertyMap = PiecePropertyMap,
+    ActionProps extends NonAuthPiecePropertyMap = NonAuthPiecePropertyMap,
 > = BaseContext<PieceAuth, ActionProps> & {
     executionType: ExecutionType,
     connections: ConnectionsManager,

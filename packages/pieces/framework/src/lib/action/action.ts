@@ -1,11 +1,11 @@
 import { ActionContext } from '../context';
 import { ActionBase } from '../piece-metadata';
-import { PieceAuthProperty, PiecePropertyMap } from '../property/property';
+import { NonAuthPiecePropertyMap, PieceAuthProperty, PiecePropertyMap } from '../property/property';
 
-export type ActionRunner<PieceAuth extends PieceAuthProperty, ActionProps extends PiecePropertyMap> =
+export type ActionRunner<PieceAuth extends PieceAuthProperty, ActionProps extends NonAuthPiecePropertyMap> =
   (ctx: ActionContext<PieceAuth, ActionProps>) => Promise<unknown | void>
 
-type CreateActionParams<PieceAuth extends PieceAuthProperty, ActionProps extends PiecePropertyMap> = {
+type CreateActionParams<PieceAuth extends PieceAuthProperty, ActionProps extends NonAuthPiecePropertyMap> = {
   /**
    * A dummy parameter used to infer {@code PieceAuth} type
    */
@@ -19,7 +19,7 @@ type CreateActionParams<PieceAuth extends PieceAuthProperty, ActionProps extends
   sampleData?: unknown
 }
 
-export class IAction<PieceAuth extends PieceAuthProperty, ActionProps extends PiecePropertyMap> implements ActionBase {
+export class IAction<PieceAuth extends PieceAuthProperty, ActionProps extends NonAuthPiecePropertyMap> implements ActionBase {
   constructor(
     public readonly name: string,
     public readonly displayName: string,
@@ -34,13 +34,13 @@ export class IAction<PieceAuth extends PieceAuthProperty, ActionProps extends Pi
 export type Action<
   PieceAuth extends PieceAuthProperty = any,
   ActionProps extends PiecePropertyMap = any,
-> = IAction<PieceAuth, ActionProps>
+> = IAction<PieceAuth, NonAuthPiecePropertyMap>
 
 export const createAction = <
   PieceAuth extends PieceAuthProperty = PieceAuthProperty,
   ActionProps extends PiecePropertyMap = PiecePropertyMap
 >(
-  params: CreateActionParams<PieceAuth, ActionProps>,
+  params: CreateActionParams<PieceAuth, NonAuthPiecePropertyMap>,
 ) => {
   return new IAction(
     params.name,

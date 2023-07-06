@@ -25,7 +25,8 @@ export const generatebannersAuth = PieceAuth.BasicAuth({
 
 export const generatebanners = createPiece({
   displayName: 'GenerateBanners',
-  logoUrl: 'https://cdn.activepieces.com/pieces/generatebanners.png',
+      minimumSupportedRelease: '0.5.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/generatebanners.png',
   authors: [
   ],
   auth: generatebannersAuth,

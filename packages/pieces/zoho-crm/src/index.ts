@@ -40,8 +40,9 @@ export const zohoCrmAuth = PieceAuth.OAuth2({
 
 export const zohoCrm = createPiece({
   displayName: "Zoho CRM",
-  logoUrl: "https://cdn.activepieces.com/pieces/zoho-crm.png",
-  minimumSupportedRelease: "0.3.9",
+
+    logoUrl: "https://cdn.activepieces.com/pieces/zoho-crm.png",
+    minimumSupportedRelease: '0.5.0',
   authors: [
     "abuaboud"
   ],

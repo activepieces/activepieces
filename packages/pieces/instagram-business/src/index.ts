@@ -5,6 +5,7 @@ import { instagramCommon } from "./lib/common";
 
 export const instagramBusiness = createPiece({
     displayName: "Instagram for Business",
+        minimumSupportedRelease: '0.5.0',
     logoUrl: "https://cdn.activepieces.com/pieces/instagram.png",
     authors: ['MoShizzle'],
     auth: instagramCommon.authentication,

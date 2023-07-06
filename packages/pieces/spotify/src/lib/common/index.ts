@@ -1,5 +1,5 @@
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common'
-import { PieceAuth, Property, StaticPropsValue } from '@activepieces/pieces-framework'
+import { OAuth2PropertyValue, PieceAuth, Property, StaticPropsValue } from '@activepieces/pieces-framework'
 import { SpotifyWebApi } from './client'
 
 
@@ -46,7 +46,7 @@ export const spotifyCommon = {
                 }
             }
             const client = makeClient({
-                auth
+                auth: auth as OAuth2PropertyValue,
             })
             const res = await client.getDevices()
             return {
@@ -73,7 +73,7 @@ export const spotifyCommon = {
                 }
             }
             const client = makeClient({
-                auth,
+                auth: auth as OAuth2PropertyValue,
             })
             const playlists = await client.getAllCurrentUserPlaylists()
             return {
@@ -89,7 +89,7 @@ export const spotifyCommon = {
     })
 }
 
-export function makeClient(propsValue: StaticPropsValue<any>): SpotifyWebApi {
-    const token = getAccessTokenOrThrow(propsValue.authentication)
+export function makeClient(propsValue: {auth: OAuth2PropertyValue}): SpotifyWebApi {
+    const token = getAccessTokenOrThrow(propsValue.auth)
     return new SpotifyWebApi(token)
 }

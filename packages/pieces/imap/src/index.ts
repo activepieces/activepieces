@@ -38,6 +38,7 @@ export const imapAuth = PieceAuth.CustomAuth({
 
 export const imap = createPiece({
     displayName: "IMAP",
+        minimumSupportedRelease: '0.5.0',
     logoUrl: "https://cdn.activepieces.com/pieces/imap.png",
     authors: ['MoShizzle'],
     auth: imapAuth,

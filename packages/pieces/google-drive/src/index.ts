@@ -12,7 +12,8 @@ export const googleDriveAuth = PieceAuth.OAuth2({
 })
 
 export const googleDrive = createPiece({
-	logoUrl: 'https://cdn.activepieces.com/pieces/google-drive.png',
+	    minimumSupportedRelease: '0.5.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/google-drive.png',
 	actions: [googleDriveCreateNewFolder, googleDriveCreateNewTextFile],
 	displayName: "Google Drive",
 	authors: ['kanarelo'],

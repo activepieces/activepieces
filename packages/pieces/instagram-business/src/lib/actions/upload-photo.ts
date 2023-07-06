@@ -8,7 +8,6 @@ export const uploadPhoto = createAction({
         displayName: 'Upload Photo',
         description: 'Upload a photo to an Instagram Professional Account',
         props: {
-            authentication: instagramCommon.authentication,
             page: instagramCommon.page,
             photo: instagramCommon.photo,
             caption: instagramCommon.caption

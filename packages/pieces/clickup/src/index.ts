@@ -20,6 +20,7 @@ export const clickupAuth = PieceAuth.OAuth2({
 
 export const clickup = createPiece({
     displayName: "Clickup",
+        minimumSupportedRelease: '0.5.0',
     logoUrl: 'https://cdn.activepieces.com/pieces/clickup.png',
     auth: clickupAuth,
     actions: [

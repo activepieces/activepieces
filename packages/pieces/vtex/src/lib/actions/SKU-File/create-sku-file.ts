@@ -38,13 +38,15 @@ export const createSkuFile = createAction({
     },
     async run(context) {
         const { hostUrl, appKey, appToken } = context.auth;
-        const skuFileData: Replace<typeof context.propsValue, { authentication?: typeof context.auth; SkuId?: number }> = { ...context.propsValue };
-        delete skuFileData.authentication;
-        delete skuFileData.SkuId;
-
         const skuFile = new SkuFile(hostUrl, appKey, appToken);
 
-        return await skuFile.createSkuFile(context.propsValue.SkuId, skuFileData);
+        return await skuFile.createSkuFile(context.propsValue.SkuId, {
+            Url: context.propsValue.Url,
+            Name: context.propsValue.Name,
+            IsMain: context.propsValue.IsMain,
+            Label: context.propsValue.Label,
+            Text: context.propsValue.Text,
+        });
 
     },
 });

@@ -15,7 +15,8 @@ export const zoomAuth = PieceAuth.OAuth2({
 
 export const zoom = createPiece({
   displayName: "Zoom",
-  logoUrl: 'https://cdn.activepieces.com/pieces/zoom.png',
+      minimumSupportedRelease: '0.5.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/zoom.png',
   actions: [zoomCreateMeeting, zoomCreateMeetingRegistrant],
   auth: zoomAuth,
   authors: ['kanarelo'],

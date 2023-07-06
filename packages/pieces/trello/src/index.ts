@@ -29,7 +29,8 @@ export const trelloAuth = PieceAuth.BasicAuth({
 
 export const trello = createPiece({
   displayName: 'Trello',
-  logoUrl: 'https://cdn.activepieces.com/pieces/trello.png',
+      minimumSupportedRelease: '0.5.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/trello.png',
   authors: ['ShayPunter'],
   auth: trelloAuth,
   actions: [

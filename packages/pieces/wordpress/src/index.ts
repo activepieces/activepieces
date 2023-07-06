@@ -31,7 +31,8 @@ export const wordpressAuth = PieceAuth.CustomAuth({
 
 export const wordpress = createPiece({
 	displayName: 'Wordpress',
-	logoUrl: 'https://cdn.activepieces.com/pieces/wordpress.png',
+	    minimumSupportedRelease: '0.5.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/wordpress.png',
     auth: wordpressAuth,
 	actions: [createWordpressPost, createWordpressPage],
 	triggers: [wordpressNewPost],

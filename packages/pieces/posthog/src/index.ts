@@ -14,7 +14,8 @@ export const posthogAuth = PieceAuth.SecretText({
 
 export const posthog = createPiece({
   displayName: "PostHog",
-  logoUrl: 'https://cdn.activepieces.com/pieces/posthog.png',
+      minimumSupportedRelease: '0.5.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/posthog.png',
   auth: posthogAuth,
   actions: [posthogCreateEvent, posthogCreateProject],
   authors: ['kanarelo'],

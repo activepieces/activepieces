@@ -12,6 +12,7 @@ export const googleDocsAuth = PieceAuth.OAuth2({
 
 export const googleDocs = createPiece({
     displayName: "Google Docs",
+        minimumSupportedRelease: '0.5.0',
     logoUrl: "https://cdn.activepieces.com/pieces/google-docs.png",
     authors: ['MoShizzle'],
     auth: googleDocsAuth,

@@ -9,7 +9,8 @@ export const bannerbearAuth = PieceAuth.SecretText({
 
 export const bannerbear = createPiece({
   displayName: "Bannerbear",
-  logoUrl: 'https://cdn.activepieces.com/pieces/bannerbear.png',
+      minimumSupportedRelease: '0.5.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/bannerbear.png',
   authors: ["kanarelo"],
   auth: bannerbearAuth,
   actions: [

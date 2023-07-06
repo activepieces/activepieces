@@ -10,7 +10,8 @@ export const sendgridAuth = PieceAuth.SecretText({
 
 export const sendgrid = createPiece({
 	displayName: "SendGrid",
-	logoUrl: 'https://cdn.activepieces.com/pieces/sendgrid.png',
+	    minimumSupportedRelease: '0.5.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/sendgrid.png',
 	authors: ['ashrafsamhouri', "abuaboud"],
     auth: sendgridAuth,
 	actions: [sendEmail, sendDynamicTemplate],

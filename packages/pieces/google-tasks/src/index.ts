@@ -11,7 +11,8 @@ export const googleTasksAuth = PieceAuth.OAuth2({
 })
 
 export const googleTasks = createPiece({
-	logoUrl: 'https://cdn.activepieces.com/pieces/google-tasks.png',
+	    minimumSupportedRelease: '0.5.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/google-tasks.png',
 	actions: [googleTasksAddNewTaskAction],
 	displayName: "Google Tasks",
 	authors: ['abaza738'],

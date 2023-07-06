@@ -16,8 +16,9 @@ export const notionAuth = PieceAuth.OAuth2({
 
 export const notion = createPiece({
   displayName: 'Notion',
-  logoUrl: 'https://cdn.activepieces.com/pieces/notion.png',
-  minimumSupportedRelease: '0.3.10',
+    logoUrl: 'https://cdn.activepieces.com/pieces/notion.png',
+    minimumSupportedRelease: '0.5.0',
+
   authors: [
     'ShayPunter', 'abuaboud'
   ],

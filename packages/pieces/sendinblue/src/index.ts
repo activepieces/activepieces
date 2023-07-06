@@ -10,7 +10,8 @@ export const sendinblueAuth = PieceAuth.SecretText({
 
 export const sendinblue = createPiece({
   displayName: "Sendinblue",
-  logoUrl: "https://cdn.activepieces.com/pieces/sendinblue.png",
+      minimumSupportedRelease: '0.5.0',
+    logoUrl: "https://cdn.activepieces.com/pieces/sendinblue.png",
   authors: ['kanarelo'],
   auth: sendinblueAuth,
   actions: [createOrUpdateContact],

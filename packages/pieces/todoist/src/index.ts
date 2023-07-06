@@ -14,7 +14,8 @@ export const todoistAuth = PieceAuth.OAuth2({
 
 export const todoist = createPiece({
 	displayName: 'Todoist',
-	logoUrl: 'https://cdn.activepieces.com/pieces/todoist.png',
+	    minimumSupportedRelease: '0.5.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/todoist.png',
 	authors: ['khaledmashaly'],
     auth: todoistAuth,
 	actions: [todoistCreateTaskAction],

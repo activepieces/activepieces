@@ -34,8 +34,9 @@ export const mastodonAuth = PieceAuth.CustomAuth({
 
 export const mastodon = createPiece({
   displayName: 'Mastodon',
-  logoUrl: 'https://cdn.activepieces.com/pieces/mastodon.png',
-  minimumSupportedRelease: '0.3.9',
+
+    logoUrl: 'https://cdn.activepieces.com/pieces/mastodon.png',
+    minimumSupportedRelease: '0.5.0',
   authors: [
     "abuaboud"
   ],

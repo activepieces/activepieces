@@ -23,11 +23,12 @@ export const shopifyAuth = PieceAuth.OAuth2({
 
 export const shopify = createPiece({
   displayName: 'Shopify',
-  logoUrl: 'https://cdn.activepieces.com/pieces/shopify.png',
+
+    logoUrl: 'https://cdn.activepieces.com/pieces/shopify.png',
   authors: [
     "abuaboud"
   ],
-  minimumSupportedRelease: '0.3.9',
+  minimumSupportedRelease: '0.5.0',
   auth: shopifyAuth,
   actions: [
   ],

@@ -43,26 +43,31 @@ export type PieceAuthProperty =
     | OAuth2Property<boolean, OAuth2Props>
     | SecretTextProperty<boolean>
 
-export type PieceProperty =
-    | ShortTextProperty<boolean>
-    | LongTextProperty<boolean>
-    | CheckboxProperty<boolean>
-    | DropdownProperty<any, boolean>
-    | StaticDropdownProperty<any, boolean>
-    | NumberProperty<boolean>
-    | ArrayProperty<boolean>
-    | ObjectProperty<boolean>
-    | JsonProperty<boolean>
-    | MultiSelectDropdownProperty<unknown, boolean>
-    | StaticMultiSelectDropdownProperty<unknown, boolean>
-    | DynamicProperties<boolean>
-    | DateTimeProperty<boolean>
-    | FileProperty<boolean>
-    | PieceAuthProperty
+export type NonAuthPieceProperty = ShortTextProperty<boolean>
+| LongTextProperty<boolean>
+| CheckboxProperty<boolean>
+| DropdownProperty<any, boolean>
+| StaticDropdownProperty<any, boolean>
+| NumberProperty<boolean>
+| ArrayProperty<boolean>
+| ObjectProperty<boolean>
+| JsonProperty<boolean>
+| MultiSelectDropdownProperty<unknown, boolean>
+| StaticMultiSelectDropdownProperty<unknown, boolean>
+| DynamicProperties<boolean>
+| DateTimeProperty<boolean>
+| FileProperty<boolean>;
+
+export type PieceProperty = NonAuthPieceProperty | PieceAuthProperty
 
 export interface PiecePropertyMap {
 	[name: string]: PieceProperty
 }
+
+export interface NonAuthPiecePropertyMap {
+	[name: string]: NonAuthPieceProperty
+}
+
 
 export type PiecePropValueSchema<T extends PieceProperty | PieceAuthProperty> =
 	T extends undefined ? undefined :

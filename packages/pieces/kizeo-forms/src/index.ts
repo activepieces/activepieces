@@ -23,7 +23,8 @@ export const kizeoFormsAuth = PieceAuth.SecretText({
 
 export const kizeoForms = createPiece({
   displayName: "Kizeo Forms",
-  logoUrl: "https://cdn.activepieces.com/pieces/kizeo-forms.png",
+      minimumSupportedRelease: '0.5.0',
+    logoUrl: "https://cdn.activepieces.com/pieces/kizeo-forms.png",
   authors: ["BastienMe"],
   auth: kizeoFormsAuth,
   actions: [getDataDefinition,pushData,downloadStandardPDF,downloadCustomExportInItsOriginalFormat],

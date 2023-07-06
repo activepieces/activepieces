@@ -13,7 +13,8 @@ export const mailchimpAuth = PieceAuth.OAuth2({
 
 export const mailchimp = createPiece({
 	displayName: "Mailchimp",
-	logoUrl: 'https://cdn.activepieces.com/pieces/mailchimp.png',
+	    minimumSupportedRelease: '0.5.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/mailchimp.png',
 	authors: ['AbdulTheActivePiecer'],
     auth: mailchimpAuth,
 	actions: [addMemberToList],

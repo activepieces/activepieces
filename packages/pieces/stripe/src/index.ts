@@ -12,7 +12,8 @@ export const stripeAuth = PieceAuth.SecretText({
 
 export const stripe = createPiece({
 	displayName: "Stripe",
-	logoUrl: 'https://cdn.activepieces.com/pieces/stripe.png',
+	    minimumSupportedRelease: '0.5.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/stripe.png',
 	authors: ['ashrafsamhouri'],
     auth: stripeAuth,
 	actions: [],

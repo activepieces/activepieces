@@ -18,7 +18,8 @@ export const salesforceAuth = PieceAuth.OAuth2({
 
 export const salesforce = createPiece({
   displayName: 'Salesforce',
-  logoUrl: 'https://cdn.activepieces.com/pieces/salesforce.png',
+      minimumSupportedRelease: '0.5.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/salesforce.png',
   authors: [
     "abuaboud",
     "HKudria"

@@ -50,7 +50,8 @@ export const vtexAuth = PieceAuth.CustomAuth({
 
 export const vtex = createPiece({
   displayName: "VTEX",
-  logoUrl: "https://cdn.activepieces.com/pieces/vtex.png",
+      minimumSupportedRelease: '0.5.0',
+    logoUrl: "https://cdn.activepieces.com/pieces/vtex.png",
   authors: ["Willianwg"],
   auth: vtexAuth,
   actions: [

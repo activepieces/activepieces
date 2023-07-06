@@ -12,7 +12,8 @@ export const constantContactAuth = PieceAuth.OAuth2({
 
 export const constantContact = createPiece({
   displayName: "Constant Contact",
-  logoUrl: "https://cdn.activepieces.com/pieces/constant-contact.png",
+      minimumSupportedRelease: '0.5.0',
+    logoUrl: "https://cdn.activepieces.com/pieces/constant-contact.png",
   authors: ["abuaboud"],
   auth: constantContactAuth,
   actions: [createOrUpdateContact],

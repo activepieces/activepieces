@@ -13,7 +13,8 @@ export const dripAuth = PieceAuth.SecretText({
 
 export const drip = createPiece({
 	displayName: 'Drip',
-	logoUrl: 'https://cdn.activepieces.com/pieces/drip.png',
+	    minimumSupportedRelease: '0.5.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/drip.png',
 	authors: ['AbdulTheActivePiecer'],
     auth: dripAuth,
 	actions: [dripApplyTagToSubscriber, dripAddSubscriberToCampaign, dripUpsertSubscriberAction],

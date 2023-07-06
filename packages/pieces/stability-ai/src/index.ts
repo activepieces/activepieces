@@ -16,7 +16,8 @@ export const stabilityAiAuth = PieceAuth.CustomAuth({
 
 export const stabilityAi = createPiece({
   displayName: "Stability AI",
-  logoUrl: "https://cdn.activepieces.com/pieces/stability-ai.png",
+      minimumSupportedRelease: '0.5.0',
+    logoUrl: "https://cdn.activepieces.com/pieces/stability-ai.png",
   authors: ["Willianwg"],
   auth: stabilityAiAuth,
   actions: [textToImage],

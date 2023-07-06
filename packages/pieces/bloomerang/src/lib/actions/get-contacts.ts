@@ -178,7 +178,7 @@ export const bloomerangGetContacts = createAction({
             if (order_by) url += `&orderBy=${order_by}`;
             if (order_direction) url += `&orderDirection=${order_direction}`;
             if (id && id.length > 0) {
-                const parserId = id.map(el => `id=${el}`)
+                const parserId = id.map((el: any) => `id=${el}`)
                 url += parserId.join('&');
             }
             return (await httpClient.sendRequest({

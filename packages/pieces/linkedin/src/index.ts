@@ -13,6 +13,7 @@ export const linkedinAuth = PieceAuth.OAuth2({
 
 export const linkedin = createPiece({
     displayName: "LinkedIn",
+        minimumSupportedRelease: '0.5.0',
     logoUrl: "https://cdn.activepieces.com/pieces/linkedin.png",
     authors: ['MoShizzle'],
     auth: linkedinAuth,

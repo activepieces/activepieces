@@ -13,7 +13,8 @@ export const bloomerangAuth = PieceAuth.SecretText({
 
 export const bloomerang = createPiece({
   displayName: 'Bloomerang',
-  logoUrl: 'https://cdn.activepieces.com/pieces/bloomerang.png',
+      minimumSupportedRelease: '0.5.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/bloomerang.png',
   authors: ['HKudria'],
   auth: bloomerangAuth,
   actions: [

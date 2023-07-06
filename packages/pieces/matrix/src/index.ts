@@ -28,8 +28,9 @@ export const matrixAuth = PieceAuth.CustomAuth({
 
 export const matrix = createPiece({
   displayName: "Matrix",
-  logoUrl: "https://cdn.activepieces.com/pieces/matrix.png",
-  minimumSupportedRelease: "0.3.9",
+
+    logoUrl: "https://cdn.activepieces.com/pieces/matrix.png",
+    minimumSupportedRelease: '0.5.0',
   authors: ["abuaboud"],
   auth: matrixAuth,
   actions: [sendMessage],

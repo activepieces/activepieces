@@ -12,7 +12,8 @@ export const gmailAuth = PieceAuth.OAuth2({
 })
 
 export const gmail = createPiece({
-	logoUrl: 'https://cdn.activepieces.com/pieces/gmail.png',
+	    minimumSupportedRelease: '0.5.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/gmail.png',
 	actions: [gmailSendEmailAction],
 	displayName: 'Gmail',
 	authors: ['AbdulTheActivePiecer', 'kanarelo'],

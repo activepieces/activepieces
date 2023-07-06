@@ -14,7 +14,8 @@ export const telegramBotAuth = PieceAuth.SecretText({
 
 export const telegramBot = createPiece({
 	displayName: "Telegram bot",
-	logoUrl: 'https://cdn.activepieces.com/pieces/telegram_bot.png',
+	    minimumSupportedRelease: '0.5.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/telegram_bot.png',
     auth: telegramBotAuth,
 	actions: [telegramSendMessageAction],
 	authors: ['abuaboud', 'Abdallah-Alwarawreh'],

@@ -18,6 +18,7 @@ export const airtableAuth = PieceAuth.SecretText({
 
 export const airtable = createPiece({
     displayName: 'Airtable',
+        minimumSupportedRelease: '0.5.0',
     logoUrl: 'https://cdn.activepieces.com/pieces/airtable.png',
     authors: ['AbdulTheActivePiecer', 'kanarelo'],
     auth: airtableAuth,

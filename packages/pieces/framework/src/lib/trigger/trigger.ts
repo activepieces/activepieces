@@ -1,6 +1,6 @@
 import { TriggerHookContext } from '../context';
 import { TriggerBase } from '../piece-metadata';
-import { PieceAuthProperty, PiecePropertyMap } from '../property/property';
+import { NonAuthPiecePropertyMap, PieceAuthProperty } from '../property/property';
 
 export enum TriggerStrategy {
   POLLING = 'POLLING',
@@ -10,7 +10,7 @@ export enum TriggerStrategy {
 
 type CreateTriggerParams<
   PieceAuth extends PieceAuthProperty,
-  TriggerProps extends PiecePropertyMap,
+  TriggerProps extends NonAuthPiecePropertyMap,
   TS extends TriggerStrategy,
 > = {
   /**
@@ -33,7 +33,7 @@ type CreateTriggerParams<
 export class ITrigger<
   TS extends TriggerStrategy,
   PieceAuth extends PieceAuthProperty,
-  TriggerProps extends PiecePropertyMap,
+  TriggerProps extends NonAuthPiecePropertyMap,
 > implements TriggerBase {
   constructor(
     public readonly name: string,
@@ -52,14 +52,14 @@ export class ITrigger<
 
 export type Trigger<
   PieceAuth extends PieceAuthProperty = any,
-  TriggerProps extends PiecePropertyMap = any,
+  TriggerProps extends NonAuthPiecePropertyMap = any,
   S extends TriggerStrategy = TriggerStrategy,
 > = ITrigger<S, PieceAuth, TriggerProps>
 
 export const createTrigger = <
   TS extends TriggerStrategy,
   PieceAuth extends PieceAuthProperty,
-  TriggerProps extends PiecePropertyMap,
+  TriggerProps extends NonAuthPiecePropertyMap,
 >(params: CreateTriggerParams<PieceAuth, TriggerProps, TS>) => {
   return new ITrigger(
     params.name,

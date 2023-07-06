@@ -18,6 +18,7 @@ export const twilioAuth = PieceAuth.BasicAuth({
 
 export const twilio = createPiece({
     displayName: 'Twilio',
+        minimumSupportedRelease: '0.5.0',
     logoUrl: 'https://cdn.activepieces.com/pieces/twilio.png',
     auth: twilioAuth,
     actions: [twilioSendSms],

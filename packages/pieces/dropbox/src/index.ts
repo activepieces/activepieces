@@ -12,7 +12,8 @@ export const dropboxAuth = PieceAuth.OAuth2({
 })
 
 export const dropbox = createPiece({
-  logoUrl: 'https://cdn.activepieces.com/pieces/dropbox.png',
+      minimumSupportedRelease: '0.5.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/dropbox.png',
   actions: [dropboxCreateNewFolder, dropboxCreateNewTextFile],
   displayName: "DropBox",
   authors: ['kanarelo'],

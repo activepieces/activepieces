@@ -61,7 +61,7 @@ export const sendEmail = createAction({
             method: HttpMethod.POST,
             url: `${sendgridCommon.baseUrl}/mail/send`,
             body: {
-                personalizations: to.map(x => {
+                personalizations: to.map((x: string) => {
                     return {
                         to: [{
                             email: (x as string).trim()

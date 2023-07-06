@@ -11,7 +11,8 @@ export const typeformAuth = PieceAuth.OAuth2({
 
 export const typeform = createPiece({
   displayName: 'Typeform',
-  logoUrl: 'https://cdn.activepieces.com/pieces/typeform.png',
+      minimumSupportedRelease: '0.5.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/typeform.png',
   actions: [],
   auth: typeformAuth,
   authors: ['ShahedAlMashni'],

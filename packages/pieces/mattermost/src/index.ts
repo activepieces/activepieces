@@ -28,8 +28,9 @@ export const mattermostAuth = PieceAuth.CustomAuth({
 
 export const mattermost = createPiece({
   displayName: 'Mattermost',
-  logoUrl: 'https://cdn.activepieces.com/pieces/mattermost.png',
-  minimumSupportedRelease: '0.3.9',
+
+    logoUrl: 'https://cdn.activepieces.com/pieces/mattermost.png',
+    minimumSupportedRelease: '0.5.0',
   authors: [
     "abuaboud"
   ],

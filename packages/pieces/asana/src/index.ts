@@ -12,6 +12,7 @@ export const asanaAuth = PieceAuth.OAuth2({
 
 export const asana = createPiece({
     displayName: "Asana",
+        minimumSupportedRelease: '0.5.0',
     logoUrl: 'https://cdn.activepieces.com/pieces/asana.png',
     authors: ['abuaboud'],
     auth: asanaAuth,

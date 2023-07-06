@@ -23,6 +23,7 @@ export const facebookPagesAuth = PieceAuth.OAuth2({
 
 export const facebookPages = createPiece({
     displayName: "Facebook Pages",
+        minimumSupportedRelease: '0.5.0',
     logoUrl: "https://cdn.activepieces.com/pieces/facebook.png",
     authors: ['MoShizzle'],
     auth: facebookPagesAuth,

@@ -12,7 +12,8 @@ export const webflowAuth = PieceAuth.OAuth2({
 
 export const webflow = createPiece({
   displayName: "Webflow",
-  logoUrl: "https://cdn.activepieces.com/pieces/webflow.png",
+      minimumSupportedRelease: '0.5.0',
+    logoUrl: "https://cdn.activepieces.com/pieces/webflow.png",
   authors: ['Ahmad-AbuOsbeh'],
   auth: webflowAuth,
   actions: [],

@@ -19,7 +19,8 @@ export const hubspotAuth = PieceAuth.OAuth2({
 
 export const hubspot = createPiece({
 	displayName: "HubSpot",
-	logoUrl: 'https://cdn.activepieces.com/pieces/hubspot.png',
+	    minimumSupportedRelease: '0.5.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/hubspot.png',
 	authors: ['khaledmashaly', 'MoShizzle'],
     auth: hubspotAuth,
 	actions: [
