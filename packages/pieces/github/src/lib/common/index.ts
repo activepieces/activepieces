@@ -7,7 +7,7 @@ export const githubCommon = {
         displayName: "Repository",
         refreshers: [],
         required: true,
-        options: async ({ auth, propsValue }) => {
+        options: async ({ auth }) => {
             if (!auth) {
                 return {
                     disabled: true,

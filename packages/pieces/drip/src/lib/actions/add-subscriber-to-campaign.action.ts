@@ -14,7 +14,7 @@ export const dripAddSubscriberToCampaign = createAction({
                 displayName: "Email Series Campaign",
                 refreshers: ["account_id"],
                 required: true,
-                options: async ({ auth, propsValue }) => {
+                options: async ({ auth, account_id }) => {
                     if (!auth) {
                         return {
                             disabled: true,
@@ -22,7 +22,7 @@ export const dripAddSubscriberToCampaign = createAction({
                             placeholder: "Please fill in API key first"
                         }
                     }
-                    if (!propsValue.account_id) {
+                    if (!account_id) {
                         return {
                             disabled: true,
                             options: [],
@@ -31,7 +31,7 @@ export const dripAddSubscriberToCampaign = createAction({
                     }
                     const request: HttpRequest = {
                         method: HttpMethod.GET,
-                        url: `${dripCommon.baseUrl(propsValue.account_id as string)}/campaigns`,
+                        url: `${dripCommon.baseUrl(account_id as string)}/campaigns`,
                         headers: {
                             Authorization: `Basic ${Buffer.from(auth as string).toString("base64")}`,
                         },

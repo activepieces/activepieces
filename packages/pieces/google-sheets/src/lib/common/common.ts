@@ -1,5 +1,5 @@
 import { Property, OAuth2PropertyValue } from "@activepieces/pieces-framework";
-import { httpClient, HttpMethod, AuthenticationType, HttpRequest, getAccessTokenOrThrow } from "@activepieces/pieces-common";
+import { httpClient, HttpMethod, AuthenticationType, HttpRequest } from "@activepieces/pieces-common";
 
 export const googleSheetsCommon = {
     baseUrl: "https://sheets.googleapis.com/v4/spreadsheets",
@@ -12,8 +12,8 @@ export const googleSheetsCommon = {
     spreadsheet_id: Property.Dropdown({
         displayName: "Spreadsheet",
         required: true,
-        refreshers: [],
-        options: async ({ auth, propsValue }) => {
+        refreshers: ['include_team_drives'],
+        options: async ({ auth, include_team_drives}) => {
             if (!auth) {
                 return {
                     disabled: true,
@@ -27,7 +27,7 @@ export const googleSheetsCommon = {
                 url: `https://www.googleapis.com/drive/v3/files`,
                 queryParams: {
                     q: "mimeType='application/vnd.google-apps.spreadsheet'",
-                    includeItemsFromAllDrives: propsValue['include_team_drives'] ? "true" : "false",
+                    includeItemsFromAllDrives: include_team_drives ? "true" : "false",
                     supportsAllDrives: "true"
                 },
                 authentication: {
@@ -50,8 +50,8 @@ export const googleSheetsCommon = {
         displayName: "Sheet",
         required: true,
         refreshers: ['spreadsheet_id'],
-        options: async ({ auth, propsValue }) => {
-            if (!auth || (propsValue['spreadsheet_id'] ?? '').toString().length === 0) {
+        options: async ({ auth, spreadsheet_id }) => {
+            if (!auth || (spreadsheet_id ?? '').toString().length === 0) {
                 return {
                     disabled: true,
                     options: [],
@@ -59,7 +59,7 @@ export const googleSheetsCommon = {
                 }
             }
             const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
-            const sheets = (await listSheetsName(authProp['access_token'], propsValue['spreadsheet_id'] as string));
+            const sheets = (await listSheetsName(authProp['access_token'], spreadsheet_id as string));
             return {
                 disabled: false,
                 options: sheets.map((sheet: { properties: { title: string, sheetId: number } }) => {

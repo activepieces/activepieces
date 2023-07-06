@@ -141,7 +141,7 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
         executionType: this.executionType,
         store: createContextStore('', globals.flowId),
         // TODO URGENT
-        auth: resolvedProps['authentication'],
+        auth: resolvedProps['auth'],
         propsValue: resolvedProps,
         connections: connectionManager,
         run: {

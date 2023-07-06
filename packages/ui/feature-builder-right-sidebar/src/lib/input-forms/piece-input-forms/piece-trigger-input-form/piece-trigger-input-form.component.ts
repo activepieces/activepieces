@@ -157,7 +157,7 @@ export class PieceTriggerInputFormComponent {
               },
               value: {
                 triggerName: triggerName,
-                auth: pieceMetadata.auth,
+                auth: trigger.requireAuth ? pieceMetadata.auth : undefined,
                 properties: trigger.props,
               },
             };
@@ -204,7 +204,7 @@ export class PieceTriggerInputFormComponent {
             if (selectedTrigger.value.auth) {
               properties = {
                 // TODO FIX URGENT
-                authentication: selectedTrigger.value.auth!,
+                auth: selectedTrigger.value.auth!,
                 ...properties,
               };
             }
@@ -294,7 +294,7 @@ export class PieceTriggerInputFormComponent {
     if (selectedValue.auth) {
       properties = {
         // TODO FIX URGENT
-        authentication: selectedValue.auth!,
+        auth: selectedValue.auth!,
         ...properties,
       };
     }

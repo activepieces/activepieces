@@ -181,7 +181,7 @@ export class PieceActionInputFormComponent
               },
               value: {
                 actionName: actionName,
-                auth: pieceMetadata.auth,
+                auth: action.requireAuth ? pieceMetadata.auth : undefined,
                 properties: action.props,
               },
             };
@@ -245,7 +245,7 @@ export class PieceActionInputFormComponent
       // TODO FIX URGENT
       if (selectedAction.value.auth) {
         properties = {
-          authentication: selectedAction.value.auth,
+          auth: selectedAction.value.auth,
           ...properties,
         };
       }
@@ -330,7 +330,7 @@ export class PieceActionInputFormComponent
     if (selectedActionValue.auth) {
       // TODO FIX URGENT
       propertiesFormValue.properties = {
-        authentication: selectedActionValue.auth,
+        auth: selectedActionValue.auth,
         ...propertiesFormValue.properties,
       };
     }

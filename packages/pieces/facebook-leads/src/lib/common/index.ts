@@ -48,8 +48,8 @@ export const facebookLeadsCommon = {
         displayName: 'Form',
         required: false,
         refreshers: ['page'],
-        options: async ({ propsValue }) => {
-            if (!propsValue['page']) {
+        options: async ({ page }) => {
+            if (!page) {
                 return {
                     disabled: true,
                     options: [],
@@ -58,8 +58,8 @@ export const facebookLeadsCommon = {
             }
 
             try {
-                const page = propsValue['page'] as FacebookPageDropdown
-                const forms: any[] = (await facebookLeadsCommon.getPageForms(page.id, page.accessToken)).map((form: FacebookForm) => {
+                const modifiedPage = page as FacebookPageDropdown
+                const forms: any[] = (await facebookLeadsCommon.getPageForms(modifiedPage.id, modifiedPage.accessToken)).map((form: FacebookForm) => {
                     return {
                         label: form.name,
                         value: form.id

@@ -31,8 +31,12 @@ export const createHubspotContact = createAction({
         },
         sampleData: {},
         async run(context) {
-            const configsWithoutAuthentication: Record<string, unknown> = { ...context.propsValue };
-            delete configsWithoutAuthentication['authentication'];
+            const configsWithoutAuthentication= { 
+                firstName: context.propsValue.firstName,
+                lastName: context.propsValue.lastName,
+                zip: context.propsValue.zip,
+                emial: context.propsValue.email
+             };
             const body = {
                 properties: Object.entries(configsWithoutAuthentication).map(f => {
                     return {

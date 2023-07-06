@@ -8,7 +8,7 @@ export const salesforcesCommon = {
         description: "Select the Object",
         refreshers: [],
         options: async ({ auth }) => {
-            if(auth === undefined){
+            if(!auth){
                 return {
                     disabled: true,
                     placeholder: 'connect your account first',
@@ -33,15 +33,15 @@ export const salesforcesCommon = {
         description: "Select the Field",
         required: true,
         refreshers: ['object'],
-        options: async ({ auth, propsValue }) => {
-            if(auth === undefined || !propsValue.object){
+        options: async ({ auth, object }) => {
+            if(auth === undefined || !object){
                 return {
                     disabled: true,
                     placeholder: 'connect your account first',
                     options: [],
                 }
             }
-            const options = await getSalesforceFields(auth as OAuth2PropertyValue, propsValue.object as string);
+            const options = await getSalesforceFields(auth as OAuth2PropertyValue, object as string);
             return {
                 disabled: false,
                 options: options.body['fields'].map((field: any) => {

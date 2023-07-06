@@ -1,4 +1,4 @@
-import { PieceAuthProperty, PiecePropValueSchema, PiecePropertyMap, PropertyType, StaticPropsValue } from "./property";
+import {  PropertyType } from "./property";
 import { BasePropertySchema, TPropertyValue } from "./base-prop";
 
 export type DropdownState<T> = {
@@ -12,12 +12,7 @@ export type DropdownOption<T> = {
 	value: T;
 };
 
-export type DynamicDropdownOptionsContext = {
-    auth: PiecePropValueSchema<PieceAuthProperty>
-    propsValue: StaticPropsValue<PiecePropertyMap>
-}
-
-export type DynamicDropdownOptions<T> = (ctx: DynamicDropdownOptionsContext) => Promise<DropdownState<T>>
+export type DynamicDropdownOptions<T> = (propsValue: Record<string, unknown>) => Promise<DropdownState<T>>
 
 export type DropdownProperty<T, R extends boolean> = BasePropertySchema & {
 	refreshers: string[];

@@ -51,8 +51,7 @@ export const createCredential = createAction({
       displayName: 'Event',
       refreshers: ['organisation'],
       required: true,
-      options: async ({ auth, propsValue }) => {
-        const { organisation } = propsValue
+      options: async ({ auth, organisation }) => {
         if (!auth) {
           return {
             disabled: true,
@@ -84,8 +83,7 @@ export const createCredential = createAction({
       displayName: 'Category',
       refreshers: ['organisation', 'event'],
       required: true,
-      options: async ({ auth, propsValue }) => {
-        const { organisation, event } = propsValue
+      options: async ({ auth, organisation, event }) => {
         if (!auth) {
           return {
             disabled: true,

@@ -103,8 +103,14 @@ export const addPerson = createAction({
             }),
         },
         async run(context) {
-            const configsWithoutAuthentication: Record<string, unknown> = { ...context.propsValue };
-            delete configsWithoutAuthentication['authentication'];
+            const configsWithoutAuthentication = { 
+                name: context.propsValue.name,
+                owner_id: context.propsValue.owner_id,
+                org_id: context.propsValue.org_id,
+                phone: context.propsValue.phone,
+                email: context.propsValue.email,
+                marketing_status: context.propsValue.marketing_status
+            };
 
             const request: HttpRequest = {
                 method: HttpMethod.POST,

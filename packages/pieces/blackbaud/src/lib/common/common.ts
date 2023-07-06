@@ -8,28 +8,25 @@ export const blackbaudCommon = {
             required: true
         })
     },
-    fundraiser_list: Property.Dropdown<string>({
+    fundraiser_list: Property.StaticDropdown<string>({
         displayName: "Fundraising List",
         required: true,
         description: "Select the List",
-        refreshers: [],
-        options: async () => {
-            return {
-                options: [
-                    {
-                        label: "Campaign",
-                        value: "campaigns",
-                    },
-                    {
-                        label: "Appeal",
-                        value: "appeals",
-                    },
-                    {
-                        label: "Fund",
-                        value: "funds",
-                    }
-                ]
-            }
+        options: {
+            options: [
+                {
+                    label: "Campaign",
+                    value: "campaigns",
+                },
+                {
+                    label: "Appeal",
+                    value: "appeals",
+                },
+                {
+                    label: "Fund",
+                    value: "funds",
+                }
+            ]
         }
     }),
 }

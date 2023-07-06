@@ -54,7 +54,7 @@ export const airtableCommon = {
     displayName: 'Table',
     required: true,
     refreshers: ["base"],
-    options: async ({ auth, propsValue }) => {
+    options: async ({ auth, base }) => {
       if (!auth) {
         return {
           disabled: true,
@@ -62,7 +62,7 @@ export const airtableCommon = {
           placeholder: "Please connect your account"
         }
       }
-      if (!propsValue.base) {
+      if (!base) {
         return {
           disabled: true,
           options: [],
@@ -73,7 +73,7 @@ export const airtableCommon = {
       try {
         const tables: AirtableTable[] = await airtableCommon.fetchTableList({
           token: auth as string,
-          baseId: propsValue.base as string
+          baseId: base as string
         })
 
         if (tables) {
@@ -106,8 +106,8 @@ export const airtableCommon = {
     required: true,
     refreshers: ["base", "tableId"],
 
-    props: async ({ authentication, base, tableId }) => {
-      if (!authentication) return {}
+    props: async ({ auth, base, tableId }) => {
+      if (!auth) return {}
       if (!base) return {}
       if (!tableId) return {}
 
@@ -115,7 +115,7 @@ export const airtableCommon = {
 
       try {
         const airtable: AirtableTable = await airtableCommon.fetchTable({
-          token: authentication as unknown as string,
+          token: auth as unknown as string,
           baseId: base as unknown as string,
           tableId: tableId as unknown as string
         });

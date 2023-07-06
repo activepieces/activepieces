@@ -9,7 +9,7 @@ export const trelloCommon = {
         required: true,
         refreshers: [],
         options: async ({ auth }) => {
-            if (auth === undefined) {
+            if (!auth) {
                 return {
                     disabled: true,
                     placeholder: 'connect your account first',
@@ -34,8 +34,8 @@ export const trelloCommon = {
         description: 'Get lists from a board',
         required: true,
         refreshers: ['board_id'],
-        options: async ({ auth, propsValue }) => {
-            if (auth === undefined || propsValue['board_id'] === undefined) {
+        options: async ({ auth, board_id }) => {
+            if (auth === undefined || board_id === undefined) {
                 return {
                     disabled: true,
                     placeholder: 'connect your account first and select board',
@@ -44,7 +44,7 @@ export const trelloCommon = {
             }
 
             const basicAuthProperty = auth as BasicAuthPropertyValue;
-            const lists = await listBoardLists(basicAuthProperty.username, basicAuthProperty.password, propsValue['board_id'] as string);
+            const lists = await listBoardLists(basicAuthProperty.username, basicAuthProperty.password, board_id as string);
 
             console.log(lists);
 

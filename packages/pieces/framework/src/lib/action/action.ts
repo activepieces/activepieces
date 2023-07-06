@@ -26,7 +26,7 @@ export class IAction<PieceAuth extends PieceAuthProperty, ActionProps extends Pi
     public readonly description: string,
     public readonly props: ActionProps,
     public readonly run: ActionRunner<PieceAuth, ActionProps>,
-    public readonly requireAuth: boolean = true,
+    public readonly requireAuth: boolean,
     public readonly sampleData: unknown = {},
   ) { }
 }
@@ -48,7 +48,7 @@ export const createAction = <
     params.description,
     params.props,
     params.run,
-    params.requireAuth,
+    params.requireAuth ?? true,
     params.sampleData,
   )
 }

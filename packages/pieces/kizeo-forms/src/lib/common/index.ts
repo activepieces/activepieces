@@ -91,7 +91,7 @@ export const kizeoFormsCommon = {
     displayName: 'Export',
     required: true,
     refreshers: ["formId"],
-    options: async ({ auth, propsValue }) => {
+    options: async ({ auth, formId }) => {
         if (!auth){
             return {
                 disabled: true,
@@ -99,7 +99,7 @@ export const kizeoFormsCommon = {
                 placeholder: "Please connect your account"
             }
         }
-        if (!propsValue.formId){
+        if (!formId){
             return {
                 disabled: true,
                 options: [],
@@ -109,7 +109,7 @@ export const kizeoFormsCommon = {
         try {
             const exportList: KizeoFormsExports[] = await kizeoFormsCommon.fetchExports({
                 token: auth as string,
-                formId: propsValue.formId as string
+                formId: formId as string
             })
             if (exportList) {
 

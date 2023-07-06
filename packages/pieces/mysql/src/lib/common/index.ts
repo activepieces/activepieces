@@ -30,7 +30,7 @@ export const mysqlCommon = {
         displayName: 'Table',
         required,
         refreshers: [],
-        options: async ({ auth, propsValue }) => {
+        options: async ({ auth }) => {
             if (!auth) {
                 return {
                     disabled: true,
@@ -38,7 +38,7 @@ export const mysqlCommon = {
                     options: [],
                 };
             }
-            const conn = await mysqlConnect(auth as PiecePropValueSchema<typeof mysqlAuth>, propsValue)
+            const conn = await mysqlConnect(auth as PiecePropValueSchema<typeof mysqlAuth>, {auth})
             const tables = await mysqlGetTableNames(conn)
             await conn.end()
             return {

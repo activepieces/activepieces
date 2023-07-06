@@ -213,7 +213,7 @@ export const pieceHelper = {
         const context: ActionContext = {
             executionType: ExecutionType.BEGIN,
             // TODO URGENT
-            auth: resolvedProps['authentication'],
+            auth: resolvedProps['auth'],
             propsValue: resolvedProps,
             store: createContextStore('', globals.flowId),
             connections: {
@@ -258,27 +258,18 @@ export const pieceHelper = {
                 censorConnections: false,
             })
 
-            // TODO FIX URGENTLY
-            const resolvedAuth = resolvedProps['authentication'];
-
             if (property.type === PropertyType.DYNAMIC) {
                 const dynamicProperty = property as DynamicProperties<boolean>
-                return await dynamicProperty.props(resolvedProps);
+                return dynamicProperty.props(resolvedProps);
             }
 
             if (property.type === PropertyType.MULTI_SELECT_DROPDOWN) {
                 const multiSelectProperty = property as MultiSelectDropdownProperty<unknown, boolean>
-                return await multiSelectProperty.options({
-                    auth: resolvedAuth,
-                    propsValue: resolvedProps,
-                });
+                return multiSelectProperty.options(resolvedProps);
             }
 
             const dropdownProperty = property as DropdownProperty<unknown, boolean>
-            return await dropdownProperty.options({
-                auth: resolvedAuth,
-                propsValue: resolvedProps,
-            })
+            return dropdownProperty.options(resolvedProps)
         } catch (e) {
             console.error(e);
             return {

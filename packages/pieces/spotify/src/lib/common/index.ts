@@ -37,15 +37,17 @@ export const spotifyCommon = {
         displayName: 'Device',
         required,
         refreshers: [],
-        options: async (value) => {
-            if (!value.auth) {
+        options: async ({auth}) => {
+            if (!auth) {
                 return {
                     disabled: true,
                     placeholder: 'setup authentication first',
                     options: []
                 }
             }
-            const client = makeClient(value)
+            const client = makeClient({
+                auth
+            })
             const res = await client.getDevices()
             return {
                 disabled: false,
@@ -62,15 +64,17 @@ export const spotifyCommon = {
         displayName: 'Playlist',
         required,
         refreshers: [],
-        options: async (value) => {
-            if (!value.auth) {
+        options: async ({auth}) => {
+            if (!auth) {
                 return {
                     disabled: true,
                     placeholder: 'setup authentication first',
                     options: []
                 }
             }
-            const client = makeClient(value)
+            const client = makeClient({
+                auth,
+            })
             const playlists = await client.getAllCurrentUserPlaylists()
             return {
                 disabled: false,

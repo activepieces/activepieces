@@ -94,8 +94,8 @@ export const bannerbearCreateImageAction = createAction({
       description: 'A list of modifications you want to make on the template.',
       required: true,
       refreshers: ["template"],
-      props: async ({ authentication, template }) => {
-        if (!authentication) return {}
+      props: async ({ auth, template }) => {
+        if (!auth) return {}
         if (!template) return {}
 
         let fields: DynamicPropsValue = {};

@@ -94,16 +94,16 @@ export const renderTemplate = createAction({
         displayName: 'Variables',
         required: true,
         refreshers: ['template_id'],
-        props: async ({ authentication, template_id }) => {
-          if (!authentication || !template_id) {
+        props: async ({ auth, template_id }) => {
+          if (!auth || !template_id) {
             return {};
           }
           const request: HttpRequest = {
             method: HttpMethod.GET,
-            url: `https://api.generatebanners.com/api/v1/${authentication['username']}/template/${template_id}`,
+            url: `https://api.generatebanners.com/api/v1/${auth['username']}/template/${template_id}`,
             authentication: {
               type: AuthenticationType.BEARER_TOKEN,
-              token: authentication['password'],
+              token: auth['password'],
             },
           };
           const result = await httpClient.sendRequest(request);

@@ -38,7 +38,7 @@ export const asanaCommon = {
         displayName: 'Project',
         required: true,
         refreshers: ['workspace'],
-        options: async ({ auth, propsValue }) => {
+        options: async ({ auth, workspace }) => {
             if (!auth) {
                 return {
                     disabled: true,
@@ -46,7 +46,7 @@ export const asanaCommon = {
                     options: [],
                 };
             }
-            if (!propsValue['workspace']) {
+            if (!workspace) {
                 return {
                     disabled: true,
                     placeholder: 'Select workspace first',
@@ -59,7 +59,7 @@ export const asanaCommon = {
                     gid: string,
                     name: string
                 }[]
-            }>(HttpMethod.GET, "projects?workspace=" + propsValue['workspace'], accessToken, undefined)).body;
+            }>(HttpMethod.GET, "projects?workspace=" + workspace, accessToken, undefined)).body;
             return {
                 disabled: false,
                 options: response.data.map((project) => {
@@ -76,7 +76,7 @@ export const asanaCommon = {
         displayName: 'Assignee',
         required: false,
         refreshers: ['workspace'],
-        options: async ({ auth, propsValue }) => {
+        options: async ({ auth, workspace }) => {
             if (!auth) {
                 return {
                     disabled: true,
@@ -84,7 +84,7 @@ export const asanaCommon = {
                     options: [],
                 };
             }
-            if (!propsValue['workspace']) {
+            if (!workspace) {
                 return {
                     disabled: true,
                     placeholder: 'Select workspace first',
@@ -92,7 +92,7 @@ export const asanaCommon = {
                 };
             }
             const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
-            const users = await getUsers(accessToken, propsValue['workspace'] as string);
+            const users = await getUsers(accessToken, workspace as string);
             return {
                 disabled: false,
                 options: users.map((user) => {
@@ -109,7 +109,7 @@ export const asanaCommon = {
         displayName: 'Tags',
         required: false,
         refreshers: ['workspace'],
-        options: async ({ auth, propsValue }) => {
+        options: async ({ auth, workspace }) => {
             if (!auth) {
                 return {
                     disabled: true,
@@ -117,7 +117,7 @@ export const asanaCommon = {
                     options: [],
                 };
             }
-            if (!propsValue['workspace']) {
+            if (!'workspace') {
                 return {
                     disabled: true,
                     placeholder: 'Select workspace first',
@@ -125,7 +125,7 @@ export const asanaCommon = {
                 };
             }
             const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
-            const response = await getTags(accessToken, propsValue['workspace'] as string);
+            const response = await getTags(accessToken, workspace as string);
             return {
                 disabled: false,
                 options: response.map((project) => {

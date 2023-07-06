@@ -25,8 +25,8 @@ export const instagramCommon = {
         displayName: 'Page',
         required: true,
         refreshers: [],
-        options: async (props) => {
-            if (!props.auth) {
+        options: async ({auth}) => {
+            if (!auth) {
                 return {
                     disabled: true,
                     options: [],
@@ -34,7 +34,7 @@ export const instagramCommon = {
                 }
             }
 
-            const accessToken: string = getAccessTokenOrThrow(props.auth as OAuth2PropertyValue)
+            const accessToken: string = getAccessTokenOrThrow(auth as OAuth2PropertyValue)
             const pages: any[] = (await instagramCommon.getPages(accessToken)).map((page: FacebookPage) => {
                 if (!page.instagram_business_account) {
                     return null;

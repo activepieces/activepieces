@@ -1,9 +1,7 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { HttpRequest, HttpMethod, httpClient } from "@activepieces/pieces-common";
-import { discordAuth } from "../..";
 
 export const discordSendMessageWebhook = createAction({
-  auth: discordAuth,
     name: 'send_message_webhook',
     description: 'Send a discord message via webhook',
     displayName: 'Send Message Webhook',

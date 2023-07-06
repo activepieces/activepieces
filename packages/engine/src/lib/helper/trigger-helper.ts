@@ -59,7 +59,7 @@ export const triggerHelper = {
       },
       webhookUrl: params.webhookUrl,
       // TODO FIX URGENT
-      auth: validatedProps['authentication'],
+      auth: validatedProps["auth"],
       propsValue: validatedProps,
       payload: params.triggerPayload ?? {},
     };

@@ -69,7 +69,7 @@ export const clockodoCommon = {
         displayName: 'Project',
         required,
         refreshers: [ ...(requiresCustomer ? ['customer_id'] : [])],
-        options: async ({ auth, propsValue }) => {
+        options: async ({ auth, customer_id }) => {
             if (isNil(auth)) {
                 return {
                     disabled: true,
@@ -77,7 +77,7 @@ export const clockodoCommon = {
                     options: []
                 }
             }
-            if (requiresCustomer && !propsValue['customer_id']) {
+            if (requiresCustomer && !customer_id) {
                 return {
                     disabled: true,
                     placeholder: 'select a customer first',
@@ -87,7 +87,7 @@ export const clockodoCommon = {
             const client = makeClient(auth as ClockodoAuthValue)
             const projects = await client.listAllProjects({
                 active: active === null ? undefined : active,
-                customers_id: requiresCustomer ? parseInt(propsValue.customer_id as string) : undefined
+                customers_id: requiresCustomer ? parseInt(customer_id as string) : undefined
             })
             return {
                 disabled: false,

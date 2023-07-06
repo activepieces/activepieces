@@ -34,8 +34,7 @@ export const mondayProps = {
     description: "The board's unique identifier.",
     required: required,
     refreshers: refreshers,
-    options: async ({ auth, propsValue }) => {
-      const { workspace_id } = propsValue
+    options: async ({ auth, workspace_id }) => {
       if (!auth) return { disabled: true, placeholder: 'connect your account first', options: [] }
 
       const boards: Board[] = await getBoards(
@@ -56,8 +55,7 @@ export const mondayProps = {
     displayName: 'Group',
     required: required,
     refreshers: [ 'board_id'],
-    options: async ({ auth, propsValue }) => {
-      const { board_id } = propsValue
+    options: async ({ auth, board_id }) => {
       if (!auth)
         return { disabled: true, placeholder: 'connect your account first', options: [] }
       if (!board_id)
@@ -94,8 +92,7 @@ export const mondayProps = {
     displayName: 'Item',
     required: required,
     refreshers: [ 'board_id'],
-    options: async ({ auth, propsValue }) => {
-      const { board_id } = propsValue
+    options: async ({ auth, board_id }) => {
       if (!auth)
         return { disabled: true, placeholder: 'connect your account first', options: [] }
       if (!board_id)

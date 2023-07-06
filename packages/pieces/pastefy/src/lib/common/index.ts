@@ -35,7 +35,7 @@ export const pastefyCommon = {
         displayName: displayName,
         required,
         refreshers: [],
-        options: async ({ auth, propsValue }) => {
+        options: async ({ auth }) => {
             if (!auth) {
                 return {
                     disabled: true,
@@ -43,7 +43,7 @@ export const pastefyCommon = {
                     options: []
                 };
             }
-            const client = makeClient(auth as PiecePropValueSchema<typeof pastefyAuth>, propsValue)
+            const client = makeClient(auth as PiecePropValueSchema<typeof pastefyAuth>, {auth})
             const folders = await client.getFolderHierarchy()
 
             return {
