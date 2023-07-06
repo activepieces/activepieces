@@ -24,11 +24,7 @@ interface BranchForm {
   secondValue: FormControl<string | null>;
   caseSensitive: FormControl<boolean | null>;
 }
-export interface BranchFormValue {
-  firstValue: string;
-  operator: BranchOperator | undefined;
-  secondValue: string | undefined;
-}
+
 @Component({
   selector: 'app-branch-condition',
   templateUrl: './branch-condition-form-control.component.html',
@@ -141,7 +137,7 @@ export class BranchConditionFormControlComponent
     }
     this.showCaseSensitive = !!textConditions.find((c) => c === obj.operator);
     if (!this.showCaseSensitive) {
-      this.form.controls.caseSensitive.setValue(null);
+      this.form.controls.caseSensitive.setValue((obj as any).caseSensitive);
       this.form.controls.caseSensitive.disable();
     }
   }

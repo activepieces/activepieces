@@ -10,7 +10,6 @@ import {
 } from '@angular/forms';
 import { map, Observable, tap } from 'rxjs';
 import { BranchCondition } from '@activepieces/shared';
-import { BranchFormValue } from '../branch-condition-form-control/branch-condition-form-control.component';
 import { branchConditionValidator } from '@activepieces/ui/common';
 
 @Component({
@@ -38,16 +37,16 @@ export class BranchConditionsGroupFormControlComponent
   @Output() removeConditionGroup = new EventEmitter();
   @Output() createNewConditionGroup = new EventEmitter();
   conditionsForm: FormGroup<{
-    conditions: FormArray<FormControl<BranchFormValue>>;
+    conditions: FormArray<FormControl<BranchCondition>>;
   }>;
   valueChanges$: Observable<void>;
 
-  onChange: (val: BranchFormValue[]) => void = () => {
+  onChange: (val: BranchCondition[]) => void = () => {
     //ignored
   };
 
   constructor(private fb: FormBuilder) {
-    const emptyConditionsList: FormControl<BranchFormValue>[] = [];
+    const emptyConditionsList: FormControl<BranchCondition>[] = [];
     this.conditionsForm = this.fb.group({
       conditions: this.fb.array(emptyConditionsList),
     });
@@ -61,12 +60,11 @@ export class BranchConditionsGroupFormControlComponent
   writeValue(obj: BranchCondition[]): void {
     this.conditionsForm.controls.conditions.clear();
     obj.forEach((c) => {
-      const conditionValue: BranchFormValue = {
+      const conditionValue: BranchCondition = {
         firstValue: c.firstValue,
         operator: c.operator || undefined,
-        secondValue: c['secondValue' as keyof BranchCondition]
-          ? (c['secondValue' as keyof BranchCondition] as string)
-          : undefined,
+        caseSensitive: (c as any).caseSensitive,
+        secondValue: (c as any).secondValue
       };
       this.conditionsForm.controls.conditions.push(
         new FormControl(conditionValue, {
