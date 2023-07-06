@@ -2,7 +2,7 @@
 
     <div #interpolatingTextControlContainer>
         <mat-form-field class="ap-w-full" appearance="outline" (click)="firstHandler.showMentionsDropdown()">
-            <mat-label>{{(showSecondValue())? 'First':''}} Value</mat-label>
+            <mat-label>{{(showSecondValue)? 'First':''}} Value</mat-label>
             <app-interpolating-text-form-control #firstValueTextControl [formControl]="form.controls.firstValue"
                 (editorFocused)="firstHandler.showMentionsDropdown()"
                 [attr.name]="'firstValue'"></app-interpolating-text-form-control>
@@ -41,7 +41,7 @@
         </mat-form-field>
     </div>
 
-    <ng-container *ngIf="showSecondValue()">
+    <ng-container *ngIf="showSecondValue">
         <div #secondInputContainer>
             <mat-form-field class="ap-w-full" appearance="outline" (click)="secondHandler.showMentionsDropdown()">
                 <mat-label>Second Value</mat-label>
@@ -58,6 +58,12 @@
             </app-builder-autocomplete-dropdown-handler>
         </div>
 
+    </ng-container>
+
+    <ng-container *ngIf="showCaseSensitive">
+        <mat-slide-toggle color="primary" formControlName="caseSensitive">
+            Case sensitive
+        </mat-slide-toggle>
     </ng-container>
 
 </div>
