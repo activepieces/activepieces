@@ -30,8 +30,7 @@ import { notifications } from '../../helper/notifications'
 import { flowService } from '../flow/flow.service'
 import { isNil } from 'lodash'
 
-
-export const runRepository = databaseConnection.getRepository(FlowRunEntity)
+export const repo = databaseConnection.getRepository(FlowRunEntity)
 
 const getFlowRunOrCreate = async (params: GetOrCreateParams): Promise<Partial<FlowRun>> => {
     const { id, projectId, flowId, flowVersionId, flowDisplayName, environment } = params
@@ -67,7 +66,7 @@ export const flowRunService = {
             },
         })
 
-        const query = runRepository.createQueryBuilder('flow_run').where({
+        const query = repo.createQueryBuilder('flow_run').where({
             projectId,
             ...spreadIfDefined('flowId', flowId),
             ...spreadIfDefined('status', status),
@@ -83,7 +82,7 @@ export const flowRunService = {
         status: ExecutionOutputStatus,
         logsFileId: FileId | null,
     ): Promise<FlowRun> {
-        await runRepository.update(flowRunId, {
+        await repo.update(flowRunId, {
             logsFileId,
             status,
             finishTime: new Date().toISOString(),
@@ -117,7 +116,7 @@ export const flowRunService = {
 
         flowRun.status = ExecutionOutputStatus.RUNNING
 
-        const savedFlowRun = await runRepository.save(flowRun)
+        const savedFlowRun = await repo.save(flowRun)
 
         telemetry.trackProject(flow.projectId, {
             name: TelemetryEventName.FLOW_RUN_CREATED,
@@ -142,19 +141,19 @@ export const flowRunService = {
 
         const { flowRunId, logFileId, pauseMetadata } = params
 
-        await runRepository.update(flowRunId, {
+        await repo.update(flowRunId, {
             status: ExecutionOutputStatus.PAUSED,
             logsFileId: logFileId,
             pauseMetadata,
         })
 
-        const flowRun = await runRepository.findOneByOrFail({ id: flowRunId })
+        const flowRun = await repo.findOneByOrFail({ id: flowRunId })
 
         await flowRunSideEffects.pause({ flowRun })
     },
 
     async getOne({ projectId, id }: GetOneParams): Promise<FlowRun | null> {
-        return await runRepository.findOneBy({
+        return await repo.findOneBy({
             projectId,
             id,
         })
