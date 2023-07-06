@@ -49,10 +49,7 @@ module.exports = {
         'green-border': 'var(--green-border)',
         outline: 'var(--outline)',
         description: 'var(--description)',
-        danger: {
-          DEFAULT: '#dc3545',
-          light: '#efa2a980',
-        },
+        danger: 'var(--danger)',
         primary: { DEFAULT: 'var(--primary-default)',
         medium:'var(--primary-medium)',
          light: 'var(--primary-light)', 

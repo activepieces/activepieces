@@ -36,6 +36,7 @@
     --outline: #{$outline};
     --description: #{$description};
     --bleached-gray: #{$bleached-gray};
+    --danger: #{$danger};
     @each $shadeName, $shadeValue in $primary-color {
         --primary-#{$shadeName}: #{$shadeValue};
     }
