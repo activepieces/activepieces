@@ -1,3 +1,4 @@
+//Colors names, these are used in texts and bgs, couldn't use them in material a lot, because their api doesn't allow everything to be overwritten or because some values are derived from others.
 $line: #f0f0f0;
 $title: #262626;
 $dividers: #e0e4e8 !default;
@@ -39,8 +40,9 @@ $success-color: (
     "default": #14ae5c,
     "light": #3cad71,
 );
-
+$font-family: "Open Sans";
 $selection-color: #8965e6;
+//Colors end
 $drop-point-height: 125px;
 $drop-point-width: 300px;
 $appended-to-body-z-index: 9999;
