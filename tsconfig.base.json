@@ -59,6 +59,9 @@
         "packages/pieces/facebook-pages/src/index.ts"
       ],
       "@activepieces/piece-figma": ["packages/pieces/figma/src/index.ts"],
+      "@activepieces/piece-freshdesk": [
+        "packages/pieces/freshdesk/src/index.ts"
+      ],
       "@activepieces/piece-freshsales": [
         "packages/pieces/freshsales/src/index.ts"
       ],
