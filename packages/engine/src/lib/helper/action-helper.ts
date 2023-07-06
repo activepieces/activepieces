@@ -30,6 +30,7 @@ import {
     flowHelper,
     extractPieceFromModule,
     getPackageAliasForPiece,
+    AUTHENTICATION_PROPERTY_NAME,
 } from "@activepieces/shared";
 import { VariableService } from "../services/variable-service";
 import { isNil } from '@activepieces/shared'
@@ -212,8 +213,7 @@ export const pieceHelper = {
 
         const context: ActionContext = {
             executionType: ExecutionType.BEGIN,
-            // TODO URGENT
-            auth: resolvedProps['auth'],
+            auth: resolvedProps[AUTHENTICATION_PROPERTY_NAME],
             propsValue: resolvedProps,
             store: createContextStore('', globals.flowId),
             connections: {

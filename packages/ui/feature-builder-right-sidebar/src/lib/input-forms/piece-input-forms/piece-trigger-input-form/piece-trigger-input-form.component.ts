@@ -12,7 +12,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { forkJoin, map, Observable, of, shareReplay, take, tap } from 'rxjs';
-import { TriggerType, UpdateTriggerRequest } from '@activepieces/shared';
+import { TriggerType, UpdateTriggerRequest, AUTHENTICATION_PROPERTY_NAME } from '@activepieces/shared';
 import {
   PieceAuthProperty,
   TriggerStrategy,
@@ -203,8 +203,7 @@ export class PieceTriggerInputFormComponent {
             };
             if (selectedTrigger.value.auth) {
               properties = {
-                // TODO FIX URGENT
-                auth: selectedTrigger.value.auth!,
+                [AUTHENTICATION_PROPERTY_NAME]: selectedTrigger.value.auth!,
                 ...properties,
               };
             }
@@ -293,10 +292,10 @@ export class PieceTriggerInputFormComponent {
     };
     if (selectedValue.auth) {
       properties = {
-        // TODO FIX URGENT
-        auth: selectedValue.auth!,
+        [AUTHENTICATION_PROPERTY_NAME]: selectedValue.auth!,
         ...properties,
       };
+      
     }
     const propertiesFormValue: PiecePropertiesFormValue = {
       properties: properties,

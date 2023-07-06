@@ -30,6 +30,7 @@ import {
 import { Store } from '@ngrx/store';
 import {
   ActionType,
+  AUTHENTICATION_PROPERTY_NAME,
   PieceActionSettings,
   UpdateActionRequest,
 } from '@activepieces/shared';
@@ -242,10 +243,9 @@ export class PieceActionInputFormComponent
       let properties = {
         ...selectedAction.value.properties,
       };
-      // TODO FIX URGENT
       if (selectedAction.value.auth) {
         properties = {
-          auth: selectedAction.value.auth,
+          [AUTHENTICATION_PROPERTY_NAME]: selectedAction.value.auth,
           ...properties,
         };
       }
@@ -328,9 +328,8 @@ export class PieceActionInputFormComponent
       propertiesValues: {},
     };
     if (selectedActionValue.auth) {
-      // TODO FIX URGENT
       propertiesFormValue.properties = {
-        auth: selectedActionValue.auth,
+        [AUTHENTICATION_PROPERTY_NAME]: selectedActionValue.auth,
         ...propertiesFormValue.properties,
       };
     }

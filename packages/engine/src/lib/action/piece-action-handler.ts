@@ -1,5 +1,6 @@
 import { VariableService } from '../services/variable-service';
 import {
+  AUTHENTICATION_PROPERTY_NAME,
   Action,
   ActionType,
   ExecutionState,
@@ -15,7 +16,7 @@ import { pieceHelper } from '../helper/action-helper';
 import { createContextStore } from '../services/storage.service';
 import { connectionManager } from '../services/connections.service';
 import { Utils } from '../utils';
-import { ActionContext, PauseHook, PauseHookParams, PieceAuthProperty, PiecePropValueSchema, PiecePropertyMap, StaticPropsValue, StopHook, StopHookParams } from '@activepieces/pieces-framework';
+import { ActionContext, PauseHook, PauseHookParams, PiecePropertyMap, StaticPropsValue, StopHook, StopHookParams } from '@activepieces/pieces-framework';
 
 type CtorParams = {
   executionType: ExecutionType
@@ -140,8 +141,7 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
       const context: ActionContext = {
         executionType: this.executionType,
         store: createContextStore('', globals.flowId),
-        // TODO URGENT
-        auth: resolvedProps['auth'],
+        auth: resolvedProps[AUTHENTICATION_PROPERTY_NAME],
         propsValue: resolvedProps,
         connections: connectionManager,
         run: {

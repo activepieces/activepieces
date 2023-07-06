@@ -1,4 +1,4 @@
-import { ApEdition, EventPayload, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecutionState, PieceTrigger, ScheduleOptions, TriggerHookType } from "@activepieces/shared";
+import { AUTHENTICATION_PROPERTY_NAME, ApEdition, EventPayload, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecutionState, PieceTrigger, ScheduleOptions, TriggerHookType } from "@activepieces/shared";
 import { createContextStore } from "../services/storage.service";
 import { VariableService } from "../services/variable-service";
 import { pieceHelper } from "./action-helper";
@@ -58,8 +58,7 @@ export const triggerHelper = {
         scheduleOptions.timezone = request.timezone ?? "UTC";
       },
       webhookUrl: params.webhookUrl,
-      // TODO FIX URGENT
-      auth: validatedProps["auth"],
+      auth: validatedProps[AUTHENTICATION_PROPERTY_NAME],
       propsValue: validatedProps,
       payload: params.triggerPayload ?? {},
     };
