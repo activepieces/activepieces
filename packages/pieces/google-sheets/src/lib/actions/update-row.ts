@@ -15,39 +15,34 @@ export const updateRowAction = createAction({
             description: 'The row number to update',
             required: true,
         }),
-        values: Property.Array({
-            displayName: 'Values',
-            description: 'These are the cell values of the row that will be updated, begining with column A and continuing with each Value entered into the next column. For example, to update column C, you must enter Values for columns A, B, and C. It is likely that you will update these columns using Values selected from a previous Google Sheets operation so they will remain the same. If they are left blank they will be blanked out when updating. You do not need to enter Values for all of the columns, just those to the left of the Value you wish to update.',
-            required: true,
-        }),
+        values: googleSheetsCommon.values,
     },
     async run(context) {
-        const values = context.propsValue['values'];
-
         const sheetName = await googleSheetsCommon.findSheetName(context.propsValue['authentication']['access_token'], context.propsValue['spreadsheet_id'], context.propsValue['sheet_id']);
         if (!sheetName) {
             throw Error("Sheet not found in spreadsheet");
         }
-        if (Array.isArray(values)) {
+        const formattedValues = Object.values(context.propsValue['values']);
+        if (formattedValues.length > 0) {
             const res = await googleSheetsCommon.updateGoogleSheetRow({
                 accessToken: context.propsValue['authentication']['access_token'],
                 rowIndex:  Number(context.propsValue.row_id),
                 sheetName: sheetName,
                 spreadSheetId: context.propsValue['spreadsheet_id'],
                 valueInputOption: ValueInputOption.USER_ENTERED,
-                values: values as string[],
+                values: formattedValues,
             });
 
             
             res.body.updatedRange = res.body.updatedRange.replace(sheetName + "!", "");
             res.body.updatedRange = res.body.updatedRange.split(":");
-            const UpdatedRows = [];
+            const updatedRows = [];
             
             for (let i = 0; i < res.body.updatedRange.length; i++) 
-                UpdatedRows.push({ [res.body.updatedRange[i].charAt(0)]: parseInt(res.body.updatedRange[i].slice(1)) });
+                updatedRows.push({ [res.body.updatedRange[i].charAt(0)]: parseInt(res.body.updatedRange[i].slice(1)) });
             
 
-            return UpdatedRows;
+            return updatedRows;
         } else {
             throw Error("Values passed are not an array")
         }
