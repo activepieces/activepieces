@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { ActivatedRouteSnapshot } from '@angular/router';
 import { Observable, catchError, map, of, switchMap } from 'rxjs';
 import { FlowInstance, FlowVersion } from '@activepieces/shared';
 import { FlowInstanceService, FlowService } from '@activepieces/ui/common';
@@ -14,9 +14,7 @@ export type InstanceResolverData =
 @Injectable({
   providedIn: 'root',
 })
-export class InstanceResolver
-  implements Resolve<Observable<InstanceResolverData>>
-{
+export class InstanceResolver {
   constructor(
     private instanceService: FlowInstanceService,
     private flowService: FlowService

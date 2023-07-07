@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { ActivatedRouteSnapshot } from '@angular/router';
 import { Observable, map, of, switchMap } from 'rxjs';
 
 import { Flow, FlowId, Folder } from '@activepieces/shared';
@@ -9,7 +9,7 @@ export type FlowResolverData = { flow: Flow; folder?: Folder };
 @Injectable({
   providedIn: 'root',
 })
-export class GetFlowResolver implements Resolve<Observable<FlowResolverData>> {
+export class GetFlowResolver {
   constructor(
     private flowService: FlowService,
     private folderService: FoldersService
