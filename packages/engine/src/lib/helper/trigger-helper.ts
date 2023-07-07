@@ -38,10 +38,7 @@ export const triggerHelper = {
 
     const appListeners: Listener[] = [];
     const prefix = (params.hookType === TriggerHookType.TEST) ? 'test' : '';
-    const scheduleOptions: ScheduleOptions = {
-      cronExpression: "*/5 * * * *",
-      timezone: "UTC"
-    }
+    let scheduleOptions: ScheduleOptions | undefined = undefined;
     const context = {
       store: createContextStore(prefix, params.flowVersion.flowId),
       app: {
@@ -53,8 +50,10 @@ export const triggerHelper = {
         if (!isValidCron(request.cronExpression)) {
           throw new Error(`Invalid cron expression: ${request.cronExpression}`);
         }
-        scheduleOptions.cronExpression = request.cronExpression;
-        scheduleOptions.timezone = request.timezone ?? "UTC";
+        scheduleOptions = {
+          cronExpression: request.cronExpression,
+          timezone: request.timezone ?? "UTC"
+        }
       },
       webhookUrl: params.webhookUrl,
       propsValue: result,
