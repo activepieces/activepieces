@@ -3,7 +3,7 @@ import { amazonS3UploadBase64FileAction } from "./lib/actions/upload-file-from-b
 import { amazonS3UploadFileFromUrlAction } from "./lib/actions/upload-file-from-url";
 
 export const amazonS3Auth = PieceAuth.CustomAuth({
-  displayName: '',
+  displayName: 'Authentication',
   props: {
     accessKeyId: Property.ShortText({
       displayName: 'Access Key ID',

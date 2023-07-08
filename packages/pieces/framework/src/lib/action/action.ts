@@ -1,6 +1,6 @@
 import { ActionContext } from '../context';
 import { ActionBase } from '../piece-metadata';
-import { NonAuthPiecePropertyMap, PieceAuthProperty, PiecePropertyMap } from '../property/property';
+import { NonAuthPiecePropertyMap, PieceAuthProperty } from '../property/property';
 
 export type ActionRunner<PieceAuth extends PieceAuthProperty, ActionProps extends NonAuthPiecePropertyMap> =
   (ctx: ActionContext<PieceAuth, ActionProps>) => Promise<unknown | void>
@@ -33,14 +33,14 @@ export class IAction<PieceAuth extends PieceAuthProperty, ActionProps extends No
 
 export type Action<
   PieceAuth extends PieceAuthProperty = any,
-  ActionProps extends PiecePropertyMap = any,
-> = IAction<PieceAuth, NonAuthPiecePropertyMap>
+  ActionProps extends NonAuthPiecePropertyMap = any,
+> = IAction<PieceAuth, ActionProps>
 
 export const createAction = <
   PieceAuth extends PieceAuthProperty = PieceAuthProperty,
-  ActionProps extends PiecePropertyMap = PiecePropertyMap
+  ActionProps extends NonAuthPiecePropertyMap = any
 >(
-  params: CreateActionParams<PieceAuth, NonAuthPiecePropertyMap>,
+  params: CreateActionParams<PieceAuth, ActionProps>,
 ) => {
   return new IAction(
     params.name,

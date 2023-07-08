@@ -78,7 +78,7 @@ export const asanaCreateTaskAction = createAction({
                 return foundTag.gid;
             }
             return null;
-        }).filter((tag: null) => tag !== null);
+        }).filter((tag) => tag !== null);
 
         return (await callAsanaApi(HttpMethod.POST,
             `tasks`, getAccessTokenOrThrow(auth), {

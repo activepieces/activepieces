@@ -9,7 +9,7 @@ Enable basic authentication for your Wordpress website by downloading and instal
 `
 
 export const wordpressAuth = PieceAuth.CustomAuth({
-    displayName: '',
+    displayName: 'Authentication',
     description: markdownPropertyDescription,
     required: true,
     props: {

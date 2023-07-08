@@ -75,15 +75,13 @@ export const googleSheetsCommon = {
         displayName: 'Values',
         description: 'The values to insert',
         required: true,
-        refreshers: ['authentication', 'sheet_id', 'spreadsheet_id', 'is_first_row_headers'],
-        props: async (context) => {
+        refreshers: ['sheet_id', 'spreadsheet_id', 'is_first_row_headers'],
+        props: async ({auth, spreadsheet_id, sheet_id, is_first_row_headers}) => {
 
-            const authentication = context.authentication as OAuth2PropertyValue;
-            const spreadsheet_id = context.spreadsheet_id as unknown as string;
-            const sheet_id = context.sheet_id as unknown as number;
-            const values = await googleSheetsCommon.getValues(spreadsheet_id, getAccessTokenOrThrow(authentication), sheet_id);
+            const authentication = auth as OAuth2PropertyValue;
+            const values = await googleSheetsCommon.getValues(spreadsheet_id as unknown as string, getAccessTokenOrThrow(authentication), sheet_id as unknown as number);
 
-            if (!context.is_first_row_headers) {
+            if (!is_first_row_headers) {
                 return {
                     values: Property.Array({
                         displayName: 'Values',
@@ -111,9 +109,9 @@ export const googleSheetsCommon = {
         description: 'Column Name',
         displayName: 'The name of the column to search in',
         required: true,
-        refreshers: ['authentication', 'sheet_id', 'spreadsheet_id'],
+        refreshers: ['sheet_id', 'spreadsheet_id'],
         options: async (context) => {
-            const authentication = context.authentication as OAuth2PropertyValue;
+            const authentication = context.auth as OAuth2PropertyValue;
             const spreadsheet_id = context.spreadsheet_id as string;
             const sheet_id = context.sheet_id as number;
             const accessToken = authentication['access_token'] ?? '';

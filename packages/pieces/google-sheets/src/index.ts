@@ -5,7 +5,6 @@ import { deleteRowAction } from './lib/actions/delete-row.action';
 import { updateRowAction } from './lib/actions/update-row';
 import { findRowsAction } from './lib/actions/find-rows';
 import { clearSheetAction } from './lib/actions/clear-sheet';
-<<<<<<< HEAD
 
 export const googleSheetsAuth = PieceAuth.OAuth2({
     description: "",
@@ -15,8 +14,6 @@ export const googleSheetsAuth = PieceAuth.OAuth2({
     required: true,
     scope: ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive.readonly"]
 })
-=======
->>>>>>> main
 
 export const googleSheets = createPiece({
 	minimumSupportedRelease: '0.5.0',

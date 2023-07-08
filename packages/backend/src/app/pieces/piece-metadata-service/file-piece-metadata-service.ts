@@ -16,8 +16,7 @@ const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
     const piecesMetadata: PieceMetadata[] = []
 
     for (const piecePackage of filteredPiecePackages) {
-<<<<<<< HEAD
-      try {
+        try {
             const packageJson = await import(join(piecesPath, piecePackage, 'package.json'))
             const module = await import(join(piecesPath, piecePackage, 'src', 'index'))
             const { name: pieceName, version: pieceVersion } = packageJson
@@ -26,12 +25,6 @@ const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
                 pieceName,
                 pieceVersion,
             })
-=======
-        try {
-            const packageJson = await import(join(piecesPath, piecePackage, 'package.json'))
-            const module = await import(join(piecesPath, piecePackage, 'src', 'index'))
-            const piece = Object.values<Piece>(module)[0]
->>>>>>> main
             piecesMetadata.push({
                 directoryName: piecePackage,
                 ...piece.metadata(),

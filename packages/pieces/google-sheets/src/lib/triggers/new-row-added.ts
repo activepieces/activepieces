@@ -5,11 +5,7 @@ import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-com
 import { isNil } from '@activepieces/shared'
 import { googleSheetsAuth } from '../..';
 
-<<<<<<< HEAD
 const polling: Polling<OAuth2PropertyValue, { spreadsheet_id: string, sheet_id: number, max_rows_to_poll: number | undefined }> = {
-=======
-const polling: Polling<{ authentication: OAuth2PropertyValue, spreadsheet_id: string, sheet_id: number, max_rows_to_poll: number | undefined }> = {
->>>>>>> main
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, propsValue, lastItemId }) => {
     const currentValues = (await googleSheetsCommon.getValues(propsValue.spreadsheet_id, auth.access_token, propsValue.sheet_id)) ?? []
