@@ -1,7 +1,7 @@
 import { Static, Type } from "@sinclair/typebox";
  
 const semVerRegex = /^[0-9]+\.[0-9]+\.[0-9]+$/;
-const queryVersionRegex = /^(\^)?[0-9]+\.[0-9]+\.[0-9]+$/;
+const queryVersionRegex = /^([~^])?[0-9]+\.[0-9]+\.[0-9]+$/;
 
 export const SemVerType = Type.RegEx(semVerRegex);
 export const QueryVerType = Type.RegEx(queryVersionRegex);
