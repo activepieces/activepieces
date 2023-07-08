@@ -1,4 +1,8 @@
 {
   "name": "@activepieces/piece-http",
+<<<<<<< HEAD
   "version": "0.3.0"
+=======
+  "version": "0.2.4"
+>>>>>>> main
 }

@@ -1,4 +1,8 @@
 {
   "name": "@activepieces/piece-telegram-bot",
+<<<<<<< HEAD
   "version": "0.3.0"
+=======
+  "version": "0.2.6"
+>>>>>>> main
 }

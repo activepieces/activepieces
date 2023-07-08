@@ -19,12 +19,21 @@ export const updateRowAction = createAction({
         }),
         values: googleSheetsCommon.values,
     },
+<<<<<<< HEAD
     async run({propsValue, auth}) {
         const sheetName = await googleSheetsCommon.findSheetName(auth['access_token'], propsValue['spreadsheet_id'], propsValue['sheet_id']);
         if (!sheetName) {
             throw Error("Sheet not found in spreadsheet");
         }
         const formattedValues = Object.values(propsValue['values']);
+=======
+    async run(context) {
+        const sheetName = await googleSheetsCommon.findSheetName(context.propsValue['authentication']['access_token'], context.propsValue['spreadsheet_id'], context.propsValue['sheet_id']);
+        if (!sheetName) {
+            throw Error("Sheet not found in spreadsheet");
+        }
+        const formattedValues = Object.values(context.propsValue['values']);
+>>>>>>> main
         if (formattedValues.length > 0) {
             const res = await googleSheetsCommon.updateGoogleSheetRow({
                 accessToken: auth['access_token'],
@@ -32,7 +41,11 @@ export const updateRowAction = createAction({
                 sheetName: sheetName,
                 spreadSheetId: propsValue['spreadsheet_id'],
                 valueInputOption: ValueInputOption.USER_ENTERED,
+<<<<<<< HEAD
                 values: formattedValues as string[],
+=======
+                values: formattedValues,
+>>>>>>> main
             });
 
             

@@ -27,7 +27,11 @@ export const findRowsAction = createAction({
         }
         const alphabet = 'abcdefghijklmnopqrstuvwxyz';
         
+<<<<<<< HEAD
         const column = alphabet.indexOf(propsValue.column_name?.toLowerCase().toString()[0] ?? 'a');
+=======
+        const column = alphabet.indexOf(context.propsValue.column_name?.toLowerCase().toString()[0] ?? 'a');
+>>>>>>> main
         if (column === -1) {
             throw Error("Column not found in sheet");
         } else {
@@ -37,7 +41,11 @@ export const findRowsAction = createAction({
             for (const { row, values: innerValues } of values) {
                 for (const value of innerValues) {
                     for (const key in value) {
+<<<<<<< HEAD
                         if(value[key].includes(propsValue.search_value) && key.toLowerCase() === alphabet[column]){
+=======
+                        if(value[key].includes(context.propsValue.search_value) && key.toLowerCase() === alphabet[column]){
+>>>>>>> main
                             matchingRows.push({
                                 [key]: value[key],
                             });

@@ -1,6 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { Dimension, googleSheetsCommon, ValueInputOption } from '../common/common';
+<<<<<<< HEAD
 import { googleSheetsAuth } from '@activepieces/piece-google-sheets';
+=======
+>>>>>>> main
 
 export const insertRowAction = createAction({
     auth: googleSheetsAuth,
@@ -24,6 +27,29 @@ export const insertRowAction = createAction({
         }),
         values: googleSheetsCommon.values,
 
+<<<<<<< HEAD
+=======
+    },
+    async run(context) {
+        const values = context.propsValue['values'];
+        const sheetName = await googleSheetsCommon.findSheetName(context.propsValue['authentication']['access_token'],
+            context.propsValue['spreadsheet_id'], context.propsValue['sheet_id']);
+        if (!sheetName) {
+            return {}
+        }
+        const formattedValues = context.propsValue.is_first_row_headers ? Object.values(values) : values['values'];
+        const res = await googleSheetsCommon.appendGoogleSheetValues({
+            accessToken: context.propsValue['authentication']['access_token'],
+            majorDimension: Dimension.COLUMNS,
+            range: sheetName,
+            spreadSheetId: context.propsValue['spreadsheet_id'],
+            valueInputOption: context.propsValue['as_string']
+                ? ValueInputOption.RAW
+                : ValueInputOption.USER_ENTERED,
+            values: formattedValues,
+        });
+        return res.body;
+>>>>>>> main
     },
     async run({propsValue, auth}) {
         const values = propsValue['values'];
