@@ -4,7 +4,6 @@
   "overrides": [
     {
       "files": ["*.ts"],
-    
       "rules": {
         "rxjs/no-async-subscribe": "error",
         "rxjs/no-nested-subscribe": "error",
@@ -27,9 +26,9 @@
             "style": "kebab-case"
           }
         ]
-      }, 
+      },
       "extends": [
-        "plugin:@nrwl/nx/angular",
+        "plugin:@nx/angular",
         "plugin:@angular-eslint/template/process-inline-templates",
         "plugin:@ngrx/strict-requiring-type-checking",
         "plugin:prettier/recommended"
@@ -38,7 +37,7 @@
     },
     {
       "files": ["*.html"],
-      "extends": ["plugin:@nrwl/nx/angular-template"],
+      "extends": ["plugin:@nx/angular-template"],
       "rules": {}
     }
   ]

@@ -1,12 +1,9 @@
-import { OAuth2PropertyValue, Property, Store, createTrigger } from '@activepieces/pieces-framework';
+import { OAuth2PropertyValue, Property, createTrigger } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from "@activepieces/pieces-framework";
 import { googleSheetsCommon } from '../common/common';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/shared'
 import { googleSheetsAuth } from '../..';
-
-const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-const sampleData = Array.from(alphabet).map(c => `${c} Value`);
 
 const polling: Polling<OAuth2PropertyValue, { spreadsheet_id: string, sheet_id: number, max_rows_to_poll: number | undefined }> = {
   strategy: DedupeStrategy.LAST_ITEM,
@@ -36,10 +33,7 @@ export const readNewRows = createTrigger({
     })
   },
   type: TriggerStrategy.POLLING,
-  sampleData: {
-    "value": sampleData,
-    "rowId": 1
-  },
+  sampleData: {},
   onEnable: async (context) => {
     await pollingHelper.onEnable(polling, {
       auth: context.auth,
