@@ -1,5 +1,5 @@
 import { readdir } from 'node:fs/promises'
-import { resolve } from 'node:path'
+import { resolve, join} from 'node:path'
 import { cwd } from 'node:process'
 import { Piece, PieceMetadata, PieceMetadataSummary } from '@activepieces/pieces-framework'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
@@ -17,8 +17,8 @@ const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
 
     for (const piecePackage of filteredPiecePackages) {
         try {
-            const module = await import(`../../../../../pieces/${piecePackage}/src/index.ts`)
-            const packageJson = await import(`../../../../../pieces/${piecePackage}/package.json`)
+            const packageJson = await import(join(piecesPath, piecePackage, 'package.json'))
+            const module = await import(join(piecesPath, piecePackage, 'src', 'index'))
             const piece = Object.values<Piece>(module)[0]
             piecesMetadata.push({
                 directoryName: piecePackage,

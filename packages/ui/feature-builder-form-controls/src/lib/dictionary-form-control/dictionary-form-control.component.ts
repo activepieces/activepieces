@@ -74,13 +74,13 @@ export class DictionaryFormControlComponent
   get pairs() {
     return this.form.get('pairs') as UntypedFormArray;
   }
-  addNewPair(triggerChangeDetection: boolean = true) {
+  addNewPair(triggerChangeDetection = true) {
     this.addPair({ key: '', value: '' }, triggerChangeDetection);
   }
 
   addPair(
     pair: { key: string; value: unknown },
-    triggerChangeDetection: boolean = true
+    triggerChangeDetection = true
   ) {
     const pairGroup = this.fb.group({
       key: new UntypedFormControl(pair.key),
