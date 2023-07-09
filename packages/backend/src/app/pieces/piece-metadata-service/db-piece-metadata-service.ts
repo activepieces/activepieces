@@ -142,7 +142,18 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
         if (version.startsWith('^')) {
             return LessThan(increaseMajorVersion(version.substring(1)))
         }
+        if (version.startsWith('~')) {
+            return LessThan(increaseMinorVersion(version.substring(1)))
+        }
         return Equal(version)
+    }
+
+    function increaseMinorVersion(version: string): string {
+        const incrementedVersion = semver.inc(version, 'minor')
+        if (isNil(incrementedVersion)) {
+            throw new Error(`Failed to increase minor version ${version}`)
+        }
+        return incrementedVersion
     }
 
     function increaseMajorVersion(version: string): string {
