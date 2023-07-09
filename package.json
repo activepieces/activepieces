@@ -46,6 +46,7 @@
     "@ngrx/store": "16.0.1",
     "@ngrx/store-devtools": "16.0.1",
     "@notionhq/client": "^2.2.3",
+    "@nx/devkit": "^16.5.0",
     "@sendgrid/mail": "^7.7.0",
     "@sentry/node": "^7.38.0",
     "@sinclair/typebox": "^0.26.3",
@@ -139,6 +140,7 @@
     "@commitlint/cli": "^17.4.2",
     "@commitlint/config-conventional": "^17.4.2",
     "@ngrx/eslint-plugin": "16.0.1",
+    "@nx/angular": "16.5.0",
     "@nx/eslint-plugin": "16.5.0",
     "@nx/jest": "16.5.0",
     "@nx/js": "16.5.0",
@@ -207,7 +209,6 @@
     "turbowatch": "^2.21.0",
     "typescript": "5.1.6",
     "wait-on": "^7.0.1",
-    "webpack-ignore-dynamic-require": "^1.0.0",
-    "@nx/angular": "16.5.0"
+    "webpack-ignore-dynamic-require": "^1.0.0"
   }
 }
