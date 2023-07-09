@@ -2,7 +2,7 @@ import { readdir } from 'node:fs/promises'
 import { resolve, join} from 'node:path'
 import { cwd } from 'node:process'
 import { Piece, PieceMetadata, PieceMetadataSummary } from '@activepieces/pieces-framework'
-import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, extractPieceFromModule } from '@activepieces/shared'
 import { captureException } from '../../helper/logger'
 import { GetParams, PieceMetadataService } from './piece-metadata-service'
 import { isNil } from '@activepieces/shared'
@@ -19,12 +19,17 @@ const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
         try {
             const packageJson = await import(join(piecesPath, piecePackage, 'package.json'))
             const module = await import(join(piecesPath, piecePackage, 'src', 'index'))
-            const piece = Object.values<Piece>(module)[0]
+            const { name: pieceName, version: pieceVersion } = packageJson
+            const piece = extractPieceFromModule<Piece>({
+                module,
+                pieceName,
+                pieceVersion,
+            })
             piecesMetadata.push({
                 directoryName: piecePackage,
                 ...piece.metadata(),
-                name: packageJson.name,
-                version: packageJson.version,
+                name: pieceName,
+                version: pieceVersion,
             })
         }
         catch(ex) {
@@ -46,6 +51,7 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
                 description: p.description,
                 logoUrl: p.logoUrl,
                 version: p.version,
+                auth: p.auth,
                 minimumSupportedRelease: p.minimumSupportedRelease,
                 maximumSupportedRelease: p.maximumSupportedRelease,
                 actions: Object.keys(p.actions).length,

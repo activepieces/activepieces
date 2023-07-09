@@ -7,12 +7,6 @@ import utc from "dayjs/plugin/utc";
 import path from "path";
 import isBase64 from 'is-base64';
 
-type ResolveParams = {
-  unresolvedInput: unknown
-  executionState: ExecutionState
-  censorConnections: boolean
-}
-
 export class VariableService {
   private VARIABLE_TOKEN = RegExp('\\{\\{(.*?)\\}\\}', 'g');
   private static CONNECTIONS = 'connections';
@@ -78,21 +72,27 @@ export class VariableService {
   }
 
   private async resolveInternally(unresolvedInput: any, valuesMap: any, censorConnections: boolean): Promise<any> {
-    if (unresolvedInput === undefined || unresolvedInput === null) {
+    if (isNil(unresolvedInput)) {
       return unresolvedInput;
-    } else if (isString(unresolvedInput)) {
+    }
+
+    if (isString(unresolvedInput)) {
       return this.resolveInput(unresolvedInput, valuesMap, censorConnections);
-    } else if (Array.isArray(unresolvedInput)) {
+    }
+
+    if (Array.isArray(unresolvedInput)) {
       for (let i = 0; i < unresolvedInput.length; ++i) {
         unresolvedInput[i] = await this.resolveInternally(unresolvedInput[i], valuesMap, censorConnections);
       }
-    } else if (typeof unresolvedInput === 'object') {
+    }
+    else if (typeof unresolvedInput === 'object') {
       const entries = Object.entries(unresolvedInput);
       for (let i = 0; i < entries.length; ++i) {
         const [key, value] = entries[i];
         unresolvedInput[key] = await this.resolveInternally(value, valuesMap, censorConnections);
       }
     }
+
     return unresolvedInput;
   }
 
@@ -104,14 +104,36 @@ export class VariableService {
     return valuesMap;
   }
 
-  resolve(params: ResolveParams): Promise<any> {
+  resolve<T = unknown>(params: ResolveParams): Promise<T> {
     const { unresolvedInput, executionState, censorConnections } = params
+
+    if (isNil(unresolvedInput)) {
+      return Promise.resolve(unresolvedInput) as Promise<T>
+    }
 
     return this.resolveInternally(
       JSON.parse(JSON.stringify(unresolvedInput)),
       this.getExecutionStateObject(executionState),
       censorConnections
-    );
+    ) as Promise<T>
+  }
+
+  async resolveAndValidate<T = unknown>(params: ResolveAndValidateParams): Promise<T> {
+    const { unresolvedInput, executionState, censorConnections, actionProps } = params
+
+    const resolvedInput = await this.resolve<T>({
+      unresolvedInput,
+      executionState,
+      censorConnections,
+    })
+
+    const { result, errors } = await this.validateAndCast(resolvedInput, actionProps)
+
+    if (Object.keys(errors).length > 0) {
+      throw new Error(JSON.stringify(errors));
+    }
+
+    return result as T
   }
 
   castToNumber(number: any): number | undefined | null {
@@ -238,4 +260,14 @@ export class VariableService {
       errors
     };
   }
+}
+
+type ResolveParams = {
+  unresolvedInput: unknown
+  executionState: ExecutionState
+  censorConnections: boolean
+}
+
+type ResolveAndValidateParams = ResolveParams & {
+  actionProps: PiecePropertyMap
 }

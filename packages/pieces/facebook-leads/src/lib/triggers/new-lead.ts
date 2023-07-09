@@ -1,14 +1,15 @@
 import { TriggerStrategy, createTrigger } from "@activepieces/pieces-framework";
 import { FacebookPageDropdown, facebookLeadsCommon } from "../common";
+import { facebookLeadsAuth } from "../..";
 
 export const newLead = createTrigger({
+    auth: facebookLeadsAuth,
     name: 'new_lead',
     displayName: 'New Lead',
     description: 'Triggers when a new lead is created',
     type: TriggerStrategy.APP_WEBHOOK,
     sampleData: {},
     props: {
-        authentication: facebookLeadsCommon.authentication,
         page: facebookLeadsCommon.page,
         form: facebookLeadsCommon.form
     },
@@ -20,7 +21,7 @@ export const newLead = createTrigger({
         context.app.createListeners({ events: ['lead'], identifierValue: page.id })
     },
 
-    async onDisable(context) {
+    async onDisable() {
         //
     },
 
@@ -29,7 +30,7 @@ export const newLead = createTrigger({
         let leadPings: any[] = [];
         const leads: any[] = [];
         const form = context.propsValue.form;
-        
+
         if (form !== undefined && form !== '' && form !== null) {
             context.payload.body.entry.forEach((lead: any) => {
                 if (form == lead.changes[0].value.form_id) {
@@ -41,14 +42,8 @@ export const newLead = createTrigger({
             leadPings = context.payload.body.entry;
         }
 
-        leadPings.forEach(async (lead) => {
-            const leadData = await facebookLeadsCommon.getLeadDetails(lead.changes[0].value.leadgen_id, context.propsValue.authentication.access_token);
-            leads.push(leadData);
-        })
-
         return [leads];
     },
-
     async test(context) {
         let form = context.propsValue.form as string;
         const page = context.propsValue.page as FacebookPageDropdown;
@@ -58,7 +53,7 @@ export const newLead = createTrigger({
             form = forms[0].id;
         }
 
-        const data = await facebookLeadsCommon.loadSampleData(form, context.propsValue.authentication.access_token)
+        const data = await facebookLeadsCommon.loadSampleData(form, context.auth.access_token)
         return [data.data]
     }
 })

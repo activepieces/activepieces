@@ -1,5 +1,5 @@
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common'
-import { Property, StaticPropsValue } from '@activepieces/pieces-framework'
+import { OAuth2PropertyValue, PieceAuth, Property, StaticPropsValue } from '@activepieces/pieces-framework'
 import { SpotifyWebApi } from './client'
 
 
@@ -15,7 +15,7 @@ To obtain a client ID and client secret for Spotify, follow these simple steps:
 `
 
 export const spotifyCommon = {
-    authentication: Property.OAuth2({
+    authentication: PieceAuth.OAuth2({
         displayName: 'Authentication',
         description: markdownDescription,
         required: true,
@@ -36,16 +36,18 @@ export const spotifyCommon = {
     device_id: (required = true) => Property.Dropdown({
         displayName: 'Device',
         required,
-        refreshers: ['authentication'],
-        options: async (value) => {
-            if (!value['authentication']) {
+        refreshers: [],
+        options: async ({auth}) => {
+            if (!auth) {
                 return {
                     disabled: true,
                     placeholder: 'setup authentication first',
                     options: []
                 }
             }
-            const client = makeClient(value)
+            const client = makeClient({
+                auth: auth as OAuth2PropertyValue,
+            })
             const res = await client.getDevices()
             return {
                 disabled: false,
@@ -61,16 +63,18 @@ export const spotifyCommon = {
     playlist_id: (required = true) => Property.Dropdown({
         displayName: 'Playlist',
         required,
-        refreshers: ['authentication'],
-        options: async (value) => {
-            if (!value['authentication']) {
+        refreshers: [],
+        options: async ({auth}) => {
+            if (!auth) {
                 return {
                     disabled: true,
                     placeholder: 'setup authentication first',
                     options: []
                 }
             }
-            const client = makeClient(value)
+            const client = makeClient({
+                auth: auth as OAuth2PropertyValue,
+            })
             const playlists = await client.getAllCurrentUserPlaylists()
             return {
                 disabled: false,
@@ -85,7 +89,7 @@ export const spotifyCommon = {
     })
 }
 
-export function makeClient(propsValue: StaticPropsValue<any>): SpotifyWebApi {
-    const token = getAccessTokenOrThrow(propsValue.authentication)
+export function makeClient(propsValue: {auth: OAuth2PropertyValue}): SpotifyWebApi {
+    const token = getAccessTokenOrThrow(propsValue.auth)
     return new SpotifyWebApi(token)
 }

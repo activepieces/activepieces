@@ -55,6 +55,7 @@ To enable the sign-up feature, you need to ensure the code runs safely on the ma
 
 1. Make the Docker container privileged: Edit the `docker-compose.yml` file and add `privileged: true`. This allows the container to have additional permissions to sandbox.
 2. Change the execution mode to sandboxing: Modify the `AP_EXECUTION_MODE` setting to `SANDBOXED`. This ensures the code runs within a secure environment, isolated from the rest of the system.
+3. Modify the `AP_SIGN_UP_ENABLED` to true , the environment variable. 
 
 ### Setting Sandbox mode:
 

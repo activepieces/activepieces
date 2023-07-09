@@ -54,6 +54,7 @@ import { createPiece } from "@activepieces/pieces-framework";
 
 export const ${pieceNameCamelCase} = createPiece({
   displayName: "${capitalizeFirstLetter(pieceName)}",
+  auth: PieceAuth.None(),
   logoUrl: "https://cdn.activepieces.com/pieces/${pieceName}.png",
   authors: [],
   actions: [],

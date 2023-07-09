@@ -3,14 +3,6 @@ import { httpClient, HttpMethod, AuthenticationType, HttpRequest, getAccessToken
 
 export const googleSheetsCommon = {
     baseUrl: "https://sheets.googleapis.com/v4/spreadsheets",
-    authentication: Property.OAuth2({
-        description: "",
-        displayName: 'Authentication',
-        authUrl: "https://accounts.google.com/o/oauth2/auth",
-        tokenUrl: "https://oauth2.googleapis.com/token",
-        required: true,
-        scope: ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive.readonly"]
-    }),
     include_team_drives: Property.Checkbox({
         displayName: 'Include Team Drive Sheets',
         description: 'Determines if sheets from Team Drives should be included in the results.',
@@ -20,22 +12,22 @@ export const googleSheetsCommon = {
     spreadsheet_id: Property.Dropdown({
         displayName: "Spreadsheet",
         required: true,
-        refreshers: ['authentication', 'include_team_drives'],
-        options: async (propsValue) => {
-            if (!propsValue['authentication']) {
+        refreshers: ['include_team_drives'],
+        options: async ({ auth, include_team_drives}) => {
+            if (!auth) {
                 return {
                     disabled: true,
                     options: [],
                     placeholder: 'Please authenticate first'
                 }
             }
-            const authProp: OAuth2PropertyValue = propsValue['authentication'] as OAuth2PropertyValue;
+            const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
             const spreadsheets = (await httpClient.sendRequest<{ files: { id: string, name: string }[] }>({
                 method: HttpMethod.GET,
                 url: `https://www.googleapis.com/drive/v3/files`,
                 queryParams: {
                     q: "mimeType='application/vnd.google-apps.spreadsheet'",
-                    includeItemsFromAllDrives: propsValue['include_team_drives'] ? "true" : "false",
+                    includeItemsFromAllDrives: include_team_drives ? "true" : "false",
                     supportsAllDrives: "true"
                 },
                 authentication: {
@@ -57,17 +49,17 @@ export const googleSheetsCommon = {
     sheet_id: Property.Dropdown({
         displayName: "Sheet",
         required: true,
-        refreshers: ['authentication', 'spreadsheet_id'],
-        options: async (propsValue) => {
-            if (!propsValue['authentication'] || (propsValue['spreadsheet_id'] ?? '').toString().length === 0) {
+        refreshers: ['spreadsheet_id'],
+        options: async ({ auth, spreadsheet_id }) => {
+            if (!auth || (spreadsheet_id ?? '').toString().length === 0) {
                 return {
                     disabled: true,
                     options: [],
                     placeholder: 'Please select a spreadsheet first'
                 }
             }
-            const authProp: OAuth2PropertyValue = propsValue['authentication'] as OAuth2PropertyValue;
-            const sheets = (await listSheetsName(authProp['access_token'], propsValue['spreadsheet_id'] as string));
+            const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
+            const sheets = (await listSheetsName(authProp['access_token'], spreadsheet_id as string));
             return {
                 disabled: false,
                 options: sheets.map((sheet: { properties: { title: string, sheetId: number } }) => {
@@ -83,15 +75,13 @@ export const googleSheetsCommon = {
         displayName: 'Values',
         description: 'The values to insert',
         required: true,
-        refreshers: ['authentication', 'sheet_id', 'spreadsheet_id', 'is_first_row_headers'],
-        props: async (context) => {
+        refreshers: ['sheet_id', 'spreadsheet_id', 'is_first_row_headers'],
+        props: async ({auth, spreadsheet_id, sheet_id, is_first_row_headers}) => {
 
-            const authentication = context.authentication as OAuth2PropertyValue;
-            const spreadsheet_id = context.spreadsheet_id as unknown as string;
-            const sheet_id = context.sheet_id as unknown as number;
-            const values = await googleSheetsCommon.getValues(spreadsheet_id, getAccessTokenOrThrow(authentication), sheet_id);
+            const authentication = auth as OAuth2PropertyValue;
+            const values = await googleSheetsCommon.getValues(spreadsheet_id as unknown as string, getAccessTokenOrThrow(authentication), sheet_id as unknown as number);
 
-            if (!context.is_first_row_headers) {
+            if (!is_first_row_headers) {
                 return {
                     values: Property.Array({
                         displayName: 'Values',
@@ -119,9 +109,9 @@ export const googleSheetsCommon = {
         description: 'Column Name',
         displayName: 'The name of the column to search in',
         required: true,
-        refreshers: ['authentication', 'sheet_id', 'spreadsheet_id'],
+        refreshers: ['sheet_id', 'spreadsheet_id'],
         options: async (context) => {
-            const authentication = context.authentication as OAuth2PropertyValue;
+            const authentication = context.auth as OAuth2PropertyValue;
             const spreadsheet_id = context.spreadsheet_id as string;
             const sheet_id = context.sheet_id as number;
             const accessToken = authentication['access_token'] ?? '';
