@@ -1,47 +1,24 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
-import { CreateFlowRunRequest, ExecutionType, FlowRunId, ListFlowRunsRequestQuery, RunEnvironment } from '@activepieces/shared'
+import { ApId, CreateFlowRunRequest, ExecutionType, FlowRunId, ListFlowRunsRequestQuery, RunEnvironment } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
-import { flowRunService, runRepository } from './flow-run-service'
-import { isNil } from 'lodash'
+import { flowRunService } from './flow-run-service'
 
 const DEFAULT_PAGING_LIMIT = 10
-
 
 type GetOnePathParams = {
     id: FlowRunId
 }
 
+const ResumeFlowRunRequest = {
+    schema: {
+        params: Type.Object({
+            id: ApId,
+        }),
+    },
+}
+
 export const flowRunController: FastifyPluginCallbackTypebox = (app, _options, done): void => {
-
-    app.get('/:runId/resume', {
-        schema: {
-            params: Type.Object({
-                runId: Type.String(),
-            }),
-        },
-    }, async (request, reply) => {
-        const flowRun = await runRepository.findOneBy({
-            id: request.params.runId,
-        });
-        if (isNil(flowRun)) {
-            await reply.status(404).send({});
-            return
-        }
-
-        await flowRunService.start({
-            payload: null,
-            flowRunId: flowRun.id,
-            projectId: flowRun.projectId,
-            flowVersionId: flowRun.flowVersionId,
-            executionType: ExecutionType.RESUME,
-            environment: RunEnvironment.PRODUCTION,
-        })
-
-        await reply.send()
-    })
-
-
     app.post(
         '/',
         {
@@ -97,6 +74,12 @@ export const flowRunController: FastifyPluginCallbackTypebox = (app, _options, d
         }
 
         await reply.send(flowRun)
+    })
+
+    app.get('/:id/resume', ResumeFlowRunRequest, async (req) => {
+        await flowRunService.resume({
+            flowRunId: req.params.id,
+        })
     })
 
     done()
