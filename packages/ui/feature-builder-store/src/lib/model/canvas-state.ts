@@ -25,6 +25,7 @@ export interface CanvasState {
   selectedStepName: string;
   isGeneratingFlowComponentOpen: boolean;
   displayedFlowVersion: FlowVersion;
+  clickedAddBtnId?: number;
 }
 
 export interface StepTypeSideBarProps {

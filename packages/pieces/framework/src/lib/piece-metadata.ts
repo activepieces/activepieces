@@ -1,12 +1,16 @@
-import { PiecePropertyMap } from "./property";
+import { ProjectId } from "@activepieces/shared";
+import { PieceAuthProperty, PiecePropertyMap } from "./property";
 import { TriggerStrategy } from "./trigger/trigger";
 
 export type PieceBase = {
+  id?: string;
   name: string;
   displayName: string;
   logoUrl: string;
   description: string;
+  projectId?: ProjectId;
   directoryName?: string;
+  auth?: PieceAuthProperty;
   version: string;
   minimumSupportedRelease?: string;
   maximumSupportedRelease?: string;
@@ -18,6 +22,7 @@ export type ActionBase = {
   description: string,
   sampleData: unknown,
   props: PiecePropertyMap,
+  requireAuth: boolean;
 }
 
 export type TriggerBase = ActionBase & {

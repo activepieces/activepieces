@@ -7,7 +7,7 @@ import {
   Output,
 } from '@angular/core';
 
-import { combineLatest, map, Observable, of } from 'rxjs';
+import { combineLatest, map, Observable, of, tap } from 'rxjs';
 import { ActionType } from '@activepieces/shared';
 
 import {
@@ -41,6 +41,7 @@ export class CodeStepMentionItemComponent implements OnInit {
     value?: unknown;
     markedNodesToShow: Map<string, boolean>;
   }>;
+  search$: Observable<string>;
   constructor(
     private mentionsTreeCache: MentionsTreeCacheService,
     private store: Store
@@ -51,7 +52,11 @@ export class CodeStepMentionItemComponent implements OnInit {
       children: cacheResult?.children || [],
       value: cacheResult?.value,
     });
-
+    this.search$ = this.mentionsTreeCache.listSearchBarObs$.pipe(
+      tap((res) => {
+        this.expandCodeCollapse = !!res;
+      })
+    );
     if (cacheResult) {
       this.codeStepTest$ = combineLatest({
         stepTree: of({

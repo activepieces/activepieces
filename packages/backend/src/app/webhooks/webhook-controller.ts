@@ -5,7 +5,7 @@ import { webhookService } from './webhook-service'
 import { captureException, logger } from '../helper/logger'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { fileService } from '../file/file.service'
-import { isNil } from 'lodash'
+import { isNil } from '@activepieces/shared'
 import { flowRepo } from '../flows/flow/flow.repo'
 
 export const webhookController: FastifyPluginAsync = async (app) => {

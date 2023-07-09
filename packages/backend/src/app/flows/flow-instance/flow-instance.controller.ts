@@ -44,15 +44,4 @@ export const flowInstanceController = async (app: FastifyInstance) => {
     })
 
 
-    app.delete('/:flowId', {
-        schema: {
-            params: GetFlowInstanceRequest,
-        },
-
-    }, async (request: FastifyRequest<{
-        Params: GetFlowInstanceRequest
-    }>) => {
-        return flowInstanceService.delete({ projectId: request.principal.projectId, flowId: request.params.flowId })
-    })
-
 }

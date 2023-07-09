@@ -4,21 +4,21 @@
       <ng-container *ngIf="iteration$ | async as selectedIteration">
         <mat-expansion-panel hideToggle [expanded]="selectedIteration.length > 0" #expansionPanelTemplate>
           <mat-expansion-panel-header [class.selected-step]="
-              _selectedStepName === stepNameAndResult.stepName
+              _selectedStepName === stepResult.stepName
             " [class.parent-of-selected-step]="showIterationInput">
             <mat-panel-title (click)="
                 selectStepOrToggleExpansionPanel($event, expansionPanelTemplate)
               " class="loop-panel">
               <div class="ap-flex ap-items-center ap-w-full">
                 <div class="nested-level-padding" [style.min-width]="nestingLevelPadding"></div>
-                <div class="ap-flex icon-and-name-gap">
+                <div class="ap-flex icon-and-name-gap ap-min-w-[50%]">
                   <div class="ap-flex icons-gap ap-items-center" [class.expanded]="expansionPanelTemplate.expanded">
                     <svg-icon src="assets/img/custom/debug-icons/caret.svg" *ngIf="selectedIteration.length > 0"
                       [applyClass]="true" class="loop-caret"></svg-icon>
                     <ng-container *ngTemplateOutlet="stepIcon"></ng-container>
                   </div>
 
-                  {{ stepNameAndResult.stepName }}
+                  {{stepResult.index}}. {{ stepResult.displayName }}
                 </div>
 
                 <div #spacer class="ap-flex-grow"></div>
@@ -27,7 +27,7 @@
                       iterationInputFocusDirective.isFocused ? '100%' : 'auto'
                     ">
                     <ng-container *ngIf="!iterationInputFocusDirective.isFocused">
-                      <label (click)="$event.stopPropagation()" [for]="stepNameAndResult.stepName" @fadeIn>Iteration:
+                      <label (click)="$event.stopPropagation()" [for]="stepResult.stepName" @fadeIn>Iteration:
                         &nbsp;</label>
                     </ng-container>
                     <div dir="rtl" [style.width]="
@@ -39,7 +39,7 @@
                         ">
                         <span (click)="iterationInput.focus()">
                           /{{
-                          stepNameAndResult.result.output.iterations?.length
+                          stepResult.output?.output.iterations?.length
                           }}
                         </span>
 
@@ -57,20 +57,20 @@
                               'px)'
                             : ''
                         " [attr.min]="1" [attr.max]="
-                          stepNameAndResult.result.output.iterations!.length
+                          stepResult.output?.output.iterations?.length
                         " #iterationInputFocusDirective="focusTrackerDirective" #iterationInput apTrackFocus
                         type="number" (keydown.enter)="iterationInput.blur()" (keydown)="$event.stopPropagation()"
                         class="form-control iteration-index-control ap-text-center"
                         [formControl]="iterationIndexControl" (click)="indexSearchClicked($event)"
                         [class.expand-iteration-control]="
                           iterationInputFocusDirective.isFocused
-                        " [id]="stepNameAndResult.stepName" />
+                        " [id]="stepResult.stepName" />
                     </div>
                   </div>
                 </ng-container>
                 <ng-template #allIterations>
                   <ng-container *ngIf="
-                      _selectedStepName === stepNameAndResult.stepName;
+                      _selectedStepName === stepResult.stepName;
                       else statusIconTemplate
                     ">
                     <div class="all-iterations-text" @fadeIn>
@@ -92,7 +92,7 @@
     <ng-template #nonLoopStepTemplate>
       <mat-expansion-panel hideToggle #expansionPanelTemplate>
         <mat-expansion-panel-header [class.selected-step]="
-            _selectedStepName === stepNameAndResult.stepName
+            _selectedStepName === stepResult.stepName
           ">
           <mat-panel-title (click)="
               selectStepOrToggleExpansionPanel($event, expansionPanelTemplate)
@@ -104,7 +104,7 @@
                 <div class="ap-flex icons-gap ap-items-center" [class.expanded]="expansionPanelTemplate.expanded">
                   <ng-container *ngTemplateOutlet="stepIcon"></ng-container>
                 </div>
-                {{ stepNameAndResult.stepName }}
+                {{stepResult.index}}. {{ stepResult.displayName }}
               </div>
 
               <div #spacer class="ap-flex-grow"></div>
@@ -125,12 +125,11 @@
 
 <ng-template #statusIconTemplate>
   <svg-icon
-    *ngIf="ActionStatus.SUCCEEDED === stepNameAndResult.result.status || ActionStatus.STOPPED === stepNameAndResult.result.status"
+    *ngIf="ActionStatus.SUCCEEDED === stepResult.output?.status || ActionStatus.STOPPED === stepResult.output?.status"
     matTooltip="Step succeeded" src="assets/img/custom/success-step-result.svg"
     [svgStyle]="{ width: '21px', height: '20px' }" class="icon-padding"></svg-icon>
-  <svg-icon *ngIf="ActionStatus.FAILED === stepNameAndResult.result.status"
-    src="assets/img/custom/failure-step-result.svg" [svgStyle]="{ width: '21px', height: '20px' }" class="icon-padding"
-    matTooltip="Step failed"></svg-icon>
-  <svg-icon *ngIf="ActionStatus.PAUSED === stepNameAndResult.result.status" src="assets/img/custom/status/paused.svg"
+  <svg-icon *ngIf="ActionStatus.FAILED === stepResult.output?.status" src="assets/img/custom/failure-step-result.svg"
+    [svgStyle]="{ width: '21px', height: '20px' }" class="icon-padding" matTooltip="Step failed"></svg-icon>
+  <svg-icon *ngIf="ActionStatus.PAUSED === stepResult.output?.status" src="assets/img/custom/status/paused.svg"
     class="icon-padding" [svgStyle]="{ width: '21px', height: '20px' }" matTooltip="Step paused"></svg-icon>
 </ng-template>

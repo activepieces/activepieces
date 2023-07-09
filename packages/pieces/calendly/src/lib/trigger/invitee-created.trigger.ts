@@ -1,16 +1,17 @@
-import { createTrigger, TriggerStrategy } from "@activepieces/pieces-framework";
+import { TriggerStrategy, createTrigger } from "@activepieces/pieces-framework";
 import { HttpRequest, HttpMethod, AuthenticationType, httpClient } from "@activepieces/pieces-common";
 import { calendlyCommon, CalendlyWebhookInformation } from "../common";
+import { calendlyAuth } from "../../";
 
 const triggerNameInStore = 'calendly_invitee_created_trigger';
 
 export const calendlyInviteeCreated = createTrigger({
+  auth: calendlyAuth,
   name: 'invitee_created',
   displayName: 'Event Scheduled',
   description: 'Triggers when a new Calendly event is scheduled',
   props: {
-    authentication: calendlyCommon.authentication,
-    scope: calendlyCommon.scope
+    scope: calendlyCommon.scope,
   },
   sampleData: {
 
@@ -43,7 +44,7 @@ export const calendlyInviteeCreated = createTrigger({
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    const calendlyUser = await calendlyCommon.getUser(context.propsValue["authentication"]!);
+    const calendlyUser = await calendlyCommon.getUser(context.auth);
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url: `${calendlyCommon.baseUrl}/webhook_subscriptions`,
@@ -56,7 +57,7 @@ export const calendlyInviteeCreated = createTrigger({
 
       },
       authentication: {
-        token: context.propsValue["authentication"]!,
+        token: context.auth,
         type: AuthenticationType.BEARER_TOKEN
       },
       queryParams: {},
@@ -75,7 +76,7 @@ export const calendlyInviteeCreated = createTrigger({
         method: HttpMethod.DELETE,
         url: `${calendlyCommon.baseUrl}/webhook_subscriptions/${response.webhookId}`,
         authentication: {
-          token: context.propsValue["authentication"]!,
+          token: context.auth,
           type: AuthenticationType.BEARER_TOKEN
         },
       };
@@ -90,6 +91,3 @@ export const calendlyInviteeCreated = createTrigger({
     return [context.payload.body];
   },
 });
-
-
-

@@ -1,13 +1,13 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { Client } from "../../common/Client";
-import { auth } from "../../common/auth";
+import { vtexAuth } from "../../..";
 
 export const getClientById = createAction({
+    auth: vtexAuth,
     name: "get-client-by-id",
     displayName: "Get Client By ID",
     description: "Find a Client by Id",
     props: {
-        authentication: auth,
         clientId: Property.Number({
             displayName: "Client ID",
             description: "The Client ID",
@@ -15,7 +15,7 @@ export const getClientById = createAction({
         })
     },
     async run(context) {
-        const { hostUrl, appKey, appToken } = context.propsValue.authentication;
+        const { hostUrl, appKey, appToken } = context.auth;
         const { clientId } = context.propsValue;
 
         const client = new Client(hostUrl, appKey, appToken);

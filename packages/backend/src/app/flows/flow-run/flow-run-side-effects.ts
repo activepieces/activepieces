@@ -1,4 +1,4 @@
-import { isNil } from 'lodash'
+import { isNil } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { ActivepiecesError, ErrorCode, ExecutionType, FlowRun, PauseType } from '@activepieces/shared'
 import { JobType, flowQueue } from '../../workers/flow-worker/flow-queue'

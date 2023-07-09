@@ -9,6 +9,7 @@ import { ErrorStateMatcher, mixinErrorState } from '@angular/material/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Subject } from 'rxjs';
 import { FlowItem } from '@activepieces/ui/feature-builder-store';
+import { InsertMentionOperation } from '@activepieces/ui/common';
 
 export const keysWithinPath = (path: string) => {
   const result: string[] = [];
@@ -157,15 +158,7 @@ function replaceStepNameWithDisplayName(
   }
   return 'unknown step';
 }
-export interface InsertMentionOperation {
-  insert: {
-    mention: {
-      value: string;
-      serverValue: string;
-      denotationChar: string;
-    };
-  };
-}
+
 export interface TextInsertOperation {
   insert: string;
 }

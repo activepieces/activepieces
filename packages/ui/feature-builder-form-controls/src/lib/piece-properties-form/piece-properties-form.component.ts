@@ -17,6 +17,7 @@ import {
   NG_VALUE_ACCESSOR,
   ValidatorFn,
   Validators,
+  FormControl,
 } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import {
@@ -47,14 +48,15 @@ import {
 import {
   jsonValidator,
   fadeInUp400ms,
-  ActionMetaService,
+  PieceMetadataService,
+  InsertMentionOperation,
 } from '@activepieces/ui/common';
 import {
   BuilderSelectors,
   CodeService,
   ConnectionDropdownItem,
 } from '@activepieces/ui/feature-builder-store';
-import { InsertMentionOperation } from '../interpolating-text-form-control/utils';
+
 import { InterpolatingTextFormControlComponent } from '../interpolating-text-form-control/interpolating-text-form-control.component';
 import { PiecePropertiesFormValue } from '../models/piece-properties-form-value';
 import { AddEditConnectionButtonComponent } from '@activepieces/ui/feature-connections';
@@ -83,6 +85,9 @@ type ConfigKey = string;
 export class PiecePropertiesFormComponent implements ControlValueAccessor {
   updateValueOnChange$: Observable<void> = new Observable<void>();
   PropertyType = PropertyType;
+  searchControl: FormControl<string> = new FormControl('', {
+    nonNullable: true,
+  });
   dropdownOptionsObservables$: {
     [key: ConfigKey]: Observable<DropdownState<unknown>>;
   } = {};
@@ -128,7 +133,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
 
   constructor(
     private fb: UntypedFormBuilder,
-    private actionMetaDataService: ActionMetaService,
+    private actionMetaDataService: PieceMetadataService,
     private store: Store,
     private codeService: CodeService,
     private cd: ChangeDetectorRef
@@ -178,7 +183,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
         this.requiredProperties[pk] = this.properties[pk];
       } else {
         this.allOptionalProperties[pk] = this.properties[pk];
-        if (propertiesValues[pk]) {
+        if (propertiesValues[pk] !== undefined) {
           this.selectedOptionalProperties[pk] = this.properties[pk];
         }
       }
@@ -229,19 +234,22 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
                 const emptyDropdownState: DropdownState<unknown> = {
                   options: [],
                   disabled: true,
-                  placeholder: `No ${property.displayName} Available`,
+                  placeholder:
+                    res.placeholder ?? `No ${property.displayName} Available`,
                 };
                 return emptyDropdownState;
               }
               return res;
             }),
-            catchError(() => {
+            catchError((err) => {
+              console.error(err);
               return of({
                 options: [],
                 disabled: true,
-                placeholder: 'unknown server erro happend, check console',
+                placeholder: 'unknown server error happend, check console',
               });
-            })
+            }),
+            shareReplay(1)
           );
       }
     });
@@ -304,16 +312,22 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
     this.refreshableConfigsLoadingFlags$[obj.propertyKey] = new BehaviorSubject(
       true
     );
+    const authTypes = [
+      PropertyType.OAUTH2,
+      PropertyType.CUSTOM_AUTH,
+      PropertyType.SECRET_TEXT,
+      PropertyType.BASIC_AUTH,
+    ];
     const refreshers$: Record<string, Observable<unknown>> = {};
-    obj.property.refreshers.forEach((rk) => {
+    Object.keys(this.properties).forEach((rk) => {
+      const isAuthProperty = authTypes.includes(this.properties[rk].type);
+      const inRefreshers = obj.property.refreshers.includes(rk);
+      if (!isAuthProperty && !inRefreshers) {
+        return;
+      }
       refreshers$[rk] = this.form.controls[rk].valueChanges.pipe(
         distinctUntilChanged((prev, curr) => {
-          if (
-            this.properties[rk].type === PropertyType.OAUTH2 ||
-            this.properties[rk].type === PropertyType.CUSTOM_AUTH ||
-            this.properties[rk].type === PropertyType.SECRET_TEXT ||
-            this.properties[rk].type === PropertyType.BASIC_AUTH
-          ) {
+          if (isAuthProperty) {
             return false;
           }
           return JSON.stringify(prev) === JSON.stringify(curr);
@@ -416,7 +430,6 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
         );
       }
     });
-
     return controls;
   }
   getControl(configKey: string) {
@@ -450,7 +463,8 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
         new UntypedFormControl(
           property.defaultValue
             ? JSON.stringify(property.defaultValue, null, 2)
-            : undefined
+            : '',
+          [jsonValidator]
         )
       );
     }

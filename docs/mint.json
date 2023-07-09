@@ -5,7 +5,7 @@
     "dark": "./resources/logo/dark.svg",
     "href": "https://www.activepieces.com"
   },
-  "favicon": "./favicon.svg",
+  "favicon": "/favicon.png",
   "colors": {
     "primary": "#5155D7",
     "dark": "#3033A6",
@@ -40,9 +40,9 @@
       "url": "pieces"
     },
     {
-      "name": "Contributing",
+      "name": "Developers",
       "icon": "code",
-      "url": "contributing"
+      "url": "developers"
     },
     {
       "name": "Discord",
@@ -52,10 +52,9 @@
   ],
   "navigation": [
     {
-      "group": "Overview",
+      "group": "Introduction",
       "pages": [
-        "getting-started/introduction",
-        "getting-started/quickstart"
+        "getting-started/introduction"
       ]
     },
     {
@@ -89,6 +88,8 @@
         "pieces/apps/discord",
         "pieces/apps/drip",
         "pieces/apps/dropbox",
+        "pieces/apps/facebook-leads",
+        "pieces/apps/facebook-pages",
         "pieces/apps/figma",
         "pieces/apps/freshsales",
         "pieces/apps/generatebanners",
@@ -96,6 +97,7 @@
         "pieces/apps/gmail",
         "pieces/apps/google-calendar",
         "pieces/apps/google-contacts",
+        "pieces/apps/google-docs",
         "pieces/apps/google-drive",
         "pieces/apps/google-forms",
         "pieces/apps/google-sheets",
@@ -104,8 +106,12 @@
         "pieces/apps/hackernews",
         "pieces/apps/http",
         "pieces/apps/hubspot",
+        "pieces/apps/imap",
+        "pieces/apps/instagram-business",
         "pieces/apps/intercom",
         "pieces/apps/jotform",
+        "pieces/apps/kizeo-forms",
+        "pieces/apps/linkedin",
         "pieces/apps/mailchimp",
         "pieces/apps/mailer-lite",
         "pieces/apps/mastodon",
@@ -119,12 +125,15 @@
         "pieces/apps/ntfy",
         "pieces/apps/openai",
         "pieces/apps/pastebin",
+        "pieces/apps/pastefy",
         "pieces/apps/pipedrive",
         "pieces/apps/postgres",
         "pieces/apps/posthog",
         "pieces/apps/pushover",
+        "pieces/apps/resend",
         "pieces/apps/rss",
         "pieces/apps/salesforce",
+        "pieces/apps/salsa",
         "pieces/apps/schedule",
         "pieces/apps/sendgrid",
         "pieces/apps/sendinblue",
@@ -144,6 +153,7 @@
         "pieces/apps/twitter",
         "pieces/apps/typeform",
         "pieces/apps/vtex",
+        "pieces/apps/webflow",
         "pieces/apps/wordpress",
         "pieces/apps/xero",
         "pieces/apps/xml",
@@ -167,62 +177,79 @@
       ]
     },
     {
-      "group": "Installing",
+      "group": "Self Host",
       "pages": [
-        "install/overview",
-        "install/docker",
-        "install/easypanel",
+        {
+          "group": "Install Options",
+          "icon": "server",
+          "pages": [
+            "install/options/overview",
+            "install/options/docker",
+            "install/options/easypanel"
+          ]
+        },
         "install/configurations",
         "install/breaking-changes"
       ]
     },
     {
-      "group": "Building Flows",
+      "group": "Building Flow",
       "pages": [
-        "building-flows/overview",
-        "building-flows/triggers",
+        "building-flows/building-flow",
         "building-flows/passing-data",
+        "building-flows/publishing-flow",
         "building-flows/debugging"
       ]
     },
     {
       "group": "Getting Started",
       "pages": [
-        "contributing/overview"
+        "developers/overview"
       ]
     },
     {
-      "group": "Development Setup",
+      "group": "Tutorials",
       "pages": [
-        "contributing/development-setup/codespaces",
-        "contributing/development-setup/local",
-        "contributing/development-setup/dev-container"
-      ]
-    },
-    {
-      "group": "Building Pieces",
-      "pages": [
-        "contributing/building-pieces/create-action",
-        "contributing/building-pieces/triggers",
-        "contributing/building-pieces/create-polling-trigger",
-        "contributing/building-pieces/create-webhook-trigger",
-        "contributing/building-pieces/examples"
+        {
+          "group": "Development Setup",
+          "icon": "circle-1",
+          "pages": [
+            "developers/development-setup/getting-started",
+            "developers/development-setup/codespaces",
+            "developers/development-setup/local",
+            "developers/development-setup/dev-container"
+          ]
+        },
+        "developers/building-pieces/create-action",
+        {
+          "group": "Create Triggers",
+          "icon": "circle-3",
+          "pages": [
+            "developers/building-pieces/triggers/overview",
+            "developers/building-pieces/triggers/create-polling-trigger",
+            "developers/building-pieces/triggers/create-webhook-trigger"
+          ]
+        },
+        "developers/building-pieces/publish-piece"
       ]
     },
     {
       "group": "Piece Reference",
       "pages": [
-        "contributing/piece-reference/properties",
-        "contributing/piece-reference/flow-hooks",
-        "contributing/piece-reference/persistent-storage"
+        "developers/piece-reference/authentication",
+        "developers/piece-reference/properties",
+        "developers/piece-reference/flow-control",
+        "developers/piece-reference/persistent-storage",
+        "developers/piece-reference/piece-versioning",
+        "developers/piece-reference/examples"
       ]
     },
     {
       "group": "Worker Architecture",
       "pages": [
-        "contributing/architecture/repo-structure",
-        "contributing/architecture/flow-worker",
-        "contributing/architecture/code-worker"
+        "developers/architecture/repo-structure",
+        "developers/architecture/flow-worker",
+        "developers/architecture/code-worker"
       ]
     },
     {

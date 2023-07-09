@@ -1,15 +1,15 @@
-import { BasicAuthPropertyValue, createAction, Property } from "@activepieces/pieces-framework";
+import { createAction, PiecePropValueSchema, Property } from "@activepieces/pieces-framework";
 import { wordpressCommon, WordpressMedia } from "../common";
-import { httpClient, HttpMethod, HttpRequest, AuthenticationType } from "@activepieces/pieces-common";
-
+import { httpClient, HttpMethod, AuthenticationType } from "@activepieces/pieces-common";
+import FormData from "form-data";
+import { wordpressAuth } from "../..";
 
 export const createWordpressPost = createAction({
+    auth: wordpressAuth,
     name: 'create_post',
     description: 'Create new post on Wordpress',
     displayName: 'Create Post',
     props: {
-        connection: wordpressCommon.connection,
-        website_url: wordpressCommon.website_url,
         title: Property.ShortText({
             description: 'Title of the post about to be added',
             displayName: 'Title',
@@ -29,13 +29,14 @@ export const createWordpressPost = createAction({
             displayName: 'Date',
             required: false,
         }),
+        featured_media_file: wordpressCommon.featured_media_file,
         tags: Property.MultiSelectDropdown<string, false>({
             description: 'Post tags',
             displayName: 'Tags',
             required: false,
-            refreshers: ["connection", "website_url"],
-            options: async (propsValues) => {
-                const connection = propsValues['connection'] as BasicAuthPropertyValue;
+            refreshers: [],
+            options: async ({ auth }) => {
+                const connection = auth as PiecePropValueSchema<typeof wordpressAuth>
                 if (!connection) {
                     return {
                         disabled: true,
@@ -43,14 +44,7 @@ export const createWordpressPost = createAction({
                         placeholder: 'Please connect your account first'
                     }
                 }
-                if (!propsValues['website_url']) {
-                    return {
-                        disabled: true,
-                        options: [],
-                        placeholder: 'Please input the correct url'
-                    }
-                }
-                if (!(await wordpressCommon.urlExists((propsValues['website_url'] as string).trim()))) {
+                if (!(await wordpressCommon.urlExists(connection.website_url.trim()))) {
                     return {
                         disabled: true,
                         placeholder: 'Incorrect website url',
@@ -60,7 +54,7 @@ export const createWordpressPost = createAction({
 
                 let pageCursor = 1;
                 const getTagsParams = {
-                    websiteUrl: (propsValues['website_url'] as string).trim(),
+                    websiteUrl: connection.website_url.trim(),
                     username: connection.username,
                     password: connection.password,
                     page: pageCursor
@@ -102,9 +96,9 @@ export const createWordpressPost = createAction({
             description: 'Post categories',
             displayName: 'Categories',
             required: false,
-            refreshers: ["connection", "website_url"],
-            options: async (propsValues) => {
-                const connection = propsValues['connection'] as BasicAuthPropertyValue;
+            refreshers: [],
+            options: async ({ auth }) => {
+                const connection = auth as PiecePropValueSchema<typeof wordpressAuth>
                 if (!connection) {
                     return {
                         disabled: true,
@@ -112,14 +106,7 @@ export const createWordpressPost = createAction({
                         placeholder: 'Please connect your account first'
                     }
                 }
-                if (!propsValues['website_url']) {
-                    return {
-                        disabled: true,
-                        options: [],
-                        placeholder: 'Please input the correct url'
-                    }
-                }
-                if (!(await wordpressCommon.urlExists((propsValues['website_url'] as string).trim()))) {
+                if (!(await wordpressCommon.urlExists(connection.website_url.trim()))) {
                     return {
                         disabled: true,
                         placeholder: 'Incorrect website url',
@@ -129,7 +116,7 @@ export const createWordpressPost = createAction({
 
                 let pageCursor = 1;
                 const getTagsParams = {
-                    websiteUrl: propsValues['website_url'] as string,
+                    websiteUrl: connection.website_url,
                     username: connection.username,
                     password: connection.password,
                     perPage: 10,
@@ -172,10 +159,9 @@ export const createWordpressPost = createAction({
             description: 'Choose from one of your uploaded media files',
             displayName: 'Featured Media (image)',
             required: false,
-            refreshers: ['connection', 'website_url'],
-            options: async (propsValues) => {
-
-                const connection = propsValues['connection'] as BasicAuthPropertyValue;
+            refreshers: [],
+            options: async ({ auth }) => {
+                const connection = auth as PiecePropValueSchema<typeof wordpressAuth>
                 if (!connection) {
                     return {
                         disabled: true,
@@ -183,14 +169,7 @@ export const createWordpressPost = createAction({
                         placeholder: 'Please connect your account first'
                     }
                 }
-                if (!propsValues['website_url']) {
-                    return {
-                        disabled: true,
-                        options: [],
-                        placeholder: 'Please input the correct url'
-                    }
-                }
-                if (!(await wordpressCommon.urlExists(propsValues['website_url'].toString().trim()))) {
+                if (!(await wordpressCommon.urlExists(connection.website_url.trim()))) {
                     return {
                         disabled: true,
                         placeholder: 'Incorrect website url',
@@ -200,7 +179,7 @@ export const createWordpressPost = createAction({
 
                 let pageCursor = 1;
                 const getMediaParams = {
-                    websiteUrl: propsValues['website_url'] as string,
+                    websiteUrl: connection.website_url,
                     username: connection.username,
                     password: connection.password,
                     page: pageCursor
@@ -263,8 +242,8 @@ export const createWordpressPost = createAction({
         }),
     },
     async run(context) {
-        if (!(await wordpressCommon.urlExists(context.propsValue.website_url.trim()))) {
-            throw new Error('Website url is invalid: ' + context.propsValue.website_url);
+        if (!(await wordpressCommon.urlExists(context.auth.website_url.trim()))) {
+            throw new Error('Website url is invalid: ' + context.auth.website_url);
         }
         const requestBody: Record<string, unknown> = {};
         if (context.propsValue.date) {
@@ -294,19 +273,39 @@ export const createWordpressPost = createAction({
         if (context.propsValue.featured_media !== undefined) {
             requestBody['featured_media'] = context.propsValue.featured_media;
         }
+
+
+        if (context.propsValue.featured_media_file !== undefined) {
+            const formData = new FormData();
+            const { filename, base64 } = context.propsValue.featured_media_file;
+            formData.append('file', Buffer.from(base64, "base64"), filename);
+            console.log(context.propsValue.featured_media_file.filename);
+            const uploadMediaResponse = await httpClient.sendRequest<{ id: string }>({
+                method: HttpMethod.POST,
+                url: `${context.auth.website_url.trim()}/wp-json/wp/v2/media`,
+                body: formData,
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+                authentication: {
+                    type: AuthenticationType.BASIC,
+                    username: context.auth.username,
+                    password: context.auth.password,
+                },
+            });
+            requestBody['feature_media'] = uploadMediaResponse.body.id;
+        }
         requestBody['content'] = context.propsValue.content;
         requestBody['title'] = context.propsValue.title;
-        const request: HttpRequest = {
+        return await httpClient.sendRequest<{ id: string, name: string }[]>({
             method: HttpMethod.POST,
-            url: `${context.propsValue.website_url.trim()}/wp-json/wp/v2/posts`,
+            url: `${context.auth.website_url.trim()}/wp-json/wp/v2/posts`,
             authentication: {
                 type: AuthenticationType.BASIC,
-                username: context.propsValue.connection.username,
-                password: context.propsValue.connection.password,
+                username: context.auth.username,
+                password: context.auth.password,
             },
             body: requestBody
-        };
-        const response = await httpClient.sendRequest<{ id: string, name: string }[]>(request);
-        return response;
+        });
     }
 });

@@ -1,13 +1,16 @@
 <button (click)="$event.stopPropagation(); expandSample? expandSample=false : expandSample=true" mat-menu-item
-  class="!ap-px-[9px]" apTrackHover #hoverTracker="hoverTrackerDirective">
-  <mat-icon class="mat-icon-rtl-mirror !ap-mr-[5px]">
-    {{expandSample ? 'expand_less' : 'expand_more'}}
-  </mat-icon>
-  <app-generic-step-mention-item matTooltip="Webhook Trigger" [stepIndex]="stepIndex"
-    [stepMention]="_stepMention"></app-generic-step-mention-item>
-  <ap-button *ngIf="hoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button" btnSize="small"
-    class="ap-absolute ap-right-[10px]" [buttonIsInsideAutocomplete]="true" (click)="openPathDialog()">Custom Path
-  </ap-button>
+  class="!ap-px-5" apTrackHover #hoverTracker="hoverTrackerDirective">
+  <div class="ap-flex ap-items-center">
+    <app-generic-step-mention-item [stepIndex]="stepIndex" [stepMention]="_stepMention"></app-generic-step-mention-item>
+    <div class="ap-felx-grow"></div>
+    <ap-button *ngIf="hoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button" btnSize="small"
+      [buttonIsInsideAutocomplete]="true" (click)="openPathDialog()">Custom Path
+    </ap-button>
+    <mat-icon class="mat-icon-rtl-mirror !ap-mr-[5px]"
+      [svgIcon]="expandSample ? 'custom_expand_less' : 'custom_expand_more'">
+    </mat-icon>
+  </div>
+
 </button>
 
 
@@ -34,3 +37,4 @@
   </ng-template>
 </ng-container>
 <ng-container *ngIf="customPathDialogClosed$ | async"></ng-container>
+<ng-container *ngIf="search$ | async"></ng-container>

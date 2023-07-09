@@ -5,11 +5,10 @@ export default createAction({
     name: 'get_playback_state',
     displayName: 'Get Playback State',
     description: 'Retrieves the current playback state of the player',
-    props: {
-        authentication: spotifyCommon.authentication
-    },
-    async run(context) {
-        const client = makeClient(context.propsValue)
+    auth: spotifyCommon.authentication,
+    props: {},
+    async run({auth}) {
+        const client = makeClient({auth})
         const res = await client.getPlaybackState()
         return res
     }

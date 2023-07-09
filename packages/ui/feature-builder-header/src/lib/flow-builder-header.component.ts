@@ -28,7 +28,6 @@ import { ImportFlowDialogueComponent } from './import-flow-dialogue/import-flow-
 export class FlowBuilderHeaderComponent implements OnInit {
   isInDebugMode$: Observable<boolean>;
   isInReadOnlyMode$: Observable<boolean>;
-  isGeneratingFlowComponentOpen$: Observable<boolean>;
   instance$: Observable<FlowInstance | undefined>;
   flow$: Observable<Flow>;
   editingFlowName = false;
@@ -37,7 +36,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
   folderDisplayName$: Observable<string>;
   duplicateFlow$: Observable<void>;
   showGuessFlowBtn$: Observable<boolean>;
-
+  openDashboardOnFolder$: Observable<string>;
   constructor(
     public dialogService: MatDialog,
     private store: Store,
@@ -46,11 +45,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
     private flowService: FlowService,
     private flagsService: FlagService,
     private matDialog: MatDialog
-  ) {
-    this.isGeneratingFlowComponentOpen$ = this.store.select(
-      BuilderSelectors.selectIsGeneratingFlowComponentOpen
-    );
-  }
+  ) {}
 
   ngOnInit(): void {
     initialiseBeamer();
@@ -142,5 +137,20 @@ export class FlowBuilderHeaderComponent implements OnInit {
         return void 0;
       })
     );
+  }
+
+  openDashboardToFolder() {
+    this.openDashboardOnFolder$ = this.store
+      .select(BuilderSelectors.selectCurrentFlowFolderId)
+      .pipe(
+        take(1),
+        tap((folderId) => {
+          this.router.navigate(['/flows'], {
+            queryParams: {
+              folderId,
+            },
+          });
+        })
+      );
   }
 }

@@ -2,7 +2,7 @@ import { authenticationModule } from './app/authentication/authentication.module
 import { system, validateEnvPropsOnStartup } from './app/helper/system/system'
 import { SystemProp } from './app/helper/system/system-prop'
 import { databaseConnection } from './app/database/database-connection'
-import { initilizeSentry, logger } from './app/helper/logger'
+import { logger } from './app/helper/logger'
 import { getEdition } from './app/helper/secret-helper'
 import { ApEdition } from '@activepieces/shared'
 import { seedDevData } from './app/database/seeds/dev-seeds'
@@ -11,6 +11,7 @@ import { app } from './app/app'
 
 const start = async () => {
     try {
+        setupTimeZone()
         validateEnvPropsOnStartup()
         await databaseConnection.initialize()
         await databaseConnection.runMigrations()
@@ -19,10 +20,7 @@ const start = async () => {
 
         const edition = await getEdition()
         logger.info('Activepieces ' + (edition == ApEdition.ENTERPRISE ? 'Enterprise' : 'Community') + ' Edition')
-        if (edition === ApEdition.ENTERPRISE) {
-            initilizeSentry()
-        }
-        else {
+        if (edition === ApEdition.COMMUNITY) {
             app.register(authenticationModule)
         }
         await app.listen({
@@ -51,6 +49,13 @@ start()
 
 // This might be needed as it can be called twice
 let shuttingDown = false
+
+function setupTimeZone() {
+    // It's important to set the time zone to UTC when working with dates in PostgreSQL.
+    // If the time zone is not set to UTC, there can be problems when storing dates in UTC but not considering the UTC offset when converting them back to local time. This can lead to incorrect fields being displayed for the created 
+    // https://stackoverflow.com/questions/68240368/typeorm-find-methods-returns-wrong-timestamp-time
+    process.env.TZ = 'UTC'
+}
 
 const stop = async () => {
     if (shuttingDown) return

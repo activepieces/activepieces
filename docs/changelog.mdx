@@ -11,6 +11,96 @@ Semantic versioning is a standardized way of versioning software projects. It us
 
 <Note>You will only see Version X.Y here as all Patch changes (Z) are added under their minor versions.</Note>
 
+### 6/27/2023
+
+**Pieces:**
+- Wordpress: Support Upload Media in Create Post Action
+- Resend: Send Email Actions 
+- Instagram for Business: Upload Photo / Upload Reel Actions by @MoShizzle
+- Pastefy: Create Folder / Create Paste / Delete Folder / Delete Paste / Edit Paste / Get Folder / Get Paste Actions
+- Salsa: Search Supporter / Upsert Supporter / Offline Donation / Upsert offline donation by @mnatanek
+- IMAP: new Email trigger 
+- OpenAI: support for all models, It loads models dynamically from the account.
+- Google Sheets: Add support for Teams Drive in all actions & triggers.
+- Google Docs: Create Document Action by @MoShizzle
+
+**Features:**
+- Add Remove button for optional parameters.
+- Revamped Auto-complete variables user interface; it provides more space.
+- Show trigger type in Flow table and how often it runs if it's scheduled.
+- Improved onboarding by adding a demo flow.
+- Clicking the folder name inside the builder should redirect back to the dashboard with the folder opened.
+
+**Fixes:**
+- Fixed Test Step inside Loop to resolve the loop item.
+- cal.com: Updated webhook endpoints as they got changed.
+
+**Developer Experience:**
+- Restructured the documentation.
+- Added a guide on how to publish pieces as npm directly and use them without opening a PR to the main repository.
+
+**Contributors:**
+* @SFoskett fixed typos in docs.
+* @asuri0n improved publishing npm docs.
+* @mnatanek created Salsa piece.
+* @MoShizzle: for Instagram / LinkedIn / IMAP / Google Docs 
+
+**Full Changelog**: https://github.com/activepieces/activepieces/compare/0.3.17...0.4.0
+
+### 6/16/2023
+
+**Fixes:***
+- Connections tab now loads the connections again.
+
+### 06/15/2023
+
+**Features:**
+
+- Webhook URL trigger can now have a response by adding the response from the HTTP piece.
+- Documentation for pieces on the website now has properties.
+- Ability to import/export flows as JSON from the Chevron Dropdown in the Builder.
+- Added templates for different use cases.
+- Added the option to use mock data for webhook triggers instead of real data.
+- Ability to publish your pieces directly to npm and install them directly inside the dashboard.
+
+**Fixes:**
+- The auto-complete UI used to fail when the key contains a space. Now it's fixed.
+- Drag and drop of branches and loops used to delete steps inside. Now it's fixed.
+- Fixed inconsistency between sample data for webhook triggers before and after publishing the trigger.
+
+**Pieces:**
+
+- MySQL: Delete Row / Execute Query / Find Rows / Get Tables / Insert Row / Update Row actions by @JanHolger
+- Store: Append Action by @JanHolger
+- Spotify: Set Volume / Add Play Items / Create Playlist / Get Playback State / Get Playlist Info / Remove Playlist / Remove Items from Playlist / Update Playlist / Search / Play / Pause / Set Volume Action
+- Telegram: New Message by @Abdallah-Alwarawreh
+- Delay: Delay Until / Delay For Action by @nileshtrivedi
+- Pastebin: Create Paste / Get Paste Action by @JanHolger
+- Certopus: Create Credential Action by @VrajGohil
+- SFTP: Create Text File Action by @Abdallah-Alwarawreh
+- Discord: New Message Trigger by @Abdallah-Alwarawreh
+- Jotform: New Submission Trigger by @MoShizzle
+- Hubspot: New Task Trigger by @MoShizzle
+- Facebook Pages: Create Post / Create Post Video / Create Post Photo Actions by @MoShizzle
+- Webflow: New Form Submission by @Ahmad-AbuOsbeh
+- Google Sheets: Find Rows by @Abdallah-Alwarawreh
+- Twitter: Create Tweet with Image by @Abdallah-Alwarawreh
+
+**Developers:**
+- Fixed local link failure for shared, framework, and common packages.
+- Added file property to the piece framework.
+- Supported local development, making it smoother to develop pieces.
+
+**Contributors:**
+- @JanHolger: Contributed MySQL actions including Delete Row, Execute Query, Find Rows, Get Tables, Insert Row, and Update Row.
+- @Abdallah-Alwarawreh: Contributed Telegram's New Message trigger, SFTP's Create Text File action, and Discord's New Message trigger. Also contributed to the Google Sheets piece with the Find Rows action and Twitter with the Create Tweet with Image action.
+- @nileshtrivedi: Contributed the Delay piece with Delay Until and Delay For actions.
+- @MoShizzle: Contributed the Jotform piece with the New Submission trigger, Hubspot piece with the New Task trigger, and Facebook Pages with the Create Post, Create Post Video, and Create Post Photo actions.
+- @VrajGohil: Contributed the Certopus piece with the Create Credential action.
+- @Ahmad-AbuOsbeh: Contributed the Webflow piece with the New Form Submission action.
+
+**Full Changelog:** [View the full changelog here](https://github.com/activepieces/activepieces/compare/0.3.15..0.3.16)
+
 ### 06/01/2023
 
 **Features:**

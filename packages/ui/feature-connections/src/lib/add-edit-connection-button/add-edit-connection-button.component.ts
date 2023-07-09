@@ -36,7 +36,7 @@ import {
   tap,
 } from 'rxjs';
 
-import { ActionMetaService, FlagService } from '@activepieces/ui/common';
+import { PieceMetadataService, FlagService } from '@activepieces/ui/common';
 import { CloudAuthConfigsService } from '../services/cloud-auth-configs.service';
 import {
   CustomAuthConnectionDialogComponent,
@@ -108,7 +108,7 @@ export class AddEditConnectionButtonComponent {
     private dialogService: MatDialog,
     private cloudAuthConfigsService: CloudAuthConfigsService,
     private flagService: FlagService,
-    private actionMetaService: ActionMetaService,
+    private pieceMetadataService: PieceMetadataService,
     private cd: ChangeDetectorRef
   ) {}
 
@@ -212,7 +212,7 @@ export class AddEditConnectionButtonComponent {
             return res[this.pieceName];
           }),
           switchMap((res: { clientId: string }) => {
-            return this.actionMetaService
+            return this.pieceMetadataService
               .getPieceMetadata(this.pieceName, this.pieceVersion)
               .pipe(
                 map((p) => {

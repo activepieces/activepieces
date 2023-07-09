@@ -1,42 +1,20 @@
-import { Property, StaticPropsValue } from "@activepieces/pieces-framework"
+import { PiecePropValueSchema, Property } from "@activepieces/pieces-framework"
 import { ClockodoClient } from "./client";
+import { isNil } from "lodash";
+import { clockodoAuth } from "../../";
 
-export function makeClient(propsValue: StaticPropsValue<any>): ClockodoClient {
+type ClockodoAuthValue = PiecePropValueSchema<typeof clockodoAuth>
+
+export function makeClient(auth: ClockodoAuthValue): ClockodoClient {
     return new ClockodoClient(
-        propsValue.authentication.email,
-        propsValue.authentication.token,
-        propsValue.authentication.company_name,
-        propsValue.authentication.company_email,
+        auth.email,
+        auth.token,
+        auth.company_name,
+        auth.company_email,
     )
 }
 
 export const clockodoCommon = {
-    authentication: Property.CustomAuth({
-        displayName: "Authentication",
-        required: true,
-        props: {
-            email: Property.ShortText({
-                displayName: 'E-Mail',
-                required: true,
-                description: "The email of your clockodo user"
-            }),
-            token: Property.SecretText({
-                displayName: 'API-Token',
-                description: "Your api token (can be found in profile settings)",
-                required: true,
-            }),
-            company_name: Property.ShortText({
-                displayName: 'Company Name',
-                description: "Your company name or app name",
-                required: true,
-            }),
-            company_email: Property.ShortText({
-                displayName: 'Company E-Mail',
-                description: "A contact email for your company or app",
-                required: true,
-            })
-        }
-    }),
     absenceType: (required = true) => Property.StaticDropdown({
         displayName: 'Type',
         required,
@@ -64,16 +42,16 @@ export const clockodoCommon = {
         description: 'The ID of the customer',
         displayName: 'Customer',
         required,
-        refreshers: ['authentication'],
-        options: async (value) => {
-            if (!value['authentication']) {
+        refreshers: [],
+        options: async ({ auth }) => {
+            if (isNil(auth)) {
                 return {
                     disabled: true,
                     placeholder: 'setup authentication first',
                     options: []
                 };
             }
-            const client = makeClient(value)
+            const client = makeClient(auth as ClockodoAuthValue)
             const customers = await client.listAllCustomers({ active: active === null ? undefined : active })
             return {
                 disabled: false,
@@ -90,26 +68,26 @@ export const clockodoCommon = {
         description: 'The ID of the project',
         displayName: 'Project',
         required,
-        refreshers: ['authentication', ...(requiresCustomer ? ['customer_id'] : [])],
-        options: async (value) => {
-            if (!value['authentication']) {
+        refreshers: [ ...(requiresCustomer ? ['customer_id'] : [])],
+        options: async ({ auth, customer_id }) => {
+            if (isNil(auth)) {
                 return {
                     disabled: true,
                     placeholder: 'setup authentication first',
                     options: []
                 }
             }
-            if (requiresCustomer && !value['customer_id']) {
+            if (requiresCustomer && !customer_id) {
                 return {
                     disabled: true,
                     placeholder: 'select a customer first',
                     options: []
                 }
             }
-            const client = makeClient(value)
+            const client = makeClient(auth as ClockodoAuthValue)
             const projects = await client.listAllProjects({
                 active: active === null ? undefined : active,
-                customers_id: requiresCustomer ? parseInt(value.customer_id as string) : undefined
+                customers_id: requiresCustomer ? parseInt(customer_id as string) : undefined
             })
             return {
                 disabled: false,
@@ -126,16 +104,16 @@ export const clockodoCommon = {
         description: 'The ID of the user',
         displayName: 'User',
         required,
-        refreshers: ['authentication'],
-        options: async (value) => {
-            if (!value['authentication']) {
+        refreshers: [],
+        options: async ({ auth }) => {
+            if (isNil(auth)) {
                 return {
                     disabled: true,
                     placeholder: 'setup authentication first',
                     options: []
                 };
             }
-            const client = makeClient(value)
+            const client = makeClient(auth as ClockodoAuthValue)
             const usersRes = await client.listUsers()
             return {
                 disabled: false,
@@ -152,16 +130,16 @@ export const clockodoCommon = {
         description: 'The ID of the team',
         displayName: 'Team',
         required,
-        refreshers: ['authentication'],
-        options: async (value) => {
-            if (!value['authentication']) {
+        refreshers: [],
+        options: async ({ auth }) => {
+            if (isNil(auth)) {
                 return {
                     disabled: true,
                     placeholder: 'setup authentication first',
                     options: []
                 };
             }
-            const client = makeClient(value)
+            const client = makeClient(auth as ClockodoAuthValue)
             const teamsRes = await client.listTeams()
             return {
                 disabled: false,
@@ -178,16 +156,16 @@ export const clockodoCommon = {
         description: 'The ID of the service',
         displayName: 'Service',
         required,
-        refreshers: ['authentication'],
-        options: async (value) => {
-            if (!value['authentication']) {
+        refreshers: [],
+        options: async ({ auth }) => {
+            if (isNil(auth)) {
                 return {
                     disabled: true,
                     placeholder: 'setup authentication first',
                     options: []
                 };
             }
-            const client = makeClient(value)
+            const client = makeClient(auth as ClockodoAuthValue)
             const servicesRes = await client.listServices()
             return {
                 disabled: false,

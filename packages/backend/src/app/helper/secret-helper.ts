@@ -1,8 +1,8 @@
-import { captureException } from '@sentry/node'
 import axios from 'axios'
 import { ApEdition, FlowVersion } from '@activepieces/shared'
 import { system } from './system/system'
 import { SystemProp } from './system/system-prop'
+import { captureException } from './logger'
 
 let edition: string | undefined = undefined
 let webhookSecrets: Record<string, string> | undefined  = undefined

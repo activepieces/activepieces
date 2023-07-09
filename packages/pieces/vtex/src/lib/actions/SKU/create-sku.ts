@@ -1,14 +1,14 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { Sku } from "../../common/SKU";
 import { Replace } from "../../common/types";
-import { auth } from "../../common/auth";
+import { vtexAuth } from "../../..";
 
 export const createSku = createAction({
+    auth: vtexAuth,
     name: "create-sku",
     displayName: "Create New Sku",
     description: "Create a new SKU to your catalog",
     props: {
-        authentication: auth,
         ProductId: Property.Number({
             displayName: "Product ID",
             description: "ID of the product to be associated with this SKU",
@@ -50,13 +50,20 @@ export const createSku = createAction({
         })
     },
     async run(context) {
-        const { hostUrl, appKey, appToken } = context.propsValue.authentication;
-        const skuData: Replace<typeof context.propsValue, { authentication?: typeof context.propsValue.authentication }> = { ...context.propsValue };
-        delete skuData.authentication;
-
+        const { hostUrl, appKey, appToken } = context.auth;
         const sku = new Sku(hostUrl, appKey, appToken);
 
-        return await sku.createSku(skuData);
+        return await sku.createSku({
+            ProductId: context.propsValue.ProductId,
+            Name: context.propsValue.Name,
+            PackagedHeight: context.propsValue.PackagedHeight,
+            PackagedLength: context.propsValue.PackagedLength,
+            PackagedWidth: context.propsValue.PackagedWidth,
+            PackagedWeightKg: context.propsValue.PackagedWeightKg,
+            IsActive: context.propsValue.IsActive,
+            IsKit: context.propsValue.IsKit,
+            Id: context.propsValue.Id,
+        });
 
     },
 });

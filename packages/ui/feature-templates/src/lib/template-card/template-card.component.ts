@@ -13,8 +13,9 @@ import {
   FlowOperationType,
   FlowTemplate,
   FolderId,
+  TelemetryEventName,
 } from '@activepieces/shared';
-import { FlowService } from '@activepieces/ui/common';
+import { FlowService, TelemetryService } from '@activepieces/ui/common';
 import { Observable, switchMap, tap } from 'rxjs';
 import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
@@ -33,6 +34,7 @@ export class TemplateCardComponent implements AfterViewInit {
   useTemplate$: Observable<Flow>;
   @Output() useTemplateClicked = new EventEmitter<FlowTemplate>();
   @Input() template: FlowTemplate;
+  loading = false;
   @Input() insideBuilder = true;
   @Input() showBtnOnHover = false;
   @Input() folderId?: FolderId | null;
@@ -41,10 +43,12 @@ export class TemplateCardComponent implements AfterViewInit {
     private router: Router,
     private cd: ChangeDetectorRef,
     private matDialog: MatDialog,
+    private telemetryService: TelemetryService,
     private builderService: CollectionBuilderService
   ) {}
   useTemplate() {
-    if (!this.useTemplate$ && !this.insideBuilder) {
+    if (!this.loading && !this.insideBuilder) {
+      this.loading = true;
       this.useTemplate$ = this.flowService
         .create({
           displayName: this.template.name,
@@ -59,6 +63,17 @@ export class TemplateCardComponent implements AfterViewInit {
               })
               .pipe(
                 tap((updatedFlow: Flow) => {
+                  this.loading = false;
+                  this.telemetryService.capture({
+                    name: TelemetryEventName.FLOW_IMPORTED,
+                    payload: {
+                      id: this.template.id,
+                      name: this.template.name,
+                      location: this.template.pinnedOrder
+                        ? 'Pins in dashboard'
+                        : 'See all dialog in dashboard',
+                    },
+                  });
                   if (this.template.blogUrl) {
                     this.builderService.componentToShowInsidePortal$.next(
                       new ComponentPortal(

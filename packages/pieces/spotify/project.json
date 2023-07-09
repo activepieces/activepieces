@@ -5,30 +5,22 @@
   "projectType": "library",
   "targets": {
     "build": {
-      "executor": "@nrwl/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/spotify",
         "tsConfig": "packages/pieces/spotify/tsconfig.lib.json",
         "packageJson": "packages/pieces/spotify/package.json",
         "main": "packages/pieces/spotify/src/index.ts",
-        "assets": [
-          "packages/pieces/spotify/*.md"
-        ],
+        "assets": ["packages/pieces/spotify/*.md"],
         "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {
-      "executor": "@nrwl/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": [
-          "packages/pieces/spotify/**/*.ts"
-        ]
+        "lintFilePatterns": ["packages/pieces/spotify/**/*.ts"]
       }
     }
   },

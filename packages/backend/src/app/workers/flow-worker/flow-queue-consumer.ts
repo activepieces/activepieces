@@ -3,7 +3,7 @@ import { ActivepiecesError, ApId, ErrorCode, ExecutionType, FlowInstanceStatus, 
 import { createRedisClient } from '../../database/redis-connection'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { triggerUtils } from '../../helper/trigger-utils'
-import { ONE_TIME_JOB_QUEUE, SCHEDULED_JOB_QUEUE } from './flow-queue'
+import { ONE_TIME_JOB_QUEUE, SCHEDULED_JOB_QUEUE, flowQueue } from './flow-queue'
 import { flowWorker } from './flow-worker'
 import { DelayedJobData, OneTimeJobData, RepeatingJobData, ScheduledJobData } from './job-data'
 import { captureException, logger } from '../../helper/logger'
@@ -11,7 +11,7 @@ import { system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { flowInstanceService } from '../../flows/flow-instance/flow-instance.service'
-import { isNil } from 'lodash'
+import { isNil } from '@activepieces/shared'
 
 const oneTimeJobConsumer = new Worker<OneTimeJobData, unknown, ApId>(
     ONE_TIME_JOB_QUEUE,
@@ -73,21 +73,29 @@ const consumeRepeatingJob = async (job: Job<RepeatingJobData, void>): Promise<vo
         // TODO REMOVE AND FIND PERMANENT SOLUTION
         const instance = await flowInstanceService.get({
             projectId: data.projectId,
-            flowId: data.flowVersion.flowId,
+            flowId: data.flowId,
         })
 
         if (
             isNil(instance) ||
             instance.status !== FlowInstanceStatus.ENABLED ||
-            instance.flowVersionId !== data.flowVersion.id
+            instance.flowVersionId !== data.flowVersionId
         ) {
-            captureException(new Error(`[repeatableJobConsumer] removing job.id=${job.name} instance.flowVersionId=${instance?.flowVersionId} data.flowVersion.id=${data.flowVersion.id}`))
+            captureException(new Error(`[repeatableJobConsumer] removing job.id=${job.name} instance.flowVersionId=${instance?.flowVersionId} data.flowVersion.id=${data.flowVersionId}`))
 
-            await triggerUtils.disable({
-                projectId: data.projectId,
-                flowVersion: data.flowVersion,
-                simulate: false,
-            })
+            const flowVersion = await flowVersionService.getOneOrThrow(data.flowVersionId)
+            if (isNil(flowVersion)) {
+                await flowQueue.removeRepeatingJob({
+                    id: data.flowVersionId,
+                })
+            }
+            else {
+                await triggerUtils.disable({
+                    projectId: data.projectId,
+                    flowVersion: flowVersion,
+                    simulate: false,
+                })
+            }
 
             return
         }
@@ -99,16 +107,16 @@ const consumeRepeatingJob = async (job: Job<RepeatingJobData, void>): Promise<vo
     catch (e) {
         if (e instanceof ActivepiecesError && e.error.code === ErrorCode.TASK_QUOTA_EXCEEDED) {
             logger.info(`[repeatableJobConsumer] removing job.id=${job.name} run out of flow quota`)
-            await flowInstanceService.delete({ projectId: data.projectId, flowId: data.flowVersion.flowId })
+            await flowInstanceService.update({ projectId: data.projectId, flowId: data.flowId, status: FlowInstanceStatus.DISABLED })
         }
         else {
-            throw e
+            captureException(e)
         }
     }
 }
 
 const consumePieceTrigger = async (data: RepeatingJobData): Promise<void> => {
-    const flowVersion = await flowVersionService.getOneOrThrow(data.flowVersion.id)
+    const flowVersion = await flowVersionService.getOneOrThrow(data.flowVersionId)
 
     const payloads: unknown[] = await triggerUtils.executeTrigger({
         projectId: data.projectId,
@@ -122,7 +130,7 @@ const consumePieceTrigger = async (data: RepeatingJobData): Promise<void> => {
     const createFlowRuns = payloads.map((payload) =>
         flowRunService.start({
             environment: RunEnvironment.PRODUCTION,
-            flowVersionId: data.flowVersion.id,
+            flowVersionId: data.flowVersionId,
             payload,
             projectId: data.projectId,
             executionType: ExecutionType.BEGIN,

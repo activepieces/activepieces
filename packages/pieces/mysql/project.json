@@ -5,30 +5,22 @@
   "projectType": "library",
   "targets": {
     "build": {
-      "executor": "@nrwl/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/mysql",
         "tsConfig": "packages/pieces/mysql/tsconfig.lib.json",
         "packageJson": "packages/pieces/mysql/package.json",
         "main": "packages/pieces/mysql/src/index.ts",
-        "assets": [
-          "packages/pieces/mysql/*.md"
-        ],
+        "assets": ["packages/pieces/mysql/*.md"],
         "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {
-      "executor": "@nrwl/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": [
-          "packages/pieces/mysql/**/*.ts"
-        ]
+        "lintFilePatterns": ["packages/pieces/mysql/**/*.ts"]
       }
     }
   },

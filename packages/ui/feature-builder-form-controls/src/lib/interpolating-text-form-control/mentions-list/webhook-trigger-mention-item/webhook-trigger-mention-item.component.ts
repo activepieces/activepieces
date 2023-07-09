@@ -47,6 +47,7 @@ export class WebhookTriggerMentionItemComponent implements OnInit {
   customPathDialogClosed$: Observable<MentionListItem | undefined>;
   _stepMention: MentionListItem & { step: WebhookTrigger };
   pathFormGroup: FormGroup<{ path: FormControl<string> }>;
+  search$: Observable<string>;
   constructor(
     private dialogService: MatDialog,
     private mentionsTreeCache: MentionsTreeCacheService,
@@ -63,6 +64,11 @@ export class WebhookTriggerMentionItemComponent implements OnInit {
         children: this.sampleData,
       });
     }
+    this.search$ = this.mentionsTreeCache.listSearchBarObs$.pipe(
+      tap((res) => {
+        this.expandSample = !!res;
+      })
+    );
     this.nodesFilteredWithSearch$ =
       this.mentionsTreeCache.listSearchBarObs$.pipe(
         map((res) => {

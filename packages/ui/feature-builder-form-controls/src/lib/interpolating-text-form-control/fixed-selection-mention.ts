@@ -4,21 +4,21 @@ import { fixSelection } from './utils';
 const Embed = Quill.import('blots/embed');
 
 class MentionBlot extends Embed {
-  static blotName;
-  static tagName;
-  static className;
-  hoverHandler;
-  clickHandler;
+  static blotName: string;
+  static tagName: string;
+  static className: string;
+  hoverHandler: ((e: any) => void) | null;
+  clickHandler: ((e: any) => void) | null;
   mounted;
-  domNode;
-  constructor(scroll, node) {
+  domNode: any;
+  constructor(scroll: any, node: any) {
     super(scroll, node);
     this.clickHandler = null;
     this.hoverHandler = null;
     this.mounted = false;
   }
 
-  static create(data) {
+  static create(data: { denotationChar: string; value: any }) {
     const node = super.create();
     const denotationChar = document.createElement('span');
     denotationChar.className = 'ql-mention-denotation-char';
@@ -28,7 +28,7 @@ class MentionBlot extends Embed {
     return MentionBlot.setDataValues(node, data);
   }
 
-  static setDataValues(element, data) {
+  static setDataValues(element: any, data: { [x: string]: any }) {
     const domNode = element;
     Object.keys(data).forEach((key) => {
       domNode.dataset[key] = data[key];
@@ -36,7 +36,7 @@ class MentionBlot extends Embed {
     return domNode;
   }
 
-  static value(domNode) {
+  static value(domNode: { dataset: any }) {
     return domNode.dataset;
   }
 
@@ -69,7 +69,7 @@ class MentionBlot extends Embed {
   }
 
   getClickHandler() {
-    return (e) => {
+    return (e: { preventDefault: () => void }) => {
       if (typeof window.getSelection != 'undefined') {
         fixSelection(this.domNode);
       }
@@ -80,14 +80,14 @@ class MentionBlot extends Embed {
   }
 
   getHoverHandler() {
-    return (e) => {
+    return (e: { preventDefault: () => void }) => {
       const event = this.buildEvent('mention-hovered', e);
       window.dispatchEvent(event);
       e.preventDefault();
     };
   }
 
-  buildEvent(name, e) {
+  buildEvent(name: string, e: any) {
     const event = new Event(name, {
       bubbles: true,
       cancelable: true,

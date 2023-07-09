@@ -32,7 +32,6 @@ import {
   fromOpsToText,
   fromTextToOps,
   getImageTemplateForStepLogo,
-  InsertMentionOperation,
   keysWithinPath,
   MentionListItem,
   QuillEditorOperationsObject,
@@ -47,6 +46,7 @@ import {
   BuilderSelectors,
   FlowItem,
 } from '@activepieces/ui/feature-builder-store';
+import { InsertMentionOperation } from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-interpolating-text-form-control',
@@ -204,23 +204,21 @@ export class InterpolatingTextFormControlComponent
       })
     );
   }
+
   editorCreated(): void {
     this.removeDefaultTabKeyBinding();
     this.removeConvertingSpaceAndMinusToList();
 
     this.editor.quillEditor.clipboard.addMatcher(
       Node.ELEMENT_NODE,
-      (
-        _node: unknown,
-        delta: { ops: (TextInsertOperation | InsertMentionOperation)[] }
-      ) => {
-        const cleanedOps: (TextInsertOperation | InsertMentionOperation)[] = [];
-        delta.ops.forEach((op) => {
+      (_node: Element, delta: any) => {
+        const cleanedOps: (InsertMentionOperation | TextInsertOperation)[] = [];
+        delta.ops.forEach((op: any) => {
           if (
             (op.insert && typeof op.insert === 'string') ||
             (typeof op.insert === 'object' && op.insert.mention)
           ) {
-            //remove styling in case user is pasting html
+            // remove styling in case the user is pasting HTML
             delete op['attributes'];
             cleanedOps.push(op);
           }
@@ -230,6 +228,7 @@ export class InterpolatingTextFormControlComponent
       }
     );
   }
+
   private removeDefaultTabKeyBinding() {
     delete this.editor.quillEditor.getModule('keyboard').bindings['9'];
   }

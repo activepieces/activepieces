@@ -1,14 +1,6 @@
 import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
-import { Property } from '@activepieces/pieces-framework';
 
 export const intercomCommon = {
-    connection: Property.OAuth2({
-        authUrl: 'https://app.intercom.com/oauth',
-        tokenUrl: 'https://api.intercom.io/auth/eagle/token',
-        displayName: 'Connection',
-        required: true,
-        scope: []
-    }),
     intercomHeaders: {
         "Intercom-Version": "2.8"
     },

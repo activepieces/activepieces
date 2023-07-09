@@ -1,39 +1,23 @@
-import { BasicAuthPropertyValue, Property } from "@activepieces/pieces-framework";
+import { PiecePropValueSchema, Property } from "@activepieces/pieces-framework";
 import { AuthenticationType, httpClient, HttpMethod, HttpRequest } from "@activepieces/pieces-common";
+import { wordpressAuth } from "../..";
 export type WordpressMedia = { id: string, title: { rendered: string } }
 
-// TODO This needs a better description
-const markdownPropertyDescription = `
-Enable basic authentication for your Wordpress website by downloading and installing the plugin from this repository: https://github.com/WP-API/Basic-Auth.
-`
 const PAGE_HEADER = 'x-wp-totalpages';
 
 export const wordpressCommon = {
-    connection: Property.BasicAuth({
-        displayName: "Connection",
-        required: true,
-        description: markdownPropertyDescription,
-        username: Property.ShortText({
-            displayName: "Username",
-            required: true
-        }),
-        password: Property.SecretText({
-            displayName: "Password",
-            required: true,
-        }),
-    }),
-    website_url: Property.ShortText({
-        displayName: 'Website URL',
-        required: true,
-        description: "URL of the wordpress url i.e https://www.example-website.com"
+    featured_media_file: Property.File({
+        displayName: "Featured Media (URL)",
+        required: false,
+        description: "URL of featured media"
     }),
     authors: Property.Dropdown({
         displayName: 'Authors',
         required: false,
-        refreshers: ['connection', 'website_url'],
-        options: async (props) => {
-            const connection = props['connection'] as BasicAuthPropertyValue;
-            const websiteUrl = props['website_url'] as string;
+        refreshers: [],
+        options: async ({ auth }) => {
+            const connection = auth as PiecePropValueSchema<typeof wordpressAuth>
+            const websiteUrl = connection.website_url
             if (!connection?.username || !connection?.password || !websiteUrl) {
                 return {
                     disabled: true,
@@ -48,14 +32,13 @@ export const wordpressCommon = {
                     options: [],
                 };
             }
-            const authProp: BasicAuthPropertyValue = props['connection'] as BasicAuthPropertyValue;
             const request: HttpRequest = {
                 method: HttpMethod.GET,
                 url: `${websiteUrl.trim()}/wp-json/wp/v2/users`,
                 authentication: {
                     type: AuthenticationType.BASIC,
-                    username: authProp.username,
-                    password: authProp.password
+                    username: connection.username,
+                    password: connection.password
                 }
             };
             const response = await httpClient.sendRequest<{ id: string, name: string }[]>(request);
