@@ -188,7 +188,14 @@
             "install/options/easypanel"
           ]
         },
-        "install/configurations",
+        {
+          "group": "Configurations",
+          "icon": "gear",
+          "pages": [
+            "install/configurations/environment-variables",
+            "install/configurations/error-notifications"
+          ]
+        },
         "install/breaking-changes"
       ]
     },
