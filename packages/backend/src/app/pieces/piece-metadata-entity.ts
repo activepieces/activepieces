@@ -44,6 +44,10 @@ export const PieceMetadataEntity = new EntitySchema<PieceMetadataSchema>({
             nullable: false,
             collation: 'en_natural',
         },
+        auth: {
+            type: 'jsonb',
+            nullable: true,
+        },
         actions: {
             type: 'jsonb',
             nullable: false,
