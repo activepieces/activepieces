@@ -4,41 +4,7 @@ import { HttpRequest, HttpMethod, httpClient, AuthenticationType } from "@active
 import axios from 'axios';
 import https from 'https';
 
-const authDescription = `
-To generate your API credentials, follow the steps below:
-1. Go to WooCommerce -> Settings -> Advanced tab -> REST API.
-2. Click on Add Key to create a new key.
-3. Enter the key description and change the permissions to Read/Write.
-4. Click Generate Key.
-5. Copy the Consumer Key and Consumer Secret into the fields below. You will not be able to view the Consumer Secret after exiting the page.
-
-Note that the base URL of your WooCommerce instance needs to be on a secure (HTTPS) connection, or the piece will not work even on local instances on the same device.
-`;
-
 export const wooCommon = {
-    authentication: Property.CustomAuth({
-        displayName: 'Authentication',
-        description: authDescription,
-        required: true,
-        props: {
-            baseUrl: Property.ShortText({
-                displayName: 'Base URL',
-                description: 'The base URL of your app without trailing slash (e.g https://mystore.com, not https://mystore.com/) - HTTPS only',
-                required: true,
-            }),
-            consumerKey: Property.ShortText({
-                displayName: 'Consumer Key',
-                description: 'The consumer key generated from your app',
-                required: true,
-            }),
-            consumerSecret: Property.SecretText({
-                displayName: 'Consumer Secret',
-                description: 'The consumer secret generated from your app',
-                required: true,
-            })
-        }
-    }),
-
     /**
      * Creates a WooCommerce webhook creation object for the request body.
      * @param type The topic type to listen for (Customer, Order, Product, Coupon).

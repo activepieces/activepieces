@@ -1,17 +1,17 @@
 import { TriggerStrategy, createTrigger } from "@activepieces/pieces-framework";
 import { wooCommon } from "../common";
+import { wooAuth } from "../..";
 
 export const product = createTrigger({
     name: 'product',
     displayName: 'Product',
     description: 'Triggers when any product is created, updated or deleted.',
     type: TriggerStrategy.WEBHOOK,
-    props: {
-        authentication: wooCommon.authentication
-    },
+    auth: wooAuth,
+    props: {},
     //Create the webhooks in WooCommerce and save the webhook IDs in store for disable behavior
     async onEnable(context) {
-        const webhookIds = await wooCommon.subscribeWebhook(context.webhookUrl, 'Product', context.propsValue.authentication);
+        const webhookIds = await wooCommon.subscribeWebhook(context.webhookUrl, 'Product', context.auth);
 
         await context.store?.put('_product_trigger', {
             webhookIds: webhookIds
@@ -22,7 +22,7 @@ export const product = createTrigger({
         const response = await context.store?.get('_product_trigger') as { webhookIds: number[] };
         if (response !== null && response !== undefined) {
             response.webhookIds.forEach((webhookId: number) => {
-                wooCommon.unsubscribeWebhook(webhookId, context.propsValue.authentication);
+                wooCommon.unsubscribeWebhook(webhookId, context.auth);
             })
         }
     },

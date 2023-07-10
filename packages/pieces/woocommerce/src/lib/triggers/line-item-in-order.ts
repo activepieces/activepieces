@@ -1,17 +1,17 @@
 import { TriggerStrategy, createTrigger } from "@activepieces/pieces-framework";
 import { wooCommon } from "../common";
+import { wooAuth } from "../..";
 
 export const lineItemInOrder = createTrigger({
     name: 'lineItemInOrder',
     displayName: 'Line Item in Order',
     description: 'Triggers on any Order event, returns line items from the Order.',
     type: TriggerStrategy.WEBHOOK,
-    props: {
-        authentication: wooCommon.authentication
-    },
+    auth: wooAuth,
+    props: {},
     //Create the webhooks in WooCommerce and save the webhook IDs in store for disable behavior
     async onEnable(context) {
-        const webhookIds = await wooCommon.subscribeWebhook(context.webhookUrl, 'Order', context.propsValue.authentication);
+        const webhookIds = await wooCommon.subscribeWebhook(context.webhookUrl, 'Order', context.auth);
 
         await context.store?.put('_line_item_in_order_trigger', {
             webhookIds: webhookIds
@@ -22,7 +22,7 @@ export const lineItemInOrder = createTrigger({
         const response = await context.store?.get('_line_item_in_order_trigger') as { webhookIds: number[] };
         if (response !== null && response !== undefined) {
             response.webhookIds.forEach(async (webhookId: number) => {
-                // wooCommon.unsubscribeWebhook(webhookId, context.propsValue.authentication);
+                // wooCommon.unsubscribeWebhook(webhookId, context.auth);
             })
         }
     },
