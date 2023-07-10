@@ -1,6 +1,6 @@
 import { ExecutionType, FlowId, FlowRunId, FlowVersionId, ProjectId, RunEnvironment, TriggerType } from '@activepieces/shared'
 
-export const LATEST_JOB_DATA_SCHEMA_VERSION = 2
+export const LATEST_JOB_DATA_SCHEMA_VERSION = 3
 
 type BaseJobData = {
     projectId: ProjectId

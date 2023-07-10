@@ -32,6 +32,7 @@ const flowVersionWithBranching: FlowVersion = {
                             'operator': 'TEXT_CONTAINS',
                             'firstValue': '1',
                             'secondValue': '1',
+                            caseSensitive: true
                         },
                     ],
                 ],
@@ -215,6 +216,7 @@ describe('Flow Helper', () => {
                                 operator: BranchOperator.TEXT_CONTAINS,
                                 firstValue: '1',
                                 secondValue: '1',
+                                caseSensitive: true,
                             }
                         ]
                     ]
@@ -291,7 +293,8 @@ describe('Flow Helper', () => {
                             {
                                 "operator": "TEXT_CONTAINS",
                                 "firstValue": "1",
-                                "secondValue": "1"
+                                "secondValue": "1",
+                                caseSensitive: true
                             }
                         ]
                     ]
@@ -319,6 +322,7 @@ describe('Flow Helper', () => {
                                     operator: BranchOperator.TEXT_CONTAINS,
                                     firstValue: '1',
                                     secondValue: '1',
+                                    caseSensitive: true,
                                 }
                             ]
                         ]
@@ -380,7 +384,8 @@ describe('Flow Helper', () => {
                             {
                                 "operator": "TEXT_CONTAINS",
                                 "firstValue": "1",
-                                "secondValue": "1"
+                                "secondValue": "1",
+                                caseSensitive: true
                             }
                         ]
                     ]
@@ -534,6 +539,7 @@ test('Duplicate Flow With Branch', () => {
                                 'operator':'TEXT_CONTAINS',
                                 'firstValue':'1',
                                 'secondValue':'1',
+                                caseSensitive: true
                             },
                         ],
                     ],
@@ -612,6 +618,7 @@ test('Duplicate Flow With Branch', () => {
                                     'operator': BranchOperator.TEXT_CONTAINS,
                                     'firstValue': '1',
                                     'secondValue': '1',
+                                    caseSensitive: true
                                 },
                             ],
                         ],

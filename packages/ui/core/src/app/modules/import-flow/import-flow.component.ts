@@ -1,11 +1,6 @@
-import {
-  Flow,
-  FlowOperationType,
-  FlowTemplate,
-  FlowVersion,
-} from '@activepieces/shared';
-import { FlowService } from '@activepieces/ui/common';
-import { HttpClient } from '@angular/common/http';
+import { Flow, FlowOperationType, FlowTemplate } from '@activepieces/shared';
+import { FlowService, TemplatesService } from '@activepieces/ui/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { Meta } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -21,22 +16,20 @@ import {
   of,
 } from 'rxjs';
 
-type FlowTemplateWithVersion = FlowTemplate & { template: FlowVersion };
-
 @Component({
   selector: 'app-import-flow',
   templateUrl: './import-flow.component.html',
   styleUrls: [],
 })
 export class ImportFlowComponent implements OnInit {
-  loadFlow$: Observable<FlowTemplateWithVersion>;
+  loadFlow$: Observable<FlowTemplate>;
 
   importFlow$: Observable<void>;
   hasDirectFlag$: Observable<boolean> = of(false);
 
   constructor(
     private route: ActivatedRoute,
-    private http: HttpClient,
+    private templatesService: TemplatesService,
     private flowService: FlowService,
     private router: Router,
     private metaService: Meta
@@ -46,18 +39,20 @@ export class ImportFlowComponent implements OnInit {
     this.loadFlow$ = this.route.params.pipe(
       switchMap((params) => {
         const templateId = encodeURIComponent(params['templateId']);
-        return this.http
-          .get<FlowTemplateWithVersion>(
-            `https://activepieces-cdn.fra1.cdn.digitaloceanspaces.com/templates/${templateId}.json`
-          )
-          .pipe(
-            tap((res) => {
-              this.metaService.addTag({
-                name: 'description',
-                content: `Use this Activepieces automation template for yourself: ${res.name}`,
-              });
-            })
-          );
+        return this.templatesService.getTemplate(templateId).pipe(
+          catchError((err: HttpErrorResponse) => {
+            if (err.status === StatusCodes.NOT_FOUND) {
+              return this.templatesService.getTemplateDeprecated(templateId);
+            }
+            throw err;
+          })
+        );
+      }),
+      tap((res) => {
+        this.metaService.addTag({
+          name: 'description',
+          content: `Use this Activepieces automation template for yourself: ${res.name}`,
+        });
       }),
       catchError((error) => {
         console.error(error);

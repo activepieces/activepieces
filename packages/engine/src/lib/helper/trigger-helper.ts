@@ -1,4 +1,4 @@
-import { ApEdition, EventPayload, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecutionState, PieceTrigger, ScheduleOptions, TriggerHookType } from "@activepieces/shared";
+import { AUTHENTICATION_PROPERTY_NAME, ApEdition, EventPayload, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecutionState, PieceTrigger, ScheduleOptions, TriggerHookType } from "@activepieces/shared";
 import { createContextStore } from "../services/storage.service";
 import { VariableService } from "../services/variable-service";
 import { pieceHelper } from "./action-helper";
@@ -25,13 +25,13 @@ export const triggerHelper = {
     const variableService = new VariableService();
     const executionState = new ExecutionState();
 
-    const resolvedInput = await variableService.resolve({
+    const resolvedProps = await variableService.resolve({
       unresolvedInput: input,
       executionState,
       censorConnections: false,
     })
 
-    const {processedInput, errors} = await variableService.applyProcessorsAndValidators(resolvedInput, trigger.props);
+    const {processedInput, errors} = await variableService.applyProcessorsAndValidators(resolvedProps, trigger.props);
 
     if (Object.keys(errors).length > 0) {
       throw new Error(JSON.stringify(errors));
@@ -39,10 +39,7 @@ export const triggerHelper = {
 
     const appListeners: Listener[] = [];
     const prefix = (params.hookType === TriggerHookType.TEST) ? 'test' : '';
-    let scheduleOptions: ScheduleOptions = {
-      cronExpression: "*/5 * * * *",
-      timezone: "UTC"
-    }
+    let scheduleOptions: ScheduleOptions | undefined = undefined;
     const context = {
       store: createContextStore(prefix, params.flowVersion.flowId),
       app: {
@@ -57,27 +54,22 @@ export const triggerHelper = {
         scheduleOptions = {
           cronExpression: request.cronExpression,
           timezone: request.timezone ?? "UTC"
-        };
+        }
       },
       webhookUrl: params.webhookUrl,
+      auth: processedInput[AUTHENTICATION_PROPERTY_NAME],
       propsValue: processedInput,
       payload: params.triggerPayload ?? {},
     };
-
     switch (params.hookType) {
       case TriggerHookType.ON_DISABLE:
         await trigger.onDisable(context);
-        return {
-          scheduleOptions: {
-            cronExpression: ''
-          },
-          listeners: []
-        }
+        return {}
       case TriggerHookType.ON_ENABLE:
         await trigger.onEnable(context);
         return {
           listeners: appListeners,
-          scheduleOptions: scheduleOptions
+          scheduleOptions: trigger.type === TriggerStrategy.POLLING ? scheduleOptions : undefined,
         }
       case TriggerHookType.TEST:
         try {

@@ -16,12 +16,11 @@ import {
 import {
   BuilderSelectors,
   FlowItem,
-  Point,
-  FlowStructureUtil,
   FlowRendererService,
 } from '@activepieces/ui/feature-builder-store';
 import { PannerService } from '../../canvas-utils/panning/panner.service';
 import { ZoomingService } from '../../canvas-utils/zooming/zooming.service';
+import { flowHelper } from '@activepieces/shared';
 
 @Component({
   selector: 'app-flow-item',
@@ -37,7 +36,10 @@ export class FlowItemComponent implements OnInit {
   @Input() hoverState = false;
   @Input() trigger = false;
   _flowItemData: FlowItem;
+  delayTimer: NodeJS.Timeout;
+  delayTimerSet = false;
   touchStartLongPress = { delay: 750, delta: 10 };
+
   snappedDraggedShadowToCursor = false;
   hideDraggableSource$: Subject<boolean> = new Subject();
   c = 0;
@@ -57,7 +59,6 @@ export class FlowItemComponent implements OnInit {
   }
   selected$: Observable<boolean> = of(false);
   readOnly$: Observable<boolean> = of(false);
-  dragDelta: Point | undefined;
   scale$: Observable<string>;
   isDragging = false;
   anyStepIsDragged$: Observable<boolean>;
@@ -65,6 +66,7 @@ export class FlowItemComponent implements OnInit {
     left: `calc(50% - ${FLOW_ITEM_WIDTH / 2}px )`,
     position: 'relative',
     width: FLOW_ITEM_WIDTH + 'px',
+    'user-select': 'none',
   };
   readonly draggedContainer = {
     left: `calc(50% - ${(FLOW_ITEM_WIDTH - 1) / 2}px )`,
@@ -91,7 +93,7 @@ export class FlowItemComponent implements OnInit {
       })
     );
     this.readOnly$ = this.store.select(BuilderSelectors.selectReadOnly);
-    if (FlowStructureUtil.isTrigger(this._flowItemData)) {
+    if (flowHelper.isTrigger(this._flowItemData.type)) {
       const translate$ = this.pannerService.panningOffset$.asObservable().pipe(
         startWith({ x: 0, y: 0 }),
         map((val) => {
@@ -119,7 +121,7 @@ export class FlowItemComponent implements OnInit {
 
   flowGraphContainerCalculator() {
     return {
-      top: FlowStructureUtil.isTrigger(this._flowItemData) ? '50px' : '0px',
+      top: flowHelper.isTrigger(this._flowItemData.type) ? '50px' : '0px',
       width: this._flowItemData.boundingBox!.width + 'px',
       height: this._flowItemData.boundingBox!.height + 'px',
       left: `calc(50% - ${this._flowItemData.boundingBox!.width / 2}px )`,
@@ -146,6 +148,9 @@ export class FlowItemComponent implements OnInit {
     setTimeout(() => {
       this.hideDraggableSource$.next(true);
     });
+    setTimeout(() => {
+      this.snapElementToCursor();
+    }, 50);
   }
 
   snapElementToCursor() {
@@ -155,15 +160,9 @@ export class FlowItemComponent implements OnInit {
         const shadowElRect = shadowEl.getBoundingClientRect();
         const x = this.flowRendererService.clientX - shadowElRect.left; //x position within the element.
         const y = this.flowRendererService.clientY - shadowElRect.top; //y position within the element.
-        console.log(x, y);
         shadowEl.style.transform = `translate(${
           x - shadowElRect.width / 2
         }px , ${y - shadowElRect.height / 2}px)`;
-        console.log(
-          `translate(${x - shadowElRect.width / 2}px , ${
-            y - shadowElRect.height / 2
-          }px)`
-        );
       } else {
         console.error('shadowEl not found!!!');
       }
@@ -179,5 +178,20 @@ export class FlowItemComponent implements OnInit {
     });
     this.snappedDraggedShadowToCursor = false;
     this.renderer2.setStyle(document.body, 'cursor', 'auto');
+  }
+
+  mouseDown($event: MouseEvent, el: HTMLElement) {
+    if (!this.delayTimerSet) {
+      $event.stopImmediatePropagation();
+      this.delayTimerSet = true;
+      this.delayTimer = setTimeout(() => {
+        el.dispatchEvent(new MouseEvent('mousedown', $event));
+        this.delayTimerSet = false;
+      }, 100);
+    }
+  }
+  mouseUp() {
+    this.delayTimerSet = false;
+    clearTimeout(this.delayTimer);
   }
 }

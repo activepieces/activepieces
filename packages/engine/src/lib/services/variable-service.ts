@@ -1,13 +1,11 @@
-import { get, isNil, isString } from "lodash";
-import { ExecutionState } from "@activepieces/shared";
+import { ExecutionState, isNil, isString } from "@activepieces/shared";
 import { connectionService } from "./connections.service";
-import {PiecePropertyMap, PropertyType, formatErrorMessage, ErrorMessages } from "@activepieces/pieces-framework";
-
-type ResolveParams = {
-  unresolvedInput: unknown
-  executionState: ExecutionState
-  censorConnections: boolean
-}
+import { ApFile, PiecePropertyMap, PropertyType, formatErrorMessage, ErrorMessages } from "@activepieces/pieces-framework";
+import dayjs from "dayjs";
+import timezone from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
+import path from "path";
+import isBase64 from 'is-base64';
 
 export class VariableService {
   private VARIABLE_TOKEN = RegExp('\\{\\{(.*?)\\}\\}', 'g');
@@ -45,22 +43,18 @@ export class VariableService {
       return "**CENSORED**";
     }
     // Need to be resolved dynamically
-    const connectioName = paths[1];
-    paths.splice(0, 2);
+    const connectionName = paths[1];
+    paths.splice(0, 1);
+    // Replace connection name with something that doesn't contain - or _, otherwise evalInScope would break
+    paths[0] = 'connection';
     const newPath = paths.join(".");
-    const connection = (await connectionService.obtain(connectioName));
-    if (paths.length === 0) {
+    const connection = (await connectionService.obtain(connectionName));
+    if (paths.length === 1) {
       return connection;
     }
-    return VariableService.copyFromMap(connection, newPath);
-  }
-
-  private static copyFromMap(valuesMap: any, path: string) {
-    const value = get(valuesMap, path);
-    if (value === undefined) {
-      return '';
-    }
-    return value;
+    const context: Record<string, unknown> = {};
+    context['connection'] = connection;
+    return this.evalInScope(newPath, context);
   }
 
   private evalInScope(js: string, contextAsScope: Record<string, unknown>) {
@@ -78,21 +72,27 @@ export class VariableService {
   }
 
   private async resolveInternally(unresolvedInput: any, valuesMap: any, censorConnections: boolean): Promise<any> {
-    if (unresolvedInput === undefined || unresolvedInput === null) {
+    if (isNil(unresolvedInput)) {
       return unresolvedInput;
-    } else if (isString(unresolvedInput)) {
+    }
+
+    if (isString(unresolvedInput)) {
       return this.resolveInput(unresolvedInput, valuesMap, censorConnections);
-    } else if (Array.isArray(unresolvedInput)) {
+    }
+
+    if (Array.isArray(unresolvedInput)) {
       for (let i = 0; i < unresolvedInput.length; ++i) {
         unresolvedInput[i] = await this.resolveInternally(unresolvedInput[i], valuesMap, censorConnections);
       }
-    } else if (typeof unresolvedInput === 'object') {
+    }
+    else if (typeof unresolvedInput === 'object') {
       const entries = Object.entries(unresolvedInput);
       for (let i = 0; i < entries.length; ++i) {
         const [key, value] = entries[i];
         unresolvedInput[key] = await this.resolveInternally(value, valuesMap, censorConnections);
       }
     }
+
     return unresolvedInput;
   }
 
@@ -104,14 +104,36 @@ export class VariableService {
     return valuesMap;
   }
 
-  resolve(params: ResolveParams): Promise<any> {
+  resolve<T = unknown>(params: ResolveParams): Promise<T> {
     const { unresolvedInput, executionState, censorConnections } = params
+
+    if (isNil(unresolvedInput)) {
+      return Promise.resolve(unresolvedInput) as Promise<T>
+    }
 
     return this.resolveInternally(
       JSON.parse(JSON.stringify(unresolvedInput)),
       this.getExecutionStateObject(executionState),
       censorConnections
-    );
+    ) as Promise<T>
+  }
+
+  async resolveAndValidate<T = unknown>(params: ResolveAndValidateParams): Promise<T> {
+    const { unresolvedInput, executionState, censorConnections, actionProps } = params
+
+    const resolvedInput = await this.resolve<T>({
+      unresolvedInput,
+      executionState,
+      censorConnections,
+    })
+
+    const { result, errors } = await this.validateAndCast(resolvedInput, actionProps)
+
+    if (Object.keys(errors).length > 0) {
+      throw new Error(JSON.stringify(errors));
+    }
+
+    return result as T
   }
 
 
@@ -165,4 +187,14 @@ export class VariableService {
 
     return { processedInput, errors };
   }
+}
+
+type ResolveParams = {
+  unresolvedInput: unknown
+  executionState: ExecutionState
+  censorConnections: boolean
+}
+
+type ResolveAndValidateParams = ResolveParams & {
+  actionProps: PiecePropertyMap
 }

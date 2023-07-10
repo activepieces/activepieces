@@ -203,6 +203,11 @@ const __CanvasReducer = createReducer(
     const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
     clonedState.displayedFlowVersion = flow.version;
     return clonedState;
+  }),
+  on(canvasActions.setAddButtonId, (state, { id }) => {
+    const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
+    clonedState.clickedAddBtnId = id;
+    return clonedState;
   })
 );
 

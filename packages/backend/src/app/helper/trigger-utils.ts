@@ -15,10 +15,14 @@ import { JobType, flowQueue } from '../workers/flow-worker/flow-queue'
 import { EngineHelperResponse, EngineHelperTriggerResult, engineHelper } from './engine-helper'
 import { webhookService } from '../webhooks/webhook-service'
 import { appEventRoutingService } from '../app-event-routing/app-event-routing.service'
-import { isNil } from 'lodash'
+import { isNil } from '@activepieces/shared'
 import { LATEST_JOB_DATA_SCHEMA_VERSION } from '../workers/flow-worker/job-data'
 import { pieceMetadataService } from '../pieces/piece-metadata-service'
 import { logger } from './logger'
+import { system } from './system/system'
+import { SystemProp } from './system/system-prop'
+
+const POLLING_FREQUENCY_CRON_EXPRESSON = `*/${system.getNumber(SystemProp.TRIGGER_DEFAULT_POLL_INTERVAL ?? 5)} * * * *`
 
 export const triggerUtils = {
     async executeTrigger(params: ExecuteTrigger): Promise<unknown[]> {
@@ -69,7 +73,7 @@ export const triggerUtils = {
             return null
         }
 
-        return await enablePieceTrigger({
+        return enablePieceTrigger({
             projectId,
             flowVersion,
             simulate,
@@ -168,7 +172,12 @@ const enablePieceTrigger = async (params: EnableOrDisableParams) => {
         case TriggerStrategy.WEBHOOK:
             break
         case TriggerStrategy.POLLING: {
-            const { scheduleOptions } = engineHelperResponse.result
+            if(isNil(engineHelperResponse.result.scheduleOptions)){
+                engineHelperResponse.result.scheduleOptions = {
+                    cronExpression: POLLING_FREQUENCY_CRON_EXPRESSON,
+                    timezone: 'UTC',
+                }
+            }
             await flowQueue.add({
                 id: flowVersion.id,
                 type: JobType.REPEATING,
@@ -181,7 +190,7 @@ const enablePieceTrigger = async (params: EnableOrDisableParams) => {
                     triggerType: TriggerType.PIECE,
                     executionType: ExecutionType.BEGIN,
                 },
-                scheduleOptions: scheduleOptions,
+                scheduleOptions: engineHelperResponse.result.scheduleOptions,
             })
             break
 

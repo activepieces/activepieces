@@ -2,7 +2,6 @@ import { PropertyType } from "./property";
 import { BasePropertySchema, TPropertyValue } from "./base-prop";
 import { StringValidators } from "../validators/types";
 
-
 export type BasicAuthPropertySchema = BasePropertySchema & {
 	username: {
 		displayName: string;

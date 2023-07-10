@@ -12,9 +12,9 @@ export const formsDropdown = Property.Dropdown<string>({
     displayName: 'Form',
     description: 'Form Name',
     required: true,
-    refreshers: ['authentication'],
-    async options(propsValue) {
-        const auth = propsValue['authentication'] as OAuth2PropertyValue;
+    refreshers: [],
+    async options({ auth: authentication }) {
+        const auth = authentication as OAuth2PropertyValue;
 
         if (!auth) {
             return {
@@ -51,13 +51,6 @@ export const formsDropdown = Property.Dropdown<string>({
 
 export const typeformCommon = {
     baseUrl: "https://api.typeform.com",
-    authentication: Property.OAuth2({
-        displayName: "Authentication",
-        required: true,
-        tokenUrl: 'https://api.typeform.com/oauth/token',
-        authUrl: 'https://admin.typeform.com/oauth/authorize',
-        scope: ['webhooks:write', 'forms:read'],
-    }),
     subscribeWebhook: async (formId: string, tag: string, webhookUrl: string, accessToken: string) => {
         const request: HttpRequest = {
             method: HttpMethod.PUT,

@@ -25,7 +25,7 @@ import {
   CORE_SCHEDULE,
 } from '@activepieces/ui/common';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
-import { BuilderAutocompleteMentionsDropdownService } from '@activepieces/ui/feature-builder-form-controls';
+import { BuilderAutocompleteMentionsDropdownService } from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-flow-right-sidebar',
@@ -102,8 +102,10 @@ export class FlowRightSidebarComponent implements OnInit {
               map((res) => {
                 return (
                   res.triggers[step.settings.triggerName] &&
-                  res.triggers[step.settings.triggerName].type ===
-                    TriggerStrategy.POLLING
+                  (res.triggers[step.settings.triggerName].type ===
+                    TriggerStrategy.POLLING ||
+                    res.triggers[step.settings.triggerName].type ===
+                      TriggerStrategy.APP_WEBHOOK)
                 );
               })
             );

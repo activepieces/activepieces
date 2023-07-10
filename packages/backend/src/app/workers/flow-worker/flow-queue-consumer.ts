@@ -11,7 +11,7 @@ import { system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { flowInstanceService } from '../../flows/flow-instance/flow-instance.service'
-import { isNil } from 'lodash'
+import { isNil } from '@activepieces/shared'
 
 const oneTimeJobConsumer = new Worker<OneTimeJobData, unknown, ApId>(
     ONE_TIME_JOB_QUEUE,
@@ -107,7 +107,7 @@ const consumeRepeatingJob = async (job: Job<RepeatingJobData, void>): Promise<vo
     catch (e) {
         if (e instanceof ActivepiecesError && e.error.code === ErrorCode.TASK_QUOTA_EXCEEDED) {
             logger.info(`[repeatableJobConsumer] removing job.id=${job.name} run out of flow quota`)
-            await flowInstanceService.delete({ projectId: data.projectId, flowId: data.flowId })
+            await flowInstanceService.update({ projectId: data.projectId, flowId: data.flowId, status: FlowInstanceStatus.DISABLED })
         }
         else {
             captureException(e)

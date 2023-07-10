@@ -20,7 +20,7 @@ import {
   StopResponse,
 } from '@activepieces/shared';
 import { createActionHandler } from '../action/action-handler-factory';
-import { isNil } from 'lodash';
+import { isNil } from '@activepieces/shared'
 
 type FlowExecutorCtor = {
   executionState: ExecutionState

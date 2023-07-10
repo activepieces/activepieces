@@ -8,7 +8,7 @@ export type ListParams = {
 
 export type GetParams = {
     name: string
-    version: string
+    version: string | undefined 
     projectId: string | null
 }
 

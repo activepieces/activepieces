@@ -29,7 +29,7 @@ import { engineHelper } from '../../helper/engine-helper'
 import { acquireLock } from '../../database/redis-connection'
 import { captureException, logger } from '../../helper/logger'
 import { pieceManager } from '../../flows/common/piece-installer'
-import { isNil } from 'lodash'
+import { isNil } from '@activepieces/shared'
 
 type FlowPiece = {
     name: string

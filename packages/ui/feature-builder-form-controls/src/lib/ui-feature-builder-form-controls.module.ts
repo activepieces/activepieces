@@ -30,6 +30,9 @@ import { MatTreeModule } from '@angular/material/tree';
 import { QuillModule } from 'ngx-quill';
 
 import { WebhookTriggerMentionItemComponent } from './interpolating-text-form-control/mentions-list/webhook-trigger-mention-item/webhook-trigger-mention-item.component';
+import { BuilderAutocompleteDropdownHandlerComponent } from './interpolating-text-form-control/builder-autocomplete-dropdown-handler/builder-autocomplete-dropdown-handler.component';
+import { AutocompleteDropdownSizesButtonsComponent } from './interpolating-text-form-control/mentions-list/autocomplete-dropdown-sizes-buttons/autocomplete-dropdown-sizes-buttons.component';
+import { DropdownPropertySearchPipe } from './piece-properties-form/dropdown-search.pipe';
 const exportedDeclarations = [
   ArrayFormControlComponent,
   BranchConditionFormControlComponent,
@@ -39,6 +42,7 @@ const exportedDeclarations = [
   InterpolatingTextFormControlComponent,
   PiecePropertiesFormComponent,
   BuilderAutocompleteMentionsDropdownComponent,
+  BuilderAutocompleteDropdownHandlerComponent,
 ];
 @NgModule({
   imports: [
@@ -68,6 +72,8 @@ const exportedDeclarations = [
     StepMentionsTreeComponent,
     WebhookTriggerMentionItemComponent,
     AuthConfigsPipe,
+    AutocompleteDropdownSizesButtonsComponent,
+    DropdownPropertySearchPipe,
   ],
   exports: [...exportedDeclarations],
 })

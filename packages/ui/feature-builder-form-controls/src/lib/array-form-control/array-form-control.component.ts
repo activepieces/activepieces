@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
 import {
   ControlValueAccessor,
   FormArray,
@@ -8,7 +8,7 @@ import {
 } from '@angular/forms';
 import { map, Observable, tap } from 'rxjs';
 import { InterpolatingTextFormControlComponent } from '../interpolating-text-form-control/interpolating-text-form-control.component';
-import { InsertMentionOperation } from '../interpolating-text-form-control/utils';
+import { InsertMentionOperation } from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-array-form-control',
@@ -26,7 +26,7 @@ import { InsertMentionOperation } from '../interpolating-text-form-control/utils
 export class ArrayFormControlComponent implements ControlValueAccessor {
   valueChanges$: Observable<void>;
   formArray: FormArray<FormControl>;
-
+  @ViewChild('textControl') firstInput: InterpolatingTextFormControlComponent;
   onChange: (val: unknown) => void = () => {
     //ignore
   };
@@ -51,7 +51,10 @@ export class ArrayFormControlComponent implements ControlValueAccessor {
       obj.forEach((val) => {
         this.formArray.push(new FormControl(val), { emitEvent: false });
       });
-      if (this.formArray.controls[this.formArray.length - 1].value) {
+      if (
+        this.formArray.length > 0 &&
+        this.formArray.controls[this.formArray.length - 1].value
+      ) {
         this.formArray.push(new FormControl(''));
       }
     }
@@ -83,5 +86,8 @@ export class ArrayFormControlComponent implements ControlValueAccessor {
     mention: InsertMentionOperation
   ) {
     await textControl.addMention(mention);
+  }
+  focusFirstInput() {
+    this.firstInput.focusEditor();
   }
 }

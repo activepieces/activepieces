@@ -1,14 +1,15 @@
 import { HttpRequest, HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { Property, TriggerStrategy , createTrigger} from "@activepieces/pieces-framework";
+import { Property, TriggerStrategy, createTrigger } from "@activepieces/pieces-framework";
 import { endpoint, kizeoFormsCommon } from '../common';
+import { kizeoFormsAuth } from '../..';
 
 const triggerNameInStore = 'event_on_data_trigger';
 export const eventOnData = createTrigger({
+  auth: kizeoFormsAuth,
   name: 'event_on_data',
   displayName: 'Event On Data',
   description: 'Handle EventOnData events via webhooks',
   props: {
-    authentication: kizeoFormsCommon.authentication,
     formId: kizeoFormsCommon.formId,
     event1:
       Property.StaticDropdown({
@@ -16,29 +17,29 @@ export const eventOnData = createTrigger({
         description: "Which events will trigger this hook",
         required: true,
         options: {
-            options: [
-					{
-						label: 'Data Deleted',
-						value: 'delete',
-					},
-					{
-						label: 'Data Saved',
-						value: 'finished',
-					},
-					{
-						label: 'Data Updated',
-						value: 'update',
-					},
-					{
-						label: 'Push Received',
-						value: 'pull',
-					},
-					{
-						label: 'Push Send',
-						value: 'push',
-					},
-				]
-      }
+          options: [
+            {
+              label: 'Data Deleted',
+              value: 'delete',
+            },
+            {
+              label: 'Data Saved',
+              value: 'finished',
+            },
+            {
+              label: 'Data Updated',
+              value: 'update',
+            },
+            {
+              label: 'Push Received',
+              value: 'pull',
+            },
+            {
+              label: 'Push Send',
+              value: 'push',
+            },
+          ]
+        }
       }),
     event2:
       Property.StaticDropdown({
@@ -47,33 +48,33 @@ export const eventOnData = createTrigger({
         required: false,
         options: {
           options: [
-          {
-						label: '',
-						value: '',
-					},
-					{
-						label: 'Data Deleted',
-						value: 'delete',
-					},
-					{
-						label: 'Data Saved',
-						value: 'finished',
-					},
-					{
-						label: 'Data Updated',
-						value: 'update',
-					},
-					{
-						label: 'Push Received',
-						value: 'pull',
-					},
-					{
-						label: 'Push Send',
-						value: 'push',
-					},
-				]
-      }
-    }),
+            {
+              label: '',
+              value: '',
+            },
+            {
+              label: 'Data Deleted',
+              value: 'delete',
+            },
+            {
+              label: 'Data Saved',
+              value: 'finished',
+            },
+            {
+              label: 'Data Updated',
+              value: 'update',
+            },
+            {
+              label: 'Push Received',
+              value: 'pull',
+            },
+            {
+              label: 'Push Send',
+              value: 'push',
+            },
+          ]
+        }
+      }),
     event3:
       Property.StaticDropdown({
         displayName: "Events",
@@ -81,33 +82,33 @@ export const eventOnData = createTrigger({
         required: false,
         options: {
           options: [
-          {
-						label: '',
-						value: '',
-					},
-					{
-						label: 'Data Deleted',
-						value: 'delete',
-					},
-					{
-						label: 'Data Saved',
-						value: 'finished',
-					},
-					{
-						label: 'Data Updated',
-						value: 'update',
-					},
-					{
-						label: 'Push Received',
-						value: 'pull',
-					},
-					{
-						label: 'Push Send',
-						value: 'push',
-					},
-				]
-      }
-    }),
+            {
+              label: '',
+              value: '',
+            },
+            {
+              label: 'Data Deleted',
+              value: 'delete',
+            },
+            {
+              label: 'Data Saved',
+              value: 'finished',
+            },
+            {
+              label: 'Data Updated',
+              value: 'update',
+            },
+            {
+              label: 'Push Received',
+              value: 'pull',
+            },
+            {
+              label: 'Push Send',
+              value: 'push',
+            },
+          ]
+        }
+      }),
     event4:
       Property.StaticDropdown({
         displayName: "Events",
@@ -115,33 +116,33 @@ export const eventOnData = createTrigger({
         required: false,
         options: {
           options: [
-          {
-						label: '',
-						value: '',
-					},
-					{
-						label: 'Data Deleted',
-						value: 'delete',
-					},
-					{
-						label: 'Data Saved',
-						value: 'finished',
-					},
-					{
-						label: 'Data Updated',
-						value: 'update',
-					},
-					{
-						label: 'Push Received',
-						value: 'pull',
-					},
-					{
-						label: 'Push Send',
-						value: 'push',
-					},
-				]
-      }
-    }),
+            {
+              label: '',
+              value: '',
+            },
+            {
+              label: 'Data Deleted',
+              value: 'delete',
+            },
+            {
+              label: 'Data Saved',
+              value: 'finished',
+            },
+            {
+              label: 'Data Updated',
+              value: 'update',
+            },
+            {
+              label: 'Push Received',
+              value: 'pull',
+            },
+            {
+              label: 'Push Send',
+              value: 'push',
+            },
+          ]
+        }
+      }),
     event5:
       Property.StaticDropdown({
         displayName: "Events",
@@ -149,33 +150,33 @@ export const eventOnData = createTrigger({
         required: false,
         options: {
           options: [
-          {
-						label: '',
-						value: '',
-					},
-					{
-						label: 'Data Deleted',
-						value: 'delete',
-					},
-					{
-						label: 'Data Saved',
-						value: 'finished',
-					},
-					{
-						label: 'Data Updated',
-						value: 'update',
-					},
-					{
-						label: 'Push Received',
-						value: 'pull',
-					},
-					{
-						label: 'Push Send',
-						value: 'push',
-					},
-				]
-      }
-    }),
+            {
+              label: '',
+              value: '',
+            },
+            {
+              label: 'Data Deleted',
+              value: 'delete',
+            },
+            {
+              label: 'Data Saved',
+              value: 'finished',
+            },
+            {
+              label: 'Data Updated',
+              value: 'update',
+            },
+            {
+              label: 'Push Received',
+              value: 'pull',
+            },
+            {
+              label: 'Push Send',
+              value: 'push',
+            },
+          ]
+        }
+      }),
   },
   sampleData: {
     "id": "1",
@@ -198,7 +199,7 @@ export const eventOnData = createTrigger({
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    const { authentication: personalToken, formId, event1, event2, event3, event4, event5 } = context.propsValue;
+    const { formId, event1, event2, event3, event4, event5 } = context.propsValue;
     const onEvents = [event1, event2 !== '' ? event2 : null, event3 !== '' ? event3 : null, event4 !== '' ? event4 : null, event5 !== '' ? event5 : null].filter(Boolean);
     const webhookUrl = context.webhookUrl;
     const match = webhookUrl.match(/\/webhooks\/(\w+)\//);
@@ -218,7 +219,7 @@ export const eventOnData = createTrigger({
         'third_party_id': workflowId,
       },
       headers: {
-        'Authorization': personalToken
+        'Authorization': context.auth
       },
       queryParams: {},
     };
@@ -230,14 +231,14 @@ export const eventOnData = createTrigger({
 
   },
   async onDisable(context) {
-    const { authentication: personalToken, formId} = context.propsValue;
+    const { formId } = context.propsValue;
     const response = await context.store?.get<KizeoFormsWebhookInformation>(triggerNameInStore);
     if (response !== null && response !== undefined) {
       const request: HttpRequest = {
         method: HttpMethod.DELETE,
         url: endpoint + `public/v4/forms/${formId}/third_party_webhooks/${response.webhookId}?used-with-actives-pieces=`,
         headers: {
-          'Authorization': personalToken
+          'Authorization': context.auth
         },
       };
       await httpClient.sendRequest(request);

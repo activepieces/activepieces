@@ -30,10 +30,10 @@ export type EngineOperation =
 
 export type ExecuteActionOperation = {
     actionName: string
+    flowVersion: FlowVersion
     pieceName: string
     pieceVersion: string
     input: Record<string, unknown>
-    testExecutionContext: Record<string, unknown>
     projectId: ProjectId
     workerToken?: string
     apiUrl?: string
@@ -46,7 +46,7 @@ export type ExecuteExtractPieceMetadata = {
 
 export type ExecuteCodeOperation = {
     codeBase64: string
-    testExecutionContext: Record<string, unknown>
+    flowVersion: FlowVersion,
     input: Record<string, unknown>
     projectId: ProjectId
 }
@@ -130,7 +130,7 @@ interface ExecuteTestOrRunTriggerResponse {
 
 interface ExecuteOnEnableTriggerResponse {
     listeners: AppEventListener[];
-    scheduleOptions: ScheduleOptions;
+    scheduleOptions?: ScheduleOptions;
 }
 
 export type ExecuteTriggerResponse<H extends TriggerHookType> = H extends TriggerHookType.RUN ? ExecuteTestOrRunTriggerResponse :
@@ -146,7 +146,7 @@ export type ExecuteActionResponse = {
 
 export interface ScheduleOptions {
     cronExpression: string;
-    timezone?: string;
+    timezone: string;
 }
 
 export type EngineResponse<T> = {

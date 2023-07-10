@@ -1,20 +1,20 @@
 import { OAuth2PropertyValue, Property, createAction } from "@activepieces/pieces-framework";
 import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
-import { constantContactProps } from "../common/props";
+import { constantContactAuth } from "../../";
 
 export const createOrUpdateContact = createAction({
+    auth: constantContactAuth,
     name: "create_or_update_contact",
     displayName: "Create or Update Contact",
     description: "Create or Update a contact in Constant Contact",
     props: {
-        authentication: constantContactProps.authentication,
         list: Property.MultiSelectDropdown({
             displayName: "List",
             description: "The list of the contact",
             required: true,
-            refreshers: ['authentication'],
-            options: async (propsValue) => {
-                if (!propsValue['authentication']) {
+            refreshers: [],
+            options: async ({ auth }) => {
+                if (!auth) {
                     return {
                         options: [],
                         placeholder: "Connect to Constant Contact to see the lists",
@@ -29,7 +29,7 @@ export const createOrUpdateContact = createAction({
                         method: HttpMethod.GET,
                         authentication: {
                             type: AuthenticationType.BEARER_TOKEN,
-                            token: (propsValue['authentication'] as OAuth2PropertyValue)['access_token']
+                            token: (auth as OAuth2PropertyValue)['access_token']
                         }
                     })).body.lists.map(list => {
                         return {
@@ -75,23 +75,23 @@ export const createOrUpdateContact = createAction({
         "contact_id": "b4790a28-ccde-11ed-adb9-fa163e7e5464",
         "action": "updated"
     },
-    run: async (ctx) => {
+    run: async ({ auth, propsValue }) => {
         return (await httpClient.sendRequest({
             url: "https://api.cc.email/v3/contacts/sign_up_form",
             method: HttpMethod.POST,
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
-                token: ctx.propsValue.authentication.access_token
+                token: auth.access_token
             },
             body: {
-                "email_address": ctx.propsValue.email_address,
-                "first_name": ctx.propsValue.first_name,
-                "last_name": ctx.propsValue.last_name,
-                "job_title": ctx.propsValue.job_title,
-                "company_name": ctx.propsValue.company_name,
-                "phoner_number": ctx.propsValue.phoner_number,
-                "list_memberships": ctx.propsValue.list
+                "email_address": propsValue.email_address,
+                "first_name": propsValue.first_name,
+                "last_name": propsValue.last_name,
+                "job_title": propsValue.job_title,
+                "company_name": propsValue.company_name,
+                "phoner_number": propsValue.phoner_number,
+                "list_memberships": propsValue.list
             }
         })).body;
-    }
+    },
 });
