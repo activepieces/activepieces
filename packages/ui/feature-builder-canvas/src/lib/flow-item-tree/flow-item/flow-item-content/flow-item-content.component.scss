@@ -1,5 +1,5 @@
 @import "../.././../../../../core/src/assets/scss/variables.scss";
-
+@import "../.././../../../../core/src/assets/scss/derived-variables.scss";
 .flow-item {
   /* Auto Layout */
   display: flex;
@@ -21,7 +21,6 @@
   position: absolute;
   top: 0;
   left: 0;
-
 }
 .flow-item {
   gap: 0.9375rem;
@@ -30,43 +29,42 @@
 .flow-content {
   flex-grow: 1;
   gap: 0.25rem;
-  overflow:hidden;
+  overflow: hidden;
 }
 
 .flow-container {
   .flow-item {
     transition: all 400ms cubic-bezier(0.35, 0, 0.25, 1);
   }
- border-radius: 8px;
-  &.non-empty-step{
+  border-radius: 8px;
+  &.non-empty-step {
     &:hover {
       .flow-item {
-        box-shadow: 0px 0px 22px rgba(186, 186, 191, 0.3),
-          inset 0px 3px 0px $primary;
-        border: 1px solid $primary;
+        box-shadow: 0px 0px 22px rgba(186, 186, 191, 0.3), inset 0px 3px 0px $primary-default;
+        border: 1px solid $primary-default;
         border-radius: 8px;
       }
     }
   }
- &.empty-step {
-  .flow-item {
-    border:0px;
-    background-color: #F8F8F8;
-    background-image: url("data:image/svg+xml,%3Csvg width='300' height='92' viewBox='0 0 300 92' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect x='1' y='1' width='298' height='90' rx='8' fill='%23F8F8F8'/%3E%3Crect x='1' y='1' width='298' height='90' rx='8' stroke='%23C2C9D1' stroke-dasharray='6 6'/%3E%3C/svg%3E");
-    &:hover {    
-      background-image: url("data:image/svg+xml,%3Csvg width='300' height='92' viewBox='0 0 300 92' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect x='1' y='1' width='298' height='90' rx='8' fill='%23F8F8F8'/%3E%3Crect x='1' y='1' width='298' height='90' rx='8' stroke='%23C3C9D0' stroke-width='2' stroke-dasharray='6 6'/%3E%3C/svg%3E");
+  &.empty-step {
+    .flow-item {
+      border: 0px;
+      background-color: #f8f8f8;
+      background-image: url("data:image/svg+xml,%3Csvg width='300' height='92' viewBox='0 0 300 92' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect x='1' y='1' width='298' height='90' rx='8' fill='%23F8F8F8'/%3E%3Crect x='1' y='1' width='298' height='90' rx='8' stroke='%23C2C9D1' stroke-dasharray='6 6'/%3E%3C/svg%3E");
+      &:hover {
+        background-image: url("data:image/svg+xml,%3Csvg width='300' height='92' viewBox='0 0 300 92' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect x='1' y='1' width='298' height='90' rx='8' fill='%23F8F8F8'/%3E%3Crect x='1' y='1' width='298' height='90' rx='8' stroke='%23C3C9D0' stroke-width='2' stroke-dasharray='6 6'/%3E%3C/svg%3E");
       }
-      &.selected-empty{
-        background-image: url("data:image/svg+xml,%3Csvg width='300' height='92' viewBox='0 0 300 92' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect x='1' y='1' width='298' height='90' rx='8' fill='%23F8F8F8'/%3E%3Crect x='1' y='1' width='298' height='90' rx='8' stroke='%23C3C9D0' stroke-width='2' stroke-dasharray='6 6'/%3E%3C/svg%3E") ;
+      &.selected-empty {
+        background-image: url("data:image/svg+xml,%3Csvg width='300' height='92' viewBox='0 0 300 92' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect x='1' y='1' width='298' height='90' rx='8' fill='%23F8F8F8'/%3E%3Crect x='1' y='1' width='298' height='90' rx='8' stroke='%23C3C9D0' stroke-width='2' stroke-dasharray='6 6'/%3E%3C/svg%3E");
       }
- }
-}
-.selected-non-empty{
-  box-shadow: 0px 0px 22px rgba(186, 186, 191, 0.3), inset 0px 3px 0px $primary;
-  border: 1px solid $primary;
-  transition: all 400ms cubic-bezier(0.35, 0, 0.25, 1);
-  border-radius: 8px;
-}
+    }
+  }
+  .selected-non-empty {
+    box-shadow: 0px 0px 22px rgba(186, 186, 191, 0.3), inset 0px 3px 0px $primary-default;
+    border: 1px solid $primary-default;
+    transition: all 400ms cubic-bezier(0.35, 0, 0.25, 1);
+    border-radius: 8px;
+  }
 }
 .flow-item-wrapper {
   padding-top: 0.25rem;
@@ -97,14 +95,13 @@
 }
 
 .empty-trigger {
-  border: 1.5px dashed $primary !important;
+  border: 1.5px dashed $primary-default !important;
   box-shadow: 0px 0px 22px rgba(186, 186, 191, 0.4) !important;
   border-radius: 8px !important;
 }
 
 .flow-container:hover .empty-trigger {
-  box-shadow: 0px 0px 0px 5px rgba(227, 218, 249, 0.6),
-    0px 0px 22px rgba(186, 186, 191, 0.3) !important;
+  box-shadow: 0px 0px 0px 5px rgba(227, 218, 249, 0.6), 0px 0px 22px rgba(186, 186, 191, 0.3) !important;
 }
 
 .flow-title {
@@ -112,8 +109,6 @@
   text-overflow: ellipsis;
   overflow: hidden;
 }
-
-
 
 .step-icon-loading-spinner-container {
   min-width: 60px;
