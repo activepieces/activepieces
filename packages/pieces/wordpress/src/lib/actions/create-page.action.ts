@@ -1,15 +1,14 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { wordpressCommon } from "../common";
 import { httpClient, HttpMethod, HttpRequest, AuthenticationType } from "@activepieces/pieces-common";
-
+import { wordpressAuth } from "../..";
 
 export const createWordpressPage = createAction({
+    auth: wordpressAuth,
     name: 'create_page',
     description: 'Create new page on Wordpress',
     displayName: 'Create Page',
     props: {
-        connection: wordpressCommon.connection,
-        website_url: wordpressCommon.website_url,
         title: Property.ShortText({
             description: 'Title of the page about to be added',
             displayName: 'Title',
@@ -58,8 +57,8 @@ export const createWordpressPage = createAction({
         }),
     },
     async run(context) {
-        if (!(await wordpressCommon.urlExists(context.propsValue.website_url.trim()))) {
-            throw new Error('Website url is invalid: ' + context.propsValue.website_url);
+        if (!(await wordpressCommon.urlExists(context.auth.website_url.trim()))) {
+            throw new Error('Website url is invalid: ' + context.auth.website_url);
         }
         const requestBody: Record<string, unknown> = {};
         if (context.propsValue.date) {
@@ -81,11 +80,11 @@ export const createWordpressPage = createAction({
         requestBody['title'] = context.propsValue.title;
         const request: HttpRequest = {
             method: HttpMethod.POST,
-            url: `${context.propsValue.website_url.trim()}/wp-json/wp/v2/pages`,
+            url: `${context.auth.website_url.trim()}/wp-json/wp/v2/pages`,
             authentication: {
                 type: AuthenticationType.BASIC,
-                username: context.propsValue.connection.username,
-                password: context.propsValue.connection.password,
+                username: context.auth.username,
+                password: context.auth.password,
             },
             body: requestBody
         };

@@ -19,7 +19,7 @@ const validatePieceName = async (pieceName: string) => {
 
 const nxGenerateNodeLibrary = async (pieceName: string) => {
   const nxGenerateCommand = `
-    npx nx generate @nrwl/node:library ${pieceName} \
+    npx nx generate @nx/node:library ${pieceName} \
       --directory=pieces \
       --importPath=@activepieces/piece-${pieceName} \
       --publishable \
@@ -54,6 +54,7 @@ import { createPiece } from "@activepieces/pieces-framework";
 
 export const ${pieceNameCamelCase} = createPiece({
   displayName: "${capitalizeFirstLetter(pieceName)}",
+  auth: PieceAuth.None(),
   logoUrl: "https://cdn.activepieces.com/pieces/${pieceName}.png",
   authors: [],
   actions: [],

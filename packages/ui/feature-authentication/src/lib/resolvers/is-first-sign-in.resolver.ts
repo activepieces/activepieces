@@ -1,12 +1,12 @@
 import { FlagService } from '@activepieces/ui/common';
 import { Injectable } from '@angular/core';
-import { Router, Resolve } from '@angular/router';
+import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
 })
-export class IsFirstSignInResolver implements Resolve<boolean> {
+export class IsFirstSignInResolver {
   resolve(): Observable<boolean> {
     return this.flagService.isFirstSignIn().pipe(
       tap((isFirstSignIn) => {

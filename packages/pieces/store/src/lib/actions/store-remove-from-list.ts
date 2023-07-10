@@ -1,4 +1,4 @@
-import {createAction, Property, StoreScope} from "@activepieces/pieces-framework";
+import { createAction, Property, StoreScope } from "@activepieces/pieces-framework";
 
 
 export const storageRemoveFromList = createAction({
@@ -38,7 +38,7 @@ export const storageRemoveFromList = createAction({
         if (!Array.isArray(items)) {
             throw new Error(`Key ${context.propsValue['key']} is not an array`);
         }
-        if(items.includes(context.propsValue['value'])){
+        if (items.includes(context.propsValue['value'])) {
             items.splice(items.indexOf(context.propsValue['value']), 1);
         }
         return await context.store.put(context.propsValue['key'], items, context.propsValue.store_scope);

@@ -5,8 +5,8 @@ export default createAction({
     name: 'remove_playlist_items',
     displayName: 'Remove items from playlist',
     description: 'Removes tracks or episodes from the playlist',
+    auth: spotifyCommon.authentication,
     props: {
-        authentication: spotifyCommon.authentication,
         playlist_id: spotifyCommon.playlist_id(true),
         items: Property.Array({
             displayName: 'Items',
@@ -14,10 +14,10 @@ export default createAction({
             required: true
         })
     },
-    async run(context) {
-        const client = makeClient(context.propsValue)
-        await client.removeItemsFromPlaylist(context.propsValue.playlist_id as string, {
-            tracks: context.propsValue.items.map(uri => ({ uri: uri as string }))
+    async run({auth, propsValue}) {
+        const client = makeClient({auth})
+        await client.removeItemsFromPlaylist(propsValue.playlist_id as string, {
+            tracks: propsValue.items.map((uri) => ({ uri: uri as string }))
         })
     }
 })

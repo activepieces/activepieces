@@ -312,16 +312,22 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
     this.refreshableConfigsLoadingFlags$[obj.propertyKey] = new BehaviorSubject(
       true
     );
+    const authTypes = [
+      PropertyType.OAUTH2,
+      PropertyType.CUSTOM_AUTH,
+      PropertyType.SECRET_TEXT,
+      PropertyType.BASIC_AUTH,
+    ];
     const refreshers$: Record<string, Observable<unknown>> = {};
-    obj.property.refreshers.forEach((rk) => {
+    Object.keys(this.properties).forEach((rk) => {
+      const isAuthProperty = authTypes.includes(this.properties[rk].type);
+      const inRefreshers = obj.property.refreshers.includes(rk);
+      if (!isAuthProperty && !inRefreshers) {
+        return;
+      }
       refreshers$[rk] = this.form.controls[rk].valueChanges.pipe(
         distinctUntilChanged((prev, curr) => {
-          if (
-            this.properties[rk].type === PropertyType.OAUTH2 ||
-            this.properties[rk].type === PropertyType.CUSTOM_AUTH ||
-            this.properties[rk].type === PropertyType.SECRET_TEXT ||
-            this.properties[rk].type === PropertyType.BASIC_AUTH
-          ) {
+          if (isAuthProperty) {
             return false;
           }
           return JSON.stringify(prev) === JSON.stringify(curr);

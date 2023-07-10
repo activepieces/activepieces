@@ -15,11 +15,6 @@ export const salsaCommon = {
         required: true,
         description: "API url acquired from your Salsa API",
         defaultValue: "https://api.salsalbs.org/api"
-    }), 
-    authentication: Property.SecretText({
-        displayName: "API Key",
-        required: true,
-        description: "API key acquired from your Salsa crm"
     }),
     identifierType: Property.Dropdown<string>({
         displayName: "Identifier Type",

@@ -1,49 +1,21 @@
-import { TriggerStrategy, createTrigger , Property } from "@activepieces/pieces-framework";
+import { TriggerStrategy, createTrigger, Property } from "@activepieces/pieces-framework";
 import { AuthenticationType, DedupeStrategy, httpClient, HttpMethod, Polling, pollingHelper } from "@activepieces/pieces-common";
-
-const markdownProperty = `
-**Organization**: The organization name can be found in the URL (e.g https://ORGANIZATION_NAME.zendesk.com).
-
-**Agent Email**: The email you use to log in to Zendesk.
-
-**API Token**: You can find this in the Zendesk Admin Panel under Settings > APIs > Zendesk API.
-`
+import { zendeskAuth } from "../..";
 
 export const newTicketInView = createTrigger({
+    auth: zendeskAuth,
     name: 'new_ticket_in_view',
     displayName: 'New ticket in view',
     description: 'Triggers when a new ticket is created in a view',
     type: TriggerStrategy.POLLING,
     props: {
-        authentication: Property.CustomAuth({
-            displayName: 'Authentication',
-            description: markdownProperty,
-            props: {
-                email: Property.ShortText({
-                    displayName: 'Agent Email',
-                    description: 'The email address you use to login to Zendesk',
-                    required: true,
-                }),
-                token: Property.ShortText({
-                    displayName: 'Token',
-                    description: 'The API token you can generate in Zendesk',
-                    required: true,
-                }),
-                subdomain: Property.ShortText({
-                    displayName: 'Organization (e.g activepieceshelp)',
-                    description: 'The subdomain of your Zendesk instance',
-                    required: true,
-                }),
-            },
-            required: true,
-        }),
         view_id: Property.Dropdown({
             displayName: 'View',
             description: 'The view to monitor for new tickets',
-            refreshers: ['authentication'],
+            refreshers: [],
             required: true,
-            options: async (value) => {
-                const authentication = value['authentication'] as AuthProps;
+            options: async ({ auth }) => {
+                const authentication = auth as AuthProps;
                 if (!authentication?.['email'] || !authentication?.['subdomain'] || !authentication?.['token']) {
                     return {
                         placeholder: 'Fill your authentication first',
@@ -120,24 +92,28 @@ export const newTicketInView = createTrigger({
     },
     onEnable: async (context) => {
         await pollingHelper.onEnable(polling, {
+            auth: context.auth,
             store: context.store,
             propsValue: context.propsValue,
         })
     },
     onDisable: async (context) => {
         await pollingHelper.onDisable(polling, {
+            auth: context.auth,
             store: context.store,
             propsValue: context.propsValue,
         })
     },
     run: async (context) => {
         return await pollingHelper.poll(polling, {
+            auth: context.auth,
             store: context.store,
             propsValue: context.propsValue,
         });
     },
     test: async (context) => {
         return await pollingHelper.test(polling, {
+            auth: context.auth,
             store: context.store,
             propsValue: context.propsValue,
         });
@@ -150,10 +126,10 @@ type AuthProps = {
     subdomain: string;
 }
 
-const polling: Polling<{ authentication: AuthProps, view_id: string }> = {
+const polling: Polling<AuthProps, { view_id: string }> = {
     strategy: DedupeStrategy.LAST_ITEM,
-    items: async ({ propsValue }) => {
-        const items = await getTickets(propsValue.authentication, propsValue.view_id);
+    items: async ({ auth, propsValue }) => {
+        const items = await getTickets(auth, propsValue.view_id);
         return items.map((item) => ({
             id: item.id,
             data: item,
