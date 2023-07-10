@@ -13,7 +13,7 @@ export const docsCommon = {
     }),
 
     // Creates an empty document with the title provided
-    createDocument: async (title: string, accessToken: string) => {
+    createDocument: async (title: string, accessToken: string, parentFolder?: string) => {
         const createRequest = await httpClient.sendRequest({
             url: `${docsCommon.baseUrl}/documents`,
             method: HttpMethod.POST,
@@ -22,7 +22,8 @@ export const docsCommon = {
                 token: accessToken,
             },
             body: {
-                title: title
+                title: title,
+                ...(parentFolder ? { 'parents': [parentFolder] } : {})
             }
         });
 
