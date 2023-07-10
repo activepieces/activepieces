@@ -1,4 +1,4 @@
-import { PieceAuth, createPiece } from "@activepieces/pieces-framework";
+import { PieceAuth, Property, createPiece } from "@activepieces/pieces-framework";
 
 import { customer } from "./lib/triggers/customer";
 import { coupon } from "./lib/triggers/coupon";
@@ -22,12 +22,12 @@ export const wooAuth = PieceAuth.CustomAuth({
     description: authDescription,
     required: true,
     props: {
-        baseUrl: PieceAuth.ShortText({
+        baseUrl: Property.ShortText({
             displayName: 'Base URL',
             description: 'The base URL of your app without trailing slash (e.g https://mystore.com, not https://mystore.com/) - HTTPS only',
             required: true,
         }),
-        consumerKey: PieceAuth.ShortText({
+        consumerKey: Property.ShortText({
             displayName: 'Consumer Key',
             description: 'The consumer key generated from your app',
             required: true,
@@ -43,6 +43,7 @@ export const wooAuth = PieceAuth.CustomAuth({
 export const woocommerce = createPiece({
     displayName: "WooCommerce",
     logoUrl: "https://cdn.activepieces.com/pieces/woocommerce.png",
+    auth: wooAuth,
     authors: ['MoShizzle'],
     actions: [],
     triggers: [customer, coupon, order, product, lineItemInOrder],
