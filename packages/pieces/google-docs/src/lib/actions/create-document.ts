@@ -1,9 +1,8 @@
 import { createAction } from "@activepieces/pieces-framework";
 import { docsCommon } from "../common";
-import { googleDocsAuth } from "../..";
 
 export const createDocument = createAction({
-    auth: googleDocsAuth,
+    auth: docsCommon.auth,
         name: 'create_document',
         description: 'Create a document on Google Docs',
         displayName: 'Create Document',
