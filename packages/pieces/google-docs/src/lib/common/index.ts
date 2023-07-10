@@ -1,7 +1,9 @@
-import { Property } from "@activepieces/pieces-framework";
-import { HttpMethod, httpClient, AuthenticationType } from "@activepieces/pieces-common";
+import { createAction, Property, OAuth2PropertyValue } from "@activepieces/pieces-framework";
+import { httpClient, HttpMethod, AuthenticationType, HttpRequest } from "@activepieces/pieces-common";
+import { googleDocsAuth } from "../..";
 
 export const docsCommon = {
+    auth: googleDocsAuth,
     baseUrl: 'https://docs.googleapis.com/v1',
     title: Property.ShortText({
         displayName: 'Document Title',
@@ -10,6 +12,42 @@ export const docsCommon = {
     body: Property.LongText({
         displayName: 'Document Content',
         required: true
+    }),
+    parentFolder: Property.Dropdown({
+        displayName: "Parent Folder",
+        required: false,
+        refreshers: [],
+        options: async ({ auth }) => {
+          if (!auth) {
+            return {
+              disabled: true,
+              options: [],
+              placeholder: 'Please authenticate first'
+            }
+          }
+          const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
+          const folders = (await httpClient.sendRequest<{ files: { id: string, name: string }[] }>({
+            method: HttpMethod.GET,
+            url: `https://www.googleapis.com/drive/v3/files`,
+            queryParams: {
+              q: "mimeType='application/vnd.google-apps.folder'"
+            },
+            authentication: {
+              type: AuthenticationType.BEARER_TOKEN,
+              token: authProp['access_token'],
+            }
+          })).body.files;
+
+          return {
+            disabled: false,
+            options: folders.map((sheet: { id: string, name: string }) => {
+              return {
+                label: sheet.name,
+                value: sheet.id
+              }
+            })
+          };
+        }
     }),
 
     // Creates an empty document with the title provided
