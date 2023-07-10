@@ -17,36 +17,32 @@ export const updateRowAction = createAction({
             description: 'The row number to update',
             required: true,
         }),
+        first_row_headers: Property.Checkbox({
+            displayName: 'Are the First row Headers?',
+            description: 'If the first row is headers',
+            required: true,
+            defaultValue: false,
+        }),
         values: googleSheetsCommon.values,
     },
     async run({propsValue, auth}) {
-        const sheetName = await googleSheetsCommon.findSheetName(auth['access_token'], propsValue['spreadsheet_id'], propsValue['sheet_id']);
+        const {spreadsheet_id, sheet_id, values, row_id, first_row_headers} = propsValue;
+        const sheetName = await googleSheetsCommon.findSheetName(auth['access_token'], spreadsheet_id, sheet_id);
         if (!sheetName) {
             throw Error("Sheet not found in spreadsheet");
         }
-        const formattedValues = Object.values(propsValue['values']);
+        const formattedValues = first_row_headers ? Object.values(values) : values['values'];
         if (formattedValues.length > 0) {
-            const res = await googleSheetsCommon.updateGoogleSheetRow({
+            return (await googleSheetsCommon.updateGoogleSheetRow({
                 accessToken: auth['access_token'],
-                rowIndex:  Number(propsValue.row_id),
+                rowIndex:  Number(row_id),
                 sheetName: sheetName,
-                spreadSheetId: propsValue['spreadsheet_id'],
+                spreadSheetId: spreadsheet_id,
                 valueInputOption: ValueInputOption.USER_ENTERED,
                 values: formattedValues as string[],
-            });
-
-            
-            res.body.updatedRange = res.body.updatedRange.replace(sheetName + "!", "");
-            res.body.updatedRange = res.body.updatedRange.split(":");
-            const updatedRows = [];
-            
-            for (let i = 0; i < res.body.updatedRange.length; i++) 
-                updatedRows.push({ [res.body.updatedRange[i].charAt(0)]: parseInt(res.body.updatedRange[i].slice(1)) });
-            
-
-            return updatedRows;
+            })).body;
         } else {
-            throw Error("Values passed are not an array")
+            throw Error("Values passed are not an array " + JSON.stringify(formattedValues))
         }
     },
 });
