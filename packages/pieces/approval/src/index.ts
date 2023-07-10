@@ -1,5 +1,5 @@
 import { PieceAuth, createPiece } from "@activepieces/pieces-framework";
-import { approvalLink } from "./lib/actions/approval";
+import { approvalLink } from "./lib/actions/approval-link";
 
 export const approval = createPiece({
   displayName: "Approval",
