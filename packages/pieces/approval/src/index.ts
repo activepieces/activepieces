@@ -5,7 +5,7 @@ export const approval = createPiece({
   displayName: "Approval",
   auth: PieceAuth.None(),
   logoUrl: "https://cdn.activepieces.com/pieces/approval.svg",
-  authors: ['abuaboud'],
+  authors: ['khaledmashaly'],
   actions: [approvalAction],
   triggers: [],
 });
