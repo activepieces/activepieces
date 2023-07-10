@@ -1,9 +1,9 @@
 import { createAction } from "@activepieces/pieces-framework";
 import { ExecutionType, PauseType } from "@activepieces/shared";
 
-export const approvalAction = createAction({
+export const approvalLink = createAction({
   name: 'approval',
-  displayName: 'Approval',
+  displayName: 'Approval link',
   description: 'Pauses the flow and waits for approval from the user',
   props: {
   },
