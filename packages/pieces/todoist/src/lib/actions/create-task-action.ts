@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { assertNotNullOrUndefined } from '@activepieces/pieces-common';
+import { assertNotNullOrUndefined } from '@activepieces/shared';
 import { todoistRestClient } from '../common/client/rest-client';
 import { todoistProjectIdDropdown } from '../common/props';
 import { TodoistCreateTaskRequest } from '../common/models';
