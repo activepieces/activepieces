@@ -3,13 +3,15 @@ import { createTrigger, TriggerStrategy, OAuth2PropertyValue } from '@activepiec
 import dayjs from "dayjs";
 import { Page, notionCommon } from '../common';
 import { Client } from "@notionhq/client";
+import { notionAuth } from '@activepieces/piece-notion';
 
 export const updatedDatabaseItem = createTrigger({
     name: 'updated_database_item',
     displayName: 'Updated Database Item',
     description: 'Triggers when an item is updated in the database',
+    auth: notionAuth,
+    requireAuth: true,
     props: {
-        authentication: notionCommon.authentication,
         database_id: notionCommon.database_id
     },
     sampleData: {
@@ -80,34 +82,46 @@ export const updatedDatabaseItem = createTrigger({
     async test(ctx) {
         return await pollingHelper.test(polling, {
             store: ctx.store,
-            propsValue: ctx.propsValue
+            propsValue: {
+                database_id: ctx.propsValue.database_id ?? ""
+            },
+            auth: ctx.auth
         });
     },
     async onEnable(ctx) {
-        await pollingHelper.onEnable(polling, {
+        return await pollingHelper.onEnable(polling, {
             store: ctx.store,
-            propsValue: ctx.propsValue
+            auth: ctx.auth,
+            propsValue: {
+                database_id: ctx.propsValue.database_id ?? ""
+            }
         });
     },
     async onDisable(ctx) {
         await pollingHelper.onDisable(polling, {
             store: ctx.store,
-            propsValue: ctx.propsValue
+            auth: ctx.auth,
+            propsValue: {
+                database_id: ctx.propsValue.database_id ?? ""
+            }
         });
     },
     async run(ctx) {
         return await pollingHelper.poll(polling, {
             store: ctx.store,
-            propsValue: ctx.propsValue
+            propsValue: {
+                database_id: ctx.propsValue.database_id ?? ""
+            },
+            auth: ctx.auth
         });
     }
 });
 
 
-const polling: Polling<{ authentication: OAuth2PropertyValue, database_id: string | undefined }> = {
+const polling: Polling<OAuth2PropertyValue, { database_id: string | undefined } > = {
     strategy: DedupeStrategy.TIMEBASED,
-    items: async ({ propsValue, lastFetchEpochMS }) => {
-        const items = await getResponse(propsValue.authentication, propsValue.database_id!);
+    items: async ({ propsValue, lastFetchEpochMS, auth }) => {
+        const items = await getResponse(auth, propsValue.database_id!);
 
         items.results = items.results.filter(item => {
             try{

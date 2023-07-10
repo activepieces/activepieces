@@ -1,13 +1,15 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { notionCommon } from "../common";
 import { Client } from "@notionhq/client";
+import { notionAuth } from "@activepieces/piece-notion";
 
 export default createAction({
     name: 'create_database_item',
     displayName: 'Create Database Item',
-    description: 'Adds an item to a database',
+    description: 'Adds an item to a database',    
+    auth: notionAuth,
+    requireAuth: true,
     props: {
-        authentication: notionCommon.authentication,
         database_id: notionCommon.database_id,
         content: Property.ShortText({
             displayName: 'Content',
@@ -22,7 +24,7 @@ export default createAction({
         }
 
         const notion = new Client({
-            auth: context.propsValue.authentication.access_token,
+            auth: context.auth.access_token,
             notionVersion: "2022-02-22",
         });
 

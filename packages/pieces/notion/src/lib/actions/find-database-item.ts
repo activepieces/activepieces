@@ -1,13 +1,15 @@
 import { createAction, OAuth2PropertyValue, Property } from "@activepieces/pieces-framework";
 import { notionCommon } from "../common";
 import { Client } from "@notionhq/client";
+import { notionAuth } from "@activepieces/piece-notion";
 
 export default createAction({
     name: 'find_database_item',
     displayName: 'Find Database Item',
     description: 'Finds an item in the database',
+    auth: notionAuth,
+    requireAuth: true,
     props: {
-        authentication: notionCommon.authentication,
         database_id: notionCommon.database_id,
         content: Property.ShortText({
             displayName: 'Content',
@@ -20,7 +22,7 @@ export default createAction({
         if (!databaseId) throw new Error('Database ID is required');
         
         const notion = new Client({
-            auth: context.propsValue.authentication.access_token,
+            auth: context.auth.access_token,
             notionVersion: "2022-02-22",
         });
 

@@ -1,13 +1,15 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { notionCommon } from "../common";
 import { Client } from "@notionhq/client";
+import { notionAuth } from "@activepieces/piece-notion";
 
 export default createAction({
     name: 'create_page',
     displayName: 'Create Page',
     description: 'Creates a page',
+    auth: notionAuth,
+    requireAuth: true,
     props: {
-        authentication: notionCommon.authentication,
         parent_page: notionCommon.parent_page,
         title: Property.ShortText({
             displayName: 'Title',
@@ -27,7 +29,7 @@ export default createAction({
         if (!parentPageId) throw new Error('Parent Page ID is required');
 
         const notion = new Client({
-            auth: context.propsValue.authentication.access_token,
+            auth: context.auth.access_token,
             notionVersion: "2022-02-22",
         });
 
