@@ -16,7 +16,7 @@ export const insertRowAction = createAction({
             description: 'Inserted values that are dates and formulas will be entered strings and have no effect',
             required: false,
         }),
-        is_first_row_headers: Property.Checkbox({
+        first_row_headers: Property.Checkbox({
             displayName: 'Are the First row Headers?',
             description: 'If the first row is headers',
             required: true,
@@ -32,7 +32,7 @@ export const insertRowAction = createAction({
         if (!sheetName) {
             return {}
         }
-        const formattedValues = propsValue.is_first_row_headers ? Object.values(values) : values['values'];
+        const formattedValues = propsValue.first_row_headers ? Object.values(values) : values['values'];
         const res = await googleSheetsCommon.appendGoogleSheetValues({
             accessToken: auth['access_token'],
             majorDimension: Dimension.COLUMNS,

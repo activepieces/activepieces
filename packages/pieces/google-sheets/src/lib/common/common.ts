@@ -75,13 +75,13 @@ export const googleSheetsCommon = {
         displayName: 'Values',
         description: 'The values to insert',
         required: true,
-        refreshers: ['sheet_id', 'spreadsheet_id', 'is_first_row_headers'],
-        props: async ({auth, spreadsheet_id, sheet_id, is_first_row_headers}) => {
+        refreshers: ['sheet_id', 'spreadsheet_id', 'first_row_headers'],
+        props: async ({auth, spreadsheet_id, sheet_id, first_row_headers}) => {
 
             const authentication = auth as OAuth2PropertyValue;
             const values = await googleSheetsCommon.getValues(spreadsheet_id as unknown as string, getAccessTokenOrThrow(authentication), sheet_id as unknown as number);
 
-            if (!is_first_row_headers) {
+            if (!first_row_headers) {
                 return {
                     values: Property.Array({
                         displayName: 'Values',
@@ -98,7 +98,8 @@ export const googleSheetsCommon = {
                     properties[Letter] = Property.ShortText({
                         displayName: firstRow[key][Letter].toString(),
                         description: firstRow[key][Letter].toString(),
-                        required: true
+                        required: false,
+                        defaultValue: ''
                     })
                 }
             }
@@ -210,15 +211,14 @@ async function listSheetsName(access_token: string, spreadsheet_id: string) {
 }
 
 async function updateGoogleSheetRow(params: UpdateGoogleSheetRowParams) {
-    const requestBody = {
-        majorDimension: Dimension.ROWS,
-        range: `${params.sheetName}!A${params.rowIndex}:Z${params.rowIndex}`,
-        values: [params.values],
-    };
-    const request: HttpRequest<typeof requestBody> = {
+    return httpClient.sendRequest({
         method: HttpMethod.PUT,
         url: `https://sheets.googleapis.com/v4/spreadsheets/${params.spreadSheetId}/values/${params.sheetName}!A${params.rowIndex}:Z${params.rowIndex}`,
-        body: requestBody,
+        body: {
+            majorDimension: Dimension.ROWS,
+            range: `${params.sheetName}!A${params.rowIndex}:Z${params.rowIndex}`,
+            values: [params.values],
+        },
         authentication: {
             type: AuthenticationType.BEARER_TOKEN,
             token: params.accessToken,
@@ -226,8 +226,7 @@ async function updateGoogleSheetRow(params: UpdateGoogleSheetRowParams) {
         queryParams: {
             valueInputOption: params.valueInputOption,
         },
-    };
-    return httpClient.sendRequest(request);
+    });
 }
 
 async function appendGoogleSheetValues(params: AppendGoogleSheetValuesParams) {
