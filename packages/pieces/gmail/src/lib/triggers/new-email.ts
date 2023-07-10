@@ -1,16 +1,17 @@
-import { createTrigger, OAuth2PropertyValue, TriggerStrategy } from '@activepieces/pieces-framework';
-import {  Polling, pollingHelper, DedupeStrategy } from "@activepieces/pieces-common";
+import { createTrigger, TriggerStrategy, PiecePropValueSchema, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { Polling, pollingHelper, DedupeStrategy } from "@activepieces/pieces-common";
 import dayjs from 'dayjs';
 import { GmailRequests } from '../common/data';
 import { GmailLabel, GmailMessage } from '../common/models';
 import { GmailProps } from '../common/props';
+import { gmailAuth } from '../../';
 
 export const gmailNewEmailTrigger = createTrigger({
+  auth: gmailAuth,
   name: 'gmail_new_email_received',
   displayName: 'New Email',
   description: 'Triggers when new mail is found in your Gmail inbox',
   props: {
-    authentication: GmailProps.authentication,
     subject: GmailProps.subject,
     from: GmailProps.from,
     to: GmailProps.to,
@@ -59,26 +60,30 @@ export const gmailNewEmailTrigger = createTrigger({
     },
   },
   type: TriggerStrategy.POLLING,
-  async onEnable({ store, propsValue}) {
+  async onEnable({ auth, store, propsValue }) {
     return pollingHelper.onEnable(polling, {
+      auth,
       store,
       propsValue
     });
   },
-  async onDisable({ store, propsValue }) {
+  async onDisable({ auth, store, propsValue }) {
     return pollingHelper.onDisable(polling, {
+      auth,
       store,
       propsValue
     });
   },
-  async test({ store, propsValue }) {
+  async test({ auth, store, propsValue }) {
     return pollingHelper.test(polling, {
+      auth,
       store,
       propsValue
     });
   },
-  async run({ store, propsValue }) {
+  async run({ auth, store, propsValue }) {
     return pollingHelper.poll(polling, {
+      auth,
       store,
       propsValue
     });
@@ -87,7 +92,6 @@ export const gmailNewEmailTrigger = createTrigger({
 
 
 interface PropsValue {
-  authentication: OAuth2PropertyValue,
   from: string | undefined,
   to: string | undefined,
   subject: string | undefined,
@@ -96,10 +100,10 @@ interface PropsValue {
 
 }
 
-const polling: Polling<PropsValue> = {
+const polling: Polling<PiecePropValueSchema<typeof gmailAuth>, PropsValue> = {
   strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ propsValue, lastFetchEpochMS }) => {
-    const items = await getEmail(lastFetchEpochMS === 0 ? 5 : 100, Math.floor(lastFetchEpochMS / 1000), propsValue);
+  items: async ({ auth, propsValue, lastFetchEpochMS }) => {
+    const items = await getEmail(lastFetchEpochMS === 0 ? 5 : 100, Math.floor(lastFetchEpochMS / 1000), propsValue, auth);
     return items.map((item) => {
       const mail = item as GmailMessage;
       return {
@@ -111,10 +115,10 @@ const polling: Polling<PropsValue> = {
 }
 
 
-async function getEmail(max_result: number, after_unix_seconds: number, { authentication, from, to, subject, label, category, }: PropsValue) {
+async function getEmail(max_result: number, after_unix_seconds: number, { from, to, subject, label, category, }: PropsValue, auth: OAuth2PropertyValue) {
   return (await GmailRequests.searchMail({
     max_results: max_result,
-    access_token: (authentication.access_token as string),
+    access_token: auth.access_token,
     from: from as string,
     to: to as string,
     subject: subject as string,

@@ -1,9 +1,11 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { blackbaudCommon } from '../common/common';
+import { blackbaudAuth } from '../..';
 
 
 export const blackbaudSearchAfterDate = createAction({
+    auth: blackbaudAuth,
     name: 'search_contacts_after_date',
     description: 'Search contacts',
     displayName: 'Search Contacts After Date',
@@ -35,7 +37,7 @@ export const blackbaudSearchAfterDate = createAction({
         }
     ],
     async run(configValue) {
-        const accessToken = configValue.propsValue['authentication']?.access_token;
+        const accessToken = configValue.auth.access_token;
         return (await httpClient.sendRequest<{ count: number; next_link: string; value: unknown[] }>({
             method: HttpMethod.GET,
             url: `https://api.sky.blackbaud.com/constituent/v1/constituents?limit=1000&sort=date_modified&last_modified_date=${configValue.propsValue['last_modified_date']}`,

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Resolve } from '@angular/router';
+
 import { map, Observable } from 'rxjs';
 import { FlowService } from '@activepieces/ui/common';
 import { DEFAULT_PAGE_SIZE } from '@activepieces/ui/common';
@@ -7,7 +7,7 @@ export const ARE_THERE_FLOWS_FLAG = 'areThererFlows';
 @Injectable({
   providedIn: 'root',
 })
-export class AreThereFlowsResovler implements Resolve<Observable<boolean>> {
+export class AreThereFlowsResovler {
   constructor(private flowService: FlowService) {}
 
   resolve(): Observable<boolean> {

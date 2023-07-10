@@ -1,14 +1,15 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
 import { asanaCommon, callAsanaApi, getTags } from "../common";
 import { getAccessTokenOrThrow, HttpMethod } from "@activepieces/pieces-common";
 import dayjs from "dayjs";
+import { asanaAuth } from "../../"
+import { Property, createAction } from "@activepieces/pieces-framework";
 
-export const createAsanaTask = createAction({
+export const asanaCreateTaskAction = createAction({
+    auth: asanaAuth,
     name: 'create_task',
     description: 'Create a new task',
     displayName: 'Create Task',
     props: {
-        authentication: asanaCommon.authentication,
         workspace: asanaCommon.workspace,
         project: asanaCommon.project,
         name: Property.ShortText({
@@ -59,14 +60,15 @@ export const createAsanaTask = createAction({
         }
     },
     async run(configValue) {
-        const { project, name, notes, authentication, tags, workspace, due_on, assignee } = configValue.propsValue;
+        const { auth } = configValue
+        const { project, name, notes, tags, workspace, due_on, assignee } = configValue.propsValue;
 
-        const convertDueOne =  due_on ? dayjs(due_on).toISOString() : undefined;
+        const convertDueOne = due_on ? dayjs(due_on).toISOString() : undefined;
 
         // User can provide tags name as dynamic value, we need to convert them to tags gids
         const userTags = tags ?? [];
-        const convertedTags = await getTags(authentication.access_token, workspace);
-        const tagsGids = userTags.map((tag) => {
+        const convertedTags = await getTags(auth.access_token, workspace);
+        const tagsGids = userTags.map((tag: string) => {
             const foundTagById = convertedTags.find((convertedTag) => convertedTag.gid === tag);
             if (foundTagById) {
                 return foundTagById.gid;
@@ -79,7 +81,7 @@ export const createAsanaTask = createAction({
         }).filter((tag) => tag !== null);
 
         return (await callAsanaApi(HttpMethod.POST,
-            `tasks`, getAccessTokenOrThrow(authentication), {
+            `tasks`, getAccessTokenOrThrow(auth), {
             data: {
                 name,
                 projects: [project],

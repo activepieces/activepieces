@@ -1,9 +1,11 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { blackbaudCommon } from '../common/common';
+import { blackbaudAuth } from '../..';
 
 
 export const blackbaudGetFundraisingList = createAction({
+    auth: blackbaudAuth,
     name: 'get_fundraising_list',
     description: 'Get Fundraising List',
     displayName: 'Get Fundraising List',
@@ -57,13 +59,13 @@ export const blackbaudGetFundraisingList = createAction({
         }
     ],
     async run(configValue) {
-        const { authentication, last_modified_date, date_added, include_inactive, limit, sort_token, subscription_key, fundraiser_list } = configValue.propsValue;
-        const accessToken = authentication?.access_token;
+        const { last_modified_date, date_added, include_inactive, limit, sort_token, subscription_key, fundraiser_list } = configValue.propsValue;
+        const accessToken = configValue.auth.access_token;
         let url = `https://api.sky.blackbaud.com/fundraising/v1/${fundraiser_list}?include_inactive=${include_inactive}`;
-        if(last_modified_date) url += `&last_modified=${last_modified_date}`;
-        if(date_added) url += `&date_added=${date_added}`;
-        if(sort_token) url += `&sort_token=${sort_token}`;
-        if(limit) url += `&limit=${limit}`;
+        if (last_modified_date) url += `&last_modified=${last_modified_date}`;
+        if (date_added) url += `&date_added=${date_added}`;
+        if (sort_token) url += `&sort_token=${sort_token}`;
+        if (limit) url += `&limit=${limit}`;
         return (await httpClient.sendRequest<{ count: number; next_link: string; value: unknown[] }>({
             method: HttpMethod.GET,
             url,

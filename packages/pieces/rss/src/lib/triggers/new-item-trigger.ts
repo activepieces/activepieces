@@ -1,5 +1,5 @@
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { TriggerStrategy , createTrigger} from "@activepieces/pieces-framework";
+import { PieceAuth, PieceAuthProperty, PiecePropValueSchema, TriggerStrategy, createTrigger } from "@activepieces/pieces-framework";
 import { rssFeedUrl } from '../common/props';
 import FeedParser from 'feedparser';
 import axios from 'axios';
@@ -125,23 +125,23 @@ export const rssNewItemTrigger = createTrigger({
     props: {
         rss_feed_url: rssFeedUrl,
     },
-    async test({ propsValue, store }): Promise<unknown[]> {
-        return await pollingHelper.test(polling, { store: store, propsValue: propsValue });
+    async test({ auth, propsValue, store }): Promise<unknown[]> {
+        return await pollingHelper.test(polling, { auth, store: store, propsValue: propsValue });
     },
-    async onEnable({ propsValue, store }): Promise<void> {
-        await pollingHelper.onEnable(polling, { store: store, propsValue: propsValue });
-    },
-
-    async onDisable({ propsValue, store }): Promise<void> {
-        await pollingHelper.onDisable(polling, { store: store, propsValue: propsValue });
+    async onEnable({ auth, propsValue, store }): Promise<void> {
+        await pollingHelper.onEnable(polling, { auth, store: store, propsValue: propsValue });
     },
 
-    async run({ propsValue, store }): Promise<unknown[]> {
-        return await pollingHelper.poll(polling, { store: store, propsValue: propsValue });
+    async onDisable({ auth, propsValue, store }): Promise<void> {
+        await pollingHelper.onDisable(polling, { auth, store: store, propsValue: propsValue });
+    },
+
+    async run({ auth, propsValue, store }): Promise<unknown[]> {
+        return await pollingHelper.poll(polling, { auth, store: store, propsValue: propsValue });
     },
 });
 
-const polling: Polling<{ rss_feed_url: string }> = {
+const polling: Polling<PiecePropValueSchema<PieceAuthProperty>, { rss_feed_url: string }> = {
     strategy: DedupeStrategy.LAST_ITEM,
     items: async ({ propsValue }: { propsValue: { rss_feed_url: string } }) => {
         const items = await getRssItems(propsValue.rss_feed_url);

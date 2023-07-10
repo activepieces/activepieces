@@ -1,9 +1,9 @@
-@use '@angular/material' as mat;
-@use 'material-theme-helper.scss';
-@import '@angular/material/theming';
+@use "@angular/material" as mat;
+@use "material-theme-helper.scss";
+@import "@angular/material/theming";
 @include mat.core();
 $ap-typography: mat.define-typography-config(
-  $font-family: 'Open Sans',
+  $font-family: $font-family,
   $headline-1:
     mat.define-typography-level(
       $font-weight: 300,
@@ -13,7 +13,7 @@ $ap-typography: mat.define-typography-config(
     ),
   $headline-2:
     mat.define-typography-level(
-      $font-family: 'Open Sans',
+      $font-family: $font-family,
       $font-weight: 300,
       $font-size: 3.75rem,
       $line-height: 72px,
@@ -21,7 +21,7 @@ $ap-typography: mat.define-typography-config(
     ),
   $headline-3:
     mat.define-typography-level(
-      $font-family: 'Open Sans',
+      $font-family: $font-family,
       $font-weight: 400,
       $font-size: 2.8125rem,
       $line-height: 3.5rem,
@@ -29,7 +29,7 @@ $ap-typography: mat.define-typography-config(
     ),
   $headline-4:
     mat.define-typography-level(
-      $font-family: 'Open Sans',
+      $font-family: $font-family,
       $font-weight: 400,
       $font-size: 2.125rem,
       $line-height: 2.25rem,
@@ -37,7 +37,7 @@ $ap-typography: mat.define-typography-config(
     ),
   $headline-5:
     mat.define-typography-level(
-      $font-family: 'Open Sans',
+      $font-family: $font-family,
       $font-weight: 400,
       $font-size: 1.5rem,
       $line-height: 1.5rem,
@@ -45,7 +45,7 @@ $ap-typography: mat.define-typography-config(
     ),
   $headline-6:
     mat.define-typography-level(
-      $font-family: 'Open Sans',
+      $font-family: $font-family,
       $font-weight: 400,
       $font-size: 1.25rem,
       $line-height: 2.25rem,
@@ -53,7 +53,7 @@ $ap-typography: mat.define-typography-config(
     ),
   $body-1:
     mat.define-typography-level(
-      $font-family: 'Open Sans',
+      $font-family: $font-family,
       $font-weight: 400,
       $font-size: 1rem,
       $line-height: 1.5rem,
@@ -61,7 +61,7 @@ $ap-typography: mat.define-typography-config(
     ),
   $body-2:
     mat.define-typography-level(
-      $font-family: 'Open Sans',
+      $font-family: $font-family,
       $font-weight: 400,
       $font-size: 0.875rem,
       $line-height: 1.25rem,
@@ -69,7 +69,7 @@ $ap-typography: mat.define-typography-config(
     ),
   $subtitle-1:
     mat.define-typography-level(
-      $font-family: 'Open Sans',
+      $font-family: $font-family,
       $font-weight: 400,
       $font-size: 1rem,
       $line-height: 1.5rem,
@@ -77,7 +77,7 @@ $ap-typography: mat.define-typography-config(
     ),
   $subtitle-2:
     mat.define-typography-level(
-      $font-family: 'Open Sans',
+      $font-family: $font-family,
       $font-weight: 500,
       $font-size: 0.875rem,
       $line-height: 1.25rem,
@@ -85,7 +85,7 @@ $ap-typography: mat.define-typography-config(
     ),
   $caption:
     mat.define-typography-level(
-      $font-family: 'Open Sans',
+      $font-family: $font-family,
       $font-weight: 400,
       $font-size: 0.75rem,
       $line-height: 1rem,
@@ -93,7 +93,7 @@ $ap-typography: mat.define-typography-config(
     ),
   $button:
     mat.define-typography-level(
-      $font-family: 'Open Sans',
+      $font-family: $font-family,
       $font-weight: 500,
       $font-size: 0.875rem,
       $line-height: 1.375rem,
@@ -102,81 +102,81 @@ $ap-typography: mat.define-typography-config(
 );
 @layer utilities {
   .ap-typography-headline-1 {
-    @include mat.typography-level($ap-typography, 'headline-1');
+    @include mat.typography-level($ap-typography, "headline-1");
   }
   .ap-typography-headline-2 {
-    @include mat.typography-level($ap-typography, 'headline-2');
+    @include mat.typography-level($ap-typography, "headline-2");
   }
   .ap-typography-headline-3 {
-    @include mat.typography-level($ap-typography, 'headline-3');
+    @include mat.typography-level($ap-typography, "headline-3");
   }
   .ap-typography-headline-4 {
-    @include mat.typography-level($ap-typography, 'headline-4');
+    @include mat.typography-level($ap-typography, "headline-4");
   }
   .ap-typography-headline-5 {
-    @include mat.typography-level($ap-typography, 'headline-5');
+    @include mat.typography-level($ap-typography, "headline-5");
   }
 
   .ap-typography-headline-6 {
-    @include mat.typography-level($ap-typography, 'headline-6');
+    @include mat.typography-level($ap-typography, "headline-6");
   }
 
   .ap-typography-subtitle-1 {
-    @include mat.typography-level($ap-typography, 'subtitle-1');
+    @include mat.typography-level($ap-typography, "subtitle-1");
   }
   .ap-typography-subtitle-2 {
-    @include mat.typography-level($ap-typography, 'subtitle-2');
+    @include mat.typography-level($ap-typography, "subtitle-2");
   }
   .ap-typography-body-1 {
-    @include mat.typography-level($ap-typography, 'body-1');
+    @include mat.typography-level($ap-typography, "body-1");
   }
   .ap-typography-body-2 {
-    @include mat.typography-level($ap-typography, 'body-2');
+    @include mat.typography-level($ap-typography, "body-2");
   }
   .ap-typography-caption {
-    @include mat.typography-level($ap-typography, 'caption');
+    @include mat.typography-level($ap-typography, "caption");
   }
   .ap-typography-button {
-    @include mat.typography-level($ap-typography, 'button');
+    @include mat.typography-level($ap-typography, "button");
   }
 }
 .ap-typography-headline-1 {
-  @include mat.typography-level($ap-typography, 'headline-1');
+  @include mat.typography-level($ap-typography, "headline-1");
 }
 .ap-typography-headline-2 {
-  @include mat.typography-level($ap-typography, 'headline-2');
+  @include mat.typography-level($ap-typography, "headline-2");
 }
 .ap-typography-headline-3 {
-  @include mat.typography-level($ap-typography, 'headline-3');
+  @include mat.typography-level($ap-typography, "headline-3");
 }
 .ap-typography-headline-4 {
-  @include mat.typography-level($ap-typography, 'headline-4');
+  @include mat.typography-level($ap-typography, "headline-4");
 }
 .ap-typography-headline-5 {
-  @include mat.typography-level($ap-typography, 'headline-5');
+  @include mat.typography-level($ap-typography, "headline-5");
 }
 
 .ap-typography-headline-6 {
-  @include mat.typography-level($ap-typography, 'headline-6');
+  @include mat.typography-level($ap-typography, "headline-6");
 }
 
 .ap-typography-subtitle-1 {
-  @include mat.typography-level($ap-typography, 'subtitle-1');
+  @include mat.typography-level($ap-typography, "subtitle-1");
 }
 .ap-typography-subtitle-2 {
-  @include mat.typography-level($ap-typography, 'subtitle-2');
+  @include mat.typography-level($ap-typography, "subtitle-2");
 }
 .ap-typography-body-1 {
-  @include mat.typography-level($ap-typography, 'body-1');
+  @include mat.typography-level($ap-typography, "body-1");
 }
 .ap-typography-body-2 {
-  @include mat.typography-level($ap-typography, 'body-2');
+  @include mat.typography-level($ap-typography, "body-2");
 }
 .ap-typography-caption {
-  @include mat.typography-level($ap-typography, 'caption');
+  @include mat.typography-level($ap-typography, "caption");
 }
 .ap-typography-button {
-  @include mat.typography-level($ap-typography, 'button');
+  @include mat.typography-level($ap-typography, "button");
 }
 $ap-primary-palette: (
   50: #eee8fc,
@@ -342,14 +342,7 @@ $ap-theme-dark: mat.define-dark-theme(
     typography: $ap-typography,
   )
 );
-$main-theme: material-theme-helper.modify-background(
-  $ap-theme-light,
-  $white,
-  $white,
-  $dividers,
-  $body,
-  $body
-);
+$main-theme: material-theme-helper.modify-background($ap-theme-light, $white, $white, $dividers, $body, $body);
 @include mat.all-component-themes($main-theme);
 .mat-tab-group {
   font-family: inherit !important;
@@ -369,7 +362,7 @@ $main-theme: material-theme-helper.modify-background(
 
   .mat-tab-label-content::before {
     transition: all 250ms ease;
-    content: '';
+    content: "";
     position: absolute;
     bottom: 0;
     left: 0.9375rem;
@@ -397,7 +390,7 @@ $main-theme: material-theme-helper.modify-background(
 
 .mat-tab-labels::before {
   transition: all 500ms ease;
-  content: '';
+  content: "";
   position: absolute;
   bottom: 0;
   left: 0;
@@ -412,18 +405,6 @@ $main-theme: material-theme-helper.modify-background(
 
 .mat-tab-body-wrapper {
   flex-grow: 1;
-}
-
-.trial-progress-background.mat-progress-spinner circle,
-.trial-progress-background.mat-spinner circle {
-  stroke: $primary-light !important;
-  stroke-width: 15% !important;
-}
-
-.trial-progress-actual.mat-progress-spinner circle,
-.trial-progress-actual.mat-spinner circle {
-  stroke: $primary-hover !important;
-  stroke-width: 15% !important;
 }
 
 .mat-mdc-snack-bar-container {
@@ -552,15 +533,15 @@ td.mat-footer-cell:first-of-type {
 }
 
 th[mat-cell] {
-  @include mat.typography-level($ap-typography, 'body-2');
+  @include mat.typography-level($ap-typography, "body-2");
 }
 th[mat-header-cell] {
-  @include mat.typography-level($ap-typography, 'body-2');
+  @include mat.typography-level($ap-typography, "body-2");
   font-weight: 500;
 }
 
 tr[mat-header-row] {
-  background: $grayCard;
+  background: $gray-card;
 }
 tr.mat-header-row {
   height: 50px !important;
@@ -578,8 +559,7 @@ mat-form-field {
   .mat-mdc-text-field-wrapper {
     background-color: $white !important;
   }
-  .mat-mdc-form-field-focus-overlay
-  {
+  .mat-mdc-form-field-focus-overlay {
     opacity: 0 !important;
   }
 }
@@ -600,7 +580,7 @@ mat-option.add-auth {
 
 .ql-editor {
   padding: 0px !important;
-  @include mat.typography-level($ap-typography, 'body-1');
+  @include mat.typography-level($ap-typography, "body-1");
   line-height: 1.9rem;
 }
 
@@ -660,56 +640,47 @@ mat-form-field.\!ap-bg-white {
 }
 
 .ap-markdown {
-  @include mat.typography-level($ap-typography, 'body-1');
+  @include mat.typography-level($ap-typography, "body-1");
 }
 .mdc-switch--disabled .mdc-switch__icons {
   cursor: not-allowed !important;
 }
 
-app-mentions-list .mat-mdc-menu-item
-{
-  overflow:initial !important;
+app-mentions-list .mat-mdc-menu-item {
+  overflow: initial !important;
 }
 
 app-dashboard-container .mat-drawer {
   background-color: $hover;
 }
 
-.mat-placeholder-icon
-{
-  fill:$placeholder !important;
+.mat-placeholder-icon {
+  fill: $placeholder !important;
 }
-.mat-body-icon
-{
-  fill:$body !important;
+.mat-body-icon {
+  fill: $body !important;
 }
-.mat-expansion-panel-content
-{
-  overflow:hidden !important;
+.mat-expansion-panel-content {
+  overflow: hidden !important;
 }
 
-.data-insertion-search
-{
-  .mdc-text-field--filled:not(.mdc-text-field--disabled) .mdc-line-ripple::before
-  {
+.data-insertion-search {
+  .mdc-text-field--filled:not(.mdc-text-field--disabled) .mdc-line-ripple::before {
     border-bottom-color: $outline !important;
   }
-
 }
 
-.mat-mdc-form-field-icon-prefix>.mat-icon, .mat-mdc-form-field-icon-suffix>.mat-icon
-{
-  padding:12px 9px 12px 12px !important;
-  height:16px !important;
+.mat-mdc-form-field-icon-prefix > .mat-icon,
+.mat-mdc-form-field-icon-suffix > .mat-icon {
+  padding: 12px 9px 12px 12px !important;
+  height: 16px !important;
   width: 16px;
 }
 mat-icon[data-mat-icon-name="custom_expand_more"],
-mat-icon[data-mat-icon-name="custom_expand_less"]
-{
+mat-icon[data-mat-icon-name="custom_expand_less"] {
   width: 10px;
   height: 10px;
 }
-.mat-mdc-dialog-content
-{
+.mat-mdc-dialog-content {
   max-height: 1150px !important;
 }

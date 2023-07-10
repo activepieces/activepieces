@@ -5,8 +5,8 @@ export default createAction({
     name: 'get_playlists',
     displayName: 'Get Playlists',
     description: 'Retrieves the list of playlists that you created or followed',
+    auth: spotifyCommon.authentication,
     props: {
-        authentication: spotifyCommon.authentication,
         offset: Property.Number({
             displayName: 'Limit',
             required: false
@@ -21,15 +21,15 @@ export default createAction({
             required: false
         })
     },
-    async run(context) {
-        const client = makeClient(context.propsValue)
-        if(context.propsValue.all) {
+    async run({auth, propsValue}) {
+        const client = makeClient({auth})
+        if(propsValue.all) {
             const items = await client.getAllCurrentUserPlaylists()
             return { total: items.length, items }
         }
         return await client.getCurrentUserPlaylists({
-            limit: context.propsValue.limit,
-            offset: context.propsValue.offset
+            limit: propsValue.limit,
+            offset: propsValue.offset
         })
     }
 })

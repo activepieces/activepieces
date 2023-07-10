@@ -1,14 +1,14 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
-import { auth } from "../../common/auth";
+import { vtexAuth } from "../../..";
 import { SkuFile } from "../../common/SKU-File";
 import { Replace } from "../../common/types";
 
 export const createSkuFile = createAction({
+    auth: vtexAuth,
     name: "create-sku-file",
     displayName: "Create New Sku File",
     description: "Create a new SKU File to your catalog",
     props: {
-        authentication: auth,
         SkuId: Property.Number({
             displayName: "Sku ID",
             description: "Set the Sku ID",
@@ -37,14 +37,16 @@ export const createSkuFile = createAction({
         })
     },
     async run(context) {
-        const { hostUrl, appKey, appToken } = context.propsValue.authentication;
-        const skuFileData: Replace<typeof context.propsValue, { authentication?: typeof context.propsValue.authentication; SkuId?: number }> = { ...context.propsValue };
-        delete skuFileData.authentication;
-        delete skuFileData.SkuId;
-
+        const { hostUrl, appKey, appToken } = context.auth;
         const skuFile = new SkuFile(hostUrl, appKey, appToken);
 
-        return await skuFile.createSkuFile(context.propsValue.SkuId, skuFileData);
+        return await skuFile.createSkuFile(context.propsValue.SkuId, {
+            Url: context.propsValue.Url,
+            Name: context.propsValue.Name,
+            IsMain: context.propsValue.IsMain,
+            Label: context.propsValue.Label,
+            Text: context.propsValue.Text,
+        });
 
     },
 });

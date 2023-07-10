@@ -1,11 +1,21 @@
-import { createPiece } from '@activepieces/pieces-framework';
-import { createImageFromTemplate } from './lib/actions/create-image';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { bannerbearCreateImageAction } from './lib/actions/create-image';
+
+export const bannerbearAuth = PieceAuth.SecretText({
+  displayName: 'API Key',
+  description: 'Bannerbear API Key',
+  required: true,
+});
 
 export const bannerbear = createPiece({
   displayName: "Bannerbear",
-  logoUrl: 'https://cdn.activepieces.com/pieces/bannerbear.png',
-  actions: [createImageFromTemplate],
+      minimumSupportedRelease: '0.5.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/bannerbear.png',
   authors: ["kanarelo"],
-  triggers: [],
+  auth: bannerbearAuth,
+  actions: [
+    bannerbearCreateImageAction,
+  ],
+  triggers: [
+  ],
 });
-

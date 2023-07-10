@@ -6,7 +6,7 @@
 }
 ::selection {
   color: $white;
-  background: #8965e6;
+  background: $selection-color;
 }
 /* Remove default margin */
 body,
@@ -23,8 +23,8 @@ dd {
 }
 
 /* Remove list styles on ul, ol elements with a list role, which suggests default styling will be removed */
-ul[role='list'],
-ol[role='list'] {
+ul[role="list"],
+ol[role="list"] {
   list-style: none;
 }
 
@@ -75,9 +75,9 @@ select {
     scroll-behavior: auto !important;
   }
 }
-input[type='number']::-webkit-outer-spin-button,
-input[type='number']::-webkit-inner-spin-button,
-input[type='number'] {
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"] {
   -webkit-appearance: none;
   margin: 0;
   -moz-appearance: textfield !important;
