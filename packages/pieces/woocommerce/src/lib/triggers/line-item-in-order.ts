@@ -22,7 +22,7 @@ export const lineItemInOrder = createTrigger({
         const response = await context.store?.get('_line_item_in_order_trigger') as { webhookIds: number[] };
         if (response !== null && response !== undefined) {
             response.webhookIds.forEach(async (webhookId: number) => {
-                // wooCommon.unsubscribeWebhook(webhookId, context.auth);
+                wooCommon.unsubscribeWebhook(webhookId, context.auth);
             })
         }
     },
