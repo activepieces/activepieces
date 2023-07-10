@@ -2,6 +2,8 @@ import { Type, Static } from '@sinclair/typebox';
 import { QueryVerType } from '../../pieces';
 import { SampleDataSettingsObject } from '../sample-data';
 
+export const AUTHENTICATION_PROPERTY_NAME = "auth";
+
 export enum TriggerType {
   EMPTY = 'EMPTY',
   WEBHOOK = 'WEBHOOK',

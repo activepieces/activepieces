@@ -1,16 +1,17 @@
 import { createTrigger, OAuth2PropertyValue, TriggerStrategy } from '@activepieces/pieces-framework';
 import { getAccessTokenOrThrow, HttpResponse, httpClient, HttpMethod, AuthenticationType, Polling, DedupeStrategy, pollingHelper } from "@activepieces/pieces-common"
 import { googleContactsCommon } from '../common';
+import { googleContactsAuth } from '../../';
 
 
-const polling: Polling<{ authentication: OAuth2PropertyValue }> = {
+const polling: Polling<OAuth2PropertyValue, Record<string, never>> = {
     strategy: DedupeStrategy.LAST_ITEM,
-    items: async ({ store, propsValue: { authentication } }) => {
+    items: async ({ store, auth }) => {
         let newContacts: Connection[] = [];
         let fetchMore = true;
         while (fetchMore) {
             const syncToken = (await store.get<string>("syncToken"))!;
-            const response = await listContacts(getAccessTokenOrThrow(authentication), syncToken);
+            const response = await listContacts(getAccessTokenOrThrow(auth), syncToken);
             const newConnections = response.body.connections;
             await store.put("syncToken", response.body.nextSyncToken);
             if (newConnections === undefined || newConnections.length == 0) {
@@ -33,11 +34,11 @@ const polling: Polling<{ authentication: OAuth2PropertyValue }> = {
 };
 
 export const googleContactNewOrUpdatedContact = createTrigger({
+    auth: googleContactsAuth,
     name: 'new_or_updated_contact',
     displayName: 'New Or Updated Contact',
     description: 'Triggers when there is a new or updated contact',
     props: {
-        authentication: googleContactsCommon.authentication,
     },
     sampleData: {
         "resourceName": "people/c4278485694217203807",
@@ -97,37 +98,34 @@ export const googleContactNewOrUpdatedContact = createTrigger({
             }
         ]
     },
+
     type: TriggerStrategy.POLLING,
     async onEnable(ctx) {
         return await pollingHelper.onEnable(polling, {
             store: ctx.store,
-            propsValue: {
-                authentication: ctx.propsValue['authentication'],
-            },
+            auth: ctx.auth,
+            propsValue: {}
         });
     },
     async onDisable(ctx) {
         return await pollingHelper.onEnable(polling, {
             store: ctx.store,
-            propsValue: {
-                authentication: ctx.propsValue['authentication'],
-            },
+            auth: ctx.auth,
+            propsValue: {}
         });
     },
     async run(ctx) {
         return await pollingHelper.poll(polling, {
             store: ctx.store,
-            propsValue: {
-                authentication: ctx.propsValue['authentication'],
-            },
+            auth: ctx.auth,
+            propsValue: {}
         });
     },
     test: async (ctx) => {
         return await pollingHelper.poll(polling, {
             store: ctx.store,
-            propsValue: {
-                authentication: ctx.propsValue['authentication'],
-            },
+            auth: ctx.auth,
+            propsValue: {}
         });
     }
 });

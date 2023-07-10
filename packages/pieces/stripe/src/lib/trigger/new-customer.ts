@@ -1,13 +1,14 @@
 import { createTrigger } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from "@activepieces/pieces-framework";
 import { stripeCommon } from '../common';
+import { stripeAuth } from '../..';
 
 export const stripeNewCustomer = createTrigger({
+  auth: stripeAuth,
   name: 'new_customer',
   displayName: 'New Customer',
   description: 'Triggers when a new customer is created',
   props: {
-    api_key: stripeCommon.authentication
   },
   sampleData: {
     "id": "cus_NGtyEf4hNGTj3p",
@@ -41,15 +42,15 @@ export const stripeNewCustomer = createTrigger({
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    const webhook = await stripeCommon.subscribeWebhook('customer.created', context.webhookUrl!, context.propsValue['api_key']!);
-    await context.store?.put<WebhookInformation>('_new_customer_trigger', {
+    const webhook = await stripeCommon.subscribeWebhook('customer.created', context.webhookUrl, context.auth);
+    await context.store.put<WebhookInformation>('_new_customer_trigger', {
       webhookId: webhook.id
     });
   },
   async onDisable(context) {
     const response = await context.store?.get<WebhookInformation>('_new_customer_trigger');
     if (response !== null && response !== undefined) {
-      await stripeCommon.unsubscribeWebhook(response.webhookId, context.propsValue['api_key']!);
+      await stripeCommon.unsubscribeWebhook(response.webhookId, context.auth);
     }
   },
   async run(context) {

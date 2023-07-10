@@ -5,7 +5,7 @@ export async function searchSupporter(propsValue: Record<string, unknown>): Prom
         method: HttpMethod.POST,
         url: `${propsValue['baseUrl']}/integration/ext/v1/supporters/search`,
         headers: {
-            'authToken': propsValue['authentication'] as string,
+            'authToken': propsValue['auth'] as string,
             'Content-Type': 'application/json',
             'Accept': 'application/json'
         },
@@ -22,7 +22,7 @@ export async function upsertSupporter(propsValue: Record<string, unknown>): Prom
         method: HttpMethod.PUT,
         url: `${propsValue['baseUrl']}/integration/ext/v1/supporters`,
         headers: {
-            'authToken': propsValue['authentication'] as string,
+            'authToken': propsValue['auth'] as string,
             'Content-Type': 'application/json',
             'Accept': 'application/json'
         },

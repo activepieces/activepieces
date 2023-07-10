@@ -17,6 +17,7 @@ When you execute the deploy.sh script in the Docker installation tutorial, it wi
 | `AP_EXECUTION_MODE`          |  You can choose between 'SANDBOXED' or 'UNSANDBOXED' as possible values. If you decide to change this, make sure to carefully read the next below. | `SANDBOXED`                |
 | `AP_JWT_SECRET`              | ❗️ Encryption key used for generating JWT tokens                                                             | `None`                  | https://demo.activepieces.com
 | `AP_FRONTEND_URL`            | ❗️ Url that will be used to specify redirect url and webhook url.                                            | `None`                  | https://demo.activepieces.com/api
+| `AP_TRIGGER_DEFAULT_POLL_INTERVAL`  | The default polling internal for app triggers in minutes                                                  | `5`                     |
 | `AP_POSTGRES_DATABASE`       | ❗️ The name of the PostgreSQL database                                                                       | `None`                  |
 | `AP_POSTGRES_HOST`           | ❗️ The hostname or IP address of the PostgreSQL server                                                       | `None`                  |
 | `AP_POSTGRES_PASSWORD`       | ❗️ The password for the PostgreSQL user                                                                      | `None`                  |
@@ -54,6 +55,7 @@ To enable the sign-up feature, you need to ensure the code runs safely on the ma
 
 1. Make the Docker container privileged: Edit the `docker-compose.yml` file and add `privileged: true`. This allows the container to have additional permissions to sandbox.
 2. Change the execution mode to sandboxing: Modify the `AP_EXECUTION_MODE` setting to `SANDBOXED`. This ensures the code runs within a secure environment, isolated from the rest of the system.
+3. Modify the `AP_SIGN_UP_ENABLED` to true , the environment variable. 
 
 ### Setting Sandbox mode:
 

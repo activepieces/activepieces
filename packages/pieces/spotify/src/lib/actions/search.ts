@@ -5,8 +5,8 @@ export default createAction({
     name: 'search',
     displayName: 'Search',
     description: 'Searches for tracks, artists, albums, etc.',
+    auth: spotifyCommon.authentication,
     props: {
-        authentication: spotifyCommon.authentication,
         search_text: Property.ShortText({
             displayName: 'Search Text',
             description: 'The word or phrase you are searching for',
@@ -33,13 +33,13 @@ export default createAction({
             required: false
         })
     },
-    async run(context) {
-        const client = makeClient(context.propsValue)
+    async run({auth, propsValue}) {
+        const client = makeClient({auth})
         const res = await client.search({
-            q: context.propsValue.search_text,
-            type: context.propsValue.types.join(','),
-            limit: context.propsValue.limit,
-            offset: context.propsValue.offset
+            q: propsValue.search_text,
+            type: propsValue.types.join(','),
+            limit: propsValue.limit,
+            offset: propsValue.offset
         })
         const result = {
             tracks: res.tracks?.items,

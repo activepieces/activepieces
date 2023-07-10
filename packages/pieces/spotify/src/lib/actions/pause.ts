@@ -5,14 +5,14 @@ export default createAction({
     name: 'pause',
     displayName: 'Pause',
     description: 'Pauses the playback',
+    auth: spotifyCommon.authentication,
     props: {
-        authentication: spotifyCommon.authentication,
         device_id: spotifyCommon.device_id(false)
     },
-    async run(context) {
-        const client = makeClient(context.propsValue)
+    async run({auth, propsValue}) {
+        const client = makeClient({auth})
         const res = await client.pause({
-            device_id: context.propsValue.device_id
+            device_id: propsValue.device_id
         })
         return res
     }
