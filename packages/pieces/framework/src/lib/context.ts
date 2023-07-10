@@ -1,4 +1,4 @@
-import { AppConnectionValue, ExecutionType, PauseMetadata, StopResponse, TriggerPayload } from "@activepieces/shared";
+import { AppConnectionValue, ExecutionType, FlowRunId, PauseMetadata, StopResponse, TriggerPayload } from "@activepieces/shared";
 import { TriggerStrategy } from "./trigger/trigger";
 import { NonAuthPiecePropertyMap, PieceAuthProperty, PiecePropValueSchema, PiecePropertyMap, StaticPropsValue } from "./property";
 
@@ -66,6 +66,8 @@ export type ActionContext<
     executionType: ExecutionType,
     connections: ConnectionsManager,
     run: {
+        id: FlowRunId,
+        webhookBaseUrl: string,
         stop: StopHook,
         pause: PauseHook,
     }

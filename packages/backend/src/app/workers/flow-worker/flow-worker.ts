@@ -103,6 +103,7 @@ const finishExecution = async (params: FinishExecutionParams): Promise<void> => 
 const loadInputAndLogFileId = async ({ jobData }: LoadInputAndLogFileIdParams): Promise<LoadInputAndLogFileIdResponse> => {
     const baseInput = {
         flowVersionId: jobData.flowVersionId,
+        flowRunId: jobData.runId,
         projectId: jobData.projectId,
         triggerPayload: {
             duration: 0,

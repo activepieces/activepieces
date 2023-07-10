@@ -11,7 +11,8 @@ export const approvalLink = createAction({
     if (ctx.executionType === ExecutionType.BEGIN) {
       ctx.run.pause({
         pauseMetadata: {
-          type: PauseType.WEBHOOK
+          type: PauseType.WEBHOOK,
+          webhookUrl: `${ctx.run.webhookBaseUrl}/v1/flow-runs/${ctx.run.id}/resume`,
         }
       });
     }

@@ -1,3 +1,5 @@
+import { FlowRunId } from "@activepieces/shared";
+
 class Globals {
   private _collectionDirectory = './collections';
   private _flowDirectory = './flows';
@@ -9,6 +11,15 @@ class Globals {
   private _projectId = '';
   private _apiUrl = '';
   private _flowId = '';
+  private _flowRunId?: FlowRunId
+
+  set flowRunId(_flowRunId: string) {
+    this._flowRunId = _flowRunId;
+  }
+
+  get flowRunId(): string | undefined {
+    return this._flowRunId;
+  }
 
   set flowId(_flowId: string) {
     this._flowId = _flowId;

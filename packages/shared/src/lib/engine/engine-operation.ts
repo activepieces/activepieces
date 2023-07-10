@@ -1,6 +1,7 @@
 import { ResumeStepMetadata } from "../flow-run/execution/execution-output";
 import { ExecutionState } from "../flow-run/execution/execution-state";
 import { ExecutionType } from "../flow-run/execution/execution-type";
+import { FlowRunId } from "../flow-run/flow-run";
 import { FlowVersion, FlowVersionId } from "../flows/flow-version";
 import { ProjectId } from "../project/project";
 
@@ -64,6 +65,7 @@ export interface ExecutePropsOptions {
 
 type BaseExecuteFlowOperation<T extends ExecutionType> = {
     flowVersionId: FlowVersionId;
+    flowRunId: FlowRunId;
     projectId: ProjectId;
     triggerPayload: unknown;
     executionType: T;

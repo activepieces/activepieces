@@ -7,7 +7,8 @@ import {
   ExecutionType,
   PieceAction,
   StepOutput,
-  StepOutputStatus
+  StepOutputStatus,
+  assertNotNullOrUndefined
 } from '@activepieces/shared';
 import { BaseActionHandler, InitStepOutputParams } from './action-handler';
 import { globals } from '../globals';
@@ -138,6 +139,8 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
         censorConnections: false,
       })
 
+      assertNotNullOrUndefined(globals.flowRunId, 'globals.flowRunId')
+
       const context: ActionContext = {
         executionType: this.executionType,
         store: createContextStore('', globals.flowId),
@@ -145,6 +148,8 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
         propsValue: resolvedProps,
         connections: connectionManager,
         run: {
+          id: globals.flowRunId,
+          webhookBaseUrl: globals.apiUrl,
           stop: this.generateStopHook({ stepOutput }),
           pause: this.generatePauseHook({ stepOutput }),
         }

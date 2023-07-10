@@ -83,6 +83,7 @@ const executeFlow = async (): Promise<void> => {
     globals.workerToken = input.workerToken!;
     globals.projectId = input.projectId;
     globals.apiUrl = input.apiUrl!;
+    globals.flowRunId = input.flowRunId;
 
     const executor = initFlowExecutor(input)
     const output = await executor.safeExecute();
