@@ -10,9 +10,8 @@ export const createDocument = createAction({
         props: {
             title: docsCommon.title,
             body: docsCommon.body,
-            parentFolder: docsCommon.parentFolder,
+            parentFolder: docsCommon.parentFolder
         },
-
         async run(context) {
             const document = await docsCommon.createDocument(context.propsValue.title, context.auth.access_token, context.propsValue.parentFolder);
             const response = await docsCommon.writeToDocument(document.documentId, context.propsValue.body, context.auth.access_token);
