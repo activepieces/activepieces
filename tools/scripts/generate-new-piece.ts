@@ -29,6 +29,8 @@ const nxGenerateNodeLibrary = async (pieceName: string) => {
       --unitTestRunner=none
   `
 
+  console.log(nxGenerateCommand);
+
   await exec(nxGenerateCommand)
 }
 
@@ -48,8 +50,8 @@ const generateIndexTsFile = async (pieceName: string) => {
     })
     .join('')
 
-  const indexTemplate =
-`import { PieceAuth, createPiece } from "@activepieces/pieces-framework";
+  const indexTemplate = `
+import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
 
 export const ${pieceNameCamelCase} = createPiece({
   displayName: "${capitalizeFirstLetter(pieceName)}",

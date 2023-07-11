@@ -1,12 +1,29 @@
-import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { OAuth2PropertyValue, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { hubSpotClient } from './client';
 
+export const hubSpotAuthentication = PieceAuth.OAuth2({
+    displayName: 'Authentication',
+    authUrl: 'https://app.hubspot.com/oauth/authorize',
+    tokenUrl: 'https://api.hubapi.com/oauth/v1/token',
+    required: true,
+    scope: [
+        'crm.lists.read',
+        'crm.lists.write',
+        'crm.objects.contacts.read',
+        'crm.objects.contacts.write',
+        'crm.objects.companies.read',
+        'crm.objects.deals.read',
+        'tickets',
+        'forms'
+    ],
+});
+
 const buildEmptyList = ({ placeholder }: { placeholder: string }) => {
-  return {
-    disabled: true,
-    options: [],
-    placeholder,
-  }
+    return {
+        disabled: true,
+        options: [],
+        placeholder,
+    }
 };
 
 export const hubSpotListIdDropdown = Property.Dropdown<number>({
