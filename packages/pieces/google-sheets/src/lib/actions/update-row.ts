@@ -1,46 +1,48 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { ValueInputOption } from '../common/common';
 import { googleSheetsCommon } from '../common/common';
+import { googleSheetsAuth } from '../..';
+
 export const updateRowAction = createAction({
+    auth: googleSheetsAuth,
     name: 'update_row',
     description: 'Overwrite values in an existing row',
     displayName: 'Update Row',
     props: {
-        authentication: googleSheetsCommon.authentication,
         spreadsheet_id: googleSheetsCommon.spreadsheet_id,
+        include_team_drives: googleSheetsCommon.include_team_drives,
         sheet_id: googleSheetsCommon.sheet_id,
         row_id: Property.Number({
             displayName: 'Row Number',
             description: 'The row number to update',
             required: true,
         }),
-        values: Property.Array({
-            displayName: 'Values',
-            description: 'These are the cell values of the row that will be updated',
+        first_row_headers: Property.Checkbox({
+            displayName: 'Are the First row Headers?',
+            description: 'If the first row is headers',
             required: true,
+            defaultValue: false,
         }),
+        values: googleSheetsCommon.values,
     },
-    async run(context) {
-        const values = context.propsValue['values'];
-
-        const sheetName = await googleSheetsCommon.findSheetName(context.propsValue['authentication']['access_token'], context.propsValue['spreadsheet_id'], context.propsValue['sheet_id']);
+    async run({propsValue, auth}) {
+        const {spreadsheet_id, sheet_id, values, row_id, first_row_headers} = propsValue;
+        const sheetName = await googleSheetsCommon.findSheetName(auth['access_token'], spreadsheet_id, sheet_id);
         if (!sheetName) {
             throw Error("Sheet not found in spreadsheet");
         }
-        if (Array.isArray(values)) {
-            await googleSheetsCommon.updateGoogleSheetRow({
-                accessToken: context.propsValue['authentication']['access_token'],
-                rowIndex:  Number(context.propsValue.row_id),
+        const formattedValues = first_row_headers ? Object.values(values) : values['values'];
+        if (formattedValues.length > 0) {
+            return (await googleSheetsCommon.updateGoogleSheetRow({
+                accessToken: auth['access_token'],
+                rowIndex:  Number(row_id),
                 sheetName: sheetName,
-                spreadSheetId: context.propsValue['spreadsheet_id'],
+                spreadSheetId: spreadsheet_id,
                 valueInputOption: ValueInputOption.USER_ENTERED,
-                values: values as string[],
-            });
+                values: formattedValues as string[],
+            })).body;
         } else {
-            throw Error("Values passed are not an array")
+            throw Error("Values passed are not an array " + JSON.stringify(formattedValues))
         }
-        return {
-            success: true,
-        };
     },
 });

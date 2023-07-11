@@ -32,7 +32,7 @@ import {
   fromOpsToText,
   fromTextToOps,
   getImageTemplateForStepLogo,
-  InsertMentionOperation,
+  keysWithinPath,
   MentionListItem,
   QuillEditorOperationsObject,
   QuillMaterialBase,
@@ -46,6 +46,7 @@ import {
   BuilderSelectors,
   FlowItem,
 } from '@activepieces/ui/feature-builder-store';
+import { InsertMentionOperation } from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-interpolating-text-form-control',
@@ -203,23 +204,21 @@ export class InterpolatingTextFormControlComponent
       })
     );
   }
+
   editorCreated(): void {
     this.removeDefaultTabKeyBinding();
     this.removeConvertingSpaceAndMinusToList();
 
     this.editor.quillEditor.clipboard.addMatcher(
       Node.ELEMENT_NODE,
-      (
-        _node: unknown,
-        delta: { ops: (TextInsertOperation | InsertMentionOperation)[] }
-      ) => {
-        const cleanedOps: (TextInsertOperation | InsertMentionOperation)[] = [];
-        delta.ops.forEach((op) => {
+      (_node: Element, delta: any) => {
+        const cleanedOps: (InsertMentionOperation | TextInsertOperation)[] = [];
+        delta.ops.forEach((op: any) => {
           if (
             (op.insert && typeof op.insert === 'string') ||
             (typeof op.insert === 'object' && op.insert.mention)
           ) {
-            //remove styling in case user is pasting html
+            // remove styling in case the user is pasting HTML
             delete op['attributes'];
             cleanedOps.push(op);
           }
@@ -229,6 +228,7 @@ export class InterpolatingTextFormControlComponent
       }
     );
   }
+
   private removeDefaultTabKeyBinding() {
     delete this.editor.quillEditor.getModule('keyboard').bindings['9'];
   }
@@ -362,23 +362,16 @@ export class InterpolatingTextFormControlComponent
           2,
           mentionOp.insert.mention.serverValue.length - 2
         );
-      const itemPrefix = itemPathWithoutInterpolationDenotation.split('.')[0];
+      const keys = keysWithinPath(itemPathWithoutInterpolationDenotation);
+      const stepName = keys[0];
       let imageTag = '';
-      if (itemPrefix !== 'configs' && itemPrefix !== 'connections') {
-        const stepMetaData = allStepsMetaData.find(
-          (s) => s.step.name === itemPrefix
-        );
-        if (stepMetaData) {
-          imageTag =
-            getImageTemplateForStepLogo(stepMetaData.logoUrl || '') +
-            `${stepMetaData.step.indexInDfsTraversal || 0 + 1}. `;
-        }
-      } else {
-        if (itemPrefix === 'connections') {
-          imageTag = getImageTemplateForStepLogo(
-            'assets/img/custom/piece/connection.png'
-          );
-        }
+      const stepMetaData = allStepsMetaData.find(
+        (s) => s.step.name === stepName
+      );
+      if (stepMetaData) {
+        imageTag =
+          getImageTemplateForStepLogo(stepMetaData.logoUrl || '') +
+          `${stepMetaData.step.indexInDfsTraversal || 0 + 1}. `;
       }
       mentionOp.insert.mention.value =
         ' ' + imageTag + mentionOp.insert.mention.value + ' ';

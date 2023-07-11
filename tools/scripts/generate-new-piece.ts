@@ -3,7 +3,7 @@ import { argv } from 'node:process'
 import { rm, writeFile } from 'node:fs/promises'
 import { getAvailablePieceNames } from './utils/get-available-piece-names'
 import { exec } from './utils/exec'
-import { readProjectJson, writeProjectJson } from './utils/files'
+import { readPackageJson, readProjectJson, writeProjectJson } from './utils/files'
 import chalk from 'chalk';
 
 const validatePieceName = async (pieceName: string) => {
@@ -19,7 +19,7 @@ const validatePieceName = async (pieceName: string) => {
 
 const nxGenerateNodeLibrary = async (pieceName: string) => {
   const nxGenerateCommand = `
-    npx nx generate @nrwl/node:library ${pieceName} \
+    npx nx generate @nx/node:library ${pieceName} \
       --directory=pieces \
       --importPath=@activepieces/piece-${pieceName} \
       --publishable \
@@ -29,11 +29,12 @@ const nxGenerateNodeLibrary = async (pieceName: string) => {
       --unitTestRunner=none
   `
 
+  console.log(nxGenerateCommand);
+
   await exec(nxGenerateCommand)
 }
 
 const removeUnusedFiles = async (pieceName: string) => {
-  await rm(`packages/pieces/${pieceName}/.babelrc`)
   await rm(`packages/pieces/${pieceName}/src/lib/pieces-${pieceName}.ts`)
 }
 
@@ -50,14 +51,12 @@ const generateIndexTsFile = async (pieceName: string) => {
     .join('')
 
   const indexTemplate = `
-import { createPiece } from "@activepieces/pieces-framework";
-import packageJson from "../package.json";
+import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
 
 export const ${pieceNameCamelCase} = createPiece({
-  name: "${pieceName}",
   displayName: "${capitalizeFirstLetter(pieceName)}",
+  auth: PieceAuth.None(),
   logoUrl: "https://cdn.activepieces.com/pieces/${pieceName}.png",
-  version: packageJson.version,
   authors: [],
   actions: [],
   triggers: [],
@@ -78,6 +77,13 @@ const updateProjectJsonConfig = async (pieceName: string) => {
   assert(projectJson.targets?.build?.options, '[updateProjectJsonConfig] targets.build.options is required');
 
   projectJson.targets.build.options.buildableProjectDepsInPackageJsonType = 'dependencies'
+  await writeProjectJson(`packages/pieces/${pieceName}`, projectJson)
+}
+
+
+const updatePackageJsonConfig = async (pieceName: string) => {
+  const projectJson = await readPackageJson(`packages/pieces/${pieceName}`)
+  projectJson.keywords = ['activepieces'];
   await writeProjectJson(`packages/pieces/${pieceName}`, projectJson)
 }
 

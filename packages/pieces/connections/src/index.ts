@@ -1,13 +1,12 @@
 
-import { createPiece } from '@activepieces/pieces-framework';
-import packageJson from '../package.json';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { readConnection } from './lib/actions/read-connection';
 
 export const connections = createPiece({
-  name: 'connections',
   displayName: 'Connections',
-  logoUrl: 'https://cdn.activepieces.com/pieces/connections.png',
-  version: packageJson.version,
+      minimumSupportedRelease: '0.5.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/connections.png',
+  auth: PieceAuth.None(),
   authors: [
     "abuaboud"
   ],

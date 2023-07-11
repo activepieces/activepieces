@@ -1,4 +1,4 @@
-import { isNil } from 'lodash'
+import { isNil } from '@activepieces/shared'
 import { databaseConnection } from '../database/database-connection'
 import { ProjectEntity } from './project.entity'
 import { ActivepiecesError, apId, ErrorCode, NotificationStatus, Project, ProjectId, UpdateProjectRequest, UserId } from '@activepieces/shared'

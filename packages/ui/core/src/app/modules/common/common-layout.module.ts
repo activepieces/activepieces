@@ -122,7 +122,7 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     { provide: MAT_TOOLTIP_DEFAULT_OPTIONS, useValue: materialTooltipDefaults },
     {
       provide: MAT_FORM_FIELD_DEFAULT_OPTIONS,
-      useValue: { appearance: 'outline' },
+      useValue: { appearance: 'outline', floatLabel: 'always' },
     },
   ],
 })

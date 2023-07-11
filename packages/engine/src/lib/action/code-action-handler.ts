@@ -8,9 +8,8 @@ import {
   StepOutputStatus
 } from '@activepieces/shared';
 import { BaseActionHandler, InitStepOutputParams } from './action-handler';
-import { globals } from '../globals';
-import { isNil } from 'lodash';
 import { codeExecutor } from '../executors/code-executer';
+import { isNil } from '@activepieces/shared'
 
 type CtorParams = {
   currentAction: CodeAction

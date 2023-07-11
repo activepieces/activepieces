@@ -134,7 +134,7 @@ export type PieceNotFoundErrorParams = BaseErrorParams<
   ErrorCode.PIECE_NOT_FOUND,
   {
     pieceName: string;
-    pieceVersion: string;
+    pieceVersion: string | undefined;
   }
 >
 

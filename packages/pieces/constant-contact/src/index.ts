@@ -1,14 +1,21 @@
 
-import { createPiece } from "@activepieces/pieces-framework";
-import packageJson from "../package.json";
+import { PieceAuth, createPiece } from "@activepieces/pieces-framework";
 import { createOrUpdateContact } from "./lib/actions/create-or-update-contact";
 
+export const constantContactAuth = PieceAuth.OAuth2({
+  displayName: "Authentication",
+  required: true,
+  tokenUrl: "https://authz.constantcontact.com/oauth2/default/v1/token",
+  authUrl: "https://authz.constantcontact.com/oauth2/default/v1/authorize",
+  scope: ["contact_data"]
+})
+
 export const constantContact = createPiece({
-  name: "constant-contact",
   displayName: "Constant Contact",
-  logoUrl: "https://cdn.activepieces.com/pieces/constant-contact.png",
-  version: packageJson.version,
+      minimumSupportedRelease: '0.5.0',
+    logoUrl: "https://cdn.activepieces.com/pieces/constant-contact.png",
   authors: ["abuaboud"],
+  auth: constantContactAuth,
   actions: [createOrUpdateContact],
   triggers: [],
 });

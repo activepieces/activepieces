@@ -1,5 +1,4 @@
-import packageJson from "../package.json";
-import { createPiece } from "@activepieces/pieces-framework";
+import { PieceAuth, createPiece } from "@activepieces/pieces-framework";
 import { getClickupTaskComments } from "./lib/actions/comments/get-task-comments";
 import { createClickupFolderlessList } from "./lib/actions/lists/create-folderless-list";
 import { createClickupTask } from "./lib/actions/tasks/create-task";
@@ -10,10 +9,20 @@ import { createClickupTaskComment } from "./lib/actions/comments/create-task-com
 import { createClickupSubtask } from "./lib/actions/tasks/create-subtask";
 import { clickupTriggers as triggers } from "./lib/triggers";
 
+export const clickupAuth = PieceAuth.OAuth2({
+    description: "",
+    displayName: 'Authentication',
+    authUrl: "https://app.clickup.com/api",
+    tokenUrl: "https://app.clickup.com/api/v2/oauth/token",
+    required: true,
+    scope: []
+})
+
 export const clickup = createPiece({
-    name: 'clickup',
     displayName: "Clickup",
+        minimumSupportedRelease: '0.5.0',
     logoUrl: 'https://cdn.activepieces.com/pieces/clickup.png',
+    auth: clickupAuth,
     actions: [
         createClickupTask,
         createClickupFolderlessList,
@@ -25,6 +34,5 @@ export const clickup = createPiece({
         createClickupSubtask,
     ],
     authors: ['abuaboud', 'ShayPunter', 'kanarelo'],
-    triggers,
-    version: packageJson.version,
+    triggers
 });

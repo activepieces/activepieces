@@ -5,14 +5,17 @@ import {
     DropdownProperty,
     DropdownState,
     DynamicProperties,
-    DynamicPropsValue,
     MultiSelectDropdownProperty,
     Piece,
+    PieceAuthProperty,
+    PiecePropValueSchema,
+    PiecePropertyMap,
     PropertyType,
     StaticPropsValue,
 } from "@activepieces/pieces-framework";
 import fs from 'node:fs/promises';
 import {
+    ActionType,
     ActivepiecesError,
     ApEnvironment,
     ErrorCode,
@@ -22,10 +25,15 @@ import {
     ExecutePropsOptions,
     ExecutionState,
     ExecutionType,
+    FlowVersion,
+    TriggerType,
+    flowHelper,
+    extractPieceFromModule,
     getPackageAliasForPiece,
+    AUTHENTICATION_PROPERTY_NAME,
 } from "@activepieces/shared";
 import { VariableService } from "../services/variable-service";
-import { isNil } from 'lodash';
+import { isNil } from '@activepieces/shared'
 import { createContextStore } from '../services/storage.service';
 import { globals } from '../globals';
 import { connectionService } from '../services/connections.service';
@@ -44,6 +52,7 @@ type GetActionParams = {
 }
 
 const apEnv = env['AP_ENVIRONMENT'];
+const variableService = new VariableService()
 
 const getPackageName = (params: GetPackageNameParams): string => {
     const { pieceName, pieceVersion } = params;
@@ -65,8 +74,12 @@ const loadPieceOrThrow = async (pieceName: string, pieceVersion: string): Promis
         pieceVersion,
     })
 
-    const pieceModule = await import(packageName);
-    const piece = Object.values<Piece>(pieceModule)[0];
+    const module = await import(packageName);
+    const piece = extractPieceFromModule<Piece>({
+        module,
+        pieceName,
+        pieceVersion,
+    })
 
     if (isNil(piece)) {
         throw new ActivepiecesError({
@@ -137,34 +150,29 @@ const getPropOrThrow = async (params: ExecutePropsOptions) => {
     return prop
 }
 
-type ResolveInputParams = {
-    input: Record<string, unknown>
-    executionContext?: Record<string, unknown>
-}
-
-const resolveInput = async ({ input, executionContext = {} }: ResolveInputParams): Promise<unknown> => {
+const executionStateFromExecutionContext = (executionContext: Record<string, unknown>): ExecutionState => {
     const executionState = new ExecutionState()
 
     for (const [stepName, stepOutput] of Object.entries(executionContext)) {
         executionState.updateLastStep(stepOutput, stepName)
     }
 
-    const variableService = new VariableService()
-
-    return await variableService.resolve({
-        unresolvedInput: input,
-        executionState,
-        censorConnections: false,
-    })
+    return executionState
 }
 
 export const pieceHelper = {
     async executeCode(params: ExecuteCodeOperation): Promise<ExecuteActionResponse> {
-        const { codeBase64, input, testExecutionContext } = params;
-        const resolvedInput = await resolveInput({
-            input,
-            executionContext: testExecutionContext,
+        const { codeBase64, input, flowVersion } = params;
+
+        const executionContext = await generateTestExecutionContext(flowVersion)
+        const executionState = executionStateFromExecutionContext(executionContext)
+
+        const resolvedInput = await variableService.resolve({
+            unresolvedInput: input,
+            executionState,
+            censorConnections: false,
         })
+
         try {
             const code = Buffer.from(codeBase64, 'base64').toString('utf-8');
             const fileName = `${globals.codeDirectory}/code.js`;
@@ -175,7 +183,7 @@ export const pieceHelper = {
                 success: true,
                 output: result,
             };
-        } catch (e: any) {
+        } catch (e) {
             // Don't remove this console.error, it's used in the UI to display the error
             console.error(e);
             return {
@@ -185,7 +193,7 @@ export const pieceHelper = {
         }
     },
     async executeAction(params: ExecuteActionOperation): Promise<ExecuteActionResponse> {
-        const { actionName, pieceName, pieceVersion, input, testExecutionContext } = params;
+        const { actionName, pieceName, pieceVersion, input, flowVersion } = params;
 
         const action = await getActionOrThrow({
             pieceName,
@@ -193,14 +201,20 @@ export const pieceHelper = {
             actionName,
         })
 
-        const resolvedInput = await resolveInput({
-            input,
-            executionContext: testExecutionContext,
+        const executionContext = await generateTestExecutionContext(flowVersion)
+        const executionState = executionStateFromExecutionContext(executionContext)
+
+        const resolvedProps = await variableService.resolveAndValidate<StaticPropsValue<PiecePropertyMap>>({
+            unresolvedInput: input,
+            executionState,
+            censorConnections: false,
+            actionProps: action.props,
         })
 
-        const context: ActionContext<StaticPropsValue<Record<string, any>>> = {
+        const context: ActionContext = {
             executionType: ExecutionType.BEGIN,
-            propsValue: resolvedInput as Record<string, any>,
+            auth: resolvedProps[AUTHENTICATION_PROPERTY_NAME],
+            propsValue: resolvedProps,
             store: createContextStore('', globals.flowId),
             connections: {
                 get: async (key: string) => {
@@ -226,9 +240,9 @@ export const pieceHelper = {
                 output: await action.run(context),
                 success: true,
             }
-        } catch (e: any) {
+        } catch (e) {
             return {
-                output: Utils.tryParseJson(e.message),
+                output: e instanceof Error ? Utils.tryParseJson(e.message) : e,
                 success: false,
             }
         }
@@ -238,25 +252,24 @@ export const pieceHelper = {
         const property = await getPropOrThrow(params);
 
         try {
-            const resolvedInput = await resolveInput({
-                input: params.input,
+            const resolvedProps = await variableService.resolve<StaticPropsValue<PiecePropertyMap>>({
+                unresolvedInput: params.input,
+                executionState: new ExecutionState(),
+                censorConnections: false,
             })
 
             if (property.type === PropertyType.DYNAMIC) {
                 const dynamicProperty = property as DynamicProperties<boolean>
-                const dynamicInput = resolvedInput as Record<string, DynamicPropsValue>
-                return await dynamicProperty.props(dynamicInput);
+                return dynamicProperty.props(resolvedProps);
             }
 
             if (property.type === PropertyType.MULTI_SELECT_DROPDOWN) {
                 const multiSelectProperty = property as MultiSelectDropdownProperty<unknown, boolean>
-                const multiSelectInput = resolvedInput as Record<string, any>
-                return await multiSelectProperty.options(multiSelectInput);
+                return multiSelectProperty.options(resolvedProps);
             }
 
             const dropdownProperty = property as DropdownProperty<unknown, boolean>
-            const dropdownInput = resolvedInput as Record<string, any>;
-            return await dropdownProperty.options(dropdownInput);
+            return dropdownProperty.options(resolvedProps)
         } catch (e) {
             console.error(e);
             return {
@@ -269,3 +282,33 @@ export const pieceHelper = {
 
     loadPieceOrThrow,
 };
+
+
+const generateTestExecutionContext = async (flowVersion: FlowVersion): Promise<Record<string, unknown>> => {
+    const flowSteps = flowHelper.getAllSteps(flowVersion.trigger)
+    const testContext: Record<string, unknown> = {}
+
+    for (const step of flowSteps) {
+        const stepsWithSampleData = [ActionType.CODE, ActionType.PIECE, TriggerType.PIECE, TriggerType.WEBHOOK]
+        if (stepsWithSampleData.includes(step.type)) {
+            const { name, settings: { inputUiInfo } } = step
+            testContext[name] = inputUiInfo?.currentSelectedData
+        }
+
+        if (step.type === ActionType.LOOP_ON_ITEMS) {
+            const executionState = executionStateFromExecutionContext(testContext)
+            const resolvedLoopOutput: { items: any[] } = await variableService.resolve({
+                unresolvedInput: step.settings,
+                executionState,
+                censorConnections: false,
+            })
+            const items = resolvedLoopOutput.items;
+            testContext[step.name] = {
+                index: 1,
+                item: items?.[0],
+            }
+        }
+    }
+
+    return testContext
+}

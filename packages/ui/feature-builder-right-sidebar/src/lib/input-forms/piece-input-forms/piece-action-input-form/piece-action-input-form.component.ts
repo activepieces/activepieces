@@ -30,15 +30,16 @@ import {
 import { Store } from '@ngrx/store';
 import {
   ActionType,
+  AUTHENTICATION_PROPERTY_NAME,
   PieceActionSettings,
   UpdateActionRequest,
 } from '@activepieces/shared';
 import { PiecePropertiesFormValue } from '@activepieces/ui/feature-builder-form-controls';
 import { PieceActionInputFormSchema } from '../../input-forms-schema';
 import {
-  ActionMetaService,
   fadeInUp400ms,
   isOverflown,
+  PieceMetadataService,
 } from '@activepieces/ui/common';
 import {
   BuilderSelectors,
@@ -46,10 +47,14 @@ import {
   FlowsActions,
   FlowItemsDetailsState,
 } from '@activepieces/ui/feature-builder-store';
-import { PiecePropertyMap } from '@activepieces/pieces-framework';
+import {
+  PieceAuthProperty,
+  PiecePropertyMap,
+} from '@activepieces/pieces-framework';
 
 declare type ActionDropdownOptionValue = {
   actionName: string;
+  auth?: PieceAuthProperty;
   properties: PiecePropertyMap;
 };
 
@@ -106,10 +111,7 @@ export class PieceActionInputFormComponent
   selectedAction$: Observable<ActionDropdownOption | undefined>;
   actions$: Observable<ActionDropdownOption[]>;
   valueChanges$: Observable<void>;
-  actionDropdownValueChanged$: Observable<{
-    actionName: string;
-    properties: PiecePropertyMap;
-  }>;
+  actionDropdownValueChanged$: Observable<ActionDropdownOptionValue>;
   allAuthConfigs$: Observable<ConnectionDropdownItem[]>;
   flowItemDetails$: Observable<FlowItemsDetailsState>;
   isOverflown = isOverflown;
@@ -121,7 +123,7 @@ export class PieceActionInputFormComponent
   };
   constructor(
     private fb: UntypedFormBuilder,
-    private actionMetaDataService: ActionMetaService,
+    private pieceMetadataService: PieceMetadataService,
     private cd: ChangeDetectorRef,
     private store: Store
   ) {
@@ -165,7 +167,7 @@ export class PieceActionInputFormComponent
   }
 
   fetchActions(pieceName: string, pieceVersion: string) {
-    const pieceMetadata$ = this.actionMetaDataService.getPieceMetadata(
+    const pieceMetadata$ = this.pieceMetadataService.getPieceMetadata(
       pieceName,
       pieceVersion
     );
@@ -180,6 +182,7 @@ export class PieceActionInputFormComponent
               },
               value: {
                 actionName: actionName,
+                auth: action.requireAuth ? pieceMetadata.auth : undefined,
                 properties: action.props,
               },
             };
@@ -237,7 +240,15 @@ export class PieceActionInputFormComponent
     selectedAction: ActionDropdownOption | undefined
   ) {
     if (selectedAction && this.intialComponentInputFormValue?.input) {
-      const properties = { ...selectedAction.value.properties };
+      let properties = {
+        ...selectedAction.value.properties,
+      };
+      if (selectedAction.value.auth) {
+        properties = {
+          [AUTHENTICATION_PROPERTY_NAME]: selectedAction.value.auth,
+          ...properties,
+        };
+      }
       const propertiesValues = this.intialComponentInputFormValue.input;
       const propertiesFormValue: PiecePropertiesFormValue = {
         properties: properties,
@@ -304,19 +315,24 @@ export class PieceActionInputFormComponent
     }
   }
 
-  private actionSelected(selectedActionValue: {
-    actionName: string;
-    properties: PiecePropertyMap;
-  }) {
+  private actionSelected(selectedActionValue: ActionDropdownOptionValue) {
     const piecePropertiesForm = this.pieceActionForm.get(
       PIECE_PROPERTIES_FORM_CONTROL_NAME
     );
     const propertiesFormValue: PiecePropertiesFormValue = {
-      properties: selectedActionValue.properties,
+      properties: {
+        ...selectedActionValue.properties,
+      },
       setDefaultValues: true,
       customizedInputs: {},
       propertiesValues: {},
     };
+    if (selectedActionValue.auth) {
+      propertiesFormValue.properties = {
+        [AUTHENTICATION_PROPERTY_NAME]: selectedActionValue.auth,
+        ...propertiesFormValue.properties,
+      };
+    }
     if (!piecePropertiesForm) {
       this.pieceActionForm.addControl(
         PIECE_PROPERTIES_FORM_CONTROL_NAME,

@@ -1,6 +1,6 @@
 import { FlowExecutor } from '../executors/flow-executor';
 import { VariableService } from '../services/variable-service';
-import { ExecutionState, BranchAction, Action, BranchStepOutput, BranchCondition, BranchOperator, BranchResumeStepMetadata, ActionType } from '@activepieces/shared';
+import { ExecutionState, BranchAction, Action, BranchStepOutput, BranchCondition, BranchOperator, BranchResumeStepMetadata, ActionType, BranchActionSettings } from '@activepieces/shared';
 import { BaseActionHandler, InitStepOutputParams } from './action-handler';
 import { StepOutputStatus, StepOutput } from '@activepieces/shared';
 
@@ -52,7 +52,7 @@ export class BranchActionHandler extends BaseActionHandler<BranchAction, BranchR
     executionState: ExecutionState,
     ancestors: [string, number][]
   ): Promise<StepOutput> {
-    const resolvedInput = await this.variableService.resolve({
+    const resolvedInput: BranchActionSettings = await this.variableService.resolve({
       unresolvedInput: this.currentAction.settings,
       executionState,
       censorConnections: false,
@@ -81,7 +81,9 @@ export class BranchActionHandler extends BaseActionHandler<BranchAction, BranchR
           resumeStepMetadata: this.resumeStepMetadata?.childResumeStepMetadata,
         })
 
-        const executionOutput = await executor.execute()
+        const executionOutput = await executor.execute({
+          ancestors,
+        })
 
         this.handleFlowExecutorOutput({
           executionOutput,
@@ -115,36 +117,62 @@ function evaluateConditions(conditionGroups: BranchCondition[][]): boolean {
   for (const conditionGroup of conditionGroups) {
     let andGroup = true;
     for (const condition of conditionGroup) {
-      const castedCondition = condition as {
-        firstValue: any;
-        secondValue: any;
-        operator: BranchOperator;
-      };
+      const castedCondition = condition;
       switch (castedCondition.operator) {
-        case BranchOperator.TEXT_CONTAINS:
-          andGroup = andGroup && castedCondition.firstValue.includes(castedCondition.secondValue);
+        case BranchOperator.TEXT_CONTAINS: {
+          const firstValueContains = toLowercaseIfCaseInsensitive(castedCondition.firstValue, castedCondition.caseSensitive).includes(
+            toLowercaseIfCaseInsensitive(castedCondition.secondValue, castedCondition.caseSensitive)
+          );
+          andGroup = andGroup && firstValueContains;
           break;
-        case BranchOperator.TEXT_DOES_NOT_CONTAIN:
-          andGroup = andGroup && !castedCondition.firstValue.includes(castedCondition.secondValue);
+        }
+        case BranchOperator.TEXT_DOES_NOT_CONTAIN: {
+          const firstValueDoesNotContain = !toLowercaseIfCaseInsensitive(castedCondition.firstValue, castedCondition.caseSensitive).includes(
+            toLowercaseIfCaseInsensitive(castedCondition.secondValue, castedCondition.caseSensitive)
+          );
+          andGroup = andGroup && firstValueDoesNotContain;
           break;
-        case BranchOperator.TEXT_EXACTLY_MATCHES:
-          andGroup = andGroup && castedCondition.firstValue === castedCondition.secondValue;
+        }
+        case BranchOperator.TEXT_EXACTLY_MATCHES: {
+          const firstValueExactlyMatches = toLowercaseIfCaseInsensitive(castedCondition.firstValue, castedCondition.caseSensitive) ===
+            toLowercaseIfCaseInsensitive(castedCondition.secondValue, castedCondition.caseSensitive);
+          andGroup = andGroup && firstValueExactlyMatches;
           break;
-        case BranchOperator.TEXT_DOES_NOT_EXACTLY_MATCH:
-          andGroup = andGroup && castedCondition.firstValue !== castedCondition.secondValue;
+        }
+        case BranchOperator.TEXT_DOES_NOT_EXACTLY_MATCH: {
+          const firstValueDoesNotExactlyMatch = toLowercaseIfCaseInsensitive(castedCondition.firstValue, castedCondition.caseSensitive) !==
+            toLowercaseIfCaseInsensitive(castedCondition.secondValue, castedCondition.caseSensitive);
+          andGroup = andGroup && firstValueDoesNotExactlyMatch;
           break;
-        case BranchOperator.TEXT_STARTS_WITH:
-          andGroup = andGroup && castedCondition.firstValue.startsWith(castedCondition.secondValue);
+        }
+        case BranchOperator.TEXT_STARTS_WITH: {
+          const firstValueStartsWith = toLowercaseIfCaseInsensitive(castedCondition.firstValue, castedCondition.caseSensitive).startsWith(
+            toLowercaseIfCaseInsensitive(castedCondition.secondValue, castedCondition.caseSensitive)
+          );
+          andGroup = andGroup && firstValueStartsWith;
           break;
-        case BranchOperator.TEXT_ENDS_WITH:
-          andGroup = andGroup && castedCondition.firstValue.endsWith(castedCondition.secondValue);
+        }
+        case BranchOperator.TEXT_ENDS_WITH: {
+          const firstValueEndsWith = toLowercaseIfCaseInsensitive(castedCondition.firstValue, castedCondition.caseSensitive).endsWith(
+            toLowercaseIfCaseInsensitive(castedCondition.secondValue, castedCondition.caseSensitive)
+          );
+          andGroup = andGroup && firstValueEndsWith;
           break;
-        case BranchOperator.TEXT_DOES_NOT_START_WITH:
-          andGroup = andGroup && !castedCondition.firstValue.startsWith(castedCondition.secondValue);
+        }
+        case BranchOperator.TEXT_DOES_NOT_START_WITH: {
+          const firstValueDoesNotStartWith = !toLowercaseIfCaseInsensitive(castedCondition.firstValue, castedCondition.caseSensitive).startsWith(
+            toLowercaseIfCaseInsensitive(castedCondition.secondValue, castedCondition.caseSensitive)
+          );
+          andGroup = andGroup && firstValueDoesNotStartWith;
           break;
-        case BranchOperator.TEXT_DOES_NOT_END_WITH:
-          andGroup = andGroup && !castedCondition.firstValue.endsWith(castedCondition.secondValue);
+        }
+        case BranchOperator.TEXT_DOES_NOT_END_WITH: {
+          const firstValueDoesNotEndWith = !toLowercaseIfCaseInsensitive(castedCondition.firstValue, castedCondition.caseSensitive).endsWith(
+            toLowercaseIfCaseInsensitive(castedCondition.secondValue, castedCondition.caseSensitive)
+          );
+          andGroup = andGroup && firstValueDoesNotEndWith;
           break;
+        }        
         case BranchOperator.NUMBER_IS_GREATER_THAN: {
           const firstValue = parseStringToNumber(castedCondition.firstValue);
           const secondValue = parseStringToNumber(castedCondition.secondValue);
@@ -158,7 +186,7 @@ function evaluateConditions(conditionGroups: BranchCondition[][]): boolean {
           break;
         }
         case BranchOperator.BOOLEAN_IS_TRUE:
-          andGroup = andGroup && castedCondition.firstValue;
+          andGroup = andGroup && !!castedCondition.firstValue;
           break;
         case BranchOperator.BOOLEAN_IS_FALSE:
           andGroup = andGroup && !castedCondition.firstValue;
@@ -176,6 +204,10 @@ function evaluateConditions(conditionGroups: BranchCondition[][]): boolean {
     orOperator = orOperator || andGroup;
   }
   return Boolean(orOperator);
+}
+
+function toLowercaseIfCaseInsensitive(text: string, caseSensitive: boolean) {
+  return caseSensitive ? text : text.toLocaleLowerCase();
 }
 
 function parseStringToNumber(str: string): number | string {

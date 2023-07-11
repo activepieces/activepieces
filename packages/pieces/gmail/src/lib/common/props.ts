@@ -3,15 +3,6 @@ import { GmailRequests } from "./data";
 import { GmailLabel } from "./models";
 
 export const GmailProps = {
-  authentication: Property.OAuth2({
-    description: "",
-    displayName: 'Authentication',
-    authUrl: "https://accounts.google.com/o/oauth2/auth",
-    tokenUrl: "https://oauth2.googleapis.com/token",
-    required: true,
-    // TODO add https://www.googleapis.com/auth/gmail.readonly when we have the permission
-    scope: ["https://www.googleapis.com/auth/gmail.send"]
-  }),
   from: Property.ShortText({
     displayName: 'Email sender',
     description: "The address sending the new mail",
@@ -52,9 +43,9 @@ export const GmailProps = {
     description: "The label tagged to the mail",
     required: false,
     defaultValue: "",
-    refreshers: ["authentication"],
-    options: async ({ authentication }) => {
-      if (!authentication) {
+    refreshers: [],
+    options: async ({ auth }) => {
+      if (!auth) {
         return {
           disabled: true,
           options: [],
@@ -62,7 +53,7 @@ export const GmailProps = {
         }
       }
 
-      const response = await GmailRequests.getLabels(authentication as OAuth2PropertyValue)
+      const response = await GmailRequests.getLabels(auth as OAuth2PropertyValue)
 
       return {
         disabled: false,

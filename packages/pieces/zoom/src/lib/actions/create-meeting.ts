@@ -1,7 +1,7 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { HttpRequest, HttpMethod, AuthenticationType, httpClient } from "@activepieces/pieces-common";
 import { MeetingMessageBody, MeetingResponseBody } from "../common/models";
-import { zoomAuth } from "../common/props";
+import { zoomAuth } from "../..";
 
 const defaults = {
   "agenda": "My Meeting",
@@ -37,11 +37,11 @@ const defaults = {
 
 const action = () => {
   return createAction({
+    auth: zoomAuth,
     name: 'zoom_create_meeting', // Must be a unique across the piece, this shouldn't be changed.
     displayName: 'Create Zoom Meeting',
     description: 'Create a new Zoom Meeting',
     props: {
-      authentication: zoomAuth,
       topic: Property.ShortText({
         displayName: "Meeting's topic",
         description: "The meeting's topic",
@@ -222,14 +222,14 @@ const action = () => {
         ...defaults,
         ...context.propsValue
       }
-      delete body['authentication']
+      delete body['auth']
       const request: HttpRequest<MeetingMessageBody> = {
         method: HttpMethod.POST,
         url: `https://api.zoom.us/v2/users/me/meetings`,
         body: body,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: context.propsValue.authentication!.access_token
+          token: context.auth.access_token
         },
         queryParams: {}
       }

@@ -1,19 +1,20 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
-import { clockodoCommon, makeClient } from "../../common";
+import { Property, createAction } from "@activepieces/pieces-framework";
+import { makeClient } from "../../common";
+import { clockodoAuth } from "../../../";
 
 export default createAction({
+    auth: clockodoAuth,
     name: 'delete_absence',
     displayName: 'Delete Absence',
     description: 'Deletes an absence in clockodo',
     props: {
-        authentication: clockodoCommon.authentication,
         absence_id: Property.Number({
             displayName: 'Absence ID',
             required: true
         })
     },
-    async run(context) {
-        const client = makeClient(context.propsValue);
-        await client.deleteAbsence(context.propsValue.absence_id)
+    async run({ auth, propsValue }) {
+        const client = makeClient(auth);
+        await client.deleteAbsence(propsValue.absence_id)
     }
 })

@@ -3,7 +3,12 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { map, Observable, shareReplay, startWith, Subject, tap } from 'rxjs';
 import { FlowsTableDataSource } from './flows-table.datasource';
 import { MatDialog } from '@angular/material/dialog';
-import { Flow, FlowInstanceStatus, FolderId } from '@activepieces/shared';
+import {
+  Flow,
+  FlowInstanceStatus,
+  FolderId,
+  TriggerType,
+} from '@activepieces/shared';
 
 import {
   ApPaginatorComponent,
@@ -24,6 +29,7 @@ import {
   MoveFlowToFolderDialogData,
 } from './move-flow-to-folder-dialog/move-flow-to-folder-dialog.component';
 import { FoldersSelectors } from '../../store/folders/folders.selector';
+import cronstrue from 'cronstrue';
 
 @Component({
   templateUrl: './flows-table.component.html',
@@ -102,7 +108,7 @@ export class FlowsTableComponent implements OnInit {
 
   openBuilder(flow: Flow, event: MouseEvent) {
     const link = '/flows/' + flow.id;
-    if (event.ctrlKey) {
+    if (event.ctrlKey || event.which == 2 || event.button == 4) {
       // Open in new tab
       window.open(link, '_blank', 'noopener');
     } else {
@@ -160,6 +166,40 @@ export class FlowsTableComponent implements OnInit {
   }
   duplicate(flow: Flow) {
     this.duplicateFlow$ = this.flowService.duplicate(flow.id);
+  }
+
+  getTriggerIcon(flow: Flow) {
+    const trigger = flow.version.trigger;
+    switch (trigger.type) {
+      case TriggerType.WEBHOOK:
+        return 'assets/img/custom/triggers/instant-filled.svg';
+      case TriggerType.PIECE: {
+        const cronExpression = flow.schedule?.cronExpression;
+        if (cronExpression) {
+          return 'assets/img/custom/triggers/periodic-filled.svg';
+        } else {
+          return 'assets/img/custom/triggers/instant-filled.svg';
+        }
+      }
+      case TriggerType.EMPTY:
+        throw new Error("Flow can't be published with empty trigger");
+    }
+  }
+
+  getTriggerToolTip(flow: Flow) {
+    const trigger = flow.version.trigger;
+    switch (trigger.type) {
+      case TriggerType.WEBHOOK:
+        return 'Real time flow';
+      case TriggerType.PIECE: {
+        const cronExpression = flow.schedule?.cronExpression;
+        return cronExpression
+          ? `Runs ${cronstrue.toString(cronExpression).toLocaleLowerCase()}`
+          : 'Real time flow';
+      }
+      case TriggerType.EMPTY:
+        throw new Error("Flow can't be published with empty trigger");
+    }
   }
 
   moveFlow(flow: Flow) {

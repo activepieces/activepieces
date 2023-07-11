@@ -8,7 +8,7 @@
       </svg>
     </g>
   </svg>
-  <app-small-add-button *ngIf="!viewMode" (click)="add()" [top]="addButtonTop" [left]="addButtonLeft"
+  <app-small-add-button *ngIf="!readOnly" (click)="add()" [top]="addButtonTop" [left]="addButtonLeft"
     [showDropzoneIndicator]="insideDropArea">
   </app-small-add-button>
 

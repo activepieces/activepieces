@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Resolve } from '@angular/router';
+
 import { map, Observable, switchMap, take } from 'rxjs';
 import { AppConnection } from '@activepieces/shared';
 
@@ -14,7 +14,7 @@ export type ConnectionsResolverData = AppConnection[];
 @Injectable({
   providedIn: 'root',
 })
-export class ConnectionsResolver implements Resolve<ConnectionsResolverData> {
+export class ConnectionsResolver {
   constructor(
     private appConnectionsService: AppConnectionsService,
     private store: Store

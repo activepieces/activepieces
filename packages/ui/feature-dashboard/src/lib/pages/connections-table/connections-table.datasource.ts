@@ -19,7 +19,7 @@ import {
   DEFAULT_PAGE_SIZE,
   LIMIT_QUERY_PARAM,
   CURSOR_QUERY_PARAM,
-  ActionMetaService,
+  PieceMetadataService,
 } from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
 import { Params } from '@angular/router';
@@ -36,7 +36,7 @@ export class ConnectionsTableDataSource extends DataSource<any> {
     private queryParams$: Observable<Params>,
     private paginator: ApPaginatorComponent,
     private store: Store,
-    private actionMetaService: ActionMetaService,
+    private pieceMetadataService: PieceMetadataService,
     private connectionsService: AppConnectionsService,
     private refresh$: Observable<boolean>
   ) {
@@ -76,10 +76,11 @@ export class ConnectionsTableDataSource extends DataSource<any> {
         this.paginator.next = res.next;
         this.paginator.previous = res.previous;
         this.data = res.data;
+        console.log(this.data);
       }),
       switchMap((res) => {
         const logos: Observable<string | undefined>[] = res.data.map((item) =>
-          this.actionMetaService.getPieceNameLogo(item.appName)
+          this.pieceMetadataService.getPieceNameLogo(item.appName).pipe(take(1))
         );
         return forkJoin(logos).pipe(
           map((logos) => {

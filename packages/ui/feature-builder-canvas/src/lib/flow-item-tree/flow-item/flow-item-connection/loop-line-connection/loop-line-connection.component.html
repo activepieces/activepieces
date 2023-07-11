@@ -14,7 +14,7 @@
     </g>
   </svg>
 
-  <app-small-add-button *ngIf="flowItem.firstLoopAction &&  !viewMode" (click)="addLoopItem()" [top]="addButtonTop"
+  <app-small-add-button *ngIf="flowItem.firstLoopAction &&  !readOnly" (click)="addLoopItem()" [top]="addButtonTop"
     [left]="addButtonLeft" [showDropzoneIndicator]="isDraggingOverFirstLoopAction">
   </app-small-add-button>
 
@@ -23,7 +23,7 @@
     (dropped)="dropAtTheStartOfLoop($event)">
   </app-drop-zone>
 
-  <app-small-add-button *ngIf="!viewMode" (click)="add()" [top]="afterLoopAddButtonTop" [left]="afterLoopAddButtonLeft"
+  <app-small-add-button *ngIf="!readOnly" (click)="add()" [top]="afterLoopAddButtonTop" [left]="afterLoopAddButtonLeft"
     [showDropzoneIndicator]="isDraggingOverAfterLoopAction">
   </app-small-add-button>
 
@@ -34,7 +34,7 @@
 
   <app-big-add-button [showDropZoneIndicator]="isDraggingOverFirstLoopAction" (click)="addLoopItem()"
     [top]="emptyLoopAddButtonTopOffset" [left]="emptyLoopAddButtonLeftOffset"
-    *ngIf="!flowItem.firstLoopAction && !viewMode">
+    *ngIf="!flowItem.firstLoopAction && !readOnly">
   </app-big-add-button>
 
 </div>

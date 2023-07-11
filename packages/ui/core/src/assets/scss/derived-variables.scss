@@ -1,0 +1,5 @@
+@import "./variables.scss";
+$primary-default: map-get(
+    $map: $primary-color,
+    $key: "default",
+);

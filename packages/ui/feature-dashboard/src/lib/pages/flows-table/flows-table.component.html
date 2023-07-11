@@ -13,10 +13,13 @@
         <div
           class=" ap-rounded ap-border ap-border-solid ap-border-dividers ap-p-[30px] ap-pb-[80px] ap-flex ap-flex-col">
           <app-flows-table-title></app-flows-table-title>
-          <table mat-table [dataSource]="dataSource" class="ap-w-[100%] " aria-label="Flows">
+          <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Flows">
             <ng-container matColumnDef="name">
               <th mat-header-cell *matHeaderCellDef>Name</th>
-              <td mat-cell *matCellDef="let flow">{{ flow.version.displayName }}</td>
+              <td mat-cell *matCellDef="let flow"><a class="!ap-typography-body-2 !ap-no-underline !ap-text-body"
+                  (auxclick)="$event.stopPropagation()" [href]="'/flows/'+flow.id">
+                  {{ flow.version.displayName }}
+                </a></td>
             </ng-container>
             <ng-container matColumnDef="steps">
               <th mat-header-cell *matHeaderCellDef>Steps</th>
@@ -32,14 +35,21 @@
             <ng-container matColumnDef="status">
               <th mat-header-cell *matHeaderCellDef>Status</th>
               <td mat-cell *matCellDef="let flow">
-                <div class="ap-flex ap-gap-2">
+                <div class="ap-px-1 ap-flex ap-gap-2 ap-items-center">
                   <mat-slide-toggle color="primary" [class.ap-cursor-not-allowed]="flow.instanceToggleControl.disabled"
                     (click)="$event.stopImmediatePropagation(); toggleFlowStatus(flow,flow.instanceToggleControl)"
                     [formControl]="flow.instanceToggleControl" [matTooltip]="flow.instanceToggleControl.disabled? 'Please publish the flow':
-                  flow.instanceToggleControl.value? 'Flow is on' : 'Flow is off'"></mat-slide-toggle>
-                  <div [class.ap-invisible]=" !flowsUpdateStatusRequest$[flow.id]" class="spinner-border dark-spinner"
-                    role="status">
+                    flow.instanceToggleControl.value? 'Flow is on' : 'Flow is off'"></mat-slide-toggle>
+                  <div class="ap-min-h-[30px] ap-min-w-[30px] ap-flex ap-items-center ap-justify-center">
+                    <svg-icon [src]="getTriggerIcon(flow)"
+                      *ngIf="flow.instanceToggleControl.value && !flowsUpdateStatusRequest$[flow.id]"
+                      [matTooltip]="getTriggerToolTip(flow)" class="ap-w-[25px] ap-h-[25px] ap-fill-body"
+                      [applyClass]="true">
+                    </svg-icon>
+                    <div *ngIf="flowsUpdateStatusRequest$[flow.id]" class="spinner-border dark-spinner" role="status">
+                    </div>
                   </div>
+
                 </div>
               </td>
             </ng-container>
@@ -77,14 +87,17 @@
                         [applyClass]="true"></svg-icon>
                       <span class="ap-text-danger">Delete</span>
                     </div>
-
                   </button>
                 </mat-menu>
             </ng-container>
 
             <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-            <tr class="ap-cursor-pointer hover:!ap-bg-hover" (click)="openBuilder(row, $event)" mat-row
+
+            <tr class="ap-cursor-pointer hover:!ap-bg-hover" (click)="openBuilder(row, $event)"
+              (auxclick)="openBuilder(row, $event)" mat-row contextmenu="mymenu"
               [class.ap-hidden]="dataSource.isLoading$ | async" *matRowDef="let row; columns: displayedColumns"></tr>
+
+
           </table>
           <ng-container *ngIf="dataSource.data.length===0 && (dataSource.isLoading$ | async) === false">
             <div class="ap-flex ap-items-center ap-justify-center ap-my-8  ap-flex-grow">

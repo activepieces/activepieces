@@ -1,13 +1,21 @@
-import packageJson from '../package.json';
-import { createPiece } from '@activepieces/pieces-framework';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { googleTasksAddNewTaskAction } from './lib/actions/new-task';
 
+export const googleTasksAuth = PieceAuth.OAuth2({
+    description: "",
+    displayName: 'Authentication',
+    authUrl: "https://accounts.google.com/o/oauth2/auth",
+    tokenUrl: "https://oauth2.googleapis.com/token",
+    required: true,
+    scope: ["https://www.googleapis.com/auth/tasks"]
+})
+
 export const googleTasks = createPiece({
-	name: 'google-tasks',
-	logoUrl: 'https://cdn.activepieces.com/pieces/google-tasks.png',
+	    minimumSupportedRelease: '0.5.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/google-tasks.png',
 	actions: [googleTasksAddNewTaskAction],
 	displayName: "Google Tasks",
 	authors: ['abaza738'],
 	triggers: [],
-  version: packageJson.version,
+    auth: googleTasksAuth,
 });

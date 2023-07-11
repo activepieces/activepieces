@@ -1,0 +1,23 @@
+<div class="ap-flex" (click)="$event.stopPropagation();">
+    <button mat-icon-button [tabIndex]="-1" class="ap-flex ap-items-center ap-justify-center"
+        (click)="builderAutocompleteService.changeDataInsertionPopupSize('fullscreen')">
+        <svg-icon src="assets/img/custom/fullscreen.svg" class=" size-icon ap-w-[20px] ap-h-[20px]"
+            [class.active]="(builderAutocompleteService.dataInsertionPopupSize$ | async) === 'fullscreen'"
+            [applyClass]="true"></svg-icon>
+    </button>
+
+    <button mat-icon-button [tabIndex]="-1" (click)="builderAutocompleteService.changeDataInsertionPopupSize('docked')"
+        class="ap-flex ap-items-center ap-justify-center">
+        <svg-icon src="assets/img/custom/docked.svg" class=" size-icon ap-w-[20px] ap-h-[20px]"
+            [class.active]="(builderAutocompleteService.dataInsertionPopupSize$ | async) === 'docked'"
+            [applyClass]="true"></svg-icon>
+    </button>
+
+    <button mat-icon-button [tabIndex]="-1"
+        (click)="builderAutocompleteService.changeDataInsertionPopupSize('collapse')"
+        class="ap-flex ap-items-center ap-justify-center">
+        <svg-icon src="assets/img/custom/collapsed.svg" class=" size-icon ap-w-[20px] ap-h-[20px]"
+            [class.active]="(builderAutocompleteService.dataInsertionPopupSize$ | async) === 'collapse'"
+            [applyClass]="true"></svg-icon>
+    </button>
+</div>

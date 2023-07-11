@@ -1,8 +1,7 @@
-import { TriggerStrategy } from "@activepieces/pieces-framework";
-import { createTrigger } from "@activepieces/pieces-framework";
-import { squareAuthentication } from "../common/props";
+import { squareAuth } from "../../";
+import { TriggerStrategy, createTrigger } from "@activepieces/pieces-framework";
 
-const tirggerData = [
+const triggerData = [
     {
         name: "new_order",
         displayName: "New Order",
@@ -375,24 +374,26 @@ const tirggerData = [
     }
 ]
 
-export const squareTriggers = tirggerData.map((trigger) => {
-    return createTrigger({
+export const triggers = triggerData.map((trigger) =>
+    createTrigger({
+        auth: squareAuth,
         name: trigger.name,
         displayName: trigger.displayName,
         description: trigger.description,
-        props: {
-            authentication: squareAuthentication
-        },
+        props: {},
         type: TriggerStrategy.APP_WEBHOOK,
         sampleData: trigger.sampleData,
         onEnable: async (context) => {
-            context.app.createListeners({ events: [trigger.event], identifierValue: context.propsValue.authentication.data['merchant_id'] })
+            context.app.createListeners({ events: [trigger.event], identifierValue: context.auth.data['merchant_id'] })
         },
-        onDisable: async (context) => {
+        onDisable: async () => {
             // Ignored
+        },
+        test: async () => {
+            return [trigger.sampleData]
         },
         run: async (context) => {
             return [context.payload.body]
-        }
-    });
-});
+        },
+    })
+)
