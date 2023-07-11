@@ -1,32 +1,17 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
+import { createAction } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
+import { freshdeskAuth } from "../..";
 
 export const getTickets = createAction({
+    auth: freshdeskAuth,
     name: 'get_tickets',
     displayName: 'Get Tickets',
     description: 'Get Ticket instances from Freshdesk.',
-
     props: {
-        authentication: Property.CustomAuth({
-            displayName: 'Freshdesk Custom Authentication',
-            props: {
-                base_url: Property.ShortText({
-                    displayName: 'Base URL',
-                    description: 'Enter the base URL',
-                    required: true,
-                }),
-                access_token: Property.LongText({
-                    displayName: 'API Token',
-                    description: 'Enter the API token',
-                    required: true,
-                })
-            },
-            required: true
-        }),
     },
 
     async run(context) {
-        const FDapiToken = context.propsValue.authentication.access_token;
+        const FDapiToken = context.auth.access_token;
 
         const headers = {
             'Authorization': FDapiToken,
@@ -41,7 +26,7 @@ export const getTickets = createAction({
        // queryParams.append('rate', context.propsValue.rate?.toString() || '');
 
         // Remove trailing slash from base_url
-        const baseUrl = context.propsValue.authentication.base_url.replace(/\/$/, "");
+        const baseUrl = context.auth.base_url.replace(/\/$/, "");
         // not needed for gettickets ?${queryParams.toString()}
         const url = `${baseUrl}/api/v2/tickets/`;
         const httprequestdata = {
