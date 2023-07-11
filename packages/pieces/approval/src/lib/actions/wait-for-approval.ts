@@ -1,10 +1,10 @@
 import { createAction } from "@activepieces/pieces-framework";
 import { ExecutionType, PauseType } from "@activepieces/shared";
 
-export const approvalLink = createAction({
-  name: 'approval',
-  displayName: 'Approval link',
-  description: 'Pauses the flow and waits for approval from the user',
+export const waitForApprovalLink = createAction({
+  name: 'wait_for_approval',
+  displayName: 'Wait for Approval',
+  description: 'Pauses the flow and wait for the approval from the user',
   props: {
   },
   async run(ctx) {
@@ -12,12 +12,14 @@ export const approvalLink = createAction({
       ctx.run.pause({
         pauseMetadata: {
           type: PauseType.WEBHOOK,
-          webhookUrl: `${ctx.run.webhookBaseUrl}/v1/flow-runs/${ctx.run.id}/resume`,
           actions: ['approve', 'disapprove'],
         }
       });
 
-      return {}
+      return {
+        approvalLink: `${ctx.run.webhookBaseUrl}/v1/flow-runs/${ctx.run.id}/resume?action=approve`,
+        disapprovalLink: `${ctx.run.webhookBaseUrl}/v1/flow-runs/${ctx.run.id}/resume?action=disapprove`,
+      }
     }
     else {
       const payload = ctx.resumePayload as { action: string };

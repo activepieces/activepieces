@@ -1,11 +1,12 @@
 import { PieceAuth, createPiece } from "@activepieces/pieces-framework";
-import { approvalLink } from "./lib/actions/approval-link";
+import { waitForApprovalLink } from "./lib/actions/wait-for-approval";
+import { createApprovalLink } from "./lib/actions/create-approval-link";
 
 export const approval = createPiece({
   displayName: "Approval",
   auth: PieceAuth.None(),
   logoUrl: "https://cdn.activepieces.com/pieces/approval.svg",
   authors: ['khaledmashaly'],
-  actions: [approvalLink],
+  actions: [waitForApprovalLink, createApprovalLink],
   triggers: [],
 });

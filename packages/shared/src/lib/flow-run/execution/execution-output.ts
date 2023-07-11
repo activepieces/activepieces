@@ -66,7 +66,6 @@ export type DelayPauseMetadata = BasePauseMetadata<PauseType.DELAY> & {
 }
 
 export type WebhookPauseMetadata =  BasePauseMetadata<PauseType.WEBHOOK> & {
-  webhookUrl: string;
   actions: string[];
 }
 
