@@ -1,18 +1,27 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
-import { FastifyPluginCallbackTypebox } from '@fastify/type-provider-typebox'
-import { CreateFlowRunRequest, ExecutionType, FlowRunId, ListFlowRunsRequestQuery, RunEnvironment } from '@activepieces/shared'
+import { FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
+import { ApId, CreateFlowRunRequest, ExecutionType, FlowRunId, ListFlowRunsRequestQuery, RunEnvironment } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { flowRunService } from './flow-run-service'
 
 const DEFAULT_PAGING_LIMIT = 10
 
-
 type GetOnePathParams = {
     id: FlowRunId
 }
 
-export const flowRunController: FastifyPluginCallbackTypebox = (app, _options, done): void => {
+const ResumeFlowRunRequest = {
+    schema: {
+        params: Type.Object({
+            id: ApId,
+        }),
+        querystring: Type.Object({
+            action: Type.String(),
+        }),
+    },
+}
 
+export const flowRunController: FastifyPluginCallbackTypebox = (app, _options, done): void => {
     app.post(
         '/',
         {
@@ -68,6 +77,13 @@ export const flowRunController: FastifyPluginCallbackTypebox = (app, _options, d
         }
 
         await reply.send(flowRun)
+    })
+
+    app.get('/:id/resume', ResumeFlowRunRequest, async (req) => {
+        await flowRunService.resume({
+            flowRunId: req.params.id,
+            action: req.query.action,
+        })
     })
 
     done()

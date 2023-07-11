@@ -1,5 +1,5 @@
-import { HttpRequest, HttpMethod, AuthenticationType, httpClient, isNotUndefined } from '@activepieces/pieces-common';
-import { pickBy } from '@activepieces/shared';
+import { HttpRequest, HttpMethod, AuthenticationType, httpClient } from '@activepieces/pieces-common';
+import { isNotUndefined, pickBy } from '@activepieces/shared';
 import { TodoistCreateTaskRequest, TodoistProject, TodoistTask } from '../models';
 
 const API = 'https://api.todoist.com/rest/v2';

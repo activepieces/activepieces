@@ -7,8 +7,6 @@ import {
     DynamicProperties,
     MultiSelectDropdownProperty,
     Piece,
-    PieceAuthProperty,
-    PiecePropValueSchema,
     PiecePropertyMap,
     PropertyType,
     StaticPropsValue,
@@ -230,6 +228,8 @@ export const pieceHelper = {
                 }
             },
             run: {
+                id: 'test-flow-run-id',
+                webhookBaseUrl: 'test-webhook-base-url',
                 stop: () => console.info('stopHook called!'),
                 pause: () => console.info('pauseHook called!'),
             }
@@ -297,7 +297,7 @@ const generateTestExecutionContext = async (flowVersion: FlowVersion): Promise<R
 
         if (step.type === ActionType.LOOP_ON_ITEMS) {
             const executionState = executionStateFromExecutionContext(testContext)
-            const resolvedLoopOutput: { items: any[] } = await variableService.resolve({
+            const resolvedLoopOutput: { items: unknown[] } = await variableService.resolve({
                 unresolvedInput: step.settings,
                 executionState,
                 censorConnections: false,
