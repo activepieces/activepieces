@@ -39,7 +39,7 @@ export const findRowsAction = createAction({
                     for (const key in value) {
                         if(value[key].includes(propsValue.search_value) && key.toLowerCase() === alphabet[column]){
                             matchingRows.push({
-                                [row]: value[key],
+                                [row]: value,
                             });
                         }
                     }
