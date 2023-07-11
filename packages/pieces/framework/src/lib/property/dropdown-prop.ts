@@ -1,7 +1,5 @@
 import {  PropertyType } from "./property";
 import { BasePropertySchema, TPropertyValue } from "./base-prop";
-import { BasicAuthPropertyValue } from "./basic-auth-prop";
-import { OAuth2PropertyValue } from "./oauth2-prop";
 import { AnyProcessors } from "../processors/types";
 import { AnyValidators } from "../validators/types";
 

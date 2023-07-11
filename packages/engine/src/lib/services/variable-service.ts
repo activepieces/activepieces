@@ -118,25 +118,6 @@ export class VariableService {
     ) as Promise<T>
   }
 
-  async resolveAndValidate<T = unknown>(params: ResolveAndValidateParams): Promise<T> {
-    const { unresolvedInput, executionState, censorConnections, actionProps } = params
-
-    const resolvedInput = await this.resolve<T>({
-      unresolvedInput,
-      executionState,
-      censorConnections,
-    })
-
-    const { result, errors } = await this.validateAndCast(resolvedInput, actionProps)
-
-    if (Object.keys(errors).length > 0) {
-      throw new Error(JSON.stringify(errors));
-    }
-
-    return result as T
-  }
-
-
   async applyProcessorsAndValidators(
     resolvedInput: any,
     props: PiecePropertyMap
@@ -162,7 +143,7 @@ export class VariableService {
         }
         default: {
           for (const processor of processors) {
-            processedInput[key] = await processor(property, value);
+            processedInput[key] = await processor(property, value as any);
           }
           
           const propErrors = [];
@@ -176,7 +157,7 @@ export class VariableService {
           if (isNil(value) && !property.required) break;
 
           for (const validator of validators) {
-            const error = validator(property, processedInput[key], value);
+            const error = validator(property as any, processedInput[key], value);
             if (!isNil(error)) propErrors.push(error);
           }
           if (propErrors.length) errors[key] = propErrors;

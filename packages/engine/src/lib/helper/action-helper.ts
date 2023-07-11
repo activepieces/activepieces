@@ -204,11 +204,10 @@ export const pieceHelper = {
         const executionContext = await generateTestExecutionContext(flowVersion)
         const executionState = executionStateFromExecutionContext(executionContext)
 
-        const resolvedProps = await variableService.resolveAndValidate<StaticPropsValue<PiecePropertyMap>>({
+        const resolvedProps = await variableService.resolve<StaticPropsValue<PiecePropertyMap>>({
             unresolvedInput: input,
             executionState,
             censorConnections: false,
-            actionProps: action.props,
         })
 
         const { processedInput, errors } = await variableService.applyProcessorsAndValidators(resolvedProps, action.props);

@@ -131,12 +131,11 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
         actionName,
       })
 
-      const resolvedProps = await this.variableService.resolveAndValidate<StaticPropsValue<PiecePropertyMap>>({
-        actionProps: action.props,
+      const resolvedProps = await this.variableService.resolve<StaticPropsValue<PiecePropertyMap>>({
         unresolvedInput: input,
         executionState,
         censorConnections: false,
-      })
+    })
 
       const {processedInput, errors} = await this.variableService.applyProcessorsAndValidators(resolvedProps, action.props);
   

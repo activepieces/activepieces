@@ -5,7 +5,6 @@ import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 import isBase64 from 'is-base64';
 import axios from "axios";
-import path from "path";
 import { ProcessorFn } from "./types";
 
 
@@ -75,9 +74,8 @@ export class Processors {
       });
 
       // Get filename and extension
-      const filename = path.basename(urlOrBase64);
-      // Remove dot from extension
-      const extension = path.extname(urlOrBase64)?.substring(1);
+      const filename = urlOrBase64.substring(urlOrBase64.lastIndexOf('/') + 1);
+      const extension = filename.split('.').pop();
       // Convert file data to base64
       const base64 = Buffer.from(fileResponse.data, 'binary').toString('base64');
 
