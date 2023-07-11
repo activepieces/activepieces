@@ -1,8 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { blackbaudCommon } from '../common/common';
+import { blackbaudAuth } from '../..';
 
 export const blackbaudCreateGift = createAction({
+    auth: blackbaudAuth,
     name: 'create_gift',
     description: 'Create gift',
     displayName: 'Create gift',
@@ -83,8 +85,8 @@ export const blackbaudCreateGift = createAction({
         }
     ],
     async run(configValue) {
-        const { authentication, subscription_key, gift_json } = configValue.propsValue;
-        const accessToken = authentication?.access_token;
+        const { subscription_key, gift_json } = configValue.propsValue;
+        const accessToken = configValue.auth.access_token;
         return (await httpClient.sendRequest({
             method: HttpMethod.POST,
             url: `https://api.sky.blackbaud.com/gift/v1/gifts`,

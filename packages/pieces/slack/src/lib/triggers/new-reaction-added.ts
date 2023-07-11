@@ -1,6 +1,5 @@
-import { createTrigger, Property, TriggerStrategy } from "@activepieces/pieces-framework";
-import { slackAuth } from "../common/props";
-
+import { Property, TriggerStrategy, createTrigger } from "@activepieces/pieces-framework";
+import { slackAuth } from "../../";
 
 const sampleData = {
     "client_msg_id": "2767cf34-0651-44e0-b9c8-1b167ce9b7a9",
@@ -32,11 +31,11 @@ const sampleData = {
 };
 
 export const newReactionAdded = createTrigger({
+    auth: slackAuth,
     name: 'new_reaction_added',
     displayName: 'New Reaction',
     description: 'Triggers when a new reaction is added to a message',
     props: {
-        authentication: slackAuth,
         emoj: Property.Array({
             displayName: 'Emojis (E.g fire, smile)',
             description: 'Select emojs to trigger on',
@@ -46,7 +45,7 @@ export const newReactionAdded = createTrigger({
     type: TriggerStrategy.APP_WEBHOOK,
     sampleData: sampleData,
     onEnable: async (context) => {
-        context.app.createListeners({ events: ['reaction_added'], identifierValue: context.propsValue.authentication.data['team_id'] })
+        context.app.createListeners({ events: ['reaction_added'], identifierValue: context.auth.data['team_id'] })
     },
     onDisable: async (context) => {
         // Ignored

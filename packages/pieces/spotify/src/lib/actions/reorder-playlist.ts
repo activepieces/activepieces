@@ -5,8 +5,8 @@ export default createAction({
     name: 'reorder_playlist',
     displayName: 'Reorder playlist',
     description: 'Reorders items in the playlist',
+    auth: spotifyCommon.authentication,
     props: {
-        authentication: spotifyCommon.authentication,
         playlist_id: spotifyCommon.playlist_id(true),
         from_position: Property.Number({
             displayName: 'From Position',
@@ -21,12 +21,12 @@ export default createAction({
             required: false
         })
     },
-    async run(context) {
-        const client = makeClient(context.propsValue)
-        await client.reorderPlaylist(context.propsValue.playlist_id as string, {
-            range_start: context.propsValue.from_position,
-            range_length: context.propsValue.amount,
-            insert_before: context.propsValue.to_position
+    async run({auth, propsValue}) {
+        const client = makeClient({auth})
+        await client.reorderPlaylist(propsValue.playlist_id as string, {
+            range_start: propsValue.from_position,
+            range_length: propsValue.amount,
+            insert_before: propsValue.to_position
         })
     }
 })

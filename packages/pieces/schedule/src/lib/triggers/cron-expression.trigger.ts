@@ -20,14 +20,14 @@ export const cronExpressionTrigger = createTrigger({
             },
             required: true,
             defaultValue: "UTC"
-        })
+        }),
     },
     type: TriggerStrategy.POLLING,
     sampleData: {},
     onEnable: async (ctx) => {
         ctx.setSchedule({
             cronExpression: ctx.propsValue.cronExpression,
-            timezone: ctx.propsValue.timezone,
+            timezone: ctx.propsValue.timezone
         })
     },
     run(context) {

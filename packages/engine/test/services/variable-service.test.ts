@@ -1,6 +1,6 @@
 import { ActionType, ExecutionState, StepOutput, StepOutputStatus } from '@activepieces/shared';
 import { VariableService } from '../../src/lib/services/variable-service';
-import { Property } from '@activepieces/pieces-framework';
+import { PieceAuth, Property } from '@activepieces/pieces-framework';
 
 const variableService = new VariableService();
 
@@ -271,7 +271,7 @@ describe('Variable Service', () => {
         displayName: 'Price',
         required: true,
       }),
-      auth: Property.CustomAuth({
+      auth: PieceAuth.CustomAuth({
         displayName: 'Auth',
         required: false,
         props: {
@@ -330,7 +330,7 @@ describe('Variable Service', () => {
         displayName: 'Price',
         required: true,
       }),
-      auth: Property.CustomAuth({
+      auth: PieceAuth.CustomAuth({
         displayName: 'Auth',
         required: false,
         props: {

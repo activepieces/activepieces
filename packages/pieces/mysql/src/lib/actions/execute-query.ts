@@ -1,12 +1,13 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { mysqlCommon, mysqlConnect } from "../common";
+import { mysqlAuth } from "../..";
 
 export default createAction({
+    auth: mysqlAuth,
     name: 'execute_query',
     displayName: 'Execute Query',
     description: 'Executes a query on the mysql database and returns the results',
     props: {
-        authentication: mysqlCommon.authentication,
         timezone: mysqlCommon.timezone,
         query: Property.ShortText({
             displayName: 'Query',
@@ -20,7 +21,7 @@ export default createAction({
         })
     },
     async run(context) {
-        const conn = await mysqlConnect(context.propsValue);
+        const conn = await mysqlConnect(context.auth, context.propsValue);
         try {
             const results = await conn.query(context.propsValue.query, context.propsValue.args || []);
             return Array.isArray(results) ? { results } : results

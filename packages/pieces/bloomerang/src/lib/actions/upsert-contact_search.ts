@@ -1,13 +1,14 @@
-import {createAction, Property} from '@activepieces/pieces-framework';
-import {httpClient, HttpMethod} from '@activepieces/pieces-common';
-import {bloomerangCommon} from '../common/common';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { bloomerangCommon } from '../common/common';
+import { bloomerangAuth } from '../..';
 
 export const bloomerangUpsertContactsSearch = createAction({
+    auth: bloomerangAuth,
     name: 'upsert_contact_search',
     description: 'Update or create bloomerang contact using search',
     displayName: 'Upsert Contact (Search)',
     props: {
-        authentication: bloomerangCommon.authentication,
         search: Property.ShortText({
             displayName: "Search",
             description: "The text to search",
@@ -41,16 +42,16 @@ export const bloomerangUpsertContactsSearch = createAction({
         })
     },
     async run(context) {
-        const {authentication, contact_json, contact_type, skip, search, take} = context.propsValue
+        const { contact_json, contact_type, skip, search, take } = context.propsValue
         let url = `${bloomerangCommon.baseUrl}/constituents/search?search=${search}`;
-        if(contact_type) url += `&type=${contact_type}`;
-        if(skip) url += `&skip=${skip}`;
-        if(take) url += `&take=${take}`;
+        if (contact_type) url += `&type=${contact_type}`;
+        if (skip) url += `&skip=${skip}`;
+        if (take) url += `&take=${take}`;
         const findContact = (await httpClient.sendRequest({
             method: HttpMethod.GET,
             url,
             headers: {
-                "X-API-KEY": authentication,
+                "X-API-KEY": context.auth,
             },
         })).body;
         if (findContact.ResultCount > 0) {
@@ -59,7 +60,7 @@ export const bloomerangUpsertContactsSearch = createAction({
                 method: HttpMethod.PUT,
                 url: `${bloomerangCommon.baseUrl}/constituent/${contactID}`,
                 headers: {
-                    "X-API-KEY": authentication,
+                    "X-API-KEY": context.auth,
                 },
                 body: contact_json
             })).body
@@ -68,7 +69,7 @@ export const bloomerangUpsertContactsSearch = createAction({
                 method: HttpMethod.POST,
                 url: `${bloomerangCommon.baseUrl}/constituent`,
                 headers: {
-                    "X-API-KEY": authentication,
+                    "X-API-KEY": context.auth,
                 },
                 body: contact_json
             })).body
