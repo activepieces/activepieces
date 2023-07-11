@@ -152,7 +152,7 @@ export const flowRunService = {
         await flowRunSideEffects.pause({ flowRun })
     },
 
-    async resume({ flowRunId }: ResumeParams): Promise<void> {
+    async resume({ flowRunId, action }: ResumeParams): Promise<void> {
         logger.info(`[FlowRunService#resume] flowRunId=${flowRunId}`)
 
         const flowRunToResume = await repo.findOneBy({
@@ -169,7 +169,9 @@ export const flowRunService = {
         }
 
         await flowRunService.start({
-            payload: null,
+            payload: {
+                action,
+            },
             flowRunId: flowRunToResume.id,
             projectId: flowRunToResume.projectId,
             flowVersionId: flowRunToResume.flowVersionId,
@@ -240,4 +242,5 @@ type PauseParams = {
 
 type ResumeParams = {
     flowRunId: FlowRunId
+    action: string
 }

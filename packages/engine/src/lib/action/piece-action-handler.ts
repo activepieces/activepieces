@@ -152,7 +152,8 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
           webhookBaseUrl: globals.apiUrl,
           stop: this.generateStopHook({ stepOutput }),
           pause: this.generatePauseHook({ stepOutput }),
-        }
+        },
+        resumePayload: globals.resumePayload,
       }
 
       stepOutput.output = await action.run(context)

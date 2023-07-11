@@ -13,8 +13,18 @@ export const approvalLink = createAction({
         pauseMetadata: {
           type: PauseType.WEBHOOK,
           webhookUrl: `${ctx.run.webhookBaseUrl}/v1/flow-runs/${ctx.run.id}/resume`,
+          actions: ['approve', 'disapprove'],
         }
       });
+
+      return {}
+    }
+    else {
+      const payload = ctx.resumePayload as { action: string };
+
+      return {
+        approved: payload.action === 'approve',
+      }
     }
   },
 });

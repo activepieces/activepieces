@@ -59,11 +59,12 @@ export type PauseHookParams = {
 
 export type PauseHook = (params: PauseHookParams) => void
 
-export type ActionContext<
-    PieceAuth extends PieceAuthProperty = PieceAuthProperty,
-    ActionProps extends NonAuthPiecePropertyMap = NonAuthPiecePropertyMap,
+export type BaseActionContext<
+    ET extends ExecutionType,
+    PieceAuth extends PieceAuthProperty,
+    ActionProps extends NonAuthPiecePropertyMap,
 > = BaseContext<PieceAuth, ActionProps> & {
-    executionType: ExecutionType,
+    executionType: ET,
     connections: ConnectionsManager,
     run: {
         id: FlowRunId,
@@ -72,6 +73,23 @@ export type ActionContext<
         pause: PauseHook,
     }
 }
+
+type BeginExecutionActionContext<
+    PieceAuth extends PieceAuthProperty = PieceAuthProperty,
+    ActionProps extends NonAuthPiecePropertyMap = NonAuthPiecePropertyMap,
+> = BaseActionContext<ExecutionType.BEGIN, PieceAuth, ActionProps>
+
+type ResumeExecutionActionContext<
+    PieceAuth extends PieceAuthProperty = PieceAuthProperty,
+    ActionProps extends NonAuthPiecePropertyMap = NonAuthPiecePropertyMap,
+> = BaseActionContext<ExecutionType.RESUME, PieceAuth, ActionProps> & {
+    resumePayload: unknown
+}
+
+export type ActionContext<
+    PieceAuth extends PieceAuthProperty = PieceAuthProperty,
+    ActionProps extends NonAuthPiecePropertyMap = NonAuthPiecePropertyMap,
+> = BeginExecutionActionContext<PieceAuth, ActionProps> | ResumeExecutionActionContext<PieceAuth, ActionProps>
 
 export interface ConnectionsManager {
     get(key: string): Promise<AppConnectionValue | Record<string, unknown> | string | null>;
