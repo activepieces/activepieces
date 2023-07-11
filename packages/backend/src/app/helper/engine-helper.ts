@@ -193,7 +193,7 @@ export const engineHelper = {
             workerToken: await generateWorkerToken({ projectId: operation.projectId }),
         }
 
-        return await execute(
+        return execute(
             EngineOperationType.EXECUTE_FLOW,
             sandbox,
             input,

@@ -209,37 +209,37 @@ export const pieceHelper = {
             executionState,
             censorConnections: false,
         })
+        try {
 
-        const { processedInput, errors } = await variableService.applyProcessorsAndValidators(resolvedProps, action.props);
-        if (Object.keys(errors).length > 0) {
-            throw new Error(JSON.stringify(errors));
-        }
+            const { processedInput, errors } = await variableService.applyProcessorsAndValidators(resolvedProps, action.props);
+            if (Object.keys(errors).length > 0) {
+                throw new Error(JSON.stringify(errors));
+            }
 
-        const context: ActionContext = {
-            executionType: ExecutionType.BEGIN,
-            auth: processedInput[AUTHENTICATION_PROPERTY_NAME],
-            propsValue: processedInput,
-            store: createContextStore('', globals.flowId),
-            connections: {
-                get: async (key: string) => {
-                    try {
-                        const connection = await connectionService.obtain(key);
-                        if (!connection) {
+            const context: ActionContext = {
+                executionType: ExecutionType.BEGIN,
+                auth: processedInput[AUTHENTICATION_PROPERTY_NAME],
+                propsValue: processedInput,
+                store: createContextStore('', globals.flowId),
+                connections: {
+                    get: async (key: string) => {
+                        try {
+                            const connection = await connectionService.obtain(key);
+                            if (!connection) {
+                                return null;
+                            }
+                            return connection;
+                        } catch (e) {
                             return null;
                         }
-                        return connection;
-                    } catch (e) {
-                        return null;
                     }
+                },
+                run: {
+                    stop: () => console.info('stopHook called!'),
+                    pause: () => console.info('pauseHook called!'),
                 }
-            },
-            run: {
-                stop: () => console.info('stopHook called!'),
-                pause: () => console.info('pauseHook called!'),
             }
-        }
 
-        try {
             return {
                 output: await action.run(context),
                 success: true,

@@ -1,11 +1,13 @@
 import { ExecutionState, isNil, isString } from "@activepieces/shared";
 import { connectionService } from "./connections.service";
-import { ApFile, PiecePropertyMap, PropertyType, formatErrorMessage, ErrorMessages } from "@activepieces/pieces-framework";
+import { ApFile, PiecePropertyMap, PropertyType, formatErrorMessage, ErrorMessages, Validators } from "@activepieces/pieces-framework";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 import path from "path";
 import isBase64 from 'is-base64';
+import { AnyValidators } from "packages/pieces/framework/src/lib/validators/types";
+import { AnyProcessors } from "packages/pieces/framework/src/lib/processors/types";
 
 export class VariableService {
   private VARIABLE_TOKEN = RegExp('\\{\\{(.*?)\\}\\}', 'g');
@@ -143,7 +145,7 @@ export class VariableService {
         }
         default: {
           for (const processor of processors) {
-            processedInput[key] = await processor(property, value as any);
+            processedInput[key] = await processor(property, value);
           }
           
           const propErrors = [];
@@ -157,7 +159,7 @@ export class VariableService {
           if (isNil(value) && !property.required) break;
 
           for (const validator of validators) {
-            const error = validator(property as any, processedInput[key], value);
+            const error = validator(property, processedInput[key], value);
             if (!isNil(error)) propErrors.push(error);
           }
           if (propErrors.length) errors[key] = propErrors;
