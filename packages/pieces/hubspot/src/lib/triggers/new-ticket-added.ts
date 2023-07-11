@@ -6,10 +6,10 @@ import { hubSpotAuthentication } from '../common/props'
 import { hubSpotClient } from '../common/client';
 import dayjs from 'dayjs';
 
-const polling: Polling<{ authentication: OAuth2PropertyValue }> = {
+const polling: Polling<OAuth2PropertyValue, Record<string, never>> = {
     strategy: DedupeStrategy.TIMEBASED,
-    items: async ({ propsValue, lastFetchEpochMS }) => {
-        const currentValues = (await hubSpotClient.searchTickets(propsValue.authentication.access_token, {
+    items: async ({ auth, lastFetchEpochMS }) => {
+        const currentValues = (await hubSpotClient.searchTickets(auth.access_token, {
             createdAt: lastFetchEpochMS
         })).results ?? []
         const items = currentValues.map((item: { createdAt: string }) => ({
@@ -22,34 +22,37 @@ const polling: Polling<{ authentication: OAuth2PropertyValue }> = {
 
 export const newTicketAdded = createTrigger({
     name: 'new_ticket',
+    auth: hubSpotAuthentication,
     displayName: 'New Ticket Added',
     description: 'Trigger when a new ticket is added.',
-    props: {
-        authentication: hubSpotAuthentication
-    },
+    props: {},
     type: TriggerStrategy.POLLING,
-    onEnable: async (context) => {
+    onEnable: async ({store, propsValue, auth}) => {
         await pollingHelper.onEnable(polling, {
-            store: context.store,
-            propsValue: context.propsValue,
+            auth,
+            store: store,
+            propsValue: propsValue,
         })
     },
-    onDisable: async (context) => {
+    onDisable: async ({store, propsValue, auth}) => {
         await pollingHelper.onDisable(polling, {
-            store: context.store,
-            propsValue: context.propsValue,
+            auth,
+            store: store,
+            propsValue: propsValue,
         })
     },
-    run: async (context) => {
+    run:  async ({store, propsValue, auth}) => {
         return await pollingHelper.poll(polling, {
-            store: context.store,
-            propsValue: context.propsValue,
+            auth,
+            store: store,
+            propsValue: propsValue,
         });
     },
-    test: async (context) => {
+    test:  async ({store, propsValue, auth}) => {
         return await pollingHelper.test(polling, {
-            store: context.store,
-            propsValue: context.propsValue,
+            auth,
+            store: store,
+            propsValue: propsValue,
         });
     },
 

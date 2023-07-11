@@ -6,10 +6,10 @@ import { hubSpotAuthentication } from '../common/props'
 import { hubSpotClient } from '../common/client';
 import dayjs from 'dayjs';
 
-const polling: Polling<{ authentication: OAuth2PropertyValue }> = {
+const polling: Polling<OAuth2PropertyValue, Record<string, never>> = {
     strategy: DedupeStrategy.TIMEBASED,
-    items: async ({ propsValue, lastFetchEpochMS }) => {
-        const currentValues = (await hubSpotClient.searchContacts(propsValue.authentication.access_token, {
+    items: async ({ auth, lastFetchEpochMS }) => {
+        const currentValues = (await hubSpotClient.searchContacts(auth.access_token, {
             createdAt: lastFetchEpochMS
         })).results ?? []
         const items = currentValues.map((item: { createdAt: string }) => ({
@@ -21,37 +21,41 @@ const polling: Polling<{ authentication: OAuth2PropertyValue }> = {
 };
 
 export const newContactAdded = createTrigger({
+    auth: hubSpotAuthentication,
     name: 'new_contact',
     displayName: 'New Contact Added',
     description: 'Trigger when a new contact is added.',
-    props: {
-        authentication: hubSpotAuthentication
-    },
+    props: {},
     type: TriggerStrategy.POLLING,
     onEnable: async (context) => {
         await pollingHelper.onEnable(polling, {
+            auth: context.auth,
             store: context.store,
             propsValue: context.propsValue,
         })
     },
     onDisable: async (context) => {
         await pollingHelper.onDisable(polling, {
+            auth: context.auth,
             store: context.store,
             propsValue: context.propsValue,
         })
     },
     run: async (context) => {
         return await pollingHelper.poll(polling, {
+            auth: context.auth,
             store: context.store,
             propsValue: context.propsValue,
         });
     },
     test: async (context) => {
         return await pollingHelper.test(polling, {
+            auth: context.auth,
             store: context.store,
             propsValue: context.propsValue,
         });
     },
+
 
     sampleData: {
         id: "123",

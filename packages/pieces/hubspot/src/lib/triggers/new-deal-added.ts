@@ -6,10 +6,10 @@ import { hubSpotAuthentication } from '../common/props'
 import { hubSpotClient } from '../common/client';
 import dayjs from 'dayjs';
 
-const polling: Polling<{ authentication: OAuth2PropertyValue }> = {
+const polling: Polling<OAuth2PropertyValue, Record<string, never>> = {
     strategy: DedupeStrategy.TIMEBASED,
-    items: async ({ propsValue, lastFetchEpochMS }) => {
-        const currentValues = (await hubSpotClient.searchDeals(propsValue.authentication.access_token, {
+    items: async ({ auth, lastFetchEpochMS }) => {
+        const currentValues = (await hubSpotClient.searchDeals(auth.access_token, {
             createdAt: lastFetchEpochMS
         })).results ?? []
         const items = currentValues.map((item: { createdAt: string }) => ({
@@ -21,37 +21,42 @@ const polling: Polling<{ authentication: OAuth2PropertyValue }> = {
 };
 
 export const newDealAdded = createTrigger({
+    auth: hubSpotAuthentication,
     name: 'new_deal',
     displayName: 'New Deal Added',
     description: 'Trigger when a new deal is added.',
     props: {
-        authentication: hubSpotAuthentication
     },
     type: TriggerStrategy.POLLING,
     onEnable: async (context) => {
         await pollingHelper.onEnable(polling, {
+            auth: context.auth,
             store: context.store,
             propsValue: context.propsValue,
         })
     },
     onDisable: async (context) => {
         await pollingHelper.onDisable(polling, {
+            auth: context.auth,
             store: context.store,
             propsValue: context.propsValue,
         })
     },
     run: async (context) => {
         return await pollingHelper.poll(polling, {
+            auth: context.auth,
             store: context.store,
             propsValue: context.propsValue,
         });
     },
     test: async (context) => {
         return await pollingHelper.test(polling, {
+            auth: context.auth,
             store: context.store,
             propsValue: context.propsValue,
         });
     },
+
 
     sampleData: {},
 });
