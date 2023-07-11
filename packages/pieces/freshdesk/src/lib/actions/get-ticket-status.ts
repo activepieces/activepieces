@@ -1,12 +1,13 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { freshdeskAuth } from "../..";
+import { isNull } from "lodash";
 
 export const getTicketStatus = createAction({
     auth: freshdeskAuth,
     name: 'get_ticket_status',
     displayName: 'Get Ticket Status',
-    description: 'Get Ticket status from Freshdesk.',
+    description: 'Get Ticket status from Freshdesk. Returns ticket_status, assigned_status, assigned_id',
 
     props: {
         ticketid: Property.ShortText({
@@ -25,7 +26,6 @@ export const getTicketStatus = createAction({
             'Content-Type' : 'application/json',
         };
 
-
         // Remove trailing slash from base_url
         const baseUrl = context.auth.base_url.replace(/\/$/, "");
         const url = `${baseUrl}/api/v2/tickets/${FDticketID}`;
@@ -38,16 +38,31 @@ export const getTicketStatus = createAction({
 
         if (response.status == 200) {
             const status=response.body.status;
-            switch (status) {
-                case 2: { return 'OPEN'; break; }
-                case 3: { return 'PENDING'; break; }
-                case 4: { return 'RESOLVED'; break; }
-                case 5: { return 'CLOSED'; break; }
-                default: { return status; break; }
+            const responderid=response.body.responder_id;
+            let ass='';
+            let tstatus='';
+
+            if (isNull(responderid)) {
+                ass="NOTASSIGNED";
+            } else {
+                 ass="ASSIGNED";
             }
+             
+            switch (status) {
+                case 2: { tstatus=('OPEN'); break; }
+                case 3: { tstatus=('PENDING'); break; }
+                case 4: { tstatus=('RESOLVED'); break; }
+                case 5: { tstatus=('CLOSED'); break; }
+                default: { tstatus=status; break; }
+            }
+            const json=[{
+                ticket_status: tstatus,
+                assigned_status: ass,
+                assigned_id: responderid
+                }]
+                return json;
           } else {
            return response.status;
-          }
-        
+          }               
     }
 })
