@@ -16,10 +16,7 @@ export const waitForApprovalLink = createAction({
         }
       });
 
-      return {
-        approvalLink: `${ctx.run.webhookBaseUrl}/v1/flow-runs/${ctx.run.id}/resume?action=approve`,
-        disapprovalLink: `${ctx.run.webhookBaseUrl}/v1/flow-runs/${ctx.run.id}/resume?action=disapprove`,
-      }
+      return {}
     }
     else {
       const payload = ctx.resumePayload as { action: string };
