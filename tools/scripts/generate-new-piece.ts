@@ -29,11 +29,12 @@ const nxGenerateNodeLibrary = async (pieceName: string) => {
       --unitTestRunner=none
   `
 
+  console.log(nxGenerateCommand);
+
   await exec(nxGenerateCommand)
 }
 
 const removeUnusedFiles = async (pieceName: string) => {
-  await rm(`packages/pieces/${pieceName}/.babelrc`)
   await rm(`packages/pieces/${pieceName}/src/lib/pieces-${pieceName}.ts`)
 }
 
@@ -50,7 +51,7 @@ const generateIndexTsFile = async (pieceName: string) => {
     .join('')
 
   const indexTemplate = `
-import { createPiece } from "@activepieces/pieces-framework";
+import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
 
 export const ${pieceNameCamelCase} = createPiece({
   displayName: "${capitalizeFirstLetter(pieceName)}",
