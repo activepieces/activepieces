@@ -1,0 +1,42 @@
+{
+  "name": "pieces-weclapp",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/weclapp/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/weclapp",
+        "tsConfig": "packages/pieces/weclapp/tsconfig.lib.json",
+        "packageJson": "packages/pieces/weclapp/package.json",
+        "main": "packages/pieces/weclapp/src/index.ts",
+        "assets": [
+          "packages/pieces/weclapp/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-weclapp {args.ver} {args.tag}",
+      "dependsOn": [
+        "build"
+      ]
+    },
+    "lint": {
+      "executor": "@nx/linter:eslint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/weclapp/**/*.ts"
+        ]
+      }
+    }
+  },
+  "tags": []
+}

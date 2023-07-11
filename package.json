@@ -164,7 +164,7 @@
     "@types/mailchimp__mailchimp_marketing": "^3.0.6",
     "@types/mailparser": "^3.4.0",
     "@types/marked": "^4.0.8",
-    "@types/node": "16.11.7",
+    "@types/node": "~18.7.1",
     "@types/node-imap": "^0.9.0",
     "@types/nodemailer": "^6.4.7",
     "@types/papaparse": "^5.3.7",
@@ -208,7 +208,11 @@
     "ts-node": "10.9.1",
     "turbowatch": "^2.21.0",
     "typescript": "5.1.6",
+    "verdaccio": "^5.0.4",
     "wait-on": "^7.0.1",
     "webpack-ignore-dynamic-require": "^1.0.0"
+  },
+  "nx": {
+    "includedScripts": []
   }
 }
