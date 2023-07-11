@@ -1,14 +1,15 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {httpClient, HttpRequest, HttpMethod } from '@activepieces/pieces-common';
+import { httpClient, HttpRequest, HttpMethod } from '@activepieces/pieces-common';
 import { trelloCommon } from '../common';
 import { TrelloCard } from '../common/props/card';
+import { trelloAuth } from '../..';
 
 export const createCard = createAction({
+    auth: trelloAuth,
     name: 'create_card',
     displayName: 'Create Card',
     description: 'Create a new card in Trello',
     props: {
-        authentication: trelloCommon.authentication,
         board_id: trelloCommon.board_id,
         list_id: trelloCommon.list_id,
         name: Property.ShortText({
@@ -28,8 +29,8 @@ export const createCard = createAction({
             method: HttpMethod.POST,
             url: `${trelloCommon.baseUrl}cards` +
                 `?idList=` + context.propsValue['list_id']
-                + `&key=` + context.propsValue.authentication.username
-                + `&token=` + context.propsValue.authentication.password,
+                + `&key=` + context.auth.username
+                + `&token=` + context.auth.password,
             headers: {
                 Accept: 'application/json'
             },

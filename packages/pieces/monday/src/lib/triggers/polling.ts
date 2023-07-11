@@ -1,18 +1,17 @@
 import { DedupeStrategy, Polling } from "@activepieces/pieces-common"
 
 import { getItems, getUpdates } from "../common/data";
-import { OAuth2PropertyValue } from "@activepieces/pieces-framework";
+import { OAuth2PropertyValue, PiecePropertyMap, StaticPropsValue } from "@activepieces/pieces-framework";
 
 // check for new items in a board
-export const itemPolling: Polling<{
-  authentication: OAuth2PropertyValue
+export const itemPolling: Polling<OAuth2PropertyValue, {
   workspace_id: string | undefined
   board_id: string | undefined
 }> = {
   strategy: DedupeStrategy.LAST_ITEM,
-  items: async ({ propsValue }) => {
+  items: async ({ auth, propsValue }) => {
     const items = await getItems({
-      access_token: propsValue.authentication.access_token,
+      access_token: auth.access_token,
       board_id: propsValue.board_id
     })
 
@@ -24,13 +23,11 @@ export const itemPolling: Polling<{
 }
 
 // check for new updates in items of a board
-export const updatesPolling: Polling<{
-  authentication: OAuth2PropertyValue
-}> = {
+export const updatesPolling: Polling<OAuth2PropertyValue, StaticPropsValue<PiecePropertyMap>> = {
   strategy: DedupeStrategy.LAST_ITEM,
-  items: async ({ propsValue }) => {
+  items: async ({ auth }) => {
     const updates = await getUpdates({
-      access_token: propsValue.authentication.access_token
+      access_token: auth.access_token
     })
     return updates.map((item) => ({
       id: item.id,

@@ -3,28 +3,20 @@ import { getAccessTokenOrThrow, HttpMethod, HttpMessageBody, HttpResponse, httpC
 import { ClickupTask } from "./models";
 
 export const clickupCommon = {
-    authentication: Property.OAuth2({
-        description: "",
-        displayName: 'Authentication',
-        authUrl: "https://app.clickup.com/api",
-        tokenUrl: "https://app.clickup.com/api/v2/oauth/token",
-        required: true,
-        scope: []
-    }),
     workspace_id: (required = true) => Property.Dropdown({
         description: 'The ID of the ClickUp workspace to create the task in',
         displayName: 'Workspace',
         required,
-        refreshers: ['authentication'],
-        options: async (value) => {
-            if (!value['authentication']) {
+        refreshers: [],
+        options: async ({ auth }) => {
+            if (!auth) {
                 return {
                     disabled: true,
                     placeholder: 'connect your account first',
                     options: [],
                 };
             }
-            const accessToken = getAccessTokenOrThrow(value['authentication'] as OAuth2PropertyValue);
+            const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
             const response = (await callClickUpApi<{
                 teams: {
                     id: string,
@@ -46,18 +38,17 @@ export const clickupCommon = {
         description: 'The ID of the ClickUp space to create the task in',
         displayName: 'Space',
         required,
-        refreshers: ['authentication', 'workspace_id'],
+        refreshers: ['workspace_id'],
         defaultValue: null,
-        options: async (value) => {
-            const { workspace_id, authentication } = value;
-            if (!authentication || !workspace_id) {
+        options: async ({ auth, workspace_id }) => {
+            if (!auth || !workspace_id) {
                 return {
                     disabled: true,
                     placeholder: 'connect your account first and select workspace',
                     options: [],
                 };
             }
-            const accessToken = getAccessTokenOrThrow(authentication as OAuth2PropertyValue);
+            const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
             const response = (await listSpaces(accessToken, workspace_id as string));
             return {
                 disabled: false,
@@ -74,18 +65,17 @@ export const clickupCommon = {
         description: 'The ID of the ClickUp space to create the task in',
         displayName: 'List',
         required,
-        refreshers: ['authentication', 'space_id'],
+        refreshers: ['space_id'],
         defaultValue: null,
-        options: async (value) => {
-            const { space_id, authentication } = value;
-            if (!authentication || !space_id) {
+        options: async ({ auth, space_id}) => {
+            if (!auth || !space_id) {
                 return {
                     disabled: true,
                     placeholder: 'connect your account first and select a space',
                     options: [],
                 };
             }
-            const accessToken = getAccessTokenOrThrow(authentication as OAuth2PropertyValue);
+            const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
             const responseFolders = (await listFolders(accessToken, space_id as string));
             const promises: Promise<{ lists: { id: string, name: string }[] }>[] = [
                 listFolderlessList(accessToken, space_id as string)
@@ -115,17 +105,16 @@ export const clickupCommon = {
         displayName: 'Task Id',
         required,
         defaultValue: null,
-        refreshers: ['authentication', 'space_id', 'list_id'],
-        options: async (value) => {
-            const { list_id, authentication, space_id } = value;
-            if (!authentication || !list_id || !space_id) {
+        refreshers: ['space_id', 'list_id'],
+        options: async ({ auth, space_id, list_id }) => {
+            if (!auth || !list_id || !space_id) {
                 return {
                     disabled: true,
                     placeholder: 'connect your account first and select workspace, space and list',
                     options: [],
                 };
             }
-            const accessToken = getAccessTokenOrThrow(authentication as OAuth2PropertyValue);
+            const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
             const response = (await listTasks(accessToken, list_id as string));
             return {
                 disabled: false,
@@ -141,19 +130,18 @@ export const clickupCommon = {
     folder_id: (required = false) => Property.Dropdown({
         description: 'The ID of the ClickUp folder',
         displayName: 'Folder Id',
-        refreshers: ['authentication', 'space_id', 'workplace_id'],
+        refreshers: ['space_id', 'workplace_id'],
         defaultValue: null,
         required,
-        options: async (value) => {
-            const { space_id, authentication, workplace_id } = value;
-            if (authentication === undefined || workplace_id === undefined || space_id === undefined) {
+        options: async ({ auth, space_id, workplace_id }) => {
+            if (auth === undefined || workplace_id === undefined || space_id === undefined) {
                 return {
                     disabled: true,
                     placeholder: 'connect your account first and select workspace and space',
                     options: [],
                 };
             }
-            const accessToken = getAccessTokenOrThrow(authentication as OAuth2PropertyValue);
+            const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
             const response = (await listFolders(accessToken, space_id as string));
             return {
                 disabled: false,

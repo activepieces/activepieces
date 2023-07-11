@@ -1,15 +1,13 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { HttpMethod, AuthenticationType, httpClient } from "@activepieces/pieces-common";
+import { resendAuth } from "../..";
 
 export const sendEmail = createAction({
+    auth: resendAuth,
     name: 'send_email',
     displayName: "Send Email",
     description: "Send a text or HTML email",
     props: {
-        authentication: Property.SecretText({
-            displayName: "API Key",
-            required: true,
-        }),
         to: Property.Array({
             displayName: 'To',
             description: 'Emails of the recipients',
@@ -88,7 +86,7 @@ export const sendEmail = createAction({
             body: requestBody,
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
-                token: context.propsValue.authentication,
+                token: context.auth,
             },
             queryParams: {},
         });

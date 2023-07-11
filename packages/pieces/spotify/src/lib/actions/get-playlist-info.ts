@@ -5,12 +5,12 @@ export default createAction({
     name: 'get_playlist_info',
     displayName: 'Get Playlist Info',
     description: 'Retrieves details of a playlist',
+    auth: spotifyCommon.authentication,
     props: {
-        authentication: spotifyCommon.authentication,
         playlist_id: spotifyCommon.playlist_id(true)
     },
-    async run(context) {
-        const client = makeClient(context.propsValue)
-        return await client.getPlaylist(context.propsValue.playlist_id as string)
+    async run({auth, propsValue}) {
+        const client = makeClient({auth})
+        return await client.getPlaylist(propsValue.playlist_id as string)
     }
 })

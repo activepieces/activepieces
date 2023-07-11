@@ -1,4 +1,5 @@
 @import "../../../../../core/src/assets/scss/variables.scss";
+@import "../../../../../core/src/assets/scss/derived-variables.scss";
 .code-container {
   height: 100%;
 }
@@ -21,33 +22,27 @@
   cursor: pointer;
 }
 
-
 .modal-title {
   color: $white;
 }
 
-.modal-background
-{
-  background-color: $primary;
+.modal-background {
+  background-color: $primary-default;
 }
 
-.code-file-icon
-{
+.code-file-icon {
   line-height: 100%;
   vertical-align: "middle";
 }
-.test-code-loading-container
-{
+.test-code-loading-container {
   position: absolute;
-  left:50%;
-  top:50%;
+  left: 50%;
+  top: 50%;
 }
 
-.code-editor
-{
-  .modal-header
-  {
-    background:$primary;
-    gap:0.5rem;
+.code-editor {
+  .modal-header {
+    background: $primary-default;
+    gap: 0.5rem;
   }
 }

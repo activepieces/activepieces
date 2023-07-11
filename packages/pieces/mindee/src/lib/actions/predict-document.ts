@@ -2,22 +2,14 @@ import { createAction, Property } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { createReadStream } from "fs"
 import FormData from "form-data";
+import { mindeeAuth } from "../..";
 
 export const mindeePredictDocumentAction = createAction({
+  auth: mindeeAuth,
   name: 'mindee_predict_document',
   displayName: 'Extract Document',
   description: 'Parse details of a document using OCR.',
   props: {
-    authentication: Property.SecretText({
-      displayName: 'Api Key',
-      description: `
-      #### To obtain access your Api Key
-      1. Sign up and log in to Mindee
-      2. Go to [API Key page](https://platform.mindee.com/api-keys)
-      3. Copy the Key and paste below.
-      `,
-      required: true,
-    }),
     account_name: Property.ShortText({
       displayName: 'Account Name',
       description: 'Refers to your username or organization name with which you signed up with.',
@@ -79,7 +71,7 @@ export const mindeePredictDocumentAction = createAction({
       }
     }
   },
-  run: async ({ propsValue: { authentication, api_name, account_name, file } }) => {
+  run: async ({ auth, propsValue: { api_name, account_name, file } }) => {
     let headers, body = {}
 
     try {
@@ -101,7 +93,7 @@ export const mindeePredictDocumentAction = createAction({
       method: HttpMethod.POST,
       url: `https://api.mindee.net/v1/products/${account_name}/${api_name}/predict`,
       headers: {
-        Authorization: `Token ${(authentication as string)}`,
+        Authorization: `Token ${(auth as string)}`,
         ...headers
       },
       body: body

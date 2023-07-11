@@ -3,17 +3,12 @@ import { HttpRequest, HttpMethod, httpClient } from "@activepieces/pieces-common
 
 export const dripCommon = {
     baseUrl: (accountId: string) => { return `https://api.getdrip.com/v2/${accountId}` },
-    authentication: Property.SecretText({
-        displayName: "API Key",
-        required: true,
-        description: "Get it from https://www.getdrip.com/user/edit"
-    }),
     account_id: Property.Dropdown({
         displayName: 'Account',
         required: true,
-        refreshers: ["authentication"],
-        options: async (props) => {
-            if (!props['authentication']) {
+        refreshers: [],
+        options: async ({ auth }) => {
+            if (!auth) {
                 return {
                     disabled: true,
                     options: [],
@@ -25,7 +20,7 @@ export const dripCommon = {
                 method: HttpMethod.GET,
                 url: "https://api.getdrip.com/v2/accounts",
                 headers: {
-                    Authorization: `Basic ${Buffer.from(props["authentication"] as string).toString("base64")}`,
+                    Authorization: `Basic ${Buffer.from(auth as string).toString("base64")}`,
                 },
             };
             const response = await httpClient.sendRequest<{ accounts: { id: string, name: string }[] }>(request);
