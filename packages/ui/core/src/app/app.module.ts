@@ -27,6 +27,8 @@ import { ImportFlowComponent } from './modules/import-flow/import-flow.component
 
 import { LottieCacheModule, LottieModule } from 'ngx-lottie';
 import player from 'lottie-web';
+import { ImportCombinationResolver } from './modules/import-combination/import-combination.resolver';
+import { ImportCombinationComponent } from './modules/import-combination/import-combination.component';
 
 export function tokenGetter() {
   const jwtToken: any = localStorage.getItem(environment.jwtTokenName);
@@ -44,6 +46,7 @@ export function playerFactory() {
     NotFoundComponent,
     RedirectUrlComponent,
     ImportFlowComponent,
+    ImportCombinationComponent,
   ],
   imports: [
     CommonModule,
@@ -127,6 +130,14 @@ function dynamicRoutes(edition: string) {
     },
   ];
   const suffixRoutes: Route[] = [
+    {
+      path: 'combinations',
+      canActivate: [UserLoggedIn],
+      resolve: {
+        combination: ImportCombinationResolver,
+      },
+      component: ImportCombinationComponent,
+    },
     {
       path: 'templates/:templateId',
       component: ImportFlowComponent,
