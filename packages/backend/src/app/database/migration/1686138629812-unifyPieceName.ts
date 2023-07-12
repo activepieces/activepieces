@@ -4,7 +4,6 @@ import { logger } from '../../helper/logger'
 const FLOW_VERSION_TABLE = 'flow_version'
 const APP_CONNECTION_TABLE = 'app_connection'
 const APP_EVENT_ROUTING_TABLE = 'app_event_routing'
-const PIECE_METADATA = 'piece_metadata'
 const TRIGGER_EVENT = 'trigger_event'
 
 const PIECE_TYPE = 'PIECE'
