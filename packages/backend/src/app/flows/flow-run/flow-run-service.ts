@@ -30,7 +30,7 @@ import { notifications } from '../../helper/notifications'
 import { flowService } from '../flow/flow.service'
 import { isNil } from '@activepieces/shared'
 
-export const repo = databaseConnection.getRepository(FlowRunEntity)
+const repo = databaseConnection.getRepository(FlowRunEntity)
 
 const getFlowRunOrCreate = async (params: GetOrCreateParams): Promise<Partial<FlowRun>> => {
     const { id, projectId, flowId, flowVersionId, flowDisplayName, environment } = params
@@ -152,6 +152,34 @@ export const flowRunService = {
         await flowRunSideEffects.pause({ flowRun })
     },
 
+    async resume({ flowRunId, action }: ResumeParams): Promise<void> {
+        logger.info(`[FlowRunService#resume] flowRunId=${flowRunId}`)
+
+        const flowRunToResume = await repo.findOneBy({
+            id: flowRunId,
+        })
+
+        if (isNil(flowRunToResume)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.FLOW_RUN_NOT_FOUND,
+                params: {
+                    id: flowRunId,
+                },
+            })
+        }
+
+        await flowRunService.start({
+            payload: {
+                action,
+            },
+            flowRunId: flowRunToResume.id,
+            projectId: flowRunToResume.projectId,
+            flowVersionId: flowRunToResume.flowVersionId,
+            executionType: ExecutionType.RESUME,
+            environment: RunEnvironment.PRODUCTION,
+        })
+    },
+
     async getOne({ projectId, id }: GetOneParams): Promise<FlowRun | null> {
         return await repo.findOneBy({
             projectId,
@@ -210,4 +238,9 @@ type PauseParams = {
     flowRunId: FlowRunId
     logFileId: FileId
     pauseMetadata: PauseMetadata
+}
+
+type ResumeParams = {
+    flowRunId: FlowRunId
+    action: string
 }

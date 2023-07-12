@@ -4,11 +4,21 @@ import { createAction, Property } from "@activepieces/pieces-framework";
 import { mailchimpAuth } from "../../..";
 
 export const addMemberToList = createAction({
-    auth: mailchimpAuth,
+        auth: mailchimpAuth,
         name: 'add_member_to_list',
         displayName: "Add Member to an Audience (List)",
         description: "Add a member to an existing Mailchimp audience (list)",
         props: {
+            first_name: Property.ShortText({
+                displayName: 'First Name',
+                description: 'First name of the new contact',
+                required: false,
+            }),
+            last_name: Property.ShortText({
+                displayName: 'Last Name',
+                description: 'Last name of the new contact',
+                required: false,
+            }),
             email: Property.ShortText({
                 displayName: 'Email',
                 description: 'Email of the new contact',
@@ -37,7 +47,13 @@ export const addMemberToList = createAction({
                 accessToken: access_token,
                 server: mailChimpServerPrefix
             });
-
-            return await mailchimp.lists.addListMember(context.propsValue.list_id!, { email_address: context.propsValue.email!, status: context.propsValue.status! })
+            return await mailchimp.lists.addListMember(context.propsValue.list_id!, {
+                email_address: context.propsValue.email!,
+                status: context.propsValue.status!,
+                merge_fields: {
+                    FNAME: context.propsValue.first_name || '',
+                    LNAME: context.propsValue.last_name || ''
+                }
+            })
         },
 });

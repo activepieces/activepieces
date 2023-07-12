@@ -4,7 +4,6 @@ import {
   createAction,
 } from '@activepieces/pieces-framework'
 import {
-  assertNotNullOrUndefined,
   AuthenticationType,
   httpClient,
   HttpMethod,
@@ -12,6 +11,7 @@ import {
 } from '@activepieces/pieces-common'
 import { slackSendMessage } from '../common/utils'
 import { slackAuth } from "../../";
+import { assertNotNullOrUndefined } from '@activepieces/shared';
 
 export const slackSendDirectMessageAction = createAction({
   auth: slackAuth,
