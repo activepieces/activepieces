@@ -1,6 +1,5 @@
 import { Flow, FlowOperationType, FlowTemplate } from '@activepieces/shared';
 import { FlowService, TemplatesService } from '@activepieces/ui/common';
-import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { Meta } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -40,11 +39,14 @@ export class ImportFlowComponent implements OnInit {
       switchMap((params) => {
         const templateId = encodeURIComponent(params['templateId']);
         return this.templatesService.getTemplate(templateId).pipe(
-          catchError((err: HttpErrorResponse) => {
-            if (err.status === StatusCodes.NOT_FOUND) {
+          catchError(() => {
+            return this.templatesService.getTemplateDeprecated(templateId);
+          }),
+          switchMap((template) => {
+            if (!template) {
               return this.templatesService.getTemplateDeprecated(templateId);
             }
-            throw err;
+            return of(template);
           })
         );
       }),
