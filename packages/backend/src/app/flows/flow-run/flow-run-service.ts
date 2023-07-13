@@ -90,7 +90,7 @@ export const flowRunService = {
         })
         const flowRun = (await this.getOne({ id: flowRunId, projectId: undefined }))!
         notifications.notifyRun({
-            flowRun: flowRun,
+            flowRun,
         })
         return flowRun
     },
@@ -110,7 +110,7 @@ export const flowRunService = {
             projectId: flow.projectId,
             flowId: flowVersion.flowId,
             flowVersionId: flowVersion.id,
-            environment: environment,
+            environment,
             flowDisplayName: flowVersion.displayName,
         })
 

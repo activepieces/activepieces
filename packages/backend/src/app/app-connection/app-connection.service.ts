@@ -63,9 +63,9 @@ export const appConnectionService = {
                 break
         }
         const claimedUpsertRequest = { ...request, value: { ...response, ...request.value }, id: apId(), projectId }
-        await appConnectionRepo.upsert({ ...claimedUpsertRequest, id: apId(), projectId: projectId, value: encryptObject(claimedUpsertRequest.value) }, ['name', 'projectId'])
+        await appConnectionRepo.upsert({ ...claimedUpsertRequest, id: apId(), projectId, value: encryptObject(claimedUpsertRequest.value) }, ['name', 'projectId'])
         const connection = await appConnectionRepo.findOneByOrFail({
-            projectId: projectId,
+            projectId,
             name: request.name,
         })
         connection.value = decryptObject(connection.value)
@@ -74,8 +74,8 @@ export const appConnectionService = {
 
     async getOne({ projectId, name }: GetOneParams): Promise<AppConnection | null> {
         const appConnection = await appConnectionRepo.findOneBy({
-            projectId: projectId,
-            name: name,
+            projectId,
+            name,
         })
         if (appConnection === null) {
             return null
@@ -120,7 +120,7 @@ export const appConnectionService = {
     },
 
     async delete({ projectId, id }: { projectId: ProjectId, id: AppConnectionId }): Promise<void> {
-        await appConnectionRepo.delete({ id: id, projectId: projectId })
+        await appConnectionRepo.delete({ id, projectId })
     },
     async list(projectId: ProjectId, appName: string | undefined, cursorRequest: Cursor | null, limit: number): Promise<SeekPage<AppConnection>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
@@ -246,7 +246,7 @@ async function refreshWithCredentials(appConnection: OAuth2ConnectionValueWithAp
             appConnection.token_url,
             new URLSearchParams(body),
             {
-                headers: headers,
+                headers,
             },
         )
     ).data
@@ -309,7 +309,7 @@ async function claim(request: {
                 request.tokenUrl,
                 new URLSearchParams(body),
                 {
-                    headers: headers,
+                    headers,
                 },
             )
         ).data

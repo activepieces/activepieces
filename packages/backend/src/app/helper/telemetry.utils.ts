@@ -23,7 +23,7 @@ export const telemetry = {
                 email: user.email,
                 firstName: user.firstName,
                 lastName: user.lastName,
-                projectId: projectId,
+                projectId,
                 ...(await getMetadata()),
             },
         })

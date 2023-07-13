@@ -70,7 +70,7 @@ async function executePiece({ step, projectId, flowVersion }: ExecutePieceParams
         pieceName,
         pieceVersion,
         actionName,
-        input: input,
+        input,
         flowVersion,
         projectId,
     }
@@ -83,8 +83,8 @@ async function executePiece({ step, projectId, flowVersion }: ExecutePieceParams
     return {
         success: result.success,
         output: result.output,
-        standardError: standardError,
-        standardOutput: standardOutput,
+        standardError,
+        standardOutput,
     }
 }
 
@@ -104,7 +104,7 @@ async function executeCode({ step, flowVersion, projectId }: { step: CodeAction,
     return {
         success: result.success,
         output: result.output,
-        standardError: standardError,
-        standardOutput: standardOutput,
+        standardError,
+        standardOutput,
     }
 }

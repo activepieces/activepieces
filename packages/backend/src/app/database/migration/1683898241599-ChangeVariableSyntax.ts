@@ -81,7 +81,7 @@ function traverse(input: unknown, forward: boolean): unknown {
         return input
     }
     if (typeof input === 'string') {
-        if(forward){
+        if(forward) {
         // Replace anything ${var.asd } to {{ var.asd }}
             return input.replace(/\$\{([^}]+)\}/g, '{{$1}}')
         }

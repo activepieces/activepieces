@@ -41,7 +41,7 @@ export class migrateSchedule1679014156667 implements MigrationInterface {
         for (const flowVersion of flowVersions) {
             const step = flowVersion.trigger
             if(step.type === 'PIECE_TRIGGER') {
-                if(step.settings.pieceName === 'schedule'){
+                if(step.settings.pieceName === 'schedule') {
                     step.type = 'SCHEDULE'
                     step.settings = {
                         cronExpression: step.settings.input.cronExpression,
