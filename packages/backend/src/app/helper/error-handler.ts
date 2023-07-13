@@ -25,7 +25,7 @@ export const errorHandler = async (
         })
     }
     else {
-        if(!error.statusCode || error.statusCode === StatusCodes.INTERNAL_SERVER_ERROR) {
+        if (!error.statusCode || error.statusCode === StatusCodes.INTERNAL_SERVER_ERROR) {
             captureException(error)
         }
         await reply.status(error.statusCode ?? StatusCodes.INTERNAL_SERVER_ERROR).send(error)

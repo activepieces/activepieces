@@ -64,7 +64,7 @@ export const validateEnvPropsOnStartup = () => {
 
     const executionMode = system.get(SystemProp.EXECUTION_MODE)
     const signedUpEnabled = system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
-    if(executionMode === ExecutionMode.UNSANDBOXED && signedUpEnabled) {
+    if (executionMode === ExecutionMode.UNSANDBOXED && signedUpEnabled) {
         throw new ActivepiecesError({
             code: ErrorCode.SYSTEM_PROP_INVALID,
             params: {

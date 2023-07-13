@@ -32,7 +32,7 @@ const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
                 version: pieceVersion,
             })
         }
-        catch(ex) {
+        catch (ex) {
             captureException(ex)
         }
     }

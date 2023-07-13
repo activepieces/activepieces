@@ -20,7 +20,7 @@ export const projectController: FastifyPluginCallbackTypebox = (fastify, _opts, 
             },
         },
         async (request) => {
-            if(request.params.projectId !== request.principal.projectId) {
+            if (request.params.projectId !== request.principal.projectId) {
                 throw new ActivepiecesError({
                     code: ErrorCode.PROJECT_NOT_FOUND,
                     params: {

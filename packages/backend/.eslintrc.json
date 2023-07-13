@@ -87,7 +87,8 @@
                         "asyncArrow": "always"
                     }
                 ],
-                "@typescript-eslint/space-infix-ops": "error"
+                "@typescript-eslint/space-infix-ops": "error",
+                "@typescript-eslint/keyword-spacing": "error"
             }
         }
     ]

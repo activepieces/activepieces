@@ -172,7 +172,7 @@ const enablePieceTrigger = async (params: EnableOrDisableParams) => {
         case TriggerStrategy.WEBHOOK:
             break
         case TriggerStrategy.POLLING: {
-            if(isNil(engineHelperResponse.result.scheduleOptions)) {
+            if (isNil(engineHelperResponse.result.scheduleOptions)) {
                 engineHelperResponse.result.scheduleOptions = {
                     cronExpression: POLLING_FREQUENCY_CRON_EXPRESSON,
                     timezone: 'UTC',

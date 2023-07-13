@@ -41,7 +41,7 @@ export const appEventRoutingService = {
     },
     async getAppWebhookUrl({ appName }: { appName: string }): Promise<string | undefined> {
         const webhookUrl = system.get(SystemProp.WEBHOOK_URL)
-        if(webhookUrl) {
+        if (webhookUrl) {
             return `${webhookUrl}/v1/app-events/${appName}`
         }
         const frontendUrl = system.get(SystemProp.FRONTEND_URL)

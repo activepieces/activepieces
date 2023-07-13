@@ -26,7 +26,7 @@ export const userService = {
     },
     async getMetaInfo({ id }: { id: UserId }): Promise<UserMeta | null> {
         const user = await userRepo.findOneBy({ id })
-        if(!user) {
+        if (!user) {
             return null
         }
         return {
