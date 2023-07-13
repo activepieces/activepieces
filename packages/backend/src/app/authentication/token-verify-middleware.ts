@@ -60,7 +60,7 @@ function requiresAuthentication(routerPath: string, method: string) {
     if (routerPath == '/v1/app-credentials' && method == 'GET') {
         return false
     }
-    if(routerPath == '/v1/pieces' && method == 'GET') {
+    if (routerPath == '/v1/pieces' && method == 'GET') {
         return false
     }
     return true

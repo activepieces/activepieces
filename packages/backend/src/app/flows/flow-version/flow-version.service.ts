@@ -143,7 +143,7 @@ async function applySingleOperation(projectId: ProjectId, flowVersion: FlowVersi
     await flowVersionSideEffects.preApplyOperation({
         projectId,
         flowVersion,
-        operation: operation,
+        operation,
     })
     operation = await prepareRequest(projectId, flowVersion, operation)
     return flowHelper.apply(flowVersion, operation)
@@ -203,7 +203,7 @@ async function addArtifactsAsBase64(projectId: ProjectId, flowVersion: FlowVersi
         if (step.type === ActionType.CODE) {
             const codeSettings: CodeActionSettings = step.settings
             const artifactPromise = fileService
-                .getOne({ projectId: projectId, fileId: codeSettings.artifactSourceId! })
+                .getOne({ projectId, fileId: codeSettings.artifactSourceId! })
                 .then((artifact) => {
                     if (artifact !== null) {
                         codeSettings.artifactSourceId = undefined
@@ -236,7 +236,7 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
                 case ActionType.PIECE:
                     clonedRequest.request.action.valid = await validateAction({
                         settings: clonedRequest.request.action.settings,
-                        projectId: projectId,
+                        projectId,
                     })
                     break
                 case ActionType.CODE: {
@@ -261,7 +261,7 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
                 case ActionType.PIECE:
                     clonedRequest.request.valid = await validateAction({
                         settings: clonedRequest.request.settings,
-                        projectId: projectId,
+                        projectId,
                     })
                     break
                 case ActionType.CODE: {
@@ -295,7 +295,7 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
                 case TriggerType.PIECE:
                     clonedRequest.request.valid = await validateTrigger({
                         settings: clonedRequest.request.settings,
-                        projectId: projectId,
+                        projectId,
                     })
                     break
                 default:
@@ -322,7 +322,7 @@ async function validateAction({ projectId, settings }: { projectId: ProjectId, s
     }
 
     const piece = await pieceMetadataService.get({
-        projectId: projectId,
+        projectId,
         name: settings.pieceName,
         version: settings.pieceVersion,
     })
@@ -348,7 +348,7 @@ async function validateTrigger({ settings, projectId }: { settings: PieceTrigger
     }
 
     const piece = await pieceMetadataService.get({
-        projectId: projectId,
+        projectId,
         name: settings.pieceName,
         version: settings.pieceVersion,
     })
@@ -435,10 +435,10 @@ function buildSchema(props: PiecePropertyMap): TSchema {
 async function deleteArtifact(projectId: ProjectId, codeSettings: CodeActionSettings): Promise<CodeActionSettings> {
     const requests: Promise<void>[] = []
     if (codeSettings.artifactSourceId !== undefined) {
-        requests.push(fileService.delete({ projectId: projectId, fileId: codeSettings.artifactSourceId }))
+        requests.push(fileService.delete({ projectId, fileId: codeSettings.artifactSourceId }))
     }
     if (codeSettings.artifactPackagedId !== undefined) {
-        requests.push(fileService.delete({ projectId: projectId, fileId: codeSettings.artifactPackagedId }))
+        requests.push(fileService.delete({ projectId, fileId: codeSettings.artifactPackagedId }))
     }
     await Promise.all(requests)
     return codeSettings

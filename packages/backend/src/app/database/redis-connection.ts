@@ -19,8 +19,8 @@ export const createRedisClient = (): Redis => {
     return new Redis({
         host,
         port,
-        username: username,
-        password: password,
+        username,
+        password,
         maxRetriesPerRequest: null,
         tls: useSsl ? {} : undefined,
     })

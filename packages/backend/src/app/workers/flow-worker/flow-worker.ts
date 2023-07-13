@@ -283,7 +283,7 @@ const getArtifactFile = async (projectId: ProjectId, codeActionSettings: CodeAct
             })
         }
 
-        const fileEntity = await fileService.getOneOrThrow({ projectId: projectId, fileId: sourceId })
+        const fileEntity = await fileService.getOneOrThrow({ projectId, fileId: sourceId })
         const builtFile = await codeBuilder.build(fileEntity.data)
 
         const savedPackagedFile = await fileService.save({
@@ -295,7 +295,7 @@ const getArtifactFile = async (projectId: ProjectId, codeActionSettings: CodeAct
     }
 
     const file = await fileService.getOneOrThrow({
-        projectId: projectId,
+        projectId,
         fileId: codeActionSettings.artifactPackagedId,
     })
 
