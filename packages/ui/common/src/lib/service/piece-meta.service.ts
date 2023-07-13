@@ -39,6 +39,8 @@ export const CORE_PIECES_ACTIONS_NAMES = [
   '@activepieces/piece-delay',
   '@activepieces/piece-http',
   '@activepieces/piece-smtp',
+  '@activepieces/piece-sftp',
+  '@activepieces/piece-approval',
 ];
 export const corePieceIconUrl = (pieceName: string) =>
   `assets/img/custom/piece/${pieceName.replace(
