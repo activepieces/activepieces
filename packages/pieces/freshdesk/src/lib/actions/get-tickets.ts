@@ -16,14 +16,7 @@ export const getTickets = createAction({
         const headers = {
             'Authorization': FDapiToken,
             'Content-Type' : 'application/json',
-        };
-
-       // const queryParams = new URLSearchParams();
-        //queryParams.append('number', context.propsValue.number || '');
-        //queryParams.append('client_id', context.propsValue.client_id || '');
-       // queryParams.append('project_id', context.propsValue.project_id || '');
-       // queryParams.append('description', context.propsValue.description || '');
-       // queryParams.append('rate', context.propsValue.rate?.toString() || '');
+        };   
 
         // Remove trailing slash from base_url
         const baseUrl = context.auth.base_url.replace(/\/$/, "");

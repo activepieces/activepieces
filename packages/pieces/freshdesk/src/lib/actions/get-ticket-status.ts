@@ -39,27 +39,31 @@ export const getTicketStatus = createAction({
         if (response.status == 200) {
             const status=response.body.status;
             const responderid=response.body.responder_id;
-            let ass='';
-            let tstatus='';
+            let AssignedStatusFriendlyValue='';
+            let TicketStatusFriendlyValue='';
 
             if (isNull(responderid)) {
-                ass="NOTASSIGNED";
+                AssignedStatusFriendlyValue="NOTASSIGNED";
             } else {
-                 ass="ASSIGNED";
+                 AssignedStatusFriendlyValue="ASSIGNED";
             }
              
             switch (status) {
-                case 2: { tstatus=('OPEN'); break; }
-                case 3: { tstatus=('PENDING'); break; }
-                case 4: { tstatus=('RESOLVED'); break; }
-                case 5: { tstatus=('CLOSED'); break; }
-                default: { tstatus=status; break; }
+                case 2: { TicketStatusFriendlyValue=('OPEN'); break; }
+                case 3: { TicketStatusFriendlyValue=('PENDING'); break; }
+                case 4: { TicketStatusFriendlyValue=('RESOLVED'); break; }
+                case 5: { TicketStatusFriendlyValue=('CLOSED'); break; }
+                default: { 
+                    // if anything other than 2,3,4 or 5 just assign the value - it shouldn't happen!
+                    TicketStatusFriendlyValue=status;
+                    break; }
             }
             const json=[{
-                ticket_status: tstatus,
-                assigned_status: ass,
+                ticket_status: TicketStatusFriendlyValue,
+                assigned_status: AssignedStatusFriendlyValue,
                 assigned_id: responderid
                 }]
+
                 return json;
           } else {
            return response.status;
