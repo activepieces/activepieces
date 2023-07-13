@@ -1,5 +1,5 @@
 import { createTrigger, Property, TriggerStrategy } from "@activepieces/pieces-framework";
-import { assertNotNullOrUndefined } from "@activepieces/pieces-common";
+import { assertNotNullOrUndefined } from "@activepieces/shared";
 import { nanoid } from 'nanoid'
 import { figmaCommon } from "../common";
 import { figmaWebhookPostRequest, figmaDeleteRequest } from '../common/utils';

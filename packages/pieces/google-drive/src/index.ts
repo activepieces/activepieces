@@ -1,6 +1,7 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { googleDriveCreateNewFolder } from './lib/action/create-new-folder';
 import { googleDriveCreateNewTextFile } from './lib/action/create-new-text-file';
+import { googleDriveUploadFile } from './lib/action/upload-file';
 
 export const googleDriveAuth = PieceAuth.OAuth2({
     description: "",
@@ -12,11 +13,11 @@ export const googleDriveAuth = PieceAuth.OAuth2({
 })
 
 export const googleDrive = createPiece({
-	    minimumSupportedRelease: '0.5.0',
+	minimumSupportedRelease: '0.5.0',
     logoUrl: 'https://cdn.activepieces.com/pieces/google-drive.png',
-	actions: [googleDriveCreateNewFolder, googleDriveCreateNewTextFile],
+	actions: [googleDriveCreateNewFolder, googleDriveCreateNewTextFile, googleDriveUploadFile],
 	displayName: "Google Drive",
-	authors: ['kanarelo'],
+	authors: ['kanarelo', 'BastienMe'],
 	triggers: [],
     auth: googleDriveAuth,
 });

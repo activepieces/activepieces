@@ -103,6 +103,7 @@ const finishExecution = async (params: FinishExecutionParams): Promise<void> => 
 const loadInputAndLogFileId = async ({ jobData }: LoadInputAndLogFileIdParams): Promise<LoadInputAndLogFileIdResponse> => {
     const baseInput = {
         flowVersionId: jobData.flowVersionId,
+        flowRunId: jobData.runId,
         projectId: jobData.projectId,
         triggerPayload: {
             duration: 0,
@@ -148,6 +149,7 @@ const loadInputAndLogFileId = async ({ jobData }: LoadInputAndLogFileIdParams): 
             executionType: ExecutionType.RESUME,
             executionState: executionOutput.executionState,
             resumeStepMetadata: flowRun.pauseMetadata.resumeStepMetadata,
+            resumePayload: jobData.payload,
             ...baseInput,
         },
         logFileId: logFile.id,
