@@ -11,7 +11,7 @@ export const freshdeskAuth = PieceAuth.CustomAuth({
           description: 'Enter the base URL',
           required: true,
       }),
-      access_token: Property.LongText({
+      access_token: Property.ShortText({
           displayName: 'API Token',
           description: 'Enter the API token',
           required: true,
