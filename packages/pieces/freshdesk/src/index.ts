@@ -15,8 +15,9 @@ export const freshdeskAuth = PieceAuth.CustomAuth({
           displayName: 'API Token',
           description: 'Enter the API token',
           required: true,
-      })
+      }),
   },
+  description:`Get the API token by visiting your profile settings and clicking View API key`,
   required: true
 })
 
