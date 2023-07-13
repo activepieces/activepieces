@@ -101,7 +101,7 @@
     "ngx-skeleton-loader": "^6.0.0",
     "ngx-timeago": "^2.0.0",
     "node-imap": "^0.9.6",
-    "nodemailer": "^6.9.1",
+    "nodemailer": "^6.9.3",
     "nx-cloud": "16.0.5",
     "papaparse": "^5.3.2",
     "pg": "^8.8.0",
