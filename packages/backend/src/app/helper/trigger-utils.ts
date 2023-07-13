@@ -40,7 +40,7 @@ export const triggerUtils = {
             const handshakeConfig = pieceTrigger.handshakeConfiguration
             switch(handshakeConfig.strategy) {
                 case WebhookHandshakeStrategy.HEADER_PRESENT: {
-                    if(handshakeConfig.paramName && (handshakeConfig.paramName in payload.headers)) {
+                    if(handshakeConfig.paramName && (handshakeConfig.paramName.toLowerCase() in payload.headers)) {
                         return await executeHandshake(flowVersion, projectId, payload)
                     }
                     break

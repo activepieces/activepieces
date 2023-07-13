@@ -52,6 +52,10 @@ export const webhookService = {
             payload,
             simulate: false,
         })
+        if(response !== null) {
+            logger.info(`[WebhookService#handshake] condition met, handshake executed, response:
+            ${JSON.stringify(response, null, 2)}`)
+        }
         return response
     },
     async callback({ flow, payload }: CallbackParams): Promise<FlowRun[]> {
