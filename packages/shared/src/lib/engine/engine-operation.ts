@@ -17,6 +17,7 @@ export enum EngineOperationType {
 export enum TriggerHookType {
     ON_ENABLE = "ON_ENABLE",
     ON_DISABLE = "ON_DISABLE",
+    HANDSHAKE = "HANDSHAKE",
     RUN = "RUN",
     TEST = "TEST",
 }
@@ -131,12 +132,23 @@ interface ExecuteTestOrRunTriggerResponse {
     output: unknown[];
 }
 
+interface ExecuteHandshakeTriggerResponse {
+    success: boolean;
+    message?: string;
+    response?: {
+        status: number,
+        body?: any,
+        headers?: Record<string, string>
+    };
+}
+
 interface ExecuteOnEnableTriggerResponse {
     listeners: AppEventListener[];
     scheduleOptions?: ScheduleOptions;
 }
 
 export type ExecuteTriggerResponse<H extends TriggerHookType> = H extends TriggerHookType.RUN ? ExecuteTestOrRunTriggerResponse :
+    H extends TriggerHookType.HANDSHAKE ? ExecuteHandshakeTriggerResponse :
     H extends TriggerHookType.TEST ? ExecuteTestOrRunTriggerResponse :
     H extends TriggerHookType.ON_DISABLE ? Record<string, never> :
     ExecuteOnEnableTriggerResponse;

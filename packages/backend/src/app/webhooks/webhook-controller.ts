@@ -42,6 +42,25 @@ export const webhookController: FastifyPluginAsync = async (app) => {
         },
         async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
             const flow = await getFlowOrThrow(request.params.flowId)
+            const handshakeResponse = await webhookService.handshake({
+                flow: flow,
+                payload: {
+                    method: request.method,
+                    headers: request.headers as Record<string, string>,
+                    body: await convertBody(request),
+                    queryParams: request.query as Record<string, string>,
+                },
+            })
+            if(handshakeResponse !== null) {
+                reply = reply.status(handshakeResponse.status)
+                if(handshakeResponse.headers !== undefined) {
+                    for(const header of Object.keys(handshakeResponse.headers)) {
+                        reply = reply.header(header, handshakeResponse.headers[header] as string)
+                    }
+                }
+                await reply.send(handshakeResponse.body)
+                return
+            }
             handler(request, flow)
             await reply.status(StatusCodes.OK).send()
         },
