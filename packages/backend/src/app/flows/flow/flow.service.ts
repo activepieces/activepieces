@@ -144,7 +144,7 @@ export const flowService = {
             if (operation.type === FlowOperationType.CHANGE_FOLDER) {
                 await flowRepo.update(flow.id, {
                     ...flow,
-                    folderId: operation.request.folderId ?? undefined,
+                    folderId: operation.request.folderId ? operation.request.folderId : null,
                 })
             }
             else {

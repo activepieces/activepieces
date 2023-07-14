@@ -53,7 +53,7 @@ export class MoveFlowToFolderDialogComponent {
           request: {
             folderId:
               this.foldersForm.controls.folder.value === 'NULL'
-                ? undefined
+                ? null
                 : this.foldersForm.controls.folder.value,
           },
         })
