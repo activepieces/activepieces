@@ -116,6 +116,7 @@
     "rss-parser": "^3.13.0",
     "rxjs": "~7.8.0",
     "shade-generator": "^1.2.7",
+    "soap": "^1.0.0",
     "ssh2-sftp-client": "^9.1.0",
     "string-replace-async": "^3.0.2",
     "stripe": "^11.12.0",
@@ -218,4 +219,3 @@
     "includedScripts": []
   }
 }
-
