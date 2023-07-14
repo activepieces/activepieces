@@ -167,6 +167,9 @@
       "@activepieces/piece-twitter": ["packages/pieces/twitter/src/index.ts"],
       "@activepieces/piece-typeform": ["packages/pieces/typeform/src/index.ts"],
       "@activepieces/piece-vtex": ["packages/pieces/vtex/src/index.ts"],
+      "@activepieces/piece-woocommerce": [
+        "packages/pieces/woocommerce/src/index.ts"
+      ],
       "@activepieces/piece-wordpress": [
         "packages/pieces/wordpress/src/index.ts"
       ],
