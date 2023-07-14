@@ -34,7 +34,7 @@ export const sftpAuth = PieceAuth.CustomAuth({
 export const sftp = createPiece({
   displayName: "SFTP",
       minimumSupportedRelease: '0.5.0',
-    logoUrl: "https://cdn.activepieces.com/pieces/sftp.png",
+    logoUrl: "https://cdn.activepieces.com/pieces/sftp.svg",
   authors: ["Abdallah-Alwarawreh"],
   auth: sftpAuth,
   actions: [createFile],

@@ -4,6 +4,8 @@ export const environment = {
   jwtTokenName: 'token',
   redirectUrl: 'http://localhost:4200/redirect',
   userPropertyNameInLocalStorage: 'currentUser',
+  //You need to edit index.html manually
+  websiteTitle: 'Acitvpieces',
   // BEGIN EE
   firebase: {
     apiKey: 'AIzaSyBik7RRZ6S8QIpG4GqzwoF_SCNn3Dr9PPw',
