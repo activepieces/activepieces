@@ -24,7 +24,7 @@ export const wooAuth = PieceAuth.CustomAuth({
     props: {
         baseUrl: Property.ShortText({
             displayName: 'Base URL',
-            description: 'The base URL of your app without trailing slash (e.g https://mystore.com, not https://mystore.com/) - HTTPS only',
+            description: 'The base URL of your app (e.g https://mystore.com) and it should start with HTTPS only',
             required: true,
         }),
         consumerKey: Property.ShortText({
@@ -44,6 +44,7 @@ export const woocommerce = createPiece({
     displayName: "WooCommerce",
     logoUrl: "https://cdn.activepieces.com/pieces/woocommerce.png",
     auth: wooAuth,
+    minimumSupportedRelease: '0.5.0',
     authors: ['MoShizzle'],
     actions: [],
     triggers: [customer, coupon, order, product, lineItemInOrder],
