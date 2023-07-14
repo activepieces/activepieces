@@ -15,6 +15,7 @@ export const errorHandler = async (
             [ErrorCode.INVALID_BEARER_TOKEN]: StatusCodes.UNAUTHORIZED,
             [ErrorCode.TASK_QUOTA_EXCEEDED]: StatusCodes.PAYMENT_REQUIRED,
             [ErrorCode.ENTITY_NOT_FOUND]: StatusCodes.NOT_FOUND,
+            [ErrorCode.EXISTING_USER]: StatusCodes.CONFLICT,
         }
 
         const statusCode = statusCodeMap[error.error.code] ?? StatusCodes.BAD_REQUEST

@@ -1,4 +1,4 @@
-import { ActivepiecesError, ErrorCode, FlowInstance, FlowInstanceStatus, FlowOperationType, ProjectId, ScheduleOptions, ScheduleType, UpsertFlowInstanceRequest, apId } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, FlowInstance, FlowInstanceStatus, FlowOperationType, ProjectId, ScheduleOptions, ScheduleType, UpsertFlowInstanceRequest, UserId, apId } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { FlowInstanceEntity } from './flow-instance.entity'
 import { triggerUtils } from '../../helper/trigger-utils'
@@ -9,8 +9,9 @@ import { isNil } from '@activepieces/shared'
 export const flowInstanceRepo = databaseConnection.getRepository<FlowInstance>(FlowInstanceEntity)
 
 export const flowInstanceService = {
-    async upsert({ projectId, request }: { projectId: ProjectId, request: UpsertFlowInstanceRequest }): Promise<FlowInstance> {
+    async upsert({ userId, projectId, request }: { userId: UserId, projectId: ProjectId, request: UpsertFlowInstanceRequest }): Promise<FlowInstance> {
         const flow = await flowService.update({
+            userId,
             flowId: request.flowId, projectId, request: {
                 type: FlowOperationType.LOCK_FLOW,
                 request: {

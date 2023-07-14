@@ -16,6 +16,7 @@ import {
     ProjectId,
     SeekPage,
     TelemetryEventName,
+    UserId,
 } from '@activepieces/shared'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -126,7 +127,7 @@ export const flowService = {
         }
     },
 
-    async update({ flowId, projectId, request: operation }: { projectId: ProjectId, flowId: FlowId, request: FlowOperationRequest }): Promise<Flow> {
+    async update({ userId, flowId, projectId, request: operation }: { userId: UserId, projectId: ProjectId, flowId: FlowId, request: FlowOperationRequest }): Promise<Flow> {
         const flowLock = await acquireLock({
             key: flowId,
             timeout: 10000,
@@ -155,12 +156,12 @@ export const flowService = {
                         displayName: lastVersionWithArtifacts.displayName,
                     })
                     // Duplicate the artifacts from the previous version, otherwise they will be deleted during update operation
-                    lastVersion = await flowVersionService.applyOperation(projectId, lastVersion, {
+                    lastVersion = await flowVersionService.applyOperation(userId, projectId, lastVersion, {
                         type: FlowOperationType.IMPORT_FLOW,
                         request: lastVersionWithArtifacts,
                     })
                 }
-                await flowVersionService.applyOperation(projectId, lastVersion, operation)
+                await flowVersionService.applyOperation(userId, projectId, lastVersion, operation)
             }
         }
         finally {

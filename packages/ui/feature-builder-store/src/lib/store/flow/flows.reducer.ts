@@ -22,6 +22,7 @@ const initialState: FlowState = {
     created: '',
     version: {
       flowId: '1',
+      updatedBy: '',
       displayName: 'Flow version',
       valid: false,
       updated: '',
