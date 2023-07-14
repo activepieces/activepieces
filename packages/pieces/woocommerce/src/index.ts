@@ -24,7 +24,7 @@ export const wooAuth = PieceAuth.CustomAuth({
     props: {
         baseUrl: Property.ShortText({
             displayName: 'Base URL',
-            description: 'The base URL of your app without trailing slash (e.g https://mystore.com, not https://mystore.com/) - HTTPS only',
+            description: 'The base URL of your app (e.g https://mystore.com) and it should start with HTTPS only',
             required: true,
         }),
         consumerKey: Property.ShortText({
