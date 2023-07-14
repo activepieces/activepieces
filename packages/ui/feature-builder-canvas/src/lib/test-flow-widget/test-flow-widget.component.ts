@@ -20,7 +20,6 @@ import {
   jsonValidator,
 } from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
-import { HttpStatusCode } from '@angular/common/http';
 import { UntypedFormControl } from '@angular/forms';
 import { MatSnackBar, MatSnackBarRef } from '@angular/material/snack-bar';
 import {
