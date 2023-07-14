@@ -78,13 +78,17 @@ export const flowRunService = {
     },
 
     async finish(
-        flowRunId: FlowRunId,
-        status: ExecutionOutputStatus,
-        logsFileId: FileId | null,
+        { flowRunId, status, tasks, logsFileId }: {
+            flowRunId: FlowRunId
+            status: ExecutionOutputStatus
+            tasks: number
+            logsFileId: FileId | null
+        },
     ): Promise<FlowRun> {
         await repo.update(flowRunId, {
             logsFileId,
             status,
+            tasks,
             finishTime: new Date().toISOString(),
             pauseMetadata: null,
         })
