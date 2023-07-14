@@ -96,7 +96,9 @@ const finishExecution = async (params: FinishExecutionParams): Promise<void> => 
         })
     }
     else {
-        await flowRunService.finish(flowRunId, executionOutput.status, logFileId)
+        await flowRunService.finish({
+            flowRunId, status: executionOutput.status, tasks: executionOutput.tasks, logsFileId: logFileId,
+        })
     }
 }
 
@@ -205,12 +207,12 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
     }
     catch (e: unknown) {
         if (e instanceof ActivepiecesError && (e as ActivepiecesError).error.code === ErrorCode.EXECUTION_TIMEOUT) {
-            await flowRunService.finish(jobData.runId, ExecutionOutputStatus.TIMEOUT, null)
+            await flowRunService.finish({ flowRunId: jobData.runId, status: ExecutionOutputStatus.TIMEOUT, tasks: 1, logsFileId: null })
         }
         else {
             logger.error(e, `[${jobData.runId}] Error executing flow`)
             captureException(e as Error)
-            await flowRunService.finish(jobData.runId, ExecutionOutputStatus.INTERNAL_ERROR, null)
+            await flowRunService.finish({ flowRunId: jobData.runId, status: ExecutionOutputStatus.INTERNAL_ERROR, tasks: 0, logsFileId: null })
         }
 
     }

@@ -1,6 +1,6 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
-import { FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
-import { ApId, CreateFlowRunRequest, ExecutionType, FlowRunId, ListFlowRunsRequestQuery, RunEnvironment } from '@activepieces/shared'
+import { FastifyPluginCallbackTypebox } from '@fastify/type-provider-typebox'
+import { TestFlowRunRequestBody, FlowRunId, ListFlowRunsRequestQuery } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { flowRunService } from './flow-run-service'
 
@@ -10,37 +10,22 @@ type GetOnePathParams = {
     id: FlowRunId
 }
 
-const ResumeFlowRunRequest = {
+const TestFlowRunRequest = {
     schema: {
-        params: Type.Object({
-            id: ApId,
-        }),
-        querystring: Type.Object({
-            action: Type.String(),
-        }),
+        body: TestFlowRunRequestBody,
     },
 }
 
 export const flowRunController: FastifyPluginCallbackTypebox = (app, _options, done): void => {
-    app.post(
-        '/',
-        {
-            schema: {
-                body: CreateFlowRunRequest,
-            },
-        },
-        async (request: FastifyRequest<{ Body: CreateFlowRunRequest }>, reply: FastifyReply) => {
-            const { flowVersionId, payload } = request.body
-            const flowRun = await flowRunService.start({
-                environment: RunEnvironment.TESTING,
-                flowVersionId,
-                payload,
-                projectId: request.principal.projectId,
-                executionType: ExecutionType.BEGIN,
-            })
+    app.post('/test', TestFlowRunRequest, async (req) => {
+        const { projectId } = req.principal
+        const { flowVersionId } = req.body
 
-            await reply.send(flowRun)
-        },
+        return await flowRunService.test({
+            projectId,
+            flowVersionId,
+        })
+    },
     )
 
     // list
@@ -77,13 +62,6 @@ export const flowRunController: FastifyPluginCallbackTypebox = (app, _options, d
         }
 
         await reply.send(flowRun)
-    })
-
-    app.get('/:id/resume', ResumeFlowRunRequest, async (req) => {
-        await flowRunService.resume({
-            flowRunId: req.params.id,
-            action: req.query.action,
-        })
     })
 
     done()
