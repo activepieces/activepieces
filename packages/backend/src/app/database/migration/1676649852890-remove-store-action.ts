@@ -33,7 +33,7 @@ export class removeStoreAction1676649852890 implements MigrationInterface {
                 action = action.nextAction
             }
 
-            if(changed){
+            if (changed) {
                 await flowVersionRepo.update(currentFlowVersion.id, currentFlowVersion)
             }
         }
@@ -60,7 +60,7 @@ export class removeStoreAction1676649852890 implements MigrationInterface {
                 }
                 action = action.nextAction
             }
-            if(changed){
+            if (changed) {
                 await flowVersionRepo.update(currentFlowVersion.id, currentFlowVersion)
             }
         }
