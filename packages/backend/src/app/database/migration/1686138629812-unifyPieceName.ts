@@ -4,7 +4,6 @@ import { logger } from '../../helper/logger'
 const FLOW_VERSION_TABLE = 'flow_version'
 const APP_CONNECTION_TABLE = 'app_connection'
 const APP_EVENT_ROUTING_TABLE = 'app_event_routing'
-const PIECE_METADATA = 'piece_metadata'
 const TRIGGER_EVENT = 'trigger_event'
 
 const PIECE_TYPE = 'PIECE'
@@ -123,14 +122,14 @@ async function updateAppEventRoutes(queryRunner: QueryRunner, revert: boolean): 
 }
 
 async function updatePieceMetadata(queryRunner: QueryRunner, revert: boolean): Promise<number> {
-    const pieceMetadataRepo = queryRunner.connection.getRepository(PIECE_METADATA)
-    const pieceMetadatas = await pieceMetadataRepo.find()
+    const pieceMetadatas = await queryRunner.connection.query('SELECT * FROM piece_metadata;')
     let count = 0
 
     for (const pieceMetadata of pieceMetadatas) {
-        pieceMetadata.name = getPackageNameForPiece(pieceMetadata.name, revert)
+        const updatedName = getPackageNameForPiece(pieceMetadata.name, revert)
+        const updateQuery = `UPDATE piece_metadata SET name = '${updatedName}' WHERE id = ${pieceMetadata.id};`
+        await queryRunner.connection.query(updateQuery)
         count++
-        await pieceMetadataRepo.update(pieceMetadata.id, pieceMetadata)
     }
 
     return count

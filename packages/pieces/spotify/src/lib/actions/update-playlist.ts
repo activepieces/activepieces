@@ -5,8 +5,8 @@ export default createAction({
     name: 'update_playlist',
     displayName: 'Update Playlist',
     description: 'Updates details of the playlist',
+    auth: spotifyCommon.authentication,
     props: {
-        authentication: spotifyCommon.authentication,
         playlist_id: spotifyCommon.playlist_id(true),
         name: Property.ShortText({
             displayName: 'Name',
@@ -25,13 +25,13 @@ export default createAction({
             required: false
         })
     },
-    async run(context) {
-        const client = makeClient(context.propsValue)
-        await client.updatePlaylist(context.propsValue.playlist_id as string, {
-            name: context.propsValue.name,
-            description: context.propsValue.description,
-            public: context.propsValue.public,
-            collaborative: context.propsValue.collaborative
+    async run({auth, propsValue}) {
+        const client = makeClient({auth})
+        await client.updatePlaylist(propsValue.playlist_id as string, {
+            name: propsValue.name,
+            description: propsValue.description,
+            public: propsValue.public,
+            collaborative: propsValue.collaborative
         })
     }
 })

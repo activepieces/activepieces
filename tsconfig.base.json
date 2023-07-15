@@ -22,6 +22,7 @@
       "@activepieces/piece-amazon-s3": [
         "packages/pieces/amazon-s3/src/index.ts"
       ],
+      "@activepieces/piece-approval": ["packages/pieces/approval/src/index.ts"],
       "@activepieces/piece-asana": ["packages/pieces/asana/src/index.ts"],
       "@activepieces/piece-bannerbear": [
         "packages/pieces/bannerbear/src/index.ts"
@@ -59,6 +60,9 @@
         "packages/pieces/facebook-pages/src/index.ts"
       ],
       "@activepieces/piece-figma": ["packages/pieces/figma/src/index.ts"],
+      "@activepieces/piece-freshdesk": [
+        "packages/pieces/freshdesk/src/index.ts"
+      ],
       "@activepieces/piece-freshsales": [
         "packages/pieces/freshsales/src/index.ts"
       ],
@@ -163,6 +167,9 @@
       "@activepieces/piece-twitter": ["packages/pieces/twitter/src/index.ts"],
       "@activepieces/piece-typeform": ["packages/pieces/typeform/src/index.ts"],
       "@activepieces/piece-vtex": ["packages/pieces/vtex/src/index.ts"],
+      "@activepieces/piece-woocommerce": [
+        "packages/pieces/woocommerce/src/index.ts"
+      ],
       "@activepieces/piece-wordpress": [
         "packages/pieces/wordpress/src/index.ts"
       ],

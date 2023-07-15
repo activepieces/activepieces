@@ -1,13 +1,14 @@
-import { Property, StaticPropsValue } from "@activepieces/pieces-framework";
+import { PiecePropValueSchema, Property, StaticPropsValue } from "@activepieces/pieces-framework";
 import { Connection, createConnection } from 'promise-mysql';
+import { mysqlAuth } from "../..";
 
-export async function mysqlConnect(propsValue: StaticPropsValue<any>): Promise<Connection> {
+export async function mysqlConnect(auth: PiecePropValueSchema<typeof mysqlAuth>, propsValue: StaticPropsValue<any>): Promise<Connection> {
     const conn = await createConnection({
-        host: propsValue.authentication.host,
-        port: propsValue.authentication.port || 3306,
-        user: propsValue.authentication.user,
-        password: propsValue.authentication.password,
-        database: propsValue.authentication.database || undefined,
+        host: auth.host,
+        port: auth.port || 3306,
+        user: auth.user,
+        password: auth.password,
+        database: auth.database || undefined,
         timezone: propsValue.timezone
     })
     return conn
@@ -19,38 +20,6 @@ export async function mysqlGetTableNames(conn: Connection): Promise<string[]> {
 }
 
 export const mysqlCommon = {
-    authentication: Property.CustomAuth({
-        displayName: "Authentication",
-            props: {
-                host: Property.ShortText({
-                    displayName: 'Host',
-                    required: true,
-                    description: "The hostname or address of the mysql server"
-                }),
-                port: Property.Number({
-                    displayName: 'Port',
-                    defaultValue: 3306,
-                    description: "The port to use for connecting to the mysql server",
-                    required: true,
-                }),
-                user: Property.ShortText({
-                    displayName: 'Username',
-                    required: true,
-                    description: "The username to use for connecting to the mysql server"
-                }),
-                password: Property.SecretText({
-                    displayName: 'Password',
-                    description: "The password to use to identify at the mysql server",
-                    required: true,
-                }),
-                database: Property.ShortText({
-                    displayName: 'Database',
-                    description: "The name of the database to use",
-                    required: true,
-                })
-            },
-            required: true
-    }),
     timezone: Property.ShortText({
         displayName: 'Timezone',
         description: 'Timezone for the mysql server to use',
@@ -60,16 +29,16 @@ export const mysqlCommon = {
         description: 'The name of the table',
         displayName: 'Table',
         required,
-        refreshers: ['authentication'],
-        options: async (value) => {
-            if (!value['authentication']) {
+        refreshers: [],
+        options: async ({ auth }) => {
+            if (!auth) {
                 return {
                     disabled: true,
                     placeholder: 'connect to your database first',
                     options: [],
                 };
             }
-            const conn = await mysqlConnect(value)
+            const conn = await mysqlConnect(auth as PiecePropValueSchema<typeof mysqlAuth>, {auth})
             const tables = await mysqlGetTableNames(conn)
             await conn.end()
             return {

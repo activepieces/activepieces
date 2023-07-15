@@ -1,4 +1,5 @@
 @import "../../../../../core/src/assets/scss/variables.scss";
+@import "../../../../../core/src/assets/scss/derived-variables.scss";
 .avatar-container {
   position: relative;
 }
@@ -15,12 +16,12 @@
   cursor: pointer;
 }
 
-.dropdown-menu{
+.dropdown-menu {
   min-width: 15rem;
 }
 .avatar-outer-circle {
   position: absolute;
-  border: 0px $primary solid;
+  border: 0px $primary-default solid;
   height: 36px;
   width: 36px;
   transition: all 0.1s ease-in-out;
@@ -59,7 +60,7 @@
   font-weight: 400;
 }
 .upgrade {
-  color: $primary !important;
+  color: $primary-default !important;
 }
 .log-out {
   color: $danger !important;

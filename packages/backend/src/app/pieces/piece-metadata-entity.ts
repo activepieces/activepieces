@@ -3,7 +3,7 @@ import { PieceMetadata } from '@activepieces/pieces-framework'
 import { ApId, BaseModel, Project } from '@activepieces/shared'
 import { BaseColumnSchemaPart } from '../helper/base-entity'
 
-export type PieceMetadataSchema = BaseModel<ApId> & PieceMetadata & { projectId: ApId, project: Project}
+export type PieceMetadataSchema = BaseModel<ApId> & PieceMetadata & { projectId: ApId, project: Project }
 
 export const PieceMetadataEntity = new EntitySchema<PieceMetadataSchema>({
     name: 'piece_metadata',
@@ -43,6 +43,10 @@ export const PieceMetadataEntity = new EntitySchema<PieceMetadataSchema>({
             type: String,
             nullable: false,
             collation: 'en_natural',
+        },
+        auth: {
+            type: 'jsonb',
+            nullable: true,
         },
         actions: {
             type: 'jsonb',

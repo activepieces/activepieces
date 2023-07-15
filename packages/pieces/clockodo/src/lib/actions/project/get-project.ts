@@ -1,17 +1,18 @@
-import { createAction } from "@activepieces/pieces-framework";
 import { clockodoCommon, makeClient } from "../../common";
+import { clockodoAuth } from "../../../";
+import { createAction } from "@activepieces/pieces-framework";
 
 export default createAction({
-    name: 'get_project',
-    displayName: 'Get Project',
-    description: 'Retrieves a single project from clockodo',
-    props: {
-        authentication: clockodoCommon.authentication,
-        project_id: clockodoCommon.project_id(true, false, null)
-    },
-    async run(context) {
-        const client = makeClient(context.propsValue);
-        const res = await client.getProject(context.propsValue.project_id as number)
-        return res.project
-    }
+    auth: clockodoAuth,
+        name: 'get_project',
+        displayName: 'Get Project',
+        description: 'Retrieves a single project from clockodo',
+        props: {
+            project_id: clockodoCommon.project_id(true, false, null)
+        },
+        async run({ auth, propsValue }) {
+            const client = makeClient(auth);
+            const res = await client.getProject(propsValue.project_id as number)
+            return res.project
+        }
 })

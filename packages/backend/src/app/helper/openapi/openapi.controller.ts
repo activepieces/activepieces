@@ -1,4 +1,4 @@
-import { FastifyInstance} from 'fastify'
+import { FastifyInstance } from 'fastify'
 
 export const openapiController = async (fastify: FastifyInstance) => {
     fastify.get(

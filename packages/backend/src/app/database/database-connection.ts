@@ -44,6 +44,8 @@ import { PieceMetadata1685537054805 } from './migration/1685537054805-piece-meta
 import { AddProjectIdToPieceMetadata1686090319016 } from './migration/1686090319016-AddProjectIdToPieceMetadata'
 import { UnifyPieceName1686138629812 } from './migration/1686138629812-unifyPieceName'
 import { AddScheduleOptions1687384796637 } from './migration/1687384796637-AddScheduleOptions'
+import { AddAuthToPiecesMetadata1688922241747 } from './migration//1688922241747-AddAuthToPiecesMetadata'
+import { AddTasksToRun1689351564290 } from './migration/1689351564290-AddTasksToRun'
 
 const database = system.getOrThrow(SystemProp.POSTGRES_DATABASE)
 const host = system.getOrThrow(SystemProp.POSTGRES_HOST)
@@ -93,6 +95,8 @@ const getMigrations = () => {
         AddProjectIdToPieceMetadata1686090319016,
         UnifyPieceName1686138629812,
         AddScheduleOptions1687384796637,
+        AddAuthToPiecesMetadata1688922241747,
+        AddTasksToRun1689351564290,
     ]
 }
 

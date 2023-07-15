@@ -1,6 +1,6 @@
 import { FlowExecutor } from '../executors/flow-executor';
 import { VariableService } from '../services/variable-service';
-import { Action, ActionType, ExecutionState, LoopOnItemsAction, LoopResumeStepMetadata } from '@activepieces/shared';
+import { Action, ActionType, ExecutionState, LoopOnItemsAction, LoopOnItemsActionSettings, LoopResumeStepMetadata } from '@activepieces/shared';
 import { BaseActionHandler, InitStepOutputParams } from './action-handler';
 import { LoopOnItemsStepOutput, StepOutputStatus, StepOutput } from '@activepieces/shared';
 
@@ -62,7 +62,7 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
     executionState: ExecutionState,
     ancestors: [string, number][]
   ): Promise<StepOutput> {
-    const resolvedInput = await this.variableService.resolve({
+    const resolvedInput: LoopOnItemsActionSettings = await this.variableService.resolve({
       unresolvedInput: this.currentAction.settings,
       executionState,
       censorConnections: false,

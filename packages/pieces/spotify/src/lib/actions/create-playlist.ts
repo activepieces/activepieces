@@ -5,8 +5,8 @@ export default createAction({
     name: 'create_playlist',
     displayName: 'Create Playlist',
     description: 'Creates a new playlist for the current user',
+    auth: spotifyCommon.authentication,
     props: {
-        authentication: spotifyCommon.authentication,
         name: Property.ShortText({
             displayName: 'Name',
             required: true
@@ -24,14 +24,14 @@ export default createAction({
             required: false
         })
     },
-    async run(context) {
-        const client = makeClient(context.propsValue)
+    async run({auth, propsValue}) {
+        const client = makeClient({auth})
         const user = await client.getCurrentUser()
         const res = await client.createPlaylist(user.id, {
-            name: context.propsValue.name,
-            description: context.propsValue.description,
-            public: context.propsValue.public,
-            collaborative: context.propsValue.collaborative
+            name: propsValue.name,
+            description: propsValue.description,
+            public: propsValue.public,
+            collaborative: propsValue.collaborative
         })
         return res
     }

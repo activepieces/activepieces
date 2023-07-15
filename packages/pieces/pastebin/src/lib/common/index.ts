@@ -1,35 +1,8 @@
-import { Property, StaticPropsValue } from "@activepieces/pieces-framework";
+import { PiecePropValueSchema, Property } from "@activepieces/pieces-framework";
 import { PastebinClient } from "./client";
-
-const markdownDescription = `
-Here are the simple steps to get your credentials:
-
-1. Make an account, If you don't have one yet.
-2. Go to **https://pastebin.com/doc_api**.
-3. Copy your unique Developer API Key and paste it.
-4. Provide your username and password if you want to create **private pastes** under your account.
-`
+import { pastebinAuth } from "../..";
 
 export const pastebinCommon = {
-    authentication: (required = true) => Property.CustomAuth({
-        displayName: 'API Authentication',
-        required,
-        description: markdownDescription,
-        props: {
-            token: Property.SecretText({
-                displayName: 'Developer Key',
-                required: true
-            }),
-            username: Property.ShortText({
-                displayName: 'Username',
-                required: false
-            }),
-            password: Property.SecretText({
-                displayName: 'Password',
-                required: false
-            })
-        }
-    }),
     paste_format: (required = true) => Property.StaticDropdown({
         displayName: 'Format',
         required,
@@ -306,10 +279,10 @@ export const pastebinCommon = {
     })
 }
 
-export async function makeClient(propsValue: StaticPropsValue<any>): Promise<PastebinClient> {
-    const client = new PastebinClient(propsValue.authentication.token)
-    if(propsValue.authentication.username && propsValue.authentication.password) {
-        const userKey = await client.login(propsValue.authentication.username, propsValue.authentication.password)
+export async function makeClient(auth: PiecePropValueSchema<typeof pastebinAuth>): Promise<PastebinClient> {
+    const client = new PastebinClient(auth.token)
+    if(auth.username && auth.password) {
+        const userKey = await client.login(auth.username, auth.password)
         client.setUserKey(userKey)
     }
     return client

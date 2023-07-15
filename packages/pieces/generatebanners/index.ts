@@ -3,7 +3,8 @@ import { renderTemplate } from './actions/renderTemplate.action';
 
 export const generatebanners = createPiece({
   name: 'generatebanners',
-  logoUrl: 'https://cdn.activepieces.com/pieces/generatebanners.png',
+      minimumSupportedRelease: '0.5.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/generatebanners.png',
   authors: ['tpatel'],
   actions: [renderTemplate],
   displayName: 'GenerateBanners',

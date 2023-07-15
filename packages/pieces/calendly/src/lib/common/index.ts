@@ -16,22 +16,14 @@ export interface CalendlyWebhookInformation {
 
 export const calendlyCommon = {
     baseUrl: 'https://api.calendly.com',
-    scope: Property.Dropdown({
+    scope: Property.StaticDropdown({
         displayName: 'Scope',
         required: true,
-        refreshers: [],
-        options: async () => {
-            return {
-                options: [{ value: "user", label: "User" }, { value: "organization", label: "Organization" }],
-                disabled: false,
-            }
+        options:  {
+            options: [{ value: "user", label: "User" }, { value: "organization", label: "Organization" }],
+            disabled: false,
         },
 
-    }),
-    authentication: Property.SecretText({
-        displayName: "Personal Token",
-        required: true,
-        description: "Get it from https://calendly.com/integrations/api_webhooks"
     }),
     getUser: async (personalToken: string) => {
         const request: HttpRequest = {

@@ -23,6 +23,11 @@ type CreateParams = {
     stepName: string
 }
 
+type ExecutePieceParams = {
+    step: PieceAction
+    flowVersion: FlowVersion
+    projectId: ProjectId
+}
 
 export const stepRunService = {
     async create({ projectId, flowVersionId, stepName }: CreateParams): Promise<StepRunResponse> {
@@ -49,9 +54,7 @@ export const stepRunService = {
     },
 }
 
-async function executePiece({ step, projectId, flowVersion }: {
-    step: PieceAction, projectId: ProjectId, flowVersion: FlowVersion
-}): Promise<StepRunResponse> {
+async function executePiece({ step, projectId, flowVersion }: ExecutePieceParams): Promise<StepRunResponse> {
     const { pieceName, pieceVersion, actionName, input } = step.settings
 
     if (isNil(actionName)) {
@@ -67,8 +70,8 @@ async function executePiece({ step, projectId, flowVersion }: {
         pieceName,
         pieceVersion,
         actionName,
-        flowVersion,
         input,
+        flowVersion,
         projectId,
     }
 
@@ -80,8 +83,8 @@ async function executePiece({ step, projectId, flowVersion }: {
     return {
         success: result.success,
         output: result.output,
-        standardError: standardError,
-        standardOutput: standardOutput,
+        standardError,
+        standardOutput,
     }
 }
 
@@ -101,7 +104,7 @@ async function executeCode({ step, flowVersion, projectId }: { step: CodeAction,
     return {
         success: result.success,
         output: result.output,
-        standardError: standardError,
-        standardOutput: standardOutput,
+        standardError,
+        standardOutput,
     }
 }

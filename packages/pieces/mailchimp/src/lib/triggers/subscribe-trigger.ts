@@ -1,85 +1,86 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { getAccessTokenOrThrow, httpClient, HttpMethod, AuthenticationType } from "@activepieces/pieces-common";
-import { getMailChimpServerPrefix, mailChimpAuth, mailChimpListIdDropdown } from '../common';
+import { getMailChimpServerPrefix, mailChimpListIdDropdown } from '../common';
 import { MailChimpSubscribeWebhookRequest } from '../common/types';
+import { mailchimpAuth } from '../..';
 
 const WEBHOOK_DATA_STORE_KEY = 'mail_chimp_webhook_data';
 
 export const mailChimpSubscribeTrigger = createTrigger({
-  name: 'subscribe',
-  displayName: 'Member Subscribed to Audience',
-  description: 'Runs when an Audience subscriber is added.',
-  type: TriggerStrategy.WEBHOOK,
-  props: {
-    authentication: mailChimpAuth,
-    list_id: mailChimpListIdDropdown,
-  },
-  sampleData: {
-    'type': 'subscribe',
-    'fired_at': '2009-03-26 21:35:57',
-    'data': {
-      'id': '8a25ff1d98',
-      'list_id': 'a6b5da1054',
-      'email': 'api@mailchimp.com',
-      'email_type': 'html',
-      'ip_opt': '10.20.10.30',
-      'ip_signup': '10.20.10.30',
-      'merges': {
-        'EMAIL': 'api@mailchimp.com',
-        'FNAME': 'Mailchimp',
-        'LNAME': 'API',
-        'INTERESTS': 'Group1,Group2'
+  auth: mailchimpAuth,
+    name: 'subscribe',
+    displayName: 'Member Subscribed to Audience',
+    description: 'Runs when an Audience subscriber is added.',
+    type: TriggerStrategy.WEBHOOK,
+    props: {
+      list_id: mailChimpListIdDropdown,
+    },
+    sampleData: {
+      'type': 'subscribe',
+      'fired_at': '2009-03-26 21:35:57',
+      'data': {
+        'id': '8a25ff1d98',
+        'list_id': 'a6b5da1054',
+        'email': 'api@mailchimp.com',
+        'email_type': 'html',
+        'ip_opt': '10.20.10.30',
+        'ip_signup': '10.20.10.30',
+        'merges': {
+          'EMAIL': 'api@mailchimp.com',
+          'FNAME': 'Mailchimp',
+          'LNAME': 'API',
+          'INTERESTS': 'Group1,Group2'
+        }
       }
-    }
-  },
+    },
 
-  async onEnable(context): Promise<void> {
-    const accessToken = getAccessTokenOrThrow(context.propsValue.authentication);
+    async onEnable(context): Promise<void> {
+      const accessToken = getAccessTokenOrThrow(context.auth);
 
-    const server = await getMailChimpServerPrefix(accessToken);
+      const server = await getMailChimpServerPrefix(accessToken);
 
-    console.log(context.webhookUrl);
+      console.log(context.webhookUrl);
 
-    const enabledWebhookId = await enableWebhookRequest({
-      server,
-      listId: context.propsValue.list_id!,
-      token: accessToken,
-      webhookUrl: context.webhookUrl!,
-    });
+      const enabledWebhookId = await enableWebhookRequest({
+        server,
+        listId: context.propsValue.list_id!,
+        token: accessToken,
+        webhookUrl: context.webhookUrl!,
+      });
 
-    await context.store?.put<WebhookData>(WEBHOOK_DATA_STORE_KEY, {
-      id: enabledWebhookId,
-      listId: context.propsValue.list_id!,
-    });
-  },
+      await context.store?.put<WebhookData>(WEBHOOK_DATA_STORE_KEY, {
+        id: enabledWebhookId,
+        listId: context.propsValue.list_id!,
+      });
+    },
 
-  async onDisable(context): Promise<void> {
-    const webhookData = await context.store?.get<WebhookData>(WEBHOOK_DATA_STORE_KEY);
+    async onDisable(context): Promise<void> {
+      const webhookData = await context.store?.get<WebhookData>(WEBHOOK_DATA_STORE_KEY);
 
-    if (webhookData === undefined || webhookData === null) {
-      return;
-    }
+      if (webhookData === undefined || webhookData === null) {
+        return;
+      }
 
-    const token = getAccessTokenOrThrow(context.propsValue.authentication);
-    const server = await getMailChimpServerPrefix(token);
+      const token = getAccessTokenOrThrow(context.auth);
+      const server = await getMailChimpServerPrefix(token);
 
-    await disableWebhookRequest({
-      server,
-      token,
-      listId: webhookData.listId,
-      webhookId: webhookData.id,
-    });
-  },
+      await disableWebhookRequest({
+        server,
+        token,
+        listId: webhookData.listId,
+        webhookId: webhookData.id,
+      });
+    },
 
-  async run(context): Promise<unknown[]> {
-    const request = context.payload.body as MailChimpSubscribeWebhookRequest;
+    async run(context): Promise<unknown[]> {
+      const request = context.payload.body as MailChimpSubscribeWebhookRequest;
 
-    if (request === undefined) {
-      return [];
-    }
+      if (request === undefined) {
+        return [];
+      }
 
-    return [request];
-  },
+      return [request];
+    },
 });
 
 const enableWebhookRequest = async ({ server, token, listId, webhookUrl }: EnableTriggerRequestParams): Promise<string> => {

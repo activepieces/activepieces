@@ -38,7 +38,7 @@ export const PieceOptionRequest = Type.Object({
     pieceName: Type.String({}),
     stepName: Type.String({}),
     propertyName: Type.String({}),
-    input: Type.Any({})
+    input: Type.Any({}),
 });
 
 export type PieceOptionRequest = Static<typeof PieceOptionRequest>;

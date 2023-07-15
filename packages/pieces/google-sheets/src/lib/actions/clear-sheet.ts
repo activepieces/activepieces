@@ -1,12 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { googleSheetsCommon } from '../common/common';
+import { googleSheetsAuth } from '../..';
 
 export const clearSheetAction = createAction({
+    auth: googleSheetsAuth,
     name: 'clear_sheet',
     description: 'Clears all rows on an existing sheet',
     displayName: 'Clear Sheet',
     props: {
-        authentication: googleSheetsCommon.authentication,
         spreadsheet_id: googleSheetsCommon.spreadsheet_id,
         include_team_drives: googleSheetsCommon.include_team_drives,
         sheet_id: googleSheetsCommon.sheet_id,
@@ -17,27 +18,27 @@ export const clearSheetAction = createAction({
             defaultValue: true,
         }),
     },
-    async run(context) {
-        const sheetName = await googleSheetsCommon.findSheetName(context.propsValue['authentication']['access_token'],
-            context.propsValue['spreadsheet_id'],
-            context.propsValue['sheet_id']);
+    async run({propsValue, auth}) {
+        const sheetName = await googleSheetsCommon.findSheetName(auth['access_token'],
+            propsValue['spreadsheet_id'],
+            propsValue['sheet_id']);
         if (!sheetName) {
             throw Error("Sheet not found in spreadsheet");
         }
 
         const rowsToDelete: number[] = [];
-        const values = await googleSheetsCommon.getValues(context.propsValue.spreadsheet_id, context.propsValue['authentication']['access_token'], context.propsValue.sheet_id);
+        const values = await googleSheetsCommon.getValues(propsValue.spreadsheet_id, auth['access_token'], propsValue.sheet_id);
         for (const key in values) {
-            if (key === '0' && context.propsValue.is_first_row_headers) {
+            if (key === '0' && propsValue.is_first_row_headers) {
                 continue;
             }
             rowsToDelete.push(parseInt(key) + 1);
         }
 
         for (let i = 0; i < rowsToDelete.length; i++) {
-            await googleSheetsCommon.clearSheet(context.propsValue.spreadsheet_id,
-                context.propsValue.sheet_id, context.propsValue['authentication']['access_token'],
-                context.propsValue.is_first_row_headers ? 1 : 0, rowsToDelete.length)
+            await googleSheetsCommon.clearSheet(propsValue.spreadsheet_id,
+                propsValue.sheet_id, auth['access_token'],
+                propsValue.is_first_row_headers ? 1 : 0, rowsToDelete.length)
         }
 
         return {

@@ -13,7 +13,7 @@ export const flowFolderService = {
     async delete({ projectId, folderId }: { projectId: ProjectId, folderId: FolderId }) {
         await folderRepo.delete({
             id: folderId,
-            projectId: projectId,
+            projectId,
         })
     },
     async update({ projectId, folderId, request }: { projectId: ProjectId, folderId: FolderId, request: CreateOrRenameFolderRequest }): Promise<Folder> {
@@ -53,7 +53,7 @@ export const flowFolderService = {
         }
         const folder = await folderRepo.save({
             id: apId(),
-            projectId: projectId,
+            projectId,
             displayName: request.displayName,
         })
         return {
@@ -76,14 +76,14 @@ export const flowFolderService = {
         const numberOfFlowForEachFolder: Promise<number>[] = []
         const dtosList: FolderDto[] = []
         paginationResponse.data.forEach((f) => {
-            numberOfFlowForEachFolder.push(flowService.count({ projectId: projectId, folderId: f.id }))
+            numberOfFlowForEachFolder.push(flowService.count({ projectId, folderId: f.id }))
         });
         (await Promise.all(numberOfFlowForEachFolder)).forEach((num, idx) => {
             dtosList.push({ ...paginationResponse.data[idx], numberOfFlows: num })
         })
         return paginationHelper.createPage<FolderDto>(dtosList, paginationResponse.cursor)
     },
-    async getOne({ projectId, folderId }: {projectId: ProjectId, folderId: FolderId}): Promise<FolderDto | null> {
+    async getOne({ projectId, folderId }: { projectId: ProjectId, folderId: FolderId }): Promise<FolderDto | null> {
         const folder = await folderRepo.findOneBy({ projectId, id: folderId })
         if (!folder) {
             throw new ActivepiecesError({
@@ -93,10 +93,10 @@ export const flowFolderService = {
                 },
             })
         }
-        const numberOfFlows = await flowService.count({ projectId: projectId, folderId: folderId })
+        const numberOfFlows = await flowService.count({ projectId, folderId })
         return {
             ...folder,
-            numberOfFlows: numberOfFlows,
+            numberOfFlows,
         }
     },
 

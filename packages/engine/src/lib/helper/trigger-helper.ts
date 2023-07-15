@@ -1,4 +1,4 @@
-import { ApEdition, EventPayload, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecutionState, PieceTrigger, ScheduleOptions, TriggerHookType } from "@activepieces/shared";
+import { AUTHENTICATION_PROPERTY_NAME, ApEdition, EventPayload, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecutionState, PieceTrigger, ScheduleOptions, TriggerHookType } from "@activepieces/shared";
 import { createContextStore } from "../services/storage.service";
 import { VariableService } from "../services/variable-service";
 import { pieceHelper } from "./action-helper";
@@ -25,13 +25,14 @@ export const triggerHelper = {
     const variableService = new VariableService();
     const executionState = new ExecutionState();
 
-    const resolvedInput = await variableService.resolve({
+    const resolvedProps = await variableService.resolve({
       unresolvedInput: input,
       executionState,
       censorConnections: false,
     })
 
-    const { result, errors } = await variableService.validateAndCast(resolvedInput, trigger.props);
+    const { result: validatedProps, errors } = await variableService.validateAndCast(resolvedProps, trigger.props);
+
     if (Object.keys(errors).length > 0) {
       throw new Error(JSON.stringify(errors));
     }
@@ -56,7 +57,8 @@ export const triggerHelper = {
         }
       },
       webhookUrl: params.webhookUrl,
-      propsValue: result,
+      auth: validatedProps[AUTHENTICATION_PROPERTY_NAME],
+      propsValue: validatedProps,
       payload: params.triggerPayload ?? {},
     };
     switch (params.hookType) {

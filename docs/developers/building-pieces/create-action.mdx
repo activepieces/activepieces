@@ -23,12 +23,17 @@ npm run create-piece hacker-news
 The piece will be generated at `packages/pieces/hacker-news/`,
 the `src/index.ts` file should contain the following code
 
+<Tip>
+This piece doesn't require authentication, check the Authentication Reference for more information.
+</Tip>
+
 ```ts
-import { createPiece } from '@activepieces/pieces-framework';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 
 export const hackerNews = createPiece({
   displayName: 'hacker-news',
   logoUrl: 'https://cdn.activepieces.com/pieces/hacker-news.png',
+  auth: PieceAuth.None(),
   authors: [
   ],
   actions: [
@@ -64,8 +69,9 @@ import { httpClient, HttpMethod } from "@activepieces/pieces-common";
 
 export const fetchTopStories = createAction({
 	name: 'fetch_top_stories', // Must be a unique across the piece, this shouldn't be changed.
-    displayName:'Fetch Top Stories',
-    description: 'Fetch top stories from hackernews',
+  auth: PieceAuth.None(),
+  displayName:'Fetch Top Stories',
+  description: 'Fetch top stories from hackernews',
 	props: {
         // Properties to ask from the user, in this ask we will take number of
 		number_of_stories: Property.Number({
@@ -96,6 +102,9 @@ export const fetchTopStories = createAction({
 
 ```
 
+<Tip>
+Friendly Tip: You can use `context.auth` If your piece contains authentication for this example, It doesn't have.
+</Tip>
 This code defines an `action` that fetches the top stories from Hacker News using API.
 
 The createAction function takes an object with several properties, including the `name`, `displayName`, `description`, `props`, and `run` function of the action.
@@ -121,6 +130,7 @@ export const hackerNews = createPiece({
   displayName: 'Hackernews Tutorial',
   logoUrl: 'https://cdn.activepieces.com/pieces/hackernews.png',
   authors: [],
+  auth: PieceAuth.None(),
    // Add the action here.
   actions: [fetchTopStories], // <--------
   triggers: [],

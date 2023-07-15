@@ -243,6 +243,7 @@
     {
       "group": "Piece Reference",
       "pages": [
+        "developers/piece-reference/authentication",
         "developers/piece-reference/properties",
         "developers/piece-reference/flow-control",
         "developers/piece-reference/persistent-storage",

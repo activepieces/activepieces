@@ -1,12 +1,13 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { mysqlCommon, mysqlConnect, isSpecialColumn } from "../common";
+import { mysqlAuth } from "../..";
 
 export default createAction({
+    auth: mysqlAuth,
     name: 'find_rows',
     displayName: 'Find Rows',
     description: 'Reads rows from a table',
     props: {
-        authentication: mysqlCommon.authentication,
         timezone: mysqlCommon.timezone,
         table: mysqlCommon.table(),
         condition: Property.ShortText({
@@ -29,7 +30,7 @@ export default createAction({
         const columns = context.propsValue.columns as string[] || ['*']
         const qsColumns = columns.map(c => isSpecialColumn(c) ? c : ("`" + c + "`")).join(',')
         const qs = "SELECT " + qsColumns + " FROM `" + context.propsValue.table + "` WHERE " + context.propsValue.condition + ";"
-        const conn = await mysqlConnect(context.propsValue);
+        const conn = await mysqlConnect(context.auth, context.propsValue);
         try {
             const results = await conn.query(qs, context.propsValue.args)
             return { results }

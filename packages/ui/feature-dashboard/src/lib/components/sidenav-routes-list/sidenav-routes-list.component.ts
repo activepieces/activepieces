@@ -23,7 +23,7 @@ export class SidenavRoutesListComponent {
   sideNavRoutes: SideNavRoute[] = [
     {
       icon: '/assets/img/custom/dashboard/collections.svg',
-      borderColorInTailwind: '!ap-border-purpleBorder',
+      borderColorInTailwind: '!ap-border-purple-border',
       caption: 'Flows',
       route: 'flows',
       effect: () => {
@@ -32,13 +32,13 @@ export class SidenavRoutesListComponent {
     },
     {
       icon: 'assets/img/custom/dashboard/runs.svg',
-      borderColorInTailwind: '!ap-border-greenBorder',
+      borderColorInTailwind: '!ap-border-green-border',
       caption: 'Runs',
       route: 'runs',
     },
     {
       icon: 'assets/img/custom/connections.svg',
-      borderColorInTailwind: '!ap-border-blueBorder',
+      borderColorInTailwind: '!ap-border-blue-border',
       caption: 'Connections',
       route: 'connections',
     },
