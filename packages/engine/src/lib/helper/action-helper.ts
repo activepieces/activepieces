@@ -29,6 +29,8 @@ import {
     extractPieceFromModule,
     getPackageAliasForPiece,
     AUTHENTICATION_PROPERTY_NAME,
+    ExecuteValidateAuthOperation,
+    ExecuteValidateAuthResponse,
 } from "@activepieces/shared";
 import { VariableService } from "../services/variable-service";
 import { isNil } from '@activepieces/shared'
@@ -280,9 +282,38 @@ export const pieceHelper = {
         }
     },
 
+    async executeValidateAuth(params: ExecuteValidateAuthOperation): Promise<ExecuteValidateAuthResponse> {
+        const { pieceName, pieceVersion, input } = params
+
+        try {
+            const piece = await loadPieceOrThrow(pieceName, pieceVersion)
+
+            if (isNil(piece.validateAuth)) {
+                return {
+                    success: false,
+                    error: `validateAuth is not defined for piece ${pieceName} version ${pieceVersion}`
+                }
+            }
+
+            const output = await piece.validateAuth({
+                auth: input
+            })
+
+            return {
+                success: true,
+                output,
+            }
+        }
+        catch(e) {
+            return {
+                success: false,
+                error: e instanceof Error ? e.message : JSON.stringify(e),
+            }
+        }
+    },
+
     loadPieceOrThrow,
 };
-
 
 const generateTestExecutionContext = async (flowVersion: FlowVersion): Promise<Record<string, unknown>> => {
     const flowSteps = flowHelper.getAllSteps(flowVersion.trigger)

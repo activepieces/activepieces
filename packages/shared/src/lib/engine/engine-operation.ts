@@ -11,7 +11,8 @@ export enum EngineOperationType {
     EXECUTE_CODE = "EXECUTE_CODE",
     EXECUTE_FLOW = "EXECUTE_FLOW",
     EXECUTE_PROPERTY = "EXECUTE_PROPERTY",
-    EXECUTE_TRIGGER_HOOK = "EXECUTE_TRIGGER_HOOK"
+    EXECUTE_TRIGGER_HOOK = "EXECUTE_TRIGGER_HOOK",
+    EXECUTE_VALIDATE_AUTH = "EXECUTE_VALIDATE_AUTH",
 }
 
 export enum TriggerHookType {
@@ -29,15 +30,24 @@ export type EngineOperation =
     | ExecuteTriggerOperation<TriggerHookType>
     | ExecuteExtractPieceMetadata
 
-export type ExecuteActionOperation = {
+type BaseEngineOperation = {
+    projectId: ProjectId
+    workerToken?: string
+    apiUrl?: string
+}
+
+export type ExecuteActionOperation = BaseEngineOperation & {
     actionName: string
     flowVersion: FlowVersion
     pieceName: string
     pieceVersion: string
     input: Record<string, unknown>
-    projectId: ProjectId
-    workerToken?: string
-    apiUrl?: string
+}
+
+export type ExecuteValidateAuthOperation = BaseEngineOperation & {
+    pieceName: string
+    pieceVersion: string
+    input: Record<string, unknown>
 }
 
 export type ExecuteExtractPieceMetadata = {
@@ -52,25 +62,19 @@ export type ExecuteCodeOperation = {
     projectId: ProjectId
 }
 
-export interface ExecutePropsOptions {
+export type ExecutePropsOptions = BaseEngineOperation & {
     pieceName: string;
     pieceVersion: string;
     propertyName: string;
     stepName: string;
     input: Record<string, any>;
-    projectId: ProjectId;
-    apiUrl?: string;
-    workerToken?: string;
 }
 
-type BaseExecuteFlowOperation<T extends ExecutionType> = {
+type BaseExecuteFlowOperation<T extends ExecutionType> = BaseEngineOperation & {
     flowVersionId: FlowVersionId;
     flowRunId: FlowRunId;
-    projectId: ProjectId;
     triggerPayload: unknown;
     executionType: T;
-    workerToken?: string;
-    apiUrl?: string;
 }
 
 export type BeginExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.BEGIN>
@@ -83,14 +87,11 @@ export type ResumeExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.
 
 export type ExecuteFlowOperation = BeginExecuteFlowOperation | ResumeExecuteFlowOperation
 
-export interface ExecuteTriggerOperation<HT extends TriggerHookType> {
+export type ExecuteTriggerOperation<HT extends TriggerHookType> = BaseEngineOperation & {
     hookType: HT,
     flowVersion: FlowVersion,
     webhookUrl: string,
     triggerPayload?: TriggerPayload,
-    projectId: ProjectId,
-    workerToken?: string;
-    apiUrl?: string;
     edition?: string;
     appWebhookUrl?: string;
     webhookSecret?: string;
@@ -146,6 +147,32 @@ export type ExecuteActionResponse = {
     output: unknown;
     message?: string;
 }
+
+type BaseExecuteValidateAuthResponseOutput<Valid extends boolean> = {
+    valid: Valid
+}
+
+type ValidExecuteValidateAuthResponseOutput = BaseExecuteValidateAuthResponseOutput<true>
+
+type InvalidExecuteValidateAuthResponseOutput = BaseExecuteValidateAuthResponseOutput<false> & {
+    error: string
+}
+
+type BaseExecuteValidateAuthResponse<Success extends boolean> = {
+    success: Success
+}
+
+type SuccessfulExecuteValidateAuthResponse = BaseExecuteValidateAuthResponse<true> & {
+    output: ValidExecuteValidateAuthResponseOutput | InvalidExecuteValidateAuthResponseOutput
+}
+
+type UnsuccessfulExecuteValidateAuthResponse = BaseExecuteValidateAuthResponse<false> & {
+    error: string
+}
+
+export type ExecuteValidateAuthResponse =
+    | SuccessfulExecuteValidateAuthResponse
+    | UnsuccessfulExecuteValidateAuthResponse
 
 export interface ScheduleOptions {
     cronExpression: string;
