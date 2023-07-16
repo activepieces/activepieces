@@ -709,7 +709,7 @@ function upgradePiece(step: Step, stepName: string): Step {
   return clonedStep;
 }
 
-// TODO Remove this in 2024, this to prevent breaking the experience for existing user by performing bad upgrade in draft.
+// TODO Remove this in 2024, these pieces didn't follow the standarad versioning where the minor version has to be increased when there is breaking change.
 function isLegacyApp({pieceName, pieceVersion}: {pieceName: string, pieceVersion: string}){
   if (
     pieceName === '@activepieces/piece-google-sheets' &&
