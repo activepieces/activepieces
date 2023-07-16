@@ -718,13 +718,13 @@ function isLegacyApp({pieceName, pieceVersion}: {pieceName: string, pieceVersion
   }
   if (
     pieceName === '@activepieces/piece-google-sheets' &&
-    semver.lt(pieceVersion, '0.3.0')
+    semver.lt(newVersion, '0.3.0')
   ) {
     return true;
   }
   if (
     pieceName === '@activepieces/piece-gmail' &&
-    semver.lt(pieceVersion, '0.3.0')
+    semver.lt(newVersion, '0.3.0')
   ) {
     return true;
   }
