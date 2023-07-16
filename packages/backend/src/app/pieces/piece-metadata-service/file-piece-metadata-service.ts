@@ -1,8 +1,8 @@
 import { readdir } from 'node:fs/promises'
-import { resolve } from 'node:path'
+import { resolve, join } from 'node:path'
 import { cwd } from 'node:process'
 import { Piece, PieceMetadata, PieceMetadataSummary } from '@activepieces/pieces-framework'
-import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, extractPieceFromModule } from '@activepieces/shared'
 import { captureException } from '../../helper/logger'
 import { GetParams, PieceMetadataService } from './piece-metadata-service'
 import { isNil } from '@activepieces/shared'
@@ -17,17 +17,22 @@ const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
 
     for (const piecePackage of filteredPiecePackages) {
         try {
-            const module = await import(`../../../../../pieces/${piecePackage}/src/index.ts`)
-            const packageJson = await import(`../../../../../pieces/${piecePackage}/package.json`)
-            const piece = Object.values<Piece>(module)[0]
+            const packageJson = await import(join(piecesPath, piecePackage, 'package.json'))
+            const module = await import(join(piecesPath, piecePackage, 'src', 'index'))
+            const { name: pieceName, version: pieceVersion } = packageJson
+            const piece = extractPieceFromModule<Piece>({
+                module,
+                pieceName,
+                pieceVersion,
+            })
             piecesMetadata.push({
                 directoryName: piecePackage,
                 ...piece.metadata(),
-                name: packageJson.name,
-                version: packageJson.version,
+                name: pieceName,
+                version: pieceVersion,
             })
         }
-        catch(ex) {
+        catch (ex) {
             captureException(ex)
         }
     }
@@ -46,6 +51,7 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
                 description: p.description,
                 logoUrl: p.logoUrl,
                 version: p.version,
+                auth: p.auth,
                 minimumSupportedRelease: p.minimumSupportedRelease,
                 maximumSupportedRelease: p.maximumSupportedRelease,
                 actions: Object.keys(p.actions).length,
@@ -70,7 +76,7 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
             return pieceMetadata
         },
 
-        async delete(){
+        async delete() {
             throw new Error('Deleting pieces is not supported in development mode')
         },
         async create() {

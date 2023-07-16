@@ -9,6 +9,7 @@ import { ConnectionsTableComponent } from './pages/connections-table/connections
 import { FoldersResolver } from './resolvers/folders.resolver';
 import { DashboardContainerComponent } from './dashboard-container.component';
 import { CommunityPiecesTableComponent } from './pages/community-pieces-table/community-pieces-table.component';
+import { environment } from '@activepieces/ui/common';
 
 export const DashboardLayoutRouting: Routes = [
   {
@@ -18,25 +19,25 @@ export const DashboardLayoutRouting: Routes = [
     children: [
       { path: '', pathMatch: 'full', redirectTo: '/flows' },
       {
-        title: 'Runs - Activepieces',
+        title: `Runs - ${environment.websiteTitle}`,
         path: 'runs',
         pathMatch: 'full',
         component: RunsTableComponent,
       },
       {
-        title: 'My Pieces - Activepieces',
+        title: `My Pieces - ${environment.websiteTitle}`,
         path: 'settings/my-pieces',
         pathMatch: 'full',
         component: CommunityPiecesTableComponent,
       },
       {
-        title: 'Connections - Activepieces',
+        title: `Connections - ${environment.websiteTitle}`,
         path: 'connections',
         pathMatch: 'full',
         component: ConnectionsTableComponent,
       },
       {
-        title: 'Flows - Activepieces',
+        title: `Flows - ${environment.websiteTitle}`,
         path: 'flows',
         pathMatch: 'full',
         component: FlowsTableComponent,

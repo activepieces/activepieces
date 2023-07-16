@@ -4,7 +4,9 @@
     {
       "files": ["*.ts"],
       "parserOptions": {
-        "project":["packages/ui/feature-builder-form-controls/tsconfig.*?.json"]
+        "project": [
+          "packages/ui/feature-builder-form-controls/tsconfig.*?.json"
+        ]
       }
     }
   ]

@@ -17,7 +17,7 @@ $spinner-border-width: 3px;
   border-radius: 50%;
   animation: spinner-border 0.75s linear infinite;
   &.dark {
-    border: $spinner-border-width solid $primary;
+    border: $spinner-border-width solid map-get($map: $primary-color, $key:"default" );
     border-right-color: transparent;
   }
 }

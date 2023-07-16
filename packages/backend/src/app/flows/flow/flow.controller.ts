@@ -133,7 +133,7 @@ export const flowController = async (fastify: FastifyInstance) => {
         ) => {
             const versionId: FlowVersionId | undefined = request.query.versionId
             const viewMode = request.query.viewMode ?? FlowViewMode.NO_ARTIFACTS
-            const flow = await flowService.getOne({ id: request.params.flowId, versionId: versionId, projectId: request.principal.projectId, viewMode })
+            const flow = await flowService.getOne({ id: request.params.flowId, versionId, projectId: request.principal.projectId, viewMode })
             if (!flow) {
                 throw new ActivepiecesError({ code: ErrorCode.FLOW_NOT_FOUND, params: { id: request.params.flowId } })
             }

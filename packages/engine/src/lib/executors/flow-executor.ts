@@ -1,5 +1,4 @@
 import dayjs from 'dayjs';
-import { globals } from '../globals';
 import { ActionHandler } from '../action/action-handler';
 import {
   ExecutionState,

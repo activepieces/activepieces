@@ -18,7 +18,11 @@ import { appEventRoutingService } from '../app-event-routing/app-event-routing.s
 import { isNil } from '@activepieces/shared'
 import { LATEST_JOB_DATA_SCHEMA_VERSION } from '../workers/flow-worker/job-data'
 import { pieceMetadataService } from '../pieces/piece-metadata-service'
-import { captureException, logger } from './logger'
+import { logger } from './logger'
+import { system } from './system/system'
+import { SystemProp } from './system/system-prop'
+
+const POLLING_FREQUENCY_CRON_EXPRESSON = `*/${system.getNumber(SystemProp.TRIGGER_DEFAULT_POLL_INTERVAL ?? 5)} * * * *`
 
 export const triggerUtils = {
     async executeTrigger(params: ExecuteTrigger): Promise<unknown[]> {
@@ -33,13 +37,13 @@ export const triggerUtils = {
                 })
                 const { result } = await engineHelper.executeTrigger({
                     hookType: TriggerHookType.RUN,
-                    flowVersion: flowVersion,
+                    flowVersion,
                     triggerPayload: payload,
                     webhookUrl: await webhookService.getWebhookUrl({
                         flowId: flowVersion.flowId,
                         simulate,
                     }),
-                    projectId: projectId,
+                    projectId,
                 })
 
 
@@ -103,12 +107,12 @@ const disablePieceTrigger = async (params: EnableOrDisableParams) => {
 
     const engineHelperResponse = await engineHelper.executeTrigger({
         hookType: TriggerHookType.ON_DISABLE,
-        flowVersion: flowVersion,
+        flowVersion,
         webhookUrl: await webhookService.getWebhookUrl({
             flowId: flowVersion.flowId,
             simulate,
         }),
-        projectId: projectId,
+        projectId,
     })
 
     switch (pieceTrigger.type) {
@@ -142,9 +146,9 @@ const enablePieceTrigger = async (params: EnableOrDisableParams) => {
 
     const engineHelperResponse = await engineHelper.executeTrigger({
         hookType: TriggerHookType.ON_ENABLE,
-        flowVersion: flowVersion,
+        flowVersion,
         webhookUrl,
-        projectId: projectId,
+        projectId,
     })
 
     if (engineHelperResponse.status !== EngineResponseStatus.OK) {
@@ -168,10 +172,11 @@ const enablePieceTrigger = async (params: EnableOrDisableParams) => {
         case TriggerStrategy.WEBHOOK:
             break
         case TriggerStrategy.POLLING: {
-            const scheduleOptions = engineHelperResponse.result.scheduleOptions
-            if(isNil(scheduleOptions)){
-                captureException(new Error('ScheduleOptions can\'t be null in engine response when trigger is polling'))
-                return null
+            if (isNil(engineHelperResponse.result.scheduleOptions)) {
+                engineHelperResponse.result.scheduleOptions = {
+                    cronExpression: POLLING_FREQUENCY_CRON_EXPRESSON,
+                    timezone: 'UTC',
+                }
             }
             await flowQueue.add({
                 id: flowVersion.id,
@@ -185,7 +190,7 @@ const enablePieceTrigger = async (params: EnableOrDisableParams) => {
                     triggerType: TriggerType.PIECE,
                     executionType: ExecutionType.BEGIN,
                 },
-                scheduleOptions: scheduleOptions,
+                scheduleOptions: engineHelperResponse.result.scheduleOptions,
             })
             break
 

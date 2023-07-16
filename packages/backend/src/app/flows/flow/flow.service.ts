@@ -35,7 +35,7 @@ export const flowService = {
         const newFlowId = apId()
         const flow: Partial<Flow> = {
             id: newFlowId,
-            projectId: projectId,
+            projectId,
             folderId: request.folderId,
         }
         const savedFlow = await flowRepo.save(flow)
@@ -43,7 +43,7 @@ export const flowService = {
             displayName: request.displayName,
         })
         const latestFlowVersion = await flowVersionService.getFlowVersion({
-            projectId: projectId,
+            projectId,
             flowId: savedFlow.id,
             versionId: undefined,
             removeSecrets: false,
@@ -98,13 +98,13 @@ export const flowService = {
         const flowInstancesPromises: Promise<FlowInstance | null>[] = []
         paginationResult.data.forEach((flow) => {
             flowVersionsPromises.push(flowVersionService.getFlowVersion({
-                projectId: projectId,
+                projectId,
                 flowId: flow.id,
                 versionId: undefined,
                 includeArtifactAsBase64: false,
                 removeSecrets: false,
             }))
-            flowInstancesPromises.push(flowInstanceService.get({ projectId: projectId, flowId: flow.id }))
+            flowInstancesPromises.push(flowInstanceService.get({ projectId, flowId: flow.id }))
         })
         const versions: (FlowVersion | null)[] = await Promise.all(flowVersionsPromises)
         const instances: (FlowInstance | null)[] = await Promise.all(flowInstancesPromises)
@@ -140,7 +140,7 @@ export const flowService = {
         const flowVersion = await flowVersionService.getFlowVersion({
             projectId,
             flowId,
-            versionId: versionId,
+            versionId,
             removeSecrets: false,
             includeArtifactAsBase64: false,
         })
@@ -172,7 +172,7 @@ export const flowService = {
             removeSecrets: false,
             includeArtifactAsBase64: viewMode === FlowViewMode.WITH_ARTIFACTS,
         }))
-        const instance = await flowInstanceService.get({ projectId: projectId, flowId: flow.id })
+        const instance = await flowInstanceService.get({ projectId, flowId: flow.id })
         return {
             ...flow,
             version: flowVersion,
@@ -185,7 +185,7 @@ export const flowService = {
             key: flowId,
             timeout: 10000,
         })
-        const flow: Omit<Flow, 'version'> | null = (await flowRepo.findOneBy({ projectId: projectId, id: flowId }))
+        const flow: Omit<Flow, 'version'> | null = (await flowRepo.findOneBy({ projectId, id: flowId }))
         if (isNil(flow)) {
             throw new ActivepiecesError({
                 code: ErrorCode.FLOW_NOT_FOUND,
@@ -198,7 +198,7 @@ export const flowService = {
             if (operation.type === FlowOperationType.CHANGE_FOLDER) {
                 await flowRepo.update(flow.id, {
                     ...flow,
-                    folderId: operation.request.folderId ?? undefined,
+                    folderId: operation.request.folderId ? operation.request.folderId : null,
                 })
             }
             else {
@@ -230,11 +230,11 @@ export const flowService = {
         finally {
             await flowLock.release()
         }
-        return flowService.getOneOrThrow({ id: flowId, projectId: projectId })
+        return flowService.getOneOrThrow({ id: flowId, projectId })
     },
     async delete({ projectId, flowId }: { projectId: ProjectId, flowId: FlowId }): Promise<void> {
         await flowInstanceService.onFlowDelete({ projectId, flowId })
-        await flowRepo.delete({ projectId: projectId, id: flowId })
+        await flowRepo.delete({ projectId, id: flowId })
     },
     async count(req: {
         projectId: string

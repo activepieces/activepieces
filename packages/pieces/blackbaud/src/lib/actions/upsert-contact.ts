@@ -1,8 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { blackbaudCommon } from '../common/common';
+import { blackbaudAuth } from '../..';
 
 export const blackbaudUpsertContact = createAction({
+    auth: blackbaudAuth,
     name: 'upssert_contact_if_not_exists',
     description: 'Upsert Contact based on Email',
     displayName: 'Upsert Contact on Email',
@@ -71,7 +73,7 @@ export const blackbaudUpsertContact = createAction({
         }
     ],
     async run(configValue) {
-        const accessToken = configValue.propsValue['authentication']?.access_token;
+        const accessToken = configValue.auth.access_token;
         const contactJson = configValue.propsValue['contact_json'] as Contact;
         const emailAddress = contactJson?.email?.address;
         if (!emailAddress) {

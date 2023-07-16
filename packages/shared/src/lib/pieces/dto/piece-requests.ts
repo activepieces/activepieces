@@ -1,7 +1,7 @@
 import { Static, Type } from "@sinclair/typebox";
  
 const semVerRegex = /^[0-9]+\.[0-9]+\.[0-9]+$/;
-const queryVersionRegex = /^(\^)?[0-9]+\.[0-9]+\.[0-9]+$/;
+const queryVersionRegex = /^([~^])?[0-9]+\.[0-9]+\.[0-9]+$/;
 
 export const SemVerType = Type.RegEx(semVerRegex);
 export const QueryVerType = Type.RegEx(queryVersionRegex);
@@ -38,7 +38,7 @@ export const PieceOptionRequest = Type.Object({
     pieceName: Type.String({}),
     stepName: Type.String({}),
     propertyName: Type.String({}),
-    input: Type.Any({})
+    input: Type.Any({}),
 });
 
 export type PieceOptionRequest = Static<typeof PieceOptionRequest>;

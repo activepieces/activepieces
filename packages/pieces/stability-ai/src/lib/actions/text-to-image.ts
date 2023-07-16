@@ -4,23 +4,14 @@ import {
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common';
+import { stabilityAiAuth } from '../..';
 
 export const textToImage = createAction({
+  auth: stabilityAiAuth,
   name: 'text-to-image',
   displayName: 'Text to Image',
   description: 'Generate an image using a text prompt',
   props: {
-    authentication: Property.CustomAuth({
-      displayName: 'Authentication',
-      props: {
-        api_key: Property.ShortText({
-          displayName: 'StabilityAI API Key',
-          required: true,
-          description: 'The api key of Stability AI',
-        }),
-      },
-      required: true,
-    }),
     prompt: Property.ShortText({
       displayName: 'Prompt',
       required: true,
@@ -245,7 +236,7 @@ export const textToImage = createAction({
     const engineId = engine_id || 'stable-diffusion-v1-5';
     const apiHost = 'https://api.stability.ai';
 
-    const apiKey = context.propsValue.authentication.api_key;
+    const apiKey = context.auth.api_key;
 
     const requestBody = {
       text_prompts: [

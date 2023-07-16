@@ -1,13 +1,14 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { HttpMethod, AuthenticationType, httpClient, HttpRequest } from "@activepieces/pieces-common";
 import { sendgridCommon } from "../common";
+import { sendgridAuth } from "../..";
 
 export const sendEmail = createAction({
+    auth: sendgridAuth,
     name: 'send_email',
     displayName: "Send Email",
     description: "Send a text or HTML email",
     props: {
-        authentication: sendgridCommon.authentication,
         to: Property.Array({
             displayName: 'To',
             description: 'Emails of the recipients',
@@ -60,7 +61,7 @@ export const sendEmail = createAction({
             method: HttpMethod.POST,
             url: `${sendgridCommon.baseUrl}/mail/send`,
             body: {
-                personalizations: to.map(x => {
+                personalizations: to.map((x) => {
                     return {
                         to: [{
                             email: (x as string).trim()
@@ -84,7 +85,7 @@ export const sendEmail = createAction({
             },
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
-                token: context.propsValue.authentication,
+                token: context.auth,
             },
             queryParams: {},
         };

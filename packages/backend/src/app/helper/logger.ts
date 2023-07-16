@@ -16,7 +16,7 @@ const initLogger = () => {
 
     return pino({
         level,
-        transport: env === ApEnvironment.PRODUCTION ? undefined: { target: 'pino-pretty', options: { translateTime: 'HH:MM:ss Z', colorize: true, ignore: 'pid,hostname' } },
+        transport: env === ApEnvironment.PRODUCTION ? undefined : { target: 'pino-pretty', options: { translateTime: 'HH:MM:ss Z', colorize: true, ignore: 'pid,hostname' } },
     })
 }
 

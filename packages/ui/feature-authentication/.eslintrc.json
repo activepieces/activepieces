@@ -4,7 +4,7 @@
     {
       "files": ["*.ts"],
       "parserOptions": {
-        "project":["packages/ui/feature-authentication/tsconfig.*?.json"]
+        "project": ["packages/ui/feature-authentication/tsconfig.*?.json"]
       }
     }
   ]

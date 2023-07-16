@@ -188,7 +188,14 @@
             "install/options/easypanel"
           ]
         },
-        "install/configurations",
+        {
+          "group": "Configurations",
+          "icon": "gear",
+          "pages": [
+            "install/configurations/environment-variables",
+            "install/configurations/error-notifications"
+          ]
+        },
         "install/breaking-changes"
       ]
     },
@@ -236,6 +243,7 @@
     {
       "group": "Piece Reference",
       "pages": [
+        "developers/piece-reference/authentication",
         "developers/piece-reference/properties",
         "developers/piece-reference/flow-control",
         "developers/piece-reference/persistent-storage",
@@ -256,14 +264,21 @@
       "pages": [
         "telemetry",
         "changelog",
-        "license",
+        "license"
+      ]
+    },
+    {
+      "group": "Enterprise Edition",
+      "pages": [
+        "enterprise/whitelabel",
         {
-          "group": "Product Embed",
+          "group": "Connection Cards",
+          "icon": "cards-blank",
           "pages": [
-            "product-embed/overview",
-            "product-embed/user-authentication",
-            "product-embed/frontend-sdk",
-            "product-embed/user-flows"
+            "enterprise/connection-cards/overview",
+            "enterprise/connection-cards/user-authentication",
+            "enterprise/connection-cards/frontend-sdk",
+            "enterprise/connection-cards/user-flows"
           ]
         }
       ]

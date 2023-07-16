@@ -1,17 +1,15 @@
 @import "../../../../../../core/src/assets/scss/variables.scss";
 
-.folders-list
-{
+.folders-list {
     &::-webkit-scrollbar {
         width: 4px;
-      }
+    }
     //100% - (height of the add folder section - margin beneath it) - (height of the table title - margin above and beneath it)
     height: calc(100% - 48px - 30px - 20px - 65px);
 }
-.selected-folder-item{
-    background-color:  $graySelect;
-    .folder-icon
-    {
-        fill:$title;
+.selected-folder-item {
+    background-color: $gray-select;
+    .folder-icon {
+        fill: $title;
     }
 }
