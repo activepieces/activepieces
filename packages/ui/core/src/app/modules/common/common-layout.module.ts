@@ -13,7 +13,7 @@ import {
   MatTooltipModule,
   MAT_TOOLTIP_DEFAULT_OPTIONS,
 } from '@angular/material/tooltip';
-import { MonacoEditorModule } from '@materia-ui/ngx-monaco-editor';
+import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
 import {
   MatSnackBarModule,
   MAT_SNACK_BAR_DEFAULT_OPTIONS,

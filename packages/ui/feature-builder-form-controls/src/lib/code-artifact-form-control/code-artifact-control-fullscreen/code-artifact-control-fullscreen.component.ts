@@ -36,13 +36,13 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
   executeCodeTest$: Observable<StepRunResponse>;
   codeEditorOptions = {
     minimap: { enabled: false },
-    theme: 'vs',
+    theme: 'apTheme',
     language: 'typescript',
     readOnly: false,
   };
   packageDotJsonOptions = {
     minimap: { enabled: false },
-    theme: 'vs',
+    theme: 'apTheme',
     language: 'json',
     readOnly: false,
   };
