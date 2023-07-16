@@ -1,10 +1,10 @@
 import { Property, OAuth2PropertyValue } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod, AuthenticationType, HttpRequest } from "@activepieces/pieces-common";
-import { googleDocsAuth } from "../..";
+import FormData from "form-data";
 
 export const docsCommon = {
-    auth: googleDocsAuth,
-    baseUrl: 'https://docs.googleapis.com/v1',
+    googleDriveUploadBaseUrl: 'https://www.googleapis.com/upload/drive/v3',
+    googleDocsBaseUrl: 'https://docs.googleapis.com/v1',
     title: Property.ShortText({
         displayName: 'Document Title',
         required: true
@@ -28,7 +28,7 @@ export const docsCommon = {
           const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
           const folders = (await httpClient.sendRequest<{ files: { id: string, name: string }[] }>({
             method: HttpMethod.GET,
-            url: `https://www.googleapis.com/drive/v3/files`,
+            url: 'https://www.googleapis.com/drive/v3/files',
             queryParams: {
               q: "mimeType='application/vnd.google-apps.folder'"
             },
@@ -52,26 +52,38 @@ export const docsCommon = {
 
     // Creates an empty document with the title provided
     createDocument: async (title: string, accessToken: string, parentFolder?: string) => {
-        const createRequest = await httpClient.sendRequest({
-            url: `${docsCommon.baseUrl}/documents`,
+        const meta = {
+            'mimeType': "application/vnd.google-apps.document",
+            'name': title,
+            ...(parentFolder ? { 'parents': [parentFolder] } : {})
+        }
+
+        const metaBuffer = Buffer.from(JSON.stringify(meta), 'utf-8');
+
+        const form = new FormData()
+        form.append("Metadata", metaBuffer, { contentType: 'application/json' });
+
+        const result = await httpClient.sendRequest({
             method: HttpMethod.POST,
+            url: `${docsCommon.googleDriveUploadBaseUrl}/files?uploadType=multipart`,
+            body: form,
+            headers: {
+                ...form.getHeaders(),
+            },
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
                 token: accessToken,
-            },
-            body: {
-                title: title,
-                ...(parentFolder ? { 'parents': [parentFolder] } : {})
             }
-        });
+        })
 
-        return createRequest.body;
+        console.debug("File creation response", result)
+        return result.body;
     },
 
     // Writes provided content to the end of an existing document
     writeToDocument: async (documentId: number, body: string, accessToken: string) => {
         const writeRequest = await httpClient.sendRequest({
-            url: `${docsCommon.baseUrl}/documents/${documentId}:batchUpdate`,
+            url: `${docsCommon.googleDocsBaseUrl}/documents/${documentId}:batchUpdate`,
             method: HttpMethod.POST,
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
