@@ -213,6 +213,9 @@
     "verdaccio": "^5.0.4",
     "wait-on": "^7.0.1",
     "webpack-ignore-dynamic-require": "^1.0.0"
+  },
+  "nx": {
+    "includedScripts": []
   }
 }
 
