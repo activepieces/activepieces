@@ -77,7 +77,9 @@ export const googleSheetsCommon = {
         required: true,
         refreshers: ['sheet_id', 'spreadsheet_id', 'first_row_headers'],
         props: async ({auth, spreadsheet_id, sheet_id, first_row_headers}) => {
-
+            if (!auth || (spreadsheet_id ?? '').toString().length === 0 || (sheet_id ?? '').toString().length === 0) {
+                return {}
+            }
             const authentication = auth as OAuth2PropertyValue;
             const values = await googleSheetsCommon.getValues(spreadsheet_id as unknown as string, getAccessTokenOrThrow(authentication), sheet_id as unknown as number);
 
@@ -116,6 +118,15 @@ export const googleSheetsCommon = {
             const spreadsheet_id = context.spreadsheet_id as string;
             const sheet_id = context.sheet_id as number;
             const accessToken = authentication['access_token'] ?? '';
+
+            if (!context.auth || (spreadsheet_id ?? '').toString().length === 0  || (sheet_id ?? '').toString().length === 0) {
+                return {
+                    disabled: true,
+                    options: [],
+                    placeholder: 'Please select a sheet first'
+                }
+            }
+            
 
             const sheetName = await googleSheetsCommon.findSheetName(accessToken, spreadsheet_id, sheet_id);
 
