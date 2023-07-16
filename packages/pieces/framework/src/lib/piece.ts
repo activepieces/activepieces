@@ -64,7 +64,7 @@ export const createPiece = <PieceAuth extends PieceAuthProperty>(params: CreateP
     params.actions,
     params.triggers,
     params.auth ?? undefined,
-    params.ValidatePieceAuth,
+    params.validateAuth,
     params.minimumSupportedRelease,
     params.maximumSupportedRelease,
     params.description,
@@ -77,7 +77,7 @@ type CreatePieceParams<PieceAuth extends PieceAuthProperty = PieceAuthProperty> 
   authors?: string[]
   description?: string
   auth: PieceAuth | undefined
-  ValidatePieceAuth?: PieceAuthValidator<PieceAuth>
+  validateAuth?: PieceAuthValidator<PieceAuth>
   events?: PieceEventProcessors
   minimumSupportedRelease?: string
   maximumSupportedRelease?: string
