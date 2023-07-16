@@ -47,7 +47,7 @@ export type ExecuteActionOperation = BaseEngineOperation & {
 export type ExecuteValidateAuthOperation = BaseEngineOperation & {
     pieceName: string
     pieceVersion: string
-    input: Record<string, unknown>
+    auth: unknown
 }
 
 export type ExecuteExtractPieceMetadata = {
@@ -157,22 +157,9 @@ type ValidExecuteValidateAuthResponseOutput = BaseExecuteValidateAuthResponseOut
 type InvalidExecuteValidateAuthResponseOutput = BaseExecuteValidateAuthResponseOutput<false> & {
     error: string
 }
-
-type BaseExecuteValidateAuthResponse<Success extends boolean> = {
-    success: Success
-}
-
-type SuccessfulExecuteValidateAuthResponse = BaseExecuteValidateAuthResponse<true> & {
-    output: ValidExecuteValidateAuthResponseOutput | InvalidExecuteValidateAuthResponseOutput
-}
-
-type UnsuccessfulExecuteValidateAuthResponse = BaseExecuteValidateAuthResponse<false> & {
-    error: string
-}
-
 export type ExecuteValidateAuthResponse =
-    | SuccessfulExecuteValidateAuthResponse
-    | UnsuccessfulExecuteValidateAuthResponse
+    | ValidExecuteValidateAuthResponseOutput
+    | InvalidExecuteValidateAuthResponseOutput
 
 export interface ScheduleOptions {
     cronExpression: string;

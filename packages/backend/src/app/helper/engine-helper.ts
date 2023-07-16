@@ -19,6 +19,8 @@ import {
     ErrorCode,
     ExecuteCodeOperation,
     ExecuteExtractPieceMetadata,
+    ExecuteValidateAuthOperation,
+    ExecuteValidateAuthResponse,
 } from '@activepieces/shared'
 import { Sandbox, sandboxManager } from '../workers/sandbox'
 import { system } from './system/system'
@@ -55,6 +57,8 @@ export type EngineHelperPropResult = DropdownState<unknown> | Record<string, Dyn
 
 export type EngineHelperActionResult = ExecuteActionResponse
 
+export type EngineHelperValidateAuthResult = ExecuteValidateAuthResponse
+
 export type EngineHelperCodeResult = ExecuteActionResponse
 export type EngineHelperExtractPieceInformation = Omit<PieceMetadata, 'name' | 'version'>
 
@@ -65,6 +69,7 @@ export type EngineHelperResult =
     | EngineHelperCodeResult
     | EngineHelperExtractPieceInformation
     | EngineHelperActionResult
+    | EngineHelperValidateAuthResult
 
 export type EngineHelperResponse<Result extends EngineHelperResult> = {
     status: EngineResponseStatus
@@ -126,7 +131,7 @@ const getSandbox = async ({ pieceName, pieceVersion }: GetSandboxParams): Promis
 function tryParseJson(value: unknown) {
     try {
         return JSON.parse(value as string)
-    } 
+    }
     catch (e) {
         return value
     }
@@ -319,6 +324,35 @@ export const engineHelper = {
         try {
             return await execute(
                 EngineOperationType.EXECUTE_ACTION,
+                sandbox,
+                input,
+            )
+        }
+        finally {
+            await sandboxManager.returnSandbox(sandbox.boxId)
+        }
+    },
+
+    async executeValidateAuth(
+        operation: ExecuteValidateAuthOperation,
+    ): Promise<EngineHelperResponse<EngineHelperValidateAuthResult>> {
+        logger.debug(operation, '[EngineHelper#executeValidateAuth] operation')
+
+        const { pieceName, pieceVersion } = operation
+
+        const sandbox = await getSandbox({
+            pieceName,
+            pieceVersion,
+        })
+
+        const input = {
+            ...operation,
+            workerToken: await generateWorkerToken({ projectId: operation.projectId }),
+        }
+
+        try {
+            return await execute(
+                EngineOperationType.EXECUTE_VALIDATE_AUTH,
                 sandbox,
                 input,
             )

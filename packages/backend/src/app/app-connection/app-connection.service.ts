@@ -8,7 +8,9 @@ import {
     BaseOAuth2ConnectionValue,
     CloudOAuth2ConnectionValue,
     Cursor,
+    EngineResponseStatus,
     ErrorCode,
+    ExecuteValidateAuthOperation,
     OAuth2ConnectionValueWithApp,
     ProjectId,
     SeekPage,
@@ -25,51 +27,49 @@ import { getEdition } from '../helper/secret-helper'
 import { logger } from '../helper/logger'
 import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
 import { isNil } from '@activepieces/shared'
+import { engineHelper } from '../helper/engine-helper'
 
 type GetOneParams = {
     projectId: ProjectId
     name: string
 }
 
+type ValidateConnectionValueParams = {
+    connection: UpsertConnectionRequest
+    projectId: ProjectId
+}
+
 const appConnectionRepo = databaseConnection.getRepository(AppConnectionEntity)
 
 export const appConnectionService = {
     async upsert({ projectId, request }: { projectId: ProjectId, request: UpsertConnectionRequest }): Promise<AppConnection> {
-        let response: Record<string, unknown> = request.value
-        switch (request.value.type) {
-            case AppConnectionType.CLOUD_OAUTH2:
-                response = await claimWithCloud({
-                    pieceName: request.appName,
-                    code: request.value.code,
-                    clientId: request.value.client_id,
-                    tokenUrl: request.value.token_url!,
-                    edition: await getEdition(),
-                    authorizationMethod: request.value.authorization_method!,
-                    codeVerifier: request.value.code_challenge!,
-                })
-                break
-            case AppConnectionType.OAUTH2:
-                response = await claim({
-                    clientSecret: request.value.client_secret,
-                    clientId: request.value.client_id,
-                    tokenUrl: request.value.token_url,
-                    redirectUrl: request.value.redirect_url,
-                    code: request.value.code,
-                    authorizationMethod: request.value.authorization_method,
-                    codeVerifier: request.value.code_challenge!,
-                })
-                break
-            default:
-                break
-        }
-        const claimedUpsertRequest = { ...request, value: { ...response, ...request.value }, id: apId(), projectId }
-        await appConnectionRepo.upsert({ ...claimedUpsertRequest, id: apId(), projectId, value: encryptObject(claimedUpsertRequest.value) }, ['name', 'projectId'])
-        const connection = await appConnectionRepo.findOneByOrFail({
+        const validatedConnectionValue = await validateConnectionValue({
+            connection: request,
             projectId,
-            name: request.name,
         })
-        connection.value = decryptObject(connection.value)
-        return connection
+
+        const encryptedConnectionValue = encryptObject({
+            ...validatedConnectionValue,
+            ...request.value,
+        })
+
+        const connection = {
+            ...request,
+            value: encryptedConnectionValue,
+            id: apId(),
+            projectId,
+        }
+
+        await appConnectionRepo.upsert(connection, ['name', 'projectId'])
+
+        const updatedConnection = await appConnectionRepo.findOneByOrFail({
+            name: request.name,
+            projectId,
+        })
+
+        updatedConnection.value = decryptObject(updatedConnection.value)
+
+        return updatedConnection
     },
 
     async getOne({ projectId, name }: GetOneParams): Promise<AppConnection | null> {
@@ -162,6 +162,79 @@ export const appConnectionService = {
         const refreshConnections = await Promise.all(promises)
         return paginationHelper.createPage<AppConnection>(refreshConnections, cursor)
     },
+}
+
+const validateConnectionValue = async (params: ValidateConnectionValueParams): Promise<Record<string, unknown>> => {
+    const { connection, projectId } = params
+
+    switch (connection.value.type) {
+        case AppConnectionType.CLOUD_OAUTH2:
+            return await claimWithCloud({
+                pieceName: connection.appName,
+                code: connection.value.code,
+                clientId: connection.value.client_id,
+                tokenUrl: connection.value.token_url!,
+                edition: await getEdition(),
+                authorizationMethod: connection.value.authorization_method!,
+                codeVerifier: connection.value.code_challenge!,
+            })
+
+        case AppConnectionType.OAUTH2:
+            return await claim({
+                clientSecret: connection.value.client_secret,
+                clientId: connection.value.client_id,
+                tokenUrl: connection.value.token_url,
+                redirectUrl: connection.value.redirect_url,
+                code: connection.value.code,
+                authorizationMethod: connection.value.authorization_method,
+                codeVerifier: connection.value.code_challenge!,
+            })
+
+        case AppConnectionType.CUSTOM_AUTH:
+        case AppConnectionType.BASIC_AUTH:
+        case AppConnectionType.SECRET_TEXT:
+            await engineValidateAuth({
+                pieceName: connection.appName,
+                projectId,
+                auth: connection.value,
+            })
+    }
+
+    return connection.value
+}
+
+const engineValidateAuth = async (params: EngineValidateAuthParams): Promise<void> => {
+    const { pieceName, auth, projectId } = params
+
+    const engineInput: ExecuteValidateAuthOperation = {
+        pieceName,
+        pieceVersion: 'latest',
+        auth,
+        projectId,
+    }
+
+    const engineResponse = await engineHelper.executeValidateAuth(engineInput)
+
+    if (engineResponse.status !== EngineResponseStatus.OK) {
+        logger.error(engineResponse, '[AppConnectionService#engineValidateAuth] engineResponse')
+        throw new ActivepiecesError({
+            code: ErrorCode.ENGINE_OPERATION_FAILURE,
+            params: {
+                message: 'failed to run validateAuth',
+            },
+        })
+    }
+
+    const validateAuthResult = engineResponse.result
+
+    if (validateAuthResult.valid !== true) {
+        throw new ActivepiecesError({
+            code: ErrorCode.INVALID_APP_CONNECTION,
+            params: {
+                error: validateAuthResult.error,
+            },
+        })
+    }
 }
 
 async function refresh(connection: AppConnection): Promise<AppConnection> {
@@ -265,10 +338,10 @@ function mergeNonNull(appConnection: OAuth2ConnectionValueWithApp, oAuth2Respons
         obj[key as keyof BaseOAuth2ConnectionValue] = value
         return obj
     }, {})
-  
+
     return { ...appConnection, ...formattedOAuth2Response } as OAuth2ConnectionValueWithApp
 }
-  
+
 
 async function claim(request: {
     clientSecret: string
@@ -394,4 +467,10 @@ type claimWithCloudRequest = {
     edition: string
     clientId: string
     tokenUrl: string
+}
+
+type EngineValidateAuthParams = {
+    pieceName: string
+    projectId: ProjectId
+    auth: unknown
 }

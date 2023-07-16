@@ -7,6 +7,8 @@ import {
     DynamicProperties,
     MultiSelectDropdownProperty,
     Piece,
+    PieceAuthProperty,
+    PiecePropValueSchema,
     PiecePropertyMap,
     PropertyType,
     StaticPropsValue,
@@ -283,33 +285,22 @@ export const pieceHelper = {
     },
 
     async executeValidateAuth(params: ExecuteValidateAuthOperation): Promise<ExecuteValidateAuthResponse> {
-        const { pieceName, pieceVersion, input } = params
+        const { pieceName, pieceVersion, auth } = params
 
-        try {
-            const piece = await loadPieceOrThrow(pieceName, pieceVersion)
+        const piece = await loadPieceOrThrow(pieceName, pieceVersion)
 
-            if (isNil(piece.validateAuth)) {
-                return {
-                    success: false,
-                    error: `validateAuth is not defined for piece ${pieceName} version ${pieceVersion}`
+        if (isNil(piece.validateAuth)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: `validateAuth is not defined for piece ${pieceName} version ${pieceVersion}`
                 }
-            }
-
-            const output = await piece.validateAuth({
-                auth: input
             })
+        }
 
-            return {
-                success: true,
-                output,
-            }
-        }
-        catch(e) {
-            return {
-                success: false,
-                error: e instanceof Error ? e.message : JSON.stringify(e),
-            }
-        }
+        return await piece.validateAuth({
+            auth: auth as PiecePropValueSchema<PieceAuthProperty>,
+        })
     },
 
     loadPieceOrThrow,
