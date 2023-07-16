@@ -39,12 +39,14 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
     theme: 'apTheme',
     language: 'typescript',
     readOnly: false,
+    automaticLayout: true,
   };
   packageDotJsonOptions = {
     minimap: { enabled: false },
     theme: 'apTheme',
     language: 'json',
     readOnly: false,
+    automaticLayout: true,
   };
   testResultForm: FormGroup;
   selectedTab = SelectedTabInFullscreenCodeEditor.OUTPUT;
