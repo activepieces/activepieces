@@ -691,7 +691,7 @@ function upgradePiece(step: Step, stepName: string): Step {
   const clonedStep: Step = JSON.parse(JSON.stringify(step));
   switch (step.type) {
     case ActionType.PIECE:
-    case TriggerType.PIECE:
+    case TriggerType.PIECE:{
       const { pieceVersion, pieceName } = step.settings;
       if (isLegacyApp({pieceName, pieceVersion})) {
         return step;
@@ -705,6 +705,7 @@ function upgradePiece(step: Step, stepName: string): Step {
         clonedStep.settings.pieceVersion = `^${pieceVersion}`;
       }
       break;
+    }
   }
   return clonedStep;
 }
