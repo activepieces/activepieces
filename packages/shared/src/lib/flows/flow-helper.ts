@@ -712,6 +712,10 @@ function upgradePiece(step: Step, stepName: string): Step {
 
 // TODO Remove this in 2024, these pieces didn't follow the standarad versioning where the minor version has to be increased when there is breaking change.
 function isLegacyApp({pieceName, pieceVersion}: {pieceName: string, pieceVersion: string}){
+  let newVersion = pieceVersion;
+  if(newVersion.startsWith("^") || newVersion.startsWith("~")){
+    newVersion = newVersion.substring(1)
+  }
   if (
     pieceName === '@activepieces/piece-google-sheets' &&
     semver.lt(pieceVersion, '0.3.0')
