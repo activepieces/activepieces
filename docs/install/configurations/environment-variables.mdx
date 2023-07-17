@@ -1,6 +1,5 @@
 ---
-title: "Configurations"
-icon: "gear"
+title: "Environment Variables"
 description: ""
 ---
 
@@ -64,44 +63,3 @@ There are two modes of execution for the activepieces: the default sandboxed mod
 The sandboxed mode runs the code inside an isolated sandbox, and requires privileged access to Docker.
 
 The non-sandboxed mode runs the code directly on the host machine without any restrictions. This mode doesn't require privileged access to Docker, but it should only be used with single trusted user in activepieces.
-
-
-### Setting Notification for Failed Runs:
-
-To get notified when a flow execution fails outside of testing, set a URL for `AP_NOTIFICATION_URL`.
-
-To make a personalized notification channel, use activepieces to create a flow with a webhook trigger and choose your notification preference (e.g. Slack, Email). Copy the webhook URL and set it for `AP_NOTIFICATION_URL`.
-
-Here's an example payload send by activepieces:
-
-```json
-{
-  "body": {
-    "type": "run.failed",
-    "payload": {
-      "run": {
-        "id": "0km7v4Ke44TgEtA3HUnts",
-        "flowId": "oyvBZc2seQ4LTPXLamgOo",
-        "status": "FAILED",
-        "created": "2023-03-31T22:07:42.513Z",
-        "updated": "2023-03-31T22:07:43.536Z",
-        "projectId": "g1EcUOGl2LaNQQA3AsQmN",
-        "startTime": "2023-03-31T22:07:42.511Z",
-        "finishTime": "2023-03-31T22:07:43.535Z",
-        "environment": "PRODUCTION"
-        "flowVersionId": "6nxv1FXCQaaa2pxzLDfIx",
-        "flowDisplayName": "Flow 1"
-      },
-      "owner": {
-        "id": "LFknXPv6FMhiUQFfVMZl0",
-        "email": "mo@example.com",
-        "lastName": "Doe",
-        "firstName": "John"
-      }
-    }
-  },
-  "method": "POST",
-  "headers": {},
-  "queryParams": {}
-}
-```
