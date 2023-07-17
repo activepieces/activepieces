@@ -19,7 +19,7 @@ export const callMethod = createAction({
             required: true,
             refreshers: ['wsdl'],
             options: async ({wsdl}) => {
-                if (wsdl == null) {
+                if (!wsdl) {
                     return {
                         disabled: true,
                         placeholder: 'Setup WSDL URL first',
@@ -48,6 +48,9 @@ export const callMethod = createAction({
             required: true,
             refreshers: ['wsdl', 'method'],
             async props({wsdl, method}) {
+                if (!wsdl || !method) {
+                    return {};
+                }
                 const client = await soap.createClientAsync(wsdl as unknown as string);
                 const spec = client.describe();
                 const methods = Object.values(Object.values(spec)[0] as object)[0];
