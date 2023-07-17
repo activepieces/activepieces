@@ -1,5 +1,6 @@
 import * as soap from "soap";
-import { Property, ShortTextProperty, StaticDropdownProperty, StaticMultiSelectDropdownProperty, createAction } from "@activepieces/pieces-framework";
+import { BasicAuthProperty, BasicAuthPropertyValue, CustomAuthPropertyValue, CustomAuthProps, Property, ShortTextProperty, StaticDropdownProperty, StaticMultiSelectDropdownProperty, StaticPropsValue, createAction } from "@activepieces/pieces-framework";
+import { soapAuth } from "../shared/auth";
 
 
 type DynamicProp = ShortTextProperty<boolean> | StaticDropdownProperty<any, boolean> | StaticMultiSelectDropdownProperty<any,boolean>;
@@ -8,6 +9,7 @@ export const callMethod = createAction({
     name: 'call_method',
     displayName: 'Call SOAP Method',
     description: 'Call a SOAP from a given wsdl specification',
+    auth: soapAuth(),
     props: {
         wsdl: Property.ShortText({
             displayName: 'WSDL URL',
@@ -72,7 +74,21 @@ export const callMethod = createAction({
         const { wsdl, method, args } = ctx.propsValue;
         
         const client = await soap.createClientAsync(wsdl);
+        if (ctx.auth) {
+            const auth = ctx.auth as StaticPropsValue<CustomAuthProps>;
+            
+            const security = auth['type'] === 'WS' ? new soap.WSSecurity(auth['username'] as string, auth['password'] as string) : new soap.BasicAuthSecurity(auth['username'] as string, auth['password'] as string);
+            client.setSecurity(security);
+        }
         
-        return await client[method + 'Async'](args);
+        const [actionRes] = await client[method + 'Async'](args);
+        
+        return {
+            actionRes,
+            raw: {
+                request: client.lastRequest,
+                response: client.lastResponse
+            }
+        }
     }
 });
