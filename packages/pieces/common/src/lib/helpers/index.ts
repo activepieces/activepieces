@@ -10,4 +10,3 @@ export const getAccessTokenOrThrow = (auth: OAuth2PropertyValue | undefined): st
   return accessToken;
 };
 
-export * from './assertions'

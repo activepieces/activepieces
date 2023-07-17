@@ -4,7 +4,9 @@
     {
       "files": ["*.ts"],
       "parserOptions": {
-        "project":["packages/ui/feature-builder-right-sidebar/tsconfig.*?.json"]
+        "project": [
+          "packages/ui/feature-builder-right-sidebar/tsconfig.*?.json"
+        ]
       }
     }
   ]

@@ -1,5 +1,4 @@
 import dayjs from 'dayjs';
-import { globals } from '../globals';
 import { ActionHandler } from '../action/action-handler';
 import {
   ExecutionState,
@@ -20,7 +19,7 @@ import {
   StopResponse,
 } from '@activepieces/shared';
 import { createActionHandler } from '../action/action-handler-factory';
-import { isNil } from 'lodash';
+import { isNil } from '@activepieces/shared'
 
 type FlowExecutorCtor = {
   executionState: ExecutionState

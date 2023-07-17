@@ -18,6 +18,7 @@ import {
   RightSideBarType,
   ViewModeEnum,
 } from '@activepieces/ui/feature-builder-store';
+import { forkJoin } from 'rxjs';
 import {
   TestStepService,
   PieceMetadataService,
@@ -55,7 +56,7 @@ export class FlowRightSidebarComponent implements OnInit {
   ViewModeEnum = ViewModeEnum;
   currentStepPieceVersion$: Observable<
     | {
-        version: string;
+        version: string | undefined;
         latest: boolean;
         tooltipText: string;
       }
@@ -102,8 +103,10 @@ export class FlowRightSidebarComponent implements OnInit {
               map((res) => {
                 return (
                   res.triggers[step.settings.triggerName] &&
-                  res.triggers[step.settings.triggerName].type ===
-                    TriggerStrategy.POLLING
+                  (res.triggers[step.settings.triggerName].type ===
+                    TriggerStrategy.POLLING ||
+                    res.triggers[step.settings.triggerName].type ===
+                      TriggerStrategy.APP_WEBHOOK)
                 );
               })
             );
@@ -163,27 +166,33 @@ export class FlowRightSidebarComponent implements OnInit {
       );
   }
 
-  private checkCurrentStepPieceVersion() {
+  checkCurrentStepPieceVersion() {
     this.currentStepPieceVersion$ = this.store
       .select(BuilderSelectors.selectCurrentStepPieceVersionAndName)
       .pipe(
         switchMap((res) => {
           if (res) {
-            return this.pieceMetadaService.getPiecesManifest().pipe(
-              map((manifest) => {
-                const piece = manifest.find((p) => p.name === res?.pieceName);
-                if (piece && piece.version === res?.version) {
+            return forkJoin([
+              this.pieceMetadaService.getPieceMetadata(
+                res.pieceName,
+                res.version
+              ),
+              this.pieceMetadaService.getLatestVersion(res.pieceName),
+            ]).pipe(
+              map(([pieceManifest, latestVersion]) => {
+                if (pieceManifest && pieceManifest.version === latestVersion) {
                   return {
-                    version: res.version,
+                    version: pieceManifest.version,
                     latest: true,
-                    tooltipText: `You are using the latest version of ${piece.displayName}. Click to learn more`,
+                    tooltipText: `You are using the latest version of ${pieceManifest.displayName}. Click to learn more`,
                   };
                 }
+
                 return {
-                  version: res.version,
+                  version: pieceManifest.version,
                   latest: false,
                   tooltipText:
-                    `You are using an old version of ${piece?.displayName}. Click to learn more` ||
+                    `You are using an old version of ${pieceManifest?.displayName}. Click to learn more` ||
                     ``,
                 };
               })

@@ -26,7 +26,7 @@ const triggerEventRepo = databaseConnection.getRepository(TriggerEventEntity)
 
 export const triggerEventService = {
     async saveEvent({ projectId, flowId, payload }: { projectId: ProjectId, flowId: FlowId, payload: unknown }): Promise<TriggerEvent> {
-        const flow = await flowService.getOneOrThrow({ projectId: projectId, id: flowId })
+        const flow = await flowService.getOneOrThrow({ projectId, id: flowId })
         const sourceName = getSourceName(flow.version.trigger)
         return triggerEventRepo.save({
             id: apId(),
@@ -51,7 +51,7 @@ export const triggerEventService = {
                         flowId: flow.id,
                         simulate: true,
                     }),
-                    projectId: projectId,
+                    projectId,
                 })
                 await triggerEventRepo.delete({
                     projectId,
@@ -66,12 +66,11 @@ export const triggerEventService = {
                     })
                 }
 
-                for (let i = 0; i < testResult.output.length; i++) {
-
+                for (const output of testResult.output) {
                     await triggerEventService.saveEvent({
                         projectId,
                         flowId: flow.id,
-                        payload: testResult.output[i],
+                        payload: output,
                     })
                 }
                 return triggerEventService.list({

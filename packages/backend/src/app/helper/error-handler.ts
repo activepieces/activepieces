@@ -21,11 +21,11 @@ export const errorHandler = async (
 
         await reply.status(statusCode).send({
             code: error.error.code,
-            params:error.error.params,
+            params: error.error.params,
         })
     }
     else {
-        if(!error.statusCode || error.statusCode === StatusCodes.INTERNAL_SERVER_ERROR){
+        if (!error.statusCode || error.statusCode === StatusCodes.INTERNAL_SERVER_ERROR) {
             captureException(error)
         }
         await reply.status(error.statusCode ?? StatusCodes.INTERNAL_SERVER_ERROR).send(error)

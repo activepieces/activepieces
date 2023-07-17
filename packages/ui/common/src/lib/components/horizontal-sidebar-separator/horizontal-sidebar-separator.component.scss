@@ -1,31 +1,24 @@
 @import "../../../../../core/src/assets/scss/variables.scss";
 .pane-separator {
-    position:absolute;
-    left: 0;
-    width: 100%;
-    height: 10px;
-    background: $graySelect;
-    pointer-events: all;
-    
-    cursor:row-resize;
-    .knob
-    {
-      background-color: $border;
-      width:$knob-height;
-      height: $knob-width;
-      border-radius: 50px;
-  
-    }
-    &:hover,&.active
-    {
-      .knob
-      {
-        background-color: $body;
-      }
-  
-    }
-    z-index: $appended-to-body-z-index;
-  
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 10px;
+  background: $gray-select;
+  pointer-events: all;
+
+  cursor: row-resize;
+  .knob {
+    background-color: $border;
+    width: $knob-height;
+    height: $knob-width;
+    border-radius: 50px;
   }
-  
-  
+  &:hover,
+  &.active {
+    .knob {
+      background-color: $body;
+    }
+  }
+  z-index: $appended-to-body-z-index;
+}

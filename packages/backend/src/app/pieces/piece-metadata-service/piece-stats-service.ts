@@ -1,5 +1,5 @@
 import { FlowId, ProjectId, flowHelper, TriggerType, ActionType } from '@activepieces/shared'
-import { isNil } from 'lodash'
+import { isNil } from '@activepieces/shared'
 import { flowInstanceService } from '../../flows/flow-instance/flow-instance.service'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowService } from '../../flows/flow/flow.service'
@@ -48,7 +48,7 @@ export const pieceStatsService = {
         }
         for (const flowWithoutVersion of flows) {
             const flow = await flowService.getOneOrThrow({ id: flowWithoutVersion.id, projectId: flowWithoutVersion.projectId })
-            if(isNil(flow.version)) {
+            if (isNil(flow.version)) {
                 continue
             }
             const trigger = flow.version.trigger

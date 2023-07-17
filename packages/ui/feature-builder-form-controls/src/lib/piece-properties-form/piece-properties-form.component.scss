@@ -1,5 +1,5 @@
 @import "../../../../core/src/assets/scss/variables.scss";
-
+@import "../../../../core/src/assets/scss/derived-variables.scss";
 .description-container {
   font-weight: 400;
   font-size: 0.75rem;
@@ -13,45 +13,39 @@
 }
 
 .label-container {
-  gap: .25rem;
+  gap: 0.25rem;
   height: 1.375rem;
   overflow: visible;
-  &.has-underlined-label
-  {
-    margin-bottom:.1875rem;
+  &.has-underlined-label {
+    margin-bottom: 0.1875rem;
   }
   label {
-    margin-bottom:0px;
+    margin-bottom: 0px;
   }
 
   margin-bottom: 0px;
 }
 
-.form-group
-{
-  row-gap:.3125rem ;
+.form-group {
+  row-gap: 0.3125rem;
 }
 .optional-input-label-container {
-  margin-bottom: .625rem;
+  margin-bottom: 0.625rem;
 }
 .optional-input-label-container {
-  margin-bottom: .625rem;
+  margin-bottom: 0.625rem;
 }
-.edit-selected-auth
-{
+.edit-selected-auth {
   position: absolute;
-  top:10px;
-  right:30px;
-  color:$primary;
-  margin:0px;
+  top: 10px;
+  right: 30px;
+  color: $primary-default;
+  margin: 0px;
 }
 
-.security-dropdown
-{
+.security-dropdown {
   margin-bottom: 5px;
 }
-.authentication-section
-{
-  margin-top:0.9375rem;
+.authentication-section {
+  margin-top: 0.9375rem;
 }
-

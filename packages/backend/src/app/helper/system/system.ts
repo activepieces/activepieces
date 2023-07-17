@@ -47,8 +47,7 @@ export const system = {
 }
 
 const getEnvVar = (prop: SystemProp): string | undefined => {
-    const value = process.env[`AP_${prop}`]
-    return value
+    return process.env[`AP_${prop}`]
 }
 
 export const validateEnvPropsOnStartup = () => {
@@ -65,13 +64,13 @@ export const validateEnvPropsOnStartup = () => {
 
     const executionMode = system.get(SystemProp.EXECUTION_MODE)
     const signedUpEnabled = system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
-    if(executionMode === ExecutionMode.UNSANDBOXED && signedUpEnabled){
+    if (executionMode === ExecutionMode.UNSANDBOXED && signedUpEnabled) {
         throw new ActivepiecesError({
             code: ErrorCode.SYSTEM_PROP_INVALID,
             params: {
                 prop: SystemProp.EXECUTION_MODE,
             },
-        }, `Allowing users to sign up is not allowed in unsandboxed mode, please change the value of AP_${SystemProp.EXECUTION_MODE}, please check the documentation`)
+        }, 'Allowing users to sign up is not allowed in unsandboxed mode, please check the configuration section in the documentation')
     }
 }
 

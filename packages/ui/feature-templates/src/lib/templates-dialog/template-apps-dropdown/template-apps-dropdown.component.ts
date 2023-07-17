@@ -63,7 +63,12 @@ export class TemplateAppsDropdownComponent implements ControlValueAccessor {
         return this.pieces$.pipe(
           map((pieces) => {
             return pieces.filter((p) => {
-              return p.displayName.toLowerCase().includes(search);
+              return (
+                p.displayName
+                  .toLowerCase()
+                  .includes(search.toLocaleLowerCase()) &&
+                !this.selectedPieces.includes(p.name)
+              );
             });
           })
         );
@@ -129,6 +134,7 @@ export class TemplateAppsDropdownComponent implements ControlValueAccessor {
   }
   addPieceToFilter(pieceName: string) {
     this.selectedPieces.push(pieceName);
+    this.searchControl.setValue('');
     this.dropdownControl.setValue('', { emitEvent: false });
     this.setPiecesToShowInDropdown();
     this.onChange(this.selectedPieces);

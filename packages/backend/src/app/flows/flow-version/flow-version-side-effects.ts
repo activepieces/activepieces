@@ -21,7 +21,7 @@ const deleteWebhookSimulation = async (params: DeleteWebhookSimulationParams): P
             flowId,
         })
     }
-    catch(e: unknown) {
+    catch (e: unknown) {
         const notWebhookSimulationNotFoundError = !(e instanceof ActivepiecesError && e.error.code === ErrorCode.ENTITY_NOT_FOUND)
         if (notWebhookSimulationNotFoundError) {
             throw e

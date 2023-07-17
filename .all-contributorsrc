@@ -364,6 +364,33 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "buttonsbond",
+      "name": "Mark van Bellen",
+      "avatar_url": "https://avatars.githubusercontent.com/u/23551912?v=4",
+      "profile": "http://all-tech-plus.com",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "olivierguzzi",
+      "name": "Olivier Guzzi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/13715916?v=4",
+      "profile": "http://guzguz.fr",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "Ozak93",
+      "name": "Osama Zakarneh",
+      "avatar_url": "https://avatars.githubusercontent.com/u/31257994?v=4",
+      "profile": "https://github.com/Ozak93",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

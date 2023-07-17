@@ -1,4 +1,4 @@
-import {createAction, Property, StoreScope} from "@activepieces/pieces-framework";
+import { createAction, Property, StoreScope } from "@activepieces/pieces-framework";
 
 
 export const storageAddtoList = createAction({
@@ -38,12 +38,12 @@ export const storageAddtoList = createAction({
         })
     },
     async run(context) {
-        
+
         const items = (await context.store.get<unknown[]>(context.propsValue['key'], context.propsValue.store_scope)) ?? [];
         if (!Array.isArray(items)) {
             throw new Error(`Key ${context.propsValue['key']} is not an array`);
         }
-        if(context.propsValue['ignore_if_exists'] && items.includes(context.propsValue['value'])) {
+        if (context.propsValue['ignore_if_exists'] && items.includes(context.propsValue['value'])) {
             return items;
         }
         items.push(context.propsValue['value']);

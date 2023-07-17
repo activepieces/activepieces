@@ -24,9 +24,9 @@ export const userService = {
         }
         return await userRepo.save(user)
     },
-    async getMetaInfo({id}: {id: UserId}): Promise<UserMeta | null> {
-        const user = await userRepo.findOneBy({id})
-        if(!user){
+    async getMetaInfo({ id }: { id: UserId }): Promise<UserMeta | null> {
+        const user = await userRepo.findOneBy({ id })
+        if (!user) {
             return null
         }
         return {

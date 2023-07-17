@@ -5,30 +5,22 @@
   "projectType": "library",
   "targets": {
     "build": {
-      "executor": "@nrwl/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/twitter",
         "tsConfig": "packages/pieces/twitter/tsconfig.lib.json",
         "packageJson": "packages/pieces/twitter/package.json",
         "main": "packages/pieces/twitter/src/index.ts",
-        "assets": [
-          "packages/pieces/twitter/*.md"
-        ],
+        "assets": ["packages/pieces/twitter/*.md"],
         "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {
-      "executor": "@nrwl/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": [
-          "packages/pieces/twitter/**/*.ts"
-        ]
+        "lintFilePatterns": ["packages/pieces/twitter/**/*.ts"]
       }
     }
   },

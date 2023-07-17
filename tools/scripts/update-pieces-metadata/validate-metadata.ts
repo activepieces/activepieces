@@ -1,17 +1,17 @@
-import { compareSemVer, semVerRegex } from '../../../packages/shared/src'
 import { PieceMetadata } from '../../../packages/pieces/framework/src'
+import * as semver from 'semver'
 
 const validateSupportedRelease = (minRelease: string | undefined, maxRelease: string | undefined) => {
-  if (minRelease !== undefined && !semVerRegex.test(minRelease)) {
-    throw Error(`[validateSupportedRelease] "minimumSupportedRelease" should match ${semVerRegex.source}`)
+  if (minRelease !== undefined && !semver.valid(minRelease)) {
+    throw Error(`[validateSupportedRelease] "minimumSupportedRelease" should be a valid semver version`)
   }
 
-  if (maxRelease !== undefined && !semVerRegex.test(maxRelease)) {
-    throw Error(`[validateSupportedRelease] "maximumSupportedRelease" should match ${semVerRegex.source}`)
+  if (maxRelease !== undefined && !semver.valid(maxRelease)) {
+    throw Error(`[validateSupportedRelease] "maximumSupportedRelease" should be a valid semver version`)
   }
 
-  if (minRelease !== undefined && maxRelease !== undefined && compareSemVer(minRelease, maxRelease) === 1) {
-    throw Error(`[validateSupportedRelease] "minimumSupportedRelease" should be less than "maximumSupportedRelease`)
+  if (minRelease !== undefined && maxRelease !== undefined && semver.gt(minRelease, maxRelease)) {
+    throw Error(`[validateSupportedRelease] "minimumSupportedRelease" should be less than "maximumSupportedRelease"`)
   }
 }
 

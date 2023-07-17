@@ -1,10 +1,11 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
-import { assertNotNullOrUndefined } from "@activepieces/pieces-common";
-import { figmaAuth } from '../common/props';
+import { assertNotNullOrUndefined } from "@activepieces/shared";
 import { figmaCommon } from "../common";
 import { figmaGetRequest } from '../common/utils';
+import { figmaAuth } from "../../";
 
 export const getFileAction = createAction({
+  auth: figmaAuth,
   name: 'get_file',
   displayName: 'Get File',
   description: 'Get file',
@@ -12,7 +13,6 @@ export const getFileAction = createAction({
     success: true,
   },
   props: {
-    authentication: figmaAuth,
     file_key: Property.ShortText({
       displayName: 'File Key',
       description: 'The Figma file key (copy from Figma file URL)',
@@ -20,12 +20,12 @@ export const getFileAction = createAction({
     }),
   },
   async run(context) {
-    const token = context.propsValue.authentication?.access_token;
+    const token = context.auth.access_token;
     const fileKey = context.propsValue.file_key;
 
     assertNotNullOrUndefined(token, 'token');
     assertNotNullOrUndefined(fileKey, 'file_key');
-    
+
     const url = `${figmaCommon.baseUrl}/${figmaCommon.files}`.replace(':file_key', fileKey);
 
     return figmaGetRequest({ token, url });

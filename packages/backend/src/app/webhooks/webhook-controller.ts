@@ -5,7 +5,7 @@ import { webhookService } from './webhook-service'
 import { captureException, logger } from '../helper/logger'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { fileService } from '../file/file.service'
-import { isNil } from 'lodash'
+import { isNil } from '@activepieces/shared'
 import { flowRepo } from '../flows/flow/flow.repo'
 
 export const webhookController: FastifyPluginAsync = async (app) => {
@@ -20,7 +20,7 @@ export const webhookController: FastifyPluginAsync = async (app) => {
         async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
             const flow = await getFlowOrThrow(request.params.flowId)
             let run = (await webhookService.callback({
-                flow: flow,
+                flow,
                 payload: {
                     method: request.method,
                     headers: request.headers as Record<string, string>,
@@ -72,7 +72,7 @@ export const webhookController: FastifyPluginAsync = async (app) => {
             logger.debug(`[WebhookController#simulate] flowId=${request.params.flowId}`)
             const flow = await getFlowOrThrow(request.params.flowId)
             await webhookService.simulationCallback({
-                flow: flow,
+                flow,
                 payload: {
                     method: request.method,
                     headers: request.headers as Record<string, string>,
@@ -168,7 +168,7 @@ const handler = async (request: FastifyRequest, flow: Flow) => {
     // If we don't catch the error here, it will crash the Fastify API. Adding await before the function call can help, but since 3P services expect a fast response, we still don't want to wait for the callback to finish.
     try {
         await webhookService.callback({
-            flow: flow,
+            flow,
             payload: {
                 method: request.method,
                 headers: request.headers as Record<string, string>,

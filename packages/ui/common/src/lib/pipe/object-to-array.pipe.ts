@@ -5,12 +5,12 @@ import { Pipe, PipeTransform } from '@angular/core';
   pure: true,
 })
 export class ObjectToArrayPipe implements PipeTransform {
-  transform(obj: any): { value: any; key: string }[] {
+  transform<T>(obj: T): { key: string; value: (typeof obj)[keyof T] }[] {
     if (!obj) return [];
     return Object.entries(obj).map(([key, val]) => {
       return {
-        value: val,
-        key: key,
+        value: val as (typeof obj)[keyof T],
+        key: key as string,
       };
     });
   }

@@ -1,6 +1,7 @@
 import { ResumeStepMetadata } from "../flow-run/execution/execution-output";
 import { ExecutionState } from "../flow-run/execution/execution-state";
 import { ExecutionType } from "../flow-run/execution/execution-type";
+import { FlowRunId } from "../flow-run/flow-run";
 import { FlowVersion, FlowVersionId } from "../flows/flow-version";
 import { ProjectId } from "../project/project";
 
@@ -30,10 +31,10 @@ export type EngineOperation =
 
 export type ExecuteActionOperation = {
     actionName: string
+    flowVersion: FlowVersion
     pieceName: string
     pieceVersion: string
     input: Record<string, unknown>
-    testExecutionContext: Record<string, unknown>
     projectId: ProjectId
     workerToken?: string
     apiUrl?: string
@@ -46,7 +47,7 @@ export type ExecuteExtractPieceMetadata = {
 
 export type ExecuteCodeOperation = {
     codeBase64: string
-    testExecutionContext: Record<string, unknown>
+    flowVersion: FlowVersion,
     input: Record<string, unknown>
     projectId: ProjectId
 }
@@ -64,6 +65,7 @@ export interface ExecutePropsOptions {
 
 type BaseExecuteFlowOperation<T extends ExecutionType> = {
     flowVersionId: FlowVersionId;
+    flowRunId: FlowRunId;
     projectId: ProjectId;
     triggerPayload: unknown;
     executionType: T;
@@ -76,6 +78,7 @@ export type BeginExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.B
 export type ResumeExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.RESUME> & {
     executionState: ExecutionState,
     resumeStepMetadata: ResumeStepMetadata,
+    resumePayload: unknown,
 }
 
 export type ExecuteFlowOperation = BeginExecuteFlowOperation | ResumeExecuteFlowOperation

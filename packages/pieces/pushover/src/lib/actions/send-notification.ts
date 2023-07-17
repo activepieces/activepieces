@@ -1,40 +1,13 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
+import { pushoverAuth } from "../..";
 
 export const sendNotification = createAction({
+    auth: pushoverAuth,
     name: "send_notification",
     displayName: "Send Notification",
     description: "Send a notification to Pushover",
     props: {
-        authentication: Property.CustomAuth({
-            displayName: "Authentication",
-            description: `
-            To obtain the api token:
-            
-            1. Log in to Pushover.
-            2. Click on your Application or on Create an Application/API Token
-            3. Copy the API Token/Key.
-
-            To obtain the user key:
-            1. Log in to Pushover
-            2. Copy your Your User Key
-
-            Note if you want to send the message to your group, you should specify a group key instead of the user key
-            `,
-            props: {
-                api_token: Property.SecretText({
-                    displayName: "Api Token",
-                    description: "Pushover Api Token",
-                    required: true,
-                }),
-                user_key: Property.SecretText({
-                    displayName: "User Key",
-                    description: "Pushover User Key",
-                    required: true,
-                }),
-            },
-            required: true,
-        }),
         title: Property.ShortText({
             displayName: "Title",
             description: "The title of the notification",
@@ -81,10 +54,10 @@ export const sendNotification = createAction({
             required: false,
         }),
     },
-    async run({ propsValue }) {
+    async run({ auth, propsValue }) {
         const baseUrl = 'https://api.pushover.net/1/messages.json';
-        const apiToken = propsValue.authentication.api_token;
-        const userKey = propsValue.authentication.user_key;
+        const apiToken = auth.api_token;
+        const userKey = auth.user_key;
 
         const title = propsValue.title;
         const message = propsValue.message;

@@ -17,6 +17,7 @@ import {
   NG_VALUE_ACCESSOR,
   ValidatorFn,
   Validators,
+  FormControl,
 } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import {
@@ -84,6 +85,9 @@ type ConfigKey = string;
 export class PiecePropertiesFormComponent implements ControlValueAccessor {
   updateValueOnChange$: Observable<void> = new Observable<void>();
   PropertyType = PropertyType;
+  searchControl: FormControl<string> = new FormControl('', {
+    nonNullable: true,
+  });
   dropdownOptionsObservables$: {
     [key: ConfigKey]: Observable<DropdownState<unknown>>;
   } = {};
@@ -221,28 +225,39 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
         property.type === PropertyType.MULTI_SELECT_DROPDOWN
       ) {
         this.dropdownOptionsObservables$[pk] =
-          this.createRefreshableConfigObservables<DropdownState<unknown>>({
-            property: property,
-            propertyKey: pk,
-          }).pipe(
+          this.createRefreshableConfigObservables<DropdownState<unknown>>(
+            {
+              property: property,
+              propertyKey: pk,
+            },
+            {
+              options: [],
+              disabled: true,
+              placeholder:
+                'An unxpected error occured please contact our support',
+            }
+          ).pipe(
             map((res) => {
               if (res.options.length === 0) {
                 const emptyDropdownState: DropdownState<unknown> = {
                   options: [],
                   disabled: true,
-                  placeholder: `No ${property.displayName} Available`,
+                  placeholder:
+                    res.placeholder ?? `No ${property.displayName} Available`,
                 };
                 return emptyDropdownState;
               }
               return res;
             }),
-            catchError(() => {
+            catchError((err) => {
+              console.error(err);
               return of({
                 options: [],
                 disabled: true,
-                placeholder: 'unknown server erro happend, check console',
+                placeholder: 'unknown server error happend, check console',
               });
-            })
+            }),
+            shareReplay(1)
           );
       }
     });
@@ -252,10 +267,13 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
       const parentProperty = this.properties[pk];
       if (parentProperty.type == PropertyType.DYNAMIC) {
         this.dynamicPropsObservables$[pk] =
-          this.createRefreshableConfigObservables<PiecePropertyMap>({
-            property: parentProperty,
-            propertyKey: pk,
-          }).pipe(
+          this.createRefreshableConfigObservables<PiecePropertyMap>(
+            {
+              property: parentProperty,
+              propertyKey: pk,
+            },
+            {}
+          ).pipe(
             tap((res) => {
               const fg = this.form.get(pk) as UntypedFormGroup;
               if (fg) {
@@ -295,26 +313,35 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
 
   createRefreshableConfigObservables<
     T extends DropdownState<unknown> | PiecePropertyMap
-  >(obj: {
-    property:
-      | DynamicProperties<boolean>
-      | MultiSelectDropdownProperty<unknown, boolean>
-      | DropdownProperty<unknown, boolean>;
-    propertyKey: string;
-  }) {
+  >(
+    obj: {
+      property:
+        | DynamicProperties<boolean>
+        | MultiSelectDropdownProperty<unknown, boolean>
+        | DropdownProperty<unknown, boolean>;
+      propertyKey: string;
+    },
+    fallbackObject: T
+  ) {
     this.refreshableConfigsLoadingFlags$[obj.propertyKey] = new BehaviorSubject(
       true
     );
+    const authTypes = [
+      PropertyType.OAUTH2,
+      PropertyType.CUSTOM_AUTH,
+      PropertyType.SECRET_TEXT,
+      PropertyType.BASIC_AUTH,
+    ];
     const refreshers$: Record<string, Observable<unknown>> = {};
-    obj.property.refreshers.forEach((rk) => {
+    Object.keys(this.properties).forEach((rk) => {
+      const isAuthProperty = authTypes.includes(this.properties[rk].type);
+      const inRefreshers = obj.property.refreshers.includes(rk);
+      if (!isAuthProperty && !inRefreshers) {
+        return;
+      }
       refreshers$[rk] = this.form.controls[rk].valueChanges.pipe(
         distinctUntilChanged((prev, curr) => {
-          if (
-            this.properties[rk].type === PropertyType.OAUTH2 ||
-            this.properties[rk].type === PropertyType.CUSTOM_AUTH ||
-            this.properties[rk].type === PropertyType.SECRET_TEXT ||
-            this.properties[rk].type === PropertyType.BASIC_AUTH
-          ) {
+          if (isAuthProperty) {
             return false;
           }
           return JSON.stringify(prev) === JSON.stringify(curr);
@@ -331,17 +358,20 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
     }
     return combineLatest(refreshers$).pipe(
       switchMap((res) => {
-        return this.actionMetaDataService.getPieceActionConfigOptions<T>({
-          pieceVersion: this.pieceVersion,
-          pieceName: this.pieceName,
-          propertyName: obj.propertyKey,
-          stepName: this.actionOrTriggerName,
-          input: res,
-        });
-      }),
-      catchError((err) => {
-        console.error(err);
-        throw err;
+        return this.actionMetaDataService
+          .getPieceActionConfigOptions<T>({
+            pieceVersion: this.pieceVersion,
+            pieceName: this.pieceName,
+            propertyName: obj.propertyKey,
+            stepName: this.actionOrTriggerName,
+            input: res,
+          })
+          .pipe(
+            catchError((err) => {
+              console.error(err);
+              return of(fallbackObject);
+            })
+          );
       }),
       tap(() => {
         this.refreshableConfigsLoadingFlags$[obj.propertyKey].next(false);

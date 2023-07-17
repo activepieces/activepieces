@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { Store, StoreScope } from '@activepieces/pieces-framework';
 import { DeletStoreEntryRequest, FlowId, PutStoreEntryRequest, StoreEntry } from '@activepieces/shared';
 import { globals } from '../globals';
@@ -6,45 +5,55 @@ import { globals } from '../globals';
 export const storageService = {
     async get(key: string): Promise<StoreEntry | null> {
         try {
-            return (
-                await axios.get(globals.apiUrl + '/v1/store-entries?key=' + encodeURIComponent(key), {
-                    headers: {
-                        Authorization: 'Bearer ' + globals.workerToken
-                    }
-                })
-            ).data ?? null;;
+            const response = await fetch(globals.apiUrl + '/v1/store-entries?key=' + encodeURIComponent(key), {
+                headers: {
+                    Authorization: 'Bearer ' + globals.workerToken
+                }
+            });
+            if (!response.ok) {
+                throw new Error('Failed to fetch store entry');
+            }
+            return (await response.json()) ?? null;
         } catch (e) {
             return null;
         }
     },
     async put(request: PutStoreEntryRequest): Promise<StoreEntry | null> {
         try {
-            return (
-                await axios.post(globals.apiUrl + '/v1/store-entries', request, {
-                    headers: {
-                        Authorization: 'Bearer ' + globals.workerToken
-                    }
-                })
-            ).data ?? null;;
+            const response = await fetch(globals.apiUrl + '/v1/store-entries', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: 'Bearer ' + globals.workerToken
+                },
+                body: JSON.stringify(request)
+            });
+            if (!response.ok) {
+                throw new Error('Failed to store entry');
+            }
+            return (await response.json()) ?? null;
         } catch (e) {
             return null;
         }
     },
     async delete(request: DeletStoreEntryRequest): Promise<StoreEntry | null> {
         try {
-            return (
-                await axios.delete(globals.apiUrl + '/v1/store-entries?key=' + encodeURIComponent(request.key), {
-                    headers: {
-                        Authorization: 'Bearer ' + globals.workerToken
-                    }
-                })
-            ).data ?? null;;
+            const response = await fetch(globals.apiUrl + '/v1/store-entries?key=' + encodeURIComponent(request.key), {
+                method: 'DELETE',
+                headers: {
+                    Authorization: 'Bearer ' + globals.workerToken
+                }
+            });
+            if (!response.ok) {
+                throw new Error('Failed to delete store entry');
+            }
+            return (await response.json()) ?? null;
         } catch (e) {
             return null;
         }
     }
+};
 
-}
 export function createContextStore(prefix: string, flowId: FlowId): Store {
     return {
         put: async function <T>(key: string, value: T, scope = StoreScope.FLOW): Promise<T> {
@@ -65,10 +74,6 @@ export function createContextStore(prefix: string, flowId: FlowId): Store {
             const modifiedKey = createKey(prefix, scope, flowId, key);
             const storeEntry = await storageService.get(modifiedKey);
             if (storeEntry === null) {
-                // TODO remove in three months (May) as old triggers are storing as collection, while it should store as flow
-                if (scope === StoreScope.FLOW) {
-                    return this.get(key, StoreScope.PROJECT);
-                }
                 return null;
             }
             return storeEntry.value as T;
@@ -81,6 +86,6 @@ function createKey(prefix: string, scope: StoreScope, flowId: FlowId, key: strin
         case StoreScope.PROJECT:
             return prefix + key;
         case StoreScope.FLOW:
-            return prefix + "flow_" + flowId + "/" + key;
+            return prefix + 'flow_' + flowId + '/' + key;
     }
 }

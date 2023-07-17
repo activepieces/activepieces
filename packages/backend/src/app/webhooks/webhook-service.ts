@@ -7,7 +7,6 @@ import {
     FlowInstanceStatus,
     FlowRun,
     FlowVersion,
-    FlowViewMode,
     ProjectId,
     RunEnvironment,
 } from '@activepieces/shared'
@@ -19,7 +18,7 @@ import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
 import { getPublicIp } from '../helper/public-ip-utils'
 import { triggerEventService } from '../flows/trigger-events/trigger-event.service'
-import { isEmpty, isNil } from 'lodash'
+import { isNil } from '@activepieces/shared'
 import { logger } from '../helper/logger'
 import { webhookSimulationService } from './webhook-simulation/webhook-simulation-service'
 import { flowInstanceService } from '../flows/flow-instance/flow-instance.service'
@@ -84,7 +83,7 @@ export const webhookService = {
             simulate: true,
         })
 
-        if (isEmpty(events)) {
+        if (events.length === 0) {
             return
         }
 
@@ -137,14 +136,14 @@ function extractHostname(url: string): string | null {
 }
 
 const getLatestFlowVersionOrThrow = async (flowId: FlowId, projectId: ProjectId): Promise<FlowVersion> => {
-    const flowVersionId = undefined
 
-    const flowVersion = await flowVersionService.getFlowVersion(
+    const flowVersion = await flowVersionService.getFlowVersion({
         projectId,
         flowId,
-        flowVersionId,
-        FlowViewMode.NO_ARTIFACTS,
-    )
+        versionId: undefined,
+        removeSecrets: false,
+        includeArtifactAsBase64: false,
+    })
 
     if (isNil(flowVersion)) {
         logger.error(`[WebhookService#getLatestFlowVersionOrThrow] error=flow_version_not_found flowId=${flowId} projectId=${projectId}`)
