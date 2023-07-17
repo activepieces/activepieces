@@ -41,19 +41,31 @@ export const triggerUtils = {
             switch(handshakeConfig.strategy) {
                 case WebhookHandshakeStrategy.HEADER_PRESENT: {
                     if(handshakeConfig.paramName && (handshakeConfig.paramName.toLowerCase() in payload.headers)) {
-                        return await executeHandshake(flowVersion, projectId, payload)
+                        return await executeHandshake({
+                            flowVersion,
+                            projectId,
+                            payload,
+                        })
                     }
                     break
                 }
                 case WebhookHandshakeStrategy.QUERY_PRESENT: {
                     if(handshakeConfig.paramName && (handshakeConfig.paramName in payload.queryParams)) {
-                        return await executeHandshake(flowVersion, projectId, payload)
+                        return await executeHandshake({
+                            flowVersion,
+                            projectId,
+                            payload,
+                        })
                     }
                     break
                 }
                 case WebhookHandshakeStrategy.BODY_PARAM_PRESENT: {
                     if(handshakeConfig.paramName && typeof payload.body === 'object' && (handshakeConfig.paramName in payload.body)) {
-                        return await executeHandshake(flowVersion, projectId, payload)
+                        return await executeHandshake({
+                            flowVersion,
+                            projectId,
+                            payload,
+                        })
                     }
                     break
                 }
