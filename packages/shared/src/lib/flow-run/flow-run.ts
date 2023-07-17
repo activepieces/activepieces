@@ -19,6 +19,7 @@ export type FlowRun = BaseModel<FlowRunId> & {
   flowVersionId: FlowVersionId;
   flowDisplayName: string;
   logsFileId: FileId | null;
+  tasks?: number;
   status: ExecutionOutputStatus;
   startTime: string;
   finishTime: string;

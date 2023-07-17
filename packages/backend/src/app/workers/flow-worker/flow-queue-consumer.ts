@@ -92,7 +92,7 @@ const consumeRepeatingJob = async (job: Job<RepeatingJobData, void>): Promise<vo
             else {
                 await triggerUtils.disable({
                     projectId: data.projectId,
-                    flowVersion: flowVersion,
+                    flowVersion,
                     simulate: false,
                 })
             }
@@ -120,7 +120,7 @@ const consumePieceTrigger = async (data: RepeatingJobData): Promise<void> => {
 
     const payloads: unknown[] = await triggerUtils.executeTrigger({
         projectId: data.projectId,
-        flowVersion: flowVersion,
+        flowVersion,
         payload: {},
         simulate: false,
     })
