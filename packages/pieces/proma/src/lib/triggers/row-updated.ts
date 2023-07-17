@@ -1,13 +1,15 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { promaProps } from '../common/props';
 import { removeWebhookUrl, storeWebhookUrl } from '../common/data';
+import { promaAuth } from '../..';
 
 export const dataRowUpdated = createTrigger({
   name: 'row_updated',
   displayName: 'Row Updated',
   description: 'Triggers when a row is updated',
+  auth: promaAuth,
   props: {
-    api_key: promaProps.api_key,
+    // api_key: promaProps.api_key,
     // organization_id: promaProps.organization_id(true),
     workspace_id: promaProps.workspace_id(true),
     table_id: promaProps.table_id(true),
@@ -29,7 +31,7 @@ export const dataRowUpdated = createTrigger({
     }
   },
   async onEnable(context) {
-    const api_key = context.propsValue.api_key;
+    const api_key = context.auth;
     const resp = await storeWebhookUrl({
       api_key,
       trigger_type: 'tableRowUpdated',
@@ -46,7 +48,7 @@ export const dataRowUpdated = createTrigger({
       '_row_updated_trigger'
     );
     if (response !== null && response !== undefined) {
-      await removeWebhookUrl({ id: response.ROWID, api_key: context.propsValue.api_key });
+      await removeWebhookUrl({ id: response.ROWID, api_key: context.auth });
     }
   },
   async run(context) {

@@ -1,5 +1,4 @@
-import { createPiece } from '@activepieces/pieces-framework';
-import packageJson from '../package.json';
+import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { addPromaRow } from './lib/actions/create-item';
 import { newRowAdded } from './lib/triggers/new-row';
 import { dataRowUpdated } from './lib/triggers/row-updated';
@@ -13,10 +12,16 @@ import { teamMemberAddedOrganization } from './lib/triggers/team-member-added-or
 import { updatePromaRow } from './lib/actions/update-item';
 import { teamMemberAddedWorkspace } from './lib/triggers/team-member-added-ws';
 
+export const promaAuth = PieceAuth.SecretText({
+  displayName: 'API Key',
+  description: 'Enter API Key from Proma App',
+  required: true,
+});
+
 export const proma = createPiece({
   displayName: 'Proma',
   logoUrl:
-    'https://growthzilla-notes-759987269.development.catalystserverless.com/staticfiles/eb5ade4a-27dc-4d91-b80e-89807962f19d-proma-logo.png',
+    'https://console.catalyst.zoho.com/baas/v1/project/9417000000970018/authentication/hosted-login/logo?Environment=Production&catalyst_org=759987269',
   authors: [],
   actions: [
     addPromaRow,
@@ -28,5 +33,11 @@ export const proma = createPiece({
     getPromaTableColumns,
     getPromaTableRows,
   ],
-  triggers: [newRowAdded, dataRowUpdated, teamMemberAddedOrganization, teamMemberAddedWorkspace],
+  auth: promaAuth,
+  triggers: [
+    newRowAdded,
+    dataRowUpdated,
+    teamMemberAddedOrganization,
+    teamMemberAddedWorkspace,
+  ],
 });

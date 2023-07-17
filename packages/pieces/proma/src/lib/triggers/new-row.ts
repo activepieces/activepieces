@@ -1,13 +1,15 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { promaProps } from '../common/props';
 import { removeWebhookUrl, storeWebhookUrl } from '../common/data';
+import { promaAuth } from '../..';
 
 export const newRowAdded = createTrigger({
   name: 'new_row',
   displayName: 'Row Added',
   description: 'Triggers when a new row is added',
+  auth: promaAuth,
   props: {
-    api_key: promaProps.api_key,
+    // api_key: promaProps.api_key,
     // organization_id: promaProps.organization_id(true),
     workspace_id: promaProps.workspace_id(true),
     table_id: promaProps.table_id(true),
@@ -24,7 +26,7 @@ export const newRowAdded = createTrigger({
     }
   },
   async onEnable(context) {
-    const api_key = context.propsValue.api_key;
+    const api_key = context.auth;
     const resp = await storeWebhookUrl({
       api_key,
       trigger_type: 'tableRowAdded',
@@ -37,7 +39,7 @@ export const newRowAdded = createTrigger({
     });
   },
   async onDisable(context) {
-    const api_key = context.propsValue.api_key;
+    const api_key = context.auth;
     const response = await context.store?.get<{ ROWID: string }>(
       '_new_row_trigger'
     );

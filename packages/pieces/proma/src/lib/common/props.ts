@@ -6,11 +6,6 @@ import {
 } from './data';
 
 export const promaProps = {
-  api_key: Property.SecretText({
-    displayName: 'API Key',
-    description: 'Enter API Key from Proma App',
-    required: true,
-  }),
   table_name: (required = false) =>
     Property.ShortText({ displayName: 'Master Sheet Name', required }),
   acl: (required = false) =>

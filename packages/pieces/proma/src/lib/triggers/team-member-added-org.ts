@@ -1,13 +1,15 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { promaProps } from '../common/props';
 import { removeWebhookUrl, storeWebhookUrl } from '../common/data';
+import { promaAuth } from '../..';
 
 export const teamMemberAddedOrganization = createTrigger({
     name: 'new_team_member_org',
     displayName: 'Team Member Added To Organization',
     description: 'Triggers when a new member is added to organization',
+    auth: promaAuth,
     props: {
-        api_key: promaProps.api_key,
+        // api_key: promaProps.api_key,
     },
     type: TriggerStrategy.WEBHOOK,
     sampleData:
@@ -19,7 +21,7 @@ export const teamMemberAddedOrganization = createTrigger({
         organizationId: "98575748485"
     },
     async onEnable(context) {
-        const api_key = context.propsValue.api_key;
+        const api_key = context.auth;
         const resp = await storeWebhookUrl({
             api_key,
             trigger_type: 'teamMemberAddedToOrg',
@@ -32,7 +34,7 @@ export const teamMemberAddedOrganization = createTrigger({
         });
     },
     async onDisable(context) {
-        const api_key = context.propsValue.api_key;
+        const api_key = context.auth;
         const response = await context.store?.get<{ ROWID: string }>(
             '_new_team_member_org_trigger'
         );

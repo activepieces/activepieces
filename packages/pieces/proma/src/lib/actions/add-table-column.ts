@@ -1,13 +1,15 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { promaProps } from '../common/props';
 import { insertTableColumn } from '../common/data';
+import { promaAuth } from '../..';
 
 export const addPromaTableColumn = createAction({
   name: 'add_proma_table_column', // Must be a unique across the piece, this shouldn't be changed.
   displayName: 'Add Column',
   description: '',
+  auth: promaAuth,
   props: {
-    api_key: promaProps.api_key,
+    // api_key: promaProps.api_key,
     // organization_id: promaProps.organization_id(true),
     workspace_id: promaProps.workspace_id(true),
     table_id: promaProps.table_id(true, "write"),
@@ -15,7 +17,7 @@ export const addPromaTableColumn = createAction({
     column_data_type: promaProps.column_data_type(true),
   },
   async run(context) {
-    const api_key = context.propsValue.api_key;
+    const api_key = context.auth;
     // const organization_id = context.propsValue.organization_id;
     const workspace_id = context.propsValue.workspace_id;
     const table_id = context.propsValue.table_id;

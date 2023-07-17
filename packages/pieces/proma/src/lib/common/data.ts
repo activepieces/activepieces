@@ -27,7 +27,7 @@ export const parseJSON = (x: string, returnNull = false) => {
 };
 
 export const PROMA_SERVER_URL =
-  'https://pipeline-759987269.development.catalystserverless.com/api/oauth';
+  'https://pipeline-759987269.catalystserverless.com/api/oauth';
 
 export async function getOrganizations(
   api_key: string
