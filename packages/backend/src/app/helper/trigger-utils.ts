@@ -25,7 +25,7 @@ import { SystemProp } from './system/system-prop'
 const POLLING_FREQUENCY_CRON_EXPRESSON = `*/${system.getNumber(SystemProp.TRIGGER_DEFAULT_POLL_INTERVAL ?? 5)} * * * *`
 
 export const triggerUtils = {
-    /* eslint-disable */ async tryHandshake(params: ExecuteTrigger): Promise<WebhookResponse|null> { // disabled eslint because of weird no-redundant-type-constituents error
+    async tryHandshake(params: ExecuteTrigger): Promise<WebhookResponse|null> {
         const { payload, flowVersion, projectId, simulate } = params
         if(simulate)
             return null
@@ -135,7 +135,8 @@ export const triggerUtils = {
     },
 }
 
-async function executeHandshake(flowVersion: FlowVersion, projectId: ProjectId, payload: TriggerPayload): Promise<WebhookResponse> {
+async function executeHandshake(params: ExecuteHandshakeParams): Promise<WebhookResponse> {
+    const { flowVersion, projectId, payload } = params
     const { result } = await engineHelper.executeTrigger({
         hookType: TriggerHookType.HANDSHAKE,
         flowVersion: flowVersion,
@@ -155,6 +156,12 @@ async function executeHandshake(flowVersion: FlowVersion, projectId: ProjectId, 
         }
     }
     return result.response
+}
+
+type ExecuteHandshakeParams = {
+    flowVersion: FlowVersion
+    projectId: ProjectId
+    payload: TriggerPayload
 }
 
 const disablePieceTrigger = async (params: EnableOrDisableParams) => {

@@ -26,7 +26,7 @@ import { flowInstanceService } from '../flows/flow-instance/flow-instance.servic
 import { WebhookResponse } from '@activepieces/pieces-framework'
 
 export const webhookService = {
-    /* eslint-disable */ async handshake({ flow, payload }: CallbackParams): Promise<WebhookResponse|null> { // disabled eslint because of weird no-redundant-type-constituents error
+    async handshake({ flow, payload }: CallbackParams): Promise<WebhookResponse|null> {
         logger.info(`[WebhookService#handshake] flowId=${flow.id}`)
 
         const { projectId } = flow
