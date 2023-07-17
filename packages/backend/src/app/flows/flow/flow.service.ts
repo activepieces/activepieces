@@ -141,8 +141,8 @@ export const flowService = {
             projectId,
             flowId,
             versionId,
-            removeSecrets: false,
-            includeArtifactAsBase64: false,
+            removeSecrets: true,
+            includeArtifactAsBase64: true,
         })
         const template: FlowTemplate =
         {
