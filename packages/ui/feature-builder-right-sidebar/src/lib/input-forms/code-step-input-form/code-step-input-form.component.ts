@@ -15,7 +15,6 @@ import { CodeService } from '@activepieces/ui/feature-builder-store';
 @Component({
   selector: 'app-code-step-input-form',
   templateUrl: './code-step-input-form.component.html',
-  styleUrls: ['./code-step-input-form.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

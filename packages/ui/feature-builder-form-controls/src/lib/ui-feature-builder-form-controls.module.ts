@@ -22,7 +22,7 @@ import { PieceStepMentionItemComponent } from './interpolating-text-form-control
 import { PieceTriggerMentionItemComponent } from './interpolating-text-form-control/mentions-list/piece-trigger-mention-item/piece-trigger-mention-item.component';
 import { StepMentionsTreeComponent } from './interpolating-text-form-control/mentions-list/step-mentions-tree/step-mentions-tree.component';
 import { CodemirrorModule } from '@ctrl/ngx-codemirror';
-import { MonacoEditorModule } from '@materia-ui/ngx-monaco-editor';
+import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { AuthConfigsPipe } from './piece-properties-form/auth-configs.pipe';
 import { PiecePropertiesFormComponent } from './piece-properties-form/piece-properties-form.component';
