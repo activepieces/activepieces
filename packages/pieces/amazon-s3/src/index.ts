@@ -1,4 +1,4 @@
-import { PieceAuth, Property, createPiece } from "@activepieces/pieces-framework";
+import { PieceAuth, PieceAuthProperty, Property, createPiece } from "@activepieces/pieces-framework";
 import { amazonS3UploadBase64FileAction } from "./lib/actions/upload-file-from-base64";
 import { amazonS3UploadFileFromUrlAction } from "./lib/actions/upload-file-from-url";
 
@@ -143,16 +143,21 @@ export const amazonS3Auth = PieceAuth.CustomAuth({
       required: true,
     })
   },
-  required: true
+  required: true,
+  async validate({ auth }) {
+    auth.accessKeyId
+    return {
+      valid: true,
+    }
+  }
 })
 
 export const amazonS3 = createPiece({
   displayName: "Amazon S3",
-
-    logoUrl: "https://cdn.activepieces.com/pieces/amazon-s3.png",
-    minimumSupportedRelease: '0.5.0',
+  logoUrl: "https://cdn.activepieces.com/pieces/amazon-s3.png",
+  minimumSupportedRelease: '0.5.0',
   authors: ["Willianwg"],
-  auth: amazonS3Auth,
+  auth: amazonS3Auth as PieceAuthProperty,
   actions: [
     amazonS3UploadBase64FileAction,
     amazonS3UploadFileFromUrlAction,

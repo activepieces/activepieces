@@ -2,7 +2,7 @@ import { Trigger } from './trigger/trigger'
 import { Action } from './action/action'
 import { EventPayload, ParseEventResponse } from '@activepieces/shared'
 import { PieceBase, PieceMetadata } from './piece-metadata'
-import { PieceAuthProperty, PiecePropValueSchema } from './property'
+import { PieceAuthProperty } from './property'
 
 export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty> implements Omit<PieceBase, "version" | "name"> {
   private readonly _actions: Record<string, Action> = {}
@@ -16,7 +16,6 @@ export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty> impl
     actions: Action<PieceAuth>[],
     triggers: Trigger<PieceAuth>[],
     public readonly auth?: PieceAuth,
-    public readonly validateAuth?: PieceAuthValidator<PieceAuth>,
     public readonly minimumSupportedRelease?: string,
     public readonly maximumSupportedRelease?: string,
     public readonly description: string = '',
@@ -64,7 +63,6 @@ export const createPiece = <PieceAuth extends PieceAuthProperty>(params: CreateP
     params.actions,
     params.triggers,
     params.auth ?? undefined,
-    params.validateAuth,
     params.minimumSupportedRelease,
     params.maximumSupportedRelease,
     params.description,
@@ -77,7 +75,6 @@ type CreatePieceParams<PieceAuth extends PieceAuthProperty = PieceAuthProperty> 
   authors?: string[]
   description?: string
   auth: PieceAuth | undefined
-  validateAuth?: PieceAuthValidator<PieceAuth>
   events?: PieceEventProcessors
   minimumSupportedRelease?: string
   maximumSupportedRelease?: string
@@ -89,22 +86,3 @@ type PieceEventProcessors = {
   parseAndReply: (ctx: { payload: EventPayload }) => ParseEventResponse
   verify: (ctx: { webhookSecret: string, payload: EventPayload, appWebhookUrl: string }) => boolean
 }
-
-type PieceAuthValidatorParams<PieceAuth extends PieceAuthProperty> = {
-  auth: PiecePropValueSchema<PieceAuth>
-}
-
-type BasePieceAuthValidatorResponse<Valid extends boolean> = {
-  valid: Valid
-}
-
-type ValidPIeceAuthValidatorResponse = BasePieceAuthValidatorResponse<true>
-
-type InvalidPieceAuthValidatorResponse = BasePieceAuthValidatorResponse<false> & {
-  error: string
-}
-
-type PieceAuthValidatorResponse = ValidPIeceAuthValidatorResponse | InvalidPieceAuthValidatorResponse
-
-type PieceAuthValidator<PieceAuth extends PieceAuthProperty> =
-  (params: PieceAuthValidatorParams<PieceAuth>) => Promise<PieceAuthValidatorResponse>

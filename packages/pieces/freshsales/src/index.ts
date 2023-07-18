@@ -24,7 +24,13 @@ export const freshsalesAuth = PieceAuth.BasicAuth({
     description: "The API Key supplied by Freshsales",
     required: true
   }),
-  required: true
+  required: true,
+  async validate({ auth }) {
+    return {
+      valid: true,
+      errors: []
+    }
+  },
 })
 
 export const freshsales = createPiece({

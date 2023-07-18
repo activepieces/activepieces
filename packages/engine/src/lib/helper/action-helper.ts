@@ -289,17 +289,17 @@ export const pieceHelper = {
 
         const piece = await loadPieceOrThrow(pieceName, pieceVersion)
 
-        if (isNil(piece.validateAuth)) {
+        if (piece.auth?.validate === undefined) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: {
-                    message: `validateAuth is not defined for piece ${pieceName} version ${pieceVersion}`
+                    message: `piece.auth.validate is not defined for piece ${pieceName} version ${pieceVersion}`
                 }
             })
         }
 
-        return await piece.validateAuth({
-            auth: auth as PiecePropValueSchema<PieceAuthProperty>,
+        return await piece.auth.validate({
+            auth: auth as any,
         })
     },
 

@@ -1,34 +1,58 @@
 import { PropertyType } from "./property";
 
 export type BasePropertySchema = {
-	displayName: string;
-	description?: string;
+    displayName: string;
+    description?: string;
+}
+
+type PieceAuthValidatorParams<AuthValueSchema> = {
+    auth: AuthValueSchema
+}
+
+type BasePieceAuthValidatorResponse<Valid extends boolean> = {
+    valid: Valid
+}
+
+type ValidPIeceAuthValidatorResponse = BasePieceAuthValidatorResponse<true>
+
+type InvalidPieceAuthValidatorResponse = BasePieceAuthValidatorResponse<false> & {
+    error: string
+}
+
+type PieceAuthValidatorResponse = ValidPIeceAuthValidatorResponse | InvalidPieceAuthValidatorResponse
+
+type PieceAuthValidator<AuthValueSchema> =
+    (params: PieceAuthValidatorParams<AuthValueSchema>) => Promise<PieceAuthValidatorResponse>
+
+
+export type BasePieceAuthSchema<AuthValueSchema> = BasePropertySchema & {
+    validate?: PieceAuthValidator<AuthValueSchema>
 }
 
 export type TPropertyValue<T, U extends PropertyType, REQUIRED extends boolean> = {
-	valueSchema: T;
-	type: U;
-	required: REQUIRED;
-	defaultValue?: U extends PropertyType.ARRAY?  unknown[]:
-	 U extends PropertyType.JSON? object:
-	 U extends PropertyType.CHECKBOX? boolean:
-	 U extends PropertyType.LONG_TEXT? string:
-	 U extends PropertyType.SHORT_TEXT? string:
-	 U extends PropertyType.NUMBER? number:
-	 U extends PropertyType.DROPDOWN? unknown  :
-	 U extends PropertyType.MULTI_SELECT_DROPDOWN? unknown[]:
-	 U extends PropertyType.STATIC_MULTI_SELECT_DROPDOWN? unknown[]:
-	 U extends PropertyType.STATIC_DROPDOWN? unknown:
-	 U extends PropertyType.DATE_TIME? string:
-	 U extends PropertyType.FILE? ApFile:
-	unknown;
+    valueSchema: T;
+    type: U;
+    required: REQUIRED;
+    defaultValue?: U extends PropertyType.ARRAY ? unknown[] :
+    U extends PropertyType.JSON ? object :
+    U extends PropertyType.CHECKBOX ? boolean :
+    U extends PropertyType.LONG_TEXT ? string :
+    U extends PropertyType.SHORT_TEXT ? string :
+    U extends PropertyType.NUMBER ? number :
+    U extends PropertyType.DROPDOWN ? unknown :
+    U extends PropertyType.MULTI_SELECT_DROPDOWN ? unknown[] :
+    U extends PropertyType.STATIC_MULTI_SELECT_DROPDOWN ? unknown[] :
+    U extends PropertyType.STATIC_DROPDOWN ? unknown :
+    U extends PropertyType.DATE_TIME ? string :
+    U extends PropertyType.FILE ? ApFile :
+    unknown;
 };
 
 export type ShortTextProperty<R extends boolean> = BasePropertySchema & TPropertyValue<string, PropertyType.SHORT_TEXT, R>;
 
 export type LongTextProperty<R extends boolean> = BasePropertySchema & TPropertyValue<string, PropertyType.LONG_TEXT, R>;
 
-export type SecretTextProperty<R extends boolean> = BasePropertySchema & TPropertyValue<string, PropertyType.SECRET_TEXT, R>;
+export type SecretTextProperty<R extends boolean> = BasePieceAuthSchema<string> & TPropertyValue<string, PropertyType.SECRET_TEXT, R>;
 
 export type CheckboxProperty<R extends boolean> = BasePropertySchema & TPropertyValue<boolean, PropertyType.CHECKBOX, R>;
 
