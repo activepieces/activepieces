@@ -87,6 +87,12 @@ pre {
 
 ngx-monaco-editor {
   overflow: visible;
+  .editor-container
+  {
+    border-bottom-right-radius: 5px;
+    border-bottom-left-radius: 5px;
+    overflow: hidden;
+  }
 }
 
 .CodeMirror-lint-tooltip {
@@ -104,6 +110,5 @@ ngx-monaco-editor {
   border-top-right-radius: 5px;
   margin-bottom: -3px;
 }
-
 
 
