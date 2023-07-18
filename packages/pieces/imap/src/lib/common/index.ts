@@ -46,6 +46,12 @@ export const imapCommon = {
                             f.on('message', msg => {
                                 msg.on('body', stream => {
                                     simpleParser(stream, async (error, parsed) => {
+                                        if (parsed.attachments.length > 0) {
+                                            parsed.attachments.forEach((attachment: any) => {
+                                                attachment.file = `data:${attachment.contentType};base64,${attachment.content.toString('base64')}`;
+                                            })
+                                        }
+                                        
                                         emails.push(parsed);
                                     });
                                 });

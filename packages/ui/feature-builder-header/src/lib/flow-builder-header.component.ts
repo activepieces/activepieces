@@ -5,8 +5,8 @@ import { map, Observable, switchMap, take, tap } from 'rxjs';
 import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
-  FlagService,
   FlowService,
+  environment,
   fadeIn400ms,
   initialiseBeamer,
 } from '@activepieces/ui/common';
@@ -16,7 +16,7 @@ import {
   CollectionBuilderService,
   FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
-import { ApEdition, Flow, FlowInstance } from '@activepieces/shared';
+import { Flow, FlowInstance } from '@activepieces/shared';
 import { ImportFlowDialogueComponent } from './import-flow-dialogue/import-flow-dialogue.component';
 
 @Component({
@@ -35,7 +35,6 @@ export class FlowBuilderHeaderComponent implements OnInit {
   deleteFlowDialogClosed$: Observable<void>;
   folderDisplayName$: Observable<string>;
   duplicateFlow$: Observable<void>;
-  showGuessFlowBtn$: Observable<boolean>;
   openDashboardOnFolder$: Observable<string>;
   constructor(
     public dialogService: MatDialog,
@@ -43,7 +42,6 @@ export class FlowBuilderHeaderComponent implements OnInit {
     private router: Router,
     public collectionBuilderService: CollectionBuilderService,
     private flowService: FlowService,
-    private flagsService: FlagService,
     private matDialog: MatDialog
   ) {}
 
@@ -58,9 +56,6 @@ export class FlowBuilderHeaderComponent implements OnInit {
     this.folderDisplayName$ = this.store.select(
       BuilderSelectors.selectCurrentFlowFolderName
     );
-    this.showGuessFlowBtn$ = this.flagsService
-      .getEdition()
-      .pipe(map((ed) => ed === ApEdition.ENTERPRISE));
   }
   changeEditValue(event: boolean) {
     this.editingFlowName = event;
@@ -152,5 +147,9 @@ export class FlowBuilderHeaderComponent implements OnInit {
           });
         })
       );
+  }
+
+  get environment() {
+    return environment;
   }
 }

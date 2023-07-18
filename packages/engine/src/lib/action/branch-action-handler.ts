@@ -206,8 +206,12 @@ function evaluateConditions(conditionGroups: BranchCondition[][]): boolean {
   return Boolean(orOperator);
 }
 
-function toLowercaseIfCaseInsensitive(text: string, caseSensitive: boolean) {
-  return caseSensitive ? text : text.toLocaleLowerCase();
+function toLowercaseIfCaseInsensitive(text: unknown, caseSensitive: boolean): string {
+  if (typeof text === 'string') {
+    return caseSensitive ? text : text.toLowerCase();
+  } else {
+    return caseSensitive ? JSON.stringify(text) : JSON.stringify(text).toLowerCase();
+  }
 }
 
 function parseStringToNumber(str: string): number | string {

@@ -5,6 +5,10 @@ export const environment = {
   redirectUrl: 'http://localhost:4200/redirect',
   userPropertyNameInLocalStorage: 'currentUser',
   //You need to edit index.html manually
+  activateBeamer: true,
+  showFeedbackButton: true,
+  showDocsButton: true,
+  showUserProfile: true,
   websiteTitle: 'Activepieces',
   // BEGIN EE
   firebase: {
