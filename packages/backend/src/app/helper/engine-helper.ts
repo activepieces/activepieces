@@ -21,6 +21,7 @@ import {
     ExecuteExtractPieceMetadata,
     ExecuteValidateAuthOperation,
     ExecuteValidateAuthResponse,
+    ApEnvironment,
 } from '@activepieces/shared'
 import { Sandbox, sandboxManager } from '../workers/sandbox'
 import { system } from './system/system'
@@ -33,6 +34,11 @@ import { getEdition, getWebhookSecret } from './secret-helper'
 import { appEventRoutingService } from '../app-event-routing/app-event-routing.service'
 import { pieceManager } from '../flows/common/piece-installer'
 import { packageManager } from './package-manager'
+import { pieceMetadataService } from '../pieces/piece-metadata-service'
+import { flowVersionService } from '../flows/flow-version/flow-version.service'
+
+
+const apEnvironment = system.getOrThrow(SystemProp.ENVIRONMENT)
 
 type InstallPieceParams = {
     path: string
@@ -107,14 +113,15 @@ const generateWorkerToken = (request: GenerateWorkerTokenParams): Promise<string
 }
 
 const getSandbox = async ({ pieceName, pieceVersion }: GetSandboxParams): Promise<Sandbox> => {
-    const sandbox = await sandboxManager.obtainSandbox(`${pieceName}:${pieceVersion}`)
+    const sandboxName = getCacheKey({ pieceName, pieceVersion })
+    const sandbox = await sandboxManager.obtainSandbox(sandboxName)
 
     if (sandbox.cached) {
-        logger.info(`Reusing sandbox number ${sandbox.boxId} for ${pieceName}:${pieceVersion}`)
+        logger.info(`Reusing sandbox number ${sandbox.boxId} for ${sandboxName}`)
         await sandbox.clean()
     }
     else {
-        logger.info(`Preparing sandbox number ${sandbox.boxId} for ${pieceName}:${pieceVersion}`)
+        logger.info(`Preparing sandbox number ${sandbox.boxId} for ${sandboxName}`)
         await sandbox.recreate()
         const path = sandbox.getSandboxFolderPath()
 
@@ -126,6 +133,13 @@ const getSandbox = async ({ pieceName, pieceVersion }: GetSandboxParams): Promis
     }
 
     return sandbox
+}
+
+function getCacheKey({ pieceName, pieceVersion }: GetSandboxParams) {
+    if (apEnvironment === ApEnvironment.DEVELOPMENT) {
+        return apId()
+    }
+    return `${pieceName}:${pieceVersion}`
 }
 
 function tryParseJson(value: unknown) {
@@ -208,7 +222,8 @@ export const engineHelper = {
     async executeTrigger<T extends TriggerHookType>(
         operation: ExecuteTriggerOperation<T>,
     ): Promise<EngineHelperResponse<EngineHelperTriggerResult<T>>> {
-        const { pieceName, pieceVersion } = (operation.flowVersion.trigger as PieceTrigger).settings
+        const lockedFlowVersion = await flowVersionService.lockPieceVersions(operation.projectId, operation.flowVersion)
+        const { pieceName, pieceVersion } = (lockedFlowVersion.trigger as PieceTrigger).settings
 
         const sandbox = await getSandbox({
             pieceName,
@@ -217,6 +232,7 @@ export const engineHelper = {
 
         const input = {
             ...operation,
+            flowVersion: lockedFlowVersion,
             edition: await getEdition(),
             appWebhookUrl: await appEventRoutingService.getAppWebhookUrl({ appName: pieceName }),
             webhookSecret: await getWebhookSecret(operation.flowVersion),
@@ -240,15 +256,20 @@ export const engineHelper = {
     ): Promise<EngineHelperResponse<EngineHelperPropResult>> {
         logger.debug(operation, '[EngineHelper#executeProp] operation')
 
-        const { pieceName, pieceVersion } = operation
+        const result = await pieceMetadataService.get({
+            projectId: operation.projectId,
+            name: operation.pieceName,
+            version: operation.pieceVersion,
+        })
 
         const sandbox = await getSandbox({
-            pieceName,
-            pieceVersion,
+            pieceName: result.name,
+            pieceVersion: result.version,
         })
 
         const input = {
             ...operation,
+            pieceVersion: result.version,
             workerToken: await generateWorkerToken({ projectId: operation.projectId }),
         }
 
@@ -289,7 +310,7 @@ export const engineHelper = {
 
     async extractPieceMetadata(operation: ExecuteExtractPieceMetadata): Promise<EngineHelperResponse<EngineHelperExtractPieceInformation>> {
         logger.info(operation, '[EngineHelper#ExecuteExtractPieceMetadata] operation')
-        const sandbox = await sandboxManager.obtainSandbox(operation.pieceName)
+        const sandbox = await sandboxManager.obtainSandbox(apId()) 
         await sandbox.recreate()
         const packages: Record<string, string> = {}
         packages[operation.pieceName] = operation.pieceVersion
@@ -309,15 +330,20 @@ export const engineHelper = {
     async executeAction(operation: ExecuteActionOperation): Promise<EngineHelperResponse<EngineHelperActionResult>> {
         logger.debug(operation, '[EngineHelper#executeAction] operation')
 
-        const { pieceName, pieceVersion } = operation
+        const result = await pieceMetadataService.get({
+            projectId: operation.projectId,
+            name: operation.pieceName,
+            version: operation.pieceVersion,
+        })
 
         const sandbox = await getSandbox({
-            pieceName,
-            pieceVersion,
+            pieceName: result.name,
+            pieceVersion: result.version,
         })
 
         const input = {
             ...operation,
+            pieceVersion: result.version,
             workerToken: await generateWorkerToken({ projectId: operation.projectId }),
         }
 
