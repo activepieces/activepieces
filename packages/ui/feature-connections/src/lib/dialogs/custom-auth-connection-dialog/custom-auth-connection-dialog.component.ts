@@ -12,6 +12,7 @@ import {
   AppConnection,
   AppConnectionType,
   CustomAuthConnection,
+  ErrorCode,
   UpsertCustomAuthRequest,
 } from '@activepieces/shared';
 import {
@@ -118,16 +119,19 @@ export class CustomAuthConnectionDialogComponent {
         },
       };
       this.upsert$ = this.appConnectionsService.upsert(upsertRequest).pipe(
-        catchError((err) => {
-          console.error(err);
-          this.snackBar.open(
-            'Connection operation failed please check your console.',
-            'Close',
-            {
-              panelClass: 'error',
-              duration: 5000,
-            }
-          );
+        catchError((response) => {
+          console.error(response);
+
+          const errorMessage =
+            response.error.code === ErrorCode.INVALID_APP_CONNECTION
+              ? response.error.params.error
+              : 'Connection operation failed please check your console.';
+
+          this.snackBar.open(errorMessage, 'Close', {
+            panelClass: 'error',
+            duration: 5000,
+          });
+
           return of(null);
         }),
         tap((connection) => {

@@ -1,4 +1,8 @@
-import { AppConnection, AppConnectionType } from '@activepieces/shared';
+import {
+  AppConnection,
+  AppConnectionType,
+  ErrorCode,
+} from '@activepieces/shared';
 import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
 import {
   FormBuilder,
@@ -93,13 +97,19 @@ export class SecretTextConnectionDialogComponent {
           },
         })
         .pipe(
-          catchError((err) => {
-            console.error(err);
-            this.snackbar.open(
-              'Connection operation failed please check your console.',
-              'Close',
-              { panelClass: 'error', duration: 5000 }
-            );
+          catchError((response) => {
+            console.error(response);
+
+            const errorMessage =
+              response.error.code === ErrorCode.INVALID_APP_CONNECTION
+                ? response.error.params.error
+                : 'Connection operation failed please check your console.';
+
+            this.snackbar.open(errorMessage, 'Close', {
+              panelClass: 'error',
+              duration: 5000,
+            });
+
             return of(null);
           }),
           tap((connection) => {
