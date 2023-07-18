@@ -145,7 +145,6 @@ export const amazonS3Auth = PieceAuth.CustomAuth({
   },
   required: true,
   async validate({ auth }) {
-    auth.accessKeyId
     return {
       valid: true,
     }
@@ -157,7 +156,7 @@ export const amazonS3 = createPiece({
   logoUrl: "https://cdn.activepieces.com/pieces/amazon-s3.png",
   minimumSupportedRelease: '0.5.0',
   authors: ["Willianwg"],
-  auth: amazonS3Auth as PieceAuthProperty,
+  auth: amazonS3Auth,
   actions: [
     amazonS3UploadBase64FileAction,
     amazonS3UploadFileFromUrlAction,

@@ -9,24 +9,12 @@ type PieceAuthValidatorParams<AuthValueSchema> = {
     auth: AuthValueSchema
 }
 
-type BasePieceAuthValidatorResponse<Valid extends boolean> = {
-    valid: Valid
-}
-
-type ValidPIeceAuthValidatorResponse = BasePieceAuthValidatorResponse<true>
-
-type InvalidPieceAuthValidatorResponse = BasePieceAuthValidatorResponse<false> & {
-    error: string
-}
-
-type PieceAuthValidatorResponse = ValidPIeceAuthValidatorResponse | InvalidPieceAuthValidatorResponse
-
-type PieceAuthValidator<AuthValueSchema> =
-    (params: PieceAuthValidatorParams<AuthValueSchema>) => Promise<PieceAuthValidatorResponse>
-
+export type PieceAuthValidatorResponse =
+  | { valid: true }
+  | { valid: false; error: string };
 
 export type BasePieceAuthSchema<AuthValueSchema> = BasePropertySchema & {
-    validate?: PieceAuthValidator<AuthValueSchema>
+    validate?: (params: PieceAuthValidatorParams<AuthValueSchema>) => Promise<PieceAuthValidatorResponse>
 }
 
 export type TPropertyValue<T, U extends PropertyType, REQUIRED extends boolean> = {

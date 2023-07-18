@@ -288,7 +288,6 @@ export const pieceHelper = {
         const { pieceName, pieceVersion, auth } = params
 
         const piece = await loadPieceOrThrow(pieceName, pieceVersion)
-
         if (piece.auth?.validate === undefined) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
@@ -298,7 +297,7 @@ export const pieceHelper = {
             })
         }
 
-        return await piece.auth.validate({
+        return piece.auth.validate({
             auth: auth as any,
         })
     },
