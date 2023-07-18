@@ -385,8 +385,8 @@
       </ng-container>
 
       <ng-template #jsonInputTemplate>
-        <div class="code-font-sm code-size-200 code-block" #interpolatingTextControlContainer
-          #hoverContainer="hoverTrackerDirective" apTrackHover (click)="$event.stopImmediatePropagation()">
+        <div #interpolatingTextControlContainer #hoverContainer="hoverTrackerDirective" apTrackHover
+          (click)="$event.stopImmediatePropagation()">
           <div class="ap-py-2 ap-px-4 ap-flex bar-containing-beautify-button">
             <div class="ap-flex-grow">
               <span class="ap-text-white ap-flex ap-gap-2 ap-items-center">{{property.value.displayName}} <ng-container
@@ -398,10 +398,13 @@
                 (click)="beautify(property.key)" matTooltip="beautify" class="ap-cursor-pointer"> </svg-icon>
             </div>
           </div>
-          <ngx-codemirror [formControlName]="property.key" #jsonControl [options]="editorOptions"
-            (focusChange)="$event? handler.showMentionsDropdown(): null"></ngx-codemirror>
+          <div class="ap-h-[300px]">
+            <ngx-monaco-editor class="!ap-h-full !ap-w-full" [formControlName]="property.key"
+              (click)="handler.showMentionsDropdown()" [options]="codeEditorOptions"></ngx-monaco-editor>
+          </div>
+
           <app-builder-autocomplete-dropdown-handler #handler [container]="interpolatingTextControlContainer"
-            (mentionEmitted)="addMentionToJsonControl(jsonControl,$event)">
+            (mentionEmitted)="addMentionToJsonControl($event)">
           </app-builder-autocomplete-dropdown-handler>
         </div>
         <div *ngIf="getControl(property.key)!.invalid" class="ap-p-2">

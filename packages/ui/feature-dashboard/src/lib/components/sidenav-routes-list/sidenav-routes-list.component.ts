@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { FolderActions } from '../../store/folders/folders.actions';
+import { environment } from '@activepieces/ui/common';
 
 type SideNavRoute = {
   icon: string;
@@ -57,5 +58,9 @@ export class SidenavRoutesListComponent {
       const fixedUrl = urlArrays.join('/');
       this.router.navigate([fixedUrl]);
     }
+  }
+
+  get environment() {
+    return environment;
   }
 }

@@ -8,6 +8,24 @@ export enum TriggerStrategy {
   APP_WEBHOOK = "APP_WEBHOOK",
 }
 
+export enum WebhookHandshakeStrategy {
+  NONE = 'NONE',
+  HEADER_PRESENT = 'HEADER_PRESENT',
+  QUERY_PRESENT = 'QUERY_PRESENT',
+  BODY_PARAM_PRESENT = 'BODY_PARAM_PRESENT'
+}
+
+export interface WebhookHandshakeConfiguration {
+  strategy: WebhookHandshakeStrategy,
+  paramName?: string
+}
+
+export interface WebhookResponse {
+  status: number,
+  body?: any,
+  headers?: Record<string, string>
+}
+
 type CreateTriggerParams<
   PieceAuth extends PieceAuthProperty,
   TriggerProps extends NonAuthPiecePropertyMap,
@@ -22,7 +40,9 @@ type CreateTriggerParams<
   auth?: PieceAuth
   props: TriggerProps
   type: TS
+  handshakeConfiguration?: WebhookHandshakeConfiguration,
   onEnable: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>
+  onHandshake?: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<WebhookResponse>
   onDisable: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>
   run: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>
   test?: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>
@@ -41,7 +61,9 @@ export class ITrigger<
     public readonly description: string,
     public readonly props: TriggerProps,
     public readonly type: TS,
+    public readonly handshakeConfiguration: WebhookHandshakeConfiguration,
     public readonly onEnable: (ctx: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>,
+    public readonly onHandshake: (ctx: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<WebhookResponse>,
     public readonly onDisable: (ctx: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>,
     public readonly run: (ctx: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>,
     public readonly test: (ctx: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>,
@@ -67,7 +89,9 @@ export const createTrigger = <
     params.description,
     params.props,
     params.type,
+    params.handshakeConfiguration ?? { strategy: WebhookHandshakeStrategy.NONE },
     params.onEnable,
+    params.onHandshake ?? (async () => ({ status: 200 })),
     params.onDisable,
     params.run,
     params.test ?? (() => Promise.resolve([params.sampleData])),

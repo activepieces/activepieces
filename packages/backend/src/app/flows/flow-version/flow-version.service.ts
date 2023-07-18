@@ -41,6 +41,26 @@ export const flowVersionService = {
             id: flowVersionId,
         })
     },
+    async lockPieceVersions(projectId: ProjectId, mutatedFlowVersion: FlowVersion): Promise<FlowVersion> {
+        return await flowHelper.transferFlowAsync(mutatedFlowVersion, async (step) => {
+            const clonedStep = JSON.parse(JSON.stringify(step))
+            switch (step.type) {
+                case ActionType.PIECE:
+                case TriggerType.PIECE: {
+                    const newVersion = await pieceMetadataService.get({
+                        projectId,
+                        name: step.settings.pieceName,
+                        version: step.settings.pieceVersion,
+                    })
+                    clonedStep.settings.pieceVersion = newVersion.version
+                    break
+                }
+                default:
+                    break
+            }
+            return clonedStep
+        })
+    },
     async applyOperation(projectId: ProjectId, flowVersion: FlowVersion, userOperation: FlowOperationRequest): Promise<FlowVersion> {
         let operations: FlowOperationRequest[] = []
         let mutatedFlowVersion = flowVersion
@@ -49,7 +69,7 @@ export const flowVersionService = {
                 operations = handleImportFlowOperation(flowVersion, userOperation.request)
                 break
             case FlowOperationType.LOCK_FLOW:
-                mutatedFlowVersion = await lockPieceVersions(projectId, mutatedFlowVersion)
+                mutatedFlowVersion = await this.lockPieceVersions(projectId, mutatedFlowVersion)
                 operations = [userOperation]
                 break
             default:
@@ -122,28 +142,6 @@ export const flowVersionService = {
         }
         return await flowVersionRepo.save(flowVersion)
     },
-}
-
-
-async function lockPieceVersions(projectId: ProjectId, mutatedFlowVersion: FlowVersion): Promise<FlowVersion> {
-    return await flowHelper.transferFlowAsync(mutatedFlowVersion, async (step) => {
-        const clonedStep = JSON.parse(JSON.stringify(step))
-        switch (step.type) {
-            case ActionType.PIECE:
-            case TriggerType.PIECE: {
-                const newVersion = await pieceMetadataService.get({
-                    projectId,
-                    name: step.settings.pieceName,
-                    version: step.settings.pieceVersion,
-                })
-                clonedStep.settings.pieceVersion = newVersion.version
-                break
-            }
-            default:
-                break
-        }
-        return clonedStep
-    })
 }
 
 async function applySingleOperation(projectId: ProjectId, flowVersion: FlowVersion, operation: FlowOperationRequest): Promise<FlowVersion> {

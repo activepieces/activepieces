@@ -46,13 +46,11 @@ export class CodeArtifactFormControlComponent
   hideDelayForFullscreenTooltip = 2000;
   codeArtifactForm: FormGroup<CodeArtifactForm>;
   codeEditorOptions = {
-    lineNumbers: true,
-    lineWrapping: true,
-    theme: 'lucario',
-    readOnly: '',
-    mode: 'text/typescript',
-    matchBrackets: true,
-    gutters: ['CodeMirror-lint-markers'],
+    minimap: { enabled: false },
+    theme: 'apTheme',
+    language: 'typescript',
+    readOnly: false,
+    automaticLayout: true,
   };
   constructor(
     private formBuilder: FormBuilder,
@@ -83,7 +81,7 @@ export class CodeArtifactFormControlComponent
   setDisabledState?(isDisabled: boolean): void {
     if (isDisabled) {
       this.codeArtifactForm.disable();
-      this.codeEditorOptions.readOnly = 'nocursor';
+      this.codeEditorOptions.readOnly = true;
     }
   }
   onChange: (val: unknown) => void = (val) => {
@@ -110,7 +108,7 @@ export class CodeArtifactFormControlComponent
     this.dialogService.open(CodeArtifactControlFullscreenComponent, {
       data: {
         codeFilesForm: this.codeArtifactForm,
-        readOnly: this.codeEditorOptions.readOnly === 'nocursor',
+        readOnly: this.codeEditorOptions.readOnly,
       },
       panelClass: 'fullscreen-dialog',
     });

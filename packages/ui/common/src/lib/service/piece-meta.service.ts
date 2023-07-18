@@ -118,7 +118,7 @@ export class PieceMetadataService {
     triggersMap: TriggersMetadata,
     edition: ApEdition
   ): TriggersMetadata {
-    if (edition === ApEdition.ENTERPRISE) {
+    if (edition !== ApEdition.COMMUNITY) {
       return triggersMap;
     }
 
