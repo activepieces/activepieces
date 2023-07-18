@@ -113,5 +113,5 @@ app.get(
 )
 app.setErrorHandler(errorHandler)
 
-//SurveyMonkey
-app.addContentTypeParser('application/vnd.surveymonkey.response.v1+json', { parseAs: 'string' }, app.getDefaultJsonParser('ignore', 'ignore'));
+// SurveyMonkey
+app.addContentTypeParser('application/vnd.surveymonkey.response.v1+json', { parseAs: 'string' }, app.getDefaultJsonParser('ignore', 'ignore'))
