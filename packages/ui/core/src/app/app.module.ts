@@ -24,134 +24,22 @@ import { FlagService } from '@activepieces/ui/common';
 import { ApEdition } from '@activepieces/shared';
 import { UserLoggedIn } from './guards/user-logged-in.guard';
 import { ImportFlowComponent } from './modules/import-flow/import-flow.component';
-
 import { LottieCacheModule, LottieModule } from 'ngx-lottie';
 import player from 'lottie-web';
 import {
   MonacoEditorModule,
   NgxMonacoEditorConfig,
 } from 'ngx-monaco-editor-v2';
+import { apMonacoTheme } from './modules/common/monaco-themes/ap-monaco-theme';
+import { cobalt2 } from './modules/common/monaco-themes/cobalt-2-theme';
 
 const monacoConfig: NgxMonacoEditorConfig = {
   baseUrl: '/assets', // configure base path for monaco editor. Starting with version 8.0.0 it defaults to './assets'. Previous releases default to '/assets'
   defaultOptions: { scrollBeyondLastLine: false }, // pass default options to be used
   onMonacoLoad: () => {
-    (window as any).monaco.editor.defineTheme('apTheme', {
-      base: 'vs',
-      inherit: true,
-      rules: [
-        {
-          background: 'FFFFFF',
-          token: '',
-        },
-        {
-          foreground: 'c41a16',
-          token: 'string',
-        },
-        {
-          foreground: '1c00cf',
-          token: 'constant.numeric',
-        },
-        {
-          foreground: '770088',
-          token: 'keyword',
-        },
-        {
-          foreground: '#0055AA',
-          token: 'keyword.operator',
-        },
-        {
-          foreground: '770088',
-          token: 'constant.language',
-        },
-        {
-          foreground: '990000',
-          token: 'support.class.exception',
-        },
-        {
-          foreground: '#0055AA',
-          token: 'entity.name.function',
-        },
-        {
-          fontStyle: 'bold underline',
-          token: 'entity.name.type',
-        },
-        {
-          fontStyle: 'italic',
-          token: 'variable.parameter',
-        },
-        {
-          foreground: '007400',
-          token: 'comment',
-        },
-        {
-          foreground: 'ff0000',
-          token: 'invalid',
-        },
-        {
-          background: 'e71a1100',
-          token: 'invalid.deprecated.trailing-whitespace',
-        },
-        {
-          foreground: '#0055AA',
-          background: 'fafafafc',
-          token: 'text source',
-        },
-        {
-          foreground: '770088',
-          token: 'meta.tag',
-        },
-        {
-          foreground: '770088',
-          token: 'declaration.tag',
-        },
-        {
-          foreground: '#0055AA',
-          fontStyle: 'bold',
-          token: 'support',
-        },
-        {
-          foreground: '770088',
-          token: 'storage',
-        },
-        {
-          fontStyle: 'bold underline',
-          token: 'entity.name.section',
-        },
-        {
-          foreground: '#0055AA',
-          fontStyle: 'bold',
-          token: 'entity.name.function.frame',
-        },
-        {
-          foreground: '333333',
-          token: 'meta.tag.preprocessor.xml',
-        },
-        {
-          foreground: '994500',
-          fontStyle: 'italic',
-          token: 'entity.other.attribute-name',
-        },
-        {
-          foreground: '881280',
-          token: 'entity.name.tag',
-        },
-        {
-          foreground: '881280',
-          token: 'entity.name.tag',
-        },
-      ],
-      colors: {
-        'editor.foreground': '#0055AA',
-        'editor.background': '#F8F9FA',
-        'editor.selectionBackground': '#BAD6FD',
-        'editor.lineHighlightBackground': '#0000001A',
-        'editorCursor.foreground': '#000000',
-        'editorWhitespace.foreground': '#B3B3B3F4',
-        'editorLineNumber.foreground': '#999999',
-        'editorGutter.background': '#F7F7F7',
-      },
-    });
+    const monaco = (window as any).monaco;
+    monaco.editor.defineTheme('apTheme', apMonacoTheme);
+    monaco.editor.defineTheme('cobalt2', cobalt2);
   }, // here monaco object will be available as window.monaco use this function to extend monaco editor functionalities.
 };
 export function tokenGetter() {
