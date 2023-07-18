@@ -1,5 +1,5 @@
 import * as soap from "soap";
-import { BasicAuthProperty, BasicAuthPropertyValue, CustomAuthPropertyValue, CustomAuthProps, Property, ShortTextProperty, StaticDropdownProperty, StaticMultiSelectDropdownProperty, StaticPropsValue, createAction } from "@activepieces/pieces-framework";
+import { CustomAuthProps, Property, ShortTextProperty, StaticDropdownProperty, StaticMultiSelectDropdownProperty, StaticPropsValue, createAction } from "@activepieces/pieces-framework";
 import { soapAuth } from "../shared/auth";
 
 
@@ -68,26 +68,54 @@ export const callMethod = createAction({
 
                 return properties;
             }
+        }),
+        parsed: Property.Checkbox({
+            displayName: 'Parsed',
+            required: false,
+            defaultValue: false
         })
     },
     async run (ctx) {
-        const { wsdl, method, args } = ctx.propsValue;
+        const { wsdl, method, args, parsed } = ctx.propsValue;
         
-        const client = await soap.createClientAsync(wsdl);
-        if (ctx.auth) {
-            const auth = ctx.auth as StaticPropsValue<CustomAuthProps>;
-            
-            const security = auth['type'] === 'WS' ? new soap.WSSecurity(auth['username'] as string, auth['password'] as string) : new soap.BasicAuthSecurity(auth['username'] as string, auth['password'] as string);
-            client.setSecurity(security);
+        const client = await soap.createClientAsync(wsdl, {
+            forceSoap12Headers: true
+        });
+
+        const auth = ctx.auth as StaticPropsValue<CustomAuthProps>;
+        switch (auth['type']) {
+            case 'WS':
+                client.setSecurity(new soap.WSSecurity(auth['username'] as string, auth['password'] as string));
+                break;
+            case 'Basic':
+                client.setSecurity(new soap.BasicAuthSecurity(auth['username'] as string, auth['password'] as string));
+                break;
+            case 'Header':                // eslint-disable-next-line no-case-declarations
+                client.addSoapHeader(ctx.auth['customHeader'] as string);
+                break;
         }
-        
-        const [actionRes] = await client[method + 'Async'](args);
-        
-        return {
-            actionRes,
-            raw: {
-                request: client.lastRequest,
-                response: client.lastResponse
+
+        const action = client[method + 'Async'];
+
+        try {
+            const [actionRes] = await action(args);
+
+            if (parsed || false) {
+                return actionRes
+            } else {
+                return {
+                    request: client.lastRequest,
+                    response: client.lastResponse
+                }
+            }
+        } catch(e: any) {
+            return {
+                error: true,
+                status: e.response.status,
+                raw: {
+                    request: client.lastRequest,
+                    response: e.body
+                }
             }
         }
     }

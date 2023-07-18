@@ -1,35 +1,48 @@
-import { PieceAuth, Property } from "@activepieces/pieces-framework";
+import { PieceAuth, Property } from '@activepieces/pieces-framework';
 
 export function soapAuth() {
     return PieceAuth.CustomAuth({
         displayName: 'Security',
-        required: false,
+        required: true,
         props: {
           type: Property.StaticDropdown({
-            displayName: "Authentication Type",
+            displayName: 'Authentication Type',
             required: true,
             options: {
               options: [
                 {
-                  label: "WS Security",
-                  value: "WS"
+                  label: 'None',
+                  value: 'None'
                 },
                 {
-                  label: "Basic Auth",
-                  value: "Basic"
+                  label: 'WS Security',
+                  value: 'WS'
+                },
+                {
+                  label: 'Basic Auth',
+                  value: 'Basic'
+                },
+                {
+                  label: 'Custom Header',
+                  value: 'Header'
                 }
               ]
             }
           }),
           username: Property.ShortText({
-            displayName: "Username",
-            description: "The WS Security username",
-            required: true
+            displayName: 'Username',
+            description: 'The WS Security username',
+            required: false
           }),
           password: Property.ShortText({
-            displayName: "Password",
-            description: "The WS Security password",
-            required: true
+            displayName: 'Password',
+            description: 'The WS Security password',
+            required: false
+          }),
+          customHeader: Property.LongText({
+            displayName: 'Custom Header',
+            description: 'Custom Header Content',
+            required: false
           })
         }
       })
