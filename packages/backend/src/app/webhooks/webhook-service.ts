@@ -25,7 +25,7 @@ import { flowInstanceService } from '../flows/flow-instance/flow-instance.servic
 import { WebhookResponse } from '@activepieces/pieces-framework'
 
 export const webhookService = {
-    async handshake({ flow, payload }: CallbackParams): Promise<WebhookResponse|null> {
+    async handshake({ flow, payload }: CallbackParams): Promise<WebhookResponse | null> {
         logger.info(`[WebhookService#handshake] flowId=${flow.id}`)
 
         const { projectId } = flow
@@ -51,7 +51,7 @@ export const webhookService = {
             payload,
             simulate: false,
         })
-        if(response !== null) {
+        if (response !== null) {
             logger.info(`[WebhookService#handshake] condition met, handshake executed, response:
             ${JSON.stringify(response, null, 2)}`)
         }

@@ -21,7 +21,7 @@ export const webhookController: FastifyPluginAsync = async (app) => {
             const flow = await getFlowOrThrow(request.params.flowId)
             const payload = await convertRequest(request)
             const isHandshake = await handshakeHandler(flow, payload, reply)
-            if(isHandshake) {
+            if (isHandshake) {
                 return
             }
             let run = (await webhookService.callback({
@@ -49,7 +49,7 @@ export const webhookController: FastifyPluginAsync = async (app) => {
             const flow = await getFlowOrThrow(request.params.flowId)
             const payload = await convertRequest(request)
             const isHandshake = await handshakeHandler(flow, payload, reply)
-            if(isHandshake) {
+            if (isHandshake) {
                 return
             }
             asyncHandler(payload, flow)
@@ -68,7 +68,7 @@ export const webhookController: FastifyPluginAsync = async (app) => {
             const flow = await getFlowOrThrow(request.query.flowId)
             const payload = await convertRequest(request)
             const isHandshake = await handshakeHandler(flow, payload, reply)
-            if(isHandshake) {
+            if (isHandshake) {
                 return
             }
             asyncHandler(payload, flow)
@@ -194,10 +194,10 @@ async function handshakeHandler(flow: Flow, payload: EventPayload, reply: Fastif
         flow,
         payload,
     })
-    if(handshakeResponse !== null) {
+    if (handshakeResponse !== null) {
         reply = reply.status(handshakeResponse.status)
-        if(handshakeResponse.headers !== undefined) {
-            for(const header of Object.keys(handshakeResponse.headers)) {
+        if (handshakeResponse.headers !== undefined) {
+            for (const header of Object.keys(handshakeResponse.headers)) {
                 reply = reply.header(header, handshakeResponse.headers[header] as string)
             }
         }
@@ -212,12 +212,7 @@ const asyncHandler = async (payload: EventPayload, flow: Flow) => {
     try {
         await webhookService.callback({
             flow,
-            payload: {
-                method: request.method,
-                headers: request.headers as Record<string, string>,
-                body: await convertBody(request),
-                queryParams: request.query as Record<string, string>,
-            },
+            payload,
         })
     }
     catch (e) {
