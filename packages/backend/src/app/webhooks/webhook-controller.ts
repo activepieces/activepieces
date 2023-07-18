@@ -26,7 +26,12 @@ export const webhookController: FastifyPluginAsync = async (app) => {
             }
             let run = (await webhookService.callback({
                 flow,
-                payload,
+                payload: {
+                    method: request.method,
+                    headers: request.headers as Record<string, string>,
+                    body: await convertBody(request),
+                    queryParams: request.query as Record<string, string>,
+                },
             }))[0]
             run = await waitForRunToComplete(run)
             await handleExecutionOutputStatus(run, reply)
@@ -82,7 +87,7 @@ export const webhookController: FastifyPluginAsync = async (app) => {
             logger.debug(`[WebhookController#simulate] flowId=${request.params.flowId}`)
             const flow = await getFlowOrThrow(request.params.flowId)
             await webhookService.simulationCallback({
-                flow: flow,
+                flow,
                 payload: {
                     method: request.method,
                     headers: request.headers as Record<string, string>,
@@ -206,8 +211,13 @@ const asyncHandler = async (payload: EventPayload, flow: Flow) => {
     // If we don't catch the error here, it will crash the Fastify API. Adding await before the function call can help, but since 3P services expect a fast response, we still don't want to wait for the callback to finish.
     try {
         await webhookService.callback({
-            flow: flow,
-            payload: payload,
+            flow,
+            payload: {
+                method: request.method,
+                headers: request.headers as Record<string, string>,
+                body: await convertBody(request),
+                queryParams: request.query as Record<string, string>,
+            },
         })
     }
     catch (e) {

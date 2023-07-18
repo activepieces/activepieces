@@ -87,13 +87,13 @@ export const triggerUtils = {
                 })
                 const { result } = await engineHelper.executeTrigger({
                     hookType: TriggerHookType.RUN,
-                    flowVersion: flowVersion,
+                    flowVersion,
                     triggerPayload: payload,
                     webhookUrl: await webhookService.getWebhookUrl({
                         flowId: flowVersion.flowId,
                         simulate,
                     }),
-                    projectId: projectId,
+                    projectId,
                 })
 
 
@@ -186,12 +186,12 @@ const disablePieceTrigger = async (params: EnableOrDisableParams) => {
 
     const engineHelperResponse = await engineHelper.executeTrigger({
         hookType: TriggerHookType.ON_DISABLE,
-        flowVersion: flowVersion,
+        flowVersion,
         webhookUrl: await webhookService.getWebhookUrl({
             flowId: flowVersion.flowId,
             simulate,
         }),
-        projectId: projectId,
+        projectId,
     })
 
     switch (pieceTrigger.type) {
@@ -225,9 +225,9 @@ const enablePieceTrigger = async (params: EnableOrDisableParams) => {
 
     const engineHelperResponse = await engineHelper.executeTrigger({
         hookType: TriggerHookType.ON_ENABLE,
-        flowVersion: flowVersion,
+        flowVersion,
         webhookUrl,
-        projectId: projectId,
+        projectId,
     })
 
     if (engineHelperResponse.status !== EngineResponseStatus.OK) {
@@ -251,7 +251,7 @@ const enablePieceTrigger = async (params: EnableOrDisableParams) => {
         case TriggerStrategy.WEBHOOK:
             break
         case TriggerStrategy.POLLING: {
-            if(isNil(engineHelperResponse.result.scheduleOptions)){
+            if (isNil(engineHelperResponse.result.scheduleOptions)) {
                 engineHelperResponse.result.scheduleOptions = {
                     cronExpression: POLLING_FREQUENCY_CRON_EXPRESSON,
                     timezone: 'UTC',

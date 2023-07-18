@@ -7,7 +7,6 @@ import {
     FlowInstanceStatus,
     FlowRun,
     FlowVersion,
-    FlowViewMode,
     ProjectId,
     RunEnvironment,
 } from '@activepieces/shared'
@@ -170,14 +169,14 @@ function extractHostname(url: string): string | null {
 }
 
 const getLatestFlowVersionOrThrow = async (flowId: FlowId, projectId: ProjectId): Promise<FlowVersion> => {
-    const flowVersionId = undefined
 
-    const flowVersion = await flowVersionService.getFlowVersion(
+    const flowVersion = await flowVersionService.getFlowVersion({
         projectId,
         flowId,
-        flowVersionId,
-        FlowViewMode.NO_ARTIFACTS,
-    )
+        versionId: undefined,
+        removeSecrets: false,
+        includeArtifactAsBase64: false,
+    })
 
     if (isNil(flowVersion)) {
         logger.error(`[WebhookService#getLatestFlowVersionOrThrow] error=flow_version_not_found flowId=${flowId} projectId=${projectId}`)

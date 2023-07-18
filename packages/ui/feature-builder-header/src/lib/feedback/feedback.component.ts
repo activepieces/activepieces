@@ -6,7 +6,7 @@ import {
 } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { MatMenuTrigger } from '@angular/material/menu';
-import { AuthenticationService } from '@activepieces/ui/common';
+import { AuthenticationService, environment } from '@activepieces/ui/common';
 import { map, Observable, tap } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
@@ -56,5 +56,9 @@ export class FeedbackComponent {
   }
   menuOpened() {
     this.feedbackTextarea.nativeElement.focus();
+  }
+
+  get environment() {
+    return environment;
   }
 }

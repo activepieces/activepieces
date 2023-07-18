@@ -17,7 +17,7 @@ import {
 import { databaseConnection } from '../database/database-connection'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
-import { AppConnectionEntity } from './app-connection.entity'
+import { AppConnectionEntity, AppConnectionSchema } from './app-connection.entity'
 import axios from 'axios'
 import { acquireLock } from '../database/redis-connection'
 import { decryptObject, encryptObject } from '../helper/encryption'
@@ -63,9 +63,9 @@ export const appConnectionService = {
                 break
         }
         const claimedUpsertRequest = { ...request, value: { ...response, ...request.value }, id: apId(), projectId }
-        await appConnectionRepo.upsert({ ...claimedUpsertRequest, id: apId(), projectId: projectId, value: encryptObject(claimedUpsertRequest.value) }, ['name', 'projectId'])
+        await appConnectionRepo.upsert({ ...claimedUpsertRequest, id: apId(), projectId, value: encryptObject(claimedUpsertRequest.value) }, ['name', 'projectId'])
         const connection = await appConnectionRepo.findOneByOrFail({
-            projectId: projectId,
+            projectId,
             name: request.name,
         })
         connection.value = decryptObject(connection.value)
@@ -74,34 +74,20 @@ export const appConnectionService = {
 
     async getOne({ projectId, name }: GetOneParams): Promise<AppConnection | null> {
         const appConnection = await appConnectionRepo.findOneBy({
-            projectId: projectId,
-            name: name,
+            projectId,
+            name,
         })
-        if (appConnection === null) {
-            return null
+        if (isNil(appConnection)) {
+            return appConnection
+        }
+        if (!needRefresh(appConnection)) {
+            appConnection.value = decryptObject(appConnection.value)
+            appConnection.status = getStatus(appConnection)
+            return appConnection
         }
         // We should make sure this is accessed only once, as a race condition could occur where the token needs to be refreshed and it gets accessed at the same time,
         // which could result in the wrong request saving incorrect data.
-        const refreshLock = await acquireLock({
-            key: `${projectId}_${name}`,
-            timeout: 10000,
-        })
-        try {
-
-            appConnection.value = decryptObject(appConnection.value)
-            const refreshedAppConnection = await refresh(appConnection)
-            await appConnectionRepo.update(refreshedAppConnection.id, { ...refreshedAppConnection, value: encryptObject(refreshedAppConnection.value) })
-            refreshedAppConnection.status = getStatus(refreshedAppConnection)
-            return refreshedAppConnection
-        }
-        catch (e) {
-            logger.error(e)
-            appConnection.status = AppConnectionStatus.ERROR
-        }
-        finally {
-            await refreshLock.release()
-        }
-        return appConnection
+        return lockAndRefreshConnection({ projectId, name })
     },
 
     async getOneOrThrow(params: GetOneParams): Promise<AppConnection> {
@@ -120,7 +106,7 @@ export const appConnectionService = {
     },
 
     async delete({ projectId, id }: { projectId: ProjectId, id: AppConnectionId }): Promise<void> {
-        await appConnectionRepo.delete({ id: id, projectId: projectId })
+        await appConnectionRepo.delete({ id, projectId })
     },
     async list(projectId: ProjectId, appName: string | undefined, cursorRequest: Cursor | null, limit: number): Promise<SeekPage<AppConnection>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
@@ -164,6 +150,56 @@ export const appConnectionService = {
     },
 }
 
+async function lockAndRefreshConnection({ projectId, name }: { projectId: ProjectId, name: string } ) {
+    const refreshLock = await acquireLock({
+        key: `${projectId}_${name}`,
+        timeout: 20000,
+    })
+
+    let appConnection: AppConnectionSchema | null = null
+
+    try {
+        appConnection = await appConnectionRepo.findOneBy({
+            projectId,
+            name,
+        })
+
+        if (isNil(appConnection)) {
+            return appConnection
+        }
+
+        if (!needRefresh(appConnection)) {
+            appConnection.status = getStatus(appConnection)
+            return appConnection
+        }
+        
+        appConnection.value = decryptObject(appConnection.value)
+        const refreshedAppConnection = await refresh(appConnection)
+        await appConnectionRepo.update(refreshedAppConnection.id, { ...refreshedAppConnection, value: encryptObject(refreshedAppConnection.value) })
+        refreshedAppConnection.status = getStatus(refreshedAppConnection)
+        return refreshedAppConnection
+    }
+    catch (e) {
+        logger.error(e)
+        if (!isNil(appConnection)) {
+            appConnection.status = AppConnectionStatus.ERROR
+        }
+    }
+    finally {
+        await refreshLock.release()
+    }
+    return appConnection
+}
+
+function needRefresh(connection: AppConnection): boolean {
+    switch (connection.value.type) {
+        case AppConnectionType.CLOUD_OAUTH2:
+        case AppConnectionType.OAUTH2:
+            return isExpired(connection.value)
+        default:
+            return false
+    }
+}
 async function refresh(connection: AppConnection): Promise<AppConnection> {
     switch (connection.value.type) {
         case AppConnectionType.CLOUD_OAUTH2:
@@ -246,7 +282,7 @@ async function refreshWithCredentials(appConnection: OAuth2ConnectionValueWithAp
             appConnection.token_url,
             new URLSearchParams(body),
             {
-                headers: headers,
+                headers,
             },
         )
     ).data
@@ -309,7 +345,7 @@ async function claim(request: {
                 request.tokenUrl,
                 new URLSearchParams(body),
                 {
-                    headers: headers,
+                    headers,
                 },
             )
         ).data
