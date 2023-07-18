@@ -19,6 +19,7 @@ import {
     ErrorCode,
     ExecuteCodeOperation,
     ExecuteExtractPieceMetadata,
+    ApEnvironment,
 } from '@activepieces/shared'
 import { Sandbox, sandboxManager } from '../workers/sandbox'
 import { system } from './system/system'
@@ -33,6 +34,9 @@ import { pieceManager } from '../flows/common/piece-installer'
 import { packageManager } from './package-manager'
 import { pieceMetadataService } from '../pieces/piece-metadata-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
+
+
+const apEnvironment = system.getOrThrow(SystemProp.ENVIRONMENT)
 
 type InstallPieceParams = {
     path: string
@@ -104,14 +108,15 @@ const generateWorkerToken = (request: GenerateWorkerTokenParams): Promise<string
 }
 
 const getSandbox = async ({ pieceName, pieceVersion }: GetSandboxParams): Promise<Sandbox> => {
-    const sandbox = await sandboxManager.obtainSandbox(`${pieceName}:${pieceVersion}`)
+    const sandboxName = getCacheKey({ pieceName, pieceVersion })
+    const sandbox = await sandboxManager.obtainSandbox(sandboxName)
 
     if (sandbox.cached) {
-        logger.info(`Reusing sandbox number ${sandbox.boxId} for ${pieceName}:${pieceVersion}`)
+        logger.info(`Reusing sandbox number ${sandbox.boxId} for ${sandboxName}`)
         await sandbox.clean()
     }
     else {
-        logger.info(`Preparing sandbox number ${sandbox.boxId} for ${pieceName}:${pieceVersion}`)
+        logger.info(`Preparing sandbox number ${sandbox.boxId} for ${sandboxName}`)
         await sandbox.recreate()
         const path = sandbox.getSandboxFolderPath()
 
@@ -123,6 +128,13 @@ const getSandbox = async ({ pieceName, pieceVersion }: GetSandboxParams): Promis
     }
 
     return sandbox
+}
+
+function getCacheKey({ pieceName, pieceVersion }: GetSandboxParams) {
+    if (apEnvironment === ApEnvironment.DEVELOPMENT) {
+        return apId()
+    }
+    return `${pieceName}:${pieceVersion}`
 }
 
 function tryParseJson(value: unknown) {
