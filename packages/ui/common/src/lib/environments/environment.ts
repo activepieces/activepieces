@@ -9,7 +9,7 @@ export const environment = {
   showFeedbackButton: true,
   showDocsButton: true,
   showUserProfile: true,
-  websiteTitle: 'Acitvpieces',
+  websiteTitle: 'Activepieces',
   // BEGIN EE
   firebase: {
     apiKey: 'AIzaSyBik7RRZ6S8QIpG4GqzwoF_SCNn3Dr9PPw',

@@ -5,7 +5,7 @@ export const environment = {
   redirectUrl: 'http://localhost:8080/redirect',
   userPropertyNameInLocalStorage: 'currentUser',
   //You need to edit index.html manually
-  websiteTitle: 'Acitvpieces',
+  websiteTitle: 'Activepieces',
   activateBeamer: true,
   showFeedbackButton: true,
   showDocsButton: true,
