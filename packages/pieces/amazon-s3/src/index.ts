@@ -1,4 +1,4 @@
-import { PieceAuth, PieceAuthProperty, Property, createPiece } from "@activepieces/pieces-framework";
+import { PieceAuth, Property, createPiece } from "@activepieces/pieces-framework";
 import { amazonS3UploadBase64FileAction } from "./lib/actions/upload-file-from-base64";
 import { amazonS3UploadFileFromUrlAction } from "./lib/actions/upload-file-from-url";
 
@@ -144,11 +144,6 @@ export const amazonS3Auth = PieceAuth.CustomAuth({
     })
   },
   required: true,
-  async validate({ auth }) {
-    return {
-      valid: true,
-    }
-  }
 })
 
 export const amazonS3 = createPiece({

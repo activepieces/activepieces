@@ -25,12 +25,6 @@ export const freshsalesAuth = PieceAuth.BasicAuth({
     required: true
   }),
   required: true,
-  async validate({ auth }) {
-    return {
-      valid: true,
-      errors: []
-    }
-  },
 })
 
 export const freshsales = createPiece({
