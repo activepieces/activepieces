@@ -143,13 +143,14 @@ export const amazonS3Auth = PieceAuth.CustomAuth({
       required: true,
     })
   },
-  required: true,
+  required: true
 })
 
 export const amazonS3 = createPiece({
   displayName: "Amazon S3",
-  logoUrl: "https://cdn.activepieces.com/pieces/amazon-s3.png",
-  minimumSupportedRelease: '0.5.0',
+
+    logoUrl: "https://cdn.activepieces.com/pieces/amazon-s3.png",
+    minimumSupportedRelease: '0.5.0',
   authors: ["Willianwg"],
   auth: amazonS3Auth,
   actions: [

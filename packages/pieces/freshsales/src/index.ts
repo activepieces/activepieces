@@ -24,7 +24,7 @@ export const freshsalesAuth = PieceAuth.BasicAuth({
     description: "The API Key supplied by Freshsales",
     required: true
   }),
-  required: true,
+  required: true
 })
 
 export const freshsales = createPiece({
