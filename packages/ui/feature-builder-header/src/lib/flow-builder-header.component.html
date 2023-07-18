@@ -60,7 +60,7 @@
           </ng-container>
         </div>
         <app-publish-button></app-publish-button>
-        <ap-user-avatar class="ap-ml-[16px]"></ap-user-avatar>
+        <ap-user-avatar *ngIf="environment.showUserProfile" class="ap-ml-[16px]"></ap-user-avatar>
       </ng-container>
     </div>
   </div>
