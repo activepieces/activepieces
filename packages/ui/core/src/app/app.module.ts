@@ -159,6 +159,9 @@ function dynamicRoutes(edition: string) {
   ];
   let editionRoutes: Route[] = [];
   switch (edition) {
+    case ApEdition.CLOUD:
+      editionRoutes = [];
+      break;
     case ApEdition.ENTERPRISE:
       editionRoutes = [];
       break;
