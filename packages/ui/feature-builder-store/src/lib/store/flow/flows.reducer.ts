@@ -17,6 +17,7 @@ const initialState: FlowState = {
   flow: {
     status: FlowInstanceStatus.UNPUBLISHED,
     projectId: '1',
+    folderId: null,
     id: '1',
     updated: '',
     created: '',

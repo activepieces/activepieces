@@ -9,12 +9,14 @@ export const invoiceninjaAuth = PieceAuth.CustomAuth({
           description: 'Enter the base URL',
           required: true,
       }),
-      access_token: Property.LongText({
+      access_token: Property.ShortText({
           displayName: 'API Token',
           description: 'Enter the API token',
           required: true,
       })
   },
+  description:`Please check https://invoice-ninja.readthedocs.io/en/latest/api_tokens.html#create-token
+   to see how to get the API token`,
   required: true
 })
 

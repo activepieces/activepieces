@@ -11,6 +11,61 @@ Semantic versioning is a standardized way of versioning software projects. It us
 
 <Note>You will only see Version X.Y here as all Patch changes (Z) are added under their minor versions.</Note>
 
+### 7/19/2023
+
+**New Pieces:**
+- Survey Monkey: Added new response trigger by @MoShizzle
+- WooCommerce: Added new triggers for coupon, customer, line item in order, order, and product by @MoShizzle
+- Freshdesk: Added actions to get contact from ID, get ticket status, and get tickets by @buttonsbond
+- Approval Piece: Added actions to generate new approval links and wait until approval by @khaledmashaly
+- Google Drive: Added upload file action by @BastienMe
+- Invoice Ninja: Added create task action by @buttonsbond
+- Facebook Leads: Added new lead trigger by @MoShizzle (Cloud only)
+- Hubspot: Added new triggers for company, contact, deal, and ticket by @MoShizzle
+
+** Enhancement**
+- Google Sheets: The "Find Row" action now returns the value of the whole row instead of the specified column by @Ozak93
+- Google Sheets: All actions can now load headers from the sheet and display them as a form by @Abdallah-Alwarawreh
+- Branch: Added a case-sensitive toggle for all text search operations.
+- Google Contacts: Fixed testing in the new contact trigger by @Abdallah-Alwarawreh
+- Ability to test Square and Slack triggers.
+- Schedule: Added support for time zones in all actions by @abuaboud
+- Mailchimp: Made first name and last name optional by @abdullahranginwala
+- IMAP: Added support for attachments in new email by @MoShizzle
+- Gmail: Added support for sending email with attachments by @BastienMe
+- Kizeo Forms: Changed download and export formats to be used in pieces that have a file property by @BastienMe
+
+**Features:**
+- Auto Upgrade: Pieces in draft mode will be automatically upgraded if possible without removing and adding steps again.
+- Dropdown Search: All dropdowns are now searchable.
+
+**Fixes / Enhancements:**
+- The mini code editor has been replaced with the Monaco (VS Code) editor, resulting in a 15% decrease in frontend and faster loading time.
+- Fixed an issue where connection refreshing sometimes fails due to high volume calling requests to the connection at the same time.
+- Fixed the ability to move a flow from a specific folder to uncategorized.
+- Polling time is now configurable from an environment variable.
+- Installing Pieces is now fixed.
+
+**Developer Experience:**
+- Added the ability to implement validate functions for connections in the piece framework and display custom errors.
+- Webhook Trigger Handshake: Added the ability to implement a method to reply to webhook verification requests by a third party by @JanHolger
+- Fixed the error "Module '@activepieces/pieces-framework' not found."
+- Implemented new strict linting rules in the backend package (https://github.com/activepieces/activepieces/pull/1663)
+- Removed the Lodash library, resulting in a 600kb decrease in the bundle size of the engine.
+- Upgraded to Nx 16 and Angular 16
+
+**Contributors:**
+- @MoShizzle: Added Survey Monkey response trigger, WooCommerce triggers, Facebook Leads trigger, and provided contributions for IMAP and Google Docs.
+- @Ozak93: Enhanced Google Sheets "Find Row" action.
+- @Abdallah-Alwarawreh: Enhanced Google Sheets actions and fixed Google Contacts testing.
+- @buttonsbond: Added actions to WooCommerce and Invoice Ninja pieces.
+- @khaledmashaly: Added actions to Approval Piece and provided contributions.
+- @BastienMe: Added Google Drive upload file action, added Gmail attachment support, and enhanced Kizeo Forms.
+- @abdullahranginwala: Made first name and last name optional in Mailchimp.
+- @JanHolger: Implemented webhook trigger handshake method.
+
+Full Changelog: [View on GitHub](https://github.com/activepieces/activepieces/compare/0.4.0...0.5.0)
+
 ### 6/27/2023
 
 **Pieces:**

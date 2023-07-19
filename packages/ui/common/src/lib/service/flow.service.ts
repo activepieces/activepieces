@@ -5,7 +5,6 @@ import { map, Observable, of, switchMap, tap } from 'rxjs';
 import {
   CountFlowsRequest,
   CreateFlowRequest,
-  CreateFlowRunRequest,
   ExecutionOutputStatus,
   ExecutionState,
   FileId,
@@ -18,6 +17,7 @@ import {
   FlowViewMode,
   ListFlowsRequest,
   SeekPage,
+  TestFlowRunRequestBody,
 } from '@activepieces/shared';
 
 @Injectable({
@@ -116,9 +116,9 @@ export class FlowService {
     );
   }
 
-  execute(request: CreateFlowRunRequest): Observable<FlowRun> {
+  execute(request: TestFlowRunRequestBody): Observable<FlowRun> {
     return this.http
-      .post<FlowRun>(environment.apiUrl + '/flow-runs', request)
+      .post<FlowRun>(environment.apiUrl + '/flow-runs/test', request)
       .pipe(
         switchMap((run) => {
           if (

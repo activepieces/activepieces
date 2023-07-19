@@ -43,7 +43,7 @@
                 {{dialogData.pieceAuthProperty.password.displayName}} is required
             </mat-error>
         </mat-form-field>
-
+        <mat-error *ngIf="settingsForm.getError('message')" class="ap-text-left">{{settingsForm.getError('message')}}</mat-error>
     </form>
 </mat-dialog-content>
 

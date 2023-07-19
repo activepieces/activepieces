@@ -7,7 +7,7 @@ import { CollectionBuilderComponent } from './page/flow-builder/collection-build
 import { MaterialLayoutModule } from '../common/common-layout.module';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { DragDropModule } from '@angular/cdk/drag-drop';
-import { MonacoEditorModule } from '@materia-ui/ngx-monaco-editor';
+import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
 import { CodemirrorModule } from '@ctrl/ngx-codemirror';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';

@@ -46,7 +46,11 @@ import {
   LeftSideBarType,
   RightSideBarType,
 } from '@activepieces/ui/feature-builder-store';
-import { FlagService, TestStepService } from '@activepieces/ui/common';
+import {
+  FlagService,
+  TestStepService,
+  environment,
+} from '@activepieces/ui/common';
 import { PannerService } from '@activepieces/ui/feature-builder-canvas';
 import { MatDialog } from '@angular/material/dialog';
 import {
@@ -174,14 +178,14 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
             })
           );
           this.titleService.setTitle(
-            `${routeData.runInformation.flow.version.displayName} - Activepieces`
+            `${routeData.runInformation.flow.version.displayName} - ${environment.websiteTitle}`
           );
           this.snackbar.openFromComponent(TestRunBarComponent, {
             duration: undefined,
           });
         } else {
           this.titleService.setTitle(
-            `${routeData.flowAndFolder.flow.version.displayName} - Activepieces`
+            `${routeData.flowAndFolder.flow.version.displayName} - ${environment.websiteTitle}`
           );
           this.store.dispatch(
             BuilderActions.loadInitial({
