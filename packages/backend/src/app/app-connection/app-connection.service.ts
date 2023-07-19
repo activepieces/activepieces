@@ -80,8 +80,8 @@ export const appConnectionService = {
         if (isNil(appConnection)) {
             return appConnection
         }
+        appConnection.value = decryptObject(appConnection.value)
         if (!needRefresh(appConnection)) {
-            appConnection.value = decryptObject(appConnection.value)
             appConnection.status = getStatus(appConnection)
             return appConnection
         }
@@ -241,12 +241,13 @@ async function lockAndRefreshConnection({ projectId, name }: { projectId: Projec
             return appConnection
         }
 
+        appConnection.value = decryptObject(appConnection.value)
+
         if (!needRefresh(appConnection)) {
             appConnection.status = getStatus(appConnection)
             return appConnection
         }
 
-        appConnection.value = decryptObject(appConnection.value)
         const refreshedAppConnection = await refresh(appConnection)
         await appConnectionRepo.update(refreshedAppConnection.id, { ...refreshedAppConnection, value: encryptObject(refreshedAppConnection.value) })
         refreshedAppConnection.status = getStatus(refreshedAppConnection)

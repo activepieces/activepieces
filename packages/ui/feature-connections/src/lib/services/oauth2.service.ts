@@ -31,8 +31,10 @@ export class Oauth2Service {
       request.client_id +
       '&redirect_uri=' +
       redirect_uri +
+      '&access_type=offline' +
       '&state=' +
       UUID.UUID() +
+      '&prompt=consent' +
       '&scope=' +
       request.scope;
     if (request.extraParams) {
