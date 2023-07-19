@@ -1,4 +1,8 @@
-import { AppConnection, AppConnectionType } from '@activepieces/shared';
+import {
+  AppConnection,
+  AppConnectionType,
+  ErrorCode,
+} from '@activepieces/shared';
 import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
 import {
   FormBuilder,
@@ -7,7 +11,6 @@ import {
   Validators,
 } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { Store } from '@ngrx/store';
 import { catchError, Observable, of, take, tap } from 'rxjs';
 import { AppConnectionsService } from '../../services/app-connections.service';
@@ -46,7 +49,6 @@ export class SecretTextConnectionDialogComponent {
     private fb: FormBuilder,
     private store: Store,
     private appConnectionsService: AppConnectionsService,
-    private snackbar: MatSnackBar,
     public dialogRef: MatDialogRef<SecretTextConnectionDialogComponent>
   ) {
     this.settingsForm = this.fb.group({
@@ -93,13 +95,14 @@ export class SecretTextConnectionDialogComponent {
           },
         })
         .pipe(
-          catchError((err) => {
-            console.error(err);
-            this.snackbar.open(
-              'Connection operation failed please check your console.',
-              'Close',
-              { panelClass: 'error', duration: 5000 }
-            );
+          catchError((response) => {
+            console.error(response);
+            this.settingsForm.setErrors({
+              message:
+                response.error.code === ErrorCode.INVALID_APP_CONNECTION
+                  ? `Connection failed: ${response.error.params.error}`
+                  : 'Internal Connection error, failed please check your console.',
+            });
             return of(null);
           }),
           tap((connection) => {
