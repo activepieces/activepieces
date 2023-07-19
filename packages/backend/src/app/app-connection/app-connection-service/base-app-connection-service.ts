@@ -17,42 +17,33 @@ import {
     SeekPage,
     UpsertConnectionRequest,
 } from '@activepieces/shared'
-import { databaseConnection } from '../database/database-connection'
-import { buildPaginator } from '../helper/pagination/build-paginator'
-import { paginationHelper } from '../helper/pagination/pagination-utils'
+import { databaseConnection } from '../../database/database-connection'
+import { buildPaginator } from '../../helper/pagination/build-paginator'
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import {
     AppConnectionEntity,
     AppConnectionSchema,
-} from './app-connection.entity'
+} from '../app-connection.entity'
 import axios from 'axios'
-import { acquireLock } from '../database/redis-connection'
-import { decryptObject, encryptObject } from '../helper/encryption'
-import { getEdition } from '../helper/secret-helper'
-import { logger } from '../helper/logger'
+import { acquireLock } from '../../database/redis-connection'
+import { decryptObject, encryptObject } from '../../helper/encryption'
+import { getEdition } from '../../helper/secret-helper'
+import { logger } from '../../helper/logger'
 import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
 import { isNil } from '@activepieces/shared'
-import { engineHelper } from '../helper/engine-helper'
+import { engineHelper } from '../../helper/engine-helper'
+import { AppConnectionService } from './app-connection-service'
 
-type GetOneParams = {
-    projectId: ProjectId
-    name: string
-}
+const repo = databaseConnection.getRepository(AppConnectionEntity)
 
-type ValidateConnectionValueParams = {
-    connection: UpsertConnectionRequest
-    projectId: ProjectId
-}
+export abstract class BaseAppConnectionService implements AppConnectionService {
+    protected abstract preUpsertHook(params: UpsertParams): Promise<void>
 
-const appConnectionRepo = databaseConnection.getRepository(AppConnectionEntity)
+    async upsert(params: UpsertParams): Promise<AppConnection> {
+        await this.preUpsertHook(params)
 
-export const appConnectionService = {
-    async upsert({
-        projectId,
-        request,
-    }: {
-        projectId: ProjectId
-        request: UpsertConnectionRequest
-    }): Promise<AppConnection> {
+        const { projectId, request } = params
+
         const validatedConnectionValue = await validateConnectionValue({
             connection: request,
             projectId,
@@ -70,36 +61,35 @@ export const appConnectionService = {
             projectId,
         }
 
-        await appConnectionRepo.upsert(connection, ['name', 'projectId'])
+        await repo.upsert(connection, ['name', 'projectId'])
 
-        const updatedConnection = await appConnectionRepo.findOneByOrFail({
+        const updatedConnection = await repo.findOneByOrFail({
             name: request.name,
             projectId,
         })
 
         return decryptConnection(updatedConnection)
-    },
+    }
 
-    async getOne({
-        projectId,
-        name,
-    }: GetOneParams): Promise<AppConnection | null> {
-        const encryptedAppConnection = await appConnectionRepo.findOneBy({
+    async getOne({ projectId, name }: GetOneParams): Promise<AppConnection | null> {
+        const encryptedAppConnection = await repo.findOneBy({
             projectId,
             name,
         })
+
         if (isNil(encryptedAppConnection)) {
             return encryptedAppConnection
         }
+
         const appConnection = decryptConnection(encryptedAppConnection)
+
         if (!needRefresh(appConnection)) {
             appConnection.status = getStatus(appConnection)
             return appConnection
         }
-        // We should make sure this is accessed only once, as a race condition could occur where the token needs to be refreshed and it gets accessed at the same time,
-        // which could result in the wrong request saving incorrect data.
+
         return lockAndRefreshConnection({ projectId, name })
-    },
+    }
 
     async getOneOrThrow(params: GetOneParams): Promise<AppConnection> {
         const connection = await this.getOne(params)
@@ -114,24 +104,15 @@ export const appConnectionService = {
         }
 
         return connection
-    },
+    }
 
-    async delete({
-        projectId,
-        id,
-    }: {
-        projectId: ProjectId
-        id: AppConnectionId
-    }): Promise<void> {
-        await appConnectionRepo.delete({ id, projectId })
-    },
-    async list(
-        projectId: ProjectId,
-        appName: string | undefined,
-        cursorRequest: Cursor | null,
-        limit: number,
-    ): Promise<SeekPage<AppConnection>> {
+    async delete(params: DeleteParams): Promise<void> {
+        await repo.delete(params)
+    }
+
+    async list({ projectId, appName, cursorRequest, limit }: ListParams): Promise<SeekPage<AppConnection>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
+
         const paginator = buildPaginator({
             entity: AppConnectionEntity,
             query: {
@@ -141,17 +122,21 @@ export const appConnectionService = {
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
-        let queryBuilder = appConnectionRepo
+
+        let queryBuilder = repo
             .createQueryBuilder('app_connection')
             .where({ projectId })
+
         if (appName !== undefined) {
             queryBuilder = queryBuilder.where({ appName })
         }
+
         const { data, cursor } = await paginator.paginate(queryBuilder)
         const promises: Promise<AppConnection>[] = []
+
         data.forEach((encryptedConnection) => {
             const apConnection: AppConnection =
-        decryptConnection(encryptedConnection)
+                decryptConnection(encryptedConnection)
             try {
                 if (apConnection.status === AppConnectionStatus.ACTIVE) {
                     promises.push(
@@ -178,12 +163,14 @@ export const appConnectionService = {
                 )
             }
         })
+
         const refreshConnections = await Promise.all(promises)
+
         return paginationHelper.createPage<AppConnection>(
             refreshConnections,
             cursor,
         )
-    },
+    }
 }
 
 const validateConnectionValue = async (
@@ -307,6 +294,10 @@ const engineValidateAuth = async (
     }
 }
 
+/**
+ * We should make sure this is accessed only once, as a race condition could occur where the token needs to be
+ * refreshed and it gets accessed at the same time, which could result in the wrong request saving incorrect data.
+ */
 async function lockAndRefreshConnection({
     projectId,
     name,
@@ -322,7 +313,7 @@ async function lockAndRefreshConnection({
     let appConnection: AppConnection | null = null
 
     try {
-        const encryptedAppConnection = await appConnectionRepo.findOneBy({
+        const encryptedAppConnection = await repo.findOneBy({
             projectId,
             name,
         })
@@ -334,7 +325,7 @@ async function lockAndRefreshConnection({
             return appConnection
         }
         const refreshedAppConnection = await refresh(appConnection)
-        await appConnectionRepo.update(refreshedAppConnection.id, {
+        await repo.update(refreshedAppConnection.id, {
             ...refreshedAppConnection,
             value: encryptObject(refreshedAppConnection.value),
         })
@@ -438,7 +429,7 @@ async function refreshWithCredentials(
         accept: 'application/json',
     }
     const authorizationMethod =
-    appConnection.authorization_method || OAuth2AuthorizationMethod.BODY
+        appConnection.authorization_method || OAuth2AuthorizationMethod.BODY
     switch (authorizationMethod) {
         case OAuth2AuthorizationMethod.BODY:
             body.client_id = appConnection.client_id
@@ -464,21 +455,22 @@ async function refreshWithCredentials(
     return mergedObject
 }
 
-/*
-When the refresh token is null or undefined, it indicates that the original connection's refresh token is also null or undefined.
-Therefore, we only need to merge non-null values to avoid overwriting the original refresh token with a null or undefined value.
+/**
+ * When the refresh token is null or undefined, it indicates that the original connection's refresh token is also null
+ * or undefined. Therefore, we only need to merge non-null values to avoid overwriting the original refresh token with a
+ *  null or undefined value.
 */
 function mergeNonNull(
     appConnection: OAuth2ConnectionValueWithApp,
     oAuth2Response: BaseOAuth2ConnectionValue,
 ): OAuth2ConnectionValueWithApp {
     const formattedOAuth2Response: Partial<BaseOAuth2ConnectionValue> =
-    Object.entries(oAuth2Response)
-        .filter(([, value]) => value !== null && value !== undefined)
-        .reduce<Partial<BaseOAuth2ConnectionValue>>((obj, [key, value]) => {
-        obj[key as keyof BaseOAuth2ConnectionValue] = value
-        return obj
-    }, {})
+        Object.entries(oAuth2Response)
+            .filter(([, value]) => value !== null && value !== undefined)
+            .reduce<Partial<BaseOAuth2ConnectionValue>>((obj, [key, value]) => {
+            obj[key as keyof BaseOAuth2ConnectionValue] = value
+            return obj
+        }, {})
 
     return {
         ...appConnection,
@@ -509,7 +501,7 @@ async function claim(request: {
             accept: 'application/json',
         }
         const authorizationMethod =
-      request.authorizationMethod || OAuth2AuthorizationMethod.BODY
+            request.authorizationMethod || OAuth2AuthorizationMethod.BODY
         switch (authorizationMethod) {
             case OAuth2AuthorizationMethod.BODY:
                 body.client_id = request.clientId
@@ -566,14 +558,6 @@ async function claimWithCloud(
     }
 }
 
-type UnformattedOauthResponse = {
-    access_token: string
-    expires_in: number
-    refresh_token: string
-    scope: string
-    token_type: string
-}
-
 function formatOAuth2Response(response: UnformattedOauthResponse) {
     const secondsSinceEpoch = Math.round(Date.now() / 1000)
     const formattedResponse: BaseOAuth2ConnectionValue = {
@@ -617,6 +601,30 @@ function getStatus(connection: AppConnection): AppConnectionStatus {
     return connectionStatus
 }
 
+
+
+type UpsertParams = {
+    projectId: ProjectId
+    request: UpsertConnectionRequest
+}
+
+type GetOneParams = {
+    projectId: ProjectId
+    name: string
+}
+
+type DeleteParams = {
+    projectId: ProjectId
+    id: AppConnectionId
+}
+
+type ListParams = {
+    projectId: ProjectId
+    appName: string | undefined
+    cursorRequest: Cursor | null
+    limit: number
+}
+
 type claimWithCloudRequest = {
     pieceName: string
     code: string
@@ -631,4 +639,17 @@ type EngineValidateAuthParams = {
     pieceName: string
     projectId: ProjectId
     auth: unknown
+}
+
+type ValidateConnectionValueParams = {
+    connection: UpsertConnectionRequest
+    projectId: ProjectId
+}
+
+type UnformattedOauthResponse = {
+    access_token: string
+    expires_in: number
+    refresh_token: string
+    scope: string
+    token_type: string
 }

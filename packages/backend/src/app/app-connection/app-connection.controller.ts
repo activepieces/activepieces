@@ -1,8 +1,9 @@
-import { FastifyInstance, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { AppConnectionId, AppConnectionValue, ListAppConnectionRequest, UpsertConnectionRequest } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
-import { appConnectionService } from './app-connection.service'
+import { appConnectionService } from './app-connection-service'
+import { FastifyPluginCallbackTypebox } from '@fastify/type-provider-typebox'
+import { FastifyRequest } from 'fastify'
 
 const DEFAULT_PAGE_SIZE = 10
 
@@ -15,20 +16,15 @@ const filterSensitiveData = (connectionValue: AppConnectionValue): Record<string
     return Object.fromEntries(filteredEntries)
 }
 
-export const appConnectionController = async (fastify: FastifyInstance) => {
-
-    fastify.post(
+export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts, done) => {
+    app.post(
         '/',
         {
             schema: {
                 body: UpsertConnectionRequest,
             },
         },
-        async (
-            request: FastifyRequest<{
-                Body: UpsertConnectionRequest
-            }>,
-        ) => {
+        async (request) => {
             const connection = await appConnectionService.upsert({ projectId: request.principal.projectId, request: request.body })
 
             return {
@@ -38,8 +34,7 @@ export const appConnectionController = async (fastify: FastifyInstance) => {
         },
     )
 
-
-    fastify.get(
+    app.get(
         '/:connectionName',
         async (
             request: FastifyRequest<{
@@ -63,26 +58,25 @@ export const appConnectionController = async (fastify: FastifyInstance) => {
         },
     )
 
-    fastify.get(
+    app.get(
         '/',
         {
             schema: {
                 querystring: ListAppConnectionRequest,
             },
         },
-        async (
-            request: FastifyRequest<{
-                Querystring: ListAppConnectionRequest
-            }>,
-        ) => {
+        async (request) => {
             const query = request.query
-            return await appConnectionService.list(request.principal.projectId,
-                query.appName,
-                query.cursor ?? null, query.limit ?? DEFAULT_PAGE_SIZE)
+            return await appConnectionService.list({
+                projectId: request.principal.projectId,
+                appName: query.appName,
+                cursorRequest: query.cursor ?? null,
+                limit: query.limit ?? DEFAULT_PAGE_SIZE,
+            })
         },
     )
 
-    fastify.delete(
+    app.delete(
         '/:connectionId',
         async (
             request: FastifyRequest<{
@@ -90,10 +84,12 @@ export const appConnectionController = async (fastify: FastifyInstance) => {
                     connectionId: AppConnectionId
                 }
             }>,
-            _reply,
+            response,
         ) => {
             await appConnectionService.delete({ id: request.params.connectionId, projectId: request.principal.projectId })
-            _reply.status(StatusCodes.OK).send()
+            response.status(StatusCodes.OK).send()
         },
     )
+
+    done()
 }
