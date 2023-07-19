@@ -67,20 +67,18 @@ export const appConnectionService = {
             projectId,
         })
 
-        updatedConnection.value = decryptObject(updatedConnection.value)
-
-        return updatedConnection
+        return decryptConnection(updatedConnection)
     },
 
     async getOne({ projectId, name }: GetOneParams): Promise<AppConnection | null> {
-        const appConnection = await appConnectionRepo.findOneBy({
+        const encryptedAppConnection = await appConnectionRepo.findOneBy({
             projectId,
             name,
         })
-        if (isNil(appConnection)) {
-            return appConnection
+        if (isNil(encryptedAppConnection)) {
+            return encryptedAppConnection
         }
-        appConnection.value = decryptObject(appConnection.value)
+        const appConnection = decryptConnection(encryptedAppConnection)
         if (!needRefresh(appConnection)) {
             appConnection.status = getStatus(appConnection)
             return appConnection
@@ -125,23 +123,22 @@ export const appConnectionService = {
         }
         const { data, cursor } = await paginator.paginate(queryBuilder)
         const promises: Promise<AppConnection>[] = []
-        data.forEach(connection => {
+        data.forEach(encryptedConnection => {
+            const apConnection: AppConnection = decryptConnection(encryptedConnection)
             try {
-                connection.value = decryptObject(connection.value)
-                connection.status = getStatus(connection)
-                if (connection.status === AppConnectionStatus.ACTIVE) {
+                if (apConnection.status === AppConnectionStatus.ACTIVE) {
                     promises.push(new Promise((resolve) => {
-                        return resolve(connection)
+                        return resolve(apConnection)
                     }))
                 }
                 else {
-                    promises.push(this.getOneOrThrow({ projectId: connection.projectId, name: connection.name }))
+                    promises.push(this.getOneOrThrow({ projectId: apConnection.projectId, name: apConnection.name }))
                 }
             }
             catch (e) {
-                connection.status = AppConnectionStatus.ERROR
+                apConnection.status = AppConnectionStatus.ERROR
                 promises.push(new Promise((resolve) => {
-                    return resolve(connection)
+                    return resolve(apConnection)
                 }))
             }
         })
@@ -189,6 +186,16 @@ const validateConnectionValue = async (params: ValidateConnectionValueParams): P
     return connection.value
 }
 
+function decryptConnection(encryptedConnection: AppConnectionSchema): AppConnection {
+    const connection = {
+        ...encryptedConnection,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        value: decryptObject<any>(encryptedConnection.value),
+    }
+    connection.status = getStatus(connection.value)
+    return connection
+}
+
 const engineValidateAuth = async (params: EngineValidateAuthParams): Promise<void> => {
     const { pieceName, auth, projectId } = params
 
@@ -229,25 +236,20 @@ async function lockAndRefreshConnection({ projectId, name }: { projectId: Projec
         timeout: 20000,
     })
 
-    let appConnection: AppConnectionSchema | null = null
+    let appConnection: AppConnection | null = null
 
     try {
-        appConnection = await appConnectionRepo.findOneBy({
+        const encryptedAppConnection = await appConnectionRepo.findOneBy({
             projectId,
             name,
         })
-
-        if (isNil(appConnection)) {
-            return appConnection
+        if (isNil(encryptedAppConnection)) {
+            return encryptedAppConnection
         }
-
-        appConnection.value = decryptObject(appConnection.value)
-
+        appConnection = decryptConnection(encryptedAppConnection)
         if (!needRefresh(appConnection)) {
-            appConnection.status = getStatus(appConnection)
             return appConnection
         }
-
         const refreshedAppConnection = await refresh(appConnection)
         await appConnectionRepo.update(refreshedAppConnection.id, { ...refreshedAppConnection, value: encryptObject(refreshedAppConnection.value) })
         refreshedAppConnection.status = getStatus(refreshedAppConnection)
