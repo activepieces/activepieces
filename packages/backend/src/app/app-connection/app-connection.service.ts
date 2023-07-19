@@ -213,7 +213,7 @@ const engineValidateAuth = async (params: EngineValidateAuthParams): Promise<voi
 
     const validateAuthResult = engineResponse.result
 
-    if (validateAuthResult.valid !== true) {
+    if (!validateAuthResult.valid) {
         throw new ActivepiecesError({
             code: ErrorCode.INVALID_APP_CONNECTION,
             params: {

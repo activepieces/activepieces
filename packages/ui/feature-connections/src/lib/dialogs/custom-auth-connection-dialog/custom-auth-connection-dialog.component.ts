@@ -21,7 +21,6 @@ import {
   PropertyType,
 } from '@activepieces/pieces-framework';
 import deepEqual from 'deep-equal';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { AppConnectionsService } from '../../services/app-connections.service';
 import { ConnectionValidator } from '../../validators/connectionNameValidator';
 import {
@@ -52,8 +51,7 @@ export class CustomAuthConnectionDialogComponent {
     public dialogData: CustomAuthDialogData,
     private store: Store,
     private dialogRef: MatDialogRef<CustomAuthConnectionDialogComponent>,
-    private appConnectionsService: AppConnectionsService,
-    private snackBar: MatSnackBar
+    private appConnectionsService: AppConnectionsService
   ) {
     const props: Record<string, FormControl> = {};
     Object.entries(this.dialogData.pieceAuthProperty.props).forEach(
@@ -122,16 +120,12 @@ export class CustomAuthConnectionDialogComponent {
         catchError((response) => {
           console.error(response);
 
-          const errorMessage =
-            response.error.code === ErrorCode.INVALID_APP_CONNECTION
-              ? response.error.params.error
-              : 'Connection operation failed please check your console.';
-
-          this.snackBar.open(errorMessage, 'Close', {
-            panelClass: 'error',
-            duration: 5000,
+          this.settingsForm.setErrors({
+            message:
+              response.error.code === ErrorCode.INVALID_APP_CONNECTION
+                ? `Connection failed: ${response.error.params.error}`
+                : 'Internal Connection error, failed please check your console.',
           });
-
           return of(null);
         }),
         tap((connection) => {
