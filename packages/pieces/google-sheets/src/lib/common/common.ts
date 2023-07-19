@@ -224,10 +224,10 @@ async function listSheetsName(access_token: string, spreadsheet_id: string) {
 async function updateGoogleSheetRow(params: UpdateGoogleSheetRowParams) {
     return httpClient.sendRequest({
         method: HttpMethod.PUT,
-        url: `https://sheets.googleapis.com/v4/spreadsheets/${params.spreadSheetId}/values/${params.sheetName}!A${params.rowIndex}:Z${params.rowIndex}`,
+        url: `https://sheets.googleapis.com/v4/spreadsheets/${params.spreadSheetId}/values/${params.sheetName}!A${params.rowIndex}:ZZZ${params.rowIndex}`,
         body: {
             majorDimension: Dimension.ROWS,
-            range: `${params.sheetName}!A${params.rowIndex}:Z${params.rowIndex}`,
+            range: `${params.sheetName}!A${params.rowIndex}:ZZZ${params.rowIndex}`,
             values: [params.values],
         },
         authentication: {
@@ -246,7 +246,7 @@ async function appendGoogleSheetValues(params: AppendGoogleSheetValuesParams) {
         range: params.range + "!A:A",
         values: params.values.map(val => ({ values: val })),
     };
-
+    
     const request: HttpRequest<typeof requestBody> = {
         method: HttpMethod.POST,
         url: `https://sheets.googleapis.com/v4/spreadsheets/${params.spreadSheetId}/values/${params.range}!A:A:append`,
