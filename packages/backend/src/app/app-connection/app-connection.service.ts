@@ -76,7 +76,6 @@ export const appConnectionService = {
             name: request.name,
             projectId,
         })
-
         return decryptConnection(updatedConnection)
     },
 
@@ -236,30 +235,35 @@ function decryptConnection(
         case AppConnectionType.BASIC_AUTH:
             connection = {
                 ...encryptedConnection,
+                status: AppConnectionStatus.ACTIVE,
                 value,
             }
             break
         case AppConnectionType.CLOUD_OAUTH2:
             connection = {
                 ...encryptedConnection,
+                status: AppConnectionStatus.ACTIVE,
                 value,
             }
             break
         case AppConnectionType.CUSTOM_AUTH:
             connection = {
                 ...encryptedConnection,
+                status: AppConnectionStatus.ACTIVE,
                 value,
             }
             break
         case AppConnectionType.OAUTH2:
             connection = {
                 ...encryptedConnection,
+                status: AppConnectionStatus.ACTIVE,
                 value,
             }
             break
         case AppConnectionType.SECRET_TEXT:
             connection = {
                 ...encryptedConnection,
+                status: AppConnectionStatus.ACTIVE,
                 value,
             }
             break
@@ -335,7 +339,10 @@ async function lockAndRefreshConnection({
         }
         const refreshedAppConnection = await refresh(appConnection)
         await appConnectionRepo.update(refreshedAppConnection.id, {
-            ...refreshedAppConnection,
+            id: refreshedAppConnection.id,
+            name: refreshedAppConnection.name,
+            appName: refreshedAppConnection.appName,
+            projectId: refreshedAppConnection.projectId,
             value: encryptObject(refreshedAppConnection.value),
         })
         refreshedAppConnection.status = getStatus(refreshedAppConnection)
