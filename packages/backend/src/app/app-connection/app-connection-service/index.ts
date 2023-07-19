@@ -1,4 +1,4 @@
 import { AppConnectionService } from './app-connection-service'
-import { OssAppConnectionService } from './oss-app-connection-service'
+import { DefaultAppConnectionService } from './default-app-connection-service'
 
-export const appConnectionService: AppConnectionService = new OssAppConnectionService()
+export const appConnectionService: AppConnectionService = new DefaultAppConnectionService()

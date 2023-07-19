@@ -2,9 +2,9 @@ import { ProjectId, UpsertConnectionRequest } from '@activepieces/shared'
 import { BaseAppConnectionService } from './base-app-connection-service'
 import { logger } from '../../helper/logger'
 
-export class OssAppConnectionService extends BaseAppConnectionService {
+export class DefaultAppConnectionService extends BaseAppConnectionService {
     protected override async preUpsertHook(params: UpsertParams): Promise<void> {
-        logger.debug(params, '[OssAppConnectionService#preUpsertHook] params')
+        logger.debug(params, '[DefaultAppConnectionService#preUpsertHook] params')
     }
 }
 
