@@ -1,6 +1,6 @@
 {
   "name": "activepieces",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "scripts": {
     "prepare": "husky install",
     "docker": "docker compose -f docker-compose.dev.yml up",

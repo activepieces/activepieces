@@ -229,7 +229,7 @@ async function downloadFiles(
     logger.info(`[${flowVersion.id}] Acquiring flow lock to build codes`)
     const flowLock = await acquireLock({
         key: flowVersion.id,
-        timeout: 60000,
+        timeout: 180000,
     })
     try {
         const buildPath = sandbox.getSandboxFolderPath()
