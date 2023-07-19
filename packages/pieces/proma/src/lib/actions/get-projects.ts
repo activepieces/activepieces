@@ -4,12 +4,11 @@ import { getTables } from '../common/data';
 import { promaAuth } from '../..';
 
 export const getPromaProjects = createAction({
-  name: 'get_proma_projects', // Must be a unique across the piece, this shouldn't be changed.
+  name: 'get_proma_projects', 
   displayName: 'Get Master Sheets',
   description: '',
   auth: promaAuth,
   props: {
-    // api_key: promaProps.api_key,
     workspace_id: promaProps.workspace_id(true),
   },
   async run(context) {

@@ -21,8 +21,8 @@ export const promaAuth = PieceAuth.SecretText({
 export const proma = createPiece({
   displayName: 'Proma',
   logoUrl:
-    'https://console.catalyst.zoho.com/baas/v1/project/9417000000970018/authentication/hosted-login/logo?Environment=Production&catalyst_org=759987269',
-  authors: [],
+    'https://pipeline-759987269.catalystserverless.com/server/pipeline_function/public/folder/9417000001056763/file/18160000000066090',
+  authors: ["kritan9"],
   actions: [
     addPromaRow,
     updatePromaRow,

@@ -4,12 +4,11 @@ import { getTableRows } from '../common/data';
 import { promaAuth } from '../..';
 
 export const getPromaTableRows = createAction({
-  name: 'get_proma_table_rows', // Must be a unique across the piece, this shouldn't be changed.
+  name: 'get_proma_table_rows',
   displayName: 'Get Rows',
   description: '',
   auth: promaAuth,
   props: {
-    // api_key: promaProps.api_key,
     workspace_id: promaProps.workspace_id(true),
     table_id: promaProps.table_id(true),
   },

@@ -9,8 +9,6 @@ export const dataRowUpdated = createTrigger({
   description: 'Triggers when a row is updated',
   auth: promaAuth,
   props: {
-    // api_key: promaProps.api_key,
-    // organization_id: promaProps.organization_id(true),
     workspace_id: promaProps.workspace_id(true),
     table_id: promaProps.table_id(true),
   },
@@ -35,7 +33,6 @@ export const dataRowUpdated = createTrigger({
     const resp = await storeWebhookUrl({
       api_key,
       trigger_type: 'tableRowUpdated',
-      // organization_id: context.propsValue.organization_id || '',
       table_id: context.propsValue.table_id || '',
       webhook_url: context.webhookUrl,
     });

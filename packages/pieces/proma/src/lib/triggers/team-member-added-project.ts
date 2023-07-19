@@ -9,7 +9,6 @@ export const teamMemberAddedProject = createTrigger({
     description: 'Triggers when a new member is added to a row',
     auth: promaAuth,
     props: {
-        // api_key: promaProps.api_key,
         workspace_id: promaProps.workspace_id(true),
         table_id: promaProps.table_id(true),
     },

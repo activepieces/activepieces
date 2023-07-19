@@ -9,7 +9,6 @@ export const teamMemberAddedWorkspace = createTrigger({
     description: 'Triggers when a new member is added to workspace',
     auth: promaAuth,
     props: {
-        // api_key: promaProps.api_key,
         workspace_id: promaProps.workspace_id(true)
     },
     type: TriggerStrategy.WEBHOOK,
@@ -22,7 +21,6 @@ export const teamMemberAddedWorkspace = createTrigger({
         const resp = await storeWebhookUrl({
             api_key,
             trigger_type: 'teamMemberAddedToWs',
-            // organization_id: context.propsValue.organization_id || '',
             workspace_id: workspace_id,
             table_id: '',
             webhook_url: context.webhookUrl,

@@ -8,7 +8,6 @@ import {
   TableColumn,
   TableColumnResponse,
   TableRow,
-  // User,
   Workspace,
   WorkspaceResponse,
   Webhook,
@@ -59,7 +58,6 @@ export async function getTables(
     url: `${PROMA_SERVER_URL}/gettables`,
     method: HttpMethod.GET,
     headers: {
-      // Authorization: access_token,
     },
     queryParams: { space_id: workspace_id, api_key, mode },
   });

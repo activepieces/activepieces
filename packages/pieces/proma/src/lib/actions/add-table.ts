@@ -4,13 +4,11 @@ import { insertTable } from '../common/data';
 import { promaAuth } from '../..';
 
 export const addPromaTable = createAction({
-  name: 'add_proma_master_sheet', // Must be a unique across the piece, this shouldn't be changed.
+  name: 'add_proma_master_sheet',
   displayName: 'Add Master Sheet',
   description: '',
   auth: promaAuth,
   props: {
-    // api_key: promaProps.api_key,
-    // organization_id: promaProps.organization_id(true),
     workspace_id: promaProps.workspace_id(true, "write"),
     table_name: promaProps.table_name(true),
     table_description: Property.LongText({ displayName: "Description", required: true, }),

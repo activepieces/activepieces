@@ -9,8 +9,6 @@ export const newRowAdded = createTrigger({
   description: 'Triggers when a new row is added',
   auth: promaAuth,
   props: {
-    // api_key: promaProps.api_key,
-    // organization_id: promaProps.organization_id(true),
     workspace_id: promaProps.workspace_id(true),
     table_id: promaProps.table_id(true),
   },

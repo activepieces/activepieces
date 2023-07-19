@@ -1,5 +1,4 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { promaProps } from '../common/props';
 import { removeWebhookUrl, storeWebhookUrl } from '../common/data';
 import { promaAuth } from '../..';
 
