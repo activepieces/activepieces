@@ -159,6 +159,9 @@
       ],
       "@activepieces/piece-store": ["packages/pieces/store/src/index.ts"],
       "@activepieces/piece-stripe": ["packages/pieces/stripe/src/index.ts"],
+      "@activepieces/piece-surveymonkey": [
+        "packages/pieces/surveymonkey/src/index.ts"
+      ],
       "@activepieces/piece-telegram-bot": [
         "packages/pieces/telegram-bot/src/index.ts"
       ],

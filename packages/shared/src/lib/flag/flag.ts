@@ -14,7 +14,8 @@ export const enum ApEnvironment {
 
 export const enum ApEdition {
     COMMUNITY = "ce",
-    ENTERPRISE = "ee"
+    ENTERPRISE = "ee",
+    CLOUD = "cloud"
 }
 
 export enum ApFlagId {

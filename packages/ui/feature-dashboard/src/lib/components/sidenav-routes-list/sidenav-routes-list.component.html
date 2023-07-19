@@ -14,7 +14,7 @@
     <div>{{ r.caption }}</div>
   </div>
   <div class="ap-flex ap-justify-center  sidenav-text ap-items-center ap-flex-col ap-gap-[2px] ap-cursor-pointer"
-    (click)="openDocs()">
+    (click)="openDocs()" *ngIf="environment.showDocsButton">
     <svg-icon class="ap-py-[10px] ap-px-[8px] ap-border-[1px] ap-border-transparent ap-rounded-[4px]"
       [svgStyle]="{ width: '25px', height: '25px' }" src="assets/img/custom/dashboard/documentation.svg" t>
     </svg-icon>

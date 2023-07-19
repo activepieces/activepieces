@@ -13,6 +13,7 @@ This tutorial explains three techniques for creating triggers:
 
 ```typescript
 export const createNewIssue = createTrigger({
+    auth: PieceAuth | undefined
     name: string, // Unique name across the piece.
     displayName: string, // Display name on the interface.
 	description: string, // Description for the action

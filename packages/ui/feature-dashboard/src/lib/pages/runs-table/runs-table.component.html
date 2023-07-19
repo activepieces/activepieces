@@ -10,7 +10,7 @@
         <mat-option value="{{ExecutionOutputStatus.SUCCEEDED}}">Succeeded</mat-option>
       </mat-select>
     </mat-form-field>
-    <mat-slide-toggle *ngIf="enterpriseEdition$ | async" [formControl]="toggleNotificationFormControl"
+    <mat-slide-toggle *ngIf="nonCommunityEdition$ | async" [formControl]="toggleNotificationFormControl"
       class="ap-mt-[-62px] ap-mb-2 ap-float-right" color="primary" [labelPosition]="'before'">Send email notifications
       about failed
       runs</mat-slide-toggle>
