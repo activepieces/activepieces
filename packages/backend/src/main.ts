@@ -19,9 +19,14 @@ const start = async () => {
         await seedDevData()
 
         const edition = await getEdition()
-        logger.info('Activepieces ' + (edition == ApEdition.ENTERPRISE ? 'Enterprise' : 'Community') + ' Edition')
-        if (edition === ApEdition.COMMUNITY) {
-            app.register(authenticationModule)
+        logger.info(`Activepieces ${edition} Edition`)
+        switch (edition) {
+            case ApEdition.CLOUD:
+            case ApEdition.ENTERPRISE:
+                break
+            case ApEdition.COMMUNITY:
+                app.register(authenticationModule)
+                break
         }
         await app.listen({
             host: '0.0.0.0',

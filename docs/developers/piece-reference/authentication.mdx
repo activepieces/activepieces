@@ -23,6 +23,18 @@ PieceAuth.SecretText({
     displayName: 'API Key',
     description: 'Enter your API key',
     required: true,
+    // Optional Validation
+    validate: async ({auth}) => {
+        if(auth.startsWith('sk_')){
+            return {
+                valid: true,
+            }
+        }
+        return {
+            valid: false,
+            error: 'Invalid Api Key'
+        }
+    }
 })
 ```
 
@@ -44,6 +56,18 @@ PieceAuth.BasicAuth({
     password: {
         displayName: 'Password',
         description: 'Enter your password',
+    },
+    // Optional Validation
+    validate: async ({auth}) => {
+        if(auth){
+            return {
+                valid: true,
+            }
+        }
+        return {
+            valid: false,
+            error: 'Invalid Api Key'
+        }
     }
 })
 ```
@@ -69,6 +93,18 @@ PieceAuth.CustomAuth({
             description: 'Enter the access token',
             required: true
         })
+    },
+    // Optional Validation
+    validate: async ({auth}) => {
+        if(auth){
+            return {
+                valid: true,
+            }
+        }
+        return {
+            valid: false,
+            error: 'Invalid Api Key'
+        }
     },
     required: true
 })

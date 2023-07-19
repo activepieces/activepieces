@@ -45,11 +45,11 @@
       <div class="ap-p-2 ap-flex-grow overflow-auto">
         <div class="ap-h-full">
           <!-- Use ngModel to update the editor outside the modal -->
-          <ngx-monaco-editor *ngIf="selectedFile === SelectedFileInFullscreenCodeEditor.CONTENT"
+          <ngx-monaco-editor class="!ap-h-full" *ngIf="selectedFile === SelectedFileInFullscreenCodeEditor.CONTENT"
             [options]="codeEditorOptions" [ngModel]="codeFilesForm.controls.content.value"
-            (ngModelChange)="codeFilesForm.controls.content.setValue($event)" class="ap-h-full"></ngx-monaco-editor>
+            (ngModelChange)="codeFilesForm.controls.content.setValue($event)"></ngx-monaco-editor>
 
-          <ngx-monaco-editor *ngIf="selectedFile ===  SelectedFileInFullscreenCodeEditor.PACKAGE" class="ap-h-full"
+          <ngx-monaco-editor class="!ap-h-full" *ngIf="selectedFile ===  SelectedFileInFullscreenCodeEditor.PACKAGE"
             [ngModel]="codeFilesForm.controls.package.value"
             (ngModelChange)="codeFilesForm.controls.package.setValue($event)"
             [options]="packageDotJsonOptions"></ngx-monaco-editor>

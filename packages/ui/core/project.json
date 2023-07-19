@@ -18,11 +18,7 @@
         "assets": [
           "packages/ui/core/src/favicon.ico",
           "packages/ui/core/src/assets",
-          {
-            "glob": "**/*",
-            "input": "node_modules/monaco-editor",
-            "output": "assets/monaco-editor/"
-          }
+          { "glob": "**/*", "input": "node_modules/monaco-editor", "output": "/assets/monaco/" }
         ],
         "styles": [
           "./node_modules/codemirror/addon/lint/lint.css",
