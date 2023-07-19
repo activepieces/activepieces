@@ -10,6 +10,8 @@ export type AppConnectionService = {
     delete(params: DeleteParams): Promise<void>
 
     list(params: ListParams): Promise<SeekPage<AppConnection>>
+
+    countByProject(params: CountByProjectParams): Promise<number>
 }
 
 type UpsertParams = {
@@ -32,4 +34,8 @@ type ListParams = {
     appName: string | undefined
     cursorRequest: Cursor | null
     limit: number
+}
+
+type CountByProjectParams = {
+    projectId: ProjectId
 }

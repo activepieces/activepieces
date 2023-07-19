@@ -171,6 +171,10 @@ export abstract class BaseAppConnectionService implements AppConnectionService {
             cursor,
         )
     }
+
+    async countByProject({ projectId }: CountByProjectParams): Promise<number> {
+        return await repo.countBy({ projectId })
+    }
 }
 
 const validateConnectionValue = async (
@@ -623,6 +627,10 @@ type ListParams = {
     appName: string | undefined
     cursorRequest: Cursor | null
     limit: number
+}
+
+type CountByProjectParams = {
+    projectId: ProjectId
 }
 
 type claimWithCloudRequest = {
