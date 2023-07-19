@@ -168,6 +168,9 @@ We welcome contributions big or small and in different directions. The best way 
       <td align="center" valign="top" width="14.28%"><a href="http://guzguz.fr"><img src="https://avatars.githubusercontent.com/u/13715916?v=4?s=100" width="100px;" alt="Olivier Guzzi"/><br /><sub><b>Olivier Guzzi</b></sub></a><br /><a href="#plugin-olivierguzzi" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Ozak93"><img src="https://avatars.githubusercontent.com/u/31257994?v=4?s=100" width="100px;" alt="Osama Zakarneh"/><br /><sub><b>Osama Zakarneh</b></sub></a><br /><a href="#plugin-Ozak93" title="Plugin/utility libraries">🔌</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/phestvik"><img src="https://avatars.githubusercontent.com/u/88210985?v=4?s=100" width="100px;" alt="phestvik"/><br /><sub><b>phestvik</b></sub></a><br /><a href="#ideas-phestvik" title="Ideas, Planning, & Feedback">🤔</a></td>
+    </tr>
   </tbody>
 </table>
 
