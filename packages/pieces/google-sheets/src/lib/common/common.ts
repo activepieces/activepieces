@@ -222,8 +222,6 @@ async function listSheetsName(access_token: string, spreadsheet_id: string) {
 }
 
 async function updateGoogleSheetRow(params: UpdateGoogleSheetRowParams) {
-    console.log(`https://sheets.googleapis.com/v4/spreadsheets/${params.spreadSheetId}/values/${params.sheetName}!A${params.rowIndex}:Z${params.rowIndex}`);
-
     return httpClient.sendRequest({
         method: HttpMethod.PUT,
         url: `https://sheets.googleapis.com/v4/spreadsheets/${params.spreadSheetId}/values/${params.sheetName}!A${params.rowIndex}:ZZZ${params.rowIndex}`,
