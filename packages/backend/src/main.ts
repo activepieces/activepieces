@@ -18,7 +18,7 @@ const start = async () => {
 
         await seedDevData()
 
-        const edition = await getEdition()
+        const edition = getEdition()
         logger.info(`Activepieces ${edition} Edition`)
         switch (edition) {
             case ApEdition.CLOUD:

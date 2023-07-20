@@ -46,7 +46,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.EDITION,
-                value: await getEdition(),
+                value: getEdition(),
                 created,
                 updated,
             },
