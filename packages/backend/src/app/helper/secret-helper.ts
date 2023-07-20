@@ -3,37 +3,21 @@ import { ApEdition, FlowVersion } from '@activepieces/shared'
 import { system } from './system/system'
 import { SystemProp } from './system/system-prop'
 import { captureException } from './logger'
+import { isNil } from 'lodash'
 
-let edition: string | undefined = undefined
-let webhookSecrets: Record<string, string> | undefined  = undefined
+let webhookSecrets: Record<string, string> | undefined = undefined
 
-async function verifyLicense(licenseKey: string): Promise<boolean> {
-    try {
-        const response =
-            await axios.post(
-                'https://secrets.activepieces.com/verify', { licenseKey })
-        return response.status === 200
+export function getEdition(): ApEdition {
+    const edition = system.get(SystemProp.EDITION)
+    if (isNil(edition)) {
+        return ApEdition.COMMUNITY
     }
-    catch (e) {
-        return false
-    }
+    return edition as ApEdition
 }
 
-export async function getEdition(): Promise<string> {
-    if (edition === undefined) {
-        const licenseKey = system.get(SystemProp.LICENSE_KEY)
-        if (licenseKey) {
-            edition = (await verifyLicense(licenseKey)) ? 'ee' : 'ce'
-        }
-        else {
-            edition = 'ce'
-        }
-    }
-
-    return edition
-}
-
-export async function getWebhookSecret(flowVersion: FlowVersion): Promise<string | undefined> {
+export async function getWebhookSecret(
+    flowVersion: FlowVersion,
+): Promise<string | undefined> {
     const appName = flowVersion.trigger.settings.pieceName
     if (!appName) {
         return undefined
@@ -45,14 +29,16 @@ export async function getWebhookSecret(flowVersion: FlowVersion): Promise<string
 }
 
 async function getWebhookSecrets(): Promise<Record<string, string>> {
-    const currentEdition = await getEdition()
+    const currentEdition = getEdition()
     if (currentEdition === ApEdition.COMMUNITY) {
         return {}
     }
     try {
         const licenseKey = system.get(SystemProp.LICENSE_KEY)
         const response = await axios.post(
-            'https://secrets.activepieces.com/webhooks', { licenseKey })
+            'https://secrets.activepieces.com/webhooks',
+            { licenseKey },
+        )
         return response.data
     }
     catch (e) {
