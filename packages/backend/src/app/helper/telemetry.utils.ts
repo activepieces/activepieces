@@ -48,7 +48,7 @@ export const telemetry = {
 
 async function getMetadata() {
     const currentVersion = (await import('package.json')).version
-    const edition = await getEdition()
+    const edition = getEdition()
     return {
         activepiecesVersion: currentVersion,
         activepiecesEnvironment: system.get(SystemProp.ENVIRONMENT),
