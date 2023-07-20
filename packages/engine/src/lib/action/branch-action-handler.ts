@@ -210,7 +210,7 @@ function toLowercaseIfCaseInsensitive(text: unknown, caseSensitive: boolean): st
   if (typeof text === 'string') {
     return caseSensitive ? text : text.toLowerCase();
   } else {
-    return caseSensitive ? String(text) : String(text).toLowerCase();
+    return caseSensitive ? JSON.stringify(text) : JSON.stringify(text).toLowerCase();
   }
 }
 

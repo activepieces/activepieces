@@ -161,7 +161,7 @@ const loadInputAndLogFileId = async ({ jobData }: LoadInputAndLogFileIdParams): 
 async function executeFlow(jobData: OneTimeJobData): Promise<void> {
     logger.info(`[FlowWorker#executeFlow] flowRunId=${jobData.runId} executionType=${jobData.executionType}`)
 
-    const flowVersion = await flowVersionService.getOneOrThrow(jobData.flowVersionId)
+    const flowVersion = await flowVersionService.lockPieceVersions(jobData.projectId, await flowVersionService.getOneOrThrow(jobData.flowVersionId))
 
     // Don't use sandbox for draft versions, since they are mutable and we don't want to cache them.
     const key = flowVersion.id + (FlowVersionState.DRAFT === flowVersion.state ? '-draft' + apId() : '')
@@ -229,7 +229,7 @@ async function downloadFiles(
     logger.info(`[${flowVersion.id}] Acquiring flow lock to build codes`)
     const flowLock = await acquireLock({
         key: flowVersion.id,
-        timeout: 60000,
+        timeout: 180000,
     })
     try {
         const buildPath = sandbox.getSandboxFolderPath()

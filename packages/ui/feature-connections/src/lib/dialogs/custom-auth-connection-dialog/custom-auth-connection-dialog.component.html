@@ -63,6 +63,7 @@
                 {{ prop.value.displayName }}
             </mat-checkbox>
         </ng-container>
+        <mat-error *ngIf="settingsForm.getError('message')" class="ap-text-left">{{settingsForm.getError('message')}}</mat-error>
     </form>
 </mat-dialog-content>
 

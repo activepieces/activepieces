@@ -1,4 +1,4 @@
-import { TriggerBase, TriggerStrategy } from '@activepieces/pieces-framework'
+import { TriggerBase, TriggerStrategy, WebhookHandshakeConfiguration, WebhookHandshakeStrategy, WebhookResponse } from '@activepieces/pieces-framework'
 import {
     ExecutionType,
     EngineResponseStatus,
@@ -25,6 +25,56 @@ import { SystemProp } from './system/system-prop'
 const POLLING_FREQUENCY_CRON_EXPRESSON = `*/${system.getNumber(SystemProp.TRIGGER_DEFAULT_POLL_INTERVAL ?? 5)} * * * *`
 
 export const triggerUtils = {
+    async tryHandshake(params: ExecuteTrigger): Promise<WebhookResponse | null> {
+        const { payload, flowVersion, projectId, simulate } = params
+        if (simulate)
+            return null
+        const flowTrigger = flowVersion.trigger
+        if (flowTrigger.type === TriggerType.PIECE) {
+            const pieceTrigger = (await getPieceTrigger({
+                trigger: flowTrigger,
+                projectId,
+            })) as TriggerBase & {
+                handshakeConfiguration: WebhookHandshakeConfiguration
+            }
+            const handshakeConfig = pieceTrigger.handshakeConfiguration
+            switch (handshakeConfig.strategy) {
+                case WebhookHandshakeStrategy.HEADER_PRESENT: {
+                    if (handshakeConfig.paramName && (handshakeConfig.paramName.toLowerCase() in payload.headers)) {
+                        return await executeHandshake({
+                            flowVersion,
+                            projectId,
+                            payload,
+                        })
+                    }
+                    break
+                }
+                case WebhookHandshakeStrategy.QUERY_PRESENT: {
+                    if (handshakeConfig.paramName && (handshakeConfig.paramName in payload.queryParams)) {
+                        return await executeHandshake({
+                            flowVersion,
+                            projectId,
+                            payload,
+                        })
+                    }
+                    break
+                }
+                case WebhookHandshakeStrategy.BODY_PARAM_PRESENT: {
+                    if (handshakeConfig.paramName && typeof payload.body === 'object' && (handshakeConfig.paramName in payload.body)) {
+                        return await executeHandshake({
+                            flowVersion,
+                            projectId,
+                            payload,
+                        })
+                    }
+                    break
+                }
+                default:
+                    break
+            }
+        }
+        return null
+    },
     async executeTrigger(params: ExecuteTrigger): Promise<unknown[]> {
         const { payload, flowVersion, projectId, simulate } = params
         const flowTrigger = flowVersion.trigger
@@ -95,6 +145,35 @@ export const triggerUtils = {
             simulate,
         })
     },
+}
+
+async function executeHandshake(params: ExecuteHandshakeParams): Promise<WebhookResponse> {
+    const { flowVersion, projectId, payload } = params
+    const { result } = await engineHelper.executeTrigger({
+        hookType: TriggerHookType.HANDSHAKE,
+        flowVersion,
+        triggerPayload: payload,
+        webhookUrl: await webhookService.getWebhookUrl({
+            flowId: flowVersion.flowId,
+            simulate: false,
+        }),
+        projectId,
+    })
+    if (!result.success || result.response === undefined) {
+        return {
+            status: 500,
+            body: {
+                error: 'Failed to execute handshake',
+            },
+        }
+    }
+    return result.response
+}
+
+type ExecuteHandshakeParams = {
+    flowVersion: FlowVersion
+    projectId: ProjectId
+    payload: TriggerPayload
 }
 
 const disablePieceTrigger = async (params: EnableOrDisableParams) => {

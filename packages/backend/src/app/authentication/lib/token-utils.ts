@@ -41,7 +41,7 @@ const generateAndStoreSecret = async (): Promise<string> => {
 }
 
 export const tokenUtils = {
-    encode: async (principal: Principal): Promise<string> => {
+    encode: async (principal: Record<string, unknown>): Promise<string> => {
         const secret = await getSecret()
 
         const signOptions: SignOptions = {
@@ -71,7 +71,7 @@ export const tokenUtils = {
         })
     },
 
-    decode: async (token: string): Promise<Principal> => {
+    decode: async (token: string): Promise<unknown> => {
         const secret = await getSecret()
 
         const verifyOptions: VerifyOptions = {

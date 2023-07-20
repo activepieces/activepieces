@@ -10,7 +10,7 @@ export class addVersionToPieceSteps1677521257188 implements MigrationInterface {
         logger.info('addVersionToPieceSteps1677521257188, started')
 
         const flowVersionRepo = queryRunner.connection.getRepository(FLOW_VERSION_TABLE)
-        const flowVersions = await flowVersionRepo.find()
+        const flowVersions = await queryRunner.query('SELECT * FROM flow_version')
 
         for (const flowVersion of flowVersions) {
             let step = flowVersion.trigger
@@ -37,7 +37,7 @@ export class addVersionToPieceSteps1677521257188 implements MigrationInterface {
         logger.info('addVersionToPieceSteps1677521257188, started')
 
         const flowVersionRepo = queryRunner.connection.getRepository(FLOW_VERSION_TABLE)
-        const flowVersions = await flowVersionRepo.find()
+        const flowVersions = await queryRunner.query('SELECT * FROM flow_version')
 
         for (const flowVersion of flowVersions) {
             let step = flowVersion.trigger

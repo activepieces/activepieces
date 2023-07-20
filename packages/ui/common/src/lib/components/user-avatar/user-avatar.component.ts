@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthenticationService } from '../../service/authentication.service';
 import { showBeamer } from '../../utils/beamer';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'ap-user-avatar',
@@ -47,7 +48,12 @@ export class UserAvatarComponent {
   goToCommunity() {
     window.open('https://discord.gg/yvxF5k5AUb', '_blank', 'noopener');
   }
+
   showWhatIsNew() {
     showBeamer();
+  }
+
+  get environment() {
+    return environment;
   }
 }
