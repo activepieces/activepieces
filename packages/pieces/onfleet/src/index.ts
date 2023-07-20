@@ -68,7 +68,7 @@ export const onfleetAuth = PieceAuth.SecretText({
 export const onfleet = createPiece({
     displayName: "Onfleet",
     auth: onfleetAuth,
-    minimumSupportedRelease: '0.4.0',
+    minimumSupportedRelease: '0.5.0',
     logoUrl: "https://cdn.activepieces.com/pieces/onfleet.png",
     authors: ['MoShizzle'],
     actions: [
