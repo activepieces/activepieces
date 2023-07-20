@@ -1,7 +1,6 @@
 import {
     TriggerBase,
     TriggerStrategy,
-    WebhookHandshakeConfiguration,
     WebhookHandshakeStrategy,
     WebhookResponse,
 } from '@activepieces/pieces-framework'
