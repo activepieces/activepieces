@@ -48,10 +48,7 @@ export const webhookController: FastifyPluginAsync = async (app) => {
         async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
             const flow = await getFlowOrThrow(request.params.flowId)
             const payload = await convertRequest(request)
-            console.log('pre-handshake')
             const isHandshake = await handshakeHandler(flow, payload, reply)
-            console.log('ishandshake')
-            console.log(isHandshake)
             if (isHandshake) {
                 return
             }
@@ -197,8 +194,6 @@ async function handshakeHandler(flow: Flow, payload: EventPayload, reply: Fastif
         flow,
         payload,
     })
-    console.log('handshake response')
-    console.log(handshakeResponse);
     if (handshakeResponse !== null) {
         reply = reply.status(handshakeResponse.status)
         if (handshakeResponse.headers !== undefined) {
