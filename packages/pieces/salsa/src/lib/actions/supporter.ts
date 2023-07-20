@@ -1,11 +1,11 @@
 import { HttpMethod, httpClient } from "@activepieces/pieces-common";
 
-export async function searchSupporter(propsValue: Record<string, unknown>): Promise<Record<string, unknown>> {    
+export async function searchSupporter(auth: string, propsValue: Record<string, unknown>): Promise<Record<string, unknown>> {    
     const response = await httpClient.sendRequest({
         method: HttpMethod.POST,
         url: `${propsValue['baseUrl']}/integration/ext/v1/supporters/search`,
         headers: {
-            'authToken': propsValue['auth'] as string,
+            'authToken': auth as string,
             'Content-Type': 'application/json',
             'Accept': 'application/json'
         },
@@ -17,12 +17,15 @@ export async function searchSupporter(propsValue: Record<string, unknown>): Prom
     return response.body.payload;
 }
 
-export async function upsertSupporter(propsValue: Record<string, unknown>): Promise<Record<string, unknown>> {    
+export async function upsertSupporter(auth: string, propsValue: {
+    baseUrl: string,
+    supporters: unknown
+}): Promise<Record<string, unknown>> {    
     const response = await httpClient.sendRequest({
         method: HttpMethod.PUT,
         url: `${propsValue['baseUrl']}/integration/ext/v1/supporters`,
         headers: {
-            'authToken': propsValue['auth'] as string,
+            'authToken': auth as string,
             'Content-Type': 'application/json',
             'Accept': 'application/json'
         },
