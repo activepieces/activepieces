@@ -1,5 +1,6 @@
 import { PieceAuth, Property, createPiece } from "@activepieces/pieces-framework";
 import { createTask } from './lib/actions/create-task';
+import { existsTask } from './lib/actions/task-exists';
 
 export const invoiceninjaAuth = PieceAuth.CustomAuth({
   displayName: 'Custom Authentication',
@@ -24,6 +25,6 @@ export const invoiceninja = createPiece({
     logoUrl: "https://cdn.activepieces.com/pieces/invoiceninja.png",
   authors: ["buttonsbond"],
   auth: invoiceninjaAuth,
-  actions: [createTask],
+  actions: [createTask,existsTask],
   triggers: [],
 });
