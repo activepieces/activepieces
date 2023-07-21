@@ -35,7 +35,6 @@ import {
   tap,
 } from 'rxjs';
 import deepEqual from 'deep-equal';
-import { CodemirrorComponent } from '@ctrl/ngx-codemirror';
 import {
   DropdownProperty,
   DropdownState,
@@ -101,14 +100,15 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
   allAuthConfigs$: Observable<ConnectionDropdownItem[]>;
   configDropdownChanged$: Observable<unknown>;
   cloudAuthCheck$: Observable<void>;
-  editorOptions = {
-    lineNumbers: true,
-    theme: 'lucario',
-    lineWrapping: true,
-    matchBrackets: true,
-    gutters: ['CodeMirror-lint-markers'],
-    mode: 'application/json',
-    lint: true,
+  codeEditorOptions = {
+    minimap: { enabled: false },
+    theme: 'cobalt2',
+    language: 'json',
+    readOnly: false,
+    automaticLayout: true,
+    contextmenu: false,
+    formatOnPaste: false,
+    formatOnType: false,
   };
   customizedInputs: Record<string, boolean> | undefined;
   checkingOAuth2CloudManager = false;
@@ -225,10 +225,18 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
         property.type === PropertyType.MULTI_SELECT_DROPDOWN
       ) {
         this.dropdownOptionsObservables$[pk] =
-          this.createRefreshableConfigObservables<DropdownState<unknown>>({
-            property: property,
-            propertyKey: pk,
-          }).pipe(
+          this.createRefreshableConfigObservables<DropdownState<unknown>>(
+            {
+              property: property,
+              propertyKey: pk,
+            },
+            {
+              options: [],
+              disabled: true,
+              placeholder:
+                'An unxpected error occured please contact our support',
+            }
+          ).pipe(
             map((res) => {
               if (res.options.length === 0) {
                 const emptyDropdownState: DropdownState<unknown> = {
@@ -259,10 +267,13 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
       const parentProperty = this.properties[pk];
       if (parentProperty.type == PropertyType.DYNAMIC) {
         this.dynamicPropsObservables$[pk] =
-          this.createRefreshableConfigObservables<PiecePropertyMap>({
-            property: parentProperty,
-            propertyKey: pk,
-          }).pipe(
+          this.createRefreshableConfigObservables<PiecePropertyMap>(
+            {
+              property: parentProperty,
+              propertyKey: pk,
+            },
+            {}
+          ).pipe(
             tap((res) => {
               const fg = this.form.get(pk) as UntypedFormGroup;
               if (fg) {
@@ -302,13 +313,16 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
 
   createRefreshableConfigObservables<
     T extends DropdownState<unknown> | PiecePropertyMap
-  >(obj: {
-    property:
-      | DynamicProperties<boolean>
-      | MultiSelectDropdownProperty<unknown, boolean>
-      | DropdownProperty<unknown, boolean>;
-    propertyKey: string;
-  }) {
+  >(
+    obj: {
+      property:
+        | DynamicProperties<boolean>
+        | MultiSelectDropdownProperty<unknown, boolean>
+        | DropdownProperty<unknown, boolean>;
+      propertyKey: string;
+    },
+    fallbackObject: T
+  ) {
     this.refreshableConfigsLoadingFlags$[obj.propertyKey] = new BehaviorSubject(
       true
     );
@@ -344,17 +358,20 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
     }
     return combineLatest(refreshers$).pipe(
       switchMap((res) => {
-        return this.actionMetaDataService.getPieceActionConfigOptions<T>({
-          pieceVersion: this.pieceVersion,
-          pieceName: this.pieceName,
-          propertyName: obj.propertyKey,
-          stepName: this.actionOrTriggerName,
-          input: res,
-        });
-      }),
-      catchError((err) => {
-        console.error(err);
-        throw err;
+        return this.actionMetaDataService
+          .getPieceActionConfigOptions<T>({
+            pieceVersion: this.pieceVersion,
+            pieceName: this.pieceName,
+            propertyName: obj.propertyKey,
+            stepName: this.actionOrTriggerName,
+            input: res,
+          })
+          .pipe(
+            catchError((err) => {
+              console.error(err);
+              return of(fallbackObject);
+            })
+          );
       }),
       tap(() => {
         this.refreshableConfigsLoadingFlags$[obj.propertyKey].next(false);
@@ -460,12 +477,12 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
     } else {
       this.form.addControl(
         propertyKey,
-        new UntypedFormControl(
-          property.defaultValue
-            ? JSON.stringify(property.defaultValue, null, 2)
-            : '',
-          [jsonValidator]
-        )
+        new UntypedFormControl('', [jsonValidator])
+      );
+      this.form.controls[propertyKey].setValue(
+        property.defaultValue
+          ? JSON.stringify(property.defaultValue, null, 2)
+          : '{}'
       );
     }
     this.selectedOptionalProperties = {
@@ -484,15 +501,13 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
     return formControlValue !== undefined && deepEqual(opt, formControlValue);
   };
 
-  addMentionToJsonControl(
-    jsonControl: CodemirrorComponent,
-    mention: InsertMentionOperation
-  ) {
-    const doc = jsonControl.codeMirror!.getDoc();
-    const cursor = doc.getCursor();
-    doc.replaceRange(mention.insert.mention.serverValue, cursor);
+  addMentionToJsonControl(mention: InsertMentionOperation) {
+    const monaco = (window as any).monaco.editor.getEditors()[0];
+    console.log(monaco);
+    monaco.trigger('keyboard', 'type', {
+      text: mention.insert.mention.serverValue,
+    });
   }
-
   formValueMiddleWare(formValue: Record<string, unknown>) {
     const formattedValue: Record<string, unknown> = { ...formValue };
     Object.keys(formValue).forEach((pk) => {

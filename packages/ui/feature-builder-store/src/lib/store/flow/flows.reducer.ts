@@ -17,11 +17,13 @@ const initialState: FlowState = {
   flow: {
     status: FlowInstanceStatus.UNPUBLISHED,
     projectId: '1',
+    folderId: null,
     id: '1',
     updated: '',
     created: '',
     version: {
       flowId: '1',
+      updatedBy: '',
       displayName: 'Flow version',
       valid: false,
       updated: '',

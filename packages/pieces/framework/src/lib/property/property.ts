@@ -39,7 +39,7 @@ export enum PropertyType {
 
 export type PieceAuthProperty =
     | BasicAuthProperty<boolean>
-    | CustomAuthProperty<boolean, CustomAuthProps>
+    | CustomAuthProperty<boolean, any>
     | OAuth2Property<boolean, OAuth2Props>
     | SecretTextProperty<boolean>
 

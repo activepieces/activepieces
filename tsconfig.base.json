@@ -151,6 +151,7 @@
       "@activepieces/piece-shopify": ["packages/pieces/shopify/src/index.ts"],
       "@activepieces/piece-slack": ["packages/pieces/slack/src/index.ts"],
       "@activepieces/piece-smtp": ["packages/pieces/smtp/src/index.ts"],
+      "@activepieces/piece-soap": ["packages/pieces/soap/src/index.ts"],
       "@activepieces/piece-spotify": ["packages/pieces/spotify/src/index.ts"],
       "@activepieces/piece-square": ["packages/pieces/square/src/index.ts"],
       "@activepieces/piece-stability-ai": [
@@ -158,6 +159,9 @@
       ],
       "@activepieces/piece-store": ["packages/pieces/store/src/index.ts"],
       "@activepieces/piece-stripe": ["packages/pieces/stripe/src/index.ts"],
+      "@activepieces/piece-surveymonkey": [
+        "packages/pieces/surveymonkey/src/index.ts"
+      ],
       "@activepieces/piece-telegram-bot": [
         "packages/pieces/telegram-bot/src/index.ts"
       ],
@@ -167,6 +171,9 @@
       "@activepieces/piece-twitter": ["packages/pieces/twitter/src/index.ts"],
       "@activepieces/piece-typeform": ["packages/pieces/typeform/src/index.ts"],
       "@activepieces/piece-vtex": ["packages/pieces/vtex/src/index.ts"],
+      "@activepieces/piece-woocommerce": [
+        "packages/pieces/woocommerce/src/index.ts"
+      ],
       "@activepieces/piece-wordpress": [
         "packages/pieces/wordpress/src/index.ts"
       ],

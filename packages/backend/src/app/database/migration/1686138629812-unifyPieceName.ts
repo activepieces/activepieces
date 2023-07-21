@@ -58,7 +58,7 @@ export class UnifyPieceName1686138629812 implements MigrationInterface {
 
 async function updateFlowVersions(queryRunner: QueryRunner, revert: boolean): Promise<number> {
     const flowVersionRepo = queryRunner.connection.getRepository(FLOW_VERSION_TABLE)
-    const flowVersions = await flowVersionRepo.find()
+    const flowVersions = await queryRunner.query('SELECT * FROM flow_version')
     let count = 0
 
     for (const flowVersion of flowVersions) {

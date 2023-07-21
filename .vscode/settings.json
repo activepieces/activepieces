@@ -1,6 +1,9 @@
 {
     "cSpell.words": [
-        "mpim"
+        "Activepieces",
+        "Fastify",
+        "mpim",
+        "sendgrid"
     ],
     "typescript.tsdk": "node_modules/typescript/lib"
 }

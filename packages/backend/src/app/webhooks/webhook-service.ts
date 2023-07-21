@@ -7,7 +7,6 @@ import {
     FlowInstanceStatus,
     FlowRun,
     FlowVersion,
-    FlowViewMode,
     ProjectId,
     RunEnvironment,
 } from '@activepieces/shared'
@@ -23,8 +22,41 @@ import { isNil } from '@activepieces/shared'
 import { logger } from '../helper/logger'
 import { webhookSimulationService } from './webhook-simulation/webhook-simulation-service'
 import { flowInstanceService } from '../flows/flow-instance/flow-instance.service'
+import { WebhookResponse } from '@activepieces/pieces-framework'
 
 export const webhookService = {
+    async handshake({ flow, payload }: CallbackParams): Promise<WebhookResponse | null> {
+        logger.info(`[WebhookService#handshake] flowId=${flow.id}`)
+
+        const { projectId } = flow
+        const flowInstance = await flowInstanceService.get({
+            flowId: flow.id,
+            projectId: flow.projectId,
+        })
+        if (isNil(flowInstance)) {
+            logger.info(`[WebhookService#handshake] flowInstance not found, flowId=${flow.id}`)
+            saveSampleDataForWebhookTesting(
+                flow,
+                payload)
+            return null
+        }
+        if (flowInstance.status !== FlowInstanceStatus.ENABLED) {
+            logger.info(`[WebhookService#handshake] flowInstance not found or not enabled ignoring the webhook handshake, flowId=${flow.id}`)
+            return null
+        }
+        const flowVersion = await flowVersionService.getOneOrThrow(flowInstance.flowVersionId)
+        const response = await triggerUtils.tryHandshake({
+            projectId,
+            flowVersion,
+            payload,
+            simulate: false,
+        })
+        if (response !== null) {
+            logger.info(`[WebhookService#handshake] condition met, handshake executed, response:
+            ${JSON.stringify(response, null, 2)}`)
+        }
+        return response
+    },
     async callback({ flow, payload }: CallbackParams): Promise<FlowRun[]> {
         logger.info(`[WebhookService#callback] flowId=${flow.id}`)
 
@@ -137,14 +169,14 @@ function extractHostname(url: string): string | null {
 }
 
 const getLatestFlowVersionOrThrow = async (flowId: FlowId, projectId: ProjectId): Promise<FlowVersion> => {
-    const flowVersionId = undefined
 
-    const flowVersion = await flowVersionService.getFlowVersion(
+    const flowVersion = await flowVersionService.getFlowVersion({
         projectId,
         flowId,
-        flowVersionId,
-        FlowViewMode.NO_ARTIFACTS,
-    )
+        versionId: undefined,
+        removeSecrets: false,
+        includeArtifactAsBase64: false,
+    })
 
     if (isNil(flowVersion)) {
         logger.error(`[WebhookService#getLatestFlowVersionOrThrow] error=flow_version_not_found flowId=${flowId} projectId=${projectId}`)

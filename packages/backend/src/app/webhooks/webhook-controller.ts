@@ -1,6 +1,6 @@
 import { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { ActivepiecesError, ErrorCode, ExecutionOutputStatus, Flow, FlowId, FlowRun, StopExecutionOutput, WebhookUrlParams } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, EventPayload, ExecutionOutputStatus, Flow, FlowId, FlowRun, StopExecutionOutput, WebhookUrlParams } from '@activepieces/shared'
 import { webhookService } from './webhook-service'
 import { captureException, logger } from '../helper/logger'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
@@ -19,8 +19,13 @@ export const webhookController: FastifyPluginAsync = async (app) => {
         },
         async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
             const flow = await getFlowOrThrow(request.params.flowId)
+            const payload = await convertRequest(request)
+            const isHandshake = await handshakeHandler(flow, payload, reply)
+            if (isHandshake) {
+                return
+            }
             let run = (await webhookService.callback({
-                flow: flow,
+                flow,
                 payload: {
                     method: request.method,
                     headers: request.headers as Record<string, string>,
@@ -42,7 +47,12 @@ export const webhookController: FastifyPluginAsync = async (app) => {
         },
         async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
             const flow = await getFlowOrThrow(request.params.flowId)
-            handler(request, flow)
+            const payload = await convertRequest(request)
+            const isHandshake = await handshakeHandler(flow, payload, reply)
+            if (isHandshake) {
+                return
+            }
+            asyncHandler(payload, flow)
             await reply.status(StatusCodes.OK).send()
         },
     )
@@ -56,7 +66,12 @@ export const webhookController: FastifyPluginAsync = async (app) => {
         },
         async (request: FastifyRequest<{ Querystring: WebhookUrlParams }>, reply) => {
             const flow = await getFlowOrThrow(request.query.flowId)
-            handler(request, flow)
+            const payload = await convertRequest(request)
+            const isHandshake = await handshakeHandler(flow, payload, reply)
+            if (isHandshake) {
+                return
+            }
+            asyncHandler(payload, flow)
             await reply.status(StatusCodes.OK).send()
         },
     )
@@ -72,7 +87,7 @@ export const webhookController: FastifyPluginAsync = async (app) => {
             logger.debug(`[WebhookController#simulate] flowId=${request.params.flowId}`)
             const flow = await getFlowOrThrow(request.params.flowId)
             await webhookService.simulationCallback({
-                flow: flow,
+                flow,
                 payload: {
                     method: request.method,
                     headers: request.headers as Record<string, string>,
@@ -141,6 +156,16 @@ const handleExecutionOutputStatus = async (run: FlowRun, reply: FastifyReply) =>
     }
 }
 
+async function convertRequest(request: FastifyRequest): Promise<EventPayload> {
+    const payload: EventPayload = {
+        method: request.method,
+        headers: request.headers as Record<string, string>,
+        body: await convertBody(request),
+        queryParams: request.query as Record<string, string>,
+    }
+    return payload
+}
+
 const convertBody = async (request: FastifyRequest) => {
     if (request.isMultipart()) {
         const jsonResult: Record<string, unknown> = {}
@@ -164,17 +189,30 @@ const convertBody = async (request: FastifyRequest) => {
 
 }
 
-const handler = async (request: FastifyRequest, flow: Flow) => {
+async function handshakeHandler(flow: Flow, payload: EventPayload, reply: FastifyReply): Promise<boolean> {
+    const handshakeResponse = await webhookService.handshake({
+        flow,
+        payload,
+    })
+    if (handshakeResponse !== null) {
+        reply = reply.status(handshakeResponse.status)
+        if (handshakeResponse.headers !== undefined) {
+            for (const header of Object.keys(handshakeResponse.headers)) {
+                reply = reply.header(header, handshakeResponse.headers[header] as string)
+            }
+        }
+        await reply.send(handshakeResponse.body)
+        return true
+    }
+    return false
+}
+
+const asyncHandler = async (payload: EventPayload, flow: Flow) => {
     // If we don't catch the error here, it will crash the Fastify API. Adding await before the function call can help, but since 3P services expect a fast response, we still don't want to wait for the callback to finish.
     try {
         await webhookService.callback({
-            flow: flow,
-            payload: {
-                method: request.method,
-                headers: request.headers as Record<string, string>,
-                body: await convertBody(request),
-                queryParams: request.query as Record<string, string>,
-            },
+            flow,
+            payload,
         })
     }
     catch (e) {

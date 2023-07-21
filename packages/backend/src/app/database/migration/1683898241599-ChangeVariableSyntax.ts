@@ -8,7 +8,7 @@ export class ChangeVariableSyntax1683898241599 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         logger.info('ChangeVariableSyntax1683898241599, started')
         const flowVersionRepo = queryRunner.connection.getRepository(FLOW_VERSION_TABLE)
-        const flowVersions = await flowVersionRepo.find()
+        const flowVersions = await queryRunner.query('SELECT * FROM flow_version')
         let count = 0
         for (const flowVersion of flowVersions) {
             const step = flowVersion.trigger
@@ -25,7 +25,7 @@ export class ChangeVariableSyntax1683898241599 implements MigrationInterface {
     public async down(queryRunner: QueryRunner): Promise<void> {
         logger.info('ChangeVariableSyntax1683898241599 down, started')
         const flowVersionRepo = queryRunner.connection.getRepository(FLOW_VERSION_TABLE)
-        const flowVersions = await flowVersionRepo.find()
+        const flowVersions = await queryRunner.query('SELECT * FROM flow_version')
         let count = 0
         for (const flowVersion of flowVersions) {
             const step = flowVersion.trigger
@@ -81,11 +81,11 @@ function traverse(input: unknown, forward: boolean): unknown {
         return input
     }
     if (typeof input === 'string') {
-        if(forward){
+        if (forward) {
         // Replace anything ${var.asd } to {{ var.asd }}
             return input.replace(/\$\{([^}]+)\}/g, '{{$1}}')
         }
-        else{
+        else {
             // Revert above change
             return input.replace(/\{\{([^}]+)\}\}/g, '${$1}')
         }

@@ -15,6 +15,7 @@ export const FlowVersion = Type.Object({
   flowId: Type.String(),
   displayName: Type.String(),
   trigger: Trigger,
+  updatedBy: Type.String(),
   valid: Type.Boolean(),
   state: Type.Enum(FlowVersionState)
 });
