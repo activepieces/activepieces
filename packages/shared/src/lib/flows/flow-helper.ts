@@ -12,7 +12,8 @@ import {
   Action,
   ActionType,
   BranchAction,
-  LoopOnItemsAction
+  LoopOnItemsAction,
+  SingleActionSchema
 } from './actions/action';
 import { Trigger, TriggerType } from './triggers/trigger';
 import { TypeCompiler } from '@sinclair/typebox/compiler';
@@ -31,7 +32,7 @@ type GetStepFromSubFlow = {
   stepName: string;
 };
 
-const actionSchemaValidator = TypeCompiler.Compile(Action);
+const actionSchemaValidator = TypeCompiler.Compile(SingleActionSchema);
 const triggerSchemaValidation = TypeCompiler.Compile(Trigger);
 
 function isValid(flowVersion: FlowVersion) {
