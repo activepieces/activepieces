@@ -30,11 +30,23 @@ export const existsTask = createAction({
             const baseUrl = context.auth.base_url.replace(/\/$/, "");
             const url = `${baseUrl}/api/v1/tasks?${queryParams.toString()}`;
             const httprequestdata = {
-                method: HttpMethod.POST,
+                method: HttpMethod.GET,
                 url,
                 headers,
             };
-            const response = await httpClient.sendRequest(httprequestdata);
-            return response.body;
-        }
+            
+            try {
+                  const response = await httpClient.sendRequest(httprequestdata);
+                  // Process the successful response here (status 2xx).
+                  // count is the number of tickets with that number so return true if it is 1
+                  if (response.body.meta.pagination.total>0) { return true; } else { return false; }
+                } catch (error) {
+                  // Handle the error when the request fails (status other than 2xx).
+                  return "There was a problem getting information from your Invoice Ninja";
+                }
+
+            }
+              
+
+
 })
