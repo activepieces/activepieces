@@ -206,7 +206,7 @@ function evaluateConditions(conditionGroups: BranchCondition[][]): boolean {
   return Boolean(orOperator);
 }
 
-function toLowercaseIfCaseInsensitive(text: unknown, caseSensitive: boolean): string {
+function toLowercaseIfCaseInsensitive(text: unknown, caseSensitive: boolean | undefined): string {
   if (typeof text === 'string') {
     return caseSensitive ? text : text.toLowerCase();
   } else {
