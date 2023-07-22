@@ -47,7 +47,7 @@ export class CodeArtifactFormControlComponent
   codeArtifactForm: FormGroup<CodeArtifactForm>;
   codeEditorOptions = {
     minimap: { enabled: false },
-    theme: 'apTheme',
+    theme: 'cobalt2',
     language: 'typescript',
     readOnly: false,
     automaticLayout: true,
