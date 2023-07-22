@@ -32,8 +32,8 @@ import { system } from './system/system'
 import { SystemProp } from './system/system-prop'
 
 const POLLING_FREQUENCY_CRON_EXPRESSON = `*/${system.getNumber(
-    SystemProp.TRIGGER_DEFAULT_POLL_INTERVAL ?? 5,
-)} * * * *`
+    SystemProp.TRIGGER_DEFAULT_POLL_INTERVAL,
+) ?? 5} * * * *`
 
 export const triggerUtils = {
     async tryHandshake(params: ExecuteTrigger): Promise<WebhookResponse | null> {
