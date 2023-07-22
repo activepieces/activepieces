@@ -53,3 +53,5 @@ packages/backend/.env
 
 # produced by backend tests
 .npm-cache
+packages/ui/common/src/lib/environments/environment.ts
+packages/backend/.env
