@@ -38,7 +38,7 @@ export const existsTask = createAction({
             try {
                   const response = await httpClient.sendRequest(httprequestdata);
                   // Process the successful response here (status 2xx).
-                  // count is the number of tickets with that number so return true if it is 1
+                  // count is the number of tickets with that number so return true if it is 1.
                   if (response.body.meta.pagination.total>0) { return true; } else { return false; }
                 } catch (error) {
                   // Handle the error when the request fails (status other than 2xx).
