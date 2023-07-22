@@ -11,11 +11,17 @@ Pieces are npm packages and follows **semantic versioning**.
 The version number consists of three numbers: `MAJOR.MINOR.PATCH`, where:
 
 - **MAJOR** It should be incremented when there are breaking changes to the piece.
-- **MINOR** It should be incremented for new features or functionality that is compatible with the previous version.
+- **MINOR** It should be incremented for new features or functionality that is compatible with the previous version, unless the major version is less than 1.0, in which case it can be a breaking change.
 - **PATCH** It should be incremented for bug fixes and small changes that do not introduce new features or break backward compatibility.
 
 ## Engine
-The engine will use the latest compatible version for a given piece version, i.e. latest version with the same **major** version number
+The engine will use the most up-to-date compatible version for a given piece version during the **DRAFT** flow versions. Once the flow is published, all pieces will be locked to a specific version.
+
+**Case 1: Piece Version is Less Than 1.0**:
+The engine will select the latest **patch** version that shares the same **minor** version number.
+
+**Case 2: Piece Version Reaches Version 1.0**:
+The engine will select the latest **minor** version that shares the same **major** version number.
 
 ## Examples
 <Tip>

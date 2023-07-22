@@ -29,7 +29,7 @@ const triggerEventController = async (fastify: FastifyInstance) => {
 
             return await triggerEventService.test({
                 projectId: request.principal.projectId,
-                flow: flow,
+                flow,
             })
         },
     )
@@ -48,8 +48,8 @@ const triggerEventController = async (fastify: FastifyInstance) => {
         ) => {
             return await triggerEventService.saveEvent({
                 projectId: request.principal.projectId,
-                flowId:request.query.flowId,
-                payload:request.body,
+                flowId: request.query.flowId,
+                payload: request.body,
             })
         },
     )
@@ -69,7 +69,7 @@ const triggerEventController = async (fastify: FastifyInstance) => {
             const flow = await flowService.getOneOrThrow({ projectId: request.principal.projectId, id: request.query.flowId })
             return await triggerEventService.list({
                 projectId: request.principal.projectId,
-                flow: flow,
+                flow,
                 cursor: request.query.cursor ?? null,
                 limit: request.query.limit ?? DEFAULT_PAGE_SIZE,
             })

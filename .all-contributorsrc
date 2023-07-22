@@ -382,6 +382,24 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "Ozak93",
+      "name": "Osama Zakarneh",
+      "avatar_url": "https://avatars.githubusercontent.com/u/31257994?v=4",
+      "profile": "https://github.com/Ozak93",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "phestvik",
+      "name": "phestvik",
+      "avatar_url": "https://avatars.githubusercontent.com/u/88210985?v=4",
+      "profile": "https://github.com/phestvik",
+      "contributions": [
+        "ideas"
+      ]
     }
   ],
   "commitType": "docs"

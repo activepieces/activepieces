@@ -24,10 +24,24 @@ import { FlagService } from '@activepieces/ui/common';
 import { ApEdition } from '@activepieces/shared';
 import { UserLoggedIn } from './guards/user-logged-in.guard';
 import { ImportFlowComponent } from './modules/import-flow/import-flow.component';
-
 import { LottieCacheModule, LottieModule } from 'ngx-lottie';
 import player from 'lottie-web';
+import {
+  MonacoEditorModule,
+  NgxMonacoEditorConfig,
+} from 'ngx-monaco-editor-v2';
+import { apMonacoTheme } from './modules/common/monaco-themes/ap-monaco-theme';
+import { cobalt2 } from './modules/common/monaco-themes/cobalt-2-theme';
 
+const monacoConfig: NgxMonacoEditorConfig = {
+  baseUrl: '/assets', // configure base path for monaco editor. Starting with version 8.0.0 it defaults to './assets'. Previous releases default to '/assets'
+  defaultOptions: { scrollBeyondLastLine: false }, // pass default options to be used
+  onMonacoLoad: () => {
+    const monaco = (window as any).monaco;
+    monaco.editor.defineTheme('apTheme', apMonacoTheme);
+    monaco.editor.defineTheme('cobalt2', cobalt2);
+  }, // here monaco object will be available as window.monaco use this function to extend monaco editor functionalities.
+};
 export function tokenGetter() {
   const jwtToken: any = localStorage.getItem(environment.jwtTokenName);
   return jwtToken;
@@ -69,6 +83,7 @@ export function playerFactory() {
     UiCommonModule,
     LottieModule.forRoot({ player: playerFactory }),
     LottieCacheModule.forRoot(),
+    MonacoEditorModule.forRoot(monacoConfig),
   ],
   providers: [
     {
@@ -130,7 +145,7 @@ function dynamicRoutes(edition: string) {
     {
       path: 'templates/:templateId',
       component: ImportFlowComponent,
-      title: 'Import Flow - Activepieces',
+      title: `Import Flow - ${environment.websiteTitle}`,
     },
     {
       path: 'redirect',
@@ -139,11 +154,14 @@ function dynamicRoutes(edition: string) {
     {
       path: '**',
       component: NotFoundComponent,
-      title: '404 - Activepieces',
+      title: `404 - ${environment.websiteTitle}`,
     },
   ];
   let editionRoutes: Route[] = [];
   switch (edition) {
+    case ApEdition.CLOUD:
+      editionRoutes = [];
+      break;
     case ApEdition.ENTERPRISE:
       editionRoutes = [];
       break;

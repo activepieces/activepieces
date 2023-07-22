@@ -4,6 +4,12 @@ export const environment = {
   jwtTokenName: 'token',
   redirectUrl: 'http://localhost:4200/redirect',
   userPropertyNameInLocalStorage: 'currentUser',
+  //You need to edit index.html manually
+  activateBeamer: true,
+  showFeedbackButton: true,
+  showDocsButton: true,
+  showUserProfile: true,
+  websiteTitle: 'Activepieces',
   // BEGIN EE
   firebase: {
     apiKey: 'AIzaSyBik7RRZ6S8QIpG4GqzwoF_SCNn3Dr9PPw',

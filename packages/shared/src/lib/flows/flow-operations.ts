@@ -40,7 +40,7 @@ export const ImportFlowRequest = Type.Object({
 export type ImportFlowRequest = Static<typeof ImportFlowRequest>;
 
 export const ChangeFolderRequest = Type.Object({
-    folderId: Type.Optional(Type.String({})),
+    folderId: Type.Union([Type.String(),Type.Null()])
 });
 
 export type ChangeFolderRequest = Static<typeof ChangeFolderRequest>;

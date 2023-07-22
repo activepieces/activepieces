@@ -8,8 +8,6 @@ import {
     FlowViewMode,
     GetFlowRequest,
     ListFlowsRequest,
-    apId,
-    flowHelper,
 } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
@@ -54,7 +52,7 @@ export const flowController = async (fastify: FastifyInstance) => {
             if (flow === null) {
                 throw new ActivepiecesError({ code: ErrorCode.FLOW_NOT_FOUND, params: { id: request.params.flowId } })
             }
-            return await flowService.update({ flowId: request.params.flowId, request: request.body, projectId: request.principal.projectId })
+            return await flowService.update({ userId: request.principal.id, flowId: request.params.flowId, request: request.body, projectId: request.principal.projectId })
         },
     )
 
@@ -110,22 +108,11 @@ export const flowController = async (fastify: FastifyInstance) => {
                 }
             }>,
         ) => {
-            const flow = await flowService.getOne({ id: request.params.flowId, versionId: undefined, projectId: request.principal.projectId, viewMode: FlowViewMode.TEMPLATE })
-            if (!flow) {
-                throw new ActivepiecesError({ code: ErrorCode.FLOW_NOT_FOUND, params: { id: request.params.flowId } })
-            }
-            const template: FlowTemplate =
-            {
-                id: apId(),
-                name: flow.version.displayName,
-                description: '',
-                pieces: flowHelper.getUsedPieces(flow.version.trigger),
-                template: flow.version,
-                tags:[],
-                blogUrl:'', 
-                pinnedOrder:null,
-            }
-            return template
+            return flowService.getTemplate({
+                flowId: request.params.flowId,
+                projectId: request.principal.projectId,
+                versionId: undefined,
+            })
         },
     )
 
@@ -146,7 +133,7 @@ export const flowController = async (fastify: FastifyInstance) => {
         ) => {
             const versionId: FlowVersionId | undefined = request.query.versionId
             const viewMode = request.query.viewMode ?? FlowViewMode.NO_ARTIFACTS
-            const flow = await flowService.getOne({ id: request.params.flowId, versionId: versionId, projectId: request.principal.projectId, viewMode })
+            const flow = await flowService.getOne({ id: request.params.flowId, versionId, projectId: request.principal.projectId, viewMode })
             if (!flow) {
                 throw new ActivepiecesError({ code: ErrorCode.FLOW_NOT_FOUND, params: { id: request.params.flowId } })
             }

@@ -1,6 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
-  assertNotNullOrUndefined,
   HttpRequest,
   HttpHeaders,
   QueryParams,
@@ -8,6 +7,7 @@ import {
   HttpError,
 } from '@activepieces/pieces-common';
 import { httpMethodDropdown } from '../common/props';
+import { assertNotNullOrUndefined } from '@activepieces/shared';
 
 export const httpSendRequestAction = createAction({
     name: 'send_request',

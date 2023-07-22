@@ -1,18 +1,21 @@
 <form [formGroup]="codeArtifactForm">
   <div class="code-font-sm code-size-200 code-block">
-    <div class="ap-py-2 ap-px-4 ap-flex bar-containing-expand-button">
+    <div class="ap-py-2 ap-px-4 ap-flex bar-containing-expand-button  ap-text-body ap-rounded">
       <div class="ap-flex-grow">
         <span class="ap-text-white">index.ts</span>
       </div>
-      <div>
-        <svg-icon src="/assets/img/custom/maximize.svg" [svgStyle]="{width:'16px', height:'16px'}" #tooltip="matTooltip"
-          matTooltip="Fullscreen" class="ap-cursor-pointer" [matTooltipHideDelay]="hideDelayForFullscreenTooltip"
-          (click)="showFullscreenEditor()"> </svg-icon>
+      <div class="ap-flex ap-items-center">
+        <svg-icon src="/assets/img/custom/maximize.svg" #tooltip="matTooltip" matTooltip="Fullscreen"
+          class="ap-cursor-pointer ap-h-[16px] ap-w-[16px] ap-fill-white" [applyClass]="true"
+          [matTooltipHideDelay]="hideDelayForFullscreenTooltip" (click)="showFullscreenEditor()"> </svg-icon>
 
       </div>
     </div>
 
-    <ngx-codemirror #codeMirror formControlName="content" [options]="codeEditorOptions"></ngx-codemirror>
+    <div class="ap-h-[300px] ap-rounded">
+      <ngx-monaco-editor class="!ap-h-full !ap-w-full" formControlName="content"
+        [options]="codeEditorOptions"></ngx-monaco-editor>
+    </div>
 
   </div>
 </form>

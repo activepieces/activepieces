@@ -16,7 +16,7 @@ export const salsaOfflineDonationUpsert = createAction({
                 required: true
             })
         },
-        async run(context) {
-            return await upsertOfflineDonation(context.auth, context.propsValue);
+        async run({auth, propsValue}) {
+            return await upsertOfflineDonation(auth, propsValue);
         },
 });

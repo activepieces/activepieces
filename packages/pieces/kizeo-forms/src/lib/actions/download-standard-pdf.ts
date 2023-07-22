@@ -27,7 +27,7 @@ export const downloadStandardPDF = createAction({
             });
 
             if (response.status === 200) {
-                return Buffer.from(response.data).toString('base64')
+                return "data:application/pdf;base64,"+Buffer.from(response.data).toString('base64')
             }
 
             return []
