@@ -10,9 +10,18 @@ class Globals {
   private _workerToken = '';
   private _projectId = '';
   private _apiUrl = '';
+  private _serverUrl = '';
   private _flowId = '';
   private _flowRunId?: FlowRunId
   private _resumePayload: unknown
+
+  set serverUrl(_serverUrl: string) {
+    this._serverUrl = _serverUrl;
+  }
+
+  get serverUrl(): string | undefined {
+    return this._serverUrl;
+  }
 
   set flowRunId(_flowRunId: string) {
     this._flowRunId = _flowRunId;

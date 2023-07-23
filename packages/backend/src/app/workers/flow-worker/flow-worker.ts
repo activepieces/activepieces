@@ -30,6 +30,7 @@ import { acquireLock } from '../../database/redis-connection'
 import { captureException, logger } from '../../helper/logger'
 import { pieceManager } from '../../flows/common/piece-installer'
 import { isNil } from '@activepieces/shared'
+import { getServerUrl } from '../../helper/public-ip-utils'
 
 type FlowPiece = {
     name: string
@@ -118,6 +119,7 @@ const loadInputAndLogFileId = async ({ jobData }: LoadInputAndLogFileIdParams): 
     if (jobData.executionType === ExecutionType.BEGIN) {
         return {
             input: {
+                serverUrl: await getServerUrl(),
                 executionType: ExecutionType.BEGIN,
                 ...baseInput,
             },
