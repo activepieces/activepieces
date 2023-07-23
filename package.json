@@ -57,6 +57,7 @@
     "angular2-uuid": "^1.1.1",
     "async-mutex": "^0.4.0",
     "bcrypt": "^5.1.0",
+    "buffer": "^6.0.3",
     "bullmq": "^3.5.9",
     "cheerio": "^1.0.0-rc.12",
     "codemirror": "^5.65.9",
