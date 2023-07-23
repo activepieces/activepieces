@@ -71,6 +71,21 @@ export const triggerHelper = {
           listeners: appListeners,
           scheduleOptions: trigger.type === TriggerStrategy.POLLING ? scheduleOptions : undefined,
         }
+      case TriggerHookType.HANDSHAKE: {
+        try {
+          const response = await trigger.onHandshake(context);
+          return {
+            success: true,
+            response
+          }
+        } catch (e: any) {
+          console.error(e)
+          return {
+            success: false,
+            message: e.toString()
+          }
+        } 
+      }
       case TriggerHookType.TEST:
         try {
           return {

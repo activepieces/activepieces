@@ -21,7 +21,7 @@ export class AddInputUiInfo1681107443963 implements MigrationInterface {
 
         let count = 0
         const flowVersionRepo = queryRunner.connection.getRepository(FLOW_VERSION_TABLE)
-        const flowVersions = await flowVersionRepo.find()
+        const flowVersions = await queryRunner.query('SELECT * FROM flow_version')
 
         for (const flowVersion of flowVersions) {
             const steps = getAllSteps(flowVersion as FlowVersion)

@@ -66,9 +66,9 @@ export type BaseActionContext<
 > = BaseContext<PieceAuth, ActionProps> & {
     executionType: ET,
     connections: ConnectionsManager,
+    serverUrl: string,
     run: {
         id: FlowRunId,
-        webhookBaseUrl: string,
         stop: StopHook,
         pause: PauseHook,
     }

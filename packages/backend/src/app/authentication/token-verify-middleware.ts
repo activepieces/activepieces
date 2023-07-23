@@ -1,6 +1,6 @@
 import { FastifyRequest } from 'fastify'
 import { tokenUtils } from './lib/token-utils'
-import { ActivepiecesError, ErrorCode, PrincipalType, apId } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, Principal, PrincipalType, apId } from '@activepieces/shared'
 
 const ignoredRoutes = new Set([
     // BEGIN EE
@@ -42,7 +42,7 @@ export const tokenVerifyMiddleware = async (request: FastifyRequest): Promise<vo
     else {
         try {
             const token = rawToken.substring(HEADER_PREFIX.length)
-            const principal = await tokenUtils.decode(token)
+            const principal = await tokenUtils.decode(token) as Principal
             request.principal = principal
         }
         catch (e) {
@@ -60,7 +60,7 @@ function requiresAuthentication(routerPath: string, method: string) {
     if (routerPath == '/v1/app-credentials' && method == 'GET') {
         return false
     }
-    if(routerPath == '/v1/pieces' && method == 'GET') {
+    if (routerPath == '/v1/pieces' && method == 'GET') {
         return false
     }
     return true

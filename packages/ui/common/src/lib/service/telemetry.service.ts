@@ -48,7 +48,7 @@ export class TelemetryService {
       });
   }
 
-  isFeatureEnabled(feature: string): Observable<boolean> {
+  isFeatureEnabled(feature: string): Observable<boolean | undefined> {
     return this.flagService.getAllFlags().pipe(
       map((flags) => {
         if (flags[ApFlagId.ENVIRONMENT] === ApEnvironment.DEVELOPMENT) {

@@ -98,8 +98,8 @@ export const salsaSupporterSearch = createAction({
                 "count": 1
             }
         ],
-        async run(context) {
-            return await searchSupporter(context.propsValue);
+        async run({auth, propsValue}) {
+            return await searchSupporter(auth, propsValue);
         }
 });
 

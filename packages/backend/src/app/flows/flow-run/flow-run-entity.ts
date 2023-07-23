@@ -25,6 +25,10 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
         status: {
             type: String,
         },
+        tasks: {
+            nullable: true,
+            type: Number,
+        },
         startTime: {
             type: 'timestamp with time zone',
         },

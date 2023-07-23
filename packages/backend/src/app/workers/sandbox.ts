@@ -136,8 +136,8 @@ export class Sandbox {
 
             const result = {
                 timeInSeconds,
-                verdict: verdict,
-                output: output,
+                verdict,
+                output,
                 standardOutput: await fs.readFile(this.getSandboxFilePath('_standardOutput.txt'), { encoding: 'utf-8' }),
                 standardError: await fs.readFile(this.getSandboxFilePath('_standardError.txt'), { encoding: 'utf-8' }),
             }

@@ -14,15 +14,21 @@
         <app-template-apps-dropdown [formControl]="dialogForm.controls.pieces"></app-template-apps-dropdown>
     </div>
     <div class="ap-flex ap-gap-5 ap-w-[830px] ap-flex-wrap ap-overflow-y-scroll  thin-scrollbars"
-        [class.ap-items-center]="(loading$ | async) || (templates$ | async)?.length === 0"
-        [class.ap-justify-center]="(loading$ | async) || (templates$ | async)?.length === 0">
+        [class.ap-items-center]="(loading$ | async)"
+        [class.ap-justify-center]="(loading$ | async)">
         <ng-container *ngIf="(loading$ | async) === false">
+            <div (click)="closeDialog()"
+                class="ap-flex ap-items-center ap-gap-2 ap-justify-center ap-flex-col ap-border ap-border-outline ap-h-[249px] ap-w-[254px] ap-rounded ap-bg-white ap-rounded-lg ap-cursor-pointer ap-transition-colors hover:ap-border-primary hover:ap-bg-primary-light ">
+                <ng-container>
+                    <svg-icon src="assets/img/custom/add.svg" [applyClass]="true"
+                        class="ap-fill-primary ap-w-[26px] ap-h-[26px]"></svg-icon>
+                    <div class="ap-typography-subtitle-1 ap-text-primary">Start from scratch</div>
+                </ng-container>
+            </div>
+        
             <app-template-card [showBtnOnHover]="true" [template]="template" [folderId]="(data?.folderId$ | async)"
                 [insideBuilder]="data? data.insideBuilder:false" (useTemplateClicked)="useTemplate(template)"
                 *ngFor="let template of (templates$ | async)"></app-template-card>
-            <div class="ap-typography-body-1 ap-text-center" *ngIf="(templates$ | async)?.length === 0">
-                No results found. <br> Please adjust your search, filters or apps.
-            </div>
         </ng-container>
 
         <ap-loading-icon *ngIf="loading$ | async" [outlineLoader]="false" [whiteLoader]="false" height="40px"

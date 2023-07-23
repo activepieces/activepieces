@@ -28,9 +28,10 @@ import { flowRunSideEffects } from './flow-run-side-effects'
 import { logger } from '../../helper/logger'
 import { notifications } from '../../helper/notifications'
 import { flowService } from '../flow/flow.service'
-import { isNil } from '@activepieces/shared'
+import { isNil } from 'lodash'
+import { MoreThanOrEqual } from 'typeorm'
 
-const repo = databaseConnection.getRepository(FlowRunEntity)
+export const repo = databaseConnection.getRepository(FlowRunEntity)
 
 const getFlowRunOrCreate = async (params: GetOrCreateParams): Promise<Partial<FlowRun>> => {
     const { id, projectId, flowId, flowVersionId, flowDisplayName, environment } = params
@@ -76,83 +77,10 @@ export const flowRunService = {
         const { data, cursor: newCursor } = await paginator.paginate(query)
         return paginationHelper.createPage<FlowRun>(data, newCursor)
     },
-
-    async finish(
-        flowRunId: FlowRunId,
-        status: ExecutionOutputStatus,
-        logsFileId: FileId | null,
-    ): Promise<FlowRun> {
-        await repo.update(flowRunId, {
-            logsFileId,
-            status,
-            finishTime: new Date().toISOString(),
-            pauseMetadata: null,
-        })
-        const flowRun = (await this.getOne({ id: flowRunId, projectId: undefined }))!
-        notifications.notifyRun({
-            flowRun: flowRun,
-        })
-        return flowRun
-    },
-
-    async start({ projectId, flowVersionId, flowRunId, payload, environment, executionType }: StartParams): Promise<FlowRun> {
-        logger.info(`[flowRunService#start] flowRunId=${flowRunId} executionType=${executionType}`)
-
-        const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
-
-        const flow = await flowService.getOneOrThrow({
-            id: flowVersion.flowId,
-            projectId,
-        })
-
-        const flowRun = await getFlowRunOrCreate({
-            id: flowRunId,
-            projectId: flow.projectId,
-            flowId: flowVersion.flowId,
-            flowVersionId: flowVersion.id,
-            environment: environment,
-            flowDisplayName: flowVersion.displayName,
-        })
-
-        flowRun.status = ExecutionOutputStatus.RUNNING
-
-        const savedFlowRun = await repo.save(flowRun)
-
-        telemetry.trackProject(flow.projectId, {
-            name: TelemetryEventName.FLOW_RUN_CREATED,
-            payload: {
-                projectId: savedFlowRun.projectId,
-                flowId: savedFlowRun.flowId,
-                environment: savedFlowRun.environment,
-            },
-        })
-
-        await flowRunSideEffects.start({
-            flowRun: savedFlowRun,
-            payload,
-            executionType,
-        })
-
-        return savedFlowRun
-    },
-
-    async pause(params: PauseParams): Promise<void> {
-        logger.info(`[FlowRunService#pause] flowRunId=${params.flowRunId} pauseType=${params.pauseMetadata.type}`)
-
-        const { flowRunId, logFileId, pauseMetadata } = params
-
-        await repo.update(flowRunId, {
-            status: ExecutionOutputStatus.PAUSED,
-            logsFileId: logFileId,
-            pauseMetadata,
-        })
-
-        const flowRun = await repo.findOneByOrFail({ id: flowRunId })
-
-        await flowRunSideEffects.pause({ flowRun })
-    },
-
-    async resume({ flowRunId, action }: ResumeParams): Promise<void> {
+    async resume({ flowRunId, action }: {
+        flowRunId: FlowRunId
+        action: string
+    }): Promise<void> {
         logger.info(`[FlowRunService#resume] flowRunId=${flowRunId}`)
 
         const flowRunToResume = await repo.findOneBy({
@@ -179,6 +107,98 @@ export const flowRunService = {
             environment: RunEnvironment.PRODUCTION,
         })
     },
+    async finish(
+        { flowRunId, status, tasks, logsFileId }: {
+            flowRunId: FlowRunId
+            status: ExecutionOutputStatus
+            tasks: number
+            logsFileId: FileId | null
+        },
+    ): Promise<FlowRun> {
+        await repo.update(flowRunId, {
+            logsFileId,
+            status,
+            tasks,
+            finishTime: new Date().toISOString(),
+            pauseMetadata: null,
+        })
+        const flowRun = (await this.getOne({ id: flowRunId, projectId: undefined }))!
+        notifications.notifyRun({
+            flowRun,
+        })
+        return flowRun
+    },
+
+    async start({ projectId, flowVersionId, flowRunId, payload, environment, executionType }: StartParams): Promise<FlowRun> {
+        logger.info(`[flowRunService#start] flowRunId=${flowRunId} executionType=${executionType}`)
+
+        const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
+
+        const flow = await flowService.getOneOrThrow({
+            id: flowVersion.flowId,
+            projectId,
+        })
+
+        const flowRun = await getFlowRunOrCreate({
+            id: flowRunId,
+            projectId: flow.projectId,
+            flowId: flowVersion.flowId,
+            flowVersionId: flowVersion.id,
+            environment,
+            flowDisplayName: flowVersion.displayName,
+        })
+
+        flowRun.status = ExecutionOutputStatus.RUNNING
+
+        const savedFlowRun = await repo.save(flowRun)
+
+        telemetry.trackProject(flow.projectId, {
+            name: TelemetryEventName.FLOW_RUN_CREATED,
+            payload: {
+                projectId: savedFlowRun.projectId,
+                flowId: savedFlowRun.flowId,
+                environment: savedFlowRun.environment,
+            },
+        })
+
+        await flowRunSideEffects.start({
+            flowRun: savedFlowRun,
+            payload,
+            executionType,
+        })
+
+        return savedFlowRun
+    },
+
+    async test({ projectId, flowVersionId }: TestParams): Promise<FlowRun> {
+        const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
+
+        const payload = flowVersion.trigger.settings.inputUiInfo.currentSelectedData
+
+        return this.start({
+            projectId,
+            flowVersionId,
+            payload,
+            environment: RunEnvironment.TESTING,
+            executionType: ExecutionType.BEGIN,
+        })
+    },
+
+    async pause(params: PauseParams): Promise<void> {
+        logger.info(`[FlowRunService#pause] flowRunId=${params.flowRunId} pauseType=${params.pauseMetadata.type}`)
+
+        const { flowRunId, logFileId, pauseMetadata } = params
+
+        await repo.update(flowRunId, {
+            status: ExecutionOutputStatus.PAUSED,
+            logsFileId: logFileId,
+            pauseMetadata,
+        })
+
+        const flowRun = await repo.findOneByOrFail({ id: flowRunId })
+
+        await flowRunSideEffects.pause({ flowRun })
+    },
 
     async getOne({ projectId, id }: GetOneParams): Promise<FlowRun | null> {
         return await repo.findOneBy({
@@ -200,6 +220,18 @@ export const flowRunService = {
         }
 
         return flowRun
+    },
+
+    async getAllProdRuns(params: GetAllProdRuns): Promise<FlowRun[]> {
+        const { projectId, finishTime } = params
+
+        const query = {
+            projectId,
+            environment: RunEnvironment.PRODUCTION,
+            finishTime: MoreThanOrEqual(finishTime),
+        }
+
+        return await repo.findBy(query)
     },
 }
 
@@ -234,13 +266,18 @@ type StartParams = {
     executionType: ExecutionType
 }
 
+type TestParams = {
+    projectId: ProjectId
+    flowVersionId: FlowVersionId
+}
+
 type PauseParams = {
     flowRunId: FlowRunId
     logFileId: FileId
     pauseMetadata: PauseMetadata
 }
 
-type ResumeParams = {
-    flowRunId: FlowRunId
-    action: string
+type GetAllProdRuns = {
+    projectId: ProjectId
+    finishTime: string
 }

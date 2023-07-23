@@ -17,6 +17,8 @@ import {
   FlowVersion,
   ExecuteCodeOperation,
   ExecuteExtractPieceMetadata,
+  ExecuteValidateAuthOperation,
+  extractPieceFromModule
 } from '@activepieces/shared';
 import { pieceHelper } from './lib/helper/action-helper';
 import { triggerHelper } from './lib/helper/trigger-helper';
@@ -61,7 +63,11 @@ const extractInformation = async (): Promise<void> => {
 
 
     const pieceModule = await import(input.pieceName);
-    const piece = Object.values<Piece>(pieceModule)[0];
+    const piece = extractPieceFromModule<Piece>({
+      module: pieceModule,
+      pieceName: input.pieceName,
+      pieceVersion: input.pieceVersion
+    })
 
     writeOutput({
       status: EngineResponseStatus.OK,
@@ -83,6 +89,7 @@ const executeFlow = async (): Promise<void> => {
     globals.workerToken = input.workerToken!;
     globals.projectId = input.projectId;
     globals.apiUrl = input.apiUrl!;
+    globals.serverUrl = input.serverUrl!;
     globals.flowRunId = input.flowRunId;
 
     if (input.executionType === ExecutionType.RESUME) {
@@ -157,7 +164,7 @@ const executeCode = async (): Promise<void> => {
 
     globals.projectId = operationInput.projectId;
 
-  const output = await pieceHelper.executeCode(operationInput);
+    const output = await pieceHelper.executeCode(operationInput);
     writeOutput({
       status: EngineResponseStatus.OK,
       response: output
@@ -179,8 +186,33 @@ const executeAction = async (): Promise<void> => {
     globals.workerToken = input.workerToken!;
     globals.projectId = input.projectId;
     globals.apiUrl = input.apiUrl!;
+    globals.serverUrl = input.serverUrl;
 
-  const output = await pieceHelper.executeAction(input);
+    const output = await pieceHelper.executeAction(input);
+    writeOutput({
+      status: EngineResponseStatus.OK,
+      response: output
+    })
+  }
+  catch (e) {
+    console.error(e);
+    writeOutput({
+      status: EngineResponseStatus.ERROR,
+      response: Utils.tryParseJson((e as Error).message)
+    })
+  }
+}
+
+const executeValidateAuth = async (): Promise<void> => {
+  try {
+    const input: ExecuteValidateAuthOperation = Utils.parseJsonFile(globals.inputFile);
+
+    globals.workerToken = input.workerToken!;
+    globals.projectId = input.projectId;
+    globals.apiUrl = input.apiUrl!;
+
+    const output = await pieceHelper.executeValidateAuth(input);
+
     writeOutput({
       status: EngineResponseStatus.OK,
       response: output
@@ -220,6 +252,9 @@ async function execute() {
       break;
     case EngineOperationType.EXECUTE_CODE:
       executeCode();
+      break;
+    case EngineOperationType.EXECUTE_VALIDATE_AUTH:
+      executeValidateAuth();
       break;
     default:
       console.error('unknown operation');

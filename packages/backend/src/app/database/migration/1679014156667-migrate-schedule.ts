@@ -9,11 +9,11 @@ export class migrateSchedule1679014156667 implements MigrationInterface {
 
         let count = 0
         const flowVersionRepo = queryRunner.connection.getRepository(FLOW_VERSION_TABLE)
-        const flowVersions = await flowVersionRepo.find()
+        const flowVersions = await queryRunner.query('SELECT * FROM flow_version')
 
         for (const flowVersion of flowVersions) {
             const step = flowVersion.trigger
-            if(step.type === 'SCHEDULE') {
+            if (step.type === 'SCHEDULE') {
                 step.type = 'PIECE_TRIGGER'
                 step.settings = {
                     input: {
@@ -36,12 +36,12 @@ export class migrateSchedule1679014156667 implements MigrationInterface {
 
         let count = 0
         const flowVersionRepo = queryRunner.connection.getRepository(FLOW_VERSION_TABLE)
-        const flowVersions = await flowVersionRepo.find()
+        const flowVersions = await queryRunner.query('SELECT * FROM flow_version')
 
         for (const flowVersion of flowVersions) {
             const step = flowVersion.trigger
-            if(step.type === 'PIECE_TRIGGER') {
-                if(step.settings.pieceName === 'schedule'){
+            if (step.type === 'PIECE_TRIGGER') {
+                if (step.settings.pieceName === 'schedule') {
                     step.type = 'SCHEDULE'
                     step.settings = {
                         cronExpression: step.settings.input.cronExpression,

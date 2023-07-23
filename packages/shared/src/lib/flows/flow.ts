@@ -10,7 +10,7 @@ export type FlowId = ApId;
 export const Flow = Type.Object({
     ...BaseModelSchema,
     projectId: Type.String(),
-    folderId: Type.Optional(Type.String()),
+    folderId: Type.Union([Type.String(),Type.Null()]),
     version: FlowVersion,
     // TODO revisit this area as these filled from Instance during listing.
     status: Type.Enum(FlowInstanceStatus),

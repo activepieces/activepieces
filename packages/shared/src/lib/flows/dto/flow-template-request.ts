@@ -3,7 +3,7 @@ import { FlowVersion } from "../flow-version";
 
 export const FlowVersionTemplate = Type.Omit(
     FlowVersion,
-    ["id", "created", "updated", "flowId", "state"]
+    ["id", "created", "updated", "flowId", "state", "updatedBy"]
 );
 
 export type FlowVersionTemplate = Static<typeof FlowVersionTemplate>;

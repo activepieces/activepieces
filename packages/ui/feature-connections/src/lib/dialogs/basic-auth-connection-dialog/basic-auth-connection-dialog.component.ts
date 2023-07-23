@@ -2,6 +2,7 @@ import {
   AppConnection,
   AppConnectionType,
   BasicAuthConnection,
+  ErrorCode,
   UpsertBasicAuthRequest,
 } from '@activepieces/shared';
 import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
@@ -12,7 +13,6 @@ import {
   Validators,
 } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { Store } from '@ngrx/store';
 import { catchError, Observable, of, take, tap } from 'rxjs';
 import { AppConnectionsService } from '../../services/app-connections.service';
@@ -49,7 +49,6 @@ export class BasicAuthConnectionDialogComponent {
     private formBuilder: FormBuilder,
     private store: Store,
     private appConnectionsService: AppConnectionsService,
-    private snackbar: MatSnackBar,
     private dialogRef: MatDialogRef<BasicAuthConnectionDialogComponent>,
     @Inject(MAT_DIALOG_DATA)
     public readonly dialogData: BasicAuthDialogData
@@ -111,16 +110,14 @@ export class BasicAuthConnectionDialogComponent {
         },
       };
       this.upsert$ = this.appConnectionsService.upsert(upsertRequest).pipe(
-        catchError((err) => {
-          console.error(err);
-          this.snackbar.open(
-            'Connection operation failed please check your console.',
-            'Close',
-            {
-              panelClass: 'error',
-              duration: 5000,
-            }
-          );
+        catchError((response) => {
+          console.error(response);
+          this.settingsForm.setErrors({
+            message:
+              response.error.code === ErrorCode.INVALID_APP_CONNECTION
+                ? `Connection failed: ${response.error.params.error}`
+                : 'Internal Connection error, failed please check your console.',
+          });
           return of(null);
         }),
         tap((connection) => {
