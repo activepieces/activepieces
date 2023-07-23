@@ -10,8 +10,8 @@ export const bloomerangUpsertContactsDuplicates = createAction({
     displayName: 'Upsert Contact (Duplicates)',
     props: {
         first_name: Property.ShortText({
-            displayName: "Firs name",
-            description: "Firs name",
+            displayName: "First name",
+            description: "First name",
             required: false
         }),
         last_name: Property.ShortText({
