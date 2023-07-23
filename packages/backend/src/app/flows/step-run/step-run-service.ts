@@ -16,6 +16,7 @@ import { flowVersionService } from '../flow-version/flow-version.service'
 import { fileService } from '../../file/file.service'
 import { codeBuilder } from '../../workers/code-worker/code-builder'
 import { isNil } from '@activepieces/shared'
+import { getServerUrl } from '../../helper/public-ip-utils'
 
 type CreateParams = {
     projectId: ProjectId
@@ -67,6 +68,7 @@ async function executePiece({ step, projectId, flowVersion }: ExecutePieceParams
     }
 
     const operation: ExecuteActionOperation = {
+        serverUrl: await getServerUrl(),
         pieceName,
         pieceVersion,
         actionName,

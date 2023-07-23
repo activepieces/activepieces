@@ -89,6 +89,7 @@ const executeFlow = async (): Promise<void> => {
     globals.workerToken = input.workerToken!;
     globals.projectId = input.projectId;
     globals.apiUrl = input.apiUrl!;
+    globals.serverUrl = input.serverUrl!;
     globals.flowRunId = input.flowRunId;
 
     if (input.executionType === ExecutionType.RESUME) {
@@ -185,6 +186,7 @@ const executeAction = async (): Promise<void> => {
     globals.workerToken = input.workerToken!;
     globals.projectId = input.projectId;
     globals.apiUrl = input.apiUrl!;
+    globals.serverUrl = input.serverUrl;
 
     const output = await pieceHelper.executeAction(input);
     writeOutput({
