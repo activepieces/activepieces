@@ -170,6 +170,7 @@ We welcome contributions big or small and in different directions. The best way 
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/phestvik"><img src="https://avatars.githubusercontent.com/u/88210985?v=4?s=100" width="100px;" alt="phestvik"/><br /><sub><b>phestvik</b></sub></a><br /><a href="#ideas-phestvik" title="Ideas, Planning, & Feedback">🤔</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://website-portfolio-bucket.s3-website-ap-northeast-1.amazonaws.com/"><img src="https://avatars.githubusercontent.com/u/113296626?v=4?s=100" width="100px;" alt="Rajdeep Pal"/><br /><sub><b>Rajdeep Pal</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=Rajdeep1311" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
