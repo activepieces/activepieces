@@ -6,7 +6,6 @@ import { FlowId, FlowTemplate } from '@activepieces/shared';
 @Injectable({ providedIn: 'root' })
 export class CollectionBuilderService {
   lastSuccessfulSaveDate = '';
-  refreshCodeMirror$ = new Subject<void>();
   importTemplate$: Subject<{ template: FlowTemplate; flowId: FlowId }> =
     new Subject();
   componentToShowInsidePortal$ = new ReplaySubject<

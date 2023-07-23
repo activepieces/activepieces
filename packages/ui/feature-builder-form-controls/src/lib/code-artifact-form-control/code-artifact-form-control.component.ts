@@ -12,7 +12,6 @@ import { CodeArtifactControlFullscreenComponent } from './code-artifact-control-
 import { MatTooltip } from '@angular/material/tooltip';
 import { Artifact } from '@activepieces/ui/common';
 import { CodemirrorComponent } from '@ctrl/ngx-codemirror';
-import { CollectionBuilderService } from '@activepieces/ui/feature-builder-store';
 
 export interface CodeArtifactForm {
   content: FormControl<string>;
@@ -40,7 +39,6 @@ export class CodeArtifactFormControlComponent
       package: string;
     }>
   >;
-  refreshCodeMirror$: Observable<void>;
   @ViewChild('codeMirror') codeMirror: CodemirrorComponent;
   @ViewChild('tooltip') tooltip: MatTooltip;
   hideDelayForFullscreenTooltip = 2000;
@@ -54,20 +52,12 @@ export class CodeArtifactFormControlComponent
   };
   constructor(
     private formBuilder: FormBuilder,
-    private dialogService: MatDialog,
-    private builderService: CollectionBuilderService
+    private dialogService: MatDialog
   ) {
     this.codeArtifactForm = this.formBuilder.group({
       content: new FormControl('', { nonNullable: true }),
       package: new FormControl('', { nonNullable: true }),
     });
-    this.refreshCodeMirror$ = this.builderService.refreshCodeMirror$
-      .asObservable()
-      .pipe(
-        tap(() => {
-          this.codeMirror.codeMirror?.refresh();
-        })
-      );
   }
   ngOnInit(): void {
     this.setupValueListener();
