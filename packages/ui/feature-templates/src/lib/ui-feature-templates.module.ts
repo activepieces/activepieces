@@ -6,18 +6,14 @@ import { TemplateAppsDropdownComponent } from './templates-dialog/template-apps-
 import { TemplateAppTagContainerComponent } from './templates-dialog/template-apps-dropdown/template-app-tag-container/template-app-tag-container.component';
 import { TemplateCardComponent } from './template-card/template-card.component';
 import { UiCommonModule } from '@activepieces/ui/common';
-import { TemplatesContainerComponent } from './templates-container/templates-container.component';
 import { TemplateBlogNotificationComponent } from './template-blog-notification/template-blog-notification.component';
-import { NewFlowCardComponent } from './new-flow-card/new-flow-card.component';
 const exportedDeclarations = [
   TemplatesDialogComponent,
   TemplatesFiltersComponent,
   TemplateAppsDropdownComponent,
   TemplateAppTagContainerComponent,
   TemplateCardComponent,
-  TemplatesContainerComponent,
   TemplateBlogNotificationComponent,
-  NewFlowCardComponent,
 ];
 @NgModule({
   imports: [CommonModule, UiCommonModule],
