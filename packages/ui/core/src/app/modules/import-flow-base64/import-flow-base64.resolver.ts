@@ -7,7 +7,7 @@ import { FlowOperationType, FlowTemplate } from '@activepieces/shared';
 @Injectable({
   providedIn: 'root',
 })
-export class ImportCombinationResolver {
+export class ImportFlowBase64Resolver {
   resolve(snapshot: ActivatedRouteSnapshot): Observable<unknown> {
     const combinationB64 = snapshot.queryParamMap.get('flow');
     if (!combinationB64) {

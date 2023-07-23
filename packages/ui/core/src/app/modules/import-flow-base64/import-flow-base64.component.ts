@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 @Component({
-  templateUrl: './import-combination.component.html',
+  template: '',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ImportCombinationComponent {}
+export class ImportFlowBase64Component {}
