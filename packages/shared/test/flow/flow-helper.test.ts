@@ -5,6 +5,7 @@ const flowVersionWithBranching: FlowVersion = {
     'created': '2023-05-24T00:16:41.353Z',
     'updated': '2023-05-24T00:16:41.353Z',
     'flowId': 'lod6JEdKyPlvrnErdnrGa',
+    'updatedBy': '',
     'displayName': 'Standup Reminder',
     'trigger': {
         'name': 'trigger',
@@ -113,6 +114,7 @@ const emptyScheduleFlowVersion: FlowVersion = {
     'updated': '2023-05-24T00:16:41.353Z',
     'flowId': 'lod6JEdKyPlvrnErdnrGa',
     'displayName': 'Standup Reminder',
+    'updatedBy': '',
     'trigger': {
         'name': 'trigger',
         'type': TriggerType.PIECE,
@@ -157,6 +159,7 @@ describe('Flow Helper', () => {
         const result = flowHelper.apply(flowVersionWithBranching, operation);
         const expectedFlowVersion: FlowVersion = {
             "id": "pj0KQ7Aypoa9OQGHzmKDl",
+            'updatedBy': '',
             "created": "2023-05-24T00:16:41.353Z",
             "updated": "2023-05-24T00:16:41.353Z",
             "flowId": "lod6JEdKyPlvrnErdnrGa",
@@ -512,6 +515,7 @@ test('Duplicate Flow With Branch', () => {
         'created':'2023-05-24T00:16:41.353Z',
         'updated':'2023-05-24T00:16:41.353Z',
         'flowId':'lod6JEdKyPlvrnErdnrGa',
+        'updatedBy': '',
         'displayName':'Standup Reminder',
         'trigger':{
             'name':'trigger',
@@ -702,6 +706,7 @@ test('Duplicate Flow With Loops using Import', () => {
         'created': '2023-05-23T00:14:47.809Z',
         'updated': '2023-05-23T00:14:47.809Z',
         'flowId': 'YGPIPQDfLcPdJ0aJ9AKGb',
+        'updatedBy': '',
         'displayName': 'Flow 1',
         'trigger': {
             'name': 'trigger',

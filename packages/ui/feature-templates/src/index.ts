@@ -1,6 +1,4 @@
-export * from './lib/new-flow-card/new-flow-card.component';
 export * from './lib/template-card/template-card.component';
-export * from './lib/templates-container/templates-container.component';
 export * from './lib/templates-dialog/template-apps-dropdown/template-app-tag-container/template-app-tag-container.component';
 export * from './lib/templates-dialog/template-apps-dropdown/template-apps-dropdown.component';
 export * from './lib/templates-dialog/templates-filters/templates-filters.component';

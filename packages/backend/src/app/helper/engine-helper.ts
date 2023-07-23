@@ -233,7 +233,7 @@ export const engineHelper = {
         const input = {
             ...operation,
             flowVersion: lockedFlowVersion,
-            edition: await getEdition(),
+            edition: getEdition(),
             appWebhookUrl: await appEventRoutingService.getAppWebhookUrl({ appName: pieceName }),
             webhookSecret: await getWebhookSecret(operation.flowVersion),
             workerToken: await generateWorkerToken({ projectId: operation.projectId }),

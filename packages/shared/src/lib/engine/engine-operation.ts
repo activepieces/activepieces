@@ -42,6 +42,7 @@ export type ExecuteActionOperation = BaseEngineOperation & {
     flowVersion: FlowVersion
     pieceName: string
     pieceVersion: string
+    serverUrl: string,
     input: Record<string, unknown>
 }
 
@@ -75,6 +76,7 @@ type BaseExecuteFlowOperation<T extends ExecutionType> = BaseEngineOperation & {
     flowVersionId: FlowVersionId;
     flowRunId: FlowRunId;
     triggerPayload: unknown;
+    serverUrl: string;
     executionType: T;
 }
 

@@ -68,7 +68,6 @@ export class AppConnectionService {
             name: request.name,
             projectId,
         })
-
         return decryptConnection(updatedConnection)
     }
 
@@ -185,18 +184,18 @@ const validateConnectionValue = async (
 
     switch (connection.value.type) {
         case AppConnectionType.CLOUD_OAUTH2:
-            return await claimWithCloud({
+            return claimWithCloud({
                 pieceName: connection.appName,
                 code: connection.value.code,
                 clientId: connection.value.client_id,
                 tokenUrl: connection.value.token_url!,
-                edition: await getEdition(),
+                edition: getEdition(),
                 authorizationMethod: connection.value.authorization_method!,
                 codeVerifier: connection.value.code_challenge!,
             })
 
         case AppConnectionType.OAUTH2:
-            return await claim({
+            return claim({
                 clientSecret: connection.value.client_secret,
                 clientId: connection.value.client_id,
                 tokenUrl: connection.value.token_url,
@@ -228,30 +227,35 @@ function decryptConnection(
         case AppConnectionType.BASIC_AUTH:
             connection = {
                 ...encryptedConnection,
+                status: AppConnectionStatus.ACTIVE,
                 value,
             }
             break
         case AppConnectionType.CLOUD_OAUTH2:
             connection = {
                 ...encryptedConnection,
+                status: AppConnectionStatus.ACTIVE,
                 value,
             }
             break
         case AppConnectionType.CUSTOM_AUTH:
             connection = {
                 ...encryptedConnection,
+                status: AppConnectionStatus.ACTIVE,
                 value,
             }
             break
         case AppConnectionType.OAUTH2:
             connection = {
                 ...encryptedConnection,
+                status: AppConnectionStatus.ACTIVE,
                 value,
             }
             break
         case AppConnectionType.SECRET_TEXT:
             connection = {
                 ...encryptedConnection,
+                status: AppConnectionStatus.ACTIVE,
                 value,
             }
             break
@@ -330,8 +334,12 @@ async function lockAndRefreshConnection({
             return appConnection
         }
         const refreshedAppConnection = await refresh(appConnection)
+
         await repo.update(refreshedAppConnection.id, {
-            ...refreshedAppConnection,
+            id: refreshedAppConnection.id,
+            name: refreshedAppConnection.name,
+            appName: refreshedAppConnection.appName,
+            projectId: refreshedAppConnection.projectId,
             value: encryptObject(refreshedAppConnection.value),
         })
         refreshedAppConnection.status = getStatus(refreshedAppConnection)
@@ -403,7 +411,7 @@ async function refreshCloud(
         refreshToken: connectionValue.refresh_token,
         pieceName: appName,
         clientId: connectionValue.client_id,
-        edition: await getEdition(),
+        edition: getEdition(),
         authorizationMethod: connectionValue.authorization_method,
         tokenUrl: connectionValue.token_url,
     }

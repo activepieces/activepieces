@@ -231,9 +231,9 @@ export const pieceHelper = {
                     }
                 }
             },
+            serverUrl: globals.serverUrl!,
             run: {
                 id: 'test-flow-run-id',
-                webhookBaseUrl: 'test-webhook-base-url',
                 stop: () => console.info('stopHook called!'),
                 pause: () => console.info('pauseHook called!'),
             }

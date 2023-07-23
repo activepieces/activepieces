@@ -1,5 +1,5 @@
 
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework';
 import { newRecord } from './lib/trigger/new-record';
 import { newOrUpdatedRecord } from './lib/trigger/new-updated-record';
 import { upsertByExternalId } from './lib/action/upsert-by-external-id';
@@ -8,11 +8,31 @@ import { createNewObject } from './lib/action/create-new-object';
 import { UpdateObjectById } from './lib/action/update-object-by-id';
 
 export const salesforceAuth = PieceAuth.OAuth2({
+  props: {
+    environment: Property.StaticDropdown({
+        displayName: 'Environment',
+        description: 'Choose environment',
+        required: true,
+        options: {
+          options: [
+            {
+              label: 'Production',
+              value: 'login'
+            },
+            {
+              label: 'Devleopment',
+              value: 'test'
+            }
+          ]
+        },
+        defaultValue: 'login'
+    })
+},
   displayName: "Authentication",
   required: true,
   description: "Authenticate with Salesforce Production",
-  authUrl: "https://login.salesforce.com/services/oauth2/authorize",
-  tokenUrl: "https://login.salesforce.com/services/oauth2/token",
+  authUrl: "https://{environment}.salesforce.com/services/oauth2/authorize",
+  tokenUrl: "https://{environment}.salesforce.com/services/oauth2/token",
   scope: ["refresh_token+full"],
 })
 
