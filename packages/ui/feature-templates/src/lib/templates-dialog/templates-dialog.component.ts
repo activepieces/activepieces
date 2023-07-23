@@ -77,4 +77,7 @@ export class TemplatesDialogComponent {
   useTemplate(template: FlowTemplate) {
     this.dialogRef.close(template);
   }
+  closeDialog() {
+    this.dialogRef.close();
+  }
 }
