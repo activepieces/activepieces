@@ -40,10 +40,6 @@ export const webhookService = {
                 payload)
             return null
         }
-        if (flowInstance.status !== FlowInstanceStatus.ENABLED) {
-            logger.info(`[WebhookService#handshake] flowInstance not found or not enabled ignoring the webhook handshake, flowId=${flow.id}`)
-            return null
-        }
         const flowVersion = await flowVersionService.getOneOrThrow(flowInstance.flowVersionId)
         const response = await triggerUtils.tryHandshake({
             projectId,
