@@ -3,7 +3,7 @@ import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import { EMPTY, Observable, catchError, switchMap, tap } from 'rxjs';
 import { FlowService } from '@activepieces/ui/common';
 import { FlowOperationType, FlowTemplate } from '@activepieces/shared';
-
+import { Buffer } from 'buffer';
 @Injectable({
   providedIn: 'root',
 })
@@ -15,9 +15,8 @@ export class ImportFlowBase64Resolver {
       return EMPTY;
     }
     try {
-      const combinationJson: FlowTemplate = JSON.parse(
-        window.atob(combinationB64)
-      );
+      const decodedFlow = Buffer.from(combinationB64, 'base64').toString();
+      const combinationJson: FlowTemplate = JSON.parse(decodedFlow);
       return this.flowService
         .create({
           displayName: combinationJson.name,
