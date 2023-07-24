@@ -31,7 +31,6 @@ export const apiTableUpdateRecord = createAction({
         "message": "SUCCESS"
     },
     props: {
-        apiTableUrl: APITableCommon.apiTableUrl,
         datasheet: APITableCommon.datasheet,
         recordId: Property.ShortText({
             displayName: 'Record ID',
@@ -44,7 +43,7 @@ export const apiTableUpdateRecord = createAction({
         const auth = context.auth;
         const datasheet = context.propsValue.datasheet;
         const recordId = context.propsValue.recordId;
-        const apiTableUrl = context.propsValue.apiTableUrl;
+        const apiTableUrl = auth.apiTableUrl;
         const dynamicFields: DynamicPropsValue = context.propsValue.fields;
         const fields: {
             [n: string]: string
@@ -61,7 +60,7 @@ export const apiTableUpdateRecord = createAction({
             method: HttpMethod.PATCH,
             url: `${apiTableUrl}/fusion/v1/datasheets/${datasheet}/records`,
             headers: {
-                "Authorization": "Bearer " + auth,
+                "Authorization": "Bearer " + auth.token,
                 "Content-Type": "application/json",
             },
             body: {

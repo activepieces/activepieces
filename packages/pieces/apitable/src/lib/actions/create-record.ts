@@ -31,7 +31,6 @@ export const apiTableCreateRecord = createAction({
         "message": "SUCCESS"
     },
     props: {
-        apiTableUrl: APITableCommon.apiTableUrl,
         datasheet: APITableCommon.datasheet,
         fields: APITableCommon.fields,
     },
@@ -39,7 +38,7 @@ export const apiTableCreateRecord = createAction({
         const auth = context.auth;
         const datasheet = context.propsValue.datasheet;
         const dynamicFields: DynamicPropsValue = context.propsValue.fields;
-        const apiTableUrl = context.propsValue.apiTableUrl;
+        const apiTableUrl = auth.apiTableUrl;
         const fields: {
             [n: string]: string
         } = {};
@@ -55,7 +54,7 @@ export const apiTableCreateRecord = createAction({
             method: HttpMethod.POST,
             url: `${apiTableUrl}/fusion/v1/datasheets/${datasheet}/records`,
             headers: {
-                "Authorization": "Bearer " + auth,
+                "Authorization": "Bearer " + auth.token,
                 "Content-Type": "application/json",
             },
             body: {

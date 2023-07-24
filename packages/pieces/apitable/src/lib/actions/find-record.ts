@@ -16,7 +16,6 @@ export const apiTableFindRecord = createAction({
         }
     },
     props: {
-        apiTableUrl: APITableCommon.apiTableUrl,
         datasheet: APITableCommon.datasheet,
         recordIds: Property.Array({
             displayName: 'Record IDs',
@@ -52,7 +51,7 @@ export const apiTableFindRecord = createAction({
         const maxRecords = context.propsValue.maxRecords;
         const pageSize = context.propsValue.pageSize ?? 100;
         const pageNum = context.propsValue.pageNum ?? 1;
-        const apiTableUrl = context.propsValue.apiTableUrl;
+        const apiTableUrl = auth.apiTableUrl;
 
         let query = `?pageSize=${pageSize}&pageNum=${pageNum}`;
         if (recordIds) query += `&recordIds=${recordIds.join(',')}`;
@@ -63,7 +62,7 @@ export const apiTableFindRecord = createAction({
             method: HttpMethod.GET,
             url: `${apiTableUrl}/fusion/v1/datasheets/${datasheet}/records${query}`,
             headers: {
-                "Authorization": "Bearer " + auth,
+                "Authorization": "Bearer " + auth.token,
                 "Content-Type": "application/json",
             },
         };
