@@ -1,7 +1,6 @@
-import { Lock } from 'redlock'
 import { isNil } from '@activepieces/shared'
 import { ActivepiecesError, apId, ErrorCode, FlowId, ProjectId, WebhookSimulation } from '@activepieces/shared'
-import { acquireLock } from '../../database/redis-connection'
+import { acquireLock, NormalLock } from '../../helper/lock'
 import { databaseConnection } from '../../database/database-connection'
 import { WebhookSimulationEntity } from './webhook-simulation-entity'
 import { webhookSideEffects } from './webhook-simulation-side-effects'
@@ -13,7 +12,7 @@ type BaseParams = {
 }
 
 type DeleteParams = BaseParams & {
-    parentLock?: Lock
+    parentLock?: NormalLock
 }
 
 type GetParams = BaseParams
@@ -23,7 +22,7 @@ type AcquireLockParams = {
     flowId: FlowId
 }
 
-const createLock = async ({ flowId }: AcquireLockParams): Promise<Lock> => {
+const createLock = async ({ flowId }: AcquireLockParams): Promise<NormalLock> => {
     const key = `${flowId}-webhook-simulation`
     return await acquireLock({ key, timeout: 5000 })
 }
