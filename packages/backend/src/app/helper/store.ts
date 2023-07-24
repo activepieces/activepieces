@@ -2,6 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import os from 'os'
 
+// TODO FIX make sure this works in multiple instances
 export const localStore = {
     async save(key: string, value: string): Promise<void> {
         const settingsFilePath = path.join(localStore.getStorePath(), 'settings.json')

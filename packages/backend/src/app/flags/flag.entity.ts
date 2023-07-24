@@ -1,5 +1,5 @@
 import { EntitySchema } from 'typeorm'
-import { BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../helper/base-entity'
+import { BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../helper/database-common'
 import { Flag } from '@activepieces/shared'
 
 type FlagSchema = Flag

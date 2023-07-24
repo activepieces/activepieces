@@ -1,7 +1,7 @@
 import { EntitySchema } from 'typeorm'
 import { PieceMetadata } from '@activepieces/pieces-framework'
 import { ApId, BaseModel, Project } from '@activepieces/shared'
-import { BaseColumnSchemaPart, COLLATION, JSONB_COLUMN_TYPE } from '../helper/base-entity'
+import { BaseColumnSchemaPart, COLLATION, JSONB_COLUMN_TYPE } from '../helper/database-common'
 
 export type PieceMetadataSchema = BaseModel<ApId> & PieceMetadata & { projectId: ApId, project: Project }
 

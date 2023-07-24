@@ -1,6 +1,6 @@
 import { EntitySchema } from 'typeorm'
 import { Flow, Project, TriggerEvent } from '@activepieces/shared'
-import { ApIdSchema, BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../../helper/base-entity'
+import { ApIdSchema, BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../../helper/database-common'
 
 type TriggerEventSchema = {
     flow: Flow

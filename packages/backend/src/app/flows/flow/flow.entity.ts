@@ -1,6 +1,6 @@
 import { EntitySchema } from 'typeorm'
 import { Flow, Folder, FlowRun, FlowVersion, Project, TriggerEvent } from '@activepieces/shared'
-import { ApIdSchema, BaseColumnSchemaPart } from '../../helper/base-entity'
+import { ApIdSchema, BaseColumnSchemaPart } from '../../helper/database-common'
 
 export type FlowSchema = {
     versions: FlowVersion[]
