@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from '../../helper/logger'
+import { logger } from '../../../helper/logger'
 
 export class AddProjectIdToPieceMetadata1686090319016 implements MigrationInterface {
     name = 'AddProjectIdToPieceMetadata1686090319016'

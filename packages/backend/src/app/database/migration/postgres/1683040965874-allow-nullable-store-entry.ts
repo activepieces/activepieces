@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from '../../helper/logger'
+import { logger } from '../../../helper/logger'
 export class AllowNullableStoreEntryAndTrigger1683040965874 implements MigrationInterface {
     name = 'AllowNullableStoreEntryAndTrigger1683040965874'
 

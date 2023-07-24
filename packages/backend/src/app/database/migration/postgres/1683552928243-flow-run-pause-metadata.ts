@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from '../../helper/logger'
+import { logger } from '../../../helper/logger'
 
 export class FlowRunPauseMetadata1683552928243 implements MigrationInterface {
     name = 'FlowRunPauseMetadata1683552928243'

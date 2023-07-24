@@ -1,6 +1,6 @@
 import { EntitySchema } from 'typeorm'
 import { AppConnection, Flow, Folder, Project, TriggerEvent, User } from '@activepieces/shared'
-import { ApIdSchema, BaseColumnSchemaPart } from '../helper/base-entity'
+import { ApIdSchema, BaseColumnSchemaPart } from '../helper/database-common'
 
 type ProjectSchema = {
     owner: User

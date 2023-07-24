@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from '../../helper/logger'
+import { logger } from '../../../helper/logger'
 
 const FLOW_VERSION_TABLE = 'flow_version'
 export class migrateSchedule1679014156667 implements MigrationInterface {

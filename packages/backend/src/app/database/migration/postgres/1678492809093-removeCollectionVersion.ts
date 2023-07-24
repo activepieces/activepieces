@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from '../../helper/logger'
+import { logger } from '../../../helper/logger'
 
 export class removeCollectionVersion1678492809093 implements MigrationInterface {
     name = 'removeCollectionVersion1678492809093'
