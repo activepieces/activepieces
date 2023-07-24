@@ -15,9 +15,9 @@ export const APITableCommon = {
         props: async ({ auth, datasheet }) => {
             const request: HttpRequest = {
                 method: HttpMethod.GET,
-                url: `https://api.apitable.com/fusion/v1/datasheets/${datasheet}/fields`,
+                url: `${auth["apiTableUrl"].replace(/\/$/, "")}/fusion/v1/datasheets/${datasheet}/fields`,
                 headers: {
-                    "Authorization": "Bearer " + auth,
+                    "Authorization": "Bearer " + auth["token"],
                 }
             };
 

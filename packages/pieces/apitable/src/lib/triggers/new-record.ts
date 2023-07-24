@@ -1,10 +1,10 @@
 import { APITableAuth } from "../..";
-import { Property, StaticPropsValue, Store, StoreScope, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
+import { PiecePropValueSchema, Property, StaticPropsValue, Store, StoreScope, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { APITableCommon } from "../common";
 import { HttpRequest, HttpMethod, httpClient } from "@activepieces/pieces-common";
 
-const polling: Polling<string, { datasheet: string }> = {
+const polling: Polling<PiecePropValueSchema<typeof APITableAuth>, { datasheet: string }> = {
     strategy: DedupeStrategy.TIMEBASED,
     items: async ({store, auth, propsValue: { datasheet } }) => {
         const LastTime: number = await store.get('LastTime', StoreScope.FLOW) || 0;
@@ -12,9 +12,9 @@ const polling: Polling<string, { datasheet: string }> = {
 
         const request: HttpRequest = {
             method: HttpMethod.GET,
-            url: `https://api.apitable.com/fusion/v1/datasheets/${datasheet}/records`,
+            url: `${auth.apiTableUrl.replace(/\/$/, "")}/fusion/v1/datasheets/${datasheet}/records`,
             headers: {
-                "Authorization": "Bearer " + auth,
+                "Authorization": "Bearer " + auth.token,
             }
         };
 
