@@ -47,24 +47,6 @@ const initializeLock = () => {
     }
 }
 
-type ApLock = {
-    release(): Promise<unknown>
-}
-
-type AcquireLockParams = {
-    key: string
-    timeout?: number
-}
-
-
-export const acquireLock = async ({ key, timeout = 3000 }: AcquireLockParams): Promise<ApLock> => {
-    switch (queueMode) {
-        case QueueMode.REDIS:
-            return acquireRedisLock(key, timeout)
-        case QueueMode.MEMORY:
-            return acquireMemoryLock(key)
-    }
-}
 
 const acquireMemoryLock = async (key: string): Promise<ApLock> => {
     let lock = memoryLocks.get(key)
@@ -87,6 +69,24 @@ const acquireRedisLock = async (key: string, timeout: number): Promise<ApLock> =
     catch (e) {
         captureException(e)
         throw e
+    }
+}
+
+type AcquireLockParams = {
+    key: string
+    timeout?: number
+}
+
+export type ApLock = {
+    release(): Promise<unknown>
+}
+
+export const acquireLock = async ({ key, timeout = 3000 }: AcquireLockParams): Promise<ApLock> => {
+    switch (queueMode) {
+        case QueueMode.REDIS:
+            return acquireRedisLock(key, timeout)
+        case QueueMode.MEMORY:
+            return acquireMemoryLock(key)
     }
 }
 

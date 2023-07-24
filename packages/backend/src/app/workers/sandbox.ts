@@ -30,7 +30,7 @@ export type ExecuteIsolateResult = {
 
 export class Sandbox {
     private static readonly isolateExecutableName = getIsolateExecutableName()
-    private static readonly sandboxRunTimeSeconds = system.getNumber(SystemProp.SANDBOX_RUN_TIME_SECONDS) ?? 120
+    private static readonly sandboxRunTimeSeconds = system.getNumber(SystemProp.SANDBOX_RUN_TIME_SECONDS)
 
     public readonly boxId: number
     public used: boolean

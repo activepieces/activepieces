@@ -42,7 +42,7 @@ const initFlowQueueConsumer = async (): Promise<void> => {
     }
 }
 
-const closeAllConsumers = async (): Promise<void> => {
+const close = async (): Promise<void> => {
     logger.info('[FlowQueueConsumer#closeAllConsumers] closing all consumers')
     switch (queueMode) {
         case QueueMode.MEMORY: {
@@ -184,5 +184,5 @@ export const flowQueueConsumer = {
     consumeOnetimeJob,
     consumeScheduledJobs,
     init: initFlowQueueConsumer,
-    close: closeAllConsumers,
+    close,
 }

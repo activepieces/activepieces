@@ -1,9 +1,28 @@
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { SystemProp } from './system-prop'
 
+const systemPropDefaultValues: Record<string, string> = {
+    [SystemProp.SIGN_UP_ENABLED]: 'false',
+    [SystemProp.TELEMETRY_ENABLED]: 'true',
+    [SystemProp.SANDBOX_RUN_TIME_SECONDS]: '600',
+    [SystemProp.QUEUE_MODE]: 'MEMORY',
+    [SystemProp.DB_TYPE]: 'SQLITE3',
+    [SystemProp.EXECUTION_MODE]: 'UNSANDBOXED',
+    [SystemProp.TRIGGER_DEFAULT_POLL_INTERVAL]: '5',
+    [SystemProp.FLOW_WORKER_CONCURRENCY]: '10',
+    [SystemProp.CLOUD_AUTH_ENABLED]: 'true',
+    [SystemProp.STATS_ENABLED]: 'false',
+    [SystemProp.EDITION]: 'ce',
+    [SystemProp.TEMPLATES_SOURCE_URL]: 'https://cloud.activepieces.com/api/v1/flow-templates',
+    [SystemProp.ENVIRONMENT]: 'prod',
+    [SystemProp.ENGINE_EXECUTABLE_PATH]: 'dist/packages/engine/main.js',
+    
+
+}
+
 export const system = {
     get(prop: SystemProp): string | undefined {
-        return getEnvVar(prop)
+        return getEnvVar(prop) ?? systemPropDefaultValues[prop]
     },
 
     getNumber(prop: SystemProp): number | null {

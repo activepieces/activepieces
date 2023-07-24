@@ -1,6 +1,6 @@
 import { isNil } from '@activepieces/shared'
 import { ActivepiecesError, apId, ErrorCode, FlowId, ProjectId, WebhookSimulation } from '@activepieces/shared'
-import { acquireLock, NormalLock } from '../../helper/lock'
+import { acquireLock, ApLock } from '../../helper/lock'
 import { databaseConnection } from '../../database/database-connection'
 import { WebhookSimulationEntity } from './webhook-simulation-entity'
 import { webhookSideEffects } from './webhook-simulation-side-effects'
@@ -12,7 +12,7 @@ type BaseParams = {
 }
 
 type DeleteParams = BaseParams & {
-    parentLock?: NormalLock
+    parentLock?: ApLock
 }
 
 type GetParams = BaseParams
@@ -22,7 +22,7 @@ type AcquireLockParams = {
     flowId: FlowId
 }
 
-const createLock = async ({ flowId }: AcquireLockParams): Promise<NormalLock> => {
+const createLock = async ({ flowId }: AcquireLockParams): Promise<ApLock> => {
     const key = `${flowId}-webhook-simulation`
     return await acquireLock({ key, timeout: 5000 })
 }
@@ -95,7 +95,7 @@ export const webhookSimulationService = {
 
         const { flowId, projectId, parentLock } = params
 
-        let lock: Lock | null = null
+        let lock: ApLock | null = null
 
         if (isNil(parentLock)) {
             lock = await createLock({

@@ -3,10 +3,9 @@
   "version": "0.5.3",
   "scripts": {
     "prepare": "husky install",
-    "docker": "docker compose -f docker-compose.dev.yml up",
     "frontend": "nx serve ui-core",
-    "backend": "wait-on tcp:5432 tcp:6379 && nx serve backend",
-    "dev": "concurrently -p \"[{name}]\" -n \"DKR,GUI,API\" -c \"bgBlue.bold,bgMagenta.bold,bgGreen.bold\" \"npm:docker\" \"npm:frontend\" \"npm:backend\"",
+    "backend": "nx serve backend",
+    "dev": "concurrently -p \"[{name}]\" -n \"DKR,GUI,API\" -c \"bgBlue.bold,bgMagenta.bold,bgGreen.bold\" \"npm:frontend\" \"npm:backend\"",
     "start": "npm i && npm run dev",
     "publish-piece": "npx ts-node tools/scripts/utils/publish-piece.ts",
     "create-piece": "npx ts-node tools/scripts/generate-new-piece.ts"
