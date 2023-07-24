@@ -2,6 +2,12 @@ import { DynamicPropsValue, Property } from "@activepieces/pieces-framework";
 import { HttpRequest, HttpMethod, httpClient } from "@activepieces/pieces-common";
 
 export const APITableCommon = {
+    apiTableUrl: Property.ShortText({
+        displayName: 'APITable Url',
+        description: 'The url of the APITable instance.',
+        required: true,
+        defaultValue: 'https://api.apitable.com',
+    }),
     datasheet: Property.ShortText({
         displayName: 'Datasheet',
         description: 'The datasheet to watch for new records.',
@@ -11,11 +17,11 @@ export const APITableCommon = {
         displayName: 'Fields',
         description: 'The fields to add to the record.',
         required: true,
-        refreshers: ['auth', 'datasheet'],
-        props: async ({ auth, datasheet }) => {
+        refreshers: ['auth', 'datasheet', 'apiTableUrl'],
+        props: async ({ auth, datasheet, apiTableUrl }) => {
             const request: HttpRequest = {
                 method: HttpMethod.GET,
-                url: `https://api.apitable.com/fusion/v1/datasheets/${datasheet}/fields`,
+                url: `${apiTableUrl}/fusion/v1/datasheets/${datasheet}/fields`,
                 headers: {
                     "Authorization": "Bearer " + auth,
                 }

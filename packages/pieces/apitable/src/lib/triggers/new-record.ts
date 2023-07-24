@@ -4,15 +4,15 @@ import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-com
 import { APITableCommon } from "../common";
 import { HttpRequest, HttpMethod, httpClient } from "@activepieces/pieces-common";
 
-const polling: Polling<string, { datasheet: string }> = {
+const polling: Polling<string, { datasheet: string, apiTableUrl: string }> = {
     strategy: DedupeStrategy.TIMEBASED,
-    items: async ({store, auth, propsValue: { datasheet } }) => {
+    items: async ({store, auth, propsValue: { datasheet, apiTableUrl } }) => {
         const LastTime: number = await store.get('LastTime', StoreScope.FLOW) || 0;
         await store.put('LastTime', Date.now(), StoreScope.FLOW);
 
         const request: HttpRequest = {
             method: HttpMethod.GET,
-            url: `https://api.apitable.com/fusion/v1/datasheets/${datasheet}/records`,
+            url: `${apiTableUrl}/fusion/v1/datasheets/${datasheet}/records`,
             headers: {
                 "Authorization": "Bearer " + auth,
             }
@@ -53,6 +53,7 @@ export const ApiTableNewRecord = createTrigger({
     displayName: 'New Record',
     description: 'Triggers when a new record is added to a datasheet.',
     props: {
+        apiTableUrl: APITableCommon.apiTableUrl,
         datasheet: APITableCommon.datasheet,
     },
     sampleData: {
@@ -67,16 +68,16 @@ export const ApiTableNewRecord = createTrigger({
     },
     type: TriggerStrategy.POLLING,
     async test(context) {
-        return await pollingHelper.test(polling, { store: context.store, auth: context.auth, propsValue: {datasheet: context.propsValue.datasheet} });
+        return await pollingHelper.test(polling, { store: context.store, auth: context.auth, propsValue: {datasheet: context.propsValue.datasheet, apiTableUrl: context.propsValue.apiTableUrl} });
     },
     async onEnable(context) {
-        await pollingHelper.onEnable(polling, { store: context.store, auth: context.auth, propsValue: {datasheet: context.propsValue.datasheet} });
+        await pollingHelper.onEnable(polling, { store: context.store, auth: context.auth, propsValue: {datasheet: context.propsValue.datasheet, apiTableUrl: context.propsValue.apiTableUrl} });
     },
     async onDisable(context) {
-        await pollingHelper.onDisable(polling, { store: context.store, auth: context.auth, propsValue: {datasheet: context.propsValue.datasheet} });
+        await pollingHelper.onDisable(polling, { store: context.store, auth: context.auth, propsValue: {datasheet: context.propsValue.datasheet, apiTableUrl: context.propsValue.apiTableUrl} });
     },
     async run(context) {
-        return await pollingHelper.poll(polling, { store: context.store, auth: context.auth, propsValue: {datasheet: context.propsValue.datasheet} });
+        return await pollingHelper.poll(polling, { store: context.store, auth: context.auth, propsValue: {datasheet: context.propsValue.datasheet, apiTableUrl: context.propsValue.apiTableUrl} });
     },
 });
   
