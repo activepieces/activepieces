@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from '../../helper/logger'
+import { logger } from '../../../helper/logger'
 
 export class StoreAllPeriods1681019096716 implements MigrationInterface {
     name = 'StoreAllPeriods1681019096716'

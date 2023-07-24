@@ -1,21 +1,83 @@
-/*import { createRedisClient } from '../database/redis-connection'
 import { captureException } from '../helper/logger'
-import RedLock, { Lock } from 'redlock'
+import RedLock from 'redlock'
+import { QueueMode, queueMode } from '../workers/flow-worker/queues/queue'
+import { Redis } from 'ioredis'
+import { createRedisClient } from '../database/redis-connection'
+import { Mutex } from 'async-mutex'
 
-const redisConnection = createRedisClient()
+let redLock: RedLock
+let redisConnection: Redis
+const memoryLocks = new Map<string, MutexLockWrapper>()
 
-const redLock = new RedLock(
-    [redisConnection],
-    {
-        driftFactor: 0.01,
-        retryCount: 30,
-        retryDelay: 2000,
-        retryJitter: 200,
-        automaticExtensionThreshold: 500,
-    },
-)
+class MutexLockWrapper {
+    private lock: Mutex
 
-export const acquireLock = async ({ key, timeout = 3000 }: AcquireLockParams): Promise<Lock> => {
+    constructor() {
+        this.lock = new Mutex()
+    }
+
+    async acquire(): Promise<void> {
+        await this.lock.acquire()
+    }
+
+    async release(): Promise<void> {
+        this.lock.release()
+    }
+}
+
+const initializeLock = () => {
+    switch (queueMode) {
+        case QueueMode.REDIS:{
+            redisConnection = createRedisClient()
+            redLock = new RedLock(
+                [redisConnection],
+                {
+                    driftFactor: 0.01,
+                    retryCount: 30,
+                    retryDelay: 2000,
+                    retryJitter: 200,
+                    automaticExtensionThreshold: 500,
+                },
+            )
+            break
+        }
+        case QueueMode.MEMORY:{
+            break
+        }
+    }
+}
+
+type ApLock = {
+    release(): Promise<unknown>
+}
+
+type AcquireLockParams = {
+    key: string
+    timeout?: number
+}
+
+
+export const acquireLock = async ({ key, timeout = 3000 }: AcquireLockParams): Promise<ApLock> => {
+    switch (queueMode) {
+        case QueueMode.REDIS:
+            return acquireRedisLock(key, timeout)
+        case QueueMode.MEMORY:
+            return acquireMemoryLock(key)
+    }
+}
+
+const acquireMemoryLock = async (key: string): Promise<ApLock> => {
+    let lock = memoryLocks.get(key)
+    if (!lock) {
+        lock = new MutexLockWrapper()
+        memoryLocks.set(key, lock)
+    }
+    await lock.acquire()
+    return lock
+}
+
+
+const acquireRedisLock = async (key: string, timeout: number): Promise<ApLock> => {
     try {
         return redLock.acquire([key], timeout, {
             retryCount: Math.ceil(timeout / 2000) * 2,
@@ -26,47 +88,6 @@ export const acquireLock = async ({ key, timeout = 3000 }: AcquireLockParams): P
         captureException(e)
         throw e
     }
-}*/
-
-
-type AcquireLockParams = {
-    key: string
-    timeout?: number
 }
 
-export class NormalLock {
-    private isLocked = false
-    private lockTimeout: NodeJS.Timeout | null = null
-
-    async acquire(timeout: number): Promise<void> {
-        if (this.isLocked) {
-            throw new Error('Lock is already acquired.')
-        }
-
-        this.isLocked = true
-
-        return new Promise<void>((resolve) => {
-            this.lockTimeout = setTimeout(() => {
-                this.release()
-            }, timeout)
-            resolve()
-        })
-    }
-
-    async release(): Promise<void> {
-        if (this.isLocked) {
-            this.isLocked = false
-            if (this.lockTimeout) {
-                clearTimeout(this.lockTimeout)
-                this.lockTimeout = null
-            }
-        }
-    }
-}
-
-export const acquireLock = async ({ timeout = 3000 }: AcquireLockParams): Promise<NormalLock> => {
-    const lock = new NormalLock()
-
-    await lock.acquire(timeout)
-    return lock
-}
+initializeLock()

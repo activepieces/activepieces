@@ -1,17 +1,21 @@
-// TODO FIX
-const getKey = (keySuffix: string): string => {
-    return `ACTIVEPIECES:SYSTEM_PROP:${keySuffix}`
-}
+import fs from 'fs'
+import path from 'path'
+import os from 'os'
 
-export const redisStore = {
-    async save(keySuffix: string, value: string): Promise<void> {
-        // FF
-        const f = keySuffix + value;
-        console.log(f);
+export const localStore = {
+    async save(key: string, value: string): Promise<void> {
+        const settingsFilePath = path.join(localStore.getStorePath(), 'settings.json')
+        const settings = JSON.parse(fs.readFileSync(settingsFilePath, 'utf8'))
+        settings[key] = value
+        fs.writeFileSync(settingsFilePath, JSON.stringify(settings))
     },
 
-    async load(keySuffix: string): Promise<string | null> {
-        const key = getKey(keySuffix)
-        return key
+    async load(key: string): Promise<string | null> {
+        const settingsFilePath = path.join(localStore.getStorePath(), 'settings.json')
+        const settings = JSON.parse(fs.readFileSync(settingsFilePath, 'utf8'))
+        return settings[key] || null
+    },
+    getStorePath(): string {
+        return path.join(os.homedir(), '.activepieces')
     },
 }

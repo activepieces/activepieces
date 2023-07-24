@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from '../../helper/logger'
+import { logger } from '../../../helper/logger'
 import { apId } from '@activepieces/shared'
 
 export class RemoveCollections1680986182074 implements MigrationInterface {

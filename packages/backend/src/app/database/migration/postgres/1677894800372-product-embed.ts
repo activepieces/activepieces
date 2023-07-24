@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from '../../helper/logger'
+import { logger } from '../../../helper/logger'
 
 export class productEmbed1677894800372 implements MigrationInterface {
     name = 'productEmbed1677894800372'

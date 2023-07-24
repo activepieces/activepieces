@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from '../../helper/logger'
+import { logger } from '../../../helper/logger'
 
 export class addtriggerevents1678621361185 implements MigrationInterface {
     name = 'addtriggerevents1678621361185'

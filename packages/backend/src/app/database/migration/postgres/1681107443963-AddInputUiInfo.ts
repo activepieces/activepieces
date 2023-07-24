@@ -1,6 +1,6 @@
 import { FlowVersion } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from '../../helper/logger'
+import { logger } from '../../../helper/logger'
 
 type Step = {
     type: string

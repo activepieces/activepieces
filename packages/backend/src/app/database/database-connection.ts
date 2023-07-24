@@ -11,42 +11,47 @@ import { FlagEntity } from '../flags/flag.entity'
 import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
-import { FlowAndFileProjectId1674788714498 } from './migration/1674788714498-FlowAndFileProjectId'
-import { initializeSchema1676238396411 } from './migration/1676238396411-initialize-schema'
-import { removeStoreAction1676649852890 } from './migration/1676649852890-remove-store-action'
-import { encryptCredentials1676505294811 } from './migration/1676505294811-encrypt-credentials'
-import { billing1677286751592 } from './migration/1677286751592-billing'
-import { addVersionToPieceSteps1677521257188 } from './migration/1677521257188-add-version-to-piece-steps'
+import { FlowAndFileProjectId1674788714498 } from './migration/postgres/1674788714498-FlowAndFileProjectId'
+import { initializeSchema1676238396411 } from './migration/postgres/1676238396411-initialize-schema'
+import { removeStoreAction1676649852890 } from './migration/postgres/1676649852890-remove-store-action'
+import { encryptCredentials1676505294811 } from './migration/postgres/1676505294811-encrypt-credentials'
+import { billing1677286751592 } from './migration/postgres/1677286751592-billing'
+import { addVersionToPieceSteps1677521257188 } from './migration/postgres/1677521257188-add-version-to-piece-steps'
 import { AppEventRoutingEntity } from '../app-event-routing/app-event-routing.entity'
-import { productEmbed1677894800372 } from './migration/1677894800372-product-embed'
+import { productEmbed1677894800372 } from './migration/postgres/1677894800372-product-embed'
 import { TriggerEventEntity } from '../flows/trigger-events/trigger-event.entity'
-import { addtriggerevents1678621361185 } from './migration/1678621361185-addtriggerevents'
-import { removeCollectionVersion1678492809093 } from './migration/1678492809093-removeCollectionVersion'
-import { addEventRouting1678382946390 } from './migration/1678382946390-add-event-routing'
-import { bumpFixPieceVersions1678928503715 } from './migration/1678928503715-bump-fix-piece-versions'
-import { migrateSchedule1679014156667 } from './migration/1679014156667-migrate-schedule'
-import { addNotificationsStatus1680563747425 } from './migration/1680563747425-add-notifications-status'
-import { AddInputUiInfo1681107443963 } from './migration/1681107443963-AddInputUiInfo'
+import { addtriggerevents1678621361185 } from './migration/postgres/1678621361185-addtriggerevents'
+import { removeCollectionVersion1678492809093 } from './migration/postgres/1678492809093-removeCollectionVersion'
+import { addEventRouting1678382946390 } from './migration/postgres/1678382946390-add-event-routing'
+import { bumpFixPieceVersions1678928503715 } from './migration/postgres/1678928503715-bump-fix-piece-versions'
+import { migrateSchedule1679014156667 } from './migration/postgres/1679014156667-migrate-schedule'
+import { addNotificationsStatus1680563747425 } from './migration/postgres/1680563747425-add-notifications-status'
+import { AddInputUiInfo1681107443963 } from './migration/postgres/1681107443963-AddInputUiInfo'
 import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-simulation-entity'
-import { CreateWebhookSimulationSchema1680698259291 } from './migration/1680698259291-create-webhook-simulation-schema'
+import { CreateWebhookSimulationSchema1680698259291 } from './migration/postgres/1680698259291-create-webhook-simulation-schema'
 import { FlowInstanceEntity } from '../flows/flow-instance/flow-instance.entity'
 import { FolderEntity } from '../flows/folder/folder.entity'
-import { RemoveCollections1680986182074 } from './migration/1680986182074-RemoveCollections'
-import { StoreAllPeriods1681019096716 } from './migration/1681019096716-StoreAllPeriods'
-import { AllowNullableStoreEntryAndTrigger1683040965874 } from './migration/1683040965874-allow-nullable-store-entry'
-import { RenameNotifications1683195711242 } from './migration/1683195711242-rename-notifications'
-import { ListFlowRunsIndices1683199709317 } from './migration/1683199709317-list-flow-runs-indices'
-import { ProjectNotifyStatusNotNull1683458275525 } from './migration/1683458275525-project-notify-status-not-null'
-import { FlowRunPauseMetadata1683552928243 } from './migration/1683552928243-flow-run-pause-metadata'
-import { ChangeVariableSyntax1683898241599 } from './migration/1683898241599-ChangeVariableSyntax'
+import { RemoveCollections1680986182074 } from './migration/postgres/1680986182074-RemoveCollections'
+import { StoreAllPeriods1681019096716 } from './migration/postgres/1681019096716-StoreAllPeriods'
+import { AllowNullableStoreEntryAndTrigger1683040965874 } from './migration/postgres/1683040965874-allow-nullable-store-entry'
+import { RenameNotifications1683195711242 } from './migration/postgres/1683195711242-rename-notifications'
+import { ListFlowRunsIndices1683199709317 } from './migration/postgres/1683199709317-list-flow-runs-indices'
+import { ProjectNotifyStatusNotNull1683458275525 } from './migration/postgres/1683458275525-project-notify-status-not-null'
+import { FlowRunPauseMetadata1683552928243 } from './migration/postgres/1683552928243-flow-run-pause-metadata'
+import { ChangeVariableSyntax1683898241599 } from './migration/postgres/1683898241599-ChangeVariableSyntax'
 import { PieceMetadataEntity } from '../pieces/piece-metadata-entity'
-import { PieceMetadata1685537054805 } from './migration/1685537054805-piece-metadata'
-import { AddProjectIdToPieceMetadata1686090319016 } from './migration/1686090319016-AddProjectIdToPieceMetadata'
-import { UnifyPieceName1686138629812 } from './migration/1686138629812-unifyPieceName'
-import { AddScheduleOptions1687384796637 } from './migration/1687384796637-AddScheduleOptions'
-import { AddAuthToPiecesMetadata1688922241747 } from './migration//1688922241747-AddAuthToPiecesMetadata'
-import { AddUpdatedByInFlowVersion1689292797727 } from './migration/1689292797727-AddUpdatedByInFlowVersion'
-import { AddTasksToRun1689351564290 } from './migration/1689351564290-AddTasksToRun'
+import { PieceMetadata1685537054805 } from './migration/postgres/1685537054805-piece-metadata'
+import { AddProjectIdToPieceMetadata1686090319016 } from './migration/postgres/1686090319016-AddProjectIdToPieceMetadata'
+import { UnifyPieceName1686138629812 } from './migration/postgres/1686138629812-unifyPieceName'
+import { AddScheduleOptions1687384796637 } from './migration/postgres/1687384796637-AddScheduleOptions'
+import { AddAuthToPiecesMetadata1688922241747 } from './migration/postgres//1688922241747-AddAuthToPiecesMetadata'
+import { AddUpdatedByInFlowVersion1689292797727 } from './migration/postgres/1689292797727-AddUpdatedByInFlowVersion'
+import { AddTasksToRun1689351564290 } from './migration/postgres/1689351564290-AddTasksToRun'
+import { ApEnvironment } from '@activepieces/shared'
+import { InitialSql3Migration1690195839899 } from './migration/sqllite3/1690195839899-InitialSql3Migration'
+import os from 'os'
+import path from 'path'
+import fs from 'fs'
 
 const database = system.getOrThrow(SystemProp.POSTGRES_DATABASE)
 const host = system.getOrThrow(SystemProp.POSTGRES_HOST)
@@ -67,54 +72,19 @@ const getSslConfig = (): boolean | TlsOptions => {
     return false
 }
 
-const getMigrations = () => {
-    return [
-        FlowAndFileProjectId1674788714498,
-        initializeSchema1676238396411,
-        encryptCredentials1676505294811,
-        removeStoreAction1676649852890,
-        billing1677286751592,
-        addVersionToPieceSteps1677521257188,
-        productEmbed1677894800372,
-        addtriggerevents1678621361185,
-        removeCollectionVersion1678492809093,
-        addEventRouting1678382946390,
-        bumpFixPieceVersions1678928503715,
-        migrateSchedule1679014156667,
-        addNotificationsStatus1680563747425,
-        AddInputUiInfo1681107443963,
-        CreateWebhookSimulationSchema1680698259291,
-        RemoveCollections1680986182074,
-        StoreAllPeriods1681019096716,
-        AllowNullableStoreEntryAndTrigger1683040965874,
-        RenameNotifications1683195711242,
-        ListFlowRunsIndices1683199709317,
-        ProjectNotifyStatusNotNull1683458275525,
-        FlowRunPauseMetadata1683552928243,
-        ChangeVariableSyntax1683898241599,
-        PieceMetadata1685537054805,
-        AddProjectIdToPieceMetadata1686090319016,
-        UnifyPieceName1686138629812,
-        AddScheduleOptions1687384796637,
-        AddAuthToPiecesMetadata1688922241747,
-        AddUpdatedByInFlowVersion1689292797727,
-        AddTasksToRun1689351564290,
-    ]
+function getSQLiteFilePath() {
+    const homeDirectory = os.homedir()
+    const hiddenFolderName = '.activepieces'
+    const hiddenFolderPath = path.join(homeDirectory, hiddenFolderName)
+    if (!fs.existsSync(hiddenFolderPath)) {
+        fs.mkdirSync(hiddenFolderPath)
+    }
+    const sqliteFilePath = path.join(hiddenFolderPath, 'database.sqlite')
+    return sqliteFilePath
 }
 
-export const databaseConnection = new DataSource({
-    type: 'postgres',
-    host,
-    port,
-    username,
-    password,
-    database,
-    synchronize: false,
+export const commonProperties = {
     subscribers: [],
-    migrationsRun: true,
-    migrationsTransactionMode: 'each',
-    ssl: getSslConfig(),
-    migrations: getMigrations(),
     entities: [
         TriggerEventEntity,
         FlowInstanceEntity,
@@ -132,4 +102,62 @@ export const databaseConnection = new DataSource({
         FolderEntity,
         PieceMetadataEntity,
     ],
-})
+    synchronize: false,
+}
+
+export const databaseConnection =
+    system.get(SystemProp.ENVIRONMENT) === ApEnvironment.DEVELOPMENT
+        ? new DataSource({
+            type: 'sqlite',
+            database: getSQLiteFilePath(),
+            migrationsRun: true,
+            migrationsTransactionMode: 'each',
+            migrations: [
+                InitialSql3Migration1690195839899,
+            ],
+            ...commonProperties,
+        })
+        : new DataSource({
+            type: 'postgres',
+            host,
+            port,
+            username,
+            password,
+            database,
+            migrationsRun: true,
+            migrationsTransactionMode: 'each',
+            ssl: getSslConfig(),
+            migrations: [
+                FlowAndFileProjectId1674788714498,
+                initializeSchema1676238396411,
+                encryptCredentials1676505294811,
+                removeStoreAction1676649852890,
+                billing1677286751592,
+                addVersionToPieceSteps1677521257188,
+                productEmbed1677894800372,
+                addtriggerevents1678621361185,
+                removeCollectionVersion1678492809093,
+                addEventRouting1678382946390,
+                bumpFixPieceVersions1678928503715,
+                migrateSchedule1679014156667,
+                addNotificationsStatus1680563747425,
+                AddInputUiInfo1681107443963,
+                CreateWebhookSimulationSchema1680698259291,
+                RemoveCollections1680986182074,
+                StoreAllPeriods1681019096716,
+                AllowNullableStoreEntryAndTrigger1683040965874,
+                RenameNotifications1683195711242,
+                ListFlowRunsIndices1683199709317,
+                ProjectNotifyStatusNotNull1683458275525,
+                FlowRunPauseMetadata1683552928243,
+                ChangeVariableSyntax1683898241599,
+                PieceMetadata1685537054805,
+                AddProjectIdToPieceMetadata1686090319016,
+                UnifyPieceName1686138629812,
+                AddScheduleOptions1687384796637,
+                AddAuthToPiecesMetadata1688922241747,
+                AddUpdatedByInFlowVersion1689292797727,
+                AddTasksToRun1689351564290,
+            ],
+            ...commonProperties,
+        })

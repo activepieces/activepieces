@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from '../../helper/logger'
+import { logger } from '../../../helper/logger'
 
 export class ProjectNotifyStatusNotNull1683458275525 implements MigrationInterface {
     name = 'ProjectNotifyStatusNotNull1683458275525'

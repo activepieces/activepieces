@@ -1,6 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { decryptObject, encryptObject } from '../../helper/encryption'
-import { logger } from '../../helper/logger'
+import { decryptObject, encryptObject } from '../../../helper/encryption'
+import { logger } from '../../../helper/logger'
 
 export class encryptCredentials1676505294811 implements MigrationInterface {
 

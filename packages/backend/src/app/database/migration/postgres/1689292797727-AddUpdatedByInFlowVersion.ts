@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from '../../helper/logger'
+import { logger } from '../../../helper/logger'
 
 export class AddUpdatedByInFlowVersion1689292797727 implements MigrationInterface {
     name = 'AddUpdatedByInFlowVersion1689292797727'

@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from '../../helper/logger'
+import { logger } from '../../../helper/logger'
 
 export class AddScheduleOptions1687384796637 implements MigrationInterface {
     name = 'AddScheduleOptions1687384796637'
