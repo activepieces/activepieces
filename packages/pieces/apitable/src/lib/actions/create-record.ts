@@ -52,7 +52,7 @@ export const apiTableCreateRecord = createAction({
 
         const request: HttpRequest = {
             method: HttpMethod.POST,
-            url: `${apiTableUrl}/fusion/v1/datasheets/${datasheet}/records`,
+            url: `${apiTableUrl.replace(/\/$/, "")}/fusion/v1/datasheets/${datasheet}/records`,
             headers: {
                 "Authorization": "Bearer " + auth.token,
                 "Content-Type": "application/json",

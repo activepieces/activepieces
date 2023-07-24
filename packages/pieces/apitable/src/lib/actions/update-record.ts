@@ -58,7 +58,7 @@ export const apiTableUpdateRecord = createAction({
 
         const request: HttpRequest = {
             method: HttpMethod.PATCH,
-            url: `${apiTableUrl}/fusion/v1/datasheets/${datasheet}/records`,
+            url: `${apiTableUrl.replace(/\/$/, "")}/fusion/v1/datasheets/${datasheet}/records`,
             headers: {
                 "Authorization": "Bearer " + auth.token,
                 "Content-Type": "application/json",

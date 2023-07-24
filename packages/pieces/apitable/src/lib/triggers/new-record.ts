@@ -12,7 +12,7 @@ const polling: Polling<PiecePropValueSchema<typeof APITableAuth>, { datasheet: s
 
         const request: HttpRequest = {
             method: HttpMethod.GET,
-            url: `${auth.apiTableUrl}/fusion/v1/datasheets/${datasheet}/records`,
+            url: `${auth.apiTableUrl.replace(/\/$/, "")}/fusion/v1/datasheets/${datasheet}/records`,
             headers: {
                 "Authorization": "Bearer " + auth.token,
             }

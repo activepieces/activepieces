@@ -60,7 +60,7 @@ export const apiTableFindRecord = createAction({
 
         const request: HttpRequest = {
             method: HttpMethod.GET,
-            url: `${apiTableUrl}/fusion/v1/datasheets/${datasheet}/records${query}`,
+            url: `${apiTableUrl.replace(/\/$/, "")}/fusion/v1/datasheets/${datasheet}/records${query}`,
             headers: {
                 "Authorization": "Bearer " + auth.token,
                 "Content-Type": "application/json",
