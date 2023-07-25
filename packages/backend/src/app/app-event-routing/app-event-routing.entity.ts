@@ -1,5 +1,5 @@
 import { FlowId, ProjectId } from '@activepieces/shared'
-import { ApIdSchema, BaseColumnSchemaPart } from '../helper/base-entity'
+import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
 import { EntitySchema } from 'typeorm'
 
 export type AppEventRoutingId = string

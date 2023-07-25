@@ -23,7 +23,7 @@ type InstallDependenciesParams = BaseParams
 
 const log = logger.child({ file: 'PieceManager' })
 
-const env = system.getOrThrow(SystemProp.ENVIRONMENT)
+const env = system.get(SystemProp.ENVIRONMENT)
 
 const linkFrameworkPackages = async (projectPath: string, baseLinkPath: string, frameworkPackages: Record<string, string>) => {
     await updatePackageJson('framework', baseLinkPath, frameworkPackages)

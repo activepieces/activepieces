@@ -19,6 +19,7 @@ import {
     PieceTriggerSettings,
     ProjectId,
     TriggerType,
+    UserId,
 } from '@activepieces/shared'
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity'
 import { fileService } from '../../file/file.service'
@@ -29,6 +30,7 @@ import { flowVersionSideEffects } from './flow-version-side-effects'
 import { DEFAULT_SAMPLE_DATA_SETTINGS } from '@activepieces/shared'
 import { isNil } from '@activepieces/shared'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
+import dayjs from 'dayjs'
 
 const branchSettingsValidator = TypeCompiler.Compile(BranchActionSettingsWithValidation)
 const loopSettingsValidator = TypeCompiler.Compile(LoopOnItemsActionSettingsWithValidation)
@@ -61,7 +63,7 @@ export const flowVersionService = {
             return clonedStep
         })
     },
-    async applyOperation(projectId: ProjectId, flowVersion: FlowVersion, userOperation: FlowOperationRequest): Promise<FlowVersion> {
+    async applyOperation(userId: UserId, projectId: ProjectId, flowVersion: FlowVersion, userOperation: FlowOperationRequest): Promise<FlowVersion> {
         let operations: FlowOperationRequest[] = []
         let mutatedFlowVersion = flowVersion
         switch (userOperation.type) {
@@ -79,6 +81,8 @@ export const flowVersionService = {
         for (const operation of operations) {
             mutatedFlowVersion = await applySingleOperation(projectId, mutatedFlowVersion, operation)
         }
+        mutatedFlowVersion.updated = dayjs().toISOString()
+        mutatedFlowVersion.updatedBy = userId
         await flowVersionRepo.update(flowVersion.id, mutatedFlowVersion as QueryDeepPartialEntity<FlowVersion>)
         return flowVersionRepo.findOneByOrFail({
             id: flowVersion.id,

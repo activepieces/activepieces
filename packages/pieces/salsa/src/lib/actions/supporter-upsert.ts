@@ -16,7 +16,7 @@ export const salsaSupporterUpsert = createAction({
                 required: true
             })
         },
-        async run(context) {
-            return await upsertSupporter(context.propsValue);
+        async run({auth, propsValue}) {
+            return await upsertSupporter(auth, propsValue);
         },
 });

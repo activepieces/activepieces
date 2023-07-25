@@ -1,4 +1,4 @@
-import { SignUpRequest, AuthenticationResponse, PrincipalType, SignInRequest, TelemetryEventName, ApFlagId } from '@activepieces/shared'
+import { SignUpRequest, AuthenticationResponse, PrincipalType, SignInRequest, TelemetryEventName, ApFlagId, UserStatus } from '@activepieces/shared'
 import { userService } from '../user/user-service'
 import { passwordHasher } from './lib/password-hasher'
 import { tokenUtils } from './lib/token-utils'
@@ -11,7 +11,7 @@ import { telemetry } from '../helper/telemetry.utils'
 export const authenticationService = {
     signUp: async (request: SignUpRequest): Promise<AuthenticationResponse> => {
         try {
-            const user = await userService.create(request)
+            const user = await userService.create(request, UserStatus.VERIFIED)
 
             await flagService.save({ id: ApFlagId.USER_CREATED, value: true })
 

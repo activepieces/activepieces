@@ -147,9 +147,9 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
         auth: resolvedProps[AUTHENTICATION_PROPERTY_NAME],
         propsValue: resolvedProps,
         connections: connectionManager,
+        serverUrl: globals.serverUrl!,
         run: {
           id: globals.flowRunId,
-          webhookBaseUrl: globals.apiUrl,
           stop: this.generateStopHook({ stepOutput }),
           pause: this.generatePauseHook({ stepOutput }),
         },

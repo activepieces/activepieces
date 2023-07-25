@@ -26,10 +26,11 @@ import { codeBuilder } from '../code-worker/code-builder'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { OneTimeJobData } from './job-data'
 import { engineHelper } from '../../helper/engine-helper'
-import { acquireLock } from '../../database/redis-connection'
 import { captureException, logger } from '../../helper/logger'
 import { pieceManager } from '../../flows/common/piece-installer'
 import { isNil } from '@activepieces/shared'
+import { getServerUrl } from '../../helper/public-ip-utils'
+import { acquireLock } from '../../helper/lock'
 
 type FlowPiece = {
     name: string
@@ -118,6 +119,7 @@ const loadInputAndLogFileId = async ({ jobData }: LoadInputAndLogFileIdParams): 
     if (jobData.executionType === ExecutionType.BEGIN) {
         return {
             input: {
+                serverUrl: await getServerUrl(),
                 executionType: ExecutionType.BEGIN,
                 ...baseInput,
             },
@@ -148,6 +150,7 @@ const loadInputAndLogFileId = async ({ jobData }: LoadInputAndLogFileIdParams): 
 
     return {
         input: {
+            serverUrl: await getServerUrl(),
             executionType: ExecutionType.RESUME,
             executionState: executionOutput.executionState,
             resumeStepMetadata: flowRun.pauseMetadata.resumeStepMetadata,
@@ -229,7 +232,7 @@ async function downloadFiles(
     logger.info(`[${flowVersion.id}] Acquiring flow lock to build codes`)
     const flowLock = await acquireLock({
         key: flowVersion.id,
-        timeout: 60000,
+        timeout: 180000,
     })
     try {
         const buildPath = sandbox.getSandboxFolderPath()

@@ -9,7 +9,7 @@ import { FastifyRequest } from 'fastify'
 import { logger } from '../helper/logger'
 import { flagService } from '../flags/flag.service'
 
-const statsEnabled = system.get(SystemProp.STATS_ENABLED) ?? false
+const statsEnabled = system.getBoolean(SystemProp.STATS_ENABLED)
 
 const getPieceMetaData = async (pieceName: string, pieceVersion: string) => {
     try {

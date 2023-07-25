@@ -1,9 +1,9 @@
 import { AppConnection, Project } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
-import { ApIdSchema, BaseColumnSchemaPart } from '../helper/base-entity'
+import { ApIdSchema, BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../database/database-common'
 import { EncryptedObject } from '../helper/encryption'
 
-export type AppConnectionSchema = AppConnection & { project: Project, value: EncryptedObject }
+export type AppConnectionSchema = Omit<AppConnection, 'value' | 'status'> & { project: Project, value: EncryptedObject }
 
 export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
     name: 'app_connection',
@@ -17,7 +17,7 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
         },
         projectId: ApIdSchema,
         value: {
-            type: 'jsonb',
+            type: JSONB_COLUMN_TYPE,
         },
     },
     indices: [

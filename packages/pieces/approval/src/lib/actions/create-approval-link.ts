@@ -8,8 +8,8 @@ export const createApprovalLink = createAction({
   },
   async run(ctx) {
     return {
-      approvalLink: `${ctx.run.webhookBaseUrl}/v1/flow-runs/${ctx.run.id}/resume?action=approve`,
-      disapprovalLink: `${ctx.run.webhookBaseUrl}/v1/flow-runs/${ctx.run.id}/resume?action=disapprove`,
+      approvalLink: `${ctx.serverUrl}v1/flow-runs/${ctx.run.id}/resume?action=approve`,
+      disapprovalLink: `${ctx.serverUrl}v1/flow-runs/${ctx.run.id}/resume?action=disapprove`,
     }
   },
 });

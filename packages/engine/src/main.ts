@@ -18,6 +18,7 @@ import {
   ExecuteCodeOperation,
   ExecuteExtractPieceMetadata,
   ExecuteValidateAuthOperation,
+  extractPieceFromModule
 } from '@activepieces/shared';
 import { pieceHelper } from './lib/helper/action-helper';
 import { triggerHelper } from './lib/helper/trigger-helper';
@@ -62,7 +63,11 @@ const extractInformation = async (): Promise<void> => {
 
 
     const pieceModule = await import(input.pieceName);
-    const piece = Object.values<Piece>(pieceModule)[0];
+    const piece = extractPieceFromModule<Piece>({
+      module: pieceModule,
+      pieceName: input.pieceName,
+      pieceVersion: input.pieceVersion
+    })
 
     writeOutput({
       status: EngineResponseStatus.OK,
@@ -84,6 +89,7 @@ const executeFlow = async (): Promise<void> => {
     globals.workerToken = input.workerToken!;
     globals.projectId = input.projectId;
     globals.apiUrl = input.apiUrl!;
+    globals.serverUrl = input.serverUrl!;
     globals.flowRunId = input.flowRunId;
 
     if (input.executionType === ExecutionType.RESUME) {
@@ -180,6 +186,7 @@ const executeAction = async (): Promise<void> => {
     globals.workerToken = input.workerToken!;
     globals.projectId = input.projectId;
     globals.apiUrl = input.apiUrl!;
+    globals.serverUrl = input.serverUrl;
 
     const output = await pieceHelper.executeAction(input);
     writeOutput({
@@ -246,9 +253,9 @@ async function execute() {
     case EngineOperationType.EXECUTE_CODE:
       executeCode();
       break;
-      case EngineOperationType.EXECUTE_VALIDATE_AUTH:
-        executeValidateAuth();
-        break;
+    case EngineOperationType.EXECUTE_VALIDATE_AUTH:
+      executeValidateAuth();
+      break;
     default:
       console.error('unknown operation');
       break;

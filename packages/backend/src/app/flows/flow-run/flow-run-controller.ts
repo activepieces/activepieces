@@ -1,6 +1,6 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
-import { FastifyPluginCallbackTypebox } from '@fastify/type-provider-typebox'
-import { TestFlowRunRequestBody, FlowRunId, ListFlowRunsRequestQuery } from '@activepieces/shared'
+import { FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
+import { TestFlowRunRequestBody, FlowRunId, ListFlowRunsRequestQuery, ApId } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { flowRunService } from './flow-run-service'
 
@@ -13,6 +13,17 @@ type GetOnePathParams = {
 const TestFlowRunRequest = {
     schema: {
         body: TestFlowRunRequestBody,
+    },
+}
+
+const ResumeFlowRunRequest = {
+    schema: {
+        params: Type.Object({
+            id: ApId,
+        }),
+        querystring: Type.Object({
+            action: Type.String(),
+        }),
     },
 }
 
@@ -62,6 +73,14 @@ export const flowRunController: FastifyPluginCallbackTypebox = (app, _options, d
         }
 
         await reply.send(flowRun)
+    })
+
+
+    app.all('/:id/resume', ResumeFlowRunRequest, async (req) => {
+        await flowRunService.resume({
+            flowRunId: req.params.id,
+            action: req.query.action,
+        })
     })
 
     done()

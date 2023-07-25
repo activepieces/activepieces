@@ -22,6 +22,7 @@
       "@activepieces/piece-amazon-s3": [
         "packages/pieces/amazon-s3/src/index.ts"
       ],
+      "@activepieces/piece-apitable": ["packages/pieces/apitable/src/index.ts"],
       "@activepieces/piece-approval": ["packages/pieces/approval/src/index.ts"],
       "@activepieces/piece-asana": ["packages/pieces/asana/src/index.ts"],
       "@activepieces/piece-bannerbear": [
@@ -34,6 +35,7 @@
       "@activepieces/piece-bloomerang": [
         "packages/pieces/bloomerang/src/index.ts"
       ],
+      "@activepieces/piece-box": ["packages/pieces/box/src/index.ts"],
       "@activepieces/piece-cal-com": ["packages/pieces/cal-com/src/index.ts"],
       "@activepieces/piece-calendly": ["packages/pieces/calendly/src/index.ts"],
       "@activepieces/piece-certopus": ["packages/pieces/certopus/src/index.ts"],
@@ -69,6 +71,7 @@
       "@activepieces/piece-generatebanners": [
         "packages/pieces/generatebanners/src/index.ts"
       ],
+      "@activepieces/piece-ghostcms": ["packages/pieces/ghostcms/src/index.ts"],
       "@activepieces/piece-github": ["packages/pieces/github/src/index.ts"],
       "@activepieces/piece-gmail": ["packages/pieces/gmail/src/index.ts"],
       "@activepieces/piece-google-calendar": [
@@ -128,6 +131,7 @@
       "@activepieces/piece-mysql": ["packages/pieces/mysql/src/index.ts"],
       "@activepieces/piece-notion": ["packages/pieces/notion/src/index.ts"],
       "@activepieces/piece-ntfy": ["packages/pieces/ntfy/src/index.ts"],
+      "@activepieces/piece-onfleet": ["packages/pieces/onfleet/src/index.ts"],
       "@activepieces/piece-openai": ["packages/pieces/openai/src/index.ts"],
       "@activepieces/piece-pastebin": ["packages/pieces/pastebin/src/index.ts"],
       "@activepieces/piece-pastefy": ["packages/pieces/pastefy/src/index.ts"],
@@ -151,6 +155,7 @@
       "@activepieces/piece-shopify": ["packages/pieces/shopify/src/index.ts"],
       "@activepieces/piece-slack": ["packages/pieces/slack/src/index.ts"],
       "@activepieces/piece-smtp": ["packages/pieces/smtp/src/index.ts"],
+      "@activepieces/piece-soap": ["packages/pieces/soap/src/index.ts"],
       "@activepieces/piece-spotify": ["packages/pieces/spotify/src/index.ts"],
       "@activepieces/piece-square": ["packages/pieces/square/src/index.ts"],
       "@activepieces/piece-stability-ai": [
