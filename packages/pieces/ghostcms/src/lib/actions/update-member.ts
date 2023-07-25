@@ -7,7 +7,7 @@ import { common } from '../common';
 export const updateMember = createAction({
     name: 'update_member',
     displayName: 'Update Member',
-    description: 'Updates a member',
+    description: 'Update a member',
     auth: ghostAuth,
     props: {
         member: common.properties.member(),
