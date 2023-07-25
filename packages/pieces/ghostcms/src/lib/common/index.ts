@@ -112,7 +112,7 @@ export const common = {
 
         return jwt.sign({}, Buffer.from(secret, 'hex'), {
             keyid: id,
-            expiresIn: '1y',
+            expiresIn: '5m',
             audience: '/admin/'
         });
     },
