@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken';
 
 export const common = {
     properties: {
-        newsletters: (required: boolean = true) => {
+        newsletters: (required = true) => {
             return Property.MultiSelectDropdown({
                 displayName: 'Newsletters',
                 required: required,
@@ -31,7 +31,7 @@ export const common = {
                 }
             })
         },
-        member: (required: boolean = true) => {
+        member: (required = true) => {
             return Property.Dropdown({
                 displayName: 'Member',
                 required: required,
