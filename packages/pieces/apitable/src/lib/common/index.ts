@@ -3,8 +3,8 @@ import { HttpRequest, HttpMethod, httpClient } from "@activepieces/pieces-common
 
 export const APITableCommon = {
     datasheet: Property.ShortText({
-        displayName: 'Datasheet',
-        description: 'The datasheet to watch for new records.',
+        displayName: 'Datasheet ID',
+        description: 'The datasheet to watch for new records, obtain it from the url',
         required: true,
     }),
     fields: Property.DynamicProperties({
