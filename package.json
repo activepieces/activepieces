@@ -5,7 +5,7 @@
     "prepare": "husky install",
     "frontend": "nx serve ui-core",
     "backend": "nx serve backend",
-    "dev": "concurrently -p \"[{name}]\" -n \"DKR,GUI,API\" -c \"bgBlue.bold,bgMagenta.bold,bgGreen.bold\" \"npm:frontend\" \"npm:backend\"",
+    "dev": "concurrently -p \"[{name}]\" -n \"GUI,API\" -c \"bgBlue.bold,bgMagenta.bold,bgGreen.bold\" \"npm:frontend\" \"npm:backend\"",
     "start": "npm i && npm run dev",
     "publish-piece": "npx ts-node tools/scripts/utils/publish-piece.ts",
     "create-piece": "npx ts-node tools/scripts/generate-new-piece.ts"

@@ -1,5 +1,5 @@
 import { EntitySchema } from 'typeorm'
-import { ApIdSchema, BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../helper/database-common'
+import { ApIdSchema, BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../database/database-common'
 import { StoreEntry } from '@activepieces/shared'
 
 type StoreEntrySchema = StoreEntry

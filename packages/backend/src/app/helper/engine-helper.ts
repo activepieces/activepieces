@@ -38,7 +38,7 @@ import { pieceMetadataService } from '../pieces/piece-metadata-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 
 
-const apEnvironment = system.getOrThrow(SystemProp.ENVIRONMENT)
+const apEnvironment = system.get(SystemProp.ENVIRONMENT)
 
 type InstallPieceParams = {
     path: string
@@ -85,8 +85,7 @@ export type EngineHelperResponse<Result extends EngineHelperResult> = {
 }
 
 
-const engineExecutablePath = system.getOrThrow(SystemProp.ENGINE_EXECUTABLE_PATH)
-
+const engineExecutablePath = system.get(SystemProp.ENGINE_EXECUTABLE_PATH)
 
 const installPiece = async (params: InstallPieceParams) => {
     logger.debug(params, '[InstallPiece] params')

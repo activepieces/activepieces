@@ -18,7 +18,7 @@ const getIsolateExecutableName = () => {
     return executableNameMap[arch] ?? defaultName
 }
 
-const executionMode: ExecutionMode = system.get(SystemProp.EXECUTION_MODE) as ExecutionMode ?? ExecutionMode.SANDBOXED
+const executionMode: ExecutionMode = system.get(SystemProp.EXECUTION_MODE) as ExecutionMode
 
 export type ExecuteIsolateResult = {
     output: unknown
@@ -30,7 +30,7 @@ export type ExecuteIsolateResult = {
 
 export class Sandbox {
     private static readonly isolateExecutableName = getIsolateExecutableName()
-    private static readonly sandboxRunTimeSeconds = system.getNumber(SystemProp.SANDBOX_RUN_TIME_SECONDS)
+    private static readonly sandboxRunTimeSeconds = system.getNumber(SystemProp.SANDBOX_RUN_TIME_SECONDS)!
 
     public readonly boxId: number
     public used: boolean

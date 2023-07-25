@@ -1,17 +1,8 @@
 import { EntitySchemaColumnOptions } from 'typeorm'
-import { system } from './system/system'
-import { SystemProp } from './system/system-prop'
+import { DatabaseType, system } from '../helper/system/system'
+import { SystemProp } from '../helper/system/system-prop'
 
-
-export enum DatabaseType {
-    POSTGRES = 'POSTGRES',
-    SQLITE3 = 'SQLITE3',
-}
-
-export const databaseType =
-(system.get(SystemProp.DB_TYPE) as DatabaseType | undefined) ??
-DatabaseType.POSTGRES
-
+const databaseType = system.get(SystemProp.DB_TYPE)
 
 export const JSON_COLUMN_TYPE =
   databaseType === DatabaseType.SQLITE3 ? 'simple-json' : 'json'

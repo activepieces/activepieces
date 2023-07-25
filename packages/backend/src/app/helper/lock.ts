@@ -1,14 +1,15 @@
 import { captureException } from '../helper/logger'
 import RedLock from 'redlock'
-import { QueueMode, queueMode } from '../workers/flow-worker/queues/queue'
 import { Redis } from 'ioredis'
 import { createRedisClient } from '../database/redis-connection'
 import { Mutex } from 'async-mutex'
+import { QueueMode, system } from './system/system'
+import { SystemProp } from './system/system-prop'
 
 let redLock: RedLock
 let redisConnection: Redis
 const memoryLocks = new Map<string, MutexLockWrapper>()
-
+const queueMode = system.get(SystemProp.QUEUE_MODE) as QueueMode
 class MutexLockWrapper {
     private lock: Mutex
 

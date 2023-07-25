@@ -1,4 +1,4 @@
-import { system } from '../../../helper/system/system'
+import { QueueMode, system } from '../../../helper/system/system'
 import { SystemProp } from '../../../helper/system/system-prop'
 import {
     DelayedJobData,
@@ -8,12 +8,7 @@ import {
 } from '../job-data'
 import { ApId, ScheduleOptions } from '@activepieces/shared'
 
-export enum QueueMode {
-    REDIS = 'REDIS',
-    MEMORY = 'MEMORY',
-}
-
-export const queueMode: QueueMode = system.get(SystemProp.QUEUE_MODE) as (QueueMode | undefined) ?? QueueMode.REDIS
+export const queueMode: QueueMode = system.get(SystemProp.QUEUE_MODE)
 
 export type QueueManager = {
     init(): Promise<void>

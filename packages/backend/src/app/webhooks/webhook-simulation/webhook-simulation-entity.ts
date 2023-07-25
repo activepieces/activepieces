@@ -1,6 +1,6 @@
 import { EntitySchema } from 'typeorm'
 import { WebhookSimulation } from '@activepieces/shared'
-import { ApIdSchema, BaseColumnSchemaPart } from '../../helper/database-common'
+import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 
 export type WebhookSimulationSchema = WebhookSimulation
 

@@ -1,6 +1,6 @@
 import { EntitySchema } from 'typeorm'
 import { Flow, FlowInstance, FlowVersion } from '@activepieces/shared'
-import { ApIdSchema, BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../../helper/database-common'
+import { ApIdSchema, BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../../database/database-common'
 
 export type FlowInstanceSchema = {
     flow: Flow

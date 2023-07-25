@@ -15,7 +15,10 @@ import { FolderEntity } from '../flows/folder/folder.entity'
 import { PieceMetadataEntity } from '../pieces/piece-metadata-entity'
 import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDatasource } from './sqllite-connection'
-import { DatabaseType, databaseType } from '../helper/database-common'
+import { DatabaseType, system } from '../helper/system/system'
+import { SystemProp } from '../helper/system/system-prop'
+
+const databaseType = system.get(SystemProp.DB_TYPE)
 
 export const commonProperties = {
     subscribers: [],

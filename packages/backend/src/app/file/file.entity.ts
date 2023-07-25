@@ -1,5 +1,5 @@
 import { EntitySchema } from 'typeorm'
-import { ApIdSchema, BLOB_COLUMN_TYPE, BaseColumnSchemaPart } from '../helper/database-common'
+import { ApIdSchema, BLOB_COLUMN_TYPE, BaseColumnSchemaPart } from '../database/database-common'
 import { File, Project } from '@activepieces/shared'
 
 type FileSchema = File & {

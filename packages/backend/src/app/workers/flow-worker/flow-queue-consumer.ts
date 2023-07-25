@@ -22,10 +22,12 @@ import { flowInstanceService } from '../../flows/flow-instance/flow-instance.ser
 import { isNil } from '@activepieces/shared'
 import { consumeJobsInMemory } from './queues/memory/memory-consumer'
 import { inMemoryQueueManager } from './queues/memory/memory-queue'
-import { QueueMode, queueMode } from './queues/queue'
 import { redisConsumer } from './queues/redis/redis-consumer'
 import { redisQueueManager } from './queues/redis/redis-queue'
+import { QueueMode, system } from '../../helper/system/system'
+import { SystemProp } from '../../helper/system/system-prop'
 
+const queueMode = system.get(SystemProp.QUEUE_MODE) as QueueMode
 
 const initFlowQueueConsumer = async (): Promise<void> => {
     switch (queueMode) {
