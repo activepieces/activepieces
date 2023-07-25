@@ -87,7 +87,7 @@ export class Sandbox {
     async runCommandLine(commandLine: string): Promise<ExecuteIsolateResult> {
         if (executionMode === ExecutionMode.UNSANDBOXED) {
             const startTime = Date.now()
-            const envionment = system.get(SystemProp.ENVIRONMENT);
+            const envionment = system.get(SystemProp.ENVIRONMENT)
             const result = await this.runUnsafeCommand(`cd ${this.getSandboxFolderPath()} && env -i AP_ENVIRONMENT=${envionment} NODE_OPTIONS='--enable-source-maps' ${commandLine}`)
             let engineResponse
             if (result.verdict === EngineResponseStatus.OK) {
