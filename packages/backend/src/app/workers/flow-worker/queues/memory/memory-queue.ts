@@ -11,7 +11,8 @@ import {
 import cronParser from 'cron-parser'
 import { logger } from '../../../../helper/logger'
 import { flowInstanceRepo } from '../../../../flows/flow-instance/flow-instance.service'
-import { ExecutionType, FlowInstanceStatus, RunEnvironment, TriggerType } from '@activepieces/shared'
+import { DelayPauseMetadata, ExecutionOutputStatus, ExecutionType, FlowInstanceStatus, PauseType, RunEnvironment, TriggerType } from '@activepieces/shared'
+import { flowRunRepo } from '../../../../flows/flow-run/flow-run-service'
 
 function calculateNextFireForCron(cronExpression: string, timezone: string) {
     try {
@@ -77,6 +78,31 @@ export const inMemoryQueueManager: InMemoryQueueManager = {
             })
         })
 
+        const flowRuns = await flowRunRepo.findBy({
+            status: ExecutionOutputStatus.PAUSED,
+        })
+        logger.info(`Adding ${flowRuns.length} flow runs to the queue manager.`)
+        flowRuns.forEach((flowRun) => {
+            if (flowRun.pauseMetadata?.type === PauseType.DELAY) {
+                
+                const delayPauseMetadata = flowRun.pauseMetadata as DelayPauseMetadata
+                const delay = Math.max(0, dayjs(delayPauseMetadata.resumeDateTime).diff(dayjs(), 'ms'))
+
+                this.add({
+                    id: flowRun.id,
+                    type: JobType.DELAYED,
+                    data: {
+                        runId: flowRun.id,
+                        projectId: flowRun.projectId,
+                        environment: RunEnvironment.PRODUCTION,
+                        schemaVersion: 1,
+                        flowVersionId: flowRun.flowVersionId,
+                        executionType: ExecutionType.RESUME,
+                    },
+                    delay,
+                })
+            }
+        })
         // TODO add run with status RUNNING
     },
     async add(params: AddParams): Promise<void> {
@@ -101,7 +127,7 @@ export const inMemoryQueueManager: InMemoryQueueManager = {
             case JobType.DELAYED: {
                 this.queues[params.type].push({
                     ...params,
-                    nextFireEpochSeconds: dayjs().add(params.delay, 'seconds').unix(),
+                    nextFireEpochSeconds: dayjs().add(params.delay, 'ms').unix(),
                 })
                 break
             }

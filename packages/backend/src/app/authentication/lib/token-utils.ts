@@ -1,12 +1,11 @@
 import { randomBytes } from 'node:crypto'
 import { promisify } from 'node:util'
 import jwt, { SignOptions, VerifyOptions } from 'jsonwebtoken'
-import { Principal } from '@activepieces/shared'
+import { Principal, isNil } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { QueueMode, system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
 import { localFileStore } from '../../helper/store'
-import { isNil } from 'lodash'
 
 const ALGORITHM = 'HS256'
 const KEY_ID = '1'

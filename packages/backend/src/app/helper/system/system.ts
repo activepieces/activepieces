@@ -80,9 +80,11 @@ const getEnvVar = (prop: SystemProp): string | undefined => {
 }
 
 export const validateEnvPropsOnStartup = () => {
-    loadEncryptionKey()
     const executionMode = system.get(SystemProp.EXECUTION_MODE)
     const signedUpEnabled = system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
+    const queueMode = system.get(SystemProp.QUEUE_MODE) as QueueMode
+    loadEncryptionKey(queueMode)
+
     if (executionMode === ExecutionMode.UNSANDBOXED && signedUpEnabled) {
         throw new ActivepiecesError({
             code: ErrorCode.SYSTEM_PROP_INVALID,

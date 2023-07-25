@@ -9,9 +9,8 @@ let secret: string | null
 const algorithm = 'aes-256-cbc'
 const ivLength = 16
 
-const queueMode: QueueMode = system.get(SystemProp.QUEUE_MODE) as QueueMode
 
-export const loadEncryptionKey = async (): Promise<void> => {
+export const loadEncryptionKey = async (queueMode: QueueMode): Promise<void> => {
     secret = system.get(SystemProp.ENCRYPTION_KEY) ?? null
     if (queueMode === QueueMode.MEMORY) {
         if (isNil(secret)) {
