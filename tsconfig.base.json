@@ -70,6 +70,7 @@
       "@activepieces/piece-generatebanners": [
         "packages/pieces/generatebanners/src/index.ts"
       ],
+      "@activepieces/piece-ghostcms": ["packages/pieces/ghostcms/src/index.ts"],
       "@activepieces/piece-github": ["packages/pieces/github/src/index.ts"],
       "@activepieces/piece-gmail": ["packages/pieces/gmail/src/index.ts"],
       "@activepieces/piece-google-calendar": [
