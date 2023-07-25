@@ -16,7 +16,7 @@ import {
     TriggerType,
 } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
-import { JobType, flowQueue } from '../workers/flow-worker/flow-queue'
+import { flowQueue } from '../workers/flow-worker/flow-queue'
 import {
     EngineHelperResponse,
     EngineHelperTriggerResult,
@@ -30,6 +30,7 @@ import { pieceMetadataService } from '../pieces/piece-metadata-service'
 import { logger } from './logger'
 import { system } from './system/system'
 import { SystemProp } from './system/system-prop'
+import { JobType } from '../workers/flow-worker/queues/queue'
 
 const POLLING_FREQUENCY_CRON_EXPRESSON = `*/${system.getNumber(
     SystemProp.TRIGGER_DEFAULT_POLL_INTERVAL,

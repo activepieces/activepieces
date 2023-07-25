@@ -30,11 +30,11 @@ type IpMetadata = {
 
 
 export const getServerUrl = async (): Promise<string> => {
-    const environment = system.getOrThrow(SystemProp.ENVIRONMENT)
+    const environment = system.get(SystemProp.ENVIRONMENT)
 
     let url = environment === ApEnvironment.PRODUCTION
-        ? system.getOrThrow(SystemProp.FRONTEND_URL)
-        : system.getOrThrow(SystemProp.WEBHOOK_URL)
+        ? system.get(SystemProp.FRONTEND_URL)!
+        : system.get(SystemProp.WEBHOOK_URL)!
 
     // Localhost doesn't work with webhooks, so we need try to use the public ip
     if (extractHostname(url) == 'localhost' && environment === ApEnvironment.PRODUCTION) {

@@ -1,5 +1,5 @@
 import { EntitySchema } from 'typeorm'
-import { ApIdSchema, BaseColumnSchemaPart } from '../helper/base-entity'
+import { ApIdSchema, BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../database/database-common'
 import { StoreEntry } from '@activepieces/shared'
 
 type StoreEntrySchema = StoreEntry
@@ -13,7 +13,7 @@ export const StoreEntryEntity = new EntitySchema<StoreEntrySchema>({
         },
         projectId: ApIdSchema,
         value: {
-            type: 'jsonb',
+            type: JSONB_COLUMN_TYPE,
             nullable: true,
         },
     },

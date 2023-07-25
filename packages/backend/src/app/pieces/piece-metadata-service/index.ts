@@ -6,7 +6,7 @@ import { FilePieceMetadataService } from './file-piece-metadata-service'
 import { AggregatedPieceMetadataService } from './aggregated-metadata-service'
 
 const initPieceMetadataService = (): PieceMetadataService => {
-    const env = system.getOrThrow(SystemProp.ENVIRONMENT)
+    const env = system.get(SystemProp.ENVIRONMENT)
 
     if (env === ApEnvironment.DEVELOPMENT) {
         return FilePieceMetadataService()
