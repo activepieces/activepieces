@@ -185,6 +185,7 @@
           "pages": [
             "install/options/overview",
             "install/options/docker",
+            "install/options/docker-compose",
             "install/options/easypanel"
           ]
         },
