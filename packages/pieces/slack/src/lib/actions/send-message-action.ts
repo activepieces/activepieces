@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework'
-import { slackChannel } from '../common/props'
+import { ProfilePicture, slackChannel, Username } from '../common/props'
 import { slackSendMessage } from '../common/utils'
 import { slackAuth } from "../../";
 
@@ -20,6 +20,8 @@ export const slackSendMessageAction = createAction({
         description: 'The text of your message',
         required: true,
       }),
+      Username,
+      ProfilePicture,
     },
     async run(context) {
       const token = context.auth.access_token
@@ -28,6 +30,8 @@ export const slackSendMessageAction = createAction({
       return slackSendMessage({
         token,
         text,
+        username: context.propsValue.Username,
+        profilePicture: context.propsValue.ProfilePicture,
         conversationId: channel,
       })
     },

@@ -12,6 +12,7 @@ import {
 import { slackSendMessage } from '../common/utils'
 import { slackAuth } from "../../";
 import { assertNotNullOrUndefined } from '@activepieces/shared';
+import { ProfilePicture, Username } from '../common/props';
 
 export const slackSendDirectMessageAction = createAction({
   auth: slackAuth,
@@ -68,6 +69,8 @@ export const slackSendDirectMessageAction = createAction({
         description: 'The text of your message',
         required: true,
       }),
+      Username,
+      ProfilePicture,
     },
     async run(context) {
       const token = context.auth.access_token
@@ -80,6 +83,8 @@ export const slackSendDirectMessageAction = createAction({
       return slackSendMessage({
         token,
         text,
+        username: context.propsValue.Username,
+        profilePicture: context.propsValue.ProfilePicture,
         conversationId: userId,
       })
     },
