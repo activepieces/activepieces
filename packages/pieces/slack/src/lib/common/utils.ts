@@ -39,18 +39,6 @@ type SlackSendMessageParams = {
   conversationId: string
   username?: string
   profilePicture?: string
-  blocks?: {
-			type: "actions",
-			block_id: string,
-			elements: {
-        "type": "button",
-        "text": {
-          "type": "plain_text",
-          "text": string
-        },
-        "style"?: string,
-        "url": string
-      }[]
-  }[]
+  blocks?: unknown[]
   text: string
 }

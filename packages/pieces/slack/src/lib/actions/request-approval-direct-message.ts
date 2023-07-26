@@ -40,7 +40,15 @@ export const requestApprovalDirectMessageAction = createAction({
                 text: `${context.propsValue.text}\n\nApprove: ${approvalLink}\n\nDisapprove: ${disapprovalLink}`,
                 username,
                 profilePicture,
-                blocks: [{
+                blocks: [
+                  {
+                    type: 'section',
+                    text: {
+                      type: 'mrkdwn',
+                      text: `${context.propsValue.text}`
+                    }
+                  },
+                  {
                     type: "actions",
                     block_id: "actions",
                     elements: [
