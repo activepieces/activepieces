@@ -1,7 +1,7 @@
-import { PieceAuth, createPiece } from "@activepieces/pieces-framework";
+import { PieceAuth, Property, createPiece } from "@activepieces/pieces-framework";
 import { discordSendMessageWebhook } from "./lib/actions/send-message-webhook";
 import { newMessage } from "./lib/trigger/new-message";
-import { discordSendApprovalMessageWebhook } from "./lib/actions/send-approval-message-webhook";
+import { discordSendApprovalMessage } from "./lib/actions/send-approval-message";
 
 const markdown = `
 To obtain a token, follow these steps:
@@ -22,7 +22,7 @@ export const discord = createPiece({
         minimumSupportedRelease: '0.5.0',
     logoUrl: 'https://cdn.activepieces.com/pieces/discord.png',
     auth: discordAuth,
-    actions: [discordSendMessageWebhook, discordSendApprovalMessageWebhook],
+    actions: [discordSendMessageWebhook, discordSendApprovalMessage],
     authors: ['creed983', "Abdallah-Alwarawreh"],
     triggers: [newMessage],
 });

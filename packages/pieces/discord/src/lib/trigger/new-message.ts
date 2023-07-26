@@ -2,7 +2,7 @@ import { DedupeStrategy, HttpMethod, HttpRequest, Polling, httpClient, pollingHe
 import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs'
 import { discordAuth } from '../..';
-
+import { discordCommon } from "../common";
 
 export interface Message {
     id: string;
@@ -76,44 +76,7 @@ export const newMessage = createTrigger({
                 required: false,
                 defaultValue: 50
             }),
-            channel: Property.Dropdown<string>({
-                displayName: 'Channel',
-                description: 'List of channels',
-                required: true,
-                refreshers: [],
-                options: async ({ auth }) => {
-                    const request = {
-                        method: HttpMethod.GET,
-                        url: "https://discord.com/api/v9/users/@me/guilds",
-                        headers: {
-                            "Authorization": "Bot " + auth,
-                        }
-                    };
-
-                    const res = await httpClient.sendRequest<Guild[]>(request);
-                    const options: { options: { value: string, label: string }[] } = { options: [] };
-
-                    await Promise.all(res.body.map(async (guild) => {
-                        const requestChannels = {
-                            method: HttpMethod.GET,
-                            url: "https://discord.com/api/v9/guilds/" + guild.id + "/channels",
-                            headers: {
-                                "Authorization": "Bot " + auth,
-                            }
-                        };
-
-                        const resChannels = await httpClient.sendRequest<Channel[]>(requestChannels);
-                        resChannels.body.forEach((channel) => {
-                            options.options.push({
-                                value: channel.id,
-                                label: channel.name
-                            });
-                        });
-                    }));
-
-                    return options;
-                },
-            }),
+            channel: discordCommon.channel,
         },
         sampleData: {},
         onEnable: async (context) => {

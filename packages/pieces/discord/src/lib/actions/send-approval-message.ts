@@ -1,58 +1,21 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { HttpRequest, HttpMethod, httpClient } from "@activepieces/pieces-common";
 import { discordAuth } from "../../index";
-import { Channel, Guild } from "../trigger/new-message";
 import { ExecutionType, PauseType } from "@activepieces/shared";
+import { discordCommon } from "../common";
 
-export const discordSendApprovalMessageWebhook = createAction({
+export const discordSendApprovalMessage = createAction({
     auth: discordAuth,
-    name: 'send_approval_message_webhook',
-    description: 'Send a discord approval message via webhook',
-    displayName: 'Send Approval Message via Webhook',
+    name: 'send_approval_message',
+    description: 'Send a discord approval message',
+    displayName: 'Send Approval Message',
     props: {
       content: Property.LongText({
         displayName: 'Message',
         description: "The message you want to send",
         required: true,
       }),
-      channel: Property.Dropdown<string>({
-        displayName: 'Channel',
-        description: 'List of channels',
-        required: true,
-        refreshers: [],
-        options: async ({ auth }) => {
-          const request = {
-              method: HttpMethod.GET,
-              url: "https://discord.com/api/v9/users/@me/guilds",
-              headers: {
-                  "Authorization": "Bot " + auth,
-              }
-          };
-
-          const res = await httpClient.sendRequest<Guild[]>(request);
-          const options: { options: { value: string, label: string }[] } = { options: [] };
-
-          await Promise.all(res.body.map(async (guild) => {
-            const requestChannels = {
-              method: HttpMethod.GET,
-              url: "https://discord.com/api/v9/guilds/" + guild.id + "/channels",
-              headers: {
-                "Authorization": "Bot " + auth,
-              }
-            };
-
-            const resChannels = await httpClient.sendRequest<Channel[]>(requestChannels);
-            resChannels.body.forEach((channel) => {
-              options.options.push({
-                value: channel.id,
-                label: channel.name
-              });
-            });
-          }));
-
-          return options;
-        },
-      }),
+      channel: discordCommon.channel,
     },
     async run(configValue) {
       if (configValue.executionType === ExecutionType.BEGIN) {
