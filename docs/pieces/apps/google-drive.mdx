@@ -2,13 +2,36 @@
 title: 'Google Drive'
 ---
 
-##### Authors: [kanarelo](https://github.com/kanarelo)
+##### Authors: [kanarelo](https://github.com/kanarelo), [BastienMe](https://github.com/BastienMe), [MoShizzle](https://github.com/MoShizzle)
 
 
 ## Triggers
 
-*No supported triggers yet, please let us know if you need something on Discord so we can help out* 
 
+      <Card title="New File (Scheduled)" icon="clock">
+        Trigger when a new file is uploaded.
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Parent Folder"  type="Dropdown">
+
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  
+      <Card title="New Folder (Scheduled)" icon="clock">
+        Trigger when a new folder is created or uploaded.
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Parent Folder"  type="Dropdown">
+
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  
 
 ---
 
@@ -20,10 +43,6 @@ title: 'Google Drive'
 
         <Expandable title="Properties">
           
-<ResponseField name="Authentication" required type="Oauth2">
-
-</ResponseField>
-            
 <ResponseField name="Folder name" required type="Short_text">
 The name of the new folder
 </ResponseField>
@@ -40,16 +59,32 @@ The name of the new folder
 
         <Expandable title="Properties">
           
-<ResponseField name="Authentication" required type="Oauth2">
-
-</ResponseField>
-            
 <ResponseField name="File name" required type="Short_text">
 The name of the new text file
 </ResponseField>
             
 <ResponseField name="Text" required type="Long_text">
 The text content to add to file
+</ResponseField>
+            
+<ResponseField name="Parent Folder"  type="Dropdown">
+
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  
+      <Card title="Upload file " >
+        Upload a file in your Google Drive
+
+        <Expandable title="Properties">
+          
+<ResponseField name="File name" required type="Short_text">
+The name of the file
+</ResponseField>
+            
+<ResponseField name="File" required type="File">
+The file URL or base64 to upload
 </ResponseField>
             
 <ResponseField name="Parent Folder"  type="Dropdown">
