@@ -35,7 +35,7 @@ export const requestApprovalDirectMessageAction = createAction({
             const approvalLink = `${context.serverUrl}v1/flow-runs/${context.run.id}/resume?action=approve`;
             const disapprovalLink = `${context.serverUrl}v1/flow-runs/${context.run.id}/resume?action=disapprove`;
 
-            slackSendMessage({
+            return await slackSendMessage({
                 token,
                 text: `${context.propsValue.text}\n\nApprove: ${approvalLink}\n\nDisapprove: ${disapprovalLink}`,
                 username,
@@ -50,6 +50,7 @@ export const requestApprovalDirectMessageAction = createAction({
                           type: "plain_text",
                           text: "Approve"
                         },
+                        style: "primary",
                         url: approvalLink
                       },
                       {
@@ -58,14 +59,13 @@ export const requestApprovalDirectMessageAction = createAction({
                           "type": "plain_text",
                           "text": "Disapprove"
                         },
+                        "style": "danger",
                         "url": disapprovalLink
                       }
                     ]
                 }],
                 conversationId: userId,
             });
-      
-            return {}
         } else {
             const payload = context.resumePayload as { action: string };
       

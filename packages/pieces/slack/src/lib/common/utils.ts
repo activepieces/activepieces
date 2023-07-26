@@ -48,6 +48,7 @@ type SlackSendMessageParams = {
           "type": "plain_text",
           "text": string
         },
+        "style"?: string,
         "url": string
       }[]
   }[]
