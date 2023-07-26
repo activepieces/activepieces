@@ -4,7 +4,7 @@ import dayjs from 'dayjs'
 import { discordAuth } from '../..';
 
 
-interface Message {
+export interface Message {
     id: string;
     type: number;
     content: string;
@@ -26,7 +26,7 @@ interface Message {
     components: any;
 }
 
-interface Guild {
+export interface Guild {
     id: string;
     name: string;
     icon: string | null;
@@ -35,7 +35,7 @@ interface Guild {
     features: string[];
 }
 
-interface Channel {
+export interface Channel {
     id: string;
     name: string;
 }
