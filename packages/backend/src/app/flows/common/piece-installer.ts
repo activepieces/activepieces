@@ -38,7 +38,7 @@ const linkDependencies = async (params: LinkDependenciesParams) => {
     const { projectPath, pieces } = params
     // Get Path before /dist
     const uniquePieces = removeDuplicatedPieces(pieces)
-    const basePath = path.resolve(__dirname.split('/dist')[0])
+    const basePath = path.resolve(__dirname.split(`${path.sep}dist`)[0])
     const baseLinkPath = path.join(basePath, 'dist', 'packages', 'pieces')
 
     const frameworkPackages = {

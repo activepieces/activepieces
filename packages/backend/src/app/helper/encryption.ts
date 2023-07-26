@@ -31,9 +31,9 @@ export const loadEncryptionKey = async (queueMode: QueueMode): Promise<void> => 
 }
 
 const generateAndStoreSecret = async (): Promise<string> => {
-    const secretLengthInBytes = 32
+    const secretLengthInBytes = 16
     const secretBuffer = await promisify(randomBytes)(secretLengthInBytes)
-    const secret = secretBuffer.toString('base64')
+    const secret = secretBuffer.toString('hex') // Convert to hexadecimal
     await localFileStore.save(SystemProp.ENCRYPTION_KEY, secret)
     return secret
 }

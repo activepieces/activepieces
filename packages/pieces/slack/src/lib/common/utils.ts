@@ -1,13 +1,18 @@
 import { AuthenticationType, httpClient, HttpMethod, HttpRequest } from "@activepieces/pieces-common";
 
-export const slackSendMessage = async ({ text, conversationId, token }: SlackSendMessageParams) => {
+export const slackSendMessage = async ({ text, conversationId, username, profilePicture, token }: SlackSendMessageParams) => {
+  const body: any = {
+    text,
+    channel: conversationId,
+  }
+
+  if (username) body['username'] = username
+  if (profilePicture) body['icon_url'] = profilePicture
+
   const request: HttpRequest<SlackSendMessageRequestBody> = {
     method: HttpMethod.POST,
     url: 'https://slack.com/api/chat.postMessage',
-    body: {
-      text,
-      channel: conversationId,
-    },
+    body,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
       token,
@@ -31,5 +36,7 @@ type SlackSendMessageRequestBody = {
 type SlackSendMessageParams = {
   token: string
   conversationId: string
+  username?: string
+  profilePicture?: string
   text: string
 }
