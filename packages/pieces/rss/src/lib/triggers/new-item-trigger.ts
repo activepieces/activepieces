@@ -143,8 +143,18 @@ export const rssNewItemTrigger = createTrigger({
     },
 
     async run({ auth, propsValue, store }): Promise<unknown[]> {
-        const newItems = await pollingHelper.poll(polling, { auth, store: store, propsValue: propsValue });
         const lastFetchDate = await store.get<number>('_lastRssPublishDate')
+        const newItems = (await pollingHelper.poll(polling, { auth, store: store, propsValue: propsValue })).filter(f => {
+            if(isNil(lastFetchDate)){
+                return false;
+            }
+            const newItem = f as {pubdate: string, pubDate: string}
+            const newDate = newItem.pubdate ?? newItem.pubDate
+            if(isNil(newDate)){
+                return false;
+            }
+            return dayjs(newDate).unix() < lastFetchDate
+        });
         let newFetchDateUnix = lastFetchDate;
         for(const item of newItems){
             const newItem = item as {pubdate: string, pubDate: string}
@@ -165,19 +175,9 @@ export const rssNewItemTrigger = createTrigger({
 
 const polling: Polling<PiecePropValueSchema<PieceAuthProperty>, { rss_feed_url: string }> = {
     strategy: DedupeStrategy.LAST_ITEM,
-    items: async ({ store, propsValue }: { store: Store, propsValue: { rss_feed_url: string } }) => {
+    items: async ({ propsValue }: { store: Store, propsValue: { rss_feed_url: string } }) => {
         const items = await getRssItems(propsValue.rss_feed_url);
-        const lastFetchDate = await store.get<number>('_lastRssPublishDate')
-        return items.filter(f => {
-            if(isNil(lastFetchDate)){
-                return false;
-            }
-            const newDate = f.pubdate ?? f.pubDate
-            if(isNil(newDate)){
-                return false;
-            }
-            return dayjs(newDate).unix() < lastFetchDate
-        }).map((item) => ({
+        return items.map((item) => ({
             id: getId(item),
             data: item,
         }));
