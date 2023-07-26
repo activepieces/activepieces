@@ -4,11 +4,11 @@ import { slackAuth } from "../..";
 import { assertNotNullOrUndefined, ExecutionType, PauseType } from '@activepieces/shared';
 import { profilePicture, slackChannel, text, username } from '../common/props';
 
-export const slackSendApprovalMessageAction = createAction({
+export const requestSendApprovalMessageAction = createAction({
     auth: slackAuth,
-    name: 'send_approval_message',
-    displayName: 'Send Approval Message To A Channel',
-    description: 'Send approval message to a channel',
+    name: 'request_approval_message',
+    displayName: 'Request Approval in a Channel',
+    description: 'Send approval message to a channel and then wait until the message is approved or disapproved',
     sampleData: {
         approved: true,
     },

@@ -1,14 +1,14 @@
 import { createAction } from '@activepieces/pieces-framework'
 import { slackSendMessage } from '../common/utils'
-import { slackAuth } from "../../";
+import { slackAuth } from "../..";
 import { assertNotNullOrUndefined, ExecutionType, PauseType } from '@activepieces/shared';
 import { profilePicture, text, userId, username } from '../common/props';
 
-export const slackSendApprovalDirectMessageAction = createAction({
+export const requestApprovalDirectMessageAction = createAction({
     auth: slackAuth,
-    name: 'send_approval_direct_message',
-    displayName: 'Send Approval Message To A User',
-    description: 'Send approval message to a user',
+    name: 'request_approval_direct_message',
+    displayName: 'Request Approval from A User',
+    description: 'Send approval message to a user and then wait until the message is approved or disapproved',
     sampleData: {
         approved: true,
     },
