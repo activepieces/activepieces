@@ -1,6 +1,6 @@
 import { AuthenticationType, httpClient, HttpMethod, HttpRequest } from "@activepieces/pieces-common";
 
-export const slackSendMessage = async ({ text, conversationId, username, profilePicture, token }: SlackSendMessageParams) => {
+export const slackSendMessage = async ({ text, conversationId, username, profilePicture, attachments, token }: SlackSendMessageParams) => {
   const body: any = {
     text,
     channel: conversationId,
@@ -8,7 +8,8 @@ export const slackSendMessage = async ({ text, conversationId, username, profile
 
   if (username) body['username'] = username
   if (profilePicture) body['icon_url'] = profilePicture
-
+  if (attachments) body['attachments'] = attachments
+  
   const request: HttpRequest<SlackSendMessageRequestBody> = {
     method: HttpMethod.POST,
     url: 'https://slack.com/api/chat.postMessage',
@@ -38,5 +39,18 @@ type SlackSendMessageParams = {
   conversationId: string
   username?: string
   profilePicture?: string
+  attachments?: {
+    text: string
+    fallback: string
+    callback_id: string
+    color: string
+    attachment_type: string
+    actions: {
+      name: string
+      text: string
+      type: string
+      value: string
+    }[]
+  }[]
   text: string
 }

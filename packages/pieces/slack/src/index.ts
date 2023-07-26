@@ -1,6 +1,7 @@
 import crypto from 'node:crypto'
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
 import { slackSendDirectMessageAction } from './lib/actions/send-direct-message-action'
+import { slackSendApprovalDirectMessageAction } from './lib/actions/send-approval-direct-message'
 import { slackSendMessageAction } from './lib/actions/send-message-action';
 import { newMessage } from './lib/triggers/new-message';
 import { newReactionAdded } from './lib/triggers/new-reaction-added';
@@ -25,8 +26,8 @@ export const slackAuth = PieceAuth.OAuth2({
 
 export const slack = createPiece({
   displayName: 'Slack',
-      minimumSupportedRelease: '0.5.0',
-    logoUrl: 'https://cdn.activepieces.com/pieces/slack.png',
+  minimumSupportedRelease: '0.5.0',
+  logoUrl: 'https://cdn.activepieces.com/pieces/slack.png',
   auth: slackAuth,
   events: {
     parseAndReply: ({ payload }) => {
@@ -54,6 +55,7 @@ export const slack = createPiece({
   actions: [
     slackSendDirectMessageAction,
     slackSendMessageAction,
+    slackSendApprovalDirectMessageAction,
   ],
   triggers: [
     newMessage,
