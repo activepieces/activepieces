@@ -96,14 +96,12 @@ export const googleSheetsCommon = {
                 [key: string]: any
             } = {}
             for (const key in firstRow) {
-                for (const Letter in firstRow[key]) {
-                    properties[Letter] = Property.ShortText({
-                        displayName: firstRow[key][Letter].toString(),
-                        description: firstRow[key][Letter].toString(),
-                        required: false,
-                        defaultValue: ''
-                    })
-                }
+                properties[key] = Property.ShortText({
+                    displayName: firstRow[key].toString(),
+                    description: firstRow[key].toString(),
+                    required: false,
+                    defaultValue: ''
+                })
             }
             return properties;
         }
