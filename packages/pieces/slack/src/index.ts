@@ -5,6 +5,7 @@ import { slackSendApprovalDirectMessageAction } from './lib/actions/send-approva
 import { slackSendMessageAction } from './lib/actions/send-message-action';
 import { newMessage } from './lib/triggers/new-message';
 import { newReactionAdded } from './lib/triggers/new-reaction-added';
+import { slackSendApprovalMessageAction } from './lib/actions/send-approval-message';
 
 export const slackAuth = PieceAuth.OAuth2({
   displayName: 'Authentication',
@@ -56,6 +57,7 @@ export const slack = createPiece({
     slackSendDirectMessageAction,
     slackSendMessageAction,
     slackSendApprovalDirectMessageAction,
+    slackSendApprovalMessageAction,
   ],
   triggers: [
     newMessage,

@@ -1,19 +1,19 @@
 import { createAction } from '@activepieces/pieces-framework'
 import { slackSendMessage } from '../common/utils'
-import { slackAuth } from "../../";
+import { slackAuth } from "../..";
 import { assertNotNullOrUndefined, ExecutionType, PauseType } from '@activepieces/shared';
-import { profilePicture, text, userId, username } from '../common/props';
+import { profilePicture, slackChannel, text, userId, username } from '../common/props';
 
-export const slackSendApprovalDirectMessageAction = createAction({
+export const slackSendApprovalMessageAction = createAction({
     auth: slackAuth,
-    name: 'send_approval_direct_message',
-    displayName: 'Send Approval Message To A User',
-    description: 'Send approval message to a user',
+    name: 'send_approval_message',
+    displayName: 'Send Approval Message To A Channel',
+    description: 'Send approval message to a channel',
     sampleData: {
         approved: true,
     },
     props: {
-        userId,
+        channel: slackChannel,
         text,
         username,
         profilePicture,
@@ -27,7 +27,7 @@ export const slackSendApprovalDirectMessageAction = createAction({
                 }
             });
             const token = context.auth.access_token
-            const { userId, username, profilePicture } = context.propsValue
+            const { channel, username, profilePicture } = context.propsValue
 
             assertNotNullOrUndefined(token, 'token')
             assertNotNullOrUndefined(text, 'text')
@@ -40,7 +40,7 @@ export const slackSendApprovalDirectMessageAction = createAction({
                 text: `${context.propsValue.text}\n\nApprove: ${approvalLink}\n\nDisapprove: ${disapprovalLink}`,
                 username,
                 profilePicture,
-                conversationId: userId,
+                conversationId: channel,
             });
       
             return {}
