@@ -71,7 +71,8 @@ export const common = {
             method: HttpMethod.GET,
             url: `https://www.googleapis.com/drive/v3/files`,
             queryParams: {
-                q: q.join(' and ')
+                q: q.join(' and '),
+                orderBy: order ?? 'createdTime asc'
             },
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
