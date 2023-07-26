@@ -9,11 +9,13 @@ export const discordCommon = {
         required: true,
         refreshers: [],
         options: async ({ auth }) => {
-        if(!auth) return {
-            disabled: true,
-            options: [],
-            placeholder: "Please add a token first"
-        };
+        if(!auth) {
+            return {
+             disabled: true,
+             options: [],
+             placeholder: "Please connect your bot first"
+           };
+        }
         
         const request = {
             method: HttpMethod.GET,

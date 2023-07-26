@@ -6,9 +6,9 @@ import { discordCommon } from "../common";
 
 export const discordSendApprovalMessage = createAction({
     auth: discordAuth,
-    name: 'send_approval_message',
-    description: 'Send a discord approval message',
-    displayName: 'Send Approval Message',
+    name: 'request_approval_message',
+    description: 'send a message to a channel asking for approval and wait for a response',
+    displayName: 'Request Approval in a Channel',
     props: {
       content: Property.LongText({
         displayName: 'Message',
