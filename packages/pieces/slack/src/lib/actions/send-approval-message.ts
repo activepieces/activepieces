@@ -2,7 +2,7 @@ import { createAction } from '@activepieces/pieces-framework'
 import { slackSendMessage } from '../common/utils'
 import { slackAuth } from "../..";
 import { assertNotNullOrUndefined, ExecutionType, PauseType } from '@activepieces/shared';
-import { profilePicture, slackChannel, text, userId, username } from '../common/props';
+import { profilePicture, slackChannel, text, username } from '../common/props';
 
 export const slackSendApprovalMessageAction = createAction({
     auth: slackAuth,
@@ -31,7 +31,7 @@ export const slackSendApprovalMessageAction = createAction({
 
             assertNotNullOrUndefined(token, 'token')
             assertNotNullOrUndefined(text, 'text')
-            assertNotNullOrUndefined(userId, 'userId')
+            assertNotNullOrUndefined(channel, 'channel')
             const approvalLink = `${context.serverUrl}v1/flow-runs/${context.run.id}/resume?action=approve`;
             const disapprovalLink = `${context.serverUrl}v1/flow-runs/${context.run.id}/resume?action=disapprove`;
 
@@ -40,6 +40,28 @@ export const slackSendApprovalMessageAction = createAction({
                 text: `${context.propsValue.text}\n\nApprove: ${approvalLink}\n\nDisapprove: ${disapprovalLink}`,
                 username,
                 profilePicture,
+                blocks: [{
+                    type: "actions",
+                    block_id: "actions",
+                    elements: [
+                      {
+                        type: "button",
+                        text: {
+                          type: "plain_text",
+                          text: "Approve"
+                        },
+                        url: approvalLink
+                      },
+                      {
+                        "type": "button",
+                        "text": {
+                          "type": "plain_text",
+                          "text": "Disapprove"
+                        },
+                        "url": disapprovalLink
+                      }
+                    ]
+                }],
                 conversationId: channel,
             });
       

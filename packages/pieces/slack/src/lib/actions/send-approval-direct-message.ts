@@ -40,6 +40,28 @@ export const slackSendApprovalDirectMessageAction = createAction({
                 text: `${context.propsValue.text}\n\nApprove: ${approvalLink}\n\nDisapprove: ${disapprovalLink}`,
                 username,
                 profilePicture,
+                blocks: [{
+                    type: "actions",
+                    block_id: "actions",
+                    elements: [
+                      {
+                        type: "button",
+                        text: {
+                          type: "plain_text",
+                          text: "Approve"
+                        },
+                        url: approvalLink
+                      },
+                      {
+                        "type": "button",
+                        "text": {
+                          "type": "plain_text",
+                          "text": "Disapprove"
+                        },
+                        "url": disapprovalLink
+                      }
+                    ]
+                }],
                 conversationId: userId,
             });
       
