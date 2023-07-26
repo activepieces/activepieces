@@ -1,5 +1,6 @@
 import { PieceAuth, createPiece } from "@activepieces/pieces-framework";
 import { mondayCreateAnItem } from "./lib/actions/create-item";
+import { mondayUpdateAnItem } from "./lib/actions/update-item";
 
 import { mondayItemCreatedTrigger } from "./lib/triggers/item-created-trigger";
 import { mondayNewUpdatesTrigger } from "./lib/triggers/new-update-trigger";
@@ -25,6 +26,6 @@ export const monday = createPiece({
     logoUrl: "https://cdn.activepieces.com/pieces/monday.png",
   authors: ['kanarelo'],
   auth: mondayAuth,
-  actions: [mondayCreateAnItem],
+  actions: [mondayCreateAnItem, mondayUpdateAnItem],
   triggers: [mondayItemCreatedTrigger, mondayNewUpdatesTrigger],
 });
