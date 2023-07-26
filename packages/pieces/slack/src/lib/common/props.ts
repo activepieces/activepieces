@@ -39,3 +39,15 @@ export const slackChannel = Property.Dropdown({
     }
   },
 });
+
+export const username = Property.ShortText({
+  displayName: 'Username',
+  description: 'The username of the bot',
+  required: false,
+});
+
+export const profilePicture = Property.ShortText({
+  displayName: 'Profile Picture',
+  description: 'The profile picture of the bot',
+  required: false,
+});
