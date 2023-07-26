@@ -5,6 +5,7 @@ import { mondayGetItemColumnValues } from "./lib/actions/get-column-value-by-ite
 
 import { mondayItemCreatedTrigger } from "./lib/triggers/item-created-trigger";
 import { mondayNewUpdatesTrigger } from "./lib/triggers/new-update-trigger";
+import { mondayGetItemByColumnValues } from './lib/actions/get-item-by-column-value';
 
 export const mondayAuth = PieceAuth.OAuth2({
   displayName: "Authentication",
@@ -27,6 +28,6 @@ export const monday = createPiece({
     logoUrl: "https://cdn.activepieces.com/pieces/monday.png",
   authors: ['kanarelo'],
   auth: mondayAuth,
-  actions: [mondayCreateAnItem, mondayUpdateAnItem, mondayGetItemColumnValues],
+  actions: [mondayCreateAnItem, mondayUpdateAnItem, mondayGetItemColumnValues, mondayGetItemByColumnValues],
   triggers: [mondayItemCreatedTrigger, mondayNewUpdatesTrigger],
 });
