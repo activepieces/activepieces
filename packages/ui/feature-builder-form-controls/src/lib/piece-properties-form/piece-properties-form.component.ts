@@ -85,7 +85,6 @@ type ConfigKey = string;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PiecePropertiesFormComponent implements ControlValueAccessor {
-
   updateValueOnChange$: Observable<void> = new Observable<void>();
   PropertyType = PropertyType;
   searchControl: FormControl<string> = new FormControl('', {
@@ -617,7 +616,10 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
       webhookPrefix: this.flagService.getWebhookUrlPrefix(),
     }).pipe(
       map((res) => {
-      return markdown.replace("{{webhookUrl}}",`${res.webhookPrefix}/${res.flow.id}`)
+        return markdown.replace(
+          '{{webhookUrl}}',
+          `${res.webhookPrefix}/${res.flow.id}`
+        );
       })
     );
   }
