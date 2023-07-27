@@ -8,7 +8,7 @@ import {
 } from '../job-data'
 import { ApId, ScheduleOptions } from '@activepieces/shared'
 
-export const queueMode: QueueMode = system.get(SystemProp.QUEUE_MODE)
+export const queueMode = system.getOrThrow(SystemProp.QUEUE_MODE) as QueueMode
 
 export type QueueManager = {
     init(): Promise<void>
