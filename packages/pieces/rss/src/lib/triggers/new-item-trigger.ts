@@ -146,14 +146,14 @@ export const rssNewItemTrigger = createTrigger({
         const lastFetchDate = await store.get<number>('_lastRssPublishDate')
         const newItems = (await pollingHelper.poll(polling, { auth, store: store, propsValue: propsValue })).filter(f => {
             if(isNil(lastFetchDate)){
-                return false;
+                return true;
             }
             const newItem = f as {pubdate: string, pubDate: string}
             const newDate = newItem.pubdate ?? newItem.pubDate
             if(isNil(newDate)){
-                return false;
+                return true;
             }
-            return dayjs(newDate).unix() < lastFetchDate
+            return dayjs(newDate).unix() > lastFetchDate
         });
         let newFetchDateUnix = lastFetchDate;
         for(const item of newItems){
