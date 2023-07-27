@@ -6,6 +6,7 @@ import {
     JsonProperty,
     LongTextProperty,
     MarkDownProperty,
+    MarkDownPropertySchema,
     NumberProperty,
     ObjectProperty,
     SecretTextProperty,
@@ -47,7 +48,7 @@ export type PieceAuthProperty =
 
 export type NonAuthPieceProperty = ShortTextProperty<boolean>
 | LongTextProperty<boolean>
-| MarkDownProperty<boolean>
+| MarkDownProperty
 | OAuth2Property<boolean, OAuth2Props>
 | CheckboxProperty<boolean>
 | DropdownProperty<any, boolean>
@@ -93,8 +94,8 @@ export const Property = {
 	LongText<R extends boolean>(request: Properties<LongTextProperty<R>>): R extends true ? LongTextProperty<true> : LongTextProperty<false> {
 		return { ...request, valueSchema: undefined, type: PropertyType.LONG_TEXT } as unknown as R extends true ? LongTextProperty<true> : LongTextProperty<false>;
 	},
-	MarkDown<R extends boolean>(request: Properties<MarkDownProperty<R>>): R extends true ? MarkDownProperty<true> : MarkDownProperty<false> {
-		return { ...request, valueSchema: undefined, type: PropertyType.MARKDOWN } as unknown as R extends true ? MarkDownProperty<true> : MarkDownProperty<false>;
+	MarkDown(request: MarkDownPropertySchema): MarkDownProperty {
+		return {displayName: 'Markdown', required: true, description: request.value, type: PropertyType.MARKDOWN, valueSchema: undefined as never}
 	},
 	Number<R extends boolean>(request: Properties<NumberProperty<R>>): R extends true ? NumberProperty<true> : NumberProperty<false> {
 		return { ...request, valueSchema: undefined, type: PropertyType.NUMBER } as unknown as R extends true ? NumberProperty<true> : NumberProperty<false>;

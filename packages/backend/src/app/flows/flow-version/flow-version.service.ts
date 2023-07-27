@@ -394,6 +394,9 @@ function buildSchema(props: PiecePropertyMap): TSchema {
     const propsSchema: Record<string, TSchema> = {}
     for (const [name, property] of entries) {
         switch (property.type) {
+            case PropertyType.MARKDOWN:
+                propsSchema[name] = Type.Never()
+                break
             case PropertyType.DATE_TIME:
             case PropertyType.SHORT_TEXT:
             case PropertyType.LONG_TEXT:

@@ -1,35 +1,38 @@
-import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, PieceAuth, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 
 
 const markdown = `
-Go to plugins and activate the webhook plugin.
-Then go to the form you want to trigger on and add a webhook to it.
-The webhook url should be {{webhookUrl}}.
-You can leave the other settings as default.
+- Go to the "Plugins" section.
+- Find and click on the "Webhook" plugin to activate it.
+- Now, locate the form where you want the trigger to occur.
+- Add a webhook to that form.
+- In the webhook settings, paste this URL: 
+  \`{{webhookUrl}}\`
+- Keep the other settings unchanged (default).
 `
 
 export const gravityFormsNewSubmission = createTrigger({
-    name: 'gravityforms-new-submission',
+    name: 'new-submission',
     displayName: 'New Submission',
+    auth: PieceAuth.None(),
     description: 'Triggers when form receives a new submission',
     props: {
         md: Property.MarkDown({
-            description: markdown,
-            required: true,
+            value: markdown
         }),
     },
     type: TriggerStrategy.WEBHOOK,
     sampleData: { },
     async onEnable(context) {
-        // lol
+        // Empty
     },
     async onDisable(context) {
-        // lol
+        // Empty
     },
     async run(context) {
-        return [context];
+        return [context.payload];
     },
     async test(context) {
-        return [context];
+        return [context.payload];
     }
 });

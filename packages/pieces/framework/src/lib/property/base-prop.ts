@@ -18,16 +18,8 @@ export type BasePieceAuthSchema<AuthValueSchema> = BasePropertySchema & {
 }
 
 export type MarkDownPropertySchema = {
-	readonly displayName?: "MarkDown"
-	description: string;
+	value: string
 }
-
-export type MarkDownPropertyValue<T, U extends PropertyType, REQUIRED extends boolean> = {
-	valueSchema: T;
-	type: U;
-	readonly required?: true;
-	readonly defaultValue?: any;
-};
 
 export type TPropertyValue<T, U extends PropertyType, REQUIRED extends boolean> = {
     valueSchema: T;
@@ -52,7 +44,7 @@ export type ShortTextProperty<R extends boolean> = BasePropertySchema & TPropert
 
 export type LongTextProperty<R extends boolean> = BasePropertySchema & TPropertyValue<string, PropertyType.LONG_TEXT, R>;
 
-export type MarkDownProperty<R extends boolean> = MarkDownPropertySchema & MarkDownPropertyValue<string, PropertyType.MARKDOWN, R>;
+export type MarkDownProperty= BasePropertySchema & TPropertyValue<never, PropertyType.MARKDOWN, true>;
 
 export type SecretTextProperty<R extends boolean> = BasePieceAuthSchema<string> & TPropertyValue<string, PropertyType.SECRET_TEXT, R>;
 
