@@ -1,9 +1,10 @@
 import { EntitySchema } from 'typeorm'
-import { Flow, FlowVersion } from '@activepieces/shared'
-import { ApIdSchema, BaseColumnSchemaPart } from '../../helper/base-entity'
+import { Flow, FlowVersion, User } from '@activepieces/shared'
+import { ApIdSchema, BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../../database/database-common'
 
 type FlowVersionSchema = {
     flow: Flow
+    updatedByUser: User
 } & FlowVersion
 
 export const FlowVersionEntity = new EntitySchema<FlowVersionSchema>({
@@ -15,7 +16,11 @@ export const FlowVersionEntity = new EntitySchema<FlowVersionSchema>({
             type: String,
         },
         trigger: {
-            type: 'jsonb',
+            type: JSONB_COLUMN_TYPE,
+            nullable: true,
+        },
+        updatedBy: {
+            type: String,
             nullable: true,
         },
         valid: {
@@ -33,6 +38,16 @@ export const FlowVersionEntity = new EntitySchema<FlowVersionSchema>({
         },
     ],
     relations: {
+        updatedByUser: {
+            type: 'many-to-one',
+            target: 'user',
+            cascade: true,
+            onDelete: 'CASCADE',
+            joinColumn: {
+                name: 'updatedBy',
+                foreignKeyConstraintName: 'fk_updated_by_user_flow',
+            },
+        },
         flow: {
             type: 'many-to-one',
             target: 'flow',

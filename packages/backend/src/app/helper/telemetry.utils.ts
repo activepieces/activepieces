@@ -6,7 +6,7 @@ import { projectService } from '../project/project.service'
 import { getEdition } from './secret-helper'
 
 
-const telemetryEnabled = system.getBoolean(SystemProp.TELEMETRY_ENABLED) ?? true
+const telemetryEnabled = system.getBoolean(SystemProp.TELEMETRY_ENABLED)
 
 const client = new PostHog(
     'phc_7F92HoXJPeGnTKmYv0eOw62FurPMRW9Aqr0TPrDzvHh',
@@ -23,7 +23,7 @@ export const telemetry = {
                 email: user.email,
                 firstName: user.firstName,
                 lastName: user.lastName,
-                projectId: projectId,
+                projectId,
                 ...(await getMetadata()),
             },
         })
@@ -47,8 +47,8 @@ export const telemetry = {
 }
 
 async function getMetadata() {
-    const currentVersion = (await import('../../../../../package.json')).version
-    const edition = await getEdition()
+    const currentVersion = (await import('package.json')).version
+    const edition = getEdition()
     return {
         activepiecesVersion: currentVersion,
         activepiecesEnvironment: system.get(SystemProp.ENVIRONMENT),

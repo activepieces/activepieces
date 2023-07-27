@@ -171,7 +171,7 @@ export const askOpenAI = createAction({
             top_p: topP,
             frequency_penalty: frequencyPenalty,
             presence_penalty: presencePenalty,
-          })).data.choices[0].message?.content.trim();
+          }))?.data?.choices[0]?.message?.content?.trim();
           break; // Break out of the loop if the request is successful
         } catch (error) {
           console.error(`An error occurred: ${error}`);

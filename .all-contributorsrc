@@ -382,6 +382,33 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "Ozak93",
+      "name": "Osama Zakarneh",
+      "avatar_url": "https://avatars.githubusercontent.com/u/31257994?v=4",
+      "profile": "https://github.com/Ozak93",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "phestvik",
+      "name": "phestvik",
+      "avatar_url": "https://avatars.githubusercontent.com/u/88210985?v=4",
+      "profile": "https://github.com/phestvik",
+      "contributions": [
+        "ideas"
+      ]
+    },
+    {
+      "login": "Rajdeep1311",
+      "name": "Rajdeep Pal",
+      "avatar_url": "https://avatars.githubusercontent.com/u/113296626?v=4",
+      "profile": "http://website-portfolio-bucket.s3-website-ap-northeast-1.amazonaws.com/",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "commitType": "docs"

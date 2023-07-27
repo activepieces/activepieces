@@ -13,12 +13,10 @@ export * from "./lib/flow-run/execution/execution-type";
 export * from "./lib/flow-run/execution/step-output";
 export * from "./lib/flows/flow-operations";
 export * from "./lib/flows/step-run";
-export * from './lib/instance';
 export * from "./lib/app-connection/app-connection";
 export * from "./lib/app-connection/dto/upsert-app-connection-request";
 export * from "./lib/flow-run/execution/execution-output";
 export { StepOutputStatus } from "./lib/flow-run/execution/step-output";
-export * from "./lib/instance";
 export * from "./lib/pieces";
 export * from "./lib/store-entry/dto/store-entry-request";
 export * from "./lib/webhook";
@@ -35,7 +33,7 @@ export {
 } from './lib/flows/actions/action'
 export { StoreEntry, StoreEntryId } from './lib/store-entry/store-entry';
 export * from './lib/user/user';
-export { CreateFlowRunRequest } from './lib/flow-run/create-flow-run-request';
+export { TestFlowRunRequestBody } from "./lib/flow-run/test-flow-run-request";
 export { Trigger, EmptyTrigger, PieceTriggerSettings, PieceTrigger, WebhookTrigger, TriggerType, AUTHENTICATION_PROPERTY_NAME} from './lib/flows/triggers/trigger';
 export { FlowVersion, FlowVersionState, FlowVersionId } from './lib/flows/flow-version';
 export { Flow, FlowId } from './lib/flows/flow';

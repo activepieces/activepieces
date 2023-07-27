@@ -1,13 +1,3 @@
-<mat-toolbar class="!ap-bg-primary-light" *ngIf="warningMessage$ | async as warning" @fadeInUp>
-  <div class="ap-bg-primary-light ap-typography-body-1 ap-flex ap-flex-col ap-items-center ap-p-1 ap-flex-grow">
-    <div class="ap-typography-body-1 ap-text-primary !ap-font-bold">
-      {{ warning.title }}
-    </div>
-    <div class="ap-typography-body-2 ap-text-title ap-text-center">
-      {{ warning.body }}
-    </div>
-  </div>
-</mat-toolbar>
 <mat-toolbar @fadeInUp class="!ap-bg-primary ap-min-h-[64px]" *ngIf="showUpgradeNotification$ | async">
   <div class="ap-typography-body-1 ap-flex ap-flex-col ap-items-center ap-flex ap-flex-grow ap-justify-center">
     <div class="ap-typography-body-2 ap-text-white !ap-font-bold ap-flex ap-gap-1 ap-items-center">

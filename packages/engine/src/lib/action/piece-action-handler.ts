@@ -7,7 +7,8 @@ import {
   ExecutionType,
   PieceAction,
   StepOutput,
-  StepOutputStatus
+  StepOutputStatus,
+  assertNotNullOrUndefined
 } from '@activepieces/shared';
 import { BaseActionHandler, InitStepOutputParams } from './action-handler';
 import { globals } from '../globals';
@@ -138,16 +139,21 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
         censorConnections: false,
       })
 
+      assertNotNullOrUndefined(globals.flowRunId, 'globals.flowRunId')
+
       const context: ActionContext = {
         executionType: this.executionType,
         store: createContextStore('', globals.flowId),
         auth: resolvedProps[AUTHENTICATION_PROPERTY_NAME],
         propsValue: resolvedProps,
         connections: connectionManager,
+        serverUrl: globals.serverUrl!,
         run: {
+          id: globals.flowRunId,
           stop: this.generateStopHook({ stepOutput }),
           pause: this.generatePauseHook({ stepOutput }),
-        }
+        },
+        resumePayload: globals.resumePayload,
       }
 
       stepOutput.output = await action.run(context)

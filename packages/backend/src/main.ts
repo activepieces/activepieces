@@ -18,10 +18,15 @@ const start = async () => {
 
         await seedDevData()
 
-        const edition = await getEdition()
-        logger.info('Activepieces ' + (edition == ApEdition.ENTERPRISE ? 'Enterprise' : 'Community') + ' Edition')
-        if (edition === ApEdition.COMMUNITY) {
-            app.register(authenticationModule)
+        const edition = getEdition()
+        logger.info(`Activepieces ${edition} Edition`)
+        switch (edition) {
+            case ApEdition.CLOUD:
+            case ApEdition.ENTERPRISE:
+                break
+            case ApEdition.COMMUNITY:
+                app.register(authenticationModule)
+                break
         }
         await app.listen({
             host: '0.0.0.0',
@@ -52,7 +57,7 @@ let shuttingDown = false
 
 function setupTimeZone() {
     // It's important to set the time zone to UTC when working with dates in PostgreSQL.
-    // If the time zone is not set to UTC, there can be problems when storing dates in UTC but not considering the UTC offset when converting them back to local time. This can lead to incorrect fields being displayed for the created 
+    // If the time zone is not set to UTC, there can be problems when storing dates in UTC but not considering the UTC offset when converting them back to local time. This can lead to incorrect fields being displayed for the created
     // https://stackoverflow.com/questions/68240368/typeorm-find-methods-returns-wrong-timestamp-time
     process.env.TZ = 'UTC'
 }
@@ -68,7 +73,8 @@ const stop = async () => {
         process.exit(0)
     }
     catch (err) {
-        logger.error('Error stopping server', err)
+        logger.error('Error stopping server')
+        logger.error(err)
         process.exit(1)
     }
 }

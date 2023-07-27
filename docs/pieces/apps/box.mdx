@@ -1,0 +1,57 @@
+---
+title: 'Box'
+---
+
+##### Authors: [kanarelo](https://github.com/kanarelo), [MoShizzle](https://github.com/MoShizzle)
+
+
+## Triggers
+
+
+      <Card title="New File (Instant)" icon="bolt">
+        Triggers when a file is uploaded
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Folder ID" required type="Short_text">
+The ID of the folder in which file uploads will trigger this webhook
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  
+      <Card title="New Folder (Instant)" icon="bolt">
+        Triggers when a folder is created
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Folder ID" required type="Short_text">
+The ID of the folder in which file uploads will trigger this webhook
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  
+      <Card title="New Comment (Instant)" icon="bolt">
+        Triggers when a comment is created
+
+        <Expandable title="Properties">
+          
+<ResponseField name="File/Folder ID" required type="Short_text">
+The ID of the item to trigger a webhook
+</ResponseField>
+            
+<ResponseField name="Item Type" required type="Static_dropdown">
+The type of the item to trigger a webhook
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  
+
+---
+
+## Actions
+
+*No supported actions yet, please let us know if you need something on Discord so we can help out* 
+

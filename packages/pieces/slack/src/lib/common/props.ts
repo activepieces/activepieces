@@ -39,3 +39,68 @@ export const slackChannel = Property.Dropdown({
     }
   },
 });
+
+export const username = Property.ShortText({
+  displayName: 'Username',
+  description: 'The username of the bot',
+  required: false,
+});
+
+export const profilePicture = Property.ShortText({
+  displayName: 'Profile Picture',
+  description: 'The profile picture of the bot',
+  required: false,
+});
+
+export const userId = Property.Dropdown<string>({
+  displayName: 'User',
+  description: 'Message receiver',
+  required: true,
+  refreshers: [],
+  async options({ auth }) {
+    if (!auth) {
+      return {
+        disabled: true,
+        placeholder: 'connect slack account',
+        options: [],
+      }
+    }
+
+    const accessToken = (auth as OAuth2PropertyValue).access_token
+
+    const request: HttpRequest = {
+      method: HttpMethod.GET,
+      url: 'https://slack.com/api/users.list',
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: accessToken,
+      },
+    }
+
+    const response = await httpClient.sendRequest<UserListResponse>(request)
+
+    const options = response.body.members.map(member => ({
+      label: member.name,
+      value: member.id,
+    }))
+
+    return {
+      disabled: false,
+      placeholder: 'Select channel',
+      options,
+    }
+  },
+});
+
+export const text = Property.LongText({
+  displayName: 'Message',
+  description: 'The text of your message',
+  required: true,
+});
+
+type UserListResponse = {
+  members: {
+    id: string
+    name: string
+  }[]
+}

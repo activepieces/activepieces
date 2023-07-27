@@ -22,15 +22,14 @@ export const flagService = {
         })
     },
     async getCurrentVersion(): Promise<string> {
-        return (await import('../../../../../package.json')).version
+        return (await import('package.json')).version
     },
     async getAll(): Promise<Flag[]> {
         const flags = await flagRepo.find({})
         const now = new Date().toISOString()
         const created = now
         const updated = now
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const currentVersion = (await import('../../../../../package.json')).version
+        const currentVersion = (await import('package.json')).version
         const latestVersion = (await this.getCurrentVersion())
         flags.push(
             {
@@ -47,7 +46,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.EDITION,
-                value: await getEdition(),
+                value: getEdition(),
                 created,
                 updated,
             },
@@ -72,18 +71,6 @@ export const flagService = {
             {
                 id: ApFlagId.FRONTEND_URL,
                 value: system.get(SystemProp.FRONTEND_URL),
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.WARNING_TEXT_BODY,
-                value: system.get(SystemProp.WARNING_TEXT_BODY),
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.WARNING_TEXT_HEADER,
-                value: system.get(SystemProp.WARNING_TEXT_HEADER),
                 created,
                 updated,
             },
@@ -131,8 +118,6 @@ export type FlagType =
     | BaseFlagStructure<ApFlagId.WEBHOOK_URL_PREFIX, string>
     | BaseFlagStructure<ApFlagId.USER_CREATED, boolean>
     | BaseFlagStructure<ApFlagId.TELEMETRY_ENABLED, boolean>
-    | BaseFlagStructure<ApFlagId.WARNING_TEXT_BODY, string>
-    | BaseFlagStructure<ApFlagId.WARNING_TEXT_HEADER, string>
 
 type BaseFlagStructure<K extends ApFlagId, V> = {
     id: K

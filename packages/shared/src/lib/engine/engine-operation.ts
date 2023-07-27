@@ -1,6 +1,7 @@
 import { ResumeStepMetadata } from "../flow-run/execution/execution-output";
 import { ExecutionState } from "../flow-run/execution/execution-state";
 import { ExecutionType } from "../flow-run/execution/execution-type";
+import { FlowRunId } from "../flow-run/flow-run";
 import { FlowVersion, FlowVersionId } from "../flows/flow-version";
 import { ProjectId } from "../project/project";
 
@@ -10,12 +11,14 @@ export enum EngineOperationType {
     EXECUTE_CODE = "EXECUTE_CODE",
     EXECUTE_FLOW = "EXECUTE_FLOW",
     EXECUTE_PROPERTY = "EXECUTE_PROPERTY",
-    EXECUTE_TRIGGER_HOOK = "EXECUTE_TRIGGER_HOOK"
+    EXECUTE_TRIGGER_HOOK = "EXECUTE_TRIGGER_HOOK",
+    EXECUTE_VALIDATE_AUTH = "EXECUTE_VALIDATE_AUTH",
 }
 
 export enum TriggerHookType {
     ON_ENABLE = "ON_ENABLE",
     ON_DISABLE = "ON_DISABLE",
+    HANDSHAKE = "HANDSHAKE",
     RUN = "RUN",
     TEST = "TEST",
 }
@@ -28,15 +31,25 @@ export type EngineOperation =
     | ExecuteTriggerOperation<TriggerHookType>
     | ExecuteExtractPieceMetadata
 
-export type ExecuteActionOperation = {
+type BaseEngineOperation = {
+    projectId: ProjectId
+    workerToken?: string
+    apiUrl?: string
+}
+
+export type ExecuteActionOperation = BaseEngineOperation & {
     actionName: string
     flowVersion: FlowVersion
     pieceName: string
     pieceVersion: string
+    serverUrl: string,
     input: Record<string, unknown>
-    projectId: ProjectId
-    workerToken?: string
-    apiUrl?: string
+}
+
+export type ExecuteValidateAuthOperation = BaseEngineOperation & {
+    pieceName: string
+    pieceVersion: string
+    auth: unknown
 }
 
 export type ExecuteExtractPieceMetadata = {
@@ -51,24 +64,20 @@ export type ExecuteCodeOperation = {
     projectId: ProjectId
 }
 
-export interface ExecutePropsOptions {
+export type ExecutePropsOptions = BaseEngineOperation & {
     pieceName: string;
     pieceVersion: string;
     propertyName: string;
     stepName: string;
     input: Record<string, any>;
-    projectId: ProjectId;
-    apiUrl?: string;
-    workerToken?: string;
 }
 
-type BaseExecuteFlowOperation<T extends ExecutionType> = {
+type BaseExecuteFlowOperation<T extends ExecutionType> = BaseEngineOperation & {
     flowVersionId: FlowVersionId;
-    projectId: ProjectId;
+    flowRunId: FlowRunId;
     triggerPayload: unknown;
+    serverUrl: string;
     executionType: T;
-    workerToken?: string;
-    apiUrl?: string;
 }
 
 export type BeginExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.BEGIN>
@@ -76,18 +85,16 @@ export type BeginExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.B
 export type ResumeExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.RESUME> & {
     executionState: ExecutionState,
     resumeStepMetadata: ResumeStepMetadata,
+    resumePayload: unknown,
 }
 
 export type ExecuteFlowOperation = BeginExecuteFlowOperation | ResumeExecuteFlowOperation
 
-export interface ExecuteTriggerOperation<HT extends TriggerHookType> {
+export type ExecuteTriggerOperation<HT extends TriggerHookType> = BaseEngineOperation & {
     hookType: HT,
     flowVersion: FlowVersion,
     webhookUrl: string,
     triggerPayload?: TriggerPayload,
-    projectId: ProjectId,
-    workerToken?: string;
-    apiUrl?: string;
     edition?: string;
     appWebhookUrl?: string;
     webhookSecret?: string;
@@ -128,12 +135,23 @@ interface ExecuteTestOrRunTriggerResponse {
     output: unknown[];
 }
 
+interface ExecuteHandshakeTriggerResponse {
+    success: boolean;
+    message?: string;
+    response?: {
+        status: number,
+        body?: any,
+        headers?: Record<string, string>
+    };
+}
+
 interface ExecuteOnEnableTriggerResponse {
     listeners: AppEventListener[];
     scheduleOptions?: ScheduleOptions;
 }
 
 export type ExecuteTriggerResponse<H extends TriggerHookType> = H extends TriggerHookType.RUN ? ExecuteTestOrRunTriggerResponse :
+    H extends TriggerHookType.HANDSHAKE ? ExecuteHandshakeTriggerResponse :
     H extends TriggerHookType.TEST ? ExecuteTestOrRunTriggerResponse :
     H extends TriggerHookType.ON_DISABLE ? Record<string, never> :
     ExecuteOnEnableTriggerResponse;
@@ -143,6 +161,19 @@ export type ExecuteActionResponse = {
     output: unknown;
     message?: string;
 }
+
+type BaseExecuteValidateAuthResponseOutput<Valid extends boolean> = {
+    valid: Valid
+}
+
+type ValidExecuteValidateAuthResponseOutput = BaseExecuteValidateAuthResponseOutput<true>
+
+type InvalidExecuteValidateAuthResponseOutput = BaseExecuteValidateAuthResponseOutput<false> & {
+    error: string
+}
+export type ExecuteValidateAuthResponse =
+    | ValidExecuteValidateAuthResponseOutput
+    | InvalidExecuteValidateAuthResponseOutput
 
 export interface ScheduleOptions {
     cronExpression: string;

@@ -6,7 +6,7 @@ import { bloomerangAuth } from '../..';
 export const bloomerangUpsertContactsSearch = createAction({
     auth: bloomerangAuth,
     name: 'upsert_contact_search',
-    description: 'Update or create bloomerang contact using search',
+    description: 'Update or create bloomerang contact using the search',
     displayName: 'Upsert Contact (Search)',
     props: {
         search: Property.ShortText({

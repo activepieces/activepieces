@@ -7,11 +7,11 @@
 
     </ng-container>
     <ng-template #folderTemplate>
+        
         <ng-container *ngIf="currentFolder$| async as folder; else uncategorizedTemplate">
             <div class="ap-flex-grow ap-typography-headline-6 ap-flex ap-gap-2 ap-items-center"><svg-icon
                     src="assets/img/custom/folder.svg" class="ap-h-[15px] ap-w-[15px] ap-fill-bleached-gray"
                     [applyClass]="true"></svg-icon>{{folder.displayName}}</div>
-
         </ng-container>
         <ng-template #uncategorizedTemplate>
             <div class="ap-flex-grow ap-typography-headline-6 ap-flex ap-gap-2 ap-items-center"><svg-icon
@@ -20,5 +20,7 @@
             </div>
         </ng-template>
     </ng-template>
-
+    <ap-button btnColor="primary" btnSize="medium" [loading]="creatingFlow" (buttonClicked)="createFlow()"> + New Flow</ap-button>
 </div>
+
+<ng-container *ngIf="createFlow$ | async"></ng-container>

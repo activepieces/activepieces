@@ -1,5 +1,5 @@
 import { EntitySchema } from 'typeorm'
-import { ApIdSchema, BaseColumnSchemaPart } from '../helper/base-entity'
+import { ApIdSchema, BLOB_COLUMN_TYPE, BaseColumnSchemaPart } from '../database/database-common'
 import { File, Project } from '@activepieces/shared'
 
 type FileSchema = File & {
@@ -12,7 +12,7 @@ export const FileEntity = new EntitySchema<FileSchema>({
         ...BaseColumnSchemaPart,
         projectId: { ...ApIdSchema, nullable: true },
         data: {
-            type: 'bytea',
+            type: BLOB_COLUMN_TYPE,
             nullable: false,
         },
     },

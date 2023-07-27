@@ -32,6 +32,7 @@ export class ProjectEffects {
               `Error loading projects: ${error.message}`,
               'Dismiss'
             );
+            this.authenticationService.logout();
             return of({ type: 'Load Projects Error' });
           })
         );

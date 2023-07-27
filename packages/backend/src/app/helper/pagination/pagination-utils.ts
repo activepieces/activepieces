@@ -45,6 +45,7 @@ export function decodeByType(type: string, value: string): string | number | Dat
     switch (type) {
         case 'object':
         case 'timestamp with time zone':
+        case 'datetime':
         case 'date': {
             const timestamp = parseInt(value, 10)
             if (Number.isNaN(timestamp)) {

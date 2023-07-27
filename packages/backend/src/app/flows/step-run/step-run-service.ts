@@ -16,6 +16,7 @@ import { flowVersionService } from '../flow-version/flow-version.service'
 import { fileService } from '../../file/file.service'
 import { codeBuilder } from '../../workers/code-worker/code-builder'
 import { isNil } from '@activepieces/shared'
+import { getServerUrl } from '../../helper/public-ip-utils'
 
 type CreateParams = {
     projectId: ProjectId
@@ -67,10 +68,11 @@ async function executePiece({ step, projectId, flowVersion }: ExecutePieceParams
     }
 
     const operation: ExecuteActionOperation = {
+        serverUrl: await getServerUrl(),
         pieceName,
         pieceVersion,
         actionName,
-        input: input,
+        input,
         flowVersion,
         projectId,
     }
@@ -83,8 +85,8 @@ async function executePiece({ step, projectId, flowVersion }: ExecutePieceParams
     return {
         success: result.success,
         output: result.output,
-        standardError: standardError,
-        standardOutput: standardOutput,
+        standardError,
+        standardOutput,
     }
 }
 
@@ -104,7 +106,7 @@ async function executeCode({ step, flowVersion, projectId }: { step: CodeAction,
     return {
         success: result.success,
         output: result.output,
-        standardError: standardError,
-        standardOutput: standardOutput,
+        standardError,
+        standardOutput,
     }
 }

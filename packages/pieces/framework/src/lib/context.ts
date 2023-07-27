@@ -1,4 +1,4 @@
-import { AppConnectionValue, ExecutionType, PauseMetadata, StopResponse, TriggerPayload } from "@activepieces/shared";
+import { AppConnectionValue, ExecutionType, FlowRunId, PauseMetadata, StopResponse, TriggerPayload } from "@activepieces/shared";
 import { TriggerStrategy } from "./trigger/trigger";
 import { NonAuthPiecePropertyMap, PieceAuthProperty, PiecePropValueSchema, PiecePropertyMap, StaticPropsValue } from "./property";
 
@@ -49,7 +49,9 @@ export type StopHookParams = {
 
 export type StopHook = (params: StopHookParams) => void
 
-export type PauseHookPauseMetadata = Omit<PauseMetadata, 'resumeStepMetadata'>
+type PauseMetadataWithoutResumeStepMetadata<T extends PauseMetadata> = T extends PauseMetadata ? Omit<T, 'resumeStepMetadata'> : never
+
+export type PauseHookPauseMetadata = PauseMetadataWithoutResumeStepMetadata<PauseMetadata>
 
 export type PauseHookParams = {
     pauseMetadata: PauseHookPauseMetadata
@@ -57,17 +59,37 @@ export type PauseHookParams = {
 
 export type PauseHook = (params: PauseHookParams) => void
 
-export type ActionContext<
-    PieceAuth extends PieceAuthProperty = PieceAuthProperty,
-    ActionProps extends NonAuthPiecePropertyMap = NonAuthPiecePropertyMap,
+export type BaseActionContext<
+    ET extends ExecutionType,
+    PieceAuth extends PieceAuthProperty,
+    ActionProps extends NonAuthPiecePropertyMap,
 > = BaseContext<PieceAuth, ActionProps> & {
-    executionType: ExecutionType,
+    executionType: ET,
     connections: ConnectionsManager,
+    serverUrl: string,
     run: {
+        id: FlowRunId,
         stop: StopHook,
         pause: PauseHook,
     }
 }
+
+type BeginExecutionActionContext<
+    PieceAuth extends PieceAuthProperty = PieceAuthProperty,
+    ActionProps extends NonAuthPiecePropertyMap = NonAuthPiecePropertyMap,
+> = BaseActionContext<ExecutionType.BEGIN, PieceAuth, ActionProps>
+
+type ResumeExecutionActionContext<
+    PieceAuth extends PieceAuthProperty = PieceAuthProperty,
+    ActionProps extends NonAuthPiecePropertyMap = NonAuthPiecePropertyMap,
+> = BaseActionContext<ExecutionType.RESUME, PieceAuth, ActionProps> & {
+    resumePayload: unknown
+}
+
+export type ActionContext<
+    PieceAuth extends PieceAuthProperty = PieceAuthProperty,
+    ActionProps extends NonAuthPiecePropertyMap = NonAuthPiecePropertyMap,
+> = BeginExecutionActionContext<PieceAuth, ActionProps> | ResumeExecutionActionContext<PieceAuth, ActionProps>
 
 export interface ConnectionsManager {
     get(key: string): Promise<AppConnectionValue | Record<string, unknown> | string | null>;

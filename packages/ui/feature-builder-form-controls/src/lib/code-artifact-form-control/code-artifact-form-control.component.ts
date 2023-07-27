@@ -12,7 +12,6 @@ import { CodeArtifactControlFullscreenComponent } from './code-artifact-control-
 import { MatTooltip } from '@angular/material/tooltip';
 import { Artifact } from '@activepieces/ui/common';
 import { CodemirrorComponent } from '@ctrl/ngx-codemirror';
-import { CollectionBuilderService } from '@activepieces/ui/feature-builder-store';
 
 export interface CodeArtifactForm {
   content: FormControl<string>;
@@ -40,36 +39,25 @@ export class CodeArtifactFormControlComponent
       package: string;
     }>
   >;
-  refreshCodeMirror$: Observable<void>;
   @ViewChild('codeMirror') codeMirror: CodemirrorComponent;
   @ViewChild('tooltip') tooltip: MatTooltip;
   hideDelayForFullscreenTooltip = 2000;
   codeArtifactForm: FormGroup<CodeArtifactForm>;
   codeEditorOptions = {
-    lineNumbers: true,
-    lineWrapping: true,
-    theme: 'lucario',
-    readOnly: '',
-    mode: 'text/typescript',
-    matchBrackets: true,
-    gutters: ['CodeMirror-lint-markers'],
+    minimap: { enabled: false },
+    theme: 'cobalt2',
+    language: 'typescript',
+    readOnly: false,
+    automaticLayout: true,
   };
   constructor(
     private formBuilder: FormBuilder,
-    private dialogService: MatDialog,
-    private builderService: CollectionBuilderService
+    private dialogService: MatDialog
   ) {
     this.codeArtifactForm = this.formBuilder.group({
       content: new FormControl('', { nonNullable: true }),
       package: new FormControl('', { nonNullable: true }),
     });
-    this.refreshCodeMirror$ = this.builderService.refreshCodeMirror$
-      .asObservable()
-      .pipe(
-        tap(() => {
-          this.codeMirror.codeMirror?.refresh();
-        })
-      );
   }
   ngOnInit(): void {
     this.setupValueListener();
@@ -83,7 +71,7 @@ export class CodeArtifactFormControlComponent
   setDisabledState?(isDisabled: boolean): void {
     if (isDisabled) {
       this.codeArtifactForm.disable();
-      this.codeEditorOptions.readOnly = 'nocursor';
+      this.codeEditorOptions.readOnly = true;
     }
   }
   onChange: (val: unknown) => void = (val) => {
@@ -110,7 +98,7 @@ export class CodeArtifactFormControlComponent
     this.dialogService.open(CodeArtifactControlFullscreenComponent, {
       data: {
         codeFilesForm: this.codeArtifactForm,
-        readOnly: this.codeEditorOptions.readOnly === 'nocursor',
+        readOnly: this.codeEditorOptions.readOnly,
       },
       panelClass: 'fullscreen-dialog',
     });

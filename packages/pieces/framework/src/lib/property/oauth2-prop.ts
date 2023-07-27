@@ -1,6 +1,6 @@
 import { PropertyType } from "./property";
 
-import { BasePropertySchema, SecretTextProperty, ShortTextProperty, TPropertyValue } from "./base-prop";
+import { BasePieceAuthSchema, SecretTextProperty, ShortTextProperty, TPropertyValue } from "./base-prop";
 import { StaticDropdownProperty } from "./dropdown-prop";
 import { StaticPropsValue } from "./property";
 
@@ -12,7 +12,7 @@ export interface OAuth2Props {
 
 export type OAuthPropsValue<T extends OAuth2Props> = StaticPropsValue<T>;
 
-export type OAuth2PropertySchema = BasePropertySchema & {
+export type OAuth2PropertySchema = BasePieceAuthSchema<OAuth2PropertyValue> & {
 	props?: Record<string, OAuthProp>
 	authUrl: string;
 	tokenUrl: string;

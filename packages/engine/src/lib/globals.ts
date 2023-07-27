@@ -1,3 +1,5 @@
+import { FlowRunId } from "@activepieces/shared";
+
 class Globals {
   private _collectionDirectory = './collections';
   private _flowDirectory = './flows';
@@ -8,7 +10,34 @@ class Globals {
   private _workerToken = '';
   private _projectId = '';
   private _apiUrl = '';
+  private _serverUrl = '';
   private _flowId = '';
+  private _flowRunId?: FlowRunId
+  private _resumePayload: unknown
+
+  set serverUrl(_serverUrl: string) {
+    this._serverUrl = _serverUrl;
+  }
+
+  get serverUrl(): string | undefined {
+    return this._serverUrl;
+  }
+
+  set flowRunId(_flowRunId: string) {
+    this._flowRunId = _flowRunId;
+  }
+
+  get flowRunId(): string | undefined {
+    return this._flowRunId;
+  }
+
+  set resumePayload(_resumePayload: unknown) {
+    this._resumePayload = _resumePayload;
+  }
+
+  get resumePayload() {
+    return this._resumePayload;
+  }
 
   set flowId(_flowId: string) {
     this._flowId = _flowId;

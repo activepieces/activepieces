@@ -8,7 +8,7 @@ export const captureException = (error: unknown) => {
 }
 
 const initLogger = () => {
-    const env = system.getOrThrow(SystemProp.ENVIRONMENT)
+    const env = system.get(SystemProp.ENVIRONMENT)
 
     const level: pino.Level = env === ApEnvironment.DEVELOPMENT
         ? 'debug'
@@ -16,7 +16,7 @@ const initLogger = () => {
 
     return pino({
         level,
-        transport: env === ApEnvironment.PRODUCTION ? undefined: { target: 'pino-pretty', options: { translateTime: 'HH:MM:ss Z', colorize: true, ignore: 'pid,hostname' } },
+        transport: env === ApEnvironment.PRODUCTION ? undefined : { target: 'pino-pretty', options: { translateTime: 'HH:MM:ss Z', colorize: true, ignore: 'pid,hostname' } },
     })
 }
 

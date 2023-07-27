@@ -9,13 +9,13 @@ import { FastifyRequest } from 'fastify'
 import { logger } from '../helper/logger'
 import { flagService } from '../flags/flag.service'
 
-const statsEnabled = system.get(SystemProp.STATS_ENABLED) ?? false
+const statsEnabled = system.getBoolean(SystemProp.STATS_ENABLED)
 
 const getPieceMetaData = async (pieceName: string, pieceVersion: string) => {
     try {
         const { result } = await engineHelper.extractPieceMetadata({
-            pieceName: pieceName,
-            pieceVersion: pieceVersion,
+            pieceName,
+            pieceVersion,
         })
         return result
     }
@@ -67,7 +67,7 @@ export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done)
         const latestRelease = await flagService.getCurrentVersion()
         const release = req.query.release ?? latestRelease
         return await pieceMetadataService.list({
-            release: release,
+            release,
             projectId: req.principal.projectId,
         })
     })

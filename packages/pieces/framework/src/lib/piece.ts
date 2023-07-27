@@ -4,24 +4,6 @@ import { EventPayload, ParseEventResponse } from '@activepieces/shared'
 import { PieceBase, PieceMetadata } from './piece-metadata'
 import { PieceAuthProperty } from './property'
 
-type CreatePieceParams<PieceAuth extends PieceAuthProperty = PieceAuthProperty> = {
-  displayName: string
-  logoUrl: string
-  authors?: string[]
-  description?: string
-  auth: PieceAuth  | undefined
-  events?: PieceEventProcessors
-  minimumSupportedRelease?: string
-  maximumSupportedRelease?: string
-  actions: Action<PieceAuth>[]
-  triggers: Trigger<PieceAuth>[]
-}
-
-type PieceEventProcessors = {
-  parseAndReply: (ctx: { payload: EventPayload }) => ParseEventResponse
-  verify: (ctx: { webhookSecret: string, payload: EventPayload, appWebhookUrl: string }) => boolean
-}
-
 export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty> implements Omit<PieceBase, "version" | "name"> {
   private readonly _actions: Record<string, Action> = {}
   private readonly _triggers: Record<string, Trigger> = {}
@@ -85,4 +67,22 @@ export const createPiece = <PieceAuth extends PieceAuthProperty>(params: CreateP
     params.maximumSupportedRelease,
     params.description,
   )
+}
+
+type CreatePieceParams<PieceAuth extends PieceAuthProperty = PieceAuthProperty> = {
+  displayName: string
+  logoUrl: string
+  authors?: string[]
+  description?: string
+  auth: PieceAuth | undefined
+  events?: PieceEventProcessors
+  minimumSupportedRelease?: string
+  maximumSupportedRelease?: string
+  actions: Action<PieceAuth>[]
+  triggers: Trigger<PieceAuth>[]
+}
+
+type PieceEventProcessors = {
+  parseAndReply: (ctx: { payload: EventPayload }) => ParseEventResponse
+  verify: (ctx: { webhookSecret: string, payload: EventPayload, appWebhookUrl: string }) => boolean
 }

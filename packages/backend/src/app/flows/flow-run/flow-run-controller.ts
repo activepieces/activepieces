@@ -1,37 +1,42 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
-import { FastifyPluginCallbackTypebox } from '@fastify/type-provider-typebox'
-import { CreateFlowRunRequest, ExecutionType, FlowRunId, ListFlowRunsRequestQuery, RunEnvironment } from '@activepieces/shared'
+import { FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
+import { TestFlowRunRequestBody, FlowRunId, ListFlowRunsRequestQuery, ApId } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { flowRunService } from './flow-run-service'
 
 const DEFAULT_PAGING_LIMIT = 10
 
-
 type GetOnePathParams = {
     id: FlowRunId
 }
 
+const TestFlowRunRequest = {
+    schema: {
+        body: TestFlowRunRequestBody,
+    },
+}
+
+const ResumeFlowRunRequest = {
+    schema: {
+        params: Type.Object({
+            id: ApId,
+        }),
+        querystring: Type.Object({
+            action: Type.String(),
+        }),
+    },
+}
+
 export const flowRunController: FastifyPluginCallbackTypebox = (app, _options, done): void => {
+    app.post('/test', TestFlowRunRequest, async (req) => {
+        const { projectId } = req.principal
+        const { flowVersionId } = req.body
 
-    app.post(
-        '/',
-        {
-            schema: {
-                body: CreateFlowRunRequest,
-            },
-        },
-        async (request: FastifyRequest<{ Body: CreateFlowRunRequest }>, reply: FastifyReply) => {
-            const { flowVersionId, payload } = request.body
-            const flowRun = await flowRunService.start({
-                environment: RunEnvironment.TESTING,
-                flowVersionId,
-                payload,
-                projectId: request.principal.projectId,
-                executionType: ExecutionType.BEGIN,
-            })
-
-            await reply.send(flowRun)
-        },
+        return await flowRunService.test({
+            projectId,
+            flowVersionId,
+        })
+    },
     )
 
     // list
@@ -68,6 +73,14 @@ export const flowRunController: FastifyPluginCallbackTypebox = (app, _options, d
         }
 
         await reply.send(flowRun)
+    })
+
+
+    app.all('/:id/resume', ResumeFlowRunRequest, async (req) => {
+        await flowRunService.resume({
+            flowRunId: req.params.id,
+            action: req.query.action,
+        })
     })
 
     done()

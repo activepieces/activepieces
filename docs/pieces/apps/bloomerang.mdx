@@ -20,12 +20,8 @@ title: 'Bloomerang'
 
         <Expandable title="Properties">
           
-<ResponseField name="API Key" required type="Secret_text">
-API key acquired from your Bloomerang crm
-</ResponseField>
-            
-<ResponseField name="Firs name"  type="Short_text">
-Firs name
+<ResponseField name="First name"  type="Short_text">
+First name
 </ResponseField>
             
 <ResponseField name="Last name"  type="Short_text">
@@ -60,14 +56,10 @@ The Contact JSON
       </Card>
   
       <Card title="Upsert Contact (Search) " >
-        Update or create bloomerang contact using search
+        Update or create bloomerang contact using the search
 
         <Expandable title="Properties">
           
-<ResponseField name="API Key" required type="Secret_text">
-API key acquired from your Bloomerang crm
-</ResponseField>
-            
 <ResponseField name="Search" required type="Short_text">
 The text to search
 </ResponseField>
@@ -80,7 +72,7 @@ The number of items to skip before starting to collect the result set.
 The number of items to include in the result set.
 </ResponseField>
             
-<ResponseField name="Contact type"  type="Dropdown">
+<ResponseField name="Contact type"  type="Static_dropdown">
 Select the object
 </ResponseField>
             
@@ -96,10 +88,6 @@ The Contact JSON
 
         <Expandable title="Properties">
           
-<ResponseField name="API Key" required type="Secret_text">
-API key acquired from your Bloomerang crm
-</ResponseField>
-            
 <ResponseField name="Transaction (JSON)" required type="Json">
 The Transaction JSON
 </ResponseField>
@@ -112,10 +100,6 @@ The Transaction JSON
 
         <Expandable title="Properties">
           
-<ResponseField name="API Key" required type="Secret_text">
-API key acquired from your Bloomerang crm
-</ResponseField>
-            
 <ResponseField name="Last Modified Date" required type="Short_text">
 The date to search for contacts modified after
 </ResponseField>
@@ -132,7 +116,7 @@ The number of items to include in the result set.
 Filters constituents to only constituents the user has favorited.
 </ResponseField>
             
-<ResponseField name="Contact type"  type="Dropdown">
+<ResponseField name="Contact type"  type="Static_dropdown">
 Select the object
 </ResponseField>
             
@@ -156,11 +140,7 @@ Filters results based on the ID for the constituent.
 
         <Expandable title="Properties">
           
-<ResponseField name="API Key" required type="Secret_text">
-API key acquired from your Bloomerang crm
-</ResponseField>
-            
-<ResponseField name="Transaction stuff" required type="Dropdown">
+<ResponseField name="Transaction stuff" required type="Static_dropdown">
 Select the object
 </ResponseField>
             

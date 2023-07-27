@@ -32,7 +32,7 @@ export class RunsTableComponent implements OnInit {
   @ViewChild(ApPaginatorComponent, { static: true })
   paginator!: ApPaginatorComponent;
   runsPage$: Observable<SeekPage<FlowRun>>;
-  enterpriseEdition$: Observable<boolean>;
+  nonCommunityEdition$: Observable<boolean>;
   toggleNotificationFormControl: FormControl<boolean> = new FormControl();
   dataSource!: RunsTableDataSource;
   displayedColumns = ['flowName', 'status', 'started', 'finished'];
@@ -63,9 +63,9 @@ export class RunsTableComponent implements OnInit {
       }),
       map(() => undefined)
     );
-    this.enterpriseEdition$ = this.flagsService
+    this.nonCommunityEdition$ = this.flagsService
       .getEdition()
-      .pipe(map((res) => res === ApEdition.ENTERPRISE));
+      .pipe(map((res) => res !== ApEdition.COMMUNITY));
     this.updateNotificationsValue$ = this.store
       .select(ProjectSelectors.selectIsNotificationsEnabled)
       .pipe(
