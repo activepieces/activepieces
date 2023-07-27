@@ -85,7 +85,7 @@ export type EngineHelperResponse<Result extends EngineHelperResult> = {
 }
 
 
-const engineExecutablePath = system.get(SystemProp.ENGINE_EXECUTABLE_PATH)
+const engineExecutablePath = system.getOrThrow(SystemProp.ENGINE_EXECUTABLE_PATH)
 
 const installPiece = async (params: InstallPieceParams) => {
     logger.debug(params, '[InstallPiece] params')
