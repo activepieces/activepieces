@@ -96,6 +96,9 @@
         "packages/pieces/google-tasks/src/index.ts"
       ],
       "@activepieces/piece-gotify": ["packages/pieces/gotify/src/index.ts"],
+      "@activepieces/piece-gravityforms": [
+        "packages/pieces/gravityforms/src/index.ts"
+      ],
       "@activepieces/piece-hackernews": [
         "packages/pieces/hackernews/src/index.ts"
       ],

@@ -640,6 +640,7 @@ mat-form-field.\!ap-bg-white {
 }
 
 .ap-markdown {
+  word-wrap: break-word;
   @include mat.typography-level($ap-typography, "body-1");
 }
 .mdc-switch--disabled .mdc-switch__icons {
