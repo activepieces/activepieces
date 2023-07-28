@@ -100,13 +100,10 @@ export const Property = {
 		return {displayName: 'Markdown', required: true, description: request.value, type: PropertyType.MARKDOWN, valueSchema: undefined as never}
 	},
 	Number<R extends boolean>(request: Properties<NumberProperty<R>>): R extends true ? NumberProperty<true> : NumberProperty<false> {
-		request = {
-			...request, 
-			defaultProcessors: [Processors.number],
-			defaultValidators: [Validators.number],
-		}
 		return { 
 			...request,
+			defaultProcessors: [Processors.number],
+			defaultValidators: [Validators.number],
 			valueSchema: undefined, 
 			type: PropertyType.NUMBER, 
 		} as unknown as R extends true ? NumberProperty<true> : NumberProperty<false>;
@@ -137,24 +134,19 @@ export const Property = {
 		return { ...request, valueSchema: undefined, type: PropertyType.STATIC_MULTI_SELECT_DROPDOWN } as unknown as R extends true ? StaticMultiSelectDropdownProperty<T, true> : StaticMultiSelectDropdownProperty<T, false>;
 	},
 	DateTime<R extends boolean>(request: Properties<DateTimeProperty<R>>): R extends true ? DateTimeProperty<true> : DateTimeProperty<false> {
-		request = {
-			...request, 
-			defaultProcessors: [Processors.datetime],
-			defaultValidators: [Validators.datetimeIso]
-		}
 		return { 
 			...request, 
+			defaultProcessors: [Processors.datetime],
+			defaultValidators: [Validators.datetimeIso],
 			valueSchema: undefined, 
 			type: PropertyType.DATE_TIME, 
 		} as unknown as R extends true ? DateTimeProperty<true> : DateTimeProperty<false>;
 	},
 	File<R extends boolean>(request: Properties<FileProperty<R>>): R extends true ? FileProperty<true> : FileProperty<false> {
-		request = {
-			...request, 
+		return { ...request, 
 			defaultProcessors: [Processors.file],
-			defaultValidators: [Validators.file]
-		}
-		return { ...request, valueSchema: undefined, type: PropertyType.FILE } as unknown as R extends true ? FileProperty<true> : FileProperty<false>
+			defaultValidators: [Validators.file],
+			valueSchema: undefined, type: PropertyType.FILE } as unknown as R extends true ? FileProperty<true> : FileProperty<false>
 	},
 };
 
@@ -177,4 +169,4 @@ export const PieceAuth = {
 	}
 };
 
-type Properties<T> = Omit<T, "valueSchema" | "type">;
+type Properties<T> = Omit<T, "valueSchema" | "type" | "defaultValidators" | "defaultProcessors">;
