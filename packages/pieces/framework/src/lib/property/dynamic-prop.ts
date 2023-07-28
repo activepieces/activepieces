@@ -1,6 +1,7 @@
 import { PropertyType } from "./property";
 import { BasePropertySchema, ShortTextProperty, TPropertyValue } from "./base-prop";
 import { StaticDropdownProperty, StaticMultiSelectDropdownProperty } from "./dropdown-prop";
+import { ValidationInputType } from "../validators/types";
 
 type DynamicProp = ShortTextProperty<boolean> | StaticDropdownProperty<any, boolean> | StaticMultiSelectDropdownProperty<any,boolean>;
 
@@ -14,5 +15,6 @@ export type DynamicPropsSchema = BasePropertySchema & {
 export type DynamicProperties<R extends boolean> = DynamicPropsSchema & TPropertyValue<
 	DynamicPropsValue,
 	PropertyType.DYNAMIC,
+	ValidationInputType.ANY,
 	R
 >;

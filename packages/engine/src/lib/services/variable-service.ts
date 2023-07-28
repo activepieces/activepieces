@@ -152,7 +152,7 @@ export class VariableService {
           if (isNil(value) && !property.required) break;
 
           for (const validator of validators) {
-            const error = validator(property, processedInput[key], value);
+            const error = validator.fn(property, processedInput[key], value);
             if (!isNil(error)) propErrors.push(error);
           }
           if (propErrors.length) errors[key] = propErrors;
