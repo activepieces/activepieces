@@ -31,7 +31,7 @@ export const triggerHelper = {
       censorConnections: false,
     })
 
-    const { result: validatedProps, errors } = await variableService.validateAndCast(resolvedProps, trigger.props);
+    const {processedInput, errors} = await variableService.applyProcessorsAndValidators(resolvedProps, trigger.props);
 
     if (Object.keys(errors).length > 0) {
       throw new Error(JSON.stringify(errors));
@@ -57,8 +57,8 @@ export const triggerHelper = {
         }
       },
       webhookUrl: params.webhookUrl,
-      auth: validatedProps[AUTHENTICATION_PROPERTY_NAME],
-      propsValue: validatedProps,
+      auth: processedInput[AUTHENTICATION_PROPERTY_NAME],
+      propsValue: processedInput,
       payload: params.triggerPayload ?? {},
     };
     switch (params.hookType) {
