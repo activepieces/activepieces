@@ -346,6 +346,7 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
                   },
                 ],
               ],
+              inputUiInfo: {},
             },
           },
         };

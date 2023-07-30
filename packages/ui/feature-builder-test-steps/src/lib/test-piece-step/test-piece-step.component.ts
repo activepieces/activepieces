@@ -16,7 +16,7 @@ import {
   BuilderSelectors,
   FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
-import { ActionType, PieceAction } from '@activepieces/shared';
+import { ActionType, BranchAction, PieceAction } from '@activepieces/shared';
 import { TestStepCoreComponent } from '../test-steps-core.component';
 import deepEqual from 'deep-equal';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -113,27 +113,65 @@ export class TestPieceStepComponent extends TestStepCoreComponent {
       .pipe(
         take(1),
         tap((step) => {
-          if (step && step.type === ActionType.PIECE) {
-            const clone: PieceAction = {
-              ...step,
-              settings: {
-                ...step.settings,
-                inputUiInfo: {
-                  customizedInputs: step.settings.inputUiInfo.customizedInputs,
-                  currentSelectedData: testResult
-                    ? testResult
-                    : testResult === undefined
-                    ? 'undefined'
-                    : JSON.stringify(testResult),
-                  lastTestDate: new Date().toString(),
-                },
-              },
-            };
-            this.store.dispatch(
-              FlowsActions.updateAction({
-                operation: clone,
-              })
-            );
+          if (step) {
+            switch (step.type) {
+              case ActionType.PIECE: {
+                const clone: PieceAction = {
+                  ...step,
+                  settings: {
+                    ...step.settings,
+                    inputUiInfo: {
+                      customizedInputs:
+                        step.settings.inputUiInfo.customizedInputs,
+                      currentSelectedData: testResult
+                        ? testResult
+                        : testResult === undefined
+                        ? 'undefined'
+                        : JSON.stringify(testResult),
+                      lastTestDate: new Date().toString(),
+                    },
+                  },
+                };
+
+                this.store.dispatch(
+                  FlowsActions.updateAction({
+                    operation: clone,
+                  })
+                );
+
+                break;
+              }
+
+              case ActionType.BRANCH: {
+                const clone: BranchAction = {
+                  ...step,
+                  settings: {
+                    ...step.settings,
+                    inputUiInfo: {
+                      customizedInputs:
+                        step.settings.inputUiInfo.customizedInputs,
+                      currentSelectedData: testResult
+                        ? testResult
+                        : testResult === undefined
+                        ? 'undefined'
+                        : JSON.stringify(testResult),
+                      lastTestDate: new Date().toString(),
+                    },
+                  },
+                };
+
+                this.store.dispatch(
+                  FlowsActions.updateAction({
+                    operation: clone,
+                  })
+                );
+
+                break;
+              }
+
+              default:
+                break;
+            }
           }
         }),
         map(() => void 0)
