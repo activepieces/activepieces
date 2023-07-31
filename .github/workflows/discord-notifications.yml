@@ -1,0 +1,13 @@
+on:
+  workflow_run:
+    workflows:
+      - "Release Pieces"
+      - "build-cloud-nx"
+    types: [completed]
+    branches: [main, chore/github-actions-notifications-on-discord]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo ${{ github.event }}
