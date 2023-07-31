@@ -132,24 +132,20 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
         actionName,
       })
 
-      const resolvedProps = await this.variableService.resolve<StaticPropsValue<PiecePropertyMap>>({
+      const resolvedProps = await this.variableService.resolveAndValidate<StaticPropsValue<PiecePropertyMap>>({
+        actionProps: action.props,
         unresolvedInput: input,
         executionState,
         censorConnections: false,
       })
 
       assertNotNullOrUndefined(globals.flowRunId, 'globals.flowRunId')
-      const {processedInput, errors} = await this.variableService.applyProcessorsAndValidators(resolvedProps, action.props);
-
-      if (Object.keys(errors).length > 0) {
-        throw new Error(JSON.stringify(errors));
-      }
 
       const context: ActionContext = {
         executionType: this.executionType,
         store: createContextStore('', globals.flowVersionId),
-        auth: processedInput[AUTHENTICATION_PROPERTY_NAME],
-        propsValue: processedInput,
+        auth: resolvedProps[AUTHENTICATION_PROPERTY_NAME],
+        propsValue: resolvedProps,
         connections: connectionManager,
         serverUrl: globals.serverUrl!,
         run: {
