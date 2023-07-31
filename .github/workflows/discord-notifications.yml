@@ -9,7 +9,38 @@ on:
     branches: [main, chore/github-actions-notifications-on-discord]
 
 jobs:
-  test:
+  on-success:
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
-      - run: echo ${{ github.event }}
+      - run: >-
+          curl ${{ secrets.DISCORD_WEBHOOK_URL }}
+          -H 'Content-Type: application/json'
+          -d '{
+            "embeds": [
+              {
+                "title": "oss build success - ${{ github.event.workflow_run.name }} #${{ github.event.workflow_run.run_number }}",
+                "url": "${{ github.event.workflow_run.html_url }}",
+                "color": 39236
+              }
+            ],
+            "username": "GitHub Actions"
+          }'
+
+  on-failure:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    steps:
+      - run: >-
+          curl ${{ secrets.DISCORD_WEBHOOK_URL }}
+          -H 'Content-Type: application/json'
+          -d '{
+            "embeds": [
+              {
+                "title": "oss build failure - ${{ github.event.workflow_run.name }} #${{ github.event.workflow_run.run_number }}",
+                "url": "${{ github.event.workflow_run.html_url }}",
+                "color": 13565967
+              }
+            ],
+            "username": "GitHub Actions"
+          }'
