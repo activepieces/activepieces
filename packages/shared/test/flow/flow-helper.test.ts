@@ -222,7 +222,8 @@ describe('Flow Helper', () => {
                                 caseSensitive: true,
                             }
                         ]
-                    ]
+                    ],
+                    inputUiInfo: {},
                 }
             }
         }
@@ -300,7 +301,8 @@ describe('Flow Helper', () => {
                                 caseSensitive: true
                             }
                         ]
-                    ]
+                    ],
+                    "inputUiInfo": {}
                 }
             },
             "displayName": "Cron Expression"
@@ -328,7 +330,8 @@ describe('Flow Helper', () => {
                                     caseSensitive: true,
                                 }
                             ]
-                        ]
+                        ],
+                        inputUiInfo: {},
                     }
                 }
             }
@@ -391,7 +394,8 @@ describe('Flow Helper', () => {
                                 caseSensitive: true
                             }
                         ]
-                    ]
+                    ],
+                    "inputUiInfo": {}
                 },
                 "onSuccessAction": {
                     "displayName": "Code",
@@ -526,9 +530,7 @@ test('Duplicate Flow With Branch', () => {
                     'cronExpression':'25 10 * * 0,1,2,3,4',
                 },
                 'pieceName':'schedule',
-                'inputUiInfo':{
-                 
-                },
+                'inputUiInfo':{},
                 'triggerName':'cron_expression',
                 'pieceVersion':'0.0.2',
             },
@@ -547,6 +549,7 @@ test('Duplicate Flow With Branch', () => {
                             },
                         ],
                     ],
+                    'inputUiInfo': {}
                 },
                 'nextAction':{
                     'name':'step_4',
@@ -560,7 +563,7 @@ test('Duplicate Flow With Branch', () => {
                         'actionName':'get',
                         'inputUiInfo':{
                             'customizedInputs':{
-                          
+
                             },
                         },
                         'pieceVersion':'0.2.6',
@@ -574,7 +577,7 @@ test('Duplicate Flow With Branch', () => {
                     'valid':true,
                     'settings':{
                         'input':{
-                       
+
                         },
                         'artifactSourceId':'pJskIPz1ZL3RYiyUX1HPm',
                     },
@@ -593,7 +596,7 @@ test('Duplicate Flow With Branch', () => {
                         'actionName':'send_message_webhook',
                         'inputUiInfo':{
                             'customizedInputs':{
-                          
+
                             },
                         },
                         'pieceVersion':'0.2.1',
@@ -626,6 +629,7 @@ test('Duplicate Flow With Branch', () => {
                                 },
                             ],
                         ],
+                        inputUiInfo: {},
                     },
                     'valid': true,
                 },
@@ -815,7 +819,7 @@ test('Duplicate Flow With Loops using Import', () => {
             },
         },
     ]
-    
+
     const importOperations = flowHelper.getImportOperations(flowVersion.trigger)
     expect(importOperations).toEqual(expectedResult)
 })
