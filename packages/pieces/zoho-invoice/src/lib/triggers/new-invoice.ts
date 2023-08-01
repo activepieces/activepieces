@@ -11,7 +11,7 @@ const polling: Polling<PiecePropValueSchema<typeof zohoAuth>, {}> = {
     strategy: DedupeStrategy.TIMEBASED,
     items: async ({ auth, lastFetchEpochMS }) => {
         const currentValues = await common.getInvoices(auth, {
-            createdTime: dayjs('2023-07-22T17:12:14+0300').format('YYYY-MM-DD')
+            createdSince: dayjs(lastFetchEpochMS).format('YYYY-MM-DD')
         }) ?? [];
         const items = (currentValues as any[]).map((item: { created_time: string }) => ({
             epochMilliSeconds: dayjs(item.created_time).valueOf(),
