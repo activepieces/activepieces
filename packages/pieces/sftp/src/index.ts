@@ -1,6 +1,7 @@
 
 import { PieceAuth, Property, createPiece } from "@activepieces/pieces-framework";
 import { createFile } from "./lib/actions/create-file";
+import { newOrModifiedFile } from "./lib/triggers/new-modified-file";
 
 export const sftpAuth = PieceAuth.CustomAuth({
   displayName: 'Authentication',
@@ -33,10 +34,10 @@ export const sftpAuth = PieceAuth.CustomAuth({
 
 export const sftp = createPiece({
   displayName: "SFTP",
-      minimumSupportedRelease: '0.5.0',
-    logoUrl: "https://cdn.activepieces.com/pieces/sftp.svg",
+  minimumSupportedRelease: '0.5.0',
+  logoUrl: "https://cdn.activepieces.com/pieces/sftp.svg",
   authors: ["Abdallah-Alwarawreh"],
   auth: sftpAuth,
   actions: [createFile],
-  triggers: [],
+  triggers: [newOrModifiedFile],
 });
