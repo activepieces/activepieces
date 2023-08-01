@@ -17,6 +17,10 @@ export type BasePieceAuthSchema<AuthValueSchema> = BasePropertySchema & {
     validate?: (params: PieceAuthValidatorParams<AuthValueSchema>) => Promise<PieceAuthValidatorResponse>
 }
 
+export type MarkDownPropertySchema = {
+	value: string
+}
+
 export type TPropertyValue<T, U extends PropertyType, REQUIRED extends boolean> = {
     valueSchema: T;
     type: U;
@@ -39,6 +43,8 @@ export type TPropertyValue<T, U extends PropertyType, REQUIRED extends boolean> 
 export type ShortTextProperty<R extends boolean> = BasePropertySchema & TPropertyValue<string, PropertyType.SHORT_TEXT, R>;
 
 export type LongTextProperty<R extends boolean> = BasePropertySchema & TPropertyValue<string, PropertyType.LONG_TEXT, R>;
+
+export type MarkDownProperty= BasePropertySchema & TPropertyValue<never, PropertyType.MARKDOWN, true>;
 
 export type SecretTextProperty<R extends boolean> = BasePieceAuthSchema<string> & TPropertyValue<string, PropertyType.SECRET_TEXT, R>;
 

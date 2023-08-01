@@ -1,0 +1,49 @@
+---
+title: 'Freshdesk'
+---
+
+##### Authors: [buttonsbond](https://github.com/buttonsbond)
+
+
+## Triggers
+
+*No supported triggers yet, please let us know if you need something on Discord so we can help out* 
+
+
+---
+
+## Actions
+
+
+      <Card title="Get Tickets " >
+        Get Ticket instances from Freshdesk.
+
+        <Expandable title="Properties">
+            
+        </Expandable>
+      </Card>
+  
+      <Card title="Get Contact from ID " >
+        Get contacts details from Freshdesk using ID number.
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Contact ID number" required type="Short_text">
+The ID number of the contact
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  
+      <Card title="Get Ticket Status " >
+        Get Ticket status from Freshdesk. Returns ticket_status, assigned_status, assigned_id
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Ticket ID" required type="Short_text">
+The Ticket ID to return status
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  

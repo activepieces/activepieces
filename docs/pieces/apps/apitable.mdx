@@ -1,0 +1,96 @@
+---
+title: 'APITable'
+---
+
+##### Authors: [abdallah-alwarawreh](https://github.com/abdallah-alwarawreh)
+
+
+## Triggers
+
+
+      <Card title="New Record (Scheduled)" icon="clock">
+        Triggers when a new record is added to a datasheet.
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Datasheet ID" required type="Short_text">
+The datasheet to watch for new records, obtain it from the url
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  
+
+---
+
+## Actions
+
+
+      <Card title="Create APITable Record " >
+        Adds a record into an ApiTable datasheet.
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Datasheet ID" required type="Short_text">
+The datasheet to watch for new records, obtain it from the url
+</ResponseField>
+            
+<ResponseField name="Fields" required type="Dynamic">
+The fields to add to the record.
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  
+      <Card title="Update APITable Record " >
+        updates a record in datasheet.
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Datasheet ID" required type="Short_text">
+The datasheet to watch for new records, obtain it from the url
+</ResponseField>
+            
+<ResponseField name="Record ID" required type="Short_text">
+The ID of the record to update.
+</ResponseField>
+            
+<ResponseField name="Fields" required type="Dynamic">
+The fields to add to the record.
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  
+      <Card title="Find APITable Record " >
+        Finds records in datasheet.
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Datasheet ID" required type="Short_text">
+The datasheet to watch for new records, obtain it from the url
+</ResponseField>
+            
+<ResponseField name="Record IDs"  type="Array">
+The IDs of the records to find.
+</ResponseField>
+            
+<ResponseField name="Field Names"  type="Array">
+The returned record results are limited to the specified fields
+</ResponseField>
+            
+<ResponseField name="Max Records"  type="Number">
+How many records are returned in total
+</ResponseField>
+            
+<ResponseField name="Page Size"  type="Number">
+How many records are returned per page (max 1000)
+</ResponseField>
+            
+<ResponseField name="Page Number"  type="Number">
+Specifies the page number of the page
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  

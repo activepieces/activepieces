@@ -409,6 +409,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "camilou",
+      "name": "Camilo Usuga",
+      "avatar_url": "https://avatars.githubusercontent.com/u/40870?v=4",
+      "profile": "http://www.tepote.com",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

@@ -2,7 +2,7 @@
 title: 'Gmail'
 ---
 
-##### Authors: [AbdulTheActivePiecer](https://github.com/AbdulTheActivePiecer), [kanarelo](https://github.com/kanarelo)
+##### Authors: [AbdulTheActivePiecer](https://github.com/AbdulTheActivePiecer), [kanarelo](https://github.com/kanarelo), [BastienMe](https://github.com/BastienMe)
 
 
 ## Triggers
@@ -20,10 +20,6 @@ title: 'Gmail'
 
         <Expandable title="Properties">
           
-<ResponseField name="Authentication" required type="Oauth2">
-
-</ResponseField>
-            
 <ResponseField name="Receiver Email (To)" required type="Array">
 
 </ResponseField>
@@ -42,6 +38,10 @@ Email address to set as the "Reply-To" header
             
 <ResponseField name="Body (HTML)"  type="Short_text">
 HTML version of the body for the email you want to send
+</ResponseField>
+            
+<ResponseField name="Attachment"  type="File">
+File to attach to the email you want to send
 </ResponseField>
               
         </Expandable>

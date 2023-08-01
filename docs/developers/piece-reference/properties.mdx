@@ -54,6 +54,21 @@ Property.Checkbox({
 })
 ```
 
+### Markdown 
+
+This property to show markdown snippet to the user, can be used to show documentation or instructions.
+
+**Example:**
+
+```typescript
+Property.MarkDown({
+    value: '## This is a markdown snippet'
+}),
+```
+<Tip>
+If you want to show a webhook url to the user, use `{{webhookUrl}}` in the markdown snippet.
+</Tip>
+
 ### DateTime
 
 This property collects a date and time from the user.

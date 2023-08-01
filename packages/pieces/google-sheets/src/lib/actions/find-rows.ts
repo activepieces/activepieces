@@ -25,29 +25,24 @@ export const findRowsAction = createAction({
         if (!sheetName) {
             throw Error("Sheet not found in spreadsheet");
         }
-        const alphabet = 'abcdefghijklmnopqrstuvwxyz';
         
-        const column = alphabet.indexOf(propsValue.column_name?.toLowerCase().toString()[0] ?? 'a');
-        if (column === -1) {
-            throw Error("Column not found in sheet");
-        } else {
-            const values = await googleSheetsCommon.getValues(propsValue.spreadsheet_id, auth['access_token'],propsValue.sheet_id);
+        const columnName = propsValue.column_name?.toLowerCase().toString() ?? 'a';
 
-            const matchingRows = [];
-            for (const { row, values: innerValues } of values) {
-                for (const value of innerValues) {
-                    for (const key in value) {
-                        if(value[key].includes(propsValue.search_value) && key.toLowerCase() === alphabet[column]){
-                            matchingRows.push({
-                                [row]: value,
-                            });
-                        }
-                    }
+        const values = await googleSheetsCommon.getValues(propsValue.spreadsheet_id, auth['access_token'],propsValue.sheet_id);
+
+        const matchingRows: any = {};
+        for (const { row, values: innerValues } of values) {
+            Object.entries(innerValues).forEach(([key, value]) => {
+                const v = value.toString();
+                if(v.includes(propsValue.search_value) && key.toLowerCase() === columnName){
+                    // return the whole row
+                    matchingRows[key] = innerValues;
                 }
-            }
-
-            return matchingRows;
+            });
+            
         }
+
+        return matchingRows;
     },
 
 });

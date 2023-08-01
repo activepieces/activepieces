@@ -6,7 +6,7 @@ import { projectService } from '../project/project.service'
 import { getEdition } from './secret-helper'
 
 
-const telemetryEnabled = system.getBoolean(SystemProp.TELEMETRY_ENABLED) ?? true
+const telemetryEnabled = system.getBoolean(SystemProp.TELEMETRY_ENABLED)
 
 const client = new PostHog(
     'phc_7F92HoXJPeGnTKmYv0eOw62FurPMRW9Aqr0TPrDzvHh',

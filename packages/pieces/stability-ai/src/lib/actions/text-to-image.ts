@@ -173,6 +173,10 @@ export const textToImage = createAction({
       options: {
         options: [
           {
+            label: 'stable-diffusion-xl-1024-v1-0',
+            value: 'stable-diffusion-xl-1024-v1-0',
+          },
+          {
             label: 'stable-diffusion-768-v2-1',
             value: 'stable-diffusion-768-v2-1',
           },

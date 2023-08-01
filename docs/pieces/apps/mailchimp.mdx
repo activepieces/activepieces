@@ -13,10 +13,6 @@ title: 'Mailchimp'
 
         <Expandable title="Properties">
           
-<ResponseField name="Authentication" required type="Oauth2">
-
-</ResponseField>
-            
 <ResponseField name="Audience" required type="Dropdown">
 Audience you want to add the contact to
 </ResponseField>
@@ -35,8 +31,12 @@ Audience you want to add the contact to
 
         <Expandable title="Properties">
           
-<ResponseField name="Authentication" required type="Oauth2">
-
+<ResponseField name="First Name"  type="Short_text">
+First name of the new contact
+</ResponseField>
+            
+<ResponseField name="Last Name"  type="Short_text">
+Last name of the new contact
 </ResponseField>
             
 <ResponseField name="Email" required type="Short_text">

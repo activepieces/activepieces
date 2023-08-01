@@ -73,7 +73,8 @@ const stop = async () => {
         process.exit(0)
     }
     catch (err) {
-        logger.error('Error stopping server', err)
+        logger.error('Error stopping server')
+        logger.error(err)
         process.exit(1)
     }
 }

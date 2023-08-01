@@ -4,24 +4,36 @@ import axios, { AxiosError } from 'axios'
 import { exec } from './exec'
 import { readPackageJson } from './files'
 
-const getLatestPublishedVersion = async (packageName: string): Promise<string | null> => {
-  console.info(`[getLatestPublishedVersion] packageName=${packageName}`)
+const getLatestPublishedVersion = async (packageName: string, maxRetries: number = 5): Promise<string | null> => {
+  console.info(`[getLatestPublishedVersion] packageName=${packageName}`);
 
-  try {
-    const response = await axios<{version: string}>(`https://registry.npmjs.org/${packageName}/latest`)
-    const version = response.data.version
-    console.info(`[getLatestPublishedVersion] packageName=${packageName}, latestVersion=${version}`)
-    return response.data.version
-  }
-  catch (e: unknown) {
-      if (e instanceof AxiosError && e.response?.status === 404) {
-        console.info(`[getLatestPublishedVersion] packageName=${packageName}, latestVersion=null`)
-        return null
+  const retryDelay = (attempt: number) => Math.pow(4, attempt - 1) * 2000; 
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await axios<{ version: string }>(`https://registry.npmjs.org/${packageName}/latest`);
+      const version = response.data.version;
+      console.info(`[getLatestPublishedVersion] packageName=${packageName}, latestVersion=${version}`);
+      return version;
+    } catch (e: unknown) {
+      if (attempt === maxRetries) {
+        throw e; // If it's the last attempt, rethrow the error
       }
 
-      throw e
+      if (e instanceof AxiosError && e.response?.status === 404) {
+        console.info(`[getLatestPublishedVersion] packageName=${packageName}, latestVersion=null`);
+        return null;
+      }
+
+      console.warn(`[getLatestPublishedVersion] packageName=${packageName}, attempt=${attempt}, error=${e}`);
+      const delay = retryDelay(attempt);
+      await new Promise(resolve => setTimeout(resolve, delay)); // Wait for the delay before retrying
+    }
   }
-}
+
+  return null; // Return null if all retries fail
+};
+
 
 const packageChangedFromMainBranch = async (path: string): Promise<boolean> => {
   console.info(`[packageChangedFromMainBranch] path=${path}`)

@@ -1,6 +1,6 @@
 import { EntitySchema } from 'typeorm'
 import { Flow, Project, TriggerEvent } from '@activepieces/shared'
-import { ApIdSchema, BaseColumnSchemaPart } from '../../helper/base-entity'
+import { ApIdSchema, BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../../database/database-common'
 
 type TriggerEventSchema = {
     flow: Flow
@@ -17,7 +17,7 @@ export const TriggerEventEntity = new EntitySchema<TriggerEventSchema>({
             type: String,
         },
         payload: {
-            type: 'jsonb',
+            type: JSONB_COLUMN_TYPE,
             nullable: true,
         },
     },

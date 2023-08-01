@@ -26,11 +26,11 @@ import { codeBuilder } from '../code-worker/code-builder'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { OneTimeJobData } from './job-data'
 import { engineHelper } from '../../helper/engine-helper'
-import { acquireLock } from '../../database/redis-connection'
 import { captureException, logger } from '../../helper/logger'
 import { pieceManager } from '../../flows/common/piece-installer'
 import { isNil } from '@activepieces/shared'
 import { getServerUrl } from '../../helper/public-ip-utils'
+import { acquireLock } from '../../helper/lock'
 
 type FlowPiece = {
     name: string
@@ -150,6 +150,7 @@ const loadInputAndLogFileId = async ({ jobData }: LoadInputAndLogFileIdParams): 
 
     return {
         input: {
+            serverUrl: await getServerUrl(),
             executionType: ExecutionType.RESUME,
             executionState: executionOutput.executionState,
             resumeStepMetadata: flowRun.pauseMetadata.resumeStepMetadata,
