@@ -6,7 +6,7 @@ on:
       - "Release Pieces"
       - "build-cloud-nx"
     types: [completed]
-    branches: [main, chore/github-actions-notifications-on-discord]
+    branches: [main]
 
 jobs:
   on-success:
@@ -19,9 +19,8 @@ jobs:
           -d '{
             "embeds": [
               {
-                "title": "oss build success -
-                  ${{ github.event.workflow_run.head_commit.message }} -
-                  ${{ github.event.workflow_run.name }} #${{ github.event.workflow_run.run_number }}",
+                "title": "${{ github.event.repository.name }} build success - ${{ github.event.workflow_run.name }} #${{ github.event.workflow_run.run_number }}",
+                "description": "${{ github.event.workflow_run.head_commit.message }}"
                 "url": "${{ github.event.workflow_run.html_url }}",
                 "color": 39236
               }
@@ -39,7 +38,8 @@ jobs:
           -d '{
             "embeds": [
               {
-                "title": "oss build failure - ${{ github.event.workflow_run.name }} #${{ github.event.workflow_run.run_number }}",
+                "title": "${{ github.event.repository.name }} build failure - ${{ github.event.workflow_run.name }} #${{ github.event.workflow_run.run_number }}",
+                "description": "${{ github.event.workflow_run.head_commit.message }}"
                 "url": "${{ github.event.workflow_run.html_url }}",
                 "color": 13565967
               }
