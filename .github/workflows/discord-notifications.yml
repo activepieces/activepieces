@@ -6,7 +6,7 @@ on:
       - "Release Pieces"
       - "build-cloud-nx"
     types: [completed]
-    branches: [main, chore/github-actions-notifications-on-discord]
+    branches: [main]
 
 jobs:
   on-success:
