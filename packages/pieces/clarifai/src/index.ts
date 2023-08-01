@@ -11,7 +11,7 @@ export const clarifai = createPiece({
     displayName: "Clarifai",
     minimumSupportedRelease: '0.5.0',
     logoUrl: 'https://cdn.activepieces.com/pieces/clarifai.png',
-    authors: ['abuaboud'],
+    authors: ['akatechis'],
     auth: clarifaiAuth,
     actions: [
         callClassifierModel,
