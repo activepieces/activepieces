@@ -11,6 +11,7 @@ import { getPromaTableColumns } from './lib/actions/get-table-columns';
 import { teamMemberAddedOrganization } from './lib/triggers/team-member-added-org';
 import { updatePromaRow } from './lib/actions/update-item';
 import { teamMemberAddedWorkspace } from './lib/triggers/team-member-added-ws';
+import { buttonTrigger } from './lib/triggers/button-trigger';
 
 export const promaAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -37,6 +38,7 @@ export const proma = createPiece({
   triggers: [
     newRowAdded,
     dataRowUpdated,
+    buttonTrigger,
     teamMemberAddedOrganization,
     teamMemberAddedWorkspace,
   ],

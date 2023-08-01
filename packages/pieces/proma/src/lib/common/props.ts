@@ -1,9 +1,6 @@
 import { Property } from '@activepieces/pieces-framework';
-import { Table, Workspace } from './types';
-import {
-  getTables,
-  getWorkSpaces,
-} from './data';
+import { Table, TableColumn, Workspace } from './types';
+import { getTableColumns, getTables, getWorkSpaces } from './data';
 
 export const promaProps = {
   table_name: (required = false) =>
@@ -12,14 +9,14 @@ export const promaProps = {
     Property.StaticDropdown({
       displayName: 'Access',
       required,
-      defaultValue: "private",
+      defaultValue: 'private',
       options: {
         disabled: false,
         placeholder: '',
         options: [
-          { label: 'Private', value: "private" },
-          { label: 'Public', value: "public" },
-          { label: 'Inherit from workspace', value: "inherit" },
+          { label: 'Private', value: 'private' },
+          { label: 'Public', value: 'public' },
+          { label: 'Inherit from workspace', value: 'inherit' },
         ],
       },
     }),
@@ -44,16 +41,16 @@ export const promaProps = {
           { label: 'multiSelect', value: 'multiSelect' },
           { label: 'file', value: 'file' },
           { label: 'tel', value: 'tel' },
-          { label: 'team members', value: "teamMembers" }
+          { label: 'team members', value: 'teamMembers' },
         ],
       },
     }),
-  workspace_id: (required = false, mode = "read") =>
+  workspace_id: (required = false, mode = 'read') =>
     Property.Dropdown({
       displayName: 'Workspace',
       description: "The workspace's unique identifier.",
       required: required,
-      refreshers: ['auth',],
+      refreshers: ['auth'],
       options: async ({ auth }) => {
         if (!auth)
           return {
@@ -63,7 +60,8 @@ export const promaProps = {
           };
 
         const response: Workspace[] | null = await getWorkSpaces(
-          auth as string, mode as string
+          auth as string,
+          mode as string
         );
 
         if (!response)
@@ -84,7 +82,7 @@ export const promaProps = {
         };
       },
     }),
-  table_id: (required = false, mode = "read") =>
+  table_id: (required = false, mode = 'read') =>
     Property.Dropdown({
       displayName: 'Master Sheet',
       description: '',
@@ -128,6 +126,51 @@ export const promaProps = {
         };
       },
     }),
+  column_id: (required = false, label?: string, dataType?: string) =>
+    Property.Dropdown({
+      displayName: label || 'Column Name',
+      description: '',
+      required: required,
+      refreshers: ['api_key', 'table_id'],
+      options: async ({ api_key, table_id }) => {
+        if (!api_key)
+          return {
+            disabled: true,
+            placeholder: 'connect your account first',
+            options: [],
+          };
+        if (!table_id)
+          return {
+            disabled: true,
+            placeholder: 'select a master sheet first',
+            options: [],
+          };
+
+        const response: TableColumn[] | null = await getTableColumns(
+          api_key as string,
+          table_id as string
+        );
+
+        if (!response)
+          return {
+            disabled: true,
+            placeholder: 'Invalid API key',
+            options: [],
+          };
+
+        const options = (response || [])
+          .filter((el) => (dataType ? el.dataType === dataType : true))
+          .map((el) => ({
+            label: el.columnNmae,
+            value: el.ROWID,
+          }));
+
+        return {
+          disabled: false,
+          options: options,
+        };
+      },
+    }),
   data_row: (required = false) =>
     Property.Object({
       displayName: 'Enter data',
@@ -135,5 +178,6 @@ export const promaProps = {
       defaultValue: {},
       description: 'Enter column name on left and its value on right',
     }),
-  row_id: (required = false) => Property.ShortText({ displayName: "Row ID", required, description: "" })
+  row_id: (required = false) =>
+    Property.ShortText({ displayName: 'Row ID', required, description: '' }),
 };

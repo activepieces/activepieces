@@ -40,7 +40,10 @@ export async function getOrganizations(
   return response.body.data;
 }
 
-export async function getWorkSpaces(api_key: string, mode = "read"): Promise<Workspace[]> {
+export async function getWorkSpaces(
+  api_key: string,
+  mode = 'read'
+): Promise<Workspace[]> {
   const response = await httpClient.sendRequest<WorkspaceResponse>({
     url: `${PROMA_SERVER_URL}/getworkspaces`,
     method: HttpMethod.GET,
@@ -52,13 +55,12 @@ export async function getWorkSpaces(api_key: string, mode = "read"): Promise<Wor
 export async function getTables(
   api_key: string,
   workspace_id: string,
-  mode = "read"
+  mode = 'read'
 ): Promise<Table[]> {
   const response = await httpClient.sendRequest<TableResponse>({
     url: `${PROMA_SERVER_URL}/gettables`,
     method: HttpMethod.GET,
-    headers: {
-    },
+    headers: {},
     queryParams: { space_id: workspace_id, api_key, mode },
   });
   return response.body.data;
@@ -67,7 +69,7 @@ export async function getTables(
 export async function getTableRows(
   api_key: string,
   table_id: string,
-  mode = "read"
+  mode = 'read'
 ): Promise<TableRow[]> {
   if (!table_id) return [];
   const response = await httpClient.sendRequest<TableRowResponse>({
@@ -81,7 +83,7 @@ export async function getTableRows(
 export async function getTableColumns(
   api_key: string,
   table_id: string,
-  mode = "read"
+  mode = 'read'
 ): Promise<TableColumn[]> {
   if (!table_id) return [];
   const response = await httpClient.sendRequest<TableColumnResponse>({
@@ -98,12 +100,14 @@ export async function storeWebhookUrl({
   workspace_id,
   webhook_url,
   trigger_type,
+  column_id,
 }: {
   api_key: string;
   table_id?: string;
   workspace_id?: string;
   webhook_url: string;
   trigger_type: string;
+  column_id?: string;
 }): Promise<Webhook> {
   const response = await httpClient.sendRequest<WebhookResponse>({
     url: `${PROMA_SERVER_URL}/webhook/create`,
@@ -114,8 +118,9 @@ export async function storeWebhookUrl({
       trigger_type,
       workspace_id,
       api_key,
+      column_id,
     },
-    queryParams: { api_key }
+    queryParams: { api_key },
   });
   return response.body.data;
 }
@@ -131,7 +136,7 @@ export async function removeWebhookUrl({
     url: `${PROMA_SERVER_URL}/webhook/delete`,
     method: HttpMethod.POST,
     body: { ROWID: id, api_key },
-    queryParams: { api_key }
+    queryParams: { api_key },
   });
   return response.body?.data;
 }
