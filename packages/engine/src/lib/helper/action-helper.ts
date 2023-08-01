@@ -212,12 +212,11 @@ export const pieceHelper = {
             censorConnections: false,
             actionProps: action.props,
         })
-
         const context: ActionContext = {
             executionType: ExecutionType.BEGIN,
             auth: resolvedProps[AUTHENTICATION_PROPERTY_NAME],
             propsValue: resolvedProps,
-            store: createContextStore('', globals.flowId),
+            store: createContextStore('', globals.flowVersionId),
             connections: {
                 get: async (key: string) => {
                     try {

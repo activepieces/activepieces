@@ -1,0 +1,772 @@
+---
+title: 'Onfleet'
+---
+
+##### Authors: [MoShizzle](https://github.com/MoShizzle)
+
+
+## Triggers
+
+
+      <Card title="Task Arrival (Instant)" icon="bolt">
+        Triggers when a task worker arriving at or closer than threshold value provided, in meters
+
+        <Expandable title="Properties">
+            
+        </Expandable>
+      </Card>
+  
+      <Card title="Task Assigned (Instant)" icon="bolt">
+        Triggers when a task is assigned
+
+        <Expandable title="Properties">
+            
+        </Expandable>
+      </Card>
+  
+      <Card title="Task Cloned (Instant)" icon="bolt">
+        Triggers when a task is cloned
+
+        <Expandable title="Properties">
+            
+        </Expandable>
+      </Card>
+  
+      <Card title="Task Completed (Instant)" icon="bolt">
+        Triggers when a task is completed
+
+        <Expandable title="Properties">
+            
+        </Expandable>
+      </Card>
+  
+      <Card title="Task Created (Instant)" icon="bolt">
+        Triggers when a task is created
+
+        <Expandable title="Properties">
+            
+        </Expandable>
+      </Card>
+  
+      <Card title="Task Delayed (Instant)" icon="bolt">
+        Triggers when a task is delayed
+
+        <Expandable title="Properties">
+            
+        </Expandable>
+      </Card>
+  
+      <Card title="Task Deleted (Instant)" icon="bolt">
+        Triggers when a task is deleted
+
+        <Expandable title="Properties">
+            
+        </Expandable>
+      </Card>
+  
+      <Card title="Task ETA (Instant)" icon="bolt">
+        Triggers when a task worker ETA less than or equal to threshold value provided, in seconds
+
+        <Expandable title="Properties">
+            
+        </Expandable>
+      </Card>
+  
+      <Card title="Task Failed (Instant)" icon="bolt">
+        Triggers when a task has failed
+
+        <Expandable title="Properties">
+            
+        </Expandable>
+      </Card>
+  
+      <Card title="Task Started (Instant)" icon="bolt">
+        Triggers when a task is started
+
+        <Expandable title="Properties">
+            
+        </Expandable>
+      </Card>
+  
+      <Card title="Task Unassigned (Instant)" icon="bolt">
+        Triggers when a task is unassigned
+
+        <Expandable title="Properties">
+            
+        </Expandable>
+      </Card>
+  
+      <Card title="Task Updated (Instant)" icon="bolt">
+        Triggers when a task is updated
+
+        <Expandable title="Properties">
+            
+        </Expandable>
+      </Card>
+  
+      <Card title="Worker Created (Instant)" icon="bolt">
+        Triggers when a worker is created
+
+        <Expandable title="Properties">
+            
+        </Expandable>
+      </Card>
+  
+      <Card title="Worker Deleted (Instant)" icon="bolt">
+        Triggers when a worker is deleted
+
+        <Expandable title="Properties">
+            
+        </Expandable>
+      </Card>
+  
+      <Card title="Worker Duty Change (Instant)" icon="bolt">
+        Triggers when a worker status changes
+
+        <Expandable title="Properties">
+            
+        </Expandable>
+      </Card>
+  
+      <Card title="Auto Dispatch Completed (Instant)" icon="bolt">
+        Triggers when team auto-dispatch calculation is completed
+
+        <Expandable title="Properties">
+            
+        </Expandable>
+      </Card>
+  
+      <Card title="SMS Recipient Opt Out (Instant)" icon="bolt">
+        Triggers when a recipient opts out of SMS notifications
+
+        <Expandable title="Properties">
+            
+        </Expandable>
+      </Card>
+  
+      <Card title="SMS Recipient Response Missed (Instant)" icon="bolt">
+        Triggers when a recipient responds to a notification via SMS, but the organization is unable to handle it at that time
+
+        <Expandable title="Properties">
+            
+        </Expandable>
+      </Card>
+  
+
+---
+
+## Actions
+
+
+      <Card title="Create Recipient " >
+        Creates a recipient
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Name" required type="Short_text">
+The recipient's full name
+</ResponseField>
+            
+<ResponseField name="Phone" required type="Short_text">
+A unique, valid phone number as per the organization's country if there's no leading + sign. If a phone number has a leading + sign, it will disregard the organization's country setting.
+</ResponseField>
+            
+<ResponseField name="Notes"  type="Short_text">
+
+</ResponseField>
+            
+<ResponseField name="Skip SMS Notifications"  type="Checkbox">
+
+</ResponseField>
+            
+<ResponseField name="Skip Phone Number Validation"  type="Checkbox">
+
+</ResponseField>
+            
+<ResponseField name="Use Long Code for Text - Canadian Organizations Only"  type="Checkbox">
+Checking this option will default the Onfleet system to use a toll-free long code number for SMS communication.
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  
+      <Card title="Update Recipient " >
+        Updates a recipient
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Recipient ID" required type="Short_text">
+The ID of the recipient you want to update
+</ResponseField>
+            
+<ResponseField name="Name"  type="Short_text">
+The recipient's full name
+</ResponseField>
+            
+<ResponseField name="Notes"  type="Short_text">
+
+</ResponseField>
+            
+<ResponseField name="Skip SMS Notifications"  type="Checkbox">
+
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  
+      <Card title="Get Recipient " >
+        Gets a single recipient
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Recipient ID" required type="Short_text">
+The recipient's ID
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  
+      <Card title="Create Task " >
+        Creates a task
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Merchant ID"  type="Short_text">
+ID of the organization that will be displayed on the task
+</ResponseField>
+            
+<ResponseField name="Executor ID"  type="Short_text">
+ID of the organization that will be executing the task
+</ResponseField>
+            
+<ResponseField name="Destination" required type="Dynamic">
+The task destination
+</ResponseField>
+            
+<ResponseField name="Unparsed Destination" required type="Checkbox">
+Check this box if the destination is a single unparsed string
+</ResponseField>
+            
+<ResponseField name="Destination" required type="Dynamic">
+The task destination
+</ResponseField>
+            
+<ResponseField name="Use Recipient ID" required type="Checkbox">
+Check this box if you want to use an ID for the recipient
+</ResponseField>
+            
+<ResponseField name="Complete After"  type="Date_time">
+The earliest time the task should be completed
+</ResponseField>
+            
+<ResponseField name="Complete Before"  type="Date_time">
+The latest time the task should be completed
+</ResponseField>
+            
+<ResponseField name="Pickup"  type="Checkbox">
+Whether the task is pickup
+</ResponseField>
+            
+<ResponseField name="Quantity"  type="Number">
+The number of units to be dropped off
+</ResponseField>
+            
+<ResponseField name="Recipient Name Override"  type="Short_text">
+Override the recipient name for this task only
+</ResponseField>
+            
+<ResponseField name="Recipient Notes Override"  type="Short_text">
+Override the recipient notes for this task only
+</ResponseField>
+            
+<ResponseField name="Recipient Skip SMS Override"  type="Checkbox">
+Override the recipient skip SMS option for this task only
+</ResponseField>
+            
+<ResponseField name="Service Time"  type="Number">
+The number of minutes to be spent by the worker on arrival at this task's destination
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  
+      <Card title="Delete Task " >
+        Deletes a task
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Task ID" required type="Short_text">
+The ID of the task you want to delete
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  
+      <Card title="Force Complete Task " >
+        Force completes a task
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Task ID" required type="Short_text">
+The ID of the task you want to complete
+</ResponseField>
+            
+<ResponseField name="Complete as Success" required type="Checkbox">
+Whether to complete the task as a success or not
+</ResponseField>
+            
+<ResponseField name="Notes"  type="Short_text">
+
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  
+      <Card title="Clone Task " >
+        Clones a task
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Task ID" required type="Short_text">
+ID of the task you want to clone
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  
+      <Card title="Update Task " >
+        Updates a task
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Task ID" required type="Short_text">
+ID of the task you want to update
+</ResponseField>
+            
+<ResponseField name="Merchant ID"  type="Short_text">
+ID of the organization that will be displayed on the task
+</ResponseField>
+            
+<ResponseField name="Executor ID"  type="Short_text">
+ID of the organization that will be executing the task
+</ResponseField>
+            
+<ResponseField name="Complete After"  type="Date_time">
+The earliest time the task should be completed
+</ResponseField>
+            
+<ResponseField name="Complete Before"  type="Date_time">
+The latest time the task should be completed
+</ResponseField>
+            
+<ResponseField name="Pickup"  type="Checkbox">
+Whether the task is pickup
+</ResponseField>
+            
+<ResponseField name="Quantity"  type="Number">
+The number of units to be dropped off
+</ResponseField>
+            
+<ResponseField name="Service Time"  type="Number">
+The number of minutes to be spent by the worker on arrival at this task's destination
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  
+      <Card title="Get Task " >
+        Get a specific task
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Task ID" required type="Short_text">
+The ID of the task you want to delete
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  
+      <Card title="Get Tasks " >
+        Get many task
+
+        <Expandable title="Properties">
+          
+<ResponseField name="From" required type="Date_time">
+
+</ResponseField>
+            
+<ResponseField name="To"  type="Date_time">
+
+</ResponseField>
+            
+<ResponseField name="State"  type="Multi_select_dropdown">
+
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  
+      <Card title="Create Destination " >
+        Create a new destination
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Destination" required type="Dynamic">
+The task destination
+</ResponseField>
+            
+<ResponseField name="Unparsed Destination" required type="Checkbox">
+Check this box if the destination is a single unparsed string
+</ResponseField>
+            
+<ResponseField name="Notes"  type="Short_text">
+
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  
+      <Card title="Get Destination " >
+        Get a specific destination
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Destination ID" required type="Short_text">
+The ID of the destination you want to delete
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  
+      <Card title="Get Hubs " >
+        Get many hubs
+
+        <Expandable title="Properties">
+            
+        </Expandable>
+      </Card>
+  
+      <Card title="Create Hub " >
+        Create a new hub
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Name" required type="Short_text">
+Name of the hub
+</ResponseField>
+            
+<ResponseField name="Destination" required type="Dynamic">
+The task destination
+</ResponseField>
+            
+<ResponseField name="Unparsed Destination" required type="Checkbox">
+Check this box if the destination is a single unparsed string
+</ResponseField>
+            
+<ResponseField name="Teams"  type="Multi_select_dropdown">
+
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  
+      <Card title="Update Hub " >
+        Update an existing hub
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Hub" required type="Dropdown">
+
+</ResponseField>
+            
+<ResponseField name="Name"  type="Short_text">
+Name of the hub
+</ResponseField>
+            
+<ResponseField name="Teams"  type="Multi_select_dropdown">
+
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  
+      <Card title="Get Organization " >
+        Get your organization details
+
+        <Expandable title="Properties">
+            
+        </Expandable>
+      </Card>
+  
+      <Card title="Get Delegatee Details " >
+        Get details of a connected organization
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Organization ID" required type="Short_text">
+ID of the connected organization
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  
+      <Card title="Create Administrator " >
+        Create a new administrator
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Name" required type="Short_text">
+Full name
+</ResponseField>
+            
+<ResponseField name="Email" required type="Short_text">
+
+</ResponseField>
+            
+<ResponseField name="Phone Number"  type="Short_text">
+
+</ResponseField>
+            
+<ResponseField name="Read Only"  type="Checkbox">
+Whether this administrator can perform write operations.
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  
+      <Card title="Update Administrator " >
+        Update an existing administrator
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Administrator" required type="Dropdown">
+
+</ResponseField>
+            
+<ResponseField name="Name"  type="Short_text">
+Full name
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  
+      <Card title="Get Administrators " >
+        Get many administrators
+
+        <Expandable title="Properties">
+            
+        </Expandable>
+      </Card>
+  
+      <Card title="Delete Administrator " >
+        Delete an existing administrator
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Administrator" required type="Dropdown">
+
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  
+      <Card title="Create Worker " >
+        Create a new worker
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Name" required type="Short_text">
+Name of the worker
+</ResponseField>
+            
+<ResponseField name="Phone" required type="Short_text">
+
+</ResponseField>
+            
+<ResponseField name="Teams" required type="Multi_select_dropdown">
+
+</ResponseField>
+            
+<ResponseField name="Capacity"  type="Number">
+The maximum number of units this worker can carry
+</ResponseField>
+            
+<ResponseField name="Display Name"  type="Short_text">
+
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  
+      <Card title="Delete Worker " >
+        Delete an existing worker
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Worker" required type="Dropdown">
+
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  
+      <Card title="Get Worker " >
+        Get an existing worker's details
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Worker" required type="Dropdown">
+
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  
+      <Card title="Get Worker Schedule " >
+        Get an existing worker's schedule
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Worker" required type="Dropdown">
+
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  
+      <Card title="Update Worker " >
+        Update an existing worker
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Worker" required type="Dropdown">
+
+</ResponseField>
+            
+<ResponseField name="Name"  type="Short_text">
+Name of the worker
+</ResponseField>
+            
+<ResponseField name="Teams"  type="Multi_select_dropdown">
+
+</ResponseField>
+            
+<ResponseField name="Capacity"  type="Number">
+The maximum number of units this worker can carry
+</ResponseField>
+            
+<ResponseField name="Display Name"  type="Short_text">
+
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  
+      <Card title="Create Team " >
+        Create a new team
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Name" required type="Short_text">
+Name of the team
+</ResponseField>
+            
+<ResponseField name="Workers" required type="Multi_select_dropdown">
+
+</ResponseField>
+            
+<ResponseField name="Managers" required type="Multi_select_dropdown">
+
+</ResponseField>
+            
+<ResponseField name="Hub"  type="Dropdown">
+
+</ResponseField>
+            
+<ResponseField name="Enable Self Assignment"  type="Checkbox">
+Allows Drivers to Self Assign Tasks that are in the Team unassigned container.
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  
+      <Card title="Delete Team " >
+        Delete an existing team
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Team" required type="Dropdown">
+
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  
+      <Card title="Get Team " >
+        Gets an existing team
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Team" required type="Dropdown">
+
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  
+      <Card title="Get Teams " >
+        Gets many existing team
+
+        <Expandable title="Properties">
+            
+        </Expandable>
+      </Card>
+  
+      <Card title="Update Team " >
+        Update an existing team
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Team" required type="Dropdown">
+
+</ResponseField>
+            
+<ResponseField name="Name"  type="Short_text">
+Name of the team
+</ResponseField>
+            
+<ResponseField name="Workers"  type="Multi_select_dropdown">
+
+</ResponseField>
+            
+<ResponseField name="Managers"  type="Multi_select_dropdown">
+
+</ResponseField>
+            
+<ResponseField name="Hub"  type="Dropdown">
+
+</ResponseField>
+            
+<ResponseField name="Enable Self Assignment"  type="Checkbox">
+Allows Drivers to Self Assign Tasks that are in the Team unassigned container.
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  
+      <Card title="Get Container " >
+        Get a specific container
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Container Type" required type="Dropdown">
+
+</ResponseField>
+            
+<ResponseField name="Container ID" required type="Short_text">
+
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  

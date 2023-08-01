@@ -1,4 +1,5 @@
 import { SeekPage } from '@activepieces/shared'
+import dayjs from 'dayjs'
 import { CursorResult } from 'typeorm'
 
 export function atob(value: string): string {
@@ -14,8 +15,9 @@ export function encodeByType(type: string, value: unknown): string | null {
 
     switch (type) {
         case 'timestamp with time zone':
+        case 'datetime':
         case 'date': {
-            return new Date(value as string).valueOf().toString()
+            return dayjs(value as string).valueOf().toString()
         }
         case 'number': {
             return `${value}`

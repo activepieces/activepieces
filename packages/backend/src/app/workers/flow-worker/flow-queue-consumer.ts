@@ -45,7 +45,7 @@ const initFlowQueueConsumer = async (): Promise<void> => {
 }
 
 const close = async (): Promise<void> => {
-    logger.info('[FlowQueueConsumer#closeAllConsumers] closing all consumers')
+    logger.info('[FlowQueueConsumer#close] closing all consumers')
     switch (queueMode) {
         case QueueMode.MEMORY: {
             break

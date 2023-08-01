@@ -26,6 +26,7 @@ export function constructUpdateOperation(
               },
             ],
           ],
+          inputUiInfo: {},
         },
         type: ActionType.BRANCH,
         valid: false,

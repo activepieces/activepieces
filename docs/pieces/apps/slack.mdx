@@ -10,10 +10,6 @@ title: 'Slack'
 
         <Expandable title="Properties">
           
-<ResponseField name="Authentication" required type="Oauth2">
-
-</ResponseField>
-            
 <ResponseField name="Channel" required type="Dropdown">
 Channel, private group, or IM channel to send message to.
 </ResponseField>
@@ -26,10 +22,6 @@ Channel, private group, or IM channel to send message to.
 
         <Expandable title="Properties">
           
-<ResponseField name="Authentication" required type="Oauth2">
-
-</ResponseField>
-            
 <ResponseField name="Emojis (E.g fire, smile)"  type="Array">
 Select emojs to trigger on
 </ResponseField>
@@ -48,16 +40,20 @@ Select emojs to trigger on
 
         <Expandable title="Properties">
           
-<ResponseField name="Authentication" required type="Oauth2">
-
-</ResponseField>
-            
 <ResponseField name="User" required type="Dropdown">
 Message receiver
 </ResponseField>
             
 <ResponseField name="Message" required type="Long_text">
 The text of your message
+</ResponseField>
+            
+<ResponseField name="Username"  type="Short_text">
+The username of the bot
+</ResponseField>
+            
+<ResponseField name="Profile Picture"  type="Short_text">
+The profile picture of the bot
 </ResponseField>
               
         </Expandable>
@@ -68,16 +64,20 @@ The text of your message
 
         <Expandable title="Properties">
           
-<ResponseField name="Authentication" required type="Oauth2">
-
-</ResponseField>
-            
 <ResponseField name="Channel" required type="Dropdown">
 Channel, private group, or IM channel to send message to.
 </ResponseField>
             
 <ResponseField name="Message" required type="Long_text">
 The text of your message
+</ResponseField>
+            
+<ResponseField name="Username"  type="Short_text">
+The username of the bot
+</ResponseField>
+            
+<ResponseField name="Profile Picture"  type="Short_text">
+The profile picture of the bot
 </ResponseField>
               
         </Expandable>

@@ -1,7 +1,7 @@
 import { PostHog } from 'posthog-node'
 import { SystemProp } from './system/system-prop'
 import { system } from './system/system'
-import { ProjectId, TelemetryEvent, User } from '@activepieces/shared'
+import { ProjectId, TelemetryEvent, User, UserId } from '@activepieces/shared'
 import { projectService } from '../project/project.service'
 import { getEdition } from './secret-helper'
 
@@ -33,8 +33,14 @@ export const telemetry = {
             return
         }
         const project = await projectService.getOne(projectId)
+        this.trackUser(project!.ownerId, event)
+    },
+    async trackUser(userId: UserId, event: TelemetryEvent): Promise<void> {
+        if (!telemetryEnabled) {
+            return
+        }
         client.capture({
-            distinctId: project!.ownerId,
+            distinctId: userId,
             event: event.name,
             properties: {
                 ...event.payload,
@@ -42,7 +48,6 @@ export const telemetry = {
                 datetime: new Date().toISOString(),
             },
         })
-
     },
 }
 
