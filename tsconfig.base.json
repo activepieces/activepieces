@@ -109,6 +109,9 @@
       "@activepieces/piece-invoiceninja": [
         "packages/pieces/invoiceninja/src/index.ts"
       ],
+      "@activepieces/piece-jira-cloud": [
+        "packages/pieces/jira-cloud/src/index.ts"
+      ],
       "@activepieces/piece-jotform": ["packages/pieces/jotform/src/index.ts"],
       "@activepieces/piece-kizeo-forms": [
         "packages/pieces/kizeo-forms/src/index.ts"
