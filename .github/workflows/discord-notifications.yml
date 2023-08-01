@@ -14,12 +14,14 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - run: >-
-          curl ${{ secrets.DISCORD_WEBHOOK_URL }}
+          curl ${{ secrets.DISCORD_CI_CHANNEL_WEBHOOK_URL }}
           -H 'Content-Type: application/json'
           -d '{
             "embeds": [
               {
-                "title": "oss build success - ${{ github.event.workflow_run.name }} #${{ github.event.workflow_run.run_number }}",
+                "title": "oss build success -
+                  ${{ github.event.workflow_run.head_commit.message }} -
+                  ${{ github.event.workflow_run.name }} #${{ github.event.workflow_run.run_number }}",
                 "url": "${{ github.event.workflow_run.html_url }}",
                 "color": 39236
               }
@@ -32,7 +34,7 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'failure' }}
     steps:
       - run: >-
-          curl ${{ secrets.DISCORD_WEBHOOK_URL }}
+          curl ${{ secrets.DISCORD_CI_CHANNEL_WEBHOOK_URL }}
           -H 'Content-Type: application/json'
           -d '{
             "embeds": [
