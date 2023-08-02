@@ -173,6 +173,12 @@ export class AppComponent implements OnInit {
 
   private registerSearchIconIntoMaterialIconRegistery() {
     this.maticonRegistry.addSvgIcon(
+      'info',
+      this.domSanitizer.bypassSecurityTrustResourceUrl(
+        '../assets/img/custom/info.svg'
+      )
+    );
+    this.maticonRegistry.addSvgIcon(
       'search',
       this.domSanitizer.bypassSecurityTrustResourceUrl(
         '../assets/img/custom/search.svg'
