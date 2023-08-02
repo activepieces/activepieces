@@ -17,8 +17,7 @@ import {
   AppConnectionType,
 } from '@activepieces/shared';
 import deepEqual from 'deep-equal';
-import { fadeInUp400ms } from '@activepieces/ui/common';
-import { AppConnectionsService } from '../../services/app-connections.service';
+import { AppConnectionsService, fadeInUp400ms } from '@activepieces/ui/common';
 import { ConnectionValidator } from '../../validators/connectionNameValidator';
 import {
   BuilderSelectors,

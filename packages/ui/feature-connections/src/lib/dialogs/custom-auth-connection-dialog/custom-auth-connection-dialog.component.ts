@@ -21,7 +21,7 @@ import {
   PropertyType,
 } from '@activepieces/pieces-framework';
 import deepEqual from 'deep-equal';
-import { AppConnectionsService } from '../../services/app-connections.service';
+import { AppConnectionsService } from '@activepieces/ui/common';
 import { ConnectionValidator } from '../../validators/connectionNameValidator';
 import {
   BuilderSelectors,
