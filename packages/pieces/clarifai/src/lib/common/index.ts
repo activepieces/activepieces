@@ -19,26 +19,18 @@ export const clarifaiClient = initClarifaiClient();
 export type ReqInfo = readonly [string, string, string];
 
 export interface CallModelRequest {
-    auth: ReqInfo;
-    modelId: string;
-    modelVersionId?: string;
-    latestVersion: boolean;
-    input: string;
+    auth: string;
+    modelUrl: string;
+    inputUrl: string;
 }
 
-export function callClarifaiModel({ auth, modelId, modelVersionId, latestVersion, input }: CallModelRequest) {
+export function callClarifaiModel({ auth, modelUrl, inputUrl }: CallModelRequest) {
+    const [userId, appId, modelId] = parseEntityUrl(modelUrl);
+
     const req = new PostModelOutputsRequest();
-    req.setUserAppId(userAppIdSet(auth));
+    req.setUserAppId(userAppIdSet(userId, appId));
     req.setModelId(modelId);
-    if (!latestVersion) {
-        if (!modelVersionId) {
-            throw new Error('Must specify either latestVersion or modelVersionId');
-        }
-        else {
-            req.setVersionId(modelVersionId);
-        }
-    }
-    req.setInputsList([createImageInput(input)])
+    req.setInputsList([createImageInput(inputUrl)])
 
     const metadata = authMetadata(auth);
     // TODO: we should really be using the async version of this, circle back with clarifai team to see if we can
@@ -57,28 +49,29 @@ function createImageInput(url: string) {
     return input;
 }
 
-function userAppIdSet(auth: ReqInfo) {
+function userAppIdSet(userId: string, appId: string) {
     const set = new UserAppIDSet();
-    set.setUserId(auth[1]);
-    set.setAppId(auth[2]);
+    set.setUserId(userId);
+    set.setAppId(appId);
     return set;
 }
 
-function authMetadata(auth: ReqInfo) {
+function authMetadata(auth: string) {
     const metadata = new grpc.Metadata();
     metadata.set("authorization", "Key " + auth[0]);
     return metadata;
 }
 
 export const CommonClarifaiProps = {
-    userId: Property.ShortText({
-        description: 'User ID of the owner of the model',
-        displayName: 'User ID',
-        required: true,
-    }),
-    appId: Property.ShortText({
-        description: 'ID of the app the model belongs to',
-        displayName: 'App ID',
+    modelUrl: Property.ShortText({
+        description: 'URL of the Clarifai model',
+        displayName: 'Model URL',
         required: true,
     }),
 };
+
+function parseEntityUrl(entityUrl: string): [string, string, string] {
+    const url = new URL(entityUrl);
+    const parts = url.pathname.split('/')
+    return [parts[0], parts[1], parts[3]];
+}
