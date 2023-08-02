@@ -15,13 +15,13 @@ import {
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { catchError, Observable, of, take, tap } from 'rxjs';
-import { AppConnectionsService } from '../../services/app-connections.service';
 import { ConnectionValidator } from '../../validators/connectionNameValidator';
 import {
   BuilderSelectors,
   appConnectionsActions,
 } from '@activepieces/ui/feature-builder-store';
 import { BasicAuthProperty } from '@activepieces/pieces-framework';
+import { AppConnectionsService } from '@activepieces/ui/common';
 
 interface BasicAuthForm {
   name: FormControl<string>;
