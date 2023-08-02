@@ -8,9 +8,27 @@ export const callClassifierModel = createAction({
     description: 'Call a classifier model',
     displayName: 'Classify Image',
     props: {
-        modelUrl: CommonClarifaiProps.modelUrl,
+        userId: CommonClarifaiProps.userId,
+        appId: CommonClarifaiProps.appId,
+        // todo: change modelId and modelversionId to dropdowns
+        modelId: Property.ShortText({
+            description: 'Model ID of the model to call',
+            displayName: 'Model ID',
+            required: true,
+        }),
+        latestVersion: Property.Checkbox({
+            description: 'Use the latest version of the model',
+            displayName: 'Latest Version',
+            required: true,
+        }),
+        modelVersionId: Property.ShortText({
+            description: 'Model Version ID to call',
+            displayName: 'Model Version ID',
+            required: false,
+            defaultValue: '',
+        }),
         inputUrl: Property.ShortText({
-            description: 'URL of the image to classify',
+            description: 'Input URL',
             displayName: 'Input URL',
             required: true,
         }),
@@ -18,12 +36,14 @@ export const callClassifierModel = createAction({
     sampleData: {},
     async run(ctx) {
         const { auth } = ctx
-        const { modelUrl, inputUrl } = ctx.propsValue;
+        const { userId, appId, modelId, modelVersionId, latestVersion, inputUrl } = ctx.propsValue;
 
         const outputs = await callClarifaiModel({
-          auth,
-          modelUrl,
-          inputUrl,
+          auth: [auth, userId, appId],
+          modelId,
+          modelVersionId,
+          latestVersion,
+          input: inputUrl,
         });
         const list = outputs.getOutputsList()[0].getData()?.getConceptsList() || [];
 
