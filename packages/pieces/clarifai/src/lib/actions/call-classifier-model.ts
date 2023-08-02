@@ -21,6 +21,11 @@ export const callClassifierModel = createAction({
             displayName: 'Latest Version',
             required: true,
         }),
+        inputUrl: Property.ShortText({
+            description: 'URL of the image to classify',
+            displayName: 'Input URL',
+            required: true,
+        }),
         modelVersionId: Property.ShortText({
             description: 'Model Version ID to call',
             displayName: 'Model Version ID',
