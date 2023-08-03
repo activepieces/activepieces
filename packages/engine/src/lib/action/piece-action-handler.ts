@@ -131,6 +131,7 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
         pieceVersion,
         actionName,
       })
+      const piece = await pieceHelper.loadPieceOrThrow(pieceName, pieceVersion);
 
       const resolvedProps = await this.variableService.resolve<StaticPropsValue<PiecePropertyMap>>({
         unresolvedInput: input,
@@ -139,7 +140,7 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
       })
 
       assertNotNullOrUndefined(globals.flowRunId, 'globals.flowRunId')
-      const {processedInput, errors} = await this.variableService.applyProcessorsAndValidators(resolvedProps, action.props);
+      const {processedInput, errors} = await this.variableService.applyProcessorsAndValidators(resolvedProps, action.props, piece.auth);
 
       if (Object.keys(errors).length > 0) {
         throw new Error(JSON.stringify(errors));

@@ -202,6 +202,7 @@ export const pieceHelper = {
             pieceVersion,
             actionName,
         })
+        const piece = await pieceHelper.loadPieceOrThrow(pieceName, pieceVersion);
 
         const executionContext = await generateTestExecutionContext(flowVersion)
         const executionState = executionStateFromExecutionContext(executionContext)
@@ -214,7 +215,7 @@ export const pieceHelper = {
 
         try {
 
-            const { processedInput, errors } = await variableService.applyProcessorsAndValidators(resolvedProps, action.props);
+            const { processedInput, errors } = await variableService.applyProcessorsAndValidators(resolvedProps, action.props, piece.auth);
             if (Object.keys(errors).length > 0) {
                 throw new Error(JSON.stringify(errors));
             }

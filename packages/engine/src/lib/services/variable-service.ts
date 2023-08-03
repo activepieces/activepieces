@@ -1,11 +1,27 @@
-import { ExecutionState, isNil, isString } from "@activepieces/shared";
-import { connectionService } from "./connections.service";
-import { PiecePropertyMap, PropertyType, formatErrorMessage, ErrorMessages } from "@activepieces/pieces-framework";
+import {
+  AUTHENTICATION_PROPERTY_NAME,
+  ExecutionState,
+  isNil,
+  isString
+} from '@activepieces/shared';
+import { connectionService } from './connections.service';
+import {
+  PiecePropertyMap,
+  PropertyType,
+  formatErrorMessage,
+  ErrorMessages,
+  PieceAuthProperty,
+  NonAuthPiecePropertyMap
+} from '@activepieces/pieces-framework';
 
 export class VariableService {
   private VARIABLE_TOKEN = RegExp('\\{\\{(.*?)\\}\\}', 'g');
   private static CONNECTIONS = 'connections';
-  private async resolveInput(input: string, valuesMap: Record<string, unknown>, censorConnections: boolean): Promise<any> {
+  private async resolveInput(
+    input: string,
+    valuesMap: Record<string, unknown>,
+    censorConnections: boolean
+  ): Promise<any> {
     // If input contains only a variable token, return the value of the variable while maintaining the variable type.
     const matchedTokens = input.match(this.VARIABLE_TOKEN);
     if (
@@ -28,22 +44,25 @@ export class VariableService {
     });
   }
 
-  private async handleTypeAndResolving(path: string, censorConnections: boolean): Promise<any> {
-    const paths = path.split(".");
+  private async handleTypeAndResolving(
+    path: string,
+    censorConnections: boolean
+  ): Promise<any> {
+    const paths = path.split('.');
     // Invalid naming return nothing
     if (paths.length < 2) {
       return '';
     }
     if (censorConnections) {
-      return "**CENSORED**";
+      return '**CENSORED**';
     }
     // Need to be resolved dynamically
     const connectionName = paths[1];
     paths.splice(0, 1);
     // Replace connection name with something that doesn't contain - or _, otherwise evalInScope would break
     paths[0] = 'connection';
-    const newPath = paths.join(".");
-    const connection = (await connectionService.obtain(connectionName));
+    const newPath = paths.join('.');
+    const connection = await connectionService.obtain(connectionName);
     if (paths.length === 1) {
       return connection;
     }
@@ -59,14 +78,18 @@ export class VariableService {
       const functionBody = `return (${js})`;
       const evaluatedFn = new Function(...keys, functionBody);
       const result = evaluatedFn(...values);
-      return result ?? "";
+      return result ?? '';
     } catch (exception) {
       console.warn('Error evaluating expression', exception);
-      return "";
+      return '';
     }
   }
 
-  private async resolveInternally(unresolvedInput: any, valuesMap: any, censorConnections: boolean): Promise<any> {
+  private async resolveInternally(
+    unresolvedInput: any,
+    valuesMap: any,
+    censorConnections: boolean
+  ): Promise<any> {
     if (isNil(unresolvedInput)) {
       return unresolvedInput;
     }
@@ -77,22 +100,31 @@ export class VariableService {
 
     if (Array.isArray(unresolvedInput)) {
       for (let i = 0; i < unresolvedInput.length; ++i) {
-        unresolvedInput[i] = await this.resolveInternally(unresolvedInput[i], valuesMap, censorConnections);
+        unresolvedInput[i] = await this.resolveInternally(
+          unresolvedInput[i],
+          valuesMap,
+          censorConnections
+        );
       }
-    }
-    else if (typeof unresolvedInput === 'object') {
+    } else if (typeof unresolvedInput === 'object') {
       const entries = Object.entries(unresolvedInput);
       for (let i = 0; i < entries.length; ++i) {
         const [key, value] = entries[i];
-        unresolvedInput[key] = await this.resolveInternally(value, valuesMap, censorConnections);
+        unresolvedInput[key] = await this.resolveInternally(
+          value,
+          valuesMap,
+          censorConnections
+        );
       }
     }
 
     return unresolvedInput;
   }
 
-  private getExecutionStateObject(executionState: ExecutionState): Record<string, unknown> {
-    const valuesMap: Record<string, unknown> = {}
+  private getExecutionStateObject(
+    executionState: ExecutionState
+  ): Record<string, unknown> {
+    const valuesMap: Record<string, unknown> = {};
     Object.entries(executionState.lastStepState).forEach(([key, value]) => {
       valuesMap[key] = value;
     });
@@ -100,73 +132,80 @@ export class VariableService {
   }
 
   resolve<T = unknown>(params: ResolveParams): Promise<T> {
-    const { unresolvedInput, executionState, censorConnections } = params
+    const { unresolvedInput, executionState, censorConnections } = params;
 
     if (isNil(unresolvedInput)) {
-      return Promise.resolve(unresolvedInput) as Promise<T>
+      return Promise.resolve(unresolvedInput) as Promise<T>;
     }
 
     return this.resolveInternally(
       JSON.parse(JSON.stringify(unresolvedInput)),
       this.getExecutionStateObject(executionState),
       censorConnections
-    ) as Promise<T>
+    ) as Promise<T>;
   }
 
   async applyProcessorsAndValidators(
-    resolvedInput: any,
-    props: PiecePropertyMap
-  ): Promise<{ processedInput: any; errors: any; }> {
+    resolvedInput: Record<string, any>,
+    props: NonAuthPiecePropertyMap,
+    auth: PieceAuthProperty | undefined
+  ): Promise<{ processedInput: any; errors: any }> {
     const processedInput = { ...resolvedInput };
     const errors: any = {};
-  
-    for (const [key, value] of Object.entries(resolvedInput)) {
-      const property = props[key];
-      const type = property.type;
-  
-      const processors = [...(property.defaultProcessors || []), ...(property.processors || [])];
-      const validators = [...(property.defaultValidators || []), ...(property.validators || [])];
-  
-      switch (type) {
-        case PropertyType.CUSTOM_AUTH: {
-          const { processedInput: innerProcessedInput, errors: innerErrors } = await this.applyProcessorsAndValidators(value, property.props);
-          processedInput[key] = innerProcessedInput;
-          if (Object.keys(innerErrors).length > 0) {
-            errors[key] = innerErrors;
-          }
-          break;
-        }
-        default: {
-          for (const processor of processors) {
-            processedInput[key] = await processor(property, value);
-          }
-          
-          const propErrors = [];
-          // Short Circuit
-          // If the value is required, we don't allow it to be undefined or null
-          if (isNil(value) && property.required) {
-            errors[key] = [formatErrorMessage(ErrorMessages.REQUIRED, { userInput: value })]
-            break
-          };
-          // If the value is not required, we allow it to be undefined or null
-          if (isNil(value) && !property.required) break;
 
-          for (const validator of validators) {
-            const error = validator.fn(property, processedInput[key], value);
-            if (!isNil(error)) propErrors.push(error);
-          }
-          if (propErrors.length) errors[key] = propErrors;
-          break;
-        }
+    if (auth && auth.type === PropertyType.CUSTOM_AUTH) {
+      const { processedInput: authProcessedInput, errors: authErrors } =
+        await this.applyProcessorsAndValidators(
+          resolvedInput[AUTHENTICATION_PROPERTY_NAME],
+          auth.props,
+          undefined
+        );
+      processedInput['auth'] = authProcessedInput;
+      if (Object.keys(authErrors).length > 0) {
+        errors.auth = authErrors;
       }
     }
+    for (const [key, value] of Object.entries(resolvedInput)) {
+      const property = props[key];
+      if (key === AUTHENTICATION_PROPERTY_NAME) {
+        continue;
+      }
+      const processors = [
+        ...(property.defaultProcessors || []),
+        ...(property.processors || [])
+      ];
+      const validators = [
+        ...(property.defaultValidators || []),
+        ...(property.validators || [])
+      ];
+      for (const processor of processors) {
+        processedInput[key] = await processor(property, value);
+      }
 
+      const propErrors = [];
+      // Short Circuit
+      // If the value is required, we don't allow it to be undefined or null
+      if (isNil(value) && property.required) {
+        errors[key] = [
+          formatErrorMessage(ErrorMessages.REQUIRED, { userInput: value })
+        ];
+        continue;
+      }
+      // If the value is not required, we allow it to be undefined or null
+      if (isNil(value) && !property.required) continue;
+
+      for (const validator of validators) {
+        const error = validator.fn(property, processedInput[key], value);
+        if (!isNil(error)) propErrors.push(error);
+      }
+      if (propErrors.length) errors[key] = propErrors;
+    }
     return { processedInput, errors };
   }
 }
 
 type ResolveParams = {
-  unresolvedInput: unknown
-  executionState: ExecutionState
-  censorConnections: boolean
-}
+  unresolvedInput: unknown;
+  executionState: ExecutionState;
+  censorConnections: boolean;
+};
