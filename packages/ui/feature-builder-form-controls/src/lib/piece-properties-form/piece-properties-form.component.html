@@ -48,8 +48,13 @@
       <ng-template #checkboxInputTemplate>
         <div class="ap-flex ap-mb-[20px] ap-mr-[5px] ap-items-center ap-gap-2">
 
-          <mat-slide-toggle apTrackHover #slider="hoverTrackerDirective" [formControlName]="property.key"
-            color="primary" [matTooltip]="property.value.description">{{property.value.displayName}}</mat-slide-toggle>
+          <div class="ap-flex ap-items-center ap-gap-2 ap-align-center">
+            <mat-slide-toggle apTrackHover #slider="hoverTrackerDirective" [formControlName]="property.key" color="primary"
+              class="ap-flex-grow-1">{{property.value.displayName}}</mat-slide-toggle>
+              <ng-container
+              *ngTemplateOutlet="propInfo; context{$implicit:property}"></ng-container>  
+          </div>
+
           <ng-container
             *ngTemplateOutlet="removeOptionalPropertyIcon; context{$implicit:property, propertyUiContainer:slider}"></ng-container>
           <div class="ap-flex-grow"></div>
@@ -280,9 +285,12 @@
 
       <ng-template #arrayInputTemplate>
         <div [class.ap-mb-5]="form.disabled" #hoverContainer="hoverTrackerDirective" apTrackHover>
-          <div class="ap-mb-2 ap-flex ap-gap-2 ap-items-center" [matTooltip]="property.value.description">
+          <div class="ap-mb-2 ap-flex ap-gap-2 ap-items-center">
+            <ng-container
+            *ngTemplateOutlet="propInfo; context{$implicit:property}"></ng-container>
             <div class="ap-cursor-pointer" (click)="array.focusFirstInput()">{{property.value.displayName}}
-            </div><ng-container
+            </div>
+            <ng-container
               *ngTemplateOutlet="removeOptionalPropertyIcon; context{$implicit:property, propertyUiContainer:hoverContainer}"></ng-container>
           </div>
           <app-array-form-control #array [formControlName]="property.key"></app-array-form-control>
@@ -302,7 +310,9 @@
 
       <ng-template #objectInputTemplate>
         <div [class.ap-mb-5]="form.disabled" #hoverContainer="hoverTrackerDirective" apTrackHover>
-          <div class="ap-mb-2 ap-flex ap-gap-2 ap-items-center" [matTooltip]="property.value.description">
+          <div class="ap-mb-2 ap-flex ap-gap-2 ap-items-center">
+            <ng-container
+              *ngTemplateOutlet="propInfo; context{$implicit:property}"></ng-container>
             <div class="ap-cursor-pointer" (click)="dictonary.focusFirstKeyInput()">{{property.value.displayName}}
             </div>
             <ng-container
@@ -395,7 +405,11 @@
           (click)="$event.stopImmediatePropagation()">
           <div class="ap-py-2 ap-px-4 ap-flex bar-containing-beautify-button">
             <div class="ap-flex-grow">
-              <span class="ap-text-white ap-flex ap-gap-2 ap-items-center">{{property.value.displayName}} <ng-container
+              
+              <span class="ap-text-white ap-flex ap-gap-2 ap-items-center">
+                <ng-container *ngTemplateOutlet="propInfo; context{$implicit:property}"></ng-container>
+                {{property.value.displayName}} 
+                <ng-container
                   *ngTemplateOutlet="removeOptionalPropertyIcon; context{$implicit:property, propertyUiContainer:hoverContainer, isWhite:true}"></ng-container>
               </span>
             </div>
@@ -472,9 +486,10 @@
     <mat-form-field class="ap-w-full" appearance="outline" #textInput
       (click)="isTriggerPieceForm?null: handler.showMentionsDropdown()">
       <mat-label>{{property.value.displayName}}</mat-label>
-      <app-interpolating-text-form-control #textControl [matTooltip]="property.value.description"
+      <app-interpolating-text-form-control #textControl 
         [formControlName]="property.key" [attr.name]="property.key"
         (editorFocused)="handler.showMentionsDropdown()"></app-interpolating-text-form-control>
+      <mat-icon matSuffix *ngIf="property.value.description" [matTooltip]="property.value.description">info</mat-icon>
       <mat-error *ngIf="formGroup.get(property.key)?.invalid">
         {{property.value.displayName}} is required
       </mat-error>
@@ -514,4 +529,9 @@
     <input #searchInput [formControl]="searchControl" matInput placeholder="Search" autocomplete="off"
       (keydown.Space)="$event.stopPropagation()">
   </mat-form-field>
+</ng-template>
+
+<ng-template #propInfo let-property>
+  <mat-icon *ngIf="property.value.description" [matTooltip]="property.value.description"
+  class="ap-cursor-pointer">info</mat-icon>
 </ng-template>
