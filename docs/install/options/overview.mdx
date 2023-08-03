@@ -3,13 +3,17 @@ title: "Overview"
 description: "Introduction to the different ways to install Activepieces"
 ---
 
-Activepieces can be deployed using **Docker Compose** and **Kubernetes**. We are also working on rolling out specific deployment options for popular hosting providers such as DigitalOcean, AWS, GCP, and Azure.
+Activepieces can be deployed using **Docker**, **Docker Compose** and **Kubernetes**.
 
 ## Self Hosting Options
 
 <CardGroup cols={2}>
-  <Card title="Docker Compose" icon="docker" color="#248fe0" href="./docker">
-    Deploy using Docker Compose 
+  <Card title="Docker (Fastest)" icon="docker" color="#248fe0" href="./docker">
+Deploy Activepieces as a single Docker container using the sqllite database.
+  </Card>
+
+  <Card title="Docker Compose" icon="layer-group" color="#00FFFF" href="./docker-compose">
+    Deploy Activepieces with **redis** and **postgres** setup
   </Card>
 
   <Card title="Easypanel" icon={

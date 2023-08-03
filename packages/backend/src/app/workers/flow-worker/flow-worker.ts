@@ -26,11 +26,11 @@ import { codeBuilder } from '../code-worker/code-builder'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { OneTimeJobData } from './job-data'
 import { engineHelper } from '../../helper/engine-helper'
-import { acquireLock } from '../../database/redis-connection'
 import { captureException, logger } from '../../helper/logger'
 import { pieceManager } from '../../flows/common/piece-installer'
 import { isNil } from '@activepieces/shared'
 import { getServerUrl } from '../../helper/public-ip-utils'
+import { acquireLock } from '../../helper/lock'
 
 type FlowPiece = {
     name: string
@@ -49,6 +49,7 @@ type FinishExecutionParams = {
 }
 
 type LoadInputAndLogFileIdParams = {
+    flowVersion: FlowVersion
     jobData: OneTimeJobData
 }
 
@@ -103,9 +104,9 @@ const finishExecution = async (params: FinishExecutionParams): Promise<void> => 
     }
 }
 
-const loadInputAndLogFileId = async ({ jobData }: LoadInputAndLogFileIdParams): Promise<LoadInputAndLogFileIdResponse> => {
+const loadInputAndLogFileId = async ({ flowVersion, jobData }: LoadInputAndLogFileIdParams): Promise<LoadInputAndLogFileIdResponse> => {
     const baseInput = {
-        flowVersionId: jobData.flowVersionId,
+        flowVersion,
         flowRunId: jobData.runId,
         projectId: jobData.projectId,
         triggerPayload: {
@@ -150,6 +151,7 @@ const loadInputAndLogFileId = async ({ jobData }: LoadInputAndLogFileIdParams): 
 
     return {
         input: {
+            serverUrl: await getServerUrl(),
             executionType: ExecutionType.RESUME,
             executionState: executionOutput.executionState,
             resumeStepMetadata: flowRun.pauseMetadata.resumeStepMetadata,
@@ -163,7 +165,10 @@ const loadInputAndLogFileId = async ({ jobData }: LoadInputAndLogFileIdParams): 
 async function executeFlow(jobData: OneTimeJobData): Promise<void> {
     logger.info(`[FlowWorker#executeFlow] flowRunId=${jobData.runId} executionType=${jobData.executionType}`)
 
-    const flowVersion = await flowVersionService.lockPieceVersions(jobData.projectId, await flowVersionService.getOneOrThrow(jobData.flowVersionId))
+    const flowVersion = await flowVersionService.lockPieceVersions(
+        jobData.projectId,
+        await flowVersionService.getOneOrThrow(jobData.flowVersionId),
+    )
 
     // Don't use sandbox for draft versions, since they are mutable and we don't want to cache them.
     const key = flowVersion.id + (FlowVersionState.DRAFT === flowVersion.state ? '-draft' + apId() : '')
@@ -189,7 +194,7 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
             logger.info(`[${jobData.runId}] Reusing sandbox ${sandbox.boxId} took ${Date.now() - startTime}ms`)
         }
 
-        const { input, logFileId } = await loadInputAndLogFileId({ jobData })
+        const { input, logFileId } = await loadInputAndLogFileId({ flowVersion, jobData })
 
         const { result: executionOutput } = await engineHelper.executeFlow(sandbox, input)
 
@@ -243,10 +248,6 @@ async function downloadFiles(
         for (const artifact of artifacts) {
             await fs.writeFile(`${buildPath}/codes/${artifact.id}.js`, artifact.data)
         }
-
-        await fs.ensureDir(`${buildPath}/flows/`)
-        await fs.writeFile(`${buildPath}/flows/${flowVersion.id}.json`, JSON.stringify(flowVersion))
-
     }
     finally {
         logger.info(`[${flowVersion.id}] Releasing flow lock`)

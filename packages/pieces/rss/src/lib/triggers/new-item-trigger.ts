@@ -1,8 +1,10 @@
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { PieceAuth, PieceAuthProperty, PiecePropValueSchema, TriggerStrategy, createTrigger } from "@activepieces/pieces-framework";
+import { PieceAuthProperty, PiecePropValueSchema, Store, TriggerStrategy, createTrigger } from "@activepieces/pieces-framework";
 import { rssFeedUrl } from '../common/props';
 import FeedParser from 'feedparser';
 import axios from 'axios';
+import { isNil } from '@activepieces/shared';
+import dayjs from "dayjs";
 
 export const rssNewItemTrigger = createTrigger({
     name: 'new-item',
@@ -133,17 +135,47 @@ export const rssNewItemTrigger = createTrigger({
     },
 
     async onDisable({ auth, propsValue, store }): Promise<void> {
+        const lastFetchDate = await store.get<number>('_lastRssPublishDate')
+        if(!isNil(lastFetchDate)){
+            await store.delete('_lastRssPublishDate')
+        }
         await pollingHelper.onDisable(polling, { auth, store: store, propsValue: propsValue });
     },
 
     async run({ auth, propsValue, store }): Promise<unknown[]> {
-        return await pollingHelper.poll(polling, { auth, store: store, propsValue: propsValue });
+        const lastFetchDate = await store.get<number>('_lastRssPublishDate')
+        const newItems = (await pollingHelper.poll(polling, { auth, store: store, propsValue: propsValue })).filter(f => {
+            if(isNil(lastFetchDate)){
+                return true;
+            }
+            const newItem = f as {pubdate: string, pubDate: string}
+            const newDate = newItem.pubdate ?? newItem.pubDate
+            if(isNil(newDate)){
+                return true;
+            }
+            return dayjs(newDate).unix() > lastFetchDate
+        });
+        let newFetchDateUnix = lastFetchDate;
+        for(const item of newItems){
+            const newItem = item as {pubdate: string, pubDate: string}
+            const newDate = newItem.pubdate ?? newItem.pubDate
+            if(!isNil(newDate)){
+                const newDateUnix = dayjs(newDate).unix()
+                if(isNil(newFetchDateUnix) || newDateUnix > newFetchDateUnix){
+                    newFetchDateUnix = newDateUnix
+                }
+            }
+        }
+        if(!isNil(newFetchDateUnix)){
+            await store.put('_lastRssPublishDate', newFetchDateUnix)
+        }
+        return newItems
     },
 });
 
 const polling: Polling<PiecePropValueSchema<PieceAuthProperty>, { rss_feed_url: string }> = {
     strategy: DedupeStrategy.LAST_ITEM,
-    items: async ({ propsValue }: { propsValue: { rss_feed_url: string } }) => {
+    items: async ({ propsValue }: { store: Store, propsValue: { rss_feed_url: string } }) => {
         const items = await getRssItems(propsValue.rss_feed_url);
         return items.map((item) => ({
             id: getId(item),

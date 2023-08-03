@@ -2,8 +2,8 @@ import { AppConnectionId } from "../app-connection/app-connection";
 import { FileId } from "../file/file";
 import { FlowRunId } from "../flow-run/flow-run";
 import { FlowId } from "../flows/flow";
+import { FlowInstanceId } from "../flows/flow-instances";
 import { FlowVersionId } from "../flows/flow-version";
-import { InstanceId } from "../instance";
 import { ApId } from "./id-generator";
 
 export class ActivepiecesError extends Error {
@@ -84,7 +84,7 @@ export type FlowNotFoundErrorParams = BaseErrorParams<
 export type FlowInstanceNotFoundErrorParams = BaseErrorParams<
   ErrorCode.FLOW_INSTANCE_NOT_FOUND,
   {
-    id?: InstanceId
+    id?: FlowInstanceId
   }
 >
 

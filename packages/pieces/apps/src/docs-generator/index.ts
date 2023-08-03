@@ -3,6 +3,7 @@ import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { cwd } from "node:process";
 import { Piece, ActionBase, PieceMetadata, PiecePropertyMap, TriggerBase, TriggerStrategy} from '@activepieces/pieces-framework';
+import { extractPieceFromModule } from "@activepieces/shared";
 
 type PieceInfo = PieceMetadata & {
   authors: string[];
@@ -16,10 +17,17 @@ const loadPiecesMetadata = async (): Promise<PieceInfo[]> => {
   const piecesMetadata: PieceInfo[] = [];
 
   for (const piecePackage of filteredPiecePackages) {
+    try{
     const module = await import(`packages/pieces/${piecePackage}/src/index.ts`)
     const packageJson = await import(`packages/pieces/${piecePackage}/package.json`)
 
-    const piece = Object.values<Piece>(module)[0]
+
+
+    const piece =  await extractPieceFromModule<Piece>({
+      module,
+      pieceName: packageJson.name,
+      pieceVersion: packageJson.version,
+    })
 
     piecesMetadata.push({
       ...piece.metadata(),
@@ -28,6 +36,9 @@ const loadPiecesMetadata = async (): Promise<PieceInfo[]> => {
       directoryName: piecePackage,
       authors: piece.authors
     })
+  }catch( e){
+ console.error(`Error loading piece `, e);
+  }
   }
 
   return piecesMetadata.sort((a, b) => a.displayName.toUpperCase().localeCompare(b.displayName.toUpperCase()));

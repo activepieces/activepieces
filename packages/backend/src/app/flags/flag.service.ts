@@ -75,18 +75,6 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.WARNING_TEXT_BODY,
-                value: system.get(SystemProp.WARNING_TEXT_BODY),
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.WARNING_TEXT_HEADER,
-                value: system.get(SystemProp.WARNING_TEXT_HEADER),
-                created,
-                updated,
-            },
-            {
                 id: ApFlagId.SANDBOX_RUN_TIME_SECONDS,
                 value: system.getNumber(SystemProp.SANDBOX_RUN_TIME_SECONDS),
                 created,
@@ -130,8 +118,6 @@ export type FlagType =
     | BaseFlagStructure<ApFlagId.WEBHOOK_URL_PREFIX, string>
     | BaseFlagStructure<ApFlagId.USER_CREATED, boolean>
     | BaseFlagStructure<ApFlagId.TELEMETRY_ENABLED, boolean>
-    | BaseFlagStructure<ApFlagId.WARNING_TEXT_BODY, string>
-    | BaseFlagStructure<ApFlagId.WARNING_TEXT_HEADER, string>
 
 type BaseFlagStructure<K extends ApFlagId, V> = {
     id: K

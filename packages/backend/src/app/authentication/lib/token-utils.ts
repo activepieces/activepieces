@@ -1,42 +1,54 @@
 import { randomBytes } from 'node:crypto'
 import { promisify } from 'node:util'
 import jwt, { SignOptions, VerifyOptions } from 'jsonwebtoken'
-import { Principal } from '@activepieces/shared'
+import { Principal, isNil } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
-import { system } from '../../helper/system/system'
+import { QueueMode, system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
-import { redisStore } from '../../helper/store'
+import { localFileStore } from '../../helper/store'
 
 const ALGORITHM = 'HS256'
 const KEY_ID = '1'
-// TODO MAKE IT SHORT LIVE WITH REFRESH TOKEN STRATEGY
 const EXPIRES_IN_SECONDS = 7 * 24 * 3600
 const ISSUER = 'activepieces'
 
 let secret: string | null = null
+const queueMode: QueueMode = system.get(SystemProp.QUEUE_MODE) as QueueMode
 
 const getSecret = async (): Promise<string> => {
     if (secret !== null) {
         return secret
     }
+    secret = system.get(SystemProp.JWT_SECRET) ?? null
 
-    secret = getSecretFromEnvironment() ?? (await getSecretFromStore()) ?? (await generateAndStoreSecret())
+    if (queueMode === QueueMode.MEMORY) {
+        if (isNil(secret)) {
+            secret = await getSecretFromStore()
+        }
+        if (isNil(secret)) {
+            secret = await generateAndStoreSecret()
+        }
+    }
+    if (isNil(secret)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.SYSTEM_PROP_INVALID,
+            params: {
+                prop: SystemProp.JWT_SECRET,
+            },
+        }, `System property AP_${SystemProp.JWT_SECRET} must be defined`)
+    }
     return secret
 }
 
-const getSecretFromEnvironment = (): string | undefined => {
-    return system.get(SystemProp.JWT_SECRET)
-}
-
 const getSecretFromStore = async (): Promise<string | null> => {
-    return await redisStore.load(SystemProp.JWT_SECRET)
+    return await localFileStore.load(SystemProp.JWT_SECRET)
 }
 
 const generateAndStoreSecret = async (): Promise<string> => {
     const secretLengthInBytes = 32
     const secretBuffer = await promisify(randomBytes)(secretLengthInBytes)
     const secret = secretBuffer.toString('base64')
-    await redisStore.save(SystemProp.JWT_SECRET, secret)
+    await localFileStore.save(SystemProp.JWT_SECRET, secret)
     return secret
 }
 

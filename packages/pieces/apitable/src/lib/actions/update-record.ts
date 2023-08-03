@@ -43,6 +43,7 @@ export const apiTableUpdateRecord = createAction({
         const auth = context.auth;
         const datasheet = context.propsValue.datasheet;
         const recordId = context.propsValue.recordId;
+        const apiTableUrl = auth.apiTableUrl;
         const dynamicFields: DynamicPropsValue = context.propsValue.fields;
         const fields: {
             [n: string]: string
@@ -57,9 +58,9 @@ export const apiTableUpdateRecord = createAction({
 
         const request: HttpRequest = {
             method: HttpMethod.PATCH,
-            url: `https://api.apitable.com/fusion/v1/datasheets/${datasheet}/records`,
+            url: `${apiTableUrl.replace(/\/$/, "")}/fusion/v1/datasheets/${datasheet}/records`,
             headers: {
-                "Authorization": "Bearer " + auth,
+                "Authorization": "Bearer " + auth.token,
                 "Content-Type": "application/json",
             },
             body: {

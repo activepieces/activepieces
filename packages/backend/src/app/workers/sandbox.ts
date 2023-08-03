@@ -18,7 +18,7 @@ const getIsolateExecutableName = () => {
     return executableNameMap[arch] ?? defaultName
 }
 
-const executionMode: ExecutionMode = system.get(SystemProp.EXECUTION_MODE) as ExecutionMode ?? ExecutionMode.SANDBOXED
+const executionMode: ExecutionMode = system.get(SystemProp.EXECUTION_MODE) as ExecutionMode
 
 export type ExecuteIsolateResult = {
     output: unknown
@@ -30,7 +30,7 @@ export type ExecuteIsolateResult = {
 
 export class Sandbox {
     private static readonly isolateExecutableName = getIsolateExecutableName()
-    private static readonly sandboxRunTimeSeconds = system.getNumber(SystemProp.SANDBOX_RUN_TIME_SECONDS) ?? 120
+    private static readonly sandboxRunTimeSeconds = system.getNumber(SystemProp.SANDBOX_RUN_TIME_SECONDS)!
 
     public readonly boxId: number
     public used: boolean
@@ -87,7 +87,8 @@ export class Sandbox {
     async runCommandLine(commandLine: string): Promise<ExecuteIsolateResult> {
         if (executionMode === ExecutionMode.UNSANDBOXED) {
             const startTime = Date.now()
-            const result = await this.runUnsafeCommand(`cd ${this.getSandboxFolderPath()} && env -i AP_ENVIRONMENT=$AP_ENVIRONMENT NODE_OPTIONS='--enable-source-maps' ${commandLine}`)
+            const envionment = system.get(SystemProp.ENVIRONMENT)
+            const result = await this.runUnsafeCommand(`cd ${this.getSandboxFolderPath()} && env -i AP_ENVIRONMENT=${envionment} NODE_OPTIONS='--enable-source-maps' ${commandLine}`)
             let engineResponse
             if (result.verdict === EngineResponseStatus.OK) {
                 engineResponse = await this.parseFunctionOutput()

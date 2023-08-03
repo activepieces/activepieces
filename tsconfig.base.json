@@ -35,6 +35,7 @@
       "@activepieces/piece-bloomerang": [
         "packages/pieces/bloomerang/src/index.ts"
       ],
+      "@activepieces/piece-box": ["packages/pieces/box/src/index.ts"],
       "@activepieces/piece-cal-com": ["packages/pieces/cal-com/src/index.ts"],
       "@activepieces/piece-calendly": ["packages/pieces/calendly/src/index.ts"],
       "@activepieces/piece-certopus": ["packages/pieces/certopus/src/index.ts"],
@@ -70,6 +71,7 @@
       "@activepieces/piece-generatebanners": [
         "packages/pieces/generatebanners/src/index.ts"
       ],
+      "@activepieces/piece-ghostcms": ["packages/pieces/ghostcms/src/index.ts"],
       "@activepieces/piece-github": ["packages/pieces/github/src/index.ts"],
       "@activepieces/piece-gmail": ["packages/pieces/gmail/src/index.ts"],
       "@activepieces/piece-google-calendar": [
@@ -94,6 +96,9 @@
         "packages/pieces/google-tasks/src/index.ts"
       ],
       "@activepieces/piece-gotify": ["packages/pieces/gotify/src/index.ts"],
+      "@activepieces/piece-gravityforms": [
+        "packages/pieces/gravityforms/src/index.ts"
+      ],
       "@activepieces/piece-hackernews": [
         "packages/pieces/hackernews/src/index.ts"
       ],
@@ -129,6 +134,7 @@
       "@activepieces/piece-mysql": ["packages/pieces/mysql/src/index.ts"],
       "@activepieces/piece-notion": ["packages/pieces/notion/src/index.ts"],
       "@activepieces/piece-ntfy": ["packages/pieces/ntfy/src/index.ts"],
+      "@activepieces/piece-onfleet": ["packages/pieces/onfleet/src/index.ts"],
       "@activepieces/piece-openai": ["packages/pieces/openai/src/index.ts"],
       "@activepieces/piece-pastebin": ["packages/pieces/pastebin/src/index.ts"],
       "@activepieces/piece-pastefy": ["packages/pieces/pastefy/src/index.ts"],

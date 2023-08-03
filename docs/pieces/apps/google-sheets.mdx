@@ -13,10 +13,6 @@ title: 'Google Sheets'
 
         <Expandable title="Properties">
           
-<ResponseField name="Authentication" required type="Oauth2">
-
-</ResponseField>
-            
 <ResponseField name="Spreadsheet" required type="Dropdown">
 
 </ResponseField>
@@ -47,10 +43,6 @@ The maximum number of rows to poll, the rest will be polled on the next run
 
         <Expandable title="Properties">
           
-<ResponseField name="Authentication" required type="Oauth2">
-
-</ResponseField>
-            
 <ResponseField name="Spreadsheet" required type="Dropdown">
 
 </ResponseField>
@@ -67,8 +59,12 @@ Determines if sheets from Team Drives should be included in the results.
 Inserted values that are dates and formulas will be entered strings and have no effect
 </ResponseField>
             
-<ResponseField name="Values" required type="Array">
-These are the cell values of the row that will be added, beginning with the Value in column A and proceeding with each Value being entered in the next cell.
+<ResponseField name="Are the First row Headers?" required type="Checkbox">
+If the first row is headers
+</ResponseField>
+            
+<ResponseField name="Values" required type="Dynamic">
+The values to insert
 </ResponseField>
               
         </Expandable>
@@ -79,10 +75,6 @@ These are the cell values of the row that will be added, beginning with the Valu
 
         <Expandable title="Properties">
           
-<ResponseField name="Authentication" required type="Oauth2">
-
-</ResponseField>
-            
 <ResponseField name="Spreadsheet" required type="Dropdown">
 
 </ResponseField>
@@ -107,10 +99,6 @@ The row number to remove
 
         <Expandable title="Properties">
           
-<ResponseField name="Authentication" required type="Oauth2">
-
-</ResponseField>
-            
 <ResponseField name="Spreadsheet" required type="Dropdown">
 
 </ResponseField>
@@ -127,8 +115,12 @@ Determines if sheets from Team Drives should be included in the results.
 The row number to update
 </ResponseField>
             
-<ResponseField name="Values" required type="Array">
-These are the cell values of the row that will be updated, begining with column A and continuing with each Value entered into the next column. For example, to update column C, you must enter Values for columns A, B, and C. It is likely that you will update these columns using Values selected from a previous Google Sheets operation so they will remain the same. If they are left blank they will be blanked out when updating. You do not need to enter Values for all of the columns, just those to the left of the Value you wish to update.
+<ResponseField name="Are the First row Headers?" required type="Checkbox">
+If the first row is headers
+</ResponseField>
+            
+<ResponseField name="Values" required type="Dynamic">
+The values to insert
 </ResponseField>
               
         </Expandable>
@@ -139,10 +131,6 @@ These are the cell values of the row that will be updated, begining with column 
 
         <Expandable title="Properties">
           
-<ResponseField name="Authentication" required type="Oauth2">
-
-</ResponseField>
-            
 <ResponseField name="Spreadsheet" required type="Dropdown">
 
 </ResponseField>
@@ -155,12 +143,36 @@ Determines if sheets from Team Drives should be included in the results.
 
 </ResponseField>
             
-<ResponseField name="Column Name" required type="Short_text">
-The name of the column to search in, e.g. "A"
+<ResponseField name="The name of the column to search in" required type="Dropdown">
+Column Name
 </ResponseField>
             
 <ResponseField name="Search Value" required type="Short_text">
 The value to search for
+</ResponseField>
+              
+        </Expandable>
+      </Card>
+  
+      <Card title="Clear Sheet " >
+        Clears all rows on an existing sheet
+
+        <Expandable title="Properties">
+          
+<ResponseField name="Spreadsheet" required type="Dropdown">
+
+</ResponseField>
+            
+<ResponseField name="Include Team Drive Sheets" required type="Checkbox">
+Determines if sheets from Team Drives should be included in the results.
+</ResponseField>
+            
+<ResponseField name="Sheet" required type="Dropdown">
+
+</ResponseField>
+            
+<ResponseField name="Is First row Headers?" required type="Checkbox">
+If the first row is headers
 </ResponseField>
               
         </Expandable>

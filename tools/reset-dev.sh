@@ -1,3 +1,4 @@
+rm -rf ~/.activepieces
 rm -rf node_modules/
 docker container rm activepieces_devcontainer_db_1 --force
 docker container rm activepieces_devcontainer_redis_1 --force

@@ -153,6 +153,7 @@ const BranchConditionValid = (addMinLength: boolean) => Type.Union([
 
 export const BranchActionSettingsWithValidation = Type.Object({
   conditions: Type.Array(Type.Array(BranchConditionValid(true))),
+  inputUiInfo: SampleDataSettingsObject,
 })
 
 export const BranchCondition = BranchConditionValid(false);
@@ -160,6 +161,7 @@ export type BranchCondition = Static<typeof BranchCondition>;
 
 export const BranchActionSettings = Type.Object({
   conditions: Type.Array(Type.Array(BranchConditionValid(false))),
+  inputUiInfo: SampleDataSettingsObject,
 })
 export type BranchActionSettings = Static<typeof BranchActionSettings>;
 

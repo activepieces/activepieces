@@ -1,8 +1,6 @@
 import Redis from 'ioredis'
-import RedLock, { Lock } from 'redlock'
 import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
-import { captureException } from '../helper/logger'
 
 const url = system.get(SystemProp.REDIS_URL)
 const username = system.get(SystemProp.REDIS_USER)
@@ -24,35 +22,4 @@ export const createRedisClient = (): Redis => {
         maxRetriesPerRequest: null,
         tls: useSsl ? {} : undefined,
     })
-}
-
-const redisConnection = createRedisClient()
-
-const redLock = new RedLock(
-    [redisConnection],
-    {
-        driftFactor: 0.01,
-        retryCount: 30,
-        retryDelay: 2000,
-        retryJitter: 200,
-        automaticExtensionThreshold: 500,
-    },
-)
-
-type AcquireLockParams = {
-    key: string
-    timeout?: number
-}
-
-export const acquireLock = async ({ key, timeout = 3000 }: AcquireLockParams): Promise<Lock> => {
-    try {
-        return await redLock.acquire([key], timeout, {
-            retryCount: Math.ceil(timeout / 2000) * 2,
-            retryDelay: 2000,
-        })
-    }
-    catch (e) {
-        captureException(e)
-        throw e
-    }
 }

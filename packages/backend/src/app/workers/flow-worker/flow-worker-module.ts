@@ -1,7 +1,6 @@
-import { initFlowQueueConsumer } from './flow-queue-consumer'
-import { migrateScheduledJobs } from './flow-queue-migration'
+import { flowQueueConsumer } from './flow-queue-consumer'
 
 export const flowWorkerModule = async (): Promise<void> => {
-    await migrateScheduledJobs()
-    await initFlowQueueConsumer()
+    await flowQueueConsumer.init()
 }
+
