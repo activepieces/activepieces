@@ -6,7 +6,10 @@ icon: 'magnifying-glass'
 
 Validators help ensure that user input meets certain criteria or constraints. Below are some examples of validator functions:
 
-**Pattern Validator**: Checks if the processed value matches a specific regular expression.
+## Validators 
+
+### Pattern
+Checks if the processed value matches a specific regular expression.
 
 ```typescript
 text: Property.LongText({
@@ -17,7 +20,8 @@ text: Property.LongText({
 })
 ```
 
-**Max Length Validator**: Verifies if the processed string length is within a specified maximum limit.
+### Max Length
+Verifies if the processed string length is within a specified maximum limit.
 
 ```typescript
 text: Property.LongText({
@@ -28,7 +32,8 @@ text: Property.LongText({
 })
 ```
 
-**Min Length Validator**: Verifies if the processed string length is within a specified minimum limit.
+### Min Length
+Verifies if the processed string length is within a specified minimum limit.
 
 ```typescript
 text: Property.LongText({
@@ -39,7 +44,8 @@ text: Property.LongText({
 })
 ```
 
-**Min Value Validator**: Ensures that the processed numeric value is greater than or equal to a specified minimum.
+### Min Value
+Ensures that the processed numeric value is greater than or equal to a specified minimum.
 
 ```typescript
 age: Property.Number({
@@ -50,7 +56,8 @@ age: Property.Number({
 })
 ```
 
-**Max Value Validator**: Ensures that the processed numeric value is less than or equal to a specified maximum.
+### Max Value
+Ensures that the processed numeric value is less than or equal to a specified maximum.
 
 ```typescript
 count: Property.Number({
@@ -61,7 +68,8 @@ count: Property.Number({
 })
 ```
 
-**In Range Validator**: Checks if the processed numeric value falls within a specified range.
+### In Range
+Checks if the processed numeric value falls within a specified range.
 
 ```typescript
 score: Property.Number({
@@ -72,7 +80,8 @@ score: Property.Number({
 })
 ```
 
-**One Of Validator**: Validates whether the processed value is one of the specified values.
+### One Of
+Validates whether the processed value is one of the specified values.
 
 ```typescript
 fruit: Property.Text({
@@ -83,7 +92,9 @@ fruit: Property.Text({
 })
 ```
 
-**Number Validator**: Validates whether the processed value is a valid number.
+### Number
+
+Validates whether the processed value is a valid number.
 
 ```typescript
 quantity: Property.Number({
@@ -94,7 +105,9 @@ quantity: Property.Number({
 })
 ```
 
-**Image Validator**: Verifies whether the processed value is a valid image file based on its extension.
+### Image
+
+Verifies whether the processed value is a valid image file based on its extension.
 
 ```typescript
 imageFile: Property.File({
@@ -105,7 +118,8 @@ imageFile: Property.File({
 })
 ```
 
-**File Validator**: Ensures that the processed value is a valid file.
+### File
+Ensures that the processed value is a valid file.
 
 ```typescript
 documentFile: Property.File({
@@ -115,8 +129,8 @@ documentFile: Property.File({
     validators: [Validators.file],
 })
 ```
-
-**Email Validator**: Validates whether the processed value is a valid email address.
+### Email
+Validates whether the processed value is a valid email address.
 
 ```typescript
 email: Property.Text({
@@ -127,7 +141,9 @@ email: Property.Text({
 })
 ```
 
-**URL Validator**: Ensures that the processed value is a valid URL.
+### URL
+
+Ensures that the processed value is a valid URL.
 
 ```typescript
 websiteUrl: Property.Text({
@@ -138,7 +154,9 @@ websiteUrl: Property.Text({
 })
 ```
 
-**Datetime ISO Validator**: Validates whether the processed value is a valid ISO-formatted date and time.
+###  Datetime ISO
+
+Validates whether the processed value is a valid ISO-formatted date and time.
 
 ```typescript
 eventDate: Property.DateTime({
@@ -149,7 +167,7 @@ eventDate: Property.DateTime({
 })
 ```
 
-**Custom Validator**:
+### Custom
    Example:
 
 Note: The custom validator allows you to define your own validation logic and error message. It can be used to perform complex validations beyond the provided built-in validators.
