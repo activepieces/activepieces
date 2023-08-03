@@ -28,7 +28,7 @@ import {
   OAuth2PopupResponse,
 } from '../../models/oauth2-popup-params.interface';
 import { CloudAuthConfigsService } from '../../services/cloud-auth-configs.service';
-import { AppConnectionsService } from '../../services/app-connections.service';
+import { AppConnectionsService } from '@activepieces/ui/common';
 import { ConnectionValidator } from '../../validators/connectionNameValidator';
 import {
   BuilderSelectors,

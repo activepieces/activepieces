@@ -45,11 +45,12 @@ export class StateIconComponent implements OnInit, OnChanges {
       case StepOutputStatus.STOPPED:
       case AppConnectionStatus.ACTIVE:
         return 'assets/img/custom/status/success.svg';
+      case AppConnectionStatus.EXPIRED:
+        return 'assets/img/custom/status/warning.svg';
       case ExecutionOutputStatus.FAILED:
       case ExecutionOutputStatus.INTERNAL_ERROR:
       case ExecutionOutputStatus.TIMEOUT:
       case StepOutputStatus.FAILED:
-      case AppConnectionStatus.EXPIRED:
       case AppConnectionStatus.ERROR:
         return 'assets/img/custom/status/error.svg';
       case ExecutionOutputStatus.PAUSED:

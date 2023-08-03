@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { environment } from '../environments/environment';
 import { Observable } from 'rxjs';
 import {
   SeekPage,
@@ -10,6 +9,7 @@ import {
   ListAppConnectionRequest,
 } from '@activepieces/shared';
 import { CURSOR_QUERY_PARAM, LIMIT_QUERY_PARAM } from '../utils/tables.utils';
+import { environment } from '../environments/environment';
 
 @Injectable({
   providedIn: 'root',
@@ -38,6 +38,12 @@ export class AppConnectionsService {
         params: queryParams,
       }
     );
+  }
+
+  getConnectionNameSuggest(pieceName: string) {
+    return pieceName
+      .replace('@activepieces/piece-', '')
+      .replace(/[^A-Za-z0-9_\\-]/g, '_');
   }
 
   delete(id: AppConnectionId): Observable<void> {
