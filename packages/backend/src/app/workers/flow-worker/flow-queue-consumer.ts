@@ -83,7 +83,7 @@ const consumeRepeatingJob = async (job: Job<RepeatingJobData, void>): Promise<vo
         ) {
             captureException(new Error(`[repeatableJobConsumer] removing job.id=${job.name} instance.flowVersionId=${instance?.flowVersionId} data.flowVersion.id=${data.flowVersionId}`))
 
-            const flowVersion = await flowVersionService.getOneOrThrow(data.flowVersionId)
+            const flowVersion = await flowVersionService.getOne(data.flowVersionId)
             if (isNil(flowVersion)) {
                 await flowQueue.removeRepeatingJob({
                     id: data.flowVersionId,
