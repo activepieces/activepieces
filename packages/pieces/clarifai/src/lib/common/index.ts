@@ -12,33 +12,22 @@ function initClarifaiClient() {
 
 export const clarifaiClient = initClarifaiClient();
 
-/**
- * A tuple of `[API Key, User ID, App ID]`, useful for passing around authentication
- * info for Clarifai.
- */
-export type ReqInfo = readonly [string, string, string];
-
 export interface CallModelRequest {
-    auth: ReqInfo;
-    modelId: string;
-    modelVersionId?: string;
-    latestVersion: boolean;
-    input: string;
+    auth: string;
+    modelUrl: string;
+    inputUrl: string;
 }
 
-export function callClarifaiModel({ auth, modelId, modelVersionId, latestVersion, input }: CallModelRequest) {
+export function callClarifaiModel({ auth, modelUrl, inputUrl }: CallModelRequest) {
+    const [userId, appId, modelId, versionId] = parseEntityUrl(modelUrl);
+
     const req = new PostModelOutputsRequest();
-    req.setUserAppId(userAppIdSet(auth));
+    req.setUserAppId(userAppIdSet(userId, appId));
     req.setModelId(modelId);
-    if (!latestVersion) {
-        if (!modelVersionId) {
-            throw new Error('Must specify either latestVersion or modelVersionId');
-        }
-        else {
-            req.setVersionId(modelVersionId);
-        }
+    if (versionId) {
+        req.setVersionId(versionId);
     }
-    req.setInputsList([createImageInput(input)])
+    req.setInputsList([createImageInput(inputUrl)])
 
     const metadata = authMetadata(auth);
     // TODO: we should really be using the async version of this, circle back with clarifai team to see if we can
@@ -57,28 +46,56 @@ function createImageInput(url: string) {
     return input;
 }
 
-function userAppIdSet(auth: ReqInfo) {
+function userAppIdSet(userId: string, appId: string) {
     const set = new UserAppIDSet();
-    set.setUserId(auth[1]);
-    set.setAppId(auth[2]);
+    set.setUserId(userId);
+    set.setAppId(appId);
     return set;
 }
 
-function authMetadata(auth: ReqInfo) {
+function authMetadata(auth: string) {
     const metadata = new grpc.Metadata();
-    metadata.set("authorization", "Key " + auth[0]);
+    metadata.set("authorization", "Key " + auth);
     return metadata;
 }
 
 export const CommonClarifaiProps = {
-    userId: Property.ShortText({
-        description: 'User ID of the owner of the model',
-        displayName: 'User ID',
-        required: true,
-    }),
-    appId: Property.ShortText({
-        description: 'ID of the app the model belongs to',
-        displayName: 'App ID',
+    modelUrl: Property.ShortText({
+        description: 'URL of the Clarifai model. For example https://clarifai.com/clarifai/main/models/general-image-recognition OR a specific version such as https://clarifai.com/clarifai/main/models/general-image-recognition/versions/aa7f35c01e0642fda5cf400f543e7c40. Find more visual classifiers at https://clarifai.com/explore/models?filterData=%5B%7B%22field%22%3A%22model_type_id%22%2C%22value%22%3A%5B%22visual-classifier%22%5D%7D%5D&page=1&perPage=24',
+        displayName: 'Model URL',
         required: true,
     }),
 };
+
+function parseEntityUrl(entityUrl: string): [string, string, string, string] {
+    const url = new URL(entityUrl);
+    const parts = url.pathname.split('/')
+    var version = '';
+    if (parts.length === 7 && parts[5] === 'versions') {
+        version = parts[6];
+    }
+    return [parts[1], parts[2], parts[4], version];
+}
+
+export function removeListFromPropertyNames(obj: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (key.endsWith('List') && Array.isArray(value)) {
+      if (value.length === 0) { // remove empty lists by default
+          continue;
+      }
+      // remove 'List' and recurse on every item in the array
+      result[key.slice(0, -4)] = value.map((item) => {
+        // if the item is an object, recurse on it
+        if (Object.prototype.toString.call(item) === '[object Object]') {
+          return removeListFromPropertyNames(item);
+        }
+        // otherwise, return the item as-is
+        return item;
+      });
+    } else {
+      result[key] = value;
+    }
+  }
+  return result;
+}
