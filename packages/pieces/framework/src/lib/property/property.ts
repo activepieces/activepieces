@@ -17,6 +17,8 @@ import { CustomAuthProperty, CustomAuthProps } from "./custom-auth-prop";
 import { DropdownProperty, MultiSelectDropdownProperty, StaticDropdownProperty, StaticMultiSelectDropdownProperty } from "./dropdown-prop";
 import { DynamicProperties } from "./dynamic-prop";
 import { OAuth2Property, OAuth2Props } from "./oauth2-prop";
+import { Processors } from "../processors/processors";
+import { Validators } from "../validators/validators";
 
 export enum PropertyType {
 	SHORT_TEXT = 'SHORT_TEXT',
@@ -98,8 +100,15 @@ export const Property = {
 		return {displayName: 'Markdown', required: true, description: request.value, type: PropertyType.MARKDOWN, valueSchema: undefined as never}
 	},
 	Number<R extends boolean>(request: Properties<NumberProperty<R>>): R extends true ? NumberProperty<true> : NumberProperty<false> {
-		return { ...request, valueSchema: undefined, type: PropertyType.NUMBER } as unknown as R extends true ? NumberProperty<true> : NumberProperty<false>;
+		return { 
+			...request,
+			defaultProcessors: [Processors.number],
+			defaultValidators: [Validators.number],
+			valueSchema: undefined, 
+			type: PropertyType.NUMBER, 
+		} as unknown as R extends true ? NumberProperty<true> : NumberProperty<false>;
 	},
+
 	Json<R extends boolean>(request: Properties<JsonProperty<R>>): R extends true ? JsonProperty<true> : JsonProperty<false> {
 		return { ...request, valueSchema: undefined, type: PropertyType.JSON } as unknown as R extends true ? JsonProperty<true> : JsonProperty<false>;
 	},
@@ -124,11 +133,20 @@ export const Property = {
 	StaticMultiSelectDropdown<T, R extends boolean = boolean>(request: Properties<StaticMultiSelectDropdownProperty<T, R>>): R extends true ? StaticMultiSelectDropdownProperty<T, true> : StaticMultiSelectDropdownProperty<T, false> {
 		return { ...request, valueSchema: undefined, type: PropertyType.STATIC_MULTI_SELECT_DROPDOWN } as unknown as R extends true ? StaticMultiSelectDropdownProperty<T, true> : StaticMultiSelectDropdownProperty<T, false>;
 	},
-    DateTime<R extends boolean>(request: Properties<DateTimeProperty<R>>): R extends true ? DateTimeProperty<true> : DateTimeProperty<false> {
-        return { ...request, valueSchema: undefined, type: PropertyType.DATE_TIME } as unknown as R extends true ? DateTimeProperty<true> : DateTimeProperty<false>;
-    },
+	DateTime<R extends boolean>(request: Properties<DateTimeProperty<R>>): R extends true ? DateTimeProperty<true> : DateTimeProperty<false> {
+		return { 
+			...request, 
+			defaultProcessors: [Processors.datetime],
+			defaultValidators: [Validators.datetimeIso],
+			valueSchema: undefined, 
+			type: PropertyType.DATE_TIME, 
+		} as unknown as R extends true ? DateTimeProperty<true> : DateTimeProperty<false>;
+	},
 	File<R extends boolean>(request: Properties<FileProperty<R>>): R extends true ? FileProperty<true> : FileProperty<false> {
-		return { ...request, valueSchema: undefined, type: PropertyType.FILE } as unknown as R extends true ? FileProperty<true> : FileProperty<false>;
+		return { ...request, 
+			defaultProcessors: [Processors.file],
+			defaultValidators: [Validators.file],
+			valueSchema: undefined, type: PropertyType.FILE } as unknown as R extends true ? FileProperty<true> : FileProperty<false>
 	},
 };
 
@@ -151,4 +169,4 @@ export const PieceAuth = {
 	}
 };
 
-type Properties<T> = Omit<T, "valueSchema" | "type">;
+type Properties<T> = Omit<T, "valueSchema" | "type" | "defaultValidators" | "defaultProcessors">;

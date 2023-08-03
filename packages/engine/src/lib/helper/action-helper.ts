@@ -202,43 +202,50 @@ export const pieceHelper = {
             pieceVersion,
             actionName,
         })
+        const piece = await pieceHelper.loadPieceOrThrow(pieceName, pieceVersion);
 
         const executionContext = await generateTestExecutionContext(flowVersion)
         const executionState = executionStateFromExecutionContext(executionContext)
 
-        const resolvedProps = await variableService.resolveAndValidate<StaticPropsValue<PiecePropertyMap>>({
+        const resolvedProps = await variableService.resolve<StaticPropsValue<PiecePropertyMap>>({
             unresolvedInput: input,
             executionState,
             censorConnections: false,
-            actionProps: action.props,
         })
-        const context: ActionContext = {
-            executionType: ExecutionType.BEGIN,
-            auth: resolvedProps[AUTHENTICATION_PROPERTY_NAME],
-            propsValue: resolvedProps,
-            store: createContextStore('', globals.flowVersionId),
-            connections: {
-                get: async (key: string) => {
-                    try {
-                        const connection = await connectionService.obtain(key);
-                        if (!connection) {
-                            return null;
-                        }
-                        return connection;
-                    } catch (e) {
-                        return null;
-                    }
-                }
-            },
-            serverUrl: globals.serverUrl!,
-            run: {
-                id: 'test-flow-run-id',
-                stop: () => console.info('stopHook called!'),
-                pause: () => console.info('pauseHook called!'),
-            }
-        }
 
         try {
+
+            const { processedInput, errors } = await variableService.applyProcessorsAndValidators(resolvedProps, action.props, piece.auth);
+            if (Object.keys(errors).length > 0) {
+                throw new Error(JSON.stringify(errors));
+            }
+
+            const context: ActionContext = {
+                executionType: ExecutionType.BEGIN,
+                auth: processedInput[AUTHENTICATION_PROPERTY_NAME],
+                propsValue: processedInput,
+                store: createContextStore('', globals.flowVersionId),
+                connections: {
+                    get: async (key: string) => {
+                        try {
+                            const connection = await connectionService.obtain(key);
+                            if (!connection) {
+                                return null;
+                            }
+                            return connection;
+                        } catch (e) {
+                            return null;
+                        }
+                    }
+                },
+                serverUrl: globals.serverUrl!,
+                run: {
+                    id: 'test-flow-run-id',
+                    stop: () => console.info('stopHook called!'),
+                    pause: () => console.info('pauseHook called!'),
+                }
+            }
+
             return {
                 output: await action.run(context),
                 success: true,
