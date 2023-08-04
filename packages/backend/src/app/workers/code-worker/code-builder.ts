@@ -61,11 +61,21 @@ async function build(artifact: Buffer): Promise<Buffer> {
         await downloadFiles(artifact, buildPath)
 
         const dependencies: PackageManagerDependencies = {
-            '@tsconfig/node18': '1.0.1',
-            'ts-loader': '9.4.2',
-            'typescript': '4.8.4',
-            'webpack': '5.74.0',
-            'webpack-cli': '4.10.0',
+            '@tsconfig/node18': {
+                version: '1.0.0',
+            },
+            'ts-loader': {
+                version: '9.4.2',
+            },
+            typescript: {
+                version: '4.8.4',
+            },
+            webpack: {
+                version: '5.74.0',
+            },
+            'webpack-cli': {
+                version: '4.10.0',
+            },
         }
 
         await packageManager.addDependencies(buildPath, dependencies)

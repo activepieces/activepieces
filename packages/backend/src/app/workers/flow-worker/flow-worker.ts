@@ -31,14 +31,11 @@ import { pieceManager } from '../../flows/common/piece-installer'
 import { isNil } from '@activepieces/shared'
 import { getServerUrl } from '../../helper/public-ip-utils'
 import { acquireLock } from '../../helper/lock'
-
-type FlowPiece = {
-    name: string
-    version: string
-}
+import { PackageInfo } from '../../helper/package-manager'
 
 type InstallPiecesParams = {
     path: string
+    projectId: ProjectId
     flowVersion: FlowVersion
 }
 
@@ -58,8 +55,8 @@ type LoadInputAndLogFileIdResponse = {
     logFileId?: FileId | undefined
 }
 
-const extractFlowPieces = (flowVersion: FlowVersion): FlowPiece[] => {
-    const pieces: FlowPiece[] = []
+const extractFlowPieces = async ({projectId, flowVersion}: {projectId: ProjectId, flowVersion: FlowVersion}) => {
+    const pieces: PackageInfo[] = []
     const steps = flowHelper.getAllSteps(flowVersion.trigger)
 
     for (const step of steps) {
@@ -76,8 +73,8 @@ const extractFlowPieces = (flowVersion: FlowVersion): FlowPiece[] => {
 }
 
 const installPieces = async (params: InstallPiecesParams): Promise<void> => {
-    const { path, flowVersion } = params
-    const pieces = extractFlowPieces(flowVersion)
+    const { path, flowVersion, projectId } = params
+    const pieces = await extractFlowPieces({projectId, flowVersion})
 
     await pieceManager.install({
         projectPath: path,
@@ -183,6 +180,7 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
             const path = sandbox.getSandboxFolderPath()
 
             await installPieces({
+                projectId: jobData.projectId,
                 path,
                 flowVersion,
             })
