@@ -61,6 +61,7 @@
     "buffer": "^6.0.3",
     "bullmq": "^3.5.9",
     "cheerio": "^1.0.0-rc.12",
+    "clarifai-nodejs-grpc": "^8.0.0",
     "codemirror": "^5.65.9",
     "compare-versions": "^6.0.0-rc.1",
     "concat": "^1.0.3",
