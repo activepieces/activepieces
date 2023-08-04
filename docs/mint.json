@@ -256,6 +256,7 @@
       "pages": [
         "developers/piece-reference/authentication",
         "developers/piece-reference/properties",
+        "developers/piece-reference/properties-validation",
         "developers/piece-reference/flow-control",
         "developers/piece-reference/persistent-storage",
         "developers/piece-reference/piece-versioning",

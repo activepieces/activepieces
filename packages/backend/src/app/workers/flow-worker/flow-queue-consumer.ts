@@ -109,9 +109,7 @@ const consumeRepeatingJob = async (data: RepeatingJobData): Promise<void> => {
                 ),
             )
 
-            const flowVersion = await flowVersionService.getOneOrThrow(
-                data.flowVersionId,
-            )
+            const flowVersion = await flowVersionService.getOne(data.flowVersionId)
             if (isNil(flowVersion)) {
                 await flowQueue.removeRepeatingJob({
                     id: data.flowVersionId,

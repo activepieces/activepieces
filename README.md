@@ -172,6 +172,7 @@ We welcome contributions big or small and in different directions. The best way 
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/phestvik"><img src="https://avatars.githubusercontent.com/u/88210985?v=4?s=100" width="100px;" alt="phestvik"/><br /><sub><b>phestvik</b></sub></a><br /><a href="#ideas-phestvik" title="Ideas, Planning, & Feedback">🤔</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://website-portfolio-bucket.s3-website-ap-northeast-1.amazonaws.com/"><img src="https://avatars.githubusercontent.com/u/113296626?v=4?s=100" width="100px;" alt="Rajdeep Pal"/><br /><sub><b>Rajdeep Pal</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=Rajdeep1311" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://www.tepote.com"><img src="https://avatars.githubusercontent.com/u/40870?v=4?s=100" width="100px;" alt="Camilo Usuga"/><br /><sub><b>Camilo Usuga</b></sub></a><br /><a href="#plugin-camilou" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/kishanprmr"><img src="https://avatars.githubusercontent.com/u/135701940?v=4?s=100" width="100px;" alt="Kishan Parmar"/><br /><sub><b>Kishan Parmar</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=kishanprmr" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>

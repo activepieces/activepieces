@@ -204,7 +204,7 @@
     "ng-packagr": "16.1.0",
     "nx": "16.5.2",
     "pino-pretty": "^9.1.1",
-    "pnpm": "^8.6.0",
+    "pnpm": "^8.6.8",
     "postcss": "^8.4.5",
     "postcss-import": "~14.1.0",
     "postcss-preset-env": "~7.5.0",
