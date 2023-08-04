@@ -32,6 +32,7 @@ import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
 import { isNil } from '@activepieces/shared'
 import { engineHelper } from '../../helper/engine-helper'
 import { acquireLock } from '../../helper/lock'
+import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 
 const repo = databaseConnection.getRepository(AppConnectionEntity)
 
@@ -257,9 +258,14 @@ const engineValidateAuth = async (
 ): Promise<void> => {
     const { pieceName, auth, projectId } = params
 
+    const pieceMatadata = await pieceMetadataService.get({
+        name: pieceName,
+        projectId,
+        version: undefined
+    })
     const engineInput: ExecuteValidateAuthOperation = {
         pieceName,
-        pieceVersion: 'latest',
+        pieceVersion: pieceMatadata.version,
         auth,
         projectId,
     }
