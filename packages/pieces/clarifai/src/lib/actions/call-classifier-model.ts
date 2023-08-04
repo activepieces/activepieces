@@ -30,11 +30,11 @@ export const callClassifierModel = createAction({
         if (outputs.getOutputsList().length === 0) {
             throw new Error('No outputs found from Clarifai');
         }
-        var data = outputs.getOutputsList()[0].getData();
+        const data = outputs.getOutputsList()[0].getData();
         if (data == undefined) {
             throw new Error('No data found from Clarifai');
         } else {
-            var result = Data.toObject(false, data);
+            const result = Data.toObject(false, data);
             return removeListFromPropertyNames(result);
         }
     },
