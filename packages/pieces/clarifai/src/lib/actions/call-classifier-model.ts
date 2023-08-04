@@ -2,8 +2,6 @@ import { clarifaiAuth } from "../../"
 import { Property, createAction } from "@activepieces/pieces-framework";
 import { CommonClarifaiProps, callClarifaiModel, removeListFromPropertyNames } from "../common";
 import { Data } from 'clarifai-nodejs-grpc/proto/clarifai/api/resources_pb';
-import * as serializer from 'proto3-json-serializer';
-import { loadSync } from 'protobufjs';
 
 
 export const callClassifierModel = createAction({
