@@ -55,7 +55,7 @@ type LoadInputAndLogFileIdResponse = {
     logFileId?: FileId | undefined
 }
 
-const extractFlowPieces = async ({projectId, flowVersion}: {projectId: ProjectId, flowVersion: FlowVersion}) => {
+const extractFlowPieces = async ({ flowVersion }: { projectId: ProjectId, flowVersion: FlowVersion }) => {
     const pieces: PackageInfo[] = []
     const steps = flowHelper.getAllSteps(flowVersion.trigger)
 
@@ -74,7 +74,7 @@ const extractFlowPieces = async ({projectId, flowVersion}: {projectId: ProjectId
 
 const installPieces = async (params: InstallPiecesParams): Promise<void> => {
     const { path, flowVersion, projectId } = params
-    const pieces = await extractFlowPieces({projectId, flowVersion})
+    const pieces = await extractFlowPieces({ projectId, flowVersion })
 
     await pieceManager.install({
         projectPath: path,
