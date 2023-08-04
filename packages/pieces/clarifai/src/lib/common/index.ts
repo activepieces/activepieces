@@ -1,4 +1,4 @@
-import { Property } from '@activepieces/pieces-framework';
+import { Property, ApFile } from '@activepieces/pieces-framework';
 import { grpc } from 'clarifai-nodejs-grpc';
 import { Data, Input, UserAppIDSet, Image } from 'clarifai-nodejs-grpc/proto/clarifai/api/resources_pb';
 import { V2Client } from 'clarifai-nodejs-grpc/proto/clarifai/api/service_grpc_pb';
@@ -15,10 +15,10 @@ export const clarifaiClient = initClarifaiClient();
 export interface CallModelRequest {
     auth: string;
     modelUrl: string;
-    inputUrl: string;
+    input: ApFile;
 }
 
-export function callClarifaiModel({ auth, modelUrl, inputUrl }: CallModelRequest) {
+export function callClarifaiModel({ auth, modelUrl, input }: CallModelRequest) {
     const [userId, appId, modelId, versionId] = parseEntityUrl(modelUrl);
 
     const req = new PostModelOutputsRequest();
@@ -27,7 +27,7 @@ export function callClarifaiModel({ auth, modelUrl, inputUrl }: CallModelRequest
     if (versionId) {
         req.setVersionId(versionId);
     }
-    req.setInputsList([createImageInput(inputUrl)])
+    req.setInputsList([createImageInput(input)])
 
     const metadata = authMetadata(auth);
     // TODO: we should really be using the async version of this, circle back with clarifai team to see if we can
@@ -36,11 +36,11 @@ export function callClarifaiModel({ auth, modelUrl, inputUrl }: CallModelRequest
     return postModelOutputs(req, metadata);
 }
 
-function createImageInput(url: string) {
+function createImageInput(file: ApFile) {
     const input = new Input();
     const inputData = new Data();
     const dataImage = new Image();
-    dataImage.setUrl(url);
+    dataImage.setBase64(file.base64);
     inputData.setImage(dataImage);
     input.setData(inputData);
     return input;
