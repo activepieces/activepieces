@@ -70,7 +70,7 @@ export const CommonClarifaiProps = {
 function parseEntityUrl(entityUrl: string): [string, string, string, string] {
     const url = new URL(entityUrl);
     const parts = url.pathname.split('/')
-    var version = '';
+    let version = '';
     if (parts.length === 7 && parts[5] === 'versions') {
         version = parts[6];
     }

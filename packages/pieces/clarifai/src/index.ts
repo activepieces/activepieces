@@ -3,7 +3,7 @@ import { callClassifierModel } from "./lib/actions/call-classifier-model";
 
 export const clarifaiAuth = PieceAuth.SecretText({
     displayName: "API Key",
-    description: "API key or PAT from your Clarifai settings",
+    description: "Obtain an API or PAT key from your Clarifai account",
     required: true,
 });
 

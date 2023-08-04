@@ -2,8 +2,6 @@ import { clarifaiAuth } from "../../"
 import { Property, createAction } from "@activepieces/pieces-framework";
 import { CommonClarifaiProps, callClarifaiModel, removeListFromPropertyNames } from "../common";
 import { Data } from 'clarifai-nodejs-grpc/proto/clarifai/api/resources_pb';
-import * as serializer from 'proto3-json-serializer';
-import { loadSync } from 'protobufjs';
 
 
 export const callClassifierModel = createAction({
@@ -34,11 +32,11 @@ export const callClassifierModel = createAction({
         if (outputs.getOutputsList().length === 0) {
             throw new Error('No outputs found from Clarifai');
         }
-        var data = outputs.getOutputsList()[0].getData();
+        const data = outputs.getOutputsList()[0].getData();
         if (data == undefined) {
             throw new Error('No data found from Clarifai');
         } else {
-            var result = Data.toObject(false, data);
+            const result = Data.toObject(false, data);
             return removeListFromPropertyNames(result);
         }
     },
