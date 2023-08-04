@@ -35,6 +35,7 @@ import { PackageInfo } from '../../helper/package-manager'
 
 type InstallPiecesParams = {
     path: string
+    projectId: ProjectId
     flowVersion: FlowVersion
 }
 
@@ -54,7 +55,7 @@ type LoadInputAndLogFileIdResponse = {
     logFileId?: FileId | undefined
 }
 
-const extractFlowPieces = (flowVersion: FlowVersion) => {
+const extractFlowPieces = async ({projectId, flowVersion}: {projectId: ProjectId, flowVersion: FlowVersion}) => {
     const pieces: PackageInfo[] = []
     const steps = flowHelper.getAllSteps(flowVersion.trigger)
 
@@ -72,8 +73,8 @@ const extractFlowPieces = (flowVersion: FlowVersion) => {
 }
 
 const installPieces = async (params: InstallPiecesParams): Promise<void> => {
-    const { path, flowVersion } = params
-    const pieces = extractFlowPieces(flowVersion)
+    const { path, flowVersion, projectId } = params
+    const pieces = await extractFlowPieces({projectId, flowVersion})
 
     await pieceManager.install({
         projectPath: path,
@@ -179,6 +180,7 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
             const path = sandbox.getSandboxFolderPath()
 
             await installPieces({
+                projectId: jobData.projectId,
                 path,
                 flowVersion,
             })
