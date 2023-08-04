@@ -17,7 +17,7 @@ const polling: Polling<PiecePropValueSchema<typeof amazonS3Auth>, { folderPath?:
             region: region || "us-east-1"
         });
 
-        let params: any = {
+        const params: any = {
             Bucket: bucket,
             MaxKeys: 100,
             StartAfter: lastItemId
