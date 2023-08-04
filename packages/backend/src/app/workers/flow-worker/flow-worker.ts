@@ -31,11 +31,7 @@ import { pieceManager } from '../../flows/common/piece-installer'
 import { isNil } from '@activepieces/shared'
 import { getServerUrl } from '../../helper/public-ip-utils'
 import { acquireLock } from '../../helper/lock'
-
-type FlowPiece = {
-    name: string
-    version: string
-}
+import { PackageInfo } from '../../helper/package-manager'
 
 type InstallPiecesParams = {
     path: string
@@ -58,8 +54,8 @@ type LoadInputAndLogFileIdResponse = {
     logFileId?: FileId | undefined
 }
 
-const extractFlowPieces = (flowVersion: FlowVersion): FlowPiece[] => {
-    const pieces: FlowPiece[] = []
+const extractFlowPieces = (flowVersion: FlowVersion) => {
+    const pieces: PackageInfo[] = []
     const steps = flowHelper.getAllSteps(flowVersion.trigger)
 
     for (const step of steps) {

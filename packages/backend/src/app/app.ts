@@ -55,7 +55,7 @@ app.register(cors, {
     origin: '*',
     methods: ['*'],
 })
-app.register(fastifyMultipart)
+app.register(fastifyMultipart, { addToBody: true })
 app.register(import('fastify-raw-body'), {
     field: 'rawBody',
     global: false,

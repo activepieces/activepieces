@@ -41,12 +41,14 @@ import { flowVersionService } from '../flows/flow-version/flow-version.service'
 const apEnvironment = system.get(SystemProp.ENVIRONMENT)
 
 type InstallPieceParams = {
+    projectId: string
     path: string
     pieceName: string
     pieceVersion: string
 }
 
 type GetSandboxParams = {
+    projectId: string
     pieceName: string
     pieceVersion: string
 }
@@ -111,8 +113,8 @@ const generateWorkerToken = (request: GenerateWorkerTokenParams): Promise<string
     })
 }
 
-const getSandbox = async ({ pieceName, pieceVersion }: GetSandboxParams): Promise<Sandbox> => {
-    const sandboxName = getCacheKey({ pieceName, pieceVersion })
+const getSandbox = async ({ pieceName, pieceVersion, projectId }: GetSandboxParams): Promise<Sandbox> => {
+    const sandboxName = getCacheKey({ pieceName, pieceVersion, projectId })
     const sandbox = await sandboxManager.obtainSandbox(sandboxName)
 
     if (sandbox.cached) {
@@ -125,6 +127,7 @@ const getSandbox = async ({ pieceName, pieceVersion }: GetSandboxParams): Promis
         const path = sandbox.getSandboxFolderPath()
 
         await installPiece({
+            projectId,
             path,
             pieceName,
             pieceVersion,
@@ -134,11 +137,11 @@ const getSandbox = async ({ pieceName, pieceVersion }: GetSandboxParams): Promis
     return sandbox
 }
 
-function getCacheKey({ pieceName, pieceVersion }: GetSandboxParams) {
+function getCacheKey({ pieceName, pieceVersion, projectId }: GetSandboxParams) {
     if (apEnvironment === ApEnvironment.DEVELOPMENT) {
         return apId()
     }
-    return `${pieceName}:${pieceVersion}`
+    return `${projectId}:${pieceName}:${pieceVersion}`
 }
 
 function tryParseJson(value: unknown) {
@@ -225,6 +228,7 @@ export const engineHelper = {
         const { pieceName, pieceVersion } = (lockedFlowVersion.trigger as PieceTrigger).settings
 
         const sandbox = await getSandbox({
+            projectId: operation.projectId,
             pieceName,
             pieceVersion,
         })
@@ -262,6 +266,7 @@ export const engineHelper = {
         })
 
         const sandbox = await getSandbox({
+            projectId: operation.projectId,
             pieceName: result.name,
             pieceVersion: result.version,
         })
@@ -311,9 +316,11 @@ export const engineHelper = {
         logger.info(operation, '[EngineHelper#ExecuteExtractPieceMetadata] operation')
         const sandbox = await sandboxManager.obtainSandbox(apId())
         await sandbox.recreate()
-        const packages: Record<string, string> = {}
-        packages[operation.pieceName] = operation.pieceVersion
-        await packageManager.addDependencies(sandbox.getSandboxFolderPath(), packages)
+        await packageManager.addDependencies(sandbox.getSandboxFolderPath(), {
+            [operation.pieceName]: {
+                version: operation.pieceVersion,
+            },
+        })
 
         try {
             return await execute(
@@ -336,6 +343,7 @@ export const engineHelper = {
         })
 
         const sandbox = await getSandbox({
+            projectId: operation.projectId,
             pieceName: result.name,
             pieceVersion: result.version,
         })
@@ -366,6 +374,7 @@ export const engineHelper = {
         const { pieceName, pieceVersion } = operation
 
         const sandbox = await getSandbox({
+            projectId: operation.projectId,
             pieceName,
             pieceVersion,
         })
