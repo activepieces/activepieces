@@ -3,6 +3,7 @@ import {
   BasePropertySchema,
   CheckboxProperty,
   DateTimeProperty,
+  DropdownOption,
   LongTextProperty,
   NumberProperty,
   ObjectProperty,
@@ -25,7 +26,35 @@ type Properties<T> = Omit<
 const ShortTextTransformer =
   (request: Properties<ShortTextProperty<true>> = {}) =>
   (field: ContentFields) => {
-    // field.validations
+    const validations = [];
+    const options: DropdownOption<string>[] = [];
+    if (field.validations) {
+      field.validations.forEach((v) => {
+        if (v['in']) {
+          options.push(
+            ...v['in'].map((o) => ({ label: o as string, value: o as string }))
+          );
+        }
+        if (v['size']?.min) {
+          validations.push(Validators.minLength(v['size'].min));
+        }
+        if (v['size']?.max) {
+          validations.push(Validators.maxLength(v['size'].max));
+        }
+      });
+    }
+    if (options.length > 0) {
+      return Property.StaticDropdown({
+        displayName: field.name,
+        required: field.required,
+        options: {
+          disabled: false,
+          placeholder: 'Select an option',
+          options,
+        },
+      });
+    }
+
     return Property.ShortText({
       ...request,
       displayName: field.name,
