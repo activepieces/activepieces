@@ -115,7 +115,7 @@ type Transformer = (field: ContentFields) => BasePropertySchema;
 
 export const FieldTransformers: Record<FieldType['type'], Transformer> = {
   Symbol: ShortTextTransformer({ validators: [Validators.maxLength(256)] }),
-  Text: LongTextTransformer({ validators: [Validators.maxLength(256)] }),
+  Text: LongTextTransformer({ validators: [Validators.maxLength(50000)] }),
   RichText: LongTextTransformer(),
   Integer: NumberTransformer({ validators: [Validators.integer] }),
   Number: NumberTransformer(),
