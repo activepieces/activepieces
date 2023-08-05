@@ -181,14 +181,24 @@ export const createEmbeddingsFromText = createAction({
       documentTitle = textInput.slice(0, 50).split(/[.?,/\\!;:()"]/u)[0]
     }
 
-    return response.data.data.map((data, index) => {
-      return {
-        embeddingId: createHash('md5').update(textSplited[index]).digest('hex'),
-        documentId,
-        documentTitle,
-        embedding: data.embedding,
-        chunckOfText: textSplited[index],
-      };
-    });
+    const resData = response.data.data
+    const embeddings = []
+    const chuncksOfText =  []
+    const embeddingIds = []
+
+    for (let index = 0; index < resData.length; index++) {
+      const vec = resData[index];
+      embeddings.push(vec)
+      chuncksOfText.push(textSplited[index])
+      embeddingIds.push(createHash('md5').update(textSplited[index]).digest('hex'))
+    }
+
+    return {
+      documentTitle,
+      documentId,
+      chuncksOfText,
+      embeddings,
+      embeddingIds
+    }
   },
 });
