@@ -80,7 +80,6 @@ export class VariableService {
       const result = evaluatedFn(...values);
       return result ?? '';
     } catch (exception) {
-      console.warn('Error evaluating expression', exception);
       return '';
     }
   }
