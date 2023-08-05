@@ -1,5 +1,6 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { askOpenAI } from './lib/actions/send-prompt';
+import { createEmbeddingsFromText } from './lib/actions/generate-embeddings';
 
 const markdownDescription = `
 Follow these instructions to get your OpenAI API Key:
@@ -22,7 +23,7 @@ export const openai = createPiece({
       minimumSupportedRelease: '0.5.0',
     logoUrl: 'https://cdn.activepieces.com/pieces/openai.png',
   auth: openaiAuth,
-  actions: [askOpenAI],
-  authors: ['aboudzein', 'creed983', 'astorozhevsky',],
+  actions: [askOpenAI, createEmbeddingsFromText],
+  authors: ['aboudzein', 'creed983', 'astorozhevsky', 'ArmanGiau'],
   triggers: [],
 });

@@ -54,4 +54,24 @@ Array of roles to specify more accurate response
               
         </Expandable>
       </Card>
-  
+
+  <Card title="Generate embeddings">
+    Chuck a text and generate embeddings for it
+    <Expandable title="Properties">
+      <ResponseField name="Text Input" required type="Long_text">
+        Enter the text input you want to tarsform to embeddings
+      </ResponseField>
+      <ResponseField name="Document Title or Md5 ID" required type="Short_text">
+        What is the title or the Md5 ID of the text or document you\'ve inputted
+      </ResponseField>
+      <ResponseField name="Split by" type="Dropdown">
+        Define where the text will be split
+      </ResponseField>
+      <ResponseField name="Min number of token by embedding" type="Number">
+        After which number of tokens the text will be split
+      </ResponseField>
+      <ResponseField name="Max number of token by embedding" type="Number">
+        After the text was split, if this value is inferior to the number of tokens, the text will be split arbitrarily
+      </ResponseField>
+    </Expandable>
+  <Card/>  
