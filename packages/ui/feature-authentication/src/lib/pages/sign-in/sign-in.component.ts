@@ -71,12 +71,12 @@ export class SignInComponent {
     }
   }
 
-	redirectToBack() {
-		const redirectUrl = this.route.snapshot.queryParamMap.get('redirect_url');
-		if (redirectUrl) {
-			this.router.navigateByUrl(decodeURIComponent(redirectUrl));
-		} else {
-			this.router.navigate(['/flows']);
-		}
-	}	
+  redirectToBack() {
+    const redirectUrl = this.route.snapshot.queryParamMap.get('redirect_url');
+    if (redirectUrl) {
+      this.router.navigateByUrl(decodeURIComponent(redirectUrl));
+    } else {
+      this.router.navigate(['/flows']);
+    }
+  }
 }
