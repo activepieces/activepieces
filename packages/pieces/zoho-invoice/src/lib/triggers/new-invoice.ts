@@ -1,5 +1,4 @@
-import { PiecePropValueSchema, createTrigger } from '@activepieces/pieces-framework';
-import { TriggerStrategy } from "@activepieces/pieces-framework";
+import { PiecePropValueSchema, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 
 import { common } from '../common';
