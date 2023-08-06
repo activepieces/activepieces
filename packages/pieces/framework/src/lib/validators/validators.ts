@@ -6,6 +6,7 @@ import {
   ValidationInputType,
 } from './types';
 import { formatErrorMessage } from './utils';
+import dayjs, { OpUnitType } from 'dayjs';
 
 class Validators {
   static pattern(
@@ -24,6 +25,27 @@ class Validators {
           ? null
           : formatErrorMessage(ErrorMessages.REGEX, {
               property: property?.displayName,
+            });
+      },
+    };
+  }
+
+  static prohibitPattern(
+    regex: string | RegExp
+  ): TypedValidatorFn<ValidationInputType.STRING> {
+    return {
+      type: ValidationInputType.STRING,
+      fn: (property, processedValue, userInput) => {
+        const patternValidator = Validators.pattern(regex);
+        const patternError = patternValidator.fn(
+          property,
+          processedValue,
+          userInput
+        );
+        return patternError
+          ? null
+          : formatErrorMessage(ErrorMessages.PROHIBIT_REGEX, {
+              property: property.displayName,
             });
       },
     };
@@ -91,6 +113,59 @@ class Validators {
     };
   }
 
+  static minDate(
+    min: string,
+    unit: OpUnitType = 'day',
+    includeBounds = false
+  ): TypedValidatorFn<ValidationInputType.DATE_TIME> {
+    return {
+      type: ValidationInputType.DATE_TIME,
+      fn: (property, processedValue, userInput) => {
+        const dateValue = dayjs(processedValue);
+        const minDate = dayjs(min);
+        if (!minDate.isValid()) return null;
+
+        const isValid = includeBounds
+          ? dateValue.isAfter(minDate, unit)
+          : dateValue.isSame(minDate, unit) && dateValue.isAfter(minDate, unit);
+
+        if (isValid) return null;
+
+        return formatErrorMessage(ErrorMessages.MIN_DATE, {
+          userInput: dateValue.toISOString(),
+          min: minDate.toISOString(),
+        });
+      },
+    };
+  }
+
+  static maxDate(
+    max: string,
+    unit: OpUnitType = 'day',
+    includeBounds = false
+  ): TypedValidatorFn<ValidationInputType.DATE_TIME> {
+    return {
+      type: ValidationInputType.DATE_TIME,
+      fn: (property, processedValue, userInput) => {
+        const dateValue = dayjs(processedValue);
+        const maxDate = dayjs(max);
+        if (!maxDate.isValid()) return null;
+
+        const isValid = includeBounds
+          ? dateValue.isBefore(maxDate, unit)
+          : dateValue.isSame(maxDate, unit) &&
+            dateValue.isBefore(maxDate, unit);
+
+        if (isValid) return null;
+
+        return formatErrorMessage(ErrorMessages.MAX_DATE, {
+          userInput: dateValue.toISOString(),
+          max: maxDate.toISOString(),
+        });
+      },
+    };
+  }
+
   static inRange(
     min: number,
     max: number
@@ -107,6 +182,40 @@ class Validators {
           userInput,
           min,
           max,
+        });
+      },
+    };
+  }
+
+  static inDateRange(
+    min: string,
+    max: string,
+    unit: OpUnitType = 'day',
+    includeBounds = false
+  ): TypedValidatorFn<ValidationInputType.DATE_TIME> {
+    return {
+      type: ValidationInputType.DATE_TIME,
+      fn: (property, processedValue) => {
+        const dateValue = dayjs(processedValue);
+        const minDate = dayjs(min);
+        const maxDate = dayjs(max);
+        const validRanges = minDate.isValid() && maxDate.isValid();
+        if (!validRanges) return null;
+
+        const isValid = includeBounds
+          ? (dateValue.isBefore(maxDate, unit) ||
+              dateValue.isSame(maxDate, unit)) &&
+            (dateValue.isAfter(minDate, unit) ||
+              dateValue.isSame(minDate, unit))
+          : dateValue.isBefore(maxDate, unit) &&
+            dateValue.isAfter(minDate, unit);
+
+        if (isValid) return null;
+
+        return formatErrorMessage(ErrorMessages.IN_RANGE, {
+          userInput: dateValue.toISOString(),
+          min: minDate.toISOString(),
+          max: maxDate.toISOString(),
         });
       },
     };
