@@ -1,23 +1,47 @@
 <div
-  class="ap-min-w-[70px] ap-bg-transparent ap-h-full ap-flex ap-flex-col ap-items-center ap-gap-[20px] ap-typography-caption">
-  <ap-icon-button class="ap-my-[25px]" [useSvgDefault]="true" [iconFilename]="'logo/logo.svg'" [tooltipText]="'Home'"
-    (buttonClicked)="redirectHome(false)" (auxclick)="redirectHome(true)"></ap-icon-button>
+  class="ap-min-w-[70px] ap-bg-transparent ap-h-full ap-flex ap-flex-col ap-items-center ap-gap-[20px] ap-typography-caption"
+>
+  <ap-icon-button
+    class="ap-my-[25px]"
+    [useSvgDefault]="true"
+    [iconFilename]="'logo/logo.svg'"
+    [tooltipText]="'Home'"
+    (buttonClicked)="redirectHome(false)"
+    (auxclick)="redirectHome(true)"
+  ></ap-icon-button>
 
-  <div *ngFor="let r of sideNavRoutes"
-    class="ap-flex ap-justify-center  sidenav-text ap-items-center ap-flex-col ap-gap-[2px] ap-cursor-pointer t"
-    [routerLink]="['/' + r.route]" routerLinkActive="active-route">
+  <div
+    *ngFor="let r of sideNavRoutes"
+    [matTooltip]="r.caption"
+    [matTooltipPosition]="'right'"
+    class="ap-w-[50px]ap-flex ap-border-transparent ap-justify-center ap-text-title ap-items-center ap-flex-col ap-cursor-pointer ap-py-[8px] ap-px-[4px] ap-transition ap-ease-out ap-rounded-[8px]"
+    [routerLink]="['/' + r.route]"
+  
+    routerLinkActive="ap-bg-primary-light"
+  >
     <svg-icon
-      class="ap-py-[10px] ap-px-[8px] ap-border-[1px] ap-border-transparent ap-transition ap-ease-out  ap-rounded-[4px] "
-      [svgStyle]="{ width: '25px', height: '25px' }" [src]="r.icon" [routerLink]="['/' + r.route]"
-      (click)="r.effect? r.effect() : null" [routerLinkActive]="r.borderColorInTailwind">
+      [class]="isActive(r.route) ? 'ap-fill-primary' : 'ap-fill-title'"
+      [svgStyle]="{ width: '24px', height: '24px' }"
+      [src]="r.icon"
+      [applyClass]="true"
+      (click)="r.effect ? r.effect() : null"
+    >
     </svg-icon>
-    <div>{{ r.caption }}</div>
+    <div class="ap-mt-1">{{r.caption}}</div>
   </div>
-  <div class="ap-flex ap-justify-center  sidenav-text ap-items-center ap-flex-col ap-gap-[2px] ap-cursor-pointer"
-    (click)="openDocs()" *ngIf="environment.showDocsButton">
-    <svg-icon class="ap-py-[10px] ap-px-[8px] ap-border-[1px] ap-border-transparent ap-rounded-[4px]"
-      [svgStyle]="{ width: '25px', height: '25px' }" src="assets/img/custom/dashboard/documentation.svg" t>
+  <div class="ap-flex-grow"></div>
+
+  <div
+    [matTooltip]="'Documentation'"
+    [matTooltipPosition]="'right'"
+    class="ap-flex ap-justify-center ap-text-title ap-items-center ap-flex-col ap-cursor-pointer ap-py-[8px] ap-px-[8px] ap-transition ap-ease-out ap-rounded-[8px] ap-mb-[20px]"
+  >
+    <svg-icon
+      [class]="'ap-fill-title'"
+      [svgStyle]="{ width: '24px', height: '24px' }"
+      src="assets/img/custom/dashboard/documentation.svg"
+      [applyClass]="true"
+    >
     </svg-icon>
-    <div>Docs</div>
   </div>
 </div>
