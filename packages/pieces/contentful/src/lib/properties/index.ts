@@ -1,2 +1,9 @@
-export { default as ContentModel } from './content-model';
-export { default as DynamicFields } from './dynamic-fields';
+import ContentModel from './content-model';
+import DynamicFields from './dynamic-fields';
+import Locale from './locale';
+
+export const ContentfulProperty = {
+  ContentModel,
+  DynamicFields,
+  Locale,
+};

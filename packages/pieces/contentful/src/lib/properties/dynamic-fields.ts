@@ -8,8 +8,12 @@ const DynamicFields = Property.DynamicProperties({
   displayName: 'Fields',
   description: 'Fields for Content Model',
   required: true,
-  refreshers: [PropertyKeys.CONTENT_MODEL],
-  props: async ({ auth, [PropertyKeys.CONTENT_MODEL]: model }) => {
+  refreshers: [PropertyKeys.CONTENT_MODEL, PropertyKeys.LOCALE],
+  props: async ({
+    auth,
+    [PropertyKeys.CONTENT_MODEL]: model,
+    [PropertyKeys.LOCALE]: locale,
+  }) => {
     if (_.isEmpty(auth) || _.isNil(model)) return {};
     const dynamicFields: DynamicPropsValue = {};
     const { client, defaultOptions } = makeClient(auth as ContentfulAuth);
@@ -24,13 +28,17 @@ const DynamicFields = Property.DynamicProperties({
         .map((f) => {
           const transformer = FieldTransformers[f.type as FieldType['type']];
           if (transformer) {
-            dynamicFields[f.id] = transformer(f);
+            dynamicFields[f.id] = {
+              ...transformer(f),
+              defaultValue: f.defaultValue?.[locale as unknown as string],
+            };
             return;
           }
           dynamicFields[f.id] = Property.ShortText({
             displayName: f.name,
             required: f.required,
             description: 'Unsupported Field Type',
+            defaultValue: f.defaultValue?.[locale as unknown as string],
           });
         });
     } catch (e) {
