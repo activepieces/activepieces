@@ -1,49 +1,124 @@
 <nav class="navbar-container navbar-expand ap-relative">
-  <div class="ap-absolute ap-w-full ap-flex ap-items-center ap-justify-center  ap-p-4 ap-pointer-events-none">
-    <svg-icon src="assets/img/custom/logo/full-logo-small.svg">
-    </svg-icon>
+  <div
+    class="ap-absolute ap-w-full ap-flex ap-items-center ap-justify-center ap-p-4 ap-pointer-events-none"
+  >
+    <svg-icon src="assets/img/custom/logo/full-logo-small.svg"> </svg-icon>
   </div>
 
   <div class="ap-text-center ap-flex ap-items-center ap-justify-center"></div>
 
   <div class="ap-flex ap-items-center">
     <div class="ap-flex ap-items-center ap-gap-2">
-      <ap-icon-button [width]="7" [height]="14" iconFilename="back.svg" [tooltipText]="'Home'"
-        (buttonClicked)="redirectHome(false)" (auxclick)="redirectHome(true)"></ap-icon-button>
+      <ap-icon-button
+        [width]="7"
+        [height]="14"
+        iconFilename="back.svg"
+        [tooltipText]="'Home'"
+        (buttonClicked)="redirectHome(false)"
+        (auxclick)="redirectHome(true)"
+      ></ap-icon-button>
       <div class="ap-flex-grow ap-flex ap-items-center ap-gap-2" #spacer>
-        <div class="ap-typography-body-1 ap-truncate ap-max-w-[150px] ap-cursor-pointer hover:ap-text-[#000000]"
-          #folderName (click)="openDashboardToFolder()" [matTooltip]="
+        <div
+          class="ap-typography-body-1 ap-truncate ap-max-w-[150px] ap-cursor-pointer hover:ap-text-[#000000]"
+          #folderName
+          (click)="openDashboardToFolder()"
+          [matTooltip]="
             folderName.scrollWidth > folderName.clientWidth
               ? (folderDisplayName$ | async) || ''
               : ''
-          ">
+          "
+        >
           {{ folderDisplayName$ | async }}
         </div>
         <div class="ap-typography-body-1 ap-text-placeholder">/</div>
-        <ap-editable-text [editing]="editingFlowName" (editingChanges)="changeEditValue($event)"
-          [value]="(flow$ | async)?.version?.displayName || ''" (valueChanges)="saveFlowName($event)" [disableEditing]="
+        <ap-editable-text
+          [editing]="editingFlowName"
+          (editingChanges)="changeEditValue($event)"
+          [value]="(flow$ | async)?.version?.displayName || ''"
+          (valueChanges)="saveFlowName($event)"
+          [disableEditing]="
             (isInDebugMode$ | async | defaultTrue) ||
             (isInReadOnlyMode$ | async | defaultTrue)
-          " [allowClick]="true" [cssClasses]="'ap-typography-body-1 !ap-font-semibold'"
-          class="ap-text-title"></ap-editable-text>
+          "
+          [allowClick]="true"
+          [cssClasses]="'ap-typography-body-1 !ap-font-semibold'"
+          class="ap-text-title"
+        ></ap-editable-text>
       </div>
-      <div class="ap-p-1 ap-cursor-pointer" [matMenuTriggerFor]="menu" xPosition="after">
-        <svg-icon [svgStyle]="{ width: '12px', height: '7px' }" src="assets/img/custom/chevron.svg">
+      <div
+        class="ap-p-1 ap-cursor-pointer"
+        [matMenuTriggerFor]="menu"
+        xPosition="after"
+      >
+        <svg-icon
+          [svgStyle]="{ width: '12px', height: '7px' }"
+          src="assets/img/custom/chevron.svg"
+        >
         </svg-icon>
       </div>
       <mat-menu #menu="matMenu">
-        <button mat-menu-item (click)="editingFlowName = true">Rename</button>
-        <button mat-menu-item *ngIf="flow$ | async as flow" (click)="duplicate()">
-          Duplicate
+        <button mat-menu-item (click)="editingFlowName = true">
+          <div class="ap-flex ap-gap-3 ap-items-center">
+            <svg-icon
+              [applyClass]="true"
+              src="assets/img/custom/pencil-underline.svg"
+              class="ap-fill-body ap-w-[20px] ap-h-[20px]"
+            >
+            </svg-icon>
+            <span class="ap-text-body">Rename</span>
+          </div>
+        </button>
+        <button
+          mat-menu-item
+          *ngIf="flow$ | async as flow"
+          (click)="duplicate()"
+        >
+          <div class="ap-flex ap-gap-3 ap-items-center">
+            <svg-icon
+              src="assets/img/custom/duplicate.svg"
+              class="ap-w-[20px] ap-h-[20px]"
+              [applyClass]="true"
+            ></svg-icon>
+            <span>Duplicate</span>
+          </div>
         </button>
         <button mat-menu-item *ngIf="flow$ | async as flow" (click)="import()">
-          Import
+          <div class="ap-flex ap-gap-3 ap-items-center">
+            <svg-icon
+              src="assets/img/custom/import.svg"
+              class="ap-w-[20px] ap-h-[20px]"
+              [applyClass]="true"
+            ></svg-icon>
+            <span>Import</span>
+          </div>
         </button>
-        <button mat-menu-item *ngIf="flow$ | async as flow" (click)="download(flow.id)">
-          Export
+        <button
+          mat-menu-item
+          *ngIf="flow$ | async as flow"
+          (click)="download(flow.id)"
+        >
+          <div class="ap-flex ap-gap-3 ap-items-center">
+            <svg-icon
+              src="assets/img/custom/download.svg"
+              class="ap-w-[20px] ap-h-[20px]"
+              [applyClass]="true"
+            ></svg-icon>
+            <span>Export</span>
+          </div>
         </button>
-        <button mat-menu-item *ngIf="flow$ | async as flow" (click)="deleteFlow(flow)">
-          <div class="ap-text-danger">Delete</div>
+        <button
+          mat-menu-item
+          *ngIf="flow$ | async as flow"
+          (click)="deleteFlow(flow)"
+        >
+          <div class="ap-flex ap-gap-3 ap-items-center">
+            <svg-icon
+              src="assets/img/custom/trash.svg"
+              class="ap-fill-danger ap-w-[20px] ap-h-[20px]"
+              [applyClass]="true"
+            ></svg-icon>
+            <span class="ap-text-danger">Delete</span>
+          </div>
         </button>
       </mat-menu>
     </div>
@@ -56,11 +131,16 @@
         <div class="ap-flex ap-items-center ap-gap-1">
           <app-draft-status></app-draft-status>
           <ng-container *ngIf="instance$ | async as instance">
-            <app-toggle-instance-state [instance]="instance"></app-toggle-instance-state>
+            <app-toggle-instance-state
+              [instance]="instance"
+            ></app-toggle-instance-state>
           </ng-container>
         </div>
         <app-publish-button></app-publish-button>
-        <ap-user-avatar *ngIf="environment.showUserProfile" class="ap-ml-[16px]"></ap-user-avatar>
+        <ap-user-avatar
+          *ngIf="environment.showUserProfile"
+          class="ap-ml-[16px]"
+        ></ap-user-avatar>
       </ng-container>
     </div>
   </div>
