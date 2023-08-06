@@ -36,7 +36,6 @@ const DynamicFields = Property.DynamicProperties({
     } catch (e) {
       console.debug(e);
     }
-    console.log('dynamicFields', dynamicFields);
     return dynamicFields;
   },
 });

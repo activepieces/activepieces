@@ -11,7 +11,7 @@ export const ContentfulCreateRecordAction = createAction({
     [PropertyKeys.CONTENT_MODEL]: ContentModel,
     [PropertyKeys.PUBLISH_ON_CREATE]: Property.Checkbox({
       displayName: 'Publish after Creating',
-      required: false,
+      required: true,
       description: 'Whether or not to publish this record after creating it.',
       defaultValue: false,
     }),

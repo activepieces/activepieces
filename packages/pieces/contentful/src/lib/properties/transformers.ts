@@ -95,9 +95,10 @@ const ShortTextTransformer =
 const LongTextTransformer =
   (request: Properties<LongTextProperty<true>> = {}) =>
   (field: ContentFields) =>
-    Property.MarkDown({
+    Property.LongText({
       ...request,
-      value: field.name,
+      displayName: field.name,
+      required: field.required,
     });
 
 const NumberTransformer =
@@ -200,7 +201,10 @@ const ArrayTransformer =
   (request: Properties<ArrayProperty<true>> = {}) =>
   (field: ContentFields) => {
     // Is this an array of strings?
-    if (field.items?.type === 'Symbol') {
+    if (
+      field.items?.type === 'Symbol' ||
+      (field.items?.type === 'Link' && field.items?.linkType === 'Entry')
+    ) {
       return Property.Array({
         ...request,
         displayName: field.name,
