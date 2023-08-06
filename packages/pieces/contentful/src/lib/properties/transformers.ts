@@ -31,7 +31,7 @@ const evalAndConvertToStaticDropDown = <T extends string | number>(
     field.validations.forEach((v) => {
       if (v['in']) {
         options.push(
-          ...v['in'].map((o) => ({ label: o as string, value: o as T }))
+          ...v['in'].map((o) => ({ label: o.toString(), value: o as T }))
         );
       }
     });
