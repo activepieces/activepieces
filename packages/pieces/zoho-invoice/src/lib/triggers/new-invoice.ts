@@ -6,7 +6,7 @@ import { common } from '../common';
 import dayjs from 'dayjs';
 import { zohoAuth } from '../..';
 
-const polling: Polling<PiecePropValueSchema<typeof zohoAuth>, {}> = {
+const polling: Polling<PiecePropValueSchema<typeof zohoAuth>, Record<string,never>> = {
     strategy: DedupeStrategy.TIMEBASED,
     items: async ({ auth, lastFetchEpochMS }) => {
         const currentValues = await common.getInvoices(auth, {
