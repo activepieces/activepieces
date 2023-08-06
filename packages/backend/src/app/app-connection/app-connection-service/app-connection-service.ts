@@ -261,7 +261,7 @@ const engineValidateAuth = async (
     const pieceMatadata = await pieceMetadataService.get({
         name: pieceName,
         projectId,
-        version: undefined
+        version: undefined,
     })
     const engineInput: ExecuteValidateAuthOperation = {
         pieceName,
