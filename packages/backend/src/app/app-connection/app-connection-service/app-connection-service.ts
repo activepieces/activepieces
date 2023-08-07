@@ -132,13 +132,13 @@ export class AppConnectionService {
             },
         })
 
-        const querySelector:Record<string,string> = {
+        const querySelector: Record<string, string> = {
             projectId,
         }
-        if(!isNil(appName)) {
-            querySelector['appName'] = appName
+        if (!isNil(appName)) {
+            querySelector.appName = appName
         }
-        let queryBuilder = repo
+        const queryBuilder = repo
             .createQueryBuilder('app_connection')
             .where(querySelector)
         const { data, cursor } = await paginator.paginate(queryBuilder)
