@@ -193,7 +193,6 @@
         "packages/pieces/zoho-invoice/src/index.ts"
       ],
       "@activepieces/piece-zoom": ["packages/pieces/zoom/src/index.ts"],
-      "@activepieces/pieces-apps": ["packages/pieces/apps/src/index.ts"],
       "@activepieces/pieces-common": ["packages/pieces/common/src/index.ts"],
       "@activepieces/pieces-framework": [
         "packages/pieces/framework/src/index.ts"
