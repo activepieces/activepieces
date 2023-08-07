@@ -132,14 +132,15 @@ export class AppConnectionService {
             },
         })
 
+        const querySelector:Record<string,string> = {
+            projectId,
+        }
+        if(!isNil(appName)) {
+            querySelector['appName'] = appName
+        }
         let queryBuilder = repo
             .createQueryBuilder('app_connection')
-            .where({ projectId })
-
-        if (appName !== undefined) {
-            queryBuilder = queryBuilder.where({ appName, projectId })
-        }
-
+            .where(querySelector)
         const { data, cursor } = await paginator.paginate(queryBuilder)
         const promises: Promise<AppConnection>[] = []
 

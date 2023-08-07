@@ -11,7 +11,7 @@ export const slackAuth = PieceAuth.OAuth2({
   displayName: 'Authentication',
   description: '',
   authUrl: 'https://slack.com/oauth/authorize',
-  tokenUrl: 'https://slack.com/api/oauth.access',
+  tokenUrl: 'https://slack.com/api/oauth.v2.access',
   required: true,
   scope: [
     'channels:read',
