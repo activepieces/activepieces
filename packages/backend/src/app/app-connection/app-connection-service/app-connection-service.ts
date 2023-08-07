@@ -137,7 +137,7 @@ export class AppConnectionService {
             .where({ projectId })
 
         if (appName !== undefined) {
-            queryBuilder = queryBuilder.where({ appName })
+            queryBuilder = queryBuilder.where({ appName, projectId })
         }
 
         const { data, cursor } = await paginator.paginate(queryBuilder)
