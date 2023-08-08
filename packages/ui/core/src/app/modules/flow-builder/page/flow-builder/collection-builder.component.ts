@@ -92,6 +92,13 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
   showGuessFlowComponent = true;
   importTemplate$: Observable<void>;
   dataInsertionPopupHidden$: Observable<boolean>;
+  codeEditorOptions = {
+    minimap: { enabled: false },
+    theme: 'cobalt2',
+    language: 'typescript',
+    readOnly: false,
+    automaticLayout: true,
+  };
   constructor(
     private store: Store,
     private actRoute: ActivatedRoute,
