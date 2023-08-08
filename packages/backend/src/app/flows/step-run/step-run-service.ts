@@ -159,6 +159,7 @@ const executeBranch = async ({ step, flowVersion, projectId }: ExecuteParams<Bra
     }
 
     const testSandbox = await sandboxManager.obtainSandbox(apId())
+    await testSandbox.recreate()
 
     const { status, result, standardError, standardOutput } = await engineHelper.executeFlow(testSandbox, testInput)
 
