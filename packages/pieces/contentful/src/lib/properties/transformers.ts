@@ -188,7 +188,7 @@ const LinkTransformer =
   (field: ContentFields) => {
     const linkType = field.linkType;
     if (!linkType || linkType === 'Entry') {
-      return ShortTextTransformer(request)(field);
+      return ShortTextTransformer({ ...request, description: 'Link' })(field);
     }
 
     return Property.File({
@@ -200,7 +200,7 @@ const LinkTransformer =
 const ArrayTransformer =
   (request: Properties<ArrayProperty<true>> = {}) =>
   (field: ContentFields) => {
-    // Is this an array of strings?
+    // Currently only supports arrays of symbols and entries, arrays of assets are not yet supported
     if (
       field.items?.type === 'Symbol' ||
       (field.items?.type === 'Link' && field.items?.linkType === 'Entry')
@@ -211,15 +211,10 @@ const ArrayTransformer =
         required: field.required,
       });
     }
-    // No Support for Other Array Types at the Moment
-    return Property.LongText({
-      displayName: field.name,
-      required: field.required,
-      description: 'Unsupported Array Type',
-    });
+    return null;
   };
 
-type Transformer = (field: ContentFields) => BasePropertySchema;
+type Transformer = (field: ContentFields) => BasePropertySchema | null;
 
 export const FieldTransformers: Record<FieldType['type'], Transformer> = {
   Symbol: ShortTextTransformer({ validators: [Validators.maxLength(256)] }),

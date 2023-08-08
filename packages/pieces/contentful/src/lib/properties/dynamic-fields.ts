@@ -28,8 +28,10 @@ const DynamicFields = Property.DynamicProperties({
         .map((f) => {
           const transformer = FieldTransformers[f.type as FieldType['type']];
           if (transformer) {
+            const property = transformer(f);
+            if (!property) return;
             dynamicFields[f.id] = {
-              ...transformer(f),
+              ...property,
               defaultValue: f.defaultValue?.[locale as unknown as string],
             };
             return;
