@@ -5,10 +5,9 @@ import { translateText } from './lib/actions/translateText';
 const markdownDescription = `
 Follow these instructions to get your DeepL API Key:
 
-1. Visit the following website: https://www.deepl.com/fr/pro-checkout/account?productId=1200&yearly=false&trial=false.
-2. Once on the website, locate and click on the option to obtain your OpenAI API Key.
-
-It is strongly recommended that you add your credit card information to your DeepL account to get access to the API Key.
+1. Log in to your DeepL account.
+2. Visit https://www.deepl.com/account/summary
+3. Go to the API section and obtain your DeepL API Key.
 `
 
 //export const deeplAuth = PieceAuth.SecretText({
@@ -19,7 +18,7 @@ It is strongly recommended that you add your credit card information to your Dee
 
 export const deeplAuth = PieceAuth.CustomAuth({
   displayName: 'API Authentication',
-  description: 'Enter custom authentication details',
+  description: markdownDescription,
   props: {
       key: Property.ShortText({
           displayName: 'Api key',
