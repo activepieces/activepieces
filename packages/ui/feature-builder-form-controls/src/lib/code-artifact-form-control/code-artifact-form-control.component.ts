@@ -7,7 +7,7 @@ import {
   FormGroup,
 } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, map } from 'rxjs';
 import { CodeArtifactControlFullscreenComponent } from './code-artifact-control-fullscreen/code-artifact-control-fullscreen.component';
 import { MatTooltip } from '@angular/material/tooltip';
 import { Artifact } from '@activepieces/ui/common';
@@ -50,6 +50,7 @@ export class CodeArtifactFormControlComponent
     readOnly: false,
     automaticLayout: true,
   };
+  fullScreenEditorClosed$: Observable<void>;
   constructor(
     private formBuilder: FormBuilder,
     private dialogService: MatDialog
@@ -95,13 +96,23 @@ export class CodeArtifactFormControlComponent
     this.onTouched = touched;
   }
   showFullscreenEditor() {
-    this.dialogService.open(CodeArtifactControlFullscreenComponent, {
-      data: {
-        codeFilesForm: this.codeArtifactForm,
-        readOnly: this.codeEditorOptions.readOnly,
-      },
-      panelClass: 'fullscreen-dialog',
-    });
+    this.fullScreenEditorClosed$ = this.dialogService
+      .open(CodeArtifactControlFullscreenComponent, {
+        data: {
+          codeFilesForm: this.codeArtifactForm,
+          readOnly: this.codeEditorOptions.readOnly,
+        },
+        panelClass: 'fullscreen-dialog',
+      })
+      .beforeClosed()
+      .pipe(
+        tap(() => {
+          this.codeEditorOptions = JSON.parse(
+            JSON.stringify(this.codeEditorOptions)
+          );
+        }),
+        map(() => void 0)
+      );
   }
 
   setupValueListener() {
