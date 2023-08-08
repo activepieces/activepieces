@@ -83,3 +83,4 @@ export type BasicAuthConnection = BaseAppConnection<BasicAuthConnectionValue>;
 export type CustomAuthConnection = BaseAppConnection<CustomAuthConnectionValue>;
 export type AppConnection = BasicAuthConnection | SecretKeyAppConnection | OAuth2AppConnection | CloudAuth2Connection | CustomAuthConnection;
 export type AppConnectionValue = SecretTextConnectionValue | OAuth2ConnectionValueWithApp | CloudOAuth2ConnectionValue | BasicAuthConnectionValue | CustomAuthConnectionValue;
+export type AppConnectionWithoutSensitiveData = Omit<AppConnection, 'value'> & { __brand: 'AppConnectionWithoutSensitiveData' }

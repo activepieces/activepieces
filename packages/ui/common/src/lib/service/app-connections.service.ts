@@ -5,8 +5,8 @@ import {
   SeekPage,
   AppConnectionId,
   AppConnection,
-  UpsertConnectionRequest,
-  ListAppConnectionRequest,
+  UpsertAppConnectionRequestBody,
+  ListAppConnectionsRequestQuery,
 } from '@activepieces/shared';
 import { CURSOR_QUERY_PARAM, LIMIT_QUERY_PARAM } from '../utils/tables.utils';
 import { environment } from '../environments/environment';
@@ -17,14 +17,16 @@ import { environment } from '../environments/environment';
 export class AppConnectionsService {
   constructor(private http: HttpClient) {}
 
-  upsert(request: UpsertConnectionRequest): Observable<AppConnection> {
+  upsert(request: UpsertAppConnectionRequestBody): Observable<AppConnection> {
     return this.http.post<AppConnection>(
       environment.apiUrl + '/app-connections',
       request
     );
   }
 
-  list(params: ListAppConnectionRequest): Observable<SeekPage<AppConnection>> {
+  list(
+    params: ListAppConnectionsRequestQuery
+  ): Observable<SeekPage<AppConnection>> {
     const queryParams: { [key: string]: string | number } = {};
     if (params.cursor) {
       queryParams[CURSOR_QUERY_PARAM] = params.cursor;
