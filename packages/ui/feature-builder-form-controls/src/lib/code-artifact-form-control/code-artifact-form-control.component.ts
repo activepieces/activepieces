@@ -107,12 +107,14 @@ export class CodeArtifactFormControlComponent
       .beforeClosed()
       .pipe(
         tap(() => {
-          this.codeEditorOptions = JSON.parse(
-            JSON.stringify(this.codeEditorOptions)
-          );
+          this.reinitialiseEditor();
         }),
         map(() => void 0)
       );
+  }
+  /**Check ngx-monaco-editor-v2 code, you will see the editor gets reinitialised once the options are changed, no public api to do that otherwise. */
+  private reinitialiseEditor() {
+    this.codeEditorOptions = JSON.parse(JSON.stringify(this.codeEditorOptions));
   }
 
   setupValueListener() {
