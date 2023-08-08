@@ -10,6 +10,64 @@ Semantic versioning is a standardized way of versioning software projects. It us
 **Z** is the patch number, which is incremented for bug fixes and other small changes that do not add new features or break backwards compatibility.
 
 <Note>You will only see Version X.Y here as all Patch changes (Z) are added under their minor versions.</Note>
+### 8/8/2023
+<Warning>
+important Security Update: If you're allowing users to sign up, please upgrade to version 0.7.0 immediately to address a security concern, you won't effected If you have single user in your instance.
+</Warning>
+
+**New Additions:**
+- Google Drive: Now detects when new files or folders are added.
+- Slack: You can now easily change your username and profile picture.
+- SFTP: Introduces triggers for modified or new files.
+- Clarifai: Added an action to call a model.
+- Zoho Invoice: New trigger for when invoices are created.
+- Stablity AI: Includes the new Stable Diffusion XL 1.0 model.
+- Amazon S3: Can trigger actions for new or read files.
+
+**Bug Fixes:**
+- SFTP: Issue with creating new files when the path doesn't exist has been resolved.
+- Loading indicators for the Code Editor are now working correctly.
+- Icons have been added for the flow menu dropdown.
+
+**New Features / Improvements:**
+- You can now test branch steps.
+  
+**Developer Updates:**
+- Added a Markdown Property.
+- Improved validation and processors for properties in the framework (Thanks to @OsamaHaikal for these changes).
+
+** New Contributors **
+* @camilou contributed for the first time in https://github.com/activepieces/activepieces/pull/1773
+* @kishanprmr made their first contribution in https://github.com/activepieces/activepieces/pull/1813
+* @akatechis contributed for the first time in https://github.com/activepieces/activepieces/pull/1806
+* @zeiler made their first contribution in https://github.com/activepieces/activepieces/pull/1818
+
+**Full List of Changes**: Compare versions 0.6.0 and 0.7.0 at https://github.com/activepieces/activepieces/compare/0.6.0...0.7.0
+
+## 7/26/2023
+
+**New Pieces:**
+- API Table: Now supports Create Record, Find Record, Update Record actions, and New Record Trigger.
+- Approval: Added Generate Approval Links and Wait for Approval features.
+- GhostCMS: Included Create Member, Create Project, Find Members, Find User, and Update Member functionalities.
+- Google Sheets: Enhanced Find Rows feature.
+- Hubspot: Fixed an issue with the Create Contact action.
+- RSS: Addressed a problem with duplicated triggers.
+- Slack: Added Request Approval from User and Request Approval in Channel actions.
+- Discord: Included Request Approval from User and Request Approval in Channel features.
+
+**New Features:**
+- Support for SQLite 3 and In-memory queues. Redis and Postgres are no longer required for personal usage.
+
+**Developer Experience:**
+- Development environment no longer requires Docker; it now runs on SQLite3 and in-memory queues.
+
+**Contributors:**
+- @MoShizzle: Added Survey Monkey response trigger, WooCommerce triggers, Facebook Leads trigger, and provided contributions for IMAP and Google Docs.
+- @Abdallah-Alwarawreh: Enhanced Google Sheets actions.
+- @buttonsbond: Enhanced Invoice Ninja.
+
+**Full Changelog**: [Check it out here](https://github.com/activepieces/activepieces/compare/0.5.3...0.6.0)
 
 ### 7/19/2023
 
