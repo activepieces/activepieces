@@ -64,3 +64,7 @@
 <ng-container *ngIf="loadInitialData$ | async"></ng-container>
 <ng-container *ngIf="graphChanged$ | async"></ng-container>
 <ng-container *ngIf="importTemplate$ | async"></ng-container>
+
+<div class="ap-hidden">
+  <ngx-monaco-editor [options]="codeEditorOptions"></ngx-monaco-editor>
+</div>
