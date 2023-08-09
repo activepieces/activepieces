@@ -2,7 +2,6 @@ import assert from 'node:assert'
 import { PieceMetadata } from '../../../packages/pieces/framework/src'
 import { StatusCodes } from 'http-status-codes'
 import { HttpHeader } from '../../../packages/pieces/common/src'
-import { isNil } from 'lodash'
 
 assert(process.env.AP_CLOUD_API_KEY, 'API Key is not defined')
 
@@ -36,7 +35,7 @@ const pieceMetadataExists = async (pieceName: string, pieceVersion: string): Pro
         [StatusCodes.NOT_FOUND]: false,
     }
 
-    if (isNil(pieceExist[cloudResponse.status])) {
+    if (pieceExist[cloudResponse.status] === null || pieceExist[cloudResponse.status] === undefined) {
         throw new Error(await cloudResponse.text())
     }
 

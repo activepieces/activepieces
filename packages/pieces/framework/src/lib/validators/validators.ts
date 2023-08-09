@@ -1,4 +1,4 @@
-import { isEmpty, isNil } from "lodash";
+import { isEmpty, isNil } from '@activepieces/shared';
 import { ErrorMessages } from './errors';
 import { ValidationErrors, TypedValidatorFn, ValidationInputType } from "./types";
 import { formatErrorMessage } from "./utils";
