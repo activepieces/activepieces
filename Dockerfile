@@ -29,6 +29,9 @@ COPY packages/ui/core/nginx.conf /etc/nginx/nginx.conf
 # Copy Output files to appropriate directory from build stage
 COPY --from=build /usr/src/app/dist/ /usr/src/app/dist/
 
+# Copy Output files to appropriate directory from build stage
+COPY --from=build /usr/src/app/packages/ /usr/src/app/packages/
+
 
 # Copy frontend files to Nginx document root directory from build stage
 COPY --from=build /usr/src/app/dist/packages/ui/core/ /usr/share/nginx/html/
