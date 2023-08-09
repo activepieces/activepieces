@@ -16,6 +16,9 @@ RUN cd dist/packages/backend && \
 ### STAGE 2: Run ###
 FROM activepieces/ap-base:3 AS run
 
+# Set up backend
+WORKDIR /usr/src/app
+
 # Install Nginx and gettext for envsubst
 RUN apt-get update && \
     apt-get install -y nginx gettext
@@ -23,11 +26,12 @@ RUN apt-get update && \
 # Copy Nginx configuration template
 COPY packages/ui/core/nginx.conf /etc/nginx/nginx.conf
 
+# Copy Output files to appropriate directory from build stage
+COPY --from=build /usr/src/app/dist/ /usr/src/app/dist/
+
+
 # Copy frontend files to Nginx document root directory from build stage
 COPY --from=build /usr/src/app/dist/packages/ui/core/ /usr/share/nginx/html/
-
-# Copy backend files to appropriate directory from build stage
-COPY --from=build /usr/src/app/dist/packages/backend/ /usr/src/app/dist/packages/backend/
 
 # Set up entrypoint script
 COPY docker-entrypoint.sh /
