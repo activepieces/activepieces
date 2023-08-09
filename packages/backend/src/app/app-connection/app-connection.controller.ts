@@ -11,6 +11,7 @@ import {
 } from '@activepieces/shared'
 import { appConnectionService } from './app-connection-service'
 import { FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
+import { StatusCodes } from 'http-status-codes'
 
 export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts, done) => {
     app.post('/', UpsertAppConnectionRequest, async (request): Promise<AppConnectionWithoutSensitiveData> => {
@@ -86,12 +87,18 @@ const GetAppConnectionRequest = {
         params: Type.Object({
             connectionName: Type.String(),
         }),
+        response: {
+            [StatusCodes.OK]: AppConnectionWithoutSensitiveData,
+        },
     },
 }
 
 const ListAppConnectionsRequest = {
     schema: {
         querystring: ListAppConnectionsRequestQuery,
+        response: {
+            [StatusCodes.OK]: SeekPage(AppConnectionWithoutSensitiveData),
+        },
     },
 }
 

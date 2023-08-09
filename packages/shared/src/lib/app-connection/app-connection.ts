@@ -1,5 +1,7 @@
-import { BaseModel } from "../common/base-model";
+import { Static, Type } from "@sinclair/typebox";
+import { BaseModel, BaseModelSchema } from "../common/base-model";
 import { OAuth2AuthorizationMethod } from "./oauth2-authorization-method";
+import { ApId } from "../common/id-generator";
 
 export type AppConnectionId = string;
 
@@ -83,4 +85,13 @@ export type BasicAuthConnection = BaseAppConnection<BasicAuthConnectionValue>;
 export type CustomAuthConnection = BaseAppConnection<CustomAuthConnectionValue>;
 export type AppConnection = BasicAuthConnection | SecretKeyAppConnection | OAuth2AppConnection | CloudAuth2Connection | CustomAuthConnection;
 export type AppConnectionValue = SecretTextConnectionValue | OAuth2ConnectionValueWithApp | CloudOAuth2ConnectionValue | BasicAuthConnectionValue | CustomAuthConnectionValue;
-export type AppConnectionWithoutSensitiveData = Omit<AppConnection, 'value'> & { __brand: 'AppConnectionWithoutSensitiveData' }
+
+export const AppConnectionWithoutSensitiveData = Type.Object({
+  ...BaseModelSchema,
+  name: Type.String(),
+  appName: Type.String(),
+  projectId: ApId,
+  status: Type.Enum(AppConnectionStatus),
+})
+
+export type AppConnectionWithoutSensitiveData = Static<typeof AppConnectionWithoutSensitiveData> & { __brand: 'AppConnectionWithoutSensitiveData' }
