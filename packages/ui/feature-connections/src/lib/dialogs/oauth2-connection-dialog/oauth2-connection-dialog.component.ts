@@ -11,8 +11,8 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { Store } from '@ngrx/store';
 import { catchError, map, Observable, of, take, tap } from 'rxjs';
 import {
-  AppConnection,
   AppConnectionType,
+  AppConnectionWithoutSensitiveData,
   OAuth2AppConnection,
   UpsertOAuth2Request,
 } from '@activepieces/shared';
@@ -74,7 +74,7 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
   keyTooltip =
     'The ID of this authentication definition. You will need to select this key whenever you want to reuse this authentication.';
   hasCloudAuthCred$: Observable<boolean>;
-  upsert$: Observable<AppConnection | null>;
+  upsert$: Observable<AppConnectionWithoutSensitiveData | null>;
   constructor(
     private fb: FormBuilder,
     private store: Store,
@@ -188,6 +188,7 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
     const newConnection: UpsertOAuth2Request = {
       name: connectionName,
       appName: this.dialogData.pieceName,
+      type: AppConnectionType.OAUTH2,
       value: {
         code: this.settingsForm.controls.value.value.code,
         code_challenge: this.settingsForm.controls.value.value.code_challenge,

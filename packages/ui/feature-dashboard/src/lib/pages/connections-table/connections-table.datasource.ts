@@ -11,7 +11,7 @@ import {
   forkJoin,
   map,
 } from 'rxjs';
-import { AppConnection } from '@activepieces/shared';
+import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
 import {
   AppConnectionsService,
   ApPaginatorComponent,
@@ -30,7 +30,7 @@ import { Params } from '@angular/router';
  * (including sorting, pagination, and filtering).
  */
 export class ConnectionsTableDataSource extends DataSource<any> {
-  data: AppConnection[] = [];
+  data: AppConnectionWithoutSensitiveData[] = [];
   isLoading$: BehaviorSubject<boolean> = new BehaviorSubject(true);
   constructor(
     private queryParams$: Observable<Params>,

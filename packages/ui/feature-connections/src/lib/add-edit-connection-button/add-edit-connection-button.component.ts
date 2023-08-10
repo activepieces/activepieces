@@ -1,10 +1,8 @@
 import {
   AppConnection,
   AppConnectionType,
-  BasicAuthConnection,
-  CustomAuthConnection,
+  AppConnectionWithoutSensitiveData,
   OAuth2AppConnection,
-  SecretKeyAppConnection,
 } from '@activepieces/shared';
 import {
   BasicAuthProperty,
@@ -361,11 +359,11 @@ export class AddEditConnectionButtonComponent {
   }
 
   private editCustomAuthConnection(
-    currentConnection$: Observable<AppConnection>
+    currentConnection$: Observable<AppConnectionWithoutSensitiveData>
   ) {
     this.updateOrAddConnectionDialogClosed$ = currentConnection$.pipe(
       switchMap((connection) => {
-        const customAuthConnection = connection as CustomAuthConnection;
+        const customAuthConnection = connection;
         const dialogData: CustomAuthDialogData = {
           pieceName: this.pieceName,
           pieceAuthProperty: this.authProperty as CustomAuthProperty<
@@ -388,17 +386,16 @@ export class AddEditConnectionButtonComponent {
   }
 
   private editSecretKeyConnection(
-    currentConnection$: Observable<AppConnection>
+    currentConnection$: Observable<AppConnectionWithoutSensitiveData>
   ) {
     this.updateOrAddConnectionDialogClosed$ = currentConnection$.pipe(
       switchMap((connection) => {
-        const secretKeyConnection = connection as SecretKeyAppConnection;
         const dialogData: SecretTextConnectionDialogData = {
           pieceName: this.pieceName,
           displayName: this.authProperty.displayName,
           description: this.authProperty.description || '',
           connectionName: connection!.name,
-          secretText: secretKeyConnection.value.secret_text,
+          secretText: '***',
         };
         return this.dialogService
           .open(SecretTextConnectionDialogComponent, {
@@ -413,14 +410,14 @@ export class AddEditConnectionButtonComponent {
     );
   }
   private editBasicAuthConnection(
-    currentConnection$: Observable<AppConnection>
+    currentConnection$: Observable<AppConnectionWithoutSensitiveData>
   ) {
     this.updateOrAddConnectionDialogClosed$ = currentConnection$.pipe(
       switchMap((connection) => {
         const dialogData: BasicAuthDialogData = {
           pieceName: this.pieceName,
           pieceAuthProperty: this.authProperty as BasicAuthProperty<boolean>,
-          connectionToUpdate: connection as BasicAuthConnection,
+          connectionToUpdate: connection,
         };
 
         return this.dialogService
@@ -436,10 +433,12 @@ export class AddEditConnectionButtonComponent {
     );
   }
 
-  private editOAuth2Property(currentConnection$: Observable<AppConnection>) {
+  private editOAuth2Property(
+    currentConnection$: Observable<AppConnectionWithoutSensitiveData>
+  ) {
     this.updateOrAddConnectionDialogClosed$ = currentConnection$.pipe(
       switchMap((connection) => {
-        if (connection.value.type === AppConnectionType.OAUTH2) {
+        if (connection.type === AppConnectionType.OAUTH2) {
           return this.dialogService
             .open(OAuth2ConnectionDialogComponent, {
               data: {

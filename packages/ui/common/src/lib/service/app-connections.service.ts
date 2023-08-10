@@ -4,9 +4,9 @@ import { Observable } from 'rxjs';
 import {
   SeekPage,
   AppConnectionId,
-  AppConnection,
   UpsertAppConnectionRequestBody,
   ListAppConnectionsRequestQuery,
+  AppConnectionWithoutSensitiveData,
 } from '@activepieces/shared';
 import { CURSOR_QUERY_PARAM, LIMIT_QUERY_PARAM } from '../utils/tables.utils';
 import { environment } from '../environments/environment';
@@ -17,8 +17,10 @@ import { environment } from '../environments/environment';
 export class AppConnectionsService {
   constructor(private http: HttpClient) {}
 
-  upsert(request: UpsertAppConnectionRequestBody): Observable<AppConnection> {
-    return this.http.post<AppConnection>(
+  upsert(
+    request: UpsertAppConnectionRequestBody
+  ): Observable<AppConnectionWithoutSensitiveData> {
+    return this.http.post<AppConnectionWithoutSensitiveData>(
       environment.apiUrl + '/app-connections',
       request
     );
@@ -26,7 +28,7 @@ export class AppConnectionsService {
 
   list(
     params: ListAppConnectionsRequestQuery
-  ): Observable<SeekPage<AppConnection>> {
+  ): Observable<SeekPage<AppConnectionWithoutSensitiveData>> {
     const queryParams: { [key: string]: string | number } = {};
     if (params.cursor) {
       queryParams[CURSOR_QUERY_PARAM] = params.cursor;
@@ -34,7 +36,7 @@ export class AppConnectionsService {
     if (params.limit) {
       queryParams[LIMIT_QUERY_PARAM] = params.limit;
     }
-    return this.http.get<SeekPage<AppConnection>>(
+    return this.http.get<SeekPage<AppConnectionWithoutSensitiveData>>(
       environment.apiUrl + '/app-connections',
       {
         params: queryParams,

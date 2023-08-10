@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 
 import { map, Observable, switchMap, take } from 'rxjs';
-import { AppConnection } from '@activepieces/shared';
+import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
 
 import {
   AppConnectionsService,
@@ -9,7 +9,7 @@ import {
 } from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
 
-export type ConnectionsResolverData = AppConnection[];
+export type ConnectionsResolverData = AppConnectionWithoutSensitiveData[];
 
 @Injectable({
   providedIn: 'root',
@@ -19,7 +19,7 @@ export class ConnectionsResolver {
     private appConnectionsService: AppConnectionsService,
     private store: Store
   ) {}
-  resolve(): Observable<AppConnection[]> {
+  resolve(): Observable<AppConnectionWithoutSensitiveData[]> {
     return this.store.select(ProjectSelectors.selectProject).pipe(
       take(1),
       switchMap(() => {
