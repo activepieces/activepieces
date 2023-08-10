@@ -75,9 +75,10 @@ export class Sandbox {
         ]
         const promises = filesToDelete.map((file) => {
             const filePath = this.getSandboxFilePath(file)
-            return fs.unlink(filePath).catch((error) => {
-            })
+            // eslint-disable-next-line @typescript-eslint/no-empty-function
+            return fs.unlink(filePath).catch(() => {})
         })
+        
         await Promise.all(promises)
     }
 
