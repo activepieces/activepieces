@@ -12,6 +12,9 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
         name: {
             type: String,
         },
+        type: {
+            type: String,
+        },
         appName: {
             type: String,
         },
