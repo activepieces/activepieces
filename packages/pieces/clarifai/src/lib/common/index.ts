@@ -374,9 +374,6 @@ export function cleanPostWorkflowResultsResponse(response: PostWorkflowResultsRe
     }
     let array: any[] = [];
     for (const output of outputs) {
-      console.log("OOOOOOOOOOOOOOOOOO");
-      console.log(output);
-      console.log(Output.toObject(false, output));
       const model = output.getModel();
       if (model == undefined) {
           throw new Error('No model found from Clarifai');
