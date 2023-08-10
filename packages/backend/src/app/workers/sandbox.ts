@@ -4,7 +4,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { ExecutionMode, system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
-import { captureException, logger } from '../helper/logger'
+import { logger } from '../helper/logger'
 import { packageManager } from '../helper/package-manager'
 import { Mutex } from 'async-mutex'
 import { EngineResponse, EngineResponseStatus } from '@activepieces/shared'
@@ -76,9 +76,6 @@ export class Sandbox {
         const promises = filesToDelete.map((file) => {
             const filePath = this.getSandboxFilePath(file)
             return fs.unlink(filePath).catch((error) => {
-                if (error.code !== 'ENOENT') { // Ignore file not found error
-                    captureException(error)
-                }
             })
         })
         await Promise.all(promises)
