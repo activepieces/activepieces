@@ -35,7 +35,7 @@ export const requestAction = async (conversationId: string, context: any) => {
     assertNotNullOrUndefined(text, 'text');
 
     const actionElements = actionTextToIds.map((action: any) => {
-      const actionLink = `${context.serverUrl}v1/flow-runs/${context.run.id}/resume?action=${encodeURI(action.actionId)}`;
+      const actionLink = `${context.serverUrl}v1/flow-runs/${context.run.id}/resume?action=${action.actionId}`;
 
       return {
         type: 'button',
