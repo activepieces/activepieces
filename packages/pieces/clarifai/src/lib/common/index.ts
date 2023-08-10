@@ -1,6 +1,6 @@
-import { Property, ApFile } from '@activepieces/pieces-framework';
+import { Property, Validators, ApFile } from '@activepieces/pieces-framework';
 import { grpc } from 'clarifai-nodejs-grpc';
-import { Data, Input, UserAppIDSet, Image } from 'clarifai-nodejs-grpc/proto/clarifai/api/resources_pb';
+import { Data, Input, UserAppIDSet, Image, Video, Audio, Text } from 'clarifai-nodejs-grpc/proto/clarifai/api/resources_pb';
 import { V2Client } from 'clarifai-nodejs-grpc/proto/clarifai/api/service_grpc_pb';
 import { MultiOutputResponse, PostModelOutputsRequest } from 'clarifai-nodejs-grpc/proto/clarifai/api/service_pb';
 import { promisify } from 'util';
@@ -15,7 +15,7 @@ export const clarifaiClient = initClarifaiClient();
 export interface CallModelRequest {
     auth: string;
     modelUrl: string;
-    input: ApFile;
+    input: Input;
 }
 
 export function callClarifaiModel({ auth, modelUrl, input }: CallModelRequest) {
@@ -27,7 +27,7 @@ export function callClarifaiModel({ auth, modelUrl, input }: CallModelRequest) {
     if (versionId) {
         req.setVersionId(versionId);
     }
-    req.setInputsList([createImageInput(input)])
+    req.setInputsList([input])
 
     const metadata = authMetadata(auth);
     // TODO: we should really be using the async version of this, circle back with clarifai team to see if we can
@@ -36,15 +36,42 @@ export function callClarifaiModel({ auth, modelUrl, input }: CallModelRequest) {
     return postModelOutputs(req, metadata);
 }
 
-function createImageInput(file: ApFile) {
+
+export function fileToInput(file: ApFile) {
     const input = new Input();
     const inputData = new Data();
-    const dataImage = new Image();
-    dataImage.setBase64(file.base64);
-    inputData.setImage(dataImage);
+    const mimeType = detectMimeType(file.base64, file.filename);
+    if (mimeType.startsWith("image")) {
+        const dataImage = new Image();
+        dataImage.setBase64(file.base64);
+        inputData.setImage(dataImage);
+    } else if (mimeType.startsWith("video")) {
+        const dataVideo = new Video();
+        dataVideo.setBase64(file.base64);
+        inputData.setVideo(dataVideo);
+    } else if (mimeType.startsWith("audio")) {
+        const dataAudio = new Audio();
+        dataAudio.setBase64(file.base64);
+        inputData.setAudio(dataAudio);
+    } else { // sending the rest of text may not always work, but it's worth a shot
+        const dataText = new Text();
+        dataText.setRaw(file.base64);
+        inputData.setText(dataText);
+    }
     input.setData(inputData);
     return input;
 }
+
+export function textToInput(text: string) {
+    const input = new Input();
+    const inputData = new Data();
+    const dataText = new Text();
+    dataText.setRaw(text);
+    inputData.setText(dataText);
+    input.setData(inputData);
+    return input;
+}
+
 
 function userAppIdSet(userId: string, appId: string) {
     const set = new UserAppIDSet();
@@ -64,6 +91,7 @@ export const CommonClarifaiProps = {
         description: 'URL of the Clarifai model. For example https://clarifai.com/clarifai/main/models/general-image-recognition OR a specific version such as https://clarifai.com/clarifai/main/models/general-image-recognition/versions/aa7f35c01e0642fda5cf400f543e7c40. Find more visual classifiers at https://clarifai.com/explore/models?filterData=%5B%7B%22field%22%3A%22model_type_id%22%2C%22value%22%3A%5B%22visual-classifier%22%5D%7D%5D&page=1&perPage=24',
         displayName: 'Model URL',
         required: true,
+        validators: [Validators.url],
     }),
 };
 
@@ -98,4 +126,161 @@ export function removeListFromPropertyNames(obj: Record<string, unknown>): Recor
     }
   }
   return result;
+}
+
+
+/**
+ * Returns the data type based on the base64 string and filename extension
+ * https://www.iana.org/assignments/media-types/media-types.xhtml for full list of mime types.
+ * @param {String} base64String
+ * @param {String} fileName
+ * @returns {String}
+ */
+function detectMimeType(base64String: string, fileName: string | undefined) {
+  var ext = "undefined";
+  if (fileName === undefined || fileName === null || fileName === "") {
+    ext = "bin";
+  } else {
+    var ext = fileName.substring(fileName.lastIndexOf(".") + 1);
+    if (ext === undefined || ext === null || ext === "") ext = "bin";
+  }
+  ext = ext.toLowerCase();
+  // This is not an exhaustive list by any stretch.
+  const signatures = {
+    "JVBERi0": "application/pdf",
+    "R0lGODdh": "image/gif",
+    "R0lGODlh": "image/gif",
+    "iVBORw0KGgo": "image/png",
+    "TU0AK": "image/tiff",
+    "/9j/": "image/jpg",
+    "UEs": "application/vnd.openxmlformats-officedocument.",
+    "PK": "application/zip",
+  };
+  for (var [key, value] of Object.entries(signatures)) {
+    if (base64String.indexOf(key) === 0) {
+      // var x = signatures[s];
+      // if an office file format
+      if (ext.length > 3 && ext.substring(0, 3) === "ppt") {
+        value += "presentationml.presentation";
+      } else if (ext.length > 3 && ext.substring(0, 3) === "xls") {
+        value += "spreadsheetml.sheet";
+      } else if (ext.length > 3 && ext.substring(0, 3) === "doc") {
+        value += "wordprocessingml.document";
+      }
+      // return
+      return value;
+    }
+  }
+  // if we are here we can only go off the extensions
+  const extensions = {
+    "7z": "application/x-7z-compressed",
+    "aif": "audio/x-aiff",
+    "aiff": "audio/x-aiff",
+    "asf": "video/x-ms-asf",
+    "asx": "video/x-ms-asf",
+    "avi": "video/x-msvideo",
+    "bin": "application/octet-stream",
+    "bmp": "image/bmp",
+    "class": "application/octet-stream",
+    "css": "text/css",
+    "csv": "text/csv",
+    "dll": "application/octet-stream",
+    "doc": "application/msword",
+    "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "dwg": "application/acad",
+    "dxf": "application/dxf",
+    "eml": "message/rfc822",
+    "exe": "application/octet-stream",
+    "flv": "video/x-flv",
+    "gif": "image/gif",
+    "gz": "application/x-gzip",
+    "gzip": "application/x-gzip",
+    "htm": "text/html",
+    "html": "text/html",
+    "ice": "x-conference/x-cooltalk",
+    "ico": "image/x-icon",
+    "ics": "text/calendar",
+    "iges": "model/iges",
+    "igs": "model/iges",
+    "jpeg": "image/jpeg",
+    "jpg": "image/jpeg",
+    "js": "application/javascript",
+    "json": "application/json",
+    "m2a": "audio/mpeg",
+    "m2v": "video/mpeg",
+    "m3u": "audio/x-mpegurl",
+    "m4v": "video/mpeg",
+    "mesh": "model/mesh",
+    "mov": "video/quicktime",
+    "movie": "video/x-sgi-movie",
+    "mp2": "audio/mpeg",
+    "mp2a": "audio/mpeg",
+    "mp3": "audio/mpeg",
+    "mp4": "video/mp4",
+    "mpe": "video/mpeg",
+    "mpeg": "video/mpeg",
+    "mpg": "video/mpeg",
+    "mpga": "audio/mpeg",
+    "mpv": "video/mpeg",
+    "msg": "application/vnd.ms-outlook",
+    "msh": "model/mesh",
+    "mxf": "application/mxf",
+    "obj": "application/octet-stream",
+    "oda": "application/oda",
+    "ogg": "application/ogg",
+    "ogv": "video/ogg",
+    "ogx": "application/ogg",
+    "pdb": "chemical/x-pdb",
+    "pdf": "application/pdf",
+    "png": "image/png",
+    "ppt": "application/vnd.ms-powerpoint",
+    "psd": "application/octet-stream",
+    "qt": "video/quicktime",
+    "ra": "audio/x-realaudio",
+    "ram": "audio/x-pn-realaudio",
+    "rgb": "image/x-rgb",
+    "rm": "audio/x-pn-realaudio",
+    "rpm": "audio/x-pn-realaudio-plugin",
+    "rtf": "application/rtf",
+    "sea": "application/octet-stream",
+    "silo": "model/mesh",
+    "so": "application/octet-stream",
+    "svg": "image/svg+xml",
+    "tar": "application/x-tar",
+    "tif": "image/tiff",
+    "tiff": "image/tiff",
+    "txt": "text/plain",
+    "vrml": "model/vrml",
+    "wav": "audio/x-wav",
+    "wax": "audio/x-ms-wax",
+    "webp": "image/webp",
+    "wma": "audio/x-ms-wma",
+    "wmv": "video/x-ms-wmv",
+    "wrl": "model/vrml",
+    "xls": "application/vnd.ms-excel",
+    "xml": "text/xml",
+    "xyz": "chemical/x-pdb",
+    "zip": "application/zip",
+  };
+  for (var [key, value] of Object.entries(extensions)) {
+    if (ext.indexOf(key) === 0) {
+      return value;
+    }
+  }
+  // if we are here - not sure what type this is
+  return "unknown";
+}
+
+
+export function cleanMultiOutputResponse(outputs: MultiOutputResponse) {
+  if (outputs.getOutputsList().length === 0) {
+    throw new Error('No outputs found from Clarifai');
+  }
+  const data = outputs.getOutputsList()[0].getData();
+  if (data == undefined) {
+    throw new Error('No data found from Clarifai');
+  } else {
+    const result = Data.toObject(false, data);
+    return removeListFromPropertyNames(result);
+  }
 }

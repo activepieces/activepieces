@@ -1,5 +1,6 @@
 import { PieceAuth, createPiece } from "@activepieces/pieces-framework";
-import { callClassifierModel } from "./lib/actions/call-classifier-model";
+import { callImageClassifierModel, callTextClassifierModel } from "./lib/actions/call-classifier-model";
+
 
 export const clarifaiAuth = PieceAuth.SecretText({
     displayName: "API Key",
@@ -14,7 +15,8 @@ export const clarifai = createPiece({
     authors: ['akatechis'],
     auth: clarifaiAuth,
     actions: [
-        callClassifierModel,
+        callImageClassifierModel,
+        callTextClassifierModel,
     ],
     triggers: [],
 });
