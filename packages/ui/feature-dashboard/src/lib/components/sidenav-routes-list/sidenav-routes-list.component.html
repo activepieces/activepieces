@@ -1,8 +1,8 @@
 <div
-  class="ap-min-w-[70px] ap-bg-transparent ap-h-full ap-flex ap-flex-col ap-items-center ap-gap-[20px] ap-typography-caption"
+  class="ap-w-[70px] ap-bg-transparent ap-h-full ap-flex ap-flex-col ap-typography-caption ap-items-center ap-gap-[20px] ap-p-3"
 >
   <ap-icon-button
-    class="ap-my-[25px]"
+    class="ap-mb-[10px]"
     [useSvgDefault]="true"
     [iconFilename]="'logo/logo.svg'"
     [tooltipText]="'Home'"
@@ -14,34 +14,46 @@
     *ngFor="let r of sideNavRoutes"
     [matTooltip]="r.caption"
     [matTooltipPosition]="'right'"
-    class="ap-w-[50px]ap-flex ap-border-transparent ap-justify-center ap-text-title ap-items-center ap-flex-col ap-cursor-pointer ap-py-[8px] ap-px-[4px] ap-transition ap-ease-out ap-rounded-[8px]"
+    class="ap-w-full ap-flex-col ap-flex ap-border-transparent ap-justify-center ap-items-center ap-cursor-pointer ap-px-3"
     [routerLink]="['/' + r.route]"
-  
-    routerLinkActive="ap-bg-primary-light"
   >
-    <svg-icon
-      [class]="isActive(r.route) ? 'ap-fill-primary' : 'ap-fill-title'"
-      [svgStyle]="{ width: '24px', height: '24px' }"
-      [src]="r.icon"
-      [applyClass]="true"
-      (click)="r.effect ? r.effect() : null"
+    <div
+      [class]="
+        (isActive(r.route)
+          ? 'ap-bg-primary-light ap-transition ap-ease-out ap-rounded-[8px]'
+          : '') + ' ap-p-3'
+      "
     >
-    </svg-icon>
-    <div class="ap-mt-1">{{r.caption}}</div>
+      <svg-icon
+        [class]="isActive(r.route) ? 'ap-fill-primary' : 'ap-fill-title '"
+        [svgStyle]="{ width: '21px', height: '21px' }"
+        [src]="r.icon"
+        [applyClass]="true"
+        (click)="r.effect ? r.effect() : null"
+      >
+      </svg-icon>
+    </div>
+
+    <div class="ap-mt-1 ap-font-medium">
+      {{ r.caption.length > 7 ? r.caption.slice(0, 4) : r.caption }}
+    </div>
   </div>
   <div class="ap-flex-grow"></div>
-
   <div
+    (click)="openDocs()"
     [matTooltip]="'Documentation'"
     [matTooltipPosition]="'right'"
-    class="ap-flex ap-justify-center ap-text-title ap-items-center ap-flex-col ap-cursor-pointer ap-py-[8px] ap-px-[8px] ap-transition ap-ease-out ap-rounded-[8px] ap-mb-[20px]"
+    class="ap-w-full ap-flex-col ap-flex ap-border-transparent ap-justify-center ap-items-center ap-cursor-pointer ap-px-3"
   >
-    <svg-icon
-      [class]="'ap-fill-title'"
-      [svgStyle]="{ width: '24px', height: '24px' }"
-      src="assets/img/custom/dashboard/documentation.svg"
-      [applyClass]="true"
-    >
-    </svg-icon>
+    <div class="ap-p-3">
+      <svg-icon
+        [class]="'ap-fill-title'"
+        [svgStyle]="{ width: '21px', height: '21px' }"
+        src="assets/img/custom/dashboard/documentation.svg"
+        [applyClass]="true"
+      >
+      </svg-icon>
+    </div>
+    <div class="ap-font-medium">Docs</div>
   </div>
 </div>

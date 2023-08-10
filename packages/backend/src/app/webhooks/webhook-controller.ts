@@ -33,7 +33,7 @@ export const webhookController: FastifyPluginAsync = async (app) => {
                     queryParams: request.query as Record<string, string>,
                 },
             }))[0]
-            if(isNil(run)) {
+            if (isNil(run)) {
                 await reply.status(StatusCodes.NOT_FOUND).send()
                 return
             }
