@@ -1,29 +1,28 @@
 import { clarifaiAuth } from "../../"
 import { Property, createAction } from "@activepieces/pieces-framework";
-import { CommonClarifaiProps, callClarifaiModel, cleanMultiOutputResponse, fileToInput, textToInput } from "../common";
+import { CommonClarifaiProps, callClarifaiModel, cleanMultiOutputResponse, textToInput } from "../common";
 import { Data } from 'clarifai-nodejs-grpc/proto/clarifai/api/resources_pb';
 
 
-
-export const callImageClassifierModel = createAction({
+export const textClassifierModelPredictAction = createAction({
     auth: clarifaiAuth,
-    name: 'image_classifier_model',
-    description: 'Call an image classifier model',
-    displayName: 'Classify Image',
+    name: 'text_classifier_model',
+    description: 'Call a text classifier AI model to recognize concepts',
+    displayName: 'Classify Text',
     props: {
         modelUrl: CommonClarifaiProps.modelUrl,
-        file: Property.File({
-            description: 'URL or base64 bytes of the image to classify',
-            displayName: 'Input URL or bytes',
+        txt: Property.LongText({
+            description: 'Text to classify',
+            displayName: 'Input Text',
             required: true,
         }),
     },
     sampleData: { },
     async run(ctx) {
         const { auth } = ctx
-        const { modelUrl, file } = ctx.propsValue;
+        const { modelUrl, txt } = ctx.propsValue;
 
-        const input = fileToInput(file);
+        const input = textToInput(txt);
 
         const outputs = await callClarifaiModel({
           auth,
@@ -34,11 +33,12 @@ export const callImageClassifierModel = createAction({
     },
 });
 
-export const callTextClassifierModel = createAction({
+
+export const textToTextModelPredictAction = createAction({
     auth: clarifaiAuth,
-    name: 'text_classifier_model',
-    description: 'Call a text classifier model',
-    displayName: 'Classify Text',
+    name: 'text_text_model',
+    description: 'Call a text to text AI model',
+    displayName: 'Text to Text',
     props: {
         modelUrl: CommonClarifaiProps.modelUrl,
         txt: Property.LongText({

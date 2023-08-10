@@ -2,7 +2,7 @@ import { Property, Validators, ApFile } from '@activepieces/pieces-framework';
 import { grpc } from 'clarifai-nodejs-grpc';
 import { Data, Input, UserAppIDSet, Image, Video, Audio, Text } from 'clarifai-nodejs-grpc/proto/clarifai/api/resources_pb';
 import { V2Client } from 'clarifai-nodejs-grpc/proto/clarifai/api/service_grpc_pb';
-import { MultiOutputResponse, PostModelOutputsRequest } from 'clarifai-nodejs-grpc/proto/clarifai/api/service_pb';
+import { MultiOutputResponse, PostModelOutputsRequest, MultiInputResponse, PostInputsRequest } from 'clarifai-nodejs-grpc/proto/clarifai/api/service_pb';
 import { promisify } from 'util';
 
 function initClarifaiClient() {
@@ -17,6 +17,14 @@ export interface CallModelRequest {
     modelUrl: string;
     input: Input;
 }
+
+export interface CallPostInputsRequest {
+    auth: string;
+    userId: string;
+    appId: string;
+    input: Input;
+}
+
 
 export function callClarifaiModel({ auth, modelUrl, input }: CallModelRequest) {
     const [userId, appId, modelId, versionId] = parseEntityUrl(modelUrl);
@@ -37,9 +45,24 @@ export function callClarifaiModel({ auth, modelUrl, input }: CallModelRequest) {
 }
 
 
+export function callPostInputs({ auth, userId, appId, input }: CallPostInputsRequest) {
+    const req = new PostInputsRequest();
+    req.setUserAppId(userAppIdSet(userId, appId));
+    req.setInputsList([input])
+
+    const metadata = authMetadata(auth);
+    // TODO: we should really be using the async version of this, circle back with clarifai team to see if we can
+    // tweak the protoc settings to build a promise-compatible version of our API client.
+    const postInputs = promisify<PostInputsRequest, grpc.Metadata, MultiInputResponse>(clarifaiClient.postInputs.bind(clarifaiClient));
+    return postInputs(req, metadata);
+}
+
+
+
 export function fileToInput(file: ApFile) {
     const input = new Input();
     const inputData = new Data();
+
     const mimeType = detectMimeType(file.base64, file.filename);
     if (mimeType.startsWith("image")) {
         const dataImage = new Image();
@@ -88,7 +111,7 @@ function authMetadata(auth: string) {
 
 export const CommonClarifaiProps = {
     modelUrl: Property.ShortText({
-        description: 'URL of the Clarifai model. For example https://clarifai.com/clarifai/main/models/general-image-recognition OR a specific version such as https://clarifai.com/clarifai/main/models/general-image-recognition/versions/aa7f35c01e0642fda5cf400f543e7c40. Find more visual classifiers at https://clarifai.com/explore/models?filterData=%5B%7B%22field%22%3A%22model_type_id%22%2C%22value%22%3A%5B%22visual-classifier%22%5D%7D%5D&page=1&perPage=24',
+        description: 'URL of the Clarifai model. For example https://clarifai.com/clarifai/main/models/general-image-recognition OR a specific version such as https://clarifai.com/clarifai/main/models/general-image-recognition/versions/aa7f35c01e0642fda5cf400f543e7c40. Find more models at https://clarifai.com/explore/models',
         displayName: 'Model URL',
         required: true,
         validators: [Validators.url],
@@ -277,6 +300,20 @@ export function cleanMultiOutputResponse(outputs: MultiOutputResponse) {
     throw new Error('No outputs found from Clarifai');
   }
   const data = outputs.getOutputsList()[0].getData();
+  if (data == undefined) {
+    throw new Error('No data found from Clarifai');
+  } else {
+    const result = Data.toObject(false, data);
+    return removeListFromPropertyNames(result);
+  }
+}
+
+
+export function cleanMultiInputResponse(inputs: MultiInputResponse) {
+  if (inputs.getInputsList().length === 0) {
+    throw new Error('No inputs found from Clarifai');
+  }
+  const data = inputs.getInputsList()[0].getData();
   if (data == undefined) {
     throw new Error('No data found from Clarifai');
   } else {
