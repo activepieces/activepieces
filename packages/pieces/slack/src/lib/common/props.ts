@@ -1,5 +1,5 @@
-import { OAuth2PropertyValue, Property } from "@activepieces/pieces-framework";
-import { AuthenticationType, httpClient, HttpMethod, HttpRequest } from "@activepieces/pieces-common";
+import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { AuthenticationType, httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common';
 
 export const slackChannel = Property.Dropdown({
   displayName: 'Channel',
@@ -12,10 +12,10 @@ export const slackChannel = Property.Dropdown({
         disabled: true,
         placeholder: 'connect slack account',
         options: [],
-      }
+      };
     }
-    const authentication = auth as OAuth2PropertyValue
-    const accessToken = authentication['access_token']
+    const authentication = auth as OAuth2PropertyValue;
+    const accessToken = authentication['access_token'];
     const request: HttpRequest = {
       method: HttpMethod.GET,
       url: `https://slack.com/api/conversations.list?types=public_channel,private_channel`,
@@ -23,10 +23,10 @@ export const slackChannel = Property.Dropdown({
         type: AuthenticationType.BEARER_TOKEN,
         token: accessToken,
       },
-    }
+    };
     const response = await httpClient.sendRequest<{
-      channels: { id: string; name: string }[]
-    }>(request)
+      channels: { id: string; name: string }[];
+    }>(request);
     return {
       disabled: false,
       placeholder: 'Select channel',
@@ -34,9 +34,9 @@ export const slackChannel = Property.Dropdown({
         return {
           label: ch.name,
           value: ch.id,
-        }
+        };
       }),
-    }
+    };
   },
 });
 
@@ -63,10 +63,10 @@ export const userId = Property.Dropdown<string>({
         disabled: true,
         placeholder: 'connect slack account',
         options: [],
-      }
+      };
     }
 
-    const accessToken = (auth as OAuth2PropertyValue).access_token
+    const accessToken = (auth as OAuth2PropertyValue).access_token;
 
     const request: HttpRequest = {
       method: HttpMethod.GET,
@@ -75,20 +75,20 @@ export const userId = Property.Dropdown<string>({
         type: AuthenticationType.BEARER_TOKEN,
         token: accessToken,
       },
-    }
+    };
 
-    const response = await httpClient.sendRequest<UserListResponse>(request)
+    const response = await httpClient.sendRequest<UserListResponse>(request);
 
-    const options = response.body.members.map(member => ({
+    const options = response.body.members.map((member) => ({
       label: member.name,
       value: member.id,
-    }))
+    }));
 
     return {
       disabled: false,
       placeholder: 'Select channel',
       options,
-    }
+    };
   },
 });
 
@@ -98,9 +98,14 @@ export const text = Property.LongText({
   required: true,
 });
 
+export const actions = Property.Array({
+  displayName: 'Action Buttons',
+  required: true,
+});
+
 type UserListResponse = {
   members: {
-    id: string
-    name: string
-  }[]
-}
+    id: string;
+    name: string;
+  }[];
+};
