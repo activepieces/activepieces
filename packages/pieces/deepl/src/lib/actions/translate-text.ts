@@ -2,8 +2,6 @@ import { createAction, Property } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { deeplAuth } from '../..';
 
-
-
 export const translateText = createAction({
 	name: 'translate_text',
     auth: deeplAuth,

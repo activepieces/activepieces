@@ -1,6 +1,6 @@
 
 import { createPiece, PieceAuth, Property } from "@activepieces/pieces-framework";
-import { translateText } from './lib/actions/translateText';
+import { translateText } from './lib/actions/translate-text';
 
 const markdownDescription = `
 Follow these instructions to get your DeepL API Key:
@@ -9,15 +9,8 @@ Follow these instructions to get your DeepL API Key:
 2. Visit https://www.deepl.com/account/summary
 3. Go to the API section and obtain your DeepL API Key.
 `
-
-//export const deeplAuth = PieceAuth.SecretText({
-//  description: markdownDescription,
-//  displayName: 'Api Key',
-//  required: true,
-//})
-
 export const deeplAuth = PieceAuth.CustomAuth({
-  displayName: 'API Authentication',
+  displayName: 'Authentication',
   description: markdownDescription,
   props: {
       key: Property.ShortText({
@@ -42,18 +35,6 @@ export const deeplAuth = PieceAuth.CustomAuth({
             ]
         }
     })
-  },
-  // Optional Validation
-  validate: async ({auth}) => {
-      if(auth){
-          return {
-              valid: true,
-          }
-      }
-      return {
-          valid: false,
-          error: 'Invalid Api Key'
-      }
   },
   required: true
 })
