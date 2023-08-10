@@ -1,8 +1,9 @@
 import { PieceAuth, createPiece } from "@activepieces/pieces-framework";
-import { imageClassifierModelPredictAction, imageToTextModelPredictAction } from "./lib/actions/call-image-model";
+import { visualClassifierModelPredictAction, imageToTextModelPredictAction } from "./lib/actions/call-image-model";
 import { textToTextModelPredictAction, textClassifierModelPredictAction } from "./lib/actions/call-text-model";
 import { audioToTextModelPredictAction } from "./lib/actions/call-audio-model";
 import { postInputsAction } from "./lib/actions/call-post-inputs";
+import { workflowPredictAction } from "./lib/actions/call-workflow";
 
 
 export const clarifaiAuth = PieceAuth.SecretText({
@@ -18,12 +19,13 @@ export const clarifai = createPiece({
     authors: ['akatechis'],
     auth: clarifaiAuth,
     actions: [
-        imageClassifierModelPredictAction,
+        visualClassifierModelPredictAction,
         textClassifierModelPredictAction,
         imageToTextModelPredictAction,
         textToTextModelPredictAction,
         audioToTextModelPredictAction,
         postInputsAction,
+        workflowPredictAction,
     ],
     triggers: [],
 });

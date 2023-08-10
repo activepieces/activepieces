@@ -1,8 +1,8 @@
 import { Property, Validators, ApFile } from '@activepieces/pieces-framework';
 import { grpc } from 'clarifai-nodejs-grpc';
-import { Data, Input, UserAppIDSet, Image, Video, Audio, Text } from 'clarifai-nodejs-grpc/proto/clarifai/api/resources_pb';
+import { WorkflowResult, Output, Model, Data, Input, UserAppIDSet, Image, Video, Audio, Text } from 'clarifai-nodejs-grpc/proto/clarifai/api/resources_pb';
 import { V2Client } from 'clarifai-nodejs-grpc/proto/clarifai/api/service_grpc_pb';
-import { MultiOutputResponse, PostModelOutputsRequest, MultiInputResponse, PostInputsRequest } from 'clarifai-nodejs-grpc/proto/clarifai/api/service_pb';
+import { MultiOutputResponse, PostModelOutputsRequest, MultiInputResponse, PostInputsRequest, PostWorkflowResultsResponse, PostWorkflowResultsRequest } from 'clarifai-nodejs-grpc/proto/clarifai/api/service_pb';
 import { promisify } from 'util';
 
 function initClarifaiClient() {
@@ -18,13 +18,18 @@ export interface CallModelRequest {
     input: Input;
 }
 
+export interface CallWorkflowRequest {
+    auth: string;
+    workflowUrl: string;
+    input: Input;
+}
+
 export interface CallPostInputsRequest {
     auth: string;
     userId: string;
     appId: string;
     input: Input;
 }
-
 
 export function callClarifaiModel({ auth, modelUrl, input }: CallModelRequest) {
     const [userId, appId, modelId, versionId] = parseEntityUrl(modelUrl);
@@ -42,6 +47,25 @@ export function callClarifaiModel({ auth, modelUrl, input }: CallModelRequest) {
     // tweak the protoc settings to build a promise-compatible version of our API client.
     const postModelOutputs = promisify<PostModelOutputsRequest, grpc.Metadata, MultiOutputResponse>(clarifaiClient.postModelOutputs.bind(clarifaiClient));
     return postModelOutputs(req, metadata);
+}
+
+
+export function callClarifaiWorkflow({ auth, workflowUrl, input }: CallWorkflowRequest) {
+    const [userId, appId, workflowId, versionId] = parseEntityUrl(workflowUrl);
+
+    const req = new PostWorkflowResultsRequest();
+    req.setUserAppId(userAppIdSet(userId, appId));
+    req.setWorkflowId(workflowId);
+    if (versionId) {
+        req.setVersionId(versionId);
+    }
+    req.setInputsList([input])
+
+    const metadata = authMetadata(auth);
+    // TODO: we should really be using the async version of this, circle back with clarifai team to see if we can
+    // tweak the protoc settings to build a promise-compatible version of our API client.
+    const postWorkflowResults = promisify<PostWorkflowResultsRequest, grpc.Metadata, PostWorkflowResultsResponse>(clarifaiClient.postWorkflowResults.bind(clarifaiClient));
+    return postWorkflowResults(req, metadata);
 }
 
 
@@ -116,6 +140,12 @@ export const CommonClarifaiProps = {
         required: true,
         validators: [Validators.url],
     }),
+    workflowUrl: Property.ShortText({
+        description: 'URL of the Clarifai workflow. For example https://clarifai.com/clarifai/main/workflows/Demographics. Find more workflows at https://clarifai.com/explore/workflows',
+        displayName: 'Workflow URL',
+        required: true,
+        validators: [Validators.url],
+    }),
 };
 
 function parseEntityUrl(entityUrl: string): [string, string, string, string] {
@@ -145,7 +175,12 @@ export function removeListFromPropertyNames(obj: Record<string, unknown>): Recor
         return item;
       });
     } else {
-      result[key] = value;
+      // if the item is an object, recurse on it
+      if (Object.prototype.toString.call(value) === '[object Object]') {
+        result[key] = removeListFromPropertyNames(value as Record<string, unknown>);
+      } else {
+        result[key] = value;
+      }
     }
   }
   return result;
@@ -319,5 +354,41 @@ export function cleanMultiInputResponse(inputs: MultiInputResponse) {
   } else {
     const result = Data.toObject(false, data);
     return removeListFromPropertyNames(result);
+  }
+}
+
+
+export function cleanPostWorkflowResultsResponse(response: PostWorkflowResultsResponse) {
+  if (response.getResultsList().length === 0) {
+      throw new Error('No results found from Clarifai');
+  }
+  // one result per input in the workflow.
+  const results = response.getResultsList();
+  if (results == undefined || results.length === 0) {
+      throw new Error('No results found from Clarifai');
+  } else {
+    let result = results[0];
+    const outputs = result.getOutputsList();
+    if (outputs == undefined || outputs.length === 0) {
+      throw new Error('No outputs found from Clarifai');
+    }
+    let array: any[] = [];
+    for (const output of outputs) {
+      console.log("OOOOOOOOOOOOOOOOOO");
+      console.log(output);
+      console.log(Output.toObject(false, output));
+      const model = output.getModel();
+      if (model == undefined) {
+          throw new Error('No model found from Clarifai');
+      }
+      const m = Model.toObject(false, model);
+      const data = output.getData();
+      let out: any = {"output": "suppressed"};
+      if (data != undefined) {
+        out = Data.toObject(false, data);
+      }
+      array.push({"model": removeListFromPropertyNames(m), "data": removeListFromPropertyNames(out)})
+    }
+    return array;
   }
 }

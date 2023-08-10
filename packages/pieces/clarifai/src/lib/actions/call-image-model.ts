@@ -3,15 +3,15 @@ import { Property, createAction } from "@activepieces/pieces-framework";
 import { CommonClarifaiProps, callClarifaiModel, cleanMultiOutputResponse, fileToInput } from "../common";
 import { Data } from 'clarifai-nodejs-grpc/proto/clarifai/api/resources_pb';
 
-export const imageClassifierModelPredictAction = createAction({
+export const visualClassifierModelPredictAction = createAction({
     auth: clarifaiAuth,
-    name: 'image_classifier_model',
-    description: 'Call an image classifier AI model to recognize concepts',
-    displayName: 'Classify Image',
+    name: 'visual_classifier_model',
+    description: 'Call an visual classifier AI model to recognize concepts',
+    displayName: 'Classify Images or Videos',
     props: {
         modelUrl: CommonClarifaiProps.modelUrl,
         file: Property.File({
-            description: 'URL or base64 bytes of the image to classify',
+            description: 'URL or base64 bytes of the image or video to classify',
             displayName: 'Input URL or bytes',
             required: true,
         }),
