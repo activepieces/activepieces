@@ -16,6 +16,7 @@ import {
     ActivepiecesError,
     ErrorCode,
     ExecutionType,
+    isNil,
 } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
@@ -28,7 +29,6 @@ import { flowRunSideEffects } from './flow-run-side-effects'
 import { logger } from '../../helper/logger'
 import { notifications } from '../../helper/notifications'
 import { flowService } from '../flow/flow.service'
-import { isNil } from 'lodash'
 import { MoreThanOrEqual } from 'typeorm'
  
 export const flowRunRepo = databaseConnection.getRepository(FlowRunEntity)

@@ -74,13 +74,11 @@ export class Sandbox {
             'meta.txt',
         ]
         const promises = filesToDelete.map((file) => {
-            const filePath = path.join(__dirname, this.getSandboxFilePath(file))
-            return fs.unlink(filePath).catch((error) => {
-                if (error.code !== 'ENOENT') { // Ignore file not found error
-                    throw error
-                }
-            })
+            const filePath = this.getSandboxFilePath(file)
+            // eslint-disable-next-line @typescript-eslint/no-empty-function
+            return fs.unlink(filePath).catch(() => {})
         })
+        
         await Promise.all(promises)
     }
 

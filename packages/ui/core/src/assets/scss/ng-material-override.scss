@@ -674,8 +674,7 @@ app-dashboard-container .mat-drawer {
 .mat-mdc-form-field-icon-prefix > .mat-icon,
 .mat-mdc-form-field-icon-suffix > .mat-icon {
   padding: 12px 9px 12px 12px !important;
-  height: 16px !important;
-  width: 16px;
+  transform: scale(0.84);
 }
 mat-icon[data-mat-icon-name="custom_expand_more"],
 mat-icon[data-mat-icon-name="custom_expand_less"] {
