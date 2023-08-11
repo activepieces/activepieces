@@ -6,12 +6,14 @@ import { slackSendMessageAction } from './lib/actions/send-message-action';
 import { newMessage } from './lib/triggers/new-message';
 import { newReactionAdded } from './lib/triggers/new-reaction-added';
 import { requestSendApprovalMessageAction } from './lib/actions/request-approval-message';
+import { requestActionDirectMessageAction } from './lib/actions/request-action-direct-message';
+import { requestActionMessageAction } from './lib/actions/request-action-message';
 
 export const slackAuth = PieceAuth.OAuth2({
   displayName: 'Authentication',
   description: '',
   authUrl: 'https://slack.com/oauth/authorize',
-  tokenUrl: 'https://slack.com/api/oauth.v2.access',
+  tokenUrl: 'https://slack.com/api/oauth.access',
   required: true,
   scope: [
     'channels:read',
@@ -58,9 +60,11 @@ export const slack = createPiece({
     slackSendMessageAction,
     requestApprovalDirectMessageAction,
     requestSendApprovalMessageAction,
+    requestActionDirectMessageAction,
+    requestActionMessageAction
   ],
   triggers: [
     newMessage,
     newReactionAdded,
-  ],
+  ]
 })
