@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { FolderActions } from '../../store/folders/folders.actions';
@@ -18,7 +18,7 @@ type SideNavRoute = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SidenavRoutesListComponent {
-  constructor(public router: Router, private store: Store) {}
+  constructor(public router: Router, private store: Store, private cd: ChangeDetectorRef) {}
 
   sideNavRoutes: SideNavRoute[] = [
     {
@@ -56,6 +56,10 @@ export class SidenavRoutesListComponent {
     }
   }
 
+  markChange(){
+    this.cd.detectChanges();
+  }
+  
   public isActive(route: string) {
     return this.router.url.includes(route);
   }
