@@ -445,6 +445,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "rita-gorokhod",
+      "name": "Rita Gorokhod",
+      "avatar_url": "https://avatars.githubusercontent.com/u/60586879?v=4",
+      "profile": "https://www.linkedin.com/in/ritagorokhod/",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
