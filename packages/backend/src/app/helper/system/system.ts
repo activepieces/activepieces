@@ -24,6 +24,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [SystemProp.CLOUD_AUTH_ENABLED]: 'true',
     [SystemProp.STATS_ENABLED]: 'false',
     [SystemProp.EDITION]: 'ce',
+    [SystemProp.ENABLE_CHATBOT]: 'false',
     [SystemProp.TEMPLATES_SOURCE_URL]: 'https://cloud.activepieces.com/api/v1/flow-templates',
     [SystemProp.ENVIRONMENT]: 'prod',
     [SystemProp.ENGINE_EXECUTABLE_PATH]: 'dist/packages/engine/main.js',

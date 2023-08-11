@@ -133,6 +133,19 @@ function dynamicRoutes(edition: string) {
     },
     {
       path: '',
+      canActivate: [UserLoggedIn],
+      children: [
+        {
+          path: '',
+          loadChildren: () =>
+            import('@activepieces/ui/chatbot').then(
+              (m) => m.UiChatbotModule
+            ),
+        },
+      ],
+    },
+    {
+      path: '',
       children: [
         {
           path: '',
