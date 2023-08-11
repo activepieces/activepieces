@@ -4,7 +4,6 @@ import { encoding_for_model, type Tiktoken } from 'tiktoken';
 import { openaiAuth } from '../..';
 import { createHash } from 'crypto';
 
-
 const splitByToken = (enc: Tiktoken, text: string, minToken = 1) => {
   const encodedTextInput = enc.encode(text);
   const textSplited: string[] = [];
@@ -115,7 +114,7 @@ export const createEmbeddingsFromText = createAction({
         ],
       },
       defaultValue: 'paragraph',
-      required: false,
+      required: true,
     }),
     minTokenByEmbeddings: Property.Number({
       displayName: 'Min number of token by embedding',
@@ -141,73 +140,78 @@ export const createEmbeddingsFromText = createAction({
 
     const openai = new OpenAIApi(configuration);
 
-    propsValue.splitBy ??= 'paragraph';
-    propsValue.minTokenByEmbeddings ??= 250;
-    propsValue.maxTokenByEmbeddings ??= MAX_TOKENS_SUPPORTED_BY_EMBEDDINGS;
+    const minTokens = propsValue.minTokenByEmbeddings ?? 250;
+    const maxTokens = propsValue.maxTokenByEmbeddings ?? MAX_TOKENS_SUPPORTED_BY_EMBEDDINGS;
     
     if (
-      propsValue.maxTokenByEmbeddings > MAX_TOKENS_SUPPORTED_BY_EMBEDDINGS ||
-      propsValue.minTokenByEmbeddings > MAX_TOKENS_SUPPORTED_BY_EMBEDDINGS
+      maxTokens > MAX_TOKENS_SUPPORTED_BY_EMBEDDINGS ||
+      minTokens> MAX_TOKENS_SUPPORTED_BY_EMBEDDINGS
     ) throw new Error(
       `maxTokenByEmbeddings and  minTokenByEmbeddings must be inferior or equal to ${MAX_TOKENS_SUPPORTED_BY_EMBEDDINGS} because it is the max number of tokens supported by the openai text-embedding-ada-002 model`
     );
 
-    if (propsValue.minTokenByEmbeddings > propsValue.maxTokenByEmbeddings) 
+    if (minTokens> maxTokens) 
       throw new Error('minTokenByEmbeddings cannot be superior to maxTokenByEmbeddings')
 
-    propsValue.splitBy ??= 'paragraph';
 
     const model = 'text-embedding-ada-002';
-    const textInput = propsValue.textInput;
+    const textInput = propsValue.textInput as unknown as string | string[];
     const enc = encoding_for_model(model);
 
-    let textSplited: string[] = [];
+    const textSplited: string[] = [];
+    const splitText = (textInput: string) => {
+      switch (propsValue.splitBy) {
+        case 'token':
+          textSplited.push(...splitByToken(
+            enc,
+            textInput,
+            minTokens
+          ));
+          break;
+        case 'space':
+          textSplited.push(...splitBychar(
+            enc,
+            textInput,
+            minTokens,
+            maxTokens,
+            [' ']
+          ));
+          break;
+        case 'sentence':
+          textSplited.push(...splitBychar(
+            enc,
+            textInput,
+            minTokens,
+            maxTokens,
+            [' ', ':}]),;»”', '!?.']
+          ));
+          break;
+        case 'paragraph':
+          textSplited.push(...splitBychar(
+            enc,
+            textInput,
+            minTokens,
+            maxTokens,
+            [' ', ':}]),;»”', '!?.', '\n']
+          ));
+          break;
+        case 'keep':
+          textSplited.push(...splitByToken(
+            enc,
+            textInput,
+            MAX_TOKENS_SUPPORTED_BY_EMBEDDINGS
+          ));
+          break;
+      }
+    }
 
-    switch (propsValue.splitBy) {
-      case 'token':
-        textSplited = splitByToken(
-          enc,
-          textInput,
-          propsValue.minTokenByEmbeddings
-        );
-        break;
-      case 'space':
-        textSplited = splitBychar(
-          enc,
-          textInput,
-          propsValue.minTokenByEmbeddings,
-          propsValue.maxTokenByEmbeddings,
-          [' ']
-        );
-        break;
-      case 'sentence':
-        textSplited = splitBychar(
-          enc,
-          textInput,
-          propsValue.minTokenByEmbeddings,
-          propsValue.maxTokenByEmbeddings,
-          [' ', ':}]),;»”', '!?.']
-        );
-        break;
-      case 'paragraph':
-        textSplited = splitBychar(
-          enc,
-          textInput,
-          propsValue.minTokenByEmbeddings,
-          propsValue.maxTokenByEmbeddings,
-          [' ', ':}]),;»”', '!?.', '\n']
-        );
-        break;
-      case 'keep':
-        textSplited = splitBychar(
-          enc,
-          textInput,
-          MAX_TOKENS_SUPPORTED_BY_EMBEDDINGS,
-          MAX_TOKENS_SUPPORTED_BY_EMBEDDINGS,
-          []
-        );
-        break;
-    }    
+    if (textInput instanceof Array) {
+      for (const text of textInput) {
+        splitText(text);
+      }
+    } else {
+      splitText(textInput)
+    }
 
     enc.free();
 
@@ -223,7 +227,7 @@ export const createEmbeddingsFromText = createAction({
     
     if (validateMd5Id(documentTitle)) {
       documentId = documentTitle
-      documentTitle = textInput.slice(0, 50).split(/[.?,/\\!;:()"]/u)[0]
+      documentTitle = (textInput instanceof Array ? textInput[0]: textInput).slice(0, 50).split(/[.?,/\\!;:()"]/u)[0]
     }
 
     const resData = response.data.data
