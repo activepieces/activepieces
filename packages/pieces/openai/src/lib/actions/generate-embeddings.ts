@@ -237,7 +237,7 @@ export const createEmbeddingsFromText = createAction({
 
     for (let index = 0; index < resData.length; index++) {
       const vec = resData[index];
-      embeddings.push(vec)
+      embeddings.push(vec.embedding)
       chuncksOfText.push(textSplited[index])
       embeddingIds.push(createHash('md5').update(textSplited[index]).digest('hex'))
     }
