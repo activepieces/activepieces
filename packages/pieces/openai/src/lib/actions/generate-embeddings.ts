@@ -60,7 +60,7 @@ const splitBychar = (
     if (tokenCount > maxTokens) {
       recursiveSplit.splice(i, 1, ...recursiveSpliting(enc, chunck, maxTokens - tokenCount, charsPriority))
     }
-    if (tokenCount >= minToken) {
+    if (tokenCount >= minToken || i === recursiveSplit.length - 1) {
       textSplited.push(recursiveSplit.slice(lastPushIndex, i + 1).join(''))
       lastPushIndex = i + 1
       tokenCount = 0
@@ -215,6 +215,7 @@ export const createEmbeddingsFromText = createAction({
 
     enc.free();
 
+    console.log('documents: ', textSplited)
     const response = await openai.createEmbedding({
       model: model,
       input: textSplited,
