@@ -64,14 +64,14 @@ Array of roles to specify more accurate response
       <ResponseField name="Document Title or Md5 ID" required type="Short_text">
         What is the title or the Md5 ID of the text or document you\'ve inputted
       </ResponseField>
-      <ResponseField name="Split by" type="Dropdown">
+      <ResponseField name="Split by" type="Dropdown" required>
         Define where the text will be split
       </ResponseField>
       <ResponseField name="Min number of token by embedding" type="Number">
         After which number of tokens the text will be split
       </ResponseField>
       <ResponseField name="Max number of token by embedding" type="Number">
-        After the text was split, if this value is inferior to the number of tokens, the text will be split arbitrarily
+        After the text was split, if this value is inferior to the number of tokens, the text will be split again
       </ResponseField>
     </Expandable>
   <Card/>  
