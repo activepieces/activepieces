@@ -1,5 +1,5 @@
 <div
-  class="ap-w-[70px] ap-bg-transparent ap-h-full ap-flex ap-flex-col ap-typography-caption ap-items-center ap-gap-[20px] ap-p-3"
+  class="ap-w-[75px] ap-bg-transparent ap-h-full ap-flex ap-flex-col ap-typegraphy-body-2 ap-items-center ap-gap-[20px] ap-p-3"
 >
   <ap-icon-button
     class="ap-mb-[10px]"
@@ -34,8 +34,8 @@
       </svg-icon>
     </div>
 
-    <div class="ap-mt-1 ap-font-medium">
-      {{ r.caption.length > 7 ? r.caption.slice(0, 3) + '...' : r.caption }}
+    <div class="ap-font-medium ap-text-[10px]">
+      {{ r.caption }}
     </div>
   </div>
   <div class="ap-flex-grow"></div>
@@ -54,6 +54,6 @@
       >
       </svg-icon>
     </div>
-    <div class="ap-font-medium">Docs</div>
+    <div class="ap-font-medium ap-text-[10px]">Docs</div>
   </div>
 </div>
