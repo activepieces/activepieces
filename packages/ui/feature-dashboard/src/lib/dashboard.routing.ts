@@ -10,6 +10,7 @@ import { FoldersResolver } from './resolvers/folders.resolver';
 import { DashboardContainerComponent } from './dashboard-container.component';
 import { CommunityPiecesTableComponent } from './pages/community-pieces-table/community-pieces-table.component';
 import { environment } from '@activepieces/ui/common';
+import { ChatbotsTableComponent } from './pages/chatbots-table/chatbots-table.component';
 
 export const DashboardLayoutRouting: Routes = [
   {
@@ -29,6 +30,12 @@ export const DashboardLayoutRouting: Routes = [
         path: 'settings/my-pieces',
         pathMatch: 'full',
         component: CommunityPiecesTableComponent,
+      },
+      {
+        title: `Chatbots - ${environment.websiteTitle}`,
+        path: 'chatbots',
+        pathMatch: 'full',
+        component: ChatbotsTableComponent,
       },
       {
         title: `Connections - ${environment.websiteTitle}`,

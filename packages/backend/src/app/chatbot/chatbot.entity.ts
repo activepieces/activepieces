@@ -1,6 +1,6 @@
-import { BaseModelSchema, Chatbot, Project } from "@activepieces/shared";
+import { Chatbot, Project } from "@activepieces/shared";
 import { EntitySchema } from "typeorm";
-import { JSONB_COLUMN_TYPE } from "../database/database-common";
+import { BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from "../database/database-common";
 
 type ChatbotSchema = Chatbot &{
     project: Project
@@ -9,12 +9,18 @@ type ChatbotSchema = Chatbot &{
 export const ChatbotEntity = new EntitySchema<ChatbotSchema>({
     name: 'chatbot',
     columns: {
-        ...BaseModelSchema,
+        ...BaseColumnSchemaPart,
+        type: {
+            type: String,
+        },
         displayName: {
             type: String,
         },
         projectId: {
             type: String,
+        },
+        dataSources: {
+            type: JSONB_COLUMN_TYPE,
         },
         settings: {
             type: JSONB_COLUMN_TYPE,

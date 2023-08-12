@@ -38,6 +38,11 @@ export class SidenavRoutesListComponent {
       },
     },
     {
+      icon: 'assets/img/custom/dashboard/chatbots.svg',
+      caption: 'Chatbots',
+      route: 'chatbots',
+    },
+    {
       icon: 'assets/img/custom/dashboard/runs.svg',
       caption: 'Runs',
       route: 'runs',

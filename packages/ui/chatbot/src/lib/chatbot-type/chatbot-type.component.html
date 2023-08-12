@@ -1,0 +1,18 @@
+<ap-dialog-title-template>Create Bot</ap-dialog-title-template>
+<mat-dialog-content class="!ap-flex ap-h-[655px] ap-gap-2 !ap-mt-3">
+  <div
+    class="ap-border ap-border-outline ap-bg-white ap-rounded-lg ap-p-5 ap-flex ap-flex-col ap-gap-5"
+    *ngFor="let c of bots"
+  >
+    <div
+      class="ap-typography-subtitle-1 ap-h-[96px] ap-text-body ap-clamp-4 ap-w-[212px]"
+    >
+      Customer Service Bot
+    </div>
+    <ap-button btnSize="medium" btnStyle="flat" btnColor="primary" (buttonClicked)="createBot(c.id)"
+      >Use</ap-button
+    >
+  </div>
+</mat-dialog-content>
+
+<ng-container *ngIf="createBot$ | async"></ng-container>

@@ -4,6 +4,7 @@ import fs from 'fs'
 import { DataSource } from 'typeorm'
 import { InitialSql3Migration1690195839899 } from './migration/sqllite3/1690195839899-InitialSql3Migration'
 import { commonProperties } from './database-connection'
+import { AddChatBotSqLite31691873711900 } from './migration/sqllite3/1691873711900-AddChatBotSqLite3'
 
 function getSQLiteFilePath() {
     const homeDirectory = os.homedir()
@@ -22,7 +23,10 @@ export const createSqlLiteDatasource = () => {
         database: getSQLiteFilePath(),
         migrationsRun: true,
         migrationsTransactionMode: 'each',
-        migrations: [InitialSql3Migration1690195839899],
+        migrations: [
+            InitialSql3Migration1690195839899,
+            AddChatBotSqLite31691873711900,
+        ],
         ...commonProperties,
     })
 }

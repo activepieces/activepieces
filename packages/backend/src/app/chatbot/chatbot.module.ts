@@ -1,0 +1,139 @@
+import {
+    CreateDataSourceRequest,
+    UpdateChatbotRequest,
+    ListChatbotsRequest,
+    CreateChatBotRequest,
+} from '@activepieces/shared'
+import {
+    FastifyPluginCallbackTypebox,
+    Static,
+    Type,
+} from '@fastify/type-provider-typebox'
+import { FastifyInstance } from 'fastify'
+import { chatbotService } from './chatbot.service'
+
+const ChatBotIdParams = Type.Object({
+    id: Type.String(),
+})
+
+type ChatBotIdParams = Static<typeof ChatBotIdParams>
+
+export const chatbotModule = async (app: FastifyInstance) => {
+    app.register(chatbotController, { prefix: '/v1/chatbots' })
+}
+
+export const chatbotController: FastifyPluginCallbackTypebox = (
+    app,
+    _opts,
+    done,
+) => {
+    app.post(
+        '/',
+        {
+            schema: {
+                body: CreateChatBotRequest,
+            },
+        },
+        async (request) => {
+            return chatbotService.save({
+                projectId: request.principal.projectId,
+                request: request.body,
+            })
+        },
+    )
+    app.get(
+        '/',
+        {
+            schema: {
+                querystring: ListChatbotsRequest,
+            },
+        },
+        async (request) => {
+            return chatbotService.list({
+                projectId: request.principal.projectId,
+                limit: request.query.limit ?? 10,
+                cursorRequest: request.query.cursor ?? null,
+            })
+        },
+    ),
+    app.post(
+        '/:id',
+        {
+            schema: {
+                params: ChatBotIdParams,
+                body: UpdateChatbotRequest,
+            },
+        },
+        async (request) => {
+            return chatbotService.update({
+                projectId: request.principal.projectId,
+                request: request.body,
+                chatbotId: request.params.id,
+            })
+        },
+    ),
+    app.post(
+        '/:id/ask',
+        {
+            schema: {
+                params: ChatBotIdParams,
+                body: Type.Object({
+                    input: Type.String(),
+                }),
+            },
+        },
+        async (request) => {
+            return chatbotService.ask({
+                projectId: request.principal.projectId,
+                chatbotId: request.params.id,
+                input: request.body.input,
+            })
+        },
+    ),
+    app.delete(
+        '/:id',
+        { schema: { params: ChatBotIdParams } },
+        async (request) => {
+            return chatbotService.delete({
+                projectId: request.principal.projectId,
+                chatbotId: request.params.id,
+            })
+        },
+    ),
+    app.post(
+        '/:id/datasources',
+        {
+            schema: {
+                params: ChatBotIdParams,
+                body: CreateDataSourceRequest,
+            },
+        },
+        async (request) => {
+            return chatbotService.createDatasource({
+                projectId: request.principal.projectId,
+                chatbotId: request.params.id,
+                request: request.body,
+            })
+        },
+    ),
+    app.delete(
+        '/:id/datasources/:datasourceId',
+        {
+            schema: {
+                params: Type.Object({
+                    id: Type.String(),
+                    datasourceId: Type.String(),
+                }),
+            },
+        },
+        async (request) => {
+            return chatbotService.deleteDatasource({
+                projectId: request.principal.projectId,
+                chatbotId: request.params.id,
+                dataSourceId: request.params.datasourceId,
+            })
+        },
+    ),
+
+    done()
+}

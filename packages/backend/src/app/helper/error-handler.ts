@@ -8,7 +8,6 @@ export const errorHandler = async (
     _request: FastifyRequest,
     reply: FastifyReply,
 ): Promise<void> => {
-    logger.error('[errorHandler]:', error)
     if (error instanceof ActivepiecesError) {
         const statusCodeMap: Partial<Record<ErrorCode, StatusCodes>> = {
             [ErrorCode.INVALID_API_KEY]: StatusCodes.UNAUTHORIZED,
@@ -26,6 +25,7 @@ export const errorHandler = async (
         })
     }
     else {
+        logger.error('[errorHandler]: ' + JSON.stringify(error))
         if (!error.statusCode || error.statusCode === StatusCodes.INTERNAL_SERVER_ERROR) {
             captureException(error)
         }

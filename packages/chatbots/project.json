@@ -1,0 +1,26 @@
+{
+  "name": "chatbots",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/chatbots/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/chatbots",
+        "main": "packages/chatbots/src/index.ts",
+        "tsConfig": "packages/chatbots/tsconfig.lib.json",
+        "assets": ["packages/chatbots/*.md"]
+      }
+    },
+    "lint": {
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/chatbots/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}

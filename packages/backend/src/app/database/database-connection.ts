@@ -17,6 +17,7 @@ import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDatasource } from './sqllite-connection'
 import { DatabaseType, system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
+import { ChatbotEntity } from '../chatbot/chatbot.entity'
 
 const databaseType = system.get(SystemProp.DB_TYPE)
 
@@ -38,6 +39,7 @@ export const commonProperties = {
         WebhookSimulationEntity,
         FolderEntity,
         PieceMetadataEntity,
+        ChatbotEntity,
     ],
     synchronize: false,
 }
