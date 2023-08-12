@@ -15,5 +15,6 @@ export const websiteDataSource = createDatasource({
     },
     sync: async ({ propsValue }) => {
         console.log('Syncing website datasource', propsValue);
+        return []
     }
 });
