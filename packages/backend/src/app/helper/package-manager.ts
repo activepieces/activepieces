@@ -8,7 +8,7 @@ type PackageManagerOutput = {
 }
 
 type PnpmCoreCommand = 'add' | 'init' | 'link'
-type PnpmDependencyCommand = 'webpack'
+type PnpmDependencyCommand = 'tsc index.ts --skipLibCheck'
 type PnpmCommand = PnpmCoreCommand | PnpmDependencyCommand
 
 export type PackageInfo = PackageMetdataInfo & {

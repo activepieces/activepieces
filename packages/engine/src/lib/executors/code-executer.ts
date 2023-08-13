@@ -6,7 +6,7 @@ type CodePieceModule = {
 
 export const codeExecutor = {
    async executeCode(artifact: string, params: unknown) {
-      const artifactJs = `${artifact}.js`;
+      const artifactJs = `${artifact}/index.js`;
       const artifactPath = `${globals.codeDirectory}/${artifactJs}`;
       const codePieceModule: CodePieceModule = await import(artifactPath);
       return codePieceModule.code(params);

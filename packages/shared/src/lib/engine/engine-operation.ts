@@ -1,7 +1,9 @@
+import { File } from "../file/file";
 import { ResumeStepMetadata } from "../flow-run/execution/execution-output";
 import { ExecutionState } from "../flow-run/execution/execution-state";
 import { ExecutionType } from "../flow-run/execution/execution-type";
 import { FlowRunId } from "../flow-run/flow-run";
+import { CodeAction } from "../flows/actions/action";
 import { FlowVersion } from "../flows/flow-version";
 import { ProjectId } from "../project/project";
 
@@ -58,7 +60,8 @@ export type ExecuteExtractPieceMetadata = {
 }
 
 export type ExecuteCodeOperation = {
-    codeBase64: string
+    file: File
+    step: CodeAction
     flowVersion: FlowVersion,
     input: Record<string, unknown>
     projectId: ProjectId

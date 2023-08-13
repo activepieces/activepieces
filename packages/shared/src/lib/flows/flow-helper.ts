@@ -665,7 +665,6 @@ function keepBaseAction(action: Action): Action {
         type: action.type,
         settings: {
           ...action.settings,
-          artifactPackagedId: undefined,
           artifactSourceId: undefined
         },
         ...commonProps

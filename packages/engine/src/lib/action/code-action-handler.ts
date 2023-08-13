@@ -57,15 +57,15 @@ export class CodeActionHandler extends BaseActionHandler<CodeAction> {
       censorConnections: false,
     })
 
-    const artifactPackagedId = this.currentAction.settings.artifactPackagedId
+    const artifactSourceId = this.currentAction.settings.artifactSourceId
 
-    if (isNil(artifactPackagedId)) {
+    if (isNil(artifactSourceId)) {
       throw new Error("Artifact packaged id is not defined");
     }
 
     try {
       stepOutput.output = await codeExecutor.executeCode(
-        artifactPackagedId,
+        artifactSourceId,
         resolvedInput
       )
 
