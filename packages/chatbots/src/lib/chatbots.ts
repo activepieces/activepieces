@@ -21,10 +21,12 @@ export function getChatBotType({ type }: { type: string }) {
 }
 
 export const runBot = async ({
+  botId,
   type,
   input,
   settings
 }: {
+  botId: string;
   type: string;
   input: string;
   settings: {
@@ -38,7 +40,7 @@ export const runBot = async ({
   return bot.run({
     input,
     llm: llm,
-    embeddings: memoryEmbedding,
+    embeddings: memoryEmbedding(botId),
     settings: settings
   });
 };

@@ -84,6 +84,7 @@ export const chatbotService = {
             chatbotId,
         })
         const output = await runBot({
+            botId: chatbotId,
             input,
             type: chatbot.type,
             settings: chatbot.settings,
