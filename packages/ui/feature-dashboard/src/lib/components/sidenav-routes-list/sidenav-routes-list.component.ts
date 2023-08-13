@@ -6,7 +6,8 @@ import {
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { FolderActions } from '../../store/folders/folders.actions';
-import { environment } from '@activepieces/ui/common';
+import { FlagService, environment } from '@activepieces/ui/common';
+import { Observable, map, tap } from 'rxjs';
 
 type SideNavRoute = {
   icon: string;
@@ -22,11 +23,22 @@ type SideNavRoute = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SidenavRoutesListComponent {
+
+  removeChatbots$: Observable<void>;
+
   constructor(
     public router: Router,
     private store: Store,
-    private cd: ChangeDetectorRef
-  ) {}
+    private cd: ChangeDetectorRef,
+    private flagServiceService: FlagService
+  ) {
+    this.removeChatbots$ = this.flagServiceService.isChatEnabled().pipe(tap((res) => {
+      if(!res){
+        this.sideNavRoutes = this.sideNavRoutes.filter((route) => route.route !== 'chatbots');
+      }
+    }), map(() => {}));
+    
+  }
 
   sideNavRoutes: SideNavRoute[] = [
     {

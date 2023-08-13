@@ -22,6 +22,10 @@ import { appEventRoutingModule } from './app-event-routing/app-event-routing.mod
 import { triggerEventModule } from './flows/trigger-events/trigger-event.module'
 import { flowInstanceModule } from './flows/flow-instance/flow-instance.module'
 import { chatbotModule } from './chatbot/chatbot.module'
+import { system } from './helper/system/system'
+import { SystemProp } from './helper/system/system-prop'
+
+const chatbotEnabled = system.get(SystemProp.CHATBOT_ENABLED)
 
 export const app = fastify({
     logger,
@@ -32,9 +36,7 @@ export const app = fastify({
             removeAdditional: 'all',
             useDefaults: true,
             coerceTypes: 'array',
-            formats: {
-
-            },
+            formats: {},
         },
     },
 })
@@ -64,7 +66,7 @@ app.register(import('fastify-raw-body'), {
     runFirst: true,
     routes: [],
 })
-app.register(formBody, { parser: str => qs.parse(str) })
+app.register(formBody, { parser: (str) => qs.parse(str) })
 
 app.addHook('onRequest', async (request, reply) => {
     const route = app.hasRoute({
@@ -95,25 +97,35 @@ app.register(appConnectionModule)
 app.register(openapiModule)
 app.register(triggerEventModule)
 app.register(appEventRoutingModule)
-app.register(chatbotModule)
+if (chatbotEnabled) {
+    app.register(chatbotModule)
+}
 
 app.get(
     '/redirect',
-    async (
-        request: FastifyRequest<{ Querystring: { code: string } }>, reply,
-    ) => {
+    async (request: FastifyRequest<{ Querystring: { code: string } }>, reply) => {
         const params = {
-            'code': request.query.code,
+            code: request.query.code,
         }
         if (!params.code) {
             reply.send('The code is missing in url')
         }
         else {
-            reply.type('text/html').send(`<script>if(window.opener){window.opener.postMessage({ 'code': '${encodeURIComponent(params.code)}' },'*')}</script> <html>Redirect succuesfully, this window should close now</html>`)
+            reply
+                .type('text/html')
+                .send(
+                    `<script>if(window.opener){window.opener.postMessage({ 'code': '${encodeURIComponent(
+                        params.code,
+                    )}' },'*')}</script> <html>Redirect succuesfully, this window should close now</html>`,
+                )
         }
     },
 )
 app.setErrorHandler(errorHandler)
 
 // SurveyMonkey
-app.addContentTypeParser('application/vnd.surveymonkey.response.v1+json', { parseAs: 'string' }, app.getDefaultJsonParser('ignore', 'ignore'))
+app.addContentTypeParser(
+    'application/vnd.surveymonkey.response.v1+json',
+    { parseAs: 'string' },
+    app.getDefaultJsonParser('ignore', 'ignore'),
+)

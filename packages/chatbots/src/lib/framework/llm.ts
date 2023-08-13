@@ -7,7 +7,6 @@ export interface APLLM {
 export const llm = {
   async chat({ input, temperature, maxTokens }: AskChat) {
     const model = new OpenAI({
-      openAIApiKey: '',
       modelName: 'gpt-3.5-turbo',
       temperature: temperature || 0.7,
       maxTokens: maxTokens

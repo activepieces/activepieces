@@ -1,45 +1,35 @@
-<div class="ap-container">
-    <h1 class="ap-text-2xl ap-font-bold mb-4">Settings</h1>
-    <form class="ap-w-full ap-max-w-md">
+<div class="ap-w-full ap-h-full ap-px-[30px] ap-pt-[50px]">
+  <div class="ap-h-full">
+    <div
+      class="ap-py-4 ap-mb-4 ap-text-left ap-border-b-[1px] ap-font-semibold ap-typography-headline-6"
+    >
+      <div class="ap-flex">Configure Chatbot</div>
+    </div>
+
+    <div class="ap-min-h-[70%]">
+      <form class="ap-w-full ap-max-w-[70%]" [formGroup]="formGroup">
         <mat-form-field class="ap-w-full ap-mb-4">
-            <mat-label>Bot Name</mat-label>
-            <input matInput placeholder="Enter bot name" class="ap-border ap-rounded ap-py-2 ap-px-4 w-full">
+          <mat-label>Bot Name</mat-label>
+          <input
+            matInput
+            placeholder="Enter bot name"
+            formControlName="displayName"
+            class="ap-border ap-rounded ap-py-2 ap-px-4 w-full"
+          />
         </mat-form-field>
         <mat-form-field class="ap-w-full ap-mb-4">
-            <mat-label>Prompt Text</mat-label>
-            <input matInput placeholder="Enter prompt text" class="ap-border ap-rounded ap-py-2 ap-px-4 w-full">
+          <mat-label>Prompt Text</mat-label>
+          <textarea
+            matInput
+            placeholder="Enter prompt text"
+            formControlName="prompt"
+            class="ap-border ap-rounded ap-py-2 ap-px-4 w-full"
+          ></textarea>
         </mat-form-field>
-    </form>
+      </form>
+    </div>
+  </div>
 </div>
 
-<div class="ap-container">
-    <h1 class="ap-text-2xl ap-font-bold mb-4">Data Sources</h1>
-    <table class="ap-w-full">
-        <thead>
-            <tr>
-                <th class="ap-py-2 ap-px-4 ap-text-left ap-font-bold">Name</th>
-                <th class="ap-py-2 ap-px-4 ap-text-left ap-font-bold">Type</th>
-                <th class="ap-py-2 ap-px-4 ap-text-left ap-font-bold">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr class="hover:bg-gray-100">
-                <td class="ap-py-2 ap-px-4">Data Source 1</td>
-                <td class="ap-py-2 ap-px-4">Type 1</td>
-                <td class="ap-py-2 ap-px-4">
-                    <button class="ap-bg-blue-500 ap-text-white ap-py-2 ap-px-4 ap-rounded">Edit</button>
-                    <button class="ap-bg-red-500 ap-text-white ap-py-2 ap-px-4 ap-rounded ml-2">Delete</button>
-                </td>
-            </tr>
-            <tr class="hover:bg-gray-100">
-                <td class="ap-py-2 ap-px-4">Data Source 2</td>
-                <td class="ap-py-2 ap-px-4">Type 2</td>
-                <td class="ap-py-2 ap-px-4">
-                    <button class="ap-bg-blue-500 ap-text-white ap-py-2 ap-px-4 ap-rounded">Edit</button>
-                    <button class="ap-bg-red-500 ap-text-white ap-py-2 ap-px-4 ap-rounded ml-2">Delete</button>
-                </td>
-            </tr>
-            <!-- Add more rows for additional data sources -->
-        </tbody>
-    </table>
-</div>
+<ng-container *ngIf="updateExistingDate$ | async"></ng-container>
+<ng-container *ngIf="autoSave$ | async"></ng-container>

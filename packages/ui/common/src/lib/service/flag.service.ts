@@ -106,4 +106,12 @@ export class FlagService {
       })
     );
   }
+
+  isChatEnabled(): Observable<boolean> {
+    return this.getAllFlags().pipe(
+      map((flags) => {
+        return flags[ApFlagId.CHATBOT_ENABLED] as boolean;
+      })
+    );
+  }
 }

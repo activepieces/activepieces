@@ -1,10 +1,11 @@
 import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/shared';
-import { customerServiceBot } from './bots/customer-service-bot';
-import { websiteDataSource } from './datasource/website-datasource';
+import { customBot } from './bots/custom-bot';
 import { llm } from './framework/llm';
+import { memoryEmbedding } from './framework/embeddings';
+import { pdfDataSource } from './datasource/pdf-datasource';
 
-const chatbots = [customerServiceBot];
-const datasources = [websiteDataSource];
+const chatbots = [customBot];
+const datasources = [pdfDataSource];
 
 export function getChatBotType({ type }: { type: string }) {
   const chatbot = chatbots.find((b) => b.name === type);
@@ -26,7 +27,9 @@ export const runBot = async ({
 }: {
   type: string;
   input: string;
-  settings: Record<string, unknown>;
+  settings: {
+    prompt: string;
+  };
 }) => {
   const bot = chatbots.find((b) => b.name === type);
   if (!bot) {
@@ -35,8 +38,7 @@ export const runBot = async ({
   return bot.run({
     input,
     llm: llm,
-    // TODO FIX
-    embeddings: {} as any,
+    embeddings: memoryEmbedding,
     settings: settings
   });
 };

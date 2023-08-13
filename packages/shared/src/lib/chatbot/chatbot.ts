@@ -15,7 +15,9 @@ export const Chatbot = Type.Object({
   type: Type.String(),
   displayName: Type.String(),
   projectId: Type.String(),
-  settings: Type.Record(Type.String(), Type.Unknown()),
+  settings: Type.Object({
+    prompt: Type.String()
+  }),
   dataSources: Type.Array(DataSource)
 });
 

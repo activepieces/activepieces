@@ -39,8 +39,8 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.ENABLE_CHATBOT,
-                value: system.get(SystemProp.ENABLE_CHATBOT),
+                id: ApFlagId.CHATBOT_ENABLED,
+                value: system.getBoolean(SystemProp.CHATBOT_ENABLED),
                 created,
                 updated,
             },

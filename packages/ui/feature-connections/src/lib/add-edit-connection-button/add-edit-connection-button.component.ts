@@ -64,7 +64,7 @@ import { BuilderSelectors } from '@activepieces/ui/feature-builder-store';
 @Component({
   selector: 'app-add-edit-connection-button',
   templateUrl: './add-edit-connection-button.component.html',
-  styleUrls: ['./add-edit-connection-button.component.scss'],
+  styleUrls: [],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AddEditConnectionButtonComponent {

@@ -13,12 +13,12 @@ export class ChatbotTypeComponent {
   loading = false;
   bots = [
     {
-      displayName: 'Chatbot 1',
-      id: 'customer-service-bot'
+      prompt: 'Custom Bot',
+      id: 'custom-bot'
     },
     {
-      displayName: 'Chatbot 2',
-      id: 'customer-service-bot'
+      displayName: 'Customer Service Bot',
+      id: 'custom-bot'
     }
   ];
 

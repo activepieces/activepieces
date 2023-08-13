@@ -56,6 +56,20 @@ export const chatbotController: FastifyPluginCallbackTypebox = (
             })
         },
     ),
+    app.get(
+        '/:id',
+        {
+            schema: {
+                params: ChatBotIdParams,
+            },
+        },
+        async (request) => {
+            return chatbotService.getOneOrThrow({
+                projectId: request.principal.projectId,
+                chatbotId: request.params.id,
+            })
+        },
+    ),
     app.post(
         '/:id',
         {

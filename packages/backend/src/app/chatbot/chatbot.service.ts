@@ -63,6 +63,7 @@ export const chatbotService = {
         }
         await chatbotRepo.update(chatbotId, {
             displayName: request.displayName,
+            settings: request.settings,
         })
         return chatbotRepo.findOneByOrFail({
             projectId,

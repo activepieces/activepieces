@@ -1,4 +1,4 @@
-import { Chatbot, ChatbotResponse, SeekPage, CreateChatBotRequest } from '@activepieces/shared';
+import { Chatbot, ChatbotResponse, SeekPage, CreateChatBotRequest, UpdateChatbotRequest } from '@activepieces/shared';
 import { CURSOR_QUERY_PARAM, LIMIT_QUERY_PARAM, environment } from '@activepieces/ui/common';
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
@@ -14,6 +14,17 @@ export class ChatBotService {
       environment.apiUrl + '/chatbots',
       request
     );
+  }
+
+  update(chatbotId: string, request: UpdateChatbotRequest){
+    return this.http.post<Chatbot>(
+      environment.apiUrl + '/chatbots/' + chatbotId,
+      request
+    );
+  }
+
+  get(id: string) {
+    return this.http.get<Chatbot>(environment.apiUrl + '/chatbots/' + id);
   }
   
   ask(req: { chatbotId: string; input: string }) {
@@ -39,5 +50,9 @@ export class ChatBotService {
         params: queryParams,
       }
     );
+  }
+
+  delete(id: string) {
+    return this.http.delete<void>(environment.apiUrl + '/chatbots/' + id);
   }
 }

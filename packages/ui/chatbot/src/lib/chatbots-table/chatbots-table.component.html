@@ -1,6 +1,11 @@
 <div class="ap-w-full ap-h-full ap-px-[30px] ap-pt-[50px]">
   <div class="ap-h-full">
-    <app-page-title title="Chatbots"> </app-page-title>
+    <div
+      class="ap-py-4 ap-mb-4 ap-text-left ap-border-b-[1px] ap-font-semibold ap-typography-headline-6"
+    >
+      <div class="ap-flex">Chatbot</div>
+    </div>
+
     <div class="ap-min-h-[70%]">
       <table
         mat-table
@@ -16,13 +21,26 @@
         <ng-container matColumnDef="action">
           <th mat-header-cell *matHeaderCellDef class="!ap-text-center">
             <div class="ap-flex ap-justify-end">
-              <ap-button btnColor="primary" btnSize="small" (buttonClicked)="createChatbot()">
+              <ap-button
+                btnColor="primary"
+                btnSize="small"
+                (buttonClicked)="createChatbot()"
+              >
                 Create Chatbot
               </ap-button>
             </div>
           </th>
           <td mat-cell *matCellDef="let chatbot" class="!ap-text-center">
             <div class="ap-flex ap-gap-2 ap-items-center ap-justify-end">
+              <ap-icon-button
+                (click)="openSettings(chatbot.id)"
+                tooltipText="Settings"
+                iconFilename="settings.svg"
+                color="primary"
+                [width]="20"
+                [height]="20"
+                [height]="16"
+              ></ap-icon-button>
               <ap-icon-button
                 (click)="openChatbot(chatbot.id)"
                 tooltipText="Chat with bot"
@@ -33,6 +51,7 @@
                 [height]="16"
               ></ap-icon-button>
               <ap-icon-button
+                (click)="deleteChatbot(chatbot)"
                 tooltipText="Delete Bot"
                 iconFilename="trash.svg"
                 color="warn"
@@ -79,3 +98,5 @@
     </div>
   </div>
 </div>
+
+<ng-container *ngIf="createBot$ | async"></ng-container>

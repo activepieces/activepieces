@@ -23,7 +23,6 @@ import { RenameFolderDialogComponent } from './pages/flows-table/rename-folder-d
 import { UiFeatureTemplatesModule } from '@activepieces/ui/feature-templates';
 import { CommunityPiecesTableComponent } from './pages/community-pieces-table/community-pieces-table.component';
 import { InstallCommunityPieceModalComponent } from './pages/community-pieces-table/install-community-piece/install-community-piece-modal.component';
-import { ChatbotsTableComponent } from './pages/chatbots-table/chatbots-table.component';
 import { UiChatbotModule } from '@activepieces/ui/chatbot';
 
 @NgModule({
@@ -51,7 +50,6 @@ import { UiChatbotModule } from '@activepieces/ui/chatbot';
     NewFolderDialogComponent,
     MoveFlowToFolderDialogComponent,
     RenameFolderDialogComponent,
-    ChatbotsTableComponent,
   ],
 })
 export class UiFeatureDashboardModule {}
