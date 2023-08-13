@@ -4,6 +4,7 @@ import {
   ShortTextProperty,
   StaticPropsValue
 } from '@activepieces/pieces-framework';
+import { Document } from 'langchain/dist/document';
 
 
 interface DatasourcePropertyMap {
@@ -29,7 +30,7 @@ class Datasource<
     public readonly props: props,
     public readonly sync: (
       ctx: DatasourceSyncContext<auth, props>
-    ) => Promise<void>
+    ) => Promise<Document[]>
   ) {}
 }
 
@@ -42,7 +43,7 @@ export const createDatasource = <
     description: string;
     auth?: auth;
     props: props;
-    sync: (ctx: DatasourceSyncContext<auth, props>) => Promise<void>;
+    sync: (ctx: DatasourceSyncContext<auth, props>) => Promise<Document[]>;
   }
 ) => {
   return new Datasource(
