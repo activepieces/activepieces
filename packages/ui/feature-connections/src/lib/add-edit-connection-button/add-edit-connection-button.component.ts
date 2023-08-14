@@ -492,5 +492,4 @@ export class AddEditConnectionButtonComponent {
     const result = interpolatedString.split(`{{connections.`)[1];
     return result.slice(0, result.length - 2);
   }
-
 }

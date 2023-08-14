@@ -26,6 +26,7 @@ import {
   BuilderSelectors,
   appConnectionsActions,
 } from '@activepieces/ui/feature-builder-store';
+import { connectionNameRegex } from '../utils';
 
 export interface CustomAuthDialogData {
   pieceAuthProperty: CustomAuthProperty<boolean, CustomAuthProps>;
@@ -77,7 +78,7 @@ export class CustomAuthConnectionDialogComponent {
           nonNullable: true,
           validators: [
             Validators.required,
-            Validators.pattern('[A-Za-z0-9_\\-]*'),
+            Validators.pattern(connectionNameRegex),
           ],
           asyncValidators: [
             ConnectionValidator.createValidator(

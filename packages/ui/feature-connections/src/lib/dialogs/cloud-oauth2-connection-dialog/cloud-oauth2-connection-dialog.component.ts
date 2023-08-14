@@ -32,6 +32,7 @@ import {
   OAuth2Property,
   OAuth2Props,
 } from '@activepieces/pieces-framework';
+import { connectionNameRegex } from '../utils';
 
 interface AuthConfigSettings {
   name: FormControl<string>;
@@ -93,7 +94,7 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
           nonNullable: true,
           validators: [
             Validators.required,
-            Validators.pattern('[A-Za-z0-9_\\-]*'),
+            Validators.pattern(connectionNameRegex),
           ],
           asyncValidators: [
             ConnectionValidator.createValidator(
