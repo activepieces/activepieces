@@ -1,6 +1,6 @@
 import {
-  AppConnection,
   AppConnectionType,
+  AppConnectionWithoutSensitiveData,
   ErrorCode,
 } from '@activepieces/shared';
 import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
@@ -42,7 +42,7 @@ export class SecretTextConnectionDialogComponent {
   keyTooltip =
     'The ID of this connection definition. You will need to select this key whenever you want to reuse this connection.';
   loading = false;
-  upsert$: Observable<AppConnection | null>;
+  upsert$: Observable<AppConnectionWithoutSensitiveData | null>;
   constructor(
     @Inject(MAT_DIALOG_DATA)
     public dialogData: SecretTextConnectionDialogData,
@@ -89,6 +89,7 @@ export class SecretTextConnectionDialogComponent {
         .upsert({
           appName: this.dialogData.pieceName,
           name: this.settingsForm.controls.name.value,
+          type: AppConnectionType.SECRET_TEXT,
           value: {
             secret_text: this.settingsForm.controls.secretText.value,
             type: AppConnectionType.SECRET_TEXT,

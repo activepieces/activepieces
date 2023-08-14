@@ -1,7 +1,6 @@
 import {
-  AppConnection,
   AppConnectionType,
-  BasicAuthConnection,
+  AppConnectionWithoutSensitiveData,
   ErrorCode,
   UpsertBasicAuthRequest,
 } from '@activepieces/shared';
@@ -31,7 +30,7 @@ interface BasicAuthForm {
 export interface BasicAuthDialogData {
   pieceAuthProperty: BasicAuthProperty<boolean>;
   pieceName: string;
-  connectionToUpdate?: BasicAuthConnection;
+  connectionToUpdate?: AppConnectionWithoutSensitiveData;
 }
 
 @Component({
@@ -41,7 +40,7 @@ export interface BasicAuthDialogData {
 })
 export class BasicAuthConnectionDialogComponent {
   loading = false;
-  upsert$: Observable<AppConnection | null>;
+  upsert$: Observable<AppConnectionWithoutSensitiveData | null>;
   settingsForm: FormGroup<BasicAuthForm>;
   keyTooltip =
     'The ID of this connection definition. You will need to select this key whenever you want to reuse this connection.';
@@ -84,16 +83,7 @@ export class BasicAuthConnectionDialogComponent {
       ),
     });
     if (this.dialogData.connectionToUpdate) {
-      this.settingsForm.controls.name.setValue(
-        this.dialogData.connectionToUpdate.name
-      );
       this.settingsForm.controls.name.disable();
-      this.settingsForm.controls.username.setValue(
-        this.dialogData.connectionToUpdate.value.username
-      );
-      this.settingsForm.controls.password.setValue(
-        this.dialogData.connectionToUpdate.value.password
-      );
     }
   }
   submit() {
@@ -103,6 +93,7 @@ export class BasicAuthConnectionDialogComponent {
       const upsertRequest: UpsertBasicAuthRequest = {
         appName: this.dialogData.pieceName,
         name: this.settingsForm.getRawValue().name,
+        type: AppConnectionType.BASIC_AUTH,
         value: {
           password: this.settingsForm.getRawValue().password,
           username: this.settingsForm.getRawValue().username,

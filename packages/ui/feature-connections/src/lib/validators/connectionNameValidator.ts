@@ -1,11 +1,11 @@
 import { AbstractControl } from '@angular/forms';
 
 import { map, Observable } from 'rxjs';
-import { AppConnection } from '@activepieces/shared';
+import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
 
 export class ConnectionValidator {
   static createValidator(
-    allConnections$: Observable<AppConnection[]>,
+    allConnections$: Observable<AppConnectionWithoutSensitiveData[]>,
     connectionToUpdateName: string | undefined
   ) {
     return (control: AbstractControl) => {
