@@ -214,7 +214,7 @@ function detectMimeType(base64String: string, fileName: string | undefined) {
     "UEs": "application/vnd.openxmlformats-officedocument.",
     "PK": "application/zip",
   };
-  for (const [key, value] of Object.entries(signatures)) {
+  for (let [key, value] of Object.entries(signatures)) {
     if (base64String.indexOf(key) === 0) {
       // var x = signatures[s];
       // if an office file format
