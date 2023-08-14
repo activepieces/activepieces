@@ -1,5 +1,4 @@
 import { FastifyInstance, FastifyRequest } from 'fastify'
-import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { FileId } from '@activepieces/shared'
 import { fileService } from './file.service'
 import { StatusCodes } from 'http-status-codes'
