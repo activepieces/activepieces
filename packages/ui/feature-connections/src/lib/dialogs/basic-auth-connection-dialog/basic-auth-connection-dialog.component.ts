@@ -83,10 +83,7 @@ export class BasicAuthConnectionDialogComponent {
       ),
     });
     if (this.dialogData.connectionToUpdate) {
-      this.settingsForm.controls.name.setValue('***');
       this.settingsForm.controls.name.disable();
-      this.settingsForm.controls.username.setValue('***');
-      this.settingsForm.controls.password.setValue('***');
     }
   }
   submit() {
