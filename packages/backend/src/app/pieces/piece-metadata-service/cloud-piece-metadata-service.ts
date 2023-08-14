@@ -33,7 +33,7 @@ export const CloudPieceMetadataService = (): PieceMetadataService => {
         },
 
         async get({ name, version }: GetParams): Promise<PieceMetadata> {
-            const response = await fetch(`${CLOUD_API_URL}/${name}${version ? '?version='+version : ''}`)
+            const response = await fetch(`${CLOUD_API_URL}/${name}${version ? '?version=' + version : ''}`)
 
             await handleHttpErrors(response)
 
