@@ -1,6 +1,6 @@
 import { Property, Validators, ApFile } from '@activepieces/pieces-framework';
 import { grpc } from 'clarifai-nodejs-grpc';
-import { WorkflowResult, Output, Model, Data, Input, UserAppIDSet, Image, Video, Audio, Text } from 'clarifai-nodejs-grpc/proto/clarifai/api/resources_pb';
+import { Model, Data, Input, UserAppIDSet, Image, Video, Audio, Text } from 'clarifai-nodejs-grpc/proto/clarifai/api/resources_pb';
 import { V2Client } from 'clarifai-nodejs-grpc/proto/clarifai/api/service_grpc_pb';
 import { MultiOutputResponse, PostModelOutputsRequest, MultiInputResponse, PostInputsRequest, PostWorkflowResultsResponse, PostWorkflowResultsRequest } from 'clarifai-nodejs-grpc/proto/clarifai/api/service_pb';
 import { promisify } from 'util';
@@ -195,11 +195,11 @@ export function removeListFromPropertyNames(obj: Record<string, unknown>): Recor
  * @returns {String}
  */
 function detectMimeType(base64String: string, fileName: string | undefined) {
-  var ext = "undefined";
+  let ext = "undefined";
   if (fileName === undefined || fileName === null || fileName === "") {
     ext = "bin";
   } else {
-    var ext = fileName.substring(fileName.lastIndexOf(".") + 1);
+    ext = fileName.substring(fileName.lastIndexOf(".") + 1);
     if (ext === undefined || ext === null || ext === "") ext = "bin";
   }
   ext = ext.toLowerCase();
@@ -214,7 +214,7 @@ function detectMimeType(base64String: string, fileName: string | undefined) {
     "UEs": "application/vnd.openxmlformats-officedocument.",
     "PK": "application/zip",
   };
-  for (var [key, value] of Object.entries(signatures)) {
+  for (const [key, value] of Object.entries(signatures)) {
     if (base64String.indexOf(key) === 0) {
       // var x = signatures[s];
       // if an office file format
@@ -320,7 +320,7 @@ function detectMimeType(base64String: string, fileName: string | undefined) {
     "xyz": "chemical/x-pdb",
     "zip": "application/zip",
   };
-  for (var [key, value] of Object.entries(extensions)) {
+  for (const [key, value] of Object.entries(extensions)) {
     if (ext.indexOf(key) === 0) {
       return value;
     }
@@ -367,12 +367,12 @@ export function cleanPostWorkflowResultsResponse(response: PostWorkflowResultsRe
   if (results == undefined || results.length === 0) {
       throw new Error('No results found from Clarifai');
   } else {
-    let result = results[0];
+    const result = results[0];
     const outputs = result.getOutputsList();
     if (outputs == undefined || outputs.length === 0) {
       throw new Error('No outputs found from Clarifai');
     }
-    let array: any[] = [];
+    const array: any[] = [];
     for (const output of outputs) {
       const model = output.getModel();
       if (model == undefined) {
