@@ -427,7 +427,7 @@ const selectAppConnectionsDropdownOptions = createSelector(
     return [...connections].map((c) => {
       const result: ConnectionDropdownItem = {
         label: { appName: c.appName, name: c.name },
-        value: `{{connections.${c.name}}}`,
+        value: `{{connections['${c.name}']}}`,
       };
       return result;
     });
@@ -440,7 +440,7 @@ const selectAppConnectionsForMentionsDropdown = createSelector(
     return [...connections].map((c) => {
       const result: MentionListItem = {
         label: c.name,
-        value: `{{connections.${c.name}}}`,
+        value: `{{connections['${c.name}']}}`,
       };
       return result;
     });

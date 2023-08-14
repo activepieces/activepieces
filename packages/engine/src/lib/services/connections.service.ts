@@ -17,7 +17,7 @@ export const connectionManager = {
 
 export const connectionService = {
     async obtain(connectionName: string): Promise<null | OAuth2ConnectionValueWithApp | CloudOAuth2ConnectionValue | BasicAuthConnectionValue | string | Record<string, unknown>> {
-        const url = globals.apiUrl + `/v1/worker/app-connections/${connectionName}?projectId=${globals.projectId}`;
+        const url = globals.apiUrl + `/v1/worker/app-connections/${encodeURIComponent(connectionName)}?projectId=${globals.projectId}`;
         try {
             const response = await fetch(url, {
                 method: 'GET',
