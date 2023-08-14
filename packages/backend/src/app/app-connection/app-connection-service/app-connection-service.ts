@@ -615,7 +615,7 @@ type claimWithCloudRequest = {
 type EngineValidateAuthParams = {
     pieceName: string
     projectId: ProjectId
-    auth: unknown
+    auth: AppConnectionValue
 }
 
 type ValidateConnectionValueParams = {

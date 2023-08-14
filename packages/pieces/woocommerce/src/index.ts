@@ -38,8 +38,8 @@ export const wooAuth = PieceAuth.CustomAuth({
             required: true,
         })
     },
-    async validate(ctx) {
-        const baseUrl = ctx.auth.baseUrl;
+    async validate( {auth}) {
+        const baseUrl = auth.baseUrl;
         if (!baseUrl.match(/^(https):\/\//)) {
             return { valid: false, error: 'Base URL must start with https (e.g https://mystore.com)' }
         }
@@ -51,7 +51,7 @@ export const woocommerce = createPiece({
     displayName: "WooCommerce",
     logoUrl: "https://cdn.activepieces.com/pieces/woocommerce.png",
     auth: wooAuth,
-    minimumSupportedRelease: '0.5.0',
+    minimumSupportedRelease: '0.7.1',
     authors: ['MoShizzle'],
     actions: [],
     triggers: [customer, coupon, order, product, lineItemInOrder],
