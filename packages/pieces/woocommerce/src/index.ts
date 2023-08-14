@@ -37,6 +37,13 @@ export const wooAuth = PieceAuth.CustomAuth({
             description: 'The consumer secret generated from your app',
             required: true,
         })
+    },
+    async validate(ctx) {
+        const baseUrl = ctx.auth.baseUrl;
+        if (!baseUrl.match(/^(https):\/\//)) {
+            return { valid: false, error: 'Base URL must start with https (e.g https://mystore.com)' }
+        }
+        return { valid: true}
     }
 })
 
