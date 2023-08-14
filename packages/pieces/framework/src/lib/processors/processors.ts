@@ -65,8 +65,9 @@ export class Processors {
       const response = await axios.head(urlOrBase64);
       const contentType = response.headers['content-type'];
 
+      console.info(`Content type: ${contentType}`);
       // Check if content type is file
-      if (!contentType || !(contentType.startsWith('application/') || contentType.startsWith("image") || contentType === 'application/octet-stream')) {
+      if (!contentType || !(contentType.startsWith('application/') || contentType.startsWith("image") || contentType.startsWith("audio")  || contentType.startsWith("video") || contentType === 'application/octet-stream')) {
         return null;
       }
       const fileResponse = await axios.get(urlOrBase64, {
