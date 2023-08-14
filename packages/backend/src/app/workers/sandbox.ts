@@ -31,7 +31,6 @@ export type ExecuteIsolateResult = {
 export class Sandbox {
     private static readonly isolateExecutableName = getIsolateExecutableName()
     private static readonly sandboxRunTimeSeconds = system.getNumber(SystemProp.SANDBOX_RUN_TIME_SECONDS)!
-    private static readonly sandboxMemoryLimit = system.getNumber(SystemProp.SANDBOX_MEMORY_LIMIT)!
 
     public readonly boxId: number
     public used: boolean
@@ -114,7 +113,6 @@ export class Sandbox {
                     this.boxId +
                     ` --processes --wall-time=${Sandbox.sandboxRunTimeSeconds} --meta=` +
                     metaFile +
-                    ' --mem=' + Sandbox.sandboxMemoryLimit +
                     ' --stdout=_standardOutput.txt' +
                     ' --stderr=_standardError.txt --run ' +
                     ' --env=HOME=/tmp/' +
