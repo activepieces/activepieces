@@ -75,8 +75,10 @@ export class VariableService {
     const paths = path.split('.');
     // Connections with square brackets
     if (path.includes('[')) {
+      // Find the connection name inside {{connections['connectionName'].path}}
       const matches = path.match(/\['([^']+)'\]/g);
       if (matches && matches.length >= 1) {
+        // Remove the square brackets and quotes from the connection name
         const secondPath = matches[0].replace(/\['|'\]/g, '');
         return secondPath;
       }
