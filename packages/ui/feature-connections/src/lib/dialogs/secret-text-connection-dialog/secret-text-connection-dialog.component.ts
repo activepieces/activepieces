@@ -19,6 +19,7 @@ import {
   appConnectionsActions,
 } from '@activepieces/ui/feature-builder-store';
 import { AppConnectionsService } from '@activepieces/ui/common';
+import { connectionNameRegex } from '../utils';
 
 interface SecretTextForm {
   secretText: FormControl<string>;
@@ -64,7 +65,7 @@ export class SecretTextConnectionDialogComponent {
           nonNullable: true,
           validators: [
             Validators.required,
-            Validators.pattern('[A-Za-z0-9_\\-]*'),
+            Validators.pattern(connectionNameRegex),
           ],
           asyncValidators: [
             ConnectionValidator.createValidator(

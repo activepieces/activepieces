@@ -1,36 +1,16 @@
 <div
-  class="ap-w-[75px] ap-bg-transparent ap-h-full ap-flex ap-flex-col ap-typegraphy-body-2 ap-items-center ap-gap-[20px] ap-p-3"
->
-  <ap-icon-button
-    class="ap-mb-[10px]"
-    [useSvgDefault]="true"
-    [iconFilename]="'logo/logo.svg'"
-    [tooltipText]="'Home'"
-    (buttonClicked)="redirectHome(false)"
-    (auxclick)="redirectHome(true)"
-  ></ap-icon-button>
+  class="ap-w-[75px] ap-bg-transparent ap-h-full ap-flex ap-flex-col ap-typegraphy-body-2 ap-items-center ap-gap-[20px] ap-p-3">
+  <ap-icon-button class="ap-mb-[10px]" [useSvgDefault]="true" [iconFilename]="'logo/logo.svg'" [tooltipText]="'Home'"
+    (buttonClicked)="redirectHome(false)" (auxclick)="redirectHome(true)"></ap-icon-button>
 
-  <div
-    *ngFor="let r of sideNavRoutes"
-    [matTooltip]="r.caption"
-    [matTooltipPosition]="'right'"
+  <div *ngFor="let r of sideNavRoutes" [matTooltip]="r.caption" [matTooltipPosition]="'right'"
     class="ap-w-full ap-flex-col ap-flex ap-border-transparent ap-justify-center ap-items-center ap-cursor-pointer ap-px-3"
-    [routerLink]="['/' + r.route]"
-  >
+    [routerLink]="['/' + r.route]">
     <div
-      [class]="
-        (isActive(r.route)
-          ? 'ap-bg-primary-light ap-transition ap-ease-out ap-rounded-[8px]'
-          : ' hover:ap-bg-[#f5f5f5]') + ' ap-p-3'
-      "
-    >
-      <svg-icon
-        [class]="isActive(r.route) ? 'ap-fill-primary' : 'ap-fill-title '"
-        [svgStyle]="{ width: '21px', height: '21px' }"
-        [src]="r.icon"
-        [applyClass]="true"
-        (click)="r.effect ? r.effect() : null"
-      >
+      routerLinkActive="ap-bg-primary-light ap-transition ap-ease-out ap-rounded-[8px] hover:!ap-bg-primary-light !ap-fill-primary "
+      class="hover:ap-bg-[#f5f5f5] ap-p-3 ap-fill-title " [routerLink]="['/' + r.route]">
+      <svg-icon [applyClass]="true" class="ap-fill-inherit" [svgStyle]="{ width: '21px', height: '21px' }"
+        [src]="r.icon" (click)="r.effect ? r.effect() : null">
       </svg-icon>
     </div>
 
@@ -39,19 +19,11 @@
     </div>
   </div>
   <div class="ap-flex-grow"></div>
-  <div
-    (click)="openDocs()"
-    [matTooltip]="'Documentation'"
-    [matTooltipPosition]="'right'"
-    class="ap-w-full ap-flex-col ap-flex ap-border-transparent ap-justify-center ap-items-center ap-cursor-pointer ap-px-3"
-  >
+  <div (click)="openDocs()" [matTooltip]="'Documentation'" [matTooltipPosition]="'right'"
+    class="ap-w-full ap-flex-col ap-flex ap-border-transparent ap-justify-center ap-items-center ap-cursor-pointer ap-px-3">
     <div class="ap-p-3">
-      <svg-icon
-        [class]="'ap-fill-title'"
-        [svgStyle]="{ width: '21px', height: '21px' }"
-        src="assets/img/custom/dashboard/documentation.svg"
-        [applyClass]="true"
-      >
+      <svg-icon [class]="'ap-fill-title'" [svgStyle]="{ width: '21px', height: '21px' }"
+        src="assets/img/custom/dashboard/documentation.svg" [applyClass]="true">
       </svg-icon>
     </div>
     <div class="ap-font-medium ap-text-[10px]">Docs</div>

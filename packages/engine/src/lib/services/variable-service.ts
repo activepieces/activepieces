@@ -48,27 +48,43 @@ export class VariableService {
     path: string,
     censorConnections: boolean
   ): Promise<any> {
-    const paths = path.split('.');
-    // Invalid naming return nothing
-    if (paths.length < 2) {
+    // Need to be resolved dynamically
+    const connectionName = this.findConnectionName(path);
+    if (isNil(connectionName)) {
       return '';
     }
     if (censorConnections) {
       return '**CENSORED**';
     }
     // Need to be resolved dynamically
-    const connectionName = paths[1];
+    const paths = path.split('.');
     paths.splice(0, 1);
     // Replace connection name with something that doesn't contain - or _, otherwise evalInScope would break
     paths[0] = 'connection';
     const newPath = paths.join('.');
     const connection = await connectionService.obtain(connectionName);
-    if (paths.length === 1) {
+    if (paths.length <= 1) {
       return connection;
     }
     const context: Record<string, unknown> = {};
     context['connection'] = connection;
     return this.evalInScope(newPath, context);
+  }
+
+  private findConnectionName(path: string): string | null {
+    const paths = path.split('.');
+    // Connections with square brackets
+    if (path.includes('[')) {
+      // Find the connection name inside {{connections['connectionName'].path}}
+      const matches = path.match(/\['([^']+)'\]/g);
+      if (matches && matches.length >= 1) {
+        // Remove the square brackets and quotes from the connection name
+        const secondPath = matches[0].replace(/\['|'\]/g, '');
+        return secondPath;
+      }
+      return null;
+    }
+    return paths[1];
   }
 
   private evalInScope(js: string, contextAsScope: Record<string, unknown>) {
