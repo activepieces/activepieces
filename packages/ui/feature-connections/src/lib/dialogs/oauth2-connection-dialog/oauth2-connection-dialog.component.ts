@@ -34,6 +34,7 @@ import {
   BuilderSelectors,
   appConnectionsActions,
 } from '@activepieces/ui/feature-builder-store';
+import { connectionNameRegex } from '../utils';
 
 interface OAuth2PropertySettings {
   redirect_url: FormControl<string>;
@@ -121,7 +122,7 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
           nonNullable: true,
           validators: [
             Validators.required,
-            Validators.pattern('[A-Za-z0-9_\\-]*'),
+            Validators.pattern(connectionNameRegex),
           ],
           asyncValidators: [
             ConnectionValidator.createValidator(
