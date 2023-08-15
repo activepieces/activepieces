@@ -17,7 +17,7 @@ import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDatasource } from './sqllite-connection'
 import { DatabaseType, system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
-import { ArrayContains, SelectQueryBuilder } from 'typeorm'
+import { ArrayContains, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
 
 const databaseType = system.get(SystemProp.DB_TYPE)
 
@@ -48,7 +48,7 @@ export const databaseConnection =
       ? createSqlLiteDatasource()
       : createPostgresDataSource()
 
-export function APArrayContains<T extends Record<string, unknown>>(columnName: string, values: string[], query: SelectQueryBuilder<T>): SelectQueryBuilder<T> {
+export function APArrayContains<T extends ObjectLiteral>(columnName: string, values: string[], query: SelectQueryBuilder<T>): SelectQueryBuilder<T> {
     const databaseType = system.get(SystemProp.DB_TYPE)
     switch (databaseType) {
         case DatabaseType.POSTGRES:
