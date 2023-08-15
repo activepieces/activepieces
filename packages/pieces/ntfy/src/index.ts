@@ -32,7 +32,7 @@ export const ntfy = createPiece({
   displayName: "Ntfy",
     logoUrl: "https://cdn.activepieces.com/pieces/ntfy.png",
     minimumSupportedRelease: '0.5.0',
-  auth: PieceAuth.None(),
+  auth: ntfyAuth,
   authors: ["MyWay"],
   actions: [sendNotification],
   triggers: [],
