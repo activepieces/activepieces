@@ -61,7 +61,7 @@ export const googleContactsAddContactAction = createAction({
             }
 
             if (context.propsValue['phoneNumber']) {
-                contact['phoneNumbers'] = [{ value: context.propsValue['phoneNumber'], primary: true }];
+                contact['phoneNumbers'] = [{ value: context.propsValue['phoneNumber']}];
             }
 
             if (context.propsValue['company'] || context.propsValue['jobTitle']) {
