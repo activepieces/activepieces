@@ -395,7 +395,6 @@ export class AddEditConnectionButtonComponent {
           displayName: this.authProperty.displayName,
           description: this.authProperty.description || '',
           connectionName: connection!.name,
-          secretText: '***',
         };
         return this.dialogService
           .open(SecretTextConnectionDialogComponent, {
