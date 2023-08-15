@@ -14,6 +14,7 @@ import {
   InsertMentionOperation,
 } from '@activepieces/ui/common';
 import { BuilderSelectors } from '@activepieces/ui/feature-builder-store';
+import { mentionsListId } from '../builder-autocomplete-mentions-dropdown/builder-autocomplete-mentions-dropdown.component';
 
 @Component({
   selector: 'app-builder-autocomplete-dropdown-handler',
@@ -38,7 +39,10 @@ export class BuilderAutocompleteDropdownHandlerComponent {
       .asObservable()
       .pipe(
         filter((res) => res.id === this.id),
-        tap((res) => this.mentionEmitted.emit(res.insert))
+        tap((res) => {
+          this.mentionEmitted.emit(res.insert);
+          document.getElementById(mentionsListId)?.focus();
+        })
       );
   }
   showMentionsDropdown() {

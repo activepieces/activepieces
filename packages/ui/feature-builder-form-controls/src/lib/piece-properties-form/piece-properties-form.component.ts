@@ -133,7 +133,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
   setDefaultValue$: Observable<null>;
   OnChange: (value: unknown) => void;
   OnTouched: () => void;
-
+  jsonMonacoEditor: any;
   constructor(
     private fb: UntypedFormBuilder,
     private actionMetaDataService: PieceMetadataService,
@@ -507,11 +507,12 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
   };
 
   addMentionToJsonControl(mention: InsertMentionOperation) {
-    const monaco = (window as any).monaco.editor.getEditors()[0];
-    console.log(monaco);
-    monaco.trigger('keyboard', 'type', {
+    this.jsonMonacoEditor.trigger('keyboard', 'type', {
       text: mention.insert.mention.serverValue,
     });
+  }
+  onInit(monacoEditor: any) {
+    this.jsonMonacoEditor = monacoEditor;
   }
   formValueMiddleWare(formValue: Record<string, unknown>) {
     const formattedValue: Record<string, unknown> = { ...formValue };
