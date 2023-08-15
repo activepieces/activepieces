@@ -6,7 +6,6 @@ import {
 } from '@activepieces/shared';
 import { connectionService } from './connections.service';
 import {
-  PiecePropertyMap,
   PropertyType,
   formatErrorMessage,
   ErrorMessages,
@@ -58,18 +57,26 @@ export class VariableService {
       return '**CENSORED**';
     }
     // Need to be resolved dynamically
-    const paths = path.split('.');
-    paths.splice(0, 1);
     // Replace connection name with something that doesn't contain - or _, otherwise evalInScope would break
-    paths[0] = 'connection';
-    const newPath = paths.join('.');
+    const newPath = this.cleanPath(path, connectionName);
     const connection = await connectionService.obtain(connectionName);
-    if (paths.length <= 1) {
+    if (newPath.length === 0) {
       return connection;
     }
     const context: Record<string, unknown> = {};
     context['connection'] = connection;
     return this.evalInScope(newPath, context);
+  }
+
+  private cleanPath(path: string, connectionName: string): string {
+    if (path.includes('[')) {
+      return path.substring(`connections.['${connectionName}']`.length);
+    }
+    const cp = path.substring(`connections.${connectionName}`.length);
+    if (cp.length === 0) {
+      return cp;
+    }
+    return `connection${cp}`;
   }
 
   private findConnectionName(path: string): string | null {

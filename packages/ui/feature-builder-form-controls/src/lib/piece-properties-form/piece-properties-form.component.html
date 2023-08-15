@@ -426,7 +426,7 @@
             </div>
           </div>
           <div class="ap-h-[300px]">
-            <ngx-monaco-editor class="!ap-h-full !ap-w-full" [formControlName]="property.key"
+            <ngx-monaco-editor (onInit)="onInit($event)" class="!ap-h-full !ap-w-full" [formControlName]="property.key"
               (click)="handler.showMentionsDropdown()" [options]="codeEditorOptions"></ngx-monaco-editor>
           </div>
 

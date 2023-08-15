@@ -395,7 +395,6 @@ export class AddEditConnectionButtonComponent {
           displayName: this.authProperty.displayName,
           description: this.authProperty.description || '',
           connectionName: connection!.name,
-          secretText: '***',
         };
         return this.dialogService
           .open(SecretTextConnectionDialogComponent, {
@@ -438,6 +437,7 @@ export class AddEditConnectionButtonComponent {
   ) {
     this.updateOrAddConnectionDialogClosed$ = currentConnection$.pipe(
       switchMap((connection) => {
+        console.log(connection);
         if (connection.type === AppConnectionType.OAUTH2) {
           return this.dialogService
             .open(OAuth2ConnectionDialogComponent, {
@@ -486,10 +486,10 @@ export class AddEditConnectionButtonComponent {
   getConnectionNameFromInterpolatedString(interpolatedString: string) {
     //eg. {{connections.google}}
     if (interpolatedString.includes('[')) {
-      const result = interpolatedString.split(`{{connections['`)[1];
-      return result.slice(0, result.length - 3);
+      const result = interpolatedString.substring(`{{connections['`.length);
+      return result.slice(0, result.length - 4);
     }
-    const result = interpolatedString.split(`{{connections.`)[1];
-    return result.slice(0, result.length - 2);
+    const result = interpolatedString.substring(`{{connections.`.length);
+    return result.slice(0, result.length - 4);
   }
 }
