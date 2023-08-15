@@ -16,6 +16,7 @@ import {
 export class VariableService {
   private VARIABLE_TOKEN = RegExp('\\{\\{(.*?)\\}\\}', 'g');
   private static CONNECTIONS = 'connections';
+
   private async resolveInput(
     input: string,
     valuesMap: Record<string, unknown>,
@@ -223,6 +224,38 @@ export class VariableService {
       if (propErrors.length) errors[key] = propErrors;
     }
     return { processedInput, errors };
+  }
+
+  extractConnectionNames(input: any): string[] {
+    const connectionNames: string[] = [];
+
+    const extractFromValue = (value: any) => {
+      if (typeof value === 'string') {
+        const matchedTokens = value.match(this.VARIABLE_TOKEN);
+        if (
+          matchedTokens !== null &&
+          matchedTokens.length === 1 &&
+          matchedTokens[0] === value
+        ) {
+          const variableName = value.substring(2, value.length - 2);
+          if (variableName.startsWith(VariableService.CONNECTIONS)) {
+            const connectionName = this.findConnectionName(variableName);
+            if (connectionName) {
+              connectionNames.push(connectionName);
+            }
+          }
+        }
+      } else if (Array.isArray(value)) {
+        value.forEach(extractFromValue);
+      } else if (typeof value === 'object' && value !== null) {
+        for (const key in value) {
+          extractFromValue(value[key]);
+        }
+      }
+    };
+
+    extractFromValue(input);
+    return connectionNames;
   }
 }
 

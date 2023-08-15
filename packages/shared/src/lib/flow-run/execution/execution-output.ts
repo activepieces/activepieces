@@ -22,6 +22,7 @@ type BaseExecutionOutput<T extends ExecutionOutputStatus> = {
   executionState: ExecutionState;
   duration: number;
   tasks: number;
+  tags?: string[];
   errorMessage?: ExecutionError;
 }
 
