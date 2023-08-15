@@ -30,7 +30,6 @@ export interface SecretTextConnectionDialogData {
   connectionName?: string;
   displayName: string;
   description: string;
-  secretText?: string;
 }
 
 @Component({
@@ -53,7 +52,7 @@ export class SecretTextConnectionDialogComponent {
     public dialogRef: MatDialogRef<SecretTextConnectionDialogComponent>
   ) {
     this.settingsForm = this.fb.group({
-      secretText: new FormControl(this.dialogData.secretText || '', {
+      secretText: new FormControl('', {
         nonNullable: true,
         validators: [Validators.required],
       }),
