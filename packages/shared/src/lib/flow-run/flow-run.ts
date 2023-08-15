@@ -16,6 +16,7 @@ export type FlowRun = BaseModel<FlowRunId> & {
   id: FlowRunId;
   projectId: ProjectId;
   flowId: FlowId;
+  tags?: string[];
   flowVersionId: FlowVersionId;
   flowDisplayName: string;
   logsFileId: FileId | null;
