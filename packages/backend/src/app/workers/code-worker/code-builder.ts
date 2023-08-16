@@ -18,25 +18,22 @@ import { fileService } from '../../file/file.service'
 
 const tsConfig = `
 {
-    // preset config for node 18
     "extends": "@tsconfig/node18/tsconfig.json",
-    
-    // Disable all linting rules
     "compilerOptions": {
-      "skipLibCheck": true,
-      "noUnusedLocals": false,
-      "noUnusedParameters": false,
-      "strict": false,
-      "strictPropertyInitialization": false,
-      "strictNullChecks": false,
-      "strictFunctionTypes": false,
-      "strictBindCallApply": false,
-      "noImplicitAny": false,
-      "noImplicitThis": false,
-      "noImplicitReturns": false,
-      "noFallthroughCasesInSwitch": false
+        "skipLibCheck": true,
+        "noUnusedLocals": false,
+        "noUnusedParameters": false,
+        "strict": false,
+        "strictPropertyInitialization": false,
+        "strictNullChecks": false,
+        "strictFunctionTypes": false,
+        "strictBindCallApply": false,
+        "noImplicitAny": false,
+        "noImplicitThis": false,
+        "noImplicitReturns": false,
+        "noFallthroughCasesInSwitch": false
     }
-  } 
+}
 `
 
 async function processCodeStep(
@@ -68,7 +65,7 @@ async function processCodeStep(
         await decompress(fileEntity.data, codePath, {})
         await addCodeDependencies(codePath)
         await fs.writeFile(tsConfigPath, tsConfig)
-        await packageManager.runLocalDependency(codePath, 'tsc index.ts --skipLibCheck')
+        await packageManager.runLocalDependency(codePath, 'tsc')
     }
     catch (error: unknown) {
         await handleCompilationError(codePath, error as (Error & { stdout: string }))
