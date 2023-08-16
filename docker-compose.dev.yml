@@ -33,8 +33,6 @@ services:
      - "9222:9222"
     networks:
       - activepieces_dev
-    profiles:
-      - full
     volumes:
      - ./:/usr/src/app
     working_dir: /usr/src/app
