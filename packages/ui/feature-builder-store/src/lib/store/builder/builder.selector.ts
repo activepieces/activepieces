@@ -2,7 +2,7 @@ import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { GlobalBuilderState } from '../../model/global-builder-state.model';
 
 import {
-  AppConnection,
+  AppConnectionWithoutSensitiveData,
   ExecutionOutputStatus,
   Flow,
   FlowRun,
@@ -414,17 +414,20 @@ const selectAllAppConnections = createSelector(
 );
 
 export const selectConnection = (connectionName: string) =>
-  createSelector(selectAllAppConnections, (connections: AppConnection[]) => {
-    return connections.find((c) => c.name === connectionName);
-  });
+  createSelector(
+    selectAllAppConnections,
+    (connections: AppConnectionWithoutSensitiveData[]) => {
+      return connections.find((c) => c.name === connectionName);
+    }
+  );
 
 const selectAppConnectionsDropdownOptions = createSelector(
   selectAllAppConnections,
-  (connections: AppConnection[]) => {
+  (connections: AppConnectionWithoutSensitiveData[]) => {
     return [...connections].map((c) => {
       const result: ConnectionDropdownItem = {
         label: { appName: c.appName, name: c.name },
-        value: `{{connections.${c.name}}}`,
+        value: `{{connections['${c.name}']}}`,
       };
       return result;
     });
@@ -433,11 +436,11 @@ const selectAppConnectionsDropdownOptions = createSelector(
 
 const selectAppConnectionsForMentionsDropdown = createSelector(
   selectAllAppConnections,
-  (connections: AppConnection[]) => {
+  (connections: AppConnectionWithoutSensitiveData[]) => {
     return [...connections].map((c) => {
       const result: MentionListItem = {
         label: c.name,
-        value: `{{connections.${c.name}}}`,
+        value: `{{connections['${c.name}']}}`,
       };
       return result;
     });

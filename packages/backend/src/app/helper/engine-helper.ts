@@ -177,6 +177,7 @@ const execute = async <Result extends EngineHelperResult>(
     input: EngineOperation,
 ): Promise<EngineHelperResponse<Result>> => {
     logger.debug(`Executing ${operation} inside sandbox number ${sandbox.boxId}`)
+    logger.debug(`[EngineHelper#execute] workerToken=${(input as Record<string, string>).workerToken}`)
 
     const sandboxPath = sandbox.getSandboxFolderPath()
 

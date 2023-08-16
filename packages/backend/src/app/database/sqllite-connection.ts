@@ -4,6 +4,8 @@ import fs from 'fs'
 import { DataSource } from 'typeorm'
 import { InitialSql3Migration1690195839899 } from './migration/sqllite3/1690195839899-InitialSql3Migration'
 import { commonProperties } from './database-connection'
+import { AddAppConnectionTypeToTopLevel1691706020626 } from './migration/sqllite3/1691706020626-add-app-connection-type-to-top-level'
+import { AddTagsToRunSqlite31692056190942 } from './migration/sqllite3/1692056190942-AddTagsToRunSqlite3'
 
 function getSQLiteFilePath() {
     const homeDirectory = os.homedir()
@@ -22,7 +24,11 @@ export const createSqlLiteDatasource = () => {
         database: getSQLiteFilePath(),
         migrationsRun: true,
         migrationsTransactionMode: 'each',
-        migrations: [InitialSql3Migration1690195839899],
+        migrations: [
+            InitialSql3Migration1690195839899,
+            AddAppConnectionTypeToTopLevel1691706020626,
+            AddTagsToRunSqlite31692056190942,
+        ],
         ...commonProperties,
     })
 }

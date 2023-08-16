@@ -1,6 +1,6 @@
 ## **************** DOCUMENTATION ****************
 ##
-## Please refer to the documentation for more information on how to use this file. 
+## Please refer to the documentation for more information on how to use this file.
 ## https://www.activepieces.com/docs/contributing/development-setup/docker-compose
 ##
 ## ***********************************************
@@ -12,25 +12,33 @@ services:
     image: activepieces/ap-base:3
     container_name: app
     environment:
-      AP_JWT_SECRET: super-secret
-      AP_POSTGRES_HOST: postgres
-      AP_SIGN_UP_ENABLED: false
-      AP_REDIS_HOST: redis
+      AP_DB_TYPE: POSTGRES
+      AP_ENCRYPTION_KEY: 7e19fad4c13eaea8f657afb12e8f9c40
       AP_EXECUTION_MODE: UNSANDBOXED
+      AP_JWT_SECRET: super-secret
+      AP_POSTGRES_DATABASE: activepieces
+      AP_POSTGRES_HOST: postgres
+      AP_POSTGRES_PASSWORD: postgres
+      AP_POSTGRES_PORT: 5432
+      AP_POSTGRES_USERNAME: postgres
+      AP_QUEUE_MODE: REDIS
+      AP_REDIS_HOST: redis
+      AP_REDIS_PORT: 6379
+      AP_SIGN_UP_ENABLED: false
     user: 1000:1000
     ports:
      - "3000:3000"
-     - "4200:4200"
      - "9229:9229"
-     - "9222:9222"
     networks:
       - activepieces_dev
-    profiles:
-      - full
     volumes:
      - ./:/usr/src/app
     working_dir: /usr/src/app
-    command: /bin/sh -c "npm i && (npx nx serve backend & npx nx serve ui-core)"
+    entrypoint:
+      - npx
+      - nx
+      - build-watch
+      - backend
     depends_on:
      - postgres
      - redis
@@ -43,7 +51,7 @@ services:
     environment:
       POSTGRES_DB: activepieces
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: A79Vm5D4p2VQHOp2gd5
+      POSTGRES_PASSWORD: postgres
     volumes:
       - postgres_data_dev:/var/lib/postgresql/data
     networks:

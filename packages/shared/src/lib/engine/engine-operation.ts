@@ -1,4 +1,5 @@
 import { File } from "../file/file";
+import { AppConnectionValue } from "../app-connection/app-connection";
 import { ResumeStepMetadata } from "../flow-run/execution/execution-output";
 import { ExecutionState } from "../flow-run/execution/execution-state";
 import { ExecutionType } from "../flow-run/execution/execution-type";
@@ -51,7 +52,7 @@ export type ExecuteActionOperation = BaseEngineOperation & {
 export type ExecuteValidateAuthOperation = BaseEngineOperation & {
     pieceName: string
     pieceVersion: string
-    auth: unknown
+    auth: AppConnectionValue
 }
 
 export type ExecuteExtractPieceMetadata = {

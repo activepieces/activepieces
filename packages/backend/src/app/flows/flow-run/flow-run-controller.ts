@@ -48,6 +48,7 @@ export const flowRunController: FastifyPluginCallbackTypebox = (app, _options, d
         const flowRunPage = await flowRunService.list({
             projectId: request.principal.projectId,
             flowId: request.query.flowId,
+            tags: request.query.tags,
             status: request.query.status,
             cursor: request.query.cursor ?? null,
             limit: Number(request.query.limit ?? DEFAULT_PAGING_LIMIT),

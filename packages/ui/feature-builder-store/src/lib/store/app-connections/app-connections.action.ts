@@ -1,15 +1,15 @@
 import { createAction, props } from '@ngrx/store';
-import { AppConnection } from '@activepieces/shared';
+import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
 
-export enum AppConectionActionType {
+export enum AppConnectionActionType {
   LOAD_INITIAL = '[APP_CONNECTION] LOAD_INITIAL',
   UPSERT = '[APP_CONNECTION] UPSERT_APP_CONNECTION',
   DELETE = '[APP_CONNECTION] DELETE_APP_CONNECTION',
 }
 
 const upsert = createAction(
-  AppConectionActionType.UPSERT,
-  props<{ connection: AppConnection }>()
+  AppConnectionActionType.UPSERT,
+  props<{ connection: AppConnectionWithoutSensitiveData }>()
 );
 
 export const appConnectionsActions = {

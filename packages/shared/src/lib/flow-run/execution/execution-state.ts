@@ -12,6 +12,7 @@ type AdjustTaskCountParams = {
 
 export class ExecutionState {
   private _taskCount = 0
+  private _tags: string[] = [];
   steps: Record<string, StepOutput> = {};
   lastStepState: Record<string, unknown> = {};
 
@@ -23,8 +24,23 @@ export class ExecutionState {
     }
   }
 
+  get tags(){
+    return this._tags
+  }
+
   get taskCount() {
     return this._taskCount
+  }
+
+  public addConnectionTags(tags: string[]) {
+    this._tags.push(...tags.map(tag => `connection:${tag}`));
+    // Sorting the array
+    this._tags.sort();
+
+    // Removing duplicates
+    this._tags = this._tags.filter((value, index, self) => {
+      return self.indexOf(value) === index;
+    });
   }
 
   private adjustTaskCount({ stepOutput }: AdjustTaskCountParams) {

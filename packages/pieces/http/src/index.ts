@@ -9,7 +9,7 @@ export const http = createPiece({
 	auth: PieceAuth.None(),
 	minimumSupportedRelease: '0.5.0',
 	actions: [httpSendRequestAction, httpReturnResponse],
-	authors: ['khaledmashaly', 'bibhuty-did-this'],
+	authors: ['khaledmashaly', 'bibhuty-did-this' ,'AbdulTheActivePiecer'],
 	triggers: [
 	],
 });

@@ -425,7 +425,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/135701940?v=4",
       "profile": "https://github.com/kishanprmr",
       "contributions": [
-        "doc"
+        "doc",
+        "plugin"
       ]
     },
     {
@@ -451,6 +452,15 @@
       "name": "Rita Gorokhod",
       "avatar_url": "https://avatars.githubusercontent.com/u/60586879?v=4",
       "profile": "https://www.linkedin.com/in/ritagorokhod/",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "facferreira",
+      "name": "Fábio Ferreira",
+      "avatar_url": "https://avatars.githubusercontent.com/u/487349?v=4",
+      "profile": "https://github.com/facferreira",
       "contributions": [
         "plugin"
       ]
