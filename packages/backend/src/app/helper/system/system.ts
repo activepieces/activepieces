@@ -16,6 +16,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [SystemProp.SIGN_UP_ENABLED]: 'false',
     [SystemProp.TELEMETRY_ENABLED]: 'true',
     [SystemProp.SANDBOX_RUN_TIME_SECONDS]: '600',
+    [SystemProp.SANDBOX_MEMORY_LIMIT]: '131072',
     [SystemProp.QUEUE_MODE]: QueueMode.REDIS,
     [SystemProp.DB_TYPE]: DatabaseType.POSTGRES,
     [SystemProp.EXECUTION_MODE]: 'UNSANDBOXED',

@@ -1,10 +1,8 @@
 import {
   AppConnection,
   AppConnectionType,
-  BasicAuthConnection,
-  CustomAuthConnection,
+  AppConnectionWithoutSensitiveData,
   OAuth2AppConnection,
-  SecretKeyAppConnection,
 } from '@activepieces/shared';
 import {
   BasicAuthProperty,
@@ -94,7 +92,7 @@ export class AddEditConnectionButtonComponent {
   @Output()
   connectionPropertyValueChanged: EventEmitter<{
     propertyKey: string;
-    value: `{{connections.${string}}}`;
+    value: `{{connections['${string}']}}`;
   }> = new EventEmitter();
   updateOrAddConnectionDialogClosed$: Observable<void>;
   cloudAuthCheck$: Observable<void>;
@@ -154,7 +152,7 @@ export class AddEditConnectionButtonComponent {
   }
 
   private emitNewConnection(result: AppConnection) {
-    const authConfigOptionValue: `{{connections.${string}}}` = `{{connections.${result.name}}}`;
+    const authConfigOptionValue: `{{connections['${string}']}}` = `{{connections['${result.name}']}}`;
     this.connectionPropertyValueChanged.emit({
       propertyKey: this.propertyKey,
       value: authConfigOptionValue,
@@ -361,11 +359,11 @@ export class AddEditConnectionButtonComponent {
   }
 
   private editCustomAuthConnection(
-    currentConnection$: Observable<AppConnection>
+    currentConnection$: Observable<AppConnectionWithoutSensitiveData>
   ) {
     this.updateOrAddConnectionDialogClosed$ = currentConnection$.pipe(
       switchMap((connection) => {
-        const customAuthConnection = connection as CustomAuthConnection;
+        const customAuthConnection = connection;
         const dialogData: CustomAuthDialogData = {
           pieceName: this.pieceName,
           pieceAuthProperty: this.authProperty as CustomAuthProperty<
@@ -388,17 +386,15 @@ export class AddEditConnectionButtonComponent {
   }
 
   private editSecretKeyConnection(
-    currentConnection$: Observable<AppConnection>
+    currentConnection$: Observable<AppConnectionWithoutSensitiveData>
   ) {
     this.updateOrAddConnectionDialogClosed$ = currentConnection$.pipe(
       switchMap((connection) => {
-        const secretKeyConnection = connection as SecretKeyAppConnection;
         const dialogData: SecretTextConnectionDialogData = {
           pieceName: this.pieceName,
           displayName: this.authProperty.displayName,
           description: this.authProperty.description || '',
           connectionName: connection!.name,
-          secretText: secretKeyConnection.value.secret_text,
         };
         return this.dialogService
           .open(SecretTextConnectionDialogComponent, {
@@ -413,14 +409,14 @@ export class AddEditConnectionButtonComponent {
     );
   }
   private editBasicAuthConnection(
-    currentConnection$: Observable<AppConnection>
+    currentConnection$: Observable<AppConnectionWithoutSensitiveData>
   ) {
     this.updateOrAddConnectionDialogClosed$ = currentConnection$.pipe(
       switchMap((connection) => {
         const dialogData: BasicAuthDialogData = {
           pieceName: this.pieceName,
           pieceAuthProperty: this.authProperty as BasicAuthProperty<boolean>,
-          connectionToUpdate: connection as BasicAuthConnection,
+          connectionToUpdate: connection,
         };
 
         return this.dialogService
@@ -436,10 +432,13 @@ export class AddEditConnectionButtonComponent {
     );
   }
 
-  private editOAuth2Property(currentConnection$: Observable<AppConnection>) {
+  private editOAuth2Property(
+    currentConnection$: Observable<AppConnectionWithoutSensitiveData>
+  ) {
     this.updateOrAddConnectionDialogClosed$ = currentConnection$.pipe(
       switchMap((connection) => {
-        if (connection.value.type === AppConnectionType.OAUTH2) {
+        console.log(connection);
+        if (connection.type === AppConnectionType.OAUTH2) {
           return this.dialogService
             .open(OAuth2ConnectionDialogComponent, {
               data: {
@@ -486,7 +485,11 @@ export class AddEditConnectionButtonComponent {
 
   getConnectionNameFromInterpolatedString(interpolatedString: string) {
     //eg. {{connections.google}}
-    const result = interpolatedString.split('{{connections.')[1];
-    return result.slice(0, result.length - 2);
+    if (interpolatedString.includes('[')) {
+      const result = interpolatedString.substring(`{{connections['`.length);
+      return result.slice(0, result.length - 4);
+    }
+    const result = interpolatedString.substring(`{{connections.`.length);
+    return result.slice(0, result.length - 4);
   }
 }

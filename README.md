@@ -173,6 +173,12 @@ We welcome contributions big or small and in different directions. The best way 
       <td align="center" valign="top" width="14.28%"><a href="http://website-portfolio-bucket.s3-website-ap-northeast-1.amazonaws.com/"><img src="https://avatars.githubusercontent.com/u/113296626?v=4?s=100" width="100px;" alt="Rajdeep Pal"/><br /><sub><b>Rajdeep Pal</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=Rajdeep1311" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://www.tepote.com"><img src="https://avatars.githubusercontent.com/u/40870?v=4?s=100" width="100px;" alt="Camilo Usuga"/><br /><sub><b>Camilo Usuga</b></sub></a><br /><a href="#plugin-camilou" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/kishanprmr"><img src="https://avatars.githubusercontent.com/u/135701940?v=4?s=100" width="100px;" alt="Kishan Parmar"/><br /><sub><b>Kishan Parmar</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=kishanprmr" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/BBND"><img src="https://avatars.githubusercontent.com/u/42919338?v=4?s=100" width="100px;" alt="BBND"/><br /><sub><b>BBND</b></sub></a><br /><a href="#plugin-BBND" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/haseebrehmanpc"><img src="https://avatars.githubusercontent.com/u/37938986?v=4?s=100" width="100px;" alt="Haseeb Rehman"/><br /><sub><b>Haseeb Rehman</b></sub></a><br /><a href="#plugin-haseebrehmanpc" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.linkedin.com/in/ritagorokhod/"><img src="https://avatars.githubusercontent.com/u/60586879?v=4?s=100" width="100px;" alt="Rita Gorokhod"/><br /><sub><b>Rita Gorokhod</b></sub></a><br /><a href="#plugin-rita-gorokhod" title="Plugin/utility libraries">🔌</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/facferreira"><img src="https://avatars.githubusercontent.com/u/487349?v=4?s=100" width="100px;" alt="Fábio Ferreira"/><br /><sub><b>Fábio Ferreira</b></sub></a><br /><a href="#plugin-facferreira" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>

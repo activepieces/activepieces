@@ -51,6 +51,7 @@
       "@activepieces/piece-data-mapper": [
         "packages/pieces/data-mapper/src/index.ts"
       ],
+      "@activepieces/piece-deepl": ["packages/pieces/deepl/src/index.ts"],
       "@activepieces/piece-delay": ["packages/pieces/delay/src/index.ts"],
       "@activepieces/piece-discord": ["packages/pieces/discord/src/index.ts"],
       "@activepieces/piece-drip": ["packages/pieces/drip/src/index.ts"],
@@ -189,8 +190,10 @@
       "@activepieces/piece-youtube": ["packages/pieces/youtube/src/index.ts"],
       "@activepieces/piece-zendesk": ["packages/pieces/zendesk/src/index.ts"],
       "@activepieces/piece-zoho-crm": ["packages/pieces/zoho-crm/src/index.ts"],
+      "@activepieces/piece-zoho-invoice": [
+        "packages/pieces/zoho-invoice/src/index.ts"
+      ],
       "@activepieces/piece-zoom": ["packages/pieces/zoom/src/index.ts"],
-      "@activepieces/pieces-apps": ["packages/pieces/apps/src/index.ts"],
       "@activepieces/pieces-common": ["packages/pieces/common/src/index.ts"],
       "@activepieces/pieces-framework": [
         "packages/pieces/framework/src/index.ts"

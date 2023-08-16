@@ -427,6 +427,42 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "BBND",
+      "name": "BBND",
+      "avatar_url": "https://avatars.githubusercontent.com/u/42919338?v=4",
+      "profile": "https://github.com/BBND",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "haseebrehmanpc",
+      "name": "Haseeb Rehman",
+      "avatar_url": "https://avatars.githubusercontent.com/u/37938986?v=4",
+      "profile": "https://github.com/haseebrehmanpc",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "rita-gorokhod",
+      "name": "Rita Gorokhod",
+      "avatar_url": "https://avatars.githubusercontent.com/u/60586879?v=4",
+      "profile": "https://www.linkedin.com/in/ritagorokhod/",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "facferreira",
+      "name": "Fábio Ferreira",
+      "avatar_url": "https://avatars.githubusercontent.com/u/487349?v=4",
+      "profile": "https://github.com/facferreira",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

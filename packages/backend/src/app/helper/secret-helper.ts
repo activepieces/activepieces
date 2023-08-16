@@ -1,9 +1,8 @@
 import axios from 'axios'
-import { ApEdition, FlowVersion } from '@activepieces/shared'
+import { ApEdition, FlowVersion, isNil } from '@activepieces/shared'
 import { system } from './system/system'
 import { SystemProp } from './system/system-prop'
 import { captureException } from './logger'
-import { isNil } from 'lodash'
 
 let webhookSecrets: Record<string, string> | undefined = undefined
 

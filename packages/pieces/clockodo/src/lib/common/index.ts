@@ -1,7 +1,7 @@
 import { PiecePropValueSchema, Property } from "@activepieces/pieces-framework"
 import { ClockodoClient } from "./client";
-import { isNil } from "lodash";
 import { clockodoAuth } from "../../";
+import { isNil } from "@activepieces/shared";
 
 type ClockodoAuthValue = PiecePropValueSchema<typeof clockodoAuth>
 

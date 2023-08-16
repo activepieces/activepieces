@@ -6,7 +6,6 @@ import {
 } from '@activepieces/shared';
 import { connectionService } from './connections.service';
 import {
-  PiecePropertyMap,
   PropertyType,
   formatErrorMessage,
   ErrorMessages,
@@ -17,6 +16,7 @@ import {
 export class VariableService {
   private VARIABLE_TOKEN = RegExp('\\{\\{(.*?)\\}\\}', 'g');
   private static CONNECTIONS = 'connections';
+
   private async resolveInput(
     input: string,
     valuesMap: Record<string, unknown>,
@@ -48,27 +48,51 @@ export class VariableService {
     path: string,
     censorConnections: boolean
   ): Promise<any> {
-    const paths = path.split('.');
-    // Invalid naming return nothing
-    if (paths.length < 2) {
+    // Need to be resolved dynamically
+    const connectionName = this.findConnectionName(path);
+    if (isNil(connectionName)) {
       return '';
     }
     if (censorConnections) {
       return '**CENSORED**';
     }
     // Need to be resolved dynamically
-    const connectionName = paths[1];
-    paths.splice(0, 1);
     // Replace connection name with something that doesn't contain - or _, otherwise evalInScope would break
-    paths[0] = 'connection';
-    const newPath = paths.join('.');
+    const newPath = this.cleanPath(path, connectionName);
     const connection = await connectionService.obtain(connectionName);
-    if (paths.length === 1) {
+    if (newPath.length === 0) {
       return connection;
     }
     const context: Record<string, unknown> = {};
     context['connection'] = connection;
     return this.evalInScope(newPath, context);
+  }
+
+  private cleanPath(path: string, connectionName: string): string {
+    if (path.includes('[')) {
+      return path.substring(`connections.['${connectionName}']`.length);
+    }
+    const cp = path.substring(`connections.${connectionName}`.length);
+    if (cp.length === 0) {
+      return cp;
+    }
+    return `connection${cp}`;
+  }
+
+  private findConnectionName(path: string): string | null {
+    const paths = path.split('.');
+    // Connections with square brackets
+    if (path.includes('[')) {
+      // Find the connection name inside {{connections['connectionName'].path}}
+      const matches = path.match(/\['([^']+)'\]/g);
+      if (matches && matches.length >= 1) {
+        // Remove the square brackets and quotes from the connection name
+        const secondPath = matches[0].replace(/\['|'\]/g, '');
+        return secondPath;
+      }
+      return null;
+    }
+    return paths[1];
   }
 
   private evalInScope(js: string, contextAsScope: Record<string, unknown>) {
@@ -80,7 +104,6 @@ export class VariableService {
       const result = evaluatedFn(...values);
       return result ?? '';
     } catch (exception) {
-      console.warn('Error evaluating expression', exception);
       return '';
     }
   }
@@ -201,6 +224,38 @@ export class VariableService {
       if (propErrors.length) errors[key] = propErrors;
     }
     return { processedInput, errors };
+  }
+
+  extractConnectionNames(input: any): string[] {
+    const connectionNames: string[] = [];
+
+    const extractFromValue = (value: any) => {
+      if (typeof value === 'string') {
+        const matchedTokens = value.match(this.VARIABLE_TOKEN);
+        if (
+          matchedTokens !== null &&
+          matchedTokens.length === 1 &&
+          matchedTokens[0] === value
+        ) {
+          const variableName = value.substring(2, value.length - 2);
+          if (variableName.startsWith(VariableService.CONNECTIONS)) {
+            const connectionName = this.findConnectionName(variableName);
+            if (connectionName) {
+              connectionNames.push(connectionName);
+            }
+          }
+        }
+      } else if (Array.isArray(value)) {
+        value.forEach(extractFromValue);
+      } else if (typeof value === 'object' && value !== null) {
+        for (const key in value) {
+          extractFromValue(value[key]);
+        }
+      }
+    };
+
+    extractFromValue(input);
+    return connectionNames;
   }
 }
 

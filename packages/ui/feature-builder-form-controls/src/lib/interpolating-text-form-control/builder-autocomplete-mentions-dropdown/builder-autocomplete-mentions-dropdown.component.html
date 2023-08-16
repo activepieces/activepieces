@@ -1,5 +1,5 @@
 <div @fadeIn (mouseover)="mouseWithinToggle(true)" (mouseleave)="mouseWithinToggle(false)" #mentionsList
-    id="mentionsList"
+    [id]="mentionsListId" tabindex="1"
     class="ap-transition-opacity ap-overflow-hidden dropdown-shadow ap-absolute  ap-z-50 ap-bg-white ap-border ap-border-outline ap-border-solid !ap-rounded-lg"
     [class.ap-h-full]="(interpolatingTextFormControlService.dataInsertionPopupSize$ | async )==='fullscreen'"
     [class.ap-w-full]="(interpolatingTextFormControlService.dataInsertionPopupSize$ | async )==='fullscreen'"

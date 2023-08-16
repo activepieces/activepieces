@@ -15,7 +15,7 @@ import {
     OAuth2ConnectionValueWithApp,
     ProjectId,
     SeekPage,
-    UpsertConnectionRequest,
+    UpsertAppConnectionRequestBody,
 } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -32,6 +32,7 @@ import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
 import { isNil } from '@activepieces/shared'
 import { engineHelper } from '../../helper/engine-helper'
 import { acquireLock } from '../../helper/lock'
+import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 
 const repo = databaseConnection.getRepository(AppConnectionEntity)
 
@@ -131,14 +132,15 @@ export class AppConnectionService {
             },
         })
 
-        let queryBuilder = repo
-            .createQueryBuilder('app_connection')
-            .where({ projectId })
-
-        if (appName !== undefined) {
-            queryBuilder = queryBuilder.where({ appName })
+        const querySelector: Record<string, string> = {
+            projectId,
         }
-
+        if (!isNil(appName)) {
+            querySelector.appName = appName
+        }
+        const queryBuilder = repo
+            .createQueryBuilder('app_connection')
+            .where(querySelector)
         const { data, cursor } = await paginator.paginate(queryBuilder)
         const promises: Promise<AppConnection>[] = []
 
@@ -210,43 +212,10 @@ function decryptConnection(
     encryptedConnection: AppConnectionSchema,
 ): AppConnection {
     const value = decryptObject<AppConnectionValue>(encryptedConnection.value)
-    let connection: AppConnection
-    switch (value.type) {
-        case AppConnectionType.BASIC_AUTH:
-            connection = {
-                ...encryptedConnection,
-                status: AppConnectionStatus.ACTIVE,
-                value,
-            }
-            break
-        case AppConnectionType.CLOUD_OAUTH2:
-            connection = {
-                ...encryptedConnection,
-                status: AppConnectionStatus.ACTIVE,
-                value,
-            }
-            break
-        case AppConnectionType.CUSTOM_AUTH:
-            connection = {
-                ...encryptedConnection,
-                status: AppConnectionStatus.ACTIVE,
-                value,
-            }
-            break
-        case AppConnectionType.OAUTH2:
-            connection = {
-                ...encryptedConnection,
-                status: AppConnectionStatus.ACTIVE,
-                value,
-            }
-            break
-        case AppConnectionType.SECRET_TEXT:
-            connection = {
-                ...encryptedConnection,
-                status: AppConnectionStatus.ACTIVE,
-                value,
-            }
-            break
+    const connection: AppConnection = {
+        ...encryptedConnection,
+        status: AppConnectionStatus.ACTIVE,
+        value,
     }
     connection.status = getStatus(connection)
     return connection
@@ -257,9 +226,14 @@ const engineValidateAuth = async (
 ): Promise<void> => {
     const { pieceName, auth, projectId } = params
 
+    const pieceMatadata = await pieceMetadataService.get({
+        name: pieceName,
+        projectId,
+        version: undefined,
+    })
     const engineInput: ExecuteValidateAuthOperation = {
         pieceName,
-        pieceVersion: 'latest',
+        pieceVersion: pieceMatadata.version,
         auth,
         projectId,
     }
@@ -604,7 +578,7 @@ function getStatus(connection: AppConnection): AppConnectionStatus {
 
 type UpsertParams = {
     projectId: ProjectId
-    request: UpsertConnectionRequest
+    request: UpsertAppConnectionRequestBody
 }
 
 type GetOneParams = {
@@ -641,11 +615,11 @@ type claimWithCloudRequest = {
 type EngineValidateAuthParams = {
     pieceName: string
     projectId: ProjectId
-    auth: unknown
+    auth: AppConnectionValue
 }
 
 type ValidateConnectionValueParams = {
-    connection: UpsertConnectionRequest
+    connection: UpsertAppConnectionRequestBody
     projectId: ProjectId
 }
 

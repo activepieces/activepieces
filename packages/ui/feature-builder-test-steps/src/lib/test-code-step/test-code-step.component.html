@@ -31,7 +31,7 @@
                 {{ (lastTestDate$ | async) | timeago:true}}
             </div>
             <ap-json-viewer class="json-viewer" title="Output" [maxHeight]="400"
-                [content]="!(stepTest$ | async)?.standardError ? (lastTestResult$|async) : (stepTest$ | async)?.standardError"></ap-json-viewer>
+                [content]="!(stepTest$ | async)?.standardError === true ? (lastTestResult$|async) : (stepTest$ | async)?.standardError"></ap-json-viewer>
         </ng-container>
     </ng-container>
 </div>
