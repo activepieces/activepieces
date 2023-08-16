@@ -19,12 +19,18 @@ export interface DatasourceSyncContext<
   propsValue: StaticPropsValue<props>;
 }
 
-class Datasource<
+export type Datasource<
+  PieceAuth extends PieceAuthProperty = any,
+  TriggerProps extends DatasourcePropertyMap = any,
+> = IDatasource<PieceAuth, TriggerProps>
+
+class IDatasource<
   auth extends PieceAuthProperty,
   props extends DatasourcePropertyMap
 > {
   constructor(
     public readonly name: string,
+    public readonly displayName: string,
     public readonly description: string,
     public readonly auth: auth | undefined,
     public readonly props: props,
@@ -40,14 +46,16 @@ export const createDatasource = <
 >(
   request: {
     name: string;
+    displayName: string;
     description: string;
     auth?: auth;
     props: props;
     sync: (ctx: DatasourceSyncContext<auth, props>) => Promise<Document[]>;
   }
 ) => {
-  return new Datasource(
+  return new IDatasource(
     request.name,
+    request.displayName,
     request.description,
     request.auth,
     request.props,

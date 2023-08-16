@@ -56,6 +56,7 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
                 maximumSupportedRelease: p.maximumSupportedRelease,
                 actions: Object.keys(p.actions).length,
                 triggers: Object.keys(p.triggers).length,
+                datasources: Object.keys(p.datasources).length,
             }))
         },
 

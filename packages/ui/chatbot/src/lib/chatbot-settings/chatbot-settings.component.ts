@@ -7,13 +7,13 @@ import {
 } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Observable, debounceTime, map, skip, switchMap, tap } from 'rxjs';
-import { ChatBotService } from '../chatbot.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import {
   AppConnectionsService,
   GenericSnackbarTemplateComponent
 } from '@activepieces/ui/common';
 import { AppConnection } from '@activepieces/shared';
+import { ChatBotService } from '../chatbot.service';
 
 @Component({
   selector: 'activepieces-chatbot-settings',

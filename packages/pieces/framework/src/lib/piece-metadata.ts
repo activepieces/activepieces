@@ -30,12 +30,21 @@ export type TriggerBase = ActionBase & {
   handshakeConfiguration?: WebhookHandshakeConfiguration;
 };
 
+export type DatasourceBase = {
+  name: string,
+  displayName: string,
+  description: string,
+  props: PiecePropertyMap,
+}
+
 export type PieceMetadata = PieceBase & {
   actions: Record<string, ActionBase >;
-  triggers: Record<string, TriggerBase> ;
+  triggers: Record<string, TriggerBase>;
+  datasources: Record<string, DatasourceBase>
 };
 
-export type PieceMetadataSummary = Omit<PieceMetadata, "actions" | "triggers"> & {
+export type PieceMetadataSummary = Omit<PieceMetadata, "actions" | "triggers" | "datasources"> & {
   actions: number;
   triggers: number;
+  datasources: number;
 }

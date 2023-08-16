@@ -10,8 +10,7 @@ import { FoldersResolver } from './resolvers/folders.resolver';
 import { DashboardContainerComponent } from './dashboard-container.component';
 import { CommunityPiecesTableComponent } from './pages/community-pieces-table/community-pieces-table.component';
 import { environment } from '@activepieces/ui/common';
-import { ChatbotSettingsComponent } from 'packages/ui/chatbot/src/lib/chatbot-settings/chatbot-settings.component';
-import { ChatbotsTableComponent } from 'packages/ui/chatbot/src/lib/chatbots-table/chatbots-table.component';
+import { ChatbotSettingsComponent, ChatbotsTableComponent } from '@activepieces/ui/chatbot';
 
 export const DashboardLayoutRouting: Routes = [
   {

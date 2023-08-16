@@ -2,7 +2,7 @@ import { DataSource } from '@angular/cdk/collections';
 import { Observable, BehaviorSubject, tap, switchMap, map } from 'rxjs';
 import { combineLatest } from 'rxjs';
 import { Chatbot } from '@activepieces/shared';
-import { ChatBotService } from '@activepieces/ui/chatbot';
+import { ChatBotService } from '../chatbot.service';
 
 /**
  * Data source for the LogsTable view. This class should

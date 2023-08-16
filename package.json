@@ -95,6 +95,7 @@
     "mailparser": "^3.6.4",
     "marked": "^4.3.0",
     "mime-types": "^2.1.35",
+    "mintlify": "^3.0.88",
     "monaco-editor": "^0.34.1",
     "nanoid": "^3.3.4",
     "ngx-lottie": "^10.0.0",
@@ -134,7 +135,7 @@
     "zone.js": "0.13.1"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "16.1.4",
+    "@angular-devkit/build-angular": "^16.2.0",
     "@angular-devkit/core": "16.1.4",
     "@angular-devkit/schematics": "16.1.4",
     "@angular-eslint/builder": "^15.2.0",

@@ -2,9 +2,11 @@ import { Static, Type } from '@sinclair/typebox';
 import { BaseModelSchema } from '../common';
 
 export const DataSource = Type.Object({
+  displayName: Type.String(),
   id: Type.String(),
-  name: Type.String(),
-  auth: Type.Record(Type.String(), Type.Unknown()),
+  pieceName: Type.String(),
+  sourceName: Type.String(),
+  auth: Type.Optional(Type.String()),
   props: Type.Record(Type.String(), Type.Unknown())
 });
 
@@ -49,8 +51,10 @@ export const ChatbotResponse = Type.Object({
 export type ChatbotResponse = Static<typeof ChatbotResponse>;
 
 export const CreateDataSourceRequest = Type.Object({
-  name: Type.String(),
-  auth: Type.Record(Type.String(), Type.Unknown()),
+  displayName: Type.String(),
+  pieceName: Type.String(),
+  sourceName: Type.String(),
+  auth: Type.Optional(Type.String()),
   props: Type.Record(Type.String(), Type.Unknown())
 });
 

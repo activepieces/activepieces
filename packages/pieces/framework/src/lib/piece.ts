@@ -3,10 +3,12 @@ import { Action } from './action/action'
 import { EventPayload, ParseEventResponse } from '@activepieces/shared'
 import { PieceBase, PieceMetadata } from './piece-metadata'
 import { PieceAuthProperty } from './property'
+import { Datasource } from './datasource/framework/framework'
 
 export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty> implements Omit<PieceBase, "version" | "name"> {
   private readonly _actions: Record<string, Action> = {}
   private readonly _triggers: Record<string, Trigger> = {}
+  private readonly _datasources: Record<string, Datasource> = {}
 
   constructor(
     public readonly displayName: string,
@@ -15,6 +17,7 @@ export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty> impl
     public readonly events: PieceEventProcessors | undefined,
     actions: Action<PieceAuth>[],
     triggers: Trigger<PieceAuth>[],
+    datasources: Datasource<PieceAuth>[],
     public readonly auth?: PieceAuth,
     public readonly minimumSupportedRelease?: string,
     public readonly maximumSupportedRelease?: string,
@@ -22,6 +25,7 @@ export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty> impl
   ) {
     actions.forEach(action => this._actions[action.name] = action)
     triggers.forEach(trigger => this._triggers[trigger.name] = trigger)
+    datasources.forEach(datasource => this._datasources[datasource.name] = datasource)
   }
 
   metadata(): Omit<PieceMetadata, "name" | "version"> {
@@ -30,6 +34,7 @@ export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty> impl
       logoUrl: this.logoUrl,
       actions: this._actions,
       triggers: this._triggers,
+      datasources: this._datasources,
       description: this.description,
       auth: this.auth,
       minimumSupportedRelease: this.minimumSupportedRelease,
@@ -49,6 +54,10 @@ export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty> impl
     return this._actions
   }
 
+  datasources(){
+    return this._datasources;
+  }
+
   triggers() {
     return this._triggers
   }
@@ -62,6 +71,7 @@ export const createPiece = <PieceAuth extends PieceAuthProperty>(params: CreateP
     params.events,
     params.actions,
     params.triggers,
+    params.datasources ?? [],
     params.auth ?? undefined,
     params.minimumSupportedRelease,
     params.maximumSupportedRelease,
@@ -80,6 +90,7 @@ type CreatePieceParams<PieceAuth extends PieceAuthProperty = PieceAuthProperty> 
   maximumSupportedRelease?: string
   actions: Action<PieceAuth>[]
   triggers: Trigger<PieceAuth>[]
+  datasources?: Datasource<PieceAuth>[]
 }
 
 type PieceEventProcessors = {

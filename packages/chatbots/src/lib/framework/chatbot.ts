@@ -1,9 +1,9 @@
 import {
   ShortTextProperty,
-  StaticPropsValue
+  StaticPropsValue,
+  ApEmbeddings
 } from '@activepieces/pieces-framework';
 import { APLLM } from './llm';
-import { ApEmbeddings } from './embeddings';
 
 interface ChatbotPropertyMap {
   [name: string]: ShortTextProperty<boolean>;
