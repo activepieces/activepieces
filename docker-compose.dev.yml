@@ -43,7 +43,7 @@ services:
     environment:
       POSTGRES_DB: activepieces
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: A79Vm5D4p2VQHOp2gd5
+      POSTGRES_PASSWORD: postgres
     volumes:
       - postgres_data_dev:/var/lib/postgresql/data
     networks:
