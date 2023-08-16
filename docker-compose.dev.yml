@@ -28,15 +28,17 @@ services:
     user: 1000:1000
     ports:
      - "3000:3000"
-     - "4200:4200"
      - "9229:9229"
-     - "9222:9222"
     networks:
       - activepieces_dev
     volumes:
      - ./:/usr/src/app
     working_dir: /usr/src/app
-    command: /bin/sh -c "npm i && (npx nx serve backend & npx nx serve ui-core)"
+    entrypoint:
+      - npx
+      - nx
+      - build-watch
+      - backend
     depends_on:
      - postgres
      - redis
