@@ -38,12 +38,6 @@ const loopSettingsValidator = TypeCompiler.Compile(LoopOnItemsActionSettingsWith
 const flowVersionRepo = databaseConnection.getRepository<FlowVersion>(FlowVersionEntity)
 
 export const flowVersionService = {
-    async overwriteVersion(flowVersionId: FlowVersionId, mutatedFlowVersion: FlowVersion) {
-        await flowVersionRepo.update(flowVersionId, mutatedFlowVersion as QueryDeepPartialEntity<FlowVersion>)
-        return await flowVersionRepo.findOneBy({
-            id: flowVersionId,
-        })
-    },
     async lockPieceVersions(projectId: ProjectId, mutatedFlowVersion: FlowVersion): Promise<FlowVersion> {
         return await flowHelper.transferFlowAsync(mutatedFlowVersion, async (step) => {
             const clonedStep = JSON.parse(JSON.stringify(step))
@@ -461,9 +455,6 @@ async function deleteArtifact(projectId: ProjectId, codeSettings: CodeActionSett
     if (codeSettings.artifactSourceId !== undefined) {
         requests.push(fileService.delete({ projectId, fileId: codeSettings.artifactSourceId }))
     }
-    if (codeSettings.artifactPackagedId !== undefined) {
-        requests.push(fileService.delete({ projectId, fileId: codeSettings.artifactPackagedId }))
-    }
     await Promise.all(requests)
     return codeSettings
 }
@@ -479,7 +470,6 @@ async function uploadArtifact(projectId: ProjectId, codeSettings: CodeActionSett
 
         codeSettings.artifact = undefined
         codeSettings.artifactSourceId = savedFile.id
-        codeSettings.artifactPackagedId = undefined
     }
     return codeSettings
 }

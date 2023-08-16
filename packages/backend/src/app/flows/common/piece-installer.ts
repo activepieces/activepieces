@@ -60,7 +60,7 @@ const updatePackageJson = async (directoryName: string, baseLinkPath: string, fr
 
     const packageJson = await fs.readFile(packageJsonForPiece, 'utf-8').then(JSON.parse)
     for (const [key, value] of Object.entries(frameworkPackages)) {
-        if (Object.keys(packageJson.dependencies).includes(key)) {
+        if (packageJson.dependencies && Object.keys(packageJson.dependencies).includes(key)) {
             packageJson.dependencies[key] = value
         }
     }
