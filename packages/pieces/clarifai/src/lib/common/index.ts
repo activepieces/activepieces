@@ -214,19 +214,20 @@ function detectMimeType(base64String: string, fileName: string | undefined) {
     "UEs": "application/vnd.openxmlformats-officedocument.",
     "PK": "application/zip",
   };
-  for (let [key, value] of Object.entries(signatures)) {
+  for (const [key, value] of Object.entries(signatures)) {
+    let modiifedValue = value;
     if (base64String.indexOf(key) === 0) {
       // var x = signatures[s];
       // if an office file format
       if (ext.length > 3 && ext.substring(0, 3) === "ppt") {
-        value += "presentationml.presentation";
+        modiifedValue += "presentationml.presentation";
       } else if (ext.length > 3 && ext.substring(0, 3) === "xls") {
-        value += "spreadsheetml.sheet";
+        modiifedValue += "spreadsheetml.sheet";
       } else if (ext.length > 3 && ext.substring(0, 3) === "doc") {
-        value += "wordprocessingml.document";
+        modiifedValue += "wordprocessingml.document";
       }
       // return
-      return value;
+      return modiifedValue;
     }
   }
   // if we are here we can only go off the extensions
