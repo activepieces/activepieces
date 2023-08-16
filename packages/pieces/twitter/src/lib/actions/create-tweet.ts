@@ -1,4 +1,4 @@
-import { Property, createAction } from "@activepieces/pieces-framework";
+import { Property, Validators, createAction } from "@activepieces/pieces-framework";
 import { TwitterApi } from 'twitter-api-v2';
 import { twitterAuth } from "../..";
 
@@ -13,6 +13,7 @@ export const createTweet = createAction({
             displayName: "Text",
             description: "The text of the tweet",
             required: true,
+            validators: [Validators.minLength(1)]
         }),
         image: Property.File({
             displayName: "Media",
