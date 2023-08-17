@@ -69,38 +69,36 @@
           *ngTemplateOutlet="customizedInputs && customizedInputs[property.key]? textInputTemplate:dropdownInputTemplate ;context:{$implicit:property, formGroup:formGroup}">
         </ng-container>
         <ng-template #dropdownInputTemplate>
-          <div class="ap-relative">
-            <mat-form-field subscriptSizing="dynamic" class="ap-w-full" appearance="outline" #dropdown
-              #dropdownUiContainer="hoverTrackerDirective" apTrackHover>
+          <mat-form-field subscriptSizing="dynamic" class="ap-w-full" appearance="outline" #dropdown
+            #dropdownUiContainer="hoverTrackerDirective" apTrackHover>
 
-              <mat-label> {{ (refreshableConfigsLoadingFlags$[property.key] | async)? 'Loading...' :
-                property.value.displayName
-                }}</mat-label>
-              <mat-select [formControlName]="property.key" (closed)="searchControl.setValue('')"
-                [compareWith]="dropdownCompareWithFunction">
-                <ng-container *ngIf="dropdownOptionsObservables$[property.key]| async as state">
-                  <ng-container
-                    *ngIf="!(state.disabled && ((refreshableConfigsLoadingFlags$[property.key] | async) === false || !refreshableConfigsLoadingFlags$[property.key]))">
-                    <ng-container *ngTemplateOutlet="searchInputForDropdowns"></ng-container>
-                  </ng-container>
-
-                  <div class="thin-scrollbars ap-max-h-[190px] ap-overflow-y-auto">
-                    <mat-option *ngFor="let opt of (state.options | dropdownSearch:searchControl.value)"
-                      [class.!ap-h-0]="!opt.show" [class.!ap-min-h-0]="!opt.show" [value]="opt.item.value">
-                      {{opt.item.label}}
-                    </mat-option>
-                  </div>
-                  <mat-option [disabled]="true"
-                    *ngIf="state.disabled && ((refreshableConfigsLoadingFlags$[property.key] | async) === false || !refreshableConfigsLoadingFlags$[property.key])">
-                    <div> {{state.placeholder}} </div>
-                  </mat-option>
+            <mat-label> {{ (refreshableConfigsLoadingFlags$[property.key] | async)? 'Loading...' :
+              property.value.displayName
+              }}</mat-label>
+            <mat-select [formControlName]="property.key" (closed)="searchControl.setValue('')"
+              [compareWith]="dropdownCompareWithFunction">
+              <ng-container *ngIf="dropdownOptionsObservables$[property.key]| async as state">
+                <ng-container
+                  *ngIf="!(state.disabled && ((refreshableConfigsLoadingFlags$[property.key] | async) === false || !refreshableConfigsLoadingFlags$[property.key]))">
+                  <ng-container *ngTemplateOutlet="searchInputForDropdowns"></ng-container>
                 </ng-container>
-              </mat-select>
-              <mat-error *ngIf="formGroup.get(property.key)?.invalid">
-                {{property.value.displayName}} is required
-              </mat-error>
-            </mat-form-field>
-          </div>
+
+                <div class="thin-scrollbars ap-max-h-[190px] ap-overflow-y-auto">
+                  <mat-option *ngFor="let opt of (state.options | dropdownSearch:searchControl.value)"
+                    [class.!ap-h-0]="!opt.show" [class.!ap-min-h-0]="!opt.show" [value]="opt.item.value">
+                    {{opt.item.label}}
+                  </mat-option>
+                </div>
+                <mat-option [disabled]="true"
+                  *ngIf="state.disabled && ((refreshableConfigsLoadingFlags$[property.key] | async) === false || !refreshableConfigsLoadingFlags$[property.key])">
+                  <div> {{state.placeholder}} </div>
+                </mat-option>
+              </ng-container>
+            </mat-select>
+            <mat-error *ngIf="formGroup.get(property.key)?.invalid">
+              {{property.value.displayName}} is required
+            </mat-error>
+          </mat-form-field>
           <ng-container *ngTemplateOutlet="description; context:{$implicit:property}">
           </ng-container>
         </ng-template>
@@ -118,43 +116,41 @@
           *ngTemplateOutlet="customizedInputs && customizedInputs[property.key]? textInputTemplate:multiDropdownInputTemplate ;context:{$implicit:property, formGroup:formGroup}">
         </ng-container>
         <ng-template #multiDropdownInputTemplate>
-          <div class="ap-relative">
-            <mat-form-field subscriptSizing="dynamic" class="ap-w-full" appearance="outline" #dropdown
-              #dropdownUiContainer="hoverTrackerDirective" apTrackHover>
+          <mat-form-field subscriptSizing="dynamic" class="ap-w-full" appearance="outline" #dropdown
+            #dropdownUiContainer="hoverTrackerDirective" apTrackHover>
 
-              <mat-label> {{ (refreshableConfigsLoadingFlags$[property.key] | async)? 'Loading...' :
-                property.value.displayName
-                }}</mat-label>
-              <mat-select (closed)="searchControl.setValue('')" [style.display]="((dropdownOptionsObservables$[property.key] | async) === undefined 
+            <mat-label> {{ (refreshableConfigsLoadingFlags$[property.key] | async)? 'Loading...' :
+              property.value.displayName
+              }}</mat-label>
+            <mat-select (closed)="searchControl.setValue('')" [style.display]="((dropdownOptionsObservables$[property.key] | async) === undefined 
                 || (dropdownOptionsObservables$[property.key] | async) === null || 
                  (dropdownOptionsObservables$[property.key] | async)?.disabled === true)? 'none':'block' " multiple
-                [formControlName]="property.key" [compareWith]="dropdownCompareWithFunction">
+              [formControlName]="property.key" [compareWith]="dropdownCompareWithFunction">
+              <ng-container *ngIf="dropdownOptionsObservables$[property.key]| async as state">
+                <ng-container *ngTemplateOutlet="searchInputForDropdowns"></ng-container>
+                <div class="thin-scrollbars ap-max-h-[190px] ap-overflow-y-auto">
+                  <mat-option *ngFor="let opt of state.options| dropdownSearch:searchControl.value"
+                    [class.!ap-h-0]="!opt.show" [class.!ap-min-h-0]="!opt.show" [value]="opt.item.value">
+                    {{opt.item.label}}
+                  </mat-option>
+                </div>
+              </ng-container>
+            </mat-select>
+            <ng-container
+              *ngIf="!!(dropdownOptionsObservables$[property.key] | async) &&  (dropdownOptionsObservables$[property.key] | async)?.disabled === true">
+              <mat-select [formControlName]="property.key" [compareWith]="dropdownCompareWithFunction">
                 <ng-container *ngIf="dropdownOptionsObservables$[property.key]| async as state">
-                  <ng-container *ngTemplateOutlet="searchInputForDropdowns"></ng-container>
-                  <div class="thin-scrollbars ap-max-h-[190px] ap-overflow-y-auto">
-                    <mat-option *ngFor="let opt of state.options| dropdownSearch:searchControl.value"
-                      [class.!ap-h-0]="!opt.show" [class.!ap-min-h-0]="!opt.show" [value]="opt.item.value">
-                      {{opt.item.label}}
-                    </mat-option>
-                  </div>
+                  <mat-option [disabled]="true"
+                    *ngIf="state.disabled && ((refreshableConfigsLoadingFlags$[property.key] | async) === false || !refreshableConfigsLoadingFlags$[property.key])">
+                    <div> {{state.placeholder}} </div>
+                  </mat-option>
                 </ng-container>
               </mat-select>
-              <ng-container
-                *ngIf="!!(dropdownOptionsObservables$[property.key] | async) &&  (dropdownOptionsObservables$[property.key] | async)?.disabled === true">
-                <mat-select [formControlName]="property.key" [compareWith]="dropdownCompareWithFunction">
-                  <ng-container *ngIf="dropdownOptionsObservables$[property.key]| async as state">
-                    <mat-option [disabled]="true"
-                      *ngIf="state.disabled && ((refreshableConfigsLoadingFlags$[property.key] | async) === false || !refreshableConfigsLoadingFlags$[property.key])">
-                      <div> {{state.placeholder}} </div>
-                    </mat-option>
-                  </ng-container>
-                </mat-select>
-              </ng-container>
-              <mat-error *ngIf="formGroup.get(property.key)?.invalid">
-                {{property.value.displayName}} is required
-              </mat-error>
-            </mat-form-field>
-          </div>
+            </ng-container>
+            <mat-error *ngIf="formGroup.get(property.key)?.invalid">
+              {{property.value.displayName}} is required
+            </mat-error>
+          </mat-form-field>
           <ng-container *ngTemplateOutlet="description; context:{$implicit:property}">
           </ng-container>
         </ng-template>
@@ -174,29 +170,27 @@
           *ngTemplateOutlet="customizedInputs && customizedInputs[property.key]? textInputTemplate:staticDropdownInputTemplate ;context:{$implicit:property, formGroup:formGroup}">
         </ng-container>
         <ng-template #staticDropdownInputTemplate>
-          <div class="ap-relative">
-            <mat-form-field subscriptSizing="dynamic" class="ap-w-full" appearance="outline" apTrackHover
-              #dropdownUiContainer="hoverTrackerDirective" #dropdown>
+          <mat-form-field subscriptSizing="dynamic" class="ap-w-full" appearance="outline" apTrackHover
+            #dropdownUiContainer="hoverTrackerDirective" #dropdown>
 
-              <mat-label> {{ property.value.displayName }} </mat-label>
-              <mat-select [matTooltip]="property.value.description" [formControlName]="property.key"
-                (closed)="searchControl.setValue('')" [compareWith]="dropdownCompareWithFunction">
-                <ng-container *ngTemplateOutlet="searchInputForDropdowns"></ng-container>
-                <div class="thin-scrollbars ap-max-h-[190px] ap-overflow-y-auto">
-                  <mat-option *ngFor="let opt of property.value.options.options | dropdownSearch:searchControl.value"
-                    [value]="opt.item.value" [class.!ap-h-0]="!opt.show" [class.!ap-min-h-0]="!opt.show">
-                    {{opt.item.label}}
-                  </mat-option>
-                </div>
+            <mat-label> {{ property.value.displayName }} </mat-label>
+            <mat-select [matTooltip]="property.value.description" [formControlName]="property.key"
+              (closed)="searchControl.setValue('')" [compareWith]="dropdownCompareWithFunction">
+              <ng-container *ngTemplateOutlet="searchInputForDropdowns"></ng-container>
+              <div class="thin-scrollbars ap-max-h-[190px] ap-overflow-y-auto">
+                <mat-option *ngFor="let opt of property.value.options.options | dropdownSearch:searchControl.value"
+                  [value]="opt.item.value" [class.!ap-h-0]="!opt.show" [class.!ap-min-h-0]="!opt.show">
+                  {{opt.item.label}}
+                </mat-option>
+              </div>
 
-              </mat-select>
-              <mat-error *ngIf="formGroup.get(property.key)?.invalid">
-                {{property.value.displayName}} is required
-              </mat-error>
-            </mat-form-field>
-            <ng-container *ngTemplateOutlet="description; context:{$implicit:property}">
-            </ng-container>
-          </div>
+            </mat-select>
+            <mat-error *ngIf="formGroup.get(property.key)?.invalid">
+              {{property.value.displayName}} is required
+            </mat-error>
+          </mat-form-field>
+          <ng-container *ngTemplateOutlet="description; context:{$implicit:property}">
+          </ng-container>
         </ng-template>
 
       </div>
@@ -213,26 +207,24 @@
           *ngTemplateOutlet="customizedInputs && customizedInputs[property.key]? textInputTemplate:staticMultiSelectDropdownInputTemplate ;context:{$implicit:property, formGroup:formGroup}">
         </ng-container>
         <ng-template #staticMultiSelectDropdownInputTemplate>
-          <div class="ap-relative">
-            <mat-form-field subscriptSizing="dynamic" #dropdown class="ap-w-full" appearance="outline"
-              #dropdownUiContainer="hoverTrackerDirective" apTrackHover>
+          <mat-form-field subscriptSizing="dynamic" #dropdown class="ap-w-full" appearance="outline"
+            #dropdownUiContainer="hoverTrackerDirective" apTrackHover>
 
-              <mat-label> {{ property.value.displayName }} </mat-label>
-              <mat-select (closed)="searchControl.setValue('')" [matTooltip]="property.value.description"
-                [formControlName]="property.key" multiple [compareWith]="dropdownCompareWithFunction">
-                <ng-container *ngTemplateOutlet="searchInputForDropdowns"></ng-container>
-                <div class="thin-scrollbars ap-max-h-[190px] ap-overflow-y-auto">
-                  <mat-option *ngFor="let opt of property.value.options.options | dropdownSearch:searchControl.value"
-                    [class.!ap-h-0]="!opt.show" [class.!ap-min-h-0]="!opt.show" [value]="opt.item.value">
-                    {{opt.item.label}}
-                  </mat-option>
-                </div>
-              </mat-select>
-              <mat-error *ngIf="formGroup.get(property.key)?.invalid">
-                {{property.value.displayName}} is required
-              </mat-error>
-            </mat-form-field>
-          </div>
+            <mat-label> {{ property.value.displayName }} </mat-label>
+            <mat-select (closed)="searchControl.setValue('')" [matTooltip]="property.value.description"
+              [formControlName]="property.key" multiple [compareWith]="dropdownCompareWithFunction">
+              <ng-container *ngTemplateOutlet="searchInputForDropdowns"></ng-container>
+              <div class="thin-scrollbars ap-max-h-[190px] ap-overflow-y-auto">
+                <mat-option *ngFor="let opt of property.value.options.options | dropdownSearch:searchControl.value"
+                  [class.!ap-h-0]="!opt.show" [class.!ap-min-h-0]="!opt.show" [value]="opt.item.value">
+                  {{opt.item.label}}
+                </mat-option>
+              </div>
+            </mat-select>
+            <mat-error *ngIf="formGroup.get(property.key)?.invalid">
+              {{property.value.displayName}} is required
+            </mat-error>
+          </mat-form-field>
           <ng-container *ngTemplateOutlet="description; context:{$implicit:property}">
           </ng-container>
         </ng-template>
@@ -435,9 +427,7 @@
 <ng-template #textInputTemplate let-property let-formGroup="formGroup">
 
   <div [formGroup]="formGroup" #interpolatingTextComponentContainer (click)="$event.stopImmediatePropagation()"
-    class="ap-relative" apTrackHover #textInputContainer="hoverTrackerDirective">
-    <div class="ap-absolute -ap-left-[20px]" [style.top]="textInput._elementRef.nativeElement.clientHeight/2-15+'px'">
-    </div>
+    apTrackHover #textInputContainer="hoverTrackerDirective">
     <mat-form-field subscriptSizing="dynamic" class="ap-w-full" appearance="outline" #textInput
       (click)="isTriggerPieceForm?null: handler.showMentionsDropdown()">
       <mat-label>{{property.value.displayName}}</mat-label>
@@ -479,9 +469,25 @@
 </ng-template>
 
 
-
+<!--Line clamp is not working with prefix on tailwind for some reason  -->
 <ng-template #description let-property>
-  <div class="ap-text-body-2 ap-truncate ap-typography-caption ap-py-2">
-    {{property.value.description}}
+  <div class="ap-py-2 ap-flex ap-gap-2 ap-justify-between ap-markdown">
+    <div style="overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;" [style.display]="descriptionExpandedMap[property.key]? 'block': '-webkit-box'">
+      <div class="ap-typography-caption " apCheckOverflow (isOverflowed)="descriptionOverflownMap[property.key]=$event">
+        <markdown [data]="property.value.description"></markdown>
+      </div>
+    </div>
+    <div class="ap-flex ap-items-start">
+      <button class="ap-underline ap-typography-caption"
+        *ngIf="descriptionOverflownMap[property.key] || descriptionExpandedMap[property.key]"
+        (click)="descriptionExpandedMap[property.key] = !descriptionExpandedMap[property.key]">
+        {{descriptionExpandedMap[property.key]? 'less' : 'more'}} </button>
+    </div>
+
+
   </div>
+
+
 </ng-template>

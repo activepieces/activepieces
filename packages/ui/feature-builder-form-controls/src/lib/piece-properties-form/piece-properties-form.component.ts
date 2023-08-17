@@ -98,7 +98,8 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
   refreshableConfigsLoadingFlags$: {
     [key: ConfigKey]: BehaviorSubject<boolean>;
   } = {};
-
+  descriptionOverflownMap: Record<string, boolean> = {};
+  descriptionExpandedMap: Record<string, boolean> = {};
   allAuthConfigs$: Observable<ConnectionDropdownItem[]>;
   configDropdownChanged$: Observable<unknown>;
   cloudAuthCheck$: Observable<void>;
@@ -147,7 +148,8 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
   writeValue(obj: PiecePropertiesFormValue): void {
     this.properties = obj.properties;
     this.customizedInputs = obj.customizedInputs;
-    console.log(this.properties);
+    this.descriptionExpandedMap = {};
+    this.descriptionOverflownMap = {};
     this.createForm(obj.propertiesValues);
     if (obj.setDefaultValues) {
       this.setDefaultValue$ = of(null).pipe(
