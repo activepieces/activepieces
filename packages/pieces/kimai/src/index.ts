@@ -67,7 +67,7 @@ export const kimai = createPiece({
   displayName: "Kimai",
   auth: kimaiAuth,
   minimumSupportedRelease: '0.6.0',
-  logoUrl: 'https://www.kimai.org/images/marketplace/cloudrizon-kimai-mobile-logo.png',
+  logoUrl: 'https://cdn.activepieces.com/pieces/kimai.png',
   authors: ['facferreira'],
   actions: [kimaiCreateTimesheetAction],
   triggers: [],
