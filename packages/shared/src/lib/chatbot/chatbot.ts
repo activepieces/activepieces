@@ -65,3 +65,29 @@ export const DeleteDataSourceRequest = Type.Object({
 });
 
 export type DeleteDataSourceRequest = Static<typeof DeleteDataSourceRequest>;
+
+export const TelegramWebhookRequest = Type.Object({
+  update_id: Type.Number(),
+  message: Type.Object({
+    message_id: Type.Number(),
+    from: Type.Object({
+      id: Type.Number(),
+      is_bot: Type.Boolean(),
+      first_name: Type.String(),
+      last_name: Type.String(),
+      username: Type.String(),
+      language_code: Type.String()
+    }),
+    chat: Type.Object({
+      id: Type.Number(),
+      first_name: Type.String(),
+      last_name: Type.String(),
+      username: Type.String(),
+      type: Type.String()
+    }),
+    date: Type.Number(),
+    text: Type.String()
+  })
+});
+
+export type TelegramWebhookRequest = Static<typeof TelegramWebhookRequest>;

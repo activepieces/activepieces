@@ -1,5 +1,4 @@
 import {
-    CreateDataSourceRequest,
     UpdateChatbotRequest,
     ListChatbotsRequest,
     CreateChatBotRequest,
@@ -11,6 +10,8 @@ import {
 } from '@fastify/type-provider-typebox'
 import { FastifyInstance } from 'fastify'
 import { chatbotService } from './chatbot.service'
+import { telegramController } from './integrations/telegram.controller'
+import { datasourceController } from './datasources/datasource.controller'
 
 const ChatBotIdParams = Type.Object({
     id: Type.String(),
@@ -20,6 +21,8 @@ type ChatBotIdParams = Static<typeof ChatBotIdParams>
 
 export const chatbotModule = async (app: FastifyInstance) => {
     app.register(chatbotController, { prefix: '/v1/chatbots' })
+    app.register(telegramController, { prefix: '/v1/chatbots' })
+    app.register(datasourceController, { prefix: '/v1/chatbots' })
 }
 
 export const chatbotController: FastifyPluginCallbackTypebox = (
@@ -114,40 +117,5 @@ export const chatbotController: FastifyPluginCallbackTypebox = (
             })
         },
     ),
-    app.post(
-        '/:id/datasources',
-        {
-            schema: {
-                params: ChatBotIdParams,
-                body: CreateDataSourceRequest,
-            },
-        },
-        async (request) => {
-            return chatbotService.createDatasource({
-                projectId: request.principal.projectId,
-                chatbotId: request.params.id,
-                request: request.body,
-            })
-        },
-    ),
-    app.delete(
-        '/:id/datasources/:datasourceId',
-        {
-            schema: {
-                params: Type.Object({
-                    id: Type.String(),
-                    datasourceId: Type.String(),
-                }),
-            },
-        },
-        async (request) => {
-            return chatbotService.deleteDatasource({
-                projectId: request.principal.projectId,
-                chatbotId: request.params.id,
-                dataSourceId: request.params.datasourceId,
-            })
-        },
-    ),
-
     done()
 }

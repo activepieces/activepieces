@@ -17,8 +17,7 @@ import { ChatbotEntity } from './chatbot.entity'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { getChatBotType, runBot } from '@activepieces/chatbots'
-import { deleteDataSource, syncDatasource } from './datasource-helper'
-import { faissEmbedding } from '@activepieces/chatbots'
+import { datasourceService } from './datasources/datasource-service'
 
 const chatbotRepo = databaseConnection.getRepository(ChatbotEntity)
 
@@ -183,7 +182,7 @@ export const chatbotService = {
             id: datasourceId,
             ...request,
         })
-        await syncDatasource({
+        await datasourceService.syncDatasource({
             botId: chatbotId,
             datasourceId,
             propsValue: request.props,
@@ -207,7 +206,7 @@ export const chatbotService = {
         chatbot.dataSources = chatbot.dataSources.filter(
             (ds) => ds.id !== dataSourceId,
         )
-        await deleteDataSource({
+        await datasourceService.deleteDataSource({
             botId: chatbotId,
             datasourceId: dataSourceId,
         })

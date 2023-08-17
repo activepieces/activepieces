@@ -1,8 +1,8 @@
-import { Chatbot, Project } from "@activepieces/shared";
-import { EntitySchema } from "typeorm";
-import { BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from "../database/database-common";
+import { Chatbot, Project } from '@activepieces/shared'
+import { EntitySchema } from 'typeorm'
+import { BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../database/database-common'
 
-type ChatbotSchema = Chatbot &{
+type ChatbotSchema = Chatbot & {
     project: Project
 }
 
@@ -35,4 +35,4 @@ export const ChatbotEntity = new EntitySchema<ChatbotSchema>({
             },
         },
     },
-});
+})

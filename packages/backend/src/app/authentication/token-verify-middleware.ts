@@ -9,6 +9,7 @@ const ignoredRoutes = new Set([
     '/v1/firebase/sign-in',
     '/v1/billing/stripe/webhook',
     // END EE
+    '/v1/chatbots/:id/telegram/webhook',
     '/v1/flow-runs/:id/resume',
     '/v1/pieces/stats',
     '/v1/pieces/:name',
