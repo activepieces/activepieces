@@ -43,6 +43,7 @@ import { globals } from '../globals';
 import { connectionService } from '../services/connections.service';
 import { Utils } from '../utils';
 import { codeExecutor } from '../executors/code-executer';
+import { createTagsManager } from '../services/tags.service';
 
 type GetPackageNameParams = {
   pieceName: string;
@@ -234,6 +235,7 @@ export const pieceHelper = {
         executionType: ExecutionType.BEGIN,
         auth: processedInput[AUTHENTICATION_PROPERTY_NAME],
         propsValue: processedInput,
+        tags: createTagsManager(executionState),
         store: createContextStore('', globals.flowVersionId),
         connections: {
           get: async (key: string) => {

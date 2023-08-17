@@ -398,6 +398,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
       if (
         prop.required &&
         prop.type !== PropertyType.OBJECT &&
+        prop.type !== PropertyType.MARKDOWN &&
         prop.type !== PropertyType.ARRAY
       ) {
         validators.push(Validators.required);

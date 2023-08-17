@@ -32,6 +32,10 @@ export class ExecutionState {
     return this._taskCount
   }
 
+  public addTags(tags: string[]) {
+    this._tags.push(...tags); 
+  }
+
   public addConnectionTags(tags: string[]) {
     this._tags.push(...tags.map(tag => `connection:${tag}`));
     // Sorting the array
