@@ -1,5 +1,5 @@
-import { kimaiAuth } from "@activepieces/piece-kimai";
 import { PiecePropValueSchema, Property } from "@activepieces/pieces-framework";
+import { kimaiAuth } from "../..";
 import { KimaiClient } from "./client";
 
 export const kimaiCommon = {
