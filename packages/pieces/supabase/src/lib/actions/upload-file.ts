@@ -32,6 +32,9 @@ export const uploadFile = createAction({
         if (error) {
             throw new Error(error.message);
         }
-        return data;
+        const { data: pbData } = supabase.storage.from(bucket).getPublicUrl(filePath);
+        return {
+            publicUrl: pbData.publicUrl,
+        }
     }
 })
