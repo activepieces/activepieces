@@ -464,6 +464,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "FlorinBuffet",
+      "name": "Florin Buffet",
+      "avatar_url": "https://avatars.githubusercontent.com/u/73933252?v=4",
+      "profile": "https://buffetitservices.ch",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "commitType": "docs"
