@@ -114,6 +114,7 @@
         "packages/pieces/invoiceninja/src/index.ts"
       ],
       "@activepieces/piece-jotform": ["packages/pieces/jotform/src/index.ts"],
+      "@activepieces/piece-kimai": ["packages/pieces/kimai/src/index.ts"],
       "@activepieces/piece-kizeo-forms": [
         "packages/pieces/kizeo-forms/src/index.ts"
       ],
