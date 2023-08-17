@@ -49,6 +49,7 @@
     "@sendgrid/mail": "^7.7.0",
     "@sentry/node": "^7.38.0",
     "@sinclair/typebox": "^0.26.3",
+    "@supabase/supabase-js": "^2.32.0",
     "@types/ssh2-sftp-client": "^9.0.0",
     "airtable": "^0.11.6",
     "ajv": "^8.12.0",
