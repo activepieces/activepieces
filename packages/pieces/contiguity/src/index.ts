@@ -12,7 +12,7 @@ export const contiguity = createPiece({
   displayName: "Contiguity",
   auth: contigAuth,
   minimumSupportedRelease: '0.7.1',
-  logoUrl: '',
+  logoUrl: 'https://cdn.activepieces.com/pieces/contiguity.png',
   authors: ['Owlcept'],
   actions: [sendSMS],
   triggers: [],
