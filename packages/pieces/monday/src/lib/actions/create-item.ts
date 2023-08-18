@@ -9,14 +9,6 @@ export const mondayCreateAnItem = createAction({
   name: 'monday_create_an_item',
   displayName: 'Create Item',
   description: 'Create a new item inside a board.',
-  sampleData: {
-    "data": {
-      "create_item": {
-        "id": "1175651821"
-      }
-    },
-    "account_id": 16284131
-  },
   props: {
     workspace_id: mondayProps.workspace_id(true),
     board_id: mondayProps.board_id(true),

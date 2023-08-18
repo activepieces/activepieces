@@ -11,11 +11,6 @@ export const slackSendDirectMessageAction = createAction({
     name: 'send_direct_message',
     displayName: 'Send Message To A User',
     description: 'Send message to a user',
-    sampleData: {
-      success: true,
-      message: 'sample message',
-      results: [1, 2, 3, 4],
-    },
     props: {
       userId,
       text,

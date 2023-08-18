@@ -151,22 +151,25 @@ export const Property = {
 };
 
 export const PieceAuth = {
-	SecretText<R extends boolean>(request: Properties<SecretTextProperty<R>>): R extends true ? SecretTextProperty<true> : SecretTextProperty<false> {
-		return { ...request, valueSchema: undefined, type: PropertyType.SECRET_TEXT } as unknown as R extends true ? SecretTextProperty<true> : SecretTextProperty<false>;
+	SecretText<R extends boolean>(request: AuthProperties<SecretTextProperty<R>>): R extends true ? SecretTextProperty<true> : SecretTextProperty<false> {
+		return { ...request, valueSchema: undefined, type: PropertyType.SECRET_TEXT, displayName: 'Connection' } as unknown as R extends true ? SecretTextProperty<true> : SecretTextProperty<false>;
 	},
-	BasicAuth<R extends boolean>(request: Properties<BasicAuthProperty<R>>): R extends true ? BasicAuthProperty<true> : BasicAuthProperty<false> {
-		return { ...request, valueSchema: undefined, type: PropertyType.BASIC_AUTH } as unknown as R extends true ? BasicAuthProperty<true> : BasicAuthProperty<false>;
+	BasicAuth<R extends boolean>(request: AuthProperties<BasicAuthProperty<R>>): R extends true ? BasicAuthProperty<true> : BasicAuthProperty<false> {
+		return { ...request, valueSchema: undefined, type: PropertyType.BASIC_AUTH, displayName: 'Connection' } as unknown as R extends true ? BasicAuthProperty<true> : BasicAuthProperty<false>;
 	},
-	CustomAuth<R extends boolean, T extends CustomAuthProps>(request: Properties<CustomAuthProperty<R, T>>):
+	CustomAuth<R extends boolean, T extends CustomAuthProps>(request: AuthProperties<CustomAuthProperty<R, T>>):
 		R extends true ? CustomAuthProperty<true, T> : CustomAuthProperty<false, T> {
-		return { ...request, valueSchema: undefined, type: PropertyType.CUSTOM_AUTH } as unknown as R extends true ? CustomAuthProperty<true, T> : CustomAuthProperty<false, T>;
+		return { ...request, valueSchema: undefined, type: PropertyType.CUSTOM_AUTH, displayName: 'Connection' } as unknown as R extends true ? CustomAuthProperty<true, T> : CustomAuthProperty<false, T>;
 	},
-	OAuth2<R extends boolean, T extends OAuth2Props>(request: Properties<OAuth2Property<R, T>>): R extends true ? OAuth2Property<true, T> : OAuth2Property<false, T> {
-		return { ...request, valueSchema: undefined, type: PropertyType.OAUTH2 } as unknown as R extends true ? OAuth2Property<true, T> : OAuth2Property<false, T>;
+	OAuth2<R extends boolean, T extends OAuth2Props>(request: AuthProperties<OAuth2Property<R, T>>): R extends true ? OAuth2Property<true, T> : OAuth2Property<false, T> {
+		return { ...request, valueSchema: undefined, type: PropertyType.OAUTH2, displayName: 'Connection' } as unknown as R extends true ? OAuth2Property<true, T> : OAuth2Property<false, T>;
 	},
 	None() {
 		return undefined;
 	}
 };
+
+type AuthProperties<T> = Omit<Properties<T>, "displayName">;
+
 
 type Properties<T> = Omit<T, "valueSchema" | "type" | "defaultValidators" | "defaultProcessors">;

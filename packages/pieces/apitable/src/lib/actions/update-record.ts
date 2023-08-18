@@ -8,28 +8,6 @@ export const apiTableUpdateRecord = createAction({
     name: 'apitable_update_record',
     displayName: 'Update APITable Record',
     description: 'updates a record in datasheet.',
-    sampleData: {
-        "code": 200,
-        "success": true,
-        "data": {
-          "records": [
-            {
-              "recordId": "recwFSozTQON7",
-              "createdAt": 1689774745000,
-              "updatedAt": 1689775686000,
-              "fields": {
-                "Long text": "Do people really look at this?",
-                "asdasd": "hmmm",
-                "Options": [
-                  "wow"
-                ],
-                "Title": "amazing"
-              }
-            }
-          ]
-        },
-        "message": "SUCCESS"
-    },
     props: {
         datasheet: APITableCommon.datasheet,
         recordId: Property.ShortText({

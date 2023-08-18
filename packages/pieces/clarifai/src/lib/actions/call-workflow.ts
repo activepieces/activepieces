@@ -16,7 +16,6 @@ export const workflowPredictAction = createAction({
             required: true,
         }),
     },
-    sampleData: { },
     async run(ctx) {
         const { auth } = ctx
         const { workflowUrl, file } = ctx.propsValue;

@@ -9,14 +9,6 @@ export const mondayUpdateAnItem = createAction({
   name: 'monday_update_an_item',
   displayName: 'Update Item',
   description: 'Update an item inside a board.',
-  sampleData: {
-    "data": {
-      "change_multiple_column_values": {
-        "id": "1175651821"
-      }
-    },
-    "account_id": 16284131
-  },
   props: {
     workspace_id: mondayProps.workspace_id(true),
     board_id: mondayProps.board_id(true),

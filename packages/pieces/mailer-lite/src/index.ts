@@ -13,7 +13,7 @@ To obtain your API key, follow these steps:
 
 export const mailerListAuth = PieceAuth.SecretText({
     description: markdownDescription,
-    displayName: 'Authentication',
+    
     required: true,
 })
 

@@ -204,28 +204,4 @@ export const createCredential = createAction({
     const res = await httpClient.sendRequest(request);
     return res.body;
   },
-  sampleData: {
-    message: 'success',
-    responses: [
-      {
-        certificateId: 'String',
-        recipient: {
-          id: 'String',
-          email: 'String',
-          data: 'Object',
-        },
-        category: {
-          id: 'String',
-          name: 'String',
-        },
-        eventName: 'String',
-        pdfUrl: 'String',
-        imageUrl: 'String',
-        certificateUrl: 'String',
-        issueDate: 'String',
-        expiryDate: 'String',
-        walletId: 'String',
-      },
-    ],
-  },
 });

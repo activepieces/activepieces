@@ -9,8 +9,6 @@ export const runQuery = createAction({
         name: 'run_query',
         displayName: 'Run Query (Advanced)',
         description: 'Run a salesforce query',
-        sampleData: {
-        },
         props: {
             query: Property.ShortText({
                 displayName: 'Query',

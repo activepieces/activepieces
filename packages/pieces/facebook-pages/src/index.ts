@@ -13,7 +13,7 @@ To Obtain the following credentials:
 `
 
 export const facebookPagesAuth = PieceAuth.OAuth2({
-    displayName: 'Authentication',
+    
     description: markdown,
     authUrl: "https://graph.facebook.com/oauth/authorize",
     tokenUrl: "https://graph.facebook.com/oauth/access_token",

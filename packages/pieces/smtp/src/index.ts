@@ -3,7 +3,7 @@ import { PieceAuth, Property, createPiece } from '@activepieces/pieces-framework
 import { sendEmail } from './lib/actions/send-email';
 
 export const smtpAuth = PieceAuth.CustomAuth({
-  displayName: 'Authentication',
+  
   required: true,
   props: {
     host: Property.ShortText({

@@ -5,7 +5,6 @@ import { newFile } from "./lib/triggers/new-file";
 import { readFile } from "./lib/actions/read-file";
 
 export const amazonS3Auth = PieceAuth.CustomAuth({
-    displayName: 'Authentication',
     props: {
         accessKeyId: Property.ShortText({
             displayName: 'Access Key ID',

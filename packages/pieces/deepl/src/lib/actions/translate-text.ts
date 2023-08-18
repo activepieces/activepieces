@@ -171,14 +171,6 @@ export const translateText = createAction({
             required: false
         }),
 	},
-    sampleData: {
-        "translations": [
-            {
-              "detected_source_language": "EN",
-              "text": "Hallo, Welt!"
-            }
-        ]
-    },
 	async run(context) {
         const DEEPL_FREE_URL = "https://api-free.deepl.com/v2/translate";
         const DEEPL_PAID_URL = "https://api.deepl.com/v2/translate";

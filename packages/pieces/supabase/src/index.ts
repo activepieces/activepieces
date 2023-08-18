@@ -6,7 +6,7 @@ import {
 import { uploadFile } from './lib/actions/upload-file';
 
 export const supabaseAuth = PieceAuth.CustomAuth({
-  displayName: 'Authentication',
+  
   required: true,
   props: {
     url: Property.ShortText({

@@ -18,7 +18,6 @@ export const audioToTextModelPredictAction = createAction({
             required: true,
         }),
     },
-    sampleData: { },
     async run(ctx) {
         const { auth } = ctx
         const { modelUrl, file } = ctx.propsValue;

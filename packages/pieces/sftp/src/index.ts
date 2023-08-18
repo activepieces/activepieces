@@ -4,7 +4,7 @@ import { createFile } from "./lib/actions/create-file";
 import { newOrModifiedFile } from "./lib/triggers/new-modified-file";
 
 export const sftpAuth = PieceAuth.CustomAuth({
-  displayName: 'Authentication',
+  
   description: 'Enter the authentication details',
   props: {
     host: Property.ShortText({

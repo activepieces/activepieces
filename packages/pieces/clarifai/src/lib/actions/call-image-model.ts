@@ -16,7 +16,6 @@ export const visualClassifierModelPredictAction = createAction({
             required: true,
         }),
     },
-    sampleData: { },
     async run(ctx) {
         const { auth } = ctx
         const { modelUrl, file } = ctx.propsValue;
@@ -46,7 +45,6 @@ export const imageToTextModelPredictAction = createAction({
             required: true,
         }),
     },
-    sampleData: { },
     async run(ctx) {
         const { auth } = ctx
         const { modelUrl, file } = ctx.propsValue;

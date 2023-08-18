@@ -7,39 +7,6 @@ export const bannerbearCreateImageAction = createAction({
   name: 'bannerbear_create_image', // Must be a unique across the piece, this shouldn't be changed.
   displayName: 'Create Image',
   description: 'Create image from Bannerbear template',
-  sampleData: {
-    "created_at": "2023-02-13T23:53:05.445Z",
-    "status": "completed",
-    "self": "https://api.bannerbear.com/v2/images/VA54EW2ZqQr5eKOP6egGPNXJl",
-    "uid": "VA54EW2ZqQr5eKOP6egGPNXJl",
-    "image_url": "https://images.bannerbear.com/direct/2by4GqMJbkdMERad9x/requests/000/034/020/670/VA54EW2ZqQr5eKOP6egGPNXJl/0b067422c8a3023c3301a64a5e8fcb8d7099b8ad.png",
-    "image_url_png": "https://images.bannerbear.com/direct/2by4GqMJbkdMERad9x/requests/000/034/020/670/VA54EW2ZqQr5eKOP6egGPNXJl/0b067422c8a3023c3301a64a5e8fcb8d7099b8ad.png",
-    "image_url_jpg": "https://images.bannerbear.com/direct/2by4GqMJbkdMERad9x/requests/000/034/020/670/VA54EW2ZqQr5eKOP6egGPNXJl/0b067422c8a3023c3301a64a5e8fcb8d7099b8ad.jpg",
-    "template": "Rqg32K5QE6Y58V07Y6",
-    "template_version": null,
-    "modifications": [
-      {
-        "name": "message",
-        "text": "You can change this text",
-        "color": null,
-        "background": null
-      },
-      {
-        "name": "face",
-        "image_url": "https://cdn.bannerbear.com/sample_images/welcome_bear_photo.jpg"
-      }
-    ],
-    "webhook_url": null,
-    "webhook_response_code": null,
-    "transparent": false,
-    "metadata": null,
-    "template_name": "Template 1",
-    "width": 1200,
-    "height": 700,
-    "render_pdf": false,
-    "pdf_url": null,
-    "pdf_url_compressed": null
-  },
   props: {
     template: Property.Dropdown({
       displayName: 'Template',

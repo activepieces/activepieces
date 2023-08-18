@@ -13,8 +13,6 @@ export const createVideoPost = createAction({
             title: facebookPagesCommon.title,
             description: facebookPagesCommon.description
         },
-        sampleData: {},
-
         async run(context) {
             const page: FacebookPageDropdown = context.propsValue.page!
 
