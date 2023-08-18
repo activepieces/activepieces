@@ -4,7 +4,6 @@ import { kimaiCreateTimesheetAction } from "./lib/actions/create-timesheet";
 import { makeClient } from "./lib/common";
 
 export const kimaiAuth = PieceAuth.CustomAuth({
-  displayName: 'Authentication',
   description: `
   To configure API access:
 
