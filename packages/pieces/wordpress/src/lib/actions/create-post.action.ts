@@ -279,7 +279,6 @@ export const createWordpressPost = createAction({
             const formData = new FormData();
             const { filename, base64 } = context.propsValue.featured_media_file;
             formData.append('file', Buffer.from(base64, "base64"), filename);
-            console.log(context.propsValue.featured_media_file.filename);
             const uploadMediaResponse = await httpClient.sendRequest<{ id: string }>({
                 method: HttpMethod.POST,
                 url: `${context.auth.website_url.trim()}/wp-json/wp/v2/media`,
@@ -293,7 +292,7 @@ export const createWordpressPost = createAction({
                     password: context.auth.password,
                 },
             });
-            requestBody['feature_media'] = uploadMediaResponse.body.id;
+            requestBody['featured_media'] = uploadMediaResponse.body.id;
         }
         requestBody['content'] = context.propsValue.content;
         requestBody['title'] = context.propsValue.title;
