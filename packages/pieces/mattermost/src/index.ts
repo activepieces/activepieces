@@ -9,7 +9,7 @@ const markdownDescription = `
 `;
 
 export const mattermostAuth = PieceAuth.CustomAuth({
-    displayName: "Authentication",
+    
     description: markdownDescription,
     required: true,
     props: {

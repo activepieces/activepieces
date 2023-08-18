@@ -10,7 +10,7 @@ Follow these instructions to get your DeepL API Key:
 3. Go to the API section and obtain your DeepL API Key.
 `
 export const deeplAuth = PieceAuth.CustomAuth({
-  displayName: 'Authentication',
+  
   description: markdownDescription,
   props: {
       key: Property.ShortText({

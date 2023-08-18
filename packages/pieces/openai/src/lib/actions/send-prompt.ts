@@ -112,7 +112,6 @@ export const askOpenAI = createAction({
       ]
     })
   },
-  sampleData: {},
   async run({ auth, propsValue }) {
     const configuration = new Configuration({
       apiKey: auth

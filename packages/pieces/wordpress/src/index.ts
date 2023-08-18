@@ -14,7 +14,7 @@ const markdownPropertyDescription = `
 `
 
 export const wordpressAuth = PieceAuth.CustomAuth({
-    displayName: 'Authentication',
+    
     description: markdownPropertyDescription,
     required: true,
     props: {

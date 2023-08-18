@@ -4,7 +4,7 @@ import { mailChimpSubscribeTrigger } from './lib/triggers/subscribe-trigger';
 
 export const mailchimpAuth = PieceAuth.OAuth2({
     description: "",
-    displayName: 'Authentication',
+    
     authUrl: "https://login.mailchimp.com/oauth2/authorize",
     tokenUrl: "https://login.mailchimp.com/oauth2/token",
     required: true,

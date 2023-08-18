@@ -9,8 +9,6 @@ export const UpdateObjectById = createAction({
         name: 'update_object_by_id',
         displayName: 'Update Object (Advanced)',
         description: 'Update object by Id',
-        sampleData: {
-        },
         props: {
             object: salesforcesCommon.object,
             id: Property.ShortText({

@@ -3,7 +3,7 @@ import { PieceAuth, Property, createPiece } from "@activepieces/pieces-framework
 import { newEmail } from "./lib/triggers/new-email";
 
 export const imapAuth = PieceAuth.CustomAuth({
-    displayName: 'Authentication',
+    
     description: 'Enter your IMAP server authentication details',
     props: {
         host: Property.ShortText({

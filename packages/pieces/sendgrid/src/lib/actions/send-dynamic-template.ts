@@ -66,7 +66,4 @@ export const sendDynamicTemplate = createAction({
                 success: true
             };
         },
-        sampleData: {
-            success: true
-        }
 });

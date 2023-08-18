@@ -13,7 +13,7 @@ export const instagramCommon = {
     baseUrl: 'https://graph.facebook.com/v17.0',
 
     authentication: PieceAuth.OAuth2({
-        displayName: 'Authentication',
+        
         description: markdown,
         authUrl: "https://graph.facebook.com/oauth/authorize",
         tokenUrl: "https://graph.facebook.com/oauth/access_token",

@@ -27,7 +27,6 @@ export const postInputsAction = createAction({
             required: true,
         }),
     },
-    sampleData: { },
     async run(ctx) {
         const { auth } = ctx
         const { userId, appId, file } = ctx.propsValue;

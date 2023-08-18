@@ -2,7 +2,6 @@ import { PieceAuth, Property } from '@activepieces/pieces-framework';
 
 export function soapAuth() {
     return PieceAuth.CustomAuth({
-        displayName: 'Security',
         required: true,
         props: {
           type: Property.StaticDropdown({

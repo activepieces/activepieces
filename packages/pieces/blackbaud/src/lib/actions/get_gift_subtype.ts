@@ -12,25 +12,6 @@ export const blackbaudGetGiftSubtypes = createAction({
     props: {
         ...blackbaudCommon.auth_props,
     },
-    sampleData: [
-        {
-            "count": 12,
-            "value": [
-                "NotInFund",
-                "Acreage",
-                "Annuity",
-                "Auction",
-                "Bequest",
-                "Charitable Lead Trust",
-                "Charitable Remainder Trust",
-                "Computers",
-                "Event",
-                "Life Insurance Policy",
-                "Membership",
-                "United Way"
-            ]
-        }
-    ],
     async run(configValue) {
         const { subscription_key } = configValue.propsValue;
         const accessToken = configValue.auth.access_token;

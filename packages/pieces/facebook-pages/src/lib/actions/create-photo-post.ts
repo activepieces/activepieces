@@ -14,8 +14,6 @@ export const createPhotoPost = createAction({
         photo: facebookPagesCommon.photo,
         caption: facebookPagesCommon.caption
     },
-    sampleData: {},
-
     async run(context) {
         const page: FacebookPageDropdown = context.propsValue.page!
 

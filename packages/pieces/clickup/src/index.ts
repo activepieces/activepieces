@@ -11,7 +11,6 @@ import { clickupTriggers as triggers } from "./lib/triggers";
 
 export const clickupAuth = PieceAuth.OAuth2({
     description: "",
-    displayName: 'Authentication',
     authUrl: "https://app.clickup.com/api",
     tokenUrl: "https://app.clickup.com/api/v2/oauth/token",
     required: true,

@@ -18,7 +18,7 @@ Note that the base URL of your WooCommerce instance needs to be on a secure (HTT
 `;
 
 export const wooAuth = PieceAuth.CustomAuth({
-    displayName: 'Authentication',
+    
     description: authDescription,
     required: true,
     props: {

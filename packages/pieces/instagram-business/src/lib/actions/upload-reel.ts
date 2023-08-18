@@ -12,7 +12,6 @@ export const uploadReel = createAction({
     video: instagramCommon.video,
     caption: instagramCommon.caption
   },
-  sampleData: {},
   async run(context) {
     const page: FacebookPageDropdown = context.propsValue.page!;
     const result = await instagramCommon.createVideoPost(
