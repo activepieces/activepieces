@@ -3,6 +3,7 @@ import { airtableCreateRecordAction } from './lib/actions/create-record';
 import { airtableNewRecordTrigger } from './lib/trigger/new-record.trigger';
 
 export const airtableAuth = PieceAuth.SecretText({
+    displayName: 'Personal Token',
     required: true,
     description: `
     To obtain your personal token, follow these steps:

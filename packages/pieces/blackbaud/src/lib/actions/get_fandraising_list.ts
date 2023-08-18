@@ -39,25 +39,6 @@ export const blackbaudGetFundraisingList = createAction({
             required: false,
         })
     },
-    sampleData: [
-        {
-            "count": 1,
-            "value": [
-                {
-                    "id": "1",
-                    "category": "Annual",
-                    "date_added": "1999-06-25T11:59:57+00:00",
-                    "date_modified": "2007-06-18T14:44:52.623+00:00",
-                    "description": "Annual Newsletter",
-                    "goal": {
-                        "value": 250000
-                    },
-                    "inactive": false,
-                    "lookup_id": "NEWSLETTER"
-                }
-            ]
-        }
-    ],
     async run(configValue) {
         const { last_modified_date, date_added, include_inactive, limit, sort_token, subscription_key, fundraiser_list } = configValue.propsValue;
         const accessToken = configValue.auth.access_token;

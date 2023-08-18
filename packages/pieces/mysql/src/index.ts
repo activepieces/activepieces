@@ -3,7 +3,7 @@ import { PieceAuth, Property, createPiece } from "@activepieces/pieces-framework
 import actions from "./lib/actions";
 
 export const mysqlAuth = PieceAuth.CustomAuth({
-  displayName: "Authentication",
+  
       props: {
           host: Property.ShortText({
               displayName: 'Host',

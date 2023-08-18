@@ -11,7 +11,6 @@ Here are the simple steps to get your credentials:
 `
 
 export const pastebinAuth = PieceAuth.CustomAuth({
-    displayName: 'API Authentication',
     required: true,
     description: markdownDescription,
     props: {

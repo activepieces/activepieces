@@ -151,8 +151,8 @@ export const Property = {
 };
 
 export const PieceAuth = {
-	SecretText<R extends boolean>(request: AuthProperties<SecretTextProperty<R>>): R extends true ? SecretTextProperty<true> : SecretTextProperty<false> {
-		return { ...request, valueSchema: undefined, type: PropertyType.SECRET_TEXT, displayName: 'Connection' } as unknown as R extends true ? SecretTextProperty<true> : SecretTextProperty<false>;
+	SecretText<R extends boolean>(request: Properties<SecretTextProperty<R>>): R extends true ? SecretTextProperty<true> : SecretTextProperty<false> {
+		return { ...request, valueSchema: undefined, type: PropertyType.SECRET_TEXT } as unknown as R extends true ? SecretTextProperty<true> : SecretTextProperty<false>;
 	},
 	BasicAuth<R extends boolean>(request: AuthProperties<BasicAuthProperty<R>>): R extends true ? BasicAuthProperty<true> : BasicAuthProperty<false> {
 		return { ...request, valueSchema: undefined, type: PropertyType.BASIC_AUTH, displayName: 'Connection' } as unknown as R extends true ? BasicAuthProperty<true> : BasicAuthProperty<false>;
