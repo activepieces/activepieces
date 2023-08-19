@@ -30,7 +30,10 @@ const polling: Polling<PiecePropValueSchema<typeof sftpAuth>, { path: string, ig
                 files = files.filter(file => !file.name.startsWith('.'));
 
             return files.map(file => ({
-                data: file,
+                data: {
+                    ...file,
+                    path: `${propsValue.path}/${file.name}`
+                },
                 epochMilliSeconds: dayjs(file.modifyTime).valueOf()
             }));
         } catch (err) {
