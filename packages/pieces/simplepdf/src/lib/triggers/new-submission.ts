@@ -47,6 +47,6 @@ export const simplePDFNewSubmission = createTrigger({
     // Empty
   },
   async run(context) {
-    return [context.payload.body.data];
+    return [context.payload?.body?.data ?? {}];
   },
 });
