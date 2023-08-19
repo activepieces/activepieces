@@ -482,6 +482,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "bendersej",
+      "name": "Benjamin André-Micolon",
+      "avatar_url": "https://avatars.githubusercontent.com/u/10613140?v=4",
+      "profile": "https://bendersej.com",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

@@ -181,6 +181,7 @@ We welcome contributions big or small and in different directions. The best way 
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/facferreira"><img src="https://avatars.githubusercontent.com/u/487349?v=4?s=100" width="100px;" alt="Fábio Ferreira"/><br /><sub><b>Fábio Ferreira</b></sub></a><br /><a href="#plugin-facferreira" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://buffetitservices.ch"><img src="https://avatars.githubusercontent.com/u/73933252?v=4?s=100" width="100px;" alt="Florin Buffet"/><br /><sub><b>Florin Buffet</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=FlorinBuffet" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Owlcept"><img src="https://avatars.githubusercontent.com/u/67299472?v=4?s=100" width="100px;" alt="Drew Lewis"/><br /><sub><b>Drew Lewis</b></sub></a><br /><a href="#plugin-Owlcept" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://bendersej.com"><img src="https://avatars.githubusercontent.com/u/10613140?v=4?s=100" width="100px;" alt="Benjamin André-Micolon"/><br /><sub><b>Benjamin André-Micolon</b></sub></a><br /><a href="#plugin-bendersej" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>
