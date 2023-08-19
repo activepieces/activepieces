@@ -491,6 +491,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "DGurskij",
+      "name": "Denis Gurskij",
+      "avatar_url": "https://avatars.githubusercontent.com/u/26856659?v=4",
+      "profile": "https://github.com/DGurskij",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
