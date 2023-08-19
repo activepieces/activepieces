@@ -1,5 +1,4 @@
 import {
-    ApEnvironment,
     EventPayload,
     ExecutionType,
     Flow,
@@ -14,9 +13,7 @@ import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { triggerUtils } from '../helper/trigger-utils'
-import { system } from '../helper/system/system'
-import { SystemProp } from '../helper/system/system-prop'
-import { getPublicIp } from '../helper/public-ip-utils'
+import { getServerUrl } from '../helper/public-ip-utils'
 import { triggerEventService } from '../flows/trigger-events/trigger-event.service'
 import { isNil } from '@activepieces/shared'
 import { logger } from '../helper/logger'
@@ -38,10 +35,6 @@ export const webhookService = {
             saveSampleDataForWebhookTesting(
                 flow,
                 payload)
-            return null
-        }
-        if (flowInstance.status !== FlowInstanceStatus.ENABLED) {
-            logger.info(`[WebhookService#handshake] flowInstance not found or not enabled ignoring the webhook handshake, flowId=${flow.id}`)
             return null
         }
         const flowVersion = await flowVersionService.getOneOrThrow(flowInstance.flowVersionId)
@@ -134,21 +127,7 @@ export const webhookService = {
     },
 
     async getWebhookPrefix(): Promise<string> {
-        const environment = system.getOrThrow(SystemProp.ENVIRONMENT)
-
-        let url = environment === ApEnvironment.PRODUCTION
-            ? system.getOrThrow(SystemProp.FRONTEND_URL)
-            : system.getOrThrow(SystemProp.WEBHOOK_URL)
-
-        // Localhost doesn't work with webhooks, so we need try to use the public ip
-        if (extractHostname(url) == 'localhost' && environment === ApEnvironment.PRODUCTION) {
-            url = `http://${(await getPublicIp()).ip}`
-        }
-
-        const slash = url.endsWith('/') ? '' : '/'
-        const redirect = environment === ApEnvironment.PRODUCTION ? 'api/' : ''
-
-        return `${url}${slash}${redirect}v1/webhooks`
+        return `${await getServerUrl()}v1/webhooks`
     },
 
     async getWebhookUrl({ flowId, simulate }: GetWebhookUrlParams): Promise<string> {
@@ -156,16 +135,6 @@ export const webhookService = {
         const webhookPrefix = await this.getWebhookPrefix()
         return `${webhookPrefix}/${flowId}${suffix}`
     },
-}
-
-function extractHostname(url: string): string | null {
-    try {
-        const hostname = new URL(url).hostname
-        return hostname
-    }
-    catch (e) {
-        return null
-    }
 }
 
 const getLatestFlowVersionOrThrow = async (flowId: FlowId, projectId: ProjectId): Promise<FlowVersion> => {

@@ -76,7 +76,8 @@
                 "@typescript-eslint/no-unused-vars": [
                     "error",
                     {
-                        "varsIgnorePattern": "^_.*$"
+                        "varsIgnorePattern": "^_",
+                        "argsIgnorePattern": "^_"
                     }
                 ],
                 "@typescript-eslint/space-before-function-paren": [
@@ -88,7 +89,8 @@
                     }
                 ],
                 "@typescript-eslint/space-infix-ops": "error",
-                "@typescript-eslint/keyword-spacing": "error"
+                "@typescript-eslint/keyword-spacing": "error",
+                "@typescript-eslint/explicit-function-return-type": "warn"
             }
         }
     ]

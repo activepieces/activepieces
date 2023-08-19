@@ -8,13 +8,6 @@ export const apiTableFindRecord = createAction({
     name: 'apitable_find_record',
     displayName: 'Find APITable Record',
     description: 'Finds records in datasheet.',
-    sampleData: {
-        "id": "recoyzj6c0Zekuz4V",
-        "createdTime": "2023-03-15T12:50:33.000Z",
-        "fields": {
-        "fieldName": "fieldValue"
-        }
-    },
     props: {
         datasheet: APITableCommon.datasheet,
         recordIds: Property.Array({
@@ -51,6 +44,7 @@ export const apiTableFindRecord = createAction({
         const maxRecords = context.propsValue.maxRecords;
         const pageSize = context.propsValue.pageSize ?? 100;
         const pageNum = context.propsValue.pageNum ?? 1;
+        const apiTableUrl = auth.apiTableUrl;
 
         let query = `?pageSize=${pageSize}&pageNum=${pageNum}`;
         if (recordIds) query += `&recordIds=${recordIds.join(',')}`;
@@ -59,9 +53,9 @@ export const apiTableFindRecord = createAction({
 
         const request: HttpRequest = {
             method: HttpMethod.GET,
-            url: `https://api.apitable.com/fusion/v1/datasheets/${datasheet}/records${query}`,
+            url: `${apiTableUrl.replace(/\/$/, "")}/fusion/v1/datasheets/${datasheet}/records${query}`,
             headers: {
-                "Authorization": "Bearer " + auth,
+                "Authorization": "Bearer " + auth.token,
                 "Content-Type": "application/json",
             },
         };

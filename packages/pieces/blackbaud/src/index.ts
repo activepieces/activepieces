@@ -7,7 +7,6 @@ import {blackbaudCreateGift} from './lib/actions/create-gift';
 
 export const blackbaudAuth = PieceAuth.OAuth2({
     description: "",
-    displayName: 'Authentication',
     authUrl: "https://app.blackbaud.com/oauth/authorize",
     tokenUrl: "https://oauth2.sky.blackbaud.com/token",
     required: true,

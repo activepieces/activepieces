@@ -30,7 +30,7 @@ export const zohoCrmAuth = PieceAuth.OAuth2({
       }
     })
   },
-  displayName: "Authentication",
+  
   description: "Authentication for Zoho CRM",
   scope: ["ZohoCRM.modules.READ"],
   authUrl: "https://accounts.{location}/oauth/v2/auth",

@@ -31,6 +31,8 @@ import {
   of,
   shareReplay,
   startWith,
+  take,
+  forkJoin,
   switchMap,
   tap,
 } from 'rxjs';
@@ -49,6 +51,7 @@ import {
   fadeInUp400ms,
   PieceMetadataService,
   InsertMentionOperation,
+  FlagService,
 } from '@activepieces/ui/common';
 import {
   BuilderSelectors,
@@ -130,11 +133,12 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
   setDefaultValue$: Observable<null>;
   OnChange: (value: unknown) => void;
   OnTouched: () => void;
-
+  jsonMonacoEditor: any;
   constructor(
     private fb: UntypedFormBuilder,
     private actionMetaDataService: PieceMetadataService,
     private store: Store,
+    private flagService: FlagService,
     private codeService: CodeService,
     private cd: ChangeDetectorRef
   ) {
@@ -145,6 +149,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
   writeValue(obj: PiecePropertiesFormValue): void {
     this.properties = obj.properties;
     this.customizedInputs = obj.customizedInputs;
+    console.log(this.properties);
     this.createForm(obj.propertiesValues);
     if (obj.setDefaultValues) {
       this.setDefaultValue$ = of(null).pipe(
@@ -393,6 +398,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
       if (
         prop.required &&
         prop.type !== PropertyType.OBJECT &&
+        prop.type !== PropertyType.MARKDOWN &&
         prop.type !== PropertyType.ARRAY
       ) {
         validators.push(Validators.required);
@@ -493,7 +499,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
 
   connectionValueChanged(event: {
     propertyKey: string;
-    value: `{{connections.${string}}}`;
+    value: `{{connections['${string}']}}`;
   }) {
     this.form.get(event.propertyKey)!.setValue(event.value.toString());
   }
@@ -502,11 +508,12 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
   };
 
   addMentionToJsonControl(mention: InsertMentionOperation) {
-    const monaco = (window as any).monaco.editor.getEditors()[0];
-    console.log(monaco);
-    monaco.trigger('keyboard', 'type', {
+    this.jsonMonacoEditor.trigger('keyboard', 'type', {
       text: mention.insert.mention.serverValue,
     });
+  }
+  onInit(monacoEditor: any) {
+    this.jsonMonacoEditor = monacoEditor;
   }
   formValueMiddleWare(formValue: Record<string, unknown>) {
     const formattedValue: Record<string, unknown> = { ...formValue };
@@ -603,5 +610,19 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
   }
   checkIfTheDivIsTheTarget($event: MouseEvent, noConnectionDiv: HTMLElement) {
     return $event.target === noConnectionDiv;
+  }
+
+  convertMarkdown(markdown: string): Observable<string> {
+    return forkJoin({
+      flow: this.store.select(BuilderSelectors.selectCurrentFlow).pipe(take(1)),
+      webhookPrefix: this.flagService.getWebhookUrlPrefix(),
+    }).pipe(
+      map((res) => {
+        return markdown.replace(
+          '{{webhookUrl}}',
+          `${res.webhookPrefix}/${res.flow.id}`
+        );
+      })
+    );
   }
 }

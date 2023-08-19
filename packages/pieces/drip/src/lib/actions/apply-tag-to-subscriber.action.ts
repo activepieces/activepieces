@@ -17,7 +17,6 @@ export const dripApplyTagToSubscriber = createAction({
                 description: "Tag to apply"
             })
         },
-        sampleData: {},
         async run({ auth, propsValue }) {
             const request: HttpRequest = {
                 method: HttpMethod.POST,

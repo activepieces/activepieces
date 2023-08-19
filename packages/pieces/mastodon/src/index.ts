@@ -14,7 +14,7 @@ const markdownDescription = `
 `;
 
 export const mastodonAuth = PieceAuth.CustomAuth({
-    displayName: "Authentication",
+    
     description: markdownDescription,
     props: {
         base_url: Property.ShortText({

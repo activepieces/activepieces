@@ -6,7 +6,7 @@ import { logger } from './app/helper/logger'
 import { getEdition } from './app/helper/secret-helper'
 import { ApEdition } from '@activepieces/shared'
 import { seedDevData } from './app/database/seeds/dev-seeds'
-import { closeAllConsumers } from './app/workers/flow-worker/flow-queue-consumer'
+import { flowQueueConsumer } from './app/workers/flow-worker/flow-queue-consumer'
 import { app } from './app/app'
 
 const start = async () => {
@@ -68,12 +68,13 @@ const stop = async () => {
 
     try {
         await app.close()
-        await closeAllConsumers()
+        await flowQueueConsumer.close()
         logger.info('Server stopped')
         process.exit(0)
     }
     catch (err) {
-        logger.error('Error stopping server', err)
+        logger.error('Error stopping server')
+        logger.error(err)
         process.exit(1)
     }
 }

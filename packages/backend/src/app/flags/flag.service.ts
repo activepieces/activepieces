@@ -29,8 +29,8 @@ export const flagService = {
         const now = new Date().toISOString()
         const created = now
         const updated = now
-        const currentVersion = (await import('package.json')).version
-        const latestVersion = (await this.getCurrentVersion())
+        const currentVersion = (await this.getCurrentVersion())
+        const latestVersion = (await this.getLatestPackageDotJson()).version
         flags.push(
             {
                 id: ApFlagId.ENVIRONMENT,
@@ -71,18 +71,6 @@ export const flagService = {
             {
                 id: ApFlagId.FRONTEND_URL,
                 value: system.get(SystemProp.FRONTEND_URL),
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.WARNING_TEXT_BODY,
-                value: system.get(SystemProp.WARNING_TEXT_BODY),
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.WARNING_TEXT_HEADER,
-                value: system.get(SystemProp.WARNING_TEXT_HEADER),
                 created,
                 updated,
             },
@@ -130,8 +118,6 @@ export type FlagType =
     | BaseFlagStructure<ApFlagId.WEBHOOK_URL_PREFIX, string>
     | BaseFlagStructure<ApFlagId.USER_CREATED, boolean>
     | BaseFlagStructure<ApFlagId.TELEMETRY_ENABLED, boolean>
-    | BaseFlagStructure<ApFlagId.WARNING_TEXT_BODY, string>
-    | BaseFlagStructure<ApFlagId.WARNING_TEXT_HEADER, string>
 
 type BaseFlagStructure<K extends ApFlagId, V> = {
     id: K

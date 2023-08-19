@@ -4,7 +4,6 @@ import { zoomCreateMeetingRegistrant } from './lib/actions/create-meeting-regist
 
 export const zoomAuth = PieceAuth.OAuth2({
   description: "",
-  displayName: 'Authentication',
   authUrl: "https://zoom.us/oauth/authorize",
   tokenUrl: "https://zoom.us/oauth/token",
   required: true,

@@ -7,12 +7,11 @@ import {
   FormGroup,
 } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, map } from 'rxjs';
 import { CodeArtifactControlFullscreenComponent } from './code-artifact-control-fullscreen/code-artifact-control-fullscreen.component';
 import { MatTooltip } from '@angular/material/tooltip';
 import { Artifact } from '@activepieces/ui/common';
 import { CodemirrorComponent } from '@ctrl/ngx-codemirror';
-import { CollectionBuilderService } from '@activepieces/ui/feature-builder-store';
 
 export interface CodeArtifactForm {
   content: FormControl<string>;
@@ -40,7 +39,6 @@ export class CodeArtifactFormControlComponent
       package: string;
     }>
   >;
-  refreshCodeMirror$: Observable<void>;
   @ViewChild('codeMirror') codeMirror: CodemirrorComponent;
   @ViewChild('tooltip') tooltip: MatTooltip;
   hideDelayForFullscreenTooltip = 2000;
@@ -52,22 +50,15 @@ export class CodeArtifactFormControlComponent
     readOnly: false,
     automaticLayout: true,
   };
+  fullScreenEditorClosed$: Observable<void>;
   constructor(
     private formBuilder: FormBuilder,
-    private dialogService: MatDialog,
-    private builderService: CollectionBuilderService
+    private dialogService: MatDialog
   ) {
     this.codeArtifactForm = this.formBuilder.group({
       content: new FormControl('', { nonNullable: true }),
       package: new FormControl('', { nonNullable: true }),
     });
-    this.refreshCodeMirror$ = this.builderService.refreshCodeMirror$
-      .asObservable()
-      .pipe(
-        tap(() => {
-          this.codeMirror.codeMirror?.refresh();
-        })
-      );
   }
   ngOnInit(): void {
     this.setupValueListener();
@@ -105,13 +96,25 @@ export class CodeArtifactFormControlComponent
     this.onTouched = touched;
   }
   showFullscreenEditor() {
-    this.dialogService.open(CodeArtifactControlFullscreenComponent, {
-      data: {
-        codeFilesForm: this.codeArtifactForm,
-        readOnly: this.codeEditorOptions.readOnly,
-      },
-      panelClass: 'fullscreen-dialog',
-    });
+    this.fullScreenEditorClosed$ = this.dialogService
+      .open(CodeArtifactControlFullscreenComponent, {
+        data: {
+          codeFilesForm: this.codeArtifactForm,
+          readOnly: this.codeEditorOptions.readOnly,
+        },
+        panelClass: 'fullscreen-dialog',
+      })
+      .beforeClosed()
+      .pipe(
+        tap(() => {
+          this.reinitialiseEditor();
+        }),
+        map(() => void 0)
+      );
+  }
+  /**Check ngx-monaco-editor-v2 code, you will see the editor gets reinitialised once the options are changed, no public api to do that otherwise. */
+  private reinitialiseEditor() {
+    this.codeEditorOptions = JSON.parse(JSON.stringify(this.codeEditorOptions));
   }
 
   setupValueListener() {

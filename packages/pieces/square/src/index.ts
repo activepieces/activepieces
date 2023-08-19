@@ -3,7 +3,6 @@ import crypto from 'crypto'
 import { triggers } from './lib/triggers';
 
 export const squareAuth = PieceAuth.OAuth2({
-  displayName: 'Authentication',
   description: 'Authentication',
   authUrl: 'https://connect.squareup.com/oauth2/authorize',
   tokenUrl: 'https://connect.squareup.com/oauth2/token',

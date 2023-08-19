@@ -3,7 +3,7 @@ import { PieceAuth, Property, createPiece } from "@activepieces/pieces-framework
 import { sendMessage } from "./lib/actions/send-message";
 
 export const matrixAuth = PieceAuth.CustomAuth({
-    displayName: "Authentication",
+    
     description: `
     To obtain access token & Home server:
 

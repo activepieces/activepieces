@@ -3,7 +3,7 @@ import { PieceAuth, Property, createPiece } from "@activepieces/pieces-framework
 import { textToImage } from "./lib/actions/text-to-image";
 
 export const stabilityAiAuth = PieceAuth.CustomAuth({
-  displayName: 'Authentication',
+  
   props: {
     api_key: Property.ShortText({
       displayName: 'StabilityAI API Key',

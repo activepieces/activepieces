@@ -28,7 +28,7 @@ export const salesforceAuth = PieceAuth.OAuth2({
         defaultValue: 'login'
     })
 },
-  displayName: "Authentication",
+  
   required: true,
   description: "Authenticate with Salesforce Production",
   authUrl: "https://{environment}.salesforce.com/services/oauth2/authorize",

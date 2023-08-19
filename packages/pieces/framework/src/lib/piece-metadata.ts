@@ -20,13 +20,13 @@ export type ActionBase = {
   name: string,
   displayName: string,
   description: string,
-  sampleData: unknown,
   props: PiecePropertyMap,
   requireAuth: boolean;
 }
 
 export type TriggerBase = ActionBase & {
   type: TriggerStrategy;
+  sampleData: unknown,
   handshakeConfiguration?: WebhookHandshakeConfiguration;
 };
 

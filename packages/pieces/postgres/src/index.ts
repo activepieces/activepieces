@@ -3,7 +3,7 @@ import { PieceAuth, Property, createPiece } from "@activepieces/pieces-framework
 import { runQuery } from "./lib/actions/run-query";
 
 export const postgresAuth = PieceAuth.CustomAuth({
-  displayName: "Authentication",
+  
   props: {
     host: Property.ShortText({
       displayName: 'Host',

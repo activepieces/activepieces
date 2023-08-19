@@ -8,7 +8,7 @@ import { clearSheetAction } from './lib/actions/clear-sheet';
 
 export const googleSheetsAuth = PieceAuth.OAuth2({
     description: "",
-    displayName: 'Authentication',
+    
     authUrl: "https://accounts.google.com/o/oauth2/auth",
     tokenUrl: "https://oauth2.googleapis.com/token",
     required: true,

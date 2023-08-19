@@ -96,14 +96,12 @@ export const googleSheetsCommon = {
                 [key: string]: any
             } = {}
             for (const key in firstRow) {
-                for (const Letter in firstRow[key]) {
-                    properties[Letter] = Property.ShortText({
-                        displayName: firstRow[key][Letter].toString(),
-                        description: firstRow[key][Letter].toString(),
-                        required: false,
-                        defaultValue: ''
-                    })
-                }
+                properties[key] = Property.ShortText({
+                    displayName: firstRow[key].toString(),
+                    description: firstRow[key].toString(),
+                    required: false,
+                    defaultValue: ''
+                })
             }
             return properties;
         }
@@ -144,6 +142,7 @@ export const googleSheetsCommon = {
             const ret = [];
 
             const firstRow = values[0].values;
+            const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
             if (firstRow.length === 0) {
                 let columnSize = 1;
@@ -152,8 +151,6 @@ export const googleSheetsCommon = {
                     columnSize = Math.max(columnSize, row.values.length);
                 }
 
-                const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
                 for (let i = 0; i < columnSize; i++) {
                     ret.push({
                         label: alphabet[i].toUpperCase(),
@@ -161,16 +158,27 @@ export const googleSheetsCommon = {
                     });
                 }
             } else {
+                let index = 0;
                 for (const key in firstRow) {
-                    for (const letter in firstRow[key]) {
-                        ret.push({
-                            label: firstRow[key][letter].toString(),
-                            value: letter,
-                        });
+                    let value = "A";
+                    if (index >= alphabet.length) {
+                        // if the index is greater than the length of the alphabet, we need to add another letter
+                        const firstLetter = alphabet[Math.floor(index / alphabet.length) - 1];
+                        const secondLetter = alphabet[index % alphabet.length];
+                        value = firstLetter + secondLetter;
+                    } else {
+                        value = alphabet[index];
                     }
+
+                    ret.push({
+                        label: firstRow[key].toString(),
+                        value: value,
+                    });
+                    index++;
                 }
             }
-
+            console.log(ret);
+            
             return {
                 options: ret,
                 disabled: false,
@@ -283,13 +291,14 @@ async function getValues(spreadsheetId: string, accessToken: string, sheetId: nu
 
     const res = [];
     for (let i = 0; i < response.body.values.length; i++) {
+        const values: any = {}
+        for (let j = 0; j < response.body.values[i].length; j++) {
+            values[columnToLabel(j)] = response.body.values[i][j];
+        }
+        
         res.push({
             row: i + 1,
-            values: response.body.values[i].map((value, index) => {
-                return {
-                    [columnToLabel(index)]: value
-                }
-            })
+            values
         });
 
     }

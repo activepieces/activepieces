@@ -2,8 +2,8 @@ import { AppConnectionId } from "../app-connection/app-connection";
 import { FileId } from "../file/file";
 import { FlowRunId } from "../flow-run/flow-run";
 import { FlowId } from "../flows/flow";
+import { FlowInstanceId } from "../flows/flow-instances";
 import { FlowVersionId } from "../flows/flow-version";
-import { InstanceId } from "../instance";
 import { ApId } from "./id-generator";
 
 export class ActivepiecesError extends Error {
@@ -14,6 +14,7 @@ export class ActivepiecesError extends Error {
 
 type ErrorParams =
   | AppConnectionNotFoundErrorParams
+  | AuthorizationErrorParams
   | ConfigNotFoundErrorParams
   | EngineOperationFailureParams
   | EntityNotFoundErrorParams
@@ -67,6 +68,11 @@ export type AppConnectionNotFoundErrorParams = BaseErrorParams<
   }
 >;
 
+export type AuthorizationErrorParams = BaseErrorParams<
+  ErrorCode.AUTHORIZATION,
+  Record<string, never>
+>;
+
 export type SystemInvalidErrorParams = BaseErrorParams<
   ErrorCode.SYSTEM_PROP_INVALID,
   {
@@ -84,7 +90,7 @@ export type FlowNotFoundErrorParams = BaseErrorParams<
 export type FlowInstanceNotFoundErrorParams = BaseErrorParams<
   ErrorCode.FLOW_INSTANCE_NOT_FOUND,
   {
-    id?: InstanceId
+    id?: FlowInstanceId
   }
 >
 
@@ -274,6 +280,7 @@ export type InvalidAppConnectionParams = BaseErrorParams<
 
 export enum ErrorCode {
   APP_CONNECTION_NOT_FOUND = "APP_CONNECTION_NOT_FOUND",
+  AUTHORIZATION = "AUTHORIZATION",
   CONFIG_NOT_FOUND = "CONFIG_NOT_FOUND",
   ENGINE_OPERATION_FAILURE = "ENGINE_OPERATION_FAILURE",
   ENTITY_NOT_FOUND = "ENTITY_NOT_FOUND",

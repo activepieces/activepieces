@@ -3,7 +3,7 @@ import { PieceAuth, Property, createPiece } from "@activepieces/pieces-framework
 import { sendNotification } from './lib/actions/send-notification';
 
 export const ntfyAuth = PieceAuth.CustomAuth({
-  displayName: "Authentication",
+  
   description: `
   To obtain a token:
 
@@ -32,7 +32,7 @@ export const ntfy = createPiece({
   displayName: "Ntfy",
     logoUrl: "https://cdn.activepieces.com/pieces/ntfy.png",
     minimumSupportedRelease: '0.5.0',
-  auth: PieceAuth.None(),
+  auth: ntfyAuth,
   authors: ["MyWay"],
   actions: [sendNotification],
   triggers: [],

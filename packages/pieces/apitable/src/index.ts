@@ -1,12 +1,11 @@
 
-import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
+import { createPiece, PieceAuth, Property } from "@activepieces/pieces-framework";
 import { ApiTableNewRecord } from "./lib/triggers/new-record";
 import { apiTableCreateRecord } from "./lib/actions/create-record";
 import { apiTableUpdateRecord } from "./lib/actions/update-record";
 import { apiTableFindRecord } from "./lib/actions/find-record";
 
-export const APITableAuth = PieceAuth.SecretText({
-    displayName: 'APITable Token',
+export const APITableAuth = PieceAuth.CustomAuth({
     required: true,
     description: `
     To obtain your APITable token, follow these steps:
@@ -19,6 +18,19 @@ export const APITableAuth = PieceAuth.SecretText({
     6. Click on "Generate new token".
     7. Copy the token.
     `,
+    props: {
+      token: PieceAuth.SecretText({
+        displayName: 'Token',
+        description: 'The token of the APITable account',
+        required: true,
+      }),
+      apiTableUrl: Property.ShortText({
+        displayName: 'Instance Url',
+        description: 'The url of the APITable instance.',
+        required: true,
+        defaultValue: 'https://api.apitable.com',
+      }),
+    }
 })
 
 export const apitable = createPiece({

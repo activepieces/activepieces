@@ -1,18 +1,24 @@
-import { FlowRunId } from "@activepieces/shared";
+import { FlowRunId, FlowVersionId } from "@activepieces/shared";
 
 class Globals {
-  private _collectionDirectory = './collections';
-  private _flowDirectory = './flows';
   private _codeDirectory = './codes';
   private _inputFile = './input.json';
   private _outputFile = './output.json';
-  private _executorFile = './executor.js';
   private _workerToken = '';
   private _projectId = '';
   private _apiUrl = '';
-  private _flowId = '';
+  private _serverUrl = '';
+  private _flowVersionId = '';
   private _flowRunId?: FlowRunId
   private _resumePayload: unknown
+
+  set serverUrl(_serverUrl: string) {
+    this._serverUrl = _serverUrl;
+  }
+
+  get serverUrl(): string | undefined {
+    return this._serverUrl;
+  }
 
   set flowRunId(_flowRunId: string) {
     this._flowRunId = _flowRunId;
@@ -30,14 +36,13 @@ class Globals {
     return this._resumePayload;
   }
 
-  set flowId(_flowId: string) {
-    this._flowId = _flowId;
+  set flowVersionId(_flowVersionId: FlowVersionId) {
+    this._flowVersionId = _flowVersionId;
   }
 
-  get flowId() {
-    return this._flowId;
+  get flowVersionId(): FlowVersionId {
+    return this._flowVersionId;
   }
-
 
   set apiUrl(_apiUrl: string) {
     this._apiUrl = _apiUrl;
@@ -64,14 +69,6 @@ class Globals {
     return this._workerToken;
   }
 
-  get collectionDirectory() {
-    return this._collectionDirectory;
-  }
-
-  get flowDirectory() {
-    return this._flowDirectory;
-  }
-
   get codeDirectory() {
     return this._codeDirectory;
   }
@@ -82,10 +79,6 @@ class Globals {
 
   get outputFile() {
     return this._outputFile;
-  }
-
-  get executorFile() {
-    return this._executorFile;
   }
 }
 

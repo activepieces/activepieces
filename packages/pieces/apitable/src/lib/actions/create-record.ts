@@ -8,28 +8,6 @@ export const apiTableCreateRecord = createAction({
     name: 'apitable_create_record',
     displayName: 'Create APITable Record',
     description: 'Adds a record into an ApiTable datasheet.',
-    sampleData: {
-        "code": 200,
-        "success": true,
-        "data": {
-          "records": [
-            {
-              "recordId": "recwFSozTQON7",
-              "createdAt": 1689774745000,
-              "updatedAt": 1689774745000,
-              "fields": {
-                "Long text": "you still read this?",
-                "asdasd": "bro?",
-                "Options": [
-                  "ok?"
-                ],
-                "Title": "mhm"
-              }
-            }
-          ]
-        },
-        "message": "SUCCESS"
-    },
     props: {
         datasheet: APITableCommon.datasheet,
         fields: APITableCommon.fields,
@@ -38,6 +16,7 @@ export const apiTableCreateRecord = createAction({
         const auth = context.auth;
         const datasheet = context.propsValue.datasheet;
         const dynamicFields: DynamicPropsValue = context.propsValue.fields;
+        const apiTableUrl = auth.apiTableUrl;
         const fields: {
             [n: string]: string
         } = {};
@@ -51,9 +30,9 @@ export const apiTableCreateRecord = createAction({
 
         const request: HttpRequest = {
             method: HttpMethod.POST,
-            url: `https://api.apitable.com/fusion/v1/datasheets/${datasheet}/records`,
+            url: `${apiTableUrl.replace(/\/$/, "")}/fusion/v1/datasheets/${datasheet}/records`,
             headers: {
-                "Authorization": "Bearer " + auth,
+                "Authorization": "Bearer " + auth.token,
                 "Content-Type": "application/json",
             },
             body: {

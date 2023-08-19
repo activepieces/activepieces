@@ -43,35 +43,6 @@ export const blackbaudUpsertContact = createAction({
             required: true
         })
     },
-    sampleData: [
-        {
-            "email": {
-                "address": "Kilgore_Trout64@gmail.com",
-                "do_not_email": false,
-                "inactive": false,
-                "primary": true,
-                "type": "Email"
-            },
-            "first": "Kilgore",
-            "last": "Trout",
-            "phone": {
-                "do_not_call": false,
-                "inactive": false,
-                "number": "843-537-3397",
-                "primary": true,
-                "type": "Home"
-            },
-            "address": {
-                "street1": "Street 41",
-                "city": "Calforina",
-                "state": "CA",
-                "zip": "19941",
-                "type": "Business",
-                "country": "USA"
-            },
-            "type": "Individual"
-        }
-    ],
     async run(configValue) {
         const accessToken = configValue.auth.access_token;
         const contactJson = configValue.propsValue['contact_json'] as Contact;

@@ -55,6 +55,7 @@ export class BranchStepInputFormComponent implements ControlValueAccessor {
         this.onChange({
           conditions: val.conditionsGroups,
           type: ActionType.BRANCH,
+          inputUiInfo: {},
         });
       }),
       map(() => void 0)

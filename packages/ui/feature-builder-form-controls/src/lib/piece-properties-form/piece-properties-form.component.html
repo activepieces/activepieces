@@ -34,6 +34,12 @@
 
   <ng-container [ngSwitch]="property.value.type" [formGroup]="formGroup">
 
+    <ng-container *ngSwitchCase="PropertyType.MARKDOWN">
+      <ng-container *ngIf="convertMarkdown(property.value.description) | async as markdown">
+        <ap-markdown [fullWidth]="true" [data]="markdown"> </ap-markdown>
+      </ng-container>
+    </ng-container>
+
     <ng-container *ngSwitchCase="PropertyType.CHECKBOX">
       <ng-container
         *ngTemplateOutlet="customizedInputs && customizedInputs[property.key]? dynamicValueTemplate:checkboxInputTemplate ;context:{$implicit:property, formGroup:formGroup}">
@@ -42,8 +48,12 @@
       <ng-template #checkboxInputTemplate>
         <div class="ap-flex ap-mb-[20px] ap-mr-[5px] ap-items-center ap-gap-2">
 
-          <mat-slide-toggle apTrackHover #slider="hoverTrackerDirective" [formControlName]="property.key"
-            color="primary" [matTooltip]="property.value.description">{{property.value.displayName}}</mat-slide-toggle>
+          <div apTrackHover #slider="hoverTrackerDirective" class="ap-flex ap-items-center ap-gap-2 ap-align-center">
+            <mat-slide-toggle [formControlName]="property.key" color="primary"
+              class="ap-flex-grow-1">{{property.value.displayName}}</mat-slide-toggle>
+            <ng-container *ngTemplateOutlet="propInfo; context{$implicit:property}"></ng-container>
+          </div>
+
           <ng-container
             *ngTemplateOutlet="removeOptionalPropertyIcon; context{$implicit:property, propertyUiContainer:slider}"></ng-container>
           <div class="ap-flex-grow"></div>
@@ -90,6 +100,8 @@
             </div>
             <mat-form-field class="ap-w-full" appearance="outline" #dropdown
               #dropdownUiContainer="hoverTrackerDirective" apTrackHover>
+              <mat-icon class="!ap-text-form-label" matSuffix *ngIf="property.value.description"
+                [matTooltip]="property.value.description">info</mat-icon>
               <mat-label> {{ (refreshableConfigsLoadingFlags$[property.key] | async)? 'Loading...' :
                 property.value.displayName
                 }}</mat-label>
@@ -142,12 +154,15 @@
             </div>
             <mat-form-field class="ap-w-full" appearance="outline" #dropdown
               #dropdownUiContainer="hoverTrackerDirective" apTrackHover>
+              <mat-icon class="!ap-text-form-label" matSuffix *ngIf="property.value.description"
+                [matTooltip]="property.value.description">info</mat-icon>
               <mat-label> {{ (refreshableConfigsLoadingFlags$[property.key] | async)? 'Loading...' :
                 property.value.displayName
                 }}</mat-label>
-              <mat-select (closed)="searchControl.setValue('')"
-                [style.display]="((dropdownOptionsObservables$[property.key] | async) === undefined || (dropdownOptionsObservables$[property.key] | async) === null ||  (dropdownOptionsObservables$[property.key] | async)?.disabled === true)? 'none':'block' "
-                multiple [formControlName]="property.key" [compareWith]="dropdownCompareWithFunction">
+              <mat-select (closed)="searchControl.setValue('')" [style.display]="((dropdownOptionsObservables$[property.key] | async) === undefined 
+                || (dropdownOptionsObservables$[property.key] | async) === null || 
+                 (dropdownOptionsObservables$[property.key] | async)?.disabled === true)? 'none':'block' " multiple
+                [formControlName]="property.key" [compareWith]="dropdownCompareWithFunction">
                 <ng-container *ngIf="dropdownOptionsObservables$[property.key]| async as state">
                   <ng-container *ngTemplateOutlet="searchInputForDropdowns"></ng-container>
                   <div class="thin-scrollbars ap-max-h-[190px] ap-overflow-y-auto">
@@ -200,6 +215,8 @@
             </div>
             <mat-form-field class="ap-w-full" appearance="outline" apTrackHover
               #dropdownUiContainer="hoverTrackerDirective" #dropdown>
+              <mat-icon class="!ap-text-form-label" matSuffix *ngIf="property.value.description"
+                [matTooltip]="property.value.description">info</mat-icon>
               <mat-label> {{ property.value.displayName }} </mat-label>
               <mat-select [matTooltip]="property.value.description" [formControlName]="property.key"
                 (closed)="searchControl.setValue('')" [compareWith]="dropdownCompareWithFunction">
@@ -241,6 +258,8 @@
             </div>
             <mat-form-field #dropdown class="ap-w-full" appearance="outline"
               #dropdownUiContainer="hoverTrackerDirective" apTrackHover>
+              <mat-icon class="!ap-text-form-label" matSuffix *ngIf="property.value.description"
+                [matTooltip]="property.value.description">info</mat-icon>
               <mat-label> {{ property.value.displayName }} </mat-label>
               <mat-select (closed)="searchControl.setValue('')" [matTooltip]="property.value.description"
                 [formControlName]="property.key" multiple [compareWith]="dropdownCompareWithFunction">
@@ -274,9 +293,11 @@
 
       <ng-template #arrayInputTemplate>
         <div [class.ap-mb-5]="form.disabled" #hoverContainer="hoverTrackerDirective" apTrackHover>
-          <div class="ap-mb-2 ap-flex ap-gap-2 ap-items-center" [matTooltip]="property.value.description">
+          <div class="ap-mb-2 ap-flex ap-gap-2 ap-items-center">
+            <ng-container *ngTemplateOutlet="propInfo; context{$implicit:property}"></ng-container>
             <div class="ap-cursor-pointer" (click)="array.focusFirstInput()">{{property.value.displayName}}
-            </div><ng-container
+            </div>
+            <ng-container
               *ngTemplateOutlet="removeOptionalPropertyIcon; context{$implicit:property, propertyUiContainer:hoverContainer}"></ng-container>
           </div>
           <app-array-form-control #array [formControlName]="property.key"></app-array-form-control>
@@ -296,7 +317,8 @@
 
       <ng-template #objectInputTemplate>
         <div [class.ap-mb-5]="form.disabled" #hoverContainer="hoverTrackerDirective" apTrackHover>
-          <div class="ap-mb-2 ap-flex ap-gap-2 ap-items-center" [matTooltip]="property.value.description">
+          <div class="ap-mb-2 ap-flex ap-gap-2 ap-items-center">
+            <ng-container *ngTemplateOutlet="propInfo; context{$implicit:property}"></ng-container>
             <div class="ap-cursor-pointer" (click)="dictonary.focusFirstKeyInput()">{{property.value.displayName}}
             </div>
             <ng-container
@@ -389,7 +411,12 @@
           (click)="$event.stopImmediatePropagation()">
           <div class="ap-py-2 ap-px-4 ap-flex bar-containing-beautify-button">
             <div class="ap-flex-grow">
-              <span class="ap-text-white ap-flex ap-gap-2 ap-items-center">{{property.value.displayName}} <ng-container
+
+              <span class="ap-text-white ap-flex ap-gap-2 ap-items-center">
+                <ng-container
+                  *ngTemplateOutlet="propInfo; context{$implicit:property,extraClass:'!ap-text-white ap-rounded-full !ap-text-[25px]'}"></ng-container>
+                {{property.value.displayName}}
+                <ng-container
                   *ngTemplateOutlet="removeOptionalPropertyIcon; context{$implicit:property, propertyUiContainer:hoverContainer, isWhite:true}"></ng-container>
               </span>
             </div>
@@ -399,7 +426,7 @@
             </div>
           </div>
           <div class="ap-h-[300px]">
-            <ngx-monaco-editor class="!ap-h-full !ap-w-full" [formControlName]="property.key"
+            <ngx-monaco-editor (onInit)="onInit($event)" class="!ap-h-full !ap-w-full" [formControlName]="property.key"
               (click)="handler.showMentionsDropdown()" [options]="codeEditorOptions"></ngx-monaco-editor>
           </div>
 
@@ -466,9 +493,10 @@
     <mat-form-field class="ap-w-full" appearance="outline" #textInput
       (click)="isTriggerPieceForm?null: handler.showMentionsDropdown()">
       <mat-label>{{property.value.displayName}}</mat-label>
-      <app-interpolating-text-form-control #textControl [matTooltip]="property.value.description"
-        [formControlName]="property.key" [attr.name]="property.key"
+      <app-interpolating-text-form-control #textControl [formControlName]="property.key" [attr.name]="property.key"
         (editorFocused)="handler.showMentionsDropdown()"></app-interpolating-text-form-control>
+      <mat-icon class="!ap-text-form-label" matSuffix *ngIf="property.value.description"
+        [matTooltip]="property.value.description">info</mat-icon>
       <mat-error *ngIf="formGroup.get(property.key)?.invalid">
         {{property.value.displayName}} is required
       </mat-error>
@@ -508,4 +536,9 @@
     <input #searchInput [formControl]="searchControl" matInput placeholder="Search" autocomplete="off"
       (keydown.Space)="$event.stopPropagation()">
   </mat-form-field>
+</ng-template>
+
+<ng-template #propInfo let-property let-extraClass="extraClass">
+  <mat-icon *ngIf="property.value.description" [matTooltip]="property.value.description"
+    [class]="'!ap-text-form-label ap-scale-[0.86] '+( extraClass? extraClass : '')">info</mat-icon>
 </ng-template>

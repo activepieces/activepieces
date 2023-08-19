@@ -2,17 +2,14 @@ import { ApEnvironment, getPackageAliasForPiece, getPackageVersionForPiece } fro
 import { system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
 import { logger } from '../../helper/logger'
-import { PackageManagerDependencies, packageManager } from '../../helper/package-manager'
+import { PackageInfo, PackageMetdataInfo, packageManager } from '../../helper/package-manager'
 import * as path from 'path'
 import fs from 'fs/promises'
 import { FilePieceMetadataService } from '../../pieces/piece-metadata-service/file-piece-metadata-service'
 
 type BaseParams = {
     projectPath: string
-    pieces: {
-        name: string
-        version: string
-    }[]
+    pieces: PackageInfo[]
 }
 
 type InstallParams = BaseParams
@@ -23,7 +20,7 @@ type InstallDependenciesParams = BaseParams
 
 const log = logger.child({ file: 'PieceManager' })
 
-const env = system.getOrThrow(SystemProp.ENVIRONMENT)
+const env = system.get(SystemProp.ENVIRONMENT)
 
 const linkFrameworkPackages = async (projectPath: string, baseLinkPath: string, frameworkPackages: Record<string, string>) => {
     await updatePackageJson('framework', baseLinkPath, frameworkPackages)
@@ -38,7 +35,7 @@ const linkDependencies = async (params: LinkDependenciesParams) => {
     const { projectPath, pieces } = params
     // Get Path before /dist
     const uniquePieces = removeDuplicatedPieces(pieces)
-    const basePath = path.resolve(__dirname.split('/dist')[0])
+    const basePath = path.resolve(__dirname.split(`${path.sep}dist`)[0])
     const baseLinkPath = path.join(basePath, 'dist', 'packages', 'pieces')
 
     const frameworkPackages = {
@@ -63,7 +60,7 @@ const updatePackageJson = async (directoryName: string, baseLinkPath: string, fr
 
     const packageJson = await fs.readFile(packageJsonForPiece, 'utf-8').then(JSON.parse)
     for (const [key, value] of Object.entries(frameworkPackages)) {
-        if (Object.keys(packageJson.dependencies).includes(key)) {
+        if (packageJson.dependencies && Object.keys(packageJson.dependencies).includes(key)) {
             packageJson.dependencies[key] = value
         }
     }
@@ -77,7 +74,7 @@ const installDependencies = async (params: InstallDependenciesParams) => {
     const { projectPath, pieces } = params
 
     const uniquePieces = removeDuplicatedPieces(pieces)
-    const packages = uniquePieces.map(piece => {
+    const packages: [string, PackageMetdataInfo][] = uniquePieces.map(piece => {
         const packageAlias = getPackageAliasForPiece({
             pieceName: piece.name,
             pieceVersion: piece.version,
@@ -88,15 +85,17 @@ const installDependencies = async (params: InstallDependenciesParams) => {
             pieceVersion: piece.version,
         })
 
-        return [packageAlias, packageVersion]
+        return [packageAlias, {
+            version: packageVersion,
+        }]
     })
 
-    const dependencies: PackageManagerDependencies = Object.fromEntries(packages)
+    const dependencies = Object.fromEntries(packages)
 
     await packageManager.addDependencies(projectPath, dependencies)
 }
 
-const removeDuplicatedPieces = (pieces: { name: string, version: string }[]) => {
+const removeDuplicatedPieces = (pieces: PackageInfo[]) => {
     return pieces.filter((piece, index, self) =>
         index === self.findIndex((p) => p.name === piece.name && p.version === piece.version),
     )

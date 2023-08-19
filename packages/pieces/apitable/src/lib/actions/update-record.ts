@@ -8,28 +8,6 @@ export const apiTableUpdateRecord = createAction({
     name: 'apitable_update_record',
     displayName: 'Update APITable Record',
     description: 'updates a record in datasheet.',
-    sampleData: {
-        "code": 200,
-        "success": true,
-        "data": {
-          "records": [
-            {
-              "recordId": "recwFSozTQON7",
-              "createdAt": 1689774745000,
-              "updatedAt": 1689775686000,
-              "fields": {
-                "Long text": "Do people really look at this?",
-                "asdasd": "hmmm",
-                "Options": [
-                  "wow"
-                ],
-                "Title": "amazing"
-              }
-            }
-          ]
-        },
-        "message": "SUCCESS"
-    },
     props: {
         datasheet: APITableCommon.datasheet,
         recordId: Property.ShortText({
@@ -43,6 +21,7 @@ export const apiTableUpdateRecord = createAction({
         const auth = context.auth;
         const datasheet = context.propsValue.datasheet;
         const recordId = context.propsValue.recordId;
+        const apiTableUrl = auth.apiTableUrl;
         const dynamicFields: DynamicPropsValue = context.propsValue.fields;
         const fields: {
             [n: string]: string
@@ -57,9 +36,9 @@ export const apiTableUpdateRecord = createAction({
 
         const request: HttpRequest = {
             method: HttpMethod.PATCH,
-            url: `https://api.apitable.com/fusion/v1/datasheets/${datasheet}/records`,
+            url: `${apiTableUrl.replace(/\/$/, "")}/fusion/v1/datasheets/${datasheet}/records`,
             headers: {
-                "Authorization": "Bearer " + auth,
+                "Authorization": "Bearer " + auth.token,
                 "Content-Type": "application/json",
             },
             body: {

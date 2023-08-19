@@ -9,7 +9,6 @@ export const createShareUpdate = createAction({
         name: "create_share_update",
         displayName: "Create Share Update",
         description: 'Create a share update on LinkedIn',
-        sampleData: {},
         props: {
             text: linkedinCommon.text,
             visibility: linkedinCommon.visibility,

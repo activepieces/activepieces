@@ -16,7 +16,7 @@ To obtain a client ID and client secret for Spotify, follow these simple steps:
 
 export const spotifyCommon = {
     authentication: PieceAuth.OAuth2({
-        displayName: 'Authentication',
+        
         description: markdownDescription,
         required: true,
         authUrl: "https://accounts.spotify.com/authorize",

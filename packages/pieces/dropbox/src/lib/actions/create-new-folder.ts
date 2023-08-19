@@ -19,31 +19,6 @@ export const dropboxCreateNewFolder = createAction({
         required: false
       })
     },
-    sampleData: {
-      "metadata": {
-        "id": "id:a4ayc_80_OEAAAAAAAAAXz",
-        "name": "math",
-        "path_display": "/Homework/math",
-        "path_lower": "/homework/math",
-        "property_groups": [
-          {
-            "fields": [
-              {
-                "name": "Security Policy",
-                "value": "Confidential"
-              }
-            ],
-            "template_id": "ptid:1a5n2i6d3OYEAAAAAAAAAYa"
-          }
-        ],
-        "sharing_info": {
-          "no_access": false,
-          "parent_shared_folder_id": "84528192421",
-          "read_only": false,
-          "traverse_only": false
-        }
-      }
-    },
     async run(context) {
       const body = {
         autorename: context.propsValue.autorename ? true : false,

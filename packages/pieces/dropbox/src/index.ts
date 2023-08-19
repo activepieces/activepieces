@@ -4,7 +4,7 @@ import { dropboxCreateNewTextFile } from './lib/actions/create-new-text-file';
 
 export const dropboxAuth = PieceAuth.OAuth2({
   description: "",
-  displayName: 'Authentication',
+  
   authUrl: "https://www.dropbox.com/oauth2/authorize",
   tokenUrl: "https://api.dropboxapi.com/oauth2/token",
   required: true,

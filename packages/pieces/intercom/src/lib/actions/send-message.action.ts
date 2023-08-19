@@ -12,23 +12,6 @@ export const sendMessage = createAction({
         description: "Send a message to a contact (only allowed by admins)",
         displayName: "Send Message",
         name: "send_message",
-        sampleData: {
-            "type": "admin_message",
-            "id": "98257967",
-            "created_at": 1678635731,
-            "subject": "test",
-            "body": "test body",
-            "message_type": "email",
-            "template": "personal",
-            "owner": {
-                "type": "admin",
-                "id": "6439686",
-                "name": "Jon Doe",
-                "email": "John@Doe.com",
-                "away_mode_enabled": false,
-                "away_mode_reassign": false
-            }
-        },
         props: {
             message_type: Property.StaticDropdown(
                 {

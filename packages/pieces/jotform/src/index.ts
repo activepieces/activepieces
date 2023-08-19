@@ -10,7 +10,7 @@ To obtain api key, follow the steps below:
 `;
 
 export const jotformAuth = PieceAuth.CustomAuth({
-    displayName: "Authentication",
+    
     required: true,
     description: markdownDescription,
     props: {

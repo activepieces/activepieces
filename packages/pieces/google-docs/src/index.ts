@@ -3,7 +3,7 @@ import { PieceAuth, createPiece } from "@activepieces/pieces-framework";
 import { createDocument } from "./lib/actions/create-document";
 
 export const googleDocsAuth = PieceAuth.OAuth2({
-    displayName: 'Authentication',
+    
     authUrl: "https://accounts.google.com/o/oauth2/auth",
     tokenUrl: "https://oauth2.googleapis.com/token",
     required: true,

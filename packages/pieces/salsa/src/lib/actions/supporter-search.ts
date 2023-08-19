@@ -57,47 +57,6 @@ export const salsaSupporterSearch = createAction({
                 required: false,
             })
         },
-        sampleData: [
-            {
-                "total": 1,
-                "supporters": [
-                    {
-                        "readOnly": false,
-                        "supporterId": "98f588e2-6517-4147-a499-d6feaac85174",
-                        "firstName": "Jackson",
-                        "lastName": "Whole",
-                        "createdDate": "2022-08-30T09:28:53.338Z",
-                        "lastModified": "2022-08-30T09:30:02.215Z",
-                        "address": {
-                            "addressLine1": "380 W Broadway",
-                            "addressLine2": "",
-                            "city": "",
-                            "state": "WY",
-                            "postalCode": "",
-                            "country": "US"
-                        },
-                        "contacts": [
-                            {
-                                "type": "CELL_PHONE",
-                                "value": "5553332222",
-                                "optInDate": "2022-08-30T09:28:53.329Z",
-                                "lastChangeReason": "Client API Integration"
-                            },
-                            {
-                                "type": "EMAIL",
-                                "value": "jackson.whole@test.com",
-                                "status": "OPT_IN",
-                                "optInDate": "2022-08-30T09:28:53.329Z",
-                                "lastChangeReason": "Client API Integration"
-                            }
-                        ],
-                        "customFieldValues": [],
-                        "result": "FOUND"
-                    }
-                ],
-                "count": 1
-            }
-        ],
         async run({auth, propsValue}) {
             return await searchSupporter(auth, propsValue);
         }

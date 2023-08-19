@@ -1,8 +1,11 @@
+import { File } from "../file/file";
+import { AppConnectionValue } from "../app-connection/app-connection";
 import { ResumeStepMetadata } from "../flow-run/execution/execution-output";
 import { ExecutionState } from "../flow-run/execution/execution-state";
 import { ExecutionType } from "../flow-run/execution/execution-type";
 import { FlowRunId } from "../flow-run/flow-run";
-import { FlowVersion, FlowVersionId } from "../flows/flow-version";
+import { CodeAction } from "../flows/actions/action";
+import { FlowVersion } from "../flows/flow-version";
 import { ProjectId } from "../project/project";
 
 export enum EngineOperationType {
@@ -42,13 +45,14 @@ export type ExecuteActionOperation = BaseEngineOperation & {
     flowVersion: FlowVersion
     pieceName: string
     pieceVersion: string
+    serverUrl: string,
     input: Record<string, unknown>
 }
 
 export type ExecuteValidateAuthOperation = BaseEngineOperation & {
     pieceName: string
     pieceVersion: string
-    auth: unknown
+    auth: AppConnectionValue
 }
 
 export type ExecuteExtractPieceMetadata = {
@@ -57,7 +61,8 @@ export type ExecuteExtractPieceMetadata = {
 }
 
 export type ExecuteCodeOperation = {
-    codeBase64: string
+    file: File
+    step: CodeAction
     flowVersion: FlowVersion,
     input: Record<string, unknown>
     projectId: ProjectId
@@ -72,9 +77,10 @@ export type ExecutePropsOptions = BaseEngineOperation & {
 }
 
 type BaseExecuteFlowOperation<T extends ExecutionType> = BaseEngineOperation & {
-    flowVersionId: FlowVersionId;
+    flowVersion: FlowVersion;
     flowRunId: FlowRunId;
     triggerPayload: unknown;
+    serverUrl: string;
     executionType: T;
 }
 

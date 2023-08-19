@@ -1,6 +1,6 @@
 import {
-  AppConnection,
   AppConnectionType,
+  AppConnectionWithoutSensitiveData,
   ErrorCode,
 } from '@activepieces/shared';
 import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
@@ -13,12 +13,13 @@ import {
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { catchError, Observable, of, take, tap } from 'rxjs';
-import { AppConnectionsService } from '../../services/app-connections.service';
 import { ConnectionValidator } from '../../validators/connectionNameValidator';
 import {
   BuilderSelectors,
   appConnectionsActions,
 } from '@activepieces/ui/feature-builder-store';
+import { AppConnectionsService } from '@activepieces/ui/common';
+import { connectionNameRegex } from '../utils';
 
 interface SecretTextForm {
   secretText: FormControl<string>;
@@ -29,7 +30,6 @@ export interface SecretTextConnectionDialogData {
   connectionName?: string;
   displayName: string;
   description: string;
-  secretText?: string;
 }
 
 @Component({
@@ -42,7 +42,7 @@ export class SecretTextConnectionDialogComponent {
   keyTooltip =
     'The ID of this connection definition. You will need to select this key whenever you want to reuse this connection.';
   loading = false;
-  upsert$: Observable<AppConnection | null>;
+  upsert$: Observable<AppConnectionWithoutSensitiveData | null>;
   constructor(
     @Inject(MAT_DIALOG_DATA)
     public dialogData: SecretTextConnectionDialogData,
@@ -52,7 +52,7 @@ export class SecretTextConnectionDialogComponent {
     public dialogRef: MatDialogRef<SecretTextConnectionDialogComponent>
   ) {
     this.settingsForm = this.fb.group({
-      secretText: new FormControl(this.dialogData.secretText || '', {
+      secretText: new FormControl('', {
         nonNullable: true,
         validators: [Validators.required],
       }),
@@ -64,7 +64,7 @@ export class SecretTextConnectionDialogComponent {
           nonNullable: true,
           validators: [
             Validators.required,
-            Validators.pattern('[A-Za-z0-9_\\-]*'),
+            Validators.pattern(connectionNameRegex),
           ],
           asyncValidators: [
             ConnectionValidator.createValidator(
@@ -89,6 +89,7 @@ export class SecretTextConnectionDialogComponent {
         .upsert({
           appName: this.dialogData.pieceName,
           name: this.settingsForm.controls.name.value,
+          type: AppConnectionType.SECRET_TEXT,
           value: {
             secret_text: this.settingsForm.controls.secretText.value,
             type: AppConnectionType.SECRET_TEXT,

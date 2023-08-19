@@ -26,7 +26,7 @@ const seedDevUser = async (): Promise<void> => {
 
 export const seedDevData = async () => {
 
-    const env = system.getOrThrow(SystemProp.ENVIRONMENT)
+    const env = system.get(SystemProp.ENVIRONMENT)
 
     if (env !== ApEnvironment.DEVELOPMENT) {
         logger.info('[seedDevData] skip seeding dev data')

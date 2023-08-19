@@ -3,7 +3,7 @@ import { webflowNewSubmission } from './lib/triggers/new-form-submitted';
 
 export const webflowAuth = PieceAuth.OAuth2({
   description: "",
-  displayName: 'Authentication',
+  
   authUrl: "https://webflow.com/oauth/authorize",
   tokenUrl: "https://api.webflow.com/oauth/access_token",
   required: true,

@@ -41,29 +41,6 @@ export const gmailSendEmailAction = createAction({
       required: false,
     }),
   },
-  sampleData: {
-      "status": 200,
-      "headers": {
-        "content-type": "application/json; charset=UTF-8",
-        "vary": "Origin, X-Origin, Referer",
-        "date": "Mon, 17 Jul 2023 08:34:57 GMT",
-        "server": "ESF",
-        "cache-control": "private",
-        "x-xss-protection": "0",
-        "x-frame-options": "SAMEORIGIN",
-        "x-content-type-options": "nosniff",
-        "alt-svc": "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000",
-        "connection": "close",
-        "transfer-encoding": "chunked"
-      },
-      "body": {
-        "id": "17862bf0653c7e4f",
-        "threadId": "17862bf0653c7e4f",
-        "labelIds": [
-          "SENT"
-        ]
-      }
-  },
   async run(configValue) {
     const subjectBase64 = Buffer.from(configValue.propsValue['subject']).toString("base64");
     const attachment = configValue.propsValue['attachment'];
