@@ -39,8 +39,8 @@ export const getClient = createAction({
                   const response = await httpClient.sendRequest(httprequestdata);
                   // Process the successful response here (status 2xx).
                   // count is the number of tickets with that number so return true if it is 1.
-                  return response.body;
-                  // if (response.body.meta.pagination.total>0) { return true; } else { return false; }
+                  return response.body.data;
+                  // if (response.body.meta.pagination.total>0) { return true; } else { return false; } this is still returned so if it is false we'll return notfound or similar
                 } catch (error) {
                   // Handle the error when the request fails (status other than 2xx).
                   return "There was a problem getting information from your Invoice Ninja";
