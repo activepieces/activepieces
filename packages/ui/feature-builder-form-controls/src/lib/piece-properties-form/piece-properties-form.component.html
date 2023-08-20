@@ -312,11 +312,10 @@
             <mat-select [formControlName]="property.key" [compareWith]="dropdownCompareWithFunction">
               <mat-option
                 [style.display]="((allAuthConfigs$ | async)!| authConfigsForPiece:pieceName)?.length === 0 ? 'none': 'flex'"
-                class="add-auth">
+                (click)="addConnectionBtn.buttonClicked()" class="add-auth">
                 <div class="ap-flex">
                   <div class="ap-flex-grow ap-text-primary ap-flex ap-gap-2 ap-font-bold ap-items-center"
-                    #noConnectionDiv
-                    (click)="checkIfTheDivIsTheTarget($event,noConnectionDiv)? addConnectionBtn.buttonClicked():null ">
+                    #noConnectionDiv>
                     <svg-icon src="assets/img/custom/add.svg" [applyClass]="true"
                       class="ap-fill-primary ap-w-[13px]  ap-h-[13px] "></svg-icon> New Connection
                   </div>
@@ -328,17 +327,13 @@
               </mat-option>
               <mat-option
                 [style.display]="((allAuthConfigs$ | async)!| authConfigsForPiece:pieceName)?.length === 0 ? 'flex': 'none'"
-                class="add-auth">
+                (click)="addConnectionBtn.buttonClicked()" class="add-auth">
                 <div class="ap-flex">
-                  <div class="ap-flex-grow" #noConnectionDiv
-                    (click)="checkIfTheDivIsTheTarget($event,noConnectionDiv)? addConnectionBtn.buttonClicked():null ">
-                    No connections</div>
-                  <app-add-edit-connection-button class="edit-selected-auth ap-z-40 " btnSize="small"
-                    [isEditConnectionButton]="false" [authProperty]="property.value" [pieceName]="pieceName"
-                    [propertyKey]="property.key" [pieceVersion]="pieceVersion" [triggerName]="actionOrTriggerName"
-                    (connectionPropertyValueChanged)="connectionValueChanged($event);">
-                    + Add
-                  </app-add-edit-connection-button>
+                  <div class="ap-flex-grow ap-text-primary ap-flex ap-gap-2 ap-font-bold ap-items-center"
+                    #noConnectionDiv>
+                    <svg-icon src="assets/img/custom/add.svg" [applyClass]="true"
+                      class="ap-fill-primary ap-w-[13px]  ap-h-[13px] "></svg-icon> New Connection
+                  </div>
                 </div>
               </mat-option>
             </mat-select>

@@ -128,7 +128,7 @@ export const airtableCommon = {
             displayName: field.name,
             description: (
               (['date', 'dateTime'].includes(field.type))
-                ? `Expected format: mmmm d,yyyy ${field.description? '.<br> '+field.description:''}`
+                ? `Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown.`
                 : field.description
             ),
             required: false
