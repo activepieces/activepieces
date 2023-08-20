@@ -69,8 +69,7 @@
           *ngTemplateOutlet="customizedInputs && customizedInputs[property.key]? textInputTemplate:dropdownInputTemplate ;context:{$implicit:property, formGroup:formGroup}">
         </ng-container>
         <ng-template #dropdownInputTemplate>
-          <mat-form-field subscriptSizing="dynamic" class="ap-w-full" appearance="outline" #dropdown
-            #dropdownUiContainer="hoverTrackerDirective" apTrackHover>
+          <mat-form-field subscriptSizing="dynamic" class="ap-w-full" appearance="outline" #dropdown>
 
             <mat-label> {{ (refreshableConfigsLoadingFlags$[property.key] | async)? 'Loading...' :
               property.value.displayName
@@ -95,11 +94,13 @@
                 </mat-option>
               </ng-container>
             </mat-select>
-            <mat-error *ngIf="formGroup.get(property.key)?.invalid">
-              {{property.value.displayName}} is required
-            </mat-error>
+
           </mat-form-field>
-          <ng-container *ngTemplateOutlet="description; context:{$implicit:property}">
+          <ng-container *ngTemplateOutlet=" description; 
+          context:{$implicit:property,
+          hasError:formGroup.get(property.key)?.invalid, 
+          errorMessage:(property.value.displayName+' is required'),
+          isTouched:formGroup.get(property.key)?.touched}">
           </ng-container>
         </ng-template>
 
@@ -116,8 +117,7 @@
           *ngTemplateOutlet="customizedInputs && customizedInputs[property.key]? textInputTemplate:multiDropdownInputTemplate ;context:{$implicit:property, formGroup:formGroup}">
         </ng-container>
         <ng-template #multiDropdownInputTemplate>
-          <mat-form-field subscriptSizing="dynamic" class="ap-w-full" appearance="outline" #dropdown
-            #dropdownUiContainer="hoverTrackerDirective" apTrackHover>
+          <mat-form-field subscriptSizing="dynamic" class="ap-w-full" appearance="outline" #dropdown>
 
             <mat-label> {{ (refreshableConfigsLoadingFlags$[property.key] | async)? 'Loading...' :
               property.value.displayName
@@ -147,11 +147,13 @@
                 </ng-container>
               </mat-select>
             </ng-container>
-            <mat-error *ngIf="formGroup.get(property.key)?.invalid">
-              {{property.value.displayName}} is required
-            </mat-error>
+
           </mat-form-field>
-          <ng-container *ngTemplateOutlet="description; context:{$implicit:property}">
+          <ng-container *ngTemplateOutlet=" description; 
+          context:{$implicit:property,
+          hasError:formGroup.get(property.key)?.invalid, 
+          errorMessage:(property.value.displayName+' is required'),
+          isTouched:formGroup.get(property.key)?.touched}">
           </ng-container>
         </ng-template>
 
@@ -170,8 +172,7 @@
           *ngTemplateOutlet="customizedInputs && customizedInputs[property.key]? textInputTemplate:staticDropdownInputTemplate ;context:{$implicit:property, formGroup:formGroup}">
         </ng-container>
         <ng-template #staticDropdownInputTemplate>
-          <mat-form-field subscriptSizing="dynamic" class="ap-w-full" appearance="outline" apTrackHover
-            #dropdownUiContainer="hoverTrackerDirective" #dropdown>
+          <mat-form-field subscriptSizing="dynamic" class="ap-w-full" appearance="outline">
 
             <mat-label> {{ property.value.displayName }} </mat-label>
             <mat-select [matTooltip]="property.value.description" [formControlName]="property.key"
@@ -185,11 +186,12 @@
               </div>
 
             </mat-select>
-            <mat-error *ngIf="formGroup.get(property.key)?.invalid">
-              {{property.value.displayName}} is required
-            </mat-error>
           </mat-form-field>
-          <ng-container *ngTemplateOutlet="description; context:{$implicit:property}">
+          <ng-container *ngTemplateOutlet=" description; 
+          context:{$implicit:property,
+          hasError:formGroup.get(property.key)?.invalid, 
+          errorMessage:(property.value.displayName+' is required'),
+          isTouched:formGroup.get(property.key)?.touched}">
           </ng-container>
         </ng-template>
 
@@ -221,11 +223,13 @@
                 </mat-option>
               </div>
             </mat-select>
-            <mat-error *ngIf="formGroup.get(property.key)?.invalid">
-              {{property.value.displayName}} is required
-            </mat-error>
+
           </mat-form-field>
-          <ng-container *ngTemplateOutlet="description; context:{$implicit:property}">
+          <ng-container *ngTemplateOutlet=" description; 
+          context:{$implicit:property,
+          hasError:formGroup.get(property.key)?.invalid, 
+          errorMessage:(property.value.displayName+' is required'),
+          isTouched:formGroup.get(property.key)?.touched}">
           </ng-container>
         </ng-template>
 
@@ -326,9 +330,6 @@
                 </div>
               </mat-option>
             </mat-select>
-            <mat-error *ngIf="formGroup.get(property.key)!.invalid">
-              {{property.value.displayName}} is required
-            </mat-error>
           </mat-form-field>
           <app-add-edit-connection-button btnSize="medium" *ngIf="formGroup.enabled" [isEditConnectionButton]="false"
             #addConnectionBtn [authProperty]="property.value" [pieceName]="pieceName" [pieceVersion]="pieceVersion"
@@ -337,6 +338,12 @@
             + New Connection
           </app-add-edit-connection-button>
         </div>
+        <ng-container *ngTemplateOutlet=" description; 
+        context:{$implicit:property,
+        hasError:formGroup.get(property.key)?.invalid, 
+        errorMessage:(property.value.displayName+' is required'),
+        isTouched:formGroup.get(property.key)?.touched}">
+        </ng-container>
       </ng-template>
 
     </ng-container>
@@ -374,13 +381,13 @@
             (mentionEmitted)="addMentionToJsonControl($event)">
           </app-builder-autocomplete-dropdown-handler>
         </div>
-        <div *ngIf="getControl(property.key)!.invalid" class="ap-p-2">
-          <p @fadeInUp *ngIf="getControl(property.key)!.hasError('required');else invalidJson"
+        <div *ngIf="getControl(property.key)!.invalid" class="ap-py-2">
+          <p *ngIf="getControl(property.key)!.hasError('required');else invalidJson"
             class="ap-text-danger ap-typography-caption">
             {{property.value.displayName}} is required
           </p>
           <ng-template #invalidJson>
-            <p @fadeInUp class="ap-text-danger ap-typography-caption">
+            <p class="ap-text-danger ap-typography-caption">
               {{property.value.displayName}} is not a valid JSON object.
             </p>
           </ng-template>
@@ -433,11 +440,13 @@
       <mat-label>{{property.value.displayName}}</mat-label>
       <app-interpolating-text-form-control #textControl [formControlName]="property.key" [attr.name]="property.key"
         (editorFocused)="handler.showMentionsDropdown()"></app-interpolating-text-form-control>
-      <mat-error *ngIf="formGroup.get(property.key)?.invalid">
-        {{property.value.displayName}} is required
-      </mat-error>
     </mat-form-field>
-    <ng-container *ngTemplateOutlet="description; context:{$implicit:property}">
+    <ng-container *ngTemplateOutlet="
+        description; 
+        context:{$implicit:property,
+        hasError:formGroup.get(property.key)?.invalid, 
+        errorMessage:(property.value.displayName+' is required'),
+        isTouched:formGroup.get(property.key)?.touched}">
 
     </ng-container>
     <app-builder-autocomplete-dropdown-handler #handler [container]="interpolatingTextComponentContainer"
@@ -470,13 +479,14 @@
 
 
 <!--Line clamp is not working with prefix on tailwind for some reason  -->
-<ng-template #description let-property>
+<ng-template #description let-property let-hasError="hasError" let-errorMessage="errorMessage"
+  let-isTouched="isTouched">
   <div class="ap-py-2 ap-flex ap-gap-2 ap-justify-between ap-markdown">
-    <div style="overflow: hidden;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 1;" [style.display]="descriptionExpandedMap[property.key]? 'block': '-webkit-box'">
+    <div class="ap-line-clamp-1" [style.display]="descriptionExpandedMap[property.key]? 'block': '-webkit-box'">
       <div class="ap-typography-caption " apCheckOverflow (isOverflowed)="descriptionOverflownMap[property.key]=$event">
-        <markdown [data]="property.value.description"></markdown>
+        <markdown
+          [data]="isTouched && hasError? '<span class=\'ap-text-danger\'>'+errorMessage+'</span>. '+ (property.value.description? property.value.description: '') : property.value.description? property.value.description:''">
+        </markdown>
       </div>
     </div>
     <div class="ap-flex ap-items-start">

@@ -210,8 +210,6 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
       }),
       map(() => void 0)
     );
-
-    // this.form.markAllAsTouched();
   }
   addNewConnectionButtonPress() {
     this.addConnectionBtn.buttonClicked();
@@ -301,7 +299,6 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
                     );
                   }
                 });
-                fg.markAllAsTouched();
               }
             }),
             shareReplay(1)

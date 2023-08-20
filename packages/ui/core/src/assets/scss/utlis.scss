@@ -151,3 +151,9 @@ ap-markdown{
   -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
 }
+.ap-line-clamp-1
+{
+  overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+}
