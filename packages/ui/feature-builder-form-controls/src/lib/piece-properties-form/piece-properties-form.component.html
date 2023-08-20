@@ -310,6 +310,18 @@
             #dropdownUiContainer="hoverTrackerDirective" apTrackHover>
             <mat-label> Connection </mat-label>
             <mat-select [formControlName]="property.key" [compareWith]="dropdownCompareWithFunction">
+              <mat-option
+                [style.display]="((allAuthConfigs$ | async)!| authConfigsForPiece:pieceName)?.length === 0 ? 'none': 'flex'"
+                class="add-auth">
+                <div class="ap-flex">
+                  <div class="ap-flex-grow ap-text-primary ap-flex ap-gap-2 ap-font-bold ap-items-center"
+                    #noConnectionDiv
+                    (click)="checkIfTheDivIsTheTarget($event,noConnectionDiv)? addConnectionBtn.buttonClicked():null ">
+                    <svg-icon src="assets/img/custom/add.svg" [applyClass]="true"
+                      class="ap-fill-primary ap-w-[13px]  ap-h-[13px] "></svg-icon> New Connection
+                  </div>
+                </div>
+              </mat-option>
               <mat-option *ngFor="let opt of ((allAuthConfigs$ | async)!| authConfigsForPiece:pieceName)"
                 [value]="opt.value">
                 {{opt.label.name}}
@@ -321,7 +333,7 @@
                   <div class="ap-flex-grow" #noConnectionDiv
                     (click)="checkIfTheDivIsTheTarget($event,noConnectionDiv)? addConnectionBtn.buttonClicked():null ">
                     No connections</div>
-                  <app-add-edit-connection-button class="edit-selected-auth ap-z-40" btnSize="small"
+                  <app-add-edit-connection-button class="edit-selected-auth ap-z-40 " btnSize="small"
                     [isEditConnectionButton]="false" [authProperty]="property.value" [pieceName]="pieceName"
                     [propertyKey]="property.key" [pieceVersion]="pieceVersion" [triggerName]="actionOrTriggerName"
                     (connectionPropertyValueChanged)="connectionValueChanged($event);">
@@ -331,17 +343,17 @@
               </mat-option>
             </mat-select>
           </mat-form-field>
-          <app-add-edit-connection-button btnSize="medium" *ngIf="formGroup.enabled" [isEditConnectionButton]="false"
-            #addConnectionBtn [authProperty]="property.value" [pieceName]="pieceName" [pieceVersion]="pieceVersion"
-            [propertyKey]="property.key" (connectionPropertyValueChanged)="connectionValueChanged($event)"
-            [triggerName]="actionOrTriggerName">
-            + New Connection
+          <app-add-edit-connection-button btnSize="medium" class="ap-hidden" *ngIf="formGroup.enabled"
+            [isEditConnectionButton]="false" #addConnectionBtn [authProperty]="property.value" [pieceName]="pieceName"
+            [pieceVersion]="pieceVersion" [propertyKey]="property.key"
+            (connectionPropertyValueChanged)="connectionValueChanged($event)" [triggerName]="actionOrTriggerName">
+
           </app-add-edit-connection-button>
         </div>
         <ng-container *ngTemplateOutlet=" description; 
-        context:{$implicit:property,
+        context:{$implicit:{value:{description:''}},
         hasError:formGroup.get(property.key)?.invalid, 
-        errorMessage:(property.value.displayName+' is required'),
+        errorMessage:('Connection is required'),
         isTouched:formGroup.get(property.key)?.touched}">
         </ng-container>
       </ng-template>
