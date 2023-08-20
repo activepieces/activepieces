@@ -1,0 +1,27 @@
+<ap-dialog-title-template>Add data source</ap-dialog-title-template>
+<mat-dialog-content class="!ap-flex ap-h-[400px] ap-gap-2 !ap-mt-3">
+  <div class="ap-text-label ap-typography-subtitle-2 ap-mb-3">Data source type</div>
+  <mat-radio-group aria-label="Select an option">
+    <mat-radio-button value="URL">URL</mat-radio-button>
+    <mat-radio-button value="PDF">PDF URL</mat-radio-button>
+  </mat-radio-group>
+  <mat-form-field class="ap-w-full" appearance="outline">
+    <mat-label>URL</mat-label>
+    <input matInput placeholder="https://news.com" formControlName="displayName" />
+    <mat-error *ngIf="formGroup.controls.url.invalid">
+      URL is required
+    </mat-error>
+  </mat-form-field>
+</mat-dialog-content>
+
+
+<mat-dialog-actions align="end">
+  <div class="ap-flex ap-gap-2.5">
+    <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic">
+      Cancel
+    </ap-button>
+    <ap-button btnSize="default" type="submit" btnColor="warn" (buttonClicked)="confirmClicked()">
+      Confirm
+    </ap-button>
+  </div>
+</mat-dialog-actions>
