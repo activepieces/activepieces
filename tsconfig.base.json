@@ -47,6 +47,9 @@
       "@activepieces/piece-constant-contact": [
         "packages/pieces/constant-contact/src/index.ts"
       ],
+      "@activepieces/piece-contiguity": [
+        "packages/pieces/contiguity/src/index.ts"
+      ],
       "@activepieces/piece-csv": ["packages/pieces/csv/src/index.ts"],
       "@activepieces/piece-data-mapper": [
         "packages/pieces/data-mapper/src/index.ts"
@@ -158,6 +161,9 @@
       ],
       "@activepieces/piece-sftp": ["packages/pieces/sftp/src/index.ts"],
       "@activepieces/piece-shopify": ["packages/pieces/shopify/src/index.ts"],
+      "@activepieces/piece-simplepdf": [
+        "packages/pieces/simplepdf/src/index.ts"
+      ],
       "@activepieces/piece-slack": ["packages/pieces/slack/src/index.ts"],
       "@activepieces/piece-smtp": ["packages/pieces/smtp/src/index.ts"],
       "@activepieces/piece-soap": ["packages/pieces/soap/src/index.ts"],

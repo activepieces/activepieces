@@ -1,4 +1,4 @@
-import { OAuth2PropertyValue, Property, createTrigger } from '@activepieces/pieces-framework';
+import { OAuth2PropertyValue, Property, Validators, createTrigger } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from "@activepieces/pieces-framework";
 import { googleSheetsCommon } from '../common/common';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
@@ -28,8 +28,9 @@ export const readNewRows = createTrigger({
     sheet_id: googleSheetsCommon.sheet_id,
     max_rows_to_poll: Property.Number({
       displayName: 'Max Rows to Poll',
-      description: 'The maximum number of rows to poll, the rest will be polled on the next run',
+      description: 'The maximum number of rows to poll, the rest will be polled on the next run, maximum is 10 in order to avoid errors.',
       required: false,
+      validators: [Validators.minValue(1)]
     })
   },
   type: TriggerStrategy.POLLING,
@@ -52,7 +53,8 @@ export const readNewRows = createTrigger({
     return await pollingHelper.poll(polling, {
       auth: context.auth,
       store: context.store,
-      maxItemsToPoll: context.propsValue.max_rows_to_poll,
+      // Max items to poll is 10, to avoid rate limit errors
+      maxItemsToPoll: Math.min(10,context.propsValue.max_rows_to_poll),
       propsValue: context.propsValue,
     });
   },
