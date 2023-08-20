@@ -47,6 +47,10 @@ input.form-control {
 a {
   @apply ap-underline ap-text-blue-link ap-typography-caption;
 }
+a.no-link-styling {
+ all:unset;
+}
+
 
 ap-markdown {
   @apply ap-typography-body-1;
