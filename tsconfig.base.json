@@ -96,6 +96,9 @@
       "@activepieces/piece-google-sheets": [
         "packages/pieces/google-sheets/src/index.ts"
       ],
+      "@activepieces/piece-google-slides": [
+        "packages/pieces/google-slides/src/index.ts"
+      ],
       "@activepieces/piece-google-tasks": [
         "packages/pieces/google-tasks/src/index.ts"
       ],

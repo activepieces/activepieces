@@ -1,0 +1,42 @@
+{
+  "name": "pieces-google-slides",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/google-slides/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/google-slides",
+        "tsConfig": "packages/pieces/google-slides/tsconfig.lib.json",
+        "packageJson": "packages/pieces/google-slides/package.json",
+        "main": "packages/pieces/google-slides/src/index.ts",
+        "assets": [
+          "packages/pieces/google-slides/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-google-slides {args.ver} {args.tag}",
+      "dependsOn": [
+        "build"
+      ]
+    },
+    "lint": {
+      "executor": "@nx/linter:eslint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/google-slides/**/*.ts"
+        ]
+      }
+    }
+  },
+  "tags": []
+}
