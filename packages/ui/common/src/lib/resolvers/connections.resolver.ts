@@ -3,10 +3,8 @@ import { Injectable } from '@angular/core';
 import { map, Observable, switchMap, take } from 'rxjs';
 import { AppConnection } from '@activepieces/shared';
 
-import {
-  AppConnectionsService,
-  ProjectSelectors,
-} from '@activepieces/ui/common';
+import { AppConnectionsService } from '../service/app-connections.service';
+import { ProjectSelectors } from '../store/project/project.selector';
 import { Store } from '@ngrx/store';
 
 export type ConnectionsResolverData = AppConnection[];

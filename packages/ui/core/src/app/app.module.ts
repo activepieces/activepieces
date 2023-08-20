@@ -138,7 +138,7 @@ function dynamicRoutes(edition: string) {
         {
           path: '',
           loadChildren: () =>
-            import('@activepieces/ui/chatbot').then(
+            import('@activepieces/ui/feature-chatbot').then(
               (m) => m.UiChatbotModule
             ),
         },

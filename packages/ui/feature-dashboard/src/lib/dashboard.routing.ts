@@ -9,8 +9,11 @@ import { ConnectionsTableComponent } from './pages/connections-table/connections
 import { FoldersResolver } from './resolvers/folders.resolver';
 import { DashboardContainerComponent } from './dashboard-container.component';
 import { CommunityPiecesTableComponent } from './pages/community-pieces-table/community-pieces-table.component';
-import { environment } from '@activepieces/ui/common';
-import { ChatbotSettingsComponent, ChatbotsTableComponent } from '@activepieces/ui/chatbot';
+import { ConnectionsResolver, environment } from '@activepieces/ui/common';
+import {
+  ChatbotSettingsComponent,
+  ChatbotsTableComponent,
+} from '@activepieces/ui/feature-chatbot';
 
 export const DashboardLayoutRouting: Routes = [
   {
@@ -42,7 +45,8 @@ export const DashboardLayoutRouting: Routes = [
         canActivate: [],
         title: `ChatBot Settings`,
         pathMatch: 'full',
-        component: ChatbotSettingsComponent
+        component: ChatbotSettingsComponent,
+        resolve: { connections: ConnectionsResolver },
       },
       {
         title: `Connections - ${environment.websiteTitle}`,

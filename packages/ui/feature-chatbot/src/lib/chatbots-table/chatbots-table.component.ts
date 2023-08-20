@@ -38,7 +38,7 @@ export class ChatbotsTableComponent {
           this.router.navigate(['/chatbots', value.id, 'settings']);
           this.loading = false;
         }),
-        map(() => {})
+        map(() => void 0)
       );
   }
 

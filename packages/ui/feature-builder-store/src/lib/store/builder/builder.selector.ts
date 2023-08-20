@@ -430,7 +430,11 @@ const selectAppConnectionsDropdownOptions = createSelector(
     });
   }
 );
-
+const selectAppConnectionsDropdownOptionsForApp = (appName: string) => {
+  return createSelector(selectAppConnectionsDropdownOptions, (connections) => {
+    return connections.filter((opt) => opt.label.appName === appName);
+  });
+};
 const selectAppConnectionsForMentionsDropdown = createSelector(
   selectAllAppConnections,
   (connections: AppConnection[]) => {
@@ -617,4 +621,5 @@ export const BuilderSelectors = {
   selectLastClickedAddBtnId,
   selectCurrentFlowFolderId,
   selectFlowTriggerIsTested,
+  selectAppConnectionsDropdownOptionsForApp,
 };

@@ -98,6 +98,7 @@
     "mintlify": "^3.0.88",
     "monaco-editor": "^0.34.1",
     "nanoid": "^3.3.4",
+    "ngx-autosize": "^2.0.4",
     "ngx-lottie": "^10.0.0",
     "ngx-markdown": "^15.1.2",
     "ngx-monaco-editor-v2": "^16.0.0",

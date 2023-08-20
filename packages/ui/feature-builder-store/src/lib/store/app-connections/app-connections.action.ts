@@ -11,7 +11,12 @@ const upsert = createAction(
   AppConectionActionType.UPSERT,
   props<{ connection: AppConnection }>()
 );
+const loadInitial = createAction(
+  AppConectionActionType.LOAD_INITIAL,
+  props<{ connections: AppConnection[] }>()
+);
 
 export const appConnectionsActions = {
   upsert,
+  loadInitial,
 };

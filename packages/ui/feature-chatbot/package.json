@@ -1,5 +1,5 @@
 {
-  "name": "@activepieces/ui/chatbot",
+  "name": "@activepieces/ui/feature-chatbot",
   "version": "0.0.1",
   "peerDependencies": {
     "@angular/common": "^16.1.0",

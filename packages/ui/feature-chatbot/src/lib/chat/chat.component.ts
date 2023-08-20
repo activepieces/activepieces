@@ -59,7 +59,7 @@ export class ChatComponent implements OnInit {
             sender: 'bot'
           });
         }),
-        map(() => {})
+        map(() => void 0)
       );
     this.messageControl.reset();
   }

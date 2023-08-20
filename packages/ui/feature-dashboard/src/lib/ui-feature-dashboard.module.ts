@@ -23,7 +23,7 @@ import { RenameFolderDialogComponent } from './pages/flows-table/rename-folder-d
 import { UiFeatureTemplatesModule } from '@activepieces/ui/feature-templates';
 import { CommunityPiecesTableComponent } from './pages/community-pieces-table/community-pieces-table.component';
 import { InstallCommunityPieceModalComponent } from './pages/community-pieces-table/install-community-piece/install-community-piece-modal.component';
-import { UiChatbotModule } from '@activepieces/ui/chatbot';
+import { UiChatbotModule } from '@activepieces/ui/feature-chatbot';
 
 @NgModule({
   imports: [

@@ -1,4 +1,4 @@
-import { ConnectionsResolverData } from './connections.resolver';
+import { ConnectionsResolverData } from '../../../../../../common/src/lib/resolvers/connections.resolver';
 import { FlowResolverData } from './flow.resolver';
 import { InstanceRunResolverData } from './instance-run.resolver';
 import { InstanceResolverData } from './instance.resolver';

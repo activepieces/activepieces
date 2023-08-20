@@ -23,7 +23,6 @@ type SideNavRoute = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SidenavRoutesListComponent {
-
   removeChatbots$: Observable<void>;
 
   constructor(
@@ -32,12 +31,16 @@ export class SidenavRoutesListComponent {
     private cd: ChangeDetectorRef,
     private flagServiceService: FlagService
   ) {
-    this.removeChatbots$ = this.flagServiceService.isChatEnabled().pipe(tap((res) => {
-      if(!res){
-        this.sideNavRoutes = this.sideNavRoutes.filter((route) => route.route !== 'chatbots');
-      }
-    }), map(() => {}));
-    
+    this.removeChatbots$ = this.flagServiceService.isChatEnabled().pipe(
+      tap((res) => {
+        if (!res) {
+          this.sideNavRoutes = this.sideNavRoutes.filter(
+            (route) => route.route !== 'chatbots'
+          );
+        }
+      }),
+      map(() => void 0)
+    );
   }
 
   sideNavRoutes: SideNavRoute[] = [

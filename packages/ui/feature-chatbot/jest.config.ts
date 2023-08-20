@@ -3,7 +3,7 @@ export default {
   displayName: 'ui-chatbot',
   preset: '../../../jest.preset.js',
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
-  coverageDirectory: '../../../coverage/packages/ui/chatbot',
+  coverageDirectory: '../../../coverage/packages/ui/feature-chatbot',
   transform: {
     '^.+\\.(ts|mjs|js|html)$': [
       'jest-preset-angular',
