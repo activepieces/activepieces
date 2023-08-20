@@ -50,12 +50,6 @@ export const googleDriveCreateNewFolder = createAction({
         }
       }),
     },
-    sampleData: {
-      "kind": "drive#file",
-      "id": "1zBGDdjasE4A63269CXhqOvAe3odTsplF",
-      "name": "New Folder",
-      "mimeType": "application/vnd.google-apps.folder"
-    },
     async run(context) {
       const body: Record<string, (string | string[] | undefined)> = {
         'mimeType': "application/vnd.google-apps.folder",

@@ -39,7 +39,6 @@ export const addMemberToList = createAction({
                 }
             })
         },
-        sampleData: {},
         async run(context) {
             const access_token = context.auth.access_token;
             const mailChimpServerPrefix = await getMailChimpServerPrefix(access_token);

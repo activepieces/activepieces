@@ -47,6 +47,9 @@
       "@activepieces/piece-constant-contact": [
         "packages/pieces/constant-contact/src/index.ts"
       ],
+      "@activepieces/piece-contiguity": [
+        "packages/pieces/contiguity/src/index.ts"
+      ],
       "@activepieces/piece-csv": ["packages/pieces/csv/src/index.ts"],
       "@activepieces/piece-data-mapper": [
         "packages/pieces/data-mapper/src/index.ts"
@@ -114,6 +117,7 @@
         "packages/pieces/invoiceninja/src/index.ts"
       ],
       "@activepieces/piece-jotform": ["packages/pieces/jotform/src/index.ts"],
+      "@activepieces/piece-kimai": ["packages/pieces/kimai/src/index.ts"],
       "@activepieces/piece-kizeo-forms": [
         "packages/pieces/kizeo-forms/src/index.ts"
       ],
@@ -157,6 +161,9 @@
       ],
       "@activepieces/piece-sftp": ["packages/pieces/sftp/src/index.ts"],
       "@activepieces/piece-shopify": ["packages/pieces/shopify/src/index.ts"],
+      "@activepieces/piece-simplepdf": [
+        "packages/pieces/simplepdf/src/index.ts"
+      ],
       "@activepieces/piece-slack": ["packages/pieces/slack/src/index.ts"],
       "@activepieces/piece-smtp": ["packages/pieces/smtp/src/index.ts"],
       "@activepieces/piece-soap": ["packages/pieces/soap/src/index.ts"],
@@ -167,9 +174,11 @@
       ],
       "@activepieces/piece-store": ["packages/pieces/store/src/index.ts"],
       "@activepieces/piece-stripe": ["packages/pieces/stripe/src/index.ts"],
+      "@activepieces/piece-supabase": ["packages/pieces/supabase/src/index.ts"],
       "@activepieces/piece-surveymonkey": [
         "packages/pieces/surveymonkey/src/index.ts"
       ],
+      "@activepieces/piece-tags": ["packages/pieces/tags/src/index.ts"],
       "@activepieces/piece-telegram-bot": [
         "packages/pieces/telegram-bot/src/index.ts"
       ],

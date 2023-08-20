@@ -17,7 +17,7 @@ class Validators {
 
         return regex.test(String(processedValue))
           ? null
-          : formatErrorMessage(ErrorMessages.REGEX, { property: property.displayName });
+          : formatErrorMessage(ErrorMessages.REGEX, { property: property?.displayName });
       }
     };
   };
@@ -112,7 +112,7 @@ class Validators {
 
       return regex.test((processedValue as File).name)
         ? null
-        : formatErrorMessage(ErrorMessages.IMAGE, { property: property.displayName });
+        : formatErrorMessage(ErrorMessages.IMAGE, { property: property });
     }
   }
 

@@ -8,20 +8,6 @@ export const createBrand = createAction({
     name: "create-brand",
     displayName: "Create new Brand",
     description: "Create a new Brand to your catalog",
-    sampleData: {
-        "Id": 2000013,
-        "Name": "Orma Carbono2",
-        "Text": "Orma Carbon2",
-        "Keywords": "orma",
-        "SiteTitle": "Orma Carbon2",
-        "Active": true,
-        "MenuHome": true,
-        "AdWordsRemarketingCode": "",
-        "LomadeeCampaignCode": "",
-        "Score": null,
-        "LinkId": null
-    }
-    ,
     props: {
         Name: Property.ShortText({
             displayName: "Name",

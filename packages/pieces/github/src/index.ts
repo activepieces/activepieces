@@ -3,7 +3,7 @@ import { githubTriggers } from './lib/trigger';
 import { githubCreateIssueAction } from './lib/actions/create-issue';
 
 export const githubAuth = PieceAuth.OAuth2({
-    displayName: "Authentication",
+    
     required: true,
     authUrl: 'https://github.com/login/oauth/authorize',
     tokenUrl: 'https://github.com/login/oauth/access_token',

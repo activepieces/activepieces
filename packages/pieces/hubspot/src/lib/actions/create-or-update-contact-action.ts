@@ -8,10 +8,6 @@ export const hubSpotContactsCreateOrUpdateAction = createAction({
     name: 'create_or_update_contact',
     displayName: 'Create or Update Contact',
     description: 'Updates contact if email address already exists',
-    sampleData: {
-      'vid': 12345,
-      'isNew': true,
-    },
     props: {
       email: Property.ShortText({
         displayName: 'Email',

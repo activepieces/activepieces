@@ -8,9 +8,6 @@ export const posthogCreateEvent = createAction({
     name: 'create_event',
     displayName: 'Create Event',
     description: 'Create an event inside a project',
-    sampleData: {
-      "status": 1
-    },
     props: {
       event: Property.ShortText({
         displayName: "Event name",

@@ -26,7 +26,7 @@ const markdownDescription = `
 `;
 
 export const vtexAuth = PieceAuth.CustomAuth({
-    displayName: "Authentication",
+    
     description: markdownDescription,
     props: {
         hostUrl: Property.ShortText({

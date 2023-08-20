@@ -5,7 +5,6 @@ import { newFile } from "./lib/triggers/new-file";
 import { newFolder } from "./lib/triggers/new-folder";
 
 export const boxAuth = PieceAuth.OAuth2({
-    displayName: 'Authentication',
     required: true,
     authUrl: 'https://account.box.com/api/oauth2/authorize',
     tokenUrl: 'https://api.box.com/oauth2/token',

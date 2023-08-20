@@ -274,7 +274,6 @@ describe('Variable Service', () => {
       })
     };
     const {processedInput, errors} = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.CustomAuth({
-      displayName: 'Auth',
       required: false,
       props: {
         age: Property.Number({
@@ -331,7 +330,6 @@ describe('Variable Service', () => {
       })
     };
     const {processedInput, errors} = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.CustomAuth({
-      displayName: 'Auth',
       required: false,
       props: {
         age: Property.Number({
@@ -504,7 +502,6 @@ describe('Variable Service', () => {
       })
     };
     const { processedInput, errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.CustomAuth({
-      displayName: 'Auth',
       required: false,
       props: {
         email: Property.LongText({

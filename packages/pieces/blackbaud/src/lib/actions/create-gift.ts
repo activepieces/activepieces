@@ -36,54 +36,6 @@ export const blackbaudCreateGift = createAction({
             required: true
         })
     },
-    sampleData: [
-        {
-            "amount": {
-                "value": 100
-            },
-            "constituent_id": "280",
-            "date": "2017-10-03T00:00:00Z",
-            "fundraisers": [
-                {
-                    "amount": {
-                        "value": 100
-                    },
-                    "constituent_id": "252"
-                }
-            ],
-            "gift_splits": [
-                {
-                    "amount": {
-                        "value": 100
-                    },
-                    "appeal_id": "15",
-                    "campaign_id": "1",
-                    "fund_id": "41"
-                }
-            ],
-            "gift_status": "Active",
-            "is_anonymous": false,
-            "lookup_id": "2225",
-            "payments": [
-                {
-                    "payment_method": "Cash"
-                }
-            ],
-            "post_date": "2017-10-03T00:00:00Z",
-            "post_status": "NotPosted",
-            "reference": "newly added gift",
-            "soft_credits": [
-                {
-                    "amount": {
-                        "value": 100
-                    },
-                    "constituent_id": "187"
-                }
-            ],
-            "subtype": "Annuity",
-            "type": "Donation"
-        }
-    ],
     async run(configValue) {
         const { subscription_key, gift_json } = configValue.propsValue;
         const accessToken = configValue.auth.access_token;

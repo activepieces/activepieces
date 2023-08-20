@@ -17,7 +17,6 @@ export const textClassifierModelPredictAction = createAction({
             required: true,
         }),
     },
-    sampleData: { },
     async run(ctx) {
         const { auth } = ctx
         const { modelUrl, txt } = ctx.propsValue;
@@ -47,7 +46,6 @@ export const textToTextModelPredictAction = createAction({
             required: true,
         }),
     },
-    sampleData: { },
     async run(ctx) {
         const { auth } = ctx
         const { modelUrl, txt } = ctx.propsValue;

@@ -9,7 +9,7 @@ import { newDealAdded } from './lib/triggers/new-deal-added';
 import { newTicketAdded } from './lib/triggers/new-ticket-added';
 
 export const hubspotAuth = PieceAuth.OAuth2({
-    displayName: 'Authentication',
+    
     authUrl: 'https://app.hubspot.com/oauth/authorize',
     tokenUrl: 'https://api.hubapi.com/oauth/v1/token',
     required: true,

@@ -13,7 +13,6 @@ export const githubCreateIssueAction = createAction({
   name: 'github_create_issue',
   displayName: 'Create Issue',
   description: 'Create Issue',
-  sampleData: {},
   props: {
     repository: githubCommon.repositoryDropdown,
     title: Property.ShortText({

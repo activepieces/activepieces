@@ -18,6 +18,7 @@ import { createContextStore } from '../services/storage.service';
 import { Utils } from '../utils';
 import { ActionContext, PauseHook, PauseHookParams, PiecePropertyMap, StaticPropsValue, StopHook, StopHookParams } from '@activepieces/pieces-framework';
 import { createConnectionManager } from '../services/connections.service';
+import { createTagsManager } from '../services/tags.service';
 
 type CtorParams = {
   executionType: ExecutionType
@@ -151,6 +152,7 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
         store: createContextStore('', globals.flowVersionId),
         auth: processedInput[AUTHENTICATION_PROPERTY_NAME],
         propsValue: processedInput,
+        tags: createTagsManager(executionState),
         connections: createConnectionManager(executionState),
         serverUrl: globals.serverUrl!,
         run: {

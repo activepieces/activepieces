@@ -3,7 +3,6 @@ import { OAuth2AuthorizationMethod, PieceAuth, createPiece } from '@activepieces
 import { newDatabaseItem } from './lib/triggers/new-database-item';
 
 export const notionAuth = PieceAuth.OAuth2({
-  displayName: "Notion Account",
   authUrl: "https://api.notion.com/v1/oauth/authorize",
   tokenUrl: "https://api.notion.com/v1/oauth/token",
   scope: [],

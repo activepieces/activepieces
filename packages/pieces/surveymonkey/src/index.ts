@@ -3,7 +3,7 @@ import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
 import { newResponse } from "./lib/triggers/new-response";
 
 export const smAuth = PieceAuth.OAuth2({
-    displayName: 'Authentication',
+    
     authUrl: 'https://api.surveymonkey.com/oauth/authorize',
     tokenUrl: 'https://api.surveymonkey.com/oauth/token',
     required: true,

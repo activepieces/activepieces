@@ -2,7 +2,7 @@ import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { typeformNewSubmission } from './lib/trigger/new-submission';
 
 export const typeformAuth = PieceAuth.OAuth2({
-  displayName: "Authentication",
+  
   required: true,
   tokenUrl: 'https://api.typeform.com/oauth/token',
   authUrl: 'https://admin.typeform.com/oauth/authorize',

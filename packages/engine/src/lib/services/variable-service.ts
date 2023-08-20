@@ -193,6 +193,9 @@ export class VariableService {
       if (key === AUTHENTICATION_PROPERTY_NAME) {
         continue;
       }
+      if (property.type === PropertyType.MARKDOWN) {
+        continue;
+      }
       const processors = [
         ...(property.defaultProcessors || []),
         ...(property.processors || [])

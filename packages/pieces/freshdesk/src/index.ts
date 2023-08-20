@@ -4,7 +4,6 @@ import { getContactFromID } from './lib/actions/get-contact-from-id';
 import { getTicketStatus } from './lib/actions/get-ticket-status';
 
 export const freshdeskAuth = PieceAuth.CustomAuth({
-  displayName: 'Freshdesk Custom Authentication',
   props: {
       base_url: Property.ShortText({
           displayName: 'Base URL',

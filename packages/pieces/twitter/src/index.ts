@@ -29,7 +29,7 @@ The steps to obtain the required credentials:
 `
 
 export const twitterAuth = PieceAuth.CustomAuth({
-    displayName: "Authentication",
+    
     description: markdownDescription,
     props: {
         consumerKey: Property.ShortText({
