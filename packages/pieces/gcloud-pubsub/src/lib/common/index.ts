@@ -42,8 +42,6 @@ export const common = {
       if ('response' in e) {
         topics.placeholder = `Get topics error: ${e.response.data.error}`;
         console.debug(e.response.data.error)
-      } else {
-        topics.placeholder = `${auth.email} ${auth.privateKey}-------Error: ${e}`;
       }
     }
 
