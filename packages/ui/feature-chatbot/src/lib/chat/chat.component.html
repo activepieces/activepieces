@@ -1,6 +1,6 @@
 <div class="flex items-center ap-absolute ap-top-0 ap-w-full ap-border-b ap-border-solid ap-border-dividers">
-  <ap-icon-button class="ap-mb-[10px]" [useSvgDefault]="true" [iconFilename]="'logo/logo.svg'" [tooltipText]="'Home'"
-    (buttonClicked)="redirectHome(false)" (auxclick)="redirectHome(true)"></ap-icon-button>
+  <ap-icon-button class="ap-mb-[10px]" [useSvgDefault]="true" [width]="7" [height]="14" iconFilename="back.svg"
+    [tooltipText]="'Home'" (buttonClicked)="redirectHome(false)" (auxclick)="redirectHome(true)"></ap-icon-button>
   <div class="ap-absolute ap-w-full ap-flex ap-items-center ap-justify-center ap-top-0 ap-p-4 ap-pointer-events-none">
     <svg-icon src="assets/img/custom/logo/full-logo-small.svg"> </svg-icon>
   </div>
@@ -50,13 +50,14 @@
           [applyClass]="true"></svg-icon>
         {{msg.text}}
       </div>
-      <div *ngIf="sendingMessage$ | async"
-        class="ap-p-7 ap-typography-body-1 ap-flex ap-items-center ap-gap-3 ap-bg-header">
-        <svg-icon class="ap-w-[24px] ap-h-[24px] ap-fill-body" src="assets/img/custom/dashboard/chatbots.svg"
-          [applyClass]="true"></svg-icon>
-        Chatbot is thinking ...
-      </div>
+
     </ng-container>
+    <div *ngIf="sendingMessage$ | async"
+      class="ap-p-7 ap-typography-body-1 ap-flex ap-items-center ap-gap-3 ap-bg-header">
+      <svg-icon class="ap-w-[24px] ap-h-[24px] ap-fill-body" src="assets/img/custom/dashboard/chatbots.svg"
+        [applyClass]="true"></svg-icon>
+      Chatbot is thinking ...
+    </div>
   </div>
 
 
