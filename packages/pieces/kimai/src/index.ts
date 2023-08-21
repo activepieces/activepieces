@@ -2,6 +2,7 @@
 import { createPiece, PieceAuth, Property, Validators } from "@activepieces/pieces-framework";
 import { kimaiCreateTimesheetAction } from "./lib/actions/create-timesheet";
 import { makeClient } from "./lib/common";
+import { HttpError } from "@activepieces/pieces-common";
 
 export const kimaiAuth = PieceAuth.CustomAuth({
   description: `
@@ -53,9 +54,18 @@ export const kimaiAuth = PieceAuth.CustomAuth({
       };
 
     } catch (e) {
+      if (e instanceof HttpError) {
+        if (e.response.body instanceof Object && 'message' in e.response.body) {
+          return {
+            valid: false,
+            error: e.response.body.message as string
+          };
+        }
+      }
+
       return {
         valid: false,
-        error: 'Connection failed. Please check your server URL/credentials and try again.'
+        error: 'Please check your server URL/credentials and try again.'
       };
     }
   },
