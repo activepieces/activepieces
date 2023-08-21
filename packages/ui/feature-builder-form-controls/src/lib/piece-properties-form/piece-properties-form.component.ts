@@ -441,7 +441,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
       } else {
         controls[pk] = new UntypedFormControl(
           propValue === undefined || propValue === null
-            ? prop.defaultValue
+            ? `${prop.defaultValue}`
             : propValue,
           validators
         );
