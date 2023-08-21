@@ -201,11 +201,11 @@ const execute = async <Result extends EngineHelperResult>(
     )
 
     sandboxResponse.standardOutput.split('\n').forEach((f) => {
-        if (f.trim().length > 0) logger.debug({}, chalk.yellow(f))
+        if (f.trim().length > 0) logger.info({}, chalk.yellow(f))
     })
 
     sandboxResponse.standardError.split('\n').forEach((f) => {
-        if (f.trim().length > 0) logger.debug({}, chalk.red(f))
+        if (f.trim().length > 0) logger.error({}, chalk.red(f))
     })
 
     if (sandboxResponse.verdict === EngineResponseStatus.TIMEOUT) {
