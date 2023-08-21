@@ -1,5 +1,5 @@
 import { googleSlidesAuth } from "../..";
-import { createAction, Property, OAuth2PropertyValue } from "@activepieces/pieces-framework";
+import { createAction, Property } from "@activepieces/pieces-framework";
 import { HttpMethod, httpClient, HttpRequest, AuthenticationType } from "@activepieces/pieces-common";
 
 
@@ -18,7 +18,7 @@ export const createPresentation = createAction({
     },
     async run(context) {
         const baseUrl = "https://slides.googleapis.com/v1/presentations";
-        const authProp: OAuth2PropertyValue = context.auth as OAuth2PropertyValue;
+        const authProp = context.auth;
         const { title } = context.propsValue;
         const request: HttpRequest = {
             method: HttpMethod.POST,
