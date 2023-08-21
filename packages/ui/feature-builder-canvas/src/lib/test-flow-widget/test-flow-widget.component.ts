@@ -17,10 +17,8 @@ import {
   fadeIn400ms,
   fadeInUp400ms,
   initializedRun,
-  jsonValidator,
 } from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
-import { UntypedFormControl } from '@angular/forms';
 import { MatSnackBar, MatSnackBarRef } from '@angular/material/snack-bar';
 import {
   ExecutionOutputStatus,
@@ -52,17 +50,6 @@ export class TestFlowWidgetComponent implements OnInit {
   shouldHideTestWidget$: Observable<boolean>;
   testRunSnackbar: MatSnackBarRef<TestRunBarComponent>;
   isTriggerTested$: Observable<boolean>;
-  payloadControl: UntypedFormControl = new UntypedFormControl(
-    JSON.stringify(
-      {
-        body: {},
-        headers: {},
-      },
-      null,
-      2
-    ),
-    jsonValidator
-  );
 
   constructor(
     private flowService: FlowService,

@@ -413,13 +413,12 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
         }
         if (typeof propValue === 'object') {
           controls[pk] = new UntypedFormControl(
-            JSON.stringify(propValue || prop.defaultValue, null, 2),
+            JSON.stringify(propValue, null, 2),
             validators
           );
         } else {
           controls[pk] = new UntypedFormControl(
-            propertiesValues[pk] ||
-              JSON.stringify(prop.defaultValue ?? {}, null, 2),
+            propertiesValues[pk],
             validators
           );
         }
@@ -475,11 +474,15 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
     const formattedValue: Record<string, unknown> = { ...formValue };
     Object.keys(formValue).forEach((pk) => {
       const property = this.properties[pk];
-      if (property.type === PropertyType.JSON) {
-        try {
-          formattedValue[pk] = JSON.parse(formValue[pk] as string);
-        } catch (_) {
-          //incase it is an invalid json
+      if (formattedValue[pk] === '' || formattedValue[pk] === null) {
+        formattedValue[pk] = undefined;
+      } else {
+        if (property.type === PropertyType.JSON) {
+          try {
+            formattedValue[pk] = JSON.parse(formValue[pk] as string);
+          } catch (_) {
+            //incase it is an invalid json
+          }
         }
       }
     });
