@@ -1,94 +1,122 @@
 <div class="ap-typography-headline-5 !ap-font-semibold ap-m-7.5 ">Chatbot Configuration</div>
-<div class="ap-p-15 ap-flex ap-flex-col ap-gap-36 ap-divide-y ap-divide-dividers">
-  <div class="ap-flex ap-gap-36">
-    <div class="ap-text-body-1 ap-font-semibold ap-w-[8.375rem]">
-      1- Branding
-    </div>
-    <form [formGroup]="formGroup" class="ap-w-[346px]">
-      <mat-form-field class="ap-w-full" appearance="outline">
-        <mat-label>Name</mat-label>
-        <input matInput placeholder="Name" formControlName="displayName" />
-        <mat-error *ngIf="formGroup.controls.displayName.invalid">
-          Name is required
-        </mat-error>
-      </mat-form-field>
-    </form>
-  </div>
-  <div class="ap-flex ap-gap-36 ap-pt-36">
-    <div class="ap-text-body-1 ap-font-semibold">
-      2- Teach your bot
-    </div>
-    <form [formGroup]="formGroup" class="ap-w-[346px] ">
-      <div class="ap-relative ap-mb-5">
-        <ng-container *ngIf="openAiPiece$ | async as openAiPiece">
-          <div class="ap-absolute ap-top-[10px] ap-right-[30px] ap-z-50">
-            <app-add-edit-connection-button class="edit-selected-auth "
-              *ngIf="formGroup.controls.connection.value && openAiPiece.auth" btnSize="extraSmall"
-              [isEditConnectionButton]="true" [authProperty]="openAiPiece.auth" [pieceName]="pieceName"
-              [pieceVersion]="pieceVersion" [selectedConnectionInterpolatedString]="formGroup.controls.connection.value"
-              (connectionPropertyValueChanged)="connectionValueChanged($event)">
-              Edit
-            </app-add-edit-connection-button>
-          </div>
-
-        </ng-container>
-        <mat-form-field class="ap-w-full " appearance="outline" #dropdown #dropdownUiContainer="hoverTrackerDirective"
-          apTrackHover>
-          <mat-label> Open AI Connection </mat-label>
-          <mat-select [formControl]="formGroup.controls.connection" [compareWith]="dropdownCompareWithFunction">
-            <mat-option *ngFor="let opt of connections$ | async" [value]="opt.value">
-              {{opt.label.name}}
-            </mat-option>
-            <mat-option (click)="addConnectionBtn.buttonClicked()"
-              [style.display]="(connections$ | async)?.length === 0 ? 'none': 'flex'">
-              <div class="ap-flex">
-                <div class="ap-flex-grow ap-text-primary ap-flex ap-gap-2 ap-font-bold ap-items-center"
-                  #noConnectionDiv>
-                  <svg-icon src="assets/img/custom/add.svg" [applyClass]="true"
-                    class="ap-fill-primary ap-w-[13px]  ap-h-[13px] "></svg-icon> New Connection
-                </div>
-              </div>
-            </mat-option>
-            <mat-option [style.display]="(connections$ | async)?.length === 0 ? 'flex': 'none'"
-              (click)="addConnectionBtn.buttonClicked()" class="add-auth">
-              <div class="ap-flex">
-                <div class="ap-flex-grow">
-                  No connections</div>
-                <app-add-edit-connection-button (click)="$event.stopPropagation()" class="edit-selected-auth ap-z-40"
-                  btnSize="small" btnSize="extraSmall" [isEditConnectionButton]="false"
-                  [authProperty]="(openAiPiece$ | async)?.auth!" [pieceName]="pieceName" [pieceVersion]="pieceVersion"
-                  [selectedConnectionInterpolatedString]="formGroup.controls.connection.value"
-                  (connectionPropertyValueChanged)="connectionValueChanged($event)">
-                  + Add
-                </app-add-edit-connection-button>
-              </div>
-            </mat-option>
-          </mat-select>
-          <mat-error *ngIf="formGroup.controls.connection.invalid">
-            Connection is required
+<div class="ap-flex ap-divide-x ap-divide-dividers ap-h-[calc(100%-5.25rem)]">
+  <div
+    class="ap-px-15 ap-pt-15 ap-flex ap-flex-col ap-gap-36 ap-divide-y ap-divide-dividers ap-grow ap-overflow-scroll thin-scrollbars">
+    <div class="ap-flex ap-gap-36">
+      <div class="ap-text-body-1 ap-font-semibold ap-w-[8.3125rem] ">
+        1- Branding
+      </div>
+      <form [formGroup]="formGroup" class="ap-w-[346px]">
+        <mat-form-field class="ap-w-full" appearance="outline">
+          <mat-label>Name</mat-label>
+          <input matInput placeholder="Name" formControlName="displayName" />
+          <mat-error *ngIf="formGroup.controls.displayName.invalid">
+            Name is required
           </mat-error>
         </mat-form-field>
-        <app-add-edit-connection-button class="ap-hidden" btnSize="medium" [isEditConnectionButton]="false"
-          #addConnectionBtn [isEditConnectionButton]="false" [authProperty]="(openAiPiece$ | async)?.auth!"
-          [pieceName]="pieceName" [pieceVersion]="pieceVersion"
-          [selectedConnectionInterpolatedString]="formGroup.controls.connection.value"
-          (connectionPropertyValueChanged)="connectionValueChanged($event)">
-          + New Connection
-        </app-add-edit-connection-button>
+      </form>
+    </div>
+    <div class="ap-flex ap-gap-36 ap-pt-36">
+      <div class="ap-text-body-1 ap-font-semibold">
+        2- Teach your bot
       </div>
+      <form [formGroup]="formGroup" class="ap-w-[346px] ap-flex ap-flex-col ap-gap-5">
+        <div class="ap-relative ">
+          <ng-container *ngIf="openAiPiece$ | async as openAiPiece">
+            <div class="ap-absolute ap-top-[10px] ap-right-[30px] ap-z-50">
+              <app-add-edit-connection-button class="edit-selected-auth "
+                *ngIf="formGroup.controls.connection.value && openAiPiece.auth" btnSize="extraSmall"
+                [isEditConnectionButton]="true" [authProperty]="openAiPiece.auth" [pieceName]="pieceName"
+                [pieceVersion]="pieceVersion"
+                [selectedConnectionInterpolatedString]="formGroup.controls.connection.value"
+                (connectionPropertyValueChanged)="connectionValueChanged($event)">
+                Edit
+              </app-add-edit-connection-button>
+            </div>
 
-      <mat-form-field class="ap-w-full" appearance="outline">
-        <mat-label>Prompt</mat-label>
-        <textarea autosize matInput [minRows]="1" class="!ap-resize-none !ap-pb-2"
-          placeholder="i.e. Act like Ironman's assistant, Jarvis." formControlName="prompt">
-        </textarea>
-        <mat-error *ngIf="formGroup.controls.displayName.invalid">
-          Prompt is required
-        </mat-error>
-      </mat-form-field>
+          </ng-container>
+          <mat-form-field class="ap-w-full " appearance="outline" #dropdown #dropdownUiContainer="hoverTrackerDirective"
+            apTrackHover>
+            <mat-label> Open AI Connection </mat-label>
+            <mat-select [formControl]="formGroup.controls.connection" [compareWith]="dropdownCompareWithFunction">
+              <mat-option (click)="addConnectionBtn.buttonClicked()"
+                [style.display]="(connections$ | async)?.length === 0 ? 'none': 'flex'">
+                <div class="ap-flex">
+                  <div class="ap-flex-grow ap-text-primary ap-flex ap-gap-2 ap-font-bold ap-items-center"
+                    #noConnectionDiv>
+                    <svg-icon src="assets/img/custom/add.svg" [applyClass]="true"
+                      class="ap-fill-primary ap-w-[13px]  ap-h-[13px] "></svg-icon> New Connection
+                  </div>
+                </div>
+              </mat-option>
+              <mat-option *ngFor="let opt of connections$ | async" [value]="opt.value">
+                {{opt.label.name}}
+              </mat-option>
 
-    </form>
+              <mat-option [style.display]="(connections$ | async)?.length === 0 ? 'flex': 'none'"
+                (click)="addConnectionBtn.buttonClicked()" class="add-auth">
+                <div class="ap-flex">
+                  <div class="ap-flex-grow">
+                    No connections</div>
+                  <app-add-edit-connection-button (click)="$event.stopPropagation()" class="edit-selected-auth ap-z-40"
+                    btnSize="small" btnSize="extraSmall" [isEditConnectionButton]="false"
+                    [authProperty]="(openAiPiece$ | async)?.auth!" [pieceName]="pieceName" [pieceVersion]="pieceVersion"
+                    [selectedConnectionInterpolatedString]="formGroup.controls.connection.value"
+                    (connectionPropertyValueChanged)="connectionValueChanged($event)">
+                    + Add
+                  </app-add-edit-connection-button>
+                </div>
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="formGroup.controls.connection.invalid">
+              Connection is required
+            </mat-error>
+          </mat-form-field>
+          <app-add-edit-connection-button class="ap-hidden" btnSize="medium" [isEditConnectionButton]="false"
+            #addConnectionBtn [isEditConnectionButton]="false" [authProperty]="(openAiPiece$ | async)?.auth!"
+            [pieceName]="pieceName" [pieceVersion]="pieceVersion"
+            [selectedConnectionInterpolatedString]="formGroup.controls.connection.value"
+            (connectionPropertyValueChanged)="connectionValueChanged($event)">
+            + New Connection
+          </app-add-edit-connection-button>
+        </div>
+
+        <mat-form-field class="ap-w-full" appearance="outline">
+          <mat-label>Prompt</mat-label>
+          <textarea autosize matInput [minRows]="1" class="!ap-resize-none !ap-pb-2"
+            placeholder="i.e. Act like Ironman's assistant, Jarvis." formControlName="prompt">
+          </textarea>
+          <mat-error *ngIf="formGroup.controls.displayName.invalid">
+            Prompt is required
+          </mat-error>
+        </mat-form-field>
+        <div>
+          <div class="ap-text-label ap-typography-subtitle-2 ap-mb-3">Data sources</div>
+          <app-datasources-table [formControl]="formGroup.controls.sources">
+
+          </app-datasources-table>
+          <div @fadeInUp *ngIf="formGroup.controls.sources.invalid && formGroup.controls.sources.touched"
+            class="ap-text-danger ap-typography-caption ap-px-4">
+            Requires at least one source
+          </div>
+        </div>
+
+      </form>
+
+    </div>
+
+    <div class="ap-grow !ap-border-0">
+
+    </div>
+    <div class=" ap-items-center ap-flex ap-justify-end ap-p-6">
+      <ap-button btnColor="primary" btnSize="medium" btnStyle="flat" (buttonClicked)="submit()">Save</ap-button>
+    </div>
+  </div>
+  <div class="ap-flex ap-items-center ap-justify-center ap-bg-[#F0F1F3] ap-typography-headline-5 ap-h-full ap-grow">
+    We will be adding preview soon
   </div>
 </div>
+
+
 
 <ng-container *ngIf="loadConnections$ | async"></ng-container>

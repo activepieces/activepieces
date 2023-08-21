@@ -4,7 +4,7 @@ import { ChatComponent } from './chat/chat.component';
 import { UiCommonModule } from '@activepieces/ui/common';
 import { RouterModule } from '@angular/router';
 import { ChatbotLayoutRoutes } from './ui-chatbot-routes';
-import { ChatbotTypeComponent } from './chatbot-source-dialog/chatbot-source-dialog.component';
+import { ChatbotDataSourceDialogComponent } from './chatbot-source-dialog/chatbot-source-dialog.component';
 import { ChatbotSettingsComponent } from './chatbot-settings/chatbot-settings.component';
 import { ChatbotsTableComponent } from './chatbots-table/chatbots-table.component';
 import { AutosizeModule } from 'ngx-autosize';
@@ -13,6 +13,7 @@ import { appConnectionsReducer } from '@activepieces/ui/feature-builder-store';
 import { StoreModule } from '@ngrx/store';
 import { MatRadioModule } from '@angular/material/radio';
 import { DatasourcesTableComponent } from './datasources-table/datasources-table.component';
+import { MatExpansionModule } from '@angular/material/expansion';
 @NgModule({
   imports: [
     CommonModule,
@@ -24,16 +25,17 @@ import { DatasourcesTableComponent } from './datasources-table/datasources-table
       appConnectionsState: appConnectionsReducer,
     }),
     MatRadioModule,
+    MatExpansionModule,
   ],
   declarations: [
     ChatComponent,
-    ChatbotTypeComponent,
+    ChatbotDataSourceDialogComponent,
     ChatbotSettingsComponent,
     ChatbotsTableComponent,
     DatasourcesTableComponent,
   ],
   exports: [
-    ChatbotTypeComponent,
+    ChatbotDataSourceDialogComponent,
     ChatbotsTableComponent,
     ChatbotSettingsComponent,
   ],

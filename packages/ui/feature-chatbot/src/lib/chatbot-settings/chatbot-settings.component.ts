@@ -7,7 +7,7 @@ import {
 } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Observable, map, tap } from 'rxjs';
-import { PieceMetadataService } from '@activepieces/ui/common';
+import { PieceMetadataService, fadeInUp400ms } from '@activepieces/ui/common';
 import { AppConnection } from '@activepieces/shared';
 import { ChatBotService } from '../chatbot.service';
 import deepEqual from 'deep-equal';
@@ -18,17 +18,19 @@ import {
   ConnectionDropdownItem,
   appConnectionsActions,
 } from '@activepieces/ui/feature-builder-store';
+import { DataSourceValue } from '../datasources-table/datasources-table.component';
 
 @Component({
   selector: 'app-chatbot-settings',
   templateUrl: './chatbot-settings.component.html',
-  styleUrls: [],
+  animations: [fadeInUp400ms],
 })
 export class ChatbotSettingsComponent implements OnInit {
   formGroup: FormGroup<{
     displayName: FormControl<string>;
     prompt: FormControl<string>;
     connection: FormControl<string>;
+    sources: FormControl<DataSourceValue[]>;
   }>;
   updateExistingDate$: Observable<void> | undefined;
   autoSave$: Observable<void> | undefined;
@@ -66,6 +68,9 @@ export class ChatbotSettingsComponent implements OnInit {
         validators: [Validators.required],
         nonNullable: true,
       }),
+      sources: new FormControl([] as DataSourceValue[], {
+        nonNullable: true,
+      }),
     });
     this.loadConnections$ = this.actRoute.data.pipe(
       tap((value) => {
@@ -92,31 +97,14 @@ export class ChatbotSettingsComponent implements OnInit {
       }),
       map(() => void 0)
     );
-
-    // this.autoSave$ = this.formGroup.valueChanges.pipe(
-    //   debounceTime(500),
-    //   switchMap((value) => {
-    //     return this.chatbotService.update(this.chatbotId, {
-    //       displayName: value.displayName,
-    //       settings: {
-    //         prompt: value.prompt
-    //       }
-    //     });
-    //   }),
-    //   skip(1),
-    //   tap(() => {
-    //     this.matSnackBar.openFromComponent(GenericSnackbarTemplateComponent, {
-    //       data: 'Chatbot settings updated successfully',
-    //       duration: 2000
-    //     });
-    //   }),
-    //   map(() => {})
-    // );
   }
   connectionValueChanged(event: {
     propertyKey: string;
     value: `{{connections.${string}}}`;
   }) {
     this.formGroup.controls.connection.setValue(event.value.toString());
+  }
+  submit() {
+    this.formGroup.markAllAsTouched();
   }
 }

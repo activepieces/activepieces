@@ -1,59 +1,41 @@
-<div
-  class="ap-container ap-flex ap-justify-center ap-items-center ap-h-screen ap-p-8"
->
-  <div
-    class="ap-w-full ap-border ap-rounded-lg ap-w-full ap-h-full ap-flex ap-flex-col"
-  >
-    <div class="ap-bg-gray-800 ap-text-white ap-p-4 ap-rounded-t-lg">
-      <h1 class="ap-text-lg font-bold">My Chatbot</h1>
-    </div>
-    <div class="ap-flex-grow ap-flex ap-flex-col ap-justify-end ap-p-4">
-      <div class="ap-flex ap-flex-col ap-gap-4">
-        <ng-container *ngFor="let message of messages">
-          <div
-            class="ap-flex ap-flex-row ap-items-end"
-            *ngIf="message.sender === 'bot'"
-          >
-            <div
-              class="ap-bg-gray-100 ap-rounded-lg ap-p-2 ap-max-w-xs ap-break-words ap-shadow-md ap-ml-2"
-            >
-              <p class="ap-text-sm">{{ message.text }}</p>
-            </div>
-          </div>
-          <div
-            class="ap-flex ap-flex-row-reverse ap-items-end"
-            *ngIf="message.sender === 'user'"
-          >
-            <div
-              class="ap-bg-primary ap-text-white ap-rounded-lg ap-p-2 ap-max-w-xs ap-break-words ap-shadow-md ap-ml-2 ap-mr-2"
-            >
-              <p class="ap-text-sm">{{ message.text }}</p>
-            </div>
-          </div>
-        </ng-container>
-        <div class="ap-mt-2" *ngIf="sending">
-          <div class="ap-flex ap-items-center ap-justify-center ap-space-x-2 ap-animate-bounce">
-            <div class="ap-w-4 ap-h-4 ap-bg-primary ap-rounded-full"></div>
-            <div class="ap-w-4 ap-h-4 ap-bg-primary ap-rounded-full"></div>
-            <div class="ap-w-4 ap-h-4 ap-bg-primary ap-rounded-full"></div>
-          </div>
-        </div>
-      </div>
-      <div class="ap-flex ap-flex-row ap-items-center ap-mt-4">
-        <mat-form-field appearance="fill" class="ap-flex-grow">
-          <mat-label>Message</mat-label>
-          <textarea matInput [formControl]="messageControl" (keydown.enter)="send()"></textarea>
-          <mat-hint>Press Enter to send message</mat-hint>
-        </mat-form-field>
-        <button mat-icon-button [disabled]="sending" (click)="send()">
-          <mat-icon *ngIf="!sending">send</mat-icon>
-          <div
-            class="ap-spinner ap-spinner-sm ap-text-gray-500"
-            *ngIf="sending"
-          ></div>
-        </button>
-      </div>
-    </div>
+<div class="flex items-center ap-absolute ap-top-0 ap-w-full ap-border-b ap-border-solid ap-border-dividers">
+  <ap-icon-button class="ap-mb-[10px]" [useSvgDefault]="true" [iconFilename]="'logo/logo.svg'" [tooltipText]="'Home'"
+    (buttonClicked)="redirectHome(false)" (auxclick)="redirectHome(true)"></ap-icon-button>
+  <div class="ap-absolute ap-w-full ap-flex ap-items-center ap-justify-center ap-top-0 ap-p-4 ap-pointer-events-none">
+    <svg-icon src="assets/img/custom/logo/full-logo-small.svg"> </svg-icon>
   </div>
-  <ng-container *ngIf="sendMessage$ | async"></ng-container>
+</div>
+
+<div class="ap-container ap-mx-auto ap-h-full ">
+
+  <div class="ap-flex ap-flex-col ap-gap-4  ap-items-center ap-justify-center  "
+    [style.height]="'calc( 100% - ' + textareaContainer.clientHeight + 'px )'">
+    <ng-container *ngIf="messages.length===0">
+      <svg-icon src="assets/img/custom/dashboard/chatbots.svg" [applyClass]="true"
+        class="ap-fill-body ap-h-[60px] ap-w-[60px]"></svg-icon>
+      <div class="ap-typography-headline-6 ap-text-body">
+        Ask me something
+      </div>
+    </ng-container>
+    <ng-container *ngIf="messages.length > 0">
+      <svg-icon src="assets/img/custom/dashboard/chatbots.svg" [applyClass]="true"
+        class="ap-fill-body ap-h-[60px] ap-w-[60px]"></svg-icon>
+      <div class="ap-typography-headline-6 ap-text-body">
+        Ask me something
+      </div>
+    </ng-container>
+  </div>
+  <div #textareaContainer>
+    <mat-form-field class="ap-w-full" appearance="outline">
+      <textarea autosize matInput [minRows]="1" [maxRows]="8" class="!ap-resize-none thin-scrollbars"
+        [formControl]="messageControl" placeholder="Send a message" formControlName="prompt">
+      </textarea>
+      <div matSuffix class="ap-m-2">
+        <ap-icon-button [useSvgDefault]="true" [iconFilename]="'send.svg'" [buttonDisabled]="sending"></ap-icon-button>
+      </div>
+    </mat-form-field>
+  </div>
+
+
+
 </div>

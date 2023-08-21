@@ -5,11 +5,15 @@ import { Router } from '@angular/router';
 import { Chatbot } from '@activepieces/shared';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { DeleteEntityDialogComponent, DeleteEntityDialogData, GenericSnackbarTemplateComponent } from '@activepieces/ui/common';
+import {
+  DeleteEntityDialogComponent,
+  DeleteEntityDialogData,
+  GenericSnackbarTemplateComponent,
+} from '@activepieces/ui/common';
 import { ChatBotService } from '../chatbot.service';
 
 @Component({
-  selector: 'activepieces-chatbots-table',
+  selector: 'app-chatbots-table',
   templateUrl: './chatbots-table.component.html',
   styleUrls: [],
 })
@@ -20,7 +24,12 @@ export class ChatbotsTableComponent {
   loading = true;
   createBot$: Observable<void> | undefined;
   deleteBot$: Observable<void> | undefined;
-  constructor(private chatbotService: ChatBotService, private router: Router, private dialogService: MatDialog, private snackBar: MatSnackBar) {
+  constructor(
+    private chatbotService: ChatBotService,
+    private router: Router,
+    private dialogService: MatDialog,
+    private snackBar: MatSnackBar
+  ) {
     this.dataSource = new ChatBotsDataSource(
       this.chatbotService,
       this.refreshTable$.asObservable().pipe(startWith(true))
@@ -41,7 +50,6 @@ export class ChatbotsTableComponent {
         map(() => void 0)
       );
   }
-
 
   deleteChatbot(metadata: Chatbot) {
     const dialogRef = this.dialogService.open(DeleteEntityDialogComponent, {

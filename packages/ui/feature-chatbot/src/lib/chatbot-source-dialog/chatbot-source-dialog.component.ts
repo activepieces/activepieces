@@ -10,16 +10,17 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { Observable } from 'rxjs';
 import { DeleteEntityDialogComponent } from '@activepieces/ui/common';
+import { DatasourceType } from '../utils';
 
 @Component({
   selector: 'app-chatbot-source-dialog',
   templateUrl: './chatbot-source-dialog.component.html',
   styleUrls: [],
 })
-export class ChatbotTypeComponent {
+export class ChatbotDataSourceDialogComponent {
   createBot$: Observable<void> | undefined;
   formGroup: FormGroup<{
-    type: FormControl<'URL' | 'PDF'>;
+    type: FormControl<DatasourceType>;
     url: FormControl<string>;
   }>;
   constructor(
@@ -28,7 +29,7 @@ export class ChatbotTypeComponent {
     private dialogRef: MatDialogRef<DeleteEntityDialogComponent>
   ) {
     this.formGroup = this.fb.group({
-      type: new FormControl<'URL' | 'PDF'>('URL', { nonNullable: true }),
+      type: new FormControl<DatasourceType>('URL', { nonNullable: true }),
       url: new FormControl<string>('', {
         validators: Validators.required,
         nonNullable: true,
