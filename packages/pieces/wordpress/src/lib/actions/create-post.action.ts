@@ -275,7 +275,7 @@ export const createWordpressPost = createAction({
         }
 
 
-        if (context.propsValue.featured_media_file !== undefined) {
+        if (context.propsValue.featured_media_file) {
             const formData = new FormData();
             const { filename, base64 } = context.propsValue.featured_media_file;
             formData.append('file', Buffer.from(base64, "base64"), filename);
