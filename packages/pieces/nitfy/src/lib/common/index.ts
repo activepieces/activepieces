@@ -50,7 +50,8 @@ export const nitfyCommon = {
         required: true,
         refreshers: ['portfolio'],
         options: async ({ auth, portfolio }) => {
-            if (!auth) {
+            const authentication = auth as OAuth2PropertyValue;
+            if (! authentication) {
                 return {
                     disabled: true,
                     placeholder: 'connect your account first',
@@ -64,19 +65,62 @@ export const nitfyCommon = {
                     options: [],
                 };
             }
-            const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
+            const accessToken = authentication.access_token;
             const response = (await callNitfyApi<{
-                data: {
-                    gid: string,
-                    name: string
-                }[]
-            }>(HttpMethod.GET, `portfolios/${portfolio}/projects`, accessToken, undefined)).body;
+                items:{
+                    id: string,
+                    nice_id: string,
+                    name: string,
+                    description: string, 
+                    initials: string,
+                    logo: string,
+                    color: string,
+                    secondary_color: string,
+                    demo: boolean,
+                    archived: boolean,
+                    auto_milestones: boolean,
+                    default_tasks_view: string,
+                    access_type: string,
+                    owner: string,
+                    members: string[],
+                    general_discussion: string,
+                    subteam: string,
+                    progress: number,
+                    joined: boolean,
+                    general_discussion_muted: boolean,
+                    email: string,
+                    zoom_id: string,
+                    zoom_password: string,
+                    zoom_join_url: string,
+                    webex_id: string,
+                    webex_password: string,
+                    webex_join_url: string,
+                    enabled_modules: string[],
+                    disabled_modules: string[],
+                    disabled_widgets: string,
+                    hidden_taskboard_fields: string,
+                    repo: string,
+                    total_story_points: number,
+                    completed_story_points: number,
+                    pinned_message: string,
+                    pinned_by: string,
+                    completion_groups: string[],
+                    doc_root_folder: object,
+                    file_root_folder: object,
+                    removed: boolean,
+                    rollups: string[],
+                    list_columns_order: string[],
+                    hidden_list_columns: string[],
+                    integrations: string[],
+                }[],
+                hasMore: boolean,
+            }>(HttpMethod.GET, `projects`, accessToken, undefined)).body;
             return {
                 disabled: false,
-                options: response.data.map((project) => {
+                options: response.items.map((project) => {
                     return {
                         label: project.name,
-                        value: project.gid
+                        value: project.id
                     }
                 }),
             };
@@ -123,7 +167,6 @@ export const nitfyCommon = {
 // }
 
 export async function callNitfyApi<T extends HttpMessageBody>(method: HttpMethod, apiUrl: string, accessToken: string, body: any | undefined): Promise<HttpResponse<T>> {
-    console.log("\n\n\n" , accessToken , "\n\n\n")
     return await httpClient.sendRequest<T>({
         method: method,
         url: `https://openapi.niftypm.com/api/v1.0/${apiUrl}`,

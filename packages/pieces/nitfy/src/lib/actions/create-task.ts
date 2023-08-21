@@ -9,7 +9,8 @@ export const createTask = createAction({
     displayName: 'Create Task',
     description: 'Create a task in nitfy',
     props: {
-        // portfolio: nitfyCommon.Portfolios,
+        portfolio: nitfyCommon.Portfolios,
+        project: nitfyCommon.Projects,
         task_name: Property.ShortText({
             displayName: 'Task Name',
             description: 'Enter the task name',
@@ -18,6 +19,6 @@ export const createTask = createAction({
     },
     async run(context) {
         
-        return [ context.auth.access_token, context.propsValue.task_name];
+        return [ context.auth.access_token, context.propsValue.task_name , context.auth.data];
     }
 })
