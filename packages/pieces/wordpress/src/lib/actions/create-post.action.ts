@@ -249,7 +249,7 @@ export const createWordpressPost = createAction({
         if (context.propsValue.date) {
             requestBody['date'] = context.propsValue.date;
         }
-        if (context.propsValue.comment_status !== undefined) {
+        if (context.propsValue.comment_status) {
             requestBody['comment_status'] = context.propsValue.comment_status ? 'open' : 'closed';
         }
         if (context.propsValue.categories) {
@@ -264,13 +264,13 @@ export const createWordpressPost = createAction({
         if (context.propsValue.tags) {
             requestBody['tags'] = context.propsValue.tags;
         }
-        if (context.propsValue.ping_status !== undefined) {
+        if (context.propsValue.ping_status) {
             requestBody['ping_status'] = context.propsValue.ping_status ? 'open' : 'closed';
         }
-        if (context.propsValue.status !== undefined) {
+        if (context.propsValue.status) {
             requestBody['status'] = context.propsValue.status;
         }
-        if (context.propsValue.featured_media !== undefined) {
+        if (context.propsValue.featured_media) {
             requestBody['featured_media'] = context.propsValue.featured_media;
         }
 
