@@ -34,4 +34,4 @@ export const createPresentation = createAction({
         return await httpClient.sendRequest(request);
 
     }
-})
+});
