@@ -1,5 +1,4 @@
-import { FlowId, ProjectId, flowHelper, TriggerType, ActionType } from '@activepieces/shared'
-import { isNil } from '@activepieces/shared'
+import { FlowId, ProjectId, flowHelper, TriggerType, ActionType, isNil } from '@activepieces/shared'
 import { flowInstanceService } from '../../flows/flow-instance/flow-instance.service'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowService } from '../../flows/flow/flow.service'
@@ -21,10 +20,10 @@ let cachedStats: AllPiecesStats = {}
 let cacheTime: number
 const FIVE_MINUTES_IN_MILLISECONDS = 5 * 60 * 1000
 
-const pieceMetaService = CloudPieceMetadataService()
 
 export const pieceStatsService = {
     async get(): Promise<AllPiecesStats> {
+        const pieceMetaService = CloudPieceMetadataService()
         if (cachedStats && (Date.now() - cacheTime) < FIVE_MINUTES_IN_MILLISECONDS) {
             return cachedStats
         }
