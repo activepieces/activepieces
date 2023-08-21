@@ -8,16 +8,11 @@
 
 <div class="ap-container ap-mx-auto ap-h-full ">
 
-  <div class="ap-flex ap-flex-col ap-gap-4  ap-items-center ap-justify-center  "
+  <div class="ap-flex ap-flex-col ap-gap-4  ap-items-center ap-justify-center thin-scrollbars ap-overflow-auto"
+    [class.!ap-justify-start]="messages.length>0 || (sendingMessage$ | async)"
+    [style.paddingTop]="(messages.length>0 || (sendingMessage$ | async))? '60px':''"
     [style.height]="'calc( 100% - ' + textareaContainer.clientHeight + 'px )'">
-    <ng-container *ngIf="messages.length===0">
-      <svg-icon src="assets/img/custom/dashboard/chatbots.svg" [applyClass]="true"
-        class="ap-fill-body ap-h-[60px] ap-w-[60px]"></svg-icon>
-      <div class="ap-typography-headline-6 ap-text-body">
-        Ask me something
-      </div>
-    </ng-container>
-    <ng-container *ngIf="messages.length > 0">
+    <ng-container *ngIf="messages.length === 0 && (sendingMessage$ | async) === false; else messageThread">
       <svg-icon src="assets/img/custom/dashboard/chatbots.svg" [applyClass]="true"
         class="ap-fill-body ap-h-[60px] ap-w-[60px]"></svg-icon>
       <div class="ap-typography-headline-6 ap-text-body">
@@ -28,10 +23,12 @@
   <div #textareaContainer>
     <mat-form-field class="ap-w-full" appearance="outline">
       <textarea autosize matInput [minRows]="1" [maxRows]="8" class="!ap-resize-none thin-scrollbars"
-        [formControl]="messageControl" placeholder="Send a message" formControlName="prompt">
+        (keyup.enter)="send()" [formControl]="messageControl" placeholder="Send a message">
       </textarea>
       <div matSuffix class="ap-m-2">
-        <ap-icon-button [useSvgDefault]="true" [iconFilename]="'send.svg'" [buttonDisabled]="sending"></ap-icon-button>
+        <ap-icon-button [useSvgDefault]="true" [iconFilename]="'send.svg'"
+          [buttonDisabled]="(sendingMessage$ | async)|| !messageControl.value"
+          (buttonClicked)="send()"></ap-icon-button>
       </div>
     </mat-form-field>
   </div>
@@ -39,3 +36,28 @@
 
 
 </div>
+
+<ng-container *ngIf="sendMessage$ | async"></ng-container>
+
+<ng-template #messageThread>
+  <div class="ap-w-full">
+    <ng-container *ngFor="let msg of messages">
+      <div class="ap-p-7 ap-typography-body-1 ap-flex ap-items-center ap-gap-3"
+        [class.ap-bg-header]="msg.sender === 'bot'">
+        <svg-icon *ngIf="msg.sender === 'bot'" class="ap-w-[24px] ap-h-[24px] ap-fill-body"
+          src="assets/img/custom/dashboard/chatbots.svg" [applyClass]="true"></svg-icon>
+        <svg-icon *ngIf="msg.sender === 'user'" class="ap-w-[24px] ap-h-[24px]" src="assets/img/custom/logo/logo.svg"
+          [applyClass]="true"></svg-icon>
+        {{msg.text}}
+      </div>
+      <div *ngIf="sendingMessage$ | async"
+        class="ap-p-7 ap-typography-body-1 ap-flex ap-items-center ap-gap-3 ap-bg-header">
+        <svg-icon class="ap-w-[24px] ap-h-[24px] ap-fill-body" src="assets/img/custom/dashboard/chatbots.svg"
+          [applyClass]="true"></svg-icon>
+        Chatbot is thinking ...
+      </div>
+    </ng-container>
+  </div>
+
+
+</ng-template>

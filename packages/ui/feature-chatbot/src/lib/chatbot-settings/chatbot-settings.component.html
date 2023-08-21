@@ -55,7 +55,7 @@
 
               <mat-option [style.display]="(connections$ | async)?.length === 0 ? 'flex': 'none'"
                 (click)="addConnectionBtn.buttonClicked()" class="add-auth">
-                <div class="ap-flex">
+                <div class="ap-flex ap-items-center">
                   <div class="ap-flex-grow">
                     No connections</div>
                   <app-add-edit-connection-button (click)="$event.stopPropagation()" class="edit-selected-auth ap-z-40"

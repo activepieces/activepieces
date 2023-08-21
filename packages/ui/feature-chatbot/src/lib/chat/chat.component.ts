@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ChatBotService } from '../chatbot.service';
-import { Observable, delay, map, tap } from 'rxjs';
-import { FormControl, Validators } from '@angular/forms';
+import { BehaviorSubject, Observable, map, tap } from 'rxjs';
+import { FormControl } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
 type Message = {
@@ -18,7 +18,7 @@ export class ChatComponent implements OnInit {
   messages: Message[] = [];
   messageControl: FormControl<string | null>;
   sendMessage$: Observable<void> | undefined;
-  sending = false;
+  sendingMessage$: BehaviorSubject<boolean> = new BehaviorSubject(false);
   chatbotId: string | undefined;
 
   constructor(
@@ -26,7 +26,7 @@ export class ChatComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router
   ) {
-    this.messageControl = new FormControl('', Validators.required);
+    this.messageControl = new FormControl('');
   }
 
   ngOnInit(): void {
@@ -34,7 +34,7 @@ export class ChatComponent implements OnInit {
   }
 
   send() {
-    if (this.sending || this.messageControl.invalid) {
+    if (this.sendingMessage$.value || !this.messageControl.value) {
       return;
     }
     const input = this.messageControl.value!;
@@ -43,17 +43,15 @@ export class ChatComponent implements OnInit {
       sender: 'user',
     });
     this.messageControl.reset();
-    this.sending = true;
+    this.sendingMessage$.next(true);
     this.sendMessage$ = this.chatbotService
       .ask({
         chatbotId: this.chatbotId!,
         input,
       })
       .pipe(
-        // TODO REMOVE
-        delay(3000), // delay for 3000ms
         tap((res) => {
-          this.sending = false;
+          this.sendingMessage$.next(false);
           this.messages.push({
             text: res.output,
             sender: 'bot',
