@@ -2,7 +2,9 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { flagService } from './flag.service'
 
 export const flagController = async (app: FastifyInstance) => {
-    app.get('/', async (_request: FastifyRequest, reply: FastifyReply) => {
+    app.get('/', {
+        logLevel: 'debug',
+    }, async (_request: FastifyRequest, reply: FastifyReply) => {
         const flags = await flagService.getAll()
         const flagMap: Record<string, unknown> = {}
         flags.forEach(flag => {
