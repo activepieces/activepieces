@@ -3,6 +3,7 @@ import { HttpRequest, HttpMethod, AuthenticationType, httpClient } from "@active
 import { gmailAuth } from "../../";
 import MailComposer from 'nodemailer/lib/mail-composer';
 import mime from 'mime-types';
+import Mail, { Attachment } from "nodemailer/lib/mailer";
 
 export const gmailSendEmailAction = createAction({
   auth: gmailAuth,
@@ -46,24 +47,29 @@ export const gmailSendEmailAction = createAction({
     const attachment = configValue.propsValue['attachment'];
     const replyTo = configValue.propsValue['reply_to'];
 
-    const mailOptions = {
+    const mailOptions:Mail.Options = {
         to: configValue.propsValue['receiver'].join(', '), // Join all email addresses with a comma
         subject: `=?UTF-8?B?${subjectBase64}?=`,
         replyTo : replyTo? replyTo.join(', ') : "",
         text: configValue.propsValue['body_text'].replace(/\n/g, '<br>'),
         html: configValue.propsValue['body_html'],
-        attachments: [{}]
+        attachments: []
+    }
+    
+    if(attachment)
+    {
+      const lookupResult = mime.lookup(attachment?.extension ? attachment?.extension : '');
+      const attachmentOption:Attachment[] = [{
+        filename: attachment?.filename,
+      content: attachment?.base64,
+      contentType: lookupResult? lookupResult: undefined,
+      encoding: 'base64',
+    }];
+    mailOptions.attachments = attachmentOption;
     }
 
-    const attachmentOption = [{
-	    filename: attachment?.filename,
-		content: attachment?.base64,
-		contentType: mime.lookup(attachment?.extension ? attachment?.extension : ''),
-		encoding: 'base64',
-	}];
 
-    mailOptions.attachments = attachmentOption;
-
+ 
     const mail = new MailComposer(mailOptions).compile();
     const mailBody = await mail.build();
 

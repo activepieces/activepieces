@@ -7,10 +7,22 @@ import { ChatCompletionRequestMessage, Configuration, OpenAIApi } from 'openai';
 import {
   AuthenticationType,
   httpClient,
-  HttpError,
   HttpMethod
 } from '@activepieces/pieces-common';
 import { openaiAuth } from '../..';
+
+const billingIssueMessage = `Error Occurred: 429 \n
+
+1. Ensure that billing is enabled on your OpenAI platform. \n
+2. Generate a new API key. \n
+3. Attempt the process again. \n
+
+For guidance, visit: https://beta.openai.com/account/billing`
+
+const unaurthorizedMessage = `Error Occurred: 401 \n
+
+Ensure that your API key is valid. \n
+`
 
 export const askOpenAI = createAction({
   auth: openaiAuth,
@@ -64,8 +76,7 @@ export const askOpenAI = createAction({
     }),
     prompt: Property.LongText({
       displayName: 'Question',
-      required: true,
-      description: 'The question to ask OpenAI.'
+      required: true
     }),
     temperature: Property.Number({
       displayName: 'Temperature',
@@ -117,7 +128,8 @@ export const askOpenAI = createAction({
       apiKey: auth
     });
     const openai = new OpenAIApi(configuration);
-
+    let billingIssue = false;
+    let unaurthorized = false;
     let model = 'gpt-3.5-turbo';
     if (propsValue.model) {
       model = propsValue.model;
@@ -163,7 +175,6 @@ export const askOpenAI = createAction({
     const maxRetries = 4;
     let retries = 0;
     let response: string | undefined;
-    let errorStatusCode = undefined;
     while (retries < maxRetries) {
       try {
         response = (
@@ -185,8 +196,11 @@ export const askOpenAI = createAction({
         )?.data?.choices[0]?.message?.content?.trim();
         break; // Break out of the loop if the request is successful
       } catch (error: any) {
-        console.error(`An error occurred: ${error}`);
-        errorStatusCode = error?.response?.status;
+        if (error?.message?.includes('code 401')) {
+          unaurthorized = true;
+        } else if (error?.message?.includes('code 429')) {
+          billingIssue = true;
+        }
         if (retries + 1 === maxRetries) {
           throw error;
         }
@@ -195,18 +209,14 @@ export const askOpenAI = createAction({
         console.log(`Retrying in ${delay} milliseconds...`);
         await sleep(delay); // Wait for the calculated delay
         retries++;
+        break;
       }
     }
-    if (errorStatusCode === 429) {
-      throw new Error(
-        `Error Occurred: ${errorStatusCode} \n
-
-        1. Ensure that billing is enabled on your OpenAI platform. \n
-        2. Generate a new API key. \n
-        3. Attempt the process again. \n
-        
-        For guidance, visit: https://beta.openai.com/account/billing`
-      );
+    if (billingIssue) {
+      throw new Error(billingIssueMessage);
+    }
+    if (unaurthorized) {
+      throw new Error(unaurthorizedMessage );
     }
     return response;
   }

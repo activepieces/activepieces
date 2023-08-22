@@ -29,12 +29,6 @@
         "packages/pieces/bannerbear/src/index.ts"
       ],
       "@activepieces/piece-binance": ["packages/pieces/binance/src/index.ts"],
-      "@activepieces/piece-blackbaud": [
-        "packages/pieces/blackbaud/src/index.ts"
-      ],
-      "@activepieces/piece-bloomerang": [
-        "packages/pieces/bloomerang/src/index.ts"
-      ],
       "@activepieces/piece-box": ["packages/pieces/box/src/index.ts"],
       "@activepieces/piece-cal-com": ["packages/pieces/cal-com/src/index.ts"],
       "@activepieces/piece-calendly": ["packages/pieces/calendly/src/index.ts"],
@@ -153,7 +147,6 @@
       "@activepieces/piece-salesforce": [
         "packages/pieces/salesforce/src/index.ts"
       ],
-      "@activepieces/piece-salsa": ["packages/pieces/salsa/src/index.ts"],
       "@activepieces/piece-schedule": ["packages/pieces/schedule/src/index.ts"],
       "@activepieces/piece-sendgrid": ["packages/pieces/sendgrid/src/index.ts"],
       "@activepieces/piece-sendinblue": [
@@ -161,6 +154,9 @@
       ],
       "@activepieces/piece-sftp": ["packages/pieces/sftp/src/index.ts"],
       "@activepieces/piece-shopify": ["packages/pieces/shopify/src/index.ts"],
+      "@activepieces/piece-simplepdf": [
+        "packages/pieces/simplepdf/src/index.ts"
+      ],
       "@activepieces/piece-slack": ["packages/pieces/slack/src/index.ts"],
       "@activepieces/piece-smtp": ["packages/pieces/smtp/src/index.ts"],
       "@activepieces/piece-soap": ["packages/pieces/soap/src/index.ts"],

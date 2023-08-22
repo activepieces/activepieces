@@ -42,7 +42,6 @@ import {
   DropdownState,
   DynamicProperties,
   MultiSelectDropdownProperty,
-  PieceProperty,
   PiecePropertyMap,
   PropertyType,
 } from '@activepieces/pieces-framework';
@@ -99,7 +98,8 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
   refreshableConfigsLoadingFlags$: {
     [key: ConfigKey]: BehaviorSubject<boolean>;
   } = {};
-
+  descriptionOverflownMap: Record<string, boolean> = {};
+  descriptionExpandedMap: Record<string, boolean> = {};
   allAuthConfigs$: Observable<ConnectionDropdownItem[]>;
   configDropdownChanged$: Observable<unknown>;
   cloudAuthCheck$: Observable<void>;
@@ -117,8 +117,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
   checkingOAuth2CloudManager = false;
   properties: PiecePropertyMap = {};
   requiredProperties: PiecePropertyMap = {};
-  allOptionalProperties: PiecePropertyMap = {};
-  selectedOptionalProperties: PiecePropertyMap = {};
+  optionalProperties: PiecePropertyMap = {};
   optionalConfigsMenuOpened = false;
   @Input() actionOrTriggerName: string;
   @Input() pieceName: string;
@@ -149,7 +148,8 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
   writeValue(obj: PiecePropertiesFormValue): void {
     this.properties = obj.properties;
     this.customizedInputs = obj.customizedInputs;
-    console.log(this.properties);
+    this.descriptionExpandedMap = {};
+    this.descriptionOverflownMap = {};
     this.createForm(obj.propertiesValues);
     if (obj.setDefaultValues) {
       this.setDefaultValue$ = of(null).pipe(
@@ -181,17 +181,11 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
   }
   createForm(propertiesValues: Record<string, unknown>) {
     this.requiredProperties = {};
-    this.allOptionalProperties = {};
-    this.selectedOptionalProperties = {};
+    this.optionalProperties = {};
     Object.entries(this.properties).forEach(([pk]) => {
-      if (this.properties[pk].required) {
-        this.requiredProperties[pk] = this.properties[pk];
-      } else {
-        this.allOptionalProperties[pk] = this.properties[pk];
-        if (propertiesValues[pk] !== undefined) {
-          this.selectedOptionalProperties[pk] = this.properties[pk];
-        }
-      }
+      this.properties[pk].required
+        ? (this.requiredProperties[pk] = this.properties[pk])
+        : (this.optionalProperties[pk] = this.properties[pk]);
     });
 
     const requiredConfigsControls = this.createConfigsFormControls(
@@ -199,7 +193,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
       propertiesValues
     );
     const optionalConfigsControls = this.createConfigsFormControls(
-      this.selectedOptionalProperties,
+      this.optionalProperties,
       propertiesValues
     );
 
@@ -419,13 +413,12 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
         }
         if (typeof propValue === 'object') {
           controls[pk] = new UntypedFormControl(
-            JSON.stringify(propValue || prop.defaultValue, null, 2),
+            JSON.stringify(propValue, null, 2),
             validators
           );
         } else {
           controls[pk] = new UntypedFormControl(
-            propertiesValues[pk] ||
-              JSON.stringify(prop.defaultValue ?? {}, null, 2),
+            propertiesValues[pk],
             validators
           );
         }
@@ -448,6 +441,8 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
         controls[pk] = new UntypedFormControl(
           propValue === undefined || propValue === null
             ? prop.defaultValue
+              ? `${prop.defaultValue}`
+              : ''
             : propValue,
           validators
         );
@@ -457,44 +452,6 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
   }
   getControl(configKey: string) {
     return this.form.get(configKey);
-  }
-
-  removeConfig(propertyKey: string) {
-    this.form.removeControl(propertyKey);
-    const newSelectedOptionalConfigsObj: PiecePropertyMap = {};
-    Object.keys(this.selectedOptionalProperties).forEach((k) => {
-      if (k !== propertyKey) {
-        newSelectedOptionalConfigsObj[k] = {
-          ...this.selectedOptionalProperties[k],
-        };
-      }
-    });
-    this.selectedOptionalProperties = newSelectedOptionalConfigsObj;
-  }
-
-  addOptionalProperty(propertyKey: string, property: PieceProperty) {
-    if (property.type !== PropertyType.JSON) {
-      this.form.addControl(
-        propertyKey,
-        new UntypedFormControl(
-          property.defaultValue ? property.defaultValue : undefined
-        )
-      );
-    } else {
-      this.form.addControl(
-        propertyKey,
-        new UntypedFormControl('', [jsonValidator])
-      );
-      this.form.controls[propertyKey].setValue(
-        property.defaultValue
-          ? JSON.stringify(property.defaultValue, null, 2)
-          : '{}'
-      );
-    }
-    this.selectedOptionalProperties = {
-      ...this.selectedOptionalProperties,
-      [propertyKey]: property,
-    };
   }
 
   connectionValueChanged(event: {
@@ -519,11 +476,15 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
     const formattedValue: Record<string, unknown> = { ...formValue };
     Object.keys(formValue).forEach((pk) => {
       const property = this.properties[pk];
-      if (property.type === PropertyType.JSON) {
-        try {
-          formattedValue[pk] = JSON.parse(formValue[pk] as string);
-        } catch (_) {
-          //incase it is an invalid json
+      if (formattedValue[pk] === '' || formattedValue[pk] === null) {
+        formattedValue[pk] = undefined;
+      } else {
+        if (property.type === PropertyType.JSON) {
+          try {
+            formattedValue[pk] = JSON.parse(formValue[pk] as string);
+          } catch (_) {
+            //incase it is an invalid json
+          }
         }
       }
     });
