@@ -21,7 +21,6 @@ export const invoiceninjaAuth = PieceAuth.CustomAuth({
   required: true
 })
 
-
 export const invoiceninja = createPiece({
   displayName: "Invoice Ninja",
       minimumSupportedRelease: '0.5.0',

@@ -89,8 +89,5 @@ export const getClient = createAction({
                   return "There was a problem getting information from your Invoice Ninja";
                 }
 
-            }
-              
-
-
+            }             
 })
