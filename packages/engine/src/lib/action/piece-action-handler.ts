@@ -101,7 +101,7 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
     const censoredInput = await this.variableService.resolve({
       unresolvedInput: this.currentAction.settings.input,
       executionState,
-      censorConnections: true,
+      logs: true,
     })
 
     return {
@@ -137,7 +137,7 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
       const resolvedProps = await this.variableService.resolve<StaticPropsValue<PiecePropertyMap>>({
         unresolvedInput: input,
         executionState,
-        censorConnections: false,
+        logs: false,
       })
 
       assertNotNullOrUndefined(globals.flowRunId, 'globals.flowRunId')

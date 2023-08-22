@@ -41,7 +41,7 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
     const censoredInput = await this.variableService.resolve({
       unresolvedInput: this.currentAction.settings,
       executionState,
-      censorConnections: true,
+      logs: true,
     })
 
     const newStepOutput: LoopOnItemsStepOutput = {
@@ -65,7 +65,7 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
     const resolvedInput: LoopOnItemsActionSettings = await this.variableService.resolve({
       unresolvedInput: this.currentAction.settings,
       executionState,
-      censorConnections: false,
+      logs: false,
     })
 
     const stepOutput = await this.loadStepOutput({
