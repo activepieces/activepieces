@@ -15,7 +15,11 @@ export const createClickupTask = createAction({
     list_id: clickupCommon.list_id(),
     status_id: clickupCommon.status_id(),
     priority_id: clickupCommon.priority_id(),
-    assignee_id: clickupCommon.assignee_id(),
+    assignee_id: clickupCommon.assignee_id(
+      false,
+      'Assignee Id',
+      'ID of assignee for Clickup Task'
+    ),
     name: Property.ShortText({
       description: 'The name of the task to create',
       displayName: 'Task Name',

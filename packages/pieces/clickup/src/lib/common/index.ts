@@ -8,7 +8,6 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 import { ClickupTask, ClickupWorkspace } from './models';
-import { stringify } from 'querystring';
 
 export const clickupCommon = {
   workspace_id: (required = true) =>
@@ -217,6 +216,7 @@ export const clickupCommon = {
     Property.StaticDropdown({
       displayName: 'Priority Id',
       defaultValue: null,
+      description: 'The ID of Clickup Issue Priority',
       required,
       options: {
         options: [
@@ -239,9 +239,14 @@ export const clickupCommon = {
         ],
       },
     }),
-  assignee_id: (required = false) =>
+  assignee_id: (
+    required = false,
+    displayName = 'Assignee Id',
+    description: string
+  ) =>
     Property.MultiSelectDropdown({
-      displayName: 'Assignee Id',
+      displayName: displayName,
+      description: description,
       required,
       refreshers: ['workspace_id'],
       options: async ({ auth, workspace_id }) => {
@@ -279,6 +284,7 @@ export const clickupCommon = {
     Property.Dropdown({
       displayName: 'Template Id',
       required,
+      description: 'The ID of Clickup Task Template',
       refreshers: ['workspace_id'],
       options: async ({ auth, workspace_id }) => {
         if (!auth) {
@@ -314,7 +320,6 @@ export const clickupCommon = {
 };
 
 async function listWorkspaces(accessToken: string) {
-  console.log('Fetching all workspaces!!!');
   return (
     await callClickUpApi<{ teams: ClickupWorkspace[] }>(
       HttpMethod.GET,

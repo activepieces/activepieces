@@ -9,6 +9,7 @@ import { createClickupTaskComment } from './lib/actions/comments/create-task-com
 import { createClickupSubtask } from './lib/actions/tasks/create-subtask';
 import { clickupTriggers as triggers } from './lib/triggers';
 import { createClickupTaskFromTemplate } from './lib/actions/tasks/create-task-from-template';
+import { updateClickupTask } from './lib/actions/tasks/update-task';
 
 export const clickupAuth = PieceAuth.OAuth2({
   description: '',
@@ -33,6 +34,7 @@ export const clickup = createPiece({
     getClickupTaskComments,
     createClickupTaskComment,
     createClickupSubtask,
+    updateClickupTask,
   ],
   authors: ['abuaboud', 'ShayPunter', 'kanarelo'],
   triggers,
