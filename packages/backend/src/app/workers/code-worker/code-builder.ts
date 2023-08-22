@@ -20,6 +20,7 @@ const tsConfig = `
 {
     "extends": "@tsconfig/node18/tsconfig.json",
     "compilerOptions": {
+        "lib": ["es2022", "dom"],
         "skipLibCheck": true,
         "noUnusedLocals": false,
         "noUnusedParameters": false,
