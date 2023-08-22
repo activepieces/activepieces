@@ -8,7 +8,7 @@ export const createClickupTaskFromTemplate = createAction({
   auth: clickupAuth,
   name: 'create_task_from_template',
   description: 'Create a new task from Template',
-  displayName: 'Create Task',
+  displayName: 'Create Task From Template',
   props: {
     workspace_id: clickupCommon.workspace_id(),
     space_id: clickupCommon.space_id(),
