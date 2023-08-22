@@ -100,6 +100,9 @@ async function addCodeDependencies(codePath: string): Promise<void> {
         '@tsconfig/node18': {
             version: '1.0.0',
         },
+        '@types/node': {
+            version: '20.5.1',
+        },
         'ts-loader': {
             version: '9.4.2',
         },
