@@ -22,6 +22,7 @@ import {
     ExecuteValidateAuthOperation,
     ExecuteValidateAuthResponse,
     ApEnvironment,
+    EngineTestOperation,
 } from '@activepieces/shared'
 import { Sandbox, sandboxManager } from '../workers/sandbox'
 import { system } from './system/system'
@@ -433,5 +434,19 @@ export const engineHelper = {
         finally {
             await sandboxManager.returnSandbox(sandbox.boxId)
         }
+    },
+
+    async executeTest(sandbox: Sandbox, operation: EngineTestOperation): Promise<EngineHelperResponse<EngineHelperFlowResult>> {
+        logger.debug(
+            { ...operation, triggerPayload: undefined, executionState: undefined },
+            '[EngineHelper#executeTest] operation',
+        )
+
+        const input = {
+            ...operation,
+            workerToken: await generateWorkerToken({ projectId: operation.projectId }),
+        }
+
+        return await execute(EngineOperationType.EXECUTE_TEST, sandbox, input)
     },
 }
