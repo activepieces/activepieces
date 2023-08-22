@@ -8,6 +8,7 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 import { ClickupTask, ClickupWorkspace } from './models';
+import { stringify } from 'querystring';
 
 export const clickupCommon = {
   workspace_id: (required = true) =>
@@ -274,6 +275,42 @@ export const clickupCommon = {
         };
       },
     }),
+  template_id: (required = false) =>
+    Property.Dropdown({
+      displayName: 'Template Id',
+      required,
+      refreshers: ['workspace_id'],
+      options: async ({ auth, workspace_id }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder: 'conncet your account first',
+            options: [],
+          };
+        }
+        if (!workspace_id) {
+          return {
+            disabled: true,
+            placeholder: 'select workspace',
+            options: [],
+          };
+        }
+        const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
+        const response = await listWorkspaceTemplates(
+          accessToken,
+          workspace_id as string
+        );
+        return {
+          disabled: false,
+          options: response.templates.map((template) => {
+            return {
+              label: template.name,
+              value: template.id,
+            };
+          }),
+        };
+      },
+    }),
 };
 
 async function listWorkspaces(accessToken: string) {
@@ -299,6 +336,24 @@ async function listWorkspaceMembers(accessToken: string, workspaceId: string) {
   return workspace.members;
 }
 
+async function listWorkspaceTemplates(
+  accessToken: string,
+  workspaceId: string
+) {
+  return (
+    await callClickUpApi<{
+      templates: {
+        id: string;
+        name: string;
+      }[];
+    }>(
+      HttpMethod.GET,
+      `team/${workspaceId}/taskTemplate`,
+      accessToken,
+      undefined
+    )
+  ).body;
+}
 async function listSpaces(accessToken: string, workspaceId: string) {
   return (
     await callClickUpApi<{
