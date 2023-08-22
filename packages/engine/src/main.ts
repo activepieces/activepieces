@@ -62,7 +62,6 @@ const extractInformation = async (): Promise<void> => {
   try {
     const input: ExecuteExtractPieceMetadata = Utils.parseJsonFile(globals.inputFile);
 
-
     const pieceModule = await import(input.pieceName);
     const piece = extractPieceFromModule<Piece>({
       module: pieceModule,
@@ -237,14 +236,9 @@ const executeTest = async (): Promise<void> => {
       flowVersion: input.sourceFlowVersion,
     })
 
-    const output = await executeFlow({
+    await executeFlow({
       ...input,
       executionState: testExecutionState,
-    })
-
-    writeOutput({
-      status: EngineResponseStatus.OK,
-      response: output
     })
   }
   catch (e) {
