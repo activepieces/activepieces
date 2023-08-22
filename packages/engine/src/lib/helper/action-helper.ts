@@ -170,8 +170,8 @@ const executionStateFromExecutionContext = (
 };
 
 export const pieceHelper = {
-    async executeCode(params: ExecuteCodeOperation): Promise<ExecuteActionResponse> {
-        const { step, input, flowVersion } = params;
+  async executeCode(params: ExecuteCodeOperation): Promise<ExecuteActionResponse> {
+    const { step, input, flowVersion } = params;
 
     const executionContext = await generateTestExecutionContext(flowVersion);
     const executionState = executionStateFromExecutionContext(executionContext);
@@ -182,25 +182,25 @@ export const pieceHelper = {
       censorConnections: false
     });
 
-        try {
-            const artifactSourceId = step.settings.artifactSourceId
+    try {
+      const artifactSourceId = step.settings.artifactSourceId
 
-            const result = await codeExecutor.executeCode(artifactSourceId!, resolvedInput);
-            return {
-                success: true,
-                output: result,
-            };
-        } catch (e) {
-            // Don't remove this console.error, it's used in the UI to display the error
-            console.error(e);
-            return {
-                success: false,
-                output: undefined
-            };
-        }
-    },
-    async executeAction(params: ExecuteActionOperation): Promise<ExecuteActionResponse> {
-        const { actionName, pieceName, pieceVersion, input, flowVersion } = params;
+      const result = await codeExecutor.executeCode(artifactSourceId!, resolvedInput);
+      return {
+        success: true,
+        output: result,
+      };
+    } catch (e) {
+      // Don't remove this console.error, it's used in the UI to display the error
+      console.error(e);
+      return {
+        success: false,
+        output: undefined
+      };
+    }
+  },
+  async executeAction(params: ExecuteActionOperation): Promise<ExecuteActionResponse> {
+    const { actionName, pieceName, pieceVersion, input, flowVersion } = params;
 
     const action = await getActionOrThrow({
       pieceName,
