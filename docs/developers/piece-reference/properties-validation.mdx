@@ -1,0 +1,206 @@
+---
+title: "Props Validation"
+description: "Learn about different types of properties validation "
+icon: 'magnifying-glass'
+---
+
+Validators help ensure that user input meets certain criteria or constraints. Below are some examples of validator functions:
+
+## Validators 
+
+### Pattern
+Checks if the processed value matches a specific regular expression.
+
+```typescript
+text: Property.LongText({
+    displayName: 'Text',
+    required: true,
+    processors: [],
+    validators: [Validators.pattern(/^[a-zA-Z0-9]+$/);],
+})
+```
+
+### Max Length
+Verifies if the processed string length is within a specified maximum limit.
+
+```typescript
+text: Property.LongText({
+    displayName: 'Text',
+    required: true,
+    processors: [],
+    validators: [Validators.maxLength(100)],
+})
+```
+
+### Min Length
+Verifies if the processed string length is within a specified minimum limit.
+
+```typescript
+text: Property.LongText({
+    displayName: 'Text',
+    required: true,
+    processors: [],
+    validators: [Validators.minLength(41)],
+})
+```
+
+### Min Value
+Ensures that the processed numeric value is greater than or equal to a specified minimum.
+
+```typescript
+age: Property.Number({
+    displayName: 'Age',
+    required: true,
+    processors: [],
+    validators: [Validators.minValue(100)],
+})
+```
+
+### Max Value
+Ensures that the processed numeric value is less than or equal to a specified maximum.
+
+```typescript
+count: Property.Number({
+    displayName: 'Count',
+    required: true,
+    processors: [],
+    validators: [Validators.maxValue(7)],
+})
+```
+
+### In Range
+Checks if the processed numeric value falls within a specified range.
+
+```typescript
+score: Property.Number({
+    displayName: 'Score',
+    required: true,
+    processors: [],
+    validators: [Validators.inRange(0, 100)], // The range is inclusive (0 to 100).
+})
+```
+
+### One Of
+Validates whether the processed value is one of the specified values.
+
+```typescript
+fruit: Property.Text({
+    displayName: 'Fruit',
+    required: true,
+    processors: [],
+    validators: [Validators.oneOf(["apple", "banana", "orange"])],
+})
+```
+
+### Number
+
+Validates whether the processed value is a valid number.
+
+```typescript
+quantity: Property.Number({
+    displayName: 'Quantity',
+    required: true,
+    processors: [],
+    validators: [Validators.number],
+})
+```
+
+### Image
+
+Verifies whether the processed value is a valid image file based on its extension.
+
+```typescript
+imageFile: Property.File({
+    displayName: 'Image File',
+    required: true,
+    processors: [],
+    validators: [Validators.image],
+})
+```
+
+### File
+Ensures that the processed value is a valid file.
+
+```typescript
+documentFile: Property.File({
+    displayName: 'Document File',
+    required: true,
+    processors: [],
+    validators: [Validators.file],
+})
+```
+### Email
+Validates whether the processed value is a valid email address.
+
+```typescript
+email: Property.Text({
+    displayName: 'Email',
+    required: true,
+    processors: [],
+    validators: [Validators.email],
+})
+```
+
+### URL
+
+Ensures that the processed value is a valid URL.
+
+```typescript
+websiteUrl: Property.Text({
+    displayName: 'Website URL',
+    required: true,
+    processors: [],
+    validators: [Validators.url],
+})
+```
+
+###  Datetime ISO
+
+Validates whether the processed value is a valid ISO-formatted date and time.
+
+```typescript
+eventDate: Property.DateTime({
+    displayName: 'Event Date',
+    required: true,
+    processors: [],
+    validators: [Validators.datetimeIso],
+})
+```
+
+### Custom
+   Example:
+
+Note: The custom validator allows you to define your own validation logic and error message. It can be used to perform complex validations beyond the provided built-in validators.
+
+```typescript
+const customValidator = {
+    type: ValidationInputType.STRING,
+    fn: (property, processedValue, userInput) => {
+        // Your custom validation logic here
+        if (validationFails) {
+            return "Validation Error: Your custom error message.";
+        }
+        return null;
+    }
+};
+```
+
+## Processors
+
+Processors act as data transformers, enabling you to transform or process user input before further processing.
+
+To add a custom processor, you can define a function with this type `ProcessorFn` that takes two parameters: The function should return the processed value. Here's an example:
+
+```typescript
+const customProcessor: ProcessorFn<any, any> = (property, value) => {
+    // Your custom processing logic here
+    return processedValue;
+}
+
+text: Property.LongText({
+    displayName: 'Text',
+    required: true,
+    processors: [customProcessor],
+    validators: [],
+})
+```
