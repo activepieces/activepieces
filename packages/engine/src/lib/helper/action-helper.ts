@@ -163,7 +163,7 @@ export const pieceHelper = {
     const resolvedInput = await variableService.resolve({
       unresolvedInput: input,
       executionState,
-      censorConnections: false
+      logs: false
     });
 
     try {
@@ -203,7 +203,7 @@ export const pieceHelper = {
     >({
       unresolvedInput: input,
       executionState,
-      censorConnections: false
+      logs: false
     });
 
     try {
@@ -265,7 +265,7 @@ export const pieceHelper = {
       >({
         unresolvedInput: params.input,
         executionState: new ExecutionState(),
-        censorConnections: false
+        logs: false
       });
 
       if (property.type === PropertyType.DYNAMIC) {

@@ -35,7 +35,7 @@ export class CodeActionHandler extends BaseActionHandler<CodeAction> {
     const censoredInput = await this.variableService.resolve({
       unresolvedInput: this.currentAction.settings.input,
       executionState,
-      censorConnections: true,
+      logs: true,
     })
 
     return {
@@ -54,7 +54,7 @@ export class CodeActionHandler extends BaseActionHandler<CodeAction> {
     const resolvedInput = await this.variableService.resolve({
       unresolvedInput: this.currentAction.settings.input,
       executionState,
-      censorConnections: false,
+      logs: false,
     })
 
     const artifactSourceId = this.currentAction.settings.artifactSourceId

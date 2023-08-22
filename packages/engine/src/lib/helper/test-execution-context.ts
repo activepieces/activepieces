@@ -40,7 +40,7 @@ const contextFromFlowVersion = async ({ flowVersion }: FromFlowVersionParams): P
             const resolvedLoopOutput: { items: unknown[] } = await variableService.resolve({
                 unresolvedInput: step.settings,
                 executionState,
-                censorConnections: false,
+                logs: false,
             })
 
             testContext[step.name] = {
