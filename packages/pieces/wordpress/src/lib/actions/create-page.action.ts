@@ -64,7 +64,7 @@ export const createWordpressPage = createAction({
         if (context.propsValue.date) {
             requestBody['date'] = context.propsValue.date;
         }
-        if (context.propsValue.comment_status !== undefined) {
+        if (context.propsValue.comment_status) {
             requestBody['comment_status'] = context.propsValue.comment_status ? 'open' : 'closed';
         }
         if (context.propsValue.slug) {
@@ -73,7 +73,7 @@ export const createWordpressPage = createAction({
         if (context.propsValue.excerpt) {
             requestBody['excerpt'] = context.propsValue.excerpt;
         }
-        if (context.propsValue.status !== undefined) {
+        if (context.propsValue.status) {
             requestBody['status'] = context.propsValue.status;
         }
         requestBody['content'] = context.propsValue.content;

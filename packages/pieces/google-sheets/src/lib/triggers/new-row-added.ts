@@ -55,7 +55,8 @@ export const readNewRows = createTrigger({
       description:
         'The maximum number of rows to poll, the rest will be polled on the next run, maximum is 10 in order to avoid errors.',
       required: false,
-      validators: [Validators.minValue(1)]
+      defaultValue: 10,
+      validators: []
     })
   },
   type: TriggerStrategy.POLLING,
@@ -79,7 +80,7 @@ export const readNewRows = createTrigger({
       auth: context.auth,
       store: context.store,
       // Max items to poll is 10, to avoid rate limit errors
-      maxItemsToPoll: Math.min(10, context.propsValue.max_rows_to_poll ?? 10),
+      maxItemsToPoll: Math.max(1,Math.min(10, context.propsValue.max_rows_to_poll ?? 10)),
       propsValue: context.propsValue
     });
   },
