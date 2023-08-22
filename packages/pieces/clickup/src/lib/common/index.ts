@@ -384,7 +384,7 @@ async function getList(accessToken: string, listId: string) {
   return (
     await callClickUpApi<{
       statuses: {
-        id: String;
+        id: string;
         status: string;
       }[];
     }>(HttpMethod.GET, `list/${listId}`, accessToken, undefined)
