@@ -2,8 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { linearAuth } from '../../..';
 import { props } from '../../common/props';
 import { makeClient } from '../../common/client';
-import { updateIssuePayload } from '../../common/models';
-
+import { LinearDocument } from '@linear/sdk';
 export const linearUpdateIssue = createAction({
   auth: linearAuth,
   name: 'linear_update_issue',
@@ -29,7 +28,7 @@ export const linearUpdateIssue = createAction({
   },
   async run({ auth, propsValue }) {
     const issueId = propsValue.issue_id!;
-    const issue: updateIssuePayload = {
+    const issue: LinearDocument.IssueUpdateInput = {
       title: propsValue.title,
       description: propsValue.description,
       assigneeId: propsValue.assignee_id,

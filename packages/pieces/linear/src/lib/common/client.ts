@@ -1,20 +1,16 @@
-import { LinearClient } from '@linear/sdk';
-import {
-  createIssuePayload,
-  listTeamsQueryVariables,
-  listWorkflowStatesQueryVariables,
-  listIssuesQueryVaribles,
-  updateIssuePayload,
-} from './models';
+import { LinearClient, LinearDocument } from '@linear/sdk';
+
 export class LinearClientWrapper {
   private client: LinearClient;
   constructor(apiKey: string) {
     this.client = new LinearClient({ apiKey: apiKey });
   }
-  async createIssue(input: createIssuePayload) {
+  async createIssue(input: LinearDocument.IssueCreateInput) {
     return this.client.createIssue(input);
   }
-  async listIssueStates(variables: listWorkflowStatesQueryVariables) {
+  async listIssueStates(
+    variables: LinearDocument.WorkflowStatesQueryVariables
+  ) {
     return this.client.workflowStates(variables);
   }
   async listIssuePriorities() {
@@ -26,13 +22,13 @@ export class LinearClientWrapper {
   async listIssueLabels() {
     return this.client.issueLabels();
   }
-  async listTeams(variables: listTeamsQueryVariables = {}) {
+  async listTeams(variables: LinearDocument.TeamsQueryVariables = {}) {
     return this.client.teams(variables);
   }
-  async listIssues(variables: listIssuesQueryVaribles = {}) {
+  async listIssues(variables: LinearDocument.IssuesQueryVariables = {}) {
     return this.client.issues(variables);
   }
-  async updateIssue(issueId: string, input: updateIssuePayload) {
+  async updateIssue(issueId: string, input: LinearDocument.IssueUpdateInput) {
     return this.client.updateIssue(issueId, input);
   }
 }

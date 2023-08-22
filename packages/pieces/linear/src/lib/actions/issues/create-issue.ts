@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { linearAuth } from '../../..';
 import { props } from '../../common/props';
 import { makeClient } from '../../common/client';
-import { createIssuePayload } from '../../common/models';
+import { LinearDocument } from '@linear/sdk';
 
 export const linearCreateIssue = createAction({
   auth: linearAuth,
@@ -27,7 +27,7 @@ export const linearCreateIssue = createAction({
     priority_id: props.priority_id(),
   },
   async run({ auth, propsValue }) {
-    const issue: createIssuePayload = {
+    const issue: LinearDocument.IssueCreateInput = {
       teamId: propsValue.team_id!,
       title: propsValue.title,
       assigneeId: propsValue.assignee_id,

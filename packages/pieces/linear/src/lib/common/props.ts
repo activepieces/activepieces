@@ -1,10 +1,6 @@
 import { Property } from '@activepieces/pieces-framework';
 import { makeClient } from './client';
-import {
-  updatedAt,
-  listWorkflowStatesQueryVariables,
-  listIssuesQueryVaribles,
-} from './models';
+import { LinearDocument } from '@linear/sdk';
 
 export const props = {
   team_id: (required = true) =>
@@ -22,7 +18,10 @@ export const props = {
           };
         }
         const client = makeClient(auth as string);
-        const teams = await client.listTeams({ first: 50, orderBy: updatedAt });
+        const teams = await client.listTeams({
+          first: 50,
+          orderBy: LinearDocument.PaginationOrderBy.UpdatedAt,
+        });
         return {
           disabled: false,
           options: teams.nodes.map((team) => {
@@ -49,7 +48,7 @@ export const props = {
           };
         }
         const client = makeClient(auth as string);
-        const filter: listWorkflowStatesQueryVariables = {
+        const filter: LinearDocument.WorkflowStatesQueryVariables = {
           filter: {
             team: {
               id: {
@@ -101,7 +100,7 @@ export const props = {
     Property.Dropdown({
       description: 'Assignee of the Issue',
       displayName: 'Assignee',
-      required: false,
+      required,
       refreshers: ['auth'],
       options: async ({ auth }) => {
         if (!auth) {
@@ -166,7 +165,7 @@ export const props = {
           };
         }
         const client = makeClient(auth as string);
-        const filter: listIssuesQueryVaribles = {
+        const filter: LinearDocument.IssuesQueryVariables = {
           first: 50,
           filter: {
             team: {
@@ -175,6 +174,7 @@ export const props = {
               },
             },
           },
+          orderBy: LinearDocument.PaginationOrderBy.UpdatedAt,
         };
         const issues = await client.listIssues(filter);
         return {
