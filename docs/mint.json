@@ -1,0 +1,186 @@
+{
+  "name": "Activepieces",
+  "logo": {
+    "light": "./resources/logo/light.svg",
+    "dark": "./resources/logo/dark.svg",
+    "href": "https://www.activepieces.com"
+  },
+  "favicon": "/favicon.png",
+  "colors": {
+    "primary": "#5155D7",
+    "dark": "#3033A6",
+    "light": "#6D72F6",
+    "background": {
+      "dark": "#121212"
+    }
+  },
+  "metadata": {
+    "og:image": "https://uploads-ssl.webflow.com/62c21c5154de255ece48bdf4/62c4ecbe6b2d76719d890ae7_Screenshot%202022-07-06%20at%2004.59.45-p-2600.png",
+    "description": "Open source alternative to zapier"
+  },
+  "topbarCtaButton": {
+    "type": "link",
+    "name": "Get Started",
+    "url": "https://www.activepieces.com/plans"
+  },
+  "feedback": {
+    "suggestEdit": true,
+    "raiseIssue": true
+  },
+  "topbarLinks": [
+    {
+      "name": "Github",
+      "url": "https://github.com/activepieces/activepieces"
+    }
+  ],
+  "anchors": [
+    {
+      "name": "Pieces",
+      "icon": "plug",
+      "url": "https://www.activepieces.com/pieces"
+    },
+    {
+      "name": "Developers",
+      "icon": "code",
+      "url": "developers"
+    },
+    {
+      "name": "Discord",
+      "icon": "discord",
+      "url": "https://discord.gg/2jUXBKDdP8"
+    }
+  ],
+  "navigation": [
+    {
+      "group": "Introduction",
+      "pages": [
+        "getting-started/introduction"
+      ]
+    },
+    {
+      "group": "Self Host",
+      "pages": [
+        {
+          "group": "Install Options",
+          "icon": "server",
+          "pages": [
+            "install/options/overview",
+            "install/options/docker",
+            "install/options/docker-compose",
+            "install/options/easypanel"
+          ]
+        },
+        {
+          "group": "Configurations",
+          "icon": "gear",
+          "pages": [
+            "install/configurations/environment-variables",
+            "install/configurations/error-notifications"
+          ]
+        },
+        "install/breaking-changes"
+      ]
+    },
+    {
+      "group": "Building Flow",
+      "pages": [
+        "building-flows/building-flow",
+        "building-flows/passing-data",
+        "building-flows/publishing-flow",
+        "building-flows/debugging"
+      ]
+    },
+    {
+      "group": "Helper Pieces",
+      "pages": [
+        "helper-pieces/code"
+      ]
+    },
+    {
+      "group": "Getting Started",
+      "pages": [
+        "developers/overview"
+      ]
+    },
+    {
+      "group": "Tutorials",
+      "pages": [
+        {
+          "group": "Development Setup",
+          "icon": "circle-1",
+          "pages": [
+            "developers/development-setup/getting-started",
+            "developers/development-setup/codespaces",
+            "developers/development-setup/local",
+            "developers/development-setup/dev-container"
+          ]
+        },
+        "developers/building-pieces/create-action",
+        {
+          "group": "Create Triggers",
+          "icon": "circle-3",
+          "pages": [
+            "developers/building-pieces/triggers/overview",
+            "developers/building-pieces/triggers/create-polling-trigger",
+            "developers/building-pieces/triggers/create-webhook-trigger"
+          ]
+        },
+        "developers/building-pieces/publish-piece"
+      ]
+    },
+    {
+      "group": "Piece Reference",
+      "pages": [
+        "developers/piece-reference/authentication",
+        "developers/piece-reference/properties",
+        "developers/piece-reference/properties-validation",
+        "developers/piece-reference/flow-control",
+        "developers/piece-reference/persistent-storage",
+        "developers/piece-reference/piece-versioning",
+        "developers/piece-reference/examples"
+      ]
+    },
+    {
+      "group": "Worker Architecture",
+      "pages": [
+        "developers/architecture/repo-structure",
+        "developers/architecture/flow-worker",
+        "developers/architecture/code-worker"
+      ]
+    },
+    {
+      "group": "Other",
+      "pages": [
+        "telemetry",
+        "changelog",
+        "license"
+      ]
+    },
+    {
+      "group": "Enterprise Edition",
+      "pages": [
+        "enterprise/whitelabel",
+        {
+          "group": "Connection Cards",
+          "icon": "cards-blank",
+          "pages": [
+            "enterprise/connection-cards/overview",
+            "enterprise/connection-cards/user-authentication",
+            "enterprise/connection-cards/frontend-sdk",
+            "enterprise/connection-cards/user-flows"
+          ]
+        }
+      ]
+    }
+  ],
+  "analytics": {
+    "posthog": {
+      "apiKey": "phc_TXdpocbYTeZVm5VJmMzHTMrCofBQu3e0kN7HGMNGTVW"
+    }
+  },
+  "footerSocials": {
+    "website": "https://www.activepieces.com",
+    "github": "https://github.com/activepieces/activepieces",
+    "discord": "https://discord.gg/2jUXBKDdP8"
+  }
+}
