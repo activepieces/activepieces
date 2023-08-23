@@ -6,8 +6,6 @@ import {
   CountFlowsRequest,
   CreateFlowRequest,
   ExecutionOutputStatus,
-  ExecutionState,
-  FileId,
   Flow,
   FlowId,
   FlowOperationRequest,
@@ -19,12 +17,13 @@ import {
   SeekPage,
   TestFlowRunRequestBody,
 } from '@activepieces/shared';
+import { InstanceRunService } from './instance-run.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class FlowService {
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private instanceRunService: InstanceRunService) {}
   create(request: CreateFlowRequest): Observable<Flow> {
     return this.http.post<Flow>(environment.apiUrl + '/flows', {
       displayName: request.displayName,
@@ -125,7 +124,9 @@ export class FlowService {
             run.status !== ExecutionOutputStatus.RUNNING &&
             run.logsFileId !== null
           ) {
-            return this.loadStateLogs(run.logsFileId).pipe(
+            return this.instanceRunService.logs({
+              logId: run.logsFileId,
+            }).pipe(
               map((state) => {
                 return { ...run, state: state };
               })
@@ -136,11 +137,6 @@ export class FlowService {
       );
   }
 
-  loadStateLogs(fileId: FileId): Observable<ExecutionState> {
-    return this.http.get<ExecutionState>(
-      environment.apiUrl + `/files/${fileId}`
-    );
-  }
 
   count(req: CountFlowsRequest) {
     const params: Record<string, string | number | boolean> = {};

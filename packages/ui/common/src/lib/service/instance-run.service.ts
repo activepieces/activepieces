@@ -24,7 +24,9 @@ export class InstanceRunService {
     return this.http.get<FlowRun>(environment.apiUrl + '/flow-runs/' + id).pipe(
       switchMap((instanceRun) => {
         if (instanceRun.logsFileId !== null) {
-          return this.logs(instanceRun.logsFileId).pipe(
+          return this.logs({
+            logId: instanceRun.logsFileId,
+          }).pipe(
             map((output) => {
               return { ...instanceRun, executionOutput: output } as FlowRun;
             })
@@ -56,9 +58,9 @@ export class InstanceRunService {
     });
   }
 
-  private logs(fileId: string): Observable<ExecutionOutput> {
+  logs({logId}: {logId: string}): Observable<ExecutionOutput> {
     return this.http.get<ExecutionOutput>(
-      environment.apiUrl + `/files/${fileId}`
+      environment.apiUrl + `/logs/${logId}`
     );
   }
 }

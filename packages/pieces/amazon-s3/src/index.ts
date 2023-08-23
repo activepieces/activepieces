@@ -149,7 +149,6 @@ export const amazonS3Auth = PieceAuth.CustomAuth({
 
 export const amazonS3 = createPiece({
     displayName: "Amazon S3",
-
     logoUrl: "https://cdn.activepieces.com/pieces/amazon-s3.png",
     minimumSupportedRelease: '0.5.0',
     authors: ["Willianwg", 'MoShizzle'],

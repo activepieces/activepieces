@@ -7,6 +7,11 @@ export enum QueueMode {
     MEMORY = 'MEMORY',
 }
 
+export enum StorageType {
+    S3 = 'S3',
+    DB = 'DB',
+}
+
 export enum DatabaseType {
     POSTGRES = 'POSTGRES',
     SQLITE3 = 'SQLITE3',
@@ -22,6 +27,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [SystemProp.EXECUTION_MODE]: 'UNSANDBOXED',
     [SystemProp.TRIGGER_DEFAULT_POLL_INTERVAL]: '5',
     [SystemProp.FLOW_WORKER_CONCURRENCY]: '10',
+    [SystemProp.REDIS_HOST]: StorageType.S3,
     [SystemProp.CLOUD_AUTH_ENABLED]: 'true',
     [SystemProp.STATS_ENABLED]: 'false',
     [SystemProp.EDITION]: 'ce',

@@ -141,7 +141,9 @@ export class TestFlowWidgetComponent implements OnInit {
           instanceRun.status !== ExecutionOutputStatus.RUNNING &&
           instanceRun.logsFileId !== null
         ) {
-          return this.flowService.loadStateLogs(instanceRun.logsFileId).pipe(
+          return this.instanceRunService.logs({
+            logId: instanceRun.logsFileId
+          }).pipe(
             map((state) => {
               return { ...instanceRun, state: state };
             })

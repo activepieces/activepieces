@@ -34,6 +34,7 @@ import {
     PackageInfo,
 } from '../../helper/package-manager'
 import { codeBuilder } from '../code-worker/code-builder'
+import { logsService } from '../../flows/flow-run/logs/run-logs.service'
 
 type InstallPiecesParams = {
     path: string
@@ -224,7 +225,7 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
             )
         }
 
-        const { input, logFileId } = await loadInputAndLogFileId({
+        const { input } = await loadInputAndLogFileId({
             flowVersion,
             jobData,
         })
@@ -234,15 +235,17 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
             input,
         )
 
-        const logsFile = await fileService.save({
-            fileId: logFileId,
+        const logStartTime = Date.now()
+        const logsFile = await logsService.save({
+            flowRunId: jobData.runId,
             projectId: jobData.projectId,
-            data: Buffer.from(JSON.stringify(executionOutput)),
+            data: executionOutput,
         })
+        logger.info('Saving logs took' +  (Date.now() - logStartTime) + 'ms');
 
         await finishExecution({
             flowRunId: jobData.runId,
-            logFileId: logsFile.id,
+            logFileId: logsFile,
             executionOutput,
         })
 
