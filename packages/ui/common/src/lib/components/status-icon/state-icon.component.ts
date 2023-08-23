@@ -69,8 +69,9 @@ export class StateIconComponent implements OnInit, OnChanges {
       case StepOutputStatus.SUCCEEDED:
       case StepOutputStatus.STOPPED:
         return 'Succeeded';
-      case ExecutionOutputStatus.FAILED:
       case ExecutionOutputStatus.INTERNAL_ERROR:
+        return 'Internal Error';
+      case ExecutionOutputStatus.FAILED:
       case ExecutionOutputStatus.TIMEOUT:
       case StepOutputStatus.FAILED:
         return 'Failed';
