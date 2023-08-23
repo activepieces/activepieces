@@ -181,8 +181,10 @@ export class FlowsTableComponent implements OnInit {
           return 'assets/img/custom/triggers/instant-filled.svg';
         }
       }
-      case TriggerType.EMPTY:
-        throw new Error("Flow can't be published with empty trigger");
+      case TriggerType.EMPTY: {
+        console.error("Flow can't be published with empty trigger");
+        return '';
+      }
     }
   }
 
@@ -197,8 +199,10 @@ export class FlowsTableComponent implements OnInit {
           ? `Runs ${cronstrue.toString(cronExpression).toLocaleLowerCase()}`
           : 'Real time flow';
       }
-      case TriggerType.EMPTY:
-        throw new Error("Flow can't be published with empty trigger");
+      case TriggerType.EMPTY: {
+        console.error("Flow can't be published with empty trigger");
+        return '';
+      }
     }
   }
 
