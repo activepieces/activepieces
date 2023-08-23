@@ -71,6 +71,7 @@
       ],
       "@activepieces/piece-ghostcms": ["packages/pieces/ghostcms/src/index.ts"],
       "@activepieces/piece-github": ["packages/pieces/github/src/index.ts"],
+      "@activepieces/piece-gitlab": ["packages/pieces/gitlab/src/index.ts"],
       "@activepieces/piece-gmail": ["packages/pieces/gmail/src/index.ts"],
       "@activepieces/piece-google-calendar": [
         "packages/pieces/google-calendar/src/index.ts"
