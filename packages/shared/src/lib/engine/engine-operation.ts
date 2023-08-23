@@ -16,6 +16,7 @@ export enum EngineOperationType {
     EXECUTE_PROPERTY = "EXECUTE_PROPERTY",
     EXECUTE_TRIGGER_HOOK = "EXECUTE_TRIGGER_HOOK",
     EXECUTE_VALIDATE_AUTH = "EXECUTE_VALIDATE_AUTH",
+    EXECUTE_TEST = "EXECUTE_TEST",
 }
 
 export enum TriggerHookType {
@@ -84,7 +85,9 @@ type BaseExecuteFlowOperation<T extends ExecutionType> = BaseEngineOperation & {
     executionType: T;
 }
 
-export type BeginExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.BEGIN>
+export type BeginExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.BEGIN> & {
+    executionState?: ExecutionState,
+}
 
 export type ResumeExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.RESUME> & {
     executionState: ExecutionState,
@@ -93,6 +96,14 @@ export type ResumeExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.
 }
 
 export type ExecuteFlowOperation = BeginExecuteFlowOperation | ResumeExecuteFlowOperation
+
+export type EngineTestOperation = BeginExecuteFlowOperation & {
+    /**
+     * original flow version that the current test flow version is derived from.
+     * Used to generate the test execution context.
+     */
+    sourceFlowVersion: FlowVersion
+}
 
 export type ExecuteTriggerOperation<HT extends TriggerHookType> = BaseEngineOperation & {
     hookType: HT,

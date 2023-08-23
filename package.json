@@ -106,6 +106,7 @@
     "node-imap": "^0.9.6",
     "nodemailer": "^6.9.3",
     "nx-cloud": "16.1.0",
+    "object-sizeof": "^2.6.3",
     "papaparse": "^5.3.2",
     "pg": "^8.8.0",
     "posthog-js": "^1.57.2",
