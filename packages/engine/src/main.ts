@@ -24,7 +24,7 @@ import { pieceHelper } from './lib/helper/action-helper';
 import { triggerHelper } from './lib/helper/trigger-helper';
 import { Piece } from '@activepieces/pieces-framework';
 import { VariableService } from './lib/services/variable-service';
-import { trimExecution } from 'packages/shared/src/lib/flow-run/execution/execution-state';
+import { trimExecution } from '@activepieces/shared';
 
 const initFlowExecutor = (input: ExecuteFlowOperation): FlowExecutor => {
   const { flowVersion } = input
