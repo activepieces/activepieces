@@ -252,7 +252,6 @@ export const textToImage = createAction({
     }>(request);
 
     return body.artifacts.map((artifact) => ({
-      ...artifact,
       url: `data:image/png;base64,${artifact.base64}`
     }));
   }

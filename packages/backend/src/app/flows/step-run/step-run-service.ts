@@ -15,7 +15,6 @@ import {
     EmptyTrigger,
     TriggerType,
     apId,
-    ExecuteFlowOperation,
     ExecutionType,
     EngineResponseStatus,
     ExecutionState,
@@ -23,6 +22,8 @@ import {
     ExecutionOutputStatus,
     UserId,
     FlowOperationType,
+    EngineTestOperation,
+    StepOutputStatus,
 } from '@activepieces/shared'
 import { engineHelper } from '../../helper/engine-helper'
 import { flowVersionService } from '../flow-version/flow-version.service'
@@ -144,34 +145,44 @@ const executeBranch = async ({ step, flowVersion, projectId }: ExecuteParams<Bra
         })
     }
 
-    delete branchStep.nextAction
-    delete branchStep.onFailureAction
-    delete branchStep.onSuccessAction
-
     const testTrigger: EmptyTrigger = {
-        name: 'test_branch_step',
+        name: 'test_trigger',
         valid: true,
         displayName: 'test branch step',
-        nextAction: branchStep,
+        nextAction: {
+            ...branchStep,
+            nextAction: undefined,
+            onSuccessAction: undefined,
+            onFailureAction: undefined,
+        },
         type: TriggerType.EMPTY,
         settings: {},
     }
 
-    flowVersion.trigger = testTrigger
+    const testFlowVersion: FlowVersion = {
+        ...flowVersion,
+        trigger: testTrigger,
+    }
 
-    const testInput: ExecuteFlowOperation = {
+    const testInput: EngineTestOperation = {
         executionType: ExecutionType.BEGIN,
         flowRunId: apId(),
-        flowVersion,
+        flowVersion: testFlowVersion,
         projectId,
         serverUrl: await getServerUrl(),
-        triggerPayload: {},
+        triggerPayload: {
+            duration: 0,
+            input: {},
+            output: flowVersion.trigger.settings.inputUiInfo.currentSelectedData,
+            status: StepOutputStatus.SUCCEEDED,
+        },
+        sourceFlowVersion: flowVersion,
     }
 
     const testSandbox = await sandboxManager.obtainSandbox(apId())
     await testSandbox.recreate()
 
-    const { status, result, standardError, standardOutput } = await engineHelper.executeFlow(testSandbox, testInput)
+    const { status, result, standardError, standardOutput } = await engineHelper.executeTest(testSandbox, testInput)
 
     if (status !== EngineResponseStatus.OK || result.status !== ExecutionOutputStatus.SUCCEEDED) {
         return {
