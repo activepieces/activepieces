@@ -20,6 +20,7 @@ const tsConfig = `
 {
     "extends": "@tsconfig/node18/tsconfig.json",
     "compilerOptions": {
+        "lib": ["es2022", "dom"],
         "skipLibCheck": true,
         "noUnusedLocals": false,
         "noUnusedParameters": false,
@@ -100,8 +101,8 @@ async function addCodeDependencies(codePath: string): Promise<void> {
         '@tsconfig/node18': {
             version: '1.0.0',
         },
-        'ts-loader': {
-            version: '9.4.2',
+        '@types/node': {
+            version: '18.16.1',
         },
         typescript: {
             version: '4.8.4',

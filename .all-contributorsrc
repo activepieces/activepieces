@@ -500,6 +500,24 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "thatguynef",
+      "name": "Nefer Lopez",
+      "avatar_url": "https://avatars.githubusercontent.com/u/11466949?v=4",
+      "profile": "https://neferlopez.com",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "fardeenpanjwani-codeglo",
+      "name": "fardeenpanjwani-codeglo",
+      "avatar_url": "https://avatars.githubusercontent.com/u/141914308?v=4",
+      "profile": "https://github.com/fardeenpanjwani-codeglo",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "commitType": "docs"
