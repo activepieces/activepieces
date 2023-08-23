@@ -12,7 +12,6 @@ import {
   PieceAuthProperty,
   NonAuthPiecePropertyMap
 } from '@activepieces/pieces-framework';
-import sizeof from 'object-sizeof'
 
 export class VariableService {
   private VARIABLE_TOKEN = RegExp('\\{\\{(.*?)\\}\\}', 'g');
@@ -151,11 +150,6 @@ export class VariableService {
   ): Record<string, unknown> {
     const valuesMap: Record<string, unknown> = {};
     Object.entries(executionState.lastStepState).forEach(([key, value]) => {
-      const size = sizeof(value)
-      // TODO FIX LATER
-      if (logs && size > 4096) {
-        return;
-      }
       valuesMap[key] = value;
     });
     return valuesMap;

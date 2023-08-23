@@ -24,6 +24,7 @@ import { pieceHelper } from './lib/helper/action-helper';
 import { triggerHelper } from './lib/helper/trigger-helper';
 import { Piece } from '@activepieces/pieces-framework';
 import { VariableService } from './lib/services/variable-service';
+import { trimExecution } from '@activepieces/shared';
 
 const initFlowExecutor = (input: ExecuteFlowOperation): FlowExecutor => {
   const { flowVersion } = input
@@ -101,7 +102,7 @@ const executeFlow = async (): Promise<void> => {
 
     writeOutput({
       status: EngineResponseStatus.OK,
-      response: output
+      response: trimExecution(output)
     })
   } catch (e) {
     console.error(e);

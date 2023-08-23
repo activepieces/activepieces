@@ -34,6 +34,8 @@ import {
     PackageInfo,
 } from '../../helper/package-manager'
 import { codeBuilder } from '../code-worker/code-builder'
+import sizeof from 'object-sizeof'
+import { MAX_LOG_SIZE } from '@activepieces/shared'
 
 type InstallPiecesParams = {
     path: string
@@ -234,10 +236,11 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
             input,
         )
 
-        const logsFile = await fileService.save({
+
+        const logsFile = await saveToLogFile({
             fileId: logFileId,
             projectId: jobData.projectId,
-            data: Buffer.from(JSON.stringify(executionOutput)),
+            executionOutput,
         })
 
         await finishExecution({
@@ -279,6 +282,26 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
     finally {
         await sandboxManager.returnSandbox(sandbox.boxId)
     }
+}
+
+async function saveToLogFile({ fileId, projectId, executionOutput }: { fileId: FileId | undefined, projectId: ProjectId, executionOutput: ExecutionOutput }) {
+    // TODO REMOVE THIS, DELETE TEMPORARY 
+    if (executionOutput.status !== ExecutionOutputStatus.PAUSED) {
+        executionOutput.executionState.lastStepState = {}
+    }
+    if (sizeof(executionOutput) > MAX_LOG_SIZE) {
+        const errors = new Error('Execution Output is too large, maximum size is ' + MAX_LOG_SIZE)
+        captureException(errors)
+        throw errors
+    }
+    // END TODO REMOVE THIS, DELETE TEMPORARY
+
+    const logsFile = await fileService.save({
+        fileId,
+        projectId,
+        data: Buffer.from(JSON.stringify(executionOutput)),
+    })
+    return logsFile
 }
 
 async function downloadFiles(
