@@ -315,6 +315,14 @@ export default class SandboxManager {
         return oldestSandbox
     }
 
+    async markAsNotCached(sandboxId: number): Promise<void> {
+        const sandbox = this.sandboxes.get(sandboxId)
+        if (!sandbox) {
+            throw new Error('Sandbox not found')
+        }
+        sandbox.cached = false
+    }
+
     async returnSandbox(sandboxId: number): Promise<void> {
         const release = await this.mutex.acquire()
         const sandbox = this.sandboxes.get(sandboxId)
