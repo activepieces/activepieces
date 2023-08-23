@@ -3,19 +3,27 @@ title: 'Github Codespaces'
 description: ''
 ---
 
-GitHub Codespaces is a cloud development platform that enables developers to write, run, and debug code directly in their browser, seamlessly integrated with GitHub.
+GitHub Codespaces is a cloud development platform that enables developers to write, run, and debug code directly in their browsers, seamlessly integrated with GitHub.
 
 ### Steps to setup Codespaces
 
-1.Go to [Activepieces repo](https://github.com/activepieces/activepieces).
+1. Go to [Activepieces repo](https://github.com/activepieces/activepieces).
 
-2.Click Code `<>`, then under codespaces click create codespace on main.
+2. Click Code `<>`, then under codespaces click create codespace on main.
 
 ![Create Codespace](/resources/screenshots/development-setup_codespaces.png)
 
 3. Open the terminal and run `npm run backend & npm run frontend`
 
-4. Access the frontend URL by opening the port 4200 and sign in with these details:
+<Warning>
+**Troubleshoot 1:** In some cases, the above command may not start the frontend server correctly. If this happens, follow these steps:
+  1. Cancel the running command by pressing Ctrl+C.
+  2. In separate terminal windows, run the following commands:
+     - To start the backend server: `npm run backend`
+     - To start the frontend server: `npm run frontend`
+</Warning>
+
+4. Access the frontend URL by opening port 4200 and signing in with these details:
 
 Email: `dev@ap.com`
 Password: `12345678`
