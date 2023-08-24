@@ -1,9 +1,8 @@
 import { createTrigger, OAuth2PropertyValue, TriggerStrategy } from "@activepieces/pieces-framework";
-import { AuthenticationType, DedupeStrategy, httpClient, HttpMethod, HttpRequest , Polling, pollingHelper } from "@activepieces/pieces-common";
+import { DedupeStrategy, HttpMethod, Polling, pollingHelper } from "@activepieces/pieces-common";
 import { calltidycalapi } from "../common";
 import { tidyCalAuth } from "../../";
 import dayjs from "dayjs";
-
 
 export const tidycalnewcontact = createTrigger({
     auth: tidyCalAuth,
@@ -54,7 +53,7 @@ export const tidycalnewcontact = createTrigger({
     },
 });
 
-const polling: Polling<OAuth2PropertyValue, Record<string, never>> = {
+const polling: Polling<string, Record<string, never>> = {
     strategy: DedupeStrategy.TIMEBASED,
     items: async ({ auth, lastFetchEpochMS }) => {
 
@@ -63,7 +62,7 @@ const polling: Polling<OAuth2PropertyValue, Record<string, never>> = {
                 id: string,
                 created_at: string,
             }[]
-        }>(HttpMethod.GET, `contacts`, auth.access_token, undefined);
+        }>(HttpMethod.GET, `contacts`, auth, undefined);
         
         const createdcontacts = currentValues.body;
         const contact = createdcontacts.data.filter((item) => {
