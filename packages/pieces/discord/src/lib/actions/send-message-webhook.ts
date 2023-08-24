@@ -13,12 +13,10 @@ export const discordSendMessageWebhook = createAction({
       }),
       username: Property.ShortText({
         displayName: 'Name',
-        description: "The webhook name",
         required: false,
       }),
       content: Property.LongText({
         displayName: 'Message',
-        description: "The message you want to send",
         required: true,
       }),
       avatar_url: Property.ShortText({
@@ -30,11 +28,7 @@ export const discordSendMessageWebhook = createAction({
         displayName: 'embeds',
         description: "Embeds to send along with the message",
         required: false,
-        defaultValue: [{
-          "title": "Hello!",
-          "description": "Hi! :grinning:",
-          "color": 1127128,
-        }]
+        defaultValue: []
       }),
       tts: Property.Checkbox({
         displayName: "Text to speech",
