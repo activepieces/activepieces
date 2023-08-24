@@ -73,7 +73,7 @@
     "deep-equal": "^2.2.0",
     "drip-nodejs": "^3.1.1",
     "fastify": "4.12.0",
-    "fastify-raw-body": "^4.2.0",
+    "fastify-raw-body": "4.2.0",
     "feedparser": "^2.2.10",
     "firebase-admin": "^11.5.0",
     "flatpickr": "^4.6.13",
