@@ -1,7 +1,7 @@
 {
-  "name": "pieces-nitfy",
+  "name": "pieces-tidycal",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/pieces/nitfy/src",
+  "sourceRoot": "packages/pieces/tidycal/src",
   "projectType": "library",
   "targets": {
     "build": {
@@ -10,18 +10,18 @@
         "{options.outputPath}"
       ],
       "options": {
-        "outputPath": "dist/packages/pieces/nitfy",
-        "tsConfig": "packages/pieces/nitfy/tsconfig.lib.json",
-        "packageJson": "packages/pieces/nitfy/package.json",
-        "main": "packages/pieces/nitfy/src/index.ts",
+        "outputPath": "dist/packages/pieces/tidycal",
+        "tsConfig": "packages/pieces/tidycal/tsconfig.lib.json",
+        "packageJson": "packages/pieces/tidycal/package.json",
+        "main": "packages/pieces/tidycal/src/index.ts",
         "assets": [
-          "packages/pieces/nitfy/*.md"
+          "packages/pieces/tidycal/*.md"
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "publish": {
-      "command": "node tools/scripts/publish.mjs pieces-nitfy {args.ver} {args.tag}",
+      "command": "node tools/scripts/publish.mjs pieces-tidycal {args.ver} {args.tag}",
       "dependsOn": [
         "build"
       ]
@@ -33,7 +33,7 @@
       ],
       "options": {
         "lintFilePatterns": [
-          "packages/pieces/nitfy/**/*.ts"
+          "packages/pieces/tidycal/**/*.ts"
         ]
       }
     }
