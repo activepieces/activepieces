@@ -395,8 +395,8 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
             ? propValue
             : Array.isArray(prop.defaultValue) && prop.defaultValue.length > 0
             ? prop.defaultValue
-            : [''];
-          controls[pk] = new UntypedFormControl(controlValue, validators);
+            : [];
+          controls[pk] = new UntypedFormControl(controlValue);
           break;
         }
         case PropertyType.MARKDOWN: {
@@ -408,7 +408,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
             : typeof prop.defaultValue === 'object'
             ? prop.defaultValue
             : {};
-          controls[pk] = new UntypedFormControl(controlValue, validators);
+          controls[pk] = new UntypedFormControl(controlValue);
           break;
         }
         case PropertyType.BASIC_AUTH:
@@ -422,7 +422,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
           break;
         }
         case PropertyType.CHECKBOX: {
-          controls[pk] = new UntypedFormControl(propValue || false, validators);
+          controls[pk] = new UntypedFormControl(propValue || false);
           break;
         }
         case PropertyType.DATE_TIME:
