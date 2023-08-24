@@ -1,6 +1,6 @@
 import { ProjectId } from "@activepieces/shared";
-import { PiecePropertyMap } from "./property";
-import { TriggerStrategy } from "./trigger/trigger";
+import { PieceAuthProperty, PiecePropertyMap } from "./property";
+import { TriggerStrategy, WebhookHandshakeConfiguration } from "./trigger/trigger";
 
 export type PieceBase = {
   id?: string;
@@ -10,6 +10,7 @@ export type PieceBase = {
   description: string;
   projectId?: ProjectId;
   directoryName?: string;
+  auth?: PieceAuthProperty;
   version: string;
   minimumSupportedRelease?: string;
   maximumSupportedRelease?: string;
@@ -19,12 +20,14 @@ export type ActionBase = {
   name: string,
   displayName: string,
   description: string,
-  sampleData: unknown,
   props: PiecePropertyMap,
+  requireAuth: boolean;
 }
 
 export type TriggerBase = ActionBase & {
   type: TriggerStrategy;
+  sampleData: unknown,
+  handshakeConfiguration?: WebhookHandshakeConfiguration;
 };
 
 export type PieceMetadata = PieceBase & {

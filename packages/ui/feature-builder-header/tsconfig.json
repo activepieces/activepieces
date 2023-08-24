@@ -3,8 +3,7 @@
     "target": "es2022",
     "useDefineForClassFields": false,
     "forceConsistentCasingInFileNames": true,
-    // TODO - remove this once we find types for jsonlint-mod
-    "strict": false,
+    "strict": true,
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
     "noImplicitReturns": true,

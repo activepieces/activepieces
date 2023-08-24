@@ -1,5 +1,4 @@
 import {
-    ApEnvironment,
     EventPayload,
     ExecutionType,
     Flow,
@@ -7,7 +6,6 @@ import {
     FlowInstanceStatus,
     FlowRun,
     FlowVersion,
-    FlowViewMode,
     ProjectId,
     RunEnvironment,
 } from '@activepieces/shared'
@@ -15,16 +13,49 @@ import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { triggerUtils } from '../helper/trigger-utils'
-import { system } from '../helper/system/system'
-import { SystemProp } from '../helper/system/system-prop'
-import { getPublicIp } from '../helper/public-ip-utils'
+import { getServerUrl } from '../helper/public-ip-utils'
 import { triggerEventService } from '../flows/trigger-events/trigger-event.service'
-import { isEmpty, isNil } from 'lodash'
+import { isNil } from '@activepieces/shared'
 import { logger } from '../helper/logger'
 import { webhookSimulationService } from './webhook-simulation/webhook-simulation-service'
 import { flowInstanceService } from '../flows/flow-instance/flow-instance.service'
+import { WebhookResponse } from '@activepieces/pieces-framework'
+import { flowService } from '../flows/flow/flow.service'
 
 export const webhookService = {
+    async handshake({
+        flow,
+        payload,
+    }: CallbackParams): Promise<WebhookResponse | null> {
+        logger.info(`[WebhookService#handshake] flowId=${flow.id}`)
+
+        const { projectId } = flow
+        const flowInstance = await flowInstanceService.get({
+            flowId: flow.id,
+            projectId: flow.projectId,
+        })
+        if (isNil(flowInstance)) {
+            logger.info(
+                `[WebhookService#handshake] flowInstance not found, flowId=${flow.id}`,
+            )
+            saveSampleDataForWebhookTesting(flow, payload)
+            return null
+        }
+        const flowVersion = await flowVersionService.getOneOrThrow(
+            flowInstance.flowVersionId,
+        )
+        const response = await triggerUtils.tryHandshake({
+            projectId,
+            flowVersion,
+            payload,
+            simulate: false,
+        })
+        if (response !== null) {
+            logger.info(`[WebhookService#handshake] condition met, handshake executed, response:
+            ${JSON.stringify(response, null, 2)}`)
+        }
+        return response
+    },
     async callback({ flow, payload }: CallbackParams): Promise<FlowRun[]> {
         logger.info(`[WebhookService#callback] flowId=${flow.id}`)
 
@@ -34,17 +65,33 @@ export const webhookService = {
             projectId: flow.projectId,
         })
         if (isNil(flowInstance)) {
-            logger.info(`[WebhookService#callback] flowInstance not found, flowId=${flow.id}`)
-            saveSampleDataForWebhookTesting(
-                flow,
-                payload)
+            logger.info(
+                `[WebhookService#callback] flowInstance not found, flowId=${flow.id}`,
+            )
+            const flowVersion = (await flowService.getOneOrThrow({
+                projectId,
+                id: flow.id,
+            })).version
+            const payloads: unknown[] = await triggerUtils.executeTrigger({
+                projectId,
+                flowVersion,
+                payload,
+                simulate: false,
+            })
+            payloads.forEach((resultPayload) => {
+                saveSampleDataForWebhookTesting(flow, resultPayload)
+            })
             return []
         }
         if (flowInstance.status !== FlowInstanceStatus.ENABLED) {
-            logger.info(`[WebhookService#callback] flowInstance not found or not enabled ignoring the webhook, flowId=${flow.id}`)
+            logger.info(
+                `[WebhookService#callback] flowInstance not found or not enabled ignoring the webhook, flowId=${flow.id}`,
+            )
             return []
         }
-        const flowVersion = await flowVersionService.getOneOrThrow(flowInstance.flowVersionId)
+        const flowVersion = await flowVersionService.getOneOrThrow(
+            flowInstance.flowVersionId,
+        )
         const payloads: unknown[] = await triggerUtils.executeTrigger({
             projectId,
             flowVersion,
@@ -84,17 +131,22 @@ export const webhookService = {
             simulate: true,
         })
 
-        if (isEmpty(events)) {
+        if (events.length === 0) {
             return
         }
 
-        logger.debug(events, `[WebhookService#simulationCallback] events, flowId=${flow.id}`)
+        logger.debug(
+            events,
+            `[WebhookService#simulationCallback] events, flowId=${flow.id}`,
+        )
 
-        const eventSaveJobs = events.map(event => triggerEventService.saveEvent({
-            flowId: flow.id,
-            projectId,
-            payload: event,
-        }))
+        const eventSaveJobs = events.map((event) =>
+            triggerEventService.saveEvent({
+                flowId: flow.id,
+                projectId,
+                payload: event,
+            }),
+        )
 
         await Promise.all(eventSaveJobs)
 
@@ -102,52 +154,35 @@ export const webhookService = {
     },
 
     async getWebhookPrefix(): Promise<string> {
-        const environment = system.getOrThrow(SystemProp.ENVIRONMENT)
-
-        let url = environment === ApEnvironment.PRODUCTION
-            ? system.getOrThrow(SystemProp.FRONTEND_URL)
-            : system.getOrThrow(SystemProp.WEBHOOK_URL)
-
-        // Localhost doesn't work with webhooks, so we need try to use the public ip
-        if (extractHostname(url) == 'localhost' && environment === ApEnvironment.PRODUCTION) {
-            url = `http://${(await getPublicIp()).ip}`
-        }
-
-        const slash = url.endsWith('/') ? '' : '/'
-        const redirect = environment === ApEnvironment.PRODUCTION ? 'api/' : ''
-
-        return `${url}${slash}${redirect}v1/webhooks`
+        return `${await getServerUrl()}v1/webhooks`
     },
 
-    async getWebhookUrl({ flowId, simulate }: GetWebhookUrlParams): Promise<string> {
+    async getWebhookUrl({
+        flowId,
+        simulate,
+    }: GetWebhookUrlParams): Promise<string> {
         const suffix: WebhookUrlSuffix = simulate ? '/simulate' : ''
         const webhookPrefix = await this.getWebhookPrefix()
         return `${webhookPrefix}/${flowId}${suffix}`
     },
 }
 
-function extractHostname(url: string): string | null {
-    try {
-        const hostname = new URL(url).hostname
-        return hostname
-    }
-    catch (e) {
-        return null
-    }
-}
-
-const getLatestFlowVersionOrThrow = async (flowId: FlowId, projectId: ProjectId): Promise<FlowVersion> => {
-    const flowVersionId = undefined
-
-    const flowVersion = await flowVersionService.getFlowVersion(
+const getLatestFlowVersionOrThrow = async (
+    flowId: FlowId,
+    projectId: ProjectId,
+): Promise<FlowVersion> => {
+    const flowVersion = await flowVersionService.getFlowVersion({
         projectId,
         flowId,
-        flowVersionId,
-        FlowViewMode.NO_ARTIFACTS,
-    )
+        versionId: undefined,
+        removeSecrets: false,
+        includeArtifactAsBase64: false,
+    })
 
     if (isNil(flowVersion)) {
-        logger.error(`[WebhookService#getLatestFlowVersionOrThrow] error=flow_version_not_found flowId=${flowId} projectId=${projectId}`)
+        logger.error(
+            `[WebhookService#getLatestFlowVersionOrThrow] error=flow_version_not_found flowId=${flowId} projectId=${projectId}`,
+        )
 
         throw new ActivepiecesError({
             code: ErrorCode.FLOW_NOT_FOUND,
@@ -160,7 +195,10 @@ const getLatestFlowVersionOrThrow = async (flowId: FlowId, projectId: ProjectId)
     return flowVersion
 }
 
-function saveSampleDataForWebhookTesting(flow: Flow, payload: EventPayload): void {
+function saveSampleDataForWebhookTesting(
+    flow: Flow,
+    payload: unknown,
+): void {
     triggerEventService.saveEvent({
         flowId: flow.id,
         payload,

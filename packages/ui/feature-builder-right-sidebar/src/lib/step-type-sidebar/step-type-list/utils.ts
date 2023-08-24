@@ -26,6 +26,7 @@ export function constructUpdateOperation(
               },
             ],
           ],
+          inputUiInfo: {},
         },
         type: ActionType.BRANCH,
         valid: false,
@@ -37,7 +38,6 @@ export function constructUpdateOperation(
         settings: {
           artifact: helloWorldBase64,
           artifactSourceId: '',
-          artifactPackagedId: '',
           input: {},
         },
         type: ActionType.CODE,

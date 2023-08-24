@@ -1,12 +1,18 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { StaticPropsValue, TriggerStrategy, createTrigger } from '@activepieces/pieces-framework';
 import { airtableCommon } from '../common';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { airtableAuth } from '../../';
 
-const polling: Polling<{ authentication: string, tableId: string | undefined, base: string }> = {
+const props = {
+  base: airtableCommon.base,
+  tableId: airtableCommon.tableId
+}
+
+const polling: Polling<string, StaticPropsValue<typeof props>> = {
   strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ propsValue }: { propsValue: { authentication: string, tableId: string | undefined, base: string } }) => {
+  items: async ({ auth, propsValue }) => {
     const records = await airtableCommon.getTableSnapshot({
-      personalToken: propsValue.authentication,
+      personalToken: auth,
       baseId: propsValue.base,
       tableId: propsValue.tableId!,
     });
@@ -17,30 +23,31 @@ const polling: Polling<{ authentication: string, tableId: string | undefined, ba
   }
 }
 
-export const airtableNewRecord = createTrigger({
-  name: 'new_record',
-  displayName: 'New Record',
-  description: 'Triggers when a new record is added to the selected table.',
-  props: {
-    authentication: airtableCommon.authentication,
-    base: airtableCommon.base,
-    tableId: airtableCommon.tableId
-  },
-  sampleData: {},
-  type: TriggerStrategy.POLLING,
-  async test(context) {
-    return await pollingHelper.test(polling, { store: context.store, propsValue: context.propsValue });
-  },
-  async onEnable(context) {
-    await pollingHelper.onEnable(polling, { store: context.store, propsValue: context.propsValue });
+export const airtableNewRecordTrigger = createTrigger({
+  auth: airtableAuth,
+    name: 'new_record',
+    displayName: 'New Record',
+    description: 'Triggers when a new record is added to the selected table.',
+    props,
+    sampleData: {},
+    type: TriggerStrategy.POLLING,
+    async test(context) {
+      const { store, auth, propsValue } = context
+      return await pollingHelper.test(polling, { store, auth, propsValue });
+    },
+    async onEnable(context) {
+      const { store, auth, propsValue } = context
+      await pollingHelper.onEnable(polling, { store, auth, propsValue });
 
-  },
+    },
 
-  async onDisable(context) {
-    await pollingHelper.onDisable(polling, { store: context.store, propsValue: context.propsValue });
-  },
+    async onDisable(context) {
+      const { store, auth, propsValue } = context
+      await pollingHelper.onDisable(polling, { store, auth, propsValue });
+    },
 
-  async run(context) {
-    return await pollingHelper.poll(polling, { store: context.store, propsValue: context.propsValue });
-  },
+    async run(context) {
+      const { store, auth, propsValue } = context
+      return await pollingHelper.poll(polling, { store, auth, propsValue });
+    },
 });

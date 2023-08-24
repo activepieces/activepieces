@@ -16,7 +16,7 @@ export const storeEntryService = {
                 id: apId(),
                 key: request.key,
                 value: request.value,
-                projectId:projectId,
+                projectId,
             }
             return await storeEntryRepo.save(entryRequest)
         }

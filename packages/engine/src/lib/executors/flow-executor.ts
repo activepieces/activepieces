@@ -1,5 +1,4 @@
 import dayjs from 'dayjs';
-import { globals } from '../globals';
 import { ActionHandler } from '../action/action-handler';
 import {
   ExecutionState,
@@ -20,7 +19,7 @@ import {
   StopResponse,
 } from '@activepieces/shared';
 import { createActionHandler } from '../action/action-handler-factory';
-import { isNil } from 'lodash';
+import { isNil } from '@activepieces/shared'
 
 type FlowExecutorCtor = {
   executionState: ExecutionState
@@ -222,6 +221,7 @@ export class FlowExecutor {
         status: ExecutionOutputStatus.FAILED,
         executionState: this.executionState,
         duration: 0,
+        tags: this.executionState.tags,
         tasks: this.executionState.taskCount,
         errorMessage: {
           stepName: 'Flow Execution',
@@ -237,6 +237,7 @@ export class FlowExecutor {
     const baseExecutionOutput = {
       executionState: this.executionState,
       duration: duration,
+      tags: this.executionState.tags,
       tasks: this.executionState.taskCount,
     }
 

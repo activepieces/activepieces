@@ -1,10 +1,10 @@
 {
   "extends": ["../.eslintrc.json"],
-   "overrides": [
+  "overrides": [
     {
       "files": ["*.ts"],
       "parserOptions": {
-        "project":["packages/ui/common/tsconfig.*?.json"]
+        "project": ["packages/ui/common/tsconfig.*?.json"]
       },
       "rules": {
         "rxjs/no-async-subscribe": "error",
@@ -30,7 +30,7 @@
         ]
       },
       "extends": [
-        "plugin:@nrwl/nx/angular",
+        "plugin:@nx/angular",
         "plugin:@angular-eslint/template/process-inline-templates",
         "plugin:@ngrx/strict-requiring-type-checking",
         "plugin:prettier/recommended"

@@ -2,7 +2,7 @@ import { FastifyInstance, FastifyRequest } from 'fastify'
 import { webhookService } from '../webhooks/webhook-service'
 import { appEventRoutingService } from './app-event-routing.service'
 import { logger } from '../helper/logger'
-import { isNil } from 'lodash'
+import { isNil } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode, EventPayload } from '@activepieces/shared'
 import { flowService } from '../flows/flow/flow.service'
 import { AppEventRouting } from './app-event-routing.entity'
@@ -12,8 +12,8 @@ import { Piece } from '@activepieces/pieces-framework'
 import { facebookLeads } from '@activepieces/piece-facebook-leads'
 
 const appWebhooks: Record<string, Piece> = {
-    slack: slack,
-    square: square,
+    slack,
+    square,
     'facebook-leads': facebookLeads,
 }
 
@@ -35,6 +35,7 @@ export const appEventRoutingController = async (fastify: FastifyInstance) => {
             config: {
                 rawBody: true,
             },
+            logLevel: 'silent',
         },
         async (
             request: FastifyRequest<{
@@ -66,14 +67,13 @@ export const appEventRoutingController = async (fastify: FastifyInstance) => {
             const pieceName = pieceNames[pieceUrl]
             const { reply, event, identifierValue } = piece.events!.parseAndReply({ payload: eventPayload })
 
-            logger.info(`Received event ${event} with identifier ${identifierValue} in app ${pieceName}`)
+            logger.debug(`Received event ${event} with identifier ${identifierValue} in app ${pieceName}`)
             if (event && identifierValue) {
                 const listeners = await appEventRoutingService.listListeners({
                     appName: pieceName,
-                    event: event,
-                    identifierValue: identifierValue,
+                    event,
+                    identifierValue,
                 })
-                logger.info(`Found ${listeners.length} listeners for event ${event} with identifier ${identifierValue} in app ${pieceName}`)
                 listeners.map(listener => {
                     callback(listener, eventPayload)
                 })
@@ -87,7 +87,7 @@ export const appEventRoutingController = async (fastify: FastifyInstance) => {
 async function callback(listener: AppEventRouting, eventPayload: EventPayload) {
     const flow = await flowService.getOneOrThrow({ projectId: listener.projectId, id: listener.flowId })
     webhookService.callback({
-        flow: flow,
+        flow,
         payload: eventPayload,
     })
 }

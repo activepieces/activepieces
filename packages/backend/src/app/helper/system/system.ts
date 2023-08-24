@@ -1,5 +1,35 @@
-import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ErrorCode } from '@activepieces/shared'
 import { SystemProp } from './system-prop'
+import { loadEncryptionKey } from '../encryption'
+
+export enum QueueMode {
+    REDIS = 'REDIS',
+    MEMORY = 'MEMORY',
+}
+
+export enum DatabaseType {
+    POSTGRES = 'POSTGRES',
+    SQLITE3 = 'SQLITE3',
+}
+
+const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
+    [SystemProp.SIGN_UP_ENABLED]: 'false',
+    [SystemProp.TELEMETRY_ENABLED]: 'true',
+    [SystemProp.SANDBOX_RUN_TIME_SECONDS]: '600',
+    [SystemProp.SANDBOX_MEMORY_LIMIT]: '131072',
+    [SystemProp.QUEUE_MODE]: QueueMode.REDIS,
+    [SystemProp.DB_TYPE]: DatabaseType.POSTGRES,
+    [SystemProp.EXECUTION_MODE]: 'UNSANDBOXED',
+    [SystemProp.TRIGGER_DEFAULT_POLL_INTERVAL]: '5',
+    [SystemProp.FLOW_WORKER_CONCURRENCY]: '10',
+    [SystemProp.CLOUD_AUTH_ENABLED]: 'true',
+    [SystemProp.STATS_ENABLED]: 'false',
+    [SystemProp.EDITION]: 'ce',
+    [SystemProp.TEMPLATES_SOURCE_URL]: 'https://cloud.activepieces.com/api/v1/flow-templates',
+    [SystemProp.ENVIRONMENT]: 'prod',
+    [SystemProp.ENGINE_EXECUTABLE_PATH]: 'dist/packages/engine/main.js',
+    
+}
 
 export const system = {
     get(prop: SystemProp): string | undefined {
@@ -47,25 +77,25 @@ export const system = {
 }
 
 const getEnvVar = (prop: SystemProp): string | undefined => {
-    const value = process.env[`AP_${prop}`]
-    return value
+    return process.env[`AP_${prop}`] ?? systemPropDefaultValues[prop]
 }
 
 export const validateEnvPropsOnStartup = () => {
-    const encryptionKey = system.getOrThrow(SystemProp.ENCRYPTION_KEY)
-    const encryptionKeyLength = Buffer.from(encryptionKey, 'binary')
-    if (encryptionKeyLength.length !== 32) {
+    const executionMode = system.get(SystemProp.EXECUTION_MODE)
+    const signedUpEnabled = system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
+    const queueMode = system.get(SystemProp.QUEUE_MODE) as QueueMode
+    const edition = system.get(SystemProp.EDITION)
+    loadEncryptionKey(queueMode)
+
+    if (executionMode !== ExecutionMode.SANDBOXED && edition !== ApEdition.COMMUNITY) {
         throw new ActivepiecesError({
             code: ErrorCode.SYSTEM_PROP_INVALID,
             params: {
-                prop: SystemProp.ENCRYPTION_KEY,
+                prop: SystemProp.EXECUTION_MODE,
             },
-        }, `System property AP_${SystemProp.ENCRYPTION_KEY} must be 256 bit (32 hex charaters)`)
+        }, 'Allowing users to sign up is not allowed in non community edtion')
     }
-
-    const executionMode = system.get(SystemProp.EXECUTION_MODE)
-    const signedUpEnabled = system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
-    if(executionMode === ExecutionMode.UNSANDBOXED && signedUpEnabled){
+    if (executionMode === ExecutionMode.UNSANDBOXED && signedUpEnabled) {
         throw new ActivepiecesError({
             code: ErrorCode.SYSTEM_PROP_INVALID,
             params: {

@@ -3,22 +3,12 @@ import { HttpRequest, HttpMethod, httpClient } from "@activepieces/pieces-common
 
 export const facebookLeadsCommon = {
     baseUrl: 'https://graph.facebook.com',
-
-    authentication: Property.OAuth2({
-        displayName: 'Authentication',
-        description: '',
-        authUrl: "https://graph.facebook.com/oauth/authorize",
-        tokenUrl: "https://graph.facebook.com/oauth/access_token",
-        required: true,
-        scope: ['ads_management', 'pages_show_list', 'pages_read_engagement', 'pages_manage_ads', 'leads_retrieval', 'pages_manage_metadata'],
-    }),
-
     page: Property.Dropdown({
         displayName: 'Page',
         required: true,
-        refreshers: ['authentication'],
-        options: async (props) => {
-            if (!props['authentication']) {
+        refreshers: [],
+        options: async ({ auth }) => {
+            if (!auth) {
                 return {
                     disabled: true,
                     options: [],
@@ -27,7 +17,7 @@ export const facebookLeadsCommon = {
             }
 
             try {
-                const authProp: OAuth2PropertyValue = props['authentication'] as OAuth2PropertyValue;
+                const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
                 const pages: any[] = (await facebookLeadsCommon.getPages(authProp.access_token)).map((page: FacebookPage) => {
                     return {
                         label: page.name,
@@ -58,8 +48,8 @@ export const facebookLeadsCommon = {
         displayName: 'Form',
         required: false,
         refreshers: ['page'],
-        options: async (props) => {
-            if (!props['page']) {
+        options: async ({ page }) => {
+            if (!page) {
                 return {
                     disabled: true,
                     options: [],
@@ -68,8 +58,8 @@ export const facebookLeadsCommon = {
             }
 
             try {
-                const page = props['page'] as FacebookPageDropdown
-                const forms: any[] = (await facebookLeadsCommon.getPageForms(page.id, page.accessToken)).map((form: FacebookForm) => {
+                const modifiedPage = page as FacebookPageDropdown
+                const forms: any[] = (await facebookLeadsCommon.getPageForms(modifiedPage.id, modifiedPage.accessToken)).map((form: FacebookForm) => {
                     return {
                         label: form.name,
                         value: form.id
@@ -135,6 +125,30 @@ export const facebookLeadsCommon = {
         const response = await httpClient.sendRequest(request);
         return response.body.data;
     },
+
+    getLeadDetails: async (leadId: string, accessToken: string) => {
+        const response = await httpClient.sendRequest({
+            method: HttpMethod.GET,
+            url: `${facebookLeadsCommon.baseUrl}/${leadId}`,
+            queryParams: {
+                access_token: accessToken
+            }
+        });
+
+        return response.body;
+    },
+
+    loadSampleData: async (formId: string, accessToken: string) => {
+        const response = await httpClient.sendRequest({
+            method: HttpMethod.GET,
+            url: `${facebookLeadsCommon.baseUrl}/${formId}/leads`,
+            queryParams: {
+                access_token: accessToken
+            }
+        });
+
+        return response.body;
+    }
 }
 
 export interface FacebookOAuth2 {

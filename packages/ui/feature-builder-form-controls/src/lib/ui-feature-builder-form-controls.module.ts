@@ -22,16 +22,17 @@ import { PieceStepMentionItemComponent } from './interpolating-text-form-control
 import { PieceTriggerMentionItemComponent } from './interpolating-text-form-control/mentions-list/piece-trigger-mention-item/piece-trigger-mention-item.component';
 import { StepMentionsTreeComponent } from './interpolating-text-form-control/mentions-list/step-mentions-tree/step-mentions-tree.component';
 import { CodemirrorModule } from '@ctrl/ngx-codemirror';
-import { MonacoEditorModule } from '@materia-ui/ngx-monaco-editor';
+import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { AuthConfigsPipe } from './piece-properties-form/auth-configs.pipe';
 import { PiecePropertiesFormComponent } from './piece-properties-form/piece-properties-form.component';
 import { MatTreeModule } from '@angular/material/tree';
 import { QuillModule } from 'ngx-quill';
-
 import { WebhookTriggerMentionItemComponent } from './interpolating-text-form-control/mentions-list/webhook-trigger-mention-item/webhook-trigger-mention-item.component';
 import { BuilderAutocompleteDropdownHandlerComponent } from './interpolating-text-form-control/builder-autocomplete-dropdown-handler/builder-autocomplete-dropdown-handler.component';
 import { AutocompleteDropdownSizesButtonsComponent } from './interpolating-text-form-control/mentions-list/autocomplete-dropdown-sizes-buttons/autocomplete-dropdown-sizes-buttons.component';
+import { DropdownPropertySearchPipe } from './piece-properties-form/dropdown-search.pipe';
+import { MarkdownModule } from 'ngx-markdown';
 const exportedDeclarations = [
   ArrayFormControlComponent,
   BranchConditionFormControlComponent,
@@ -54,6 +55,7 @@ const exportedDeclarations = [
     UiFeatureConnectionsModule,
     MatTreeModule,
     QuillModule.forRoot({}),
+    MarkdownModule,
   ],
   declarations: [
     ...exportedDeclarations,
@@ -72,6 +74,7 @@ const exportedDeclarations = [
     WebhookTriggerMentionItemComponent,
     AuthConfigsPipe,
     AutocompleteDropdownSizesButtonsComponent,
+    DropdownPropertySearchPipe,
   ],
   exports: [...exportedDeclarations],
 })

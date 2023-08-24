@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, ErrorCode, File, FileId, ProjectId } from '@activepieces/shared'
-import { isNil } from 'lodash'
+import { isNil } from '@activepieces/shared'
 import { databaseConnection } from '../database/database-connection'
 import { logger } from '../helper/logger'
 import { FileEntity } from './file.entity'
@@ -36,9 +36,9 @@ export const fileService = {
         return savedFile
     },
 
-    async getOne({projectId, fileId}: GetOneParams): Promise<File | null> {
+    async getOne({ projectId, fileId }: GetOneParams): Promise<File | null> {
         return await fileRepo.findOneBy({
-            projectId: projectId,
+            projectId,
             id: fileId,
         })
     },
@@ -60,6 +60,6 @@ export const fileService = {
 
     async delete({ fileId, projectId }: DeleteOneParams): Promise<void> {
         logger.info('Deleted file with Id ' + fileId)
-        await fileRepo.delete({ id: fileId, projectId: projectId })
+        await fileRepo.delete({ id: fileId, projectId })
     },
 }

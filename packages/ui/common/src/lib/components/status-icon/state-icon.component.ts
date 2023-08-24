@@ -43,13 +43,13 @@ export class StateIconComponent implements OnInit, OnChanges {
       case ExecutionOutputStatus.SUCCEEDED:
       case StepOutputStatus.SUCCEEDED:
       case StepOutputStatus.STOPPED:
+      case AppConnectionStatus.EXPIRED:
       case AppConnectionStatus.ACTIVE:
         return 'assets/img/custom/status/success.svg';
       case ExecutionOutputStatus.FAILED:
       case ExecutionOutputStatus.INTERNAL_ERROR:
       case ExecutionOutputStatus.TIMEOUT:
       case StepOutputStatus.FAILED:
-      case AppConnectionStatus.EXPIRED:
       case AppConnectionStatus.ERROR:
         return 'assets/img/custom/status/error.svg';
       case ExecutionOutputStatus.PAUSED:
@@ -69,9 +69,11 @@ export class StateIconComponent implements OnInit, OnChanges {
       case StepOutputStatus.SUCCEEDED:
       case StepOutputStatus.STOPPED:
         return 'Succeeded';
-      case ExecutionOutputStatus.FAILED:
       case ExecutionOutputStatus.INTERNAL_ERROR:
+        return 'Internal Error';
       case ExecutionOutputStatus.TIMEOUT:
+        return 'Timed Out';
+      case ExecutionOutputStatus.FAILED:
       case StepOutputStatus.FAILED:
         return 'Failed';
       case ExecutionOutputStatus.PAUSED:
@@ -81,9 +83,8 @@ export class StateIconComponent implements OnInit, OnChanges {
       case StepOutputStatus.RUNNING:
         return 'Running';
       case AppConnectionStatus.ACTIVE:
-        return 'Active';
       case AppConnectionStatus.EXPIRED:
-        return 'Expired';
+        return 'Active';
       case AppConnectionStatus.ERROR:
         return 'Error';
     }

@@ -5,30 +5,22 @@
   "projectType": "library",
   "targets": {
     "build": {
-      "executor": "@nrwl/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/resend",
         "tsConfig": "packages/pieces/resend/tsconfig.lib.json",
         "packageJson": "packages/pieces/resend/package.json",
         "main": "packages/pieces/resend/src/index.ts",
-        "assets": [
-          "packages/pieces/resend/*.md"
-        ],
+        "assets": ["packages/pieces/resend/*.md"],
         "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {
-      "executor": "@nrwl/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": [
-          "packages/pieces/resend/**/*.ts"
-        ]
+        "lintFilePatterns": ["packages/pieces/resend/**/*.ts"]
       }
     }
   },

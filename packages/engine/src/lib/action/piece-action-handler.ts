@@ -1,21 +1,24 @@
 import { VariableService } from '../services/variable-service';
 import {
+  AUTHENTICATION_PROPERTY_NAME,
   Action,
   ActionType,
   ExecutionState,
   ExecutionType,
   PieceAction,
   StepOutput,
-  StepOutputStatus
+  StepOutputStatus,
+  assertNotNullOrUndefined
 } from '@activepieces/shared';
 import { BaseActionHandler, InitStepOutputParams } from './action-handler';
 import { globals } from '../globals';
-import { isNil } from 'lodash';
+import { isNil } from '@activepieces/shared'
 import { pieceHelper } from '../helper/action-helper';
 import { createContextStore } from '../services/storage.service';
-import { connectionManager } from '../services/connections.service';
 import { Utils } from '../utils';
-import { PauseHook, PauseHookParams, PiecePropertyMap, StopHook, StopHookParams } from '@activepieces/pieces-framework';
+import { ActionContext, PauseHook, PauseHookParams, PiecePropertyMap, StaticPropsValue, StopHook, StopHookParams } from '@activepieces/pieces-framework';
+import { createConnectionManager } from '../services/connections.service';
+import { createTagsManager } from '../services/tags.service';
 
 type CtorParams = {
   executionType: ExecutionType
@@ -27,13 +30,6 @@ type LoadActionParams = {
   pieceName: string
   pieceVersion: string
   actionName: string
-}
-
-type ResolveAndValidateInput = {
-  actionProps: PiecePropertyMap
-  input: unknown
-  executionState: ExecutionState
-  censorConnections: boolean
 }
 
 type GenerateStopHookParams = {
@@ -76,24 +72,6 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
     return action
   }
 
-  private async resolveInput(params: ResolveAndValidateInput) {
-    const { actionProps, input, executionState, censorConnections } = params
-
-    const resolvedInput = await this.variableService.resolve({
-      unresolvedInput: input,
-      executionState,
-      censorConnections,
-    })
-
-    const { result, errors } = await this.variableService.validateAndCast(resolvedInput, actionProps);
-
-    if (Object.keys(errors).length > 0) {
-      throw new Error(JSON.stringify(errors));
-    }
-
-    return result
-  }
-
   private generateStopHook({ stepOutput }: GenerateStopHookParams): StopHook {
     return ({ response }: StopHookParams) => {
       stepOutput.status = StepOutputStatus.STOPPED
@@ -123,7 +101,7 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
     const censoredInput = await this.variableService.resolve({
       unresolvedInput: this.currentAction.settings.input,
       executionState,
-      censorConnections: true,
+      logs: true,
     })
 
     return {
@@ -154,24 +132,38 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
         pieceVersion,
         actionName,
       })
+      const piece = await pieceHelper.loadPieceOrThrow(pieceName, pieceVersion);
 
-      const resolvedInput = await this.resolveInput({
-        actionProps: action.props,
-        input,
+      const resolvedProps = await this.variableService.resolve<StaticPropsValue<PiecePropertyMap>>({
+        unresolvedInput: input,
         executionState,
-        censorConnections: false,
+        logs: false,
       })
 
-      stepOutput.output = await action.run({
+      assertNotNullOrUndefined(globals.flowRunId, 'globals.flowRunId')
+      const {processedInput, errors} = await this.variableService.applyProcessorsAndValidators(resolvedProps, action.props, piece.auth);
+
+      if (Object.keys(errors).length > 0) {
+        throw new Error(JSON.stringify(errors));
+      }
+
+      const context: ActionContext = {
         executionType: this.executionType,
-        store: createContextStore('', globals.flowId),
-        propsValue: resolvedInput,
-        connections: connectionManager,
+        store: createContextStore('', globals.flowVersionId),
+        auth: processedInput[AUTHENTICATION_PROPERTY_NAME],
+        propsValue: processedInput,
+        tags: createTagsManager(executionState),
+        connections: createConnectionManager(executionState),
+        serverUrl: globals.serverUrl!,
         run: {
+          id: globals.flowRunId,
           stop: this.generateStopHook({ stepOutput }),
           pause: this.generatePauseHook({ stepOutput }),
-        }
-      })
+        },
+        resumePayload: globals.resumePayload,
+      }
+
+      stepOutput.output = await action.run(context)
 
       if (stepOutput.status === StepOutputStatus.RUNNING) {
         stepOutput.status = StepOutputStatus.SUCCEEDED

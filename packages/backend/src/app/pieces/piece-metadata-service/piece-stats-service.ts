@@ -1,9 +1,9 @@
-import { FlowId, ProjectId, flowHelper, TriggerType, ActionType } from '@activepieces/shared'
-import { isNil } from 'lodash'
+import { FlowId, ProjectId, flowHelper, TriggerType, ActionType, isNil } from '@activepieces/shared'
 import { flowInstanceService } from '../../flows/flow-instance/flow-instance.service'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowService } from '../../flows/flow/flow.service'
-import { FilePieceMetadataService } from './file-piece-metadata-service'
+import { CloudPieceMetadataService } from './cloud-piece-metadata-service'
+import { flagService } from '../../flags/flag.service'
 
 type PieceStats = {
     activeSteps: number
@@ -20,10 +20,10 @@ let cachedStats: AllPiecesStats = {}
 let cacheTime: number
 const FIVE_MINUTES_IN_MILLISECONDS = 5 * 60 * 1000
 
-const filePieceMetadataService = FilePieceMetadataService()
 
 export const pieceStatsService = {
     async get(): Promise<AllPiecesStats> {
+        const pieceMetaService = CloudPieceMetadataService()
         if (cachedStats && (Date.now() - cacheTime) < FIVE_MINUTES_IN_MILLISECONDS) {
             return cachedStats
         }
@@ -36,7 +36,7 @@ export const pieceStatsService = {
             activeFlows: Set<FlowId>
         }> = {}
         const defaultStats = { activeSteps: 0, allSteps: 0, allProjects: 0, activeFlows: 0, allFlows: 0, activeProjects: 0 }
-        const pieces = await filePieceMetadataService.list({ release: '', projectId: null })
+        const pieces = await pieceMetaService.list({ release: await flagService.getCurrentVersion(), projectId: null })
         for (const piece of pieces) {
             uniqueStatsPerPiece[piece.name] = {
                 flows: new Set(),
@@ -48,7 +48,7 @@ export const pieceStatsService = {
         }
         for (const flowWithoutVersion of flows) {
             const flow = await flowService.getOneOrThrow({ id: flowWithoutVersion.id, projectId: flowWithoutVersion.projectId })
-            if(isNil(flow.version)) {
+            if (isNil(flow.version)) {
                 continue
             }
             const trigger = flow.version.trigger

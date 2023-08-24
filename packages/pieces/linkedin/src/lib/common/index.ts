@@ -9,14 +9,6 @@ export const linkedinCommon = {
         'X-Restli-Protocol-Version': '2.0.0',
         // 'LinkedIn-Version': '202306'
     },
-
-    authentication: Property.OAuth2({
-        authUrl: 'https://www.linkedin.com/oauth/v2/authorization',
-        tokenUrl: 'https://www.linkedin.com/oauth/v2/accessToken',
-        displayName: 'Authentication',
-        required: true,
-        scope: ['w_member_social', 'openid', 'email', 'profile', 'w_organization_social', 'rw_organization_admin']
-    }),
     text: Property.LongText({
         displayName: 'Text',
         required: true
@@ -61,18 +53,18 @@ export const linkedinCommon = {
     company: Property.Dropdown({
         displayName: 'Company Page',
         required: true,
-        refreshers: ['authentication'],
-        options: async (props) => {
-            if (!props['authentication']) {
+        refreshers: [],
+        options: async ({ auth }) => {
+            if (!auth) {
                 return {
                     disabled: true,
                     placeholder: 'Connect your account',
                     options: []
                 }
             }
-            const auth = props['authentication'] as { access_token: string };
+            const authProp = auth as { access_token: string };
 
-            const companies: any = await linkedinCommon.getCompanies(auth.access_token);
+            const companies: any = await linkedinCommon.getCompanies(authProp.access_token);
             const options = [];
             for (const company in companies) {
                 options.push({

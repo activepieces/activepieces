@@ -18,7 +18,7 @@ const getIsolateExecutableName = () => {
     return executableNameMap[arch] ?? defaultName
 }
 
-const executionMode: ExecutionMode = system.get(SystemProp.EXECUTION_MODE) as ExecutionMode ?? ExecutionMode.SANDBOXED
+const executionMode: ExecutionMode = system.get(SystemProp.EXECUTION_MODE) as ExecutionMode
 
 export type ExecuteIsolateResult = {
     output: unknown
@@ -30,7 +30,7 @@ export type ExecuteIsolateResult = {
 
 export class Sandbox {
     private static readonly isolateExecutableName = getIsolateExecutableName()
-    private static readonly sandboxRunTimeSeconds = system.getNumber(SystemProp.SANDBOX_RUN_TIME_SECONDS) ?? 120
+    private static readonly sandboxRunTimeSeconds = system.getNumber(SystemProp.SANDBOX_RUN_TIME_SECONDS)!
 
     public readonly boxId: number
     public used: boolean
@@ -74,20 +74,19 @@ export class Sandbox {
             'meta.txt',
         ]
         const promises = filesToDelete.map((file) => {
-            const filePath = path.join(__dirname, this.getSandboxFilePath(file))
-            return fs.unlink(filePath).catch((error) => {
-                if (error.code !== 'ENOENT') { // Ignore file not found error
-                    throw error
-                }
-            })
+            const filePath = this.getSandboxFilePath(file)
+            // eslint-disable-next-line @typescript-eslint/no-empty-function
+            return fs.unlink(filePath).catch(() => {})
         })
+        
         await Promise.all(promises)
     }
 
     async runCommandLine(commandLine: string): Promise<ExecuteIsolateResult> {
         if (executionMode === ExecutionMode.UNSANDBOXED) {
             const startTime = Date.now()
-            const result = await this.runUnsafeCommand(`cd ${this.getSandboxFolderPath()} && env -i AP_ENVIRONMENT=$AP_ENVIRONMENT NODE_OPTIONS='--enable-source-maps' ${commandLine}`)
+            const envionment = system.get(SystemProp.ENVIRONMENT)
+            const result = await this.runUnsafeCommand(`cd ${this.getSandboxFolderPath()} && env -i AP_ENVIRONMENT=${envionment} NODE_OPTIONS='--enable-source-maps' ${commandLine}`)
             let engineResponse
             if (result.verdict === EngineResponseStatus.OK) {
                 engineResponse = await this.parseFunctionOutput()
@@ -136,8 +135,8 @@ export class Sandbox {
 
             const result = {
                 timeInSeconds,
-                verdict: verdict,
-                output: output,
+                verdict,
+                output,
                 standardOutput: await fs.readFile(this.getSandboxFilePath('_standardOutput.txt'), { encoding: 'utf-8' }),
                 standardError: await fs.readFile(this.getSandboxFilePath('_standardError.txt'), { encoding: 'utf-8' }),
             }
@@ -314,6 +313,14 @@ export default class SandboxManager {
         release()
 
         return oldestSandbox
+    }
+
+    async markAsNotCached(sandboxId: number): Promise<void> {
+        const sandbox = this.sandboxes.get(sandboxId)
+        if (!sandbox) {
+            throw new Error('Sandbox not found')
+        }
+        sandbox.cached = false
     }
 
     async returnSandbox(sandboxId: number): Promise<void> {

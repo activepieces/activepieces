@@ -22,6 +22,7 @@ type BaseExecutionOutput<T extends ExecutionOutputStatus> = {
   executionState: ExecutionState;
   duration: number;
   tasks: number;
+  tags?: string[];
   errorMessage?: ExecutionError;
 }
 
@@ -53,6 +54,7 @@ export type ResumeStepMetadata =
 
 export enum PauseType {
   DELAY = 'DELAY',
+  WEBHOOK = "WEBHOOK"
 }
 
 type BasePauseMetadata<T extends PauseType> = {
@@ -64,7 +66,11 @@ export type DelayPauseMetadata = BasePauseMetadata<PauseType.DELAY> & {
   resumeDateTime: string;
 }
 
-export type PauseMetadata = DelayPauseMetadata
+export type WebhookPauseMetadata =  BasePauseMetadata<PauseType.WEBHOOK> & {
+  actions: string[];
+}
+
+export type PauseMetadata = DelayPauseMetadata | WebhookPauseMetadata
 
 
 export type PauseExecutionOutput = BaseExecutionOutput<ExecutionOutputStatus.PAUSED> & {

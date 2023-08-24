@@ -1,60 +1,30 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import Client from 'ssh2-sftp-client'
+import { sftpAuth } from "../..";
 
 export const createFile = createAction({
+    auth: sftpAuth,
     name: 'create_file',
-    displayName: 'Create new file',
+    displayName: 'Create File from Text',
     description: 'Create a new file in the given path',
     props: {
-        // host, port, username, password
-        authentication: Property.CustomAuth({
-            displayName: 'Authentication',
-            description: 'Enter the authentication details',
-            props: {
-                host: Property.ShortText({
-                    displayName: 'Host',
-                    description: 'The host of the SFTP server',
-                    required: true,
-                }),
-                port: Property.Number({
-                    displayName: 'Port',
-                    description: 'The port of the SFTP server',
-                    required: true,
-                    defaultValue: 22,
-                }),
-                username: Property.ShortText({
-                    displayName: 'Username',
-                    description: 'The username of the SFTP server',
-                    required: true,
-                }),
-                password: Property.SecretText({
-                    displayName: 'Password',
-                    description: 'The password of the SFTP server',
-                    required: true,
-                }),
-            },
-            required: true
-        }),
         fileName: Property.ShortText({
             displayName: 'File Path',
-            description: 'The name of the file to create',
             required: true,
         }),
         fileContent: Property.LongText({
             displayName: 'File content',
-            description: 'The content of the file to create',
             required: true,
-        }),
+        })
     },
     async run(context) {
-        const host = context.propsValue['authentication'].host;
-        const port = context.propsValue['authentication'].port;
-        const username = context.propsValue['authentication'].username;
-        const password = context.propsValue['authentication'].password;
+        const host = context.auth.host;
+        const port = context.auth.port;
+        const username = context.auth.username;
+        const password = context.auth.password;
         const fileName = context.propsValue['fileName']
         const fileContent = context.propsValue['fileContent']
         const sftp = new Client();
-
 
         try {
             await sftp.connect({
@@ -64,6 +34,17 @@ export const createFile = createAction({
                 password
             });
 
+            const remotePathExists = await sftp.exists(fileName);
+            if (!remotePathExists) {
+                // Extract the directory path from the fileName
+                const remoteDirectory = fileName.substring(0, fileName.lastIndexOf('/'));
+        
+                // Create the directory if it doesn't exist
+                await sftp.mkdir(remoteDirectory, true); // The second argument 'true' makes the function create all intermediate directories
+        
+                // You can also check if the directory was successfully created and handle any potential errors here
+            }
+        
             await sftp.put(Buffer.from(fileContent), fileName);
             await sftp.end();
 

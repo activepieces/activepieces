@@ -5,30 +5,22 @@
   "projectType": "library",
   "targets": {
     "build": {
-      "executor": "@nrwl/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/mautic",
         "tsConfig": "packages/pieces/mautic/tsconfig.lib.json",
         "packageJson": "packages/pieces/mautic/package.json",
         "main": "packages/pieces/mautic/src/index.ts",
-        "assets": [
-          "packages/pieces/mautic/*.md"
-        ],
+        "assets": ["packages/pieces/mautic/*.md"],
         "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {
-      "executor": "@nrwl/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": [
-          "packages/pieces/mautic/**/*.ts"
-        ]
+        "lintFilePatterns": ["packages/pieces/mautic/**/*.ts"]
       }
     }
   },

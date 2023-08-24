@@ -1,12 +1,12 @@
 import { PostHog } from 'posthog-node'
 import { SystemProp } from './system/system-prop'
 import { system } from './system/system'
-import { ProjectId, TelemetryEvent, User } from '@activepieces/shared'
+import { ProjectId, TelemetryEvent, User, UserId } from '@activepieces/shared'
 import { projectService } from '../project/project.service'
 import { getEdition } from './secret-helper'
 
 
-const telemetryEnabled = system.getBoolean(SystemProp.TELEMETRY_ENABLED) ?? true
+const telemetryEnabled = system.getBoolean(SystemProp.TELEMETRY_ENABLED)
 
 const client = new PostHog(
     'phc_7F92HoXJPeGnTKmYv0eOw62FurPMRW9Aqr0TPrDzvHh',
@@ -23,7 +23,7 @@ export const telemetry = {
                 email: user.email,
                 firstName: user.firstName,
                 lastName: user.lastName,
-                projectId: projectId,
+                projectId,
                 ...(await getMetadata()),
             },
         })
@@ -33,8 +33,14 @@ export const telemetry = {
             return
         }
         const project = await projectService.getOne(projectId)
+        this.trackUser(project!.ownerId, event)
+    },
+    async trackUser(userId: UserId, event: TelemetryEvent): Promise<void> {
+        if (!telemetryEnabled) {
+            return
+        }
         client.capture({
-            distinctId: project!.ownerId,
+            distinctId: userId,
             event: event.name,
             properties: {
                 ...event.payload,
@@ -42,13 +48,12 @@ export const telemetry = {
                 datetime: new Date().toISOString(),
             },
         })
-
     },
 }
 
 async function getMetadata() {
-    const currentVersion = (await import('../../../../../package.json')).version
-    const edition = await getEdition()
+    const currentVersion = (await import('package.json')).version
+    const edition = getEdition()
     return {
         activepiecesVersion: currentVersion,
         activepiecesEnvironment: system.get(SystemProp.ENVIRONMENT),

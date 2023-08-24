@@ -47,7 +47,6 @@ const upgradeNotificationMetadataKeyInLocalStorage =
 export class AppComponent implements OnInit {
   routeLoader$: Observable<unknown>;
   loggedInUser$: Observable<void>;
-  warningMessage$: Observable<{ title?: string; body?: string } | undefined>;
   showUpgradeNotification$: Observable<boolean>;
   hideUpgradeNotification = false;
   openCommandBar$: Observable<void>;
@@ -174,6 +173,12 @@ export class AppComponent implements OnInit {
 
   private registerSearchIconIntoMaterialIconRegistery() {
     this.maticonRegistry.addSvgIcon(
+      'info',
+      this.domSanitizer.bypassSecurityTrustResourceUrl(
+        '../assets/img/custom/info.svg'
+      )
+    );
+    this.maticonRegistry.addSvgIcon(
       'search',
       this.domSanitizer.bypassSecurityTrustResourceUrl(
         '../assets/img/custom/search.svg'
@@ -194,7 +199,6 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.warningMessage$ = this.flagService.getWarningMessage();
     this.loggedInUser$ = this.authenticationService.currentUserSubject.pipe(
       tap((user) => {
         if (user == undefined || Object.keys(user).length == 0) {

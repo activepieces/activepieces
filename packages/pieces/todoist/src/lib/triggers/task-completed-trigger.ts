@@ -1,9 +1,10 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { assertNotNullOrUndefined } from "@activepieces/pieces-common";
+import { assertNotNullOrUndefined } from "@activepieces/shared";
 import dayjs from 'dayjs';
 import { todoistSyncClient } from '../common/client/sync-client'
 import { TodoistCompletedTask } from '../common/models'
-import { todoistAuthentication, todoistProjectIdDropdown } from '../common/props'
+import { todoistProjectIdDropdown } from '../common/props'
+import { todoistAuth } from '../..';
 
 type TriggerData = {
   lastChecked: string;
@@ -16,6 +17,7 @@ const fiveMinutesAgo = () => dayjs().subtract(5, 'minutes').format(ISO_FORMAT)
 const now = () => dayjs().format(ISO_FORMAT)
 
 export const todoistTaskCompletedTrigger = createTrigger({
+  auth: todoistAuth,
   name: 'task_completed',
   displayName: 'Task Completed',
   description: 'Triggers when a new task is completed',
@@ -34,7 +36,6 @@ export const todoistTaskCompletedTrigger = createTrigger({
   },
 
   props: {
-    authentication: todoistAuthentication,
     project_id: todoistProjectIdDropdown,
   },
 
@@ -48,8 +49,8 @@ export const todoistTaskCompletedTrigger = createTrigger({
     await store.put(TRIGGER_DATA_STORE_KEY, null);
   },
 
-  async run({ propsValue, store }): Promise<TodoistCompletedTask[]> {
-    const token = propsValue.authentication?.access_token
+  async run({ auth, propsValue, store }): Promise<TodoistCompletedTask[]> {
+    const token = auth.access_token
     const { project_id } = propsValue
 
     assertNotNullOrUndefined(token, 'token')

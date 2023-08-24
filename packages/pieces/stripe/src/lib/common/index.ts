@@ -1,14 +1,7 @@
-import { Property} from "@activepieces/pieces-framework";
 import { HttpRequest, HttpMethod, AuthenticationType, httpClient } from "@activepieces/pieces-common";
 
 export const stripeCommon = {
     baseUrl:  "https://api.stripe.com/v1",
-    authentication: Property.SecretText({
-        displayName:"API Key",
-        required:true,
-        description:"API key acquired from your Stripe dashboard"
-
-    }),
     subscribeWebhook: async (eventName: string, webhookUrl: string, apiKey: string) => {
         const request: HttpRequest = {
             method: HttpMethod.POST,

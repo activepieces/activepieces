@@ -1,7 +1,8 @@
 import { PropertyType } from "./property";
-import { BasePropertySchema, CheckboxProperty, LongTextProperty, NumberProperty, SecretTextProperty, ShortTextProperty, TPropertyValue } from "./base-prop";
+import { BasePieceAuthSchema, CheckboxProperty, LongTextProperty, NumberProperty, SecretTextProperty, ShortTextProperty, TPropertyValue } from "./base-prop";
 import { StaticDropdownProperty } from "./dropdown-prop";
 import { StaticPropsValue } from "./property";
+import { ValidationInputType } from "../validators/types";
 
 
 export interface CustomAuthProps {
@@ -10,12 +11,13 @@ export interface CustomAuthProps {
 
 export type CustomAuthPropertyValue<T extends CustomAuthProps> = StaticPropsValue<T>;
 
-export type CustomAuthPropertySchema<T> = BasePropertySchema & {
+export type CustomAuthPropertySchema<T extends CustomAuthProps> = BasePieceAuthSchema<CustomAuthPropertyValue<T>> & {
 	props: T
 }
 
 export type CustomAuthProperty<R extends boolean, T extends CustomAuthProps> = CustomAuthPropertySchema<T> & TPropertyValue<
 	CustomAuthPropertyValue<T>,
 	PropertyType.CUSTOM_AUTH,
+	ValidationInputType.ANY,
 	R
 >;

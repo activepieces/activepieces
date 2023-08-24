@@ -10,110 +10,66 @@ import {
     FlowVersionId,
     PieceAction,
     ProjectId,
+    Action,
+    BranchAction,
+    EmptyTrigger,
     TriggerType,
+    apId,
+    ExecutionType,
+    EngineResponseStatus,
+    ExecutionState,
+    BranchStepOutput,
+    ExecutionOutputStatus,
+    UserId,
+    FlowOperationType,
+    EngineTestOperation,
+    StepOutputStatus,
 } from '@activepieces/shared'
-import { logger } from '../../helper/logger'
-import { get, isNil } from 'lodash'
 import { engineHelper } from '../../helper/engine-helper'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { fileService } from '../../file/file.service'
-import { codeBuilder } from '../../workers/code-worker/code-builder'
-
-type CreateParams = {
-    projectId: ProjectId
-    flowVersionId: FlowVersionId
-    stepName: string
-}
-
-const resolveLoopFirstItem = (flowVersion: FlowVersion, loopItemExpression: string): string => {
-    logger.debug(`[StepRunService#resolveLoopFirstItem] loopItemExpression=${loopItemExpression}`)
-
-    const loopItemRegex = /^\$\{(?<loopStepPathString>.+)\}$/
-    const loopStepPathString = loopItemExpression.match(loopItemRegex)?.groups?.loopStepPathString
-
-    logger.debug(`[StepRunService#resolveLoopFirstItem] loopStepPathString=${loopStepPathString}`)
-
-    if (isNil(loopStepPathString)) {
-        return ''
-    }
-
-    const loopStepPath = loopStepPathString.split('.')
-    const stepName = loopStepPath.shift()
-
-    logger.debug(`[StepRunService#resolveLoopFirstItem] stepName=${stepName}`)
-
-    if (isNil(stepName)) {
-        return ''
-    }
-
-    const step = flowHelper.getStep(flowVersion, stepName)
-
-    if (isNil(step)) {
-        return ''
-    }
-    //In case the loopStepPath is empty it means direct access to the step and not to a nested property
-    const firstItemPath = 'settings.inputUiInfo.currentSelectedData' + loopStepPath.map((path) => `.${path}`).join('') + '[0]'
-
-    logger.debug(`[StepRunService#resolveLoopFirstItem] firstItemPath=${firstItemPath}`)
-
-    const result = get(step, firstItemPath, '')
-
-    logger.debug(`[StepRunService#resolveLoopFirstItem] result=${result}`)
-
-    return result
-}
-
-const generateTestExecutionContext = (flowVersion: FlowVersion): Record<string, unknown> => {
-    const flowSteps = flowHelper.getAllSteps(flowVersion.trigger)
-    const testContext: Record<string, unknown> = {}
-
-    for (const step of flowSteps) {
-        const stepsWithSampleData = [ActionType.CODE, ActionType.PIECE, TriggerType.PIECE, TriggerType.WEBHOOK]
-        if (stepsWithSampleData.includes(step.type)) {
-            const { name, settings: { inputUiInfo } } = step
-            testContext[name] = inputUiInfo?.currentSelectedData
-        }
-
-        if (step.type === ActionType.LOOP_ON_ITEMS) {
-            testContext[step.name] = {
-                index: 1,
-                item: resolveLoopFirstItem(flowVersion, step.settings.items),
-            }
-        }
-    }
-
-    return testContext
-}
+import { isNil } from '@activepieces/shared'
+import { getServerUrl } from '../../helper/public-ip-utils'
+import { sandboxManager } from '../../workers/sandbox'
+import { flowService } from '../flow/flow.service'
 
 export const stepRunService = {
-    async create({ projectId, flowVersionId, stepName }: CreateParams): Promise<StepRunResponse> {
+    async create({ projectId, flowVersionId, stepName, userId }: CreateParams): Promise<StepRunResponse> {
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
         const step = flowHelper.getStep(flowVersion, stepName)
 
-        if (isNil(step) || (step.type !== ActionType.PIECE && step.type !== ActionType.CODE)) {
+        if (isNil(step)) {
             throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
+                code: ErrorCode.STEP_NOT_FOUND,
                 params: {
-                    message: `invalid stepName (${stepName})`,
+                    stepName,
                 },
             })
         }
-        const testExecutionContext = generateTestExecutionContext(flowVersion)
 
-        switch(step.type) {
+        switch (step.type) {
             case ActionType.PIECE: {
-                return await executePiece({ step, testExecutionContext, projectId, flowVersionId, flowVersion })
+                return executePiece({ step, flowVersion, projectId, userId })
             }
             case ActionType.CODE: {
-                return await executeCode({ step, testExecutionContext, projectId })
+                return executeCode({ step, flowVersion, projectId, userId })
+            }
+            case ActionType.BRANCH: {
+                return executeBranch({ step, flowVersion, projectId, userId })
+            }
+            default: {
+                return {
+                    success: false,
+                    output: 'step not testable',
+                    standardError: '',
+                    standardOutput: '',
+                }
             }
         }
     },
 }
 
-async function executePiece({ step, testExecutionContext, projectId, flowVersionId, flowVersion }: {
-    step: PieceAction, testExecutionContext: Record<string, unknown>, projectId: ProjectId, flowVersionId: FlowVersionId, flowVersion: FlowVersion
-}): Promise<StepRunResponse> {
+async function executePiece({ step, projectId, flowVersion, userId }: ExecuteParams<PieceAction>): Promise<StepRunResponse> {
     const { pieceName, pieceVersion, actionName, input } = step.settings
 
     if (isNil(actionName)) {
@@ -126,44 +82,149 @@ async function executePiece({ step, testExecutionContext, projectId, flowVersion
     }
 
     const operation: ExecuteActionOperation = {
+        serverUrl: await getServerUrl(),
         pieceName,
         pieceVersion,
         actionName,
         input,
-        testExecutionContext,
+        flowVersion,
         projectId,
     }
 
-    const {result, standardError, standardOutput} = await engineHelper.executeAction(operation)
+    const { result, standardError, standardOutput } = await engineHelper.executeAction(operation)
     if (result.success) {
         step.settings.inputUiInfo.currentSelectedData = result.output
-        await flowVersionService.overwriteVersion(flowVersionId, flowVersion)
+        await flowService.update({
+            userId,
+            flowId: flowVersion.flowId,
+            projectId,
+            request: {
+                type: FlowOperationType.UPDATE_ACTION,
+                request: step,
+            },
+        })
     }
     return {
         success: result.success,
         output: result.output,
-        standardError: standardError,
-        standardOutput: standardOutput,
+        standardError,
+        standardOutput,
     }
 }
 
-async function executeCode({ step, testExecutionContext, projectId }: { step: CodeAction, testExecutionContext: Record<string, unknown>, projectId: ProjectId }): Promise<StepRunResponse> {
+async function executeCode({ step, flowVersion, projectId }: ExecuteParams<CodeAction>): Promise<StepRunResponse> {
     const file = await fileService.getOneOrThrow({
         projectId,
         fileId: step.settings.artifactSourceId!,
     })
-    const bundledCode = await codeBuilder.build(file.data)
 
-    const {result, standardError, standardOutput} = await engineHelper.executeCode({
-        codeBase64: bundledCode.toString('base64'),
+    const { result, standardError, standardOutput } = await engineHelper.executeCode({
+        file,
+        step,
         input: step.settings.input,
-        testExecutionContext,
+        flowVersion,
         projectId,
     })
     return {
         success: result.success,
         output: result.output,
-        standardError: standardError,
-        standardOutput: standardOutput,
+        standardError,
+        standardOutput,
     }
+}
+
+const executeBranch = async ({ step, flowVersion, projectId }: ExecuteParams<BranchAction>): Promise<StepRunResponse> => {
+    const branchStep = flowHelper.getStep(flowVersion, step.name)
+
+    if (isNil(branchStep) || branchStep.type !== ActionType.BRANCH) {
+        throw new ActivepiecesError({
+            code: ErrorCode.STEP_NOT_FOUND,
+            params: {
+                stepName: step.name,
+            },
+        })
+    }
+
+    const testTrigger: EmptyTrigger = {
+        name: 'test_trigger',
+        valid: true,
+        displayName: 'test branch step',
+        nextAction: {
+            ...branchStep,
+            nextAction: undefined,
+            onSuccessAction: undefined,
+            onFailureAction: undefined,
+        },
+        type: TriggerType.EMPTY,
+        settings: {},
+    }
+
+    const testFlowVersion: FlowVersion = {
+        ...flowVersion,
+        trigger: testTrigger,
+    }
+
+    const testInput: EngineTestOperation = {
+        executionType: ExecutionType.BEGIN,
+        flowRunId: apId(),
+        flowVersion: testFlowVersion,
+        projectId,
+        serverUrl: await getServerUrl(),
+        triggerPayload: {
+            duration: 0,
+            input: {},
+            output: flowVersion.trigger.settings.inputUiInfo.currentSelectedData,
+            status: StepOutputStatus.SUCCEEDED,
+        },
+        sourceFlowVersion: flowVersion,
+    }
+
+    const testSandbox = await sandboxManager.obtainSandbox(apId())
+    await testSandbox.recreate()
+
+    const { status, result, standardError, standardOutput } = await engineHelper.executeTest(testSandbox, testInput)
+
+    if (status !== EngineResponseStatus.OK || result.status !== ExecutionOutputStatus.SUCCEEDED) {
+        return {
+            success: false,
+            output: null,
+            standardError,
+            standardOutput,
+        }
+    }
+
+    const branchStepOutput = new ExecutionState(result.executionState).getStepOutput<BranchStepOutput>({
+        stepName: branchStep.name,
+        ancestors: [],
+    })
+
+    if (isNil(branchStepOutput)) {
+        return {
+            success: false,
+            output: null,
+            standardError,
+            standardOutput,
+        }
+    }
+
+    return {
+        success: true,
+        output: branchStepOutput.output,
+        standardError,
+        standardOutput,
+    }
+}
+
+type CreateParams = {
+    userId: UserId
+    projectId: ProjectId
+    flowVersionId: FlowVersionId
+    stepName: string
+}
+
+type ExecuteParams<T extends Action> = {
+    step: T
+    userId: UserId
+    flowVersion: FlowVersion
+    projectId: ProjectId
 }

@@ -1,9 +1,9 @@
 import { EntitySchema } from 'typeorm'
 import { PieceMetadata } from '@activepieces/pieces-framework'
 import { ApId, BaseModel, Project } from '@activepieces/shared'
-import { BaseColumnSchemaPart } from '../helper/base-entity'
+import { BaseColumnSchemaPart, COLLATION, JSONB_COLUMN_TYPE } from '../database/database-common'
 
-export type PieceMetadataSchema = BaseModel<ApId> & PieceMetadata & { projectId: ApId, project: Project}
+export type PieceMetadataSchema = BaseModel<ApId> & PieceMetadata & { projectId: ApId, project: Project }
 
 export const PieceMetadataEntity = new EntitySchema<PieceMetadataSchema>({
     name: 'piece_metadata',
@@ -32,24 +32,28 @@ export const PieceMetadataEntity = new EntitySchema<PieceMetadataSchema>({
         version: {
             type: String,
             nullable: false,
-            collation: 'en_natural',
+            collation: COLLATION,
         },
         minimumSupportedRelease: {
             type: String,
             nullable: false,
-            collation: 'en_natural',
+            collation: COLLATION,
         },
         maximumSupportedRelease: {
             type: String,
             nullable: false,
-            collation: 'en_natural',
+            collation: COLLATION,
+        },
+        auth: {
+            type: JSONB_COLUMN_TYPE,
+            nullable: true,
         },
         actions: {
-            type: 'jsonb',
+            type: JSONB_COLUMN_TYPE,
             nullable: false,
         },
         triggers: {
-            type: 'jsonb',
+            type: JSONB_COLUMN_TYPE,
             nullable: false,
         },
     },

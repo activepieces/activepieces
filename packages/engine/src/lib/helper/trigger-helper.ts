@@ -1,9 +1,9 @@
-import { ApEdition, EventPayload, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecutionState, PieceTrigger, ScheduleOptions, TriggerHookType } from "@activepieces/shared";
+import { AUTHENTICATION_PROPERTY_NAME, ApEdition, EventPayload, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecutionState, PieceTrigger, ScheduleOptions, TriggerHookType } from "@activepieces/shared";
 import { createContextStore } from "../services/storage.service";
 import { VariableService } from "../services/variable-service";
 import { pieceHelper } from "./action-helper";
 import { isValidCron } from 'cron-validator';
-import { TriggerStrategy } from "@activepieces/pieces-framework";
+import { PiecePropertyMap, StaticPropsValue, TriggerStrategy } from "@activepieces/pieces-framework";
 
 type Listener = {
   events: string[];
@@ -25,23 +25,21 @@ export const triggerHelper = {
     const variableService = new VariableService();
     const executionState = new ExecutionState();
 
-    const resolvedInput = await variableService.resolve({
+    const resolvedProps = await variableService.resolve<StaticPropsValue<PiecePropertyMap>>({
       unresolvedInput: input,
       executionState,
-      censorConnections: false,
+      logs: false,
     })
 
-    const { result, errors } = await variableService.validateAndCast(resolvedInput, trigger.props);
+    const {processedInput, errors} = await variableService.applyProcessorsAndValidators(resolvedProps, trigger.props, piece.auth);
+
     if (Object.keys(errors).length > 0) {
       throw new Error(JSON.stringify(errors));
     }
 
     const appListeners: Listener[] = [];
     const prefix = (params.hookType === TriggerHookType.TEST) ? 'test' : '';
-    let scheduleOptions: ScheduleOptions = {
-      cronExpression: "*/5 * * * *",
-      timezone: "UTC"
-    }
+    let scheduleOptions: ScheduleOptions | undefined = undefined;
     const context = {
       store: createContextStore(prefix, params.flowVersion.flowId),
       app: {
@@ -56,13 +54,13 @@ export const triggerHelper = {
         scheduleOptions = {
           cronExpression: request.cronExpression,
           timezone: request.timezone ?? "UTC"
-        };
+        }
       },
       webhookUrl: params.webhookUrl,
-      propsValue: result,
+      auth: processedInput[AUTHENTICATION_PROPERTY_NAME],
+      propsValue: processedInput,
       payload: params.triggerPayload ?? {},
     };
-
     switch (params.hookType) {
       case TriggerHookType.ON_DISABLE:
         await trigger.onDisable(context);
@@ -73,6 +71,21 @@ export const triggerHelper = {
           listeners: appListeners,
           scheduleOptions: trigger.type === TriggerStrategy.POLLING ? scheduleOptions : undefined,
         }
+      case TriggerHookType.HANDSHAKE: {
+        try {
+          const response = await trigger.onHandshake(context);
+          return {
+            success: true,
+            response
+          }
+        } catch (e: any) {
+          console.error(e)
+          return {
+            success: false,
+            message: e.toString()
+          }
+        } 
+      }
       case TriggerHookType.TEST:
         try {
           return {

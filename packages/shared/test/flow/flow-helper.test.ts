@@ -5,6 +5,7 @@ const flowVersionWithBranching: FlowVersion = {
     'created': '2023-05-24T00:16:41.353Z',
     'updated': '2023-05-24T00:16:41.353Z',
     'flowId': 'lod6JEdKyPlvrnErdnrGa',
+    'updatedBy': '',
     'displayName': 'Standup Reminder',
     'trigger': {
         'name': 'trigger',
@@ -32,6 +33,7 @@ const flowVersionWithBranching: FlowVersion = {
                             'operator': 'TEXT_CONTAINS',
                             'firstValue': '1',
                             'secondValue': '1',
+                            caseSensitive: true
                         },
                     ],
                 ],
@@ -112,6 +114,7 @@ const emptyScheduleFlowVersion: FlowVersion = {
     'updated': '2023-05-24T00:16:41.353Z',
     'flowId': 'lod6JEdKyPlvrnErdnrGa',
     'displayName': 'Standup Reminder',
+    'updatedBy': '',
     'trigger': {
         'name': 'trigger',
         'type': TriggerType.PIECE,
@@ -156,6 +159,7 @@ describe('Flow Helper', () => {
         const result = flowHelper.apply(flowVersionWithBranching, operation);
         const expectedFlowVersion: FlowVersion = {
             "id": "pj0KQ7Aypoa9OQGHzmKDl",
+            'updatedBy': '',
             "created": "2023-05-24T00:16:41.353Z",
             "updated": "2023-05-24T00:16:41.353Z",
             "flowId": "lod6JEdKyPlvrnErdnrGa",
@@ -215,9 +219,11 @@ describe('Flow Helper', () => {
                                 operator: BranchOperator.TEXT_CONTAINS,
                                 firstValue: '1',
                                 secondValue: '1',
+                                caseSensitive: true,
                             }
                         ]
-                    ]
+                    ],
+                    inputUiInfo: {},
                 }
             }
         }
@@ -291,10 +297,12 @@ describe('Flow Helper', () => {
                             {
                                 "operator": "TEXT_CONTAINS",
                                 "firstValue": "1",
-                                "secondValue": "1"
+                                "secondValue": "1",
+                                caseSensitive: true
                             }
                         ]
-                    ]
+                    ],
+                    "inputUiInfo": {}
                 }
             },
             "displayName": "Cron Expression"
@@ -319,9 +327,11 @@ describe('Flow Helper', () => {
                                     operator: BranchOperator.TEXT_CONTAINS,
                                     firstValue: '1',
                                     secondValue: '1',
+                                    caseSensitive: true,
                                 }
                             ]
-                        ]
+                        ],
+                        inputUiInfo: {},
                     }
                 }
             }
@@ -380,10 +390,12 @@ describe('Flow Helper', () => {
                             {
                                 "operator": "TEXT_CONTAINS",
                                 "firstValue": "1",
-                                "secondValue": "1"
+                                "secondValue": "1",
+                                caseSensitive: true
                             }
                         ]
-                    ]
+                    ],
+                    "inputUiInfo": {}
                 },
                 "onSuccessAction": {
                     "displayName": "Code",
@@ -507,6 +519,7 @@ test('Duplicate Flow With Branch', () => {
         'created':'2023-05-24T00:16:41.353Z',
         'updated':'2023-05-24T00:16:41.353Z',
         'flowId':'lod6JEdKyPlvrnErdnrGa',
+        'updatedBy': '',
         'displayName':'Standup Reminder',
         'trigger':{
             'name':'trigger',
@@ -517,9 +530,7 @@ test('Duplicate Flow With Branch', () => {
                     'cronExpression':'25 10 * * 0,1,2,3,4',
                 },
                 'pieceName':'schedule',
-                'inputUiInfo':{
-                 
-                },
+                'inputUiInfo':{},
                 'triggerName':'cron_expression',
                 'pieceVersion':'0.0.2',
             },
@@ -534,9 +545,11 @@ test('Duplicate Flow With Branch', () => {
                                 'operator':'TEXT_CONTAINS',
                                 'firstValue':'1',
                                 'secondValue':'1',
+                                caseSensitive: true
                             },
                         ],
                     ],
+                    'inputUiInfo': {}
                 },
                 'nextAction':{
                     'name':'step_4',
@@ -550,7 +563,7 @@ test('Duplicate Flow With Branch', () => {
                         'actionName':'get',
                         'inputUiInfo':{
                             'customizedInputs':{
-                          
+
                             },
                         },
                         'pieceVersion':'0.2.6',
@@ -564,7 +577,7 @@ test('Duplicate Flow With Branch', () => {
                     'valid':true,
                     'settings':{
                         'input':{
-                       
+
                         },
                         'artifactSourceId':'pJskIPz1ZL3RYiyUX1HPm',
                     },
@@ -583,7 +596,7 @@ test('Duplicate Flow With Branch', () => {
                         'actionName':'send_message_webhook',
                         'inputUiInfo':{
                             'customizedInputs':{
-                          
+
                             },
                         },
                         'pieceVersion':'0.2.1',
@@ -612,9 +625,11 @@ test('Duplicate Flow With Branch', () => {
                                     'operator': BranchOperator.TEXT_CONTAINS,
                                     'firstValue': '1',
                                     'secondValue': '1',
+                                    caseSensitive: true
                                 },
                             ],
                         ],
+                        inputUiInfo: {},
                     },
                     'valid': true,
                 },
@@ -695,6 +710,7 @@ test('Duplicate Flow With Loops using Import', () => {
         'created': '2023-05-23T00:14:47.809Z',
         'updated': '2023-05-23T00:14:47.809Z',
         'flowId': 'YGPIPQDfLcPdJ0aJ9AKGb',
+        'updatedBy': '',
         'displayName': 'Flow 1',
         'trigger': {
             'name': 'trigger',
@@ -803,7 +819,7 @@ test('Duplicate Flow With Loops using Import', () => {
             },
         },
     ]
-    
+
     const importOperations = flowHelper.getImportOperations(flowVersion.trigger)
     expect(importOperations).toEqual(expectedResult)
 })

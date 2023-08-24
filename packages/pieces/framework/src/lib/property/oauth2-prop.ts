@@ -1,8 +1,9 @@
 import { PropertyType } from "./property";
 
-import { BasePropertySchema, SecretTextProperty, ShortTextProperty, TPropertyValue } from "./base-prop";
+import { BasePieceAuthSchema, SecretTextProperty, ShortTextProperty, TPropertyValue } from "./base-prop";
 import { StaticDropdownProperty } from "./dropdown-prop";
 import { StaticPropsValue } from "./property";
+import { ValidationInputType } from "../validators/types";
 
 type OAuthProp = ShortTextProperty<true> | SecretTextProperty<true> | StaticDropdownProperty<any, true>;
 
@@ -12,7 +13,7 @@ export interface OAuth2Props {
 
 export type OAuthPropsValue<T extends OAuth2Props> = StaticPropsValue<T>;
 
-export type OAuth2PropertySchema = BasePropertySchema & {
+export type OAuth2PropertySchema = BasePieceAuthSchema<OAuth2PropertyValue> & {
 	props?: Record<string, OAuthProp>
 	authUrl: string;
 	tokenUrl: string;
@@ -31,6 +32,7 @@ export type OAuth2PropertyValue<T extends OAuth2Props = any> = {
 export type OAuth2Property<R extends boolean, T extends OAuth2Props> = OAuth2PropertySchema & TPropertyValue<
 	OAuth2PropertyValue<T>,
 	PropertyType.OAUTH2,
+	ValidationInputType.ANY,
 	R
 >;
 

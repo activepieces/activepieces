@@ -5,8 +5,8 @@ import { map, Observable, switchMap, take, tap } from 'rxjs';
 import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
-  FlagService,
   FlowService,
+  environment,
   fadeIn400ms,
   initialiseBeamer,
 } from '@activepieces/ui/common';
@@ -16,8 +16,9 @@ import {
   CollectionBuilderService,
   FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
-import { ApEdition, Flow, FlowInstance } from '@activepieces/shared';
+import { Flow, FlowInstance } from '@activepieces/shared';
 import { ImportFlowDialogueComponent } from './import-flow-dialogue/import-flow-dialogue.component';
+import { Title } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-flow-builder-header',
@@ -28,7 +29,6 @@ import { ImportFlowDialogueComponent } from './import-flow-dialogue/import-flow-
 export class FlowBuilderHeaderComponent implements OnInit {
   isInDebugMode$: Observable<boolean>;
   isInReadOnlyMode$: Observable<boolean>;
-  isGeneratingFlowComponentOpen$: Observable<boolean>;
   instance$: Observable<FlowInstance | undefined>;
   flow$: Observable<Flow>;
   editingFlowName = false;
@@ -36,21 +36,16 @@ export class FlowBuilderHeaderComponent implements OnInit {
   deleteFlowDialogClosed$: Observable<void>;
   folderDisplayName$: Observable<string>;
   duplicateFlow$: Observable<void>;
-  showGuessFlowBtn$: Observable<boolean>;
   openDashboardOnFolder$: Observable<string>;
   constructor(
     public dialogService: MatDialog,
     private store: Store,
     private router: Router,
+    private title: Title,
     public collectionBuilderService: CollectionBuilderService,
     private flowService: FlowService,
-    private flagsService: FlagService,
     private matDialog: MatDialog
-  ) {
-    this.isGeneratingFlowComponentOpen$ = this.store.select(
-      BuilderSelectors.selectIsGeneratingFlowComponentOpen
-    );
-  }
+  ) {}
 
   ngOnInit(): void {
     initialiseBeamer();
@@ -63,9 +58,6 @@ export class FlowBuilderHeaderComponent implements OnInit {
     this.folderDisplayName$ = this.store.select(
       BuilderSelectors.selectCurrentFlowFolderName
     );
-    this.showGuessFlowBtn$ = this.flagsService
-      .getEdition()
-      .pipe(map((ed) => ed === ApEdition.ENTERPRISE));
   }
   changeEditValue(event: boolean) {
     this.editingFlowName = event;
@@ -83,6 +75,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
     }
   }
   saveFlowName(flowName: string) {
+    this.title.setTitle(`${flowName} - ${environment.websiteTitle}`);
     this.store.dispatch(FlowsActions.changeName({ displayName: flowName }));
   }
 
@@ -157,5 +150,9 @@ export class FlowBuilderHeaderComponent implements OnInit {
           });
         })
       );
+  }
+
+  get environment() {
+    return environment;
   }
 }

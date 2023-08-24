@@ -6,7 +6,7 @@
   "implicitDependencies": ["engine"],
   "targets": {
     "build": {
-      "executor": "@nrwl/webpack:webpack",
+      "executor": "@nx/webpack:webpack",
       "outputs": ["{options.outputPath}"],
       "options": {
         "target": "node",
@@ -15,7 +15,10 @@
         "main": "packages/backend/src/main.ts",
         "tsConfig": "packages/backend/tsconfig.app.json",
         "assets": ["packages/backend/src/assets"],
-        "webpackConfig": "packages/backend/webpack.config.js"
+        "webpackConfig": "packages/backend/webpack.config.js",
+        "isolatedConfig": true,
+        "generatePackageJson": true,
+        "babelUpwardRootMode": true
       },
       "configurations": {
         "production": {
@@ -26,7 +29,7 @@
       }
     },
     "build-watch": {
-      "executor": "@nrwl/js:node",
+      "executor": "@nx/js:node",
       "options": {
         "buildTarget": "backend:build",
         "host": "0.0.0.0"
@@ -48,14 +51,14 @@
       }
     },
     "lint": {
-      "executor": "@nrwl/linter:eslint",
+      "executor": "@nx/linter:eslint",
       "outputs": ["{options.outputFile}"],
       "options": {
         "lintFilePatterns": ["packages/backend/**/*.ts"]
       }
     },
     "run-tests": {
-      "executor": "@nrwl/jest:jest",
+      "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
         "jestConfig": "packages/backend/jest.config.ts",

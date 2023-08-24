@@ -3,26 +3,19 @@ import { HttpRequest, HttpMethod, AuthenticationType, httpClient } from "@active
 
 export const githubCommon = {
     baseUrl: "https://api.github.com",
-    authentication: Property.OAuth2({
-        displayName: "Authentication",
-        required: true,
-        authUrl: 'https://github.com/login/oauth/authorize',
-        tokenUrl: 'https://github.com/login/oauth/access_token',
-        scope: ['admin:repo_hook', 'admin:org', 'repo'],
-    }),
     repositoryDropdown: Property.Dropdown<{ repo: string, owner: string }>({
         displayName: "Repository",
-        refreshers: ['authentication'],
+        refreshers: [],
         required: true,
-        options: async (propsValue) => {
-            if (!propsValue['authentication']) {
+        options: async ({ auth }) => {
+            if (!auth) {
                 return {
                     disabled: true,
                     options: [],
                     placeholder: "please authenticate first"
                 }
             }
-            const authProp: OAuth2PropertyValue = propsValue['authentication'] as OAuth2PropertyValue;
+            const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
             const repositories = await getUserRepo(authProp);
             return {
                 disabled: false,
@@ -37,7 +30,33 @@ export const githubCommon = {
                 })
             };
         }
-    })
+    }),
+    assigneeDropDown: Property.MultiSelectDropdown({
+    displayName: 'Assignee',
+    refreshers: ['repository'],
+    required: true,
+    options: async ({ auth, repository }) => {
+      if (!auth || !repository) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'please authenticate first and select repo',
+        };
+      }
+      const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
+      const { owner, repo } = repository as RepositoryProp;
+      const assignees = await getAssignee(authProp, owner, repo);
+      return {
+        disabled: false,
+        options: assignees.map((assignee) => {
+          return {
+            label: assignee.login,
+            value: assignee.login,
+          };
+        }),
+      };
+    },
+  }),
 }
 
 async function getUserRepo(authProp: OAuth2PropertyValue): Promise<GithubRepository[]> {
@@ -55,9 +74,35 @@ async function getUserRepo(authProp: OAuth2PropertyValue): Promise<GithubReposit
     const response = await httpClient.sendRequest<GithubRepository[]>(request);
     return response.body;
 }
+async function getAssignee(
+  authProp: OAuth2PropertyValue,
+  owner: string,
+  repo: string
+): Promise<GithubAssignee[]> {
+  const request: HttpRequest = {
+    method: HttpMethod.GET,
+    url: `${githubCommon.baseUrl}/repos/${owner}/${repo}/assignees`,
+    queryParams: {
+      per_page: '30',
+    },
+    authentication: {
+      type: AuthenticationType.BEARER_TOKEN,
+      token: authProp.access_token,
+    },
+  };
+  const response = await httpClient.sendRequest<GithubAssignee[]>(request);
+  return response.body;
+}
 export interface GithubRepository {
     name: string;
     owner: {
         login: string;
     }
+}
+export interface GithubAssignee {
+  login: string;
+}
+export interface RepositoryProp {
+  repo: string;
+  owner: string;
 }

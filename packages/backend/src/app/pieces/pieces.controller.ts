@@ -7,28 +7,10 @@ import { pieceMetadataService } from './piece-metadata-service'
 import { PieceMetadata, PieceMetadataSummary } from '@activepieces/pieces-framework'
 import { FastifyRequest } from 'fastify'
 import { logger } from '../helper/logger'
+import { flagService } from '../flags/flag.service'
 
-const statsEnabled = system.get(SystemProp.STATS_ENABLED) ?? false
+const statsEnabled = system.getBoolean(SystemProp.STATS_ENABLED)
 
-const getPieceMetaData=async(pieceName:string, pieceVersion:string)=>{
-    try {
-        const { result } = await engineHelper.extractPieceMetadata({
-            pieceName: pieceName,
-            pieceVersion: pieceVersion,
-        })
-        return result
-    }
-    catch(err) {
-        logger.error(JSON.stringify(err))
-        throw new ActivepiecesError({
-            code: ErrorCode.VALIDATION,
-            params: {
-                message: 'Couldn\'t import package as piece',
-            },
-        })
-    }
-  
-}
 export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done) => {
 
     app.post(
@@ -43,18 +25,32 @@ export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done)
                 Body: InstallPieceRequest
             }>,
         ) => {
-
-            const  result  = await getPieceMetaData(request.body.pieceName, request.body.pieceVersion)
-            return pieceMetadataService.create({
-                projectId: request.principal.projectId,
-                pieceMetadata: {
-                    ...result,
-                    minimumSupportedRelease: result.minimumSupportedRelease ?? '0.0.0',
-                    maximumSupportedRelease: result.maximumSupportedRelease ?? '999.999.999',
-                    name: request.body.pieceName,
-                    version: request.body.pieceVersion,
-                },
-            })
+            try {
+                const { result } = await engineHelper.extractPieceMetadata({
+                    pieceName: request.body.pieceName,
+                    pieceVersion: request.body.pieceVersion,
+                })
+                const pieceMetdata = await pieceMetadataService.create({
+                    projectId: request.principal.projectId,
+                    pieceMetadata: {
+                        ...result,
+                        minimumSupportedRelease: result.minimumSupportedRelease ?? '0.0.0',
+                        maximumSupportedRelease: result.maximumSupportedRelease ?? '999.999.999',
+                        name: request.body.pieceName,
+                        version: request.body.pieceVersion,
+                    },
+                })
+                return pieceMetdata
+            } 
+            catch (err) {
+                logger.error(JSON.stringify(err))
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: {
+                        message: 'Couldn\'t import package as piece',
+                    },
+                })
+            }
         },
     )
 
@@ -63,8 +59,8 @@ export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done)
             querystring: ListPiecesRequestQuery,
         },
     }, async (req): Promise<PieceMetadataSummary[]> => {
-        const { release } = req.query
-
+        const latestRelease = await flagService.getCurrentVersion()
+        const release = req.query.release ?? latestRelease
         return await pieceMetadataService.list({
             release,
             projectId: req.principal.projectId,

@@ -1,6 +1,6 @@
 import { Type, Static, } from '@sinclair/typebox';
 
-import { SemVerType } from '../../pieces';
+import { QueryVerType } from '../../pieces';
 import { SampleDataSettingsObject } from '../sample-data';
 import { PieceTriggerSettings } from '../triggers/trigger';
 
@@ -23,10 +23,9 @@ const commonActionProps = {
 
 export const CodeActionSettings = Type.Object({
   artifactSourceId: Type.Optional(Type.String({})),
-  artifactPackagedId: Type.Optional(Type.String({})),
   artifact: Type.Optional(Type.String({})),
   input: Type.Record(Type.String({}), Type.Any()),
-  inputUiInfo:Type.Optional(SampleDataSettingsObject)
+  inputUiInfo: Type.Optional(SampleDataSettingsObject)
 });
 
 
@@ -42,7 +41,7 @@ export const CodeActionSchema = Type.Object({
 // Piece Action
 export const PieceActionSettings = Type.Object({
   pieceName: Type.String({}),
-  pieceVersion: SemVerType,
+  pieceVersion: QueryVerType,
   actionName: Type.Optional(Type.String({})),
   input: Type.Record(Type.String({}), Type.Any()),
   inputUiInfo: SampleDataSettingsObject,
@@ -64,7 +63,7 @@ export const PieceActionSchema = Type.Object({
 
 // Loop Items
 export const LoopOnItemsActionSettingsWithValidation = Type.Object({
-  items: Type.String({minLength: 1})
+  items: Type.String({ minLength: 1 })
 });
 export type LoopOnItemsActionSettingsWithValidation = Static<typeof LoopOnItemsActionSettings>;
 
@@ -80,8 +79,6 @@ export const LoopOnItemsActionSchema = Type.Object({
   type: Type.Literal(ActionType.LOOP_ON_ITEMS),
   settings: LoopOnItemsActionSettings,
 });
-
-// Loop Items
 
 export enum BranchOperator {
   TEXT_CONTAINS = 'TEXT_CONTAINS',
@@ -107,26 +104,55 @@ export const singleValueConditions = [
   BranchOperator.BOOLEAN_IS_FALSE
 ]
 
+export const textConditions =[
+  BranchOperator.TEXT_CONTAINS,
+  BranchOperator.TEXT_DOES_NOT_CONTAIN,
+  BranchOperator.TEXT_EXACTLY_MATCHES,
+  BranchOperator.TEXT_DOES_NOT_EXACTLY_MATCH,
+  BranchOperator.TEXT_STARTS_WITH,
+  BranchOperator.TEXT_DOES_NOT_START_WITH,
+  BranchOperator.TEXT_ENDS_WITH,
+  BranchOperator.TEXT_DOES_NOT_END_WITH,
+]
+
 const BranchConditionValid = (addMinLength: boolean) => Type.Union([
   Type.Object({
     firstValue: addMinLength ? Type.String({ minLength: 1 }) : Type.String(),
     secondValue: addMinLength ? Type.String({ minLength: 1 }) : Type.String(),
-    operator: Type.Optional(Type.Union([...Object.values(BranchOperator).
-      filter(c => singleValueConditions.find(sc => sc === c) === undefined).map(c => {
-        return Type.Literal(c)
-      })]))
+    caseSensitive: Type.Optional(Type.Boolean()),
+    operator: Type.Optional(Type.Union([
+      Type.Literal( BranchOperator.TEXT_CONTAINS),
+      Type.Literal( BranchOperator.TEXT_DOES_NOT_CONTAIN),
+      Type.Literal( BranchOperator.TEXT_EXACTLY_MATCHES),
+      Type.Literal( BranchOperator.TEXT_DOES_NOT_EXACTLY_MATCH),
+      Type.Literal( BranchOperator.TEXT_STARTS_WITH),
+      Type.Literal( BranchOperator.TEXT_DOES_NOT_START_WITH),
+      Type.Literal( BranchOperator.TEXT_ENDS_WITH),
+      Type.Literal( BranchOperator.TEXT_DOES_NOT_END_WITH),
+    ]))
   }),
   Type.Object({
     firstValue: addMinLength ? Type.String({ minLength: 1 }) : Type.String(),
-    operator: Type.Optional(Type.Union([...Object.values(BranchOperator).
-      filter(c => singleValueConditions.find(sc => sc === c) !== undefined).map(c => {
-        return Type.Literal(c)
-      })]))
+    secondValue: addMinLength ? Type.String({ minLength: 1 }) : Type.String(),
+    operator: Type.Optional(Type.Union([
+      Type.Literal( BranchOperator.NUMBER_IS_GREATER_THAN),
+      Type.Literal( BranchOperator.NUMBER_IS_LESS_THAN),
+    ]))
+  }),
+  Type.Object({
+    firstValue: addMinLength ? Type.String({ minLength: 1 }) : Type.String(),
+    operator: Type.Optional(Type.Union([
+      Type.Literal( BranchOperator.EXISTS),
+      Type.Literal( BranchOperator.DOES_NOT_EXIST),
+      Type.Literal( BranchOperator.BOOLEAN_IS_TRUE),
+      Type.Literal( BranchOperator.BOOLEAN_IS_FALSE)
+    ]))
   })
 ]);
 
 export const BranchActionSettingsWithValidation = Type.Object({
   conditions: Type.Array(Type.Array(BranchConditionValid(true))),
+  inputUiInfo: SampleDataSettingsObject,
 })
 
 export const BranchCondition = BranchConditionValid(false);
@@ -134,6 +160,7 @@ export type BranchCondition = Static<typeof BranchCondition>;
 
 export const BranchActionSettings = Type.Object({
   conditions: Type.Array(Type.Array(BranchConditionValid(false))),
+  inputUiInfo: SampleDataSettingsObject,
 })
 export type BranchActionSettings = Static<typeof BranchActionSettings>;
 
@@ -166,6 +193,13 @@ export const Action = Type.Recursive(action => Type.Union([
   })])
 ]));
 
+export const SingleActionSchema = Type.Union([
+  MissingActionSchema,
+  CodeActionSchema,
+  PieceActionSchema,
+  LoopOnItemsActionSchema,
+  BranchActionSchema
+])
 export type Action = Static<typeof Action>;
 
 export type BranchAction = Static<typeof BranchActionSchema> & { nextAction?: Action, onFailureAction?: Action, onSuccessAction?: Action };
@@ -178,7 +212,7 @@ export type CodeAction = Static<typeof CodeActionSchema> & { nextAction?: Action
 
 export type MissingAction = Static<typeof MissingActionSchema> & { nextAction?: Action };
 
-export  type StepSettings =
+export type StepSettings =
   | CodeActionSettings
   | PieceActionSettings
   | PieceTriggerSettings

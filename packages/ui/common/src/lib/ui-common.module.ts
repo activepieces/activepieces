@@ -53,6 +53,7 @@ import { PieceIconContainerComponent } from './components/pieces-icons/piece-ico
 import { UploadImageControlComponent } from './components/upload-file-control/upload-file-control.component';
 import { DragDropDirective } from './directives/drag-drop.directive';
 import { ElementDirective } from './directives/element-ref.directive';
+import { CheckOverflowDirective } from './directives/check-overflow.directive';
 const exportedImports = [
   CommonModule,
   MatTooltipModule,
@@ -106,6 +107,7 @@ const exportedDeclarations = [
   TrackHoverDirective,
   PieceIconContainerComponent,
   DragDropDirective,
+  CheckOverflowDirective,
 ];
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 0,

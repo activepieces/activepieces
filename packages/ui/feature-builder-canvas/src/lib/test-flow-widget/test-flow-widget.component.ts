@@ -17,11 +17,8 @@ import {
   fadeIn400ms,
   fadeInUp400ms,
   initializedRun,
-  jsonValidator,
 } from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
-import { HttpStatusCode } from '@angular/common/http';
-import { UntypedFormControl } from '@angular/forms';
 import { MatSnackBar, MatSnackBarRef } from '@angular/material/snack-bar';
 import {
   ExecutionOutputStatus,
@@ -53,17 +50,6 @@ export class TestFlowWidgetComponent implements OnInit {
   shouldHideTestWidget$: Observable<boolean>;
   testRunSnackbar: MatSnackBarRef<TestRunBarComponent>;
   isTriggerTested$: Observable<boolean>;
-  payloadControl: UntypedFormControl = new UntypedFormControl(
-    JSON.stringify(
-      {
-        body: {},
-        headers: {},
-      },
-      null,
-      2
-    ),
-    jsonValidator
-  );
 
   constructor(
     private flowService: FlowService,
@@ -101,16 +87,13 @@ export class TestFlowWidgetComponent implements OnInit {
   }
 
   testFlowButtonClicked(flow: Flow) {
-    const realSampleData =
-      flow.version.trigger.settings.inputUiInfo.currentSelectedData || {};
-    this.executeTest$ = this.executeTest(flow, realSampleData);
+    this.executeTest$ = this.executeTest(flow);
   }
 
-  executeTest(flow: Flow, payload: unknown) {
+  executeTest(flow: Flow) {
     return this.flowService
       .execute({
         flowVersionId: flow.version!.id,
-        payload,
       })
       .pipe(
         tap({
@@ -137,24 +120,13 @@ export class TestFlowWidgetComponent implements OnInit {
         }),
         catchError((err) => {
           console.error(err);
-          if (err?.status == HttpStatusCode.PaymentRequired) {
-            this.snackbar.open(
-              'You reached the maximum runs number allowed. Contact support to discuss your plan.',
-              '',
-              {
-                duration: 3000,
-                panelClass: 'error',
-              }
-            );
-          } else {
-            this.snackbar.open(
-              'Instance run failed, please check your console.',
-              '',
-              {
-                panelClass: 'error',
-              }
-            );
-          }
+          this.snackbar.open(
+            'Instance run failed, please check your console.',
+            '',
+            {
+              panelClass: 'error',
+            }
+          );
           this.store.dispatch(canvasActions.exitRun());
           return of(null);
         })

@@ -4,39 +4,6 @@ import imap from 'node-imap';
 import { simpleParser } from 'mailparser';
 
 export const imapCommon = {
-    authentication: Property.CustomAuth({
-        displayName: 'Authentication',
-        description: 'Enter your IMAP server authentication details',
-        props: {
-            host: Property.ShortText({
-                displayName: 'Host',
-                description: 'The host of the IMAP server',
-                required: true,
-            }),
-            username: Property.ShortText({
-                displayName: 'Username',
-                description: 'The username of the IMAP server',
-                required: true,
-            }),
-            password: Property.SecretText({
-                displayName: 'Password',
-                description: 'The password of the IMAP server',
-                required: true,
-            }),
-            port: Property.Number({
-                displayName: 'Port',
-                description: 'The port of the IMAP server',
-                required: true,
-                defaultValue: 143,
-            }),
-            tls: Property.Checkbox({
-                displayName: 'Use TLS',
-                defaultValue: false,
-                required: true,
-            }),
-        },
-        required: true
-    }),
     subject: Property.ShortText({
         displayName: 'Subject',
         description: 'Search for a specific value in the Subject field',
@@ -79,6 +46,12 @@ export const imapCommon = {
                             f.on('message', msg => {
                                 msg.on('body', stream => {
                                     simpleParser(stream, async (error, parsed) => {
+                                        if (parsed.attachments.length > 0) {
+                                            parsed.attachments.forEach((attachment: any) => {
+                                                attachment.file = `data:${attachment.contentType};base64,${attachment.content.toString('base64')}`;
+                                            })
+                                        }
+                                        
                                         emails.push(parsed);
                                     });
                                 });

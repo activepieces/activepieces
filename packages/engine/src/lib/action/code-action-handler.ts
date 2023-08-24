@@ -8,9 +8,8 @@ import {
   StepOutputStatus
 } from '@activepieces/shared';
 import { BaseActionHandler, InitStepOutputParams } from './action-handler';
-import { globals } from '../globals';
-import { isNil } from 'lodash';
 import { codeExecutor } from '../executors/code-executer';
+import { isNil } from '@activepieces/shared'
 
 type CtorParams = {
   currentAction: CodeAction
@@ -36,7 +35,7 @@ export class CodeActionHandler extends BaseActionHandler<CodeAction> {
     const censoredInput = await this.variableService.resolve({
       unresolvedInput: this.currentAction.settings.input,
       executionState,
-      censorConnections: true,
+      logs: true,
     })
 
     return {
@@ -55,18 +54,18 @@ export class CodeActionHandler extends BaseActionHandler<CodeAction> {
     const resolvedInput = await this.variableService.resolve({
       unresolvedInput: this.currentAction.settings.input,
       executionState,
-      censorConnections: false,
+      logs: false,
     })
 
-    const artifactPackagedId = this.currentAction.settings.artifactPackagedId
+    const artifactSourceId = this.currentAction.settings.artifactSourceId
 
-    if (isNil(artifactPackagedId)) {
+    if (isNil(artifactSourceId)) {
       throw new Error("Artifact packaged id is not defined");
     }
 
     try {
       stepOutput.output = await codeExecutor.executeCode(
-        artifactPackagedId,
+        artifactSourceId,
         resolvedInput
       )
 
