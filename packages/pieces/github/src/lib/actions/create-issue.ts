@@ -12,24 +12,33 @@ export const githubCreateIssueAction = createAction({
   auth: githubAuth,
   name: 'github_create_issue',
   displayName: 'Create Issue',
-  description: 'Create Issue',
+  description: 'Create Issue in Github Repository',
   props: {
     repository: githubCommon.repositoryDropdown,
     title: Property.ShortText({
       displayName: 'Title',
-      description: 'The title of an issue',
+      description: 'The title of the issue',
       required: true,
     }),
-    assignee: githubCommon.assigneeDropDown,
+    description: Property.LongText({
+      displayName: 'Description',
+      description: 'The discription of the issue',
+      required: false,
+    }),
+    labels: githubCommon.labelDropDown(),
+    assignees: githubCommon.assigneeDropDown(),
   },
   async run(configValue) {
-    const title = configValue.propsValue['title'];
+    const { title, assignees, labels, description } = configValue.propsValue;
     const { owner, repo } = configValue.propsValue['repository']!;
-    const assignee = configValue.propsValue['assignee']!;
+
     const requestBody: CreateIssueRequestBody = {
       title: title,
-      assignees: assignee,
+      body: description,
+      labels: labels,
+      assignees: assignees,
     };
+
     const request: HttpRequest = {
       method: HttpMethod.POST,
       url: `${githubCommon.baseUrl}/repos/${owner}/${repo}/issues`,
@@ -46,5 +55,7 @@ export const githubCreateIssueAction = createAction({
 
 type CreateIssueRequestBody = {
   title: string;
-  assignees: string[];
+  body?: string;
+  labels?: string[];
+  assignees?: string[];
 };
