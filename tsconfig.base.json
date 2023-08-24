@@ -196,6 +196,7 @@
       "@activepieces/piece-zoho-invoice": [
         "packages/pieces/zoho-invoice/src/index.ts"
       ],
+      "@activepieces/piece-nifty": ["packages/pieces/nifty/src/index.ts"],
       "@activepieces/piece-zoom": ["packages/pieces/zoom/src/index.ts"],
       "@activepieces/pieces-common": ["packages/pieces/common/src/index.ts"],
       "@activepieces/pieces-framework": [

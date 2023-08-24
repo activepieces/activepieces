@@ -1,12 +1,8 @@
 import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
-import { tidycalbookingcancelled } from "./lib/trigger/cancelled-booking";
+import { tidycalbookingcancelled  } from "./lib/trigger/cancelled-booking";
+import { tidycalnewbooking } from "./lib/trigger/new-booking";
+import { tidycalnewcontact } from "./lib/trigger/new-contacts";
 
-// Cancelled Booking
-	// Triggers when a booking is cancelled.
-// New Booking
-	// Triggers when a booking is created.
-// New Contact
-	// Triggers when a contact is added.
 export const tidyCalAuth = PieceAuth.OAuth2({
 	description: '',
 	authUrl: 'https://tidycal.com/oauth/authorize',
@@ -17,10 +13,10 @@ export const tidyCalAuth = PieceAuth.OAuth2({
 
 export const tidycal = createPiece({
 	displayName: "Tidycal",
-	auth: PieceAuth.None(),
+	auth: tidyCalAuth,
 	minimumSupportedRelease: '0.7.1',
 	logoUrl: "https://cdn.activepieces.com/pieces/tidycal.png",
 	authors: ["Salem-Alaa"],
 	actions: [],
-	triggers: [ tidycalbookingcancelled ],
+	triggers: [ tidycalbookingcancelled , tidycalnewbooking , tidycalnewcontact ],
 });

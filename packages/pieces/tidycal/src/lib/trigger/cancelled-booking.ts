@@ -13,46 +13,29 @@ export const tidycalbookingcancelled = createTrigger({
     props: {
     },
     sampleData: {
-      "created_at": "2023-01-29T13:57:17.000000Z",
-      "created_by": "https://api.calendly.com/users/AAAAAAA",
-      "event": "invitee.canceled",
-      "payload": {
-        "cancel_url": "https://calendly.com/cancellations/AAAAAAAA",
-        "cancellation": {
-          "canceler_type": "host",
-          "canceled_by": "Ashraf Samhouri",
-          "reason": "testing"
-        },
-        "created_at": "2023-01-29T13:56:46.894198Z",
-        "email": "test@test.com",
-        "event": "https://api.calendly.com/scheduled_events/AAAAAAAAA",
-        "first_name": null,
-        "last_name": null,
-        "name": "abdul",
-        "new_invitee": null,
-        "no_show": null,
-        "old_invitee": null,
-        "payment": null,
-        "questions_and_answers": [],
-        "reconfirmation": null,
-        "reschedule_url": "https://calendly.com/reschedulings/AAAAAAAA",
-        "rescheduled": false,
-        "routing_form_submission": null,
-        "status": "canceled",
-        "text_reminder_number": null,
-        "timezone": "Asia/Baghdad",
-        "tracking": {
-          "utm_campaign": null,
-          "utm_source": null,
-          "utm_medium": null,
-          "utm_content": null,
-          "utm_term": null,
-          "salesforce_uuid": null
-        },
-        "updated_at": "2023-01-29T13:57:17.466943Z",
-        "uri": "https://api.calendly.com/scheduled_events/AAAAAAAAAAAaA/invitees/AAAAAAAA"
-
-      }
+        "data": [
+            {
+                "id": 1,
+                "contact_id": 1,
+                "booking_type_id": 1,
+                "starts_at": "2022-01-01T00:00:00.000000Z",
+                "ends_at": "2022-02-01T00:00:00.000000Z",
+                "cancelled_at": "2022-02-01T00:00:00.000000Z",
+                "created_at": "2022-02-01T00:00:00.000000Z",
+                "updated_at": "2022-02-01T00:00:00.000000Z",
+                "timezone": "America/Los_Angeles",
+                "meeting_url": "https://zoom.us/j/949494949494",
+                "meeting_id": "fw44lkj48fks",
+                "questions": {},
+                "contact": {
+                "id": "1",
+                "email": "john@doe.com",
+                "name": "John Doe",
+                "created_at": "2022-01-01T00:00:00.000000Z",
+                "updated_at": "2022-01-01T00:00:00.000000Z"
+                }
+            }
+        ]
     },
     type: TriggerStrategy.POLLING,
     onEnable: async (context) => {
@@ -88,19 +71,24 @@ export const tidycalbookingcancelled = createTrigger({
 const polling: Polling<OAuth2PropertyValue, Record<string, never>> = {
     strategy: DedupeStrategy.TIMEBASED,
     items: async ({ auth, lastFetchEpochMS }) => {
+
         const currentValues = await calltidycalapi<{
-            cancelled_at: string
-        }[]>(HttpMethod.GET, `bookings?cancelled=true`, auth.access_token, undefined);
-
-        currentValues.body = currentValues.body.filter((item) => {
-            const itemEpochMS = dayjs(item.cancelled_at).valueOf();
-            return itemEpochMS > lastFetchEpochMS;
+            data: {
+                id: string,
+                cancelled_at: string,
+            }[]
+        }>(HttpMethod.GET, `bookings?cancelled=true`, auth.access_token, undefined);
+        
+        const cancelledBookings = currentValues.body;
+        const bookings = cancelledBookings.data.filter((item) => {
+            const cancelledAt = dayjs(item.cancelled_at);
+            return cancelledAt.isAfter(lastFetchEpochMS);
         });
-
-        const items = currentValues.body.map((item) => ({
-            epochMilliSeconds: dayjs(item.cancelled_at).valueOf(),
-            data: item
-        }));
-        return items;
+        return bookings.map((item) => {
+            return {
+                epochMilliSeconds: dayjs(item.cancelled_at).valueOf(),
+                data: item,
+            }
+        });
     }
 };
