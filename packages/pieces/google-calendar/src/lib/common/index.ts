@@ -1,5 +1,5 @@
 import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
-import { getCalendars } from './helper';
+import { getCalendars, listEvents } from './helper';
 
 export const googleCalendarCommon = {
   baseUrl: 'https://www.googleapis.com/calendar/v3',
@@ -28,6 +28,33 @@ export const googleCalendarCommon = {
           }),
         };
       },
-    })
+    });
   },
+  eventDropdown: (required = true) =>
+    Property.Dropdown({
+      displayName: 'Event',
+      refreshers: ['calendar_id'],
+      required,
+      options: async ({ auth, calendar_id }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            placeholder:
+              'Please connect your account first and select calender',
+            options: [],
+          };
+        }
+        const authProp = auth as OAuth2PropertyValue;
+        const events = await listEvents(authProp, calendar_id as string);
+        return {
+          disabled: false,
+          options: events.map((event) => {
+            return {
+              label: event.summary,
+              value: event.id,
+            };
+          }),
+        };
+      },
+    }),
 };
