@@ -56,6 +56,12 @@ export class ArrayFormControlComponent implements ControlValueAccessor {
           { emitEvent: false }
         );
       });
+      if (obj.length === 0) {
+        this.formArray.push(
+          new FormControl<string>('', { nonNullable: true }),
+          { emitEvent: false }
+        );
+      }
       if (
         this.formArray.length > 0 &&
         this.formArray.controls[this.formArray.length - 1].value
