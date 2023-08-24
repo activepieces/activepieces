@@ -12,17 +12,14 @@ name: 'send_message_webhook',
     }),
     username: Property.ShortText({
       displayName: 'Name',
-      description: "The webhook name",
       required: false,
     }),
     content: Property.LongText({
       displayName: 'Message',
-      description: "The message you want to send",
       required: true,
     }),
     avatar_url: Property.ShortText({
       displayName: 'Avatar URL',
-      description: "The avatar url for webhook",
       required: false,
     }),
     embeds: Property.Json({
