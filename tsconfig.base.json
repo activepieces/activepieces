@@ -175,6 +175,7 @@
       "@activepieces/piece-telegram-bot": [
         "packages/pieces/telegram-bot/src/index.ts"
       ],
+      "@activepieces/piece-tidycal": ["packages/pieces/tidycal/src/index.ts"],
       "@activepieces/piece-todoist": ["packages/pieces/todoist/src/index.ts"],
       "@activepieces/piece-trello": ["packages/pieces/trello/src/index.ts"],
       "@activepieces/piece-twilio": ["packages/pieces/twilio/src/index.ts"],
@@ -195,6 +196,7 @@
       "@activepieces/piece-zoho-invoice": [
         "packages/pieces/zoho-invoice/src/index.ts"
       ],
+      "@activepieces/piece-nifty": ["packages/pieces/nifty/src/index.ts"],
       "@activepieces/piece-zoom": ["packages/pieces/zoom/src/index.ts"],
       "@activepieces/pieces-common": ["packages/pieces/common/src/index.ts"],
       "@activepieces/pieces-framework": [

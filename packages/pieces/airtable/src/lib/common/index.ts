@@ -128,7 +128,7 @@ export const airtableCommon = {
             displayName: field.name,
             description: (
               (['date', 'dateTime'].includes(field.type))
-                ? `${field.description}. Expected format: mmmm d,yyyy`
+                ? `${field.description? field.description : ''}Expected format: mmmm d,yyyy`
                 : field.description
             ),
             required: false
