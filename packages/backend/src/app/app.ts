@@ -22,6 +22,7 @@ import { appEventRoutingModule } from './app-event-routing/app-event-routing.mod
 import { triggerEventModule } from './flows/trigger-events/trigger-event.module'
 import { flowInstanceModule } from './flows/flow-instance/flow-instance.module'
 import { fastifyRawBody } from 'fastify-raw-body'
+import { stepFileModule } from './flows/step-file/step-file.module'
 
 export const app = fastify({
     logger,
@@ -95,6 +96,7 @@ app.register(appConnectionModule)
 app.register(openapiModule)
 app.register(triggerEventModule)
 app.register(appEventRoutingModule)
+app.register(stepFileModule)
 
 app.get(
     '/redirect',
