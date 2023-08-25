@@ -9,15 +9,6 @@ export const mondayGetItemByColumnValues = createAction({
   name: 'monday_get_item-by-col-val',
   displayName: 'Get Item by Column Values',
   description: 'Get item by providing column value.',
-  sampleData: {
-    data: {
-      items_by_column_values: {
-        id: '1175651821',
-        name: 'item id',
-      },
-    },
-    account_id: 16284131,
-  },
   props: {
     workspace_id: mondayProps.workspace_id(true),
     board_id: mondayProps.board_id(true),
