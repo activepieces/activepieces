@@ -11,9 +11,9 @@ export const mondayGetItemByColumnValues = createAction({
   description: 'Get item by providing column value.',
   sampleData: {
     data: {
-      items_by_multiple_column_values: {
+      items_by_column_values: {
         id: '1175651821',
-        name: 'item id'
+        name: 'item id',
       },
     },
     account_id: 16284131,
@@ -35,19 +35,19 @@ export const mondayGetItemByColumnValues = createAction({
   async run(context) {
     const { ...itemValues } = context.propsValue;
 
-    const item = itemValues.column_values?.map(value => `"${value}"`)
+    const item = itemValues.column_values?.map((value) => `"${value}"`);
 
     const query = `
-      query {
-        items_by_multiple_column_values (
-          board_id: ${itemValues.board_id},
-          column_id: "${itemValues.column_id}",
-          column_values: [${item}])
-        { 
-          id
-          name
-        }
+    query {
+      items_by_column_values(
+        board_id: ${itemValues.board_id},
+        column_id: "${itemValues.column_id}",
+        column_value: ${item}
+      ) {
+        id,
+        name 
       }
+    }
     `;
 
     const result = await mondayMakeRequest(
@@ -55,9 +55,9 @@ export const mondayGetItemByColumnValues = createAction({
       query,
       HttpMethod.GET
     );
-
+    
     if (result.status === 200) {
-      return result.body?.data?.items_by_multiple_column_values;
+      return result.body?.data?.items_by_column_values;
     }
     return result;
   },
