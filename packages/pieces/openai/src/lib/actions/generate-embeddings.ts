@@ -83,7 +83,7 @@ export const createEmbeddingsFromText = createAction({
     }),
     title: Property.ShortText({
       displayName: 'Document Title or ID',
-      description: 'What is the title or the ID (only alphanumeric 64 or 32 characters ids) of the text or document you\'ve inputted',
+      description: 'What is the title or the ID (only alphanumeric 32 characters ids) of the text or document you\'ve inputted',
       required: true,
     }),
     splitBy: Property.StaticDropdown({
@@ -235,9 +235,9 @@ export const createEmbeddingsFromText = createAction({
     });
 
     let documentTitle = propsValue.title
-    let documentId = createHash('sha256').update(documentTitle).digest('hex')
+    let documentId = createHash('md5').update(documentTitle).digest('hex')
 
-    const validateId = (hash: string) => /^[a-f0-9]{32}$/i.test(hash) || /^[a-f0-9]{64}$/i.test(hash)
+    const validateId = (hash: string) => /^[a-f0-9]{32}$/i.test(hash)
     
     if (validateId(documentTitle)) {
       documentId = documentTitle
@@ -253,7 +253,7 @@ export const createEmbeddingsFromText = createAction({
       const vec = resData[index];
       embeddings.push(Buffer.from(new Uint8Array(new Float32Array(vec.embedding).buffer)).toString('base64'))
       chuncksOfText.push(textSplited[index])
-      embeddingIds.push(createHash('sha256').update(textSplited[index]).digest('hex'))
+      embeddingIds.push(createHash('md5').update(textSplited[index]).digest('hex'))
     }
 
     return {
