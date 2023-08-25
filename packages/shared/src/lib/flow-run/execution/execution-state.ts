@@ -4,7 +4,7 @@ import { ExecutionOutput } from './execution-output';
 import { LoopOnItemsStepOutput, StepOutput } from './step-output';
 import sizeof from 'object-sizeof';
 
-const TRIM_SIZE_BYTE = 128 * 1024;
+const TRIM_SIZE_BYTE = 512 * 1024;
 export const MAX_LOG_SIZE = 2048 * 1024;
 
 type GetStepOutputParams = {

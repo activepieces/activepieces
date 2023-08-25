@@ -320,7 +320,7 @@ export default class SandboxManager {
         if (!sandbox) {
             throw new Error('Sandbox not found')
         }
-        sandbox.cached = false
+        sandbox.resourceId = null
     }
 
     async returnSandbox(sandboxId: number): Promise<void> {
