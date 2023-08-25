@@ -7,7 +7,7 @@ Create an account and obtain the API Key from Pastefy.
 `
 
 export const pastefyAuth = PieceAuth.CustomAuth({
-  displayName: 'Authentication',
+  
   description: markdown,
   required: true,
   props: {

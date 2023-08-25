@@ -9,9 +9,6 @@ export const postCommentAction = createAction({
   name: 'post_comment',
   displayName: 'Post File Comment',
   description: 'Post file comment',
-  sampleData: {
-    success: true,
-  },
   props: {
     file_key: Property.ShortText({
       displayName: 'File Key',

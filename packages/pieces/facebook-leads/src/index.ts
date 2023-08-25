@@ -2,7 +2,7 @@ import { PieceAuth, createPiece } from "@activepieces/pieces-framework";
 import { newLead } from "./lib/triggers/new-lead";
 
 export const facebookLeadsAuth = PieceAuth.OAuth2({
-    displayName: 'Authentication',
+    
     description: '',
     authUrl: "https://graph.facebook.com/oauth/authorize",
     tokenUrl: "https://graph.facebook.com/oauth/access_token",

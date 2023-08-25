@@ -94,14 +94,13 @@ async function updateTriggerEvent(queryRunner: QueryRunner, revert: boolean): Pr
 }
 
 async function updateAppConnections(queryRunner: QueryRunner, revert: boolean): Promise<number> {
-    const appConnectionRepo = queryRunner.connection.getRepository(APP_CONNECTION_TABLE)
-    const appConnections = await appConnectionRepo.find()
+    const appConnections = await queryRunner.query(`SELECT * FROM ${APP_CONNECTION_TABLE}`)
     let count = 0
 
     for (const appConnection of appConnections) {
         appConnection.appName = getPackageNameForPiece(appConnection.appName, revert)
         count++
-        await appConnectionRepo.update(appConnection.id, appConnection)
+        await queryRunner.query(`UPDATE ${APP_CONNECTION_TABLE} SET "appName" = '${appConnection.appName}' WHERE id = ${appConnection.id}`)
     }
 
     return count

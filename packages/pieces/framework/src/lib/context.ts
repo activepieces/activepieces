@@ -66,6 +66,7 @@ export type BaseActionContext<
 > = BaseContext<PieceAuth, ActionProps> & {
     executionType: ET,
     connections: ConnectionsManager,
+    tags: TagsManager,
     serverUrl: string,
     run: {
         id: FlowRunId,
@@ -93,6 +94,10 @@ export type ActionContext<
 
 export interface ConnectionsManager {
     get(key: string): Promise<AppConnectionValue | Record<string, unknown> | string | null>;
+}
+
+export interface TagsManager {
+    add(params: { name: string}): Promise<void>;
 }
 
 export interface Store {

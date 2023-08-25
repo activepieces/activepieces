@@ -6,25 +6,21 @@ export class encryptCredentials1676505294811 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         logger.info('encryptCredentials1676505294811 up: started')
-        const appConnections = queryRunner.connection.getRepository('app_connection')
-        const connections = await appConnections.find({})
-        for (let i = 0; i < connections.length; ++i) {
-            const currentConnection = connections[i]
+        const connections = await queryRunner.query('SELECT * FROM app_connection')
+        for (const currentConnection of connections) {
             currentConnection.value = encryptObject(currentConnection.value)
-            await appConnections.update(currentConnection.id, currentConnection)
+            await queryRunner.query(`UPDATE app_connection SET value = '${JSON.stringify(currentConnection.value)}' WHERE id = ${currentConnection.id}`)
         }
         logger.info('encryptCredentials1676505294811 up: finished')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         logger.info('encryptCredentials1676505294811 down: started')
-        const appConnections = queryRunner.connection.getRepository('app_connection')
-        const connections = await appConnections.find({})
-        for (let i = 0; i < connections.length; ++i) {
+        const connections = await queryRunner.query('SELECT * FROM app_connection')
+        for (const currentConnection of connections) {
             try {
-                const currentConnection = connections[i]
                 currentConnection.value = decryptObject(currentConnection.value)
-                await appConnections.update(currentConnection.id, currentConnection)
+                await queryRunner.query(`UPDATE app_connection SET value = '${JSON.stringify(currentConnection.value)}' WHERE id = ${currentConnection.id}`)
             }
             catch (e) {
                 logger.error(e)

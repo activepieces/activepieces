@@ -15,7 +15,7 @@ import {
     OAuth2ConnectionValueWithApp,
     ProjectId,
     SeekPage,
-    UpsertConnectionRequest,
+    UpsertAppConnectionRequestBody,
 } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -32,6 +32,7 @@ import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
 import { isNil } from '@activepieces/shared'
 import { engineHelper } from '../../helper/engine-helper'
 import { acquireLock } from '../../helper/lock'
+import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 
 const repo = databaseConnection.getRepository(AppConnectionEntity)
 
@@ -71,7 +72,10 @@ export class AppConnectionService {
         return decryptConnection(updatedConnection)
     }
 
-    async getOne({ projectId, name }: GetOneParams): Promise<AppConnection | null> {
+    async getOne({
+        projectId,
+        name,
+    }: GetOneParams): Promise<AppConnection | null> {
         const encryptedAppConnection = await repo.findOneBy({
             projectId,
             name,
@@ -110,7 +114,12 @@ export class AppConnectionService {
         await repo.delete(params)
     }
 
-    async list({ projectId, appName, cursorRequest, limit }: ListParams): Promise<SeekPage<AppConnection>> {
+    async list({
+        projectId,
+        appName,
+        cursorRequest,
+        limit,
+    }: ListParams): Promise<SeekPage<AppConnection>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
 
         const paginator = buildPaginator({
@@ -123,45 +132,26 @@ export class AppConnectionService {
             },
         })
 
-        let queryBuilder = repo
-            .createQueryBuilder('app_connection')
-            .where({ projectId })
-
-        if (appName !== undefined) {
-            queryBuilder = queryBuilder.where({ appName })
+        const querySelector: Record<string, string> = {
+            projectId,
         }
-
+        if (!isNil(appName)) {
+            querySelector.appName = appName
+        }
+        const queryBuilder = repo
+            .createQueryBuilder('app_connection')
+            .where(querySelector)
         const { data, cursor } = await paginator.paginate(queryBuilder)
         const promises: Promise<AppConnection>[] = []
 
         data.forEach((encryptedConnection) => {
             const apConnection: AppConnection =
-                decryptConnection(encryptedConnection)
-            try {
-                if (apConnection.status === AppConnectionStatus.ACTIVE) {
-                    promises.push(
-                        new Promise((resolve) => {
-                            return resolve(apConnection)
-                        }),
-                    )
-                }
-                else {
-                    promises.push(
-                        this.getOneOrThrow({
-                            projectId: apConnection.projectId,
-                            name: apConnection.name,
-                        }),
-                    )
-                }
-            }
-            catch (e) {
-                apConnection.status = AppConnectionStatus.ERROR
-                promises.push(
-                    new Promise((resolve) => {
-                        return resolve(apConnection)
-                    }),
-                )
-            }
+        decryptConnection(encryptedConnection)
+            promises.push(
+                new Promise((resolve) => {
+                    return resolve(apConnection)
+                }),
+            )
         })
 
         const refreshConnections = await Promise.all(promises)
@@ -222,43 +212,10 @@ function decryptConnection(
     encryptedConnection: AppConnectionSchema,
 ): AppConnection {
     const value = decryptObject<AppConnectionValue>(encryptedConnection.value)
-    let connection: AppConnection
-    switch (value.type) {
-        case AppConnectionType.BASIC_AUTH:
-            connection = {
-                ...encryptedConnection,
-                status: AppConnectionStatus.ACTIVE,
-                value,
-            }
-            break
-        case AppConnectionType.CLOUD_OAUTH2:
-            connection = {
-                ...encryptedConnection,
-                status: AppConnectionStatus.ACTIVE,
-                value,
-            }
-            break
-        case AppConnectionType.CUSTOM_AUTH:
-            connection = {
-                ...encryptedConnection,
-                status: AppConnectionStatus.ACTIVE,
-                value,
-            }
-            break
-        case AppConnectionType.OAUTH2:
-            connection = {
-                ...encryptedConnection,
-                status: AppConnectionStatus.ACTIVE,
-                value,
-            }
-            break
-        case AppConnectionType.SECRET_TEXT:
-            connection = {
-                ...encryptedConnection,
-                status: AppConnectionStatus.ACTIVE,
-                value,
-            }
-            break
+    const connection: AppConnection = {
+        ...encryptedConnection,
+        status: AppConnectionStatus.ACTIVE,
+        value,
     }
     connection.status = getStatus(connection)
     return connection
@@ -269,9 +226,14 @@ const engineValidateAuth = async (
 ): Promise<void> => {
     const { pieceName, auth, projectId } = params
 
+    const pieceMatadata = await pieceMetadataService.get({
+        name: pieceName,
+        projectId,
+        version: undefined,
+    })
     const engineInput: ExecuteValidateAuthOperation = {
         pieceName,
-        pieceVersion: 'latest',
+        pieceVersion: pieceMatadata.version,
         auth,
         projectId,
     }
@@ -442,7 +404,7 @@ async function refreshWithCredentials(
         accept: 'application/json',
     }
     const authorizationMethod =
-        appConnection.authorization_method || OAuth2AuthorizationMethod.BODY
+    appConnection.authorization_method || OAuth2AuthorizationMethod.BODY
     switch (authorizationMethod) {
         case OAuth2AuthorizationMethod.BODY:
             body.client_id = appConnection.client_id
@@ -472,18 +434,18 @@ async function refreshWithCredentials(
  * When the refresh token is null or undefined, it indicates that the original connection's refresh token is also null
  * or undefined. Therefore, we only need to merge non-null values to avoid overwriting the original refresh token with a
  *  null or undefined value.
-*/
+ */
 function mergeNonNull(
     appConnection: OAuth2ConnectionValueWithApp,
     oAuth2Response: BaseOAuth2ConnectionValue,
 ): OAuth2ConnectionValueWithApp {
     const formattedOAuth2Response: Partial<BaseOAuth2ConnectionValue> =
-        Object.entries(oAuth2Response)
-            .filter(([, value]) => value !== null && value !== undefined)
-            .reduce<Partial<BaseOAuth2ConnectionValue>>((obj, [key, value]) => {
-            obj[key as keyof BaseOAuth2ConnectionValue] = value
-            return obj
-        }, {})
+    Object.entries(oAuth2Response)
+        .filter(([, value]) => value !== null && value !== undefined)
+        .reduce<Partial<BaseOAuth2ConnectionValue>>((obj, [key, value]) => {
+        obj[key as keyof BaseOAuth2ConnectionValue] = value
+        return obj
+    }, {})
 
     return {
         ...appConnection,
@@ -514,7 +476,7 @@ async function claim(request: {
             accept: 'application/json',
         }
         const authorizationMethod =
-            request.authorizationMethod || OAuth2AuthorizationMethod.BODY
+      request.authorizationMethod || OAuth2AuthorizationMethod.BODY
         switch (authorizationMethod) {
             case OAuth2AuthorizationMethod.BODY:
                 body.client_id = request.clientId
@@ -614,11 +576,9 @@ function getStatus(connection: AppConnection): AppConnectionStatus {
     return connectionStatus
 }
 
-
-
 type UpsertParams = {
     projectId: ProjectId
-    request: UpsertConnectionRequest
+    request: UpsertAppConnectionRequestBody
 }
 
 type GetOneParams = {
@@ -655,11 +615,11 @@ type claimWithCloudRequest = {
 type EngineValidateAuthParams = {
     pieceName: string
     projectId: ProjectId
-    auth: unknown
+    auth: AppConnectionValue
 }
 
 type ValidateConnectionValueParams = {
-    connection: UpsertConnectionRequest
+    connection: UpsertAppConnectionRequestBody
     projectId: ProjectId
 }
 

@@ -8,28 +8,6 @@ export const apiTableCreateRecord = createAction({
     name: 'apitable_create_record',
     displayName: 'Create APITable Record',
     description: 'Adds a record into an ApiTable datasheet.',
-    sampleData: {
-        "code": 200,
-        "success": true,
-        "data": {
-          "records": [
-            {
-              "recordId": "recwFSozTQON7",
-              "createdAt": 1689774745000,
-              "updatedAt": 1689774745000,
-              "fields": {
-                "Long text": "you still read this?",
-                "asdasd": "bro?",
-                "Options": [
-                  "ok?"
-                ],
-                "Title": "mhm"
-              }
-            }
-          ]
-        },
-        "message": "SUCCESS"
-    },
     props: {
         datasheet: APITableCommon.datasheet,
         fields: APITableCommon.fields,

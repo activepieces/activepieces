@@ -17,6 +17,7 @@
         "assets": ["packages/backend/src/assets"],
         "webpackConfig": "packages/backend/webpack.config.js",
         "isolatedConfig": true,
+        "generatePackageJson": true,
         "babelUpwardRootMode": true
       },
       "configurations": {

@@ -17,16 +17,10 @@ export const storeEntryController = async (fastify: FastifyInstance) => {
             }>,
             _reply,
         ) => {
-            if (request.principal.type !== PrincipalType.WORKER) {
-                _reply.status(StatusCodes.FORBIDDEN)
-                return
-            }
-            else {
-                return await storeEntryService.upsert({
-                    projectId: request.principal.projectId,
-                    request: request.body,
-                })
-            }
+            return storeEntryService.upsert({
+                projectId: request.principal.projectId,
+                request: request.body,
+            })
         },
     )
 
@@ -43,15 +37,9 @@ export const storeEntryController = async (fastify: FastifyInstance) => {
             }>,
             _reply,
         ) => {
-            if (request.principal.type !== PrincipalType.WORKER) {
-                _reply.status(StatusCodes.FORBIDDEN)
-                return
-            }
-            else {
-                return await storeEntryService.getOne({
-                    projectId: request.principal.projectId, key: request.query.key,
-                })
-            }
+            return storeEntryService.getOne({
+                projectId: request.principal.projectId, key: request.query.key,
+            })
         },
     )
 

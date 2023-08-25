@@ -6,7 +6,6 @@ import { sendMessage } from './lib/actions/send-message.action';
 export const intercomAuth = PieceAuth.OAuth2({
     authUrl: 'https://app.intercom.com/oauth',
     tokenUrl: 'https://api.intercom.io/auth/eagle/token',
-    displayName: 'Connection',
     required: true,
     scope: [],
 })

@@ -74,13 +74,11 @@ export class Sandbox {
             'meta.txt',
         ]
         const promises = filesToDelete.map((file) => {
-            const filePath = path.join(__dirname, this.getSandboxFilePath(file))
-            return fs.unlink(filePath).catch((error) => {
-                if (error.code !== 'ENOENT') { // Ignore file not found error
-                    throw error
-                }
-            })
+            const filePath = this.getSandboxFilePath(file)
+            // eslint-disable-next-line @typescript-eslint/no-empty-function
+            return fs.unlink(filePath).catch(() => {})
         })
+        
         await Promise.all(promises)
     }
 
@@ -315,6 +313,14 @@ export default class SandboxManager {
         release()
 
         return oldestSandbox
+    }
+
+    async markAsNotCached(sandboxId: number): Promise<void> {
+        const sandbox = this.sandboxes.get(sandboxId)
+        if (!sandbox) {
+            throw new Error('Sandbox not found')
+        }
+        sandbox.resourceId = null
     }
 
     async returnSandbox(sandboxId: number): Promise<void> {

@@ -19,7 +19,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 })
 export class InstallCommunityPieceModalComponent implements OnInit {
   risksMarkdown = `
-  Use this to install a <a href="https://www.activepieces.com/docs/contributing/building-pieces/create-action" target="_blank" rel="noopener">custom piece</a> that you (or someone else) created.
+  Use this to install a <a href="https://www.activepieces.com/docs/developers/building-pieces/create-action" target="_blank" rel="noopener">custom piece</a> that you (or someone else) created.
   Once the piece is installed, you can use it in the flow builder.
  <br><br>**Warning:** 
  Make sure you trust the author as the piece will have access to your flow data and it might not be compatible with the current version of Activepieces.

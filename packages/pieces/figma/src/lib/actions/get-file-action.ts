@@ -9,9 +9,6 @@ export const getFileAction = createAction({
   name: 'get_file',
   displayName: 'Get File',
   description: 'Get file',
-  sampleData: {
-    success: true,
-  },
   props: {
     file_key: Property.ShortText({
       displayName: 'File Key',

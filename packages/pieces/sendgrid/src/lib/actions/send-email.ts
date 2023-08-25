@@ -95,7 +95,4 @@ export const sendEmail = createAction({
             success: true
         };
     },
-    sampleData: {
-        success: true
-    }
 });

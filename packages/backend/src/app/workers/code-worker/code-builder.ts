@@ -1,111 +1,91 @@
 import fs from 'node:fs/promises'
 import decompress from 'decompress'
-import { sandboxManager } from '../sandbox'
-import { logger } from '../../helper/logger'
-import { packageManager, PackageManagerDependencies } from '../../helper/package-manager'
-import { apId } from '@activepieces/shared'
-
-const webpackConfig = `
-  const path = require("node:path");
-
-  module.exports = {
-    mode: "production",
-    target: "node",
-    entry: path.join(__dirname, "index.ts"),
-    module: {
-      rules: [
-        {
-          test: /\\.ts$/,
-          use: [
-            {
-              loader: "ts-loader",
-              options: {
-                // don't check types
-                transpileOnly: true,
-              },
-            },
-          ],
-        }
-      ]
-    },
-    resolve: {
-      // add 'ts' to the default extensions
-      extensions: [".ts", "..."],
-      preferRelative: true,
-    },
-    output: {
-      // enables the use of 'module.exports', see: https://github.com/webpack/webpack/issues/1114
-      libraryTarget: "commonjs2",
-      path: path.join(__dirname, "dist"),
-      filename: "index.js",
-    },
-  };
-`
+import {
+    packageManager,
+    PackageManagerDependencies,
+} from '../../helper/package-manager'
 
 const tsConfig = `
-  {
-    // preset config for node 18
-    "extends": "@tsconfig/node18/tsconfig.json"
-  }
+{
+    "extends": "@tsconfig/node18/tsconfig.json",
+    "compilerOptions": {
+        "lib": ["es2022", "dom"],
+        "skipLibCheck": true,
+        "noUnusedLocals": false,
+        "noUnusedParameters": false,
+        "strict": false,
+        "strictPropertyInitialization": false,
+        "strictNullChecks": false,
+        "strictFunctionTypes": false,
+        "strictBindCallApply": false,
+        "noImplicitAny": false,
+        "noImplicitThis": false,
+        "noImplicitReturns": false,
+        "noFallthroughCasesInSwitch": false
+    }
+}
 `
 
-async function build(artifact: Buffer): Promise<Buffer> {
-    const sandbox = await sandboxManager.obtainSandbox(apId())
-    const buildPath = sandbox.getSandboxFolderPath()
-    let bundledFile: Buffer
+async function processCodeStep({
+    codeZip,
+    sourceCodeId,
+    buildPath,
+}: {
+    codeZip: Buffer
+    sourceCodeId: string
+    buildPath: string
+}): Promise<void> {
+    const codePath = `${buildPath}/codes/${sourceCodeId}`
     try {
-        const startTime = Date.now()
-        logger.info(`Started Building in sandbox: ${buildPath}`)
-
-        await sandbox.recreate()
-        await downloadFiles(artifact, buildPath)
-
-        const dependencies: PackageManagerDependencies = {
-            '@tsconfig/node18': '1.0.1',
-            'ts-loader': '9.4.2',
-            'typescript': '4.8.4',
-            'webpack': '5.74.0',
-            'webpack-cli': '4.10.0',
-        }
-
-        await packageManager.addDependencies(buildPath, dependencies)
-
-        await packageManager.runLocalDependency(buildPath, 'webpack')
-
-        bundledFile = await fs.readFile(`${buildPath}/dist/index.js`)
-
-        logger.info(`Finished Building in sandbox: ${buildPath}, duration: ${Date.now() - startTime}ms`)
+        const tsConfigPath = `${codePath}/tsconfig.json`
+        await decompress(codeZip, codePath, {})
+        await addCodeDependencies(codePath)
+        await fs.writeFile(tsConfigPath, tsConfig)
+        await packageManager.runLocalDependency(codePath, 'tsc')
     }
-    catch (e) {
-        logger.error(e, 'code builder')
-
-        const invalidArtifactTemplate = await fs.readFile('./packages/backend/src/assets/invalid-code.js')
-
-        const errorMessage = e instanceof Error ? e.message : 'error building code'
-
-        const invalidArtifactFile = invalidArtifactTemplate
-            .toString('utf-8')
-            .replace('${ERROR_MESSAGE}', JSON.stringify(errorMessage).replace(/"/g, '\\"'))
-
-        bundledFile = Buffer.from(invalidArtifactFile, 'utf-8')
+    catch (error: unknown) {
+        await handleCompilationError(codePath, error as (Error & { stdout: string }))
     }
-    finally {
-        await sandboxManager.returnSandbox(sandbox.boxId)
-    }
-
-    return bundledFile
 }
 
-async function downloadFiles(artifact: Buffer, buildPath: string) {
-    const webpackConfigPath = `${buildPath}/webpack.config.js`
-    const tsConfigPath = `${buildPath}/tsconfig.json`
+async function handleCompilationError(
+    buildPath: string,
+    error: Error & { stdout: string },
+): Promise<void> {
+    const invalidArtifactTemplate = await fs.readFile(
+        './packages/backend/src/assets/invalid-code.js',
+    )
 
-    await decompress(artifact, buildPath, {})
+    const errorMessage =
+    'Compilation Error: \n' + error.stdout ??
+    error.message ??
+    'error building code'
 
-    await fs.writeFile(webpackConfigPath, webpackConfig)
-    await fs.writeFile(tsConfigPath, tsConfig)
+    const invalidArtifactFile = invalidArtifactTemplate
+        .toString('utf-8')
+        .replace(
+            '${ERROR_MESSAGE}',
+            JSON.stringify(errorMessage).replace(/"/g, '\\"'),
+        )
+
+    await fs.writeFile(`${buildPath}/index.js`, invalidArtifactFile)
+}
+
+async function addCodeDependencies(codePath: string): Promise<void> {
+    const dependencies: PackageManagerDependencies = {
+        '@tsconfig/node18': {
+            version: '1.0.0',
+        },
+        '@types/node': {
+            version: '18.16.1',
+        },
+        typescript: {
+            version: '4.8.4',
+        },
+    }
+    await packageManager.addDependencies(codePath, dependencies)
 }
 
 export const codeBuilder = {
-    build,
+    processCodeStep,
 }

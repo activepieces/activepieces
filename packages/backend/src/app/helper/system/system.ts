@@ -1,4 +1,4 @@
-import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ErrorCode } from '@activepieces/shared'
 import { SystemProp } from './system-prop'
 import { loadEncryptionKey } from '../encryption'
 
@@ -16,6 +16,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [SystemProp.SIGN_UP_ENABLED]: 'false',
     [SystemProp.TELEMETRY_ENABLED]: 'true',
     [SystemProp.SANDBOX_RUN_TIME_SECONDS]: '600',
+    [SystemProp.SANDBOX_MEMORY_LIMIT]: '131072',
     [SystemProp.QUEUE_MODE]: QueueMode.REDIS,
     [SystemProp.DB_TYPE]: DatabaseType.POSTGRES,
     [SystemProp.EXECUTION_MODE]: 'UNSANDBOXED',
@@ -83,8 +84,17 @@ export const validateEnvPropsOnStartup = () => {
     const executionMode = system.get(SystemProp.EXECUTION_MODE)
     const signedUpEnabled = system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
     const queueMode = system.get(SystemProp.QUEUE_MODE) as QueueMode
+    const edition = system.get(SystemProp.EDITION)
     loadEncryptionKey(queueMode)
 
+    if (executionMode !== ExecutionMode.SANDBOXED && edition !== ApEdition.COMMUNITY) {
+        throw new ActivepiecesError({
+            code: ErrorCode.SYSTEM_PROP_INVALID,
+            params: {
+                prop: SystemProp.EXECUTION_MODE,
+            },
+        }, 'Allowing users to sign up is not allowed in non community edtion')
+    }
     if (executionMode === ExecutionMode.UNSANDBOXED && signedUpEnabled) {
         throw new ActivepiecesError({
             code: ErrorCode.SYSTEM_PROP_INVALID,

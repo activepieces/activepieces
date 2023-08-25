@@ -11,6 +11,127 @@ Semantic versioning is a standardized way of versioning software projects. It us
 
 <Note>You will only see Version X.Y here as all Patch changes (Z) are added under their minor versions.</Note>
 
+### 24/08/2023
+
+**Pieces **:
+- DeepL: Translate Text Action by @BBND
+- Monday: Get Column Values / Get Item By Column Values / Change Multiple Column Values by @haseebrehmanpc
+- Slack: Support for multiple action buttons by @rita-gorokhod
+- Tags section: Ability to add tags for the run and query them through API only at this moment by @abuaboud
+- Github: Create Issue by @kishanprmr
+- Clarfai: Call Audio Model / Call Image Model / Call Post Inputs / Call Text Model / Call Workflow Actions by @zeiler
+- Kimai: Create timesheet Action by @facferreira
+- Supabase: Upload file to Storage Action by @abuaboud
+- Schedule: Add Every X minutes action by @abuaboud
+- SFTP: Read File Content Action / Added Path property inside New modified field by @abuaboud
+- Contiguity: Send SMS Action by @Owlcept
+- SimplePDF: New submission trigger by @bendersej
+- Nifty: Create new task by @Salem-Alaa
+- TidyCal: New Contact / New Booking / Cancelled booking by @Salem-Alaa
+- Branch Piece: The testing step will now resolve variables and return correct results by @khaledmashaly
+- Telegram: Added authentication instructions on how to obtain authentication by @abuaboud
+- Twitter: Added validation for authentication by @abuaboud
+- OpenAI: Improved error messages with instructions on how to avoid them by @abuaboud
+- Calendly: Added validation to authentication by @abuaboud
+- IMAP: Added validation to authentication with proper error messages, as well as instructions for Gmail by @abuaboud
+- SMTP: Added validation to authentication by @abuaboud
+- Google Contacts: Fixed the error when a phone number is entered in the create contact action by @abuaboud
+- Ntfy: Authentication error is fixed by @facferreira
+- RSS: New item trigger always sorts the RSS feed by date, even if it's not originally sorted by @abuaboud
+- Facebook Pages: Added instructions on how to create an application by @abuaboud
+
+**Enhancements / Fixes**:
+- Sidebar Icons have been redesigned.
+- Piece settings have been revamped. All piece properties are now visible by default, along with descriptions beneath them.
+- Code Piece is now built using `tsc` instead of being webpack, which allows for packages that work on node.
+- Flow title in the browser tab gets updated when the flow name is changed.
+- Connection Names: Allowed more characters
+- Dictionary field has been enhanced. If a large value is entered, it no longer makes the key field smaller.
+- Fixed internal errors when the same flow is triggered many times at the same moment.
+
+**Security Improvements**:
+- Connection values are no longer exposed through any endpoint. Users will need to reenter all information upon pressing "reconnect" in the connections.
+- All endpoints now have post validation to verify if the entity belongs to the user, adding a second layer of security.
+
+**Developer Experience**:
+- Fixed Docker Compose development environment for PostgreSQL migration.
+- Added developer credentials to the Dev Container page by @FlorinBuffet.
+- Included troubleshooting setups for codespaces by @fardeenpanjwani-codeglo.
+
+**Contributors**:
+- @BBND
+- @haseebrehmanpc
+- @rita-gorokhod
+- @facferreira
+- @kishanprmr
+- @FlorinBuffet
+- @Owlcept
+- @bendersej
+- @thatguynef
+- @fardeenpanjwani-codeglo m
+- @Salem-Alaa
+
+**Full Changelog**: https://github.com/activepieces/activepieces/compare/0.7.0...0.8.0
+
+### 8/8/2023
+<Warning>
+important Security Update: If you're allowing users to sign up, please upgrade to version 0.7.0 immediately to address a security concern, you won't effected If you have single user in your instance.
+</Warning>
+
+**New Additions:**
+- Google Drive: Now detects when new files or folders are added.
+- Slack: You can now easily change your username and profile picture.
+- SFTP: Introduces triggers for modified or new files.
+- Clarifai: Added an action to call a model.
+- Zoho Invoice: New trigger for when invoices are created.
+- Stablity AI: Includes the new Stable Diffusion XL 1.0 model.
+- Amazon S3: Can trigger actions for new or read files.
+
+**Bug Fixes:**
+- SFTP: Issue with creating new files when the path doesn't exist has been resolved.
+- Loading indicators for the Code Editor are now working correctly.
+- Icons have been added for the flow menu dropdown.
+
+**New Features / Improvements:**
+- You can now test branch steps.
+  
+**Developer Updates:**
+- Added a Markdown Property.
+- Improved validation and processors for properties in the framework (Thanks to @OsamaHaikal for these changes).
+
+** New Contributors **
+* @camilou contributed for the first time in https://github.com/activepieces/activepieces/pull/1773
+* @kishanprmr made their first contribution in https://github.com/activepieces/activepieces/pull/1813
+* @akatechis contributed for the first time in https://github.com/activepieces/activepieces/pull/1806
+* @zeiler made their first contribution in https://github.com/activepieces/activepieces/pull/1818
+
+**Full List of Changes**: Compare versions 0.6.0 and 0.7.0 at https://github.com/activepieces/activepieces/compare/0.6.0...0.7.0
+
+## 7/26/2023
+
+**New Pieces:**
+- API Table: Now supports Create Record, Find Record, Update Record actions, and New Record Trigger.
+- Approval: Added Generate Approval Links and Wait for Approval features.
+- GhostCMS: Included Create Member, Create Project, Find Members, Find User, and Update Member functionalities.
+- Google Sheets: Enhanced Find Rows feature.
+- Hubspot: Fixed an issue with the Create Contact action.
+- RSS: Addressed a problem with duplicated triggers.
+- Slack: Added Request Approval from User and Request Approval in Channel actions.
+- Discord: Included Request Approval from User and Request Approval in Channel features.
+
+**New Features:**
+- Support for SQLite 3 and In-memory queues. Redis and Postgres are no longer required for personal usage.
+
+**Developer Experience:**
+- Development environment no longer requires Docker; it now runs on SQLite3 and in-memory queues.
+
+**Contributors:**
+- @MoShizzle: Added Survey Monkey response trigger, WooCommerce triggers, Facebook Leads trigger, and provided contributions for IMAP and Google Docs.
+- @Abdallah-Alwarawreh: Enhanced Google Sheets actions.
+- @buttonsbond: Enhanced Invoice Ninja.
+
+**Full Changelog**: [Check it out here](https://github.com/activepieces/activepieces/compare/0.5.3...0.6.0)
+
 ### 7/19/2023
 
 **New Pieces:**

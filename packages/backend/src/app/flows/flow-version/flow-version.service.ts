@@ -31,18 +31,13 @@ import { DEFAULT_SAMPLE_DATA_SETTINGS } from '@activepieces/shared'
 import { isNil } from '@activepieces/shared'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import dayjs from 'dayjs'
+import { captureException } from '../../helper/logger'
 
 const branchSettingsValidator = TypeCompiler.Compile(BranchActionSettingsWithValidation)
 const loopSettingsValidator = TypeCompiler.Compile(LoopOnItemsActionSettingsWithValidation)
 const flowVersionRepo = databaseConnection.getRepository<FlowVersion>(FlowVersionEntity)
 
 export const flowVersionService = {
-    async overwriteVersion(flowVersionId: FlowVersionId, mutatedFlowVersion: FlowVersion) {
-        await flowVersionRepo.update(flowVersionId, mutatedFlowVersion as QueryDeepPartialEntity<FlowVersion>)
-        return await flowVersionRepo.findOneBy({
-            id: flowVersionId,
-        })
-    },
     async lockPieceVersions(projectId: ProjectId, mutatedFlowVersion: FlowVersion): Promise<FlowVersion> {
         return await flowHelper.transferFlowAsync(mutatedFlowVersion, async (step) => {
             const clonedStep = JSON.parse(JSON.stringify(step))
@@ -215,27 +210,28 @@ function handleImportFlowOperation(flowVersion: FlowVersion, operation: ImportFl
 
 async function addArtifactsAsBase64(projectId: ProjectId, flowVersion: FlowVersion) {
     const flowVersionWithArtifacts: FlowVersion = JSON.parse(JSON.stringify(flowVersion))
-    const artifactPromises = []
-
     const steps = flowHelper.getAllSteps(flowVersionWithArtifacts.trigger)
-    for (const step of steps) {
-        if (step.type === ActionType.CODE) {
+    
+    const artifactPromises = steps
+        .filter(step => step.type === ActionType.CODE)
+        .map(async (step) => {
             const codeSettings: CodeActionSettings = step.settings
-            const artifactPromise = fileService
-                .getOne({ projectId, fileId: codeSettings.artifactSourceId! })
-                .then((artifact) => {
-                    if (artifact !== null) {
-                        codeSettings.artifactSourceId = undefined
-                        codeSettings.artifact = artifact.data.toString('base64')
-                    }
-                })
-            artifactPromises.push(artifactPromise)
-        }
-    }
+            try {
+                const artifact = await fileService.getOne({ projectId, fileId: codeSettings.artifactSourceId! })
+                if (artifact !== null) {
+                    codeSettings.artifactSourceId = undefined
+                    codeSettings.artifact = artifact.data.toString('base64')
+                }
+            }
+            catch (error) {
+                captureException(error)
+            }
+        })
 
     await Promise.all(artifactPromises)
     return flowVersionWithArtifacts
 }
+
 
 async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, request: FlowOperationRequest) {
     const clonedRequest: FlowOperationRequest = JSON.parse(JSON.stringify(request))
@@ -394,6 +390,9 @@ function buildSchema(props: PiecePropertyMap): TSchema {
     const propsSchema: Record<string, TSchema> = {}
     for (const [name, property] of entries) {
         switch (property.type) {
+            case PropertyType.MARKDOWN:
+                propsSchema[name] = Type.Optional(Type.Union([Type.Null(), Type.Undefined(), Type.Never()]))
+                break
             case PropertyType.DATE_TIME:
             case PropertyType.SHORT_TEXT:
             case PropertyType.LONG_TEXT:
@@ -456,9 +455,6 @@ async function deleteArtifact(projectId: ProjectId, codeSettings: CodeActionSett
     if (codeSettings.artifactSourceId !== undefined) {
         requests.push(fileService.delete({ projectId, fileId: codeSettings.artifactSourceId }))
     }
-    if (codeSettings.artifactPackagedId !== undefined) {
-        requests.push(fileService.delete({ projectId, fileId: codeSettings.artifactPackagedId }))
-    }
     await Promise.all(requests)
     return codeSettings
 }
@@ -474,7 +470,6 @@ async function uploadArtifact(projectId: ProjectId, codeSettings: CodeActionSett
 
         codeSettings.artifact = undefined
         codeSettings.artifactSourceId = savedFile.id
-        codeSettings.artifactPackagedId = undefined
     }
     return codeSettings
 }

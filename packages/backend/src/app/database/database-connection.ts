@@ -17,6 +17,7 @@ import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDatasource } from './sqllite-connection'
 import { DatabaseType, system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
+import { ArrayContains, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
 
 const databaseType = system.get(SystemProp.DB_TYPE)
 
@@ -46,3 +47,25 @@ export const databaseConnection =
   databaseType === DatabaseType.SQLITE3
       ? createSqlLiteDatasource()
       : createPostgresDataSource()
+
+export function APArrayContains<T extends ObjectLiteral>(columnName: string, values: string[], query: SelectQueryBuilder<T>): SelectQueryBuilder<T> {
+    const databaseType = system.get(SystemProp.DB_TYPE)
+    switch (databaseType) {
+        case DatabaseType.POSTGRES:
+            return query.andWhere({
+                [columnName]: ArrayContains(values),
+            })
+        case DatabaseType.SQLITE3: {
+            const likeConditions = values.map((tag, index) => `flow_run.tags LIKE :tag${index}`).join(' AND ')
+            const likeParams = values.reduce((params, tag, index) => {
+                return {
+                    ...params,
+                    [`tag${index}`]: `%${tag}%`,
+                }
+            }, {})
+            return query.andWhere(likeConditions, likeParams)
+        }
+        default:
+            throw new Error(`Unsupported database type: ${databaseType}`)
+    }
+}

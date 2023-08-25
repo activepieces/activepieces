@@ -9,9 +9,8 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { catchError, Observable, of, take, tap } from 'rxjs';
 import {
-  AppConnection,
   AppConnectionType,
-  CustomAuthConnection,
+  AppConnectionWithoutSensitiveData,
   ErrorCode,
   UpsertCustomAuthRequest,
 } from '@activepieces/shared';
@@ -21,17 +20,18 @@ import {
   PropertyType,
 } from '@activepieces/pieces-framework';
 import deepEqual from 'deep-equal';
-import { AppConnectionsService } from '../../services/app-connections.service';
+import { AppConnectionsService } from '@activepieces/ui/common';
 import { ConnectionValidator } from '../../validators/connectionNameValidator';
 import {
   BuilderSelectors,
   appConnectionsActions,
 } from '@activepieces/ui/feature-builder-store';
+import { connectionNameRegex } from '../utils';
 
 export interface CustomAuthDialogData {
   pieceAuthProperty: CustomAuthProperty<boolean, CustomAuthProps>;
   pieceName: string;
-  connectionToUpdate?: CustomAuthConnection;
+  connectionToUpdate?: AppConnectionWithoutSensitiveData;
 }
 
 @Component({
@@ -44,7 +44,7 @@ export class CustomAuthConnectionDialogComponent {
   PropertyType = PropertyType;
   keyTooltip =
     'The ID of this authentication definition. You will need to select this key whenever you want to reuse this authentication.';
-  upsert$: Observable<AppConnection | null>;
+  upsert$: Observable<AppConnectionWithoutSensitiveData | null>;
   constructor(
     private fb: FormBuilder,
     @Inject(MAT_DIALOG_DATA)
@@ -78,7 +78,7 @@ export class CustomAuthConnectionDialogComponent {
           nonNullable: true,
           validators: [
             Validators.required,
-            Validators.pattern('[A-Za-z0-9_\\-]*'),
+            Validators.pattern(connectionNameRegex),
           ],
           asyncValidators: [
             ConnectionValidator.createValidator(
@@ -93,9 +93,6 @@ export class CustomAuthConnectionDialogComponent {
       ...props,
     });
     if (this.dialogData.connectionToUpdate) {
-      this.settingsForm.patchValue(
-        this.dialogData.connectionToUpdate.value.props
-      );
       this.settingsForm.get('name')?.disable();
     }
   }
@@ -111,6 +108,7 @@ export class CustomAuthConnectionDialogComponent {
       const upsertRequest: UpsertCustomAuthRequest = {
         appName: this.dialogData.pieceName,
         name: this.settingsForm.getRawValue().name,
+        type: AppConnectionType.CUSTOM_AUTH,
         value: {
           type: AppConnectionType.CUSTOM_AUTH,
           props: propsValues,

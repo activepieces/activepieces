@@ -11,14 +11,13 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { Store } from '@ngrx/store';
 import { catchError, Observable, of, take, tap } from 'rxjs';
 import {
-  AppConnection,
   UpsertCloudOAuth2Request,
   CloudAuth2Connection,
   AppConnectionType,
+  AppConnectionWithoutSensitiveData,
 } from '@activepieces/shared';
 import deepEqual from 'deep-equal';
-import { fadeInUp400ms } from '@activepieces/ui/common';
-import { AppConnectionsService } from '../../services/app-connections.service';
+import { AppConnectionsService, fadeInUp400ms } from '@activepieces/ui/common';
 import { ConnectionValidator } from '../../validators/connectionNameValidator';
 import {
   BuilderSelectors,
@@ -33,6 +32,7 @@ import {
   OAuth2Property,
   OAuth2Props,
 } from '@activepieces/pieces-framework';
+import { connectionNameRegex } from '../utils';
 
 interface AuthConfigSettings {
   name: FormControl<string>;
@@ -53,7 +53,7 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
   PropertyType = PropertyType;
   settingsForm: FormGroup<AuthConfigSettings>;
   loading = false;
-  upsert$: Observable<AppConnection | null>;
+  upsert$: Observable<AppConnectionWithoutSensitiveData | null>;
   keyTooltip =
     'The ID of this connection definition. You will need to select this key whenever you want to reuse this connection.';
   isTriggerAppWebhook = false;
@@ -94,7 +94,7 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
           nonNullable: true,
           validators: [
             Validators.required,
-            Validators.pattern('[A-Za-z0-9_\\-]*'),
+            Validators.pattern(connectionNameRegex),
           ],
           asyncValidators: [
             ConnectionValidator.createValidator(
@@ -146,6 +146,7 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
     const { tokenUrl } = this.getTokenAndUrl();
     const newConnection: UpsertCloudOAuth2Request = {
       appName: this.dialogData.pieceName,
+      type: AppConnectionType.CLOUD_OAUTH2,
       value: {
         token_url: tokenUrl,
         code: popupResponse.code,

@@ -3,7 +3,7 @@ import { PieceAuth, createPiece } from "@activepieces/pieces-framework";
 import { sendNotification } from './lib/actions/send-notification';
 
 export const pushoverAuth = PieceAuth.CustomAuth({
-    displayName: "Authentication",
+    
     description: `
     To obtain the api token:
 

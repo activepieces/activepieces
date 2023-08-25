@@ -11,8 +11,8 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { Store } from '@ngrx/store';
 import { catchError, map, Observable, of, take, tap } from 'rxjs';
 import {
-  AppConnection,
   AppConnectionType,
+  AppConnectionWithoutSensitiveData,
   OAuth2AppConnection,
   UpsertOAuth2Request,
 } from '@activepieces/shared';
@@ -28,12 +28,13 @@ import {
   OAuth2PopupResponse,
 } from '../../models/oauth2-popup-params.interface';
 import { CloudAuthConfigsService } from '../../services/cloud-auth-configs.service';
-import { AppConnectionsService } from '../../services/app-connections.service';
+import { AppConnectionsService } from '@activepieces/ui/common';
 import { ConnectionValidator } from '../../validators/connectionNameValidator';
 import {
   BuilderSelectors,
   appConnectionsActions,
 } from '@activepieces/ui/feature-builder-store';
+import { connectionNameRegex } from '../utils';
 
 interface OAuth2PropertySettings {
   redirect_url: FormControl<string>;
@@ -74,7 +75,7 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
   keyTooltip =
     'The ID of this authentication definition. You will need to select this key whenever you want to reuse this authentication.';
   hasCloudAuthCred$: Observable<boolean>;
-  upsert$: Observable<AppConnection | null>;
+  upsert$: Observable<AppConnectionWithoutSensitiveData | null>;
   constructor(
     private fb: FormBuilder,
     private store: Store,
@@ -121,7 +122,7 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
           nonNullable: true,
           validators: [
             Validators.required,
-            Validators.pattern('[A-Za-z0-9_\\-]*'),
+            Validators.pattern(connectionNameRegex),
           ],
           asyncValidators: [
             ConnectionValidator.createValidator(
@@ -188,6 +189,7 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
     const newConnection: UpsertOAuth2Request = {
       name: connectionName,
       appName: this.dialogData.pieceName,
+      type: AppConnectionType.OAUTH2,
       value: {
         code: this.settingsForm.controls.value.value.code,
         code_challenge: this.settingsForm.controls.value.value.code_challenge,

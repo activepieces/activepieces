@@ -20,7 +20,6 @@ export const sendMessage = createAction({
             })
 
         },
-        sampleData: {},
         async run(context) {
             // Remove trailling slash from workspace URL
             const baseUrl = context.auth.workspace_url.replace(/\/$/, "");

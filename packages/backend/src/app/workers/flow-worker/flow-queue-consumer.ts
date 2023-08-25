@@ -45,7 +45,7 @@ const initFlowQueueConsumer = async (): Promise<void> => {
 }
 
 const close = async (): Promise<void> => {
-    logger.info('[FlowQueueConsumer#closeAllConsumers] closing all consumers')
+    logger.info('[FlowQueueConsumer#close] closing all consumers')
     switch (queueMode) {
         case QueueMode.MEMORY: {
             break
@@ -109,9 +109,7 @@ const consumeRepeatingJob = async (data: RepeatingJobData): Promise<void> => {
                 ),
             )
 
-            const flowVersion = await flowVersionService.getOneOrThrow(
-                data.flowVersionId,
-            )
+            const flowVersion = await flowVersionService.getOne(data.flowVersionId)
             if (isNil(flowVersion)) {
                 await flowQueue.removeRepeatingJob({
                     id: data.flowVersionId,

@@ -18,6 +18,7 @@ import {
 } from '@activepieces/ui/feature-builder-store';
 import { Flow, FlowInstance } from '@activepieces/shared';
 import { ImportFlowDialogueComponent } from './import-flow-dialogue/import-flow-dialogue.component';
+import { Title } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-flow-builder-header',
@@ -40,6 +41,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
     public dialogService: MatDialog,
     private store: Store,
     private router: Router,
+    private title: Title,
     public collectionBuilderService: CollectionBuilderService,
     private flowService: FlowService,
     private matDialog: MatDialog
@@ -73,6 +75,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
     }
   }
   saveFlowName(flowName: string) {
+    this.title.setTitle(`${flowName} - ${environment.websiteTitle}`);
     this.store.dispatch(FlowsActions.changeName({ displayName: flowName }));
   }
 

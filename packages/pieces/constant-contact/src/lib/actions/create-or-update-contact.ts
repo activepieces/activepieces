@@ -71,10 +71,6 @@ export const createOrUpdateContact = createAction({
             required: false,
         })
     },
-    sampleData: {
-        "contact_id": "b4790a28-ccde-11ed-adb9-fa163e7e5464",
-        "action": "updated"
-    },
     run: async ({ auth, propsValue }) => {
         return (await httpClient.sendRequest({
             url: "https://api.cc.email/v3/contacts/sign_up_form",

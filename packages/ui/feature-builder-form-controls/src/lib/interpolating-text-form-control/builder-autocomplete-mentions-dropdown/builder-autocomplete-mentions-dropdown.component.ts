@@ -18,7 +18,7 @@ import {
   ViewModeEnum,
 } from '@activepieces/ui/feature-builder-store';
 import { MatDialog } from '@angular/material/dialog';
-
+export const mentionsListId = 'mentionsList';
 @Component({
   selector: 'app-builder-autocomplete-mentions-dropdown',
   templateUrl: './builder-autocomplete-mentions-dropdown.component.html',
@@ -27,7 +27,7 @@ import { MatDialog } from '@angular/material/dialog';
   animations: [fadeIn400ms],
 })
 export class BuilderAutocompleteMentionsDropdownComponent {
-  @ViewChild('mentionsList', { read: ElementRef }) mentionsList:
+  @ViewChild(mentionsListId, { read: ElementRef }) mentionsList:
     | ElementRef<HTMLDivElement>
     | undefined;
   showMenuObs$: Observable<boolean>;
@@ -35,6 +35,7 @@ export class BuilderAutocompleteMentionsDropdownComponent {
   @Input() mouseWithin = false;
   @Input() container: HTMLElement;
   focusChecker: NodeJS.Timer | undefined;
+  readonly mentionsListId = mentionsListId;
   constructor(
     public interpolatingTextFormControlService: BuilderAutocompleteMentionsDropdownService,
     private store: Store,

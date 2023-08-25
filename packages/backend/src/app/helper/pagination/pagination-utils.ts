@@ -1,5 +1,6 @@
 import { SeekPage } from '@activepieces/shared'
-import { CursorResult } from 'typeorm'
+import dayjs from 'dayjs'
+import { CursorResult } from './paginator'
 
 export function atob(value: string): string {
     return Buffer.from(value, 'base64').toString()
@@ -14,8 +15,9 @@ export function encodeByType(type: string, value: unknown): string | null {
 
     switch (type) {
         case 'timestamp with time zone':
+        case 'datetime':
         case 'date': {
-            return new Date(value as string).valueOf().toString()
+            return dayjs(value as string).valueOf().toString()
         }
         case 'number': {
             return `${value}`
@@ -77,14 +79,14 @@ export function decodeByType(type: string, value: string): string | number | Dat
 const decode = (str: string): string => Buffer.from(str, 'base64').toString('binary')
 const encode = (str: string): string => Buffer.from(str, 'binary').toString('base64')
 
-function encodeNextCursor(cursor: string) {
+function encodeNextCursor(cursor: string | null | undefined) {
     if (cursor === null) {
         return null
     }
     return encode('next_' + cursor)
 }
 
-function encodePreviousCursor(cursor: string) {
+function encodePreviousCursor(cursor: string | null | undefined) {
     if (cursor === null) {
         return null
     }
@@ -92,7 +94,7 @@ function encodePreviousCursor(cursor: string) {
 }
 
 export const paginationHelper = {
-    createPage<T>(data: T[], cursor: CursorResult): SeekPage<T> {
+    createPage<T>(data: T[], cursor: CursorResult | null): SeekPage<T> {
         return {
             next: encodeNextCursor(cursor?.afterCursor),
             previous: encodePreviousCursor(cursor?.beforeCursor),

@@ -39,13 +39,7 @@
     <ng-container *ngIf="itemDetails.extra && showDocsLink">
       <ap-icon-button [width]="24" [height]="24" iconFilename="piece_doc.svg" extraClasses="ap-fill-body"
         [tooltipText]="'Read our docs about '+ itemDetails.name"
-        (click)="openDocs('https://www.activepieces.com/docs/pieces/apps/'+ itemDetails.extra.appName.replace('@activepieces/piece-', ''))"></ap-icon-button>
-    </ng-container>
-    <ng-container *ngIf="itemDetails.name ==='Code' && showDocsLink">
-      <ap-icon-button [width]="24" [height]="24" iconFilename="piece_doc.svg"
-        tooltipText="Read our docs about our nodejs piece"
-        (click)="openDocs('https://www.activepieces.com/docs/pieces/helpers/code')"></ap-icon-button>
-
+        (click)="openDocs('https://www.activepieces.com/pieces/'+ itemDetails.extra.appName.replace('@activepieces/piece-', ''))"></ap-icon-button>
     </ng-container>
   </div>
 </ng-template>

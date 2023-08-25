@@ -15,9 +15,10 @@ import { globals } from '../globals';
 import { isNil } from '@activepieces/shared'
 import { pieceHelper } from '../helper/action-helper';
 import { createContextStore } from '../services/storage.service';
-import { connectionManager } from '../services/connections.service';
 import { Utils } from '../utils';
 import { ActionContext, PauseHook, PauseHookParams, PiecePropertyMap, StaticPropsValue, StopHook, StopHookParams } from '@activepieces/pieces-framework';
+import { createConnectionManager } from '../services/connections.service';
+import { createTagsManager } from '../services/tags.service';
 
 type CtorParams = {
   executionType: ExecutionType
@@ -100,7 +101,7 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
     const censoredInput = await this.variableService.resolve({
       unresolvedInput: this.currentAction.settings.input,
       executionState,
-      censorConnections: true,
+      logs: true,
     })
 
     return {
@@ -131,22 +132,28 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
         pieceVersion,
         actionName,
       })
+      const piece = await pieceHelper.loadPieceOrThrow(pieceName, pieceVersion);
 
-      const resolvedProps = await this.variableService.resolveAndValidate<StaticPropsValue<PiecePropertyMap>>({
-        actionProps: action.props,
+      const resolvedProps = await this.variableService.resolve<StaticPropsValue<PiecePropertyMap>>({
         unresolvedInput: input,
         executionState,
-        censorConnections: false,
+        logs: false,
       })
 
       assertNotNullOrUndefined(globals.flowRunId, 'globals.flowRunId')
+      const {processedInput, errors} = await this.variableService.applyProcessorsAndValidators(resolvedProps, action.props, piece.auth);
+
+      if (Object.keys(errors).length > 0) {
+        throw new Error(JSON.stringify(errors));
+      }
 
       const context: ActionContext = {
         executionType: this.executionType,
-        store: createContextStore('', globals.flowId),
-        auth: resolvedProps[AUTHENTICATION_PROPERTY_NAME],
-        propsValue: resolvedProps,
-        connections: connectionManager,
+        store: createContextStore('', globals.flowVersionId),
+        auth: processedInput[AUTHENTICATION_PROPERTY_NAME],
+        propsValue: processedInput,
+        tags: createTagsManager(executionState),
+        connections: createConnectionManager(executionState),
         serverUrl: globals.serverUrl!,
         run: {
           id: globals.flowRunId,

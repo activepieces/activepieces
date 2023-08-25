@@ -1,7 +1,7 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { freshdeskAuth } from "../..";
-import { isNull } from "lodash";
+import { isNil } from "@activepieces/shared";
 
 export const getTicketStatus = createAction({
     auth: freshdeskAuth,
@@ -42,7 +42,7 @@ export const getTicketStatus = createAction({
             let AssignedStatusFriendlyValue='';
             let TicketStatusFriendlyValue='';
 
-            if (isNull(responderid)) {
+            if (isNil(responderid)) {
                 AssignedStatusFriendlyValue="NOTASSIGNED";
             } else {
                  AssignedStatusFriendlyValue="ASSIGNED";

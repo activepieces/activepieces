@@ -26,8 +26,8 @@ import { UserLoggedIn } from './guards/user-logged-in.guard';
 import { ImportFlowComponent } from './modules/import-flow/import-flow.component';
 import { LottieCacheModule, LottieModule } from 'ngx-lottie';
 import player from 'lottie-web';
-import { ImportFlowBase64Component } from './modules/import-flow-base64/import-flow-base64.component';
-import { ImportFlowBase64Resolver } from './modules/import-flow-base64/import-flow-base64.resolver';
+import { ImportFlowUriEncodedComponent } from './modules/import-flow-uri-encoded/import-flow-uri-encoded.component';
+import { ImportFlowUriEncodedResolver } from './modules/import-flow-uri-encoded/import-flow-uri-encoded.resolver';
 import {
   MonacoEditorModule,
   NgxMonacoEditorConfig,
@@ -42,7 +42,14 @@ const monacoConfig: NgxMonacoEditorConfig = {
     const monaco = (window as any).monaco;
     monaco.editor.defineTheme('apTheme', apMonacoTheme);
     monaco.editor.defineTheme('cobalt2', cobalt2);
-  }, // here monaco object will be available as window.monaco use this function to extend monaco editor functionalities.
+    const stopImportResolutionError = () => {
+      monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
+        diagnosticCodesToIgnore: [2792],
+      });
+    };
+    stopImportResolutionError();
+    // Assuming you have already initialized the Monaco editor instance as 'editor'
+  },
 };
 export function tokenGetter() {
   const jwtToken: any = localStorage.getItem(environment.jwtTokenName);
@@ -60,7 +67,7 @@ export function playerFactory() {
     NotFoundComponent,
     RedirectUrlComponent,
     ImportFlowComponent,
-    ImportFlowBase64Component,
+    ImportFlowUriEncodedComponent,
   ],
   imports: [
     CommonModule,
@@ -146,12 +153,12 @@ function dynamicRoutes(edition: string) {
   ];
   const suffixRoutes: Route[] = [
     {
-      path: 'import-flow-64',
+      path: 'import-flow-uri-encoded',
       canActivate: [UserLoggedIn],
       resolve: {
-        combination: ImportFlowBase64Resolver,
+        combination: ImportFlowUriEncodedResolver,
       },
-      component: ImportFlowBase64Component,
+      component: ImportFlowUriEncodedComponent,
     },
     {
       path: 'templates/:templateId',

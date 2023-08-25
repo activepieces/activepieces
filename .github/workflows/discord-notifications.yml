@@ -1,0 +1,48 @@
+name: discord notifications
+
+on:
+  workflow_run:
+    workflows:
+      - "Release Pieces"
+      - "build-cloud-nx"
+    types: [completed]
+    branches: [main]
+
+jobs:
+  on-success:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - run: >-
+          curl ${{ secrets.DISCORD_CI_CHANNEL_WEBHOOK_URL }}
+          -H 'Content-Type: application/json'
+          -d '{
+            "embeds": [
+              {
+                "title": "${{ github.event.repository.name }} build success - ${{ github.event.workflow_run.name }} #${{ github.event.workflow_run.run_number }}",
+                "description": ${{ toJSON(github.event.workflow_run.head_commit.message) }},
+                "url": "${{ github.event.workflow_run.html_url }}",
+                "color": 39236
+              }
+            ],
+            "username": "GitHub Actions"
+          }'
+
+  on-failure:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    steps:
+      - run: >-
+          curl ${{ secrets.DISCORD_CI_CHANNEL_WEBHOOK_URL }}
+          -H 'Content-Type: application/json'
+          -d '{
+            "embeds": [
+              {
+                "title": "${{ github.event.repository.name }} build failure - ${{ github.event.workflow_run.name }} #${{ github.event.workflow_run.run_number }}",
+                "description": ${{ toJSON(github.event.workflow_run.head_commit.message) }},
+                "url": "${{ github.event.workflow_run.html_url }}",
+                "color": 13565967
+              }
+            ],
+            "username": "GitHub Actions"
+          }'
