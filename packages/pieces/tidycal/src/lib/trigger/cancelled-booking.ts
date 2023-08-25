@@ -68,7 +68,7 @@ export const tidycalbookingcancelled = createTrigger({
     },
 });
 
-const polling: Polling<OAuth2PropertyValue, Record<string, never>> = {
+const polling: Polling<string, Record<string, never>> = {
     strategy: DedupeStrategy.TIMEBASED,
     items: async ({ auth, lastFetchEpochMS }) => {
 
@@ -77,7 +77,7 @@ const polling: Polling<OAuth2PropertyValue, Record<string, never>> = {
                 id: string,
                 cancelled_at: string,
             }[]
-        }>(HttpMethod.GET, `bookings?cancelled=true`, auth.access_token, undefined);
+        }>(HttpMethod.GET, `bookings?cancelled=true`, auth, undefined);
         
         const cancelledBookings = currentValues.body;
         const bookings = cancelledBookings.data.filter((item) => {
