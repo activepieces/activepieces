@@ -82,8 +82,8 @@ export const createEmbeddingsFromText = createAction({
       required: true,
     }),
     title: Property.ShortText({
-      displayName: 'Document Title or Md5 ID',
-      description: 'What is the title or the ID of the text or document you\'ve inputted',
+      displayName: 'Document Title or ID',
+      description: 'What is the title or the ID (only alphanumeric 64 or 32 characters ids) of the text or document you\'ve inputted',
       required: true,
     }),
     splitBy: Property.StaticDropdown({
@@ -102,6 +102,10 @@ export const createEmbeddingsFromText = createAction({
           {
             label: 'By sentence',
             value: 'sentence',
+          },
+          {
+            label: 'By line',
+            value: 'line',
           },
           {
             label: 'By paragraph',
@@ -183,7 +187,16 @@ export const createEmbeddingsFromText = createAction({
             textInput,
             minTokens,
             maxTokens,
-            [' ', ':}]),;»”', '!?.']
+            [' ', '§\\/|`\'"\t', ':}]),;»”', '!?.']
+          ));
+          break;
+        case 'line':
+          textSplited.push(...splitBychar(
+            enc,
+            textInput,
+            minTokens,
+            maxTokens,
+            [' ', '§\\/|`\'"\t', ':}]),;»”', '!?.', '\n']
           ));
           break;
         case 'paragraph':
@@ -192,8 +205,8 @@ export const createEmbeddingsFromText = createAction({
             textInput,
             minTokens,
             maxTokens,
-            [' ', ':}]),;»”', '!?.', '\n']
-          ));
+            [' ', '§\\/|`\'"\t', ':}]),;»”', '!?.', '\n', '\n\n']
+          ))
           break;
         case 'keep':
           textSplited.push(...splitByToken(
@@ -222,11 +235,11 @@ export const createEmbeddingsFromText = createAction({
     });
 
     let documentTitle = propsValue.title
-    let documentId = createHash('md5').update(documentTitle).digest('hex')
+    let documentId = createHash('sha256').update(documentTitle).digest('hex')
 
-    const validateMd5Id = (hash: string) => /^[a-f0-9]{32}$/i.test(hash)
+    const validateId = (hash: string) => /^[a-f0-9]{32}$/i.test(hash) || /^[a-f0-9]{64}$/i.test(hash)
     
-    if (validateMd5Id(documentTitle)) {
+    if (validateId(documentTitle)) {
       documentId = documentTitle
       documentTitle = (textInput instanceof Array ? textInput[0]: textInput).slice(0, 50).split(/[.?,/\\!;:()"]/u)[0]
     }
@@ -238,9 +251,9 @@ export const createEmbeddingsFromText = createAction({
 
     for (let index = 0; index < resData.length; index++) {
       const vec = resData[index];
-      embeddings.push(vec.embedding)
+      embeddings.push(Buffer.from(new Float32Array(vec.embedding)).toString('utf-8'))
       chuncksOfText.push(textSplited[index])
-      embeddingIds.push(createHash('md5').update(textSplited[index]).digest('hex'))
+      embeddingIds.push(createHash('sha256').update(textSplited[index]).digest('hex'))
     }
 
     return {
