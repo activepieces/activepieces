@@ -29,7 +29,10 @@ export const readFile = createAction({
             Bucket: bucket,
             Key: key
         }));
-        const base64 = await file.Body?.transformToString('base64')!
+        const base64 = await file.Body?.transformToString('base64')
+        if (!base64) {
+            throw new Error(`Could not read file ${key} from S3`)
+        }
         return await context.files.write({
             fileName: key,
             data: Buffer.from(base64, 'base64'),
