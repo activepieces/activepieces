@@ -251,7 +251,7 @@ export const createEmbeddingsFromText = createAction({
 
     for (let index = 0; index < resData.length; index++) {
       const vec = resData[index];
-      embeddings.push(Buffer.from(new Float32Array(vec.embedding)).toString('utf-8'))
+      embeddings.push(Buffer.from(new Float32Array(vec.embedding)).toString('base64'))
       chuncksOfText.push(textSplited[index])
       embeddingIds.push(createHash('sha256').update(textSplited[index]).digest('hex'))
     }
