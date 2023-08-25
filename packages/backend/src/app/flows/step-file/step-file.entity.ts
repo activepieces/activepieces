@@ -8,7 +8,7 @@ type StepFileSchema = StepFile & {
 }
 
 export const StepFileEntity = new EntitySchema<StepFileSchema>({
-    name: 'step-file',
+    name: 'step_file',
     columns: {
         ...BaseColumnSchemaPart,
         flowId: ApIdSchema,
