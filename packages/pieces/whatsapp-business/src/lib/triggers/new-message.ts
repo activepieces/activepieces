@@ -8,12 +8,14 @@ export const newMessage = createTrigger({
     displayName: 'New Message',
     description: 'Triggers when a new message is received',
     type: TriggerStrategy.APP_WEBHOOK,
-    props: {},
+    props: {
+        phoneNumber: whatsappBusinessCommon.phoneNumber
+    },
 
     async onEnable(context) {
         await whatsappBusinessCommon.subscribeWhatsappToApp((context.auth.props as any)['whatsappBusinessAccountId'], context.auth.access_token)
 
-        context.app.createListeners({ events: ['whatsappBusinessMessage'], identifierValue: context.auth.props!['whatsappBusinessAccountId'] as string })
+        context.app.createListeners({ events: ['whatsappBusinessMessage'], identifierValue: context.propsValue.phoneNumber as string })
     },
 
     async onDisable() {
