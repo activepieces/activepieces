@@ -45,7 +45,6 @@
     "@ngrx/store-devtools": "16.0.1",
     "@notionhq/client": "^2.2.3",
     "@nx/devkit": "16.5.2",
-    "@nx/nx-darwin-arm64": "^16.7.2",
     "@onfleet/node-onfleet": "^1.3.3",
     "@sendgrid/mail": "^7.7.0",
     "@sentry/node": "^7.38.0",
