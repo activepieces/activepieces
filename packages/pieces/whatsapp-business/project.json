@@ -1,0 +1,42 @@
+{
+  "name": "pieces-whatsapp-business",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/whatsapp-business/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/whatsapp-business",
+        "tsConfig": "packages/pieces/whatsapp-business/tsconfig.lib.json",
+        "packageJson": "packages/pieces/whatsapp-business/package.json",
+        "main": "packages/pieces/whatsapp-business/src/index.ts",
+        "assets": [
+          "packages/pieces/whatsapp-business/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-whatsapp-business {args.ver} {args.tag}",
+      "dependsOn": [
+        "build"
+      ]
+    },
+    "lint": {
+      "executor": "@nx/linter:eslint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/whatsapp-business/**/*.ts"
+        ]
+      }
+    }
+  },
+  "tags": []
+}

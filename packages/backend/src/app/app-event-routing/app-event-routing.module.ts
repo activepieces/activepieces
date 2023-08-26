@@ -10,17 +10,20 @@ import { slack } from '@activepieces/piece-slack'
 import { square } from '@activepieces/piece-square'
 import { Piece } from '@activepieces/pieces-framework'
 import { facebookLeads } from '@activepieces/piece-facebook-leads'
+import { whatsappBusiness} from '@activepieces/piece-whatsapp-business';
 
 const appWebhooks: Record<string, Piece> = {
     slack,
     square,
     'facebook-leads': facebookLeads,
+    'whatsapp-business': whatsappBusiness
 }
 
 const pieceNames: Record<string, string> = {
     slack: '@activepieces/piece-slack',
     square: '@activepieces/piece-square',
     'facebook-leads': '@activepieces/piece-facebook-leads',
+    'whatsapp-business': '@activepieces/piece-whatsapp-business'
 }
 
 export const appEventRoutingModule = async (app: FastifyInstance) => {
