@@ -32,6 +32,7 @@ import { isNil } from '@activepieces/shared'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import dayjs from 'dayjs'
 import { captureException } from '../../helper/logger'
+import { stepFileService } from '../step-file/step-file.service'
 
 const branchSettingsValidator = TypeCompiler.Compile(BranchActionSettingsWithValidation)
 const loopSettingsValidator = TypeCompiler.Compile(LoopOnItemsActionSettingsWithValidation)
@@ -273,12 +274,21 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
                 case ActionType.BRANCH:
                     clonedRequest.request.valid = branchSettingsValidator.Check(clonedRequest.request.settings)
                     break
-                case ActionType.PIECE:
+                case ActionType.PIECE: {
                     clonedRequest.request.valid = await validateAction({
                         settings: clonedRequest.request.settings,
                         projectId,
                     })
+                    const previousStep = flowHelper.getStep(flowVersion, clonedRequest.request.name)
+                    if (
+                        previousStep !== undefined &&
+                        previousStep.type === ActionType.PIECE &&
+                        clonedRequest.request.settings.pieceName !== previousStep.settings.pieceName
+                    ) {
+                        await stepFileService.deleteAll({ projectId, flowId: flowVersion.flowId, stepName: previousStep.name })
+                    }
                     break
+                }
                 case ActionType.CODE: {
                     const codeSettings: CodeActionSettings = clonedRequest.request.settings
                     await uploadArtifact(projectId, codeSettings)
@@ -298,6 +308,9 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
             const previousStep = flowHelper.getStep(flowVersion, clonedRequest.request.name)
             if (previousStep !== undefined && previousStep.type === ActionType.CODE) {
                 await deleteArtifact(projectId, previousStep.settings)
+            }
+            if (previousStep !== undefined && previousStep.type === ActionType.PIECE) {
+                await stepFileService.deleteAll({ projectId, flowId: flowVersion.flowId, stepName: previousStep.name })
             }
             break
         }

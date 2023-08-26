@@ -10,7 +10,7 @@ import { isNil, isString } from "@activepieces/shared";
 
 export class Processors {
 
-  static number: ProcessorFn<string|number|undefined|null, number|null|undefined> = (property, value) => {
+  static number: ProcessorFn<string | number | undefined | null, number | null | undefined> = (property, value) => {
     if (isNil(value)) {
       return value;
     }
@@ -20,7 +20,7 @@ export class Processors {
     return Number(value);
   }
 
-  static datetime: ProcessorFn<number|string|undefined|null, string | undefined> = (property, value) => {
+  static datetime: ProcessorFn<number | string | undefined | null, string | undefined> = (property, value) => {
     dayjs.extend(utc);
     dayjs.extend(timezone);
     const dateTimeString = value;
@@ -44,7 +44,7 @@ export class Processors {
       if (isBase64(urlOrBase64, { allowMime: true })) {
         const matches = urlOrBase64.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
         let base64 = urlOrBase64;
-        let contentType: string|null = null;
+        let contentType: string | null = null;
 
         if (matches && matches?.length === 3) {
           contentType = matches[1];
@@ -54,11 +54,11 @@ export class Processors {
           const filename = 'unknown';
           const extension = contentType.split('/')[1];
 
-          return {
-            filename: filename + "." + extension,
+          return new ApFile(
+            filename + "." + extension,
+            Buffer.from(base64, 'base64'),
             extension,
-            base64,
-          };
+          );
         }
 
       }
@@ -67,7 +67,7 @@ export class Processors {
 
       console.info(`Content type: ${contentType}`);
       // Check if content type is file
-      if (!contentType || !(contentType.startsWith('application/') || contentType.startsWith("image") || contentType.startsWith("audio")  || contentType.startsWith("video") || contentType === 'application/octet-stream')) {
+      if (!contentType || !(contentType.startsWith('application/') || contentType.startsWith("image") || contentType.startsWith("audio") || contentType.startsWith("video") || contentType === 'application/octet-stream')) {
         return null;
       }
       const fileResponse = await axios.get(urlOrBase64, {
@@ -77,15 +77,13 @@ export class Processors {
       // Get filename and extension
       const filename = urlOrBase64.substring(urlOrBase64.lastIndexOf('/') + 1);
       const extension = filename.split('.').pop();
-      // Convert file data to base64
-      const base64 = Buffer.from(fileResponse.data, 'binary').toString('base64');
 
       // Return the ApFile object
-      return {
+      return new ApFile(
         filename,
+        Buffer.from(fileResponse.data, 'binary'),
         extension,
-        base64,
-      };
+      );
     } catch (e) {
       console.error(e);
       return null;

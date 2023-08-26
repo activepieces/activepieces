@@ -71,6 +71,7 @@ export class Sandbox {
             '_standardOutput.txt',
             '_standardError.txt',
             'output.json',
+            'tmp',
             'meta.txt',
         ]
         const promises = filesToDelete.map((file) => {

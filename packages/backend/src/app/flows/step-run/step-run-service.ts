@@ -32,6 +32,7 @@ import { isNil } from '@activepieces/shared'
 import { getServerUrl } from '../../helper/public-ip-utils'
 import { sandboxManager } from '../../workers/sandbox'
 import { flowService } from '../flow/flow.service'
+import { stepFileService } from '../step-file/step-file.service'
 
 export const stepRunService = {
     async create({ projectId, flowVersionId, stepName, userId }: CreateParams): Promise<StepRunResponse> {
@@ -81,6 +82,11 @@ async function executePiece({ step, projectId, flowVersion, userId }: ExecutePar
         })
     }
 
+    await stepFileService.deleteAll({
+        projectId,
+        flowId: flowVersion.flowId,
+        stepName: step.name,
+    })
     const operation: ExecuteActionOperation = {
         serverUrl: await getServerUrl(),
         pieceName,
