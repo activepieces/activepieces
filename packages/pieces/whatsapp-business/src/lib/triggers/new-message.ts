@@ -13,8 +13,7 @@ export const newMessage = createTrigger({
     async onEnable(context) {
         await whatsappBusinessCommon.subscribeWhatsappToApp((context.auth.props as any)['whatsappBusinessAccountId'], context.auth.access_token)
 
-        // context.app.createListeners({ events: ['whatsappBusinessMessage'], identifierValue: context.auth.props!['whatsappBusinessAccountId'] as string })
-        context.app.createListeners({ events: ['whatsappBusinessMessage'], identifierValue: '123456123' })
+        context.app.createListeners({ events: ['whatsappBusinessMessage'], identifierValue: context.auth.props!['whatsappBusinessAccountId'] as string })
     },
 
     async onDisable() {
@@ -25,7 +24,7 @@ export const newMessage = createTrigger({
     async run(context) {
         return [context.payload.body];
     },
-    
+
     sampleData: {
         "object": "whatsapp_business_account",
         "entry": [
