@@ -8,7 +8,7 @@ import {
 import { ActivatedRoute } from '@angular/router';
 import { Observable, map, tap } from 'rxjs';
 import { PieceMetadataService, fadeInUp400ms } from '@activepieces/ui/common';
-import { AppConnection } from '@activepieces/shared';
+import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
 import { ChatBotService } from '../chatbot.service';
 import deepEqual from 'deep-equal';
 import { PieceMetadata } from '@activepieces/pieces-framework';
@@ -74,7 +74,7 @@ export class ChatbotSettingsComponent implements OnInit {
     });
     this.loadConnections$ = this.actRoute.data.pipe(
       tap((value) => {
-        const routeData = value as { connections: AppConnection[] };
+        const routeData = value as { connections: AppConnectionWithoutSensitiveData[] };
         this.store.dispatch(
           appConnectionsActions.loadInitial({
             connections: routeData.connections,
@@ -100,7 +100,7 @@ export class ChatbotSettingsComponent implements OnInit {
   }
   connectionValueChanged(event: {
     propertyKey: string;
-    value: `{{connections.${string}}}`;
+    value: `{{connections['${string}']}}`;
   }) {
     this.formGroup.controls.connection.setValue(event.value.toString());
   }

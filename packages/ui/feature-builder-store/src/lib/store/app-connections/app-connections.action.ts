@@ -12,8 +12,8 @@ const upsert = createAction(
   props<{ connection: AppConnectionWithoutSensitiveData }>()
 );
 const loadInitial = createAction(
-  AppConectionActionType.LOAD_INITIAL,
-  props<{ connections: AppConnection[] }>()
+  AppConnectionActionType.LOAD_INITIAL,
+  props<{ connections: AppConnectionWithoutSensitiveData[] }>()
 );
 
 export const appConnectionsActions = {
