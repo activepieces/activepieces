@@ -10,6 +10,7 @@ export const contigAuth = PieceAuth.SecretText({
 
 export const contiguity = createPiece({
   displayName: "Contiguity",
+  description: "An SMS service for your needs - quick and simple",
   auth: contigAuth,
   minimumSupportedRelease: '0.7.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/contiguity.png',
