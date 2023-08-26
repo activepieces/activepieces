@@ -22,6 +22,8 @@ import {
     ExecuteValidateAuthOperation,
     ExecuteValidateAuthResponse,
     ApEnvironment,
+    EngineTestOperation,
+    CodeActionSettings,
 } from '@activepieces/shared'
 import { Sandbox, sandboxManager } from '../workers/sandbox'
 import { system } from './system/system'
@@ -41,6 +43,7 @@ import { packageManager } from './package-manager'
 import { pieceMetadataService } from '../pieces/piece-metadata-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { codeBuilder } from '../workers/code-worker/code-builder'
+import { fileService } from '../file/file.service'
 
 const apEnvironment = system.get(SystemProp.ENVIRONMENT)
 
@@ -328,13 +331,17 @@ export const engineHelper = {
         logger.debug(operation, '[EngineHelper#executeAction] operation')
 
         const sandbox = await sandboxManager.obtainSandbox(apId())
+        const sourceId = (operation.step.settings as CodeActionSettings).artifactSourceId!
+        const fileEntity = await fileService.getOneOrThrow({
+            projectId: operation.projectId,
+            fileId: sourceId,
+        })
         await sandbox.recreate()
-        await codeBuilder.processCodeStep(
-            operation.step,
-            sandbox.getSandboxFolderPath(),
-            operation.flowVersion.id,
-            operation.projectId,
-        )
+        await codeBuilder.processCodeStep({
+            codeZip: fileEntity.data,
+            sourceCodeId: sourceId,
+            buildPath: sandbox.getSandboxFolderPath(),
+        } )
         const input = {
             ...operation,
             workerToken: await generateWorkerToken({ projectId: operation.projectId }),
@@ -433,5 +440,19 @@ export const engineHelper = {
         finally {
             await sandboxManager.returnSandbox(sandbox.boxId)
         }
+    },
+
+    async executeTest(sandbox: Sandbox, operation: EngineTestOperation): Promise<EngineHelperResponse<EngineHelperFlowResult>> {
+        logger.debug(
+            { ...operation, triggerPayload: undefined, executionState: undefined },
+            '[EngineHelper#executeTest] operation',
+        )
+
+        const input = {
+            ...operation,
+            workerToken: await generateWorkerToken({ projectId: operation.projectId }),
+        }
+
+        return await execute(EngineOperationType.EXECUTE_TEST, sandbox, input)
     },
 }

@@ -18,12 +18,15 @@ import {
   ExecuteExtractPieceMetadata,
   ExecuteValidateAuthOperation,
   extractPieceFromModule,
-  flowHelper
+  flowHelper,
+  EngineTestOperation
 } from '@activepieces/shared';
 import { pieceHelper } from './lib/helper/action-helper';
 import { triggerHelper } from './lib/helper/trigger-helper';
 import { Piece } from '@activepieces/pieces-framework';
 import { VariableService } from './lib/services/variable-service';
+import { testExecution } from './lib/helper/test-execution-context';
+import { trimExecution } from '@activepieces/shared';
 
 const initFlowExecutor = (input: ExecuteFlowOperation): FlowExecutor => {
   const { flowVersion } = input
@@ -40,7 +43,7 @@ const initFlowExecutor = (input: ExecuteFlowOperation): FlowExecutor => {
     })
   }
 
-  const executionState = new ExecutionState()
+  const executionState = new ExecutionState(input.executionState)
   const variableService = new VariableService()
 
   const steps = flowHelper.getAllSteps(flowVersion.trigger);
@@ -59,7 +62,6 @@ const initFlowExecutor = (input: ExecuteFlowOperation): FlowExecutor => {
 const extractInformation = async (): Promise<void> => {
   try {
     const input: ExecuteExtractPieceMetadata = Utils.parseJsonFile(globals.inputFile);
-
 
     const pieceModule = await import(input.pieceName);
     const piece = extractPieceFromModule<Piece>({
@@ -81,14 +83,15 @@ const extractInformation = async (): Promise<void> => {
   }
 }
 
-const executeFlow = async (): Promise<void> => {
+const executeFlow = async (input?: ExecuteFlowOperation): Promise<void> => {
   try {
-    const input: ExecuteFlowOperation = Utils.parseJsonFile(globals.inputFile);
+    input = input ?? Utils.parseJsonFile(globals.inputFile) as ExecuteFlowOperation
 
     globals.workerToken = input.workerToken!;
     globals.projectId = input.projectId;
     globals.apiUrl = input.apiUrl!;
     globals.serverUrl = input.serverUrl!;
+    globals.flowId = input.flowVersion.flowId;
     globals.flowRunId = input.flowRunId;
     globals.flowVersionId = input.flowVersion.id;
 
@@ -101,7 +104,7 @@ const executeFlow = async (): Promise<void> => {
 
     writeOutput({
       status: EngineResponseStatus.OK,
-      response: output
+      response: trimExecution(output)
     })
   } catch (e) {
     console.error(e);
@@ -141,6 +144,8 @@ const executeTrigger = async (): Promise<void> => {
 
     globals.workerToken = input.workerToken!;
     globals.projectId = input.projectId;
+    globals.flowVersionId = input.flowVersion.id
+    globals.flowId = input.flowVersion.id
     globals.apiUrl = input.apiUrl!;
 
     const output = await triggerHelper.executeTrigger(input);
@@ -186,6 +191,8 @@ const executeAction = async (): Promise<void> => {
     globals.workerToken = input.workerToken!;
     globals.projectId = input.projectId;
     globals.apiUrl = input.apiUrl!;
+    globals.flowVersionId = input.flowVersion.id
+    globals.flowId = input.flowVersion.flowId
     globals.serverUrl = input.serverUrl;
 
     const output = await pieceHelper.executeAction(input);
@@ -227,6 +234,28 @@ const executeValidateAuth = async (): Promise<void> => {
   }
 }
 
+const executeTest = async (): Promise<void> => {
+  try {
+    const input: EngineTestOperation = Utils.parseJsonFile(globals.inputFile);
+
+    const testExecutionState = await testExecution.stateFromFlowVersion({
+      flowVersion: input.sourceFlowVersion,
+    })
+
+    await executeFlow({
+      ...input,
+      executionState: testExecutionState,
+    })
+  }
+  catch (e) {
+    console.error(e);
+    writeOutput({
+      status: EngineResponseStatus.ERROR,
+      response: Utils.tryParseJson((e as Error).message)
+    })
+  }
+}
+
 async function writeOutput(result: EngineResponse<unknown>) {
   Utils.writeToJsonFile(globals.outputFile, result);
 }
@@ -256,6 +285,9 @@ async function execute() {
     case EngineOperationType.EXECUTE_VALIDATE_AUTH:
       executeValidateAuth();
       break;
+    case EngineOperationType.EXECUTE_TEST:
+      executeTest()
+      break
     default:
       console.error('unknown operation');
       break;

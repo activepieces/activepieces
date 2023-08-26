@@ -36,7 +36,7 @@ export const whatsappBusiness = createPiece({
                 };
             }
 
-            return { event: 'whatsappBusinessMessage', identifierValue: payload.body.entry[0].id }
+            return { event: 'whatsappBusinessMessage', identifierValue: payload.body.entry[0].changes[0].value.metadata.phone_number_id }
         },
         verify: () => {
             // TODO IMPLEMENT VALIDATION AFTER APP VERIFICATION
