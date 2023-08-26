@@ -22,7 +22,6 @@ export const newMessage = createTrigger({
         //
     },
 
-    //Return new lead
     async run(context) {
         return [context.payload.body];
     },
