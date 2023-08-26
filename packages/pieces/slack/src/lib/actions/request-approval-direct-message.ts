@@ -9,9 +9,6 @@ export const requestApprovalDirectMessageAction = createAction({
     name: 'request_approval_direct_message',
     displayName: 'Request Approval from A User',
     description: 'Send approval message to a user and then wait until the message is approved or disapproved',
-    sampleData: {
-        approved: true,
-    },
     props: {
         userId,
         text,

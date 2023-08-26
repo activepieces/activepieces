@@ -66,10 +66,12 @@ export type JsonProperty<R extends boolean> = BasePropertySchema & TPropertyValu
 
 export type DateTimeProperty<R extends boolean> = BasePropertySchema & TPropertyValue<string, PropertyType.DATE_TIME, ValidationInputType.DATE_TIME, R>;
 
-export type ApFile = {
-    filename?: string;
-    extension?: string;
-    base64: string;
+export class ApFile {
+    constructor(public filename: string, public data: Buffer, public extension?: string) {}
+
+    get base64(): string {
+        return this.data.toString('base64');
+    }
 }
 
 export type FileProperty<R extends boolean> = BasePropertySchema & TPropertyValue<ApFile, PropertyType.FILE, ValidationInputType.FILE, R>;

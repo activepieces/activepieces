@@ -1,6 +1,6 @@
-import { AppConnection } from '@activepieces/shared';
+import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
 
 export interface AppConnectionsState {
   loaded: boolean;
-  connections: AppConnection[];
+  connections: AppConnectionWithoutSensitiveData[];
 }

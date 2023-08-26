@@ -7,7 +7,6 @@ export const postStatus = createAction({
         name: 'post_status',
         displayName: 'Post Status',
         description: 'Post a status to Mastodon',
-        sampleData: {},
         props: {
             status: Property.LongText({
                 displayName: 'Status',

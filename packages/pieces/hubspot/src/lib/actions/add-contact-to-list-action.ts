@@ -9,12 +9,6 @@ export const hubSpotListsAddContactAction = createAction({
     name: 'add_contact_to_list',
     displayName: 'Add contact To List',
     description: 'Add contact to list',
-    sampleData: {
-      'updated': [12345],
-      'discarded': [12345],
-      'invalidVids': [12345],
-      'invalidEmails': ['hello@example.com'],
-    },
     props: {
       listId: hubSpotListIdDropdown,
       email: Property.ShortText({

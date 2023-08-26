@@ -12,7 +12,7 @@ To obtain a token, follow these steps:
 `
 
 export const discordAuth = PieceAuth.SecretText({
-    displayName: 'Connection',
+    displayName: 'Bot Token',
     description: markdown,
     required: true,
 })

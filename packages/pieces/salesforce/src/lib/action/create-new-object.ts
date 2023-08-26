@@ -8,8 +8,6 @@ export const createNewObject = createAction({
     name: 'create_new_object',
     displayName: 'Create Object (Advanced)',
     description: 'Create new object',
-    sampleData: {
-    },
     props: {
         object: salesforcesCommon.object,
         data: Property.Json({

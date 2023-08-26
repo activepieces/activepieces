@@ -6,14 +6,8 @@ const httpMethodDropdownOptions = Object.values(HttpMethod).map(m => ({
   value: m,
 }));
 
-export const httpMethodDropdown = Property.Dropdown<HttpMethod>({
+export const httpMethodDropdown = Property.StaticDropdown<HttpMethod>({
   displayName: 'Method',
   required: true,
-  refreshers: [],
-  async options() {
-    return {
-      disabled: false,
-      options: httpMethodDropdownOptions,
-    };
-  }
+  options:{options:httpMethodDropdownOptions},
 });

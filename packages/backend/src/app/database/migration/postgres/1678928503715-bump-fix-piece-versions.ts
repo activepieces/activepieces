@@ -38,8 +38,7 @@ export class bumpFixPieceVersions1678928503715 implements MigrationInterface {
         }
 
         let connectionCount = 0
-        const appConnectionRepo = queryRunner.connection.getRepository(APP_CONNECTION_TABLE)
-        const appConnections = await appConnectionRepo.find()
+        const appConnections = await queryRunner.query(`SELECT * FROM ${APP_CONNECTION_TABLE}`)
         for (const appConnection of appConnections) {
             let update = false
             if (appConnection.appName === 'google_sheets') {
@@ -76,7 +75,7 @@ export class bumpFixPieceVersions1678928503715 implements MigrationInterface {
             }
             if (update) {
                 connectionCount++
-                await appConnectionRepo.update(appConnection.id, appConnection)
+                await queryRunner.query(`UPDATE ${APP_CONNECTION_TABLE} SET "appName" = $1 WHERE id = $2`, [appConnection.appName, appConnection.id])
             }
         }
         logger.info('bumpFixPieceVersions1678928503715, finished bumping ' + count + ' flows ' + ' and connections count ' + connectionCount)
@@ -138,4 +137,3 @@ function updateStep(step: Step | undefined): boolean {
     }
     return update
 }
-

@@ -8,8 +8,6 @@ export const upsertByExternalId = createAction({
         name: 'upsert_by_external_id',
         displayName: 'Batch Upsert (Advanced)',
         description: 'Batch upsert a record by external id',
-        sampleData: {
-        },
         props: {
             object: salesforcesCommon.object,
             external_field: Property.ShortText({

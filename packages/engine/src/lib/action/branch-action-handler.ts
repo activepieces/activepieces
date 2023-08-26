@@ -36,7 +36,7 @@ export class BranchActionHandler extends BaseActionHandler<BranchAction, BranchR
     const censoredInput = await this.variableService.resolve({
       unresolvedInput: this.currentAction.settings,
       executionState,
-      censorConnections: true,
+      logs: true,
     })
 
     const newStepOutput: BranchStepOutput = {
@@ -55,7 +55,7 @@ export class BranchActionHandler extends BaseActionHandler<BranchAction, BranchR
     const resolvedInput: BranchActionSettings = await this.variableService.resolve({
       unresolvedInput: this.currentAction.settings,
       executionState,
-      censorConnections: false,
+      logs: false,
     })
 
     const stepOutput = await this.loadStepOutput({

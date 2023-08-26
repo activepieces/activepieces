@@ -4,7 +4,7 @@ import { twilioNewIncomingSms } from './lib/trigger/new-incoming-sms';
 
 export const twilioAuth = PieceAuth.BasicAuth({
     description: 'The authentication to use to connect to Twilio',
-    displayName: 'Authentication',
+    
     required: true,
     username: {
         displayName: 'Account SID',

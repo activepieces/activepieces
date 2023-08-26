@@ -9,9 +9,6 @@ export const requestActionDirectMessageAction = createAction({
   name: 'request_action_direct_message',
   displayName: 'Request Action from A User',
   description: 'Send a message to a user and wait until the user selects an action',
-  sampleData: {
-    action: 'selectedAction',
-  },
   props: {
     userId,
     text,

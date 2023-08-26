@@ -1,8 +1,8 @@
 import { Static, Type } from "@sinclair/typebox";
 
-export const ListAppConnectionRequest = Type.Object({
+export const ListAppConnectionsRequestQuery = Type.Object({
     cursor: Type.Optional(Type.String({})),
     appName: Type.Optional(Type.String({})),
     limit: Type.Optional(Type.Number({}))
 });
-export type ListAppConnectionRequest = Static<typeof ListAppConnectionRequest>;
+export type ListAppConnectionsRequestQuery = Static<typeof ListAppConnectionsRequestQuery>;

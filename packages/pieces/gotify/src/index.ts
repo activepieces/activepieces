@@ -3,7 +3,7 @@ import { PieceAuth, Property, createPiece } from "@activepieces/pieces-framework
 import { sendNotification } from './lib/actions/send-notification';
 
 export const gotifyAuth = PieceAuth.CustomAuth({
-    displayName: "Authentication",
+    
     description: `
     To obtain a token:
 

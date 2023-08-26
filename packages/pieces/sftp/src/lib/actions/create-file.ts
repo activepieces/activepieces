@@ -5,17 +5,15 @@ import { sftpAuth } from "../..";
 export const createFile = createAction({
     auth: sftpAuth,
     name: 'create_file',
-    displayName: 'Create new file',
+    displayName: 'Create File from Text',
     description: 'Create a new file in the given path',
     props: {
         fileName: Property.ShortText({
             displayName: 'File Path',
-            description: 'The name of the file to create',
             required: true,
         }),
         fileContent: Property.LongText({
             displayName: 'File content',
-            description: 'The content of the file to create',
             required: true,
         })
     },

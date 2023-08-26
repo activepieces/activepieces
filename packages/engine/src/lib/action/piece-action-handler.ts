@@ -15,9 +15,11 @@ import { globals } from '../globals';
 import { isNil } from '@activepieces/shared'
 import { pieceHelper } from '../helper/action-helper';
 import { createContextStore } from '../services/storage.service';
-import { connectionManager } from '../services/connections.service';
 import { Utils } from '../utils';
 import { ActionContext, PauseHook, PauseHookParams, PiecePropertyMap, StaticPropsValue, StopHook, StopHookParams } from '@activepieces/pieces-framework';
+import { createConnectionManager } from '../services/connections.service';
+import { createTagsManager } from '../services/tags.service';
+import { createFilesService } from '../services/files.service';
 
 type CtorParams = {
   executionType: ExecutionType
@@ -100,7 +102,7 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
     const censoredInput = await this.variableService.resolve({
       unresolvedInput: this.currentAction.settings.input,
       executionState,
-      censorConnections: true,
+      logs: true,
     })
 
     return {
@@ -136,7 +138,7 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
       const resolvedProps = await this.variableService.resolve<StaticPropsValue<PiecePropertyMap>>({
         unresolvedInput: input,
         executionState,
-        censorConnections: false,
+        logs: false,
       })
 
       assertNotNullOrUndefined(globals.flowRunId, 'globals.flowRunId')
@@ -150,8 +152,13 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
         executionType: this.executionType,
         store: createContextStore('', globals.flowVersionId),
         auth: processedInput[AUTHENTICATION_PROPERTY_NAME],
+        files: createFilesService({
+          stepName: this.currentAction.name,
+          type: 'local'
+        }),
         propsValue: processedInput,
-        connections: connectionManager,
+        tags: createTagsManager(executionState),
+        connections: createConnectionManager(executionState),
         serverUrl: globals.serverUrl!,
         run: {
           id: globals.flowRunId,

@@ -6,7 +6,7 @@ import { createCompanyUpdate } from "./lib/actions/create-company-update";
 export const linkedinAuth = PieceAuth.OAuth2({
     authUrl: 'https://www.linkedin.com/oauth/v2/authorization',
     tokenUrl: 'https://www.linkedin.com/oauth/v2/accessToken',
-    displayName: 'Authentication',
+    
     required: true,
     scope: ['w_member_social', 'w_organization_social', 'rw_organization_admin', 'openid', 'email', 'profile']
 })

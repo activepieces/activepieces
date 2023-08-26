@@ -169,8 +169,22 @@ export const rssNewItemTrigger = createTrigger({
         if(!isNil(newFetchDateUnix)){
             await store.put('_lastRssPublishDate', newFetchDateUnix)
         }
-        return newItems
-    },
+        return newItems.sort((a, b) => {
+            const aDate = (a as {pubdate: string, pubDate: string}).pubdate ?? (a as {pubdate: string, pubDate: string}).pubDate;
+            const bDate = (b as {pubdate: string, pubDate: string}).pubdate ?? (b as {pubdate: string, pubDate: string}).pubDate;
+            if (aDate && bDate) {
+                const aUnix = dayjs(aDate).unix();
+                const bUnix = dayjs(bDate).unix();
+                if (aUnix === bUnix) {
+                    return newItems.indexOf(a) - newItems.indexOf(b);
+                } else {
+                    return bUnix - aUnix;
+                }
+            } else {
+                return newItems.indexOf(a) - newItems.indexOf(b);
+            }
+        });
+    }
 });
 
 const polling: Polling<PiecePropValueSchema<PieceAuthProperty>, { rss_feed_url: string }> = {

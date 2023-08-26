@@ -28,7 +28,7 @@ export const triggerHelper = {
     const resolvedProps = await variableService.resolve<StaticPropsValue<PiecePropertyMap>>({
       unresolvedInput: input,
       executionState,
-      censorConnections: false,
+      logs: false,
     })
 
     const {processedInput, errors} = await variableService.applyProcessorsAndValidators(resolvedProps, trigger.props, piece.auth);

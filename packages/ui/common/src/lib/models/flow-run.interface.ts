@@ -9,6 +9,7 @@ export const initializedRun: FlowRun = {
   projectId: '',
   flowVersionId: '',
   flowId: '',
+  tags: [],
   status: ExecutionOutputStatus.RUNNING,
   logsFileId: '',
   startTime: '',

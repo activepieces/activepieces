@@ -30,25 +30,6 @@ export const gmailGetEmail = createAction({
         }
       })
     },
-    sampleData: {
-      id: '183baac18543bef8',
-      threadId: '183baac18543bef8',
-      labelIds: ['UNREAD', 'CATEGORY_SOCIAL', 'INBOX'],
-      snippet: '',
-      payload: {
-        partId: '',
-        mimeType: 'multipart/alternative',
-        filename: '',
-        headers: [
-          [Object]
-        ],
-        body: { size: 0 },
-        parts: [[Object]]
-      },
-      sizeEstimate: 107643,
-      historyId: '99742',
-      internalDate: '1665284181000'
-    },
     run: async ({ auth, propsValue: { format, message_id } }) =>
       await GmailRequests.getMail({
         access_token: auth.access_token,

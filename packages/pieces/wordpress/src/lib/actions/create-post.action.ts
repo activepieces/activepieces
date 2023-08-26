@@ -249,7 +249,7 @@ export const createWordpressPost = createAction({
         if (context.propsValue.date) {
             requestBody['date'] = context.propsValue.date;
         }
-        if (context.propsValue.comment_status !== undefined) {
+        if (context.propsValue.comment_status) {
             requestBody['comment_status'] = context.propsValue.comment_status ? 'open' : 'closed';
         }
         if (context.propsValue.categories) {
@@ -264,22 +264,21 @@ export const createWordpressPost = createAction({
         if (context.propsValue.tags) {
             requestBody['tags'] = context.propsValue.tags;
         }
-        if (context.propsValue.ping_status !== undefined) {
+        if (context.propsValue.ping_status) {
             requestBody['ping_status'] = context.propsValue.ping_status ? 'open' : 'closed';
         }
-        if (context.propsValue.status !== undefined) {
+        if (context.propsValue.status) {
             requestBody['status'] = context.propsValue.status;
         }
-        if (context.propsValue.featured_media !== undefined) {
+        if (context.propsValue.featured_media) {
             requestBody['featured_media'] = context.propsValue.featured_media;
         }
 
 
-        if (context.propsValue.featured_media_file !== undefined) {
+        if (context.propsValue.featured_media_file) {
             const formData = new FormData();
             const { filename, base64 } = context.propsValue.featured_media_file;
             formData.append('file', Buffer.from(base64, "base64"), filename);
-            console.log(context.propsValue.featured_media_file.filename);
             const uploadMediaResponse = await httpClient.sendRequest<{ id: string }>({
                 method: HttpMethod.POST,
                 url: `${context.auth.website_url.trim()}/wp-json/wp/v2/media`,
@@ -293,7 +292,7 @@ export const createWordpressPost = createAction({
                     password: context.auth.password,
                 },
             });
-            requestBody['feature_media'] = uploadMediaResponse.body.id;
+            requestBody['featured_media'] = uploadMediaResponse.body.id;
         }
         requestBody['content'] = context.propsValue.content;
         requestBody['title'] = context.propsValue.title;

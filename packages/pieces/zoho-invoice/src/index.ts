@@ -2,7 +2,6 @@ import { createPiece, PieceAuth, Property } from "@activepieces/pieces-framework
 import { newInvoice } from "./lib/triggers/new-invoice";
 
 export const zohoAuth = PieceAuth.OAuth2({
-    displayName: 'Authentication',
     required: true,
     authUrl: 'https://accounts.zoho.{region}/oauth/v2/auth',
     tokenUrl: 'https://accounts.zoho.{region}/oauth/v2/token',

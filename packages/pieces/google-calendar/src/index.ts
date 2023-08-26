@@ -5,7 +5,7 @@ import { createEvent } from "./lib/actions/create-event";
 
 export const googleCalendarAuth = PieceAuth.OAuth2({
   description: '',
-  displayName: 'Authentication',
+  
   authUrl: 'https://accounts.google.com/o/oauth2/auth',
   tokenUrl: 'https://oauth2.googleapis.com/token',
   required: true,

@@ -33,13 +33,16 @@ import { AddAuthToPiecesMetadata1688922241747 } from './migration/postgres//1688
 import { AddUpdatedByInFlowVersion1689292797727 } from './migration/postgres/1689292797727-AddUpdatedByInFlowVersion'
 import { AddTasksToRun1689351564290 } from './migration/postgres/1689351564290-AddTasksToRun'
 import { commonProperties } from './database-connection'
+import { AddAppConnectionTypeToTopLevel1691703023866 } from './migration/postgres/1691703023866-add-app-connection-type-to-top-level'
+import { AddTagsToRun1692106375081 } from './migration/postgres/1692106375081-AddTagsToRun'
+import { AddFileToPostgres1693004806926 } from './migration/postgres/1693004806926-AddFileToPostgres'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
 
     if (useSsl === 'true') {
         return {
-            ca: system.get(SystemProp.POSTGRES_SSL_CA),
+            ca: system.get(SystemProp.POSTGRES_SSL_CA)?.replace(/\\n/g, '\n'),
         }
     }
 
@@ -96,6 +99,9 @@ export const createPostgresDataSource = () => {
             AddAuthToPiecesMetadata1688922241747,
             AddUpdatedByInFlowVersion1689292797727,
             AddTasksToRun1689351564290,
+            AddAppConnectionTypeToTopLevel1691703023866,
+            AddTagsToRun1692106375081,
+            AddFileToPostgres1693004806926,
         ],
         ...commonProperties,
     })

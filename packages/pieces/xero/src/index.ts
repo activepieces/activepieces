@@ -12,7 +12,7 @@ export const xeroAuth = PieceAuth.OAuth2({
   5. Enter your \`redirect url\`
   6. Copy the \`Client Id\` and \`Client Secret\`
   `,
-  displayName: 'Authentication',
+  
   authUrl: "https://login.xero.com/identity/connect/authorize",
   tokenUrl: "https://identity.xero.com/connect/token",
   required: true,

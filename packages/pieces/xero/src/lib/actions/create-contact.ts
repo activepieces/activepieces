@@ -8,20 +8,6 @@ export const xeroCreateContact = createAction({
     name: 'xero_create_contact',
     description: 'Create Xero Contact',
     displayName: 'Create or Update Contact',
-    sampleData: {
-      "Contacts": [{
-        "Name": "Bruce Banner", "EmailAddress":
-          "hulk@avengers.com", "Phones": [{
-            "PhoneType": "MOBILE",
-            "PhoneNumber": "555-1212", "PhoneAreaCode": "415"
-          }],
-        "PaymentTerms": {
-          "Bills": {
-            "Day": 15, "Type": "OFCURRENTMONTH"
-          }, "Sales": { "Day": 10, "Type": "DAYSAFTERBILLMONTH" }
-        }
-      }]
-    },
     props: {
       tenant_id: props.tenant_id,
       contact_id: props.contact_id(false),

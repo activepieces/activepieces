@@ -8,7 +8,6 @@ export const createCompanyUpdate = createAction({
         name: "create_company_update",
         displayName: "Create Company Update",
         description: 'Create a new company update for Company Page',
-        sampleData: {},
         props: {
             company: linkedinCommon.company,
             text: linkedinCommon.text,

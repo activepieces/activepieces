@@ -1,29 +1,33 @@
 import { PieceAuth, Property, createPiece } from "@activepieces/pieces-framework";
-
+import imap from 'node-imap';
 import { newEmail } from "./lib/triggers/new-email";
 
+const description = `
+**Gmail Users:**
+<br><br>
+Make Sure of the following:
+<br>
+* IMAP is enabled in your Gmail settings (https://support.google.com/mail/answer/7126229?hl=en)
+* You have created an App Password to login with (https://support.google.com/accounts/answer/185833?hl=en)
+* Enable TLS and set the port to 993 and the host to imap.gmail.com
+`
 export const imapAuth = PieceAuth.CustomAuth({
-    displayName: 'Authentication',
-    description: 'Enter your IMAP server authentication details',
+    description: description,
     props: {
         host: Property.ShortText({
             displayName: 'Host',
-            description: 'The host of the IMAP server',
             required: true,
         }),
         username: Property.ShortText({
             displayName: 'Username',
-            description: 'The username of the IMAP server',
             required: true,
         }),
         password: PieceAuth.SecretText({
             displayName: 'Password',
-            description: 'The password of the IMAP server',
             required: true,
         }),
         port: Property.Number({
             displayName: 'Port',
-            description: 'The port of the IMAP server',
             required: true,
             defaultValue: 143,
         }),
@@ -33,12 +37,41 @@ export const imapAuth = PieceAuth.CustomAuth({
             required: true,
         }),
     },
+    validate: async ({ auth }) => {
+        try {
+            const imapClient = new imap({
+                host: auth.host,
+                user: auth.username,
+                password: auth.password,
+                port: auth.port,
+                tls: auth.tls
+            });
+            return new Promise((resolve, reject) => {
+                imapClient.once('error', function (err) {
+                    resolve({ valid: false, error: JSON.stringify(err) });
+                });
+                imapClient.once('ready', function () {
+                    resolve({ valid: true });
+                    imapClient.end();
+                });
+                imapClient.once('end', function () {
+                    imapClient.end();
+                });
+                imapClient.connect();
+            });
+        } catch (e) {
+            return {
+                valid: false,
+                error: JSON.stringify(e)
+            };
+        }
+    },
     required: true
 })
 
-export const imap = createPiece({
+export const imapPiece = createPiece({
     displayName: "IMAP",
-        minimumSupportedRelease: '0.5.0',
+    minimumSupportedRelease: '0.5.0',
     logoUrl: "https://cdn.activepieces.com/pieces/imap.png",
     authors: ['MoShizzle'],
     auth: imapAuth,

@@ -47,6 +47,10 @@ input.form-control {
 a {
   @apply ap-underline ap-text-blue-link ap-typography-caption;
 }
+a.no-link-styling {
+ all:unset;
+}
+
 
 ap-markdown {
   @apply ap-typography-body-1;
@@ -92,7 +96,7 @@ app-builder-autocomplete-mentions-dropdown {
   border-right-color: transparent;
 }
 
-ap-markdown {
+ap-markdown{
   ul,
   ol {
     margin-top: 1em;
@@ -109,6 +113,21 @@ ap-markdown {
   }
 }
 
+.ap-markdown 
+{
+  ul,
+  ol {
+    
+    padding-left: 0;
+    list-style-type: auto !important; /* for unordered lists */
+  }
+
+  li {
+    margin: 0;
+    padding: 0;
+    list-style: inherit;
+  }
+}
 .thin-scrollbars {
   &::-webkit-scrollbar {
     width: 16px;
@@ -135,4 +154,10 @@ ap-markdown {
   overflow: hidden;
   -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
+}
+.ap-line-clamp-1
+{
+  overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
 }

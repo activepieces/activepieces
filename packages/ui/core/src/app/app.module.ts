@@ -42,7 +42,14 @@ const monacoConfig: NgxMonacoEditorConfig = {
     const monaco = (window as any).monaco;
     monaco.editor.defineTheme('apTheme', apMonacoTheme);
     monaco.editor.defineTheme('cobalt2', cobalt2);
-  }, // here monaco object will be available as window.monaco use this function to extend monaco editor functionalities.
+    const stopImportResolutionError = () => {
+      monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
+        diagnosticCodesToIgnore: [2792],
+      });
+    };
+    stopImportResolutionError();
+    // Assuming you have already initialized the Monaco editor instance as 'editor'
+  },
 };
 export function tokenGetter() {
   const jwtToken: any = localStorage.getItem(environment.jwtTokenName);

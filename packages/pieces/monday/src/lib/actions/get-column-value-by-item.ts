@@ -1,5 +1,5 @@
 import { HttpMethod } from "@activepieces/pieces-common"
-import { createAction } from "@activepieces/pieces-framework"
+import { Property, createAction } from "@activepieces/pieces-framework"
 import { mondayProps } from "../common/props"
 import { mondayMakeRequest } from "../common/data"
 import { mondayAuth } from "../.."
@@ -9,18 +9,14 @@ export const mondayGetItemColumnValues = createAction({
   name: 'monday_get_item-col-val',
   displayName: 'Get Column Values',
   description: 'Get Column values by providing item id.',
-  sampleData: {
-    "data": {
-      "items": {
-        "id": "1175651821"
-      }
-    },
-    "account_id": 16284131
-  },
   props: {
     workspace_id: mondayProps.workspace_id(true),
     board_id: mondayProps.board_id(true),
-    item_id: mondayProps.item_id(true)
+    item_id: Property.ShortText({
+      displayName: 'Item Id',
+      description: "Value of an item's id",
+      required: true,
+    }),
   },
   async run(context) {
     const { ...itemValues } = context.propsValue

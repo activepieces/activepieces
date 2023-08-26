@@ -15,23 +15,27 @@ import {
     EmptyTrigger,
     TriggerType,
     apId,
-    ExecuteFlowOperation,
     ExecutionType,
     EngineResponseStatus,
     ExecutionState,
     BranchStepOutput,
     ExecutionOutputStatus,
+    UserId,
+    FlowOperationType,
+    EngineTestOperation,
+    StepOutputStatus,
 } from '@activepieces/shared'
 import { engineHelper } from '../../helper/engine-helper'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { fileService } from '../../file/file.service'
-import { codeBuilder } from '../../workers/code-worker/code-builder'
 import { isNil } from '@activepieces/shared'
 import { getServerUrl } from '../../helper/public-ip-utils'
 import { sandboxManager } from '../../workers/sandbox'
+import { flowService } from '../flow/flow.service'
+import { stepFileService } from '../step-file/step-file.service'
 
 export const stepRunService = {
-    async create({ projectId, flowVersionId, stepName }: CreateParams): Promise<StepRunResponse> {
+    async create({ projectId, flowVersionId, stepName, userId }: CreateParams): Promise<StepRunResponse> {
         const flowVersion = await flowVersionService.getOneOrThrow(flowVersionId)
         const step = flowHelper.getStep(flowVersion, stepName)
 
@@ -46,13 +50,13 @@ export const stepRunService = {
 
         switch (step.type) {
             case ActionType.PIECE: {
-                return await executePiece({ step, flowVersion, projectId })
+                return executePiece({ step, flowVersion, projectId, userId })
             }
             case ActionType.CODE: {
-                return await executeCode({ step, flowVersion, projectId })
+                return executeCode({ step, flowVersion, projectId, userId })
             }
             case ActionType.BRANCH: {
-                return await executeBranch({ step, flowVersion, projectId })
+                return executeBranch({ step, flowVersion, projectId, userId })
             }
             default: {
                 return {
@@ -66,7 +70,7 @@ export const stepRunService = {
     },
 }
 
-async function executePiece({ step, projectId, flowVersion }: ExecuteParams<PieceAction>): Promise<StepRunResponse> {
+async function executePiece({ step, projectId, flowVersion, userId }: ExecuteParams<PieceAction>): Promise<StepRunResponse> {
     const { pieceName, pieceVersion, actionName, input } = step.settings
 
     if (isNil(actionName)) {
@@ -78,6 +82,11 @@ async function executePiece({ step, projectId, flowVersion }: ExecuteParams<Piec
         })
     }
 
+    await stepFileService.deleteAll({
+        projectId,
+        flowId: flowVersion.flowId,
+        stepName: step.name,
+    })
     const operation: ExecuteActionOperation = {
         serverUrl: await getServerUrl(),
         pieceName,
@@ -91,7 +100,15 @@ async function executePiece({ step, projectId, flowVersion }: ExecuteParams<Piec
     const { result, standardError, standardOutput } = await engineHelper.executeAction(operation)
     if (result.success) {
         step.settings.inputUiInfo.currentSelectedData = result.output
-        await flowVersionService.overwriteVersion(flowVersion.id, flowVersion)
+        await flowService.update({
+            userId,
+            flowId: flowVersion.flowId,
+            projectId,
+            request: {
+                type: FlowOperationType.UPDATE_ACTION,
+                request: step,
+            },
+        })
     }
     return {
         success: result.success,
@@ -106,10 +123,10 @@ async function executeCode({ step, flowVersion, projectId }: ExecuteParams<CodeA
         projectId,
         fileId: step.settings.artifactSourceId!,
     })
-    const bundledCode = await codeBuilder.build(file.data)
 
     const { result, standardError, standardOutput } = await engineHelper.executeCode({
-        codeBase64: bundledCode.toString('base64'),
+        file,
+        step,
         input: step.settings.input,
         flowVersion,
         projectId,
@@ -134,34 +151,44 @@ const executeBranch = async ({ step, flowVersion, projectId }: ExecuteParams<Bra
         })
     }
 
-    delete branchStep.nextAction
-    delete branchStep.onFailureAction
-    delete branchStep.onSuccessAction
-
     const testTrigger: EmptyTrigger = {
-        name: 'test_branch_step',
+        name: 'test_trigger',
         valid: true,
         displayName: 'test branch step',
-        nextAction: branchStep,
+        nextAction: {
+            ...branchStep,
+            nextAction: undefined,
+            onSuccessAction: undefined,
+            onFailureAction: undefined,
+        },
         type: TriggerType.EMPTY,
         settings: {},
     }
 
-    flowVersion.trigger = testTrigger
+    const testFlowVersion: FlowVersion = {
+        ...flowVersion,
+        trigger: testTrigger,
+    }
 
-    const testInput: ExecuteFlowOperation = {
+    const testInput: EngineTestOperation = {
         executionType: ExecutionType.BEGIN,
         flowRunId: apId(),
-        flowVersion,
+        flowVersion: testFlowVersion,
         projectId,
         serverUrl: await getServerUrl(),
-        triggerPayload: {},
+        triggerPayload: {
+            duration: 0,
+            input: {},
+            output: flowVersion.trigger.settings.inputUiInfo.currentSelectedData,
+            status: StepOutputStatus.SUCCEEDED,
+        },
+        sourceFlowVersion: flowVersion,
     }
 
     const testSandbox = await sandboxManager.obtainSandbox(apId())
     await testSandbox.recreate()
 
-    const { status, result, standardError, standardOutput } = await engineHelper.executeFlow(testSandbox, testInput)
+    const { status, result, standardError, standardOutput } = await engineHelper.executeTest(testSandbox, testInput)
 
     if (status !== EngineResponseStatus.OK || result.status !== ExecutionOutputStatus.SUCCEEDED) {
         return {
@@ -195,6 +222,7 @@ const executeBranch = async ({ step, flowVersion, projectId }: ExecuteParams<Bra
 }
 
 type CreateParams = {
+    userId: UserId
     projectId: ProjectId
     flowVersionId: FlowVersionId
     stepName: string
@@ -202,6 +230,7 @@ type CreateParams = {
 
 type ExecuteParams<T extends Action> = {
     step: T
+    userId: UserId
     flowVersion: FlowVersion
     projectId: ProjectId
 }

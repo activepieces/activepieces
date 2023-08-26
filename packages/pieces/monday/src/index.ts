@@ -7,7 +7,7 @@ import { mondayNewUpdatesTrigger } from "./lib/triggers/new-update-trigger";
 import { mondayGetItemByColumnValues } from './lib/actions/get-item-by-column-value';
 
 export const mondayAuth = PieceAuth.OAuth2({
-  displayName: "Authentication",
+  
   description: "OAuth2.0 Authentication",
   authUrl: "https://auth.monday.com/oauth2/authorize",
   tokenUrl: "https://auth.monday.com/oauth2/token",

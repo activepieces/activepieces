@@ -8,7 +8,7 @@ import { updatedDeal } from './lib/trigger/updated-deal'
 
 export const pipedriveAuth = PieceAuth.OAuth2({
     description: "",
-    displayName: 'Authentication',
+    
     authUrl: "https://oauth.pipedrive.com/oauth/authorize",
     tokenUrl: "https://oauth.pipedrive.com/oauth/token",
     required: true,

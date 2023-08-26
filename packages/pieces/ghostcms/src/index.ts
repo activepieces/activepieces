@@ -21,7 +21,7 @@ To generate an API key, follow the steps below in GhostCMS:
 `;
 
 export const ghostAuth = PieceAuth.CustomAuth({
-    displayName: 'Authentication',
+    
     description: authMarkdown,
     required: true,
     props: {

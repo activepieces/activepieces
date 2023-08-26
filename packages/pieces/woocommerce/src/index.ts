@@ -18,7 +18,7 @@ Note that the base URL of your WooCommerce instance needs to be on a secure (HTT
 `;
 
 export const wooAuth = PieceAuth.CustomAuth({
-    displayName: 'Authentication',
+    
     description: authDescription,
     required: true,
     props: {
@@ -37,6 +37,13 @@ export const wooAuth = PieceAuth.CustomAuth({
             description: 'The consumer secret generated from your app',
             required: true,
         })
+    },
+    async validate( {auth}) {
+        const baseUrl = auth.baseUrl;
+        if (!baseUrl.match(/^(https):\/\//)) {
+            return { valid: false, error: 'Base URL must start with https (e.g https://mystore.com)' }
+        }
+        return { valid: true}
     }
 })
 
@@ -44,7 +51,7 @@ export const woocommerce = createPiece({
     displayName: "WooCommerce",
     logoUrl: "https://cdn.activepieces.com/pieces/woocommerce.png",
     auth: wooAuth,
-    minimumSupportedRelease: '0.5.0',
+    minimumSupportedRelease: '0.7.1',
     authors: ['MoShizzle'],
     actions: [],
     triggers: [customer, coupon, order, product, lineItemInOrder],

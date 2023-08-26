@@ -57,12 +57,6 @@ export const googleDriveUploadFile = createAction({
         }
       }),
     },
-    sampleData: {
-      "kind": "drive#file",
-      "id": "1VjCR4-747AvKH7KeQ6GclFpCnu_41ZDX",
-      "name": "text.txt",
-      "mimeType": "plain/text"
-    },
     async run(context) {
       const fileData = context.propsValue.file;
       const mimeType = mime.lookup(fileData.extension ? fileData.extension : '');

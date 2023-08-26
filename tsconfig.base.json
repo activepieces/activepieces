@@ -30,12 +30,6 @@
         "packages/pieces/bannerbear/src/index.ts"
       ],
       "@activepieces/piece-binance": ["packages/pieces/binance/src/index.ts"],
-      "@activepieces/piece-blackbaud": [
-        "packages/pieces/blackbaud/src/index.ts"
-      ],
-      "@activepieces/piece-bloomerang": [
-        "packages/pieces/bloomerang/src/index.ts"
-      ],
       "@activepieces/piece-box": ["packages/pieces/box/src/index.ts"],
       "@activepieces/piece-cal-com": ["packages/pieces/cal-com/src/index.ts"],
       "@activepieces/piece-calendly": ["packages/pieces/calendly/src/index.ts"],
@@ -47,6 +41,9 @@
       ],
       "@activepieces/piece-constant-contact": [
         "packages/pieces/constant-contact/src/index.ts"
+      ],
+      "@activepieces/piece-contiguity": [
+        "packages/pieces/contiguity/src/index.ts"
       ],
       "@activepieces/piece-csv": ["packages/pieces/csv/src/index.ts"],
       "@activepieces/piece-data-mapper": [
@@ -115,6 +112,7 @@
         "packages/pieces/invoiceninja/src/index.ts"
       ],
       "@activepieces/piece-jotform": ["packages/pieces/jotform/src/index.ts"],
+      "@activepieces/piece-kimai": ["packages/pieces/kimai/src/index.ts"],
       "@activepieces/piece-kizeo-forms": [
         "packages/pieces/kizeo-forms/src/index.ts"
       ],
@@ -151,7 +149,6 @@
       "@activepieces/piece-salesforce": [
         "packages/pieces/salesforce/src/index.ts"
       ],
-      "@activepieces/piece-salsa": ["packages/pieces/salsa/src/index.ts"],
       "@activepieces/piece-schedule": ["packages/pieces/schedule/src/index.ts"],
       "@activepieces/piece-sendgrid": ["packages/pieces/sendgrid/src/index.ts"],
       "@activepieces/piece-sendinblue": [
@@ -159,6 +156,9 @@
       ],
       "@activepieces/piece-sftp": ["packages/pieces/sftp/src/index.ts"],
       "@activepieces/piece-shopify": ["packages/pieces/shopify/src/index.ts"],
+      "@activepieces/piece-simplepdf": [
+        "packages/pieces/simplepdf/src/index.ts"
+      ],
       "@activepieces/piece-slack": ["packages/pieces/slack/src/index.ts"],
       "@activepieces/piece-smtp": ["packages/pieces/smtp/src/index.ts"],
       "@activepieces/piece-soap": ["packages/pieces/soap/src/index.ts"],
@@ -169,12 +169,15 @@
       ],
       "@activepieces/piece-store": ["packages/pieces/store/src/index.ts"],
       "@activepieces/piece-stripe": ["packages/pieces/stripe/src/index.ts"],
+      "@activepieces/piece-supabase": ["packages/pieces/supabase/src/index.ts"],
       "@activepieces/piece-surveymonkey": [
         "packages/pieces/surveymonkey/src/index.ts"
       ],
+      "@activepieces/piece-tags": ["packages/pieces/tags/src/index.ts"],
       "@activepieces/piece-telegram-bot": [
         "packages/pieces/telegram-bot/src/index.ts"
       ],
+      "@activepieces/piece-tidycal": ["packages/pieces/tidycal/src/index.ts"],
       "@activepieces/piece-todoist": ["packages/pieces/todoist/src/index.ts"],
       "@activepieces/piece-trello": ["packages/pieces/trello/src/index.ts"],
       "@activepieces/piece-twilio": ["packages/pieces/twilio/src/index.ts"],
@@ -195,6 +198,7 @@
       "@activepieces/piece-zoho-invoice": [
         "packages/pieces/zoho-invoice/src/index.ts"
       ],
+      "@activepieces/piece-nifty": ["packages/pieces/nifty/src/index.ts"],
       "@activepieces/piece-zoom": ["packages/pieces/zoom/src/index.ts"],
       "@activepieces/pieces-common": ["packages/pieces/common/src/index.ts"],
       "@activepieces/pieces-framework": [

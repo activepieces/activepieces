@@ -12,8 +12,8 @@ To obtain your API key, follow these steps:
 `
 
 export const mailerListAuth = PieceAuth.SecretText({
+    displayName: 'API Key',
     description: markdownDescription,
-    displayName: 'Authentication',
     required: true,
 })
 

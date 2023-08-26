@@ -3,7 +3,7 @@ import { todoistCreateTaskAction } from './lib/actions/create-task-action';
 import { todoistTaskCompletedTrigger } from './lib/triggers/task-completed-trigger';
 
 export const todoistAuth = PieceAuth.OAuth2({
-    displayName: 'Authentication',
+    
     required: true,
     authUrl: 'https://todoist.com/oauth/authorize',
     tokenUrl: 'https://todoist.com/oauth/access_token',

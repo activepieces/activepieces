@@ -11,7 +11,7 @@ const markdownProperty = `
 `
 
 export const zendeskAuth = PieceAuth.CustomAuth({
-  displayName: 'Authentication',
+  
   description: markdownProperty,
   props: {
       email: Property.ShortText({

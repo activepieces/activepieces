@@ -6,7 +6,6 @@ import { apiTableUpdateRecord } from "./lib/actions/update-record";
 import { apiTableFindRecord } from "./lib/actions/find-record";
 
 export const APITableAuth = PieceAuth.CustomAuth({
-    displayName: 'APITable Token',
     required: true,
     description: `
     To obtain your APITable token, follow these steps:
@@ -26,7 +25,7 @@ export const APITableAuth = PieceAuth.CustomAuth({
         required: true,
       }),
       apiTableUrl: Property.ShortText({
-        displayName: 'APITable Url',
+        displayName: 'Instance Url',
         description: 'The url of the APITable instance.',
         required: true,
         defaultValue: 'https://api.apitable.com',
