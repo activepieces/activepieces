@@ -29,7 +29,7 @@ export class ChatbotSettingsComponent implements OnInit {
   formGroup: FormGroup<{
     displayName: FormControl<string>;
     prompt: FormControl<string>;
-    connection: FormControl<string>;
+    auth: FormControl<string>;
     sources: FormControl<DataSourceValue[]>;
   }>;
   updateExistingDate$: Observable<void> | undefined;
@@ -64,11 +64,12 @@ export class ChatbotSettingsComponent implements OnInit {
         validators: [Validators.required],
         nonNullable: true,
       }),
-      connection: new FormControl('', {
+      auth: new FormControl('', {
         validators: [Validators.required],
         nonNullable: true,
       }),
-      sources: new FormControl([] as DataSourceValue[], {
+      sources: new FormControl<DataSourceValue[]>([], {
+        validators: [],
         nonNullable: true,
       }),
     });
@@ -102,9 +103,20 @@ export class ChatbotSettingsComponent implements OnInit {
     propertyKey: string;
     value: `{{connections['${string}']}}`;
   }) {
-    this.formGroup.controls.connection.setValue(event.value.toString());
+    // Extract the connection name from the value
+    const match = event.value.match(/'([^']+)'/);
+    const value = match ? match[1] : '';
+    this.formGroup.controls.auth.setValue(value);
   }
   submit() {
+    this.chatbotService.update(this.chatbotId, {
+      displayName: this.formGroup.controls['displayName'].value,
+      settings: {
+        prompt: this.formGroup.controls['prompt'].value,
+        auth: this.formGroup.controls['auth'].value,
+      }
+    });
+    console.log(JSON.stringify(this.formGroup.value) + " " + this.formGroup.valid);
     this.formGroup.markAllAsTouched();
   }
 }

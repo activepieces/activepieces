@@ -11,31 +11,32 @@ function getStorePath(botId: string) {
   return path.join(os.homedir(), '.activepieces', botId);
 }
 
-function getEmbedding() {
+function getEmbedding(openAIApiKey: string) {
   return new OpenAIEmbeddings({
+    openAIApiKey,
   });
 }
 
-async function getStore(botId: string) {
+async function getStore({ botId, openAIApiKey }: { botId: string, openAIApiKey: string }) {
   if (storeCache[botId]) {
     return storeCache[botId];
   }
   const dir = getStorePath(botId);
   try {
     await fs.access(dir);
-    const store = await FaissStore.load(dir, getEmbedding());
+    const store = await FaissStore.load(dir, getEmbedding(openAIApiKey));
     storeCache[botId] = store;
     return store;
   } catch (error) {
-    const store = await FaissStore.fromDocuments([], getEmbedding());
+    const store = await FaissStore.fromDocuments([], getEmbedding(openAIApiKey));
     storeCache[botId] = store;
     return store;
   }
 }
 
-export const faissEmbedding = (botId: string) => ({
+export const faissEmbedding = ({ openAIApiKey, botId }: { botId: string, openAIApiKey: string }) => ({
   async query({ input }: { input: string }) {
-    const store = await getStore(botId);
+    const store = await getStore({ botId, openAIApiKey });
     if (store.docstore._docs.size === 0) {
       return [];
     }
@@ -49,7 +50,10 @@ export const faissEmbedding = (botId: string) => ({
     datasourceId: string;
     documents: Document[];
   }) {
-    const store = await getStore(botId);
+    const store = await getStore({
+      botId,
+      openAIApiKey
+    });
     const dir = getStorePath(botId);
     const modifiedDocument = documents.map((f) => {
       return {
@@ -65,7 +69,10 @@ export const faissEmbedding = (botId: string) => ({
     delete storeCache[botId];
   },
   async deleteDocuments({ datasourceId }: { datasourceId: string }) {
-    const store = await getStore(botId);
+    const store = await getStore({
+      botId,
+      openAIApiKey
+    });
     const dir = getStorePath(botId);
     const documentsToKeep: Document[] = [];
     store.docstore._docs.forEach((doc) => {
@@ -78,7 +85,7 @@ export const faissEmbedding = (botId: string) => ({
     } else {
       const newStore = await FaissStore.fromDocuments(
         documentsToKeep,
-        getEmbedding()
+        getEmbedding(openAIApiKey)
       );
       await newStore.save(dir);
     }

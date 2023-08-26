@@ -18,6 +18,7 @@ export const Chatbot = Type.Object({
   displayName: Type.String(),
   projectId: Type.String(),
   settings: Type.Object({
+    auth: Type.String(),
     prompt: Type.String()
   }),
   dataSources: Type.Array(DataSource)
@@ -32,7 +33,10 @@ export const CreateChatBotRequest = Type.Object({
 export type CreateChatBotRequest = Static<typeof CreateChatBotRequest>;
 export const UpdateChatbotRequest = Type.Object({
   displayName: Type.String(),
-  settings: Type.Record(Type.String(), Type.Unknown())
+  settings: Type.Object({
+    prompt: Type.String(),
+    auth: Type.String()
+  })
 });
 
 export type UpdateChatbotRequest = Static<typeof UpdateChatbotRequest>;
