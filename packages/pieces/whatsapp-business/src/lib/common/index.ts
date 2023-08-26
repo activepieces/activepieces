@@ -118,20 +118,38 @@ export const whatsappBusinessCommon = {
     },
 
     sendMessage: async (accessToken: string, message: {
-        whatsappNumberId: string | number,
-        to: string,
-        text?: string,
+        whatsappNumberId: string | number
+        to: string
+        type: string
+        text?: string
+        messageId?: string
         template?: {
-            name: string,
+            name: string
             language: {
                 code: string
-            },
+            }
             components?: [{
                 type: string,
                 parameters: any[]
             }]
         }
     }) => {
+        const messageBody: any = {
+            messaging_product: 'whatsapp',
+            to: message.to,
+            type: message.type
+        };
+
+        if (message.type == 'template') messageBody.template = message.template;
+        else {
+            messageBody.text = {
+                body: message.text
+            }
+            messageBody.context = {
+                message_id: message.messageId
+            }
+        }
+
         const response = await httpClient.sendRequest({
             method: HttpMethod.POST,
             url: `${whatsappBusinessCommon.baseUrl}/${message.whatsappNumberId}/messages`,
@@ -139,15 +157,7 @@ export const whatsappBusinessCommon = {
                 type: AuthenticationType.BEARER_TOKEN,
                 token: accessToken
             },
-            body: {
-                messaging_product: 'whatsapp',
-                to: message.to,
-                type: 'template',
-                template: message.template
-                // text: {
-                //     body: message.text
-                // }
-            }
+            body: messageBody
         });
         return response.body;
     },

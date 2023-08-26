@@ -8,9 +8,7 @@ export const newMessage = createTrigger({
     displayName: 'New Message',
     description: 'Triggers when a new message is received',
     type: TriggerStrategy.APP_WEBHOOK,
-    sampleData: {
-
-    },
+    sampleData: {},
     props: {},
 
     async onEnable(context) {

@@ -43,8 +43,9 @@ export const sendMessage = createAction({
         const result = await whatsappBusinessCommon.sendMessage(context.auth.access_token, {
             whatsappNumberId: context.propsValue.phoneNumber as any,
             to: context.propsValue.to,
+            type: 'template',
             template: template
-        })
+        });
 
         return result;
     }

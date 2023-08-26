@@ -2,6 +2,7 @@ import { createPiece, PieceAuth, Property } from "@activepieces/pieces-framework
 
 import { sendMessage } from "./lib/actions/send-message";
 import { newMessage } from "./lib/triggers/new-message";
+import { sendReply } from "./lib/actions/send-reply";
 
 export const whatappBusinessAuth = PieceAuth.OAuth2({
     authUrl: "https://graph.facebook.com/oauth/authorize",
@@ -14,7 +15,7 @@ export const whatappBusinessAuth = PieceAuth.OAuth2({
             required: true
         })
     }
-})
+});
 
 export const whatsappBusiness = createPiece({
     displayName: "WhatsApp Business",
@@ -22,7 +23,7 @@ export const whatsappBusiness = createPiece({
     minimumSupportedRelease: '0.7.1',
     logoUrl: "https://cdn.activepieces.com/pieces/whatsapp-business.png",
     authors: ['MoShizzle'],
-    actions: [sendMessage],
+    actions: [sendMessage, sendReply],
     triggers: [newMessage],
     events: {
         parseAndReply: (context) => {
