@@ -191,27 +191,30 @@ export const askOpenAI = createAction({
         )?.data?.choices[0]?.message?.content?.trim();
         break; // Break out of the loop if the request is successful
       } catch (error: any) {
-        if (error?.message?.includes('code 401')) {
-          unaurthorized = true;
-        } else if (error?.message?.includes('code 429')) {
+        if (error?.message?.includes('code 429')) {
           billingIssue = true;
-        }
-        if (retries + 1 === maxRetries) {
+          if (retries + 1 === maxRetries) {
+            throw error;
+          }
+          // Calculate the time delay for the next retry using exponential backoff
+          const delay = Math.pow(6, retries) * 1000;
+          console.log(`Retrying in ${delay} milliseconds...`);
+          await sleep(delay); // Wait for the calculated delay
+          retries++;
+          break;
+        } else {
+          if (error?.message?.includes('code 401')) {
+            unaurthorized = true;
+          }
           throw error;
         }
-        // Calculate the time delay for the next retry using exponential backoff
-        const delay = Math.pow(6, retries) * 1000;
-        console.log(`Retrying in ${delay} milliseconds...`);
-        await sleep(delay); // Wait for the calculated delay
-        retries++;
-        break;
       }
     }
     if (billingIssue) {
       throw new Error(billingIssueMessage);
     }
     if (unaurthorized) {
-      throw new Error(unaurthorizedMessage );
+      throw new Error(unaurthorizedMessage);
     }
     return response;
   }

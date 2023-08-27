@@ -71,6 +71,7 @@ export class Sandbox {
             '_standardOutput.txt',
             '_standardError.txt',
             'output.json',
+            'tmp',
             'meta.txt',
         ]
         const promises = filesToDelete.map((file) => {
@@ -263,7 +264,7 @@ export default class SandboxManager {
         if (SandboxManager._instance != null) {
             throw new Error('Use Singleton.instance instead of new.')
         }
-        for (let boxId = 0; boxId < 1000; ++boxId) {
+        for (let boxId = 0; boxId < 5000; ++boxId) {
             this.sandboxes.set(boxId, new Sandbox({
                 boxId,
                 cached: false,
@@ -320,7 +321,7 @@ export default class SandboxManager {
         if (!sandbox) {
             throw new Error('Sandbox not found')
         }
-        sandbox.cached = false
+        sandbox.resourceId = null
     }
 
     async returnSandbox(sandboxId: number): Promise<void> {

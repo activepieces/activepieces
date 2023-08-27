@@ -19,6 +19,7 @@ import { Utils } from '../utils';
 import { ActionContext, PauseHook, PauseHookParams, PiecePropertyMap, StaticPropsValue, StopHook, StopHookParams } from '@activepieces/pieces-framework';
 import { createConnectionManager } from '../services/connections.service';
 import { createTagsManager } from '../services/tags.service';
+import { createFilesService } from '../services/files.service';
 
 type CtorParams = {
   executionType: ExecutionType
@@ -151,6 +152,10 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
         executionType: this.executionType,
         store: createContextStore('', globals.flowVersionId),
         auth: processedInput[AUTHENTICATION_PROPERTY_NAME],
+        files: createFilesService({
+          stepName: this.currentAction.name,
+          type: 'local'
+        }),
         propsValue: processedInput,
         tags: createTagsManager(executionState),
         connections: createConnectionManager(executionState),
