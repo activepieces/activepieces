@@ -2,7 +2,7 @@ import { OAuth2PropertyValue, PieceAuth, Property } from '@activepieces/pieces-f
 import { hubSpotClient } from './client';
 
 export const hubSpotAuthentication = PieceAuth.OAuth2({
-    displayName: 'Authentication',
+    
     authUrl: 'https://app.hubspot.com/oauth/authorize',
     tokenUrl: 'https://api.hubapi.com/oauth/v1/token',
     required: true,

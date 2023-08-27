@@ -7,29 +7,6 @@ export const createOrUpdateContact = createAction({
     name: 'create_or_update_contact',
     displayName: 'Create or Update Contact',
     description: 'Create or update an existing contact',
-    sampleData: {
-      "id":
-        42,
-      "email": "peggy.rain@example.com",
-      "emailBlacklisted": false,
-      "smsBlacklisted": false,
-      "createdAt": "2017-05-02T16:40:31Z",
-      "modifiedAt": "2017-05-02T16:40:31Z",
-      "attributes": {
-        "FIRST_NAME": "Peggy",
-        "LAST_NAME": "Rain",
-        "SMS": "3087433387669",
-        "CIV": "1",
-        "DOB": "1986-04-13",
-        "ADDRESS": "987 5th avenue",
-        "ZIP_CODE": "87544",
-        "CITY": "New-York",
-        "AREA": "NY"
-      },
-      "listIds": [
-        40
-      ]
-    },
     props: {
       email: Property.ShortText({
         displayName: "Email",

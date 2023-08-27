@@ -14,9 +14,6 @@ export const requestSendApprovalMessageAction = createAction({
   displayName: 'Request Approval in a Channel',
   description:
     'Send approval message to a channel and then wait until the message is approved or disapproved',
-  sampleData: {
-    approved: true
-  },
   props: {
     channel: slackChannel,
     text,

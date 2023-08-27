@@ -3,7 +3,7 @@ import { gmailSendEmailAction } from './lib/actions/send-email-action';
 
 export const gmailAuth = PieceAuth.OAuth2({
     description: "",
-    displayName: 'Authentication',
+    
     authUrl: "https://accounts.google.com/o/oauth2/auth",
     tokenUrl: "https://oauth2.googleapis.com/token",
     required: true,

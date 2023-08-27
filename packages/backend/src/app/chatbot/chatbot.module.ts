@@ -10,7 +10,6 @@ import {
 } from '@fastify/type-provider-typebox'
 import { FastifyInstance } from 'fastify'
 import { chatbotService } from './chatbot.service'
-import { telegramController } from './integrations/telegram.controller'
 import { datasourceController } from './datasources/datasource.controller'
 
 const ChatBotIdParams = Type.Object({
@@ -21,7 +20,6 @@ type ChatBotIdParams = Static<typeof ChatBotIdParams>
 
 export const chatbotModule = async (app: FastifyInstance) => {
     app.register(chatbotController, { prefix: '/v1/chatbots' })
-    app.register(telegramController, { prefix: '/v1/chatbots' })
     app.register(datasourceController, { prefix: '/v1/chatbots' })
 }
 

@@ -4,7 +4,7 @@ import actions from "./lib/actions";
 import triggers from './lib/triggers'
 
 export const clockodoAuth = PieceAuth.CustomAuth({
-  displayName: 'Authentication',
+  
   required: true,
   props: {
     email: Property.ShortText({

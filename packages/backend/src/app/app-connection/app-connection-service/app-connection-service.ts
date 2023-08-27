@@ -15,7 +15,7 @@ import {
     OAuth2ConnectionValueWithApp,
     ProjectId,
     SeekPage,
-    UpsertConnectionRequest,
+    UpsertAppConnectionRequestBody,
 } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -212,43 +212,10 @@ function decryptConnection(
     encryptedConnection: AppConnectionSchema,
 ): AppConnection {
     const value = decryptObject<AppConnectionValue>(encryptedConnection.value)
-    let connection: AppConnection
-    switch (value.type) {
-        case AppConnectionType.BASIC_AUTH:
-            connection = {
-                ...encryptedConnection,
-                status: AppConnectionStatus.ACTIVE,
-                value,
-            }
-            break
-        case AppConnectionType.CLOUD_OAUTH2:
-            connection = {
-                ...encryptedConnection,
-                status: AppConnectionStatus.ACTIVE,
-                value,
-            }
-            break
-        case AppConnectionType.CUSTOM_AUTH:
-            connection = {
-                ...encryptedConnection,
-                status: AppConnectionStatus.ACTIVE,
-                value,
-            }
-            break
-        case AppConnectionType.OAUTH2:
-            connection = {
-                ...encryptedConnection,
-                status: AppConnectionStatus.ACTIVE,
-                value,
-            }
-            break
-        case AppConnectionType.SECRET_TEXT:
-            connection = {
-                ...encryptedConnection,
-                status: AppConnectionStatus.ACTIVE,
-                value,
-            }
-            break
+    const connection: AppConnection = {
+        ...encryptedConnection,
+        status: AppConnectionStatus.ACTIVE,
+        value,
     }
     connection.status = getStatus(connection)
     return connection
@@ -611,7 +578,7 @@ function getStatus(connection: AppConnection): AppConnectionStatus {
 
 type UpsertParams = {
     projectId: ProjectId
-    request: UpsertConnectionRequest
+    request: UpsertAppConnectionRequestBody
 }
 
 type GetOneParams = {
@@ -648,11 +615,11 @@ type claimWithCloudRequest = {
 type EngineValidateAuthParams = {
     pieceName: string
     projectId: ProjectId
-    auth: unknown
+    auth: AppConnectionValue
 }
 
 type ValidateConnectionValueParams = {
-    connection: UpsertConnectionRequest
+    connection: UpsertAppConnectionRequestBody
     projectId: ProjectId
 }
 

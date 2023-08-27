@@ -4,16 +4,19 @@ export interface APLLM {
   chat: ({ input, temperature, maxTokens }: AskChat) => Promise<string>;
 }
 
-export const llm = {
-  async chat({ input, temperature, maxTokens }: AskChat) {
-    const model = new OpenAI({
-      modelName: 'gpt-3.5-turbo',
-      temperature: temperature || 0.7,
-      maxTokens: maxTokens
-    });
-    const response = await model.call(input);
-    return response;
-  }
+export const llm = (openAIApiKey: string, modelName: string) => {
+  return {
+    async chat({ input, temperature, maxTokens }: AskChat) {
+      const model = new OpenAI({
+        modelName: modelName,
+        openAIApiKey: openAIApiKey,
+        temperature: temperature || 0.7,
+        maxTokens: maxTokens
+      });
+      const response = await model.call(input);
+      return response;
+    }
+  };
 };
 
 type AskChat = {

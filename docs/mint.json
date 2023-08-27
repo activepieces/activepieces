@@ -91,6 +91,12 @@
       ]
     },
     {
+      "group": "Helper Pieces",
+      "pages": [
+        "helper-pieces/code"
+      ]
+    },
+    {
       "group": "Getting Started",
       "pages": [
         "developers/overview"

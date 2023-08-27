@@ -3,7 +3,6 @@ import { createTask } from './lib/actions/create-task';
 import { existsTask } from './lib/actions/task-exists';
 
 export const invoiceninjaAuth = PieceAuth.CustomAuth({
-  displayName: 'Custom Authentication',
   props: {
       base_url: Property.ShortText({
           displayName: 'Base URL',

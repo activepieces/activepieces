@@ -1,4 +1,4 @@
-import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/shared';
+import { ActivepiecesError, ErrorCode, SecretTextConnectionValue, isNil } from '@activepieces/shared';
 import { customBot } from './bots/custom-bot';
 import { llm } from './framework/llm';
 import { faissEmbedding } from './embeddings/faiss-embeddings';
@@ -22,10 +22,12 @@ export const runBot = async ({
   botId,
   type,
   input,
+  auth,
   settings
 }: {
   botId: string;
   type: string;
+  auth: SecretTextConnectionValue,
   input: string;
   settings: {
     prompt: string;
@@ -35,10 +37,13 @@ export const runBot = async ({
   if (!bot) {
     throw new Error(`Bot ${type} not found`);
   }
-  const embeddings = await faissEmbedding(botId);
+  const embeddings = await faissEmbedding({
+    botId,
+    openAIApiKey: auth.secret_text
+  });
   return bot.run({
     input,
-    llm: llm,
+    llm: llm(auth.secret_text, 'gpt-3.5-turbo'),
     embeddings,
     settings: settings
   });

@@ -12,8 +12,6 @@ export const createPost = createAction({
             message: facebookPagesCommon.message,
             link: facebookPagesCommon.link
         },
-        sampleData: {},
-
         async run(context) {
             const page: FacebookPageDropdown = context.propsValue.page!
 

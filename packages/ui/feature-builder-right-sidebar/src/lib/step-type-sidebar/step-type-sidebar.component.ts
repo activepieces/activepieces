@@ -284,7 +284,6 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
             settings: {
               artifact: this.codeService.helloWorldBase64(),
               artifactSourceId: '',
-              artifactPackagedId: '',
               input: {},
             },
           },

@@ -16,7 +16,6 @@ type CreateActionParams<PieceAuth extends PieceAuthProperty, ActionProps extends
   props: ActionProps
   run: ActionRunner<PieceAuth, ActionProps>
   requireAuth?: boolean
-  sampleData?: unknown
 }
 
 export class IAction<PieceAuth extends PieceAuthProperty, ActionProps extends NonAuthPiecePropertyMap> implements ActionBase {
@@ -27,7 +26,6 @@ export class IAction<PieceAuth extends PieceAuthProperty, ActionProps extends No
     public readonly props: ActionProps,
     public readonly run: ActionRunner<PieceAuth, ActionProps>,
     public readonly requireAuth: boolean,
-    public readonly sampleData: unknown = {},
   ) { }
 }
 
@@ -49,6 +47,5 @@ export const createAction = <
     params.props,
     params.run,
     params.requireAuth ?? true,
-    params.sampleData,
   )
 }

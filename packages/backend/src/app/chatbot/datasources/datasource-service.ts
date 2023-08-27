@@ -20,7 +20,11 @@ export const datasourceService = {
             auth,
             propsValue,
         })
-        const embedding = faissEmbedding(botId)
+        const embedding = faissEmbedding({
+            botId,
+            // TODO FIX
+            openAIApiKey: auth!,
+        })
         await embedding.addDocuments({
             datasourceId,
             documents: docs,
@@ -33,7 +37,11 @@ export const datasourceService = {
         botId: string
         datasourceId: string
     }) {
-        const embedding = faissEmbedding(botId)
+        const embedding = faissEmbedding({
+            botId,
+            // TODO FIX
+            openAIApiKey: '',
+        })
         await embedding.deleteDocuments({
             datasourceId,
         })

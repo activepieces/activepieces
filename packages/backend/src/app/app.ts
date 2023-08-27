@@ -24,6 +24,8 @@ import { flowInstanceModule } from './flows/flow-instance/flow-instance.module'
 import { chatbotModule } from './chatbot/chatbot.module'
 import { system } from './helper/system/system'
 import { SystemProp } from './helper/system/system-prop'
+import { fastifyRawBody } from 'fastify-raw-body'
+import { stepFileModule } from './flows/step-file/step-file.module'
 
 const chatbotEnabled = system.get(SystemProp.CHATBOT_ENABLED)
 
@@ -59,7 +61,7 @@ app.register(cors, {
     methods: ['*'],
 })
 app.register(fastifyMultipart, { addToBody: true })
-app.register(import('fastify-raw-body'), {
+app.register(fastifyRawBody, {
     field: 'rawBody',
     global: false,
     encoding: 'utf8',
@@ -100,6 +102,7 @@ app.register(appEventRoutingModule)
 if (chatbotEnabled) {
     app.register(chatbotModule)
 }
+app.register(stepFileModule)
 
 app.get(
     '/redirect',

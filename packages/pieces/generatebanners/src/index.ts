@@ -12,7 +12,6 @@ To obtain your GenerateBanners public and secret API Keys, you can follow the st
 `;
 
 export const generatebannersAuth = PieceAuth.BasicAuth({
-  displayName: 'API Key',
   description: markdownDescription,
   required: true,
   username: {

@@ -57,7 +57,7 @@ export const webhookController: FastifyPluginAsync = async (app) => {
                 return
             }
             asyncHandler(payload, flow)
-            await reply.status(StatusCodes.OK).send()
+            await reply.status(StatusCodes.OK).headers({}).send({})
         },
     )
 

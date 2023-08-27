@@ -1,5 +1,5 @@
 import { EntitySchema } from 'typeorm'
-import { ApIdSchema, BaseColumnSchemaPart, JSONB_COLUMN_TYPE, TIMESTAMP_COLUMN_TYPE } from '../../database/database-common'
+import { ARRAY_COLUMN_TYPE, ApIdSchema, BaseColumnSchemaPart, JSONB_COLUMN_TYPE, TIMESTAMP_COLUMN_TYPE, isPostgres } from '../../database/database-common'
 import { Flow, FlowRun, Project } from '@activepieces/shared'
 
 type FlowRunSchema = FlowRun & {
@@ -24,6 +24,11 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
         logsFileId: { ...ApIdSchema, nullable: true },
         status: {
             type: String,
+        },
+        tags: {
+            type: ARRAY_COLUMN_TYPE,
+            array: isPostgres(),
+            nullable: true,
         },
         tasks: {
             nullable: true,

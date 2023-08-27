@@ -5,15 +5,20 @@ import { createPhotoPost } from "./lib/actions/create-photo-post";
 import { createVideoPost } from "./lib/actions/create-video-post";
 
 const markdown = `
-To Obtain the following credentials:
-1. Visit https://developers.facebook.com/
-2. Create an application, Select Other for Usecase.
-3. Select Business as App Type.
-4. Copy App Id and App Secret from Basic Settings.
+To Obtain a Client ID and Client Secret:
+
+1. Go to https://developers.facebook.com/
+2. Make a new app, Select Other for usecase.
+3. Choose Business as the type of app.
+5. Put https://activepieces.com in "App Domains".
+6. Add new Product -> Facebook Login.
+7. Navigate to Facebook Login Settings
+8. Add https://cloud.activepieces.com/redirect to "Valid OAuth Redirect URIs" and "Allowed Domains for the JavaScript SDK"
+8. Create a new App Secret, then put the App ID and App Secret into Client ID and Client Secret.
 `
 
 export const facebookPagesAuth = PieceAuth.OAuth2({
-    displayName: 'Authentication',
+    
     description: markdown,
     authUrl: "https://graph.facebook.com/oauth/authorize",
     tokenUrl: "https://graph.facebook.com/oauth/access_token",

@@ -13,7 +13,7 @@ export const shopifyAuth = PieceAuth.OAuth2({
           required: true
       })
   },
-  displayName: 'Authentication',
+  
   description: 'Authentication for the webhook',
   required: true,
   authUrl: "https://{shop}.myshopify.com/admin/oauth/authorize",

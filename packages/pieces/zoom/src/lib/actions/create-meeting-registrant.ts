@@ -10,23 +10,6 @@ export const zoomCreateMeetingRegistrant = createAction({
     displayName: 'Create Zoom Meeting Registrant',
     description: "Create and submit a user's registration to a meeting.",
     props: getRegistarantProps(),
-    sampleData: {
-      "id": 85746065,
-      "join_url": "https://example.com/j/11111",
-      "registrant_id": "fdgsfh2ey82fuh",
-      "start_time": "2021-07-13T21:44:51Z",
-      "topic": "My Meeting",
-      "occurrences": [
-        {
-          "duration": 60,
-          "occurrence_id": "1648194360000",
-          "start_time": "2022-03-25T07:46:00Z",
-          "status": "available"
-        }
-      ],
-      "participant_pin_code": 380303
-    },
-
     async run(context) {
       const body: Record<string, unknown> = { ...context.propsValue }
       delete body['auth']

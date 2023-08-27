@@ -11,6 +11,8 @@ import {
     apId,
     isNil,
     CreateChatBotRequest,
+    AppConnectionType,
+    SecretTextConnectionValue,
 } from '@activepieces/shared'
 import { databaseConnection } from '../database/database-connection'
 import { ChatbotEntity } from './chatbot.entity'
@@ -18,6 +20,7 @@ import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { getChatBotType, runBot } from '@activepieces/chatbots'
 import { datasourceService } from './datasources/datasource-service'
+import { appConnectionService } from '../app-connection/app-connection-service'
 
 const chatbotRepo = databaseConnection.getRepository(ChatbotEntity)
 
@@ -84,10 +87,23 @@ export const chatbotService = {
             projectId,
             chatbotId,
         })
+        const connection = await appConnectionService.getOneOrThrow({
+            projectId,
+            name: chatbot.settings.auth,
+        });
+        if(connection.type != AppConnectionType.SECRET_TEXT){
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    message: `Connection with id ${chatbot.settings.auth} not found`,
+                },
+            })
+        }
         const output = await runBot({
             botId: chatbotId,
             input,
             type: chatbot.type,
+            auth: connection.value as SecretTextConnectionValue,
             settings: chatbot.settings,
         })
         return {

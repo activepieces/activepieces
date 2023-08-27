@@ -12,7 +12,7 @@ To obtain your API key and bundle alias, follow these steps:
 `
 
 export const freshsalesAuth = PieceAuth.BasicAuth({
-  displayName: "Authentication",
+  
   description: markdownDescription,
   username: Property.ShortText({
     displayName: "Bundle alias",

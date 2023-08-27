@@ -37,6 +37,8 @@ export const userService = {
         }
     },
     async getOneByEmail(query: GetOneQuery): Promise<User | null> {
-        return await userRepo.findOneBy(query)
+        const { email } = query
+        const user = await userRepo.createQueryBuilder().where('LOWER(email) LIKE LOWER(:email)', { email: `${email}` }).getOne()
+        return user || null
     },
 }

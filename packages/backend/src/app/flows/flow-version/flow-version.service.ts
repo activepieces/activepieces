@@ -32,18 +32,13 @@ import { isNil } from '@activepieces/shared'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import dayjs from 'dayjs'
 import { captureException } from '../../helper/logger'
+import { stepFileService } from '../step-file/step-file.service'
 
 const branchSettingsValidator = TypeCompiler.Compile(BranchActionSettingsWithValidation)
 const loopSettingsValidator = TypeCompiler.Compile(LoopOnItemsActionSettingsWithValidation)
 const flowVersionRepo = databaseConnection.getRepository<FlowVersion>(FlowVersionEntity)
 
 export const flowVersionService = {
-    async overwriteVersion(flowVersionId: FlowVersionId, mutatedFlowVersion: FlowVersion) {
-        await flowVersionRepo.update(flowVersionId, mutatedFlowVersion as QueryDeepPartialEntity<FlowVersion>)
-        return await flowVersionRepo.findOneBy({
-            id: flowVersionId,
-        })
-    },
     async lockPieceVersions(projectId: ProjectId, mutatedFlowVersion: FlowVersion): Promise<FlowVersion> {
         return await flowHelper.transferFlowAsync(mutatedFlowVersion, async (step) => {
             const clonedStep = JSON.parse(JSON.stringify(step))
@@ -279,12 +274,21 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
                 case ActionType.BRANCH:
                     clonedRequest.request.valid = branchSettingsValidator.Check(clonedRequest.request.settings)
                     break
-                case ActionType.PIECE:
+                case ActionType.PIECE: {
                     clonedRequest.request.valid = await validateAction({
                         settings: clonedRequest.request.settings,
                         projectId,
                     })
+                    const previousStep = flowHelper.getStep(flowVersion, clonedRequest.request.name)
+                    if (
+                        previousStep !== undefined &&
+                        previousStep.type === ActionType.PIECE &&
+                        clonedRequest.request.settings.pieceName !== previousStep.settings.pieceName
+                    ) {
+                        await stepFileService.deleteAll({ projectId, flowId: flowVersion.flowId, stepName: previousStep.name })
+                    }
                     break
+                }
                 case ActionType.CODE: {
                     const codeSettings: CodeActionSettings = clonedRequest.request.settings
                     await uploadArtifact(projectId, codeSettings)
@@ -304,6 +308,9 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
             const previousStep = flowHelper.getStep(flowVersion, clonedRequest.request.name)
             if (previousStep !== undefined && previousStep.type === ActionType.CODE) {
                 await deleteArtifact(projectId, previousStep.settings)
+            }
+            if (previousStep !== undefined && previousStep.type === ActionType.PIECE) {
+                await stepFileService.deleteAll({ projectId, flowId: flowVersion.flowId, stepName: previousStep.name })
             }
             break
         }
@@ -397,7 +404,7 @@ function buildSchema(props: PiecePropertyMap): TSchema {
     for (const [name, property] of entries) {
         switch (property.type) {
             case PropertyType.MARKDOWN:
-                propsSchema[name] = Type.Never()
+                propsSchema[name] = Type.Optional(Type.Union([Type.Null(), Type.Undefined(), Type.Never()]))
                 break
             case PropertyType.DATE_TIME:
             case PropertyType.SHORT_TEXT:
@@ -461,9 +468,6 @@ async function deleteArtifact(projectId: ProjectId, codeSettings: CodeActionSett
     if (codeSettings.artifactSourceId !== undefined) {
         requests.push(fileService.delete({ projectId, fileId: codeSettings.artifactSourceId }))
     }
-    if (codeSettings.artifactPackagedId !== undefined) {
-        requests.push(fileService.delete({ projectId, fileId: codeSettings.artifactPackagedId }))
-    }
     await Promise.all(requests)
     return codeSettings
 }
@@ -479,7 +483,6 @@ async function uploadArtifact(projectId: ProjectId, codeSettings: CodeActionSett
 
         codeSettings.artifact = undefined
         codeSettings.artifactSourceId = savedFile.id
-        codeSettings.artifactPackagedId = undefined
     }
     return codeSettings
 }

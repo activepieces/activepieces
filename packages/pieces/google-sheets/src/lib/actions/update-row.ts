@@ -31,7 +31,8 @@ export const updateRowAction = createAction({
         if (!sheetName) {
             throw Error("Sheet not found in spreadsheet");
         }
-        const formattedValues = first_row_headers ? Object.values(values) : values['values'];
+        let formattedValues = (first_row_headers ? Object.values(values) : values['values']) as (string | null)[];
+        formattedValues = formattedValues.map(value => value === "" ? null : value);
         if (formattedValues.length > 0) {
             return (await googleSheetsCommon.updateGoogleSheetRow({
                 accessToken: auth['access_token'],

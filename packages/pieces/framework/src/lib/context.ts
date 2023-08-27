@@ -66,6 +66,8 @@ export type BaseActionContext<
 > = BaseContext<PieceAuth, ActionProps> & {
     executionType: ET,
     connections: ConnectionsManager,
+    tags: TagsManager,
+    files: FilesService
     serverUrl: string,
     run: {
         id: FlowRunId,
@@ -91,8 +93,16 @@ export type ActionContext<
     ActionProps extends NonAuthPiecePropertyMap = NonAuthPiecePropertyMap,
 > = BeginExecutionActionContext<PieceAuth, ActionProps> | ResumeExecutionActionContext<PieceAuth, ActionProps>
 
+export interface FilesService {
+    write({fileName, data}: {fileName: string, data: Buffer}): Promise<string>;
+}
+
 export interface ConnectionsManager {
     get(key: string): Promise<AppConnectionValue | Record<string, unknown> | string | null>;
+}
+
+export interface TagsManager {
+    add(params: { name: string}): Promise<void>;
 }
 
 export interface Store {

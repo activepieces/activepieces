@@ -8,13 +8,6 @@ export const apiTableFindRecord = createAction({
     name: 'apitable_find_record',
     displayName: 'Find APITable Record',
     description: 'Finds records in datasheet.',
-    sampleData: {
-        "id": "recoyzj6c0Zekuz4V",
-        "createdTime": "2023-03-15T12:50:33.000Z",
-        "fields": {
-        "fieldName": "fieldValue"
-        }
-    },
     props: {
         datasheet: APITableCommon.datasheet,
         recordIds: Property.Array({
