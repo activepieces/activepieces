@@ -16,6 +16,7 @@ import {
 export type DataSourceValue = {
   type: DatasourceType;
   url: string;
+  status: 'Pending' | 'Active' | 'Failed';
 };
 
 @Component({

@@ -39,7 +39,7 @@ export class ChatbotDataSourceDialogComponent {
   confirmClicked() {
     this.formGroup.markAllAsTouched();
     if (this.formGroup.valid) {
-      this.dialogRef.close(this.formGroup.value);
+      this.dialogRef.close({ ...this.formGroup.value, status: 'Pending' });
       this.snackbar.open(`Data source added`);
     }
   }

@@ -3,15 +3,24 @@
         [class]="'!ap-rounded-none !ap-cursor-default '+ (isFirst? '!ap-rounded-t ':'') + (isLast? '!ap-rounded-b':'')">
         <!-- #enddocregion hide-toggle -->
         <mat-expansion-panel-header role="text">
-            <mat-panel-title>
+            <mat-panel-title class="!ap-grow-0">
                 <div class="ap-typography-body-1 !ap-font-semibold ap-text-body ap-flex ap-gap-3">
                     <svg-icon [src]="'assets/img/custom/' + (val.type === 'URL'? 'url.svg':'pdf.svg')"
                         [applyClass]="true" class="ap-fill-label ap-w-[24px] ap-h-[24px]"></svg-icon>
                     {{val.type}}
                 </div>
             </mat-panel-title>
-            <mat-panel-description>
-                <div class="ap-typography-body-1 ap-text-body">{{val.url}}</div>
+            <mat-panel-description class="!ap-mr-0">
+                <div class="ap-flex ap-gap-1 ap-justify-between ap-grow">
+                    <div class="ap-typography-body-1 ap-text-body ap-max-w-[26.25rem] ap-grow ap-truncate">{{val.url}}
+                    </div>
+                    <div class="ap-typography-body-1 ap-text-primary" [class.ap-text-primary]="val.status === 'Active'"
+                        [class.ap-text-body]="val.status === 'Pending'"
+                        [class.ap-text-danger]="val.status === 'Failed'">
+                        {{val.status}}
+                    </div>
+                </div>
+
             </mat-panel-description>
         </mat-expansion-panel-header>
     </mat-expansion-panel>

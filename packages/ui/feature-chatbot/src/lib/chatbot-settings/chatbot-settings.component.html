@@ -1,12 +1,12 @@
 <div class="ap-typography-headline-5 !ap-font-semibold ap-m-7.5 ">Chatbot Configuration</div>
-<div class="ap-flex ap-divide-x ap-divide-dividers ap-h-[calc(100%-5.25rem)]">
+<div class="ap-flex ap-divide-x ap-divide-dividers ap-h-[calc(100%-5.25rem)] ap-flex-wrap">
   <div
     class="ap-px-15 ap-pt-15 ap-flex ap-flex-col ap-gap-36 ap-divide-y ap-divide-dividers ap-grow ap-overflow-scroll thin-scrollbars">
     <div class="ap-flex ap-gap-36">
       <div class="ap-text-body-1 ap-font-semibold ap-w-[8.3125rem] ">
         1- Branding
       </div>
-      <form [formGroup]="formGroup" class="ap-w-[346px]">
+      <form [formGroup]="formGroup" class="ap-w-[22.8125rem]">
         <mat-form-field class="ap-w-full" appearance="outline">
           <mat-label>Name</mat-label>
           <input matInput placeholder="Name" formControlName="displayName" />
@@ -20,8 +20,8 @@
       <div class="ap-text-body-1 ap-font-semibold">
         2- Teach your bot
       </div>
-      <form [formGroup]="formGroup" class="ap-w-[346px] ap-flex ap-flex-col ap-gap-5">
-        <div class="ap-relative ">
+      <form [formGroup]="formGroup" class="ap-flex ap-flex-col ap-gap-5">
+        <div class="ap-relative ap-w-[346px] ">
           <ng-container *ngIf="openAiPiece$ | async as openAiPiece">
             <div class="ap-absolute ap-top-[10px] ap-right-[30px] ap-z-50">
               <app-add-edit-connection-button class="edit-selected-auth "
@@ -81,7 +81,7 @@
           </app-add-edit-connection-button>
         </div>
 
-        <mat-form-field class="ap-w-full" appearance="outline">
+        <mat-form-field class="ap-w-[346px] " appearance="outline">
           <mat-label>Prompt</mat-label>
           <textarea autosize matInput [minRows]="1" class="!ap-resize-none !ap-pb-2"
             placeholder="i.e. Act like Ironman's assistant, Jarvis." formControlName="prompt">
@@ -90,7 +90,7 @@
             Prompt is required
           </mat-error>
         </mat-form-field>
-        <div>
+        <div class="ap-w-[650px]">
           <div class="ap-text-label ap-typography-subtitle-2 ap-mb-3">Data sources</div>
           <app-datasources-table [formControl]="formGroup.controls.sources">
 
@@ -112,7 +112,8 @@
       <ap-button btnColor="primary" btnSize="medium" btnStyle="flat" (buttonClicked)="submit()">Save</ap-button>
     </div>
   </div>
-  <div class="ap-flex ap-items-center ap-justify-center ap-bg-[#F0F1F3] ap-typography-headline-5 ap-h-full ap-grow">
+  <div
+    class="ap-flex ap-items-center ap-justify-center ap-bg-[#F0F1F3] ap-typography-headline-5 ap-h-full ap-grow ap-text-center">
     We will be adding preview soon
   </div>
 </div>
