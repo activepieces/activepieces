@@ -77,7 +77,7 @@ async function addCodeDependencies(codePath: string): Promise<void> {
             version: '1.0.0',
         },
         '@types/node': {
-            version: '18.16.1',
+            version: '18.17.1',
         },
         typescript: {
             version: '4.8.4',

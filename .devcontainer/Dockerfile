@@ -35,5 +35,6 @@ RUN npm i -g pnpm@7.28.0
 
 RUN pnpm store add \
   @tsconfig/node18@1.0.0 \
-  @types/node@18.16.1 \
-  typescript@4.8.4
+  @types/node@18.17.1 \
+  typescript@4.8.4 \
+  isolated-vm@4.6.0
