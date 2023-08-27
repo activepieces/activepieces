@@ -1,6 +1,7 @@
-import { createAction, Property, OAuth2PropertyValue } from "@activepieces/pieces-framework";
+import { createAction, Property } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod, AuthenticationType, HttpRequest } from "@activepieces/pieces-common";
 import { googleDriveAuth } from "../../";
+import { common } from "../common";
 
 export const googleDriveCreateNewFolder = createAction({
   auth: googleDriveAuth,
@@ -13,42 +14,8 @@ export const googleDriveCreateNewFolder = createAction({
         description: 'The name of the new folder',
         required: true,
       }),
-      parentFolder: Property.Dropdown({
-        displayName: "Parent Folder",
-        required: false,
-        refreshers: [],
-        options: async ({ auth }) => {
-          if (!auth) {
-            return {
-              disabled: true,
-              options: [],
-              placeholder: 'Please authenticate first'
-            }
-          }
-          const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
-          const folders = (await httpClient.sendRequest<{ files: { id: string, name: string }[] }>({
-            method: HttpMethod.GET,
-            url: `https://www.googleapis.com/drive/v3/files`,
-            queryParams: {
-              q: "mimeType='application/vnd.google-apps.folder'"
-            },
-            authentication: {
-              type: AuthenticationType.BEARER_TOKEN,
-              token: authProp['access_token'],
-            }
-          })).body.files;
-
-          return {
-            disabled: false,
-            options: folders.map((sheet: { id: string, name: string }) => {
-              return {
-                label: sheet.name,
-                value: sheet.id
-              }
-            })
-          };
-        }
-      }),
+      parentFolder: common.properties.parentFolder,
+      include_team_drives: common.properties.include_team_drives
     },
     async run(context) {
       const body: Record<string, (string | string[] | undefined)> = {

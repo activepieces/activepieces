@@ -27,7 +27,8 @@ export const newFolder = createTrigger({
     displayName: 'New Folder',
     description: 'Trigger when a new folder is created or uploaded.',
     props: {
-        parentFolder: common.properties.folder
+        parentFolder: common.properties.parentFolder,
+        include_team_drives: common.properties.include_team_drives
     },
     type: TriggerStrategy.POLLING,
     onEnable: async (context) => {
