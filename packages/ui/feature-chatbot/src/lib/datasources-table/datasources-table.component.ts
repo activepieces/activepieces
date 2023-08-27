@@ -37,6 +37,7 @@ export type DataSourceValue = {
 })
 export class DatasourcesTableComponent implements ControlValueAccessor {
   value: DataSourceValue[] = [];
+  overflownUrlsMap: Record<string, string> = {};
   addNewDataSource$: Observable<void> | undefined;
   @Input() chatbotId = '';
   constructor(private matDialog: MatDialog) {}

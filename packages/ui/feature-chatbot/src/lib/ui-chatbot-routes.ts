@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { ChatComponent } from './chat/chat.component';
-
+import { chatbotSettingsResolver } from './chatbot-settings.resolver';
 
 export const ChatbotLayoutRoutes: Routes = [
   {
@@ -9,5 +9,8 @@ export const ChatbotLayoutRoutes: Routes = [
     title: `ChatBot`,
     pathMatch: 'full',
     component: ChatComponent,
+    resolve: {
+      chatbot: chatbotSettingsResolver,
+    },
   },
 ];

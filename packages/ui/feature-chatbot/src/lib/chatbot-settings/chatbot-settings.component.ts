@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import {
   FormBuilder,
   FormControl,
@@ -8,7 +8,11 @@ import {
 import { ActivatedRoute } from '@angular/router';
 import { Observable, map, tap } from 'rxjs';
 import { PieceMetadataService, fadeInUp400ms } from '@activepieces/ui/common';
-import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
+import {
+  AppConnectionWithoutSensitiveData,
+  Chatbot,
+  DataSource,
+} from '@activepieces/shared';
 import { ChatBotService } from '../chatbot.service';
 import deepEqual from 'deep-equal';
 import { PieceMetadata } from '@activepieces/pieces-framework';
@@ -18,33 +22,32 @@ import {
   ConnectionDropdownItem,
   appConnectionsActions,
 } from '@activepieces/ui/feature-builder-store';
-import { DataSourceValue } from '../datasources-table/datasources-table.component';
 
 @Component({
   selector: 'app-chatbot-settings',
   templateUrl: './chatbot-settings.component.html',
   animations: [fadeInUp400ms],
 })
-export class ChatbotSettingsComponent implements OnInit {
+export class ChatbotSettingsComponent {
   formGroup: FormGroup<{
     displayName: FormControl<string>;
     prompt: FormControl<string>;
     auth: FormControl<string>;
-    sources: FormControl<DataSourceValue[]>;
+    sources: FormControl<DataSource[]>;
   }>;
-  updateExistingDate$: Observable<void> | undefined;
   autoSave$: Observable<void> | undefined;
   connections$: Observable<ConnectionDropdownItem[]>;
   chatbotId = '';
   readonly pieceName = '@activepieces/piece-openai';
   readonly pieceVersion = '0.3.0';
   readonly openAiPiece$: Observable<PieceMetadata>;
+  updateSettings$: Observable<Chatbot> | undefined;
   loadConnections$: Observable<void>;
   dropdownCompareWithFunction = (opt: string, formControlValue: string) => {
     return formControlValue !== undefined && deepEqual(opt, formControlValue);
   };
+  saving = false;
   constructor(
-    private activatedRouter: ActivatedRoute,
     private formBuilder: FormBuilder,
     private chatbotService: ChatBotService,
     private pieceMetadaService: PieceMetadataService,
@@ -68,14 +71,26 @@ export class ChatbotSettingsComponent implements OnInit {
         validators: [Validators.required],
         nonNullable: true,
       }),
-      sources: new FormControl<DataSourceValue[]>([], {
+      sources: new FormControl<DataSource[]>([], {
         validators: [],
         nonNullable: true,
       }),
     });
     this.loadConnections$ = this.actRoute.data.pipe(
       tap((value) => {
-        const routeData = value as { connections: AppConnectionWithoutSensitiveData[] };
+        const routeData = value as {
+          connections: AppConnectionWithoutSensitiveData[];
+          chatbot: Chatbot;
+        };
+        this.formGroup.controls.auth.setValue(routeData.chatbot.settings.auth);
+        this.formGroup.controls.prompt.setValue(
+          routeData.chatbot.settings.prompt
+        );
+        this.formGroup.controls.displayName.setValue(
+          routeData.chatbot.displayName
+        );
+        this.formGroup.controls.sources.setValue(routeData.chatbot.dataSources);
+        this.chatbotId = routeData.chatbot.id;
         this.store.dispatch(
           appConnectionsActions.loadInitial({
             connections: routeData.connections,
@@ -89,34 +104,29 @@ export class ChatbotSettingsComponent implements OnInit {
       BuilderSelectors.selectAppConnectionsDropdownOptions
     );
   }
-  ngOnInit(): void {
-    this.chatbotId = this.activatedRouter.snapshot.params['id'];
-    this.updateExistingDate$ = this.chatbotService.get(this.chatbotId).pipe(
-      tap((value) => {
-        this.formGroup.controls['displayName'].setValue(value.displayName);
-        this.formGroup.controls['prompt'].setValue(value.settings.prompt);
-      }),
-      map(() => void 0)
-    );
-  }
   connectionValueChanged(event: {
     propertyKey: string;
     value: `{{connections['${string}']}}`;
   }) {
-    // Extract the connection name from the value
-    const match = event.value.match(/'([^']+)'/);
-    const value = match ? match[1] : '';
-    this.formGroup.controls.auth.setValue(value);
+    this.formGroup.controls.auth.setValue(event.value);
   }
   submit() {
-    this.chatbotService.update(this.chatbotId, {
-      displayName: this.formGroup.controls['displayName'].value,
-      settings: {
-        prompt: this.formGroup.controls['prompt'].value,
-        auth: this.formGroup.controls['auth'].value,
-      }
-    });
-    console.log(JSON.stringify(this.formGroup.value) + " " + this.formGroup.valid);
+    if (this.formGroup.valid && !this.saving) {
+      this.saving = true;
+      this.updateSettings$ = this.chatbotService
+        .update(this.chatbotId, {
+          displayName: this.formGroup.controls['displayName'].value,
+          settings: {
+            prompt: this.formGroup.controls['prompt'].value,
+            auth: this.formGroup.controls['auth'].value,
+          },
+        })
+        .pipe(
+          tap(() => {
+            this.saving = false;
+          })
+        );
+    }
     this.formGroup.markAllAsTouched();
   }
 }

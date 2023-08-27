@@ -33,7 +33,7 @@ export class ChatBotsDataSource extends DataSource<Chatbot> {
       switchMap(() =>
         this.chatbotService.list({
           limit: 100,
-          cursor: undefined
+          cursor: undefined,
         })
       ),
       tap((chatbots) => {

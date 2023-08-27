@@ -13,6 +13,7 @@ import { ConnectionsResolver, environment } from '@activepieces/ui/common';
 import {
   ChatbotSettingsComponent,
   ChatbotsTableComponent,
+  chatbotSettingsResolver,
 } from '@activepieces/ui/feature-chatbot';
 
 export const DashboardLayoutRouting: Routes = [
@@ -46,7 +47,10 @@ export const DashboardLayoutRouting: Routes = [
         title: `ChatBot Settings`,
         pathMatch: 'full',
         component: ChatbotSettingsComponent,
-        resolve: { connections: ConnectionsResolver },
+        resolve: {
+          connections: ConnectionsResolver,
+          chatbot: chatbotSettingsResolver,
+        },
       },
       {
         title: `Connections - ${environment.websiteTitle}`,

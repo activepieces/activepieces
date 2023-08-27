@@ -4,3 +4,4 @@ export * from './lib/chatbot-source-dialog/chatbot-source-dialog.component';
 export * from './lib/chatbot.service';
 export * from './lib/ui-chatbot.module';
 export * from './lib/chat/chat.component';
+export * from './lib/chatbot-settings.resolver';

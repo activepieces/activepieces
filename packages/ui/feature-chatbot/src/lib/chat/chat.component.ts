@@ -1,8 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { ChatBotService } from '../chatbot.service';
 import { BehaviorSubject, Observable, map, tap } from 'rxjs';
 import { FormControl } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Chatbot, User } from '@activepieces/shared';
+import { AuthenticationService } from '@activepieces/ui/common';
 
 type Message = {
   text: string;
@@ -14,23 +16,31 @@ type Message = {
   templateUrl: './chat.component.html',
   styleUrls: [],
 })
-export class ChatComponent implements OnInit {
+export class ChatComponent {
   messages: Message[] = [];
   messageControl: FormControl<string | null>;
   sendMessage$: Observable<void> | undefined;
   sendingMessage$: BehaviorSubject<boolean> = new BehaviorSubject(false);
   chatbotId: string | undefined;
-
+  chatbotDisplayName = '';
+  data$: Observable<void>;
+  readonly user: User;
   constructor(
     private chatbotService: ChatBotService,
-    private route: ActivatedRoute,
-    private router: Router
+    private actRoute: ActivatedRoute,
+    private router: Router,
+    private authService: AuthenticationService
   ) {
     this.messageControl = new FormControl('');
-  }
-
-  ngOnInit(): void {
-    this.chatbotId = this.route.snapshot.params['id'];
+    this.chatbotId = this.actRoute.snapshot.params['id'];
+    this.data$ = this.actRoute.data.pipe(
+      tap((value) => {
+        const routeData: { chatbot: Chatbot } = value as { chatbot: Chatbot };
+        this.chatbotDisplayName = routeData.chatbot.displayName;
+      }),
+      map(() => void 0)
+    );
+    this.user = this.authService.currentUser;
   }
 
   send() {

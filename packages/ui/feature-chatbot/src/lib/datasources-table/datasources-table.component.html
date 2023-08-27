@@ -12,7 +12,10 @@
             </mat-panel-title>
             <mat-panel-description class="!ap-mr-0">
                 <div class="ap-flex ap-gap-1 ap-justify-between ap-grow">
-                    <div class="ap-typography-body-1 ap-text-body ap-max-w-[26.25rem] ap-grow ap-truncate">{{val.url}}
+                    <div class="ap-typography-body-1 ap-text-body ap-max-w-[26.25rem] ap-grow ap-truncate"
+                        apCheckOverflow
+                        (isOverflowed)="$event?overflownUrlsMap[val.url]=val.url: overflownUrlsMap[val.url]=''"
+                        [matTooltip]="overflownUrlsMap[val.url]">{{val.url}}
                     </div>
                     <div class="ap-typography-body-1 ap-text-primary" [class.ap-text-primary]="val.status === 'Active'"
                         [class.ap-text-body]="val.status === 'Pending'"

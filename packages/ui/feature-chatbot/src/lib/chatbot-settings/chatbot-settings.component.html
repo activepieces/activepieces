@@ -27,8 +27,7 @@
               <app-add-edit-connection-button class="edit-selected-auth "
                 *ngIf="formGroup.controls.auth.value && openAiPiece.auth" btnSize="extraSmall"
                 [isEditConnectionButton]="true" [authProperty]="openAiPiece.auth" [pieceName]="pieceName"
-                [pieceVersion]="pieceVersion"
-                [selectedConnectionInterpolatedString]="formGroup.controls.auth.value"
+                [pieceVersion]="pieceVersion" [selectedConnectionInterpolatedString]="formGroup.controls.auth.value"
                 (connectionPropertyValueChanged)="connectionValueChanged($event)">
                 Edit
               </app-add-edit-connection-button>
@@ -86,7 +85,7 @@
           <textarea autosize matInput [minRows]="1" class="!ap-resize-none !ap-pb-2"
             placeholder="i.e. Act like Ironman's assistant, Jarvis." formControlName="prompt">
           </textarea>
-          <mat-error *ngIf="formGroup.controls.displayName.invalid">
+          <mat-error *ngIf="formGroup.controls.prompt.invalid">
             Prompt is required
           </mat-error>
         </mat-form-field>
@@ -109,7 +108,8 @@
 
     </div>
     <div class=" ap-items-center ap-flex ap-justify-end ap-p-6">
-      <ap-button btnColor="primary" btnSize="medium" btnStyle="flat" (buttonClicked)="submit()">Save</ap-button>
+      <ap-button btnColor="primary" btnSize="medium" btnStyle="flat" [loading]="saving"
+        (buttonClicked)="submit()">Save</ap-button>
     </div>
   </div>
   <div
@@ -121,4 +121,4 @@
 
 
 <ng-container *ngIf="loadConnections$ | async"></ng-container>
-<ng-container *ngIf="updateExistingDate$ | async"></ng-container>
+<ng-container *ngIf="updateSettings$ | async"></ng-container>
