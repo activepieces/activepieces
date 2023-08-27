@@ -1,5 +1,5 @@
 import { createAction, Property, StoreScope } from "@activepieces/pieces-framework";
-import isEqual from 'lodash/isEqual';
+import deepEqual from 'deep-equal';
 
 export const storageAddtoList = createAction({
     name: 'add_to_list',
@@ -45,7 +45,7 @@ export const storageAddtoList = createAction({
         }
         if (context.propsValue['ignore_if_exists'] ) {
             for( const item of items ){
-                if( isEqual(item, context.propsValue['value']) ){
+                if( deepEqual(item, context.propsValue['value']) ){
                     return items;
                 }
             }
