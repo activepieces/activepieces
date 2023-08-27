@@ -49,6 +49,7 @@ export class Sandbox {
 
     async recreate(): Promise<void> {
         const sandboxFolderPath = this.getSandboxFolderPath()
+
         if (executionMode === ExecutionMode.UNSANDBOXED) {
             try {
                 await fs.rmdir(sandboxFolderPath, { recursive: true })
@@ -59,11 +60,17 @@ export class Sandbox {
             await fs.mkdir(sandboxFolderPath, { recursive: true })
         }
         else {
-            await Sandbox.runIsolate('--box-id=' + this.boxId + ' --cleanup')
-            await Sandbox.runIsolate('--box-id=' + this.boxId + ' --init')
+            await Sandbox.runIsolate(`--box-id=${this.boxId} --cleanup`)
+            await Sandbox.runIsolate(`--box-id=${this.boxId} --init`)
         }
-        await packageManager.initProject(this.getSandboxFolderPath())
 
+        await packageManager.initProject(sandboxFolderPath)
+
+        await packageManager.addDependencies(sandboxFolderPath, {
+            'isolated-vm': {
+                version: '4.6.0',
+            },
+        })
     }
 
     async clean(): Promise<void> {
@@ -79,7 +86,7 @@ export class Sandbox {
             // eslint-disable-next-line @typescript-eslint/no-empty-function
             return fs.unlink(filePath).catch(() => {})
         })
-        
+
         await Promise.all(promises)
     }
 
