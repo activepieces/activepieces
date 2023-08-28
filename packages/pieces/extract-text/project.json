@@ -1,0 +1,42 @@
+{
+  "name": "pieces-extract-text",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/extract-text/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/extract-text",
+        "tsConfig": "packages/pieces/extract-text/tsconfig.lib.json",
+        "packageJson": "packages/pieces/extract-text/package.json",
+        "main": "packages/pieces/extract-text/src/index.ts",
+        "assets": [
+          "packages/pieces/extract-text/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-extract-text {args.ver} {args.tag}",
+      "dependsOn": [
+        "build"
+      ]
+    },
+    "lint": {
+      "executor": "@nx/linter:eslint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/extract-text/**/*.ts"
+        ]
+      }
+    }
+  },
+  "tags": []
+}

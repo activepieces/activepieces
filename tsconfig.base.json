@@ -53,6 +53,9 @@
       "@activepieces/piece-discord": ["packages/pieces/discord/src/index.ts"],
       "@activepieces/piece-drip": ["packages/pieces/drip/src/index.ts"],
       "@activepieces/piece-dropbox": ["packages/pieces/dropbox/src/index.ts"],
+      "@activepieces/piece-extract-text": [
+        "packages/pieces/extract-text/src/index.ts"
+      ],
       "@activepieces/piece-facebook-leads": [
         "packages/pieces/facebook-leads/src/index.ts"
       ],
@@ -131,6 +134,7 @@
       "@activepieces/piece-mindee": ["packages/pieces/mindee/src/index.ts"],
       "@activepieces/piece-monday": ["packages/pieces/monday/src/index.ts"],
       "@activepieces/piece-mysql": ["packages/pieces/mysql/src/index.ts"],
+      "@activepieces/piece-nifty": ["packages/pieces/nifty/src/index.ts"],
       "@activepieces/piece-notion": ["packages/pieces/notion/src/index.ts"],
       "@activepieces/piece-ntfy": ["packages/pieces/ntfy/src/index.ts"],
       "@activepieces/piece-onfleet": ["packages/pieces/onfleet/src/index.ts"],
@@ -196,7 +200,6 @@
       "@activepieces/piece-zoho-invoice": [
         "packages/pieces/zoho-invoice/src/index.ts"
       ],
-      "@activepieces/piece-nifty": ["packages/pieces/nifty/src/index.ts"],
       "@activepieces/piece-zoom": ["packages/pieces/zoom/src/index.ts"],
       "@activepieces/pieces-common": ["packages/pieces/common/src/index.ts"],
       "@activepieces/pieces-framework": [
