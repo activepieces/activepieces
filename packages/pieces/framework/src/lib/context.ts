@@ -5,6 +5,7 @@ import { NonAuthPiecePropertyMap, PieceAuthProperty, PiecePropValueSchema, Piece
 type BaseContext<PieceAuth extends PieceAuthProperty, Props extends PiecePropertyMap> = {
     auth: PiecePropValueSchema<PieceAuth>,
     propsValue: StaticPropsValue<Props>
+    files: FilesService
     store: Store
 }
 
