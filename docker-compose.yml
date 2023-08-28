@@ -7,7 +7,7 @@ services:
     ## Enable the following line if you already use AP_EXECUTION_MODE with SANDBOXED or old activepieces, checking the breaking change documentation for more info.
     ## privileged: true
     ports:
-      - '443:80'
+      - '80:80'
     depends_on:
       - postgres
       - redis
