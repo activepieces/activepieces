@@ -1,5 +1,5 @@
 import {createAction } from '@activepieces/pieces-framework';
-import { collectionName, convertToFilter, seclectPointsProps } from '../common';
+import { collectionName, commaSeparatedToArray, convertToFilter, seclectPointsProps } from '../common';
 import { qdrantAuth } from '../..';
 import { QdrantClient } from '@qdrant/js-client-rest';
 
@@ -20,7 +20,7 @@ export const deletePoints = createAction({
 
     const collectionName = propsValue.collectionName as string
     if (propsValue.getPointsBy === 'Ids') {
-      const ids = propsValue.infosToGetPoint['ids']
+      const ids = commaSeparatedToArray(propsValue.infosToGetPoint['ids'])
       return await client.delete(collectionName, {
         points: ids instanceof Array ? ids : [ids],
       });

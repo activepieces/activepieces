@@ -1,6 +1,14 @@
 import { Property } from '@activepieces/pieces-framework';
 
+export const commaSeparatedToArray = <T>(str: T) => {
+  if (typeof str === 'string') {
+    return str.slice(0, -1).split(';')
+  }
+  return str
+}
+
 export const decodeEmbeddings = (embeddings: string | number[] | string[] | number[][]) => {
+  embeddings = commaSeparatedToArray(embeddings)
   if (typeof embeddings[0] === 'number' || (typeof embeddings[0] === 'string' && embeddings[0].length === 1)) {
     embeddings = [embeddings] as string[] | number[][];
   }
@@ -17,13 +25,13 @@ export const filteringProps = {
     displayName: 'Must Have',
     description:
       'If the point have this property in his payload it will be selected',
-    required: true,
+    required: false,
   }),
   must_not: Property.Object({
     displayName: 'Must Not Have',
     description:
       'If the point have this property in his payload it will not be selected',
-    required: true,
+    required: false,
   }),
 };
 
@@ -77,7 +85,7 @@ export const convertToFilter = (infosToGetPoint: {
 
   for (const getKey in infosToGetPoint) {
     for (const key in infosToGetPoint[getKey as keyof typeof filter]) {
-      const value = infosToGetPoint[getKey as keyof typeof filter][key];
+      const value = commaSeparatedToArray(infosToGetPoint[getKey as keyof typeof filter][key]);
 
       if (['id', 'ids'].includes(key.toLocaleLowerCase())) {
         filter[getKey as keyof typeof filter].push({
