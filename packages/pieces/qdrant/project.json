@@ -1,0 +1,42 @@
+{
+  "name": "pieces-qdrant",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/qdrant/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/qdrant",
+        "tsConfig": "packages/pieces/qdrant/tsconfig.lib.json",
+        "packageJson": "packages/pieces/qdrant/package.json",
+        "main": "packages/pieces/qdrant/src/index.ts",
+        "assets": [
+          "packages/pieces/qdrant/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-qdrant {args.ver} {args.tag}",
+      "dependsOn": [
+        "build"
+      ]
+    },
+    "lint": {
+      "executor": "@nx/linter:eslint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/qdrant/**/*.ts"
+        ]
+      }
+    }
+  },
+  "tags": []
+}
