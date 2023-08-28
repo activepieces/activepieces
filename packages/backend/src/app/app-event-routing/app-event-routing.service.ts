@@ -29,7 +29,7 @@ export const appEventRoutingService = {
                 identifierValue,
                 flowId,
                 projectId,
-            }, ['appName', 'event', 'identifierValue', 'projectId']);
+            }, ['appName', 'event', 'identifierValue', 'projectId'])
             upsertCommands.push(upsert)
         })
         await Promise.all(upsertCommands)
