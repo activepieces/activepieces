@@ -18,7 +18,7 @@ const getIsolateExecutableName = () => {
     return executableNameMap[arch] ?? defaultName
 }
 
-const executionMode: ExecutionMode = system.get(SystemProp.EXECUTION_MODE) as ExecutionMode
+const executionMode: ExecutionMode = system.get(SystemProp.EXECUTION_MODE)!
 
 export type ExecuteIsolateResult = {
     output: unknown
