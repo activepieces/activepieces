@@ -87,22 +87,23 @@ export function fileToInput(file: ApFile) {
     const input = new Input();
     const inputData = new Data();
 
-    const mimeType = detectMimeType(file.base64, file.filename);
+    const base64 = file.base64;
+    const mimeType = detectMimeType(base64, file.filename);
     if (mimeType.startsWith("image")) {
         const dataImage = new Image();
-        dataImage.setBase64(file.base64);
+        dataImage.setBase64(base64);
         inputData.setImage(dataImage);
     } else if (mimeType.startsWith("video")) {
         const dataVideo = new Video();
-        dataVideo.setBase64(file.base64);
+        dataVideo.setBase64(base64);
         inputData.setVideo(dataVideo);
     } else if (mimeType.startsWith("audio")) {
         const dataAudio = new Audio();
-        dataAudio.setBase64(file.base64);
+        dataAudio.setBase64(base64);
         inputData.setAudio(dataAudio);
     } else { // sending the rest of text may not always work, but it's worth a shot
         const dataText = new Text();
-        dataText.setRaw(file.base64);
+        dataText.setRaw(base64);
         inputData.setText(dataText);
     }
     input.setData(inputData);

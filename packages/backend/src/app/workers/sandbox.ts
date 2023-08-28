@@ -49,6 +49,7 @@ export class Sandbox {
 
     async recreate(): Promise<void> {
         const sandboxFolderPath = this.getSandboxFolderPath()
+
         if (executionMode === ExecutionMode.UNSANDBOXED) {
             try {
                 await fs.rmdir(sandboxFolderPath, { recursive: true })
@@ -59,11 +60,11 @@ export class Sandbox {
             await fs.mkdir(sandboxFolderPath, { recursive: true })
         }
         else {
-            await Sandbox.runIsolate('--box-id=' + this.boxId + ' --cleanup')
-            await Sandbox.runIsolate('--box-id=' + this.boxId + ' --init')
+            await Sandbox.runIsolate(`--box-id=${this.boxId} --cleanup`)
+            await Sandbox.runIsolate(`--box-id=${this.boxId} --init`)
         }
-        await packageManager.initProject(this.getSandboxFolderPath())
 
+        await packageManager.initProject(sandboxFolderPath)
     }
 
     async clean(): Promise<void> {
@@ -71,6 +72,7 @@ export class Sandbox {
             '_standardOutput.txt',
             '_standardError.txt',
             'output.json',
+            'tmp',
             'meta.txt',
         ]
         const promises = filesToDelete.map((file) => {
@@ -78,7 +80,7 @@ export class Sandbox {
             // eslint-disable-next-line @typescript-eslint/no-empty-function
             return fs.unlink(filePath).catch(() => {})
         })
-        
+
         await Promise.all(promises)
     }
 
@@ -320,7 +322,7 @@ export default class SandboxManager {
         if (!sandbox) {
             throw new Error('Sandbox not found')
         }
-        sandbox.cached = false
+        sandbox.resourceId = null
     }
 
     async returnSandbox(sandboxId: number): Promise<void> {
