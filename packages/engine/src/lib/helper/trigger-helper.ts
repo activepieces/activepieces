@@ -4,6 +4,7 @@ import { VariableService } from "../services/variable-service";
 import { pieceHelper } from "./action-helper";
 import { isValidCron } from 'cron-validator';
 import { PiecePropertyMap, StaticPropsValue, TriggerStrategy } from "@activepieces/pieces-framework";
+import { createFilesService } from "../services/files.service";
 
 type Listener = {
   events: string[];
@@ -42,6 +43,11 @@ export const triggerHelper = {
     let scheduleOptions: ScheduleOptions | undefined = undefined;
     const context = {
       store: createContextStore(prefix, params.flowVersion.flowId),
+      // TODO move it to some other efficient place
+      files: createFilesService({
+        stepName: triggerName,
+        type: 'db'
+      }),
       app: {
         async createListeners({ events, identifierKey, identifierValue }: Listener) {
           appListeners.push({ events, identifierValue, identifierKey });
