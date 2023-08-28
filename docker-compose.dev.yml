@@ -8,7 +8,7 @@ version: '3.0'
 
 services:
   app:
-    image: activepieces/ap-base:4
+    image: activepieces/ap-base:7
     container_name: ap
     environment:
       AP_DB_TYPE: POSTGRES

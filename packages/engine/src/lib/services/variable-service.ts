@@ -13,7 +13,6 @@ import {
   NonAuthPiecePropertyMap
 } from '@activepieces/pieces-framework';
 import { handleAPFile, isApFilePath } from './files.service';
-import ivm from 'isolated-vm';
 
 export class VariableService {
   private VARIABLE_TOKEN = RegExp('\\{\\{(.*?)\\}\\}', 'g');
@@ -38,10 +37,10 @@ export class VariableService {
       if (isApFilePath(variableName)) {
         return variableName;
       }
-      return this.evalInIsolate(variableName, valuesMap);
+      return this.evalInScope(variableName, valuesMap);
     }
     return input.replace(this.VARIABLE_TOKEN, (_match, variable) => {
-      const result = this.evalInIsolate(variable, valuesMap);
+      const result = this.evalInScope(variable, valuesMap);
       if (!isString(result)) {
         return JSON.stringify(result);
       }
@@ -70,7 +69,7 @@ export class VariableService {
     }
     const context: Record<string, unknown> = {};
     context['connection'] = connection;
-    return this.evalInIsolate(newPath, context);
+    return this.evalInScope(newPath, context);
   }
 
   private cleanPath(path: string, connectionName: string): string {
@@ -100,31 +99,15 @@ export class VariableService {
     return paths[1];
   }
 
-  private async evalInIsolate(js: string, contextAsScope: Record<string, unknown>) {
+  private evalInScope(js: string, contextAsScope: Record<string, unknown>) {
     try {
-      const isolate = new ivm.Isolate({
-        memoryLimit: 64
-      });
-      const context = await isolate.createContext();
-      const global = context.global;
-
-      for (const key of Object.keys(contextAsScope)) {
-        const value = contextAsScope[key];
-        global.set(key, new ivm.ExternalCopy(value).copyInto());
-      }
-
-      const functionBody = `(${js})`;
-      const script = await isolate.compileScript(functionBody);
-      const result = await script.run(context);
-
-      if (result instanceof ivm.ExternalCopy) {
-        return result.copyInto();
-      } else {
-        return result;
-      }
+      const keys = Object.keys(contextAsScope);
+      const values = Object.values(contextAsScope);
+      const functionBody = `return (${js})`;
+      const evaluatedFn = new Function(...keys, functionBody);
+      const result = evaluatedFn(...values);
+      return result ?? '';
     } catch (exception) {
-      console.log(ivm);
-      console.error(exception);
       return '';
     }
   }
