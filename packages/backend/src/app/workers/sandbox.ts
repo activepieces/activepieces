@@ -65,12 +65,6 @@ export class Sandbox {
         }
 
         await packageManager.initProject(sandboxFolderPath)
-
-        await packageManager.addDependencies(sandboxFolderPath, {
-            'isolated-vm': {
-                version: '4.6.0',
-            },
-        })
     }
 
     async clean(): Promise<void> {
