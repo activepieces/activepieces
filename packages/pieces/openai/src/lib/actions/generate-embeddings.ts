@@ -245,15 +245,15 @@ export const createEmbeddingsFromText = createAction({
     }
 
     const resData = response.data.data
-    const embeddings = []
-    const chuncksOfText =  []
-    const embeddingIds = []
+    let embeddings = ''
+    let chuncksOfText = ''
+    let embeddingIds = ''
 
     for (let index = 0; index < resData.length; index++) {
       const vec = resData[index];
-      embeddings.push(Buffer.from(new Uint8Array(new Float32Array(vec.embedding).buffer)).toString('base64'))
-      chuncksOfText.push(textSplited[index])
-      embeddingIds.push(createHash('md5').update(textSplited[index]).digest('hex'))
+      embeddings += Buffer.from(new Uint8Array(new Float32Array(vec.embedding).buffer)).toString('base64') + ';'
+      chuncksOfText += textSplited[index] + ';'
+      embeddingIds += createHash('md5').update(textSplited[index]).digest('hex') + ';'
     }
 
     return {
