@@ -25,7 +25,8 @@ import {
     EngineTestOperation,
     CodeActionSettings,
 } from '@activepieces/shared'
-import { Sandbox, sandboxManager } from '../workers/sandbox'
+import { Sandbox } from '../workers/sandbox'
+import { sandboxManager } from '../workers/sandbox/sandbox-manager'
 import { system } from './system/system'
 import { SystemProp } from './system/system-prop'
 import { tokenUtils } from '../authentication/lib/token-utils'
