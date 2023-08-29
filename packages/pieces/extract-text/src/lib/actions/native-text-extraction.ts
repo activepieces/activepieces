@@ -6,7 +6,7 @@ export const nativeTextExtraction = createAction({
   name: 'native_text_extraction',
   description:
     'Extract text from many a file types (pdf, docx, pptx, xlsx, odt, odp, ods)',
-  displayName: 'Extract text',
+  displayName: 'Native Extraction',
   props: {
     file: Property.LongText({
       displayName: 'Base64 File',
