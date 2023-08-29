@@ -1,17 +1,19 @@
 import type { HttpHeaders } from './http-headers';
 import { HttpHeader } from './http-header';
-import { Authentication, AuthenticationType, BasicAuthentication, BearerTokenAuthentication } from '../../authentication';
+import { ApiKeyAuthentication, Authentication, AuthenticationType, BasicAuthentication, BearerTokenAuthentication } from '../../authentication';
 
 export class DelegatingAuthenticationConverter implements AuthenticationConverter<Authentication> {
 	private readonly converters: Record<AuthenticationType, AuthenticationConverter<any>>;
 
 	constructor(
 		bearerTokenConverter = new BearerTokenAuthenticationConverter(),
-		basicTokenConverter = new BasicTokenAuthenticationConverter()
+		basicTokenConverter = new BasicTokenAuthenticationConverter(),
+		apiKeyConverter = new ApiKeyAuthenticationConverter(),
 	) {
 		this.converters = {
 			[AuthenticationType.BEARER_TOKEN]: bearerTokenConverter,
-			[AuthenticationType.BASIC]: basicTokenConverter
+			[AuthenticationType.BASIC]: basicTokenConverter,
+			[AuthenticationType.API_KEY]: apiKeyConverter,
 		};
 	}
 
@@ -27,6 +29,15 @@ class BearerTokenAuthenticationConverter implements AuthenticationConverter<Bear
 		return headers;
 	}
 }
+
+class ApiKeyAuthenticationConverter implements AuthenticationConverter<ApiKeyAuthentication> {
+	convert(authentication: ApiKeyAuthentication, headers: HttpHeaders): HttpHeaders {
+		headers[HttpHeader.AUTHORIZATION] = `Api-Key ${authentication.apiKey}`;
+		return headers;
+	}
+}
+
+
 
 class BasicTokenAuthenticationConverter implements AuthenticationConverter<BasicAuthentication> {
 	convert(authentication: BasicAuthentication, headers: HttpHeaders): HttpHeaders {

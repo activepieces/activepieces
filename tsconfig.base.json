@@ -97,6 +97,9 @@
       "@activepieces/piece-gravityforms": [
         "packages/pieces/gravityforms/src/index.ts"
       ],
+      "@activepieces/piece-hacker-news": [
+        "packages/pieces/hacker-news/src/index.ts"
+      ],
       "@activepieces/piece-hackernews": [
         "packages/pieces/hackernews/src/index.ts"
       ],
@@ -139,6 +142,7 @@
       "@activepieces/piece-openai": ["packages/pieces/openai/src/index.ts"],
       "@activepieces/piece-pastebin": ["packages/pieces/pastebin/src/index.ts"],
       "@activepieces/piece-pastefy": ["packages/pieces/pastefy/src/index.ts"],
+      "@activepieces/piece-pinecone": ["packages/pieces/pinecone/src/index.ts"],
       "@activepieces/piece-pipedrive": [
         "packages/pieces/pipedrive/src/index.ts"
       ],
