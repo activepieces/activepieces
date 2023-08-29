@@ -5,6 +5,7 @@ import {stripePaymentFailed} from "./lib/trigger/payment-failed";
 import { stripeNewSubscription } from './lib/trigger/new-subscription';
 import { stripeCreateCustomer } from './lib/actions/create-customer';
 import { stripeCreateInvoice } from './lib/actions/create-invoice';
+import { stripeSearchCustomer } from './lib/actions/search-customer';
 
 
 export const stripeAuth = PieceAuth.CustomAuth({
@@ -28,6 +29,6 @@ export const stripe = createPiece({
     logoUrl: 'https://cdn.activepieces.com/pieces/stripe.png',
 	authors: ['ashrafsamhouri', 'lldiegon'],
     auth: stripeAuth,
-	actions: [stripeCreateCustomer, stripeCreateInvoice],
+	actions: [stripeCreateCustomer, stripeCreateInvoice, stripeSearchCustomer],
 	triggers: [stripeNewPayment, stripeNewCustomer, stripePaymentFailed, stripeNewSubscription],
 });
