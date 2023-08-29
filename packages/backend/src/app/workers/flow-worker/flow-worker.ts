@@ -2,7 +2,6 @@ import fs from 'fs-extra'
 import {
     ActionType,
     ActivepiecesError,
-    apId,
     CodeActionSettings,
     ErrorCode,
     ExecuteFlowOperation,
@@ -181,49 +180,30 @@ const loadInputAndLogFileId = async ({
 }
 
 async function executeFlow(jobData: OneTimeJobData): Promise<void> {
-    logger.info(
-        `[FlowWorker#executeFlow] flowRunId=${jobData.runId} executionType=${jobData.executionType}`,
-    )
+    logger.info(`[FlowWorker#executeFlow] flowRunId=${jobData.runId} executionType=${jobData.executionType}`)
 
     const flowVersion = await flowVersionService.lockPieceVersions(
         jobData.projectId,
         await flowVersionService.getOneOrThrow(jobData.flowVersionId),
     )
 
-    // Don't use sandbox for draft versions, since they are mutable and we don't want to cache them.
-    const key =
-        flowVersion.id +
-        (FlowVersionState.DRAFT === flowVersion.state ? '-draft' + apId() : '')
-    const sandbox = await sandboxManager.obtainSandbox(key)
+    const sandbox = await sandboxManager.obtainSandbox()
     const startTime = Date.now()
-    logger.info(
-        `[${jobData.runId}] Executing flow ${flowVersion.id} in sandbox ${sandbox.boxId}`,
-    )
+
+    logger.info(`[FlowWorker#executeFlow] flowRunId=${jobData.runId} sandboxId=${sandbox.boxId}`)
+
     try {
-        if (!sandbox.cached) {
-            await sandbox.recreate()
-            await downloadFiles(sandbox, jobData.projectId, flowVersion)
+        await downloadFiles(sandbox, jobData.projectId, flowVersion)
 
-            const path = sandbox.getSandboxFolderPath()
+        const path = sandbox.getSandboxFolderPath()
 
-            await installPieces({
-                projectId: jobData.projectId,
-                path,
-                flowVersion,
-            })
+        await installPieces({
+            projectId: jobData.projectId,
+            path,
+            flowVersion,
+        })
 
-            logger.info(
-                `[${jobData.runId}] Preparing sandbox ${sandbox.boxId} took ${Date.now() - startTime
-                }ms`,
-            )
-        }
-        else {
-            await sandbox.clean()
-            logger.info(
-                `[${jobData.runId}] Reusing sandbox ${sandbox.boxId} took ${Date.now() - startTime
-                }ms`,
-            )
-        }
+        logger.info(`[FlowWorker#executeFlow] flowRunId=${jobData.runId} sandboxId=${sandbox.boxId} prepareTime=${Date.now() - startTime}ms`)
 
         const { input, logFileId } = await loadInputAndLogFileId({
             flowVersion,
@@ -272,7 +252,6 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
                 logsFileId: null,
                 tags: [],
             })
-            sandboxManager.markAsNotCached(sandbox.boxId)
             throwErrorToRetry(e as Error, jobData.runId)
         }
     }
@@ -280,7 +259,6 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
         await sandboxManager.returnSandbox(sandbox.boxId)
     }
 }
-
 
 function throwErrorToRetry(error: Error, runId: string): void {
     captureException(error)

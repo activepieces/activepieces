@@ -1,73 +1,62 @@
 import { Mutex } from 'async-mutex'
 import { Sandbox } from './'
 import { isNil } from '@activepieces/shared'
+import { logger } from '../../helper/logger'
 
 const SANDBOX_LIMIT = 1000
 
-const sandboxes: Sandbox[] = new Array(SANDBOX_LIMIT).fill(null).map((_, i) => new Sandbox({
-    boxId: i,
-    cached: false,
-    used: false,
-    key: null,
-    lastUsed: 0,
-}))
+const sandboxes: Sandbox[] = new Array(SANDBOX_LIMIT).fill(null).map((_, i) => new Sandbox({ boxId: i }))
 
 const lock: Mutex = new Mutex()
 
 export const sandboxManager = {
-    async obtainSandbox(key: string): Promise<Sandbox> {
-        const releaseLock = await lock.acquire()
-        const sandbox = sandboxes.find(withKeyEqualToAndNotUsed(key))
+    async obtainSandbox(): Promise<Sandbox> {
+        const sandbox = await executeWithLock((): Sandbox => {
+            const sandbox = sandboxes.find(byNotInUse)
 
-        if (sandbox) {
-            sandbox.used = true
-            sandbox.lastUsed = Date.now()
-            sandbox.cached = true
+            if (isNil(sandbox)) {
+                throw new Error('[SandboxManager#obtainSandbox] all sandboxes are in-use')
+            }
 
-            releaseLock()
+            sandbox.inUse = true
+            return sandbox
+        })
+
+        try {
+            await sandbox.recreate()
             return sandbox
         }
-
-        const oldestSandbox = sandboxes.reduce(byOldestNotUsed)
-
-        oldestSandbox.lastUsed = Date.now()
-        oldestSandbox.used = true
-        oldestSandbox.cached = false
-        oldestSandbox.key = key
-
-        releaseLock()
-        return oldestSandbox
-    },
-
-    async markAsNotCached(sandboxId: number): Promise<void> {
-        const sandbox = sandboxes[sandboxId]
-
-        if (isNil(sandbox)) {
-            throw new Error(`[SandboxManager#markAsNotCached] Sandbox not found id=${sandboxId}`)
+        catch (e) {
+            logger.error(e, '[SandboxManager#obtainSandbox]')
+            await this.returnSandbox(sandbox.boxId)
+            throw e
         }
-
-        sandbox.key = null
     },
 
     async returnSandbox(sandboxId: number): Promise<void> {
-        const releaseLock = await lock.acquire()
-        const sandbox = sandboxes[sandboxId]
+        logger.debug(`[SandboxManager#returnSandbox] sandboxId=${sandboxId}`)
 
-        if (isNil(sandbox)) {
-            throw new Error(`[SandboxManager#returnSandbox] Sandbox not found id=${sandboxId}`)
-        }
+        await executeWithLock((): void => {
+            const sandbox = sandboxes[sandboxId]
 
-        sandbox.used = false
-        releaseLock()
+            if (isNil(sandbox)) {
+                throw new Error(`[SandboxManager#returnSandbox] sandbox not found id=${sandboxId}`)
+            }
+
+            sandbox.inUse = false
+        })
     },
 }
 
-const withKeyEqualToAndNotUsed = (key: string) => (s: Sandbox): boolean => s.key === key && !s.used
+const executeWithLock = async <T>(methodToExecute: () => T): Promise<T> => {
+    const releaseLock = await lock.acquire()
 
-const byOldestNotUsed = (s1: Sandbox, s2: Sandbox): Sandbox => {
-    if (s2.lastUsed < s1.lastUsed) {
-        return s2
+    try {
+        return methodToExecute()
     }
-
-    return s1
+    finally {
+        releaseLock()
+    }
 }
+
+const byNotInUse = (s: Sandbox): boolean => !s.inUse

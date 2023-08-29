@@ -185,39 +185,43 @@ const executeBranch = async ({ step, flowVersion, projectId }: ExecuteParams<Bra
         sourceFlowVersion: flowVersion,
     }
 
-    const testSandbox = await sandboxManager.obtainSandbox(apId())
-    await testSandbox.recreate()
+    const testSandbox = await sandboxManager.obtainSandbox()
 
-    const { status, result, standardError, standardOutput } = await engineHelper.executeTest(testSandbox, testInput)
+    try {
+        const { status, result, standardError, standardOutput } = await engineHelper.executeTest(testSandbox, testInput)
 
-    if (status !== EngineResponseStatus.OK || result.status !== ExecutionOutputStatus.SUCCEEDED) {
+        if (status !== EngineResponseStatus.OK || result.status !== ExecutionOutputStatus.SUCCEEDED) {
+            return {
+                success: false,
+                output: null,
+                standardError,
+                standardOutput,
+            }
+        }
+
+        const branchStepOutput = new ExecutionState(result.executionState).getStepOutput<BranchStepOutput>({
+            stepName: branchStep.name,
+            ancestors: [],
+        })
+
+        if (isNil(branchStepOutput)) {
+            return {
+                success: false,
+                output: null,
+                standardError,
+                standardOutput,
+            }
+        }
+
         return {
-            success: false,
-            output: null,
+            success: true,
+            output: branchStepOutput.output,
             standardError,
             standardOutput,
         }
     }
-
-    const branchStepOutput = new ExecutionState(result.executionState).getStepOutput<BranchStepOutput>({
-        stepName: branchStep.name,
-        ancestors: [],
-    })
-
-    if (isNil(branchStepOutput)) {
-        return {
-            success: false,
-            output: null,
-            standardError,
-            standardOutput,
-        }
-    }
-
-    return {
-        success: true,
-        output: branchStepOutput.output,
-        standardError,
-        standardOutput,
+    finally {
+        await sandboxManager.returnSandbox(testSandbox.boxId)
     }
 }
 

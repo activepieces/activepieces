@@ -1,4 +1,4 @@
-import { unlink, readFile, access } from 'node:fs/promises'
+import { readFile, access } from 'node:fs/promises'
 import { system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
 import { logger } from '../../helper/logger'
@@ -9,17 +9,10 @@ export abstract class AbstractSandbox {
     protected static readonly sandboxRunTimeSeconds = system.getNumber(SystemProp.SANDBOX_RUN_TIME_SECONDS) ?? 600
 
     public readonly boxId: number
-    public used: boolean
-    public cached: boolean
-    public key: string | null
-    public lastUsed: number
+    public inUse = false
 
     protected constructor(params: SandboxCtorParams) {
         this.boxId = params.boxId
-        this.used = params.used
-        this.cached = params.cached
-        this.key = params.key
-        this.lastUsed = params.lastUsed
     }
 
     protected abstract recreateCleanup(): Promise<void>
@@ -28,25 +21,6 @@ export abstract class AbstractSandbox {
         await this.recreateCleanup()
         const sandboxFolderPath = this.getSandboxFolderPath()
         await packageManager.initProject(sandboxFolderPath)
-    }
-
-    public async clean(): Promise<void> {
-        const filesToDelete = [
-            '_standardOutput.txt',
-            '_standardError.txt',
-            'output.json',
-            'tmp',
-            'meta.txt',
-        ]
-
-        const promises = filesToDelete.map((file) => {
-            const filePath = this.getSandboxFilePath(file)
-            return unlink(filePath).catch(
-                (e) => logger.debug(e, `[Sandbox#clean] unlink failure filePath=${filePath}`),
-            )
-        })
-
-        await Promise.all(promises)
     }
 
     public abstract runCommandLine(commandLine: string): Promise<ExecuteSandboxResult>
@@ -95,10 +69,6 @@ export abstract class AbstractSandbox {
 
 export type SandboxCtorParams = {
     boxId: number
-    used: boolean
-    key: string | null
-    lastUsed: number
-    cached: boolean
 }
 
 export type ExecuteSandboxResult = {
