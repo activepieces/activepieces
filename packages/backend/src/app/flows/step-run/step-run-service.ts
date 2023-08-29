@@ -30,7 +30,7 @@ import { flowVersionService } from '../flow-version/flow-version.service'
 import { fileService } from '../../file/file.service'
 import { isNil } from '@activepieces/shared'
 import { getServerUrl } from '../../helper/public-ip-utils'
-import { sandboxManager } from '../../workers/sandbox'
+import { sandboxManager } from '../../workers/sandbox/sandbox-manager'
 import { flowService } from '../flow/flow.service'
 import { stepFileService } from '../step-file/step-file.service'
 
