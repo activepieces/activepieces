@@ -29,7 +29,7 @@ export const notionCommon = {
             return {
                 placeholder: "Select a database",
                 options: databases.results.map((database: any) => ({
-                    label: database.title[0].plain_text,
+                    label: database.title?.[0]?.plain_text ?? database.title ?? "Unknown title",
                     value: database.id
                 }))
             }
