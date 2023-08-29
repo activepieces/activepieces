@@ -27,6 +27,7 @@ export const pineconeCommon = {
             }
         })
         if (response.status === 200) {
+            console.log(response);
             return {
                 disabled: true,
                 options: response.body.indexes.map((index) => {
