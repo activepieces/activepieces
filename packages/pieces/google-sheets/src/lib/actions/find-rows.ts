@@ -16,6 +16,12 @@ export const findRowsAction = createAction({
       displayName: 'Search Value',
       description: 'The value to search for',
       required: true
+    }),
+    match_case: Property.Checkbox({
+      displayName: 'Exact match',
+      description: 'Whether to choose the rows with exact match or choose the rows that contain the search value',
+      required: true,
+      defaultValue: false
     })
   },
   async run({ propsValue, auth }) {
@@ -40,19 +46,27 @@ export const findRowsAction = createAction({
     for (const { row, values: innerValues } of values) {
       Object.entries(innerValues).forEach(([key, value]) => {
         const v = value.toString();
-        if (
-          v.includes(propsValue.search_value) &&
-          key.toLowerCase() === columnName
-        ) {
+        if ( propsValue.match_case ){
+          if (v === propsValue.search_value && key.toLowerCase() === columnName){
             matchingRows.push({
                 row,
                 matchedColumn: key,
                 value: innerValues
             })
+          }
+        }else{
+          if (v.includes(propsValue.search_value) && key.toLowerCase() === columnName){
+            matchingRows.push({
+                row,
+                matchedColumn: key,
+                value: innerValues
+            })
+          }
         }
+
       });
     }
 
-    return matchingRows;
+    return {matchingRows:matchingRows , exact:propsValue.match_case};
   }
 });

@@ -218,6 +218,26 @@ async function findSheetName(access_token: string, spreadsheet_id: string, sheet
     return sheets.find(f => f.properties.sheetId === sheetId)?.properties.title;
 }
 
+export async function getGoogleSheetRow(params: { accessToken: string; sheetName: string; spreadSheetId: string; rowIndex: number; }) {
+    const request: HttpRequest = {
+        method: HttpMethod.GET,
+        url: `${googleSheetsCommon.baseUrl}/${params.spreadSheetId}/values/${params.sheetName}!A${params.rowIndex}:ZZZ${params.rowIndex}`,
+        authentication: {
+            type: AuthenticationType.BEARER_TOKEN,
+            token: params.accessToken,
+        }
+    };
+    const response = await httpClient.sendRequest<{ values: [string[]][] }>(request);
+    if (response.body.values === undefined) return [];
+
+    const values: any = {}
+    for (let j = 0; j < response.body.values[0].length; j++) {
+        values[columnToLabel(j)] = response.body.values[0][j];
+    }
+
+    return values;
+}
+
 async function listSheetsName(access_token: string, spreadsheet_id: string) {
     return (await httpClient.sendRequest<{ sheets: { properties: { title: string, sheetId: number } }[] }>({
         method: HttpMethod.GET,
