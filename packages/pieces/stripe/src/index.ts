@@ -4,10 +4,11 @@ import {stripeNewCustomer} from "./lib/trigger/new-customer";
 import {stripePaymentFailed} from "./lib/trigger/payment-failed";
 import { stripeNewSubscription } from './lib/trigger/new-subscription';
 import { stripeCreateCustomer } from './lib/actions/create-customer';
+import { stripeCreateInvoice } from './lib/actions/create-invoice';
 
 
 export const stripeAuth = PieceAuth.CustomAuth({
-    description: "API Key acquired from your Stripe dashboard",
+    description: "API Keys acquired from your Stripe dashboard",
     required: true,
     props: {
         publicKey: PieceAuth.SecretText({
@@ -21,18 +22,12 @@ export const stripeAuth = PieceAuth.CustomAuth({
     }
 })
 
-export const stripeSecret = PieceAuth.SecretText({
-    displayName:"Secret API Key",
-    required:false,
-    description:"Secret key acquired from your Stripe dashboard, needed to edit records"
-})
-
 export const stripe = createPiece({
 	displayName: "Stripe",
 	    minimumSupportedRelease: '0.5.0',
     logoUrl: 'https://cdn.activepieces.com/pieces/stripe.png',
 	authors: ['ashrafsamhouri', 'lldiegon'],
     auth: stripeAuth,
-	actions: [stripeCreateCustomer],
+	actions: [stripeCreateCustomer, stripeCreateInvoice],
 	triggers: [stripeNewPayment, stripeNewCustomer, stripePaymentFailed, stripeNewSubscription],
 });

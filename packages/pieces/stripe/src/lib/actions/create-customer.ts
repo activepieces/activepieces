@@ -8,7 +8,6 @@ export const stripeCreateCustomer = createAction({
     displayName:'Create Customer',
     description: 'Create a customer in stripe',
         props: {
-            // Properties to ask from the user
             email: Property.ShortText({
                 displayName: 'Email',
                 description: undefined,
@@ -61,7 +60,6 @@ export const stripeCreateCustomer = createAction({
                     country: context.propsValue.country
                 },
             }
-
             const response = await httpClient.sendRequest({
                 method: HttpMethod.POST,
                 url: 'https://api.stripe.com/v1/customers',
@@ -78,5 +76,5 @@ export const stripeCreateCustomer = createAction({
                 }
             })
             return response.body;
-        }
+        } 
 })
