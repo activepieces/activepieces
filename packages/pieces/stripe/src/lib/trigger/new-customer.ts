@@ -42,7 +42,7 @@ export const stripeNewCustomer = createTrigger({
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    const webhook = await stripeCommon.subscribeWebhook('customer.created', context.webhookUrl, context.auth);
+    const webhook = await stripeCommon.subscribeWebhook('customer.created', context.webhookUrl, context.auth.publicKey);
     await context.store.put<WebhookInformation>('_new_customer_trigger', {
       webhookId: webhook.id
     });
@@ -50,7 +50,7 @@ export const stripeNewCustomer = createTrigger({
   async onDisable(context) {
     const response = await context.store?.get<WebhookInformation>('_new_customer_trigger');
     if (response !== null && response !== undefined) {
-      await stripeCommon.unsubscribeWebhook(response.webhookId, context.auth);
+      await stripeCommon.unsubscribeWebhook(response.webhookId, context.auth.publicKey);
     }
   },
   async run(context) {
