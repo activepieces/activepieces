@@ -1,7 +1,7 @@
 import { Property } from '@activepieces/pieces-framework';
 
 export const commaSeparatedToArray = <T>(str: T) => {
-  if (typeof str === 'string') {
+  if (typeof str === 'string' && str.charAt(-1) === ';') {
     return str.slice(0, -1).split(';')
   }
   return str
