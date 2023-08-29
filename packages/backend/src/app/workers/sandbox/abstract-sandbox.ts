@@ -11,14 +11,14 @@ export abstract class AbstractSandbox {
     public readonly boxId: number
     public used: boolean
     public cached: boolean
-    public resourceId: string | null
+    public key: string | null
     public lastUsed: number
 
     protected constructor(params: SandboxCtorParams) {
         this.boxId = params.boxId
         this.used = params.used
         this.cached = params.cached
-        this.resourceId = params.resourceId
+        this.key = params.key
         this.lastUsed = params.lastUsed
     }
 
@@ -96,7 +96,7 @@ export abstract class AbstractSandbox {
 export type SandboxCtorParams = {
     boxId: number
     used: boolean
-    resourceId: string | null
+    key: string | null
     lastUsed: number
     cached: boolean
 }
