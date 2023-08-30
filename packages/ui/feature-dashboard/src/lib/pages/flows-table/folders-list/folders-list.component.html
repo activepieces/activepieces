@@ -1,6 +1,10 @@
 <div class="ap-flex ap-items-center ap-mb-[30px]">
-    <div class="ap-flex-grow">Folders </div><ap-icon-button extraClasses="ap-fill-body" iconFilename="add.svg"
-        [width]="14" tooltipText="New Folder" (buttonClicked)="createFolder()" [height]="14"></ap-icon-button>
+    <div class="ap-flex-grow">Folders </div>
+    <ap-icon-button extraClasses="ap-fill-body" iconFilename="sort.svg" [width]="18"
+        [tooltipText]="(sortFolders$ | async) === 'asc' ? 'Ascending':'Descending'"
+        (buttonClicked)="toggleFolderSorting()" [height]="18"></ap-icon-button>
+    <ap-icon-button extraClasses="ap-fill-body" iconFilename="add.svg" [width]="14" tooltipText="New Folder"
+        (buttonClicked)="createFolder()" [height]="14"></ap-icon-button>
 </div>
 <div class=" ap-overflow-scroll folders-list">
     <div class="ap-flex ap-items-center ap-gap-4 ap-p-4 ap-cursor-pointer hover:ap-bg-hover "

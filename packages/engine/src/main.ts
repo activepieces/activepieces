@@ -91,6 +91,7 @@ const executeFlow = async (input?: ExecuteFlowOperation): Promise<void> => {
     globals.projectId = input.projectId;
     globals.apiUrl = input.apiUrl!;
     globals.serverUrl = input.serverUrl!;
+    globals.flowId = input.flowVersion.flowId;
     globals.flowRunId = input.flowRunId;
     globals.flowVersionId = input.flowVersion.id;
 
@@ -143,6 +144,8 @@ const executeTrigger = async (): Promise<void> => {
 
     globals.workerToken = input.workerToken!;
     globals.projectId = input.projectId;
+    globals.flowVersionId = input.flowVersion.id
+    globals.flowId = input.flowVersion.id
     globals.apiUrl = input.apiUrl!;
 
     const output = await triggerHelper.executeTrigger(input);
@@ -188,6 +191,8 @@ const executeAction = async (): Promise<void> => {
     globals.workerToken = input.workerToken!;
     globals.projectId = input.projectId;
     globals.apiUrl = input.apiUrl!;
+    globals.flowVersionId = input.flowVersion.id
+    globals.flowId = input.flowVersion.flowId
     globals.serverUrl = input.serverUrl;
 
     const output = await pieceHelper.executeAction(input);

@@ -115,11 +115,6 @@ export const askOpenAI = createAction({
       description: 'Array of roles to specify more accurate response',
       defaultValue: [
         { role: 'system', content: 'You are a helpful assistant.' },
-        { role: 'user', content: 'Who won the world series in 2020?' },
-        {
-          role: 'assistant',
-          content: 'The Los Angeles Dodgers won the World Series in 2020.'
-        }
       ]
     })
   },
@@ -196,27 +191,44 @@ export const askOpenAI = createAction({
         )?.data?.choices[0]?.message?.content?.trim();
         break; // Break out of the loop if the request is successful
       } catch (error: any) {
-        if (error?.message?.includes('code 401')) {
-          unaurthorized = true;
-        } else if (error?.message?.includes('code 429')) {
+        if (error?.message?.includes('code 429')) {
           billingIssue = true;
+          if (retries + 1 === maxRetries) {
+            throw error;
+          }
+          // Calculate the time delay for the next retry using exponential backoff
+          const delay = Math.pow(6, retries) * 1000;
+          console.log(`Retrying in ${delay} milliseconds...`);
+          await sleep(delay); // Wait for the calculated delay
+          retries++;
+          break;
+        } else {
+          if (error?.message?.includes('code 401')) {
+            unaurthorized = true;
+			      throw error;
+          }
+          const new_error = error as {
+              response: {
+              status: number,
+              data:{
+                error: {
+                  message: string,
+                }[]
+              },
+            }
+          };
+          throw {
+            token: new_error.response.status,
+            error: new_error.response.data.error
+          };
         }
-        if (retries + 1 === maxRetries) {
-          throw error;
-        }
-        // Calculate the time delay for the next retry using exponential backoff
-        const delay = Math.pow(6, retries) * 1000;
-        console.log(`Retrying in ${delay} milliseconds...`);
-        await sleep(delay); // Wait for the calculated delay
-        retries++;
-        break;
       }
     }
     if (billingIssue) {
       throw new Error(billingIssueMessage);
     }
     if (unaurthorized) {
-      throw new Error(unaurthorizedMessage );
+      throw new Error(unaurthorizedMessage);
     }
     return response;
   }

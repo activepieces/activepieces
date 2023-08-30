@@ -12,6 +12,7 @@ import {
   PieceAuthProperty,
   NonAuthPiecePropertyMap
 } from '@activepieces/pieces-framework';
+import { handleAPFile, isApFilePath } from './files.service';
 
 export class VariableService {
   private VARIABLE_TOKEN = RegExp('\\{\\{(.*?)\\}\\}', 'g');
@@ -32,6 +33,9 @@ export class VariableService {
       const variableName = input.substring(2, input.length - 2);
       if (variableName.startsWith(VariableService.CONNECTIONS)) {
         return this.handleTypeAndResolving(variableName, logs);
+      }
+      if (isApFilePath(variableName)) {
+        return variableName;
       }
       return this.evalInScope(variableName, valuesMap);
     }
@@ -205,8 +209,13 @@ export class VariableService {
         ...(property.defaultValidators || []),
         ...(property.validators || [])
       ];
-      for (const processor of processors) {
-        processedInput[key] = await processor(property, value);
+      // TODO remove the hard coding part
+      if (property.type === PropertyType.FILE && isApFilePath(value)) {
+        processedInput[key] = await handleAPFile(value.trim());
+      } else {
+        for (const processor of processors) {
+          processedInput[key] = await processor(property, value);
+        }
       }
 
       const propErrors = [];

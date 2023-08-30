@@ -69,7 +69,7 @@ export const googleTasksCommon = {
             }
 
             const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
-            const tasksLists = await getTasks(authProp);
+            const tasksLists = await getLists(authProp);
 
             return {
                 disabled: false,
@@ -97,13 +97,30 @@ export const googleTasksCommon = {
     }),
 };
 
-export async function getTasks(
+export async function getLists(
     authProp: OAuth2PropertyValue
 ): Promise<TasksList[]> {
     // docs: https://developers.google.com/tasks/reference/rest/v1/tasklists/list
     const request: HttpRequest = {
         method: HttpMethod.GET,
         url: `${googleTasksCommon.baseUrl}/tasks/v1/users/@me/lists`,
+        authentication: {
+            type: AuthenticationType.BEARER_TOKEN,
+            token: authProp.access_token,
+        },
+    };
+    const response = await httpClient.sendRequest<TasksListResponse>(request);
+    return response.body.items;
+}
+
+export async function getTasks(
+    authProp: OAuth2PropertyValue,
+    tasklist: string
+): Promise<TasksList[]> {
+    // docs: https://developers.google.com/tasks/reference/rest/v1/tasklists/list
+    const request: HttpRequest = {
+        method: HttpMethod.GET,
+        url: `${googleTasksCommon.baseUrl}/tasks/v1/lists/${tasklist}/tasks`,
         authentication: {
             type: AuthenticationType.BEARER_TOKEN,
             token: authProp.access_token,
