@@ -45,8 +45,8 @@ export const downloadFile = createAction({
         );
       
       const extention = '.' + extension(propsValue.mimeType)
-      const sourceFileName = propsValue.fileName
-      const fileName = ((sourceFileName && lookup(sourceFileName) ? sourceFileName.replace(new RegExp(extention + '$'), '') : sourceFileName)) ?? propsValue.fileId;
+      const srcFileName = propsValue.fileName
+      const fileName = (srcFileName ? srcFileName.replace(new RegExp(extention + '$'), '') : propsValue.fileId) + extention;
       return files.write({
         fileName,
         data: Buffer.from(await download.arrayBuffer()),
