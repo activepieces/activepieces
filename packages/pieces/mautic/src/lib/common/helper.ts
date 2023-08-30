@@ -21,6 +21,7 @@ export const mapMauticToActivepiecesProperty = (
         case 'timezone':
         case 'url':
             return Property.ShortText(fieldMetadata);
+        case 'date':
         case 'datetime':
             return Property.DateTime(fieldMetadata);
         case 'number':
@@ -35,6 +36,13 @@ export const mapMauticToActivepiecesProperty = (
                     ],
                 },
             });
+        case 'multiselect':
+            return Property.StaticMultiSelectDropdown({
+                ...fieldMetadata,
+                options: {
+                    options: Object.values(properties)[0],
+                },
+            })
         case 'select':
             return Property.StaticDropdown({
                 ...fieldMetadata,
@@ -43,7 +51,8 @@ export const mapMauticToActivepiecesProperty = (
                 },
             });
         default:
-            throw Error(`No support of type ${type}`);
+            console.error(`No support of type ${type}`);
+            return null;
     }
 };
 
@@ -51,7 +60,7 @@ export const fetchDynamicFieldsFromMetadata = async (
     baseUrl:string,
     username:string,
     password:string,
-    type:"contact"|"company"
+    type:"contact"|"company"|"lead"
 )=>{
     const request: HttpRequest = {
         method: HttpMethod.GET,
@@ -77,7 +86,10 @@ export const fetchDynamicFieldsFromMetadata = async (
                     required: false,
                 };
                 if (!type) return {};
-                fields[alias] = mapMauticToActivepiecesProperty(type, fieldMetadata, properties);
+                const f = mapMauticToActivepiecesProperty(type, fieldMetadata, properties);
+                if(f){
+                    fields[alias] = f
+                }
                 return fields;
             },
             {}
@@ -86,8 +98,7 @@ export const fetchDynamicFieldsFromMetadata = async (
     throw Error(`Unable to fetch ${type} metadata`);
 }
 
-
-export const getFields = (type:"contact"|"company") => Property.DynamicProperties({
+export const getFields = (type:"contact"|"company"|"lead") => Property.DynamicProperties({
     displayName: 'All Fields',
     description: 'List of all possible fields present',
     required: true,

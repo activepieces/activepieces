@@ -115,6 +115,7 @@
       "@activepieces/piece-kizeo-forms": [
         "packages/pieces/kizeo-forms/src/index.ts"
       ],
+      "@activepieces/piece-linear": ["packages/pieces/linear/src/index.ts"],
       "@activepieces/piece-linkedin": ["packages/pieces/linkedin/src/index.ts"],
       "@activepieces/piece-mailchimp": [
         "packages/pieces/mailchimp/src/index.ts"
@@ -131,6 +132,7 @@
       "@activepieces/piece-mindee": ["packages/pieces/mindee/src/index.ts"],
       "@activepieces/piece-monday": ["packages/pieces/monday/src/index.ts"],
       "@activepieces/piece-mysql": ["packages/pieces/mysql/src/index.ts"],
+      "@activepieces/piece-nifty": ["packages/pieces/nifty/src/index.ts"],
       "@activepieces/piece-notion": ["packages/pieces/notion/src/index.ts"],
       "@activepieces/piece-ntfy": ["packages/pieces/ntfy/src/index.ts"],
       "@activepieces/piece-onfleet": ["packages/pieces/onfleet/src/index.ts"],
@@ -148,6 +150,7 @@
         "packages/pieces/salesforce/src/index.ts"
       ],
       "@activepieces/piece-schedule": ["packages/pieces/schedule/src/index.ts"],
+      "@activepieces/piece-sendfox": ["packages/pieces/sendfox/src/index.ts"],
       "@activepieces/piece-sendgrid": ["packages/pieces/sendgrid/src/index.ts"],
       "@activepieces/piece-sendinblue": [
         "packages/pieces/sendinblue/src/index.ts"
@@ -196,7 +199,6 @@
       "@activepieces/piece-zoho-invoice": [
         "packages/pieces/zoho-invoice/src/index.ts"
       ],
-      "@activepieces/piece-nifty": ["packages/pieces/nifty/src/index.ts"],
       "@activepieces/piece-zoom": ["packages/pieces/zoom/src/index.ts"],
       "@activepieces/pieces-common": ["packages/pieces/common/src/index.ts"],
       "@activepieces/pieces-framework": [

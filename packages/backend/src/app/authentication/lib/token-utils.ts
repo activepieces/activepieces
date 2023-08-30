@@ -13,7 +13,7 @@ const EXPIRES_IN_SECONDS = 7 * 24 * 3600
 const ISSUER = 'activepieces'
 
 let secret: string | null = null
-const queueMode: QueueMode = system.get(SystemProp.QUEUE_MODE) as QueueMode
+const queueMode: QueueMode = system.get(SystemProp.QUEUE_MODE)!
 
 const getSecret = async (): Promise<string> => {
     if (secret !== null) {
