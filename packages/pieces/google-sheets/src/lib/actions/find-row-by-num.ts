@@ -1,5 +1,5 @@
 import { Property, createAction } from "@activepieces/pieces-framework";
-import { googleSheetsCommon , getGoogleSheetRow } from "../common/common";
+import { googleSheetsCommon , getGoogleSheetRows } from "../common/common";
 import { googleSheetsAuth } from "../..";
 
 
@@ -7,7 +7,7 @@ export const findRowByNumAction = createAction({
     auth: googleSheetsAuth,
     name: 'find_row_by_num',
     description: 'Find a row in a Google Sheet by row number',
-    displayName: 'Find Row By Number',
+    displayName: 'Find Row',
     props: {
         spreadsheet_id: googleSheetsCommon.spreadsheet_id,
         include_team_drives: googleSheetsCommon.include_team_drives,
@@ -28,12 +28,13 @@ export const findRowByNumAction = createAction({
             throw Error('Sheet not found in spreadsheet');
         }
         
-        const row = await getGoogleSheetRow({
+        const row = await getGoogleSheetRows({
             accessToken: auth['access_token'],
             sheetName: sheetName,
             spreadSheetId: propsValue['spreadsheet_id'],
-            rowIndex: propsValue['row_number']
+            rowIndex_s: propsValue['row_number'],
+            rowIndex_e: propsValue['row_number']
         });
-        return row;
+        return row[0];
     }
 });
