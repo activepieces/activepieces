@@ -5,7 +5,7 @@ import {
   Property
 } from '@activepieces/pieces-framework';
 import { randomUUID } from 'crypto';
-import { collectionName, commaSeparatedToArray, decodeEmbeddings } from '../common';
+import { collectionName, decodeEmbeddings } from '../common';
 
 export const addPointsToCollection = createAction({
   auth: qdrantAuth,
@@ -16,7 +16,7 @@ export const addPointsToCollection = createAction({
     'Instert a point (= embedding or vector + other infos) to a specific collection, if the collection does not exist it will be created',
   props: {
     collectionName,
-    embeddings: Property.ShortText({
+    embeddings: Property.File({
       displayName: 'Embeddings',
       description: 'Embeddings (= vectors) for the points',
       required: true,
@@ -41,8 +41,13 @@ export const addPointsToCollection = createAction({
       },
       required: true,
     }),
-    payloads: Property.Object({
-      displayName: 'Payloads',
+    content: Property.File({
+      displayName: 'Content Chunks',
+      description: 'The content chunks of the doc to add to payload',
+      required: false
+    }),
+    payload: Property.Json({
+      displayName: 'Additional Payload',
       description: 'The additional informations for the points',
       required: false
     }),
@@ -65,7 +70,7 @@ export const addPointsToCollection = createAction({
       url: auth.serverAdress,
     });
     
-    const embeddings = decodeEmbeddings(propsValue.embeddings)
+    const embeddings = decodeEmbeddings(propsValue.embeddings.data)
 
     const numberOfEmbeddings = embeddings.length;
     const embeddingsLen = embeddings[0].length;
@@ -77,7 +82,7 @@ export const addPointsToCollection = createAction({
         );
     }
 
-    const embeddingsIds = commaSeparatedToArray(propsValue.embeddingsIds) as
+    const embeddingsIds = JSON.parse(propsValue.embeddingsIds) as
       | string[]
       | 'Auto';
 
@@ -88,22 +93,14 @@ export const addPointsToCollection = createAction({
         'The number of embeddings Ids and the number of embeddings must be the same'
       );
 
-    const payloads = propsValue.payloads;
-
+    const payload = propsValue.payload ?? {};
+    const content = propsValue.content ? JSON.parse(propsValue.content.data.toString('utf-8')) as string[] : null
     const points = [];
 
     for (let i = 0; i < numberOfEmbeddings; i++) {
-      const payload = {} as any;
-
-      for (const key in payloads) {
-        const elem = commaSeparatedToArray(payloads[key]);
-        if (elem instanceof Array && elem.length == numberOfEmbeddings) {
-          payload[key] = elem[i];
-        } else {
-          payload[key] = elem;
-        }
+      if (content) {
+        payload['content'] = content[i]
       }
-
       points.push({
         id: autoEmbeddingsIds ? randomUUID() : embeddingsIds[i],
         payload,

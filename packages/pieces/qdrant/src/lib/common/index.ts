@@ -1,20 +1,16 @@
 import { Property } from '@activepieces/pieces-framework';
 
-export const commaSeparatedToArray = <T>(str: T) => {
-  if (typeof str === 'string' && str.at(-1) === ';') {
-    return str.slice(0, -1).split(';')
-  }
-  return str
-}
-
-export const decodeEmbeddings = (embeddings: string | number[] | string[] | number[][]) => {
-  embeddings = commaSeparatedToArray(embeddings)
+export const decodeEmbeddings = (embeddingsString: Buffer) => {
+  let embeddings = JSON.parse(embeddingsString.toString('utf-8')) as string[] | number[][] | number[] | string
+  
   if (typeof embeddings[0] === 'number' || (typeof embeddings[0] === 'string' && embeddings[0].length === 1)) {
     embeddings = [embeddings] as string[] | number[][];
   }
+  
   if (embeddings.length === 0) throw new Error('Embeddings must contain one element minimum')
+  
   if (typeof embeddings[0] === 'string') {
-    return (embeddings as string[]).map(embedding => new Float32Array(new Uint8Array(Buffer.from(embedding, 'base64')).buffer))
+    return (embeddings as string[]).map(embedding => new Float32Array(new Uint8Array(Buffer.from(embedding, 'utf-8')).buffer))
   } else {
     return (embeddings as number[][]).map(embedding => new Float32Array(embedding))
   }
@@ -76,7 +72,7 @@ export const convertToFilter = (infosToGetPoint: {
 }) => {
   type Tfilter = (
     | { has_id: (string | number)[] }
-    | { key: string; match: { value: any } }
+    | { key: string; match: { value: any } | { any: any[] } }
   )[];
   const filter = { must: [], must_not: [] } as {
     must: Tfilter;
@@ -85,25 +81,17 @@ export const convertToFilter = (infosToGetPoint: {
 
   for (const getKey in infosToGetPoint) {
     for (const key in infosToGetPoint[getKey as keyof typeof filter]) {
-      const value = commaSeparatedToArray(infosToGetPoint[getKey as keyof typeof filter][key]);
+      const value = JSON.parse(infosToGetPoint[getKey as keyof typeof filter][key]);
 
       if (['id', 'ids'].includes(key.toLocaleLowerCase())) {
         filter[getKey as keyof typeof filter].push({
           has_id: value instanceof Array ? value : [value],
         });
-        break;
+        continue;
       }
 
-      const destrucArray = (values: any) => {
-        for (const value of values) {
-          filter[getKey as keyof typeof filter].push({ key, match: { value } });
-          if (value instanceof Array) destrucArray(value);
-        }
-      };
-
       if (value instanceof Array) {
-        destrucArray(value);
-        break;
+        filter[getKey as keyof typeof filter].push({ key, match: { any: value } })
       }
 
       filter[getKey as keyof typeof filter].push({ key, match: { value } });

@@ -1,5 +1,5 @@
 import { createAction } from "@activepieces/pieces-framework";
-import { seclectPointsProps, convertToFilter, collectionName, commaSeparatedToArray } from "../common";
+import { seclectPointsProps, convertToFilter, collectionName } from "../common";
 import { qdrantAuth } from "../..";
 import { QdrantClient } from "@qdrant/js-client-rest";
 
@@ -20,7 +20,7 @@ export const getPoints = createAction({
     const collectionName = propsValue.collectionName as string
 
     if (propsValue.getPointsBy === 'Ids') {
-      const ids = commaSeparatedToArray(propsValue.infosToGetPoint['ids'])
+      const ids = JSON.parse(propsValue.infosToGetPoint['ids'])
       return await client.retrieve(collectionName, {
         ids: ids instanceof Array ? ids : [ids]
       })
