@@ -58,6 +58,7 @@ export class AppConnectionService {
 
         const connection = {
             ...request,
+            status: AppConnectionStatus.ACTIVE,
             value: encryptedConnectionValue,
             id: apId(),
             projectId,
@@ -88,7 +89,6 @@ export class AppConnectionService {
         const appConnection = decryptConnection(encryptedAppConnection)
 
         if (!needRefresh(appConnection)) {
-            appConnection.status = getStatus(appConnection)
             return appConnection
         }
 
@@ -146,7 +146,7 @@ export class AppConnectionService {
 
         data.forEach((encryptedConnection) => {
             const apConnection: AppConnection =
-        decryptConnection(encryptedConnection)
+                decryptConnection(encryptedConnection)
             promises.push(
                 new Promise((resolve) => {
                     return resolve(apConnection)
@@ -214,10 +214,8 @@ function decryptConnection(
     const value = decryptObject<AppConnectionValue>(encryptedConnection.value)
     const connection: AppConnection = {
         ...encryptedConnection,
-        status: AppConnectionStatus.ACTIVE,
         value,
     }
-    connection.status = getStatus(connection)
     return connection
 }
 
@@ -301,10 +299,10 @@ async function lockAndRefreshConnection({
             id: refreshedAppConnection.id,
             name: refreshedAppConnection.name,
             appName: refreshedAppConnection.appName,
+            status: refreshedAppConnection.status,
             projectId: refreshedAppConnection.projectId,
             value: encryptObject(refreshedAppConnection.value),
         })
-        refreshedAppConnection.status = getStatus(refreshedAppConnection)
         return refreshedAppConnection
     }
     catch (e) {
@@ -329,6 +327,20 @@ function needRefresh(connection: AppConnection): boolean {
     }
 }
 
+function isExpired(connection: BaseOAuth2ConnectionValue) {
+    const secondsSinceEpoch = Math.round(Date.now() / 1000)
+    if (!connection.refresh_token) {
+        return false
+    }
+    // Salesforce doesn't provide an 'expires_in' field, as it is dynamic per organization; therefore, it's necessary for us to establish a low threshold and consistently refresh it.
+    const expiresIn = connection.expires_in ?? 60 * 60
+    const refreshThreshold = 15 * 60 // Refresh if there is less than 15 minutes to expire
+    return (
+        secondsSinceEpoch + refreshThreshold >= connection.claimed_at + expiresIn
+    )
+}
+
+
 async function refresh(connection: AppConnection): Promise<AppConnection> {
     switch (connection.value.type) {
         case AppConnectionType.CLOUD_OAUTH2:
@@ -346,29 +358,11 @@ async function refresh(connection: AppConnection): Promise<AppConnection> {
     return connection
 }
 
-const REFRESH_THRESHOLD = 15 * 60 // Refresh if there is less than 15 minutes to expire
-
-function isExpired(connection: BaseOAuth2ConnectionValue) {
-    const secondsSinceEpoch = Math.round(Date.now() / 1000)
-
-    if (!connection.refresh_token) {
-        return false
-    }
-    // Salesforce doesn't provide an 'expires_in' field, as it is dynamic per organization; therefore, it's necessary for us to establish a low threshold and consistently refresh it.
-    const expiresIn = connection.expires_in ?? 60 * 60
-    return (
-        secondsSinceEpoch + REFRESH_THRESHOLD >= connection.claimed_at + expiresIn
-    )
-}
 
 async function refreshCloud(
     appName: string,
     connectionValue: CloudOAuth2ConnectionValue,
 ): Promise<CloudOAuth2ConnectionValue> {
-    if (!isExpired(connectionValue)) {
-        return connectionValue
-    }
-
     const requestBody = {
         refreshToken: connectionValue.refresh_token,
         pieceName: appName,
@@ -377,10 +371,7 @@ async function refreshCloud(
         authorizationMethod: connectionValue.authorization_method,
         tokenUrl: connectionValue.token_url,
     }
-    const response = (
-        await axios.post('https://secrets.activepieces.com/refresh', requestBody)
-    ).data
-
+    const response = (await axios.post('https://secrets.activepieces.com/refresh', requestBody, { timeout: 10000 })).data
     return {
         ...connectionValue,
         ...response,
@@ -404,7 +395,7 @@ async function refreshWithCredentials(
         accept: 'application/json',
     }
     const authorizationMethod =
-    appConnection.authorization_method || OAuth2AuthorizationMethod.BODY
+        appConnection.authorization_method || OAuth2AuthorizationMethod.BODY
     switch (authorizationMethod) {
         case OAuth2AuthorizationMethod.BODY:
             body.client_id = appConnection.client_id
@@ -421,6 +412,7 @@ async function refreshWithCredentials(
     const response = (
         await axios.post(appConnection.token_url, new URLSearchParams(body), {
             headers,
+            timeout: 10000,
         })
     ).data
     const mergedObject = mergeNonNull(
@@ -440,12 +432,12 @@ function mergeNonNull(
     oAuth2Response: BaseOAuth2ConnectionValue,
 ): OAuth2ConnectionValueWithApp {
     const formattedOAuth2Response: Partial<BaseOAuth2ConnectionValue> =
-    Object.entries(oAuth2Response)
-        .filter(([, value]) => value !== null && value !== undefined)
-        .reduce<Partial<BaseOAuth2ConnectionValue>>((obj, [key, value]) => {
-        obj[key as keyof BaseOAuth2ConnectionValue] = value
-        return obj
-    }, {})
+        Object.entries(oAuth2Response)
+            .filter(([, value]) => value !== null && value !== undefined)
+            .reduce<Partial<BaseOAuth2ConnectionValue>>((obj, [key, value]) => {
+            obj[key as keyof BaseOAuth2ConnectionValue] = value
+            return obj
+        }, {})
 
     return {
         ...appConnection,
@@ -476,7 +468,7 @@ async function claim(request: {
             accept: 'application/json',
         }
         const authorizationMethod =
-      request.authorizationMethod || OAuth2AuthorizationMethod.BODY
+            request.authorizationMethod || OAuth2AuthorizationMethod.BODY
         switch (authorizationMethod) {
             case OAuth2AuthorizationMethod.BODY:
                 body.client_id = request.clientId
@@ -559,21 +551,6 @@ function deleteProps(obj: Record<string, unknown>, prop: string[]) {
     for (const p of prop) {
         delete obj[p]
     }
-}
-
-function getStatus(connection: AppConnection): AppConnectionStatus {
-    const connectionStatus = AppConnectionStatus.ACTIVE
-    switch (connection.value.type) {
-        case AppConnectionType.CLOUD_OAUTH2:
-        case AppConnectionType.OAUTH2:
-            if (isExpired(connection.value)) {
-                return AppConnectionStatus.EXPIRED
-            }
-            break
-        default:
-            break
-    }
-    return connectionStatus
 }
 
 type UpsertParams = {

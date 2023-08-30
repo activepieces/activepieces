@@ -7,8 +7,9 @@ import { commonProperties } from './database-connection'
 import { AddAppConnectionTypeToTopLevel1691706020626 } from './migration/sqllite3/1691706020626-add-app-connection-type-to-top-level'
 import { AddTagsToRunSqlite31692056190942 } from './migration/sqllite3/1692056190942-AddTagsToRunSqlite3'
 import { AddStepFileSqlite31692958076906 } from './migration/sqllite3/1692958076906-AddStepFileSqlite3'
+import { AddStatusToConnectionsSqlite31693402376520 } from './migration/sqllite3/1693402376520-AddStatusToConnectionsSqlite3'
 
-function getSQLiteFilePath() {
+function getSQLiteFilePath(): string {
     const homeDirectory = os.homedir()
     const hiddenFolderName = '.activepieces'
     const hiddenFolderPath = path.join(homeDirectory, hiddenFolderName)
@@ -30,6 +31,7 @@ export const createSqlLiteDatasource = () => {
             AddAppConnectionTypeToTopLevel1691706020626,
             AddTagsToRunSqlite31692056190942,
             AddStepFileSqlite31692958076906,
+            AddStatusToConnectionsSqlite31693402376520,
         ],
         ...commonProperties,
     })
