@@ -1,5 +1,6 @@
 import { googleDriveAuth } from '../..';
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { extension } from 'mime-types';
 
 export const downloadFile = createAction({
   auth: googleDriveAuth,
@@ -17,10 +18,14 @@ export const downloadFile = createAction({
       description: 'The MIME type of the file to download',
       required: true,
     }),
+    fileName: Property.ShortText({
+      displayName: 'File name',
+      description: 'The indicative name of the file to download',
+      required: false,
+    }),
   },
   run: async ({ auth, propsValue, files }) => {
     const googledlCall = async (url: string) => {
-      
       const download = await fetch(url, {
         headers: {
           Authorization: `Bearer ${auth.access_token}`,
@@ -29,18 +34,22 @@ export const downloadFile = createAction({
         .then((response) =>
           response.ok ? response.blob() : Promise.reject(response)
         )
-        .catch(
-          (error) =>
-            Promise.reject(new Error(
+        .catch((error) =>
+          Promise.reject(
+            new Error(
               `Error when download file:\n\tDownload file response: ${
                 (error as Error).message ?? error
               }`
-            ))
+            )
+          )
         );
-      
+
       return files.write({
-        fileName: propsValue.fileId,
-        data: Buffer.from(await download.arrayBuffer())
+        fileName:
+          (propsValue.fileName ?? propsValue.fileId) +
+          '.' +
+          extension(propsValue.mimeType),
+        data: Buffer.from(await download.arrayBuffer()),
       });
     };
 
@@ -68,9 +77,11 @@ export const downloadFile = createAction({
       }
       return await googledlCall(
         `https://www.googleapis.com/drive/v3/files/${propsValue.fileId}/export?mimeType=${propsValue.mimeType}`
-      )
+      );
     } else {
-      return await googledlCall(`https://www.googleapis.com/drive/v3/files/${propsValue.fileId}?alt=media`);
+      return await googledlCall(
+        `https://www.googleapis.com/drive/v3/files/${propsValue.fileId}?alt=media`
+      );
     }
   },
 });
