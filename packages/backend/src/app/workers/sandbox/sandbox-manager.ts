@@ -1,5 +1,5 @@
 import { Mutex } from 'async-mutex'
-import { Sandbox } from './'
+import { Sandbox } from '.'
 import { isNil } from '@activepieces/shared'
 import { logger } from '../../helper/logger'
 

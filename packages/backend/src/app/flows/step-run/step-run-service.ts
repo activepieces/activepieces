@@ -33,6 +33,7 @@ import { getServerUrl } from '../../helper/public-ip-utils'
 import { sandboxManager } from '../../workers/sandbox/sandbox-manager'
 import { flowService } from '../flow/flow.service'
 import { stepFileService } from '../step-file/step-file.service'
+import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 
 export const stepRunService = {
     async create({ projectId, flowVersionId, stepName, userId }: CreateParams): Promise<StepRunResponse> {
@@ -87,10 +88,17 @@ async function executePiece({ step, projectId, flowVersion, userId }: ExecutePar
         flowId: flowVersion.flowId,
         stepName: step.name,
     })
+
+    const exactPieceVersion = await getExactPieceVersion({
+        name: pieceName,
+        version: pieceVersion,
+        projectId,
+    })
+
     const operation: ExecuteActionOperation = {
         serverUrl: await getServerUrl(),
         pieceName,
-        pieceVersion,
+        pieceVersion: exactPieceVersion,
         actionName,
         input,
         flowVersion,
@@ -225,6 +233,16 @@ const executeBranch = async ({ step, flowVersion, projectId }: ExecuteParams<Bra
     }
 }
 
+const getExactPieceVersion = async ({ name, version, projectId }: GetExactPieceVersionParams): Promise<string> => {
+    const pieceMetadata = await pieceMetadataService.get({
+        projectId,
+        name,
+        version,
+    })
+
+    return pieceMetadata.version
+}
+
 type CreateParams = {
     userId: UserId
     projectId: ProjectId
@@ -236,5 +254,11 @@ type ExecuteParams<T extends Action> = {
     step: T
     userId: UserId
     flowVersion: FlowVersion
+    projectId: ProjectId
+}
+
+type GetExactPieceVersionParams = {
+    name: string
+    version: string
     projectId: ProjectId
 }

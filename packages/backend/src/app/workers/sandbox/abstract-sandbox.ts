@@ -16,14 +16,15 @@ export abstract class AbstractSandbox {
     }
 
     protected abstract recreateCleanup(): Promise<void>
+    public abstract runCommandLine(commandLine: string): Promise<ExecuteSandboxResult>
+    public abstract getSandboxFolderPath(): string
+    public abstract useCache(cachePath: string): Promise<void>
 
     public async recreate(): Promise<void> {
         await this.recreateCleanup()
         const sandboxFolderPath = this.getSandboxFolderPath()
         await packageManager.initProject(sandboxFolderPath)
     }
-
-    public abstract runCommandLine(commandLine: string): Promise<ExecuteSandboxResult>
 
     protected async parseMetaFile(): Promise<Record<string, unknown>> {
         const metaFile = this.getSandboxFilePath('meta.txt')
@@ -38,7 +39,6 @@ export abstract class AbstractSandbox {
         return result
     }
 
-    public abstract getSandboxFolderPath(): string
 
     protected async parseFunctionOutput(): Promise<EngineResponse<unknown>> {
         const outputFile = this.getSandboxFilePath('output.json')

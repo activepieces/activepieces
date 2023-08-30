@@ -44,6 +44,7 @@ import { pieceMetadataService } from '../pieces/piece-metadata-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { codeBuilder } from '../workers/code-worker/code-builder'
 import { fileService } from '../file/file.service'
+import { sandboxProvisioner } from '../workers/sandbox/sandbox-provisioner'
 
 type InstallPieceParams = {
     projectId: string
@@ -367,29 +368,29 @@ export const engineHelper = {
     ): Promise<EngineHelperResponse<EngineHelperActionResult>> {
         logger.debug(operation, '[EngineHelper#executeAction] operation')
 
-        const result = await pieceMetadataService.get({
-            projectId: operation.projectId,
-            name: operation.pieceName,
-            version: operation.pieceVersion,
-        })
+        const pieces = [
+            {
+                name: operation.pieceName,
+                version: operation.pieceVersion,
+            },
+        ]
 
-        const sandbox = await getSandbox({
-            projectId: operation.projectId,
-            pieceName: result.name,
-            pieceVersion: result.version,
+        const sandbox = await sandboxProvisioner.provision({
+            pieces,
         })
-
-        const input = {
-            ...operation,
-            pieceVersion: result.version,
-            workerToken: await generateWorkerToken({ projectId: operation.projectId }),
-        }
 
         try {
+            const input = {
+                ...operation,
+                workerToken: await generateWorkerToken({ projectId: operation.projectId }),
+            }
+
             return await execute(EngineOperationType.EXECUTE_ACTION, sandbox, input)
         }
         finally {
-            await sandboxManager.returnSandbox(sandbox.boxId)
+            await sandboxProvisioner.release({
+                sandbox,
+            })
         }
     },
 
