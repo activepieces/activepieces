@@ -18,7 +18,7 @@ export const downloadFile = createAction({
       required: true,
     }),
   },
-  run: async ({ auth, propsValue }) => {
+  run: async ({ auth, propsValue, files }) => {
     const googledlCall = async (url: string) => {
       
       const download = await fetch(url, {
@@ -38,10 +38,10 @@ export const downloadFile = createAction({
             ))
         );
       
-      return (
-        `data:${propsValue.mimeType};base64,` +
-        Buffer.from(await download.arrayBuffer()).toString('base64')
-      );
+      return files.write({
+        fileName: propsValue.fileId,
+        data: Buffer.from(await download.arrayBuffer())
+      });
     };
 
     // the google drive API doesn't allowed downloading google documents but we can export them to office formats
