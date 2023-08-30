@@ -77,13 +77,13 @@ export const addPointsToCollection = createAction({
         );
     }
 
-    const embeddingsIds = commaSeparatedToArray(propsValue.embeddingsIds) as unknown as
+    const embeddingsIds = commaSeparatedToArray(propsValue.embeddingsIds) as
       | string[]
       | 'Auto';
 
     const autoEmbeddingsIds = embeddingsIds === 'Auto';
     
-    if (!autoEmbeddingsIds && embeddingsIds.length != numberOfEmbeddings)
+    if (!autoEmbeddingsIds && embeddingsIds.length !== numberOfEmbeddings)
       throw new Error(
         'The number of embeddings Ids and the number of embeddings must be the same'
       );
