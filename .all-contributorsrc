@@ -518,6 +518,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "landonmoir",
+      "name": "Landon Moir",
+      "avatar_url": "https://avatars.githubusercontent.com/u/29764668?v=4",
+      "profile": "https://github.com/landonmoir",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

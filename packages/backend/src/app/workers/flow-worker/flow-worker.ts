@@ -19,7 +19,8 @@ import {
     StepOutputStatus,
     TriggerType,
 } from '@activepieces/shared'
-import { Sandbox, sandboxManager } from '../sandbox'
+import { Sandbox } from '../sandbox'
+import { sandboxManager } from '../sandbox/sandbox-manager'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { fileService } from '../../file/file.service'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
@@ -288,7 +289,7 @@ function throwErrorToRetry(error: Error, runId: string): void {
 }
 
 async function saveToLogFile({ fileId, projectId, executionOutput }: { fileId: FileId | undefined, projectId: ProjectId, executionOutput: ExecutionOutput }): Promise<File> {
-    // TODO REMOVE THIS, DELETE TEMPORARY 
+    // TODO REMOVE THIS, DELETE TEMPORARY
     if (executionOutput.status !== ExecutionOutputStatus.PAUSED) {
         executionOutput.executionState.lastStepState = {}
     }

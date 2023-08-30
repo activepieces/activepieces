@@ -27,7 +27,7 @@ import { redisQueueManager } from './queues/redis/redis-queue'
 import { QueueMode, system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
 
-const queueMode = system.get(SystemProp.QUEUE_MODE) as QueueMode
+const queueMode = system.get(SystemProp.QUEUE_MODE)!
 
 const initFlowQueueConsumer = async (): Promise<void> => {
     switch (queueMode) {

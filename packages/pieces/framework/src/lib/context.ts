@@ -5,6 +5,7 @@ import { NonAuthPiecePropertyMap, PieceAuthProperty, PiecePropValueSchema, Piece
 type BaseContext<PieceAuth extends PieceAuthProperty, Props extends PiecePropertyMap> = {
     auth: PiecePropValueSchema<PieceAuth>,
     propsValue: StaticPropsValue<Props>
+    files: FilesService
     store: Store
 }
 
@@ -67,6 +68,7 @@ export type BaseActionContext<
     executionType: ET,
     connections: ConnectionsManager,
     tags: TagsManager,
+    files: FilesService
     serverUrl: string,
     run: {
         id: FlowRunId,
@@ -91,6 +93,10 @@ export type ActionContext<
     PieceAuth extends PieceAuthProperty = PieceAuthProperty,
     ActionProps extends NonAuthPiecePropertyMap = NonAuthPiecePropertyMap,
 > = BeginExecutionActionContext<PieceAuth, ActionProps> | ResumeExecutionActionContext<PieceAuth, ActionProps>
+
+export interface FilesService {
+    write({fileName, data}: {fileName: string, data: Buffer}): Promise<string>;
+}
 
 export interface ConnectionsManager {
     get(key: string): Promise<AppConnectionValue | Record<string, unknown> | string | null>;

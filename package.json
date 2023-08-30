@@ -38,6 +38,7 @@
     "@fortawesome/fontawesome-svg-core": "^6.2.1",
     "@fortawesome/free-solid-svg-icons": "^6.2.1",
     "@google-cloud/vision": "^3.1.0",
+    "@linear/sdk": "^7.0.1",
     "@mailchimp/mailchimp_marketing": "^3.0.80",
     "@mailerlite/mailerlite-nodejs": "^1.0.1",
     "@ngrx/effects": "16.0.1",
