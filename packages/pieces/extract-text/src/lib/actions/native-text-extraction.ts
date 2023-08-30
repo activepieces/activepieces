@@ -8,19 +8,18 @@ export const nativeTextExtraction = createAction({
     'Extract text from many a file types (pdf, docx, pptx, xlsx, odt, odp, ods)',
   displayName: 'Native Extraction',
   props: {
-    file: Property.LongText({
-      displayName: 'Base64 File',
+    file: Property.File({
+      displayName: 'File',
       description: 'The file to extract text from',
       required: true,
     }),
   },
   run: async ({ propsValue }) => {
     const file = propsValue.file;
-    const MIMIEtype = file.split(';')[0].split(':')[1];
 
-    if (MIMIEtype === 'application/pdf') {
+    if (file.extension === 'pdf') {
       const doc = await getDocument({
-        data: Buffer.from(file, 'base64').toString('binary'),
+        data: file.data.toString('binary'),
       }).promise;
       let extractText = ''
 
@@ -62,7 +61,7 @@ export const nativeTextExtraction = createAction({
 
       return extractText
     } else {
-        return await parseOfficeAsync(Buffer.from(file.split(',')[1], 'base64'))
+        return await parseOfficeAsync(file.data)
     }
   },
 });
