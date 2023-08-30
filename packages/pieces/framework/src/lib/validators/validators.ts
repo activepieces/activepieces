@@ -22,13 +22,13 @@ class Validators {
     };
   };
 
-  static maxLength(max: number, includeBounds = true): TypedValidatorFn<ValidationInputType.STRING> {
+  static maxLength(max: number): TypedValidatorFn<ValidationInputType.STRING> {
     return {
       type: ValidationInputType.STRING,
       fn: (property, processedValue, userInput) => {  
         if (isEmpty(processedValue)) return null
 
-        const isValid = includeBounds ? processedValue.length < max : processedValue.length <= max
+        const isValid = processedValue.length <= max
 
         if (!isValid) {
           return formatErrorMessage(ErrorMessages.MAX_LENGTH, { userInput, length: max.toString() });
@@ -39,12 +39,12 @@ class Validators {
     };
   };
 
-  static minLength(min: number, includeBounds = true): TypedValidatorFn<ValidationInputType.STRING> {
+  static minLength(min: number): TypedValidatorFn<ValidationInputType.STRING> {
     return {
       type: ValidationInputType.STRING,
       fn: (property, processedValue, userInput) => {  
         if (isEmpty(processedValue)) return null
-        const isValid = includeBounds ? processedValue.length > min : processedValue.length >= min
+        const isValid = processedValue.length >= min
 
         if (!isValid) {
           return formatErrorMessage(ErrorMessages.MIN_LENGTH, { userInput, length: min.toString() });
@@ -55,22 +55,22 @@ class Validators {
     };
   };
 
-  static minValue(min: number, includeBounds = true): TypedValidatorFn<ValidationInputType.NUMBER> {
+  static minValue(min: number): TypedValidatorFn<ValidationInputType.NUMBER> {
     return {
       type: ValidationInputType.NUMBER,
       fn: (property, processedValue, userInput) => {
-        const isValid = includeBounds ? Number(processedValue) > min : Number(processedValue) >= min
+        const isValid = Number(processedValue) >= min
         if (isValid) return null;
         return formatErrorMessage(ErrorMessages.MIN, { userInput, min });
       }
     };
   };
 
-  static maxValue(max: number, includeBounds = true): TypedValidatorFn<ValidationInputType.NUMBER> {
+  static maxValue(max: number): TypedValidatorFn<ValidationInputType.NUMBER> {
     return {
       type: ValidationInputType.NUMBER,
       fn: (property, processedValue, userInput) => {      
-        const isValid = includeBounds ? Number(processedValue) < max : Number(processedValue) <= max
+        const isValid = Number(processedValue) <= max
         if (isValid) return null;
 
         return formatErrorMessage(ErrorMessages.MAX, { userInput, max });
@@ -78,14 +78,14 @@ class Validators {
     };
   };
 
-  static inRange(min: number, max: number, includeBounds = true): TypedValidatorFn<ValidationInputType.NUMBER> {
+  static inRange(min: number, max: number): TypedValidatorFn<ValidationInputType.NUMBER> {
     return {
       type: ValidationInputType.NUMBER,
       fn: (property, processedValue, userInput) => {
         const numericValue = Number(processedValue);
         const isValid =
-          (includeBounds ? numericValue <= max : numericValue < max) &&
-          (includeBounds ? numericValue >= min : numericValue > min);
+          (numericValue <= max) &&
+          (numericValue >= min);
 
         if (isValid) return null;
 
