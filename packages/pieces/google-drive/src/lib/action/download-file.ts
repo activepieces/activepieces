@@ -1,6 +1,6 @@
 import { googleDriveAuth } from '../..';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { extension } from 'mime-types';
+import { extension, lookup } from 'mime-types';
 
 export const downloadFile = createAction({
   auth: googleDriveAuth,
@@ -43,12 +43,12 @@ export const downloadFile = createAction({
             )
           )
         );
-
+      
+      const extention = '.' + extension(propsValue.mimeType)
+      const sourceFileName = propsValue.fileName
+      const fileName = ((sourceFileName && lookup(sourceFileName) ? sourceFileName.replace(new RegExp(extention + '$'), '') : sourceFileName)) ?? propsValue.fileId;
       return files.write({
-        fileName:
-          (propsValue.fileName ?? propsValue.fileId) +
-          '.' +
-          extension(propsValue.mimeType),
+        fileName,
         data: Buffer.from(await download.arrayBuffer()),
       });
     };
