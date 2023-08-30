@@ -21,26 +21,28 @@ const recursiveSpliting = (
   enc: Tiktoken,
   text: string,
   maxTokens: number,
-  charsPriority: string[],
+  charsPriority: string[]
 ) => {
   const textSplited: string[] = [];
-  const chars =  charsPriority.pop()
+  const chars = charsPriority.pop();
   if (!chars) {
-    return splitByToken(enc, text)
+    return splitByToken(enc, text);
   }
 
   const chuncks = text.split(new RegExp('(?<=[' + chars + '])'));
-  
+
   for (const chunck of chuncks) {
     if (enc.encode(chunck).length > maxTokens) {
-      textSplited.push(...recursiveSpliting(enc, chunck, maxTokens, charsPriority));
+      textSplited.push(
+        ...recursiveSpliting(enc, chunck, maxTokens, charsPriority)
+      );
     } else {
       textSplited.push(chunck);
     }
   }
-  charsPriority.push(chars)
-  return textSplited
-}
+  charsPriority.push(chars);
+  return textSplited;
+};
 
 const splitBychar = (
   enc: Tiktoken,
@@ -51,23 +53,27 @@ const splitBychar = (
 ) => {
   const recursiveSplit = recursiveSpliting(enc, text, maxTokens, charsPriority);
   const textSplited: string[] = [];
-  let tokenCount = 0
-  let lastPushIndex = 0
-  
+  let tokenCount = 0;
+  let lastPushIndex = 0;
+
   for (let i = 0; i < recursiveSplit.length; i++) {
     const chunck = recursiveSplit[i];
-    tokenCount += enc.encode(chunck).length
+    tokenCount += enc.encode(chunck).length;
     if (tokenCount > maxTokens) {
-      recursiveSplit.splice(i, 1, ...recursiveSpliting(enc, chunck, maxTokens - tokenCount, charsPriority))
+      recursiveSplit.splice(
+        i,
+        1,
+        ...recursiveSpliting(enc, chunck, maxTokens - tokenCount, charsPriority)
+      );
     }
     if (tokenCount >= minToken || i === recursiveSplit.length - 1) {
-      textSplited.push(recursiveSplit.slice(lastPushIndex, i + 1).join(''))
-      lastPushIndex = i + 1
-      tokenCount = 0
+      textSplited.push(recursiveSplit.slice(lastPushIndex, i + 1).join(''));
+      lastPushIndex = i + 1;
+      tokenCount = 0;
     }
   }
 
-  return textSplited
+  return textSplited;
 };
 
 export const createEmbeddingsFromText = createAction({
@@ -83,7 +89,8 @@ export const createEmbeddingsFromText = createAction({
     }),
     title: Property.ShortText({
       displayName: 'Document Title or ID',
-      description: 'What is the title or the ID (only alphanumeric 32 characters ids) of the text or document you\'ve inputted',
+      description:
+        "What is the title or the ID (only alphanumeric 32 characters ids) of the text or document you've inputted",
       required: true,
     }),
     splitBy: Property.StaticDropdown({
@@ -114,7 +121,7 @@ export const createEmbeddingsFromText = createAction({
           {
             label: 'Keep all the text',
             value: 'keep',
-          }
+          },
         ],
       },
       defaultValue: 'paragraph',
@@ -135,7 +142,7 @@ export const createEmbeddingsFromText = createAction({
     }),
   },
   requireAuth: true,
-  run: async ({ auth, propsValue }) => {
+  run: async ({ auth, propsValue, files }) => {
     const MAX_TOKENS_SUPPORTED_BY_EMBEDDINGS = 8191;
 
     const configuration = new Configuration({
@@ -145,123 +152,147 @@ export const createEmbeddingsFromText = createAction({
     const openai = new OpenAIApi(configuration);
 
     const minTokens = propsValue.minTokenByEmbeddings ?? 250;
-    const maxTokens = propsValue.maxTokenByEmbeddings ?? MAX_TOKENS_SUPPORTED_BY_EMBEDDINGS;
-    
+    const maxTokens =
+      propsValue.maxTokenByEmbeddings ?? MAX_TOKENS_SUPPORTED_BY_EMBEDDINGS;
+
     if (
       maxTokens > MAX_TOKENS_SUPPORTED_BY_EMBEDDINGS ||
-      minTokens> MAX_TOKENS_SUPPORTED_BY_EMBEDDINGS
-    ) throw new Error(
-      `maxTokenByEmbeddings and  minTokenByEmbeddings must be inferior or equal to ${MAX_TOKENS_SUPPORTED_BY_EMBEDDINGS} because it is the max number of tokens supported by the openai text-embedding-ada-002 model`
-    );
+      minTokens > MAX_TOKENS_SUPPORTED_BY_EMBEDDINGS
+    )
+      throw new Error(
+        `maxTokenByEmbeddings and  minTokenByEmbeddings must be inferior or equal to ${MAX_TOKENS_SUPPORTED_BY_EMBEDDINGS} because it is the max number of tokens supported by the openai text-embedding-ada-002 model`
+      );
 
-    if (minTokens> maxTokens) 
-      throw new Error('minTokenByEmbeddings cannot be superior to maxTokenByEmbeddings')
-
+    if (minTokens > maxTokens)
+      throw new Error(
+        'minTokenByEmbeddings cannot be superior to maxTokenByEmbeddings'
+      );
 
     const model = 'text-embedding-ada-002';
-    const textInput = propsValue.textInput as unknown as string | string[];
+    const textInput = JSON.parse(propsValue.textInput);
+
+    if (
+      typeof textInput !== 'string' &&
+      !(Array.isArray(textInput) && typeof textInput[0] !== 'string')
+    )
+      throw new Error('textInput must be a string or an array of strings');
+
     const enc = encoding_for_model(model);
 
     const textSplited: string[] = [];
     const splitText = (textInput: string) => {
       switch (propsValue.splitBy) {
         case 'token':
-          textSplited.push(...splitByToken(
-            enc,
-            textInput,
-            minTokens
-          ));
+          textSplited.push(...splitByToken(enc, textInput, minTokens));
           break;
         case 'space':
-          textSplited.push(...splitBychar(
-            enc,
-            textInput,
-            minTokens,
-            maxTokens,
-            [' ']
-          ));
+          textSplited.push(
+            ...splitBychar(enc, textInput, minTokens, maxTokens, [' '])
+          );
           break;
         case 'sentence':
-          textSplited.push(...splitBychar(
-            enc,
-            textInput,
-            minTokens,
-            maxTokens,
-            [' ', '§\\/|`\'"\t', ':}]),;»”', '!?.']
-          ));
+          textSplited.push(
+            ...splitBychar(enc, textInput, minTokens, maxTokens, [
+              ' ',
+              '§\\/|`\'"\t',
+              ':}]),;»”',
+              '!?.',
+            ])
+          );
           break;
         case 'line':
-          textSplited.push(...splitBychar(
-            enc,
-            textInput,
-            minTokens,
-            maxTokens,
-            [' ', '§\\/|`\'"\t', ':}]),;»”', '!?.', '\n']
-          ));
+          textSplited.push(
+            ...splitBychar(enc, textInput, minTokens, maxTokens, [
+              ' ',
+              '§\\/|`\'"\t',
+              ':}]),;»”',
+              '!?.',
+              '\n',
+            ])
+          );
           break;
         case 'paragraph':
-          textSplited.push(...splitBychar(
-            enc,
-            textInput,
-            minTokens,
-            maxTokens,
-            [' ', '§\\/|`\'"\t', ':}]),;»”', '!?.', '\n', '\n\n']
-          ))
+          textSplited.push(
+            ...splitBychar(enc, textInput, minTokens, maxTokens, [
+              ' ',
+              '§\\/|`\'"\t',
+              ':}]),;»”',
+              '!?.',
+              '\n',
+              '\n\n',
+            ])
+          );
           break;
         case 'keep':
-          textSplited.push(...splitByToken(
-            enc,
-            textInput,
-            MAX_TOKENS_SUPPORTED_BY_EMBEDDINGS
-          ));
+          textSplited.push(
+            ...splitByToken(enc, textInput, MAX_TOKENS_SUPPORTED_BY_EMBEDDINGS)
+          );
           break;
       }
-    }
+    };
 
     if (textInput instanceof Array) {
       for (const text of textInput) {
-        splitText(text);
+        splitText(text as string);
       }
     } else {
-      splitText(textInput)
+      splitText(textInput);
     }
 
     enc.free();
 
-    console.log('documents: ', textSplited)
+    console.log('documents: ', textSplited);
     const response = await openai.createEmbedding({
       model: model,
       input: textSplited,
     });
 
-    let documentTitle = propsValue.title
-    let documentId = createHash('md5').update(documentTitle).digest('hex')
+    let documentTitle = propsValue.title;
+    let documentId = createHash('md5').update(documentTitle).digest('hex');
 
-    const validateId = (hash: string) => /^[a-f0-9]{32}$/i.test(hash)
-    
+    const validateId = (hash: string) => /^[a-f0-9]{32}$/i.test(hash);
+
     if (validateId(documentTitle)) {
-      documentId = documentTitle
-      documentTitle = (textInput instanceof Array ? textInput[0]: textInput).slice(0, 50).split(/[.?,/\\!;:()"]/u)[0]
+      documentId = documentTitle;
+      documentTitle = (textInput instanceof Array ? textInput[0] : textInput)
+        .slice(0, 50)
+        .split(/[.?,/\\!;:()"]/u)[0];
     }
 
-    const resData = response.data.data
-    let embeddings = ''
-    let chuncksOfText = ''
-    let embeddingIds = ''
+    const resData = response.data.data;
+    const embeddings: string[] = [];
+    const chuncksOfText: string[] = [];
+    const embeddingIds: string[] = [];
 
     for (let index = 0; index < resData.length; index++) {
       const vec = resData[index];
-      embeddings += Buffer.from(new Uint8Array(new Float32Array(vec.embedding).buffer)).toString('base64') + ';'
-      chuncksOfText += textSplited[index] + ';'
-      embeddingIds += createHash('md5').update(textSplited[index]).digest('hex') + ';'
+      embeddings.push(
+        Buffer.from(
+          new Uint8Array(new Float32Array(vec.embedding).buffer)
+        ).toString('utf-8')
+      );
+      chuncksOfText.push(textSplited[index]);
+      embeddingIds.push(
+        createHash('md5').update(textSplited[index]).digest('hex')
+      );
     }
+
+    const chuncksOfTextFile = files.write({
+      data: Buffer.from(JSON.stringify(chuncksOfText), 'utf-8'),
+      fileName: `${documentTitle}.chuncks.json`
+    })
+
+    const embeddingsFile = files.write({
+      data: Buffer.from(JSON.stringify(embeddings), 'utf-8'),
+      fileName: `${documentTitle}.embeddings.json`
+    })
 
     return {
       documentTitle,
       documentId,
-      chuncksOfText,
-      embeddings,
-      embeddingIds
-    }
+      chuncksOfTextFile,
+      embeddingsFile,
+      embeddingIds: JSON.stringify(embeddingIds),
+    };
   },
 });
