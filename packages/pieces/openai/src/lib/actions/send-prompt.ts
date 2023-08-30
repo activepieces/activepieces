@@ -205,22 +205,22 @@ export const askOpenAI = createAction({
         } else {
           if (error?.message?.includes('code 401')) {
             unaurthorized = true;
-			throw error;
+			      throw error;
           }
-		const new_error = error as {
-			  response: {
-				status: number,
-				data:{
-					error: {
-						message: string,
-					}[]
-				},
-			}
-		};
-		throw {
-			token: new_error.response.status,
-			error: new_error.response.data.error
-		};
+          const new_error = error as {
+              response: {
+              status: number,
+              data:{
+                error: {
+                  message: string,
+                }[]
+              },
+            }
+          };
+          throw {
+            token: new_error.response.status,
+            error: new_error.response.data.error
+          };
         }
       }
     }
