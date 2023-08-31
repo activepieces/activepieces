@@ -1,6 +1,7 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { parseOfficeAsync } from 'officeparser';
-import { getDocument} from 'pdfjs-dist';
+import { getDocument, type PDFDocumentProxy } from 'pdfjs-dist';
+import { TextItem } from 'pdfjs-dist/types/src/display/api';
 
 export const nativeTextExtraction = createAction({
   name: 'native_text_extraction',
@@ -13,16 +14,18 @@ export const nativeTextExtraction = createAction({
       description: 'The file to extract text from',
       required: true,
     }),
+    precisePdfBreakingLines: Property.Checkbox({
+      displayName: 'Precise PDF Breaking Lines',
+      description: 'The pdf breaking lines annalisis is expensive but should works for small files',
+      defaultValue: false,
+      required: false,
+    })
   },
-  run: async ({ propsValue }) => {
+  run: async ({ propsValue, files }) => {
     const file = propsValue.file;
 
-    if (file.extension === 'pdf') {
-      const doc = await getDocument({
-        data: file.data.toString('binary'),
-      }).promise;
+    const preciseBreaksAnalysis = async (doc: PDFDocumentProxy) => {
       let extractText = ''
-
       for (let i = 0; i < doc.numPages; i++) {
         const extractedChunks = {} as {[y: number]: { x: number; text: string }[]}; 
         const textItems = (await (await doc.getPage(i)).getTextContent()).items
@@ -58,10 +61,39 @@ export const nativeTextExtraction = createAction({
         lastY = undefined
         extractText += '\n'
       }
-
       return extractText
-    } else {
-        return await parseOfficeAsync(file.data)
     }
+
+    const fastbreakAnalysis = async (doc: PDFDocumentProxy) => {
+      const numPages = doc.numPages;
+      const pageTextPromises = [];
+      for (let i = 1; i <= numPages; i++) {
+          const pagePromise = doc.getPage(i)
+              .then(page => page.getTextContent())
+              .then(content => content.items.map(item =>(item as TextItem).hasEOL ? (item as TextItem).str + '\n' : (item as TextItem).str).join(''));
+          pageTextPromises.push(pagePromise);
+      }
+      const pageTexts = await Promise.all(pageTextPromises);
+      return pageTexts.join('\n')
+    }
+
+    let extractTextResult: string
+    if (file.extension === 'pdf') {
+      const doc = await getDocument({
+        data: file.data.toString('binary'),
+      }).promise;
+      if (propsValue.precisePdfBreakingLines){
+        extractTextResult = await preciseBreaksAnalysis(doc)
+      } else {
+        extractTextResult = await fastbreakAnalysis(doc)
+      }
+    } else {
+        extractTextResult = await parseOfficeAsync(file.data)
+    }
+
+    return await files.write({
+      data: Buffer.from(extractTextResult, 'utf-8'),
+      fileName: file.filename + '.textract.txt'
+    })
   },
 });
