@@ -169,12 +169,12 @@ export const createEmbeddingsFromText = createAction({
       );
 
     const model = 'text-embedding-ada-002';
-    let textInput = propsValue.textInput.data.toString('utf-8')
+    let textInput: string|string[] = propsValue.textInput.data.toString('utf-8')
 
     try {
       textInput = JSON.parse(textInput);
     } catch (e) {null}
-    
+
     if (
       typeof textInput !== 'string' &&
       !(Array.isArray(textInput) && typeof textInput[0] !== 'string')
