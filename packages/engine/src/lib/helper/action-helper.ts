@@ -224,10 +224,11 @@ export const pieceHelper = {
         propsValue: processedInput,
         files: createFilesService({
           stepName: actionName,
+          flowId: flowVersion.flowId,
           type: 'db'
         }),
         tags: createTagsManager(executionState),
-        store: createContextStore('', globals.flowVersionId),
+        store: createContextStore('', flowVersion.flowId),
         connections: {
           get: async (key: string) => {
             try {

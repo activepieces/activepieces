@@ -19,14 +19,15 @@ import {
   ExecuteValidateAuthOperation,
   extractPieceFromModule,
   flowHelper,
-  EngineTestOperation
+  EngineTestOperation,
+  applyFunctionToValues
 } from '@activepieces/shared';
 import { pieceHelper } from './lib/helper/action-helper';
 import { triggerHelper } from './lib/helper/trigger-helper';
 import { Piece } from '@activepieces/pieces-framework';
 import { VariableService } from './lib/services/variable-service';
 import { testExecution } from './lib/helper/test-execution-context';
-import { trimExecution } from '@activepieces/shared';
+import { loggerUtils } from './lib/helper/logging-utils';
 
 const initFlowExecutor = (input: ExecuteFlowOperation): FlowExecutor => {
   const { flowVersion } = input
@@ -37,6 +38,7 @@ const initFlowExecutor = (input: ExecuteFlowOperation): FlowExecutor => {
     const executionState = new ExecutionState(input.executionState)
 
     return new FlowExecutor({
+      flowVersion,
       executionState,
       firstStep,
       resumeStepMetadata,
@@ -54,6 +56,7 @@ const initFlowExecutor = (input: ExecuteFlowOperation): FlowExecutor => {
   executionState.insertStep(input.triggerPayload as StepOutput, 'trigger', []);
 
   return new FlowExecutor({
+    flowVersion,
     executionState,
     firstStep,
   })
@@ -91,9 +94,7 @@ const executeFlow = async (input?: ExecuteFlowOperation): Promise<void> => {
     globals.projectId = input.projectId;
     globals.apiUrl = input.apiUrl!;
     globals.serverUrl = input.serverUrl!;
-    globals.flowId = input.flowVersion.flowId;
     globals.flowRunId = input.flowRunId;
-    globals.flowVersionId = input.flowVersion.id;
 
     if (input.executionType === ExecutionType.RESUME) {
       globals.resumePayload = input.resumePayload;
@@ -104,7 +105,7 @@ const executeFlow = async (input?: ExecuteFlowOperation): Promise<void> => {
 
     writeOutput({
       status: EngineResponseStatus.OK,
-      response: trimExecution(output)
+      response: await loggerUtils.trimExecution(output)
     })
   } catch (e) {
     console.error(e);
@@ -144,8 +145,6 @@ const executeTrigger = async (): Promise<void> => {
 
     globals.workerToken = input.workerToken!;
     globals.projectId = input.projectId;
-    globals.flowVersionId = input.flowVersion.id
-    globals.flowId = input.flowVersion.id
     globals.apiUrl = input.apiUrl!;
 
     const output = await triggerHelper.executeTrigger(input);
@@ -191,8 +190,6 @@ const executeAction = async (): Promise<void> => {
     globals.workerToken = input.workerToken!;
     globals.projectId = input.projectId;
     globals.apiUrl = input.apiUrl!;
-    globals.flowVersionId = input.flowVersion.id
-    globals.flowId = input.flowVersion.flowId
     globals.serverUrl = input.serverUrl;
 
     const output = await pieceHelper.executeAction(input);

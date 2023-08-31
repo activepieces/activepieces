@@ -17,6 +17,7 @@ import {
   LoopOnItemsStepOutput,
   BranchStepOutput,
   StopResponse,
+  FlowVersion,
 } from '@activepieces/shared';
 import { createActionHandler } from '../action/action-handler-factory';
 import { isNil } from '@activepieces/shared'
@@ -24,6 +25,7 @@ import { isNil } from '@activepieces/shared'
 type FlowExecutorCtor = {
   executionState: ExecutionState
   firstStep: Action
+  flowVersion: FlowVersion
   resumeStepMetadata?: ResumeStepMetadata
 }
 
@@ -78,10 +80,12 @@ type ExecuteParams = {
 export class FlowExecutor {
   private readonly executionState: ExecutionState
   private readonly firstStep: Action
+  private readonly flowVersion: FlowVersion
   private readonly resumeStepMetadata?: ResumeStepMetadata
 
-  constructor({ executionState, firstStep, resumeStepMetadata }: FlowExecutorCtor) {
+  constructor({ executionState, firstStep, resumeStepMetadata, flowVersion }: FlowExecutorCtor) {
     this.executionState = executionState
+    this.flowVersion = flowVersion;
     this.firstStep = firstStep
     this.resumeStepMetadata = resumeStepMetadata
   }
@@ -298,7 +302,9 @@ export class FlowExecutor {
 
     const startTime = dayjs()
 
-    const stepOutput = await actionHandler.execute(this.executionState, ancestors);
+    const stepOutput = await actionHandler.execute({
+      flowVersion: this.flowVersion,
+    },this.executionState, ancestors);
 
     const endTime = dayjs()
 
