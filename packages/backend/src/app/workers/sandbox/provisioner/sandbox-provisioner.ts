@@ -1,22 +1,19 @@
 import { Sandbox } from '..'
-import { CachedSandbox, CachedSandboxState, sandboxCachePool } from '../sandbox-cache-pool'
+import { sandboxCachePool } from '../cache/sandbox-cache-pool'
 import { sandboxManager } from '../sandbox-manager'
-import { pieceManager } from '../../../flows/common/piece-installer'
-import { engineInstaller } from '../../engine/engine-installer'
 import { FileId, FlowVersionId, apId } from '@activepieces/shared'
 import { SandBoxCacheType } from './sandbox-cache-type'
 
 export const sandboxProvisioner = {
     async provision({ pieces = [], ...cacheInfo }: ProvisionParams): Promise<Sandbox> {
         const cacheKey = extractCacheKey(cacheInfo)
-        const cachedSandbox = await sandboxCachePool.getByKey(cacheKey)
 
-        await prepareCachedSandbox({
+        const cachedSandbox = await sandboxCachePool.getByKey({
+            key: cacheKey,
             type: cacheInfo.type,
-            cachedSandbox,
-            pieces,
         })
 
+        await cachedSandbox.prepare({ pieces })
         const sandbox = await sandboxManager.allocate()
         await sandbox.useCache(cachedSandbox.path())
         return sandbox
@@ -54,36 +51,6 @@ const extractNoneCacheKey = (_params: NoneProvisionCacheInfo): string => {
 
 const extractPieceCacheKey = ({ pieceName, pieceVersion }: PieceProvisionCacheInfo): string => {
     return `pieceName-${pieceName}-pieceVersion-${pieceVersion}`
-}
-
-const prepareCachedSandbox = async ({ type, cachedSandbox, pieces }: PrepareCachedSandboxParams): Promise<void> => {
-    if (cachedSandbox.state === CachedSandboxState.READY) {
-        return
-    }
-
-    if (cachedSandbox.state !== CachedSandboxState.INITIALIZED) {
-        throw new Error(`[SandboxProvisioner#prepareCachedSandbox] cachedSandboxKey=${cachedSandbox.key} state=${cachedSandbox.state}`)
-    }
-
-    const path = cachedSandbox.path()
-
-    await pieceManager.install({
-        projectPath: path,
-        pieces,
-    })
-
-    await installEngine({
-        type,
-        path,
-    })
-}
-
-const installEngine = async ({ type, path }: InstallEngineParams): Promise<void> => {
-    if (type !== SandBoxCacheType.CODE) {
-        await engineInstaller.install({
-            path,
-        })
-    }
 }
 
 type Piece = {
@@ -127,15 +94,4 @@ type ProvisionParams<T extends SandBoxCacheType = SandBoxCacheType> = ProvisionC
 
 type ReleaseParams = {
     sandbox: Sandbox
-}
-
-type PrepareCachedSandboxParams = {
-    type: SandBoxCacheType
-    cachedSandbox: CachedSandbox
-    pieces: Piece[]
-}
-
-type InstallEngineParams = {
-    type: SandBoxCacheType
-    path: string
 }
