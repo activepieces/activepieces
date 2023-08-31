@@ -21,6 +21,7 @@ import { Order } from '../../helper/pagination/paginator'
 import { webhookService } from '../../webhooks/webhook-service'
 import { flowService } from '../flow/flow.service'
 import { TriggerEventEntity } from './trigger-event.entity'
+import { stepFileService } from '../step-file/step-file.service'
 
 const triggerEventRepo = databaseConnection.getRepository(TriggerEventEntity)
 
@@ -44,6 +45,11 @@ export const triggerEventService = {
             case TriggerType.WEBHOOK:
                 throw new Error('Cannot be tested')
             case TriggerType.PIECE: {
+                await deleteOldFilesForTestData({
+                    projectId,
+                    flowId: flow.id,
+                    stepName: trigger.name,
+                })
                 const { result: testResult } = await engineHelper.executeTrigger({
                     hookType: TriggerHookType.TEST,
                     flowVersion: flow.version,
@@ -108,6 +114,13 @@ export const triggerEventService = {
     },
 }
 
+async function deleteOldFilesForTestData({ projectId, flowId, stepName }: { projectId: string, flowId: string, stepName: string }): Promise<void> {
+    await stepFileService.deleteAll({
+        projectId,
+        flowId,
+        stepName,
+    })
+}
 function getSourceName(trigger: Trigger): string {
     switch (trigger.type) {
         case TriggerType.WEBHOOK:

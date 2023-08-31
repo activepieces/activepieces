@@ -1,4 +1,4 @@
-import { StepOutput, Action, ExecutionState, ResumeStepMetadata, ExecutionOutput, ExecutionOutputStatus, StepOutputStatus, StepOutputForActionType } from '@activepieces/shared';
+import { StepOutput, Action, ExecutionState, ResumeStepMetadata, ExecutionOutput, ExecutionOutputStatus, StepOutputStatus, StepOutputForActionType, FlowVersion } from '@activepieces/shared';
 import { isNil } from '@activepieces/shared'
 
 export type ActionHandler = BaseActionHandler
@@ -18,6 +18,9 @@ export type InitStepOutputParams = {
   executionState: ExecutionState
 }
 
+export type ExecuteContext = {
+  flowVersion: FlowVersion
+}
 type LoadStepOutputParams = {
   executionState: ExecutionState
   ancestors: [string, number][]
@@ -90,6 +93,7 @@ export abstract class BaseActionHandler<CA extends Action = Action, RSM extends 
   }
 
   abstract execute(
+    context: ExecuteContext,
     executionState: ExecutionState,
     ancestors: [string, number][]
   ): Promise<StepOutput>;
