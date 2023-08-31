@@ -5,16 +5,33 @@ import { SystemProp } from '../../helper/system/system-prop'
 
 const CACHE_PATH = system.get(SystemProp.CACHE_PATH) ?? '/usr/src/cache'
 
-class CachedSandbox {
+export enum CachedSandboxState {
+    /**
+     * Sandbox object was created
+     */
+    CREATED = 'CREATED',
+
+    /**
+     * Init method was called on sandbox
+     */
+    INITIALIZED = 'INITIALIZED',
+
+    /**
+     * Dependencies, pieces, engine were installed on the sandbox, and it's ready to serve requests
+     */
+    READY = 'READY',
+}
+
+export class CachedSandbox {
     public readonly key: string
-    private _initialized = false
+    private _state = CachedSandboxState.CREATED
 
     constructor(key: string) {
         this.key = key
     }
 
-    public get initialized(): boolean {
-        return this._initialized
+    public get state(): CachedSandboxState {
+        return this._state
     }
 
     path(): string {
@@ -22,8 +39,12 @@ class CachedSandbox {
     }
 
     async init(): Promise<void> {
+        if (this._state !== CachedSandboxState.CREATED) {
+            return
+        }
+
         await mkdir(this.path(), { recursive: true })
-        this._initialized = true
+        this._state = CachedSandboxState.INITIALIZED
     }
 }
 
@@ -44,10 +65,7 @@ export const sandboxCachePool = {
             return newCachedSandBox
         })
 
-        if (!cachedSandbox.initialized) {
-            await cachedSandbox.init()
-        }
-
+        await cachedSandbox.init()
         return cachedSandbox
     },
 }

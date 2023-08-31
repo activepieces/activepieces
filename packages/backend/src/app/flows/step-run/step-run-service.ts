@@ -30,10 +30,11 @@ import { flowVersionService } from '../flow-version/flow-version.service'
 import { fileService } from '../../file/file.service'
 import { isNil } from '@activepieces/shared'
 import { getServerUrl } from '../../helper/public-ip-utils'
-import { sandboxManager } from '../../workers/sandbox/sandbox-manager'
 import { flowService } from '../flow/flow.service'
 import { stepFileService } from '../step-file/step-file.service'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
+import { sandboxProvisioner } from '../../workers/sandbox/provisioner/sandbox-provisioner'
+import { SandBoxCacheType } from '../../workers/sandbox/provisioner/sandbox-cache-type'
 
 export const stepRunService = {
     async create({ projectId, flowVersionId, stepName, userId }: CreateParams): Promise<StepRunResponse> {
@@ -194,10 +195,13 @@ const executeBranch = async ({ step, flowVersion, projectId }: ExecuteParams<Bra
         sourceFlowVersion: flowVersion,
     }
 
-    const testSandbox = await sandboxManager.obtainSandbox()
+    const sandbox = await sandboxProvisioner.provision({
+        type: SandBoxCacheType.FLOW,
+        flowVersionId: flowVersion.id,
+    })
 
     try {
-        const { status, result, standardError, standardOutput } = await engineHelper.executeTest(testSandbox, testInput)
+        const { status, result, standardError, standardOutput } = await engineHelper.executeTest(sandbox, testInput)
 
         if (status !== EngineResponseStatus.OK || result.status !== ExecutionOutputStatus.SUCCEEDED) {
             return {
@@ -230,7 +234,7 @@ const executeBranch = async ({ step, flowVersion, projectId }: ExecuteParams<Bra
         }
     }
     finally {
-        await sandboxManager.returnSandbox(testSandbox.boxId)
+        await sandboxProvisioner.release({ sandbox })
     }
 }
 

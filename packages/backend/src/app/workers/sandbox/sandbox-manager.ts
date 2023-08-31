@@ -10,7 +10,7 @@ const sandboxes: Sandbox[] = new Array(SANDBOX_LIMIT).fill(null).map((_, i) => n
 const lock: Mutex = new Mutex()
 
 export const sandboxManager = {
-    async obtainSandbox(): Promise<Sandbox> {
+    async allocate(): Promise<Sandbox> {
         const sandbox = await executeWithLock((): Sandbox => {
             const sandbox = sandboxes.find(byNotInUse)
 
@@ -28,12 +28,12 @@ export const sandboxManager = {
         }
         catch (e) {
             logger.error(e, '[SandboxManager#obtainSandbox]')
-            await this.returnSandbox(sandbox.boxId)
+            await this.release(sandbox.boxId)
             throw e
         }
     },
 
-    async returnSandbox(sandboxId: number): Promise<void> {
+    async release(sandboxId: number): Promise<void> {
         logger.debug(`[SandboxManager#returnSandbox] sandboxId=${sandboxId}`)
 
         await executeWithLock((): void => {

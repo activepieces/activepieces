@@ -102,7 +102,11 @@ const removeDuplicatedPieces = (pieces: PackageInfo[]) => {
 }
 
 export const pieceManager = {
-    async install(params: InstallParams) {
+    async install(params: InstallParams): Promise<void> {
+        if (params.pieces.length === 0) {
+            return
+        }
+
         if (env === ApEnvironment.DEVELOPMENT) {
             await linkDependencies(params)
         }
