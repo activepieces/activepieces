@@ -30,9 +30,11 @@ import { flowVersionService } from '../flow-version/flow-version.service'
 import { fileService } from '../../file/file.service'
 import { isNil } from '@activepieces/shared'
 import { getServerUrl } from '../../helper/public-ip-utils'
-import { sandboxManager } from '../../workers/sandbox/sandbox-manager'
 import { flowService } from '../flow/flow.service'
 import { stepFileService } from '../step-file/step-file.service'
+import { pieceMetadataService } from '../../pieces/piece-metadata-service'
+import { sandboxProvisioner } from '../../workers/sandbox/provisioner/sandbox-provisioner'
+import { SandBoxCacheType } from '../../workers/sandbox/provisioner/sandbox-cache-type'
 
 export const stepRunService = {
     async create({ projectId, flowVersionId, stepName, userId }: CreateParams): Promise<StepRunResponse> {
@@ -87,10 +89,17 @@ async function executePiece({ step, projectId, flowVersion, userId }: ExecutePar
         flowId: flowVersion.flowId,
         stepName: step.name,
     })
+
+    const exactPieceVersion = await getExactPieceVersion({
+        name: pieceName,
+        version: pieceVersion,
+        projectId,
+    })
+
     const operation: ExecuteActionOperation = {
         serverUrl: await getServerUrl(),
         pieceName,
-        pieceVersion,
+        pieceVersion: exactPieceVersion,
         actionName,
         input,
         flowVersion,
@@ -98,6 +107,7 @@ async function executePiece({ step, projectId, flowVersion, userId }: ExecutePar
     }
 
     const { result, standardError, standardOutput } = await engineHelper.executeAction(operation)
+
     if (result.success) {
         step.settings.inputUiInfo.currentSelectedData = result.output
         await flowService.update({
@@ -185,12 +195,13 @@ const executeBranch = async ({ step, flowVersion, projectId }: ExecuteParams<Bra
         sourceFlowVersion: flowVersion,
     }
 
-    const testSandbox = await sandboxManager.obtainSandbox(apId())
+    const sandbox = await sandboxProvisioner.provision({
+        type: SandBoxCacheType.FLOW,
+        flowVersionId: flowVersion.id,
+    })
 
     try {
-        await testSandbox.recreate()
-
-        const { status, result, standardError, standardOutput } = await engineHelper.executeTest(testSandbox, testInput)
+        const { status, result, standardError, standardOutput } = await engineHelper.executeTest(sandbox, testInput)
 
         if (status !== EngineResponseStatus.OK || result.status !== ExecutionOutputStatus.SUCCEEDED) {
             return {
@@ -223,8 +234,18 @@ const executeBranch = async ({ step, flowVersion, projectId }: ExecuteParams<Bra
         }
     }
     finally {
-        await sandboxManager.returnSandbox(testSandbox.boxId)
+        await sandboxProvisioner.release({ sandbox })
     }
+}
+
+const getExactPieceVersion = async ({ name, version, projectId }: GetExactPieceVersionParams): Promise<string> => {
+    const pieceMetadata = await pieceMetadataService.get({
+        projectId,
+        name,
+        version,
+    })
+
+    return pieceMetadata.version
 }
 
 type CreateParams = {
@@ -238,5 +259,11 @@ type ExecuteParams<T extends Action> = {
     step: T
     userId: UserId
     flowVersion: FlowVersion
+    projectId: ProjectId
+}
+
+type GetExactPieceVersionParams = {
+    name: string
+    version: string
     projectId: ProjectId
 }

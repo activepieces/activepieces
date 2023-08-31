@@ -1,4 +1,4 @@
-import { rmdir, mkdir, readFile, writeFile } from 'node:fs/promises'
+import { rmdir, mkdir, readFile, writeFile, cp } from 'node:fs/promises'
 import path from 'node:path'
 import { exec } from 'node:child_process'
 import { AbstractSandbox, ExecuteSandboxResult, SandboxCtorParams } from './abstract-sandbox'
@@ -12,7 +12,7 @@ export class FileSandbox extends AbstractSandbox {
         super(params)
     }
 
-    protected override async recreateCleanup(): Promise<void> {
+    public override async recreate(): Promise<void> {
         const sandboxFolderPath = this.getSandboxFolderPath()
 
         try {
@@ -25,7 +25,7 @@ export class FileSandbox extends AbstractSandbox {
         await mkdir(sandboxFolderPath, { recursive: true })
     }
 
-    async runCommandLine(commandLine: string): Promise<ExecuteSandboxResult> {
+    public override async runCommandLine(commandLine: string): Promise<ExecuteSandboxResult> {
         const startTime = Date.now()
         const environment = system.get(SystemProp.ENVIRONMENT)
         const result = await this.runUnsafeCommand(`cd ${this.getSandboxFolderPath()} && env -i AP_ENVIRONMENT=${environment} NODE_OPTIONS='--enable-source-maps' ${commandLine}`)
@@ -46,6 +46,10 @@ export class FileSandbox extends AbstractSandbox {
 
     public override getSandboxFolderPath(): string {
         return path.join(__dirname, `../../sandbox/${this.boxId}`)
+    }
+
+    public override async useCache(cachePath: string): Promise<void> {
+        await cp(cachePath, this.getSandboxFolderPath(), { recursive: true })
     }
 
     private async runUnsafeCommand(cmd: string): Promise<{ verdict: EngineResponseStatus }> {

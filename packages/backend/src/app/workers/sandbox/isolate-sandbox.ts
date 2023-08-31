@@ -20,11 +20,13 @@ const getIsolateExecutableName = (): string => {
 export class IsolateSandbox extends AbstractSandbox {
     private static readonly isolateExecutableName = getIsolateExecutableName()
 
+    private cachePath?: string
+
     public constructor(params: SandboxCtorParams) {
         super(params)
     }
 
-    protected override async recreateCleanup(): Promise<void> {
+    public override async recreate(): Promise<void> {
         await IsolateSandbox.runIsolate(`--box-id=${this.boxId} --cleanup`)
         await IsolateSandbox.runIsolate(`--box-id=${this.boxId} --init`)
     }
@@ -40,18 +42,26 @@ export class IsolateSandbox extends AbstractSandbox {
         try {
             const basePath = path.resolve(__dirname.split('/dist')[0])
 
-            await IsolateSandbox.runIsolate(
-                `--dir=/usr/bin/ --dir=/etc/=${etcDir} --dir=${basePath}=/${basePath}:maybe --share-net --box-id=` +
-                this.boxId +
-                ` --processes --wall-time=${AbstractSandbox.sandboxRunTimeSeconds} --meta=` +
-                metaFile +
-                ' --stdout=_standardOutput.txt' +
-                ' --stderr=_standardError.txt --run ' +
-                ' --env=HOME=/tmp/' +
-                ' --env=NODE_OPTIONS=\'--enable-source-maps\'' +
-                ' --env=AP_ENVIRONMENT ' +
+            const command = [
+                '--dir=/usr/bin/',
+                `--dir=/etc/=${etcDir}`,
+                `--dir=${basePath}=/${basePath}:maybe`,
+                `--dir=/root=${this.cachePath}`,
+                '--share-net',
+                `--box-id=${this.boxId}`,
+                '--processes',
+                `--wall-time=${AbstractSandbox.sandboxRunTimeSeconds}`,
+                `--meta=${metaFile}`,
+                '--stdout=_standardOutput.txt',
+                '--stderr=_standardError.txt',
+                '--run',
+                '--env=HOME=/tmp/',
+                '--env=NODE_OPTIONS=\'--enable-source-maps\'',
+                '--env=AP_ENVIRONMENT',
                 commandLine,
-            )
+            ].join(' ')
+
+            await IsolateSandbox.runIsolate(command)
 
             const engineResponse = await this.parseFunctionOutput()
             output = engineResponse.response
@@ -80,6 +90,10 @@ export class IsolateSandbox extends AbstractSandbox {
 
     public override getSandboxFolderPath(): string {
         return `/var/local/lib/isolate/${this.boxId}/box`
+    }
+
+    public override async useCache(cachePath: string): Promise<void> {
+        this.cachePath = cachePath
     }
 
     private static runIsolate(cmd: string): Promise<string> {

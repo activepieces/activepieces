@@ -1,89 +1,62 @@
 import { Mutex } from 'async-mutex'
-import { Sandbox } from './'
+import { Sandbox } from '.'
+import { isNil } from '@activepieces/shared'
+import { logger } from '../../helper/logger'
 
-class SandboxManager {
-    private static _instance?: SandboxManager
+const SANDBOX_LIMIT = 1000
 
-    private readonly sandboxes = new Map<number, Sandbox>()
-    private readonly mutex: Mutex = new Mutex()
+const sandboxes: Sandbox[] = new Array(SANDBOX_LIMIT).fill(null).map((_, i) => new Sandbox({ boxId: i }))
 
-    private constructor() {
-        if (SandboxManager._instance != null) {
-            throw new Error('Use Singleton.instance instead of new.')
-        }
-        for (let boxId = 0; boxId < 1000; ++boxId) {
-            this.sandboxes.set(boxId, new Sandbox({
-                boxId,
-                cached: false,
-                used: false,
-                resourceId: null,
-                lastUsed: 0,
-            }))
-        }
-        SandboxManager._instance = this
-    }
+const lock: Mutex = new Mutex()
 
-    async obtainSandbox(key: string): Promise<Sandbox> {
-        // Acquire the lock
-        const release = await this.mutex.acquire()
+export const sandboxManager = {
+    async allocate(): Promise<Sandbox> {
+        const sandbox = await executeWithLock((): Sandbox => {
+            const sandbox = sandboxes.find(byNotInUse)
 
-        // Find sandbox with resourceId equal to key and not used
-        const sandbox = Array.from(this.sandboxes.values()).find(s => s.resourceId === key && !s.used)
-        if (sandbox) {
-            sandbox.used = true
-            sandbox.lastUsed = Date.now()
-            sandbox.cached = true
-
-            // Release the lock
-            release()
-
-            return sandbox
-        }
-
-        // Find oldest sandbox not used
-        const oldestSandbox = Array.from(this.sandboxes.values()).reduce((oldest, current) => {
-            if (current.lastUsed < oldest.lastUsed) {
-                return current
+            if (isNil(sandbox)) {
+                throw new Error('[SandboxManager#obtainSandbox] all sandboxes are in-use')
             }
 
-            return oldest
+            sandbox.inUse = true
+            return sandbox
         })
 
-        if (oldestSandbox === null) {
-            new Error('No sandbox available')
+        try {
+            await sandbox.recreate()
+            return sandbox
         }
-        oldestSandbox.lastUsed = Date.now()
-        oldestSandbox.used = true
-        oldestSandbox.cached = false
-        oldestSandbox.resourceId = key
-
-        // Release the lock
-        release()
-
-        return oldestSandbox
-    }
-
-    async markAsNotCached(sandboxId: number): Promise<void> {
-        const sandbox = this.sandboxes.get(sandboxId)
-        if (!sandbox) {
-            throw new Error('Sandbox not found')
+        catch (e) {
+            logger.error(e, '[SandboxManager#obtainSandbox]')
+            await this.release(sandbox.boxId)
+            throw e
         }
-        sandbox.resourceId = null
-    }
+    },
 
-    async returnSandbox(sandboxId: number): Promise<void> {
-        const release = await this.mutex.acquire()
-        const sandbox = this.sandboxes.get(sandboxId)
-        if (!sandbox) {
-            throw new Error('Sandbox not found')
-        }
-        sandbox.used = false
-        release()
-    }
+    async release(sandboxId: number): Promise<void> {
+        logger.debug(`[SandboxManager#returnSandbox] sandboxId=${sandboxId}`)
 
-    static get instance(): SandboxManager {
-        return SandboxManager._instance ?? (SandboxManager._instance = new SandboxManager())
+        await executeWithLock((): void => {
+            const sandbox = sandboxes[sandboxId]
+
+            if (isNil(sandbox)) {
+                throw new Error(`[SandboxManager#returnSandbox] sandbox not found id=${sandboxId}`)
+            }
+
+            sandbox.inUse = false
+        })
+    },
+}
+
+const executeWithLock = async <T>(methodToExecute: () => T): Promise<T> => {
+    const releaseLock = await lock.acquire()
+
+    try {
+        return methodToExecute()
+    }
+    finally {
+        releaseLock()
     }
 }
 
-export const sandboxManager = SandboxManager.instance
+const byNotInUse = (s: Sandbox): boolean => !s.inUse
