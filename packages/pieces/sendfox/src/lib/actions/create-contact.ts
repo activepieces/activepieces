@@ -34,9 +34,9 @@ export const createContact = createAction({
         const request_body: { [key: string]: any } = { email : email } ;
         if( firstname ) request_body['first_name'] = firstname;
         if( lastname ) request_body['last_name'] = lastname;
-        if( list ) request_body['list_ids'] = [list];
+        if( list ) request_body['lists'] = [list];
 
         const response = ( await callsendfoxApi(HttpMethod.POST, 'contacts', accessToken, request_body )).body;
-        return [response];
+        return response;
     },
 });
