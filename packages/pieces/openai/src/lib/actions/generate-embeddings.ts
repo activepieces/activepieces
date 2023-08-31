@@ -281,15 +281,20 @@ export const createEmbeddingsFromText = createAction({
       );
     }
 
-    const chuncksOfTextFile = files.write({
+    const chuncksOfTextFilePromise = files.write({
       data: Buffer.from(JSON.stringify(chuncksOfText), 'utf-8'),
       fileName: `${documentTitle}.chuncks.json`
     })
 
-    const embeddingsFile = files.write({
+    const embeddingsFilePromise = files.write({
       data: Buffer.from(JSON.stringify(embeddings), 'utf-8'),
       fileName: `${documentTitle}.embeddings.json`
     })
+
+    const [chuncksOfTextFile, embeddingsFile] = await Promise.all([
+      chuncksOfTextFilePromise,
+      embeddingsFilePromise
+    ])
 
     return {
       documentTitle,
