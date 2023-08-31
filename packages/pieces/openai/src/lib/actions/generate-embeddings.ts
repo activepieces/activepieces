@@ -82,8 +82,8 @@ export const createEmbeddingsFromText = createAction({
   displayName: 'Generate embeddings',
   description: 'Chuck a text and generate embeddings for it',
   props: {
-    textInput: Property.LongText({
-      displayName: 'Text Input',
+    textInput: Property.File({
+      displayName: 'Text Input File',
       description: 'Enter the text input you want to tarsform to embeddings',
       required: true,
     }),
@@ -169,7 +169,7 @@ export const createEmbeddingsFromText = createAction({
       );
 
     const model = 'text-embedding-ada-002';
-    const textInput = JSON.parse(propsValue.textInput);
+    const textInput = JSON.parse(propsValue.textInput.data.toString('utf-8'));
 
     if (
       typeof textInput !== 'string' &&
