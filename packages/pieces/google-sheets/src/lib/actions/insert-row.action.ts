@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { Dimension, googleSheetsCommon, ValueInputOption } from '../common/common';
+import { Dimension, getErrorSheet, googleSheetsCommon, ValueInputOption } from '../common/common';
 import { googleSheetsAuth } from '../..';
 
 export const insertRowAction = createAction({
@@ -30,7 +30,7 @@ export const insertRowAction = createAction({
         const sheetName = await googleSheetsCommon.findSheetName(auth['access_token'],
             propsValue['spreadsheet_id'], propsValue['sheet_id']);
         if (!sheetName) {
-            return {}
+            throw Error( getErrorSheet(propsValue['sheet_id']) );
         }
         const formattedValues = propsValue.first_row_headers ? Object.values(values) : values['values'];
         const res = await googleSheetsCommon.appendGoogleSheetValues({

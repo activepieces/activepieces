@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { googleSheetsCommon } from '../common/common';
+import { getErrorSheet, googleSheetsCommon } from '../common/common';
 import { googleSheetsAuth } from '../../';
 
 export const deleteRowAction = createAction({
@@ -22,7 +22,7 @@ export const deleteRowAction = createAction({
             propsValue['spreadsheet_id'],
             propsValue['sheet_id']);
         if (!sheetName) {
-            throw Error("Sheet not found in spreadsheet");
+            throw Error( getErrorSheet(propsValue['sheet_id']) );
         }
 
         // Subtract 1 from the row_id to convert it to 0-indexed

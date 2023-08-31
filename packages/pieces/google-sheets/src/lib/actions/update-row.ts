@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { ValueInputOption } from '../common/common';
+import { getErrorSheet, ValueInputOption } from '../common/common';
 import { googleSheetsCommon } from '../common/common';
 import { googleSheetsAuth } from '../..';
 
@@ -29,7 +29,7 @@ export const updateRowAction = createAction({
         const {spreadsheet_id, sheet_id, values, row_id, first_row_headers} = propsValue;
         const sheetName = await googleSheetsCommon.findSheetName(auth['access_token'], spreadsheet_id, sheet_id);
         if (!sheetName) {
-            throw Error("Sheet not found in spreadsheet");
+            throw Error( getErrorSheet(propsValue['sheet_id']) );
         }
         let formattedValues = (first_row_headers ? Object.values(values) : values['values']) as (string | null)[];
         formattedValues = formattedValues.map(value => value === "" ? null : value);

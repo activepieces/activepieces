@@ -1,11 +1,11 @@
 import { createAction, Property, Validators } from '@activepieces/pieces-framework';
-import { getGoogleSheetRows, googleSheetsCommon, labelToColumn } from '../common/common';
+import { getErrorSheet, getGoogleSheetRows, googleSheetsCommon, labelToColumn } from '../common/common';
 import { googleSheetsAuth } from '../..';
 
 export const findRowsAction = createAction({
     auth: googleSheetsAuth,
     name: 'find_rows',
-    description: 'Find rows in a Google Sheet',
+    description: 'Find rows in a Google Sheet by column name and search value',
     displayName: 'Find Rows',
     props: {
         spreadsheet_id: googleSheetsCommon.spreadsheet_id,
@@ -44,7 +44,7 @@ export const findRowsAction = createAction({
             propsValue['sheet_id']
         );
         if (!sheetName) {
-            throw Error('Sheet not found in spreadsheet');
+            throw Error( getErrorSheet(propsValue['sheet_id']) );
         }
 
         let values = [];
