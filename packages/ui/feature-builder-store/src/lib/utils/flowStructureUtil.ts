@@ -1,4 +1,5 @@
 import {
+  Action,
   ActionType,
   BranchAction,
   LoopOnItemsAction,
@@ -81,5 +82,24 @@ export class FlowStructureUtil {
     return (
       flowHelper.getAllSteps(trigger).findIndex((f) => stepName === f.name) + 1
     );
+  }
+
+  public static removeAnySubequentStepsFromFlowOperationStep(
+    req: Trigger | Action
+  ): typeof req {
+    const clone: Trigger | Action = JSON.parse(JSON.stringify(req));
+    if (clone.nextAction) clone.nextAction = undefined;
+    switch (clone.type) {
+      case ActionType.BRANCH: {
+        clone.onFailureAction = undefined;
+        clone.onSuccessAction = undefined;
+        break;
+      }
+      case ActionType.LOOP_ON_ITEMS: {
+        clone.firstLoopAction = undefined;
+        break;
+      }
+    }
+    return clone;
   }
 }
