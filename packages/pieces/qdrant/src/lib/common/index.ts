@@ -2,7 +2,7 @@ import { Property } from '@activepieces/pieces-framework';
 
 export const decodeEmbeddings = (embeddingsString: Buffer) => {
   let embeddings = JSON.parse(embeddingsString.toString('utf-8')) as string[] | number[][] | number[] | string
-  
+  console.log('\tEmbeddings:\n\n', embeddings)
   if (typeof embeddings[0] === 'number' || (typeof embeddings[0] === 'string' && embeddings[0].length === 1)) {
     embeddings = [embeddings] as string[] | number[][];
   }
@@ -10,7 +10,7 @@ export const decodeEmbeddings = (embeddingsString: Buffer) => {
   if (embeddings.length === 0) throw new Error('Embeddings must contain one element minimum')
   
   if (typeof embeddings[0] === 'string') {
-    return (embeddings as string[]).map(embedding => new Float32Array(new Uint8Array(Buffer.from(embedding, 'utf-8')).buffer))
+    return (embeddings as string[]).map(embedding => new Float32Array(new Uint8Array(Buffer.from(embedding, 'base64')).buffer))
   } else {
     return (embeddings as number[][]).map(embedding => new Float32Array(embedding))
   }
