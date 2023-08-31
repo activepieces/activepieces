@@ -1,8 +1,14 @@
 import { Property } from '@activepieces/pieces-framework';
 
 export const decodeEmbeddings = (embeddingsString: Buffer) => {
-  let embeddings = JSON.parse(embeddingsString.toString('utf-8')) as string[] | number[][] | number[] | string
-  console.log('\tEmbeddings:\n\n', embeddings)
+  let embeddings = embeddingsString.toString('utf-8') as string[] | number[][] | number[] | string
+  
+  if (embeddings[0] === '[') {
+    try {
+      embeddings = JSON.parse(embeddings as string)
+    } catch {null}
+  }
+
   if (typeof embeddings[0] === 'number' || (typeof embeddings[0] === 'string' && embeddings[0].length === 1)) {
     embeddings = [embeddings] as string[] | number[][];
   }
@@ -81,7 +87,13 @@ export const convertToFilter = (infosToGetPoint: {
 
   for (const getKey in infosToGetPoint) {
     for (const key in infosToGetPoint[getKey as keyof typeof filter]) {
-      const value = JSON.parse(infosToGetPoint[getKey as keyof typeof filter][key]);
+      let value = infosToGetPoint[getKey as keyof typeof filter][key]
+
+      if (['{', '['].includes(value[0])) {
+        try {
+          value = JSON.parse(value);
+        } catch {null}
+      }
 
       if (['id', 'ids'].includes(key.toLocaleLowerCase())) {
         filter[getKey as keyof typeof filter].push({

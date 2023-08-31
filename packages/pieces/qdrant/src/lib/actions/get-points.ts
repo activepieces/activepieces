@@ -20,7 +20,10 @@ export const getPoints = createAction({
     const collectionName = propsValue.collectionName as string
 
     if (propsValue.getPointsBy === 'Ids') {
-      const ids = JSON.parse(propsValue.infosToGetPoint['ids'])
+      let ids = JSON.parse(propsValue.infosToGetPoint['ids'])
+      try {
+        ids = JSON.parse(ids)
+      } catch {null}
       return await client.retrieve(collectionName, {
         ids: ids instanceof Array ? ids : [ids]
       })
