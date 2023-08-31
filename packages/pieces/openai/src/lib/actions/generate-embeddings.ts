@@ -273,7 +273,7 @@ export const createEmbeddingsFromText = createAction({
       embeddings.push(
         Buffer.from(
           new Uint8Array(new Float32Array(vec.embedding).buffer)
-        ).toString('utf-8')
+        ).toString('base64')
       );
       chuncksOfText.push(textSplited[index]);
       embeddingIds.push(
