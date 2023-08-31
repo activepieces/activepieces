@@ -1,4 +1,3 @@
-import { apId } from '@activepieces/shared'
 import { Sandbox } from '.'
 import { sandboxCachePool } from './sandbox-cache-pool'
 import { sandboxManager } from './sandbox-manager'
@@ -6,8 +5,8 @@ import { pieceManager } from '../../flows/common/piece-installer'
 import { engineInstaller } from '../engine/engine-installer'
 
 export const sandboxProvisioner = {
-    async provision({ pieces }: ProvisionParams): Promise<Sandbox> {
-        const cacheKey = extractCacheKey()
+    async provision({ pieces, ...extractCacheKeyParams }: ProvisionParams): Promise<Sandbox> {
+        const cacheKey = extractCacheKey(extractCacheKeyParams)
         const cachedSandbox = await sandboxCachePool.getByKey(cacheKey)
 
         await pieceManager.install({
@@ -29,8 +28,16 @@ export const sandboxProvisioner = {
     },
 }
 
-const extractCacheKey = (): string => {
-    return apId()
+const extractCacheKey = ({ type, ...data }: ExtractCacheKeyParams): string => {
+    const keyExtractors = {
+        [SandBoxProvisionType.ACTION_RUN]: extractActionRunCacheKey,
+    }
+
+    return keyExtractors[type](data)
+}
+
+const extractActionRunCacheKey = ({ pieceName, pieceVersion }: Omit<ActionRunProvisionParams, 'pieces' | 'type'>): string => {
+    return `pieceName-${pieceName}-pieceVersion-${pieceVersion}`
 }
 
 type Piece = {
@@ -38,9 +45,24 @@ type Piece = {
     version: string
 }
 
-type ProvisionParams = {
+export enum SandBoxProvisionType {
+    ACTION_RUN = 'ACTION_RUN',
+}
+
+type BaseProvisionParams<T extends SandBoxProvisionType> = {
+    type: T
     pieces: Piece[]
 }
+
+type ActionRunProvisionParams = BaseProvisionParams<SandBoxProvisionType.ACTION_RUN> & {
+    pieceName: string
+    pieceVersion: string
+}
+
+type ProvisionParams =
+    | ActionRunProvisionParams
+
+type ExtractCacheKeyParams = Omit<ProvisionParams, 'pieces'>
 
 type ReleaseParams = {
     sandbox: Sandbox

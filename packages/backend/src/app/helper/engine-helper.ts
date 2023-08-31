@@ -26,8 +26,6 @@ import {
 } from '@activepieces/shared'
 import { Sandbox } from '../workers/sandbox'
 import { sandboxManager } from '../workers/sandbox/sandbox-manager'
-import { system } from './system/system'
-import { SystemProp } from './system/system-prop'
 import { tokenUtils } from '../authentication/lib/token-utils'
 import {
     DropdownState,
@@ -44,7 +42,7 @@ import { pieceMetadataService } from '../pieces/piece-metadata-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { codeBuilder } from '../workers/code-worker/code-builder'
 import { fileService } from '../file/file.service'
-import { sandboxProvisioner } from '../workers/sandbox/sandbox-provisioner'
+import { SandBoxProvisionType, sandboxProvisioner } from '../workers/sandbox/sandbox-provisioner'
 
 type InstallPieceParams = {
     projectId: string
@@ -98,10 +96,6 @@ export type EngineHelperResponse<Result extends EngineHelperResult> = {
     standardError: string
     standardOutput: string
 }
-
-const engineExecutablePath = system.getOrThrow(
-    SystemProp.ENGINE_EXECUTABLE_PATH,
-)
 
 const installPiece = async (params: InstallPieceParams) => {
     logger.debug(params, '[InstallPiece] params')
@@ -165,12 +159,6 @@ const execute = async <Result extends EngineHelperResult>(
 
     const sandboxPath = sandbox.getSandboxFolderPath()
 
-    await fs.copyFile(engineExecutablePath, `${sandboxPath}/main.js`)
-    await fs.copyFile(
-        `${engineExecutablePath}.map`,
-        `${sandboxPath}/main.js.map`,
-    )
-
     await fs.writeFile(
         `${sandboxPath}/input.json`,
         JSON.stringify({
@@ -180,9 +168,7 @@ const execute = async <Result extends EngineHelperResult>(
     )
 
     const nodeExecutablePath = process.execPath
-    const sandboxResponse = await sandbox.runCommandLine(
-        `${nodeExecutablePath} main.js ${operation}`,
-    )
+    const sandboxResponse = await sandbox.runCommandLine(`${nodeExecutablePath} /root/main.js ${operation}`)
 
     sandboxResponse.standardOutput.split('\n').forEach((f) => {
         if (f.trim().length > 0) logger.debug({}, chalk.yellow(f))
@@ -368,14 +354,19 @@ export const engineHelper = {
     ): Promise<EngineHelperResponse<EngineHelperActionResult>> {
         logger.debug(operation, '[EngineHelper#executeAction] operation')
 
+        const { pieceName, pieceVersion } = operation
+
         const pieces = [
             {
-                name: operation.pieceName,
-                version: operation.pieceVersion,
+                name: pieceName,
+                version: pieceVersion,
             },
         ]
 
         const sandbox = await sandboxProvisioner.provision({
+            type: SandBoxProvisionType.ACTION_RUN,
+            pieceName,
+            pieceVersion,
             pieces,
         })
 

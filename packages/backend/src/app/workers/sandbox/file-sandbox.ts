@@ -12,7 +12,7 @@ export class FileSandbox extends AbstractSandbox {
         super(params)
     }
 
-    protected override async recreateCleanup(): Promise<void> {
+    public override async recreate(): Promise<void> {
         const sandboxFolderPath = this.getSandboxFolderPath()
 
         try {

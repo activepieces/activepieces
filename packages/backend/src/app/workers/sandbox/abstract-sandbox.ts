@@ -2,7 +2,6 @@ import { readFile, access } from 'node:fs/promises'
 import { system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
 import { logger } from '../../helper/logger'
-import { packageManager } from '../../helper/package-manager'
 import { EngineResponse, EngineResponseStatus } from '@activepieces/shared'
 
 export abstract class AbstractSandbox {
@@ -15,16 +14,10 @@ export abstract class AbstractSandbox {
         this.boxId = params.boxId
     }
 
-    protected abstract recreateCleanup(): Promise<void>
+    public abstract recreate(): Promise<void>
     public abstract runCommandLine(commandLine: string): Promise<ExecuteSandboxResult>
     public abstract getSandboxFolderPath(): string
     public abstract useCache(cachePath: string): Promise<void>
-
-    public async recreate(): Promise<void> {
-        await this.recreateCleanup()
-        const sandboxFolderPath = this.getSandboxFolderPath()
-        await packageManager.initProject(sandboxFolderPath)
-    }
 
     protected async parseMetaFile(): Promise<Record<string, unknown>> {
         const metaFile = this.getSandboxFilePath('meta.txt')

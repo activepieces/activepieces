@@ -26,7 +26,7 @@ export class IsolateSandbox extends AbstractSandbox {
         super(params)
     }
 
-    protected override async recreateCleanup(): Promise<void> {
+    public override async recreate(): Promise<void> {
         await IsolateSandbox.runIsolate(`--box-id=${this.boxId} --cleanup`)
         await IsolateSandbox.runIsolate(`--box-id=${this.boxId} --init`)
     }

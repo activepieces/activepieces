@@ -106,6 +106,7 @@ async function executePiece({ step, projectId, flowVersion, userId }: ExecutePar
     }
 
     const { result, standardError, standardOutput } = await engineHelper.executeAction(operation)
+
     if (result.success) {
         step.settings.inputUiInfo.currentSelectedData = result.output
         await flowService.update({
