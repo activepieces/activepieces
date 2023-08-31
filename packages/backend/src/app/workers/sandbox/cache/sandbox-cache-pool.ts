@@ -1,12 +1,15 @@
 import { Mutex } from 'async-mutex'
 import { CachedSandbox } from './cached-sandbox'
 import { SandBoxCacheType } from '../provisioner/sandbox-cache-type'
+import { logger } from '../../../helper/logger'
 
 const cachedSandboxes = new Map<string, CachedSandbox>()
 const lock: Mutex = new Mutex()
 
 export const sandboxCachePool = {
     async getByKey({ type, key }: GetByKeyParams): Promise<CachedSandbox> {
+        logger.debug({ type, key }, '[SandboxCachePool#getByKey]')
+
         const cachedSandbox = await executeWithLock((): CachedSandbox => {
             const cachedSandbox = cachedSandboxes.get(key)
 

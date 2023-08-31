@@ -106,19 +106,16 @@ const execute = async <Result extends EngineHelperResult>(
     sandbox: Sandbox,
     input: EngineOperation,
 ): Promise<EngineHelperResponse<Result>> => {
-    logger.debug(`Executing ${operation} inside sandbox number ${sandbox.boxId}`)
-    logger.debug(`[EngineHelper#execute] workerToken=${(input as Record<string, string>).workerToken}`)
+    logger.debug({ operation, sandboxId: sandbox.boxId }, '[EngineHelper#execute]')
 
     const sandboxPath = sandbox.getSandboxFolderPath()
 
-    await fs.writeFile(
-        `${sandboxPath}/input.json`,
-        JSON.stringify({
-            ...input,
-            apiUrl: 'http://127.0.0.1:3000',
-        }),
-    )
+    const serializedInput = JSON.stringify({
+        ...input,
+        apiUrl: 'http://127.0.0.1:3000',
+    })
 
+    await fs.writeFile(`${sandboxPath}/input.json`, serializedInput)
     const nodeExecutablePath = process.execPath
     const sandboxResponse = await sandbox.runCommandLine(`${nodeExecutablePath} /root/main.js ${operation}`)
 
@@ -156,10 +153,12 @@ export const engineHelper = {
         sandbox: Sandbox,
         operation: ExecuteFlowOperation,
     ): Promise<EngineHelperResponse<EngineHelperFlowResult>> {
-        logger.info(
-            { ...operation, triggerPayload: undefined, executionState: undefined },
-            '[EngineHelper#executeFlow] operation',
-        )
+        logger.debug({
+            executionType: operation.executionType,
+            flowRunId: operation.flowRunId,
+            projectId: operation.projectId,
+            sandboxId: sandbox.boxId,
+        }, '[EngineHelper#executeFlow]')
 
         const input = {
             ...operation,
@@ -172,6 +171,8 @@ export const engineHelper = {
     async executeTrigger<T extends TriggerHookType>(
         operation: ExecuteTriggerOperation<T>,
     ): Promise<EngineHelperResponse<EngineHelperTriggerResult<T>>> {
+        logger.debug({ hookType: operation.hookType, projectId: operation.projectId }, '[EngineHelper#executeTrigger]')
+
         const lockedFlowVersion = await flowVersionService.lockPieceVersions(
             operation.projectId,
             operation.flowVersion,
@@ -217,7 +218,13 @@ export const engineHelper = {
     async executeProp(
         operation: ExecutePropsOptions,
     ): Promise<EngineHelperResponse<EngineHelperPropResult>> {
-        logger.debug(operation, '[EngineHelper#executeProp] operation')
+        logger.debug({
+            pieceName: operation.pieceName,
+            pieceVersion: operation.pieceVersion,
+            projectId: operation.projectId,
+            stepName: operation.stepName,
+        }, '[EngineHelper#executeProp]')
+
         const { pieceName, pieceVersion } = operation
 
         const result = await pieceMetadataService.get({
@@ -261,7 +268,10 @@ export const engineHelper = {
     async executeCode(
         operation: ExecuteCodeOperation,
     ): Promise<EngineHelperResponse<EngineHelperCodeResult>> {
-        logger.debug(operation, '[EngineHelper#executeAction] operation')
+        logger.debug({
+            flowVersionId: operation.flowVersion.id,
+            stepName: operation.step.name,
+        }, '[EngineHelper#executeCode]')
 
         const sourceId = (operation.step.settings as CodeActionSettings).artifactSourceId!
 
@@ -296,7 +306,10 @@ export const engineHelper = {
     async extractPieceMetadata(
         operation: ExecuteExtractPieceMetadata,
     ): Promise<EngineHelperResponse<EngineHelperExtractPieceInformation>> {
-        logger.info(operation, '[EngineHelper#ExecuteExtractPieceMetadata] operation')
+        logger.debug({
+            pieceName: operation.pieceName,
+            pieceVersion: operation.pieceVersion,
+        }, '[EngineHelper#extractPieceMetadata]')
 
         const { pieceName, pieceVersion } = operation
 
@@ -325,7 +338,12 @@ export const engineHelper = {
     },
 
     async executeAction(operation: ExecuteActionOperation): Promise<EngineHelperResponse<EngineHelperActionResult>> {
-        logger.debug(operation, '[EngineHelper#executeAction] operation')
+        logger.debug({
+            flowVersionId: operation.flowVersion.id,
+            pieceName: operation.pieceName,
+            pieceVersion: operation.pieceVersion,
+            actionName: operation.actionName,
+        }, '[EngineHelper#executeAction]')
 
         const { pieceName, pieceVersion } = operation
 
@@ -359,7 +377,10 @@ export const engineHelper = {
     async executeValidateAuth(
         operation: ExecuteValidateAuthOperation,
     ): Promise<EngineHelperResponse<EngineHelperValidateAuthResult>> {
-        logger.debug(operation, '[EngineHelper#executeValidateAuth] operation')
+        logger.debug({
+            pieceName: operation.pieceName,
+            pieceVersion: operation.pieceVersion,
+        }, '[EngineHelper#executeValidateAuth]')
 
         const { pieceName, pieceVersion } = operation
 
@@ -393,10 +414,12 @@ export const engineHelper = {
     },
 
     async executeTest(sandbox: Sandbox, operation: EngineTestOperation): Promise<EngineHelperResponse<EngineHelperFlowResult>> {
-        logger.debug(
-            { ...operation, triggerPayload: undefined, executionState: undefined },
-            '[EngineHelper#executeTest] operation',
-        )
+        logger.debug({
+            flowVersionId: operation.sourceFlowVersion.id,
+            projectId: operation.projectId,
+            sandboxId: sandbox.boxId,
+            executionType: operation.executionType,
+        }, '[EngineHelper#executeTest]')
 
         const input = {
             ...operation,

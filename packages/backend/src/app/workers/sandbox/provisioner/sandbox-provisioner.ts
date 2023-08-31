@@ -3,6 +3,7 @@ import { sandboxCachePool } from '../cache/sandbox-cache-pool'
 import { sandboxManager } from '../sandbox-manager'
 import { FileId, FlowVersionId, apId } from '@activepieces/shared'
 import { SandBoxCacheType } from './sandbox-cache-type'
+import { logger } from '../../../helper/logger'
 
 export const sandboxProvisioner = {
     async provision({ pieces = [], ...cacheInfo }: ProvisionParams): Promise<Sandbox> {
@@ -20,11 +21,15 @@ export const sandboxProvisioner = {
     },
 
     async release({ sandbox }: ReleaseParams): Promise<void> {
+        logger.debug({ boxId: sandbox.boxId }, '[SandboxProvisioner#release]')
+
         await sandboxManager.release(sandbox.boxId)
     },
 }
 
 const extractCacheKey = (params: ProvisionCacheInfo): string => {
+    logger.debug({ type: params.type }, '[SandboxProvisioner#extractCacheKey]')
+
     switch (params.type) {
         case SandBoxCacheType.CODE:
             return extractCodeCacheKey(params)
@@ -38,19 +43,19 @@ const extractCacheKey = (params: ProvisionCacheInfo): string => {
 }
 
 const extractCodeCacheKey = ({ artifactSourceId }: CodeProvisionCacheInfo): string => {
-    return `artifactSourceId-${artifactSourceId}`
+    return `CODE-artifactSourceId-${artifactSourceId}`
 }
 
 const extractFlowCacheKey = ({ flowVersionId }: FlowProvisionCacheInfo): string => {
-    return `flowVersionId-${flowVersionId}`
+    return `FLOW-flowVersionId-${flowVersionId}`
 }
 
 const extractNoneCacheKey = (_params: NoneProvisionCacheInfo): string => {
-    return `apId-${apId}`
+    return `NONE-apId-${apId()}`
 }
 
 const extractPieceCacheKey = ({ pieceName, pieceVersion }: PieceProvisionCacheInfo): string => {
-    return `pieceName-${pieceName}-pieceVersion-${pieceVersion}`
+    return `PIECE-pieceName-${pieceName}-pieceVersion-${pieceVersion}`
 }
 
 type Piece = {

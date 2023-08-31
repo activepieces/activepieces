@@ -13,6 +13,8 @@ export class FileSandbox extends AbstractSandbox {
     }
 
     public override async recreate(): Promise<void> {
+        logger.debug({ boxId: this.boxId }, '[FileSandbox#recreate]')
+
         const sandboxFolderPath = this.getSandboxFolderPath()
 
         try {
@@ -49,6 +51,8 @@ export class FileSandbox extends AbstractSandbox {
     }
 
     public override async useCache(cachePath: string): Promise<void> {
+        logger.debug({ boxId: this.boxId, cachePath }, '[FileSandbox#useCache]')
+
         await cp(cachePath, this.getSandboxFolderPath(), { recursive: true })
     }
 

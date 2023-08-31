@@ -27,6 +27,8 @@ export class IsolateSandbox extends AbstractSandbox {
     }
 
     public override async recreate(): Promise<void> {
+        logger.debug({ boxId: this.boxId }, '[IsolateSandbox#recreate]')
+
         await IsolateSandbox.runIsolate(`--box-id=${this.boxId} --cleanup`)
         await IsolateSandbox.runIsolate(`--box-id=${this.boxId} --init`)
     }
@@ -93,6 +95,8 @@ export class IsolateSandbox extends AbstractSandbox {
     }
 
     public override async useCache(cachePath: string): Promise<void> {
+        logger.debug({ boxId: this.boxId, cachePath }, '[IsolateSandbox#useCache]')
+
         this.cachePath = cachePath
     }
 

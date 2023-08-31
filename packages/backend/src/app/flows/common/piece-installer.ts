@@ -103,6 +103,8 @@ const removeDuplicatedPieces = (pieces: PackageInfo[]) => {
 
 export const pieceManager = {
     async install(params: InstallParams): Promise<void> {
+        logger.debug({ path: params.projectPath }, '[PieceManager#install]')
+
         if (params.pieces.length === 0) {
             return
         }

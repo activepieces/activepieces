@@ -5,6 +5,7 @@ import { CachedSandboxState } from './cached-sandbox-state'
 import { pieceManager } from '../../../flows/common/piece-installer'
 import { SandBoxCacheType } from '../provisioner/sandbox-cache-type'
 import { engineInstaller } from '../../engine/engine-installer'
+import { logger } from '../../../helper/logger'
 
 const CACHE_PATH = system.get(SystemProp.CACHE_PATH) ?? '/usr/src/cache'
 
@@ -14,6 +15,7 @@ export class CachedSandbox {
     private _state = CachedSandboxState.CREATED
 
     constructor({ key, type }: CtorParams) {
+        logger.debug({ key, type }, '[CachedSandbox#ctor]')
         this.key = key
         this._cacheType = type
     }
@@ -27,6 +29,8 @@ export class CachedSandbox {
     }
 
     async init(): Promise<void> {
+        logger.debug({ key: this.key, type: this._cacheType, state: this._state }, '[CachedSandbox#init]')
+
         if (this._state !== CachedSandboxState.CREATED) {
             return
         }
@@ -36,6 +40,8 @@ export class CachedSandbox {
     }
 
     async prepare({ pieces }: PrepareParams): Promise<void> {
+        logger.debug({ key: this.key, type: this._cacheType, state: this._state }, '[CachedSandbox#prepare]')
+
         const notInitialized = this._state === CachedSandboxState.CREATED
         if (notInitialized) {
             throw new Error(`[CachedSandbox#prepare] not initialized, Key=${this.key} state=${this._state}`)

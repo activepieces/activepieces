@@ -11,11 +11,13 @@ const lock: Mutex = new Mutex()
 
 export const sandboxManager = {
     async allocate(): Promise<Sandbox> {
+        logger.debug('[SandboxManager#allocate]')
+
         const sandbox = await executeWithLock((): Sandbox => {
             const sandbox = sandboxes.find(byNotInUse)
 
             if (isNil(sandbox)) {
-                throw new Error('[SandboxManager#obtainSandbox] all sandboxes are in-use')
+                throw new Error('[SandboxManager#allocate] all sandboxes are in-use')
             }
 
             sandbox.inUse = true
@@ -27,20 +29,20 @@ export const sandboxManager = {
             return sandbox
         }
         catch (e) {
-            logger.error(e, '[SandboxManager#obtainSandbox]')
+            logger.error(e, '[SandboxManager#allocate]')
             await this.release(sandbox.boxId)
             throw e
         }
     },
 
     async release(sandboxId: number): Promise<void> {
-        logger.debug(`[SandboxManager#returnSandbox] sandboxId=${sandboxId}`)
+        logger.debug({ boxId: sandboxId }, '[SandboxManager#release]')
 
         await executeWithLock((): void => {
             const sandbox = sandboxes[sandboxId]
 
             if (isNil(sandbox)) {
-                throw new Error(`[SandboxManager#returnSandbox] sandbox not found id=${sandboxId}`)
+                throw new Error(`[SandboxManager#release] sandbox not found id=${sandboxId}`)
             }
 
             sandbox.inUse = false
