@@ -37,6 +37,6 @@ export const createContact = createAction({
         if( list ) request_body['lists'] = [list];
 
         const response = ( await callsendfoxApi(HttpMethod.POST, 'contacts', accessToken, request_body )).body;
-        return { list_id: list , response: response};
+        return { response: response};
     },
 });
