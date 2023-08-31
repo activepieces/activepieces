@@ -5,9 +5,9 @@ import { isNil } from "@activepieces/shared";
 
 export const getRowsAction = createAction({
     auth: googleSheetsAuth,
-    name: 'get_rows',
+    name: 'get_next_rows',
     description: 'Get next group of rows from a Google Sheet',
-    displayName: 'Get Row(s)',
+    displayName: 'Get next row(s)',
     props: {
         spreadsheet_id: googleSheetsCommon.spreadsheet_id,
         include_team_drives: googleSheetsCommon.include_team_drives,
@@ -25,7 +25,6 @@ export const getRowsAction = createAction({
             defaultValue: 1,
             validators: [ Validators.minValue(1) ],
         }),
-
     },
     async run( context ) {
         const auth = context.auth;
