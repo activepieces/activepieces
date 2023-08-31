@@ -9,14 +9,19 @@ export const sandboxProvisioner = {
     async provision({ pieces = [], ...cacheInfo }: ProvisionParams): Promise<Sandbox> {
         const cacheKey = extractCacheKey(cacheInfo)
 
-        const cachedSandbox = await sandboxCachePool.getByKey({
+        const cachedSandbox = await sandboxCachePool.findOrCreate({
             key: cacheKey,
             type: cacheInfo.type,
         })
 
         await cachedSandbox.prepare({ pieces })
         const sandbox = await sandboxManager.allocate()
-        await sandbox.useCache(cachedSandbox.path())
+
+        await sandbox.assignCache({
+            cacheKey,
+            cachePath: cachedSandbox.path(),
+        })
+
         return sandbox
     },
 
@@ -24,6 +29,12 @@ export const sandboxProvisioner = {
         logger.debug({ boxId: sandbox.boxId }, '[SandboxProvisioner#release]')
 
         await sandboxManager.release(sandbox.boxId)
+
+        if (sandbox.cacheKey) {
+            await sandboxCachePool.release({
+                key: sandbox.cacheKey,
+            })
+        }
     },
 }
 

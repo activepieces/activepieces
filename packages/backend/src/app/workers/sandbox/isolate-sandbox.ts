@@ -20,8 +20,6 @@ const getIsolateExecutableName = (): string => {
 export class IsolateSandbox extends AbstractSandbox {
     private static readonly isolateExecutableName = getIsolateExecutableName()
 
-    private cachePath?: string
-
     public constructor(params: SandboxCtorParams) {
         super(params)
     }
@@ -48,7 +46,7 @@ export class IsolateSandbox extends AbstractSandbox {
                 '--dir=/usr/bin/',
                 `--dir=/etc/=${etcDir}`,
                 `--dir=${basePath}=/${basePath}:maybe`,
-                `--dir=/root=${this.cachePath}`,
+                `--dir=/root=${this._cachePath}`,
                 '--share-net',
                 `--box-id=${this.boxId}`,
                 '--processes',
@@ -94,10 +92,8 @@ export class IsolateSandbox extends AbstractSandbox {
         return `/var/local/lib/isolate/${this.boxId}/box`
     }
 
-    public override async useCache(cachePath: string): Promise<void> {
-        logger.debug({ boxId: this.boxId, cachePath }, '[IsolateSandbox#useCache]')
-
-        this.cachePath = cachePath
+    protected override async setupCache(): Promise<void> {
+        logger.debug({ boxId: this.boxId, cacheKey: this._cacheKey, cachePath: this._cachePath }, '[IsolateSandbox#setupCache]')
     }
 
     private static runIsolate(cmd: string): Promise<string> {

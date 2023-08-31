@@ -9,15 +9,30 @@ export abstract class AbstractSandbox {
 
     public readonly boxId: number
     public inUse = false
+    protected _cacheKey?: string
+    protected _cachePath?: string
 
     protected constructor(params: SandboxCtorParams) {
         this.boxId = params.boxId
     }
 
+    public get cacheKey(): string | undefined {
+        return this._cacheKey
+    }
+
     public abstract recreate(): Promise<void>
     public abstract runCommandLine(commandLine: string): Promise<ExecuteSandboxResult>
     public abstract getSandboxFolderPath(): string
-    public abstract useCache(cachePath: string): Promise<void>
+    protected abstract setupCache(): Promise<void>
+
+    public async assignCache({ cacheKey, cachePath }: AssignCacheParams): Promise<void> {
+        logger.debug({ boxId: this.boxId, cacheKey, cachePath }, '[AbstractSandbox#assignCache]')
+
+        this._cacheKey = cacheKey
+        this._cachePath = cachePath
+
+        await this.setupCache()
+    }
 
     protected async parseMetaFile(): Promise<Record<string, unknown>> {
         const metaFile = this.getSandboxFilePath('meta.txt')
@@ -70,4 +85,9 @@ export type ExecuteSandboxResult = {
     verdict: EngineResponseStatus
     standardOutput: string
     standardError: string
+}
+
+type AssignCacheParams = {
+    cacheKey: string
+    cachePath: string
 }

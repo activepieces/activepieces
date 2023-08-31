@@ -50,10 +50,12 @@ export class FileSandbox extends AbstractSandbox {
         return path.join(__dirname, `../../sandbox/${this.boxId}`)
     }
 
-    public override async useCache(cachePath: string): Promise<void> {
-        logger.debug({ boxId: this.boxId, cachePath }, '[FileSandbox#useCache]')
+    protected override async setupCache(): Promise<void> {
+        logger.debug({ boxId: this.boxId, cacheKey: this._cacheKey, cachePath: this._cachePath }, '[FileSandbox#setupCache]')
 
-        await cp(cachePath, this.getSandboxFolderPath(), { recursive: true })
+        if (this._cachePath) {
+            await cp(this._cachePath, this.getSandboxFolderPath(), { recursive: true })
+        }
     }
 
     private async runUnsafeCommand(cmd: string): Promise<{ verdict: EngineResponseStatus }> {
