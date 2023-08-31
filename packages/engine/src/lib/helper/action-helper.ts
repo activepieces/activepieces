@@ -256,7 +256,7 @@ export const pieceHelper = {
       };
     } catch (e) {
       return {
-        output: Utils.tryParseJson( e as unknown as string ) ,
+        output: e instanceof Error ? Utils.tryParseJson(e.message) : e,
         success: false
       };
     }
