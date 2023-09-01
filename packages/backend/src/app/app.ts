@@ -21,6 +21,8 @@ import { logger } from './helper/logger'
 import { appEventRoutingModule } from './app-event-routing/app-event-routing.module'
 import { triggerEventModule } from './flows/trigger-events/trigger-event.module'
 import { flowInstanceModule } from './flows/flow-instance/flow-instance.module'
+import { fastifyRawBody } from 'fastify-raw-body'
+import { stepFileModule } from './flows/step-file/step-file.module'
 
 export const app = fastify({
     logger,
@@ -56,7 +58,7 @@ app.register(cors, {
     methods: ['*'],
 })
 app.register(fastifyMultipart, { addToBody: true })
-app.register(import('fastify-raw-body'), {
+app.register(fastifyRawBody, {
     field: 'rawBody',
     global: false,
     encoding: 'utf8',
@@ -94,6 +96,7 @@ app.register(appConnectionModule)
 app.register(openapiModule)
 app.register(triggerEventModule)
 app.register(appEventRoutingModule)
+app.register(stepFileModule)
 
 app.get(
     '/redirect',

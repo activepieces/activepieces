@@ -1,10 +1,6 @@
-import { isNil, isString } from '../../common';
 import { ActionType } from '../../flows/actions/action';
-import { ExecutionOutput } from './execution-output';
 import { LoopOnItemsStepOutput, StepOutput } from './step-output';
-import sizeof from 'object-sizeof';
 
-const TRIM_SIZE_BYTE = 128 * 1024;
 export const MAX_LOG_SIZE = 2048 * 1024;
 
 type GetStepOutputParams = {
@@ -124,63 +120,3 @@ export class ExecutionState {
     return targetMap;
   }
 }
-
-export function trimExecution(executionState: ExecutionOutput){
-   const steps = executionState.executionState.steps;
-   for(const stepName in steps){
-      const stepOutput = steps[stepName];
-      steps[stepName] = trimStepOuput(stepOutput);
-    }
-    return executionState;
-}
-
-function trimStepOuput(stepOutput: StepOutput): StepOutput {
-  const modified: StepOutput = JSON.parse(JSON.stringify(stepOutput));
-  modified.input = trimObject(modified.input);
-  switch (modified.type) {
-    case ActionType.BRANCH:
-      break;
-    case ActionType.CODE:
-    case ActionType.PIECE:
-      modified.output = trimObject(modified.output);
-      break;
-    case ActionType.LOOP_ON_ITEMS: {
-      const loopItem = (modified as LoopOnItemsStepOutput).output;
-      if(loopItem){
-        loopItem.iterations = trimObject(loopItem.iterations);
-        loopItem.item = trimObject(loopItem.item);
-      }
-      break;
-    }
-  }
-  modified.standardOutput = trimObject(modified.standardOutput);
-  modified.errorMessage = trimObject(modified.errorMessage);
-  return modified;
-}
-
-function trimObject(obj: any) {
-  if (isNil(obj)) {
-    return obj;
-  } else if (isString(obj)) {
-    return trim(obj);
-  } else if (Array.isArray(obj)) {
-    for (let i = 0; i < obj.length; ++i) {
-      obj[i] = trimObject(obj[i]);
-    }
-  } else if (typeof obj === 'object') {
-    const entries = Object.entries(obj);
-    for (let i = 0; i < entries.length; ++i) {
-      const [key, value] = entries[i];
-      obj[key] = trimObject(value);
-    }
-  }
-  return trim(obj);
-}
-
-const trim = (obj: any) => {
-  const size = sizeof(obj);
-  if (size > TRIM_SIZE_BYTE) {
-    return '(truncated)';
-  }
-  return obj;
-};

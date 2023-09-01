@@ -23,8 +23,10 @@ import {
     ExecuteValidateAuthResponse,
     ApEnvironment,
     EngineTestOperation,
+    CodeActionSettings,
 } from '@activepieces/shared'
-import { Sandbox, sandboxManager } from '../workers/sandbox'
+import { Sandbox } from '../workers/sandbox'
+import { sandboxManager } from '../workers/sandbox/sandbox-manager'
 import { system } from './system/system'
 import { SystemProp } from './system/system-prop'
 import { tokenUtils } from '../authentication/lib/token-utils'
@@ -42,6 +44,7 @@ import { packageManager } from './package-manager'
 import { pieceMetadataService } from '../pieces/piece-metadata-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { codeBuilder } from '../workers/code-worker/code-builder'
+import { fileService } from '../file/file.service'
 
 const apEnvironment = system.get(SystemProp.ENVIRONMENT)
 
@@ -329,13 +332,17 @@ export const engineHelper = {
         logger.debug(operation, '[EngineHelper#executeAction] operation')
 
         const sandbox = await sandboxManager.obtainSandbox(apId())
+        const sourceId = (operation.step.settings as CodeActionSettings).artifactSourceId!
+        const fileEntity = await fileService.getOneOrThrow({
+            projectId: operation.projectId,
+            fileId: sourceId,
+        })
         await sandbox.recreate()
-        await codeBuilder.processCodeStep(
-            operation.step,
-            sandbox.getSandboxFolderPath(),
-            operation.flowVersion.id,
-            operation.projectId,
-        )
+        await codeBuilder.processCodeStep({
+            codeZip: fileEntity.data,
+            sourceCodeId: sourceId,
+            buildPath: sandbox.getSandboxFolderPath(),
+        } )
         const input = {
             ...operation,
             workerToken: await generateWorkerToken({ projectId: operation.projectId }),

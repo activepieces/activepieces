@@ -27,7 +27,8 @@ export const newFile = createTrigger({
     displayName: 'New File',
     description: 'Trigger when a new file is uploaded.',
     props: {
-        parentFolder: common.properties.folder
+        parentFolder: common.properties.parentFolder,
+        include_team_drives: common.properties.include_team_drives
     },
     type: TriggerStrategy.POLLING,
     onEnable: async (context) => {

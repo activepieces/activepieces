@@ -33,16 +33,19 @@
       "url": "https://github.com/activepieces/activepieces"
     }
   ],
-  "anchors": [
+  "primaryTab": {
+      "name": "Learn"
+  },
+  "tabs": [
+    {
+      "name": "Develop Pieces",
+      "icon": "code",
+      "url": "developers"
+    },
     {
       "name": "Pieces",
       "icon": "plug",
       "url": "https://www.activepieces.com/pieces"
-    },
-    {
-      "name": "Developers",
-      "icon": "code",
-      "url": "developers"
     },
     {
       "name": "Discord",
@@ -52,9 +55,19 @@
   ],
   "navigation": [
     {
-      "group": "Introduction",
+      "group": "Getting Started",
       "pages": [
-        "getting-started/introduction"
+        "getting-started/introduction",
+        "getting-started/building-flows",
+        "getting-started/passing-data",
+        "getting-started/publishing-flows",
+        "getting-started/debugging-runs"
+      ]
+    },
+    {
+      "group": "Helper Pieces",
+      "pages": [
+        "helper-pieces/code"
       ]
     },
     {
@@ -78,22 +91,8 @@
             "install/configurations/error-notifications"
           ]
         },
+        "install/editions",
         "install/breaking-changes"
-      ]
-    },
-    {
-      "group": "Building Flow",
-      "pages": [
-        "building-flows/building-flow",
-        "building-flows/passing-data",
-        "building-flows/publishing-flow",
-        "building-flows/debugging"
-      ]
-    },
-    {
-      "group": "Helper Pieces",
-      "pages": [
-        "helper-pieces/code"
       ]
     },
     {

@@ -1,7 +1,7 @@
 import { Property } from "@activepieces/pieces-framework";
 
 import imap from 'node-imap';
-import { simpleParser } from 'mailparser';
+import { ParsedMail, simpleParser } from 'mailparser';
 
 export const imapCommon = {
     subject: Property.ShortText({
@@ -20,10 +20,10 @@ export const imapCommon = {
         required: false,
     }),
 
-    async fetchEmails(imapConfig: any, search: { flag: string, since: any[], subject: string | undefined, to: string | undefined, from: string | undefined }): Promise<any[]> {
+    async fetchEmails(imapConfig: any, search: { flag: string, since: any[], subject: string | undefined, to: string | undefined, from: string | undefined }): Promise<ParsedMail[]> {
         return new Promise(resolve => {
             const imapClient = new imap(imapConfig);
-            const emails: any[] = [];
+            const emails: ParsedMail[] = [];
             imapClient.once('ready', () => {
                 imapClient.openBox('INBOX', true, (error, box) => {
                     if (error) {
@@ -45,13 +45,8 @@ export const imapCommon = {
 
                             f.on('message', msg => {
                                 msg.on('body', stream => {
-                                    simpleParser(stream, async (error, parsed) => {
-                                        if (parsed.attachments.length > 0) {
-                                            parsed.attachments.forEach((attachment: any) => {
-                                                attachment.file = `data:${attachment.contentType};base64,${attachment.content.toString('base64')}`;
-                                            })
-                                        }
-                                        
+                                    simpleParser(stream, async (err, parsed) => {
+
                                         emails.push(parsed);
                                     });
                                 });

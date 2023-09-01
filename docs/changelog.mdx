@@ -11,26 +11,67 @@ Semantic versioning is a standardized way of versioning software projects. It us
 
 <Note>You will only see Version X.Y here as all Patch changes (Z) are added under their minor versions.</Note>
 
-### 14/8/2023
+### 24/08/2023
 
-**New Additions:**
-- Slack: Request action from User / Chanel by @rita-gorokhod 
-- DeepL: translate by @BBND 
-- Monday: get item by column value , get column values by @haseebrehmanpc 
+**Pieces **:
+- DeepL: Translate Text Action by @BBND
+- Monday: Get Column Values / Get Item By Column Values / Change Multiple Column Values by @haseebrehmanpc
+- Slack: Support for multiple action buttons by @rita-gorokhod
+- Tags section: Ability to add tags for the run and query them through API only at this moment by @abuaboud
+- Github: Create Issue by @kishanprmr
+- Clarfai: Call Audio Model / Call Image Model / Call Post Inputs / Call Text Model / Call Workflow Actions by @zeiler
+- Kimai: Create timesheet Action by @facferreira
+- Supabase: Upload file to Storage Action by @abuaboud
+- Schedule: Add Every X minutes action by @abuaboud
+- SFTP: Read File Content Action / Added Path property inside New modified field by @abuaboud
+- Contiguity: Send SMS Action by @Owlcept
+- SimplePDF: New submission trigger by @bendersej
+- Nifty: Create new task by @Salem-Alaa
+- TidyCal: New Contact / New Booking / Cancelled booking by @Salem-Alaa
+- Branch Piece: The testing step will now resolve variables and return correct results by @khaledmashaly
+- Telegram: Added authentication instructions on how to obtain authentication by @abuaboud
+- Twitter: Added validation for authentication by @abuaboud
+- OpenAI: Improved error messages with instructions on how to avoid them by @abuaboud
+- Calendly: Added validation to authentication by @abuaboud
+- IMAP: Added validation to authentication with proper error messages, as well as instructions for Gmail by @abuaboud
+- SMTP: Added validation to authentication by @abuaboud
+- Google Contacts: Fixed the error when a phone number is entered in the create contact action by @abuaboud
+- Ntfy: Authentication error is fixed by @facferreira
+- RSS: New item trigger always sorts the RSS feed by date, even if it's not originally sorted by @abuaboud
+- Facebook Pages: Added instructions on how to create an application by @abuaboud
 
-**New Features / Improvements:**
-- Revamped Sidebar
+**Enhancements / Fixes**:
+- Sidebar Icons have been redesigned.
+- Piece settings have been revamped. All piece properties are now visible by default, along with descriptions beneath them.
+- Code Piece is now built using `tsc` instead of being webpack, which allows for packages that work on node.
+- Flow title in the browser tab gets updated when the flow name is changed.
+- Connection Names: Allowed more characters
+- Dictionary field has been enhanced. If a large value is entered, it no longer makes the key field smaller.
+- Fixed internal errors when the same flow is triggered many times at the same moment.
 
-**Fixes:**
-- connection internal error is fixed
-- fixes relating to inputs info icon by @AbdulTheActivePiecer in https://github.com/activepieces/activepieces/pull/1837
+**Security Improvements**:
+- Connection values are no longer exposed through any endpoint. Users will need to reenter all information upon pressing "reconnect" in the connections.
+- All endpoints now have post validation to verify if the entity belongs to the user, adding a second layer of security.
 
-**New Contributors**
-* @BBND made their first contribution in https://github.com/activepieces/activepieces/pull/1838
-* @haseebrehmanpc made their first contribution in https://github.com/activepieces/activepieces/pull/1840
-* @rita-gorokhod made their first contribution in https://github.com/activepieces/activepieces/pull/1844
+**Developer Experience**:
+- Fixed Docker Compose development environment for PostgreSQL migration.
+- Added developer credentials to the Dev Container page by @FlorinBuffet.
+- Included troubleshooting setups for codespaces by @fardeenpanjwani-codeglo.
 
-**Full Changelog**: https://github.com/activepieces/activepieces/compare/0.7.0...0.7.1
+**Contributors**:
+- @BBND
+- @haseebrehmanpc
+- @rita-gorokhod
+- @facferreira
+- @kishanprmr
+- @FlorinBuffet
+- @Owlcept
+- @bendersej
+- @thatguynef
+- @fardeenpanjwani-codeglo m
+- @Salem-Alaa
+
+**Full Changelog**: https://github.com/activepieces/activepieces/compare/0.7.0...0.8.0
 
 ### 8/8/2023
 <Warning>

@@ -304,7 +304,7 @@
             [pieceVersion]="pieceVersion" [propertyKey]="property.key"
             [selectedConnectionInterpolatedString]="formGroup.get(property.key)!.value"
             (connectionPropertyValueChanged)="connectionValueChanged($event)" [triggerName]="actionOrTriggerName">
-            Edit
+            Reconnect
           </app-add-edit-connection-button>
           <mat-form-field subscriptSizing="dynamic" class="ap-w-full" appearance="outline" #dropdown
             #dropdownUiContainer="hoverTrackerDirective" apTrackHover>
@@ -444,6 +444,22 @@
     apTrackHover #textInputContainer="hoverTrackerDirective">
     <mat-form-field subscriptSizing="dynamic" class="ap-w-full" appearance="outline" #textInput
       (click)="isTriggerPieceForm?null: handler.showMentionsDropdown()">
+      <div matTooltip="File Input" *ngIf="property.value.type === PropertyType.FILE" matSuffix
+        class="material-suffix-icon">
+        <svg-icon src="assets/img/custom/file.svg" [applyClass]="true"
+          class="ap-w-[24px] a-h-[24px] ap-fill-description ">
+
+        </svg-icon>
+      </div>
+
+      <div matTooltip="Date/Time Input" *ngIf="property.value.type === PropertyType.DATE_TIME" matSuffix
+        class="material-suffix-icon">
+        <svg-icon [applyClass]="true" src="assets/img/custom/calendar.svg" matToolip
+          class="ap-w-[24px] a-h-[24px] ap-fill-description">
+        </svg-icon>
+      </div>
+
+
       <mat-label>{{property.value.displayName}}</mat-label>
       <app-interpolating-text-form-control #textControl [formControlName]="property.key" [attr.name]="property.key"
         (editorFocused)="handler.showMentionsDropdown()"></app-interpolating-text-form-control>
