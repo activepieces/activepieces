@@ -116,8 +116,7 @@ const execute = async <Result extends EngineHelperResult>(
     })
 
     await fs.writeFile(`${sandboxPath}/input.json`, serializedInput)
-    const nodeExecutablePath = process.execPath
-    const sandboxResponse = await sandbox.runCommandLine(`${nodeExecutablePath} /root/main.js ${operation}`)
+    const sandboxResponse = await sandbox.runOperation(operation)
 
     sandboxResponse.standardOutput.split('\n').forEach((f) => {
         if (f.trim().length > 0) logger.debug({}, chalk.yellow(f))

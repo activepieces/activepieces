@@ -33,7 +33,7 @@ export class IsolateSandbox extends AbstractSandbox {
         await IsolateSandbox.runIsolate(`--box-id=${this.boxId} --init`)
     }
 
-    public override async runCommandLine(commandLine: string): Promise<ExecuteSandboxResult> {
+    public override async runOperation(operation: string): Promise<ExecuteSandboxResult> {
         const metaFile = this.getSandboxFilePath('meta.txt')
         const etcDir = path.resolve('./packages/backend/src/assets/etc/')
 
@@ -44,7 +44,7 @@ export class IsolateSandbox extends AbstractSandbox {
         try {
             const basePath = path.resolve(__dirname.split('/dist')[0])
 
-            const command = [
+            const fullCommand = [
                 '--dir=/usr/bin/',
                 `--dir=/etc/=${etcDir}`,
                 `--dir=${basePath}=/${basePath}:maybe`,
@@ -61,10 +61,12 @@ export class IsolateSandbox extends AbstractSandbox {
                 '--env=NODE_OPTIONS=\'--enable-source-maps\'',
                 '--env=AP_ENVIRONMENT',
                 `--env=AP_BASE_CODE_DIRECTORY=${IsolateSandbox.boxPath}/codes`,
-                commandLine,
+                AbstractSandbox.nodeExecutablePath,
+                `${IsolateSandbox.cacheBindPath}/main.js`,
+                operation,
             ].join(' ')
 
-            await IsolateSandbox.runIsolate(command)
+            await IsolateSandbox.runIsolate(fullCommand)
 
             const engineResponse = await this.parseFunctionOutput()
             output = engineResponse.response

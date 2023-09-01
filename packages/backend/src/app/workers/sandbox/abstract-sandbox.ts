@@ -1,4 +1,5 @@
 import { readFile, access } from 'node:fs/promises'
+import process from 'node:process'
 import { system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
 import { logger } from '../../helper/logger'
@@ -6,6 +7,7 @@ import { EngineResponse, EngineResponseStatus } from '@activepieces/shared'
 
 export abstract class AbstractSandbox {
     protected static readonly sandboxRunTimeSeconds = system.getNumber(SystemProp.SANDBOX_RUN_TIME_SECONDS) ?? 600
+    protected static readonly nodeExecutablePath = process.execPath
 
     public readonly boxId: number
     public inUse = false
@@ -21,7 +23,7 @@ export abstract class AbstractSandbox {
     }
 
     public abstract recreate(): Promise<void>
-    public abstract runCommandLine(commandLine: string): Promise<ExecuteSandboxResult>
+    public abstract runOperation(operation: string): Promise<ExecuteSandboxResult>
     public abstract getSandboxFolderPath(): string
     protected abstract setupCache(): Promise<void>
 

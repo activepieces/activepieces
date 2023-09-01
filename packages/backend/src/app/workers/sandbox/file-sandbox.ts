@@ -27,10 +27,21 @@ export class FileSandbox extends AbstractSandbox {
         await mkdir(sandboxFolderPath, { recursive: true })
     }
 
-    public override async runCommandLine(commandLine: string): Promise<ExecuteSandboxResult> {
+    public override async runOperation(operation: string): Promise<ExecuteSandboxResult> {
         const startTime = Date.now()
         const environment = system.get(SystemProp.ENVIRONMENT)
-        const result = await this.runUnsafeCommand(`cd ${this.getSandboxFolderPath()} && env -i AP_ENVIRONMENT=${environment} NODE_OPTIONS='--enable-source-maps' ${commandLine}`)
+
+        const command = [
+            `cd ${this.getSandboxFolderPath()}`,
+            '&&',
+            `env -i AP_ENVIRONMENT=${environment} NODE_OPTIONS='--enable-source-maps'`,
+            AbstractSandbox.nodeExecutablePath,
+            'main.js',
+            operation,
+        ].join(' ')
+
+        const result = await this.runUnsafeCommand(command)
+
         let engineResponse
 
         if (result.verdict === EngineResponseStatus.OK) {
