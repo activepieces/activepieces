@@ -5,6 +5,7 @@ import { flowQueue } from '../../workers/flow-worker/flow-queue'
 import { logger } from '../../helper/logger'
 import { LATEST_JOB_DATA_SCHEMA_VERSION } from '../../workers/flow-worker/job-data'
 import { JobType } from '../../workers/flow-worker/queues/queue'
+import { notifications } from '../../helper/notifications'
 
 type StartParams = {
     flowRun: FlowRun
@@ -30,6 +31,13 @@ const calculateDelayForResumeJob = (resumeDateTimeIsoString: string): number => 
 }
 
 export const flowRunSideEffects = {
+    async finish({ flowRun }: {
+        flowRun: FlowRun
+    }): Promise<void> {
+        await notifications.notifyRun({
+            flowRun,
+        })
+    },
     async start({ flowRun, executionType, payload }: StartParams): Promise<void> {
         logger.info(`[FlowRunSideEffects#start] flowRunId=${flowRun.id} executionType=${executionType}`)
 

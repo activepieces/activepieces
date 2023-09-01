@@ -4,22 +4,12 @@ import {
     packageManager,
     PackageManagerDependencies,
 } from '../../helper/package-manager'
-import {
-    Action,
-    ActivepiecesError,
-    CodeActionSettings,
-    ErrorCode,
-    FlowVersionId,
-    isNil,
-    ProjectId,
-    Trigger,
-} from '@activepieces/shared'
-import { fileService } from '../../file/file.service'
 
 const tsConfig = `
 {
     "extends": "@tsconfig/node18/tsconfig.json",
     "compilerOptions": {
+        "lib": ["es2022", "dom"],
         "skipLibCheck": true,
         "noUnusedLocals": false,
         "noUnusedParameters": false,
@@ -36,33 +26,19 @@ const tsConfig = `
 }
 `
 
-async function processCodeStep(
-    step: Action | Trigger,
-    buildPath: string,
-    flowVersionId: FlowVersionId,
-    projectId: ProjectId,
-): Promise<void> {
-    const codeActionSettings: CodeActionSettings = step.settings
-    const sourceId = codeActionSettings.artifactSourceId
-    const codePath = `${buildPath}/codes/${sourceId}`
-
-    if (isNil(sourceId)) {
-        throw new ActivepiecesError({
-            code: ErrorCode.VALIDATION,
-            params: {
-                message: `flowVersionId=${flowVersionId} stepId=${sourceId}`,
-            },
-        })
-    }
-
+async function processCodeStep({
+    codeZip,
+    sourceCodeId,
+    buildPath,
+}: {
+    codeZip: Buffer
+    sourceCodeId: string
+    buildPath: string
+}): Promise<void> {
+    const codePath = `${buildPath}/codes/${sourceCodeId}`
     try {
-        const fileEntity = await fileService.getOneOrThrow({
-            projectId,
-            fileId: sourceId,
-        })
         const tsConfigPath = `${codePath}/tsconfig.json`
-
-        await decompress(fileEntity.data, codePath, {})
+        await decompress(codeZip, codePath, {})
         await addCodeDependencies(codePath)
         await fs.writeFile(tsConfigPath, tsConfig)
         await packageManager.runLocalDependency(codePath, 'tsc')
@@ -100,8 +76,8 @@ async function addCodeDependencies(codePath: string): Promise<void> {
         '@tsconfig/node18': {
             version: '1.0.0',
         },
-        'ts-loader': {
-            version: '9.4.2',
+        '@types/node': {
+            version: '18.17.1',
         },
         typescript: {
             version: '4.8.4',

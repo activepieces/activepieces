@@ -29,22 +29,35 @@ export const createTweet = createAction({
             accessToken: accessToken,
             accessSecret: accessTokenSecret,
         });
-
-        const media = context.propsValue.image;
-        if (media) {
-            console.log(`Uploading media to Twitter...`);
-            const uploaded = await userClient.v1.uploadMedia(Buffer.from(media.base64, "base64"), {
-                mimeType: 'image/png',
-                target: 'tweet'
-            });
-            console.log(`Uploaded media to Twitter: ${uploaded}`);
-            return userClient.v2.tweet(context.propsValue.text, {
-                media: {
-                    media_ids: [uploaded]
-                }
-            });
-        } else {
-            return userClient.v2.tweet(context.propsValue.text);
+    
+        try {
+            const media = context.propsValue.image;
+            let uploaded="";
+    
+            if (media) {
+                uploaded = await userClient.v1.uploadMedia(Buffer.from(media.base64, "base64"), {
+                    mimeType: 'image/png',
+                    target: 'tweet'
+                });
+            }
+    
+            const response = media
+            ? await userClient.v2.tweet(context.propsValue.text, {
+                  media: {
+                      media_ids: [uploaded]
+                  }
+              })
+            : await userClient.v2.tweet(context.propsValue.text);
+            return response || { success: true };
+        } catch ( error ) {
+            const mod_error = error as {
+                code: number,
+                errors: unknown[]
+            };
+            throw {
+                code : mod_error.code,
+                errors : mod_error.errors
+            }
         }
     },
 });

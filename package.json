@@ -1,6 +1,6 @@
 {
   "name": "activepieces",
-  "version": "0.7.1",
+  "version": "0.8.0",
   "scripts": {
     "prepare": "husky install",
     "frontend": "nx serve ui-core",
@@ -38,6 +38,7 @@
     "@fortawesome/fontawesome-svg-core": "^6.2.1",
     "@fortawesome/free-solid-svg-icons": "^6.2.1",
     "@google-cloud/vision": "^3.1.0",
+    "@linear/sdk": "^7.0.1",
     "@mailchimp/mailchimp_marketing": "^3.0.80",
     "@mailerlite/mailerlite-nodejs": "^1.0.1",
     "@ngrx/effects": "16.0.1",
@@ -73,7 +74,7 @@
     "deep-equal": "^2.2.0",
     "drip-nodejs": "^3.1.1",
     "fastify": "4.12.0",
-    "fastify-raw-body": "^4.2.0",
+    "fastify-raw-body": "4.2.0",
     "feedparser": "^2.2.10",
     "firebase-admin": "^11.5.0",
     "flatpickr": "^4.6.13",
@@ -106,6 +107,7 @@
     "node-imap": "^0.9.6",
     "nodemailer": "^6.9.3",
     "nx-cloud": "16.1.0",
+    "object-sizeof": "^2.6.3",
     "papaparse": "^5.3.2",
     "pg": "^8.8.0",
     "posthog-js": "^1.57.2",

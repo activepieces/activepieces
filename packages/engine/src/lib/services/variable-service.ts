@@ -12,6 +12,7 @@ import {
   PieceAuthProperty,
   NonAuthPiecePropertyMap
 } from '@activepieces/pieces-framework';
+import { handleAPFile, isApFilePath } from './files.service';
 
 export class VariableService {
   private VARIABLE_TOKEN = RegExp('\\{\\{(.*?)\\}\\}', 'g');
@@ -20,7 +21,7 @@ export class VariableService {
   private async resolveInput(
     input: string,
     valuesMap: Record<string, unknown>,
-    censorConnections: boolean
+    logs: boolean
   ): Promise<any> {
     // If input contains only a variable token, return the value of the variable while maintaining the variable type.
     const matchedTokens = input.match(this.VARIABLE_TOKEN);
@@ -31,7 +32,7 @@ export class VariableService {
     ) {
       const variableName = input.substring(2, input.length - 2);
       if (variableName.startsWith(VariableService.CONNECTIONS)) {
-        return this.handleTypeAndResolving(variableName, censorConnections);
+        return this.handleTypeAndResolving(variableName, logs);
       }
       return this.evalInScope(variableName, valuesMap);
     }
@@ -111,14 +112,14 @@ export class VariableService {
   private async resolveInternally(
     unresolvedInput: any,
     valuesMap: any,
-    censorConnections: boolean
+    logs: boolean
   ): Promise<any> {
     if (isNil(unresolvedInput)) {
       return unresolvedInput;
     }
 
     if (isString(unresolvedInput)) {
-      return this.resolveInput(unresolvedInput, valuesMap, censorConnections);
+      return this.resolveInput(unresolvedInput, valuesMap, logs);
     }
 
     if (Array.isArray(unresolvedInput)) {
@@ -126,7 +127,7 @@ export class VariableService {
         unresolvedInput[i] = await this.resolveInternally(
           unresolvedInput[i],
           valuesMap,
-          censorConnections
+          logs
         );
       }
     } else if (typeof unresolvedInput === 'object') {
@@ -136,7 +137,7 @@ export class VariableService {
         unresolvedInput[key] = await this.resolveInternally(
           value,
           valuesMap,
-          censorConnections
+          logs
         );
       }
     }
@@ -145,8 +146,11 @@ export class VariableService {
   }
 
   private getExecutionStateObject(
-    executionState: ExecutionState
+    executionState: ExecutionState | null,
   ): Record<string, unknown> {
+    if(isNil(executionState)) {
+      return {};
+    }
     const valuesMap: Record<string, unknown> = {};
     Object.entries(executionState.lastStepState).forEach(([key, value]) => {
       valuesMap[key] = value;
@@ -155,7 +159,7 @@ export class VariableService {
   }
 
   resolve<T = unknown>(params: ResolveParams): Promise<T> {
-    const { unresolvedInput, executionState, censorConnections } = params;
+    const { unresolvedInput, executionState, logs } = params;
 
     if (isNil(unresolvedInput)) {
       return Promise.resolve(unresolvedInput) as Promise<T>;
@@ -164,7 +168,7 @@ export class VariableService {
     return this.resolveInternally(
       JSON.parse(JSON.stringify(unresolvedInput)),
       this.getExecutionStateObject(executionState),
-      censorConnections
+      logs
     ) as Promise<T>;
   }
 
@@ -204,8 +208,13 @@ export class VariableService {
         ...(property.defaultValidators || []),
         ...(property.validators || [])
       ];
-      for (const processor of processors) {
-        processedInput[key] = await processor(property, value);
+      // TODO remove the hard coding part
+      if (property.type === PropertyType.FILE && isApFilePath(value)) {
+        processedInput[key] = await handleAPFile(value.trim());
+      } else {
+        for (const processor of processors) {
+          processedInput[key] = await processor(property, value);
+        }
       }
 
       const propErrors = [];
@@ -264,6 +273,6 @@ export class VariableService {
 
 type ResolveParams = {
   unresolvedInput: unknown;
-  executionState: ExecutionState;
-  censorConnections: boolean;
+  executionState: ExecutionState | null;
+  logs: boolean;
 };

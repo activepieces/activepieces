@@ -482,6 +482,51 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "bendersej",
+      "name": "Benjamin André-Micolon",
+      "avatar_url": "https://avatars.githubusercontent.com/u/10613140?v=4",
+      "profile": "https://bendersej.com",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "DGurskij",
+      "name": "Denis Gurskij",
+      "avatar_url": "https://avatars.githubusercontent.com/u/26856659?v=4",
+      "profile": "https://github.com/DGurskij",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "thatguynef",
+      "name": "Nefer Lopez",
+      "avatar_url": "https://avatars.githubusercontent.com/u/11466949?v=4",
+      "profile": "https://neferlopez.com",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "fardeenpanjwani-codeglo",
+      "name": "fardeenpanjwani-codeglo",
+      "avatar_url": "https://avatars.githubusercontent.com/u/141914308?v=4",
+      "profile": "https://github.com/fardeenpanjwani-codeglo",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "landonmoir",
+      "name": "Landon Moir",
+      "avatar_url": "https://avatars.githubusercontent.com/u/29764668?v=4",
+      "profile": "https://github.com/landonmoir",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

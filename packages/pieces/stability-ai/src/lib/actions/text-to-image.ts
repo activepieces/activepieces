@@ -251,10 +251,16 @@ export const textToImage = createAction({
       artifacts: { base64: string }[];
     }>(request);
 
-    return body.artifacts.map((artifact) => ({
-      ...artifact,
-      url: `data:image/png;base64,${artifact.base64}`
-    }));
+    return Promise.all(
+      body.artifacts.map((artifact) =>
+        context.files
+          .write({
+            fileName: `image-${Date.now()}.png`,
+            data: Buffer.from(artifact.base64, 'base64')
+          })
+          .then((file) => ({ image: file }))
+      )
+    );
   }
 });
 

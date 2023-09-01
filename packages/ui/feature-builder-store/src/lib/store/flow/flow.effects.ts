@@ -40,6 +40,7 @@ import {
 import { canvasActions } from '../builder/canvas/canvas.action';
 import { ViewModeActions } from '../builder/viewmode/view-mode.action';
 import { ViewModeEnum } from '../../model';
+import { FlowStructureUtil } from '../../utils/flowStructureUtil';
 @Injectable()
 export class FlowsEffects {
   loadInitial$ = createEffect(() => {
@@ -220,24 +221,32 @@ export class FlowsEffects {
         const genSavedId = UUID.UUID();
         let flowOperation: FlowOperationRequest;
         switch (action.type) {
-          case FlowsActionType.UPDATE_TRIGGER:
+          case FlowsActionType.UPDATE_TRIGGER: {
+            const op = FlowStructureUtil.removeAnySubequentStepsFromTrigger(
+              action.operation
+            );
             flowOperation = {
               type: FlowOperationType.UPDATE_TRIGGER,
-              request: action.operation,
+              request: op,
             };
             break;
+          }
           case FlowsActionType.ADD_ACTION:
             flowOperation = {
               type: FlowOperationType.ADD_ACTION,
               request: action.operation,
             };
             break;
-          case FlowsActionType.UPDATE_ACTION:
+          case FlowsActionType.UPDATE_ACTION: {
+            const op = FlowStructureUtil.removeAnySubequentStepsFromAction(
+              action.operation
+            );
             flowOperation = {
               type: FlowOperationType.UPDATE_ACTION,
-              request: action.operation,
+              request: op,
             };
             break;
+          }
           case FlowsActionType.DELETE_ACTION:
             flowOperation = {
               type: FlowOperationType.DELETE_ACTION,

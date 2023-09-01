@@ -1,5 +1,6 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { googleTasksAddNewTaskAction } from './lib/actions/new-task';
+import { newTaskTrigger } from './lib/triggers/new-task';
 
 export const googleTasksAuth = PieceAuth.OAuth2({
     description: "",
@@ -11,11 +12,11 @@ export const googleTasksAuth = PieceAuth.OAuth2({
 })
 
 export const googleTasks = createPiece({
-	    minimumSupportedRelease: '0.5.0',
+	minimumSupportedRelease: '0.5.0',
     logoUrl: 'https://cdn.activepieces.com/pieces/google-tasks.png',
 	actions: [googleTasksAddNewTaskAction],
 	displayName: "Google Tasks",
-	authors: ['abaza738'],
-	triggers: [],
+	authors: ['abaza738','Salem-Alaa'],
+	triggers: [ newTaskTrigger],
     auth: googleTasksAuth,
 });

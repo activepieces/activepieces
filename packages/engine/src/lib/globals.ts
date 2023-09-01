@@ -1,4 +1,4 @@
-import { FlowRunId, FlowVersionId } from "@activepieces/shared";
+import { FlowRunId } from "@activepieces/shared";
 
 class Globals {
   private _codeDirectory = './codes';
@@ -8,10 +8,10 @@ class Globals {
   private _projectId = '';
   private _apiUrl = '';
   private _serverUrl = '';
-  private _flowVersionId = '';
   private _flowRunId?: FlowRunId
   private _resumePayload: unknown
 
+  
   set serverUrl(_serverUrl: string) {
     this._serverUrl = _serverUrl;
   }
@@ -34,14 +34,6 @@ class Globals {
 
   get resumePayload() {
     return this._resumePayload;
-  }
-
-  set flowVersionId(_flowVersionId: FlowVersionId) {
-    this._flowVersionId = _flowVersionId;
-  }
-
-  get flowVersionId(): FlowVersionId {
-    return this._flowVersionId;
   }
 
   set apiUrl(_apiUrl: string) {

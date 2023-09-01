@@ -7,7 +7,7 @@ export const googleSheetsCommon = {
         displayName: 'Include Team Drive Sheets',
         description: 'Determines if sheets from Team Drives should be included in the results.',
         defaultValue: false,
-        required: true,
+        required: false,
     }),
     spreadsheet_id: Property.Dropdown({
         displayName: "Spreadsheet",
@@ -218,6 +218,31 @@ async function findSheetName(access_token: string, spreadsheet_id: string, sheet
     return sheets.find(f => f.properties.sheetId === sheetId)?.properties.title;
 }
 
+export async function getGoogleSheetRows(params: { accessToken: string; sheetName: string; spreadSheetId: string; rowIndex_s: number; rowIndex_e : number;}) {
+    const request: HttpRequest = {
+        method: HttpMethod.GET,
+        url: `${googleSheetsCommon.baseUrl}/${params.spreadSheetId}/values/${params.sheetName}!A${params.rowIndex_s}:ZZZ${params.rowIndex_e}`,
+        authentication: {
+            type: AuthenticationType.BEARER_TOKEN,
+            token: params.accessToken,
+        }
+    };
+    const response = await httpClient.sendRequest<{ values: [string[]][] }>(request);
+    if (response.body.values === undefined) return [{}];
+
+    const values = [];
+    for (let i = 0; i < response.body.values.length; i++) {
+        const row = response.body.values[i];
+        const rowValues: any = {}
+        for (let j = 0; j < row.length; j++) {
+            rowValues[columnToLabel(j)] = row[j];
+        }
+        values.push(rowValues);
+    }
+
+    return values;
+}
+
 async function listSheetsName(access_token: string, spreadsheet_id: string) {
     return (await httpClient.sendRequest<{ sheets: { properties: { title: string, sheetId: number } }[] }>({
         method: HttpMethod.GET,
@@ -317,7 +342,25 @@ const columnToLabel = (columnIndex: number) => {
 
     return label;
 };
+export const labelToColumn = (label: string) => {
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    let column = 0;
 
+    for (let i = 0; i < label.length; i++) {
+        column += (alphabet.indexOf(label[i]) + 1) * Math.pow(26, label.length - i - 1);
+    }
+
+    return column - 1;
+};
+
+export function objectToArray(obj: { [x: string]: any; }) {
+    const maxIndex = Math.max(...Object.keys(obj).map(key => labelToColumn(key)));
+    const arr = new Array(maxIndex + 1);
+    for (const key in obj) {
+        arr[labelToColumn(key)] = obj[key];
+    }
+    return arr;
+}
 
 async function deleteRow(spreadsheetId: string, sheetId: number, rowIndex: number, accessToken: string) {
     const request: HttpRequest = {

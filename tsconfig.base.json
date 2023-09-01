@@ -29,12 +29,6 @@
         "packages/pieces/bannerbear/src/index.ts"
       ],
       "@activepieces/piece-binance": ["packages/pieces/binance/src/index.ts"],
-      "@activepieces/piece-blackbaud": [
-        "packages/pieces/blackbaud/src/index.ts"
-      ],
-      "@activepieces/piece-bloomerang": [
-        "packages/pieces/bloomerang/src/index.ts"
-      ],
       "@activepieces/piece-box": ["packages/pieces/box/src/index.ts"],
       "@activepieces/piece-cal-com": ["packages/pieces/cal-com/src/index.ts"],
       "@activepieces/piece-calendly": ["packages/pieces/calendly/src/index.ts"],
@@ -121,6 +115,7 @@
       "@activepieces/piece-kizeo-forms": [
         "packages/pieces/kizeo-forms/src/index.ts"
       ],
+      "@activepieces/piece-linear": ["packages/pieces/linear/src/index.ts"],
       "@activepieces/piece-linkedin": ["packages/pieces/linkedin/src/index.ts"],
       "@activepieces/piece-mailchimp": [
         "packages/pieces/mailchimp/src/index.ts"
@@ -137,6 +132,7 @@
       "@activepieces/piece-mindee": ["packages/pieces/mindee/src/index.ts"],
       "@activepieces/piece-monday": ["packages/pieces/monday/src/index.ts"],
       "@activepieces/piece-mysql": ["packages/pieces/mysql/src/index.ts"],
+      "@activepieces/piece-nifty": ["packages/pieces/nifty/src/index.ts"],
       "@activepieces/piece-notion": ["packages/pieces/notion/src/index.ts"],
       "@activepieces/piece-ntfy": ["packages/pieces/ntfy/src/index.ts"],
       "@activepieces/piece-onfleet": ["packages/pieces/onfleet/src/index.ts"],
@@ -153,14 +149,17 @@
       "@activepieces/piece-salesforce": [
         "packages/pieces/salesforce/src/index.ts"
       ],
-      "@activepieces/piece-salsa": ["packages/pieces/salsa/src/index.ts"],
       "@activepieces/piece-schedule": ["packages/pieces/schedule/src/index.ts"],
+      "@activepieces/piece-sendfox": ["packages/pieces/sendfox/src/index.ts"],
       "@activepieces/piece-sendgrid": ["packages/pieces/sendgrid/src/index.ts"],
       "@activepieces/piece-sendinblue": [
         "packages/pieces/sendinblue/src/index.ts"
       ],
       "@activepieces/piece-sftp": ["packages/pieces/sftp/src/index.ts"],
       "@activepieces/piece-shopify": ["packages/pieces/shopify/src/index.ts"],
+      "@activepieces/piece-simplepdf": [
+        "packages/pieces/simplepdf/src/index.ts"
+      ],
       "@activepieces/piece-slack": ["packages/pieces/slack/src/index.ts"],
       "@activepieces/piece-smtp": ["packages/pieces/smtp/src/index.ts"],
       "@activepieces/piece-soap": ["packages/pieces/soap/src/index.ts"],
@@ -176,9 +175,11 @@
         "packages/pieces/surveymonkey/src/index.ts"
       ],
       "@activepieces/piece-tags": ["packages/pieces/tags/src/index.ts"],
+      "@activepieces/piece-tally": ["packages/pieces/tally/src/index.ts"],
       "@activepieces/piece-telegram-bot": [
         "packages/pieces/telegram-bot/src/index.ts"
       ],
+      "@activepieces/piece-tidycal": ["packages/pieces/tidycal/src/index.ts"],
       "@activepieces/piece-todoist": ["packages/pieces/todoist/src/index.ts"],
       "@activepieces/piece-trello": ["packages/pieces/trello/src/index.ts"],
       "@activepieces/piece-twilio": ["packages/pieces/twilio/src/index.ts"],

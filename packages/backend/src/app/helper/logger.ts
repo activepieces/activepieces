@@ -1,22 +1,29 @@
-import pino from 'pino'
+import pino, { Logger, Level } from 'pino'
 import { system } from './system/system'
 import { SystemProp } from './system/system-prop'
-import { ApEnvironment } from '@activepieces/shared'
 
-export const captureException = (error: unknown) => {
+export const captureException = (error: unknown): void => {
     logger.error(error)
 }
 
-const initLogger = () => {
-    const env = system.get(SystemProp.ENVIRONMENT)
+const initLogger = (): Logger => {
+    const level = system.get<Level>(SystemProp.LOG_LEVEL) ?? 'info'
+    const pretty = system.getBoolean(SystemProp.LOG_PRETTY) ?? false
 
-    const level: pino.Level = env === ApEnvironment.DEVELOPMENT
-        ? 'debug'
-        : 'info'
+    const transport = pretty
+        ? {
+            target: 'pino-pretty',
+            options: {
+                translateTime: 'HH:MM:ss Z',
+                colorize: true,
+                ignore: 'pid,hostname',
+            },
+        }
+        : undefined
 
     return pino({
         level,
-        transport: env === ApEnvironment.PRODUCTION ? undefined : { target: 'pino-pretty', options: { translateTime: 'HH:MM:ss Z', colorize: true, ignore: 'pid,hostname' } },
+        transport,
     })
 }
 

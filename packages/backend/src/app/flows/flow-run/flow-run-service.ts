@@ -27,7 +27,6 @@ import { telemetry } from '../../helper/telemetry.utils'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
 import { logger } from '../../helper/logger'
-import { notifications } from '../../helper/notifications'
 import { flowService } from '../flow/flow.service'
 import { MoreThanOrEqual } from 'typeorm'
 
@@ -127,9 +126,7 @@ export const flowRunService = {
             pauseMetadata: null,
         })
         const flowRun = (await this.getOne({ id: flowRunId, projectId: undefined }))!
-        notifications.notifyRun({
-            flowRun,
-        })
+        flowRunSideEffects.finish({ flowRun })
         return flowRun
     },
 
