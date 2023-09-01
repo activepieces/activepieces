@@ -98,12 +98,13 @@ export const addPointsToCollection = createAction({
     const points = [];
 
     for (let i = 0; i < numberOfEmbeddings; i++) {
+      const localPayload = { ...payload };
       if (content) {
-        payload['content'] = content[i]
+        localPayload['content'] = content[i]
       }
       points.push({
         id: autoEmbeddingsIds ? randomUUID() : embeddingsIds[i],
-        payload,
+        localPayload,
         vector: Array.from(embeddings[i]),
       });
     }
