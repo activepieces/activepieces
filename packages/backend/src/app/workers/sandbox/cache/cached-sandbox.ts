@@ -66,11 +66,9 @@ export class CachedSandbox {
             pieces,
         })
 
-        if (this._cacheType !== SandBoxCacheType.CODE) {
-            await engineInstaller.install({
-                path: this.path(),
-            })
-        }
+        await engineInstaller.install({
+            path: this.path(),
+        })
 
         this._state = CachedSandboxState.READY
     }

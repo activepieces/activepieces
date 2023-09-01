@@ -1,7 +1,6 @@
 import { FlowRunId } from "@activepieces/shared";
 
 class Globals {
-  private _codeDirectory = './codes';
   private _inputFile = './input.json';
   private _outputFile = './output.json';
   private _workerToken = '';
@@ -11,7 +10,6 @@ class Globals {
   private _flowRunId?: FlowRunId
   private _resumePayload: unknown
 
-  
   set serverUrl(_serverUrl: string) {
     this._serverUrl = _serverUrl;
   }
@@ -59,10 +57,6 @@ class Globals {
 
   get workerToken() {
     return this._workerToken;
-  }
-
-  get codeDirectory() {
-    return this._codeDirectory;
   }
 
   get inputFile() {

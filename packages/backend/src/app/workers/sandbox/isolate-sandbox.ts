@@ -19,6 +19,8 @@ const getIsolateExecutableName = (): string => {
 
 export class IsolateSandbox extends AbstractSandbox {
     private static readonly isolateExecutableName = getIsolateExecutableName()
+    private static readonly cacheBindPath = '/root'
+    private static readonly boxPath = '/box'
 
     public constructor(params: SandboxCtorParams) {
         super(params)
@@ -46,7 +48,7 @@ export class IsolateSandbox extends AbstractSandbox {
                 '--dir=/usr/bin/',
                 `--dir=/etc/=${etcDir}`,
                 `--dir=${basePath}=/${basePath}:maybe`,
-                `--dir=/root=${this._cachePath}`,
+                `--dir=${IsolateSandbox.cacheBindPath}=${this._cachePath}`,
                 '--share-net',
                 `--box-id=${this.boxId}`,
                 '--processes',
@@ -58,6 +60,7 @@ export class IsolateSandbox extends AbstractSandbox {
                 '--env=HOME=/tmp/',
                 '--env=NODE_OPTIONS=\'--enable-source-maps\'',
                 '--env=AP_ENVIRONMENT',
+                `--env=AP_BASE_CODE_DIRECTORY=${IsolateSandbox.boxPath}/codes`,
                 commandLine,
             ].join(' ')
 

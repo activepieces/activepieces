@@ -26,7 +26,7 @@ export const sandboxProvisioner = {
     },
 
     async release({ sandbox }: ReleaseParams): Promise<void> {
-        logger.debug({ boxId: sandbox.boxId }, '[SandboxProvisioner#release]')
+        logger.debug({ boxId: sandbox.boxId, cacheKey: sandbox.cacheKey }, '[SandboxProvisioner#release]')
 
         await sandboxManager.release(sandbox.boxId)
 
