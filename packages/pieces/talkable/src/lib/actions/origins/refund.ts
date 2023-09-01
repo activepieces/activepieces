@@ -30,33 +30,20 @@ export const refund = createAction({
   async run(context) {
     const TALKABLE_API_URL = 'https://www.talkable.com/api/v2';
     const { site, api_key } = context.auth;
-    type Fields = {
-      [key: string]: any;
-    };
-    let fields:Fields = {
-      refund_subtotal: context.propsValue['refund_subtotal'],
-      refunded_at: context.propsValue['refunded_at']
-    };
-
-    const keys = Object.keys(fields);
-    for (var i = 0; i < keys.length; ++i) {
-      const key:string = keys[i];
-      const value = fields[key];
-      if (value === null || value === undefined || value === '') {
-        delete fields[key];
-      }
-    }
-
+    const { origin_slug, refund_subtotal, refunded_at } = context.propsValue;
     const refundResponse = await httpClient.sendRequest<string[]>({
       method: HttpMethod.POST,
-      url: `${TALKABLE_API_URL}/origins/${context.propsValue['origin_slug']}/refund`,
+      url: `${TALKABLE_API_URL}/origins/${origin_slug}/refund`,
       headers: {
         Authorization: `Bearer ${api_key}`,
         'Content-Type': 'application/json',
       },
       body: {
         site_slug: site,
-        data: fields,
+        data: {
+          refunded_at,
+          refund_subtotal
+        },
       },
     });
     return refundResponse.body;

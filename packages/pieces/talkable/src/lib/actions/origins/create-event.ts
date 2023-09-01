@@ -128,43 +128,6 @@ export const createEvent = createAction({
   async run(context) {
     const TALKABLE_API_URL = 'https://www.talkable.com/api/v2';
     const { site, api_key } = context.auth;
-    type Fields = {
-      [key: string]: any;
-    };
-    let fields:Fields = {
-      email: context.propsValue['email'],
-      event_number: context.propsValue['event_number'],
-      event_category: context.propsValue['event_category'],
-      subtotal: context.propsValue['subtotal'],
-      first_name: context.propsValue['first_name'],
-      last_name: context.propsValue['last_name'],
-      username: context.propsValue['username'],
-      customer_id: context.propsValue['customer_id'],
-      custom_properties: context.propsValue['custom_properties'],
-      phone_number: context.propsValue['phone_number'],
-      campaign_tags: context.propsValue['campaign_tags'],
-      sharing_channels: context.propsValue['sharing_channels'],
-      ip_address: context.propsValue['ip_address'],
-      uuid: context.propsValue['uuid'],
-      created_at: context.propsValue['created_at'],
-      traffic_source: context.propsValue['traffic_source'],
-      coupon_codes: context.propsValue['coupon_codes'],
-      currency_iso_code: context.propsValue['currency_iso_code'],
-      shipping_address: context.propsValue['shipping_address'],
-      shipping_zip: context.propsValue['shipping_zip'],
-      items: context.propsValue['items'],
-    };
-
-
-    const keys = Object.keys(fields);
-    for (var i = 0; i < keys.length; ++i) {
-      const key:string = keys[i];
-      const value = fields[key];
-      if (value === null || value === undefined || value === '') {
-        delete fields[key];
-      }
-    }
-
     const createEventResponse = await httpClient.sendRequest<string[]>({
       method: HttpMethod.POST,
       url: `${TALKABLE_API_URL}/origins/event`,
@@ -174,7 +137,7 @@ export const createEvent = createAction({
       },
       body: {
         site_slug: site,
-        data: fields,
+        data: context.propsValue,
       },
     });
     return createEventResponse.body;

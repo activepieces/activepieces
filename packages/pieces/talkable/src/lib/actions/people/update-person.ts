@@ -62,43 +62,38 @@ export const updatePerson = createAction({
   async run(context) {
     const TALKABLE_API_URL = 'https://www.talkable.com/api/v2';
     const { site, api_key } = context.auth;
-    type Fields = {
-      [key: string]: any;
-    };
-
-    let fields:Fields = {
-      email: context.propsValue['email'],
-      first_name: context.propsValue['first_name'],
-      last_name: context.propsValue['last_name'],
-      phone_number: context.propsValue['phone_number'],
-      username: context.propsValue['username'],
-      customer_id: context.propsValue['customer_id'],
-      custom_properties: context.propsValue['custom_properties'],
-      gated_param_subscribed: context.propsValue['gated_param_subscribed'],
-      unsubscribed: context.propsValue['unsubscribed'],
-      unsubscribed_at: context.propsValue['unsubscribed_at']
-    };
-
-
-    const keys = Object.keys(fields);
-    for (var i = 0; i < keys.length; ++i) {
-      const key:string = keys[i];
-      const value = fields[key];
-      if (value === null || value === undefined || value === '') {
-        delete fields[key];
-      }
-    }
-
+    const {
+      email,
+      first_name,
+      last_name,
+      phone_number,
+      username,
+      customer_id,
+      custom_properties,
+      gated_param_subscribed,
+      unsubscribed,
+      unsubscribed_at
+    } = context.propsValue;
     const personUpdateResponse = await httpClient.sendRequest<string[]>({
       method: HttpMethod.PUT,
-      url: `${TALKABLE_API_URL}/people/${context.propsValue['email']}`,
+      url: `${TALKABLE_API_URL}/people/${email}`,
       headers: {
         'Authorization': `Bearer ${api_key}`,
         'Content-Type': 'application/json'
       },
       body: {
         site_slug: site,
-        data: fields
+        data: {
+          first_name,
+          last_name,
+          phone_number,
+          username,
+          customer_id,
+          custom_properties,
+          gated_param_subscribed,
+          unsubscribed,
+          unsubscribed_at
+        }
       }
     });
     return personUpdateResponse.body;
