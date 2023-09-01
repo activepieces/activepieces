@@ -7,6 +7,7 @@ import {
 } from '@activepieces/pieces-common';
 import {
   ListProjectsRequest,
+  CreateProjectIssueRequest,
   GitlabProject,
   ProjectWebhookRequest,
   ProjectWebhook,
@@ -37,6 +38,17 @@ export class GitlabApi {
       HttpMethod.GET,
       '/projects',
       prepareQuery(request)
+    );
+  }
+  async createProjectIssue(
+    projectId: string,
+    request: CreateProjectIssueRequest
+  ) {
+    return this.makeRequest(
+      HttpMethod.POST,
+      `/projects/${projectId}/issues`,
+      undefined,
+      request
     );
   }
   async subscribeProjectWebhook(

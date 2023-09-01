@@ -93,7 +93,7 @@ const sampleData = {
   },
 };
 
-export const gitlabIssuesEvent = createTrigger({
+export const issuesEventTrigger = createTrigger({
   auth: gitlabAuth,
   name: 'issues_event',
   displayName: 'Issues Event',

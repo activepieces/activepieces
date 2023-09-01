@@ -20,6 +20,10 @@ export interface ProjectWebhookRequest {
   wiki_page_events?: boolean;
   token?: boolean;
 }
+export interface CreateProjectIssueRequest {
+  title: string;
+  description?: string;
+}
 export interface ProjectWebhook {
   id: string;
 }

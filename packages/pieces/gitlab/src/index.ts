@@ -1,5 +1,6 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { gitlabIssuesEvent } from './lib/trigger/issue-event';
+import { issuesEventTrigger } from './lib/trigger/issue-event';
+import { createIssueAction } from './lib/actions/create-issue-action';
 
 export const gitlabAuth = PieceAuth.OAuth2({
   required: true,
@@ -13,7 +14,7 @@ export const gitlab = createPiece({
   auth: gitlabAuth,
   minimumSupportedRelease: '0.7.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/gitlab.png',
-  authors: [],
-  actions: [],
-  triggers: [gitlabIssuesEvent],
+  authors: ['kishanprmr'],
+  actions: [createIssueAction],
+  triggers: [issuesEventTrigger],
 });
