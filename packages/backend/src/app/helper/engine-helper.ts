@@ -180,6 +180,12 @@ export const engineHelper = {
 
         const { pieceName, pieceVersion } = (lockedFlowVersion.trigger as PieceTrigger).settings
 
+        const exactPieceVersion = await pieceMetadataService.getExactPieceVersion({
+            name: pieceName,
+            version: pieceVersion,
+            projectId: operation.projectId,
+        })
+
         const sandbox = await sandboxProvisioner.provision({
             type: SandBoxCacheType.PIECE,
             pieceName,
@@ -187,7 +193,7 @@ export const engineHelper = {
             pieces: [
                 {
                     name: pieceName,
-                    version: pieceVersion,
+                    version: exactPieceVersion,
                 },
             ],
         })
@@ -195,6 +201,7 @@ export const engineHelper = {
         try {
             const input = {
                 ...operation,
+                pieceVersion: exactPieceVersion,
                 flowVersion: lockedFlowVersion,
                 edition: getEdition(),
                 appWebhookUrl: await appEventRoutingService.getAppWebhookUrl({
@@ -227,13 +234,11 @@ export const engineHelper = {
 
         const { pieceName, pieceVersion } = operation
 
-        const result = await pieceMetadataService.get({
-            projectId: operation.projectId,
+        const exactPieceVersion = await pieceMetadataService.getExactPieceVersion({
             name: pieceName,
             version: pieceVersion,
+            projectId: operation.projectId,
         })
-
-        const exactPieceVersion = result.version
 
         const sandbox = await sandboxProvisioner.provision({
             type: SandBoxCacheType.PIECE,
@@ -250,7 +255,7 @@ export const engineHelper = {
         try {
             const input = {
                 ...operation,
-                pieceVersion: result.version,
+                pieceVersion: exactPieceVersion,
                 workerToken: await generateWorkerToken({ projectId: operation.projectId }),
             }
 
@@ -347,6 +352,12 @@ export const engineHelper = {
 
         const { pieceName, pieceVersion } = operation
 
+        const exactPieceVersion = await pieceMetadataService.getExactPieceVersion({
+            name: pieceName,
+            version: pieceVersion,
+            projectId: operation.projectId,
+        })
+
         const sandbox = await sandboxProvisioner.provision({
             type: SandBoxCacheType.PIECE,
             pieceName,
@@ -354,7 +365,7 @@ export const engineHelper = {
             pieces: [
                 {
                     name: pieceName,
-                    version: pieceVersion,
+                    version: exactPieceVersion,
                 },
             ],
         })
@@ -362,6 +373,7 @@ export const engineHelper = {
         try {
             const input = {
                 ...operation,
+                pieceVersion: exactPieceVersion,
                 workerToken: await generateWorkerToken({ projectId: operation.projectId }),
             }
 
@@ -384,6 +396,12 @@ export const engineHelper = {
 
         const { pieceName, pieceVersion } = operation
 
+        const exactPieceVersion = await pieceMetadataService.getExactPieceVersion({
+            name: pieceName,
+            version: pieceVersion,
+            projectId: operation.projectId,
+        })
+
         const sandbox = await sandboxProvisioner.provision({
             type: SandBoxCacheType.PIECE,
             pieceName,
@@ -391,7 +409,7 @@ export const engineHelper = {
             pieces: [
                 {
                     name: pieceName,
-                    version: pieceVersion,
+                    version: exactPieceVersion,
                 },
             ],
         })
@@ -399,6 +417,7 @@ export const engineHelper = {
         try {
             const input = {
                 ...operation,
+                pieceVersion: exactPieceVersion,
                 workerToken: await generateWorkerToken({ projectId: operation.projectId }),
             }
 

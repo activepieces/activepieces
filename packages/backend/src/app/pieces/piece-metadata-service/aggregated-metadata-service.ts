@@ -51,5 +51,9 @@ export const AggregatedPieceMetadataService = (): PieceMetadataService => {
         async stats(): Promise<AllPiecesStats> {
             throw new Error('operation not supported')
         },
+
+        async getExactPieceVersion(params): Promise<string> {
+            return await dbPieceProvider.getExactPieceVersion(params)
+        },
     }
 }
