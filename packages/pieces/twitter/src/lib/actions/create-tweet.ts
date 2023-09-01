@@ -54,10 +54,10 @@ export const createTweet = createAction({
                 code: number,
                 errors: unknown[]
             };
-            return {
+            throw {
                 code : mod_error.code,
                 errors : mod_error.errors
-            };
+            }
         }
     },
 });
