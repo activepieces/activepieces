@@ -1,4 +1,4 @@
-import { mkdir } from 'node:fs/promises'
+import { mkdir, rm } from 'node:fs/promises'
 import { system } from '../../../helper/system/system'
 import { SystemProp } from '../../../helper/system/system-prop'
 import { CachedSandboxState } from './cached-sandbox-state'
@@ -9,7 +9,7 @@ import { logger } from '../../../helper/logger'
 import { Mutex } from 'async-mutex'
 import dayjs from 'dayjs'
 
-const CACHE_PATH = system.get(SystemProp.CACHE_PATH) ?? '/usr/src/cache'
+const CACHE_PATH = system.get(SystemProp.CACHE_PATH) ?? '/usr/src/app/dist/cache'
 
 const lock: Mutex = new Mutex()
 
@@ -41,6 +41,7 @@ export class CachedSandbox {
             return
         }
 
+        await this.deletePathIfExists()
         await mkdir(this.path(), { recursive: true })
         this._state = CachedSandboxState.INITIALIZED
     }
@@ -73,19 +74,6 @@ export class CachedSandbox {
         this._state = CachedSandboxState.READY
     }
 
-    private async incrementActiveSandboxCount(): Promise<void> {
-        logger.debug({ key: this.key, state: this._state, activeSandboxes: this._activeSandboxCount }, '[CachedSandbox#incrementActiveSandboxCount]')
-
-        const releaseLock = await lock.acquire()
-
-        try {
-            this._activeSandboxCount += 1
-        }
-        finally {
-            releaseLock()
-        }
-    }
-
     async decrementActiveSandboxCount(): Promise<void> {
         logger.debug({ key: this.key, state: this._state, activeSandboxes: this._activeSandboxCount }, '[CachedSandbox#decrementActiveSandboxCount]')
 
@@ -105,6 +93,27 @@ export class CachedSandbox {
 
     isInUse(): boolean {
         return this._activeSandboxCount > 0
+    }
+
+    private async incrementActiveSandboxCount(): Promise<void> {
+        logger.debug({
+            key: this.key,
+            state: this._state,
+            activeSandboxes: this._activeSandboxCount,
+        }, '[CachedSandbox#incrementActiveSandboxCount]')
+
+        const releaseLock = await lock.acquire()
+
+        try {
+            this._activeSandboxCount += 1
+        }
+        finally {
+            releaseLock()
+        }
+    }
+
+    private deletePathIfExists(): Promise<void> {
+        return rm(this.path(), { recursive: true, force: true })
     }
 }
 
