@@ -20,12 +20,14 @@ const polling: Polling<PiecePropValueSchema<typeof imapAuth>, { subject: string 
         };
 
         // When generating sample data, lastFetchEpochMS is 0, which breaks the trigger
-        const since = lastFetchEpochMS > 0 ? lastFetchEpochMS : dayjs().subtract(1, 'day').valueOf()
+        const isTest = lastFetchEpochMS == 0;
+        const since = isTest ? lastFetchEpochMS : dayjs().subtract(7, 'day').valueOf()
         const search = {
             flag: 'ALL',
             since: ['SINCE', since],
             subject: propsValue.subject,
             to: propsValue.to,
+            limit: isTest ? 5 : undefined,
             from: propsValue.from
         }
 

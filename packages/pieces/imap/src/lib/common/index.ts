@@ -21,7 +21,7 @@ export const imapCommon = {
         required: false,
     }),
 
-    async fetchEmails(imapConfig: any, search: { flag: string, since: any[], subject: string | undefined, to: string | undefined, from: string | undefined }): Promise<ParsedMail[]> {
+    async fetchEmails(imapConfig: any, search: { flag: string, since: any[], subject: string | undefined, to: string | undefined, from: string | undefined, limit: number | undefined}): Promise<ParsedMail[]> {
         return new Promise(resolve => {
             const imapClient = new imap(imapConfig);
             const emails: ParsedMail[] = [];
@@ -36,6 +36,7 @@ export const imapCommon = {
                         search.flag,
                         search.since
                     ];
+                    let emailCount = 0;
                     if (search.subject != '' && !isNil(search.subject)) searchArray.push(['SUBJECT', search.subject, 'i']);
                     if (search.to != '' && !isNil(search.to)) searchArray.push(['TO', search.to]);
                     if (search.from != '' && !isNil(search.from)) searchArray.push(['FROM', search.from]);
@@ -47,8 +48,11 @@ export const imapCommon = {
                             f.on('message', msg => {
                                 msg.on('body', stream => {
                                     simpleParser(stream, async (err, parsed) => {
-
                                         emails.push(parsed);
+                                        if(++emailCount === search.limit && search.limit) {
+                                            f.removeAllListeners(); 
+                                            imapClient.end();
+                                        }
                                     });
                                 });
                             });
