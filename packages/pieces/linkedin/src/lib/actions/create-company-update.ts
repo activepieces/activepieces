@@ -10,11 +10,11 @@ export const createCompanyUpdate = createAction({
         description: 'Create a new company update for Company Page',
         props: {
             company: linkedinCommon.company,
+            imageUrl: linkedinCommon.imageUrl,
             text: linkedinCommon.text,
             link: linkedinCommon.link,
             linkTitle: linkedinCommon.linkTitle,
             linkDescription: linkedinCommon.linkDescription,
-            imageUrl: linkedinCommon.imageUrl
         },
 
         run: async (context) => {
