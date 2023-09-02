@@ -1,4 +1,5 @@
 import { readFile, access } from 'node:fs/promises'
+import process from 'node:process'
 import { system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
 import { logger } from '../../helper/logger'
@@ -6,18 +7,34 @@ import { EngineResponse, EngineResponseStatus } from '@activepieces/shared'
 
 export abstract class AbstractSandbox {
     protected static readonly sandboxRunTimeSeconds = system.getNumber(SystemProp.SANDBOX_RUN_TIME_SECONDS) ?? 600
+    protected static readonly nodeExecutablePath = process.execPath
 
     public readonly boxId: number
     public inUse = false
+    protected _cacheKey?: string
+    protected _cachePath?: string
 
     protected constructor(params: SandboxCtorParams) {
         this.boxId = params.boxId
     }
 
+    public get cacheKey(): string | undefined {
+        return this._cacheKey
+    }
+
     public abstract recreate(): Promise<void>
-    public abstract runCommandLine(commandLine: string): Promise<ExecuteSandboxResult>
+    public abstract runOperation(operation: string): Promise<ExecuteSandboxResult>
     public abstract getSandboxFolderPath(): string
-    public abstract useCache(cachePath: string): Promise<void>
+    protected abstract setupCache(): Promise<void>
+
+    public async assignCache({ cacheKey, cachePath }: AssignCacheParams): Promise<void> {
+        logger.debug({ boxId: this.boxId, cacheKey, cachePath }, '[AbstractSandbox#assignCache]')
+
+        this._cacheKey = cacheKey
+        this._cachePath = cachePath
+
+        await this.setupCache()
+    }
 
     protected async parseMetaFile(): Promise<Record<string, unknown>> {
         const metaFile = this.getSandboxFilePath('meta.txt')
@@ -70,4 +87,9 @@ export type ExecuteSandboxResult = {
     verdict: EngineResponseStatus
     standardOutput: string
     standardError: string
+}
+
+type AssignCacheParams = {
+    cacheKey: string
+    cachePath: string
 }

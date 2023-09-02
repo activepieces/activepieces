@@ -32,7 +32,6 @@ import { isNil } from '@activepieces/shared'
 import { getServerUrl } from '../../helper/public-ip-utils'
 import { flowService } from '../flow/flow.service'
 import { stepFileService } from '../step-file/step-file.service'
-import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { sandboxProvisioner } from '../../workers/sandbox/provisioner/sandbox-provisioner'
 import { SandBoxCacheType } from '../../workers/sandbox/provisioner/sandbox-cache-type'
 
@@ -90,16 +89,10 @@ async function executePiece({ step, projectId, flowVersion, userId }: ExecutePar
         stepName: step.name,
     })
 
-    const exactPieceVersion = await getExactPieceVersion({
-        name: pieceName,
-        version: pieceVersion,
-        projectId,
-    })
-
     const operation: ExecuteActionOperation = {
         serverUrl: await getServerUrl(),
         pieceName,
-        pieceVersion: exactPieceVersion,
+        pieceVersion,
         actionName,
         input,
         flowVersion,
@@ -238,16 +231,6 @@ const executeBranch = async ({ step, flowVersion, projectId }: ExecuteParams<Bra
     }
 }
 
-const getExactPieceVersion = async ({ name, version, projectId }: GetExactPieceVersionParams): Promise<string> => {
-    const pieceMetadata = await pieceMetadataService.get({
-        projectId,
-        name,
-        version,
-    })
-
-    return pieceMetadata.version
-}
-
 type CreateParams = {
     userId: UserId
     projectId: ProjectId
@@ -259,11 +242,5 @@ type ExecuteParams<T extends Action> = {
     step: T
     userId: UserId
     flowVersion: FlowVersion
-    projectId: ProjectId
-}
-
-type GetExactPieceVersionParams = {
-    name: string
-    version: string
     projectId: ProjectId
 }

@@ -6,6 +6,7 @@ import { ActivepiecesError, ErrorCode, extractPieceFromModule } from '@activepie
 import { captureException } from '../../helper/logger'
 import { GetParams, PieceMetadataService } from './piece-metadata-service'
 import { isNil } from '@activepieces/shared'
+import { AllPiecesStats } from './piece-stats-service'
 
 const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
     const ignoredPackages = ['framework', 'apps', 'dist', 'common']
@@ -76,15 +77,20 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
             return pieceMetadata
         },
 
-        async delete() {
+        async delete(): Promise<void> {
             throw new Error('Deleting pieces is not supported in development mode')
         },
-        async create() {
+
+        async create(): Promise<PieceMetadata> {
             throw new Error('Creating pieces is not supported in development mode')
         },
 
-        async stats() {
+        async stats(): Promise<AllPiecesStats> {
             return {}
+        },
+
+        async getExactPieceVersion({ version }): Promise<string> {
+            return version
         },
     }
 }

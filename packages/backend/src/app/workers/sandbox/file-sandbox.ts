@@ -13,6 +13,8 @@ export class FileSandbox extends AbstractSandbox {
     }
 
     public override async recreate(): Promise<void> {
+        logger.debug({ boxId: this.boxId }, '[FileSandbox#recreate]')
+
         const sandboxFolderPath = this.getSandboxFolderPath()
 
         try {
@@ -25,10 +27,21 @@ export class FileSandbox extends AbstractSandbox {
         await mkdir(sandboxFolderPath, { recursive: true })
     }
 
-    public override async runCommandLine(commandLine: string): Promise<ExecuteSandboxResult> {
+    public override async runOperation(operation: string): Promise<ExecuteSandboxResult> {
         const startTime = Date.now()
         const environment = system.get(SystemProp.ENVIRONMENT)
-        const result = await this.runUnsafeCommand(`cd ${this.getSandboxFolderPath()} && env -i AP_ENVIRONMENT=${environment} NODE_OPTIONS='--enable-source-maps' ${commandLine}`)
+
+        const command = [
+            `cd ${this.getSandboxFolderPath()}`,
+            '&&',
+            `env -i AP_ENVIRONMENT=${environment} NODE_OPTIONS='--enable-source-maps'`,
+            AbstractSandbox.nodeExecutablePath,
+            'main.js',
+            operation,
+        ].join(' ')
+
+        const result = await this.runUnsafeCommand(command)
+
         let engineResponse
 
         if (result.verdict === EngineResponseStatus.OK) {
@@ -48,8 +61,12 @@ export class FileSandbox extends AbstractSandbox {
         return path.join(__dirname, `../../sandbox/${this.boxId}`)
     }
 
-    public override async useCache(cachePath: string): Promise<void> {
-        await cp(cachePath, this.getSandboxFolderPath(), { recursive: true })
+    protected override async setupCache(): Promise<void> {
+        logger.debug({ boxId: this.boxId, cacheKey: this._cacheKey, cachePath: this._cachePath }, '[FileSandbox#setupCache]')
+
+        if (this._cachePath) {
+            await cp(this._cachePath, this.getSandboxFolderPath(), { recursive: true })
+        }
     }
 
     private async runUnsafeCommand(cmd: string): Promise<{ verdict: EngineResponseStatus }> {
