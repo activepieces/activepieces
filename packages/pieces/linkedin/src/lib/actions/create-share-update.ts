@@ -52,6 +52,8 @@ export const createShareUpdate = createAction({
             }
 
             const response = await httpClient.sendRequest(request);
-            return response.body;
+            return {
+                success: true,
+            }
         }
 })

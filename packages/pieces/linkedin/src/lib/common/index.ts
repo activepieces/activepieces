@@ -139,7 +139,6 @@ export const linkedinCommon = {
         } else if (data.image) {
             requestObject.content = {
                 media: {
-                    title: data.text,
                     id: data.image.value.image
                 }
             }
@@ -231,7 +230,6 @@ export interface Post {
             description?: string | undefined
         },
         media?: {
-            title: string
             id: string
         }
     }
