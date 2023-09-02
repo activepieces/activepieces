@@ -12,38 +12,31 @@ export const createShareUpdate = createAction({
         props: {
             text: linkedinCommon.text,
             visibility: linkedinCommon.visibility,
+            imageUrl: linkedinCommon.imageUrl,
             link: linkedinCommon.link,
             linkTitle: linkedinCommon.linkTitle,
             linkDescription: linkedinCommon.linkDescription,
-            imageUrl: linkedinCommon.imageUrl
         },
 
         run: async (context) => {
             const token = context.auth.data.id_token;
             const decoded: JwtPayload = jwt.decode(token) as JwtPayload;
             const imageUrl = context.propsValue.imageUrl;
-            const bodyConfig: {
-                urn: string,
-                text: string,
-                link?: string | undefined,
-                linkDescription?: string | undefined,
-                linkTitle?: string | undefined,
-                visibility: string,
-                image?: Image | undefined
-            } = {
-                urn: `person:${decoded.sub}`,
-                text: context.propsValue.text,
-                link: context.propsValue.link,
-                linkDescription: context.propsValue.linkDescription,
-                linkTitle: context.propsValue.linkTitle,
-                visibility: context.propsValue.visibility
-            }
-
+            const { text, link, linkDescription, linkTitle, visibility } = context.propsValue;
+            let image: Image | undefined;
             if (imageUrl) {
-                bodyConfig.image = await linkedinCommon.uploadImage(context.auth.access_token, `person:${decoded.sub}`, imageUrl);
+                image = await linkedinCommon.uploadImage(context.auth.access_token, `person:${decoded.sub}`, imageUrl);
             }
 
-            const requestBody = linkedinCommon.generatePostRequestBody(bodyConfig);
+            const requestBody = linkedinCommon.generatePostRequestBody({
+                urn: `person:${decoded.sub}`,
+                text,
+                link,
+                linkDescription,
+                linkTitle,
+                visibility,
+                image
+            });
             const createPostHeaders: any = linkedinCommon.linkedinHeaders
             createPostHeaders["LinkedIn-Version"] = '202306';
 
