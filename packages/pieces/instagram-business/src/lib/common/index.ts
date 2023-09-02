@@ -2,11 +2,17 @@ import { HttpMethod, httpClient, getAccessTokenOrThrow } from "@activepieces/pie
 import { OAuth2PropertyValue, PieceAuth, Property } from "@activepieces/pieces-framework";
 
 const markdown = `
-To Obtain the following credentials:
-1. Visit https://developers.facebook.com/
-2. Create an application, Select Other for Usecase.
-3. Select Business as App Type.
-4. Copy App Id and App Secret from Basic Settings.
+To Obtain a Client ID and Client Secret:
+
+1. Go to https://developers.facebook.com/
+2. Make a new app, Select Other for usecase.
+3. Choose Business as the type of app.
+5. Put https://activepieces.com in "App Domains".
+6. Add new Product -> Facebook Login.
+7. Navigate to Facebook Login Settings
+8. Add https://cloud.activepieces.com/redirect to "Valid OAuth Redirect URIs" and "Allowed Domains for the JavaScript SDK"
+9. Create a new App Secret, then put the App ID and App Secret into Client ID and Client Secret.
+10. Make Sure the app is in **Development Mode**, don't switch to Live Mode.
 `
 
 export const instagramCommon = {

@@ -14,7 +14,8 @@ To Obtain a Client ID and Client Secret:
 6. Add new Product -> Facebook Login.
 7. Navigate to Facebook Login Settings
 8. Add https://cloud.activepieces.com/redirect to "Valid OAuth Redirect URIs" and "Allowed Domains for the JavaScript SDK"
-8. Create a new App Secret, then put the App ID and App Secret into Client ID and Client Secret.
+9. Create a new App Secret, then put the App ID and App Secret into Client ID and Client Secret.
+10. Make Sure the app is in **Development Mode**, don't switch to Live Mode.
 `
 
 export const facebookPagesAuth = PieceAuth.OAuth2({
