@@ -10,17 +10,17 @@ export const downloadFile = createAction({
   props: {
     fileId: Property.ShortText({
       displayName: 'File ID',
-      description: 'The ID of the file to download',
+      description: 'File ID comming from | New File -> id |',
       required: true,
     }),
     mimeType: Property.ShortText({
       displayName: 'MIME type',
-      description: 'The MIME type of the file to download',
+      description: 'MIME type comming from | New File -> mimeType |',
       required: true,
     }),
     fileName: Property.ShortText({
       displayName: 'File name',
-      description: 'The indicative name of the file to download',
+      description: 'Indicate the destination file name',
       required: false,
     }),
   },
