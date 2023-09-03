@@ -31,7 +31,7 @@ export const updateRowAction = createAction({
         if (!sheetName) {
             throw Error( getErrorSheet(propsValue['sheet_id']) );
         }
-        let formattedValues = (first_row_headers ? Object.values(values) : values['values']) as (string | null)[];
+        let formattedValues = (first_row_headers ? objectToArray(values) : values['values']) as (string | null)[];
         formattedValues = formattedValues.map(value => value === "" ? null : value);
         if (formattedValues.length > 0) {
             return (await googleSheetsCommon.updateGoogleSheetRow({
@@ -43,7 +43,7 @@ export const updateRowAction = createAction({
                 values: formattedValues as string[],
             })).body;
         } else {
-            throw Error("Values passed are not an array " + JSON.stringify(formattedValues))
+            throw Error("Values passed are empty or not array " + JSON.stringify(formattedValues))
         }
     },
 });

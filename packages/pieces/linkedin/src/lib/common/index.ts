@@ -7,29 +7,27 @@ export const linkedinCommon = {
     baseUrl: 'https://api.linkedin.com',
     linkedinHeaders: {
         'X-Restli-Protocol-Version': '2.0.0',
-        // 'LinkedIn-Version': '202306'
     },
     text: Property.LongText({
         displayName: 'Text',
         required: true
     }),
     imageUrl: Property.File({
-        displayName: 'Link Thumbnail URL',
+        displayName: 'Image',
         required: false
     }),
     link: Property.ShortText({
-        displayName: 'Link',
+        displayName: 'Content - URL',
         required: false
     }),
     linkTitle: Property.ShortText({
-        displayName: 'Link Title',
+        displayName: 'Content - Title',
         required: false
     }),
     linkDescription: Property.ShortText({
-        displayName: 'Link Description',
+        displayName: 'Content - Description',
         required: false
     }),
-
     visibility: Property.Dropdown({
         displayName: 'Visibility',
         refreshers: [],
@@ -138,6 +136,12 @@ export const linkedinCommon = {
                     thumbnail: data.image?.value.image
                 }
             }
+        } else if (data.image) {
+            requestObject.content = {
+                media: {
+                    id: data.image.value.image
+                }
+            }
         }
 
         return requestObject;
@@ -224,6 +228,9 @@ export interface Post {
             thumbnail?: string | undefined
             title?: string | undefined
             description?: string | undefined
+        },
+        media?: {
+            id: string
         }
     }
     isReshareDisabledByAuthor: boolean

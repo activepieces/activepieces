@@ -35,6 +35,17 @@ executionState.insertStep(
   []
 );
 
+executionState.insertStep(
+  {
+    type: ActionType.PIECE,
+    status: StepOutputStatus.SUCCEEDED,
+    input: {},
+    output: 'memory://{"fileName":"hello.png","data":"iVBORw0KGgoAAAANSUhEUgAAAiAAAAC4CAYAAADaI1cbAAA0h0lEQVR4AezdA5AlPx7A8Zxt27Z9r5PB2SidWTqbr26S9Hr/tm3btu3723eDJD3r15ec17vzXr+Z"}'
+  },
+  "step_2",
+  []
+);
+
 describe('Variable Service', () => {
   test('Test resolve text with no variables', async () => {
     expect(await variableService.resolve({ unresolvedInput: 'Hello world!', executionState, logs: false })).toEqual(
@@ -170,6 +181,36 @@ describe('Variable Service', () => {
       8.4
     );
   });
+
+  it('should not compress memory file in native value in non-logs mode', async () => {
+    const input = {
+      base64: 'memory://{"fileName":"hello.png","data":"iVBORw0KGgoAAAANSUhEUgAAAiAAAAC4CAYAAADaI1cbAAA0h0lEQVR4AezdA5AlPx7A8Zxt27Z9r5PB2SidWTqbr26S9Hr/tm3btu3723eDJD3r15ec17vzXr+Z"}',
+    }
+    const resolvedInput = await variableService.resolve({
+      unresolvedInput: input,
+      executionState,
+      logs: false,
+    });
+    expect(resolvedInput).toEqual({
+      base64: 'memory://{"fileName":"hello.png","data":"iVBORw0KGgoAAAANSUhEUgAAAiAAAAC4CAYAAADaI1cbAAA0h0lEQVR4AezdA5AlPx7A8Zxt27Z9r5PB2SidWTqbr26S9Hr/tm3btu3723eDJD3r15ec17vzXr+Z"}'
+    });
+  });
+
+  it('should not compress memory file in referenced value in non-logs mode', async () => {
+    const input = {
+      base64: '{{step_2}}',
+    }
+    const resolvedInput = await variableService.resolve({
+      unresolvedInput: input,
+      executionState,
+      logs: false,
+    });
+    expect(resolvedInput).toEqual({
+      base64: 'memory://{"fileName":"hello.png","data":"iVBORw0KGgoAAAANSUhEUgAAAiAAAAC4CAYAAADaI1cbAAA0h0lEQVR4AezdA5AlPx7A8Zxt27Z9r5PB2SidWTqbr26S9Hr/tm3btu3723eDJD3r15ec17vzXr+Z"}'
+    });
+  });
+
+
 
   it('should return base64 from base64 with mime only', async () => {
     const input = {

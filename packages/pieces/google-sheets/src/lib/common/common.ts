@@ -356,6 +356,15 @@ export const labelToColumn = (label: string) => {
     return column - 1;
 };
 
+export function objectToArray(obj: { [x: string]: any; }) {
+    const maxIndex = Math.max(...Object.keys(obj).map(key => labelToColumn(key)));
+    const arr = new Array(maxIndex + 1);
+    for (const key in obj) {
+        arr[labelToColumn(key)] = obj[key];
+    }
+    return arr;
+}
+
 async function deleteRow(spreadsheetId: string, sheetId: number, rowIndex: number, accessToken: string) {
     const request: HttpRequest = {
         method: HttpMethod.POST,

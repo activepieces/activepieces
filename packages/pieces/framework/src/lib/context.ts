@@ -5,7 +5,6 @@ import { NonAuthPiecePropertyMap, PieceAuthProperty, PiecePropValueSchema, Piece
 type BaseContext<PieceAuth extends PieceAuthProperty, Props extends PiecePropertyMap> = {
     auth: PiecePropValueSchema<PieceAuth>,
     propsValue: StaticPropsValue<Props>
-    files: FilesService
     store: Store
 }
 
@@ -39,10 +38,18 @@ export type TriggerHookContext<
 > = S extends TriggerStrategy.APP_WEBHOOK
     ? AppWebhookTriggerHookContext<PieceAuth, TriggerProps>
     : S extends TriggerStrategy.POLLING
-        ? PollingTriggerHookContext<PieceAuth, TriggerProps>
-        : S extends TriggerStrategy.WEBHOOK
-            ? WebhookTriggerHookContext<PieceAuth, TriggerProps>
-            : never
+    ? PollingTriggerHookContext<PieceAuth, TriggerProps>
+    : S extends TriggerStrategy.WEBHOOK
+    ? WebhookTriggerHookContext<PieceAuth, TriggerProps>
+    : never
+
+export type TestOrRunHookContext<
+    PieceAuth extends PieceAuthProperty,
+    TriggerProps extends PiecePropertyMap,
+    S extends TriggerStrategy,
+> = TriggerHookContext<PieceAuth, TriggerProps, S> & {
+    files: FilesService
+}
 
 export type StopHookParams = {
     response: StopResponse
@@ -95,7 +102,7 @@ export type ActionContext<
 > = BeginExecutionActionContext<PieceAuth, ActionProps> | ResumeExecutionActionContext<PieceAuth, ActionProps>
 
 export interface FilesService {
-    write({fileName, data}: {fileName: string, data: Buffer}): Promise<string>;
+    write({ fileName, data }: { fileName: string, data: Buffer }): Promise<string>;
 }
 
 export interface ConnectionsManager {
@@ -103,7 +110,7 @@ export interface ConnectionsManager {
 }
 
 export interface TagsManager {
-    add(params: { name: string}): Promise<void>;
+    add(params: { name: string }): Promise<void>;
 }
 
 export interface Store {

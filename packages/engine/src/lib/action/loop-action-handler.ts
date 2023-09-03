@@ -1,7 +1,7 @@
 import { FlowExecutor } from '../executors/flow-executor';
 import { VariableService } from '../services/variable-service';
 import { Action, ActionType, ExecutionState, LoopOnItemsAction, LoopOnItemsActionSettings, LoopResumeStepMetadata } from '@activepieces/shared';
-import { BaseActionHandler, InitStepOutputParams } from './action-handler';
+import { BaseActionHandler, ExecuteContext, InitStepOutputParams } from './action-handler';
 import { LoopOnItemsStepOutput, StepOutputStatus, StepOutput } from '@activepieces/shared';
 
 type CtorParams = {
@@ -59,6 +59,7 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
   }
 
   async execute(
+    context: ExecuteContext,
     executionState: ExecutionState,
     ancestors: [string, number][]
   ): Promise<StepOutput> {
@@ -93,6 +94,7 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
         }
 
         const executor = new FlowExecutor({
+          flowVersion: context.flowVersion,
           executionState,
           firstStep: this.firstLoopAction,
           resumeStepMetadata: this.iterationIsResuming(i)

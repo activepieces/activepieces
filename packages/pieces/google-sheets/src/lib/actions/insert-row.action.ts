@@ -32,7 +32,7 @@ export const insertRowAction = createAction({
         if (!sheetName) {
             throw Error( getErrorSheet(propsValue['sheet_id']) );
         }
-        const formattedValues = propsValue.first_row_headers ? Object.values(values) : values['values'];
+        const formattedValues = propsValue.first_row_headers ? objectToArray(values) : values['values'];
         const res = await googleSheetsCommon.appendGoogleSheetValues({
             accessToken: auth['access_token'],
             majorDimension: Dimension.COLUMNS,
