@@ -1,4 +1,4 @@
-<div class="ap-flex">
+<!-- <div class="ap-flex">
 
     <mat-tab-group mat-stretch-tabs="false" mat-align-tabs="start" #tabGroup>
         <mat-tab>
@@ -22,8 +22,14 @@
                     src="assets/img/custom/hot.svg"></svg-icon>
                 Featured
             </ng-template>
-            <div class="ap-w-[1046px] ap-h-[705px]">
-
+            <div class="ap-w-[1046px] ap-h-[705px] ap-overflow-y-auto ap-bg-[#F0F1F3] ap-pl-5  ap-py-5 thin-scrollbars black-scrollbars ap-flex ap-flex-col ap-gap-5"
+                apCheckOverflow (isOverflowed)="featuredListOverflowing=$event"
+                [class.ap-pr-5]="!featuredListOverflowing" [class.ap-pr-3]="featuredListOverflowing">
+                <app-featured-template-card></app-featured-template-card>
+                <app-featured-template-card></app-featured-template-card>
+                <app-featured-template-card></app-featured-template-card>
+                <app-featured-template-card></app-featured-template-card>
+                <app-featured-template-card></app-featured-template-card>
             </div>
         </mat-tab>
 
@@ -32,23 +38,25 @@
 
     </mat-tab-group>
     <ap-icon-button tooltipText="Close" iconFilename="close.svg"
-        class="ap-mt-1 ap-pr-3 ap-h-[2.8125rem] -ap-ml-[3.75rem] ap-z-50" mat-dialog-close></ap-icon-button>
-</div>
+        class="ap-pr-6 ap-h-[2.8125rem] -ap-ml-[3.75rem] ap-z-50" mat-dialog-close></ap-icon-button>
+</div> -->
 
 
-<!-- <div class="ap-border-b ap-border-solid ap-border-outline ap-justify-end ap-flex ">
-    <ap-icon-button tooltipText=" Close" class="ap-mr-2" iconFilename="close.svg" mat-dialog-close></ap-icon-button>
+
+
+
+
+<div
+    class="ap-border-b ap-border-solid ap-border-outline ap-justify-between ap-items-center ap-flex ap-typography-headline-6  ap-px-6">
+    Browse Templates
+    <ap-icon-button tooltipText="Close" iconFilename="close.svg" mat-dialog-close></ap-icon-button>
 </div>
 <mat-dialog-content class="!ap-flex ap-h-[705px] ap-w-[1046px] ap-gap-2 ap-p-0">
 
     <ng-container *ngTemplateOutlet="filtersColumn"></ng-container>
-    <ng-container *ngTemplateOutlet="contentColumn; context:{showFeaturedBanner:true}"></ng-container>
+    <ng-container *ngTemplateOutlet="contentColumn; context:{showFeaturedBanner:false}"></ng-container>
 
-</mat-dialog-content> -->
-
-
-
-
+</mat-dialog-content>
 <ng-container *ngIf="templates$ | async"></ng-container>
 
 <ng-template #filtersColumn>

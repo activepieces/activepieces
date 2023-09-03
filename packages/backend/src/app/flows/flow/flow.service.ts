@@ -154,6 +154,10 @@ export const flowService = {
             pieces: flowHelper.getUsedPieces(flowVersion.trigger),
             template: flowVersion,
             tags: [],
+            imageUrl: null,
+            userId: null,
+            created: Date.now().toString(),
+            updated: Date.now().toString(),
             blogUrl: '',
         }
         return template

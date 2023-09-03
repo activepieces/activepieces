@@ -37,6 +37,7 @@ export class TemplatesDialogComponent {
   loading$: BehaviorSubject<boolean> = new BehaviorSubject(true);
   templates$: Observable<FlowTemplate[]>;
   searchFormControl = new FormControl<string>('');
+  featuredListOverflowing = false;
   filters = [
     'ChatGPT',
     'Content Creation',

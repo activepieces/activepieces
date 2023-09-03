@@ -11,6 +11,8 @@ export interface User extends BaseModel<UserId> {
   newsLetter: boolean;
   password: string;
   status: UserStatus;
+  imageUrl?:string;
+  title?:string
 }
 
 export type UserMeta = Pick<User, "id" | "email" | "firstName" | "lastName">;

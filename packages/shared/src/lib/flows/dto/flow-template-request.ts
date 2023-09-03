@@ -1,6 +1,7 @@
 import { Static, Type } from "@sinclair/typebox";
 import { FlowVersion } from "../flow-version";
-
+import { User } from "../../user/user";
+import { BaseModelSchema } from "../../common";
 export const FlowVersionTemplate = Type.Omit(
     FlowVersion,
     ["id", "created", "updated", "flowId", "state", "updatedBy"]
@@ -9,7 +10,7 @@ export const FlowVersionTemplate = Type.Omit(
 export type FlowVersionTemplate = Static<typeof FlowVersionTemplate>;
 
 export const FlowTemplate = Type.Object({
-    id: Type.String(),
+    ...BaseModelSchema,
     name: Type.String(),
     description: Type.String(),
     tags: Type.Array(Type.String()),
@@ -17,16 +18,18 @@ export const FlowTemplate = Type.Object({
     pinnedOrder: Type.Union([Type.Null(),Type.Number()]),
     blogUrl: Type.Optional(Type.String()),
     template: FlowVersionTemplate,
+    userId: Type.Union([Type.Null(),Type.String()]),
+    imageUrl:Type.Union([Type.Null(),Type.String()]),
 })
 
-export type FlowTemplate = Static<typeof FlowTemplate>;
+export type FlowTemplate = Static<typeof FlowTemplate> & {user?:User};
 
 
 export const ListFlowTemplatesRequest = Type.Object({
     pieces: Type.Optional(Type.Array(Type.String())),
     tags: Type.Optional(Type.Array(Type.String())),
     search: Type.Optional(Type.String()),
-    pinned:Type.Optional(Type.Boolean())
+    featuredOnly:Type.Optional(Type.Boolean())
 })
 
 export type ListFlowTemplatesRequest = Static<typeof ListFlowTemplatesRequest>
