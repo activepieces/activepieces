@@ -27,46 +27,40 @@ export const ContentfulCreateRecordAction = createAction({
 
   async run({ auth, propsValue }) {
     const { client } = makeClient(auth);
-    try {
-      const model = await client.contentType.get({
-        contentTypeId: propsValue[PropertyKeys.CONTENT_MODEL] as string,
-      });
+    const model = await client.contentType.get({
+      contentTypeId: propsValue[PropertyKeys.CONTENT_MODEL] as string,
+    });
 
-      const fields = keyBy(model.fields, 'id');
-      const values = propsValue[PropertyKeys.FIELDS] as DynamicPropsValue;
-      // Remove empty fields
-      for (const key in values) {
-        if (
-          values[key] === '' ||
-          values[key] === null ||
-          values[key] === undefined ||
-          (Array.isArray(values[key]) && values[key].length === 0)
-        ) {
-          delete values[key];
-          continue;
-        }
-        const fieldType = fields[key].type;
-        const processor =
-          FieldProcessors[fieldType] || FieldProcessors['Basic'];
-        values[key] = {
-          [propsValue[PropertyKeys.LOCALE] as string]: await processor(
-            fields[key],
-            values[key]
-          ),
-        };
+    const fields = keyBy(model.fields, 'id');
+    const values = propsValue[PropertyKeys.FIELDS] as DynamicPropsValue;
+    // Remove empty fields
+    for (const key in values) {
+      if (
+        values[key] === '' ||
+        values[key] === null ||
+        values[key] === undefined ||
+        (Array.isArray(values[key]) && values[key].length === 0)
+      ) {
+        delete values[key];
+        continue;
       }
-      console.debug('Creating record with values', values);
-      const record = await client.entry.create(
-        { contentTypeId: model.sys.id },
-        { fields: values }
-      );
-      if (propsValue[PropertyKeys.PUBLISH_ON_CREATE]) {
-        await client.entry.publish({ entryId: record.sys.id }, record);
-      }
-      return record;
-    } catch (e) {
-      console.error(e);
+      const fieldType = fields[key].type;
+      const processor = FieldProcessors[fieldType] || FieldProcessors['Basic'];
+      values[key] = {
+        [propsValue[PropertyKeys.LOCALE] as string]: await processor(
+          fields[key],
+          values[key]
+        ),
+      };
     }
-    return false;
+    console.debug('Creating record with values', values);
+    const record = await client.entry.create(
+      { contentTypeId: model.sys.id },
+      { fields: values }
+    );
+    if (propsValue[PropertyKeys.PUBLISH_ON_CREATE]) {
+      await client.entry.publish({ entryId: record.sys.id }, record);
+    }
+    return record;
   },
 });
