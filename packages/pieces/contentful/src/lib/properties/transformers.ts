@@ -12,6 +12,7 @@ import {
   Validators,
 } from '@activepieces/pieces-framework';
 import { ContentFields, FieldType } from 'contentful-management';
+import { getLinkHelperText } from '../common';
 
 type Properties<T> = Omit<
   T,
@@ -113,13 +114,11 @@ const NumberTransformer =
     if (field.validations) {
       field.validations.forEach((v) => {
         if (v['range']?.min && v['range']?.max) {
-          validators.push(
-            Validators.inRange(v['range'].min, v['range'].max, true)
-          );
+          validators.push(Validators.inRange(v['range'].min, v['range'].max));
         } else if (v['range']?.min) {
-          validators.push(Validators.minValue(v['range'].min, true));
+          validators.push(Validators.minValue(v['range'].min));
         } else if (v['range']?.max) {
-          validators.push(Validators.maxValue(v['range'].max, true));
+          validators.push(Validators.maxValue(v['range'].max));
         }
       });
     }
@@ -186,32 +185,27 @@ const ObjectTransformer =
 const LinkTransformer =
   (request: Properties<ShortTextProperty<true>> = {}) =>
   (field: ContentFields) => {
-    const linkType = field.linkType;
-    if (!linkType || linkType === 'Entry') {
-      return ShortTextTransformer({ ...request, description: 'Link' })(field);
-    }
+    const prefix = field.linkType || field.type || '';
+    const helperText = getLinkHelperText(field.validations);
 
-    return Property.File({
-      displayName: field.name,
-      required: field.required,
-    });
+    return ShortTextTransformer({
+      ...request,
+      description: `${prefix}: ${helperText || 'Any'}`,
+    })(field);
   };
 
 const ArrayTransformer =
   (request: Properties<ArrayProperty<true>> = {}) =>
   (field: ContentFields) => {
-    // Currently only supports arrays of symbols and entries, arrays of assets are not yet supported
-    if (
-      field.items?.type === 'Symbol' ||
-      (field.items?.type === 'Link' && field.items?.linkType === 'Entry')
-    ) {
-      return Property.Array({
-        ...request,
-        displayName: field.name,
-        required: field.required,
-      });
-    }
-    return null;
+    const prefix = field.items?.linkType || field.items?.type || '';
+    const helperText = getLinkHelperText(field.items?.validations);
+
+    return Property.Array({
+      ...request,
+      displayName: field.name,
+      required: field.required,
+      description: `${prefix}: ${helperText || 'Any'}`,
+    });
   };
 
 type Transformer = (field: ContentFields) => BasePropertySchema | null;

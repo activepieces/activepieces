@@ -1,11 +1,12 @@
 import {
-  DynamicProperties,
   DynamicPropsValue,
   Property,
   createAction,
 } from '@activepieces/pieces-framework';
 import { ContentfulAuth, PropertyKeys, makeClient } from '../../common';
 import { ContentfulProperty } from '../../properties';
+import keyBy from 'lodash/keyBy';
+import { FieldProcessors } from '../../properties/processors';
 
 export const ContentfulCreateRecordAction = createAction({
   name: 'contentful_record_create',
@@ -23,35 +24,49 @@ export const ContentfulCreateRecordAction = createAction({
     }),
     [PropertyKeys.FIELDS]: ContentfulProperty.DynamicFields,
   },
-  async run({ auth, propsValue, store }) {
-    const { client, defaultOptions } = makeClient(auth);
-    const model = await client.contentType.get({
-      contentTypeId: propsValue[PropertyKeys.CONTENT_MODEL] as string,
-      ...defaultOptions,
-    });
 
-    const entryLinks = model.fields.filter(
-      (f) => f.type === 'Link' && f.linkType === 'Entry'
-    );
-    const assetLinks = [];
+  async run({ auth, propsValue }) {
+    const { client } = makeClient(auth);
+    try {
+      const model = await client.contentType.get({
+        contentTypeId: propsValue[PropertyKeys.CONTENT_MODEL] as string,
+      });
 
-    const fields = propsValue[PropertyKeys.FIELDS] as DynamicPropsValue;
-    // Remove empty fields
-    Object.keys(fields).forEach((key) => {
-      if (
-        fields[key] === '' ||
-        fields[key] === null ||
-        fields[key] === undefined
-      ) {
-        delete fields[key];
-      } else {
-        fields[key] = {
-          [propsValue[PropertyKeys.LOCALE] as string]: fields[key],
+      const fields = keyBy(model.fields, 'id');
+      const values = propsValue[PropertyKeys.FIELDS] as DynamicPropsValue;
+      // Remove empty fields
+      for (const key in values) {
+        if (
+          values[key] === '' ||
+          values[key] === null ||
+          values[key] === undefined ||
+          (Array.isArray(values[key]) && values[key].length === 0)
+        ) {
+          delete values[key];
+          continue;
+        }
+        const fieldType = fields[key].type;
+        const processor =
+          FieldProcessors[fieldType] || FieldProcessors['Basic'];
+        values[key] = {
+          [propsValue[PropertyKeys.LOCALE] as string]: await processor(
+            fields[key],
+            values[key]
+          ),
         };
       }
-    });
-
-    console.log(fields);
-    return true;
+      console.debug('Creating record with values', values);
+      const record = await client.entry.create(
+        { contentTypeId: model.sys.id },
+        { fields: values }
+      );
+      if (propsValue[PropertyKeys.PUBLISH_ON_CREATE]) {
+        await client.entry.publish({ entryId: record.sys.id }, record);
+      }
+      return record;
+    } catch (e) {
+      console.error(e);
+    }
+    return false;
   },
 });
