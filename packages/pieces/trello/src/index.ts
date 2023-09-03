@@ -3,6 +3,7 @@ import { createCard } from './lib/actions/create-card';
 import { getCard } from './lib/actions/get-card';
 import { cardMovedTrigger } from './lib/triggers/cardMoved';
 import { newCardTrigger } from './lib/triggers/newCard';
+import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common';
 
 const markdownProperty = `
 To obtain your API key and token, follow these steps:
@@ -23,6 +24,32 @@ export const trelloAuth = PieceAuth.BasicAuth({
   password: {
     displayName: 'Token',
     description: 'Trello Token'
+  },
+  validate: async ({ auth }) => {
+    const { username, password } = auth;
+    if( !username || !password ) {
+      return {
+        valid: false,
+        error: 'Empty API Key or Token'
+      }
+    }
+    try {
+      const request: HttpRequest = {
+        method: HttpMethod.GET,
+        url: `https://api.trello.com/1/members/me/boards`
+            + `?key=` + username
+            + `&token=` + password
+      };
+      await httpClient.sendRequest(request);
+      return {
+        valid: true,
+      }
+    } catch (e) {
+      return {
+        valid: false,
+        error: 'Invalid API Key or Token',
+      }
+    }
   }
 });
 
