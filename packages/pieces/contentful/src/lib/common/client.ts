@@ -5,11 +5,10 @@ export const makeClient = (auth: ContentfulAuth) => {
   return {
     client: Contentful.createClient(
       { accessToken: auth.apiKey },
-      { type: 'plain' }
+      {
+        type: 'plain',
+        defaults: { spaceId: auth.space, environmentId: auth.environment },
+      }
     ),
-    defaultOptions: {
-      spaceId: auth.space,
-      environmentId: auth.environment,
-    },
   };
 };

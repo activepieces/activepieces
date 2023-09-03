@@ -14,11 +14,10 @@ const ContentModel = Property.Dropdown<string>({
         placeholder: 'Please connect your account',
       };
     }
-    const { client, defaultOptions } = makeClient(auth as ContentfulAuth);
+    const { client } = makeClient(auth as ContentfulAuth);
     try {
       const models: DropdownOption<string>[] = [];
       let contentModels = await client.contentType.getMany({
-        ...defaultOptions,
         query: { limit: 1000 },
       });
       models.push(
@@ -29,7 +28,6 @@ const ContentModel = Property.Dropdown<string>({
       );
       while (contentModels.skip + contentModels.limit < contentModels.total) {
         contentModels = await client.contentType.getMany({
-          ...defaultOptions,
           query: { skip: contentModels.skip + contentModels.limit },
         });
         models.push(

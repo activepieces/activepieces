@@ -16,10 +16,9 @@ const DynamicFields = Property.DynamicProperties({
   }) => {
     if (_.isEmpty(auth) || _.isNil(model)) return {};
     const dynamicFields: DynamicPropsValue = {};
-    const { client, defaultOptions } = makeClient(auth as ContentfulAuth);
+    const { client } = makeClient(auth as ContentfulAuth);
     try {
       const contentModel = await client.contentType.get({
-        ...defaultOptions,
         contentTypeId: model as unknown as string,
       });
       // Remove fields that are disabled or omitted from the API

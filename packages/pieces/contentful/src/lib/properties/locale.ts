@@ -14,9 +14,9 @@ const Locale = Property.Dropdown({
         placeholder: 'Please connect your account',
       };
     }
-    const { client, defaultOptions } = makeClient(auth as ContentfulAuth);
+    const { client } = makeClient(auth as ContentfulAuth);
     try {
-      const response = await client.locale.getMany(defaultOptions);
+      const response = await client.locale.getMany({});
       const options: DropdownOption<string>[] = response.items.map(
         (locale) => ({ label: locale.name, value: locale.code })
       );

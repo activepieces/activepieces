@@ -7,7 +7,6 @@ export interface ContentfulAuth {
 }
 
 export const ContentfulAuth = PieceAuth.CustomAuth({
-  displayName: 'Contentful Access Token',
   required: true,
   props: {
     apiKey: Property.ShortText({
