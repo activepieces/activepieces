@@ -177,7 +177,6 @@ export const googleSheetsCommon = {
                     index++;
                 }
             }
-            console.log(ret);
             
             return {
                 options: ret,
@@ -228,19 +227,23 @@ export async function getGoogleSheetRows(params: { accessToken: string; sheetNam
         }
     };
     const response = await httpClient.sendRequest<{ values: [string[]][] }>(request);
-    if (response.body.values === undefined) return [{}];
+    if (response.body.values === undefined) return [];
 
-    const values = [];
+    const res = [];
     for (let i = 0; i < response.body.values.length; i++) {
-        const row = response.body.values[i];
-        const rowValues: any = {}
-        for (let j = 0; j < row.length; j++) {
-            rowValues[columnToLabel(j)] = row[j];
+        const values: any = {}
+        for (let j = 0; j < response.body.values[i].length; j++) {
+            values[columnToLabel(j)] = response.body.values[i][j];
         }
-        values.push(rowValues);
+        
+        res.push({
+            row: i + params.rowIndex_s,
+            values
+        });
+
     }
 
-    return values;
+    return res;
 }
 
 async function listSheetsName(access_token: string, spreadsheet_id: string) {

@@ -47,29 +47,31 @@ export const findRowsAction = createAction({
             throw Error( getErrorSheet(propsValue['sheet_id']) );
         }
 
-        let values = [];
+        let Rows = [] , values = [];
         if( !propsValue.starting_row ){
-            values = await googleSheetsCommon.getValues(
+            Rows = await googleSheetsCommon.getValues(
                 propsValue.spreadsheet_id,
                 auth['access_token'],
                 propsValue.sheet_id
             );
 
-            values = values.map((value) => {
-                return value.values;
+            values = Rows.map((row) => {
+                return row.values;
             });
-
         }else{
             const number_of_rows = propsValue.number_of_rows ?? 1;
 
-            values = await getGoogleSheetRows({
+            Rows = await getGoogleSheetRows({
                 accessToken: auth['access_token'],
                 sheetName: sheetName,
                 spreadSheetId: propsValue['spreadsheet_id'],
                 rowIndex_s: propsValue['starting_row'],
                 rowIndex_e: propsValue['starting_row'] + number_of_rows - 1
             });
-            
+
+            values = Rows.map((row) => {
+                return row.values;
+            });
         }
 
         const matchingRows: any[] = [];
@@ -77,10 +79,10 @@ export const findRowsAction = createAction({
         const column_number = labelToColumn(columnName);
         const search_value = propsValue.search_value ?? '';
 
-        for( const row of values ){
-
+        for( let i = 0 ; i < values.length ; i++ ){
+            const row = values[i];
             if( search_value === '' ){
-                matchingRows.push(row);
+                matchingRows.push(Rows[i]);
                 continue;
             }
 
@@ -93,11 +95,11 @@ export const findRowsAction = createAction({
             }
             if( propsValue.match_case ){
                 if( entry_value === search_value ){
-                    matchingRows.push(row);
+                    matchingRows.push(Rows[i]);
                 }
             }else{
                 if( entry_value.toLowerCase().includes(search_value.toLowerCase()) ){
-                    matchingRows.push(row);
+                    matchingRows.push(Rows[i]);
                 }
             }
         }
