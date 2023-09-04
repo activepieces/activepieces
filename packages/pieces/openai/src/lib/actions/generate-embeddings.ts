@@ -58,14 +58,18 @@ const splitBychar = (
 
   for (let i = 0; i < recursiveSplit.length; i++) {
     const chunck = recursiveSplit[i];
-    tokenCount += enc.encode(chunck).length;
+    const chunckSize = enc.encode(chunck).length;
+    tokenCount += chunckSize;
     if (tokenCount > maxTokens) {
+      tokenCount -= chunckSize;
       recursiveSplit.splice(
         i,
         1,
         ...recursiveSpliting(enc, chunck, maxTokens - tokenCount, charsPriority)
       );
+      tokenCount += enc.encode(recursiveSplit[i]).length
     }
+
     if (tokenCount >= minToken || i === recursiveSplit.length - 1) {
       textSplited.push(recursiveSplit.slice(lastPushIndex, i + 1).join(''));
       lastPushIndex = i + 1;
