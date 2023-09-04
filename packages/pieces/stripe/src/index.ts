@@ -8,19 +8,10 @@ import { stripeCreateInvoice } from './lib/actions/create-invoice';
 import { stripeSearchCustomer } from './lib/actions/search-customer';
 
 
-export const stripeAuth = PieceAuth.CustomAuth({
-    description: "API Keys acquired from your Stripe dashboard",
-    required: true,
-    props: {
-        publicKey: PieceAuth.SecretText({
-            displayName:"Public API Key",
-            required:true
-        }),
-        secretKey: PieceAuth.SecretText({
-            displayName:"Secret API Key",
-            required:false
-        }),
-    }
+export const stripeAuth = PieceAuth.SecretText({
+    displayName:"Secret API Key",
+    required:true,
+    description:"Secret key acquired from your Stripe dashboard"
 })
 
 export const stripe = createPiece({

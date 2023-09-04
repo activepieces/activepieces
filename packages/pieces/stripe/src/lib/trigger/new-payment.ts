@@ -107,7 +107,7 @@ export const stripeNewPayment = createTrigger({
     "transfer_group": null
   },
   async onEnable(context) {
-    const webhook = await stripeCommon.subscribeWebhook('charge.succeeded', context.webhookUrl!, context.auth.publicKey);
+    const webhook = await stripeCommon.subscribeWebhook('charge.succeeded', context.webhookUrl!, context.auth);
     await context.store?.put<WebhookInformation>('_new_payment_trigger', {
       webhookId: webhook.id
     });
@@ -115,7 +115,7 @@ export const stripeNewPayment = createTrigger({
   async onDisable(context) {
     const response = await context.store?.get<WebhookInformation>('_new_payment_trigger');
     if (response !== null && response !== undefined) {
-      await stripeCommon.unsubscribeWebhook(response.webhookId, context.auth.publicKey);
+      await stripeCommon.unsubscribeWebhook(response.webhookId, context.auth);
     }
   },
   async run(context) {
