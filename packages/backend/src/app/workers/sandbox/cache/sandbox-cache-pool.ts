@@ -13,7 +13,7 @@ export const sandboxCachePool = {
     async findOrCreate({ type, key }: FindOrCreateParams): Promise<CachedSandbox> {
         logger.debug({ type, key }, '[SandboxCachePool#get]')
 
-        const cachedSandbox = await executeWithLock((): CachedSandbox => {
+        const cachedSandbox = await lock.runExclusive((): CachedSandbox => {
             const cachedSandbox = cachedSandboxes.get(key)
 
             if (cachedSandbox) {
@@ -24,7 +24,7 @@ export const sandboxCachePool = {
                 deleteOldestNotInUseOrThrow()
             }
 
-            return createCachedSandbox({ key, type })
+            return createCachedSandbox({ key })
         })
 
         await cachedSandbox.init()
@@ -33,7 +33,7 @@ export const sandboxCachePool = {
 
     async release({ key }: ReleaseParams): Promise<void> {
         const cachedSandbox = getOrThrow({ key })
-        cachedSandbox.decrementActiveSandboxCount()
+        await cachedSandbox.decrementActiveSandboxCount()
     },
 }
 
@@ -47,10 +47,9 @@ const getOrThrow = ({ key }: GetOrThrowParams): CachedSandbox => {
     return cachedSandbox
 }
 
-const createCachedSandbox = ({ key, type }: CreateCachedSandboxParams): CachedSandbox => {
+const createCachedSandbox = ({ key }: CreateCachedSandboxParams): CachedSandbox => {
     const newCachedSandBox = new CachedSandbox({
         key,
-        type,
     })
 
     cachedSandboxes.set(key, newCachedSandBox)
@@ -80,17 +79,6 @@ const deleteOldestNotInUseOrThrow = (): void => {
     cachedSandboxes.delete(oldestNotInUseCachedSandbox.key)
 }
 
-const executeWithLock = async <T>(methodToExecute: () => T): Promise<T> => {
-    const releaseLock = await lock.acquire()
-
-    try {
-        return methodToExecute()
-    }
-    finally {
-        releaseLock()
-    }
-}
-
 type FindOrCreateParams = {
     key: string
     type: SandBoxCacheType
@@ -106,5 +94,4 @@ type GetOrThrowParams = {
 
 type CreateCachedSandboxParams = {
     key: string
-    type: SandBoxCacheType
 }
