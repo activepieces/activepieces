@@ -12,7 +12,7 @@ export const gitlabCommon = {
         if (!auth) {
           return {
             disabled: true,
-            placeholder: 'setup authentication first',
+            placeholder: 'Setup authentication first',
             options: [],
           };
         }
