@@ -95,6 +95,8 @@ export class TestCodeStepComponent extends TestStepCoreComponent {
                       ? result.output
                       : result.output === undefined
                       ? 'undefined'
+                      : result.output === ''
+                      ? ''
                       : JSON.stringify(result.output),
                     lastTestDate: new Date().toString(),
                   },
