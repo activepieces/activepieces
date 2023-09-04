@@ -2,6 +2,7 @@ import { Property } from "@activepieces/pieces-framework";
 
 import imap from 'node-imap';
 import { ParsedMail, simpleParser } from 'mailparser';
+import { isNil } from "@activepieces/shared";
 
 export const imapCommon = {
     subject: Property.ShortText({
@@ -35,9 +36,9 @@ export const imapCommon = {
                         search.flag,
                         search.since
                     ];
-                    if (search.subject != '' && search.subject != undefined) searchArray.push(['SUBJECT', search.subject]);
-                    if (search.to != '' && search.to != undefined) searchArray.push(['TO', search.to]);
-                    if (search.from != '' && search.from != undefined) searchArray.push(['FROM', search.from]);
+                    if (search.subject != '' && !isNil(search.subject)) searchArray.push(['SUBJECT', search.subject, 'i']);
+                    if (search.to != '' && !isNil(search.to)) searchArray.push(['TO', search.to]);
+                    if (search.from != '' && !isNil(search.from)) searchArray.push(['FROM', search.from]);
 
                     imapClient.search(searchArray, (error, results) => {
                         try {
