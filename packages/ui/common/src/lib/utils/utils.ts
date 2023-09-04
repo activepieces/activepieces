@@ -1,4 +1,4 @@
-import { ActionType, Flow, TriggerType } from '@activepieces/shared';
+import { ActionType, TriggerType } from '@activepieces/shared';
 
 export function getDisplayNameForTrigger(triggerType: TriggerType) {
   switch (triggerType) {
@@ -35,27 +35,6 @@ export function getDefaultDisplayNameForPiece(
     }
   }
 }
-
-export function isOfTypeTriggerType(value: string) {
-  const enumHolderObject = Object.keys(TriggerType);
-  return enumHolderObject.includes(value);
-}
-
-export function findDefaultFlowDisplayName(flows: Flow[]) {
-  let defaultFlowIndex = 1;
-
-  while (
-    flows.find(
-      (f) => f.version?.displayName.toLowerCase() == `flow ${defaultFlowIndex}`
-    )
-  ) {
-    defaultFlowIndex++;
-  }
-  return `Flow ${defaultFlowIndex}`;
-}
-
-export const autoSaveDebounceTime = 600;
-export const cacheArtifactDebounceTime = 200;
 
 export function isOverflown(element: HTMLElement) {
   return (
