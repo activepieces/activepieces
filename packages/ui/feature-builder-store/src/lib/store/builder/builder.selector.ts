@@ -160,6 +160,7 @@ const selectTriggerSelectedSampleData = createSelector(
     return undefined;
   }
 );
+/**If string is empty will return the string equivalent of a space */
 const selectStepTestSampleData = createSelector(selectCurrentStep, (step) => {
   if (
     step &&
@@ -610,6 +611,7 @@ export const BuilderSelectors = {
   selectIsSchduleTrigger,
   selectCurrentStepPieceVersionAndName,
   selectCurrentFlowFolderName,
+  /**If string is empty will return the string equivalent of a space */
   selectStepTestSampleData,
   selectLastTestDate,
   selectNumberOfInvalidSteps,
