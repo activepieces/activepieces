@@ -7,18 +7,17 @@ import type { TextItem } from 'pdfjs-dist/types/src/display/api';
 export const nativeTextExtraction = createAction({
   name: 'native_text_extraction',
   description:
-    'Extract text from many a file types (pdf, docx, pptx, xlsx, odt, odp, ods)',
+    'Extract text from many file types (pdf, docx, pptx, xlsx, odt, odp, ods)',
   displayName: 'Native Extraction',
   props: {
     file: Property.File({
-      displayName: 'File',
-      description: 'The file to extract text from',
+      displayName: 'Source File',
       required: true,
     }),
     precisePdfBreakingLines: Property.Checkbox({
       displayName: 'Precise PDF Breaking Lines',
       description:
-        'The pdf breaking lines annalisis is expensive but should works for small files',
+        'Checking this option will analyze PDF breaking lines more accurately. This might slow down processing for large files, but it works well for smaller ones.',
       defaultValue: false,
       required: false,
     }),
