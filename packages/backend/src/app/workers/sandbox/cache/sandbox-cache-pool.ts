@@ -24,7 +24,7 @@ export const sandboxCachePool = {
                 deleteOldestNotInUseOrThrow()
             }
 
-            return createCachedSandbox({ key, type })
+            return createCachedSandbox({ key })
         })
 
         await cachedSandbox.init()
@@ -47,10 +47,9 @@ const getOrThrow = ({ key }: GetOrThrowParams): CachedSandbox => {
     return cachedSandbox
 }
 
-const createCachedSandbox = ({ key, type }: CreateCachedSandboxParams): CachedSandbox => {
+const createCachedSandbox = ({ key }: CreateCachedSandboxParams): CachedSandbox => {
     const newCachedSandBox = new CachedSandbox({
         key,
-        type,
     })
 
     cachedSandboxes.set(key, newCachedSandBox)
@@ -106,5 +105,4 @@ type GetOrThrowParams = {
 
 type CreateCachedSandboxParams = {
     key: string
-    type: SandBoxCacheType
 }

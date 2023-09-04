@@ -4,7 +4,6 @@ import { system } from '../../../helper/system/system'
 import { SystemProp } from '../../../helper/system/system-prop'
 import { CachedSandboxState } from './cached-sandbox-state'
 import { pieceManager } from '../../../flows/common/piece-installer'
-import { SandBoxCacheType } from '../provisioner/sandbox-cache-type'
 import { engineInstaller } from '../../engine/engine-installer'
 import { logger } from '../../../helper/logger'
 import { Mutex } from 'async-mutex'
@@ -16,15 +15,13 @@ const lock: Mutex = new Mutex()
 
 export class CachedSandbox {
     public readonly key: string
-    private _cacheType: SandBoxCacheType
     private _state = CachedSandboxState.CREATED
     private _activeSandboxCount = 0
     private _lastUsedAt = dayjs()
 
-    constructor({ key, type }: CtorParams) {
-        logger.debug({ key, type }, '[CachedSandbox#ctor]')
+    constructor({ key }: CtorParams) {
+        logger.debug({ key }, '[CachedSandbox#ctor]')
         this.key = key
-        this._cacheType = type
     }
 
     path(): string {
@@ -120,7 +117,6 @@ export class CachedSandbox {
 
 type CtorParams = {
     key: string
-    type: SandBoxCacheType
 }
 
 type Piece = {
