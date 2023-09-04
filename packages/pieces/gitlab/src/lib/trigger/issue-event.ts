@@ -95,10 +95,10 @@ const sampleData = {
 
 export const issuesEventTrigger = createTrigger({
   auth: gitlabAuth,
-  name: 'issues_event',
-  displayName: 'Issues Event',
+  name: 'project_issue_event',
+  displayName: 'New Project Issue Event',
   description:
-    'Triggers when a new issue is created or an existing issue is updated, closed, or reopened.',
+    'Triggers on project issue events when an issue is created or when an existing issue is updated, closed, or reopened.',
   props: {
     projectId: gitlabCommon.projectId(),
     actiontype: Property.StaticDropdown({
