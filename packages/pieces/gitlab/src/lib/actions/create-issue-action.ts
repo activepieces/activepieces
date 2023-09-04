@@ -11,12 +11,10 @@ export const createIssueAction = createAction({
     projectId: gitlabCommon.projectId(),
     title: Property.ShortText({
       displayName: 'Issue Title',
-      description: 'Title for the Issue',
       required: true,
     }),
     description: Property.LongText({
       displayName: 'Issue Description',
-      description: 'Description for the Issue',
       required: false,
     }),
   },
