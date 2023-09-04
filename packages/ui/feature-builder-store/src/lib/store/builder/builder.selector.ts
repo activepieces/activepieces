@@ -169,6 +169,9 @@ const selectStepTestSampleData = createSelector(selectCurrentStep, (step) => {
       step.type === TriggerType.PIECE) &&
     step.settings.inputUiInfo
   ) {
+    if (step.settings.inputUiInfo.currentSelectedData === '') {
+      return ' ';
+    }
     return step.settings.inputUiInfo.currentSelectedData;
   }
   return undefined;

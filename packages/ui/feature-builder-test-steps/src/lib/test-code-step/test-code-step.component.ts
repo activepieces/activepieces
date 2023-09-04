@@ -86,6 +86,7 @@ export class TestCodeStepComponent extends TestStepCoreComponent {
           take(1),
           tap((step) => {
             if (step && step.type === ActionType.CODE) {
+              console.log(JSON.stringify(result.output));
               const clone: CodeAction = {
                 ...step,
                 settings: {
@@ -95,6 +96,8 @@ export class TestCodeStepComponent extends TestStepCoreComponent {
                       ? result.output
                       : result.output === undefined
                       ? 'undefined'
+                      : result.output === ''
+                      ? ''
                       : JSON.stringify(result.output),
                     lastTestDate: new Date().toString(),
                   },
