@@ -9,15 +9,15 @@ import { logger } from '../../../helper/logger'
 import { Mutex } from 'async-mutex'
 import dayjs from 'dayjs'
 
-const CACHE_PATH = system.get(SystemProp.CACHE_PATH) ?? resolve('dist', 'cache')
-
-const lock: Mutex = new Mutex()
-
 export class CachedSandbox {
-    public readonly key: string
+    private static readonly CACHE_PATH = system.get(SystemProp.CACHE_PATH) ?? resolve('dist', 'cache')
+
+    private readonly lock = new Mutex()
     private _state = CachedSandboxState.CREATED
     private _activeSandboxCount = 0
     private _lastUsedAt = dayjs()
+
+    public readonly key: string
 
     constructor({ key }: CtorParams) {
         logger.debug({ key }, '[CachedSandbox#ctor]')
@@ -25,7 +25,7 @@ export class CachedSandbox {
     }
 
     path(): string {
-        return `${CACHE_PATH}/sandbox/${this.key}`
+        return `${CachedSandbox.CACHE_PATH}/sandbox/${this.key}`
     }
 
     lastUsedAt(): dayjs.Dayjs {
@@ -39,7 +39,7 @@ export class CachedSandbox {
     async init(): Promise<void> {
         logger.debug({ key: this.key, state: this._state, activeSandboxes: this._activeSandboxCount }, '[CachedSandbox#init]')
 
-        await lock.runExclusive(async (): Promise<void> => {
+        await this.lock.runExclusive(async (): Promise<void> => {
             if (this._state !== CachedSandboxState.CREATED) {
                 return
             }
@@ -53,7 +53,7 @@ export class CachedSandbox {
     async prepare({ pieces }: PrepareParams): Promise<void> {
         logger.debug({ key: this.key, state: this._state, activeSandboxes: this._activeSandboxCount }, '[CachedSandbox#prepare]')
 
-        await lock.runExclusive(async (): Promise<void> => {
+        await this.lock.runExclusive(async (): Promise<void> => {
             const notInitialized = this._state === CachedSandboxState.CREATED
             if (notInitialized) {
                 throw new Error(`[CachedSandbox#prepare] not initialized, Key=${this.key} state=${this._state}`)
@@ -83,7 +83,7 @@ export class CachedSandbox {
     async decrementActiveSandboxCount(): Promise<void> {
         logger.debug({ key: this.key, state: this._state, activeSandboxes: this._activeSandboxCount }, '[CachedSandbox#decrementActiveSandboxCount]')
 
-        await lock.runExclusive((): void => {
+        await this.lock.runExclusive((): void => {
             if (this._activeSandboxCount === 0) {
                 return
             }
