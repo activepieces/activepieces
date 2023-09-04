@@ -13,18 +13,24 @@ export const downloadFile = createAction({
       description: 'File ID comming from | New File -> id |',
       required: true,
     }),
-    mimeType: Property.ShortText({
-      displayName: 'MIME type',
-      description: 'MIME type comming from | New File -> mimeType |',
-      required: true,
-    }),
     fileName: Property.ShortText({
-      displayName: 'File name',
-      description: 'Indicate the destination file name',
+      displayName: 'Destination File name',
       required: false,
     }),
   },
   run: async ({ auth, propsValue, files }) => {
+    
+    let mimeType = (
+      await fetch(
+        `https://www.googleapis.com/drive/v3/files/${propsValue.fileId}?fields=mimeType`,
+        {
+          headers: {
+            Authorization: `Bearer ${auth.access_token}`,
+          },
+        }
+      ).then((res) => res.json())
+    )['mimeType'] as string;
+    
     const googledlCall = async (url: string) => {
       const download = await fetch(url, {
         headers: {
@@ -43,10 +49,13 @@ export const downloadFile = createAction({
             )
           )
         );
-      
-      const extention = '.' + extension(propsValue.mimeType)
-      const srcFileName = propsValue.fileName
-      const fileName = (srcFileName ? srcFileName.replace(new RegExp(extention + '$'), '') : propsValue.fileId) + extention;
+
+      const extention = '.' + extension(mimeType);
+      const srcFileName = propsValue.fileName;
+      const fileName =
+        (srcFileName
+          ? srcFileName.replace(new RegExp(extention + '$'), '')
+          : propsValue.fileId) + extention;
       return files.write({
         fileName,
         data: Buffer.from(await download.arrayBuffer()),
@@ -59,24 +68,24 @@ export const downloadFile = createAction({
         'application/vnd.google-apps.document',
         'application/vnd.google-apps.spreadsheet',
         'application/vnd.google-apps.presentation',
-      ].includes(propsValue.mimeType)
+      ].includes(mimeType)
     ) {
-      switch (propsValue.mimeType) {
+      switch (mimeType) {
         case 'application/vnd.google-apps.document':
-          propsValue.mimeType =
+          mimeType =
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
           break;
         case 'application/vnd.google-apps.spreadsheet':
-          propsValue.mimeType =
+          mimeType =
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
           break;
         case 'application/vnd.google-apps.presentation':
-          propsValue.mimeType =
+          mimeType =
             'application/vnd.openxmlformats-officedocument.presentationml.presentation';
           break;
       }
       return await googledlCall(
-        `https://www.googleapis.com/drive/v3/files/${propsValue.fileId}/export?mimeType=${propsValue.mimeType}`
+        `https://www.googleapis.com/drive/v3/files/${propsValue.fileId}/export?mimeType=${mimeType}`
       );
     } else {
       return await googledlCall(
