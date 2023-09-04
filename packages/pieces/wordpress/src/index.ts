@@ -40,7 +40,7 @@ export const wordpressAuth = PieceAuth.CustomAuth({
     })
   },
   validate: async ({ auth }) => {
-    const { username, password , website_url } = auth;
+    const { username, password, website_url } = auth;
     const connection = auth as PiecePropValueSchema<typeof wordpressAuth>;
     const websiteUrl = connection.website_url;
     if (!connection?.username || !connection?.password || !websiteUrl) {
@@ -49,20 +49,26 @@ export const wordpressAuth = PieceAuth.CustomAuth({
         error: 'please fill all the fields [username, password, website_url] ',
       }
     }
-  if (!wordpressCommon.urlExists(websiteUrl.trim())) {
-    return {
-      valid: false,
-      error: 'Incorrect website url',
+    if (!wordpressCommon.isBaseUrl(websiteUrl.trim())) {
+      return {
+        valid: false,
+        error: "Please ensure that the website is valid and does not contain any paths, for example, https://example-website.com.",
+      }
     }
-  }
+    if (!wordpressCommon.urlExists(websiteUrl.trim())) {
+      return {
+        valid: false,
+        error: 'Incorrect website url',
+      }
+    }
     try {
       const request: HttpRequest = {
         method: HttpMethod.GET,
         url: `${website_url}/wp-json/wp/v2/categories`,
         authentication: {
-            type: AuthenticationType.BASIC,
-            username: username,
-            password: password
+          type: AuthenticationType.BASIC,
+          username: username,
+          password: password
         },
       };
       await httpClient.sendRequest(request);
