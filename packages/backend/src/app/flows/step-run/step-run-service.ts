@@ -189,8 +189,7 @@ const executeBranch = async ({ step, flowVersion, projectId }: ExecuteParams<Bra
     }
 
     const sandbox = await sandboxProvisioner.provision({
-        type: SandBoxCacheType.FLOW,
-        flowVersionId: flowVersion.id,
+        type: SandBoxCacheType.NONE,
     })
 
     try {
