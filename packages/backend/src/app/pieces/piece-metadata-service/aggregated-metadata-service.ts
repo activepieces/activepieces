@@ -3,7 +3,7 @@ import { PieceMetadata, PieceMetadataSummary } from '@activepieces/pieces-framew
 import { AllPiecesStats } from './piece-stats-service'
 import { CloudPieceMetadataService } from './cloud-piece-metadata-service'
 import { DbPieceMetadataService } from './db-piece-metadata-service'
-import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
+import { ActivepiecesError, EXACT_VERSION_PATTERN, ErrorCode } from '@activepieces/shared'
 
 const cloudPieceProvider = CloudPieceMetadataService()
 const dbPieceProvider = DbPieceMetadataService()
@@ -52,8 +52,20 @@ export const AggregatedPieceMetadataService = (): PieceMetadataService => {
             throw new Error('operation not supported')
         },
 
-        async getExactPieceVersion(params): Promise<string> {
-            return await dbPieceProvider.getExactPieceVersion(params)
+        async getExactPieceVersion({ name, version, projectId }): Promise<string> {
+            const isExactVersion = EXACT_VERSION_PATTERN.test(version)
+
+            if (isExactVersion) {
+                return version
+            }
+
+            const pieceMetadata = await this.get({
+                projectId,
+                name,
+                version,
+            })
+
+            return pieceMetadata.version
         },
     }
 }
