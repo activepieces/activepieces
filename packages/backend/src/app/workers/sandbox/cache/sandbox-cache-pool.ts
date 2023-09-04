@@ -13,7 +13,7 @@ export const sandboxCachePool = {
     async findOrCreate({ type, key }: FindOrCreateParams): Promise<CachedSandbox> {
         logger.debug({ type, key }, '[SandboxCachePool#get]')
 
-        const cachedSandbox = await executeWithLock((): CachedSandbox => {
+        const cachedSandbox = await lock.runExclusive((): CachedSandbox => {
             const cachedSandbox = cachedSandboxes.get(key)
 
             if (cachedSandbox) {
@@ -33,7 +33,7 @@ export const sandboxCachePool = {
 
     async release({ key }: ReleaseParams): Promise<void> {
         const cachedSandbox = getOrThrow({ key })
-        cachedSandbox.decrementActiveSandboxCount()
+        await cachedSandbox.decrementActiveSandboxCount()
     },
 }
 
@@ -77,17 +77,6 @@ const deleteOldestNotInUseOrThrow = (): void => {
     }
 
     cachedSandboxes.delete(oldestNotInUseCachedSandbox.key)
-}
-
-const executeWithLock = async <T>(methodToExecute: () => T): Promise<T> => {
-    const releaseLock = await lock.acquire()
-
-    try {
-        return methodToExecute()
-    }
-    finally {
-        releaseLock()
-    }
 }
 
 type FindOrCreateParams = {
