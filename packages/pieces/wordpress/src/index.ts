@@ -72,7 +72,7 @@ export const wordpressAuth = PieceAuth.CustomAuth({
     } catch (e) {
       return {
         valid: false,
-        error: 'Invalid credentials',
+        error: "Credentials are invalid. Please verify that the basic plugin is installed and that your credentials are correct.",
       }
     }
   }
