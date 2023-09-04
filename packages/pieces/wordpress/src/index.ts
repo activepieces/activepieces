@@ -1,11 +1,14 @@
 import {
   PieceAuth,
+  PiecePropValueSchema,
   Property,
   createPiece
 } from '@activepieces/pieces-framework';
 import { createWordpressPost } from './lib/actions/create-post.action';
 import { wordpressNewPost } from './lib/trigger/new-post.trigger';
 import { createWordpressPage } from './lib/actions/create-page.action';
+import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common';
+import { wordpressCommon } from './lib/common';
 
 const markdownPropertyDescription = `
 ** Enable Basic Authentication: **
@@ -35,6 +38,43 @@ export const wordpressAuth = PieceAuth.CustomAuth({
       description:
         'URL of the wordpress url i.e https://www.example-website.com'
     })
+  },
+  validate: async ({ auth }) => {
+    const { username, password , website_url } = auth;
+    const connection = auth as PiecePropValueSchema<typeof wordpressAuth>;
+    const websiteUrl = connection.website_url;
+    if (!connection?.username || !connection?.password || !websiteUrl) {
+      return {
+        valid: false,
+        error: 'please fill all the fields [username, password, website_url] ',
+      }
+    }
+  if (!wordpressCommon.urlExists(websiteUrl.trim())) {
+    return {
+      valid: false,
+      error: 'Incorrect website url',
+    }
+  }
+    try {
+      const request: HttpRequest = {
+        method: HttpMethod.GET,
+        url: `${website_url}/wp-json/wp/v2/categories`,
+        authentication: {
+            type: AuthenticationType.BASIC,
+            username: username,
+            password: password
+        },
+      };
+      await httpClient.sendRequest(request);
+      return {
+        valid: true,
+      }
+    } catch (e) {
+      return {
+        valid: false,
+        error: "Credentials are invalid. Please verify that the basic plugin is installed and that your credentials are correct.",
+      }
+    }
   }
 });
 
