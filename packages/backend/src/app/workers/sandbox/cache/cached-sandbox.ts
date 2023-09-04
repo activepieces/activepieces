@@ -1,4 +1,5 @@
 import { mkdir, rm } from 'node:fs/promises'
+import { resolve } from 'node:path'
 import { system } from '../../../helper/system/system'
 import { SystemProp } from '../../../helper/system/system-prop'
 import { CachedSandboxState } from './cached-sandbox-state'
@@ -8,9 +9,8 @@ import { engineInstaller } from '../../engine/engine-installer'
 import { logger } from '../../../helper/logger'
 import { Mutex } from 'async-mutex'
 import dayjs from 'dayjs'
-import path from 'path'
 
-const CACHE_PATH = system.get(SystemProp.CACHE_PATH) ?? path.resolve(__dirname, 'dist', 'cache')
+const CACHE_PATH = system.get(SystemProp.CACHE_PATH) ?? resolve('dist', 'cache')
 
 const lock: Mutex = new Mutex()
 
