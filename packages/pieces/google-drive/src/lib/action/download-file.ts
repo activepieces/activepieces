@@ -1,6 +1,6 @@
 import { googleDriveAuth } from '../..';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { extension, lookup } from 'mime-types';
+import { extension } from 'mime-types';
 
 export const downloadFile = createAction({
   auth: googleDriveAuth,
