@@ -30,10 +30,11 @@ export const userService = {
             return null
         }
         return {
-            id: user.id,
             email: user.email,
             firstName: user.firstName,
             lastName: user.lastName,
+            imageUrl: user.imageUrl,
+            title: user.title,
         }
     },
     async getOneByEmail(query: GetOneQuery): Promise<User | null> {

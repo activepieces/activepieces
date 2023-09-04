@@ -7,8 +7,7 @@ import { commonProperties } from './database-connection'
 import { AddAppConnectionTypeToTopLevel1691706020626 } from './migration/sqllite3/1691706020626-add-app-connection-type-to-top-level'
 import { AddTagsToRunSqlite31692056190942 } from './migration/sqllite3/1692056190942-AddTagsToRunSqlite3'
 import { AddStepFileSqlite31692958076906 } from './migration/sqllite3/1692958076906-AddStepFileSqlite3'
-import { AddImageUrlAndTitleToUser1693774053027 } from './migration/1693774053027-AddImageUrlAndTitleToUser'
-
+import { AddImageUrlAndTitleToUser1693774053027 } from './migration/sqllite3/1693774053027-AddImageUrlAndTitleToUser'
 
 function getSQLiteFilePath() {
     const homeDirectory = os.homedir()

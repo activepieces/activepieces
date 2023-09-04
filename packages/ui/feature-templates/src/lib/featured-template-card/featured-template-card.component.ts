@@ -15,7 +15,6 @@ import {
   FolderId,
   TelemetryEventName,
   TriggerType,
-  UserStatus,
 } from '@activepieces/shared';
 import { FlowService, TelemetryService } from '@activepieces/ui/common';
 import { Observable, switchMap, tap } from 'rxjs';
@@ -39,16 +38,9 @@ export class FeaturedTemplateCardComponent implements OnInit {
     imageUrl: 'https://www.activepieces.com/features/feat_2.svg',
     userId: '1234',
     user: {
-      created: '2023-09-03T21:01:41.919Z',
       email: 'Ash@activepieces.com',
       firstName: 'Ash',
       lastName: 'Samhouri',
-      id: '1234',
-      newsLetter: false,
-      password: '',
-      status: UserStatus.VERIFIED,
-      trackEvents: true,
-      updated: '',
       imageUrl:
         'https://media.licdn.com/dms/image/D4D03AQGpekeVaUKatg/profile-displayphoto-shrink_200_200/0/1672226756859?e=1699488000&v=beta&t=lDlntCHC9FLArS__OVLxXfyQfes9FoTkQ9tiFWQe3gM',
       title: 'Co-founder and CEO',
