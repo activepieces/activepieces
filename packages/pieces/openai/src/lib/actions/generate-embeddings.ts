@@ -79,12 +79,12 @@ const splitBychar = (
 export const createEmbeddingsFromText = createAction({
   auth: openaiAuth,
   name: 'create_embeddings',
-  displayName: 'Generate embeddings',
-  description: 'Chuck a text and generate embeddings for it',
+  displayName: 'Generate Embeddings from File',
+  description: 'Chuck a text file and generate embeddings for it',
   props: {
     textInput: Property.File({
-      displayName: 'Text Input File',
-      description: 'Enter the text input you want to tarsform to embeddings',
+      displayName: 'Text File',
+      description: 'The text file you want to transform into embeddings.',
       required: true,
     }),
     title: Property.ShortText({
@@ -245,7 +245,6 @@ export const createEmbeddingsFromText = createAction({
 
     enc.free();
 
-    console.log('documents: ', textSplited);
     const response = await openai.createEmbedding({
       model: model,
       input: textSplited,
