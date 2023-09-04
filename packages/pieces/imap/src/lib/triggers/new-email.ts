@@ -1,4 +1,4 @@
-import { PiecePropValueSchema, createTrigger } from '@activepieces/pieces-framework';
+import { FilesService, PiecePropValueSchema, createTrigger } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from "@activepieces/pieces-framework";
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 
@@ -6,6 +6,7 @@ import { imapCommon } from '../common';
 
 import dayjs from 'dayjs';
 import { imapAuth } from '../..';
+import { Attachment, ParsedMail } from 'mailparser';
 
 const polling: Polling<PiecePropValueSchema<typeof imapAuth>, { subject: string | undefined, to: string | undefined, from: string | undefined }> = {
     strategy: DedupeStrategy.TIMEBASED,
@@ -29,13 +30,23 @@ const polling: Polling<PiecePropValueSchema<typeof imapAuth>, { subject: string 
         }
 
         const currentValues = await imapCommon.fetchEmails(imapConfig, search) ?? [];
-        const items = currentValues.map((item: { date: string }) => ({
+        const items = currentValues.map((item) => ({
             epochMilliSeconds: dayjs(item.date).valueOf(),
             data: item
         }));
         return items;
     }
 };
+
+async function convertAttachment(attachments: Attachment[], files: FilesService) {
+    const promises = attachments.map(async (attachment) => {
+        return files.write({
+            fileName: attachment.filename ?? `attachment-${Date.now()}`,
+            data: attachment.content,
+        });
+    });
+    return Promise.all(promises);
+}
 
 export const newEmail = createTrigger({
     auth: imapAuth,
@@ -63,20 +74,36 @@ export const newEmail = createTrigger({
         })
     },
     run: async (context) => {
-        return await pollingHelper.poll(polling, {
+        const items = await pollingHelper.poll(polling, {
             auth: context.auth,
             store: context.store,
             propsValue: context.propsValue,
         });
+        const convertedItems = await Promise.all(items.map(async (item) => {
+            const castedItem = item as ParsedMail;
+            return {
+                ...castedItem,
+                attachments: await convertAttachment(castedItem.attachments, context.files)
+            }
+        }
+        ));
+        return convertedItems;
     },
     test: async (context) => {
-        return await pollingHelper.test(polling, {
+        const items = await pollingHelper.test(polling, {
             auth: context.auth,
             store: context.store,
             propsValue: context.propsValue,
         });
+        const convertedItems = await Promise.all(items.map(async (item) => {
+            const castedItem = item as ParsedMail;
+            return {
+                ...castedItem,
+                attachments: await convertAttachment(castedItem.attachments, context.files)
+            }
+        }));
+        return convertedItems;
     },
-
     sampleData: {
         html: 'My email body',
         text: 'My email body',

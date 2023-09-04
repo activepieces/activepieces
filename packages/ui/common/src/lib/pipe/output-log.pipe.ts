@@ -1,10 +1,8 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { SafeHtml } from '@angular/platform-browser';
 
 @Pipe({ name: 'outputLog', pure: true })
 export class OutputLogPipe implements PipeTransform {
-  constructor(private sanitizer: DomSanitizer) {}
-
   transform(value: any, truncate = true): SafeHtml {
     let result = '';
     if (typeof value === 'object') {
@@ -21,7 +19,7 @@ export class OutputLogPipe implements PipeTransform {
           : result;
     }
     const escaped = this.escapeHtmlTags(result);
-    return this.sanitizer.bypassSecurityTrustHtml(escaped);
+    return escaped;
   }
 
   escapeHtmlTags(str: string) {
