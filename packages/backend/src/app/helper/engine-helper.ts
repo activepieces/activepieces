@@ -188,7 +188,7 @@ export const engineHelper = {
         const sandbox = await sandboxProvisioner.provision({
             type: SandBoxCacheType.PIECE,
             pieceName,
-            pieceVersion,
+            pieceVersion: exactPieceVersion,
             pieces: [
                 {
                     name: pieceName,
@@ -242,7 +242,7 @@ export const engineHelper = {
         const sandbox = await sandboxProvisioner.provision({
             type: SandBoxCacheType.PIECE,
             pieceName,
-            pieceVersion,
+            pieceVersion: exactPieceVersion,
             pieces: [
                 {
                     name: pieceName,
@@ -360,7 +360,7 @@ export const engineHelper = {
         const sandbox = await sandboxProvisioner.provision({
             type: SandBoxCacheType.PIECE,
             pieceName,
-            pieceVersion,
+            pieceVersion: exactPieceVersion,
             pieces: [
                 {
                     name: pieceName,
@@ -404,7 +404,7 @@ export const engineHelper = {
         const sandbox = await sandboxProvisioner.provision({
             type: SandBoxCacheType.PIECE,
             pieceName,
-            pieceVersion,
+            pieceVersion: exactPieceVersion,
             pieces: [
                 {
                     name: pieceName,
