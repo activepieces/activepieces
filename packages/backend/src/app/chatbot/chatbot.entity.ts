@@ -19,6 +19,9 @@ export const ChatbotEntity = new EntitySchema<ChatbotSchema>({
         projectId: {
             type: String,
         },
+        connectionId: {
+            type: String,
+        },
         dataSources: {
             type: JSONB_COLUMN_TYPE,
         },

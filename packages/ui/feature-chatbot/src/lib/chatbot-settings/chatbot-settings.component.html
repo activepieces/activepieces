@@ -25,9 +25,9 @@
           <ng-container *ngIf="openAiPiece$ | async as openAiPiece">
             <div class="ap-absolute ap-top-[10px] ap-right-[30px] ap-z-50">
               <app-add-edit-connection-button class="edit-selected-auth "
-                *ngIf="formGroup.controls.auth.value && openAiPiece.auth" btnSize="extraSmall"
+                *ngIf="formGroup.controls.connectionId.value && openAiPiece.auth" btnSize="extraSmall"
                 [isEditConnectionButton]="true" [authProperty]="openAiPiece.auth" [pieceName]="pieceName"
-                [pieceVersion]="pieceVersion" [selectedConnectionInterpolatedString]="formGroup.controls.auth.value"
+                [pieceVersion]="pieceVersion" [selectedConnectionInterpolatedString]="formGroup.controls.connectionId.value"
                 (connectionPropertyValueChanged)="connectionValueChanged($event)">
                 Edit
               </app-add-edit-connection-button>
@@ -37,7 +37,7 @@
           <mat-form-field class="ap-w-full " appearance="outline" #dropdown #dropdownUiContainer="hoverTrackerDirective"
             apTrackHover>
             <mat-label> Open AI Connection </mat-label>
-            <mat-select [formControl]="formGroup.controls.auth" [compareWith]="dropdownCompareWithFunction">
+            <mat-select [formControl]="formGroup.controls.connectionId" [compareWith]="dropdownCompareWithFunction">
               <mat-option (click)="addConnectionBtn.buttonClicked()"
                 [style.display]="(connections$ | async)?.length === 0 ? 'none': 'flex'">
                 <div class="ap-flex">
@@ -60,21 +60,21 @@
                   <app-add-edit-connection-button (click)="$event.stopPropagation()" class="edit-selected-auth ap-z-40"
                     btnSize="small" btnSize="extraSmall" [isEditConnectionButton]="false"
                     [authProperty]="(openAiPiece$ | async)?.auth!" [pieceName]="pieceName" [pieceVersion]="pieceVersion"
-                    [selectedConnectionInterpolatedString]="formGroup.controls.auth.value"
+                    [selectedConnectionInterpolatedString]="formGroup.controls.connectionId.value"
                     (connectionPropertyValueChanged)="connectionValueChanged($event)">
                     + Add
                   </app-add-edit-connection-button>
                 </div>
               </mat-option>
             </mat-select>
-            <mat-error *ngIf="formGroup.controls.auth.invalid">
+            <mat-error *ngIf="formGroup.controls.connectionId.invalid">
               Connection is required
             </mat-error>
           </mat-form-field>
           <app-add-edit-connection-button class="ap-hidden" btnSize="medium" [isEditConnectionButton]="false"
             #addConnectionBtn [isEditConnectionButton]="false" [authProperty]="(openAiPiece$ | async)?.auth!"
             [pieceName]="pieceName" [pieceVersion]="pieceVersion"
-            [selectedConnectionInterpolatedString]="formGroup.controls.auth.value"
+            [selectedConnectionInterpolatedString]="formGroup.controls.connectionId.value"
             (connectionPropertyValueChanged)="connectionValueChanged($event)">
             + New Connection
           </app-add-edit-connection-button>
@@ -111,10 +111,6 @@
       <ap-button btnColor="primary" btnSize="medium" btnStyle="flat" [loading]="saving"
         (buttonClicked)="submit()">Save</ap-button>
     </div>
-  </div>
-  <div
-    class="ap-flex ap-items-center ap-justify-center ap-bg-[#F0F1F3] ap-typography-headline-5 ap-h-full ap-grow ap-text-center">
-    We will be adding preview soon
   </div>
 </div>
 

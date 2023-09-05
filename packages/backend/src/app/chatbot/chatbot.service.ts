@@ -89,13 +89,13 @@ export const chatbotService = {
         })
         const connection = await appConnectionService.getOneOrThrow({
             projectId,
-            name: chatbot.settings.auth,
+            id: chatbot.connectionId,
         });
         if(connection.type != AppConnectionType.SECRET_TEXT){
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
-                    message: `Connection with id ${chatbot.settings.auth} not found`,
+                    message: `Connection with id ${chatbot.connectionId} not found`,
                 },
             })
         }

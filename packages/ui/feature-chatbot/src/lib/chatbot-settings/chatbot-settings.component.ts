@@ -32,7 +32,7 @@ export class ChatbotSettingsComponent {
   formGroup: FormGroup<{
     displayName: FormControl<string>;
     prompt: FormControl<string>;
-    auth: FormControl<string>;
+    connectionId: FormControl<string>;
     sources: FormControl<DataSource[]>;
   }>;
   autoSave$: Observable<void> | undefined;
@@ -67,7 +67,7 @@ export class ChatbotSettingsComponent {
         validators: [Validators.required],
         nonNullable: true,
       }),
-      auth: new FormControl('', {
+      connectionId: new FormControl('', {
         validators: [Validators.required],
         nonNullable: true,
       }),
@@ -82,7 +82,7 @@ export class ChatbotSettingsComponent {
           connections: AppConnectionWithoutSensitiveData[];
           chatbot: Chatbot;
         };
-        this.formGroup.controls.auth.setValue(routeData.chatbot.settings.auth);
+        this.formGroup.controls.connectionId.setValue(routeData.chatbot.connectionId);
         this.formGroup.controls.prompt.setValue(
           routeData.chatbot.settings.prompt
         );
@@ -108,7 +108,7 @@ export class ChatbotSettingsComponent {
     propertyKey: string;
     value: `{{connections['${string}']}}`;
   }) {
-    this.formGroup.controls.auth.setValue(event.value);
+    this.formGroup.controls.connectionId.setValue(event.value);
   }
   submit() {
     if (this.formGroup.valid && !this.saving) {
@@ -118,7 +118,7 @@ export class ChatbotSettingsComponent {
           displayName: this.formGroup.controls['displayName'].value,
           settings: {
             prompt: this.formGroup.controls['prompt'].value,
-            auth: this.formGroup.controls['auth'].value,
+            auth: this.formGroup.controls['connectionId'].value,
           },
         })
         .pipe(
