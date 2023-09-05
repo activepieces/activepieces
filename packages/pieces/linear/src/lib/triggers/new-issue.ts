@@ -2,7 +2,6 @@ import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { linearAuth } from '../..';
 import { makeClient } from '../common/client';
 import { props } from '../common/props';
-// import { nanoid } from 'nanoid';
 
 export const linearNewIssue = createTrigger({
     auth: linearAuth,
@@ -64,9 +63,9 @@ export const linearNewIssue = createTrigger({
     },
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context) {
-        // const randomTag = `ap_new_issue_${nanoid()}`;
         const client = makeClient(context.auth as string);
         const webhook = await client.createWebhook({
+            label: 'ActivePieces New Issue',
             url: context.webhookUrl,
             teamId: context.propsValue['team_id'],
             resourceTypes: ['Issue'],
