@@ -3,6 +3,7 @@ import { Actions, concatLatestFrom, createEffect, ofType } from '@ngrx/effects';
 import {
   catchError,
   concatMap,
+  debounceTime,
   delay,
   EMPTY,
   Observable,
@@ -296,10 +297,13 @@ export class FlowsEffects {
       })
     );
   });
-  applyUpdateOperationS = createEffect(
+  private readonly SAVE_DEBOUNCE_TIME = 350;
+
+  applyUpdateOperation$ = createEffect(
     () => {
       return this.actions$.pipe(
         ofType(FlowsActions.applyUpdateOperation),
+        debounceTime(this.SAVE_DEBOUNCE_TIME),
         concatMap((action) => {
           return this.processFlowUpdate({
             operation: action.operation,
