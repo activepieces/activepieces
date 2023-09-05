@@ -118,12 +118,11 @@ export const flowRunService = {
         },
     ): Promise<FlowRun> {
         await flowRunRepo.update(flowRunId, {
-            logsFileId,
+            ...spreadIfDefined('logsFileId', logsFileId),
             status,
             tasks,
             tags,
             finishTime: new Date().toISOString(),
-            pauseMetadata: null,
         })
         const flowRun = (await this.getOne({ id: flowRunId, projectId: undefined }))!
         flowRunSideEffects.finish({ flowRun })
