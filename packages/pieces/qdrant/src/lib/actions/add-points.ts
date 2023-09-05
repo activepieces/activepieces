@@ -104,7 +104,7 @@ export const addPointsToCollection = createAction({
       }
       points.push({
         id: autoEmbeddingsIds ? randomUUID() : embeddingsIds[i],
-        localPayload,
+        payload: localPayload,
         vector: Array.from(embeddings[i]),
       });
     }
