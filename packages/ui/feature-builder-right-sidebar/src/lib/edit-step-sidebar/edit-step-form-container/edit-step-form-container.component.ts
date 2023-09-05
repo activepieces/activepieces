@@ -134,7 +134,6 @@ export class EditStepFormContainerComponent {
             }),
             debounceTime(350),
             tap((res) => {
-              console.log(res.step?.displayName);
               if (
                 this._selectedStep.type === TriggerType.PIECE ||
                 this._selectedStep.type === TriggerType.WEBHOOK
