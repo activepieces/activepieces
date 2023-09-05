@@ -22,7 +22,7 @@ export const sessionCommon = {
             }
             const bookings = (await httpClient.sendRequest({
                 method: HttpMethod.GET,
-                url: "https://api.app.sessions.us/api/bookings",
+                url: "https://api.app.sessions.us/api/booking-pages",
                 headers: {
                     "accept":"application/json",
                     "x-api-key": `${auth}`
