@@ -46,6 +46,15 @@ export class LinearClientWrapper {
   async createComment(input: LinearDocument.CommentCreateInput) {
     return this.client.createComment(input);
   }
+  async createWebhook(input: LinearDocument.WebhookCreateInput) {
+    return this.client.createWebhook(input);
+  }
+  async listWebhooks(variables: LinearDocument.WebhooksQueryVariables = {}) {
+    return this.client.webhooks(variables);
+  }
+  async deleteWebhook(webhookId: string) {
+    return this.client.deleteWebhook(webhookId);
+  }
 }
 
 export function makeClient(apiKey: string): LinearClientWrapper {
