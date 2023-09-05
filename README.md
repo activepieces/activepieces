@@ -188,6 +188,7 @@ We welcome contributions big or small and in different directions. The best way 
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/landonmoir"><img src="https://avatars.githubusercontent.com/u/29764668?v=4?s=100" width="100px;" alt="Landon Moir"/><br /><sub><b>Landon Moir</b></sub></a><br /><a href="#plugin-landonmoir" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://lightspeed-it.nl/"><img src="https://avatars.githubusercontent.com/u/22002313?v=4?s=100" width="100px;" alt="Diego Nijboer"/><br /><sub><b>Diego Nijboer</b></sub></a><br /><a href="#plugin-lldiegon" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>
