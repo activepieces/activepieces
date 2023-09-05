@@ -13,12 +13,10 @@ export const linearUpdateIssue = createAction({
     issue_id: props.issue_id(),
     title: Property.ShortText({
       displayName: 'Title',
-      description: 'Title of the Issue',
       required: false,
     }),
     description: Property.LongText({
       displayName: 'Description',
-      description: 'Description of the issue',
       required: false,
     }),
     state_id: props.status_id(),

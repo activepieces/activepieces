@@ -14,32 +14,26 @@ export const linearUpdateProject = createAction({
         project_id: props.project_id(),
         name: Property.ShortText({
             displayName: 'Project Name',
-            description: 'The name of the new project',
             required: true,
         }),
         description: Property.LongText({
             displayName: 'Description',
-            description: 'The description of the new project',
             required: false,
         }),
         icon: Property.ShortText({
             displayName: 'Icon',
-            description: 'The icon for the new project',
             required: false,
         }),
         color: Property.ShortText({
             displayName: 'Color',
-            description: 'The color for the new project',
             required: false,
         }),
         startDate: Property.DateTime({
             displayName: 'Start Date',
-            description: 'The start date for the new project',
             required: false,
         }),
         targetDate: Property.DateTime({
             displayName: 'Target Date',
-            description: 'The target date for the new project',
             required: false,
         }),
         
