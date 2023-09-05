@@ -20,11 +20,10 @@
         class="ap-left-[0px] ap-bottom-[0px] ap-bg-white ap-body-2 !ap-text-description ap-w-full ap-px-4 ap-py-1 ap-z-40 ap-flex "
         [class.ap-absolute]="!isOverflown(editStepSection)">
         <a href="https://activepieces.com/docs/developers/piece-reference/piece-versioning" target="_blank"
-          rel="noreferrer noopener" class="no-link-styling ap-flex ap-items-center ap-gap-2 !ap-cursor-pointer "
+          rel="noreferrer noopener" class="no-link-styling !ap-flex !ap-items-center !ap-gap-2 !ap-cursor-pointer "
           [matTooltip]="result.tooltipText">
-          v{{result.version}} <div *ngIf="!result.latest"
-            class="ap-rounded-full ap-border ap-border-warn ap-bg-warn ap-h-[8px] ap-w-[8px]">
-          </div>
+          <div *ngIf="!result.latest" class="ap-rounded-full ap-border ap-border-warn ap-bg-warn ap-h-[8px] ap-w-[8px]">
+          </div> v{{result.version}}
         </a>
       </div>
     </div>

@@ -26,6 +26,11 @@ export const telegramSendMessageAction = createAction({
             displayName: 'Chat Id',
             required: true,
         }),
+        message_thread_id: Property.ShortText({
+            displayName: 'Message Thread Id',
+            description: 'Unique identifer for the target message thread of the forums; for forums supergroups only',
+            required: false,
+        }),
         message: Property.LongText({
             displayName: 'Message',
             description: 'The message to be sent',
@@ -39,6 +44,7 @@ export const telegramSendMessageAction = createAction({
             body: {
                 chat_id: ctx.propsValue['chat_id'],
                 text: ctx.propsValue['message'],
+                message_thread_id: ctx.propsValue['message_thread_id'] ?? undefined,
             },
         });
     },
