@@ -331,7 +331,6 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
     const isSaving = await firstValueFrom(
       this.store.select(BuilderSelectors.selectIsSaving).pipe(take(1))
     );
-    debugger;
     if (isSaving) {
       event.preventDefault();
       event.returnValue = false;
