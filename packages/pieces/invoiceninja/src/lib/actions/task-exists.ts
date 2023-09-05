@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { invoiceninjaAuth } from '../..';
-
+// 05/09/23 - returns 1 or 0 instead of true or false as was having issues
 export const existsTask = createAction({
   auth: invoiceninjaAuth,
   name: 'exists_task',
@@ -40,7 +40,7 @@ export const existsTask = createAction({
       const response = await httpClient.sendRequest(httprequestdata);
       // meta data only present if ticket exists. had issues testing true and false on
       // branch piece so switched to 1 and 0 respectively instead to see if that works
-      // better
+      // better.
       if (response.body.meta.pagination.total > 0) {
         return 1;
       } else {

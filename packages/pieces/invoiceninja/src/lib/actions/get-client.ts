@@ -1,7 +1,7 @@
 import { createAction, Property, Validators } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { invoiceninjaAuth } from "../..";
-
+// 05/09/23 - added validators
 export const getClient = createAction({
     auth: invoiceninjaAuth,
         name: 'getclient_task',
