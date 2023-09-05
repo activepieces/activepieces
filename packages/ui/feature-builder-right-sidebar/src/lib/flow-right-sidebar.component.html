@@ -22,7 +22,7 @@
         <a href="https://activepieces.com/docs/developers/piece-reference/piece-versioning" target="_blank"
           rel="noreferrer noopener" class="no-link-styling !ap-flex !ap-items-center !ap-gap-2 !ap-cursor-pointer "
           [matTooltip]="result.tooltipText">
-          <div class="ap-rounded-full ap-border ap-border-warn ap-bg-warn ap-h-[8px] ap-w-[8px]">
+          <div *ngIf="!result.latest" class="ap-rounded-full ap-border ap-border-warn ap-bg-warn ap-h-[8px] ap-w-[8px]">
           </div> v{{result.version}}
         </a>
       </div>
