@@ -4,25 +4,20 @@ import {
   BehaviorSubject,
   Observable,
   debounceTime,
-  map,
   shareReplay,
   startWith,
   switchMap,
-  take,
   tap,
 } from 'rxjs';
 import { FlowTemplate, FolderId } from '@activepieces/shared';
 
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import {
-  TemplatesService,
-  isThereAnyNewFeaturedTemplatesResolverKey,
-} from '@activepieces/ui/common';
-import { ActivatedRoute } from '@angular/router';
+import { TemplatesService } from '@activepieces/ui/common';
 
 export interface TemplateDialogData {
   insideBuilder: boolean;
   folderId$?: Observable<FolderId | undefined>;
+  isThereNewFeaturedTemplates$: Observable<boolean>;
 }
 
 @Component({
@@ -56,14 +51,9 @@ export class TemplatesDialogComponent {
   constructor(
     private templatesService: TemplatesService,
     private dialogRef: MatDialogRef<TemplatesDialogComponent>,
-    private actRoute: ActivatedRoute,
     @Inject(MAT_DIALOG_DATA)
     public data?: TemplateDialogData
   ) {
-    this.isThereNewFeaturedTemplates$ = this.actRoute.data.pipe(
-      take(1),
-      map((val) => val[isThereAnyNewFeaturedTemplatesResolverKey])
-    );
     this.templates$ = this.dialogForm.valueChanges.pipe(
       startWith(() => {
         return {
