@@ -57,4 +57,12 @@ export class TemplatesService {
       `https://activepieces-cdn.fra1.cdn.digitaloceanspaces.com/templates/${templateId}.json`
     );
   }
+
+  getIsThereNewFeaturedTemplates() {
+    return this.flagsService.getTemplatesSourceUrl().pipe(
+      switchMap((url) => {
+        return this.http.get<boolean>(`${url}/is-there-new-featured-templates`);
+      })
+    );
+  }
 }

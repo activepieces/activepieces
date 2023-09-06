@@ -38,6 +38,7 @@ export class FeaturedTemplateCardComponent implements OnInit {
     imageUrl: 'https://www.activepieces.com/features/feat_2.svg',
     userId: '1234',
     user: {
+      id: '',
       email: 'Ash@activepieces.com',
       firstName: 'Ash',
       lastName: 'Samhouri',

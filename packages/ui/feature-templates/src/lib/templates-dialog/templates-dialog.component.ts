@@ -12,7 +12,11 @@ import {
 import { FlowTemplate, FolderId } from '@activepieces/shared';
 
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { TemplatesService } from '@activepieces/ui/common';
+import {
+  TemplatesService,
+  isThereAnyNewFeaturedTemplatesResolverKey,
+} from '@activepieces/ui/common';
+import { ActivatedRoute } from '@angular/router';
 
 export interface TemplateDialogData {
   insideBuilder: boolean;
@@ -46,12 +50,16 @@ export class TemplatesDialogComponent {
     'Marketing Automation',
     'Analysis',
   ];
+  isThereNewFeaturedTemplates: boolean;
   constructor(
     private templatesService: TemplatesService,
     private dialogRef: MatDialogRef<TemplatesDialogComponent>,
+    private actRoute: ActivatedRoute,
     @Inject(MAT_DIALOG_DATA)
     public data?: TemplateDialogData
   ) {
+    this.isThereNewFeaturedTemplates =
+      this.actRoute.snapshot.data[isThereAnyNewFeaturedTemplatesResolverKey];
     this.templates$ = this.dialogForm.valueChanges.pipe(
       startWith(() => {
         return {
