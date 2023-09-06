@@ -64,21 +64,20 @@ export const notionCommon = {
           const { properties } = await notion.databases.retrieve({
             database_id: database_id as unknown as string,
           });
-          //   Object.keys(database.properties).forEach((property:DatabaseProperty) => {
-          //     if (property.type )
-          //   });
-          //
+
           for (var key in properties) {
             if (properties.hasOwnProperty(key)) {
               var property = properties[key];
               if (
-                ![
+                [
                   'rollup',
+                  'unique_id',
+                  'url',
                   'relation',
                   'created_by',
                   'created_time',
                   'last_edited_by',
-                  'last_edited_time ',
+                  'last_edited_time',
                 ].includes(property.type)
               ) {
                 continue;
@@ -100,8 +99,25 @@ export const notionCommon = {
                     options: options ?? [],
                   },
                 });
+                // } else if (property.type === 'people') {
+                //   const { results } = await notion.users.list({ page_size: 100 });
+                //   console.log('PEOPLE');
+                //   console.log(res);
               } else if (property.type === 'multi_select') {
                 const options = property.multi_select.options.map(
+                  (option: { id: string; name: string }) => ({
+                    value: option.id,
+                    label: option.name,
+                  })
+                );
+                fields[property.id] = NotionFieldMapping[property.type]({
+                  ...params,
+                  options: {
+                    options: options ?? [],
+                  },
+                });
+              } else if (property.type === 'status') {
+                const options = property.status.options.map(
                   (option: { id: string; name: string }) => ({
                     value: option.id,
                     label: option.name,

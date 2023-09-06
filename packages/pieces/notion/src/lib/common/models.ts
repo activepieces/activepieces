@@ -348,7 +348,7 @@ export interface NotionDatabase {
       };
 }
 
-export const NotionFieldMapping = {
+export const NotionFieldMapping: Record<string, any> = {
   checkbox: Property.Checkbox,
   date: Property.ShortText,
   email: Property.ShortText,
@@ -361,4 +361,5 @@ export const NotionFieldMapping = {
   title: Property.ShortText,
   url: Property.ShortText,
   status: Property.StaticDropdown,
+  people: Property.StaticDropdown,
 };
