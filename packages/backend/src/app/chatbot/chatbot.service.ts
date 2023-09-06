@@ -18,7 +18,7 @@ import { databaseConnection } from '../database/database-connection'
 import { ChatbotEntity } from './chatbot.entity'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { buildPaginator } from '../helper/pagination/build-paginator'
-import { getChatBotType, runBot } from '@activepieces/chatbots'
+import { runBot } from '@activepieces/chatbots'
 import { datasourceService } from './datasources/datasource-service'
 import { appConnectionService } from '../app-connection/app-connection-service'
 
@@ -32,12 +32,10 @@ export const chatbotService = {
         projectId: ProjectId
         request: CreateChatBotRequest
     }): Promise<Chatbot> {
-        const chatbotType = getChatBotType({ type: request.type })
         const savedChatbot = await chatbotRepo.save({
             ...request,
+            displayName: 'Untitled',
             id: apId(),
-            displayName: chatbotType.displayName,
-            // TODO FIX MISSING
             settings: {},
             dataSources: [],
             projectId,
@@ -67,7 +65,7 @@ export const chatbotService = {
         }
         await chatbotRepo.update(chatbotId, {
             displayName: request.displayName,
-            settings: request.settings,
+            prompt: request.prompt,
         })
         return chatbotRepo.findOneByOrFail({
             projectId,
@@ -91,7 +89,7 @@ export const chatbotService = {
             projectId,
             id: chatbot.connectionId,
         });
-        if(connection.type != AppConnectionType.SECRET_TEXT){
+        if (connection.type != AppConnectionType.SECRET_TEXT) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
@@ -104,7 +102,7 @@ export const chatbotService = {
             input,
             type: chatbot.type,
             auth: connection.value as SecretTextConnectionValue,
-            settings: chatbot.settings,
+            prompt: chatbot.prompt,
         })
         return {
             output,
@@ -179,53 +177,5 @@ export const chatbotService = {
             })
         }
         await chatbotRepo.delete(chatbotId)
-    },
-    async createDatasource({
-        projectId,
-        chatbotId,
-        request,
-    }: {
-        projectId: ProjectId
-        chatbotId: string
-        request: CreateDataSourceRequest
-    }): Promise<Chatbot> {
-        const chatbot = await chatbotService.getOneOrThrow({
-            projectId,
-            chatbotId,
-        })
-        const datasourceId = apId()
-        chatbot.dataSources.push({
-            id: datasourceId,
-            ...request,
-        })
-        await datasourceService.syncDatasource({
-            botId: chatbotId,
-            datasourceId,
-            propsValue: request.props,
-            auth: request.auth,
-        })
-        return chatbotRepo.save(chatbot)
-    },
-    async deleteDatasource({
-        projectId,
-        chatbotId,
-        dataSourceId,
-    }: {
-        projectId: ProjectId
-        chatbotId: string
-        dataSourceId: string
-    }): Promise<Chatbot> {
-        const chatbot = await chatbotService.getOneOrThrow({
-            projectId,
-            chatbotId,
-        })
-        chatbot.dataSources = chatbot.dataSources.filter(
-            (ds) => ds.id !== dataSourceId,
-        )
-        await datasourceService.deleteDataSource({
-            botId: chatbotId,
-            datasourceId: dataSourceId,
-        })
-        return chatbotRepo.save(chatbot)
     },
 }

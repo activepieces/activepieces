@@ -1,43 +1,31 @@
 import {
-  ShortTextProperty,
-  StaticPropsValue,
   ApEmbeddings
 } from '@activepieces/pieces-framework';
 import { APLLM } from './llm';
 
-interface ChatbotPropertyMap {
-  [name: string]: ShortTextProperty<boolean>;
-}
 
-type ChatbotAnswerContext<props extends ChatbotPropertyMap> = {
-  settings: StaticPropsValue<props>;
+type ChatbotAnswerContext = {
+  settings: {
+    prompt: string;
+  };
   input: string;
   llm: APLLM;
   embeddings: ApEmbeddings
 };
 
-class IChatbot<props extends ChatbotPropertyMap> {
+class IChatbot {
   constructor(
     public readonly name: string,
-    public readonly displayName: string,
-    public readonly description: string,
-    public readonly run: (ctx: ChatbotAnswerContext<props>) => Promise<string>,
-    public readonly settings: props
-  ) {}
+    public readonly run: (ctx: ChatbotAnswerContext) => Promise<string>,
+  ) { }
 }
 
-export const createChatbot = <props extends ChatbotPropertyMap>(request: {
+export const createChatbot = (request: {
   name: string;
-  displayName: string;
-  description: string;
-  run: (ctx: ChatbotAnswerContext<props>) => Promise<string>;
-  settings: props;
+  run: (ctx: ChatbotAnswerContext) => Promise<string>;
 }) => {
   return new IChatbot(
     request.name,
-    request.displayName,
-    request.description,
     request.run,
-    request.settings
   );
 };
