@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { objectToArray, ValueInputOption } from '../common/common';
+import { objectToArray, stringifyArray, ValueInputOption } from '../common/common';
 import { googleSheetsCommon } from '../common/common';
 import { googleSheetsAuth } from '../..';
 
@@ -40,7 +40,7 @@ export const updateRowAction = createAction({
                 sheetName: sheetName,
                 spreadSheetId: spreadsheet_id,
                 valueInputOption: ValueInputOption.USER_ENTERED,
-                values: formattedValues as string[],
+                values: stringifyArray(formattedValues),
             })).body;
         } else {
             throw Error("Values passed are empty or not array " + JSON.stringify(formattedValues))

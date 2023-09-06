@@ -296,7 +296,7 @@ export class FlowsEffects {
       })
     );
   });
-  applyUpdateOperationS = createEffect(
+  applyUpdateOperation$ = createEffect(
     () => {
       return this.actions$.pipe(
         ofType(FlowsActions.applyUpdateOperation),
