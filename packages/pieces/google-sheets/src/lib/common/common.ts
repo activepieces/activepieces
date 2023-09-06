@@ -192,6 +192,7 @@ export const googleSheetsCommon = {
     findSheetName: findSheetName,
     deleteRow: deleteRow,
     clearSheet: clearSheet,
+    getNumberOfRows: getNumberOfRows,
 }
 
 
@@ -243,6 +244,28 @@ export async function getGoogleSheetRows(params: { accessToken: string; sheetNam
 
     return values;
 }
+
+async function getNumberOfRows(accessToken: string, spreadsheetId: string, sheetId: number): Promise<number> {
+    const request: HttpRequest = {
+        method: HttpMethod.GET,
+        url: `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=sheets.properties`,
+        authentication: {
+            type: AuthenticationType.BEARER_TOKEN,
+            token: accessToken,
+        },
+    };
+
+    const response = await httpClient.sendRequest(request);
+    const sheets = response.body.sheets;
+    for (const sheet of sheets) {
+        if (sheet.properties.sheetId === sheetId) {
+            return sheet.properties.gridProperties.rowCount;
+        }
+    }
+
+    throw new Error('Sheet not found');
+}
+
 
 async function listSheetsName(access_token: string, spreadsheet_id: string) {
     return (await httpClient.sendRequest<{ sheets: { properties: { title: string, sheetId: number } }[] }>({
