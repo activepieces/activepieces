@@ -4,9 +4,11 @@ import {
   BehaviorSubject,
   Observable,
   debounceTime,
+  map,
   shareReplay,
   startWith,
   switchMap,
+  take,
   tap,
 } from 'rxjs';
 import { FlowTemplate, FolderId } from '@activepieces/shared';
@@ -50,7 +52,7 @@ export class TemplatesDialogComponent {
     'Marketing Automation',
     'Analysis',
   ];
-  isThereNewFeaturedTemplates: boolean;
+  isThereNewFeaturedTemplates$: Observable<boolean>;
   constructor(
     private templatesService: TemplatesService,
     private dialogRef: MatDialogRef<TemplatesDialogComponent>,
@@ -58,8 +60,10 @@ export class TemplatesDialogComponent {
     @Inject(MAT_DIALOG_DATA)
     public data?: TemplateDialogData
   ) {
-    this.isThereNewFeaturedTemplates =
-      this.actRoute.snapshot.data[isThereAnyNewFeaturedTemplatesResolverKey];
+    this.isThereNewFeaturedTemplates$ = this.actRoute.data.pipe(
+      take(1),
+      map((val) => val[isThereAnyNewFeaturedTemplatesResolverKey])
+    );
     this.templates$ = this.dialogForm.valueChanges.pipe(
       startWith(() => {
         return {
