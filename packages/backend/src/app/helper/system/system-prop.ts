@@ -1,5 +1,6 @@
 export enum SystemProp {
     API_KEY = 'API_KEY',
+    CACHE_PATH = 'CACHE_PATH',
     CLOUD_AUTH_ENABLED = 'CLOUD_AUTH_ENABLED',
     DB_TYPE = 'DB_TYPE',
     EDITION = 'EDITION',
