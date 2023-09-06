@@ -24,6 +24,7 @@ export const User = Type.Object({
 export type User = Static<typeof User>;
 
 export const UserMeta = Type.Object({
+  id: Type.String(),
   email: Type.String(),
   firstName: Type.String(),
   lastName: Type.String(),

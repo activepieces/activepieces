@@ -24,12 +24,13 @@ export const userService = {
         }
         return await userRepo.save(user)
     },
-    async getMetaInfo({ id }: { id: UserId }): Promise<UserMeta | null> {
+  async getMetaInfo({ id }: { id: UserId }): Promise<UserMeta | null> {
         const user = await userRepo.findOneBy({ id })
         if (!user) {
             return null
         }
         return {
+            id: user.id,
             email: user.email,
             firstName: user.firstName,
             lastName: user.lastName,
