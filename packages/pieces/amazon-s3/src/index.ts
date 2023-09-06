@@ -3,8 +3,18 @@ import { amazonS3UploadBase64FileAction } from "./lib/actions/upload-file-from-b
 import { amazonS3UploadFileFromUrlAction } from "./lib/actions/upload-file-from-url";
 import { newFile } from "./lib/triggers/new-file";
 import { readFile } from "./lib/actions/read-file";
+import { S3 } from "@aws-sdk/client-s3";
+
+const description = `
+This piece allows you to upload files to Amazon S3 or other S3 compatible services.
+
+Amazon S3 Settings:
+Regions: https://docs.aws.amazon.com/general/latest/gr/s3.html
+Endpoint: leave blank
+`
 
 export const amazonS3Auth = PieceAuth.CustomAuth({
+    description: description,
     props: {
         accessKeyId: Property.ShortText({
             displayName: 'Access Key ID',
@@ -14,10 +24,22 @@ export const amazonS3Auth = PieceAuth.CustomAuth({
             displayName: 'Secret Access Key',
             required: true,
         }),
+        bucket: Property.ShortText({
+            displayName: 'Bucket',
+            required: true,
+        }),
+        endpoint: Property.ShortText({
+            displayName: 'Endpoint',
+            required: false,
+        }),
         region: Property.StaticDropdown({
             displayName: 'Region',
             options: {
                 "options": [
+                    {
+                        "label": "Default",
+                        "value": 'us-east-1',
+                    },
                     {
                         "label": "US East (N. Virginia) [us-east-1]",
                         "value": "us-east-1"
@@ -138,11 +160,31 @@ export const amazonS3Auth = PieceAuth.CustomAuth({
             },
             required: true,
         }),
-
-        bucket: Property.ShortText({
-            displayName: 'Bucket',
-            required: true,
+    },
+    validate: async ({ auth }) => {
+        const { accessKeyId, secretAccessKey, region, bucket } = auth;
+        const s3 = new S3({
+            credentials: {
+                accessKeyId,
+                secretAccessKey
+            },
+            endpoint: auth.endpoint,
+            region: region ?? undefined
         })
+        try {
+            await s3.listObjectsV2({
+                Bucket: bucket,
+                MaxKeys: 1
+            })
+            return {
+                valid: true
+            }
+        } catch (e) {
+            return {
+                valid: false,
+                error: (e as Error)?.message
+            }
+        }
     },
     required: true
 })
