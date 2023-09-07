@@ -14,6 +14,7 @@
                 <ng-container *ngIf="featuredTemplates$ | async as templates; else loading">
                     <ng-container *ngFor="let template of templates; let idx=index">
                         <app-featured-template-card [template]="template"
+                            (useTemplateClicked)="useTemplate(template,'featured')"
                             *ngIf="idx < 4 || showAllFeaturedTemplates"></app-featured-template-card>
                     </ng-container>
                     <div class="ap-w-full" *ngIf="!showAllFeaturedTemplates && templates.length>4">
@@ -114,8 +115,7 @@
                     </ng-container>
                 </div>
 
-                <app-template-card [showBtnOnHover]="true" [template]="template" [folderId]="(data?.folderId$ | async)"
-                    [insideBuilder]="data? data.insideBuilder:false" (useTemplateClicked)="useTemplate(template)"
+                <app-template-card [template]="template" (useTemplateClicked)="useTemplate(template,'all ideas')"
                     *ngFor="let template of (templates$ | async)"></app-template-card>
             </ng-container>
 

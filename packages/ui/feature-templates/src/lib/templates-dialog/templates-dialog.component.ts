@@ -19,6 +19,12 @@ export interface TemplateDialogData {
   folderId$?: Observable<FolderId | undefined>;
   isThereNewFeaturedTemplates$: Observable<boolean>;
 }
+type tabsNames = 'all ideas' | 'featured';
+
+export interface TemplateDialogClosingResult {
+  template: FlowTemplate;
+  activeTab: tabsNames;
+}
 
 @Component({
   selector: 'app-templates-dialog',
@@ -83,8 +89,12 @@ export class TemplatesDialogComponent {
       .getTemplates({ featuredOnly: true })
       .pipe(shareReplay(1));
   }
-  useTemplate(template: FlowTemplate) {
-    this.dialogRef.close(template);
+  useTemplate(template: FlowTemplate, tab: tabsNames) {
+    const result: TemplateDialogClosingResult = {
+      template,
+      activeTab: tab,
+    };
+    this.dialogRef.close(result);
   }
   closeDialog() {
     this.dialogRef.close();
