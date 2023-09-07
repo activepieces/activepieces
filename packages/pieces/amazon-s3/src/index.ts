@@ -1,9 +1,8 @@
 import { PieceAuth, Property, createPiece } from "@activepieces/pieces-framework";
-import { amazonS3UploadBase64FileAction } from "./lib/actions/upload-file-from-base64";
-import { amazonS3UploadFileFromUrlAction } from "./lib/actions/upload-file-from-url";
+import { amazons3UploadFile } from "./lib/actions/upload-file";
 import { newFile } from "./lib/triggers/new-file";
 import { readFile } from "./lib/actions/read-file";
-import { S3 } from "@aws-sdk/client-s3";
+import { createS3 } from "./lib/common";
 
 const description = `
 This piece allows you to upload files to Amazon S3 or other S3 compatible services.
@@ -162,18 +161,10 @@ export const amazonS3Auth = PieceAuth.CustomAuth({
         }),
     },
     validate: async ({ auth }) => {
-        const { accessKeyId, secretAccessKey, region, bucket } = auth;
-        const s3 = new S3({
-            credentials: {
-                accessKeyId,
-                secretAccessKey
-            },
-            endpoint: auth.endpoint,
-            region: region ?? undefined
-        })
+        const s3 = createS3(auth);
         try {
             await s3.listObjectsV2({
-                Bucket: bucket,
+                Bucket: auth.bucket,
                 MaxKeys: 1
             })
             return {
@@ -197,8 +188,7 @@ export const amazonS3 = createPiece({
     authors: ["Willianwg", 'MoShizzle'],
     auth: amazonS3Auth,
     actions: [
-        amazonS3UploadBase64FileAction,
-        amazonS3UploadFileFromUrlAction,
+        amazons3UploadFile,
         readFile
     ],
     triggers: [
