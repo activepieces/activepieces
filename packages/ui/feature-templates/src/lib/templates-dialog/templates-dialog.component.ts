@@ -39,6 +39,7 @@ export class TemplatesDialogComponent {
   templates$: Observable<FlowTemplate[]>;
   searchFormControl = new FormControl<string>('');
   featuredListOverflowing = false;
+  featuredTemplates$: Observable<FlowTemplate[]>;
   filters = [
     'ChatGPT',
     'Content Creation',
@@ -76,6 +77,10 @@ export class TemplatesDialogComponent {
       }),
       shareReplay(1)
     );
+
+    this.featuredTemplates$ = this.templatesService
+      .getTemplates({ featuredOnly: true })
+      .pipe(shareReplay(1));
   }
   useTemplate(template: FlowTemplate) {
     this.dialogRef.close(template);

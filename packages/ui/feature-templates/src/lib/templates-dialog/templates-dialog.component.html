@@ -25,11 +25,17 @@
             <div class="ap-w-[1046px] ap-h-[705px] ap-overflow-y-auto ap-bg-[#F0F1F3] ap-pl-5  ap-py-5 thin-scrollbars black-scrollbars ap-flex ap-flex-col ap-gap-5"
                 apCheckOverflow (isOverflowed)="featuredListOverflowing=$event"
                 [class.ap-pr-5]="!featuredListOverflowing" [class.ap-pr-3]="featuredListOverflowing">
-                <app-featured-template-card></app-featured-template-card>
-                <app-featured-template-card></app-featured-template-card>
-                <app-featured-template-card></app-featured-template-card>
-                <app-featured-template-card></app-featured-template-card>
-                <app-featured-template-card></app-featured-template-card>
+                <ng-container *ngIf="featuredTemplates$ | async as templates; else loading">
+                    <ng-container *ngFor="let template of templates">
+                        <app-featured-template-card [template]="template"></app-featured-template-card>
+                    </ng-container>
+                </ng-container>
+                <ng-template #loading>
+                    <div class="ap-flex ap-items-center ap-justify-center">
+                        <ap-loading-icon [outlineLoader]="false" [whiteLoader]="false" height="40px" width="40px">
+                        </ap-loading-icon>
+                    </div>
+                </ng-template>
             </div>
         </mat-tab>
 
