@@ -14,7 +14,6 @@ import {
   FlowTemplate,
   FolderId,
   TelemetryEventName,
-  TriggerType,
 } from '@activepieces/shared';
 import { FlowService, TelemetryService } from '@activepieces/ui/common';
 import { Observable, switchMap, tap } from 'rxjs';
