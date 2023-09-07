@@ -15,7 +15,6 @@ export const FlowTemplate = Type.Object({
     description: Type.String(),
     tags: Type.Array(Type.String()),
     pieces: Type.Array(Type.String()),
-    pinnedOrder: Type.Union([Type.Null(), Type.Number()]),
     blogUrl: Type.Optional(Type.String()),
     template: FlowVersionTemplate,
     userId: Type.Union([Type.Null(), Type.String()]),

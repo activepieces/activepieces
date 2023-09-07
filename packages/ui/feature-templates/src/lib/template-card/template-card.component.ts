@@ -69,9 +69,7 @@ export class TemplateCardComponent implements AfterViewInit {
                     payload: {
                       id: this.template.id,
                       name: this.template.name,
-                      location: this.template.pinnedOrder
-                        ? 'Pins in dashboard'
-                        : 'See all dialog in dashboard',
+                      location: 'All ideas tab',
                     },
                   });
                   if (this.template.blogUrl) {

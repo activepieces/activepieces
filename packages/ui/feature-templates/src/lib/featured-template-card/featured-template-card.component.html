@@ -48,7 +48,8 @@
             <div class="ap-typography-headline-6 !ap-font-semibold ap-mb-6 ap-max-w-[524px]">
                 {{template.name}}
             </div>
-            <ap-button btnColor="primary" btnStyle="flat" btnSize="small">Use Template </ap-button>
+            <ap-button btnColor="primary" btnStyle="flat" btnSize="small" (buttonClicked)="useTemplate()"
+                [loading]="!!useTemplate$">Use Template </ap-button>
         </div>
         <img [src]="template.imageUrl || 'https://www.activepieces.com/pricing/feat_2.svg'"
             class="ap-object-contain ap-rounded-md ap-w-[280px] ap-h-[153px]">
@@ -57,3 +58,5 @@
 
 <a class="ap-hidden" href="https://www.flaticon.com/free-icons/verified" title="verified icons">Verified icons created
     by lakonicon - Flaticon</a>
+
+<ng-container *ngIf="useTemplate$ | async"></ng-container>
