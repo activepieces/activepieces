@@ -1,6 +1,13 @@
 <div class="ap-rounded-lg ap-bg-white ap-p-5 ">
     <div class="ap-flex ap-gap-3 ap-mb-3 ">
-        <img [src]="template.user?.imageUrl" class="ap-h-[45px] ap-w-[45px] ap-object-contain ap-rounded-full">
+        <img *ngIf="template.user?.imageUrl" [src]="template.user?.imageUrl"
+            class="ap-h-[45px] ap-w-[45px] ap-object-contain ap-rounded-full">
+        <div class="ap-flex ap-justify-end" *ngIf="!template.user?.imageUrl">
+            <div
+                class="ap-typography-body-2 !ap-font-[600] ap-text-white ap-bg-body ap-rounded-full ap-px-[12px] ap-py-[7px] ap-cursor-pointer ap-text-center ap-min-w-[36px] ap-min-h-[36px]">
+                {{ (template.user? template.user.firstName[0] : '') | uppercase }}
+            </div>
+        </div>
         <div class="ap-flex ap-flex-col ap-gap-1">
             <div class="ap-flex  ap-items-center ap-gap-2 ap-typography-body-1 !ap-font-semibold">
                 {{template.user?.firstName}} {{template.user?.lastName}}
@@ -8,7 +15,7 @@
                     matTooltip="Activepieces Team">
             </div>
             <div class="ap-typography-caption ap-text-description">
-                {{template.user?.title}} • {{template.created | timeago:false }}
+                {{template.user?.title || 'Contributor'}} • {{template.created | timeago:false }}
             </div>
         </div>
     </div>
@@ -33,7 +40,7 @@
             </div>
             <ap-button btnColor="primary" btnStyle="flat" btnSize="small">Use Template </ap-button>
         </div>
-        <img src="https://www.activepieces.com/features/feat_1.svg"
+        <img [src]="template.imageUrl || 'https://www.activepieces.com/pricing/feat_2.svg'"
             class="ap-object-contain ap-rounded-md ap-w-[280px] ap-h-[153px]">
     </div>
 </div>
