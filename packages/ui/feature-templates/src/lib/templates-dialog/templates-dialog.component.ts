@@ -40,6 +40,7 @@ export class TemplatesDialogComponent {
   searchFormControl = new FormControl<string>('');
   featuredListOverflowing = false;
   featuredTemplates$: Observable<FlowTemplate[]>;
+  showAllFeaturedTemplates = false;
   filters = [
     'ChatGPT',
     'Content Creation',

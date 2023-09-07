@@ -26,9 +26,18 @@
                 apCheckOverflow (isOverflowed)="featuredListOverflowing=$event"
                 [class.ap-pr-5]="!featuredListOverflowing" [class.ap-pr-3]="featuredListOverflowing">
                 <ng-container *ngIf="featuredTemplates$ | async as templates; else loading">
-                    <ng-container *ngFor="let template of templates">
-                        <app-featured-template-card [template]="template"></app-featured-template-card>
+                    <ng-container *ngFor="let template of templates; let idx=index">
+                        <app-featured-template-card [template]="template"
+                            *ngIf="idx < 4 || showAllFeaturedTemplates"></app-featured-template-card>
                     </ng-container>
+                    <div class="ap-w-full" *ngIf="!showAllFeaturedTemplates && templates.length>4">
+                        <ap-button (buttonClicked)="showAllFeaturedTemplates=true" btnSize="large" btnColor="white"
+                            btnStyle="flat" [fullWidthOfContainer]="true">
+                            <div class="ap-text-center ap-w-full">
+                                Load more
+                            </div>
+                        </ap-button>
+                    </div>
                 </ng-container>
                 <ng-template #loading>
                     <div class="ap-flex ap-items-center ap-justify-center">

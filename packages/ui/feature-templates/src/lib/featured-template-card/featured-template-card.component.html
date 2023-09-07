@@ -4,7 +4,7 @@
             class="ap-h-[45px] ap-w-[45px] ap-object-contain ap-rounded-full">
         <div class="ap-flex ap-justify-end" *ngIf="!template.user?.imageUrl">
             <div
-                class="ap-typography-body-1 !ap-font-semibold ap-text-white ap-bg-primary ap-rounded-full ap-px-[12px] ap-py-[7px] ap-select-none ap-text-center ap-w-[45px] ap-h-[45px]">
+                class="ap-typography-body-1 !ap-font-semibold ap-text-white ap-bg-primary ap-rounded-full ap-px-[12px] ap-py-[7px] ap-select-none ap-text-center ap-w-[45px] ap-h-[45px] ap-flex ap-items-center ap-justify-center">
                 {{ (template.user? template.user.firstName[0] : '') | uppercase }}
             </div>
         </div>
