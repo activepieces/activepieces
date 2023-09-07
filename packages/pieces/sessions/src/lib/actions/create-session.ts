@@ -3,18 +3,16 @@ import { sessionAuth } from "../..";
 import { HttpMethod, httpClient, HttpRequest } from "@activepieces/pieces-common";
 import { Property, createAction } from "@activepieces/pieces-framework";
 
-export const createBooking = createAction({
+export const createSession = createAction({
     auth: sessionAuth,
-    name: "create_booking",
-    displayName: "Create Booking",
-    description: "Create a new booking\n **WARNING**\n You cannot create a booking on your own page",
+    name: "create_session",
+    displayName: "Create Session",
+    description: "Quickly create a session.",
     props: {
-        book_id: sessionCommon.booking_id,
         name: Property.ShortText({
-            displayName: "Name",
-            description: "The name of the session.",
+            displayName: "Session Name",
+            description: "The name of the session",
             required: true,
-            defaultValue: "AP Session",
         }),
         startAt: Property.DateTime({
             displayName: "Date & Time",
@@ -33,11 +31,11 @@ export const createBooking = createAction({
             description: "The timezone which the session will take place.",
             required: true,
         }),
-        },
+    },
     async run({propsValue, auth}) {
         const request: HttpRequest = {
             method: HttpMethod.POST,
-            url: `${sessionCommon.baseUrl}/sessions`,
+            url: `${sessionCommon.baseUrl}sessions`,
             headers: {
                 "accept":"application/json",
                 "x-api-key":auth,
@@ -49,6 +47,7 @@ export const createBooking = createAction({
                 timezone: propsValue['timezone'],
             }
         }
-        return await httpClient.sendRequest(request);
+        const response = await httpClient.sendRequest(request);
+        return response.body['sessionLink']
     }
 })
