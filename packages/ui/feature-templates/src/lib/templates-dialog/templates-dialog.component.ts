@@ -13,6 +13,7 @@ import { FlowTemplate, FolderId } from '@activepieces/shared';
 
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { TemplatesService } from '@activepieces/ui/common';
+import { MatTabGroup } from '@angular/material/tabs';
 
 export interface TemplateDialogData {
   insideBuilder: boolean;
@@ -95,6 +96,10 @@ export class TemplatesDialogComponent {
       activeTab: tab,
     };
     this.dialogRef.close(result);
+  }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  showFeaturedTab(tabGroup: MatTabGroup, location: string) {
+    tabGroup.selectedIndex = 0;
   }
   closeDialog() {
     this.dialogRef.close();

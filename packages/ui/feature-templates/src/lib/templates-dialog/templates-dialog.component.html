@@ -2,7 +2,7 @@
 
     <mat-tab-group mat-stretch-tabs="false" mat-align-tabs="start" #tabGroup [selectedIndex]="1">
 
-        <mat-tab>
+        <mat-tab (click)="showFeaturedTab(tabGroup,'tab')">
             <ng-template mat-tab-label>
                 <svg-icon class="ap-h-[18px] ap-w-[18px] ap-mr-2" [applyClass]="true"
                     src="assets/img/custom/hot.svg"></svg-icon>
@@ -89,7 +89,7 @@
             <div class="ap-p-10 ap-text-white ap-typography-headline-4 ap-max-w-[33.125rem] ">
                 <p class="ap-mb-8 ap-font-semibold"> A new way to explore fresh ideas from our partners</p>
                 <ap-button btnSize="medium" btnColor="white" btnStyle="flat"
-                    (buttonClicked)="tabGroup.selectedIndex=0">View featured
+                    (buttonClicked)="showFeaturedTab(tabGroup,'button')">View featured
                     ideas </ap-button>
             </div>
         </div>
