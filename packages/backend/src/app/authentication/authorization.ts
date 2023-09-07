@@ -14,7 +14,7 @@ export const allowWorkersOnly: onRequestHookHandler = (request, _res, done) => {
 }
 
 export const entitiesMustBeOwnedByCurrentProject: preSerializationHookHandler<Payload> = (request, _response, payload, done) => {
-    logger.debug({ payload, principal: request.principal, route: request.routeConfig }, 'entitiesMustBeOwnedByCurrentProject')
+    logger.trace({ payload, principal: request.principal, route: request.routeConfig }, 'entitiesMustBeOwnedByCurrentProject')
 
     if (!isNil(payload)) {
         const projectId = request.principal.projectId

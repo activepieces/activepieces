@@ -1,15 +1,13 @@
 import { FastifyError, FastifyReply, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
-import { captureException, logger } from './logger'
+import { captureException } from './logger'
 
 export const errorHandler = async (
     error: FastifyError,
     _request: FastifyRequest,
     reply: FastifyReply,
 ): Promise<void> => {
-    logger.info('[errorHandler]:', error)
-
     if (error instanceof ActivepiecesError) {
         const statusCodeMap: Partial<Record<ErrorCode, StatusCodes>> = {
             [ErrorCode.INVALID_API_KEY]: StatusCodes.UNAUTHORIZED,

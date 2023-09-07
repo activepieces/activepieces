@@ -1,10 +1,19 @@
 import { PieceAuth, Property, createPiece } from "@activepieces/pieces-framework";
-import { amazonS3UploadBase64FileAction } from "./lib/actions/upload-file-from-base64";
-import { amazonS3UploadFileFromUrlAction } from "./lib/actions/upload-file-from-url";
+import { amazons3UploadFile } from "./lib/actions/upload-file";
 import { newFile } from "./lib/triggers/new-file";
 import { readFile } from "./lib/actions/read-file";
+import { createS3 } from "./lib/common";
+
+const description = `
+This piece allows you to upload files to Amazon S3 or other S3 compatible services.
+
+Amazon S3 Settings:
+Regions: https://docs.aws.amazon.com/general/latest/gr/s3.html
+Endpoint: leave blank
+`
 
 export const amazonS3Auth = PieceAuth.CustomAuth({
+    description: description,
     props: {
         accessKeyId: Property.ShortText({
             displayName: 'Access Key ID',
@@ -14,10 +23,22 @@ export const amazonS3Auth = PieceAuth.CustomAuth({
             displayName: 'Secret Access Key',
             required: true,
         }),
+        bucket: Property.ShortText({
+            displayName: 'Bucket',
+            required: true,
+        }),
+        endpoint: Property.ShortText({
+            displayName: 'Endpoint',
+            required: false,
+        }),
         region: Property.StaticDropdown({
             displayName: 'Region',
             options: {
                 "options": [
+                    {
+                        "label": "Default",
+                        "value": 'us-east-1',
+                    },
                     {
                         "label": "US East (N. Virginia) [us-east-1]",
                         "value": "us-east-1"
@@ -138,11 +159,23 @@ export const amazonS3Auth = PieceAuth.CustomAuth({
             },
             required: true,
         }),
-
-        bucket: Property.ShortText({
-            displayName: 'Bucket',
-            required: true,
-        })
+    },
+    validate: async ({ auth }) => {
+        const s3 = createS3(auth);
+        try {
+            await s3.listObjectsV2({
+                Bucket: auth.bucket,
+                MaxKeys: 1
+            })
+            return {
+                valid: true
+            }
+        } catch (e) {
+            return {
+                valid: false,
+                error: (e as Error)?.message
+            }
+        }
     },
     required: true
 })
@@ -155,8 +188,7 @@ export const amazonS3 = createPiece({
     authors: ["Willianwg", 'MoShizzle'],
     auth: amazonS3Auth,
     actions: [
-        amazonS3UploadBase64FileAction,
-        amazonS3UploadFileFromUrlAction,
+        amazons3UploadFile,
         readFile
     ],
     triggers: [
