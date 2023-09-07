@@ -43,5 +43,41 @@ export const sessionCommon = {
                 })
             };
         }
+    }),
+    session_id: Property.Dropdown({
+        displayName: "Session ID",
+        required: true,
+        refreshers: ['auth'],
+        options: async({auth}) => {
+            if (!auth) {
+                return {
+                    disabled: true,
+                    options: [],
+                    placeholder: "Please authenticate first"
+                }
+            }
+            const sessions = (await httpClient.sendRequest({
+                method: HttpMethod.GET,
+                url: "https://api.app.sessions.us/api/sessions",
+                headers: {
+                    "accept":"application/json",
+                    "x-api-key": `${auth}`
+                }
+            })).body;
+            const session = [];
+            for(let x in sessions){
+                session.push(sessions[x] as Pages);
+            }
+
+            return {
+                disabled: false,
+                options: session.map((page: {id: string, name: string}) => {
+                    return {
+                        label: page.name,
+                        value: page.id
+                    }
+                })
+            };
+        }
     })
 }

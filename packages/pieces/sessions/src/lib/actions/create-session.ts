@@ -48,6 +48,9 @@ export const createSession = createAction({
             }
         }
         const response = await httpClient.sendRequest(request);
-        return response.body['sessionLink']
+        return {
+            "link": response.body['sessionLink'], 
+            "id": response.body['id']
+        }
     }
 })
