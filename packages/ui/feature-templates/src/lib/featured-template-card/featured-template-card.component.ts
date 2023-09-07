@@ -33,6 +33,7 @@ import {
 })
 export class FeaturedTemplateCardComponent implements OnInit {
   useTemplate$: Observable<Flow>;
+  showFullDescription = false;
   @Output() useTemplateClicked = new EventEmitter<FlowTemplate>();
   @Input() template: FlowTemplate = {
     imageUrl: 'https://www.activepieces.com/features/feat_2.svg',

@@ -4,7 +4,7 @@
             class="ap-h-[45px] ap-w-[45px] ap-object-contain ap-rounded-full">
         <div class="ap-flex ap-justify-end" *ngIf="!template.user?.imageUrl">
             <div
-                class="ap-typography-body-2 !ap-font-[600] ap-text-white ap-bg-body ap-rounded-full ap-px-[12px] ap-py-[7px] ap-cursor-pointer ap-text-center ap-min-w-[36px] ap-min-h-[36px]">
+                class="ap-typography-body-1 !ap-font-semibold ap-text-white ap-bg-primary ap-rounded-full ap-px-[12px] ap-py-[7px] ap-select-none ap-text-center ap-w-[45px] ap-h-[45px]">
                 {{ (template.user? template.user.firstName[0] : '') | uppercase }}
             </div>
         </div>
@@ -22,9 +22,19 @@
 
     <div>
         <div class="ap-typography-body-1 ">
-            {{
-            template.description
-            }}
+            <ng-container *ngIf="template.description.length <= 225 ">
+                {{
+                template.description
+                }}
+            </ng-container>
+            <ng-container *ngIf="template.description.length > 225 ">
+                {{
+                showFullDescription? template.description : template.description.slice(0,255)+"..."
+                }}
+                &nbsp; <div class="ap-text-primary ap-cursor-pointer ap-inline"
+                    (click)="showFullDescription = !showFullDescription" *ngIf="template.description.length > 225">
+                    {{showFullDescription? 'See less' : 'See more'}} </div>
+            </ng-container>
         </div>
 
     </div>
