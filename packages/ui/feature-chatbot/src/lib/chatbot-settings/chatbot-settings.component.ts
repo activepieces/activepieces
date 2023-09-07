@@ -84,7 +84,7 @@ export class ChatbotSettingsComponent {
         };
         this.formGroup.controls.connectionId.setValue(routeData.chatbot.connectionId);
         this.formGroup.controls.prompt.setValue(
-          routeData.chatbot.settings.prompt
+          routeData.chatbot.prompt
         );
         this.formGroup.controls.displayName.setValue(
           routeData.chatbot.displayName
@@ -116,10 +116,8 @@ export class ChatbotSettingsComponent {
       this.updateSettings$ = this.chatbotService
         .update(this.chatbotId, {
           displayName: this.formGroup.controls['displayName'].value,
-          settings: {
-            prompt: this.formGroup.controls['prompt'].value,
-            auth: this.formGroup.controls['connectionId'].value,
-          },
+          prompt: this.formGroup.controls['prompt'].value,
+          connectionId: this.formGroup.controls['connectionId'].value,
         })
         .pipe(
           tap(() => {

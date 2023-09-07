@@ -22,12 +22,14 @@ export const ChatbotEntity = new EntitySchema<ChatbotSchema>({
         },
         connectionId: {
             type: String,
+            nullable: true,
         },
         dataSources: {
             type: JSONB_COLUMN_TYPE,
         },
         prompt: {
             type: String,
+            nullable: true,
         }
     },
     relations: {

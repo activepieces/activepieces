@@ -116,6 +116,6 @@ export const chatbotController: FastifyPluginCallbackTypebox = (
             },
         ),
 
-        
+
         done()
 }

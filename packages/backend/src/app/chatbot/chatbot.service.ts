@@ -19,7 +19,6 @@ import { ChatbotEntity } from './chatbot.entity'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { runBot } from '@activepieces/chatbots'
-import { datasourceService } from './datasources/datasource-service'
 import { appConnectionService } from '../app-connection/app-connection-service'
 
 const chatbotRepo = databaseConnection.getRepository(ChatbotEntity)
@@ -66,6 +65,7 @@ export const chatbotService = {
         await chatbotRepo.update(chatbotId, {
             displayName: request.displayName,
             prompt: request.prompt,
+            connectionId: request.connectionId,
         })
         return chatbotRepo.findOneByOrFail({
             projectId,
