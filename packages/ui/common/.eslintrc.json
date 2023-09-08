@@ -2,6 +2,14 @@
   "extends": ["../.eslintrc.json"],
   "overrides": [
     {
+      "rules": {
+        "@angular-eslint/component-selector": [
+          "error",
+          {
+            "prefix": [ "ap" ]
+          }
+        ]
+      },
       "files": ["*.ts"],
       "parserOptions": {
         "project": ["packages/ui/common/tsconfig.*?.json"]
