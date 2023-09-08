@@ -13,7 +13,7 @@
   <div class="code-area">
     <pre *ngIf="highlight" class="line-numbers ap-pb-1 "><code class="language-js"
       [innerHTML]="_content | outputLog"></code></pre>
-    <pre *ngIf="!highlight" [innerHTML]="_content" class="ap-px-4 ap-py-3 ap-break-all">
+    <pre *ngIf="!highlight" [innerHTML]="_content | outputLog" class="ap-px-4 ap-py-3 ap-break-all">
 
     </pre>
   </div>

@@ -1,6 +1,10 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { linearCreateIssue } from './lib/actions/issues/create-issue';
 import { linearUpdateIssue } from './lib/actions/issues/update-issue';
+import { linearCreateProject } from './lib/actions/projects/create-project';
+import { linearUpdateProject } from './lib/actions/projects/update-project';
+import { linearCreateComment } from './lib/actions/comments/create-comment';
+import { linearNewIssue } from './lib/triggers/new-issue';
 
 const markdown = `
 To obtain your API key, follow these steps:
@@ -30,7 +34,7 @@ export const linear = createPiece({
   auth: linearAuth,
   minimumSupportedRelease: '0.7.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/linear.png',
-  authors: ['kishanprmr'],
-  actions: [linearCreateIssue, linearUpdateIssue],
-  triggers: [],
+  authors: ['kishanprmr', 'lldiegon'],
+  actions: [linearCreateIssue, linearUpdateIssue, linearCreateProject, linearUpdateProject, linearCreateComment],
+  triggers: [linearNewIssue],
 });

@@ -27,6 +27,7 @@ export enum FlowsActionType {
   SELECT_FIRST_INVALID_STEP = '[FLOWS] SELECT_FIRST_INVALID_STEP',
   MOVE_ACTION = '[FLOWS] MOVE_ACTION',
   IMPORT_FLOW = '[FLOWS] IMPORT_FLOW',
+  TOGGLE_WAITING_TO_SAVE = '[FLOWS] TOGGLE_WAITING_TO_SAVE',
 }
 
 const updateTrigger = createAction(
@@ -89,7 +90,9 @@ const applyUpdateOperation = createAction(
   FlowsActionType.APPLY_UPDATE_OPERATION,
   props<{ flow: Flow; operation: FlowOperationRequest; saveRequestId: UUID }>()
 );
-
+const toggleWaitingToSave = createAction(
+  FlowsActionType.TOGGLE_WAITING_TO_SAVE
+);
 const deselectStep = createAction(FlowsActionType.DESELECT_STEP);
 
 export const FlowsActions = {
@@ -106,6 +109,7 @@ export const FlowsActions = {
   selectFirstInvalidStep,
   moveAction,
   importFlow,
+  toggleWaitingToSave,
 };
 
 export const SingleFlowModifyingState = [

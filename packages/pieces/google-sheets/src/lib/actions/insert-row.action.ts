@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { Dimension, googleSheetsCommon, objectToArray, ValueInputOption } from '../common/common';
+import { Dimension, googleSheetsCommon, objectToArray, stringifyArray, ValueInputOption } from '../common/common';
 import { googleSheetsAuth } from '../..';
 
 export const insertRowAction = createAction({
@@ -41,7 +41,7 @@ export const insertRowAction = createAction({
             valueInputOption: propsValue['as_string']
                 ? ValueInputOption.RAW
                 : ValueInputOption.USER_ENTERED,
-            values: formattedValues,
+            values: stringifyArray(formattedValues),
         });
         return res.body;
     },

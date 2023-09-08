@@ -1,33 +1,14 @@
-import { Equal, IsNull, LessThan, LessThanOrEqual, MoreThanOrEqual } from 'typeorm'
+import { Equal, FindOperator, IsNull, LessThan, LessThanOrEqual, MoreThanOrEqual } from 'typeorm'
 import { databaseConnection } from '../../database/database-connection'
 import { PieceMetadataEntity, PieceMetadataSchema } from '../piece-metadata-entity'
 import { GetParams, ListParams, PieceMetadataService } from './piece-metadata-service'
 import { PieceMetadata, PieceMetadataSummary } from '@activepieces/pieces-framework'
-import { isNil } from '@activepieces/shared'
+import { EXACT_VERSION_PATTERN, isNil } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode, apId } from '@activepieces/shared'
 import { AllPiecesStats, pieceStatsService } from './piece-stats-service'
 import * as semver from 'semver'
 
 const repo = databaseConnection.getRepository(PieceMetadataEntity)
-
-
-const toPieceMetadataSummary = (pieceMetadataEntityList: PieceMetadataSchema[]): PieceMetadataSummary[] => {
-    return pieceMetadataEntityList.map(pieceMetadataEntity => {
-        return {
-            ...pieceMetadataEntity,
-            actions: Object.keys(pieceMetadataEntity.actions).length,
-            triggers: Object.keys(pieceMetadataEntity.triggers).length,
-        }
-    })
-}
-
-const toPieceMetadata = (pieceMetadataEntity: PieceMetadataSchema): PieceMetadata => {
-    return {
-        ...pieceMetadataEntity,
-        actions: pieceMetadataEntity.actions,
-        triggers: pieceMetadataEntity.triggers,
-    }
-}
 
 export const DbPieceMetadataService = (): PieceMetadataService => {
     return {
@@ -136,31 +117,65 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
         async stats(): Promise<AllPiecesStats> {
             return await pieceStatsService.get()
         },
-    }
 
-    function findSearchOperation(version: string) {
-        if (version.startsWith('^')) {
-            return LessThan(increaseMajorVersion(version.substring(1)))
-        }
-        if (version.startsWith('~')) {
-            return LessThan(increaseMinorVersion(version.substring(1)))
-        }
-        return Equal(version)
-    }
+        async getExactPieceVersion({ name, version, projectId }): Promise<string> {
+            const isExactVersion = EXACT_VERSION_PATTERN.test(version)
 
-    function increaseMinorVersion(version: string): string {
-        const incrementedVersion = semver.inc(version, 'minor')
-        if (isNil(incrementedVersion)) {
-            throw new Error(`Failed to increase minor version ${version}`)
-        }
-        return incrementedVersion
-    }
+            if (isExactVersion) {
+                return version
+            }
 
-    function increaseMajorVersion(version: string): string {
-        const incrementedVersion = semver.inc(version, 'major')
-        if (isNil(incrementedVersion)) {
-            throw new Error(`Failed to increase major version ${version}`)
-        }
-        return incrementedVersion
+            const pieceMetadata = await this.get({
+                projectId,
+                name,
+                version,
+            })
+
+            return pieceMetadata.version
+        },
     }
+}
+
+const toPieceMetadataSummary = (pieceMetadataEntityList: PieceMetadataSchema[]): PieceMetadataSummary[] => {
+    return pieceMetadataEntityList.map(pieceMetadataEntity => {
+        return {
+            ...pieceMetadataEntity,
+            actions: Object.keys(pieceMetadataEntity.actions).length,
+            triggers: Object.keys(pieceMetadataEntity.triggers).length,
+        }
+    })
+}
+
+const toPieceMetadata = (pieceMetadataEntity: PieceMetadataSchema): PieceMetadata => {
+    return {
+        ...pieceMetadataEntity,
+        actions: pieceMetadataEntity.actions,
+        triggers: pieceMetadataEntity.triggers,
+    }
+}
+
+const findSearchOperation = (version: string): FindOperator<string> => {
+    if (version.startsWith('^')) {
+        return LessThan(increaseMajorVersion(version.substring(1)))
+    }
+    if (version.startsWith('~')) {
+        return LessThan(increaseMinorVersion(version.substring(1)))
+    }
+    return Equal(version)
+}
+
+const increaseMinorVersion = (version: string): string => {
+    const incrementedVersion = semver.inc(version, 'minor')
+    if (isNil(incrementedVersion)) {
+        throw new Error(`Failed to increase minor version ${version}`)
+    }
+    return incrementedVersion
+}
+
+const increaseMajorVersion = (version: string): string => {
+    const incrementedVersion = semver.inc(version, 'major')
+    if (isNil(incrementedVersion)) {
+        throw new Error(`Failed to increase major version ${version}`)
+    }
+    return incrementedVersion
 }
