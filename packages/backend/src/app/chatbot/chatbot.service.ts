@@ -2,7 +2,6 @@ import {
     ActivepiecesError,
     Chatbot,
     ChatbotResponse,
-    CreateDataSourceRequest,
     UpdateChatbotRequest,
     Cursor,
     ErrorCode,
@@ -88,7 +87,7 @@ export const chatbotService = {
         const connection = await appConnectionService.getOneOrThrow({
             projectId,
             id: chatbot.connectionId,
-        });
+        })
         if (connection.type != AppConnectionType.SECRET_TEXT) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,

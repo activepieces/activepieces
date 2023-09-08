@@ -30,7 +30,7 @@ export const ChatbotEntity = new EntitySchema<ChatbotSchema>({
         prompt: {
             type: String,
             nullable: true,
-        }
+        },
     },
     relations: {
         project: {
@@ -46,6 +46,6 @@ export const ChatbotEntity = new EntitySchema<ChatbotSchema>({
             joinColumn: {
                 name: 'connectionId',
             },
-        }
+        },
     },
 })

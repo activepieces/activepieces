@@ -57,65 +57,65 @@ export const chatbotController: FastifyPluginCallbackTypebox = (
             })
         },
     ),
-        app.get(
-            '/:id',
-            {
-                schema: {
-                    params: ChatBotIdParams,
-                },
+    app.get(
+        '/:id',
+        {
+            schema: {
+                params: ChatBotIdParams,
             },
-            async (request) => {
-                return chatbotService.getOneOrThrow({
-                    projectId: request.principal.projectId,
-                    chatbotId: request.params.id,
-                })
+        },
+        async (request) => {
+            return chatbotService.getOneOrThrow({
+                projectId: request.principal.projectId,
+                chatbotId: request.params.id,
+            })
+        },
+    ),
+    app.post(
+        '/:id',
+        {
+            schema: {
+                params: ChatBotIdParams,
+                body: UpdateChatbotRequest,
             },
-        ),
-        app.post(
-            '/:id',
-            {
-                schema: {
-                    params: ChatBotIdParams,
-                    body: UpdateChatbotRequest,
-                },
+        },
+        async (request) => {
+            return chatbotService.update({
+                projectId: request.principal.projectId,
+                request: request.body,
+                chatbotId: request.params.id,
+            })
+        },
+    ),
+    app.post(
+        '/:id/ask',
+        {
+            schema: {
+                params: ChatBotIdParams,
+                body: Type.Object({
+                    input: Type.String(),
+                }),
             },
-            async (request) => {
-                return chatbotService.update({
-                    projectId: request.principal.projectId,
-                    request: request.body,
-                    chatbotId: request.params.id,
-                })
-            },
-        ),
-        app.post(
-            '/:id/ask',
-            {
-                schema: {
-                    params: ChatBotIdParams,
-                    body: Type.Object({
-                        input: Type.String(),
-                    }),
-                },
-            },
-            async (request) => {
-                return chatbotService.ask({
-                    projectId: request.principal.projectId,
-                    chatbotId: request.params.id,
-                    input: request.body.input,
-                })
-            },
-        ),
-        app.delete(
-            '/:id',
-            { schema: { params: ChatBotIdParams } },
-            async (request) => {
-                return chatbotService.delete({
-                    projectId: request.principal.projectId,
-                    chatbotId: request.params.id,
-                })
-            },
-        ),
+        },
+        async (request) => {
+            return chatbotService.ask({
+                projectId: request.principal.projectId,
+                chatbotId: request.params.id,
+                input: request.body.input,
+            })
+        },
+    ),
+    app.delete(
+        '/:id',
+        { schema: { params: ChatBotIdParams } },
+        async (request) => {
+            return chatbotService.delete({
+                projectId: request.principal.projectId,
+                chatbotId: request.params.id,
+            })
+        },
+    ),
 
 
-        done()
+    done()
 }

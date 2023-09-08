@@ -142,7 +142,7 @@ const toPieceMetadataSummary = (pieceMetadataEntityList: PieceMetadataSchema[]):
             ...pieceMetadataEntity,
             actions: Object.keys(pieceMetadataEntity.actions).length,
             triggers: Object.keys(pieceMetadataEntity.triggers).length,
-            datasources: Objects.key(pieceMetadataEntity.datasources).length
+            datasources: Object.keys(pieceMetadataEntity.datasources).length,
         }
     })
 }

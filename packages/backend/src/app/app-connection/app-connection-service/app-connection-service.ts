@@ -447,9 +447,9 @@ function mergeNonNull(
         Object.entries(oAuth2Response)
             .filter(([, value]) => value !== null && value !== undefined)
             .reduce<Partial<BaseOAuth2ConnectionValue>>((obj, [key, value]) => {
-                obj[key as keyof BaseOAuth2ConnectionValue] = value
-                return obj
-            }, {})
+            obj[key as keyof BaseOAuth2ConnectionValue] = value
+            return obj
+        }, {})
 
     return {
         ...appConnection,

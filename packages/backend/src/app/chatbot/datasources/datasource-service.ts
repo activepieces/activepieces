@@ -60,7 +60,7 @@ export const datasourceService = {
                 params: {
                     message: `Datasource ${datasourceId} not found`,
                 },
-                code: ErrorCode.ENTITY_NOT_FOUND
+                code: ErrorCode.ENTITY_NOT_FOUND,
             })
         }
         chatbot.dataSources = chatbot.dataSources.filter(
@@ -90,7 +90,7 @@ async function createDatasource({
 }) {
     const chatbot = await chatbotService.getOneOrThrow({
         chatbotId: botId,
-        projectId
+        projectId,
     })
     const appConnection = await appConnectionService.getOneOrThrow({
         projectId,

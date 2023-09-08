@@ -82,10 +82,10 @@ export class ChatbotSettingsComponent {
           connections: AppConnectionWithoutSensitiveData[];
           chatbot: Chatbot;
         };
-        this.formGroup.controls.connectionId.setValue(routeData.chatbot.connectionId);
-        this.formGroup.controls.prompt.setValue(
-          routeData.chatbot.prompt
+        this.formGroup.controls.connectionId.setValue(
+          routeData.chatbot.connectionId
         );
+        this.formGroup.controls.prompt.setValue(routeData.chatbot.prompt);
         this.formGroup.controls.displayName.setValue(
           routeData.chatbot.displayName
         );

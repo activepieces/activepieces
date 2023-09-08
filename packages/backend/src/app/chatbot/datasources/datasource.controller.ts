@@ -31,24 +31,24 @@ export const datasourceController: FastifyPluginCallbackTypebox = (
             })
         },
     ),
-        app.delete(
-            '/:id/datasources/:datasourceId',
-            {
-                schema: {
-                    params: Type.Object({
-                        id: Type.String(),
-                        datasourceId: Type.String(),
-                    }),
-                },
+    app.delete(
+        '/:id/datasources/:datasourceId',
+        {
+            schema: {
+                params: Type.Object({
+                    id: Type.String(),
+                    datasourceId: Type.String(),
+                }),
             },
-            async (request) => {
-                return datasourceService.deleteDatasourceFromBot({
-                    chatbotId: request.params.id,
-                    projectId: request.principal.projectId,
-                    datasourceId: request.params.datasourceId,
-                })
-            },
-        ),
+        },
+        async (request) => {
+            return datasourceService.deleteDatasourceFromBot({
+                chatbotId: request.params.id,
+                projectId: request.principal.projectId,
+                datasourceId: request.params.datasourceId,
+            })
+        },
+    ),
 
-        done()
+    done()
 }
