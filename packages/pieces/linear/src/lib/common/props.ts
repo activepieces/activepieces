@@ -24,7 +24,7 @@ export const props = {
         });
         return {
           disabled: false,
-          options: teams.nodes.map((team) => {
+          options: teams.nodes.map((team: { name: any; id: any; }) => {
             return {
               label: team.name,
               value: team.id,
@@ -60,7 +60,7 @@ export const props = {
         const statusList = await client.listIssueStates(filter);
         return {
           disabled: false,
-          options: statusList.nodes.map((status) => {
+          options: statusList.nodes.map((status: { name: any; id: any; }) => {
             return {
               label: status.name,
               value: status.id,
@@ -87,7 +87,7 @@ export const props = {
         const labels = await client.listIssueLabels();
         return {
           disabled: false,
-          options: labels.nodes.map((label) => {
+          options: labels.nodes.map((label: { name: any; id: any; }) => {
             return {
               label: label.name,
               value: label.id,
@@ -114,7 +114,7 @@ export const props = {
         const users = await client.listUsers();
         return {
           disabled: false,
-          options: users.nodes.map((user) => {
+          options: users.nodes.map((user: { name: any; id: any; }) => {
             return {
               label: user.name,
               value: user.id,
@@ -141,7 +141,7 @@ export const props = {
         const priorities = await client.listIssuePriorities();
         return {
           disabled: false,
-          options: priorities.map((priority) => {
+          options: priorities.map((priority: { label: any; priority: any; }) => {
             return {
               label: priority.label,
               value: priority.priority,
@@ -179,7 +179,7 @@ export const props = {
         const issues = await client.listIssues(filter);
         return {
           disabled: false,
-          options: issues.nodes.map((issue) => {
+          options: issues.nodes.map((issue: { title: any; id: any; }) => {
             return {
               label: issue.title,
               value: issue.id,
