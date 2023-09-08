@@ -1,7 +1,7 @@
 import { FastifyError, FastifyReply, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
-import { captureException, logger } from './logger'
+import { captureException } from './logger'
 
 export const errorHandler = async (
     error: FastifyError,

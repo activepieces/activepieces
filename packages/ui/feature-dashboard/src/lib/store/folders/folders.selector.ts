@@ -22,6 +22,14 @@ const selectCurrentFolderId = createSelector(
 const selectFolders = createSelector(selectFoldersState, (state) => {
   return state.folders;
 });
+const selectFoldersAsc = createSelector(selectFoldersState, (state) => {
+  const folders = [...state.folders];
+  return folders.sort((a, b) => a.displayName.localeCompare(b.displayName));
+});
+const selectFoldersDesc = createSelector(selectFoldersState, (state) => {
+  const folders = [...state.folders];
+  return folders.sort((a, b) => b.displayName.localeCompare(a.displayName));
+});
 const selectAllFlowsNumber = createSelector(selectFoldersState, (state) => {
   return state.allFlowsNumber;
 });
@@ -41,6 +49,8 @@ const selectCurrentFolderExceptCurrent = createSelector(
 export const FoldersSelectors = {
   selectDisplayAllFlows,
   selectCurrentFolder,
+  selectFoldersAsc,
+  selectFoldersDesc,
   selectFolders,
   selectAllFlowsNumber,
   selectUncategorizedFlowsNumber,

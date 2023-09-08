@@ -27,7 +27,7 @@ export const existsTask = createAction({
 
     // Remove trailing slash from base_url
     const baseUrl = context.auth.base_url.replace(/\/$/, '');
-    const url = `${baseUrl}/api/v1/tasks?${queryParams.toString()}`;
+    const url = `${baseUrl}/api/v1/tasks?number=${queryParams.toString()}`;
     const httprequestdata = {
       method: HttpMethod.GET,
       url,

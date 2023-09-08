@@ -28,10 +28,12 @@ export const notionCommon = {
             });
             return {
                 placeholder: "Select a database",
-                options: databases.results.map((database: any) => ({
-                    label: database.title[0].plain_text,
-                    value: database.id
-                }))
+                options: databases.results.
+                    filter((f: any) => f.title.length > 0)
+                    .map((database: any) => ({
+                        label: database.title?.[0]?.plain_text ?? "Unknown title",
+                        value: database.id
+                    }))
             }
         }
     })

@@ -1,5 +1,5 @@
 import { createAction, Property, StoreScope } from "@activepieces/pieces-framework";
-
+import deepEqual from 'deep-equal';
 
 export const storageAddtoList = createAction({
     name: 'add_to_list',
@@ -43,8 +43,12 @@ export const storageAddtoList = createAction({
         if (!Array.isArray(items)) {
             throw new Error(`Key ${context.propsValue['key']} is not an array`);
         }
-        if (context.propsValue['ignore_if_exists'] && items.includes(context.propsValue['value'])) {
-            return items;
+        if (context.propsValue['ignore_if_exists'] ) {
+            for( const item of items ){
+                if( deepEqual(item, context.propsValue['value']) ){
+                    return items;
+                }
+            }
         }
         items.push(context.propsValue['value']);
         return await context.store.put(context.propsValue['key'], items, context.propsValue.store_scope);

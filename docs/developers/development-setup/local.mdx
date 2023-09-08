@@ -6,7 +6,6 @@ description: ''
 ## Prerequisites
 - Node.js v18+
 - npm v9+
-- Docker & Docker Compose v2
 
 ## Instructions
 
@@ -17,29 +16,11 @@ node tools/setup-dev.js
 
 2. Start the environment
 
-This command uses Docker Compose to start PostgreSQL and Redis containers based on the configurations specified in the Docker Compose file.
-
-<Tip>
-To ensure that Docker is working properly, you can test it separately by running the command `npm run docker`.
-</Tip>
+This command uses will start activepieces with sqlite3 and in memory queue.
 
 ```bash
 npm start
 ```
-
-<Warning>
-**Troubleshoot 1:**
-The IP address 0.0.0.0:5432 is already in use. This suggests that another PostgreSQL on your device is currently active, leading to a port conflict.
-
-Please stop the existing service or edit the environment variables in `packages/backend/.env`
-</Warning>
-
-<Warning>
-**Troubleshoot 2:**
-The IP address 0.0.0.0:6379 is already in use. This suggests that another Redis on your device is currently active, leading to a port conflict.
-
-Please stop the existing service or edit the environment variables in `packages/backend/.env`
-</Warning>
 
 3. Go to ***localhost:4200*** on your web browser and sign in with these details:
 

@@ -34,9 +34,6 @@ export class VariableService {
       if (variableName.startsWith(VariableService.CONNECTIONS)) {
         return this.handleTypeAndResolving(variableName, logs);
       }
-      if (isApFilePath(variableName)) {
-        return variableName;
-      }
       return this.evalInScope(variableName, valuesMap);
     }
     return input.replace(this.VARIABLE_TOKEN, (_match, variable) => {
@@ -149,9 +146,11 @@ export class VariableService {
   }
 
   private getExecutionStateObject(
-    executionState: ExecutionState,
-    logs: boolean
+    executionState: ExecutionState | null,
   ): Record<string, unknown> {
+    if(isNil(executionState)) {
+      return {};
+    }
     const valuesMap: Record<string, unknown> = {};
     Object.entries(executionState.lastStepState).forEach(([key, value]) => {
       valuesMap[key] = value;
@@ -168,7 +167,7 @@ export class VariableService {
 
     return this.resolveInternally(
       JSON.parse(JSON.stringify(unresolvedInput)),
-      this.getExecutionStateObject(executionState, logs),
+      this.getExecutionStateObject(executionState),
       logs
     ) as Promise<T>;
   }
@@ -274,6 +273,6 @@ export class VariableService {
 
 type ResolveParams = {
   unresolvedInput: unknown;
-  executionState: ExecutionState;
+  executionState: ExecutionState | null;
   logs: boolean;
 };
