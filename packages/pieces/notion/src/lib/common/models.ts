@@ -1,4 +1,4 @@
-import { Property } from '@activepieces/pieces-framework';
+import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 type SelectColor =
   | 'default'
   | 'gray'
@@ -197,7 +197,7 @@ type SelectDatabaseProperty = {
   id: string;
   name: string;
   type: 'select';
-  multi_select: {
+  select: {
     options: {
       id: string;
       name: string;
@@ -350,16 +350,122 @@ export interface NotionDatabase {
 
 export const NotionFieldMapping: Record<string, any> = {
   checkbox: Property.Checkbox,
-  date: Property.ShortText,
-  email: Property.ShortText,
+  date: {
+    buildActivepieceType: (property: DateDatabaseProperty) =>
+      Property.DateTime({
+        displayName: property.name,
+        required: false,
+      }),
+    buildNotionType: (property: DynamicPropsValue) => ({
+      date: {
+        start: property,
+      },
+    }),
+  },
+  email: {
+    buildActivepieceType: (property: EmailDatabaseProperty) =>
+      Property.ShortText({
+        displayName: property.name,
+        required: false,
+      }),
+  },
   formula: Property.ShortText,
-  multi_select: Property.StaticMultiSelectDropdown,
+  select: {
+    buildActivepieceType: (property: SelectDatabaseProperty) =>
+      Property.StaticDropdown({
+        displayName: property.name,
+        required: false,
+        options: {
+          disabled: false,
+          options: property.select.options?.map((option) => {
+            return {
+              label: option.name,
+              value: option.id,
+            };
+          }),
+        },
+      }),
+    buildNotionType: (property: DynamicPropsValue) => ({
+      select: {
+        id: property,
+      },
+    }),
+  },
+  multi_select: {
+    buildActivepieceType: (property: MultiSelectDatabaseProperty) =>
+      Property.StaticMultiSelectDropdown({
+        displayName: property.name,
+        required: false,
+        options: {
+          disabled: false,
+          options: property.multi_select.options?.map((option) => {
+            return {
+              label: option.name,
+              value: option.id,
+            };
+          }),
+        },
+      }),
+    buildNotionType: (property: DynamicPropsValue) => ({
+      multi_select: property.map((id: any) => ({ id: id })),
+    }),
+  },
+  status: {
+    buildActivepieceType: (property: StatusDatabaseProperty) =>
+      Property.StaticDropdown({
+        displayName: property.name,
+        required: false,
+        options: {
+          disabled: false,
+          options: property.status.options?.map((option) => {
+            return {
+              label: option.name,
+              value: option.id,
+            };
+          }),
+        },
+      }),
+    buildNotionType: (property: DynamicPropsValue) => ({
+      status: {
+        id: property,
+      },
+    }),
+  },
   number: Property.Number,
   phone_number: Property.ShortText,
-  rich_text: Property.LongText,
-  select: Property.StaticDropdown,
-  title: Property.ShortText,
+  rich_text: {
+    buildActivepieceType: (property: RichTextDatabaseProperty) =>
+      Property.LongText({ displayName: property.name, required: false }),
+    buildNotionType: (property: DynamicPropsValue) => ({
+      rich_text: [
+        {
+          type: 'text',
+          text: {
+            content: property,
+          },
+        },
+      ],
+    }),
+  },
+  title: {
+    buildActivepieceType: (property: TitleDatabaseProperty) =>
+      Property.ShortText({ displayName: property.name, required: false }),
+    buildNotionType: (property: DynamicPropsValue) => ({
+      title: [
+        {
+          type: 'text',
+          text: {
+            content: property,
+          },
+        },
+      ],
+    }),
+  },
   url: Property.ShortText,
-  status: Property.StaticDropdown,
-  people: Property.StaticDropdown,
+  people: {
+    buildActivepieceType: undefined,
+    buildNotionType: (property: DynamicPropsValue) => ({
+      people: property.map((id: any) => ({ id: id })),
+    }),
+  },
 };

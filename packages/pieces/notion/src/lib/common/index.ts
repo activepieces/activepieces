@@ -41,103 +41,77 @@ export const notionCommon = {
       };
     },
   }),
-  databaseFields: (required = true) =>
-    Property.DynamicProperties({
-      displayName: 'Fields',
-      required,
-      refreshers: ['database_id'],
-      props: async ({ auth, database_id }) => {
-        if (!auth || !database_id) {
-          return {
-            disabled: true,
-            placeholder:
-              'Please connect your Notion account first and select database',
-            options: [],
-          };
-        }
-        const fields: DynamicPropsValue = {};
-        try {
-          const notion = new Client({
-            auth: (auth as OAuth2PropertyValue).access_token,
-            notionVersion: '2022-02-22',
-          });
-          const { properties } = await notion.databases.retrieve({
-            database_id: database_id as unknown as string,
-          });
+  databaseFields: Property.DynamicProperties({
+    displayName: 'Fields',
+    required: true,
+    refreshers: ['database_id'],
+    props: async ({ auth, database_id }) => {
+      if (!auth || !database_id) {
+        return {
+          disabled: true,
+          placeholder:
+            'Please connect your Notion account first and select database',
+          options: [],
+        };
+      }
+      const fields: DynamicPropsValue = {};
+      try {
+        const notion = new Client({
+          auth: (auth as OAuth2PropertyValue).access_token,
+          notionVersion: '2022-02-22',
+        });
+        const { properties } = await notion.databases.retrieve({
+          database_id: database_id as unknown as string,
+        });
 
-          for (var key in properties) {
-            if (properties.hasOwnProperty(key)) {
-              var property = properties[key];
-              if (
-                [
-                  'rollup',
-                  'unique_id',
-                  'url',
-                  'relation',
-                  'created_by',
-                  'created_time',
-                  'last_edited_by',
-                  'last_edited_time',
-                ].includes(property.type)
-              ) {
-                continue;
-              }
-              const params = {
-                displayName: key,
+        for (var key in properties) {
+          if (properties.hasOwnProperty(key)) {
+            var property = properties[key];
+            if (
+              [
+                'rollup',
+                'unique_id',
+                'url',
+                'relation',
+                'created_by',
+                'created_time',
+                'last_edited_by',
+                'last_edited_time',
+              ].includes(property.type)
+            ) {
+              continue;
+            }
+            if (property.type === 'people') {
+              const { results } = await notion.users.list({ page_size: 100 });
+              fields[property.name] = Property.StaticMultiSelectDropdown({
+                displayName: property.name,
                 required: false,
-              };
-              if (property.type === 'select') {
-                const options = property.select.options.map(
-                  (option: { id: string; name: string }) => ({
-                    value: option.id,
-                    label: option.name,
-                  })
+                options: {
+                  disabled: false,
+                  options: results
+                    .filter(
+                      (user) => user.type === 'person' && user.name !== null
+                    )
+                    .map((option: { id: string; name: any }) => {
+                      return {
+                        label: option.name,
+                        value: option.id,
+                      };
+                    }),
+                },
+              });
+            } else {
+              fields[property.name] =
+                NotionFieldMapping[property.type].buildActivepieceType(
+                  property
                 );
-                fields[property.id] = NotionFieldMapping[property.type]({
-                  ...params,
-                  options: {
-                    options: options ?? [],
-                  },
-                });
-                // } else if (property.type === 'people') {
-                //   const { results } = await notion.users.list({ page_size: 100 });
-                //   console.log('PEOPLE');
-                //   console.log(res);
-              } else if (property.type === 'multi_select') {
-                const options = property.multi_select.options.map(
-                  (option: { id: string; name: string }) => ({
-                    value: option.id,
-                    label: option.name,
-                  })
-                );
-                fields[property.id] = NotionFieldMapping[property.type]({
-                  ...params,
-                  options: {
-                    options: options ?? [],
-                  },
-                });
-              } else if (property.type === 'status') {
-                const options = property.status.options.map(
-                  (option: { id: string; name: string }) => ({
-                    value: option.id,
-                    label: option.name,
-                  })
-                );
-                fields[property.id] = NotionFieldMapping[property.type]({
-                  ...params,
-                  options: {
-                    options: options ?? [],
-                  },
-                });
-              } else {
-                fields[property.id] = NotionFieldMapping[property.type](params);
-              }
             }
           }
-        } catch (e) {
-          console.debug(e);
         }
-        return fields;
-      },
-    }),
+      } catch (e) {
+        console.debug(e);
+      }
+      return fields;
+    },
+  }),
 };
