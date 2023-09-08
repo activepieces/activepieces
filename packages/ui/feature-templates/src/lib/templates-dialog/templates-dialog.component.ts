@@ -9,10 +9,14 @@ import {
   switchMap,
   tap,
 } from 'rxjs';
-import { FlowTemplate, FolderId } from '@activepieces/shared';
+import {
+  FlowTemplate,
+  FolderId,
+  TelemetryEventName,
+} from '@activepieces/shared';
 
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { TemplatesService } from '@activepieces/ui/common';
+import { TelemetryService, TemplatesService } from '@activepieces/ui/common';
 import { MatTabGroup } from '@angular/material/tabs';
 
 export interface TemplateDialogData {
@@ -60,6 +64,7 @@ export class TemplatesDialogComponent {
   constructor(
     private templatesService: TemplatesService,
     private dialogRef: MatDialogRef<TemplatesDialogComponent>,
+    private telemetryService: TelemetryService,
     @Inject(MAT_DIALOG_DATA)
     public data?: TemplateDialogData
   ) {
@@ -76,6 +81,10 @@ export class TemplatesDialogComponent {
       }),
       debounceTime(300),
       switchMap(() => {
+        this.telemetryService.capture({
+          name: TelemetryEventName.TEMPLATE_SEARCH,
+          payload: this.dialogForm.getRawValue(),
+        });
         return this.templatesService.getTemplates(
           this.dialogForm.getRawValue()
         );
@@ -97,8 +106,17 @@ export class TemplatesDialogComponent {
     };
     this.dialogRef.close(result);
   }
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  showFeaturedTab(tabGroup: MatTabGroup, location: string) {
+
+  showFeaturedTab(
+    tabGroup: MatTabGroup,
+    buttonPressed: 'banner button' | 'tab button'
+  ) {
+    this.telemetryService.capture({
+      name: TelemetryEventName.FEATURED_TAB_VIEWED,
+      payload: {
+        buttonPressed,
+      },
+    });
     tabGroup.selectedIndex = 0;
   }
   closeDialog() {

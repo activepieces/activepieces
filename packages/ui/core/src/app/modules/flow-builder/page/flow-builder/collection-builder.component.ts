@@ -39,6 +39,7 @@ import {
   ExecutionOutputStatus,
   FlowTemplate,
   FlowVersion,
+  TelemetryEventName,
   TriggerType,
 } from '@activepieces/shared';
 import { Title } from '@angular/platform-browser';
@@ -48,6 +49,7 @@ import {
 } from '@activepieces/ui/feature-builder-store';
 import {
   FlagService,
+  TelemetryService,
   TestStepService,
   environment,
   isThereAnyNewFeaturedTemplatesResolverKey,
@@ -114,6 +116,7 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
     public builderService: CollectionBuilderService,
     private matDialog: MatDialog,
     private flagService: FlagService,
+    private telemetryService: TelemetryService,
     public builderAutocompleteService: BuilderAutocompleteMentionsDropdownService
   ) {
     this.listenToGraphChanges();
@@ -155,6 +158,15 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
                       .pipe(
                         take(1),
                         tap((flow) => {
+                          this.telemetryService.capture({
+                            name: TelemetryEventName.FLOW_IMPORTED,
+                            payload: {
+                              id: result.template.id,
+                              name: result.template.name,
+                              location: `inside the builder`,
+                              tab: `${result.activeTab}`,
+                            },
+                          });
                           this.builderService.importTemplate$.next({
                             flowId: flow.id,
                             template: result.template,
