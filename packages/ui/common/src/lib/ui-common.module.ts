@@ -76,7 +76,7 @@ const exportedImports = [
   MatCheckboxModule,
   MatDividerModule,
   MatIconModule,
-  MatTabsModule
+  MatTabsModule,
 ];
 const exportedDeclarations = [
   UploadImageControlComponent,

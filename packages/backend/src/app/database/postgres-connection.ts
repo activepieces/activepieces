@@ -103,7 +103,7 @@ export const createPostgresDataSource = () => {
             AddAppConnectionTypeToTopLevel1691703023866,
             AddTagsToRun1692106375081,
             AddFileToPostgres1693004806926,
-            AddUserMetaInformation1693850082449
+            AddUserMetaInformation1693850082449,
         ],
         ...commonProperties,
     })

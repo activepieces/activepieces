@@ -31,7 +31,7 @@ export const createSqlLiteDatasource = () => {
             AddAppConnectionTypeToTopLevel1691706020626,
             AddTagsToRunSqlite31692056190942,
             AddStepFileSqlite31692958076906,
-            AddImageUrlAndTitleToUser1693774053027
+            AddImageUrlAndTitleToUser1693774053027,
         ],
         ...commonProperties,
     })

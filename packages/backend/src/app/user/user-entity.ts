@@ -36,11 +36,11 @@ export const UserEntity = new EntitySchema<UserSchema>({
         },
         imageUrl: {
             type: String,
-            nullable: true
+            nullable: true,
         },
         title: {
             type: String,
-            nullable: true
+            nullable: true,
         },
     },
     relations: {
