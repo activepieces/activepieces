@@ -10,16 +10,16 @@ import { environment } from '../environments/environment';
 })
 export class TemplatesService {
   constructor(private flagsService: FlagService, private http: HttpClient) {}
-  getPinnedTemplates() {
+  getFeaturedTemplates() {
     return this.getTemplates({
       pieces: [],
       tags: [],
       search: '',
-      pinned: true,
+      featuredOnly: true,
     }).pipe(
       map((res) => {
         return res.sort((a, b) =>
-          (a.pinnedOrder || 0) > (b.pinnedOrder || 0) ? 1 : -1
+          new Date(a.created) > new Date(b.created) ? 1 : -1
         );
       })
     );
@@ -35,8 +35,11 @@ export class TemplatesService {
     if (params.search) {
       httpParams = httpParams.append('search', params.search);
     }
-    if (params.pinned !== undefined) {
-      httpParams = httpParams.append('pinned', params.pinned ? true : false);
+    if (params.featuredOnly !== undefined) {
+      httpParams = httpParams.append(
+        'featuredOnly',
+        params.featuredOnly ? true : false
+      );
     }
     return this.flagsService.getTemplatesSourceUrl().pipe(
       switchMap((url) => {
@@ -52,6 +55,14 @@ export class TemplatesService {
   getTemplateDeprecated(templateId: string) {
     return this.http.get<FlowTemplate>(
       `https://activepieces-cdn.fra1.cdn.digitaloceanspaces.com/templates/${templateId}.json`
+    );
+  }
+
+  getIsThereNewFeaturedTemplates() {
+    return this.flagsService.getTemplatesSourceUrl().pipe(
+      switchMap((url) => {
+        return this.http.get<boolean>(`${url}/is-there-new-featured-templates`);
+      })
     );
   }
 }

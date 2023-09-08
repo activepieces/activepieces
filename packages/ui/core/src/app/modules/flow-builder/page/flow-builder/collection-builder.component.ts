@@ -40,6 +40,7 @@ import {
   ExecutionOutputStatus,
   FlowTemplate,
   FlowVersion,
+  TelemetryEventName,
   TriggerType,
 } from '@activepieces/shared';
 import { Title } from '@angular/platform-browser';
@@ -49,8 +50,10 @@ import {
 } from '@activepieces/ui/feature-builder-store';
 import {
   FlagService,
+  TelemetryService,
   TestStepService,
   environment,
+  isThereAnyNewFeaturedTemplatesResolverKey,
 } from '@activepieces/ui/common';
 import { PannerService } from '@activepieces/ui/feature-builder-canvas';
 import { MatDialog } from '@angular/material/dialog';
@@ -64,6 +67,7 @@ import {
   TemplateDialogData,
   TemplateBlogNotificationComponent,
   BLOG_URL_TOKEN,
+  TemplateDialogClosingResult,
 } from '@activepieces/ui/feature-templates';
 import { BuilderAutocompleteMentionsDropdownService } from '@activepieces/ui/common';
 
@@ -113,6 +117,7 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
     public builderService: CollectionBuilderService,
     private matDialog: MatDialog,
     private flagService: FlagService,
+    private telemetryService: TelemetryService,
     public builderAutocompleteService: BuilderAutocompleteMentionsDropdownService
   ) {
     this.listenToGraphChanges();
@@ -133,6 +138,9 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
     if (localStorage.getItem('newFlow')) {
       const TemplateDialogData: TemplateDialogData = {
         insideBuilder: true,
+        isThereNewFeaturedTemplates$: this.actRoute.data.pipe(
+          map((val) => val[isThereAnyNewFeaturedTemplatesResolverKey])
+        ),
       };
       this.importTemplate$ = this.flagService.getTemplatesSourceUrl().pipe(
         map((url) => !!url),
@@ -144,19 +152,28 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
               })
               .afterClosed()
               .pipe(
-                switchMap((template?: FlowTemplate) => {
-                  if (template) {
+                switchMap((result?: TemplateDialogClosingResult) => {
+                  if (result) {
                     return this.store
                       .select(BuilderSelectors.selectCurrentFlow)
                       .pipe(
                         take(1),
                         tap((flow) => {
+                          this.telemetryService.capture({
+                            name: TelemetryEventName.FLOW_IMPORTED,
+                            payload: {
+                              id: result.template.id,
+                              name: result.template.name,
+                              location: `inside the builder`,
+                              tab: `${result.activeTab}`,
+                            },
+                          });
                           this.builderService.importTemplate$.next({
                             flowId: flow.id,
-                            template: template,
+                            template: result.template,
                           });
-                          if (template.blogUrl) {
-                            this.showBlogNotification(template);
+                          if (result.template.blogUrl) {
+                            this.showBlogNotification(result.template);
                           }
                         })
                       );
