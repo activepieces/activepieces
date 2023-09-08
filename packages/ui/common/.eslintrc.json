@@ -8,6 +8,12 @@
           {
             "prefix": [ "ap" ]
           }
+        ],
+        "@angular-eslint/directive-selector": [
+          "error",
+          {
+            "prefix": [ "ap" ]
+          }
         ]
       },
       "files": ["*.ts"],
