@@ -1,7 +1,7 @@
 import { sessionCommon } from "../common/common";
 import { sessionAuth } from "../..";
 import { HttpMethod, httpClient, HttpRequest } from "@activepieces/pieces-common";
-import { createAction } from "@activepieces/pieces-framework";
+import { Property, createAction } from "@activepieces/pieces-framework";
 import dayjs from 'dayjs'
 
 export const getTranscript = createAction({
@@ -10,6 +10,34 @@ export const getTranscript = createAction({
     displayName: "Get Transcript",
     description: "Get the transcript for the session.",
     props: {
+        recent: Property.Checkbox({
+            displayName: "Use recent",
+            description: "Use the most recent session.",
+            required: true,
+            defaultValue: false
+        }),
+        id: Property.DynamicProperties({
+            displayName: "Session ID",
+            required: false,
+            refreshers: ['recent'],
+            props: async (propsValue) => {
+                const check = propsValue['recent'];
+                if (check) {
+                    const properties = {
+                        prop1: sessionCommon.session_id
+                    }
+                    return properties;
+                } else {
+                    const properties = {
+                        prop1: Property.ShortText({
+                            displayName: "x",
+                            required: false
+                        })
+                    }
+                    return properties; 
+                }
+            }
+        })
     },
     async run({auth, store}) {
         const session = await latestSession(auth);
@@ -22,7 +50,7 @@ export const getTranscript = createAction({
         }
 
         if (dayjs(session.createdAt).isBefore(dayjs(dateOf))){
-            return "Retest this step";
+            return "Rerun this step, something went wrong";
         }
 
         const request: HttpRequest = {
@@ -33,6 +61,8 @@ export const getTranscript = createAction({
                 "x-api-key":auth,
             }
         }
+        await store.put("lastSession", session['createdAt']);
+        await store.put("lastId", session['id']);
         return await httpClient.sendRequest(request);
     }
 });
