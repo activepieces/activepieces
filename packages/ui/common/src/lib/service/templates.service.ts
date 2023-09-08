@@ -10,7 +10,7 @@ import dayjs from 'dayjs';
   providedIn: 'root',
 })
 export class TemplatesService {
-  constructor(private flagsService: FlagService, private http: HttpClient) { }
+  constructor(private flagsService: FlagService, private http: HttpClient) {}
   getFeaturedTemplates() {
     return this.getTemplates({
       pieces: [],
@@ -61,10 +61,14 @@ export class TemplatesService {
   }
 
   getIsThereNewFeaturedTemplates() {
-    return this.getFeaturedTemplates().pipe(map((res) => {
-      return res.filter((template) => {
-        return dayjs(template.created).isAfter(dayjs().subtract(7, 'days'))
-      }).length > 0;
-    }));
+    return this.getFeaturedTemplates().pipe(
+      map((res) => {
+        return (
+          res.filter((template) => {
+            return dayjs(template.created).isAfter(dayjs().subtract(7, 'days'));
+          }).length > 0
+        );
+      })
+    );
   }
 }
