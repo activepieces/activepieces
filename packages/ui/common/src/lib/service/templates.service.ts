@@ -1,15 +1,16 @@
 import { Injectable } from '@angular/core';
-import { map, switchMap } from 'rxjs';
+import { map, shareReplay, switchMap } from 'rxjs';
 import { FlowTemplate, ListFlowTemplatesRequest } from '@activepieces/shared';
 import { FlagService } from './flag.service';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../environments/environment';
+import dayjs from 'dayjs';
 
 @Injectable({
   providedIn: 'root',
 })
 export class TemplatesService {
-  constructor(private flagsService: FlagService, private http: HttpClient) {}
+  constructor(private flagsService: FlagService, private http: HttpClient) { }
   getFeaturedTemplates() {
     return this.getTemplates({
       pieces: [],
@@ -21,7 +22,8 @@ export class TemplatesService {
         return res.sort((a, b) =>
           new Date(a.created) > new Date(b.created) ? 1 : -1
         );
-      })
+      }),
+      shareReplay(1)
     );
   }
   getTemplates(params: ListFlowTemplatesRequest) {
@@ -59,10 +61,10 @@ export class TemplatesService {
   }
 
   getIsThereNewFeaturedTemplates() {
-    return this.flagsService.getTemplatesSourceUrl().pipe(
-      switchMap((url) => {
-        return this.http.get<boolean>(`${url}/is-there-new-featured-templates`);
-      })
-    );
+    return this.getFeaturedTemplates().pipe(map((res) => {
+      return res.filter((template) => {
+        return dayjs(template.created).isAfter(dayjs().subtract(7, 'days'))
+      }).length > 0;
+    }));
   }
 }
