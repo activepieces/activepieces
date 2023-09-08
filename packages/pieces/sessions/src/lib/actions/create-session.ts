@@ -51,6 +51,6 @@ export const createSession = createAction({
         return {
             "link": response.body['sessionLink'], 
             "id": response.body['id']
-        }
+        };
     }
 })
