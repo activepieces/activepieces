@@ -1,3 +1,4 @@
+import { isNil } from "@activepieces/shared";
 import { S3 } from "@aws-sdk/client-s3";
 
 
@@ -7,9 +8,9 @@ export function createS3(auth: { accessKeyId: string; secretAccessKey: string; r
             accessKeyId: auth.accessKeyId,
             secretAccessKey: auth.secretAccessKey,
         },
-        forcePathStyle: auth.endpoint ? true : false,
+        forcePathStyle: auth.endpoint ? true : undefined,
         region: auth.region,
-        endpoint: auth.endpoint,
+        endpoint:(auth.endpoint === '' || isNil(auth.endpoint))  ? undefined : auth.endpoint,
     });
     return s3;
 }
