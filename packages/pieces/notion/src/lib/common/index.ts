@@ -64,9 +64,9 @@ export const notionCommon = {
           database_id: database_id as unknown as string,
         });
 
-        for (var key in properties) {
+        for (let key in properties) {
           if (properties.hasOwnProperty(key)) {
-            var property = properties[key];
+            const property = properties[key];
             if (
               [
                 'rollup',

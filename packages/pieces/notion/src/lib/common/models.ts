@@ -15,13 +15,13 @@ type DateDatabaseProperty = {
   id: string;
   name: string;
   type: 'date';
-  date: {};
+  date: Record<string, never>;
 };
 type CheckboxDatabaseProperty = {
   id: string;
   name: string;
   type: 'checkbox';
-  checkbox: {};
+  checkbox: Record<string, never>;
 };
 type CreatedByDatabaseProperty = {
   id: string;
@@ -32,19 +32,19 @@ type CreatedTimeDatabaseProperty = {
   id: string;
   name: string;
   type: 'created_time';
-  created_time: {};
+  created_time: Record<string, never>;
 };
 type EmailDatabaseProperty = {
   id: string;
   name: string;
   type: 'email';
-  email: {};
+  email: Record<string, never>;
 };
 type FilesDatabaseProperty = {
   id: string;
   name: string;
   type: 'files';
-  files: {};
+  files: Record<string, never>;
 };
 type FormulaDatabaseProperty = {
   id: string;
@@ -58,13 +58,13 @@ type LastEditedByDatabaseProperty = {
   id: string;
   name: string;
   type: 'last_edited_by';
-  last_edited_by: {};
+  last_edited_by: Record<string, never>;
 };
 type LastEditedTimeDatabaseProperty = {
   id: string;
   name: string;
   type: 'last_edited_time';
-  last_edited_time: {};
+  last_edited_time: Record<string, never>;
 };
 type MultiSelectDatabaseProperty = {
   id: string;
@@ -131,13 +131,13 @@ type PeopleDatabaseProperty = {
   id: string;
   name: string;
   type: 'people';
-  people: {};
+  people: Record<string, never>;
 };
 type PhoneNumberDatabaseProperty = {
   id: string;
   name: string;
   type: 'phone_number';
-  phone_number: {};
+  phone_number: Record<string, never>;
 };
 type RelationDatabaseProperty = {
   id: string;
@@ -153,7 +153,7 @@ type RichTextDatabaseProperty = {
   id: string;
   name: string;
   type: 'rich_text';
-  rich_text: {};
+  rich_text: Record<string, never>;
 };
 type RollupFunction =
   | 'count'
@@ -225,13 +225,13 @@ type StatusDatabaseProperty = {
 };
 type TitleDatabaseProperty = {
   type: 'title';
-  title: {};
+  title: Record<string, never>;
   id: string;
   name: string;
 };
 type UrlDatabaseProperty = {
   type: 'url';
-  url: {};
+  url: Record<string, never>;
   id: string;
   name: string;
 };
