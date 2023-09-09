@@ -2,7 +2,7 @@ import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
 import { getBook } from "./lib/actions/get-page";
 import { createSession } from "./lib/actions/create-session";
 import { getTranscript } from "./lib/actions/get-transcript";
-import { getTakeaways } from "./lib/actions/get-takeaways";
+import { getTakeaway } from "./lib/actions/get-takeaways";
 
 export const sessionAuth = PieceAuth.SecretText({
   displayName: "API Key",
@@ -16,6 +16,6 @@ export const sessions = createPiece({
   minimumSupportedRelease: '0.8.0',
   logoUrl: "https://cdn.activepieces.com/pieces/sessions.png",
   authors: ["Owlcept"],
-  actions: [getBook, createSession, getTranscript, getTakeaways],
+  actions: [getBook, createSession, getTranscript, getTakeaway],
   triggers: [],
 });

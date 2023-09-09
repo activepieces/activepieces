@@ -47,13 +47,20 @@ export const sessionCommon = {
     session_id: Property.Dropdown({
         displayName: "Session ID",
         required: true,
-        refreshers: ['auth'],
-        options: async({auth}) => {
+        refreshers: ['auth', 'recent'],
+        options: async({auth, recent}) => {
             if (!auth) {
                 return {
                     disabled: true,
                     options: [],
                     placeholder: "Please authenticate first"
+                }
+            }
+            if (recent) {
+                return {
+                    disabled: true,
+                    options: [],
+                    placeholder: "Using recent session"
                 }
             }
             const sessions = (await httpClient.sendRequest({

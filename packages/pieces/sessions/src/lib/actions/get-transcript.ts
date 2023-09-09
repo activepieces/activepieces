@@ -16,28 +16,7 @@ export const getTranscript = createAction({
             required: true,
             defaultValue: false
         }),
-        id: Property.DynamicProperties({
-            displayName: "Session ID",
-            required: false,
-            refreshers: ['recent'],
-            props: async (propsValue) => {
-                const check = propsValue['recent'];
-                if (check) {
-                    const properties = {
-                        prop1: sessionCommon.session_id
-                    }
-                    return properties;
-                } else {
-                    const properties = {
-                        prop1: Property.ShortText({
-                            displayName: "x",
-                            required: false
-                        })
-                    }
-                    return properties; 
-                }
-            }
-        })
+        id: sessionCommon.session_id
     },
     async run({auth, store}) {
         const session = await latestSession(auth);
