@@ -320,7 +320,7 @@ export class InterpolatingTextFormControlComponent
           .parentNode[
           'classList' as keyof ParentNode
         ] as unknown as DOMTokenList;
-        console.log(selection);
+
         if (classList && classList.contains('mention')) {
           fixSelection(selection.focusNode);
         }

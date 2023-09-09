@@ -527,6 +527,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "lldiegon",
+      "name": "Diego Nijboer",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22002313?v=4",
+      "profile": "https://lightspeed-it.nl/",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

@@ -1,4 +1,4 @@
-import { rmdir, mkdir, readFile, writeFile } from 'node:fs/promises'
+import { rmdir, mkdir, readFile, writeFile, cp } from 'node:fs/promises'
 import path from 'node:path'
 import { exec } from 'node:child_process'
 import { AbstractSandbox, ExecuteSandboxResult, SandboxCtorParams } from './abstract-sandbox'
@@ -12,7 +12,9 @@ export class FileSandbox extends AbstractSandbox {
         super(params)
     }
 
-    protected override async recreateCleanup(): Promise<void> {
+    public override async recreate(): Promise<void> {
+        logger.debug({ boxId: this.boxId }, '[FileSandbox#recreate]')
+
         const sandboxFolderPath = this.getSandboxFolderPath()
 
         try {
@@ -25,10 +27,21 @@ export class FileSandbox extends AbstractSandbox {
         await mkdir(sandboxFolderPath, { recursive: true })
     }
 
-    async runCommandLine(commandLine: string): Promise<ExecuteSandboxResult> {
+    public override async runOperation(operation: string): Promise<ExecuteSandboxResult> {
         const startTime = Date.now()
         const environment = system.get(SystemProp.ENVIRONMENT)
-        const result = await this.runUnsafeCommand(`cd ${this.getSandboxFolderPath()} && env -i AP_ENVIRONMENT=${environment} NODE_OPTIONS='--enable-source-maps' ${commandLine}`)
+
+        const command = [
+            `cd ${this.getSandboxFolderPath()}`,
+            '&&',
+            `env -i AP_ENVIRONMENT=${environment} NODE_OPTIONS='--enable-source-maps'`,
+            AbstractSandbox.nodeExecutablePath,
+            'main.js',
+            operation,
+        ].join(' ')
+
+        const result = await this.runUnsafeCommand(command)
+
         let engineResponse
 
         if (result.verdict === EngineResponseStatus.OK) {
@@ -46,6 +59,14 @@ export class FileSandbox extends AbstractSandbox {
 
     public override getSandboxFolderPath(): string {
         return path.join(__dirname, `../../sandbox/${this.boxId}`)
+    }
+
+    protected override async setupCache(): Promise<void> {
+        logger.debug({ boxId: this.boxId, cacheKey: this._cacheKey, cachePath: this._cachePath }, '[FileSandbox#setupCache]')
+
+        if (this._cachePath) {
+            await cp(this._cachePath, this.getSandboxFolderPath(), { recursive: true })
+        }
     }
 
     private async runUnsafeCommand(cmd: string): Promise<{ verdict: EngineResponseStatus }> {

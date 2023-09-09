@@ -46,7 +46,9 @@ export const selectIsSaving = createSelector(
   selectFlowState,
   (state) =>
     (state.savingStatus & BuilderSavingStatusEnum.SAVING_FLOW) ===
-    BuilderSavingStatusEnum.SAVING_FLOW
+      BuilderSavingStatusEnum.SAVING_FLOW ||
+    (state.savingStatus & BuilderSavingStatusEnum.WAITING_TO_SAVE) ===
+      BuilderSavingStatusEnum.WAITING_TO_SAVE
 );
 
 export const selectFlowHasAnySteps = createSelector(
