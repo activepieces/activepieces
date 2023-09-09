@@ -1,7 +1,7 @@
 import { sessionCommon } from "../common/common";
 import { sessionAuth } from "../..";
 import { HttpMethod, httpClient, HttpRequest } from "@activepieces/pieces-common";
-import { Property, createAction } from "@activepieces/pieces-framework";
+import { createAction } from "@activepieces/pieces-framework";
 
 export const getBook = createAction({
     auth: sessionAuth,
