@@ -72,6 +72,10 @@
 
 .mdc-dialog .mdc-dialog__content {
   padding: 3px 24px 20px 24px !important;
+  &.ap-p-0
+  {
+    padding:0px !important
+  }
 }
 
 

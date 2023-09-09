@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { ValueInputOption } from '../common/common';
+import { objectToArray, stringifyArray, ValueInputOption } from '../common/common';
 import { googleSheetsCommon } from '../common/common';
 import { googleSheetsAuth } from '../..';
 
@@ -31,7 +31,7 @@ export const updateRowAction = createAction({
         if (!sheetName) {
             throw Error("Sheet not found in spreadsheet");
         }
-        let formattedValues = (first_row_headers ? Object.values(values) : values['values']) as (string | null)[];
+        let formattedValues = (first_row_headers ? objectToArray(values) : values['values']) as (string | null)[];
         formattedValues = formattedValues.map(value => value === "" ? null : value);
         if (formattedValues.length > 0) {
             return (await googleSheetsCommon.updateGoogleSheetRow({
@@ -40,10 +40,10 @@ export const updateRowAction = createAction({
                 sheetName: sheetName,
                 spreadSheetId: spreadsheet_id,
                 valueInputOption: ValueInputOption.USER_ENTERED,
-                values: formattedValues as string[],
+                values: stringifyArray(formattedValues),
             })).body;
         } else {
-            throw Error("Values passed are not an array " + JSON.stringify(formattedValues))
+            throw Error("Values passed are empty or not array " + JSON.stringify(formattedValues))
         }
     },
 });

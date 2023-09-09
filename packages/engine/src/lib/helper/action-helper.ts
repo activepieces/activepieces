@@ -224,10 +224,11 @@ export const pieceHelper = {
         propsValue: processedInput,
         files: createFilesService({
           stepName: actionName,
+          flowId: flowVersion.flowId,
           type: 'db'
         }),
         tags: createTagsManager(executionState),
-        store: createContextStore('', globals.flowVersionId),
+        store: createContextStore('', flowVersion.flowId),
         connections: {
           get: async (key: string) => {
             try {
@@ -255,7 +256,7 @@ export const pieceHelper = {
       };
     } catch (e) {
       return {
-        output: Utils.tryParseJson( e as unknown as string ) ,
+        output: e instanceof Error ? Utils.tryParseJson(e.message) : e,
         success: false
       };
     }

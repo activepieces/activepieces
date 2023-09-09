@@ -1,55 +1,40 @@
-import { unlink, readFile, access } from 'node:fs/promises'
+import { readFile, access } from 'node:fs/promises'
+import process from 'node:process'
 import { system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
 import { logger } from '../../helper/logger'
-import { packageManager } from '../../helper/package-manager'
 import { EngineResponse, EngineResponseStatus } from '@activepieces/shared'
 
 export abstract class AbstractSandbox {
     protected static readonly sandboxRunTimeSeconds = system.getNumber(SystemProp.SANDBOX_RUN_TIME_SECONDS) ?? 600
+    protected static readonly nodeExecutablePath = process.execPath
 
     public readonly boxId: number
-    public used: boolean
-    public cached: boolean
-    public resourceId: string | null
-    public lastUsed: number
+    public inUse = false
+    protected _cacheKey?: string
+    protected _cachePath?: string
 
     protected constructor(params: SandboxCtorParams) {
         this.boxId = params.boxId
-        this.used = params.used
-        this.cached = params.cached
-        this.resourceId = params.resourceId
-        this.lastUsed = params.lastUsed
     }
 
-    protected abstract recreateCleanup(): Promise<void>
-
-    public async recreate(): Promise<void> {
-        await this.recreateCleanup()
-        const sandboxFolderPath = this.getSandboxFolderPath()
-        await packageManager.initProject(sandboxFolderPath)
+    public get cacheKey(): string | undefined {
+        return this._cacheKey
     }
 
-    public async clean(): Promise<void> {
-        const filesToDelete = [
-            '_standardOutput.txt',
-            '_standardError.txt',
-            'output.json',
-            'tmp',
-            'meta.txt',
-        ]
+    public abstract recreate(): Promise<void>
+    public abstract runOperation(operation: string): Promise<ExecuteSandboxResult>
+    public abstract getSandboxFolderPath(): string
+    protected abstract setupCache(): Promise<void>
 
-        const promises = filesToDelete.map((file) => {
-            const filePath = this.getSandboxFilePath(file)
-            return unlink(filePath).catch(
-                (e) => logger.debug(e, `[Sandbox#clean] unlink failure filePath=${filePath}`),
-            )
-        })
+    public async assignCache({ cacheKey, cachePath }: AssignCacheParams): Promise<void> {
+        logger.debug({ boxId: this.boxId, cacheKey, cachePath }, '[AbstractSandbox#assignCache]')
 
-        await Promise.all(promises)
+        this._cacheKey = cacheKey
+        this._cachePath = cachePath
+
+        await this.setupCache()
     }
-
-    public abstract runCommandLine(commandLine: string): Promise<ExecuteSandboxResult>
 
     protected async parseMetaFile(): Promise<Record<string, unknown>> {
         const metaFile = this.getSandboxFilePath('meta.txt')
@@ -64,7 +49,6 @@ export abstract class AbstractSandbox {
         return result
     }
 
-    public abstract getSandboxFolderPath(): string
 
     protected async parseFunctionOutput(): Promise<EngineResponse<unknown>> {
         const outputFile = this.getSandboxFilePath('output.json')
@@ -95,10 +79,6 @@ export abstract class AbstractSandbox {
 
 export type SandboxCtorParams = {
     boxId: number
-    used: boolean
-    resourceId: string | null
-    lastUsed: number
-    cached: boolean
 }
 
 export type ExecuteSandboxResult = {
@@ -107,4 +87,9 @@ export type ExecuteSandboxResult = {
     verdict: EngineResponseStatus
     standardOutput: string
     standardError: string
+}
+
+type AssignCacheParams = {
+    cacheKey: string
+    cachePath: string
 }
