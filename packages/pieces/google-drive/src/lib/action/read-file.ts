@@ -2,11 +2,11 @@ import { googleDriveAuth } from '../..';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { extension } from 'mime-types';
 
-export const downloadFile = createAction({
+export const readFile = createAction({
   auth: googleDriveAuth,
-  name: 'download_ggdrive_file',
-  displayName: 'Download file',
-  description: 'Download a selected file from google drive file',
+  name: 'read-file',
+  displayName: 'Read file',
+  description: 'Read a selected file from google drive file',
   props: {
     fileId: Property.ShortText({
       displayName: 'File ID',
