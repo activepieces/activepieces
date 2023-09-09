@@ -1,7 +1,6 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
+import { createAction, Property, Validators } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { invoiceninjaAuth } from "../..";
-
 export const createTask = createAction({
     auth: invoiceninjaAuth,
         name: 'create_task',
@@ -33,6 +32,8 @@ export const createTask = createAction({
                 displayName: 'Custom hourly rate',
                 description: 'Custom hourly rate (optional) otherwise default used',
                 required: false,
+                processors: [],
+                validators: [Validators.number],
             })
         },
 
