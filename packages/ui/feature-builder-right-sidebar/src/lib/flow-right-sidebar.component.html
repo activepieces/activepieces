@@ -109,6 +109,5 @@
 
 
 </ng-container>
-<ng-container *ngIf="elevateResizer$ | async">
-
-</ng-container>
+<ng-container *ngIf="elevateResizer$ | async"></ng-container>
+<ng-container *ngIf="builderService.savingStepOrTriggerData$ | async"></ng-container>
