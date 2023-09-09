@@ -12,7 +12,7 @@ export const createDatabaseItem = createAction({
   auth: notionAuth,
   name: 'create_database_item',
   displayName: 'Create Database Item',
-  description: 'desc',
+  description: 'Creates an item in database',
   props: {
     database_id: notionCommon.database_id,
     databaseFields: notionCommon.databaseFields,

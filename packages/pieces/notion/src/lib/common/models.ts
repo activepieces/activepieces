@@ -256,45 +256,7 @@ export type DatabaseProperty =
   | CreatedTimeDatabaseProperty
   | LastEditedByDatabaseProperty
   | LastEditedTimeDatabaseProperty;
-// type AnnotationType = {
-//   bold: boolean;
-//   italic: boolean;
-//   strikethrough: boolean;
-//   underline: boolean;
-//   code: boolean;
-//   color:
-//     | 'default'
-//     | 'gray'
-//     | 'brown'
-//     | 'orange'
-//     | 'yellow'
-//     | 'green'
-//     | 'blue'
-//     | 'purple'
-//     | 'pink'
-//     | 'red'
-//     | 'gray_background'
-//     | 'brown_background'
-//     | 'orange_background'
-//     | 'yellow_background'
-//     | 'green_background'
-//     | 'blue_background'
-//     | 'purple_background'
-//     | 'pink_background'
-//     | 'red_background';
-// };
-// export type TextRichTextItemResponse = {
-//   type: 'text';
-//   text: {
-//     content: string;
-//     link: {
-//       url: string;
-//     } | null;
-//   };
-//   annotations: AnnotationType;
-//   plain_text: string;
-//   href: string | null;
-// };
+
 export interface NotionDatabase {
   object: 'database';
   id: string;
@@ -349,7 +311,16 @@ export interface NotionDatabase {
 }
 
 export const NotionFieldMapping: Record<string, any> = {
-  checkbox: Property.Checkbox,
+  checkbox: {
+    buildActivepieceType: (property: CheckboxDatabaseProperty) =>
+      Property.Checkbox({
+        displayName: property.name,
+        required: false,
+      }),
+    buildNotionType: (property: DynamicPropsValue) => ({
+      checkbox: property,
+    }),
+  },
   date: {
     buildActivepieceType: (property: DateDatabaseProperty) =>
       Property.DateTime({
@@ -368,8 +339,11 @@ export const NotionFieldMapping: Record<string, any> = {
         displayName: property.name,
         required: false,
       }),
+    buildNotionType: (property: DynamicPropsValue) => ({
+      email: property,
+    }),
   },
-  formula: Property.ShortText,
+  // formula: Property.ShortText,
   select: {
     buildActivepieceType: (property: SelectDatabaseProperty) =>
       Property.StaticDropdown({
@@ -431,8 +405,26 @@ export const NotionFieldMapping: Record<string, any> = {
       },
     }),
   },
-  number: Property.Number,
-  phone_number: Property.ShortText,
+  number: {
+    buildActivepieceType: (property: NumberDatabaseProperty) =>
+      Property.Number({
+        displayName: property.name,
+        required: false,
+      }),
+    buildNotionType: (property: DynamicPropsValue) => ({
+      number: property,
+    }),
+  },
+  phone_number: {
+    buildActivepieceType: (property: PhoneNumberDatabaseProperty) =>
+      Property.Number({
+        displayName: property.name,
+        required: false,
+      }),
+    buildNotionType: (property: DynamicPropsValue) => ({
+      phone_number: property,
+    }),
+  },
   rich_text: {
     buildActivepieceType: (property: RichTextDatabaseProperty) =>
       Property.LongText({ displayName: property.name, required: false }),
@@ -461,7 +453,16 @@ export const NotionFieldMapping: Record<string, any> = {
       ],
     }),
   },
-  url: Property.ShortText,
+  url: {
+    buildActivepieceType: (property: UrlDatabaseProperty) =>
+      Property.ShortText({
+        displayName: property.name,
+        required: false,
+      }),
+    buildNotionType: (property: DynamicPropsValue) => ({
+      url: property,
+    }),
+  },
   people: {
     buildActivepieceType: undefined,
     buildNotionType: (property: DynamicPropsValue) => ({

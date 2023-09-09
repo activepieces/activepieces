@@ -70,6 +70,7 @@ export const notionCommon = {
             if (
               [
                 'rollup',
+                'formula',
                 'unique_id',
                 'url',
                 'relation',
