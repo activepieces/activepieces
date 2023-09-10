@@ -41,6 +41,40 @@ export const notionCommon = {
       };
     },
   }),
+  database_item_id: Property.Dropdown({
+    displayName: 'Database Item',
+    description: 'Select the item you want to update',
+    required: true,
+    refreshers: ['database_id'],
+    options: async ({ auth, database_id }) => {
+      if (!auth || !database_id) {
+        return {
+          disabled: true,
+          placeholder:
+            'Please connect your Notion account first and select database',
+          options: [],
+        };
+      }
+      const notion = new Client({
+        auth: (auth as OAuth2PropertyValue).access_token,
+        notionVersion: '2022-02-22',
+      });
+      const { results } = await notion.databases.query({
+        database_id: database_id as string,
+        filter_properties: ['title'],
+      });
+      return {
+        disabled: false,
+        options: results.map((item: any) => {
+          const property: any = Object.values(item.properties)[0];
+          return {
+            label: property.title[0]?.plain_text ?? 'Unknown title',
+            value: item.id,
+          };
+        }),
+      };
+    },
+  }),
   databaseFields: Property.DynamicProperties({
     displayName: 'Fields',
     required: true,
