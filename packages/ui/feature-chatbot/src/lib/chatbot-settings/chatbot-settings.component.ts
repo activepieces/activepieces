@@ -138,4 +138,7 @@ export class ChatbotSettingsComponent {
         })
       );
   }
+  openChatbot() {
+    window.open(`/chatbots/${this.chatbotId}`, '_blank', 'noopener');
+  }
 }

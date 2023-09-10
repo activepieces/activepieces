@@ -105,7 +105,11 @@
     <div class="ap-grow !ap-border-0">
 
     </div>
-    <div class=" ap-items-center ap-flex ap-justify-end ap-p-6">
+    <div class=" ap-items-center ap-flex ap-justify-end ap-p-6 ap-gap-3">
+
+      <ap-button btnColor="primary" btnSize="medium" btnStyle="stroked" [loading]="saving"
+        [tooltipText]="!formGroup.controls.connectionId.value? 'Please choose a connection first': ''"
+        [disabled]="!formGroup.controls.connectionId.value" (buttonClicked)="openChatbot()">Chat</ap-button>
       <ap-button btnColor="primary" btnSize="medium" btnStyle="flat" [loading]="saving"
         (buttonClicked)="submit()">Save</ap-button>
     </div>
