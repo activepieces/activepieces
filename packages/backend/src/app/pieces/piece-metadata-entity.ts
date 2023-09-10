@@ -1,7 +1,7 @@
 import { EntitySchema } from 'typeorm'
 import { PieceMetadata } from '@activepieces/pieces-framework'
 import { ApId, BaseModel, Project } from '@activepieces/shared'
-import { BaseColumnSchemaPart, COLLATION, JSONB_COLUMN_TYPE, JSON_COLUMN_TYPE } from '../database/database-common'
+import { BaseColumnSchemaPart, COLLATION, JSON_COLUMN_TYPE } from '../database/database-common'
 
 export type PieceMetadataSchema = BaseModel<ApId> & PieceMetadata & { projectId: ApId, project: Project }
 
@@ -45,7 +45,7 @@ export const PieceMetadataEntity = new EntitySchema<PieceMetadataSchema>({
             collation: COLLATION,
         },
         auth: {
-            type: JSONB_COLUMN_TYPE,
+            type: JSON_COLUMN_TYPE,
             nullable: true,
         },
         actions: {
