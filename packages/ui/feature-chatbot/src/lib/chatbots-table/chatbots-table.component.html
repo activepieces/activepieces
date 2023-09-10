@@ -23,9 +23,10 @@
             <div class="ap-flex ap-gap-2 ap-items-center ap-justify-end">
               <ap-icon-button (click)="openSettings(chatbot.id)" tooltipText="Settings" iconFilename="settings.svg"
                 color="primary" [width]="20" [height]="20" [height]="16"></ap-icon-button>
-              <ap-icon-button (click)="openChatbot(chatbot.id)" tooltipText="Chat with bot"
+              <ap-icon-button (click)="openChatbot(chatbot.id)"
+                [tooltipText]="chatbot.connectionId?'Chat with bot' : 'Add OpenAi key in settings first'"
                 iconFilename="chat-bubble.svg" color="primary" [width]="20" [height]="20"
-                [height]="16"></ap-icon-button>
+                [buttonDisabled]="!chatbot.connectionId" [height]="16"></ap-icon-button>
               <ap-icon-button (click)="deleteChatbot(chatbot)" tooltipText="Delete Bot" iconFilename="trash.svg"
                 color="warn" [width]="20" [height]="20" [height]="16"></ap-icon-button>
             </div>
