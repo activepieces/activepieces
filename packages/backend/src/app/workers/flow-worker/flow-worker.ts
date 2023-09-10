@@ -299,7 +299,7 @@ async function getCodeStepsWithLock(projectId: ProjectId, flowVersion: FlowVersi
         return getCodeStepsWithoutLock(projectId, flowVersion)
     }
     finally {
-        flowLock.release()
+        await flowLock.release()
     }
 }
 
