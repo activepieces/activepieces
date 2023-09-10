@@ -545,6 +545,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "GFoley83",
+      "name": "Gavin Foley",
+      "avatar_url": "https://avatars.githubusercontent.com/u/838788?v=4",
+      "profile": "https://geteduca.com",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "commitType": "docs"
