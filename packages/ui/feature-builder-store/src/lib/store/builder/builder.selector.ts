@@ -439,6 +439,20 @@ const selectAppConnectionsDropdownOptions = createSelector(
     });
   }
 );
+
+const selectAppConnectionsDropdownOptionsWithIds = createSelector(
+  selectAllAppConnections,
+  (connections: AppConnectionWithoutSensitiveData[]) => {
+    return [...connections].map((c) => {
+      const result: ConnectionDropdownItem = {
+        label: { appName: c.appName, name: c.name },
+        value: c.id,
+      };
+      return result;
+    });
+  }
+);
+
 const selectAppConnectionsDropdownOptionsForApp = (appName: string) => {
   return createSelector(selectAppConnectionsDropdownOptions, (connections) => {
     return connections.filter((opt) => opt.label.appName === appName);
@@ -632,4 +646,5 @@ export const BuilderSelectors = {
   selectCurrentFlowFolderId,
   selectFlowTriggerIsTested,
   selectAppConnectionsDropdownOptionsForApp,
+  selectAppConnectionsDropdownOptionsWithIds,
 };

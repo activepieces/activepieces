@@ -15,8 +15,7 @@ import { MatRadioModule } from '@angular/material/radio';
 import { DatasourcesTableComponent } from './datasources-table/datasources-table.component';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { DataSourceUrlExtractorPipe } from './data-source-url-extractor.pipe';
-import { InterpolateConnectionNamePipe } from './interpolate-connection-name.pipe';
-import { ConnectionNameExtractorPipe } from './connection-name-extractor.pipe';
+import { GetInterpolatedConnectionNameFromConnectionIdPipe } from './interpolate-connection-name-from-connection-id.pipe';
 @NgModule({
   imports: [
     CommonModule,
@@ -37,8 +36,7 @@ import { ConnectionNameExtractorPipe } from './connection-name-extractor.pipe';
     ChatbotsTableComponent,
     DatasourcesTableComponent,
     DataSourceUrlExtractorPipe,
-    InterpolateConnectionNamePipe,
-    ConnectionNameExtractorPipe,
+    GetInterpolatedConnectionNameFromConnectionIdPipe,
   ],
   exports: [
     ChatbotDataSourceDialogComponent,

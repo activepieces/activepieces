@@ -22,7 +22,6 @@ import {
   ConnectionDropdownItem,
   appConnectionsActions,
 } from '@activepieces/ui/feature-builder-store';
-import { extractConnectionName } from '../utils';
 
 @Component({
   selector: 'app-chatbot-settings',
@@ -79,8 +78,8 @@ export class ChatbotSettingsComponent {
     });
     this.saveConnection$ =
       this.formGroup.controls.connectionId.valueChanges.pipe(
-        tap(() => {
-          this.save();
+        tap((res) => {
+          this.save(res);
         }),
         map(() => void 0)
       );
@@ -115,8 +114,7 @@ export class ChatbotSettingsComponent {
     );
   }
   connectionValueChanged(event: { value: string }) {
-    const connectionName = extractConnectionName(event.value);
-    this.formGroup.controls.connectionId.setValue(connectionName);
+    this.formGroup.controls.connectionId.setValue(event.value);
   }
   submit() {
     if (this.formGroup.valid && !this.saving) {
@@ -125,13 +123,14 @@ export class ChatbotSettingsComponent {
     this.formGroup.markAllAsTouched();
   }
 
-  save() {
+  save(connectionId?: string) {
     this.saving = true;
     this.updateSettings$ = this.chatbotService
       .update(this.chatbotId, {
         displayName: this.formGroup.controls.displayName.value,
         prompt: this.formGroup.controls.prompt.value,
-        connectionId: this.formGroup.controls.connectionId.value,
+        connectionId:
+          connectionId || this.formGroup.controls.connectionId.value,
       })
       .pipe(
         tap(() => {

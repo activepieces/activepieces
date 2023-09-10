@@ -16,7 +16,6 @@ import { DataSource } from '@activepieces/shared';
 
 export interface AddDataSourceDialogData {
   chatbotId: string;
-  auth: string;
 }
 
 @Component({
@@ -61,15 +60,12 @@ export class ChatbotDataSourceDialogComponent {
           url: this.formGroup.getRawValue().url,
         },
         sourceName: this.formGroup.getRawValue().type,
-        auth: this.data.auth,
       })
       .pipe(
         tap((res) => {
+          this.snackbar.open(`Data source added`);
           this.dialogRef.close(res);
         })
       );
-    if (this.formGroup.valid) {
-      this.snackbar.open(`Data source added`);
-    }
   }
 }
