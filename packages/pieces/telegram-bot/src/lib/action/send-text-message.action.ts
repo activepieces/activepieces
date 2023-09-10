@@ -37,7 +37,7 @@ export const telegramSendMessageAction = createAction({
         format: Property.StaticDropdown({
             displayName: 'Format',
             description: 'Choose format you want ',
-            required: true,
+            required: false,
             options: {
                 options: [
                     {
@@ -63,7 +63,6 @@ export const telegramSendMessageAction = createAction({
         })
     },
     async run(ctx) {
-        console.log(ctx)
         return await httpClient.sendRequest<never>({
             method: HttpMethod.POST,
             url: telegramCommons.getApiUrl(ctx.auth, 'sendMessage'),
@@ -71,7 +70,7 @@ export const telegramSendMessageAction = createAction({
                 chat_id: ctx.propsValue['chat_id'],
                 text: ctx.propsValue['message'],
                 message_thread_id: ctx.propsValue['message_thread_id'] ?? undefined,
-                parse_mode: ctx.propsValue['format']
+                parse_mode: ctx.propsValue['format'] ?? 'MarkdownV2'
             },
         });
     },
