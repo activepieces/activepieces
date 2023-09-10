@@ -536,6 +536,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "tanoggy",
+      "name": "Tân Một Nắng",
+      "avatar_url": "https://avatars.githubusercontent.com/u/24206229?v=4",
+      "profile": "https://ductan.me/",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
