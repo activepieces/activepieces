@@ -30,6 +30,7 @@ export class DatasourcesTableComponent implements ControlValueAccessor {
   overflownUrlsMap: Record<string, string> = {};
   addNewDataSource$: Observable<void> | undefined;
   @Input() chatbotId = '';
+  @Input() saving = false;
   @Input() auth = '';
   constructor(
     private matDialog: MatDialog,
@@ -53,7 +54,6 @@ export class DatasourcesTableComponent implements ControlValueAccessor {
     if (this.auth !== '') {
       const data: AddDataSourceDialogData = {
         chatbotId: this.chatbotId,
-        auth: this.auth,
       };
       this.addNewDataSource$ = this.matDialog
         .open(ChatbotDataSourceDialogComponent, { data: data })

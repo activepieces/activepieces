@@ -34,7 +34,7 @@
 
 <div class="ap-mt-3">
     <ap-button btnColor="primary" btnStyle="basic" btnSize="medium" [darkLoadingSpinner]="true"
-        (buttonClicked)="newSource()"> + New Source
+        (buttonClicked)="newSource()" [disabled]="saving"> + New Source
     </ap-button>
 </div>
 
