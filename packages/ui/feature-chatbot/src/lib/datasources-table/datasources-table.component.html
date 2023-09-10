@@ -1,36 +1,29 @@
 <ng-container *ngFor="let val of value;let isLast=last; let isFirst=first">
     <mat-expansion-panel hideToggle disabled role="text"
         [class]="'!ap-rounded-none !ap-cursor-default '+ (isFirst? '!ap-rounded-t ':'') + (isLast? '!ap-rounded-b':'')">
-        <!-- #enddocregion hide-toggle -->
         <mat-expansion-panel-header role="text">
             <mat-panel-title class="!ap-grow-0">
                 <div class="ap-typography-body-1 !ap-font-semibold ap-text-body ap-flex ap-gap-3">
-                    <svg-icon [src]="'assets/img/custom/' + (val.type === 'URL'? 'url.svg':'pdf.svg')"
+                    <svg-icon [src]="'assets/img/custom/' + (val.sourceName !== 'from-file'? 'url.svg':'pdf.svg')"
                         [applyClass]="true" class="ap-fill-label ap-w-[24px] ap-h-[24px]"></svg-icon>
-                    {{val.type}}
+                    {{val.props}}
                 </div>
             </mat-panel-title>
             <mat-panel-description class="!ap-mr-0">
                 <div class="ap-flex ap-gap-1 ap-justify-between ap-grow">
                     <div class="ap-typography-body-1 ap-text-body ap-max-w-[26.25rem] ap-grow ap-truncate"
-                        apCheckOverflow
-                        (isOverflowed)="$event?overflownUrlsMap[val.url]=val.url: overflownUrlsMap[val.url]=''"
-                        [matTooltip]="overflownUrlsMap[val.url]">{{val.url}}
-                    </div>
-                    <div class="ap-typography-body-1 ap-text-primary" [class.ap-text-primary]="val.status === 'Active'"
-                        [class.ap-text-body]="val.status === 'Pending'"
-                        [class.ap-text-danger]="val.status === 'Failed'">
-                        {{val.status}}
+                        *ngIf="(val | dataSourceUrlExtractor) as url" apCheckOverflow
+                        (isOverflowed)="$event? overflownUrlsMap[url]=url : overflownUrlsMap[url]='' "
+                        [matTooltip]="overflownUrlsMap[url]">
+                        {{url}}
                     </div>
                 </div>
-
             </mat-panel-description>
         </mat-expansion-panel-header>
     </mat-expansion-panel>
 </ng-container>
 <ng-container *ngIf="value.length===0">
     <mat-expansion-panel role="text" hideToggle disabled class="!ap-cursor-default">
-        <!-- #enddocregion hide-toggle -->
         <mat-expansion-panel-header role="text">
             <mat-panel-title class="ap-typography-body-1 ap-font-semibold !ap-text-body">
                 No sources added yet

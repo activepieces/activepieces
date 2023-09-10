@@ -1,23 +1,18 @@
 import { Component, Input } from '@angular/core';
-import {
-  ControlValueAccessor,
-  NG_VALIDATORS,
-  NG_VALUE_ACCESSOR,
-} from '@angular/forms';
-import { DatasourceType } from '../utils';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
-import { ChatbotDataSourceDialogComponent } from '../chatbot-source-dialog/chatbot-source-dialog.component';
-import { Observable, map, of, tap } from 'rxjs';
+import {
+  AddDataSourceDialogData,
+  ChatbotDataSourceDialogComponent,
+} from '../chatbot-source-dialog/chatbot-source-dialog.component';
+import { Observable, map, tap } from 'rxjs';
 import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
 } from '@activepieces/ui/common';
-
-export type DataSourceValue = {
-  type: DatasourceType;
-  url: string;
-  status: 'Pending' | 'Active' | 'Failed';
-};
+import { Chatbot, DataSource } from '@activepieces/shared';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { ChatBotService } from '../chatbot.service';
 
 @Component({
   selector: 'app-datasources-table',
@@ -28,24 +23,24 @@ export type DataSourceValue = {
       multi: true,
       useExisting: DatasourcesTableComponent,
     },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: DatasourcesTableComponent,
-      multi: true,
-    },
   ],
 })
 export class DatasourcesTableComponent implements ControlValueAccessor {
-  value: DataSourceValue[] = [];
+  value: DataSource[] = [];
   overflownUrlsMap: Record<string, string> = {};
   addNewDataSource$: Observable<void> | undefined;
   @Input() chatbotId = '';
-  constructor(private matDialog: MatDialog) {}
-  onChange: (val: DataSourceValue[]) => void = () => void 0;
-  writeValue(obj: DataSourceValue[]): void {
+  @Input() auth = '';
+  constructor(
+    private matDialog: MatDialog,
+    private snackbar: MatSnackBar,
+    private chatbotService: ChatBotService
+  ) {}
+  onChange: (val: DataSource[]) => void = () => void 0;
+  writeValue(obj: DataSource[]): void {
     this.value = obj;
   }
-  registerOnChange(fn: (val: DataSourceValue[]) => void): void {
+  registerOnChange(fn: (val: DataSource[]) => void): void {
     this.onChange = fn;
   }
   registerOnTouched(): void {
@@ -55,38 +50,37 @@ export class DatasourcesTableComponent implements ControlValueAccessor {
     //ignore
   }
   newSource() {
-    this.addNewDataSource$ = this.matDialog
-      .open(ChatbotDataSourceDialogComponent)
-      .afterClosed()
-      .pipe(
-        tap((val: DataSourceValue) => {
-          if (val) {
-            this.value = [...this.value, val];
-            this.onChange(this.value);
-          }
-        }),
-        map(() => void 0)
-      );
+    if (this.auth !== '') {
+      const data: AddDataSourceDialogData = {
+        chatbotId: this.chatbotId,
+        auth: this.auth,
+      };
+      this.addNewDataSource$ = this.matDialog
+        .open(ChatbotDataSourceDialogComponent, { data: data })
+        .afterClosed()
+        .pipe(
+          tap((val: Chatbot) => {
+            if (val) {
+              this.value = [...val.dataSources];
+              this.onChange(this.value);
+            }
+          }),
+          map(() => void 0)
+        );
+    } else {
+      this.snackbar.open('Please choose a connection first');
+    }
   }
-  deleteSource(val: DataSourceValue) {
+  deleteSource(val: DataSource) {
     const data: DeleteEntityDialogData = {
-      deleteEntity$: of(null).pipe(
-        tap(() => {
-          const idx = this.value.findIndex((v) => val.url === val.url);
-          this.value.splice(idx, 1);
-          this.onChange(this.value);
-        })
-      ),
+      deleteEntity$: this.chatbotService.deleteDataSource({
+        chatbotId: this.chatbotId,
+        dataSourceId: val.id,
+      }),
       entityName: 'source',
-      note: `Are you sure you want to delete this "${val.url}" source?
+      note: `Are you sure you want to delete ${val.displayName}?
       This action cannot be undone`,
     };
     this.matDialog.open(DeleteEntityDialogComponent, { data: data });
-  }
-  validate() {
-    if (this.value.length === 0) {
-      return { invalid: true };
-    }
-    return null;
   }
 }

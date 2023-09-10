@@ -7,7 +7,7 @@ import {
 } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Observable, map, tap } from 'rxjs';
-import { PieceMetadataService, fadeInUp400ms } from '@activepieces/ui/common';
+import { PieceMetadataService } from '@activepieces/ui/common';
 import {
   AppConnectionWithoutSensitiveData,
   Chatbot,
@@ -22,11 +22,11 @@ import {
   ConnectionDropdownItem,
   appConnectionsActions,
 } from '@activepieces/ui/feature-builder-store';
+import { extractConnectionName } from '../utils';
 
 @Component({
   selector: 'app-chatbot-settings',
   templateUrl: './chatbot-settings.component.html',
-  animations: [fadeInUp400ms],
 })
 export class ChatbotSettingsComponent {
   formGroup: FormGroup<{
@@ -104,21 +104,19 @@ export class ChatbotSettingsComponent {
       BuilderSelectors.selectAppConnectionsDropdownOptions
     );
   }
-  connectionValueChanged(event: {
-    propertyKey: string;
-    value: `{{connections['${string}']}}`;
-  }) {
-    this.formGroup.controls.auth.setValue(event.value);
+  connectionValueChanged(event: { value: `{{connections['${string}']}}` }) {
+    const connectionName = extractConnectionName(event.value);
+    this.formGroup.controls.auth.setValue(connectionName);
   }
   submit() {
     if (this.formGroup.valid && !this.saving) {
       this.saving = true;
       this.updateSettings$ = this.chatbotService
         .update(this.chatbotId, {
-          displayName: this.formGroup.controls['displayName'].value,
+          displayName: this.formGroup.controls.displayName.value,
           settings: {
-            prompt: this.formGroup.controls['prompt'].value,
-            auth: this.formGroup.controls['auth'].value,
+            prompt: this.formGroup.controls.prompt.value,
+            auth: this.formGroup.controls.auth.value,
           },
         })
         .pipe(

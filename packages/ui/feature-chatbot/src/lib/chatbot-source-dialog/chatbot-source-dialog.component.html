@@ -1,21 +1,33 @@
 <ap-dialog-title-template>Add data source</ap-dialog-title-template>
-<mat-dialog-content class="!ap-flex ap-flex-col ap-gap-5 !ap-mt-3 ap-w-[500px]">
-  <div>
-    <div class="ap-text-label ap-typography-subtitle-2 ap-mb-3">Data source type</div>
-    <mat-radio-group [formControl]="formGroup.controls.type" color="primary" aria-label="Select an option">
-      <mat-radio-button value="URL">URL</mat-radio-button>
-      <mat-radio-button value="PDF">PDF URL</mat-radio-button>
-    </mat-radio-group>
-  </div>
+<mat-dialog-content>
 
-  <mat-form-field class="ap-w-full" appearance="outline">
-    <mat-label>URL</mat-label>
-    <input matInput placeholder="https://news.com" [formControl]="formGroup.controls.url"
-      (keyup.enter)="confirmClicked()" />
-    <mat-error *ngIf="formGroup.controls.url.invalid">
-      URL is required
-    </mat-error>
-  </mat-form-field>
+  <form [formGroup]="formGroup" (ngSubmit)="confirmClicked()"
+    class="!ap-flex ap-flex-col ap-gap-5 !ap-mt-3 ap-w-[500px]">
+    <mat-form-field class="ap-w-full" appearance="outline">
+      <mat-label>Name</mat-label>
+      <input matInput placeholder="Customer support" [formControl]="formGroup.controls.displayName" />
+      <mat-error *ngIf="formGroup.controls.displayName.invalid">
+        Name is required
+      </mat-error>
+    </mat-form-field>
+
+    <div>
+      <div class="ap-text-label ap-typography-subtitle-2 ">Data source type</div>
+      <mat-radio-group [formControl]="formGroup.controls.type" color="primary" aria-label="Select an option">
+        <mat-radio-button value="from-file">PDF</mat-radio-button>
+
+      </mat-radio-group>
+    </div>
+
+    <mat-form-field class="ap-w-full" appearance="outline">
+      <mat-label>URL</mat-label>
+      <input matInput placeholder="https://pdfobject.com/pdf/sample.pdf" [formControl]="formGroup.controls.url" />
+      <mat-error *ngIf="formGroup.controls.url.invalid">
+        URL is required
+      </mat-error>
+    </mat-form-field>
+    <button class="ap-hidden" type="submit"> </button>
+  </form>
 </mat-dialog-content>
 
 
@@ -24,8 +36,11 @@
     <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic">
       Cancel
     </ap-button>
-    <ap-button btnSize="default" type="submit" btnColor="primary" (buttonClicked)="confirmClicked()">
+    <ap-button btnSize="default" type="submit" btnColor="primary" (buttonClicked)="confirmClicked()"
+      [loading]="!!createBot$">
       Confirm
     </ap-button>
   </div>
 </mat-dialog-actions>
+
+{{createBot$ | async}}
