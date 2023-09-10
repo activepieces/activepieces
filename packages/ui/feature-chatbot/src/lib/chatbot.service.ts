@@ -4,6 +4,8 @@ import {
   SeekPage,
   CreateChatBotRequest,
   UpdateChatbotRequest,
+  CreateDataSourceRequest,
+  DataSource,
 } from '@activepieces/shared';
 import {
   CURSOR_QUERY_PARAM,
@@ -58,5 +60,22 @@ export class ChatBotService {
 
   delete(id: string) {
     return this.http.delete<void>(environment.apiUrl + '/chatbots/' + id);
+  }
+  addDataSource(chatbotId: string, req: CreateDataSourceRequest) {
+    return this.http.post<DataSource>(
+      environment.apiUrl + `/chatbots/${chatbotId}/datasources`,
+      req
+    );
+  }
+  deleteDataSource({
+    chatbotId,
+    dataSourceId,
+  }: {
+    chatbotId: string;
+    dataSourceId: string;
+  }) {
+    return this.http.delete(
+      environment.apiUrl + `/chatbots/${chatbotId}/datasources/${dataSourceId}`
+    );
   }
 }

@@ -64,11 +64,8 @@ export const CreateDataSourceRequest = Type.Object({
 
 export type CreateDataSourceRequest = Static<typeof CreateDataSourceRequest>;
 
-export const DeleteDataSourceRequest = Type.Object({
-  name: Type.String()
-});
 
-export type DeleteDataSourceRequest = Static<typeof DeleteDataSourceRequest>;
+
 
 export const TelegramWebhookRequest = Type.Object({
   update_id: Type.Number(),
