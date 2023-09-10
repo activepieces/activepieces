@@ -1,5 +1,5 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
-import { common, IAuth } from "../common";
+import { common } from "../common";
 import { googlePubsubAuth } from "../..";
 
 export const publishToTopic = createAction({
@@ -10,7 +10,6 @@ export const publishToTopic = createAction({
   props: {
     message: Property.Object({
       displayName: 'Message',
-      description: 'Data to send',
       required: true,
     }),
     topic: Property.Dropdown({
@@ -18,12 +17,13 @@ export const publishToTopic = createAction({
       required: true,
       refreshers: ['auth'],
       options: async ({ auth }) => {
-        return common.getTopics(auth as IAuth);
+        const json = (auth as { json: string }).json;
+        return common.getTopics(json);
       },
     }),
   },
   async run(context) {
-    const client = common.getClient(context.auth);
+    const client = common.getClient(context.auth.json);
     const topic = context.propsValue.topic;
 
     const url = `https://pubsub.googleapis.com/v1/${topic}:publish`;

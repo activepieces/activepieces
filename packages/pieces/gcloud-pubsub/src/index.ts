@@ -3,27 +3,23 @@ import { publishToTopic } from './lib/action/publish-to-topic';
 import { common } from './lib/common';
 import { newMessageInTopic } from './lib/trigger/new-message-in-topic';
 
+const authDescription = `
+You can get it from the [Google Cloud Console](https://console.cloud.google.com/apis/credentials/serviceaccountkey).
+`
+
 export const googlePubsubAuth = PieceAuth.CustomAuth({
-  description: '',
+  description: authDescription,
   required: true,
   props: {
-    privateKey: PieceAuth.SecretText({
-      displayName: 'Private Key',
+    json: Property.LongText({
+      displayName: 'Service Key (JSON)',
       required: true,
-    }),
-    email: Property.ShortText({
-      displayName: 'Service email',
-      required: true,
-    }),
-    projectId: Property.ShortText({
-      displayName: 'Project ID',
-      required: true,
-    }),
+    })
   },
-  validate: async ({auth}) => {
+  validate: async ({ auth }) => {
     try {
-      const client = common.getClient(auth);
-      await client.request({ url: `https://pubsub.googleapis.com/v1/projects/${auth.projectId}/topics` });
+      const client = common.getClient(auth.json);
+      await client.request({ url: `https://pubsub.googleapis.com/v1/projects/${common.getProjectId(auth.json)}/topics` });
       return {
         valid: true,
       };
@@ -40,9 +36,9 @@ export const googlePubsubAuth = PieceAuth.CustomAuth({
 })
 
 export const gcloudPubsub = createPiece({
-  displayName: "Gcloud-pubsub",
+  displayName: "GCloud Pub/Sub",
   minimumSupportedRelease: '0.5.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/github.png', // FIXME: change image
+  logoUrl: 'https://cdn.activepieces.com/pieces/gcloud-pubsub.png',
   auth: googlePubsubAuth,
   authors: ['kidskey'],
   actions: [publishToTopic],

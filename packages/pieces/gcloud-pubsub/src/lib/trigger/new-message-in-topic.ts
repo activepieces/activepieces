@@ -2,7 +2,7 @@ import { Property, createTrigger } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from "@activepieces/pieces-framework";
 
 import { googlePubsubAuth } from '../..';
-import { IAuth, common } from '../common';
+import { common } from '../common';
 
 export const newMessageInTopic = createTrigger({
   auth: googlePubsubAuth,
@@ -19,16 +19,23 @@ export const newMessageInTopic = createTrigger({
       required: true,
       refreshers: ['auth'],
       options: async ({ auth }) => {
-        return common.getTopics(auth as IAuth);
+        const json = (auth as { json: string }).json;
+        return common.getTopics(json);
       },
+    }),
+    ackDeadlineSeconds: Property.Number({
+      displayName: 'Ack Deadline Seconds',
+      required: true,
+      defaultValue: 100,
     }),
   },
   type: TriggerStrategy.WEBHOOK,
   onEnable: async (context) => {
-    const client = common.getClient(context.auth);
+    const json = (context.auth as { json: string }).json;
+    const client = common.getClient(json);
 
     const { topic, subscription } = context.propsValue;
-    const project = context.auth.projectId;
+    const project = common.getProjectId(context.auth.json as string);
 
     const url = `https://pubsub.googleapis.com/v1/projects/${project}/subscriptions/${subscription}`;
     const body = {
@@ -37,7 +44,7 @@ export const newMessageInTopic = createTrigger({
         pushEndpoint: context.webhookUrl,
         attributes: {},
       },
-      ackDeadlineSeconds: 100,
+      ackDeadlineSeconds: context.propsValue.ackDeadlineSeconds,
     };
 
     await client.request({
@@ -55,7 +62,8 @@ export const newMessageInTopic = createTrigger({
     const response = await context.store.get<ISubscriptionInfo>('_trigger');
 
     if (response !== null && response !== undefined) {
-      const client = common.getClient(context.auth);
+      const json = (context.auth as { json: string }).json;
+      const client = common.getClient(json);
       const { project, subscription } = response;
       const url = `https://pubsub.googleapis.com/v1/projects/${project}/subscriptions/${subscription}`;
 

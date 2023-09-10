@@ -1,9 +1,10 @@
 import { JWT } from 'google-auth-library';
 
 export const common = {
-  getClient(auth: unknown) {
-    const { email, privateKey } = auth as IAuth;
-
+  getClient(authJson: string) {
+    const email = common.getEmail(authJson);
+    const privateKey = common.getPrivateKey(authJson);
+    
     const gaxios = new JWT({
       email,
       key: privateKey.replace(/\\n/g, '\n'), // remove duplicate '\' from client side
@@ -12,11 +13,20 @@ export const common = {
     return gaxios;
   },
 
+  getProjectId(json: string) {
+    return JSON.parse(json).project_id;
+  },
+  getPrivateKey(json: string) {
+    return JSON.parse(json).private_key;
+  },
+  getEmail(json: string) {
+    return JSON.parse(json).client_email;
+  },
   /**
    * @returns options topics, topic value contain project name: projects/{pname}/topics/{tname}
    */
-  async getTopics(auth: IAuth) {
-    const client = common.getClient(auth);
+  async getTopics(json: string) {
+    const client = common.getClient(json);
 
     const topics = {
       disabled: true,
@@ -26,7 +36,7 @@ export const common = {
 
     try {
       const response = await client.request<ITopicsInfo>({
-        url: `https://pubsub.googleapis.com/v1/projects/${auth.projectId}/topics`,
+        url: `https://pubsub.googleapis.com/v1/projects/${this.getProjectId(json)}/topics`,
         method: 'GET',
       });
 
