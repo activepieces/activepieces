@@ -37,6 +37,7 @@ import { AddAppConnectionTypeToTopLevel1691703023866 } from './migration/postgre
 import { AddTagsToRun1692106375081 } from './migration/postgres/1692106375081-AddTagsToRun'
 import { AddFileToPostgres1693004806926 } from './migration/postgres/1693004806926-AddFileToPostgres'
 import { AddUserMetaInformation1693850082449 } from './migration/postgres/1693850082449-AddUserMetaInformation'
+import { FixPieceMetadataOrderBug1694367186954 } from './migration/postgres/1694367186954-fix-piece-metadata-order-bug'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
@@ -104,6 +105,7 @@ export const createPostgresDataSource = () => {
             AddTagsToRun1692106375081,
             AddFileToPostgres1693004806926,
             AddUserMetaInformation1693850082449,
+            FixPieceMetadataOrderBug1694367186954,
         ],
         ...commonProperties,
     })
