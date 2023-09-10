@@ -10,7 +10,7 @@ import {
   StepOutputStatus,
   assertNotNullOrUndefined
 } from '@activepieces/shared';
-import { BaseActionHandler, InitStepOutputParams } from './action-handler';
+import { BaseActionHandler, ExecuteContext, InitStepOutputParams } from './action-handler';
 import { globals } from '../globals';
 import { isNil } from '@activepieces/shared'
 import { pieceHelper } from '../helper/action-helper';
@@ -19,6 +19,7 @@ import { Utils } from '../utils';
 import { ActionContext, PauseHook, PauseHookParams, PiecePropertyMap, StaticPropsValue, StopHook, StopHookParams } from '@activepieces/pieces-framework';
 import { createConnectionManager } from '../services/connections.service';
 import { createTagsManager } from '../services/tags.service';
+import { createFilesService } from '../services/files.service';
 
 type CtorParams = {
   executionType: ExecutionType
@@ -101,7 +102,7 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
     const censoredInput = await this.variableService.resolve({
       unresolvedInput: this.currentAction.settings.input,
       executionState,
-      censorConnections: true,
+      logs: true,
     })
 
     return {
@@ -112,6 +113,7 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
   }
 
   async execute(
+    executionContext: ExecuteContext,
     executionState: ExecutionState,
     ancestors: [string, number][],
   ): Promise<StepOutput> {
@@ -137,7 +139,7 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
       const resolvedProps = await this.variableService.resolve<StaticPropsValue<PiecePropertyMap>>({
         unresolvedInput: input,
         executionState,
-        censorConnections: false,
+        logs: false,
       })
 
       assertNotNullOrUndefined(globals.flowRunId, 'globals.flowRunId')
@@ -149,8 +151,13 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
 
       const context: ActionContext = {
         executionType: this.executionType,
-        store: createContextStore('', globals.flowVersionId),
+        store: createContextStore('', executionContext.flowVersion.flowId),
         auth: processedInput[AUTHENTICATION_PROPERTY_NAME],
+        files: createFilesService({
+          stepName: this.currentAction.name,
+          flowId: executionContext.flowVersion.flowId,
+          type: 'local'
+        }),
         propsValue: processedInput,
         tags: createTagsManager(executionState),
         connections: createConnectionManager(executionState),

@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { Dimension, googleSheetsCommon, ValueInputOption } from '../common/common';
+import { Dimension, googleSheetsCommon, objectToArray, stringifyArray, ValueInputOption } from '../common/common';
 import { googleSheetsAuth } from '../..';
 
 export const insertRowAction = createAction({
@@ -32,7 +32,7 @@ export const insertRowAction = createAction({
         if (!sheetName) {
             return {}
         }
-        const formattedValues = propsValue.first_row_headers ? Object.values(values) : values['values'];
+        const formattedValues = propsValue.first_row_headers ? objectToArray(values) : values['values'];
         const res = await googleSheetsCommon.appendGoogleSheetValues({
             accessToken: auth['access_token'],
             majorDimension: Dimension.COLUMNS,
@@ -41,7 +41,7 @@ export const insertRowAction = createAction({
             valueInputOption: propsValue['as_string']
                 ? ValueInputOption.RAW
                 : ValueInputOption.USER_ENTERED,
-            values: formattedValues,
+            values: stringifyArray(formattedValues),
         });
         return res.body;
     },

@@ -1,5 +1,7 @@
 import { ActionType } from '../../flows/actions/action';
-import {LoopOnItemsStepOutput, StepOutput} from './step-output';
+import { LoopOnItemsStepOutput, StepOutput } from './step-output';
+
+export const MAX_LOG_SIZE = 2048 * 1024;
 
 type GetStepOutputParams = {
   stepName: string
@@ -24,7 +26,7 @@ export class ExecutionState {
     }
   }
 
-  get tags(){
+  get tags() {
     return this._tags
   }
 
@@ -33,7 +35,7 @@ export class ExecutionState {
   }
 
   public addTags(tags: string[]) {
-    this._tags.push(...tags); 
+    this._tags.push(...tags);
   }
 
   public addConnectionTags(tags: string[]) {

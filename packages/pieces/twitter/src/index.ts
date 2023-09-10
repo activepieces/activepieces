@@ -1,6 +1,7 @@
 
 import { PieceAuth, Property, createPiece } from "@activepieces/pieces-framework";
 import { createTweet } from "./lib/actions/create-tweet";
+import { TwitterApi } from "twitter-api-v2";
 
 const markdownDescription = `
 The steps to obtain the required credentials:
@@ -29,7 +30,7 @@ The steps to obtain the required credentials:
 `
 
 export const twitterAuth = PieceAuth.CustomAuth({
-    
+
     description: markdownDescription,
     props: {
         consumerKey: Property.ShortText({
@@ -53,15 +54,34 @@ export const twitterAuth = PieceAuth.CustomAuth({
             required: true,
         }),
     },
+    validate: async ({ auth }) => {
+        const { consumerKey, consumerSecret, accessToken, accessTokenSecret } = auth;
+        const userClient = new TwitterApi({
+            appKey: consumerKey,
+            appSecret: consumerSecret,
+            accessToken: accessToken,
+            accessSecret: accessTokenSecret,
+        });
+        try {
+            await userClient.v2.me();
+            return { valid: true };
+        }
+        catch (e) {
+            return {
+                valid: false,
+                error: 'Please make sure you have followed steps carefully and that your app is placed in a project.'
+            };
+        }
+    },
     required: true,
 })
 
 export const twitter = createPiece({
-  displayName: "Twitter",
-      minimumSupportedRelease: '0.5.0',
+    displayName: "Twitter",
+    minimumSupportedRelease: '0.5.0',
     logoUrl: "https://cdn.activepieces.com/pieces/twitter.png",
-  authors: ["abuaboud", "Abdallah-Alwarawreh"],
-  auth: twitterAuth,
-  actions: [createTweet],
-  triggers: [],
+    authors: ["abuaboud", "Abdallah-Alwarawreh"],
+    auth: twitterAuth,
+    actions: [createTweet],
+    triggers: [],
 });

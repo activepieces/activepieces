@@ -1,5 +1,5 @@
 ### STAGE 1: Build ###
-FROM activepieces/ap-base:3 AS build
+FROM activepieces/ap-base:7 AS build
 
 # Set up backend
 WORKDIR /usr/src/app
@@ -14,7 +14,7 @@ RUN cd dist/packages/backend && \
     npm install --production
 
 ### STAGE 2: Run ###
-FROM activepieces/ap-base:3 AS run
+FROM activepieces/ap-base:7 AS run
 
 # Set up backend
 WORKDIR /usr/src/app

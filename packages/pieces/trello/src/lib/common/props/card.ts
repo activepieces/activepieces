@@ -53,3 +53,61 @@ export type TrelloCard = {
     subscribed: boolean;
     url: string;
   }
+export type TrelloCardMoved = {
+    action: {
+        display: {
+            translationKey: string;
+            entities: {
+                card: {
+                    type: string;
+                    idList: string;
+                    id: string;
+                    shortLink: string;
+                    text: string;
+                };
+                listBefore: {
+                    type: string;
+                    id: string;
+                    text: string;
+                };
+                listAfter: {
+                    type: string;
+                    id: string;
+                    text: string;
+                };
+                memberCreator: {
+                    type: string;
+                    id: string;
+                    username: string;
+                    text: string;
+                };
+            };
+        };
+    };
+}
+export type TrelloNewCard = {
+    action: {
+        display: {
+            translationKey: string;
+            entities: {
+                card: {
+                    type: string;
+                    id: string;
+                    shortLink: string;
+                    text: string;
+                };
+                list: {
+                    type: string;
+                    id: string;
+                    text: string;
+                };
+                memberCreator: {
+                    type: string;
+                    id: string;
+                    username: string;
+                    text: string;
+                };
+            };
+        };
+    };    
+}

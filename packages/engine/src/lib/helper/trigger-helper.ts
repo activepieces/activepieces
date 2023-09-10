@@ -4,6 +4,7 @@ import { VariableService } from "../services/variable-service";
 import { pieceHelper } from "./action-helper";
 import { isValidCron } from 'cron-validator';
 import { PiecePropertyMap, StaticPropsValue, TriggerStrategy } from "@activepieces/pieces-framework";
+import { createFilesService } from "../services/files.service";
 
 type Listener = {
   events: string[];
@@ -28,7 +29,7 @@ export const triggerHelper = {
     const resolvedProps = await variableService.resolve<StaticPropsValue<PiecePropertyMap>>({
       unresolvedInput: input,
       executionState,
-      censorConnections: false,
+      logs: false,
     })
 
     const {processedInput, errors} = await variableService.applyProcessorsAndValidators(resolvedProps, trigger.props, piece.auth);
@@ -90,7 +91,14 @@ export const triggerHelper = {
         try {
           return {
             success: true,
-            output: await trigger.test(context)
+            output: await trigger.test({
+              ...context,
+              files: createFilesService({
+                stepName: triggerName,
+                flowId: params.flowVersion.flowId,
+                type: 'db'
+              })
+            })
           }
         } catch (e: any) {
           console.error(e);
@@ -141,7 +149,14 @@ export const triggerHelper = {
             }
           }
         }
-        const items = await trigger.run(context);
+        const items = await trigger.run({
+          ...context,
+          files: createFilesService({
+            flowId: params.flowVersion.flowId,
+            stepName: triggerName,
+            type: 'memory'
+          })
+        });
         if (!Array.isArray(items)) {
           throw new Error(`Trigger run should return an array of items, but returned ${typeof items}`)
         }

@@ -18,12 +18,16 @@ import {
   ExecuteExtractPieceMetadata,
   ExecuteValidateAuthOperation,
   extractPieceFromModule,
-  flowHelper
+  flowHelper,
+  EngineTestOperation,
+  applyFunctionToValues
 } from '@activepieces/shared';
 import { pieceHelper } from './lib/helper/action-helper';
 import { triggerHelper } from './lib/helper/trigger-helper';
 import { Piece } from '@activepieces/pieces-framework';
 import { VariableService } from './lib/services/variable-service';
+import { testExecution } from './lib/helper/test-execution-context';
+import { loggerUtils } from './lib/helper/logging-utils';
 
 const initFlowExecutor = (input: ExecuteFlowOperation): FlowExecutor => {
   const { flowVersion } = input
@@ -34,13 +38,14 @@ const initFlowExecutor = (input: ExecuteFlowOperation): FlowExecutor => {
     const executionState = new ExecutionState(input.executionState)
 
     return new FlowExecutor({
+      flowVersion,
       executionState,
       firstStep,
       resumeStepMetadata,
     })
   }
 
-  const executionState = new ExecutionState()
+  const executionState = new ExecutionState(input.executionState)
   const variableService = new VariableService()
 
   const steps = flowHelper.getAllSteps(flowVersion.trigger);
@@ -51,6 +56,7 @@ const initFlowExecutor = (input: ExecuteFlowOperation): FlowExecutor => {
   executionState.insertStep(input.triggerPayload as StepOutput, 'trigger', []);
 
   return new FlowExecutor({
+    flowVersion,
     executionState,
     firstStep,
   })
@@ -59,7 +65,6 @@ const initFlowExecutor = (input: ExecuteFlowOperation): FlowExecutor => {
 const extractInformation = async (): Promise<void> => {
   try {
     const input: ExecuteExtractPieceMetadata = Utils.parseJsonFile(globals.inputFile);
-
 
     const pieceModule = await import(input.pieceName);
     const piece = extractPieceFromModule<Piece>({
@@ -81,16 +86,15 @@ const extractInformation = async (): Promise<void> => {
   }
 }
 
-const executeFlow = async (): Promise<void> => {
+const executeFlow = async (input?: ExecuteFlowOperation): Promise<void> => {
   try {
-    const input: ExecuteFlowOperation = Utils.parseJsonFile(globals.inputFile);
+    input = input ?? Utils.parseJsonFile(globals.inputFile) as ExecuteFlowOperation
 
     globals.workerToken = input.workerToken!;
     globals.projectId = input.projectId;
     globals.apiUrl = input.apiUrl!;
     globals.serverUrl = input.serverUrl!;
     globals.flowRunId = input.flowRunId;
-    globals.flowVersionId = input.flowVersion.id;
 
     if (input.executionType === ExecutionType.RESUME) {
       globals.resumePayload = input.resumePayload;
@@ -101,7 +105,7 @@ const executeFlow = async (): Promise<void> => {
 
     writeOutput({
       status: EngineResponseStatus.OK,
-      response: output
+      response: await loggerUtils.trimExecution(output)
     })
   } catch (e) {
     console.error(e);
@@ -227,6 +231,28 @@ const executeValidateAuth = async (): Promise<void> => {
   }
 }
 
+const executeTest = async (): Promise<void> => {
+  try {
+    const input: EngineTestOperation = Utils.parseJsonFile(globals.inputFile);
+
+    const testExecutionState = await testExecution.stateFromFlowVersion({
+      flowVersion: input.sourceFlowVersion,
+    })
+
+    await executeFlow({
+      ...input,
+      executionState: testExecutionState,
+    })
+  }
+  catch (e) {
+    console.error(e);
+    writeOutput({
+      status: EngineResponseStatus.ERROR,
+      response: Utils.tryParseJson((e as Error).message)
+    })
+  }
+}
+
 async function writeOutput(result: EngineResponse<unknown>) {
   Utils.writeToJsonFile(globals.outputFile, result);
 }
@@ -256,6 +282,9 @@ async function execute() {
     case EngineOperationType.EXECUTE_VALIDATE_AUTH:
       executeValidateAuth();
       break;
+    case EngineOperationType.EXECUTE_TEST:
+      executeTest()
+      break
     default:
       console.error('unknown operation');
       break;

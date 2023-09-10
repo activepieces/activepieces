@@ -4,7 +4,7 @@ import { httpClient, HttpMethod, HttpRequest } from "@activepieces/pieces-common
 
 
 export const mauticCommon= {
-    contactFields: getFields("contact"),
+    contactFields: {...getFields("contact"), ...getFields("lead")},
     companyFields: getFields("company"),
     id: Property.ShortText({
         displayName: 'Id of the entity',

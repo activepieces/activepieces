@@ -1,5 +1,5 @@
 import { createAction, Property, StoreScope } from "@activepieces/pieces-framework";
-
+import deepEqual from 'deep-equal';
 
 export const storageRemoveFromList = createAction({
     name: 'remove_from_list',
@@ -37,6 +37,12 @@ export const storageRemoveFromList = createAction({
         const items = (await context.store.get<unknown[]>(context.propsValue['key'], context.propsValue.store_scope)) ?? [];
         if (!Array.isArray(items)) {
             throw new Error(`Key ${context.propsValue['key']} is not an array`);
+        }
+        for( let i = 0 ; i < items.length ; i++ ){
+            if( deepEqual(items[i], context.propsValue['value']) ){
+                items.splice(i, 1);
+                return await context.store.put(context.propsValue['key'], items, context.propsValue.store_scope);
+            }
         }
         if (items.includes(context.propsValue['value'])) {
             items.splice(items.indexOf(context.propsValue['value']), 1);

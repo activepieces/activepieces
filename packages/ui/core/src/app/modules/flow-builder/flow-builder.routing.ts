@@ -6,6 +6,10 @@ import { GetFlowResolver } from './resolvers/flow.resolver';
 import { InstanceResolver as GetInstanceResolver } from './resolvers/instance.resolver';
 import { ConnectionsResolver } from './resolvers/connections.resolver';
 import { BuilderSavingGuard } from '../../guards/builder-saving.guard';
+import {
+  isThereAnyNewFeaturedTemplatesResolver,
+  isThereAnyNewFeaturedTemplatesResolverKey,
+} from '@activepieces/ui/common';
 
 export const FlowLayoutRouting: Routes = [
   {
@@ -15,6 +19,8 @@ export const FlowLayoutRouting: Routes = [
       flowAndFolder: GetFlowResolver,
       instanceData: GetInstanceResolver,
       connections: ConnectionsResolver,
+      [isThereAnyNewFeaturedTemplatesResolverKey]:
+        isThereAnyNewFeaturedTemplatesResolver,
     },
     canActivate: [UserLoggedIn],
     canDeactivate: [BuilderSavingGuard],

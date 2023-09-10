@@ -183,6 +183,12 @@ We welcome contributions big or small and in different directions. The best way 
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Owlcept"><img src="https://avatars.githubusercontent.com/u/67299472?v=4?s=100" width="100px;" alt="Drew Lewis"/><br /><sub><b>Drew Lewis</b></sub></a><br /><a href="#plugin-Owlcept" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://bendersej.com"><img src="https://avatars.githubusercontent.com/u/10613140?v=4?s=100" width="100px;" alt="Benjamin André-Micolon"/><br /><sub><b>Benjamin André-Micolon</b></sub></a><br /><a href="#plugin-bendersej" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/DGurskij"><img src="https://avatars.githubusercontent.com/u/26856659?v=4?s=100" width="100px;" alt="Denis Gurskij"/><br /><sub><b>Denis Gurskij</b></sub></a><br /><a href="#plugin-DGurskij" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://neferlopez.com"><img src="https://avatars.githubusercontent.com/u/11466949?v=4?s=100" width="100px;" alt="Nefer Lopez"/><br /><sub><b>Nefer Lopez</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=thatguynef" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/fardeenpanjwani-codeglo"><img src="https://avatars.githubusercontent.com/u/141914308?v=4?s=100" width="100px;" alt="fardeenpanjwani-codeglo"/><br /><sub><b>fardeenpanjwani-codeglo</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=fardeenpanjwani-codeglo" title="Documentation">📖</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/landonmoir"><img src="https://avatars.githubusercontent.com/u/29764668?v=4?s=100" width="100px;" alt="Landon Moir"/><br /><sub><b>Landon Moir</b></sub></a><br /><a href="#plugin-landonmoir" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://lightspeed-it.nl/"><img src="https://avatars.githubusercontent.com/u/22002313?v=4?s=100" width="100px;" alt="Diego Nijboer"/><br /><sub><b>Diego Nijboer</b></sub></a><br /><a href="#plugin-lldiegon" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>

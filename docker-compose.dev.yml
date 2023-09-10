@@ -7,11 +7,11 @@
 version: '3.0'
 
 services:
-
   app:
-    image: activepieces/ap-base:3
-    container_name: app
+    image: activepieces/ap-base:7
+    container_name: ap
     environment:
+      AP_CACHE_PATH: /usr/cache
       AP_DB_TYPE: POSTGRES
       AP_ENCRYPTION_KEY: 7e19fad4c13eaea8f657afb12e8f9c40
       AP_EXECUTION_MODE: UNSANDBOXED
@@ -28,6 +28,7 @@ services:
     user: 1000:1000
     ports:
      - "3000:3000"
+     - "4200:4200"
      - "9229:9229"
     networks:
       - activepieces_dev
@@ -35,10 +36,8 @@ services:
      - ./:/usr/src/app
     working_dir: /usr/src/app
     entrypoint:
-      - npx
-      - nx
-      - build-watch
-      - backend
+      - npm
+      - start
     depends_on:
      - postgres
      - redis
@@ -47,7 +46,7 @@ services:
     image: postgres:14.4
     ports:
       - "5432:5432"
-    container_name: postgres
+    container_name: pg
     environment:
       POSTGRES_DB: activepieces
       POSTGRES_USER: postgres
@@ -60,7 +59,7 @@ services:
 
   redis:
     image: redis:7.0.7
-    container_name: redis
+    container_name: rd
     ports:
       - "6379:6379"
     volumes:

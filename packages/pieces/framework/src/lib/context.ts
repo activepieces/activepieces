@@ -38,10 +38,18 @@ export type TriggerHookContext<
 > = S extends TriggerStrategy.APP_WEBHOOK
     ? AppWebhookTriggerHookContext<PieceAuth, TriggerProps>
     : S extends TriggerStrategy.POLLING
-        ? PollingTriggerHookContext<PieceAuth, TriggerProps>
-        : S extends TriggerStrategy.WEBHOOK
-            ? WebhookTriggerHookContext<PieceAuth, TriggerProps>
-            : never
+    ? PollingTriggerHookContext<PieceAuth, TriggerProps>
+    : S extends TriggerStrategy.WEBHOOK
+    ? WebhookTriggerHookContext<PieceAuth, TriggerProps>
+    : never
+
+export type TestOrRunHookContext<
+    PieceAuth extends PieceAuthProperty,
+    TriggerProps extends PiecePropertyMap,
+    S extends TriggerStrategy,
+> = TriggerHookContext<PieceAuth, TriggerProps, S> & {
+    files: FilesService
+}
 
 export type StopHookParams = {
     response: StopResponse
@@ -67,6 +75,7 @@ export type BaseActionContext<
     executionType: ET,
     connections: ConnectionsManager,
     tags: TagsManager,
+    files: FilesService
     serverUrl: string,
     run: {
         id: FlowRunId,
@@ -92,12 +101,16 @@ export type ActionContext<
     ActionProps extends NonAuthPiecePropertyMap = NonAuthPiecePropertyMap,
 > = BeginExecutionActionContext<PieceAuth, ActionProps> | ResumeExecutionActionContext<PieceAuth, ActionProps>
 
+export interface FilesService {
+    write({ fileName, data }: { fileName: string, data: Buffer }): Promise<string>;
+}
+
 export interface ConnectionsManager {
     get(key: string): Promise<AppConnectionValue | Record<string, unknown> | string | null>;
 }
 
 export interface TagsManager {
-    add(params: { name: string}): Promise<void>;
+    add(params: { name: string }): Promise<void>;
 }
 
 export interface Store {
