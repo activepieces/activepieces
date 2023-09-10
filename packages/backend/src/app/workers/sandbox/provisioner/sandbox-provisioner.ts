@@ -6,7 +6,7 @@ import { SandBoxCacheType } from './sandbox-cache-type'
 import { logger } from '../../../helper/logger'
 
 export const sandboxProvisioner = {
-    async provision({ pieces = [], ...cacheInfo }: ProvisionParams): Promise<Sandbox> {
+    async provision({ pieces = [], codeArchives = [], ...cacheInfo }: ProvisionParams): Promise<Sandbox> {
         const cacheKey = extractCacheKey(cacheInfo)
 
         const cachedSandbox = await sandboxCachePool.findOrCreate({
@@ -14,7 +14,11 @@ export const sandboxProvisioner = {
             type: cacheInfo.type,
         })
 
-        await cachedSandbox.prepare({ pieces })
+        await cachedSandbox.prepare({
+            pieces,
+            codeArchives,
+        })
+
         const sandbox = await sandboxManager.allocate()
 
         await sandbox.assignCache({
@@ -104,8 +108,14 @@ type ProvisionCacheInfo<T extends SandBoxCacheType = SandBoxCacheType> =
                     ? PieceProvisionCacheInfo
                     : never
 
+type CodeArchive = {
+    id: FileId
+    content: Buffer
+}
+
 type ProvisionParams<T extends SandBoxCacheType = SandBoxCacheType> = ProvisionCacheInfo<T> & {
     pieces?: Piece[]
+    codeArchives?: CodeArchive[]
 }
 
 type ReleaseParams = {
