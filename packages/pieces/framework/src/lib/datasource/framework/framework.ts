@@ -1,10 +1,6 @@
-import {
-  FileProperty,
-  PieceAuthProperty,
-  ShortTextProperty,
-  StaticPropsValue
-} from '@activepieces/pieces-framework';
+
 import { Document } from 'langchain/dist/document';
+import { FileProperty, PieceAuthProperty, ShortTextProperty, StaticPropsValue } from '../../property';
 
 
 interface DatasourcePropertyMap {

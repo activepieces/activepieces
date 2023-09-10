@@ -7,6 +7,8 @@ import { TemplateAppTagContainerComponent } from './templates-dialog/template-ap
 import { TemplateCardComponent } from './template-card/template-card.component';
 import { UiCommonModule } from '@activepieces/ui/common';
 import { TemplateBlogNotificationComponent } from './template-blog-notification/template-blog-notification.component';
+import { FeaturedTemplateCardComponent } from './featured-template-card/featured-template-card.component';
+import { TimeagoModule } from 'ngx-timeago';
 const exportedDeclarations = [
   TemplatesDialogComponent,
   TemplatesFiltersComponent,
@@ -16,8 +18,8 @@ const exportedDeclarations = [
   TemplateBlogNotificationComponent,
 ];
 @NgModule({
-  imports: [CommonModule, UiCommonModule],
-  declarations: exportedDeclarations,
+  imports: [CommonModule, UiCommonModule, TimeagoModule.forChild()],
+  declarations: [...exportedDeclarations, FeaturedTemplateCardComponent],
   exports: exportedDeclarations,
 })
 export class UiFeatureTemplatesModule {}

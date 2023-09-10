@@ -1,9 +1,10 @@
-import { Chatbot, Project } from '@activepieces/shared'
+import { AppConnection, Chatbot, Project } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../database/database-common'
 
 type ChatbotSchema = Chatbot & {
     project: Project
+    connection: AppConnection
 }
 
 export const ChatbotEntity = new EntitySchema<ChatbotSchema>({
@@ -19,11 +20,16 @@ export const ChatbotEntity = new EntitySchema<ChatbotSchema>({
         projectId: {
             type: String,
         },
+        connectionId: {
+            type: String,
+            nullable: true,
+        },
         dataSources: {
             type: JSONB_COLUMN_TYPE,
         },
-        settings: {
-            type: JSONB_COLUMN_TYPE,
+        prompt: {
+            type: String,
+            nullable: true,
         },
     },
     relations: {
@@ -32,6 +38,13 @@ export const ChatbotEntity = new EntitySchema<ChatbotSchema>({
             target: 'project',
             joinColumn: {
                 name: 'projectId',
+            },
+        },
+        connection: {
+            type: 'many-to-one',
+            target: 'app_connection',
+            joinColumn: {
+                name: 'connectionId',
             },
         },
     },

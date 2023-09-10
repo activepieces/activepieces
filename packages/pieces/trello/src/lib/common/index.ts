@@ -1,6 +1,16 @@
 import { BasicAuthPropertyValue, Property } from '@activepieces/pieces-framework';
 import {httpClient, HttpRequest, HttpMethod } from '@activepieces/pieces-common';
 
+export interface WebhookInformation {
+    id: string
+    description: string
+    idModel: string
+    callbackURL: string
+    active: boolean
+    consecutiveFailures: number
+    firstConsecutiveFailDate: string
+}
+
 export const trelloCommon = {
     baseUrl: "https://api.trello.com/1/",
     board_id: Property.Dropdown({
@@ -35,7 +45,7 @@ export const trelloCommon = {
         required: true,
         refreshers: ['board_id'],
         options: async ({ auth, board_id }) => {
-            if (auth === undefined || board_id === undefined) {
+            if ( !auth || !board_id ) {
                 return {
                     disabled: true,
                     placeholder: 'connect your account first and select board',
@@ -56,6 +66,66 @@ export const trelloCommon = {
             }
         }
     }),
+    list_id_opt: Property.Dropdown({
+        displayName: 'Lists',
+        description: 'Get lists from a board',
+        required: false,
+        refreshers: ['board_id'],
+        options: async ({ auth, board_id }) => {
+            if ( !auth || !board_id ) {
+                return {
+                    disabled: true,
+                    placeholder: 'connect your account first and select board',
+                    options: [],
+                };
+            }
+            const basicAuthProperty = auth as BasicAuthPropertyValue;
+            const lists = await listBoardLists(basicAuthProperty.username, basicAuthProperty.password, board_id as string);
+
+            console.log(lists);
+
+            return {
+                options: lists.map((list: { id: string; name: string; }) => ({
+                    value: list.id,
+                    label: list.name,
+                }))
+            }
+        }
+    }),
+    create_webhook: async (auth: BasicAuthPropertyValue, list_id: string, webhookUrl: string) => {
+        const request: HttpRequest = {
+            method: HttpMethod.POST,
+            url: `${trelloCommon.baseUrl}webhooks`
+                + `?key=` + auth.username
+                + `&token=` + auth.password
+                + `&callbackURL=` + webhookUrl
+                + `&idModel=` + list_id,
+        };
+        const response = await httpClient.sendRequest<WebhookInformation>(request);
+
+        return response.body;
+    },
+    delete_webhook: async (auth: BasicAuthPropertyValue , webhook_id: string) => {
+        const request: HttpRequest = {
+            method: HttpMethod.DELETE,
+            url: `${trelloCommon.baseUrl}webhooks/${webhook_id}`
+                + `?key=` + auth.username
+                + `&token=` + auth.password,
+        };
+        const response = await httpClient.sendRequest(request);
+
+        return response.body;
+    },
+    list_webhooks: async (auth: BasicAuthPropertyValue) => {
+        const request: HttpRequest = {
+            method: HttpMethod.GET,
+            url: `${trelloCommon.baseUrl}tokens/${auth.password}/webhooks`
+                + `?key=` + auth.username
+        };
+        const response = await httpClient.sendRequest<WebhookInformation[]>(request);
+
+        return response.body;
+    }
 }
 
 /**

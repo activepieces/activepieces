@@ -1,20 +1,6 @@
-//import { PDFLoader } from 'langchain/document_loaders/fs/pdf';
+import { PDFLoader } from 'langchain/document_loaders/fs/pdf';
 import { Document } from 'langchain/document';
-import { createDatasource , PieceAuth, Property} from '@activepieces/pieces-framework';
-
-const docs = [
-  new Document({
-    metadata: { foo: 'notion' },
-    pageContent:
-      'Ashraf is CEO of Activepieces, He loves to code and eat pizza in italy :O'
-  }),
-  new Document({
-    metadata: { id: 'notion' },
-    pageContent:
-      'Activepieces Open source no-code workflow builder, designed to be extensible'
-  })
-];
-// TODO FIX
+import { createDatasource, PieceAuth, Property } from '@activepieces/pieces-framework';
 
 export const pdfDataSource = createDatasource({
   name: 'from-file',
@@ -29,23 +15,21 @@ export const pdfDataSource = createDatasource({
     })
   },
   sync: async ({ propsValue }) => {
- //   const docs: Document[] = await load(propsValue.url);
-    return docs
+    return load(propsValue.url);
   }
 });
 
-/*
 async function load(url: string): Promise<Document[]> {
-  const loader = new PDFLoader(url);
-  return loader.load();
-}*/
-
-/** 
-async function transform(docs: Document[]): Promise<Document[]> {
-  const splitter = new RecursiveCharacterTextSplitter({
-    chunkSize: 1000,
-    chunkOverlap: 0
+  const blob = await downloadPdf(url);
+  const loader = new PDFLoader(blob, {
+    splitPages: false
   });
-  return await splitter.splitDocuments(docs);
+  return loader.load();
 }
-*/
+
+
+async function downloadPdf(url: string): Promise<Blob> {
+  const response = await fetch(url);
+  const blob = await response.blob();
+  return blob;
+}

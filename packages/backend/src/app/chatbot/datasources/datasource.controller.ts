@@ -3,7 +3,7 @@ import {
     FastifyPluginCallbackTypebox,
     Type,
 } from '@fastify/type-provider-typebox'
-import { chatbotService } from '../chatbot.service'
+import { datasourceService } from './datasource-service'
 
 const ChatBotIdParams = Type.Object({
     id: Type.String(),
@@ -24,7 +24,7 @@ export const datasourceController: FastifyPluginCallbackTypebox = (
             },
         },
         async (request) => {
-            return chatbotService.createDatasource({
+            return datasourceService.addDatasourceToBot({
                 projectId: request.principal.projectId,
                 chatbotId: request.params.id,
                 request: request.body,
@@ -42,10 +42,10 @@ export const datasourceController: FastifyPluginCallbackTypebox = (
             },
         },
         async (request) => {
-            return chatbotService.deleteDatasource({
-                projectId: request.principal.projectId,
+            return datasourceService.deleteDatasourceFromBot({
                 chatbotId: request.params.id,
-                dataSourceId: request.params.datasourceId,
+                projectId: request.principal.projectId,
+                datasourceId: request.params.datasourceId,
             })
         },
     ),

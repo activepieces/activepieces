@@ -31,6 +31,7 @@ const polling: Polling<
         propsValue.sheet_id
       )) ?? [];
     const items = currentValues
+      .filter((f) => Object.keys(f).length > 0)
       .map((item, index) => ({
         id: index + 1,
         data: item
@@ -80,7 +81,7 @@ export const readNewRows = createTrigger({
       auth: context.auth,
       store: context.store,
       // Max items to poll is 10, to avoid rate limit errors
-      maxItemsToPoll: Math.max(1,Math.min(10, context.propsValue.max_rows_to_poll ?? 10)),
+      maxItemsToPoll: Math.max(1, Math.min(10, context.propsValue.max_rows_to_poll ?? 10)),
       propsValue: context.propsValue
     });
   },

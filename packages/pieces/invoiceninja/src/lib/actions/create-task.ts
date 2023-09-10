@@ -48,8 +48,10 @@ export const createTask = createAction({
             queryParams.append('client_id', context.propsValue.client_id || '');
             queryParams.append('project_id', context.propsValue.project_id || '');
             queryParams.append('description', context.propsValue.description || '');
-            queryParams.append('rate', context.propsValue.rate?.toString() || '');
-
+            // bugfix - only append rate if a rate has been specified in the piece 
+            if (context.propsValue.rate?.valueOf != null) {
+            queryParams.append('rate', context.propsValue.rate?.toString() || '0');
+            }
             // Remove trailing slash from base_url
             const baseUrl = context.auth.base_url.replace(/\/$/, "");
             const url = `${baseUrl}/api/v1/tasks?${queryParams.toString()}`;

@@ -32,11 +32,12 @@ export class ChatbotSettingsComponent {
   formGroup: FormGroup<{
     displayName: FormControl<string>;
     prompt: FormControl<string>;
-    auth: FormControl<string>;
+    connectionId: FormControl<string>;
     sources: FormControl<DataSource[]>;
   }>;
-  autoSave$: Observable<void> | undefined;
-  connections$: Observable<ConnectionDropdownItem[]>;
+  saveConnection$: Observable<void>;
+  connectionsDropdownList$: Observable<ConnectionDropdownItem[]>;
+  connections$: Observable<AppConnectionWithoutSensitiveData[]>;
   chatbotId = '';
   readonly pieceName = '@activepieces/piece-openai';
   readonly pieceVersion = '0.3.0';
@@ -67,7 +68,7 @@ export class ChatbotSettingsComponent {
         validators: [Validators.required],
         nonNullable: true,
       }),
-      auth: new FormControl('', {
+      connectionId: new FormControl('', {
         validators: [Validators.required],
         nonNullable: true,
       }),
@@ -76,16 +77,23 @@ export class ChatbotSettingsComponent {
         nonNullable: true,
       }),
     });
+    this.saveConnection$ =
+      this.formGroup.controls.connectionId.valueChanges.pipe(
+        tap(() => {
+          this.save();
+        }),
+        map(() => void 0)
+      );
     this.loadConnections$ = this.actRoute.data.pipe(
       tap((value) => {
         const routeData = value as {
           connections: AppConnectionWithoutSensitiveData[];
           chatbot: Chatbot;
         };
-        this.formGroup.controls.auth.setValue(routeData.chatbot.settings.auth);
-        this.formGroup.controls.prompt.setValue(
-          routeData.chatbot.settings.prompt
+        this.formGroup.controls.connectionId.setValue(
+          routeData.chatbot.connectionId
         );
+        this.formGroup.controls.prompt.setValue(routeData.chatbot.prompt);
         this.formGroup.controls.displayName.setValue(
           routeData.chatbot.displayName
         );
@@ -99,32 +107,36 @@ export class ChatbotSettingsComponent {
       }),
       map(() => void 0)
     );
-
     this.connections$ = this.store.select(
-      BuilderSelectors.selectAppConnectionsDropdownOptions
+      BuilderSelectors.selectAllAppConnections
+    );
+    this.connectionsDropdownList$ = this.store.select(
+      BuilderSelectors.selectAppConnectionsDropdownOptionsWithIds
     );
   }
-  connectionValueChanged(event: { value: `{{connections['${string}']}}` }) {
+  connectionValueChanged(event: { value: string }) {
     const connectionName = extractConnectionName(event.value);
-    this.formGroup.controls.auth.setValue(connectionName);
+    this.formGroup.controls.connectionId.setValue(connectionName);
   }
   submit() {
     if (this.formGroup.valid && !this.saving) {
-      this.saving = true;
-      this.updateSettings$ = this.chatbotService
-        .update(this.chatbotId, {
-          displayName: this.formGroup.controls.displayName.value,
-          settings: {
-            prompt: this.formGroup.controls.prompt.value,
-            auth: this.formGroup.controls.auth.value,
-          },
-        })
-        .pipe(
-          tap(() => {
-            this.saving = false;
-          })
-        );
+      this.save();
     }
     this.formGroup.markAllAsTouched();
+  }
+
+  save() {
+    this.saving = true;
+    this.updateSettings$ = this.chatbotService
+      .update(this.chatbotId, {
+        displayName: this.formGroup.controls.displayName.value,
+        prompt: this.formGroup.controls.prompt.value,
+        connectionId: this.formGroup.controls.connectionId.value,
+      })
+      .pipe(
+        tap(() => {
+          this.saving = false;
+        })
+      );
   }
 }

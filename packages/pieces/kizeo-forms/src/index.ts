@@ -10,6 +10,12 @@ import { eventOnDataFinished } from "./lib/trigger/event-on-data-finished";
 import { eventOnDataPushed } from "./lib/trigger/event-on-data-pushed";
 import { eventOnDataPulled } from "./lib/trigger/event-on-data-received";
 import { eventOnDataUpdated } from "./lib/trigger/event-on-data-updated";
+import { CreateListItem } from "./lib/actions/create-list-item";
+import { getListDefinition } from "./lib/actions/get-list-definition";
+import { getListItem } from "./lib/actions/get-list-item";
+import { getAllListItems } from "./lib/actions/get-all-list-items";
+import { editListItem } from "./lib/actions/edit-list-item";
+import { deleteListItem } from "./lib/actions/delete-list-item";
 
 const markdownDescription = `
 To connect to Kizeo Forms, you need an API Token provided by their support team.
@@ -23,10 +29,10 @@ export const kizeoFormsAuth = PieceAuth.SecretText({
 
 export const kizeoForms = createPiece({
   displayName: "Kizeo Forms",
-      minimumSupportedRelease: '0.5.0',
-    logoUrl: "https://cdn.activepieces.com/pieces/kizeo-forms.png",
+  minimumSupportedRelease: '0.6.0',
+  logoUrl: "https://cdn.activepieces.com/pieces/kizeo-forms.png",
   authors: ["BastienMe"],
   auth: kizeoFormsAuth,
-  actions: [getDataDefinition,pushData,downloadStandardPDF,downloadCustomExportInItsOriginalFormat],
+  actions: [getDataDefinition, pushData, downloadStandardPDF, downloadCustomExportInItsOriginalFormat, getListDefinition, getListItem, getAllListItems, CreateListItem, editListItem, deleteListItem],
   triggers: [eventOnData, eventOnDataDeleted, eventOnDataFinished, eventOnDataPushed, eventOnDataPulled, eventOnDataUpdated],
 });

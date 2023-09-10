@@ -68,6 +68,6 @@ export const packageManager = {
     },
     async linkDependency(directory: string, dependencyDirectory: string) {
         const result = await executePnpm(directory, 'link', dependencyDirectory)
-        logger.info(`[PackageManager#linkDependency] result: ${JSON.stringify(result)} for directory: ${directory} and dependencyDirectory: ${dependencyDirectory}`)
+        logger.trace(`[PackageManager#linkDependency] result: ${JSON.stringify(result)} for directory: ${directory} and dependencyDirectory: ${dependencyDirectory}`)
     },
 }

@@ -5,36 +5,79 @@ import { isString } from '@activepieces/shared';
 
 const DB_PREFIX_URL = 'db://';
 const FILE_PREFIX_URL = 'file://';
+const MEMORY_PREFIX_URL = 'memory://';
 
-export type DefaultFileSystem = 'db' | 'local';
+export type DefaultFileSystem = 'db' | 'local' | 'memory';
 
-export function createFilesService({ stepName, type }: { stepName: string, type: DefaultFileSystem }) {
+export function createFilesService({ stepName, type, flowId }: { stepName: string, type: DefaultFileSystem, flowId: string }) {
     return {
         async write({ fileName, data }: { fileName: string, data: Buffer }): Promise<string> {
             switch (type) {
                 case 'db':
-                    return writeDbFile({ stepName, flowId: globals.flowId!, fileName, data });
+                    return writeDbFile({ stepName, flowId: flowId, fileName, data });
                 case 'local':
                     return writeLocalFile({ stepName, fileName, data });
+                case 'memory':
+                    return writeMemoryFile({ stepName, fileName, data });
             }
         }
     }
 };
 
+export function isMemoryFilePath(dbPath: unknown): boolean {
+    if (!isString(dbPath)) {
+        return false;
+    }
+    return dbPath.startsWith(MEMORY_PREFIX_URL);
+}
+
+export async function compressMemoryFileString(path: string) {
+    try {
+        const file = await handleAPFile(path);
+        return MEMORY_PREFIX_URL + file.filename
+    } catch (e) {
+        console.error(e);
+        return path;
+    }
+}
+
 export function isApFilePath(dbPath: unknown): boolean {
     if (!isString(dbPath)) {
         return false;
     }
-    return dbPath.startsWith(FILE_PREFIX_URL) || dbPath.startsWith(DB_PREFIX_URL);
+    return dbPath.startsWith(FILE_PREFIX_URL) || dbPath.startsWith(DB_PREFIX_URL) || dbPath.startsWith(MEMORY_PREFIX_URL);
 }
 
 export async function handleAPFile(path: string) {
-    if (path.startsWith(DB_PREFIX_URL)) {
+    if (path.startsWith(MEMORY_PREFIX_URL)) {
+        return readMemoryFile(path);
+    } else if (path.startsWith(DB_PREFIX_URL)) {
         return readDbFile(path);
     } else if (path.startsWith(FILE_PREFIX_URL)) {
         return readLocalFile(path);
     } else {
         throw new Error(`error=local_file_not_found absolute_path=${path}`);
+    }
+}
+
+async function writeMemoryFile({ stepName, fileName, data }: { stepName: string, fileName: string, data: Buffer }): Promise<string> {
+    try {
+        const base64Data = data.toString('base64');
+        const base64String = JSON.stringify({ fileName, data: base64Data });
+        return `memory://${base64String}`;
+    } catch (error) {
+        throw new Error(`Error reading file: ${error}`);
+    }
+}
+
+async function readMemoryFile(absolutePath: string): Promise<ApFile> {
+    try {
+        const base64String = absolutePath.replace(MEMORY_PREFIX_URL, '');
+        const { fileName, data } = JSON.parse(base64String);
+        const calcuatedExtension = fileName.includes('.') ? fileName.split('.').pop() : null;
+        return new ApFile(fileName, Buffer.from(data, 'base64'), calcuatedExtension);
+    } catch (error) {
+        throw new Error(`Error reading file: ${error}`);
     }
 }
 
@@ -54,7 +97,7 @@ async function writeDbFile({ stepName, flowId, fileName, data }: { stepName: str
     });
 
     if (!response.ok) {
-        throw new Error('Failed to store entry');
+        throw new Error('Failed to store entry ' + response.body);
     }
     const result = await response.json();
     return DB_PREFIX_URL + `${result.id}`
@@ -62,7 +105,6 @@ async function writeDbFile({ stepName, flowId, fileName, data }: { stepName: str
 
 async function readDbFile(absolutePath: string): Promise<ApFile> {
     const fileId = absolutePath.replace(DB_PREFIX_URL, '');
-    console.log("1 " + fileId);
     const response = await fetch(globals.apiUrl + `/v1/step-files/${encodeURIComponent(fileId)}`, {
         method: 'GET',
         headers: {

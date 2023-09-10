@@ -23,15 +23,13 @@ export const runBot = async ({
   type,
   input,
   auth,
-  settings
+  prompt
 }: {
   botId: string;
   type: string;
   auth: SecretTextConnectionValue,
   input: string;
-  settings: {
-    prompt: string;
-  };
+  prompt: string;
 }) => {
   const bot = chatbots.find((b) => b.name === type);
   if (!bot) {
@@ -45,6 +43,8 @@ export const runBot = async ({
     input,
     llm: llm(auth.secret_text, 'gpt-3.5-turbo'),
     embeddings,
-    settings: settings
+    settings: {
+      prompt,
+    }
   });
 };

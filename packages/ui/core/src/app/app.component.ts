@@ -17,11 +17,7 @@ import {
   FlowService,
 } from '@activepieces/ui/common';
 import { compareVersions } from 'compare-versions';
-import {
-  ApFlagId,
-  FlowOperationType,
-  TelemetryEventName,
-} from '@activepieces/shared';
+import { ApFlagId, FlowOperationType } from '@activepieces/shared';
 import { TelemetryService } from '@activepieces/ui/common';
 import { AuthenticationService, fadeInUp400ms } from '@activepieces/ui/common';
 import { MatDialog } from '@angular/material/dialog';
@@ -131,15 +127,7 @@ export class AppComponent implements OnInit {
     this.importTemplate$ = this.builderService.importTemplate$
       .asObservable()
       .pipe(
-        tap((res) => {
-          this.telemetryService.capture({
-            name: TelemetryEventName.FLOW_IMPORTED,
-            payload: {
-              id: res.template.id,
-              name: res.template.name,
-              location: 'Inside the builder after creation',
-            },
-          });
+        tap(() => {
           this.loading$.next(true);
         }),
         switchMap((res) => {

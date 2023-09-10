@@ -26,32 +26,18 @@ export const mondayUpdateAnItem = createAction({
     })
   },
   async run(context) {
-    const { ...itemValues } = context.propsValue
-
-    
-    const item: string = Object
-    .entries(itemValues.column_values ?? {})
-    .map(value => `${value[0]}: "${value[1]}"`)
-    .join(', ')
-    
-    const query = `
-      mutation {
-        change_multiple_column_values (
-          item_id: ${itemValues.item_id},
-          board_id: ${itemValues.board_id},
-          create_labels_if_missing: ${itemValues.create_labels_if_missing ?? false},
-          column_values: { ${item} },
-        )
-        {
-          id
-          column_values {
-            id
-            value
-            text
-          }
+    const { ...itemValues } = context.propsValue;
+    const query = `mutation{change_multiple_column_values (item_id: ${
+      itemValues.item_id
+    } 
+        ,board_id: ${itemValues.board_id} 
+        ,create_labels_if_missing: ${
+          itemValues.create_labels_if_missing ?? true
         }
-      }
-    `
+      ,column_values: " ${JSON.stringify(itemValues?.column_values).replace(
+        /"/g,
+        '\\"'
+      )}"){id}}`;
 
     const result = await mondayMakeRequest(
       context.auth.access_token,

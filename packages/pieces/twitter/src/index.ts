@@ -30,7 +30,7 @@ The steps to obtain the required credentials:
 `
 
 export const twitterAuth = PieceAuth.CustomAuth({
-    
+
     description: markdownDescription,
     props: {
         consumerKey: Property.ShortText({
@@ -77,11 +77,11 @@ export const twitterAuth = PieceAuth.CustomAuth({
 })
 
 export const twitter = createPiece({
-  displayName: "Twitter",
-      minimumSupportedRelease: '0.5.0',
+    displayName: "Twitter",
+    minimumSupportedRelease: '0.5.0',
     logoUrl: "https://cdn.activepieces.com/pieces/twitter.png",
-  authors: ["abuaboud", "Abdallah-Alwarawreh"],
-  auth: twitterAuth,
-  actions: [createTweet],
-  triggers: [],
+    authors: ["abuaboud", "Abdallah-Alwarawreh"],
+    auth: twitterAuth,
+    actions: [createTweet],
+    triggers: [],
 });

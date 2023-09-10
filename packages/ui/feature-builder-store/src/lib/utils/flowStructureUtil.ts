@@ -1,8 +1,11 @@
 import {
+  Action,
   ActionType,
   BranchAction,
   LoopOnItemsAction,
   Trigger,
+  UpdateActionRequest,
+  UpdateTriggerRequest,
   flowHelper,
 } from '@activepieces/shared';
 import { FlowItem } from '../model/flow-item';
@@ -81,5 +84,32 @@ export class FlowStructureUtil {
     return (
       flowHelper.getAllSteps(trigger).findIndex((f) => stepName === f.name) + 1
     );
+  }
+
+  public static removeAnySubequentStepsFromTrigger<T extends Trigger>(
+    req: T
+  ): UpdateTriggerRequest {
+    const clone: Trigger = JSON.parse(JSON.stringify(req));
+    if (clone.nextAction) clone.nextAction = undefined;
+    return clone;
+  }
+
+  public static removeAnySubequentStepsFromAction(
+    req: Action
+  ): UpdateActionRequest {
+    const clone: Action = JSON.parse(JSON.stringify(req));
+    if (clone.nextAction) clone.nextAction = undefined;
+    switch (clone.type) {
+      case ActionType.BRANCH: {
+        clone.onFailureAction = undefined;
+        clone.onSuccessAction = undefined;
+        break;
+      }
+      case ActionType.LOOP_ON_ITEMS: {
+        clone.firstLoopAction = undefined;
+        break;
+      }
+    }
+    return clone;
   }
 }

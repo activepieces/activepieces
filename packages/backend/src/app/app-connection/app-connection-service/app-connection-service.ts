@@ -75,7 +75,7 @@ export class AppConnectionService {
     async getOne({
         projectId,
         name,
-    }: GetOneParams): Promise<AppConnection | null> {
+    }: GetOneByName): Promise<AppConnection | null> {
         const encryptedAppConnection = await repo.findOneBy({
             projectId,
             name,
@@ -96,18 +96,22 @@ export class AppConnectionService {
     }
 
     async getOneOrThrow(params: GetOneParams): Promise<AppConnection> {
-        const connection = await this.getOne(params)
-
-        if (isNil(connection)) {
+        const connectionById = await repo.findOneBy({
+            id: params.id,
+            projectId: params.projectId,
+        })
+        if (isNil(connectionById)) {
             throw new ActivepiecesError({
                 code: ErrorCode.APP_CONNECTION_NOT_FOUND,
                 params: {
-                    id: params.name,
+                    id: params.id,
                 },
             })
         }
-
-        return connection
+        return (await this.getOne({
+            projectId: params.projectId,
+            name: connectionById.name,
+        }))!
     }
 
     async delete(params: DeleteParams): Promise<void> {
@@ -146,7 +150,7 @@ export class AppConnectionService {
 
         data.forEach((encryptedConnection) => {
             const apConnection: AppConnection =
-        decryptConnection(encryptedConnection)
+                decryptConnection(encryptedConnection)
             promises.push(
                 new Promise((resolve) => {
                     return resolve(apConnection)
@@ -404,7 +408,7 @@ async function refreshWithCredentials(
         accept: 'application/json',
     }
     const authorizationMethod =
-    appConnection.authorization_method || OAuth2AuthorizationMethod.BODY
+        appConnection.authorization_method || OAuth2AuthorizationMethod.BODY
     switch (authorizationMethod) {
         case OAuth2AuthorizationMethod.BODY:
             body.client_id = appConnection.client_id
@@ -440,12 +444,12 @@ function mergeNonNull(
     oAuth2Response: BaseOAuth2ConnectionValue,
 ): OAuth2ConnectionValueWithApp {
     const formattedOAuth2Response: Partial<BaseOAuth2ConnectionValue> =
-    Object.entries(oAuth2Response)
-        .filter(([, value]) => value !== null && value !== undefined)
-        .reduce<Partial<BaseOAuth2ConnectionValue>>((obj, [key, value]) => {
-        obj[key as keyof BaseOAuth2ConnectionValue] = value
-        return obj
-    }, {})
+        Object.entries(oAuth2Response)
+            .filter(([, value]) => value !== null && value !== undefined)
+            .reduce<Partial<BaseOAuth2ConnectionValue>>((obj, [key, value]) => {
+            obj[key as keyof BaseOAuth2ConnectionValue] = value
+            return obj
+        }, {})
 
     return {
         ...appConnection,
@@ -476,7 +480,7 @@ async function claim(request: {
             accept: 'application/json',
         }
         const authorizationMethod =
-      request.authorizationMethod || OAuth2AuthorizationMethod.BODY
+            request.authorizationMethod || OAuth2AuthorizationMethod.BODY
         switch (authorizationMethod) {
             case OAuth2AuthorizationMethod.BODY:
                 body.client_id = request.clientId
@@ -581,9 +585,14 @@ type UpsertParams = {
     request: UpsertAppConnectionRequestBody
 }
 
-type GetOneParams = {
+type GetOneByName = {
     projectId: ProjectId
     name: string
+}
+
+type GetOneParams = {
+    projectId: ProjectId
+    id: string
 }
 
 type DeleteParams = {
