@@ -354,14 +354,14 @@ export const NotionFieldMapping: Record<string, any> = {
           options: property.select.options?.map((option) => {
             return {
               label: option.name,
-              value: option.id,
+              value: option.name,
             };
           }),
         },
       }),
     buildNotionType: (property: DynamicPropsValue) => ({
       select: {
-        id: property,
+        name: property,
       },
     }),
   },
@@ -375,13 +375,13 @@ export const NotionFieldMapping: Record<string, any> = {
           options: property.multi_select.options?.map((option) => {
             return {
               label: option.name,
-              value: option.id,
+              value: option.name,
             };
           }),
         },
       }),
     buildNotionType: (property: DynamicPropsValue) => ({
-      multi_select: property.map((id: any) => ({ id: id })),
+      multi_select: property.map((name: any) => ({ name: name })),
     }),
   },
   status: {
@@ -394,14 +394,14 @@ export const NotionFieldMapping: Record<string, any> = {
           options: property.status.options?.map((option) => {
             return {
               label: option.name,
-              value: option.id,
+              value: option.name,
             };
           }),
         },
       }),
     buildNotionType: (property: DynamicPropsValue) => ({
       status: {
-        id: property,
+        name: property,
       },
     }),
   },

@@ -98,14 +98,15 @@ export const notionCommon = {
           database_id: database_id as unknown as string,
         });
 
-        Object.keys(properties).forEach(async (key) => {
+        for (const key in properties) {
           const property = properties[key];
           if (
             [
               'rollup',
+              'files',
+              'verification',
               'formula',
               'unique_id',
-              'url',
               'relation',
               'created_by',
               'created_time',
@@ -113,7 +114,7 @@ export const notionCommon = {
               'last_edited_time',
             ].includes(property.type)
           ) {
-            return;
+            continue;
           }
           if (property.type === 'people') {
             const { results } = await notion.users.list({ page_size: 100 });
@@ -138,7 +139,7 @@ export const notionCommon = {
             fields[property.name] =
               NotionFieldMapping[property.type].buildActivepieceType(property);
           }
-        });
+        }
       } catch (e) {
         console.debug(e);
       }
