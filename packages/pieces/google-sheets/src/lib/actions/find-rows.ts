@@ -44,22 +44,22 @@ export const findRowsAction = createAction({
             propsValue['sheet_id']
         );
 
-        let Rows = [] ;
+        let rows = [] ;
         let values = [];
         if( !propsValue.startingRow ){
-            Rows = await googleSheetsCommon.getValues(
+            rows = await googleSheetsCommon.getValues(
                 propsValue.spreadsheet_id,
                 auth['access_token'],
                 propsValue.sheet_id
             );
 
-            values = Rows.map((row) => {
+            values = rows.map((row) => {
                 return row.values;
             });
         }else{
             const numberOfRows = propsValue.numberOfRows ?? 1;
 
-            Rows = await getGoogleSheetRows({
+            rows = await getGoogleSheetRows({
                 accessToken: auth['access_token'],
                 sheetName: sheetName,
                 spreadSheetId: propsValue['spreadsheet_id'],
@@ -67,7 +67,7 @@ export const findRowsAction = createAction({
                 rowIndex_e: propsValue['startingRow'] + numberOfRows - 1
             });
 
-            values = Rows.map((row) => {
+            values = rows.map((row) => {
                 return row.values;
             });
         }
@@ -80,7 +80,7 @@ export const findRowsAction = createAction({
         for( let i = 0 ; i < values.length ; i++ ){
             const row = values[i];
             if( searchValue === '' ){
-                matchingRows.push(Rows[i]);
+                matchingRows.push(rows[i]);
                 continue;
             }
 
@@ -93,11 +93,11 @@ export const findRowsAction = createAction({
             }
             if( propsValue.matchCase ){
                 if( entry_value === searchValue ){
-                    matchingRows.push(Rows[i]);
+                    matchingRows.push(rows[i]);
                 }
             }else{
                 if( entry_value.toLowerCase().includes(searchValue.toLowerCase()) ){
-                    matchingRows.push(Rows[i]);
+                    matchingRows.push(rows[i]);
                 }
             }
         }
