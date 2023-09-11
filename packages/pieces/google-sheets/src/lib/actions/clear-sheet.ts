@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { getErrorSheet, googleSheetsCommon } from '../common/common';
+import { googleSheetsCommon } from '../common/common';
 import { googleSheetsAuth } from '../..';
 
 export const clearSheetAction = createAction({
@@ -19,12 +19,9 @@ export const clearSheetAction = createAction({
         }),
     },
     async run({propsValue, auth}) {
-        const sheetName = await googleSheetsCommon.findSheetName(auth['access_token'],
+        await googleSheetsCommon.findSheetName(auth['access_token'],
             propsValue['spreadsheet_id'],
             propsValue['sheet_id']);
-        if (!sheetName) {
-            throw Error( getErrorSheet(propsValue['sheet_id']) );
-        }
 
         const rowsToDelete: number[] = [];
         const values = await googleSheetsCommon.getValues(propsValue.spreadsheet_id, auth['access_token'], propsValue.sheet_id);

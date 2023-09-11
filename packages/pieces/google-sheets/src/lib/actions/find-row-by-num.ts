@@ -1,5 +1,5 @@
 import { Property, createAction } from "@activepieces/pieces-framework";
-import { googleSheetsCommon , getGoogleSheetRows, getErrorSheet } from "../common/common";
+import { googleSheetsCommon , getGoogleSheetRows } from "../common/common";
 import { googleSheetsAuth } from "../..";
 
 
@@ -12,7 +12,7 @@ export const findRowByNumAction = createAction({
         spreadsheet_id: googleSheetsCommon.spreadsheet_id,
         include_team_drives: googleSheetsCommon.include_team_drives,
         sheet_id: googleSheetsCommon.sheet_id,
-        row_number: Property.Number({
+        rowNumber: Property.Number({
             displayName: 'Row Number',
             description: 'The row number to get from the sheet',
             required: true
@@ -24,17 +24,14 @@ export const findRowByNumAction = createAction({
             propsValue['spreadsheet_id'],
             propsValue['sheet_id']
         );
-        if (!sheetName) {
-            throw Error( getErrorSheet(propsValue['sheet_id']) );
-        }
         
         const row = await getGoogleSheetRows({
             accessToken: auth['access_token'],
             sheetName: sheetName,
             spreadSheetId: propsValue['spreadsheet_id'],
-            rowIndex_s: propsValue['row_number'],
-            rowIndex_e: propsValue['row_number']
-        });
+            rowIndex_s: propsValue['rowNumber'],
+            rowIndex_e: propsValue['rowNumber']
+        });        
         return row[0];
     }
 });

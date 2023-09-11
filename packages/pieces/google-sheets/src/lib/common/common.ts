@@ -107,7 +107,7 @@ export const googleSheetsCommon = {
             return properties;
         }
     }),
-    column_name: Property.Dropdown<string>({
+    columnName: Property.Dropdown<string>({
         description: 'Column Name',
         displayName: 'The name of the column to search in',
         required: true,
@@ -212,9 +212,13 @@ type AppendGoogleSheetValuesParams = {
     accessToken: string;
 };
 
-async function findSheetName(access_token: string, spreadsheet_id: string, sheetId: number) {
-    const sheets = await listSheetsName(access_token, spreadsheet_id);
-    return sheets.find(f => f.properties.sheetId === sheetId)?.properties.title;
+async function findSheetName(access_token: string, spreadsheetId: string, sheetId: number) {
+    const sheets = await listSheetsName(access_token, spreadsheetId);
+    const sheetName = sheets.find(f => f.properties.sheetId === sheetId)?.properties.title;
+    if (!sheetName) {
+        throw Error(`Sheet with ID ${spreadsheetId} not found in spreadsheet`);
+    }
+    return sheetName;
 }
 
 export async function getGoogleSheetRows(params: { accessToken: string; sheetName: string; spreadSheetId: string; rowIndex_s: number; rowIndex_e: number; }) {
@@ -435,8 +439,4 @@ export enum ValueInputOption {
 export enum Dimension {
     ROWS = 'ROWS',
     COLUMNS = 'COLUMNS',
-}
-
-export function getErrorSheet(sheetId: number) {
-    return `Sheet with ID ${sheetId} not found in spreadsheet`;
 }

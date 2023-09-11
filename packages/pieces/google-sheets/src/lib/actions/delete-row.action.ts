@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { getErrorSheet, googleSheetsCommon } from '../common/common';
+import { googleSheetsCommon } from '../common/common';
 import { googleSheetsAuth } from '../../';
 
 export const deleteRowAction = createAction({
@@ -18,12 +18,9 @@ export const deleteRowAction = createAction({
         })
     },
     async run({propsValue, auth}) {
-        const sheetName = await googleSheetsCommon.findSheetName(auth.access_token,
+        await googleSheetsCommon.findSheetName(auth.access_token,
             propsValue['spreadsheet_id'],
             propsValue['sheet_id']);
-        if (!sheetName) {
-            throw Error( getErrorSheet(propsValue['sheet_id']) );
-        }
 
         // Subtract 1 from the row_id to convert it to 0-indexed
         const adjustedRowIndex = propsValue.row_id - 1;

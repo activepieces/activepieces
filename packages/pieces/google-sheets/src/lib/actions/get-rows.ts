@@ -1,7 +1,41 @@
-import { Property, StoreScope, Validators, createAction } from "@activepieces/pieces-framework";
+import { Property, Store, StoreScope, Validators, createAction } from "@activepieces/pieces-framework";
 import { googleSheetsAuth } from "../..";
-import { getErrorSheet, getGoogleSheetRows, googleSheetsCommon } from "../common/common";
+import { getGoogleSheetRows, googleSheetsCommon } from "../common/common";
 import { isNil } from "@activepieces/shared";
+
+async function getRows( store: Store , accessToken:string , spreadsheetId:string , sheetId:number , memKey:string , groupSize:number , testing:boolean ){
+    const sheetName = await googleSheetsCommon.findSheetName(
+        accessToken,
+        spreadsheetId,
+        sheetId
+    );
+
+    const memVal = await store.get(memKey, StoreScope.FLOW);
+
+    let startingRow;
+    if (isNil(memVal) || memVal === '') startingRow = 1;
+    else {
+        startingRow = parseInt(memVal as string);
+        if (isNaN(startingRow)) {
+            throw Error('The value stored in memory key : ' + memKey + ' is ' + memVal + ' and it is not a number');
+        }
+    }
+
+    if (startingRow < 1) throw Error('Starting row : ' + startingRow + ' is less than 1' + memVal);
+    const endRow = startingRow + groupSize;
+
+    const row = await getGoogleSheetRows({
+        accessToken: accessToken,
+        sheetName: sheetName,
+        spreadSheetId: spreadsheetId,
+        rowIndex_s: startingRow,
+        rowIndex_e: endRow - 1
+    });
+
+    if( testing == false )await store.put(memKey, endRow, StoreScope.FLOW);
+
+    return row;
+}
 
 export const getRowsAction = createAction({
     auth: googleSheetsAuth,
@@ -12,13 +46,13 @@ export const getRowsAction = createAction({
         spreadsheet_id: googleSheetsCommon.spreadsheet_id,
         include_team_drives: googleSheetsCommon.include_team_drives,
         sheet_id: googleSheetsCommon.sheet_id,
-        mem_key: Property.ShortText({
+        memKey: Property.ShortText({
             displayName: 'Memory Key',
             description: 'The key used to store the current row number in memory',
             required: true,
             defaultValue: 'row_number',
         }),
-        group_size: Property.Number({
+        groupSize: Property.Number({
             displayName: 'Group Size',
             description: 'The number of rows to get',
             required: true,
@@ -27,74 +61,9 @@ export const getRowsAction = createAction({
         }),
     },
     async run({ store, auth, propsValue }) {
-        const sheetName = await googleSheetsCommon.findSheetName(
-            auth['access_token'],
-            propsValue['spreadsheet_id'],
-            propsValue['sheet_id']
-        );
-        if (!sheetName) {
-            throw Error(getErrorSheet(propsValue['sheet_id']));
-        }
-        
-        const mem_val = await store.get(propsValue.mem_key, StoreScope.FLOW);
-        let starting_row;
-        if (isNil(mem_val) || mem_val === '') {
-            starting_row = 1;
-        } else {
-            // try to parse the value as a number if you fail then throw an error
-            starting_row = parseInt(mem_val as string);
-            if (isNaN(starting_row)) {
-                throw Error('The value stored in memory key : ' + propsValue.mem_key + ' is ' + mem_val + ' and it is not a number');
-            }
-        }
-
-        if (starting_row < 1) throw Error('Starting row : ' + starting_row + ' is less than 1' + mem_val);
-        const end_row = starting_row + propsValue.group_size;
-
-        const row = await getGoogleSheetRows({
-            accessToken: auth['access_token'],
-            sheetName: sheetName,
-            spreadSheetId: propsValue['spreadsheet_id'],
-            rowIndex_s: starting_row,
-            rowIndex_e: end_row - 1
-        });
-
-        await store.put(propsValue.mem_key, end_row, StoreScope.FLOW);
-        return row;
+        return await getRows( store , auth['access_token'] , propsValue['spreadsheet_id'] , propsValue['sheet_id'] , propsValue['memKey'] , propsValue['groupSize'] , false );
     },
     async test({ store, auth, propsValue }) {
-        const sheetName = await googleSheetsCommon.findSheetName(
-            auth['access_token'],
-            propsValue['spreadsheet_id'],
-            propsValue['sheet_id']
-        );
-        if (!sheetName) {
-            throw Error(getErrorSheet(propsValue['sheet_id']));
-        }
-        
-        const mem_val = await store.get(propsValue.mem_key, StoreScope.FLOW);
-        let starting_row;
-        if (isNil(mem_val) || mem_val === '') {
-            starting_row = 1;
-        } else {
-            // try to parse the value as a number if you fail then throw an error
-            starting_row = parseInt(mem_val as string);
-            if (isNaN(starting_row)) {
-                throw Error('The value stored in memory key : ' + propsValue.mem_key + ' is ' + mem_val + ' and it is not a number');
-            }
-        }
-
-        if (starting_row < 1) throw Error('Starting row : ' + starting_row + ' is less than 1' + mem_val);
-        const end_row = starting_row + propsValue.group_size;
-
-        const row = await getGoogleSheetRows({
-            accessToken: auth['access_token'],
-            sheetName: sheetName,
-            spreadSheetId: propsValue['spreadsheet_id'],
-            rowIndex_s: starting_row,
-            rowIndex_e: end_row - 1
-        });
-
-        return row;
+        return await getRows( store , auth['access_token'] , propsValue['spreadsheet_id'] , propsValue['sheet_id'] , propsValue['memKey'] , propsValue['groupSize'] , true );
     }
 });
