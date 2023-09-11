@@ -1,24 +1,24 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { OptionalTimeFormats, TimeFormat, action_description, createNewDate } from '../common';
+import { optionalTimeFormats, timeFormat, timeFormatDescription, createNewDate } from '../common';
 
 export const getCurrentDate = createAction({
     name: 'get_current_date',
     displayName: 'Get Current Date',
     description: 'Get the current date',
     props: {
-        TimeFormat: Property.StaticDropdown({
+        timeFormat: Property.StaticDropdown({
             displayName: 'To Time Format',
-            description: action_description,
+            description: timeFormatDescription,
             options: {
-                options: OptionalTimeFormats
+                options: optionalTimeFormats
             },
             required: true,
-            defaultValue: TimeFormat.format00
+            defaultValue: timeFormat.format00
         }),
     },
     async run(context) {
-        const TF = context.propsValue.TimeFormat;
+        const timeFormat = context.propsValue.timeFormat;
         const date = new Date();
-        return { DateNow: createNewDate( date , TF ) };
+        return { result: createNewDate( date , timeFormat ) };
     }
 })

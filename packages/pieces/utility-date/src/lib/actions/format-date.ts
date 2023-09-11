@@ -1,58 +1,57 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { ChangeDateFormat, OptionalTimeFormats, TimeFormat, action_description, timezoneOptions } from '../common';
+import { ChangeDateFormat, optionalTimeFormats, timeFormat, timeFormatDescription, timeZoneOptions } from '../common';
 
 export const formatDateAction = createAction({
     name: 'format_date',
     displayName: 'Format Date',
-    description: 'Format a date by changing its format',
+    description: 'Converts a date from one format to another',
     props: {
-        InputDate: Property.ShortText({
+        inputDate: Property.ShortText({
             displayName: 'Input Date',
             description: 'Enter the input date',
             required: true,
-            defaultValue: ''
         }),
-        InputFormat: Property.StaticDropdown({
+        inputFormat: Property.StaticDropdown({
             displayName: 'From Time Format',
-            description: action_description,
+            description: timeFormatDescription,
             options: {
-                options: OptionalTimeFormats,
+                options: optionalTimeFormats,
             },
             required: true,
-            defaultValue: TimeFormat.format00
+            defaultValue: timeFormat.format00
         }),
-        InputTimeZone: Property.StaticDropdown<string>({
-            displayName: "From Timezone",
+        inputTimeZone: Property.StaticDropdown<string>({
+            displayName: "From Time Zone",
             options: {
-                options: timezoneOptions,
+                options: timeZoneOptions,
             },
             required: true,
             defaultValue: "UTC"
         }),
-        OutputFormat: Property.StaticDropdown({
+        outputFormat: Property.StaticDropdown({
             displayName: 'To Time Format',
-            description: action_description,
+            description: timeFormatDescription,
             options: {
-                options: OptionalTimeFormats,
+                options: optionalTimeFormats,
             },
             required: true,
-            defaultValue: TimeFormat.format00
+            defaultValue: timeFormat.format00
         }),
-        OutputTimeZone: Property.StaticDropdown<string>({
-            displayName: "To Timezone",
+        outputTimeZone: Property.StaticDropdown<string>({
+            displayName: "To Time Zone",
             options: {
-                options: timezoneOptions,
+                options: timeZoneOptions,
             },
             required: true,
             defaultValue: "UTC"
         }),
     },
     async run(context) {
-        const inputDate = context.propsValue.InputDate as string;
-        const inputFormat = context.propsValue.InputFormat as string;
-        const inputTimeZone = context.propsValue.InputTimeZone as string;
-        const outputFormat = context.propsValue.OutputFormat as string;
-        const outputTimeZone = context.propsValue.OutputTimeZone as string;
+        const inputDate = context.propsValue.inputDate as string;
+        const inputFormat = context.propsValue.inputFormat as string;
+        const inputTimeZone = context.propsValue.inputTimeZone as string;
+        const outputFormat = context.propsValue.outputFormat as string;
+        const outputTimeZone = context.propsValue.outputTimeZone as string;
         
         return { result: ChangeDateFormat( inputDate , inputFormat , inputTimeZone , outputFormat , outputTimeZone ) };
     }

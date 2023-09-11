@@ -1,88 +1,88 @@
 import { Property, createAction } from "@activepieces/pieces-framework";
-import { DateInformation, OptionalTimeFormats, TimeFormat, Timeparts, action_description, createDateFromInfo, getDateInformation } from "../common";
+import { dateInformation, optionalTimeFormats, timeFormat, timeParts, timeFormatDescription, createDateFromInfo, getDateInformation } from "../common";
 
 export const dateDifferenceAction = createAction({
     name: 'date_difference',
     displayName: 'Date Difference',
     description: 'Get the difference between two dates',
     props: {
-        InputDate1: Property.ShortText({
-            displayName: 'Input Date 1',
-            description: 'Enter the first input date',
+        startDate: Property.ShortText({
+            displayName: 'Starting Date',
+            description: 'Enter the starting date',
             required: true,
-            defaultValue: ''
         }),
-        InputFormat1: Property.StaticDropdown({
-            displayName: 'Input Date 1 Format',
-            description: action_description,
+        startDateFormat: Property.StaticDropdown({
+            displayName: 'Starting date format',
+            description: timeFormatDescription,
             options: {
-                options: OptionalTimeFormats,
+                options: optionalTimeFormats,
             },
             required: true,
-            defaultValue: TimeFormat.format00
+            defaultValue: timeFormat.format00
         }),
-        InputDate2: Property.ShortText({
-            displayName: 'Input Date 2',
-            description: 'Enter the second input date',
+        endDate: Property.ShortText({
+            displayName: 'Ending Date',
+            description: 'Enter the ending date',
             required: true,
-            defaultValue: ''
         }),
-        InputFormat2: Property.StaticDropdown({
-            displayName: 'Input Date 2 Format',
-            description: action_description,
+        endDateFormat: Property.StaticDropdown({
+            displayName: 'Ending date format',
+            description: timeFormatDescription,
             options: {
-                options: OptionalTimeFormats,
+                options: optionalTimeFormats,
             },
             required: true,
-            defaultValue: TimeFormat.format00
+            defaultValue: timeFormat.format00
         }),
         unitDifference: Property.StaticDropdown({
-            displayName: 'Unit of Difference',
-            description: 'Select the unit of difference',
+            displayName: 'Unit',
+            description: 'Select the unit of difference between the two dates',
             options: {
                 options: [
-                    { label: 'Year' , value: Timeparts.year },
-                    { label: 'Month' , value: Timeparts.month },
-                    { label: 'Day' , value: Timeparts.day },
-                    { label: 'Hour' , value: Timeparts.hour },
-                    { label: 'Minute' , value: Timeparts.minute },
-                    { label: 'Second' , value: Timeparts.second },
+                    { label: 'Year' , value: timeParts.year },
+                    { label: 'Month' , value: timeParts.month },
+                    { label: 'Day' , value: timeParts.day },
+                    { label: 'Hour' , value: timeParts.hour },
+                    { label: 'Minute' , value: timeParts.minute },
+                    { label: 'Second' , value: timeParts.second },
                 ]
             },
             required: true,
-            defaultValue: Timeparts.year
+            defaultValue: timeParts.year
         }),
     },
     async run(context) {
-        const inputDate1 = context.propsValue.InputDate1;
-        const inputFormat1 = context.propsValue.InputFormat1;
-        const inputDate2 = context.propsValue.InputDate2;
-        const inputFormat2 = context.propsValue.InputFormat2;
-        const date1_info = getDateInformation( inputDate1 , inputFormat1 ) as DateInformation;
-        const date2_info = getDateInformation( inputDate2 , inputFormat2 ) as DateInformation;
-        const date1 = createDateFromInfo( date1_info );
-        const date2 = createDateFromInfo( date2_info );
+        const inputStartDate = context.propsValue.startDate;
+        const startDateFormat = context.propsValue.startDateFormat;
+        const inputEndDate = context.propsValue.endDate;
+        const endDateFormat = context.propsValue.endDateFormat;
+
+        const startDateInfo = getDateInformation( inputStartDate , startDateFormat ) as dateInformation;
+        const endDateInfo = getDateInformation( inputEndDate , endDateFormat ) as dateInformation;
+        const startDate = createDateFromInfo( startDateInfo );
+        const endDate = createDateFromInfo( endDateInfo );
 
         const unitDifference = context.propsValue.unitDifference;
-        const difference = date1.getTime() - date2.getTime();
+        const difference = endDate.getTime() - startDate.getTime();
+        
         let res = 0;
         switch ( unitDifference ) {
-            case Timeparts.year:
+            case timeParts.year:
                 res = Math.floor( difference / ( 1000 * 60 * 60 * 24 * 365 ) );
                 break;
-            case Timeparts.month:
+            case timeParts.month:
                 res = Math.floor( difference / ( 1000 * 60 * 60 * 24 * 30 ) );
                 break;
-            case Timeparts.day:
+            case timeParts.day:
                 res = Math.floor( difference / ( 1000 * 60 * 60 * 24 ) );
                 break;
-            case Timeparts.hour:
+            case timeParts.hour:
                 res = Math.floor( difference / ( 1000 * 60 * 60 ) );
                 break;
-            case Timeparts.minute:
+            case timeParts.minute:
                 res = Math.floor( difference / ( 1000 * 60 ) );
                 break;
-            case Timeparts.second:
+            case timeParts.second:
                 res = Math.floor( difference / ( 1000 ) );
                 break;
         }

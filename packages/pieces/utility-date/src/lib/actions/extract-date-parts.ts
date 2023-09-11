@@ -1,79 +1,78 @@
 import { Property, createAction } from "@activepieces/pieces-framework";
-import { DateInformation, OptionalTimeFormats, TimeFormat, Timeparts, action_description, createDateFromInfo, getDateInformation } from "../common";
+import { dateInformation, optionalTimeFormats, timeFormat, timeParts, timeFormatDescription, createDateFromInfo, getDateInformation } from "../common";
 
 export const extractDateParts = createAction({
     name: 'extract_date_parts',
     displayName: 'Extract Date Units',
-    description: 'Extract date units from a date',
+    description: 'Extract date units ( year , month , day , hour , minute , second , day of week , month name ) from a date',
     props: {
-        InputDate: Property.ShortText({
+        inputDate: Property.ShortText({
             displayName: 'Input Date',
             description: 'Enter the input date',
             required: true,
-            defaultValue: ''
         }),
-        InputFormat: Property.StaticDropdown({
+        inputFormat: Property.StaticDropdown({
             displayName: 'From Time Format',
-            description: action_description,
+            description: timeFormatDescription,
             options: {
-                options: OptionalTimeFormats,
+                options: optionalTimeFormats,
             },
             required: true,
-            defaultValue: TimeFormat.format00
+            defaultValue: timeFormat.format00
         }),
-        UnitExtract: Property.StaticDropdown({
+        unitExtract: Property.StaticDropdown({
             displayName: 'Unit to Extract',
-            description: 'Select the unit to extract',
+            description: 'Select the unit to extract from the date',
             options: {
                 options: [
-                    { label: 'Year' , value: Timeparts.year },
-                    { label: 'Month' , value: Timeparts.month },
-                    { label: 'Day' , value: Timeparts.day },
-                    { label: 'Hour' , value: Timeparts.hour },
-                    { label: 'Minute' , value: Timeparts.minute },
-                    { label: 'Second' , value: Timeparts.second },
-                    { label: 'Day of Week' , value: Timeparts.dayOfWeek },
-                    { label: 'Month name' , value: Timeparts.monthName },
+                    { label: 'Year' , value: timeParts.year },
+                    { label: 'Month' , value: timeParts.month },
+                    { label: 'Day' , value: timeParts.day },
+                    { label: 'Hour' , value: timeParts.hour },
+                    { label: 'Minute' , value: timeParts.minute },
+                    { label: 'Second' , value: timeParts.second },
+                    { label: 'Day of Week' , value: timeParts.dayOfWeek },
+                    { label: 'Month name' , value: timeParts.monthName },
                 ]
             },
             required: true,
-            defaultValue: Timeparts.year
+            defaultValue: timeParts.year
         }),
     },
     async run(context) {
-        const inputDate = context.propsValue.InputDate;
-        const inputFormat = context.propsValue.InputFormat;
-        const unitExtract = context.propsValue.UnitExtract as Timeparts;
+        const inputDate = context.propsValue.inputDate;
+        const inputFormat = context.propsValue.inputFormat;
+        const unitExtract = context.propsValue.unitExtract as timeParts;
         
-        const DateInfo = getDateInformation( inputDate , inputFormat ) as DateInformation;
+        const DateInfo = getDateInformation( inputDate , inputFormat ) as dateInformation;
         const BeforeDate = createDateFromInfo( DateInfo );
         let res ;
         switch ( unitExtract ) {
-            case Timeparts.year:
+            case timeParts.year:
                 res = DateInfo.year;
                 break;
-            case Timeparts.month:
+            case timeParts.month:
                 res = DateInfo.month;
                 break;
-            case Timeparts.day:
+            case timeParts.day:
                 res = DateInfo.day;
                 break;
-            case Timeparts.hour:
+            case timeParts.hour:
                 res = DateInfo.hour;
                 break;
-            case Timeparts.minute:
+            case timeParts.minute:
                 res = DateInfo.minute;
                 break;
-            case Timeparts.second:
+            case timeParts.second:
                 res = DateInfo.second;
                 break;
-            case Timeparts.dayOfWeek:
+            case timeParts.dayOfWeek:
                 res = BeforeDate.toLocaleString('en-us', { weekday: 'long' });
                 break;
-            case Timeparts.monthName:
+            case timeParts.monthName:
                 res = BeforeDate.toLocaleString('en-us', { month: 'long' });
                 break;
-            case Timeparts.unix_time:
+            case timeParts.unix_time:
                 throw new Error(`Invalid unit ${unitExtract}`);            
         }
         return { result:res };

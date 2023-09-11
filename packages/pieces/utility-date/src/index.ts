@@ -6,12 +6,16 @@ import { extractDateParts } from "./lib/actions/extract-date-parts";
 import { dateDifferenceAction } from "./lib/actions/date-difference";
 import { addSubtractDateAction } from "./lib/actions/add-subtract-date";
 
+const description =
+  `A utility piece to help with date operations and minipulations.`;
+
 export const utilityDate = createPiece({
-  displayName: "Utility-date",
+  displayName: "Date Utility",
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.8.0',
-  logoUrl: "https://cdn.activepieces.com/pieces/utility-date.png",
+  logoUrl: "https://cdn.activepieces.com/pieces/calendar_piece.svg",
   authors: ["Salem-Alaa"],
   actions: [ getCurrentDate , formatDateAction , extractDateParts , dateDifferenceAction , addSubtractDateAction ],
   triggers: [],
+  description: description,
 });

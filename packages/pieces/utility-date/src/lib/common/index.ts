@@ -1,4 +1,4 @@
-export interface DateInformation{
+export interface dateInformation{
     year: number;
     month: number;
     day: number;
@@ -8,7 +8,7 @@ export interface DateInformation{
     unix_time: number;
 }
 
-export enum TimeFormat {
+export enum timeFormat {
     format00 = 'DDD MMM DD YYYY HH:mm:ss',
     format01 = 'DDD MMM DD HH:mm:ss YYYY',
     format02 = 'MMMM DD YYYY HH:mm:ss',
@@ -26,7 +26,7 @@ export enum TimeFormat {
     format14 = 'X',
 }
 
-export enum TimeFormatLabel {
+export enum timeFormatLabel {
     format00 = 'DDD MMM DD YYYY HH:mm:ss (Sun Jan 17 2000 11:04:05)',
     format01 = 'DDD MMM DD HH:mm:ss YYYY (Sun Jan 17 11:04:05 2000)',
     format02 = 'MMMM DD YYYY HH:mm:ss (January 17 2000 11:04:05)',
@@ -44,7 +44,7 @@ export enum TimeFormatLabel {
     format14 = 'X (946684800)',
 }
 
-export enum Timeparts {
+export enum timeParts {
     year = 'year',
     month = 'month',
     day = 'day',
@@ -56,7 +56,7 @@ export enum Timeparts {
     monthName = 'monthName',
 }
 
-export const action_description =`Here's what each part of the format (eg. YYYY) means:
+export const timeFormatDescription =`Here's what each part of the format (eg. YYYY) means:
 \nYYYY : Year (4 digits)
 \nYY : Year (2 digits)
 \nMMMM : Month (full name)
@@ -70,45 +70,45 @@ export const action_description =`Here's what each part of the format (eg. YYYY)
 \nss : Second (2 digits)
 \nX : Time in unix format`;
 
-export const OptionalTimeFormats = [
-    { label: TimeFormatLabel.format00 , value: TimeFormat.format00 },
-    { label: TimeFormatLabel.format01 , value: TimeFormat.format01 },
-    { label: TimeFormatLabel.format02 , value: TimeFormat.format02 },
-    { label: TimeFormatLabel.format03 , value: TimeFormat.format03 },
-    { label: TimeFormatLabel.format04 , value: TimeFormat.format04 },
-    { label: TimeFormatLabel.format05 , value: TimeFormat.format05 },
-    { label: TimeFormatLabel.format06 , value: TimeFormat.format06 },
-    { label: TimeFormatLabel.format07 , value: TimeFormat.format07 },
-    { label: TimeFormatLabel.format08 , value: TimeFormat.format08 },
-    { label: TimeFormatLabel.format09 , value: TimeFormat.format09 },
-    { label: TimeFormatLabel.format10 , value: TimeFormat.format10 },
-    { label: TimeFormatLabel.format11 , value: TimeFormat.format11 },
-    { label: TimeFormatLabel.format12 , value: TimeFormat.format12 },
-    { label: TimeFormatLabel.format13 , value: TimeFormat.format13 },
-    { label: TimeFormatLabel.format14 , value: TimeFormat.format14 },
+export const optionalTimeFormats = [
+    { label: timeFormatLabel.format00 , value: timeFormat.format00 },
+    { label: timeFormatLabel.format01 , value: timeFormat.format01 },
+    { label: timeFormatLabel.format02 , value: timeFormat.format02 },
+    { label: timeFormatLabel.format03 , value: timeFormat.format03 },
+    { label: timeFormatLabel.format04 , value: timeFormat.format04 },
+    { label: timeFormatLabel.format05 , value: timeFormat.format05 },
+    { label: timeFormatLabel.format06 , value: timeFormat.format06 },
+    { label: timeFormatLabel.format07 , value: timeFormat.format07 },
+    { label: timeFormatLabel.format08 , value: timeFormat.format08 },
+    { label: timeFormatLabel.format09 , value: timeFormat.format09 },
+    { label: timeFormatLabel.format10 , value: timeFormat.format10 },
+    { label: timeFormatLabel.format11 , value: timeFormat.format11 },
+    { label: timeFormatLabel.format12 , value: timeFormat.format12 },
+    { label: timeFormatLabel.format13 , value: timeFormat.format13 },
+    { label: timeFormatLabel.format14 , value: timeFormat.format14 },
 ]
 
-function format_number( num : number , length : number ){
+function formatNumber( num : number , length : number ){
     let result = num.toString();
     while( result.length < length ) result = "0" + result;
     return result;
 }
 
-function getYear( dateString : string , TypeString : string ){
-    let year_index = TypeString.indexOf("YYYY") , year = 0 ;
-    if( year_index !== -1 ){
-        const string_year = dateString.substring( year_index , year_index + 4 );
-        year = parseInt( string_year );
+function getYear( dateString : string , typeString : string ){
+    let yearIndex = typeString.indexOf("YYYY") , year = 0 ;
+    if( yearIndex !== -1 ){
+        const stringYear = dateString.substring( yearIndex , yearIndex + 4 );
+        year = parseInt( stringYear );
         if (Number.isNaN(year)) {
-            throw new Error(`Invalid Date format in ${TypeString}. The value "${string_year}" for "YYYY" cannot be parsed as an integer.`);
+            throw new Error(`Invalid Date format in ${typeString}. The value "${stringYear}" for "YYYY" cannot be parsed as an integer.`);
         }          
     }else{
-        year_index = TypeString.indexOf("YY");
-        if( year_index !== -1 ){
-            const string_year = dateString.substring( year_index , year_index + 2 );
-            year = parseInt( string_year );
+        yearIndex = typeString.indexOf("YY");
+        if( yearIndex !== -1 ){
+            const stringYear = dateString.substring( yearIndex , yearIndex + 2 );
+            year = parseInt( stringYear );
             if (Number.isNaN(year)) {
-                throw new Error(`Invalid Date format in ${TypeString}. The value "${string_year}" for "YY" cannot be parsed as an integer.`);
+                throw new Error(`Invalid Date format in ${typeString}. The value "${stringYear}" for "YY" cannot be parsed as an integer.`);
             }
             year = year + 2000;
         }
@@ -116,9 +116,9 @@ function getYear( dateString : string , TypeString : string ){
     return year;
 }
 
-function getMonth( dateString : string , TypeString : string ){
-    let month_index = TypeString.indexOf("MMMM") , month = 0;
-    if( month_index !== -1 ){
+function getMonth( dateString : string , typeString : string ){
+    let monthIndex = typeString.indexOf("MMMM") , month = 0;
+    if( monthIndex !== -1 ){
         const monthNames1 = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October" , "November" , "December"];
         for( let i = 0 ; i < monthNames1.length ; i++ ){
             if( dateString.toLowerCase().includes( monthNames1[i].toLowerCase() ) ){
@@ -126,10 +126,10 @@ function getMonth( dateString : string , TypeString : string ){
                 break;
             }
         }
-        if( month == 0 ) throw new Error(`Invalid Date format in ${TypeString}. The value for "MMMM" which is long month cannot be found in ${dateString}.`);
+        if( month == 0 ) throw new Error(`Invalid Date format in ${typeString}. The value for "MMMM" which is long month cannot be found in ${dateString}.`);
     }else{
-        month_index = TypeString.indexOf("MMM");
-        if( month_index !== -1 ){
+        monthIndex = typeString.indexOf("MMM");
+        if( monthIndex !== -1 ){
             const monthNames2 = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct" , "Nov" , "Dec"];
             for( let i = 0 ; i < monthNames2.length ; i++ ){
                 if( dateString.toLowerCase().includes( monthNames2[i].toLowerCase() ) ){
@@ -137,81 +137,81 @@ function getMonth( dateString : string , TypeString : string ){
                     break;
                 }
             }
-            if( month == 0 ) throw new Error(`Invalid Date format in ${TypeString}. The value for "MMM" which is short month cannot be found in ${dateString}.`);
+            if( month == 0 ) throw new Error(`Invalid Date format in ${typeString}. The value for "MMM" which is short month cannot be found in ${dateString}.`);
         }else{
-            month_index = TypeString.indexOf("MM");
-            if( month_index !== -1 ){
-                const month_string = dateString.substring( month_index , month_index + 2 );
-                month = parseInt( month_string );
-                if (Number.isNaN(month)) throw new Error(`Invalid Date format in ${TypeString}. The value "${month_string}" for "MM" cannot be parsed as an integer.`);
+            monthIndex = typeString.indexOf("MM");
+            if( monthIndex !== -1 ){
+                const monthString = dateString.substring( monthIndex , monthIndex + 2 );
+                month = parseInt( monthString );
+                if (Number.isNaN(month)) throw new Error(`Invalid Date format in ${typeString}. The value "${monthString}" for "MM" cannot be parsed as an integer.`);
             }
         }
     }
     return month;
 }
 
-function getDay( dateString : string , TypeString : string ){
-    const day_index = TypeString.indexOf("DD") ;
+function getDay( dateString : string , typeString : string ){
+    const dayIndex = typeString.indexOf("DD") ;
     let day = 0 ;
-    if( day_index !== -1 ){
-        const string_day = dateString.substring( day_index , day_index + 2 );
-        day = parseInt( string_day );
-        if (Number.isNaN(day)) throw new Error(`Invalid Date format in ${TypeString}. The value "${string_day}" for "DD" cannot be parsed as an integer.`);
+    if( dayIndex !== -1 ){
+        const stringDay = dateString.substring( dayIndex , dayIndex + 2 );
+        day = parseInt( stringDay );
+        if (Number.isNaN(day)) throw new Error(`Invalid Date format in ${typeString}. The value "${stringDay}" for "DD" cannot be parsed as an integer.`);
     }
     return day;
 }
 
-function getHour( dateString : string , TypeString : string ){
-    const hour_index = TypeString.indexOf("HH") ;
+function getHour( dateString : string , typeString : string ){
+    const hourIndex = typeString.indexOf("HH") ;
     let hour = 0 ;
-    if( hour_index !== -1 ){
-        const string_hour = dateString.substring( hour_index , hour_index + 2 );
-        hour = parseInt( string_hour );
-        if (Number.isNaN(hour)) throw new Error(`Invalid Date format in ${TypeString}. The value "${string_hour}" for "HH" cannot be parsed as an integer.`);
+    if( hourIndex !== -1 ){
+        const stringHour = dateString.substring( hourIndex , hourIndex + 2 );
+        hour = parseInt( stringHour );
+        if (Number.isNaN(hour)) throw new Error(`Invalid Date format in ${typeString}. The value "${stringHour}" for "HH" cannot be parsed as an integer.`);
     }
     return hour;
 }
 
-function getMinute( dateString : string , TypeString : string ){
-    const minute_index = TypeString.indexOf("mm") ;
+function getMinute( dateString : string , typeString : string ){
+    const minuteIndex = typeString.indexOf("mm") ;
     let minute = 0 ;
-    if( minute_index !== -1 ){
-        const string_minute = dateString.substring( minute_index , minute_index + 2 );
-        minute = parseInt( string_minute );
-        if (Number.isNaN(minute)) throw new Error(`Invalid Date format in ${TypeString}. The value "${string_minute}" for "mm" cannot be parsed as an integer.`);
+    if( minuteIndex !== -1 ){
+        const stringMinute = dateString.substring( minuteIndex , minuteIndex + 2 );
+        minute = parseInt( stringMinute );
+        if (Number.isNaN(minute)) throw new Error(`Invalid Date format in ${typeString}. The value "${stringMinute}" for "mm" cannot be parsed as an integer.`);
     }
     return minute;
 }
 
-function getSecond( dateString : string , TypeString : string ){
-    const second_index = TypeString.indexOf("ss") ;
+function getSecond( dateString : string , typeString : string ){
+    const secondIndex = typeString.indexOf("ss") ;
     let second = 0 ;
-    if( second_index !== -1 ){
-        const string_second = dateString.substring( second_index , second_index + 2 );
-        second = parseInt( string_second );
-        if (Number.isNaN(second)) throw new Error(`Invalid Date format in ${TypeString}. The value "${string_second}" for "ss" cannot be parsed as an integer.`);
+    if( secondIndex !== -1 ){
+        const stringSecond = dateString.substring( secondIndex , secondIndex + 2 );
+        second = parseInt( stringSecond );
+        if (Number.isNaN(second)) throw new Error(`Invalid Date format in ${typeString}. The value "${stringSecond}" for "ss" cannot be parsed as an integer.`);
     }
     return second;
 }
 
-function getUnixTime( dateString : string , TypeString : string ){
-    const unix_index = TypeString.indexOf("X") ;
-    let unix_time = 0 ;
-    if( unix_index !== -1 ){
-        let end_index = unix_index;
-        while( dateString[end_index] >= '0' && dateString[end_index] <= '9' ) end_index++;
-        const string_unix = dateString.substring( unix_index , end_index );
-        unix_time = parseInt( string_unix );
-        if (Number.isNaN(unix_time)) throw new Error(`Invalid Date format in ${TypeString}. The value "${string_unix}" for "X" cannot be parsed as an integer.`);
+function getUnixTime( dateString : string , typeString : string ){
+    const unixIndex = typeString.indexOf("X") ;
+    let unixTime = 0 ;
+    if( unixIndex !== -1 ){
+        let endIndex = unixIndex;
+        while( dateString[endIndex] >= '0' && dateString[endIndex] <= '9' ) endIndex++;
+        const stringnix = dateString.substring( unixIndex , endIndex );
+        unixTime = parseInt( stringnix );
+        if (Number.isNaN(unixTime)) throw new Error(`Invalid Date format in ${typeString}. The value "${stringnix}" for "X" cannot be parsed as an integer.`);
     }
-    return unix_time;
+    return unixTime;
 }
 
-function remove_month( date : string ){
-    const LongMonthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October" , "November" , "December"];
+function removeMonth( date : string ){
+    const longMonthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October" , "November" , "December"];
     const shortMonthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct" , "Nov" , "Dec"];
-    for( let i = 0 ; i < LongMonthNames.length ; i++ ){
-        date = date.replace( LongMonthNames[i] , "" );
+    for( let i = 0 ; i < longMonthNames.length ; i++ ){
+        date = date.replace( longMonthNames[i] , "" );
     }
     for( let i = 0 ; i < shortMonthNames.length ; i++ ){
         date = date.replace( shortMonthNames[i] , "" );
@@ -219,11 +219,11 @@ function remove_month( date : string ){
     return date;
 }
 
-function remove_day( date : string ){
-    const LongDayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+function removeDay( date : string ){
+    const longDayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     const shortDayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-    for( let i = 0 ; i < LongDayNames.length ; i++ ){
-        date = date.replace( LongDayNames[i] , "" );
+    for( let i = 0 ; i < longDayNames.length ; i++ ){
+        date = date.replace( longDayNames[i] , "" );
     }
     for( let i = 0 ; i < shortDayNames.length ; i++ ){
         date = date.replace( shortDayNames[i] , "" );
@@ -231,77 +231,74 @@ function remove_day( date : string ){
     return date;
 }
 
-export function createDateFromInfo( DateInfo : DateInformation ){
+export function createDateFromInfo( dateInfo : dateInformation ){
     let date;
-    if( DateInfo.unix_time !== 0 ) date = new Date( DateInfo.unix_time * 1000 );
-    else{
-        date = new Date( DateInfo.year , DateInfo.month - 1 , DateInfo.day , DateInfo.hour , DateInfo.minute , DateInfo.second );
-        DateInfo.unix_time = date.getTime() / 1000;
-    }
+    if( dateInfo.unix_time !== 0 ) date = new Date( dateInfo.unix_time * 1000 );
+    else date = new Date( dateInfo.year , dateInfo.month - 1 , dateInfo.day , dateInfo.hour , dateInfo.minute , dateInfo.second );
     return date;
 }
-export function getDateInformation(date: string , TF: string) {
-    let type_string = TF.toString() ;
-    // first we strip the month names and day names from the date string
-    const month = getMonth( date , type_string );
 
-    date = remove_month( date );
-    type_string = type_string
+export function getDateInformation(date: string , TF: string) {
+    let typeString = TF.toString() ;
+    // first we strip the month names and day names from the date string
+    const month = getMonth( date , typeString );
+
+    date = removeMonth( date );
+    typeString = typeString
     .replace("MMMM" , "")
     .replace("MMM" , "")
     .replace("DDDD" , "")
     .replace("DDD" , "");
-    date = remove_day( date );
+    date = removeDay( date );
 
-    const day = getDay( date , type_string );
-    const year = getYear( date , type_string );
-    const hour = getHour( date , type_string );
-    const minute = getMinute( date , type_string );
-    const second = getSecond( date , type_string );
+    const day = getDay( date , typeString );
+    const year = getYear( date , typeString );
+    const hour = getHour( date , typeString );
+    const minute = getMinute( date , typeString );
+    const second = getSecond( date , typeString );
 
-    const unix_time = getUnixTime( date , type_string );
-
+    const unix_time = getUnixTime( date , typeString );
 
     return { year: year , month: month , day: day , hour: hour , minute: minute , second: second , unix_time: unix_time };
 }
 
 export function createNewDate( date: Date , TF: string ) {
-    const year = format_number( date.getFullYear() , 4 );
+    const year = formatNumber( date.getFullYear() , 4 );
     const result = TF
     .replace("YYYY" , year )
     .replace("YY" , year.substring(2,4) )
     .replace("MMMM" , date.toLocaleString('default', { month: 'long' }) )
     .replace("MMM" , date.toLocaleString('default', { month: 'short' }) )
-    .replace("MM" , format_number( date.getMonth() + 1 , 2 ) )
+    .replace("MM" , formatNumber( date.getMonth() + 1 , 2 ) )
     .replace("DDDD" , date.toLocaleString('default', { weekday: 'long' }) )
     .replace("DDD" , date.toLocaleString('default', { weekday: 'short' }) )
-    .replace("DD" , format_number( date.getDate() , 2 ) )
-    .replace("HH" , format_number( date.getHours() , 2 ) )
-    .replace("mm" , format_number( date.getMinutes() , 2 ) )
-    .replace("ss" , format_number( date.getSeconds() , 2 ) )
+    .replace("DD" , formatNumber( date.getDate() , 2 ) )
+    .replace("HH" , formatNumber( date.getHours() , 2 ) )
+    .replace("mm" , formatNumber( date.getMinutes() , 2 ) )
+    .replace("ss" , formatNumber( date.getSeconds() , 2 ) )
     .replace("X" ,  (date.getTime() / 1000).toString());
     return result;
 }
 
-export function TimeDiff( BeforeTimeZone:string , AfterTimeZone:string ){
+export function timeDiff( beforeTimeZone:string , afterTimeZone:string ){
     const date = new Date();
-    const BeforeDate = new Date( date.toLocaleString('en-US', { timeZone: BeforeTimeZone }) );
-    const AfterDate = new Date( date.toLocaleString('en-US', { timeZone: AfterTimeZone }) );
+    const BeforeDate = new Date( date.toLocaleString('en-US', { timeZone: beforeTimeZone }) );
+    const AfterDate = new Date( date.toLocaleString('en-US', { timeZone: afterTimeZone }) );
     const diff = (AfterDate.getTime() - BeforeDate.getTime()) / 60000 ;
 
     return diff;
 }
 
-export function ChangeDateFormat(date: string, BeforeFormat: string , BeforeTimeZone:string , After_Format: string , AfterTimeZone:string) {
-    const DateInfo = getDateInformation(date , BeforeFormat) as DateInformation;
+export function ChangeDateFormat(date: string, beforeFormat: string , beforeTimeZone:string , afterFormat: string , afterTimeZone:string) {
+    const DateInfo = getDateInformation(date , beforeFormat) as dateInformation;
     const BeforeDate = createDateFromInfo( DateInfo );
-    BeforeDate.setMinutes( BeforeDate.getMinutes() + TimeDiff( BeforeTimeZone , AfterTimeZone ));
-    const new_date = createNewDate( BeforeDate , After_Format );
+    BeforeDate.setMinutes( BeforeDate.getMinutes() + timeDiff( beforeTimeZone , afterTimeZone ));
+    const newDate = createNewDate( BeforeDate , afterFormat );
 
-    return new_date;
+    return newDate;
 }
 
-export function AddSubtractTime( date: Date , expression: string ){
+export function addSubtractTime( date: Date , expression: string ){
     // remove all the spaces and line breaks from the expression
     expression = expression.replace(/(\r\n|\n|\r)/gm, "").replace(/ /g,'');
     const parts = expression.split(/(\+|-)/);
@@ -336,32 +333,30 @@ export function AddSubtractTime( date: Date , expression: string ){
         }
 
     }
-    console.log( "-=-=-=-=-=-=-= numbers -=-=-=-=-=-=-=" );
     for( let i = 0 ; i < numbers.length ; i++ ){
-        const val = units[i].toLowerCase() as Timeparts;
-        console.log( numbers[i] , val );
+        const val = units[i].toLowerCase() as timeParts;
         switch ( val ) {
-            case Timeparts.year:
+            case timeParts.year:
                 date.setFullYear( date.getFullYear() + numbers[i] );
                 break;
-            case Timeparts.month:
+            case timeParts.month:
                 date.setMonth( date.getMonth() + numbers[i] );
                 break;
-            case Timeparts.day:
+            case timeParts.day:
                 date.setDate( date.getDate() + numbers[i] );
                 break;
-            case Timeparts.hour:
+            case timeParts.hour:
                 date.setHours( date.getHours() + numbers[i] );
                 break;
-            case Timeparts.minute:
+            case timeParts.minute:
                 date.setMinutes( date.getMinutes() + numbers[i] );
                 break;
-            case Timeparts.second:
+            case timeParts.second:
                 date.setSeconds( date.getSeconds() + numbers[i] );
                 break;
-            case Timeparts.dayOfWeek:
-            case Timeparts.monthName:
-            case Timeparts.unix_time:
+            case timeParts.dayOfWeek:
+            case timeParts.monthName:
+            case timeParts.unix_time:
                 break;                
             default: 
                 {const nvr:never = val;
@@ -369,11 +364,9 @@ export function AddSubtractTime( date: Date , expression: string ){
 
         }
     }
-    console.log( "-=-=-=-=-=-=-= numbers -=-=-=-=-=-=-=" );
     return date;
 }
-
-export const timezoneOptions = [
+export const timeZoneOptions = [
     {
         "label": "(GMT-11:00) Pacific, Midway",
         "value": "Pacific/Midway"
