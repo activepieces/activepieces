@@ -6,6 +6,8 @@ export { unsubscribePerson } from './people/unsubscribe-person';
 // Origins
 export { createPurchase } from './origins/create-purchase';
 export { createEvent } from './origins/create-event';
+export { createEventsBatch } from './origins/create-events-batch';
+export { createPurchasesBatch } from './origins/create-purchases-batch';
 export { refund } from './origins/refund';
 // Loyalty
 export { getLoyaltyRedeemActions } from './loyalty/get-loyalty-redeem-actions';
