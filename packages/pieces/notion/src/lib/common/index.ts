@@ -104,6 +104,8 @@ export const notionCommon = {
           if (
             [
               'rollup',
+              'files',
+              'verification',
               'formula',
               'unique_id',
               'relation',
