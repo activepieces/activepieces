@@ -34,7 +34,7 @@ export const dateDifferenceAction = createAction({
             required: true,
             defaultValue: timeFormat.format00
         }),
-        unitDifference: Property.StaticDropdown({
+        unitDifference: Property.StaticMultiSelectDropdown({
             displayName: 'Unit',
             description: 'Select the unit of difference between the two dates',
             options: {
@@ -48,14 +48,26 @@ export const dateDifferenceAction = createAction({
                 ]
             },
             required: true,
-            defaultValue: timeParts.year
+            defaultValue: [ timeParts.year ]
         }),
     },
     async run(context) {
         const inputStartDate = context.propsValue.startDate;
+        if( typeof inputStartDate !== "string" ) {
+            throw new Error(`Input start date is not a string \ninput date: ${JSON.stringify(inputStartDate)}`);
+        }
         const startDateFormat = context.propsValue.startDateFormat;
+        if( typeof startDateFormat !== "string" ) {
+            throw new Error(`Input start date format is not a string \ninput date: ${JSON.stringify(startDateFormat)}`);
+        }
         const inputEndDate = context.propsValue.endDate;
+        if( typeof inputEndDate !== "string" ) {
+            throw new Error(`Input end date is not a string \ninput date: ${JSON.stringify(inputEndDate)}`);
+        }
         const endDateFormat = context.propsValue.endDateFormat;
+        if( typeof endDateFormat !== "string" ) {
+            throw new Error(`Input end date format is not a string \ninput date: ${JSON.stringify(endDateFormat)}`);
+        }
 
         const startDateInfo = getDateInformation( inputStartDate , startDateFormat ) as dateInformation;
         const endDateInfo = getDateInformation( inputEndDate , endDateFormat ) as dateInformation;
@@ -65,28 +77,32 @@ export const dateDifferenceAction = createAction({
         const unitDifference = context.propsValue.unitDifference;
         const difference = endDate.getTime() - startDate.getTime();
         
-        let res = 0;
-        switch ( unitDifference ) {
-            case timeParts.year:
-                res = Math.floor( difference / ( 1000 * 60 * 60 * 24 * 365 ) );
-                break;
-            case timeParts.month:
-                res = Math.floor( difference / ( 1000 * 60 * 60 * 24 * 30 ) );
-                break;
-            case timeParts.day:
-                res = Math.floor( difference / ( 1000 * 60 * 60 * 24 ) );
-                break;
-            case timeParts.hour:
-                res = Math.floor( difference / ( 1000 * 60 * 60 ) );
-                break;
-            case timeParts.minute:
-                res = Math.floor( difference / ( 1000 * 60 ) );
-                break;
-            case timeParts.second:
-                res = Math.floor( difference / ( 1000 ) );
-                break;
+        const outputresponse: Record<string,number> = {};
+        for( let i = 0 ; i < unitDifference.length ; i++ ) {
+            switch ( unitDifference[i] ) {
+                case timeParts.year:
+                    outputresponse[timeParts.year] = Math.floor( difference / ( 1000 * 60 * 60 * 24 * 365 ) );
+                    break;
+                case timeParts.month:
+                    outputresponse[timeParts.month] = Math.floor( difference / ( 1000 * 60 * 60 * 24 * 30 ) );
+                    break;
+                case timeParts.day:
+                    outputresponse[timeParts.day] = Math.floor( difference / ( 1000 * 60 * 60 * 24 ) );
+                    break;
+                case timeParts.hour:
+                    outputresponse[timeParts.hour] = Math.floor( difference / ( 1000 * 60 * 60 ) );
+                    break;
+                case timeParts.minute:
+                    outputresponse[timeParts.minute] = Math.floor( difference / ( 1000 * 60 ) );
+                    break;
+                case timeParts.second:
+                    outputresponse[timeParts.second] = Math.floor( difference / ( 1000 ) );
+                    break;
+                default:
+                    throw new Error(`Invalid unit :\n${JSON.stringify(unitDifference[i])}`);
+            }
         }
 
-        return { result : res };
+        return outputresponse;
     }
 })

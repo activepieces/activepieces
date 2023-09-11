@@ -47,10 +47,19 @@ export const formatDateAction = createAction({
         }),
     },
     async run(context) {
-        const inputDate = context.propsValue.inputDate as string;
+        const inputDate = context.propsValue.inputDate;
+        if ( typeof inputDate !== "string" ) {
+            throw new Error(`Input date is not a string \ninput date: ${JSON.stringify(inputDate)}`);
+        }
         const inputFormat = context.propsValue.inputFormat as string;
+        if( typeof inputFormat !== "string" ) {
+            throw new Error(`Input format is not a string \ninput format: ${JSON.stringify(inputDate)}`);
+        }
         const inputTimeZone = context.propsValue.inputTimeZone as string;
         const outputFormat = context.propsValue.outputFormat as string;
+        if( typeof outputFormat !== "string" ) {
+            throw new Error(`Output format is not a string \noutput format: ${JSON.stringify(inputDate)}`);
+        }
         const outputTimeZone = context.propsValue.outputTimeZone as string;
         
         return { result: ChangeDateFormat( inputDate , inputFormat , inputTimeZone , outputFormat , outputTimeZone ) };

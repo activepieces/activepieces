@@ -7,10 +7,10 @@ import { dateDifferenceAction } from "./lib/actions/date-difference";
 import { addSubtractDateAction } from "./lib/actions/add-subtract-date";
 
 const description =
-  `A utility piece to help with date operations and minipulations.`;
+  `Effortlessly manipulate, format, and extract time units for all your date and time needs.`;
 
 export const utilityDate = createPiece({
-  displayName: "Date Utility",
+  displayName: "Date Helper",
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.8.0',
   logoUrl: "https://cdn.activepieces.com/pieces/calendar_piece.svg",

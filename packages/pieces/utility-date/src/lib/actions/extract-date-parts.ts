@@ -20,7 +20,7 @@ export const extractDateParts = createAction({
             required: true,
             defaultValue: timeFormat.format00
         }),
-        unitExtract: Property.StaticDropdown({
+        unitExtract: Property.StaticMultiSelectDropdown({
             displayName: 'Unit to Extract',
             description: 'Select the unit to extract from the date',
             options: {
@@ -36,45 +36,55 @@ export const extractDateParts = createAction({
                 ]
             },
             required: true,
-            defaultValue: timeParts.year
+            defaultValue: [ timeParts.year ]
         }),
     },
     async run(context) {
         const inputDate = context.propsValue.inputDate;
+        if( typeof inputDate !== "string" ) {
+            throw new Error(`Input date is not a string \ninput date: ${JSON.stringify(inputDate)}`);
+        }
         const inputFormat = context.propsValue.inputFormat;
-        const unitExtract = context.propsValue.unitExtract as timeParts;
+        if( typeof inputFormat !== "string" ) {
+            throw new Error(`Input format is not a string \ninput format: ${JSON.stringify(inputDate)}`);
+        }
+        const unitExtract = context.propsValue.unitExtract ;
         
         const DateInfo = getDateInformation( inputDate , inputFormat ) as dateInformation;
         const BeforeDate = createDateFromInfo( DateInfo );
-        let res ;
-        switch ( unitExtract ) {
-            case timeParts.year:
-                res = DateInfo.year;
-                break;
-            case timeParts.month:
-                res = DateInfo.month;
-                break;
-            case timeParts.day:
-                res = DateInfo.day;
-                break;
-            case timeParts.hour:
-                res = DateInfo.hour;
-                break;
-            case timeParts.minute:
-                res = DateInfo.minute;
-                break;
-            case timeParts.second:
-                res = DateInfo.second;
-                break;
-            case timeParts.dayOfWeek:
-                res = BeforeDate.toLocaleString('en-us', { weekday: 'long' });
-                break;
-            case timeParts.monthName:
-                res = BeforeDate.toLocaleString('en-us', { month: 'long' });
-                break;
-            case timeParts.unix_time:
-                throw new Error(`Invalid unit ${unitExtract}`);            
+        const outputresponse: Record<string,any> = {};
+
+        for( let i = 0 ; i < unitExtract.length ; i++ ) {
+            switch ( unitExtract[i] ) {
+                case timeParts.year:
+                    outputresponse[timeParts.year] = DateInfo.year;
+                    break;
+                case timeParts.month:
+                    outputresponse[timeParts.month] = DateInfo.month;
+                    break;
+                case timeParts.day:
+                    outputresponse[timeParts.day] = DateInfo.day;
+                    break;
+                case timeParts.hour:
+                    outputresponse[timeParts.hour] = DateInfo.hour;
+                    break;
+                case timeParts.minute:
+                    outputresponse[timeParts.minute] = DateInfo.minute;
+                    break;
+                case timeParts.second:
+                    outputresponse[timeParts.second] = DateInfo.second;
+                    break;
+                case timeParts.dayOfWeek:
+                    outputresponse[timeParts.dayOfWeek] = BeforeDate.toLocaleString('en-us', { weekday: 'long' });
+                    break;
+                case timeParts.monthName:
+                    outputresponse[timeParts.monthName] = BeforeDate.toLocaleString('en-us', { month: 'long' });
+                    break;
+                case timeParts.unix_time:
+                default:
+                    throw new Error(`Invalid unit to extract :\n${JSON.stringify(unitExtract[i])}`);
+            }
         }
-        return { result:res };
+        return outputresponse ;
     }
 })

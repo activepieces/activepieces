@@ -27,21 +27,21 @@ export enum timeFormat {
 }
 
 export enum timeFormatLabel {
-    format00 = 'DDD MMM DD YYYY HH:mm:ss (Sun Jan 17 2000 11:04:05)',
-    format01 = 'DDD MMM DD HH:mm:ss YYYY (Sun Jan 17 11:04:05 2000)',
-    format02 = 'MMMM DD YYYY HH:mm:ss (January 17 2000 11:04:05)',
-    format03 = 'MMMM DD YYYY (January 17 2000)',
-    format04 = 'MMM DD YYYY (Jan 17 2000)',
-    format05 = 'YYYY-MM-DDTHH:mm:ss (2000-01-17T11:04:05) ',
-    format06 = 'YYYY-MM-DD HH:mm:ss (2000-01-17 11:04:05)',
-    format07 = 'YYYY-MM-DD (2000-01-17)',
-    format08 = 'MM-DD-YYYY (01-17-2000)',
-    format09 = 'MM/DD/YYYY (01/17/2000)',
-    format10 = 'MM/DD/YY (01/17/00)',
-    format11 = 'DD-MM-YYYY (17-01-2000)',
-    format12 = 'DD/MM/YYYY (17/01/2000)',
-    format13 = 'DD/MM/YY (17/01/00)',
-    format14 = 'X (946684800)',
+    format00 = 'DDD MMM DD YYYY HH:mm:ss (Sun Sep 17 2023 11:23:58)',
+    format01 = 'DDD MMM DD HH:mm:ss YYYY (Sun Sep 17 11:23:58 2023)',
+    format02 = 'MMMM DD YYYY HH:mm:ss (September 17 2023 11:23:58)',
+    format03 = 'MMMM DD YYYY (September 17 2023)',
+    format04 = 'MMM DD YYYY (Sep 17 2023)',
+    format05 = 'YYYY-MM-DDTHH:mm:ss (2023-09-17T11:23:58) ',
+    format06 = 'YYYY-MM-DD HH:mm:ss (2023-09-17 11:23:58)',
+    format07 = 'YYYY-MM-DD (2023-09-17)',
+    format08 = 'MM-DD-YYYY (09-17-2023)',
+    format09 = 'MM/DD/YYYY (09/17/2023)',
+    format10 = 'MM/DD/YY (09/17/23)',
+    format11 = 'DD-MM-YYYY (17-09-2023)',
+    format12 = 'DD/MM/YYYY (17/09/2023)',
+    format13 = 'DD/MM/YY (17/09/23)',
+    format14 = 'X (1694949838)',
 }
 
 export enum timeParts {
