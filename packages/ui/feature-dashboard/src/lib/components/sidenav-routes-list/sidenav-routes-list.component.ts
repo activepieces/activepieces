@@ -6,7 +6,7 @@ import {
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { FolderActions } from '../../store/folders/folders.actions';
-import { environment } from '@activepieces/ui/common';
+import { supportUrl } from '@activepieces/shared';
 
 type SideNavRoute = {
   icon: string;
@@ -27,7 +27,6 @@ export class SidenavRoutesListComponent {
     private store: Store,
     private cd: ChangeDetectorRef
   ) {}
-
   sideNavRoutes: SideNavRoute[] = [
     {
       icon: '/assets/img/custom/dashboard/flows.svg',
@@ -72,7 +71,7 @@ export class SidenavRoutesListComponent {
     return this.router.url.includes(route);
   }
 
-  get environment() {
-    return environment;
+  openSupport() {
+    window.open(supportUrl, '_blank', 'noopener');
   }
 }
