@@ -18,6 +18,9 @@
     "baseUrl": ".",
     "paths": {
       "@activepieces/engine": ["packages/engine/src/main.ts"],
+      "@activepieces/packages/date-helper": [
+        "packages/packages/date-helper/src/index.ts"
+      ],
       "@activepieces/piece-airtable": ["packages/pieces/airtable/src/index.ts"],
       "@activepieces/piece-amazon-s3": [
         "packages/pieces/amazon-s3/src/index.ts"
@@ -186,9 +189,6 @@
       "@activepieces/piece-twilio": ["packages/pieces/twilio/src/index.ts"],
       "@activepieces/piece-twitter": ["packages/pieces/twitter/src/index.ts"],
       "@activepieces/piece-typeform": ["packages/pieces/typeform/src/index.ts"],
-      "@activepieces/piece-utility-date": [
-        "packages/pieces/utility-date/src/index.ts"
-      ],
       "@activepieces/piece-vtex": ["packages/pieces/vtex/src/index.ts"],
       "@activepieces/piece-woocommerce": [
         "packages/pieces/woocommerce/src/index.ts"
