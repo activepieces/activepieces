@@ -98,7 +98,6 @@ export const notionCommon = {
           database_id: database_id as unknown as string,
         });
 
-        // Object.keys(properties).forEach(async (key) => {
         for (const key in properties) {
           const property = properties[key];
           if (
