@@ -18,6 +18,9 @@
     "baseUrl": ".",
     "paths": {
       "@activepieces/engine": ["packages/engine/src/main.ts"],
+      "@activepieces/packages/date-helper": [
+        "packages/packages/date-helper/src/index.ts"
+      ],
       "@activepieces/piece-airtable": ["packages/pieces/airtable/src/index.ts"],
       "@activepieces/piece-amazon-s3": [
         "packages/pieces/amazon-s3/src/index.ts"
