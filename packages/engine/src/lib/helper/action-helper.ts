@@ -251,7 +251,7 @@ export const pieceHelper = {
       };
 
       return {
-        output: await action.run(context),
+        output: await action.test(context),
         success: true
       };
     } catch (e) {
