@@ -536,6 +536,24 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "tanoggy",
+      "name": "Tân Một Nắng",
+      "avatar_url": "https://avatars.githubusercontent.com/u/24206229?v=4",
+      "profile": "https://ductan.me/",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "GFoley83",
+      "name": "Gavin Foley",
+      "avatar_url": "https://avatars.githubusercontent.com/u/838788?v=4",
+      "profile": "https://geteduca.com",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "commitType": "docs"

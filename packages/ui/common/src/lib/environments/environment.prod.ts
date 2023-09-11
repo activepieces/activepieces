@@ -7,7 +7,6 @@ export const environment = {
   //You need to edit index.html manually
   websiteTitle: 'Activepieces',
   activateBeamer: true,
-  showFeedbackButton: true,
   showDocsButton: true,
   showUserProfile: true,
   // BEGIN EE

@@ -6,7 +6,6 @@ export const environment = {
   userPropertyNameInLocalStorage: 'currentUser',
   //You need to edit index.html manually
   activateBeamer: true,
-  showFeedbackButton: true,
   showDocsButton: true,
   showUserProfile: true,
   websiteTitle: 'Activepieces',
