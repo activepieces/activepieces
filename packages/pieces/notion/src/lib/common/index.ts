@@ -106,7 +106,6 @@ export const notionCommon = {
               'rollup',
               'formula',
               'unique_id',
-              'url',
               'relation',
               'created_by',
               'created_time',
