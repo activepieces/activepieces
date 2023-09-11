@@ -11,23 +11,6 @@ export const readFileContent = createAction({
     filePath: Property.ShortText({
       displayName: 'File Path',
       required: true
-    }),
-    outputFormat: Property.StaticDropdown({
-      displayName: 'Output Format',
-      required: true,
-      defaultValue: 'base64',
-      options: {
-        options: [
-          {
-            value: 'Text',
-            label: 'utf8'
-          },
-          {
-            value: 'base64',
-            label: 'Base64'
-          }
-        ]
-      }
     })
   },
   async run(context) {
@@ -44,10 +27,14 @@ export const readFileContent = createAction({
     });
 
     const fileContent = await sftp.get(filePath);
+    const fileName = filePath.split('/').pop() ?? filePath;
     await sftp.end();
 
     return {
-      base64: fileContent.toString(context.propsValue.outputFormat === 'base64' ? 'base64' : 'utf8')
+      file: await context.files.write({
+        fileName: fileName,
+        data: fileContent as Buffer,
+      })
     };
   }
 });

@@ -15,6 +15,7 @@ type CreateActionParams<PieceAuth extends PieceAuthProperty, ActionProps extends
   description: string
   props: ActionProps
   run: ActionRunner<PieceAuth, ActionProps>
+  test?: ActionRunner<PieceAuth, ActionProps>
   requireAuth?: boolean
 }
 
@@ -25,6 +26,7 @@ export class IAction<PieceAuth extends PieceAuthProperty, ActionProps extends No
     public readonly description: string,
     public readonly props: ActionProps,
     public readonly run: ActionRunner<PieceAuth, ActionProps>,
+    public readonly test: ActionRunner<PieceAuth, ActionProps>,
     public readonly requireAuth: boolean,
   ) { }
 }
@@ -46,6 +48,7 @@ export const createAction = <
     params.description,
     params.props,
     params.run,
+    params.test ?? params.run,
     params.requireAuth ?? true,
   )
 }

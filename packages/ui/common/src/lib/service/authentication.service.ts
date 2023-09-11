@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, Subject } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
@@ -12,7 +12,6 @@ import { environment } from '../environments/environment';
 export class AuthenticationService {
   public currentUserSubject: BehaviorSubject<User | undefined> =
     new BehaviorSubject<User | undefined>(this.currentUser);
-  public openFeedbackPopover$: Subject<void> = new Subject();
   private jwtHelper = new JwtHelperService();
   constructor(private router: Router, private http: HttpClient) {}
 
@@ -88,14 +87,6 @@ export class AuthenticationService {
     return this.http.post(
       'https://us-central1-activepieces-b3803.cloudfunctions.net/addContact',
       { email: email }
-    );
-  }
-
-  // TODO - move to a separate service
-  sendFeedback(feedback: string) {
-    return this.http.post(
-      'https://cloud.activepieces.com/api/v1/webhooks?flowId=uKCHMo6jwgMfzvSHb6CKQ',
-      { email: this.currentUser.email, feedback: feedback }
     );
   }
 }

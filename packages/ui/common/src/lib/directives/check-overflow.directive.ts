@@ -45,6 +45,5 @@ export class CheckOverflowDirective implements AfterViewInit, OnDestroy {
       element.scrollWidth > element.clientWidth ||
       element.scrollHeight > element.clientHeight;
     this.isOverflowed.emit(overflown);
-    console.log(overflown);
   }
 }

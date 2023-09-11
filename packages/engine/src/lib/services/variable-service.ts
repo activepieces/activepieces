@@ -12,6 +12,7 @@ import {
   PieceAuthProperty,
   NonAuthPiecePropertyMap
 } from '@activepieces/pieces-framework';
+import { handleAPFile, isApFilePath } from './files.service';
 
 export class VariableService {
   private VARIABLE_TOKEN = RegExp('\\{\\{(.*?)\\}\\}', 'g');
@@ -145,9 +146,11 @@ export class VariableService {
   }
 
   private getExecutionStateObject(
-    executionState: ExecutionState,
-    logs: boolean
+    executionState: ExecutionState | null,
   ): Record<string, unknown> {
+    if(isNil(executionState)) {
+      return {};
+    }
     const valuesMap: Record<string, unknown> = {};
     Object.entries(executionState.lastStepState).forEach(([key, value]) => {
       valuesMap[key] = value;
@@ -164,7 +167,7 @@ export class VariableService {
 
     return this.resolveInternally(
       JSON.parse(JSON.stringify(unresolvedInput)),
-      this.getExecutionStateObject(executionState, logs),
+      this.getExecutionStateObject(executionState),
       logs
     ) as Promise<T>;
   }
@@ -205,8 +208,13 @@ export class VariableService {
         ...(property.defaultValidators || []),
         ...(property.validators || [])
       ];
-      for (const processor of processors) {
-        processedInput[key] = await processor(property, value);
+      // TODO remove the hard coding part
+      if (property.type === PropertyType.FILE && isApFilePath(value)) {
+        processedInput[key] = await handleAPFile(value.trim());
+      } else {
+        for (const processor of processors) {
+          processedInput[key] = await processor(property, value);
+        }
       }
 
       const propErrors = [];
@@ -265,6 +273,6 @@ export class VariableService {
 
 type ResolveParams = {
   unresolvedInput: unknown;
-  executionState: ExecutionState;
+  executionState: ExecutionState | null;
   logs: boolean;
 };

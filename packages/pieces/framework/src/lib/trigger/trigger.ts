@@ -1,4 +1,4 @@
-import { TriggerHookContext } from '../context';
+import { TestOrRunHookContext, TriggerHookContext } from '../context';
 import { TriggerBase } from '../piece-metadata';
 import { NonAuthPiecePropertyMap, PieceAuthProperty } from '../property/property';
 
@@ -44,8 +44,8 @@ type CreateTriggerParams<
   onEnable: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>
   onHandshake?: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<WebhookResponse>
   onDisable: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>
-  run: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>
-  test?: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>
+  run: (context: TestOrRunHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>
+  test?: (context: TestOrRunHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>
   requireAuth?: boolean
   sampleData: unknown
 }
@@ -65,8 +65,8 @@ export class ITrigger<
     public readonly onEnable: (ctx: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>,
     public readonly onHandshake: (ctx: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<WebhookResponse>,
     public readonly onDisable: (ctx: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>,
-    public readonly run: (ctx: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>,
-    public readonly test: (ctx: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>,
+    public readonly run: (ctx: TestOrRunHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>,
+    public readonly test: (ctx: TestOrRunHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>,
     public sampleData: unknown,
     public readonly requireAuth: boolean = true,
   ) { }

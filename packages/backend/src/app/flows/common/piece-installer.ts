@@ -38,6 +38,8 @@ const linkDependencies = async (params: LinkDependenciesParams) => {
     const basePath = path.resolve(__dirname.split(`${path.sep}dist`)[0])
     const baseLinkPath = path.join(basePath, 'dist', 'packages', 'pieces')
 
+    await packageManager.initProject(projectPath)
+
     const frameworkPackages = {
         '@activepieces/pieces-common': `link:${baseLinkPath}/common`,
         '@activepieces/pieces-framework': `link:${baseLinkPath}/framework`,
@@ -102,7 +104,13 @@ const removeDuplicatedPieces = (pieces: PackageInfo[]) => {
 }
 
 export const pieceManager = {
-    async install(params: InstallParams) {
+    async install(params: InstallParams): Promise<void> {
+        logger.debug({ path: params.projectPath }, '[PieceManager#install]')
+
+        if (params.pieces.length === 0) {
+            return
+        }
+
         if (env === ApEnvironment.DEVELOPMENT) {
             await linkDependencies(params)
         }

@@ -39,6 +39,7 @@ import { Utils } from '../utils';
 import { codeExecutor } from '../executors/code-executer';
 import { createTagsManager } from '../services/tags.service';
 import { testExecution } from './test-execution-context';
+import { createFilesService } from '../services/files.service';
 
 type GetPackageNameParams = {
   pieceName: string;
@@ -221,8 +222,13 @@ export const pieceHelper = {
         executionType: ExecutionType.BEGIN,
         auth: processedInput[AUTHENTICATION_PROPERTY_NAME],
         propsValue: processedInput,
+        files: createFilesService({
+          stepName: actionName,
+          flowId: flowVersion.flowId,
+          type: 'db'
+        }),
         tags: createTagsManager(executionState),
-        store: createContextStore('', globals.flowVersionId),
+        store: createContextStore('', flowVersion.flowId),
         connections: {
           get: async (key: string) => {
             try {
@@ -245,7 +251,7 @@ export const pieceHelper = {
       };
 
       return {
-        output: await action.run(context),
+        output: await action.test(context),
         success: true
       };
     } catch (e) {

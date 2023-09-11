@@ -1,14 +1,12 @@
-import { FlowRunId, FlowVersionId } from "@activepieces/shared";
+import { FlowRunId } from "@activepieces/shared";
 
 class Globals {
-  private _codeDirectory = './codes';
   private _inputFile = './input.json';
   private _outputFile = './output.json';
   private _workerToken = '';
   private _projectId = '';
   private _apiUrl = '';
   private _serverUrl = '';
-  private _flowVersionId = '';
   private _flowRunId?: FlowRunId
   private _resumePayload: unknown
 
@@ -36,14 +34,6 @@ class Globals {
     return this._resumePayload;
   }
 
-  set flowVersionId(_flowVersionId: FlowVersionId) {
-    this._flowVersionId = _flowVersionId;
-  }
-
-  get flowVersionId(): FlowVersionId {
-    return this._flowVersionId;
-  }
-
   set apiUrl(_apiUrl: string) {
     this._apiUrl = _apiUrl;
   }
@@ -67,10 +57,6 @@ class Globals {
 
   get workerToken() {
     return this._workerToken;
-  }
-
-  get codeDirectory() {
-    return this._codeDirectory;
   }
 
   get inputFile() {

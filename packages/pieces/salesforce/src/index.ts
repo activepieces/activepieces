@@ -14,24 +14,24 @@ import { upsertByExternalIdBulk } from './lib/action/upsert-by-external-id-bulk'
 export const salesforceAuth = PieceAuth.OAuth2({
   props: {
     environment: Property.StaticDropdown({
-      displayName: 'Environment',
-      description: 'Choose environment',
-      required: true,
-      options: {
-        options: [
-          {
-            label: 'Production',
-            value: 'login',
-          },
-          {
-            label: 'Devleopment',
-            value: 'test',
-          },
-        ],
-      },
-      defaultValue: 'login',
-    }),
-  },
+        displayName: 'Environment',
+        description: 'Choose environment',
+        required: true,
+        options: {
+          options: [
+            {
+              label: 'Production',
+              value: 'login'
+            },
+            {
+              label: 'Development',
+              value: 'test'
+            }
+          ]
+        },
+        defaultValue: 'login'
+    })
+},
 
   required: true,
   description: 'Authenticate with Salesforce Production',

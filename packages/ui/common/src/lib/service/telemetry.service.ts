@@ -19,8 +19,6 @@ export class TelemetryService {
       this.flagService.getAllFlags().subscribe((flags) => {
         if (flags[ApFlagId.TELEMETRY_ENABLED] === true) {
           posthog.init('phc_7F92HoXJPeGnTKmYv0eOw62FurPMRW9Aqr0TPrDzvHh', {
-            api_host: 'https://track.activepieces.com',
-            ui_host: 'app.posthog.com',
             autocapture: false,
           });
           const currentVersion =
@@ -48,7 +46,7 @@ export class TelemetryService {
       });
   }
 
-  isFeatureEnabled(feature: string): Observable<boolean | undefined> {
+  isFeatureEnabled(feature: string): Observable<boolean> {
     return this.flagService.getAllFlags().pipe(
       map((flags) => {
         if (flags[ApFlagId.ENVIRONMENT] === ApEnvironment.DEVELOPMENT) {
@@ -57,7 +55,7 @@ export class TelemetryService {
         if (!flags[ApFlagId.TELEMETRY_ENABLED]) {
           return false;
         }
-        return posthog.isFeatureEnabled(feature);
+        return posthog.isFeatureEnabled(feature) || false;
       })
     );
   }
