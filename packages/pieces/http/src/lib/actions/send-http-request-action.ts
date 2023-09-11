@@ -53,7 +53,7 @@ export const httpSendRequestAction = createAction({
         url,
         headers: headers as HttpHeaders,
         queryParams: queryParams as QueryParams,
-        body,
+        body: (method !== "GET") ? body : undefined,
         timeout: timeout ? timeout * 1000 : 0,
       };
 
