@@ -37,7 +37,6 @@ import { getEdition, getWebhookSecret } from './secret-helper'
 import { appEventRoutingService } from '../app-event-routing/app-event-routing.service'
 import { pieceMetadataService } from '../pieces/piece-metadata-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
-import { codeBuilder } from '../workers/code-worker/code-builder'
 import { fileService } from '../file/file.service'
 import { sandboxProvisioner } from '../workers/sandbox/provisioner/sandbox-provisioner'
 import { SandBoxCacheType } from '../workers/sandbox/provisioner/sandbox-cache-type'
@@ -287,15 +286,15 @@ export const engineHelper = {
         const sandbox = await sandboxProvisioner.provision({
             type: SandBoxCacheType.CODE,
             artifactSourceId: sourceId,
+            codeArchives: [
+                {
+                    id: sourceId,
+                    content: fileEntity.data,
+                },
+            ],
         })
 
         try {
-            await codeBuilder.processCodeStep({
-                codeZip: fileEntity.data,
-                sourceCodeId: sourceId,
-                buildPath: sandbox.getSandboxFolderPath(),
-            })
-
             const input = {
                 ...operation,
                 workerToken: await generateWorkerToken({ projectId: operation.projectId }),
