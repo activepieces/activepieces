@@ -1,18 +1,18 @@
 {
   "name": "pieces-date-helper",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/packages/date-helper/src",
+  "sourceRoot": "packages/pieces/date-helper/src",
   "projectType": "library",
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/packages/packages/date-helper",
-        "tsConfig": "packages/packages/date-helper/tsconfig.lib.json",
-        "packageJson": "packages/packages/date-helper/package.json",
-        "main": "packages/packages/date-helper/src/index.ts",
-        "assets": ["packages/packages/date-helper/*.md"],
+        "outputPath": "dist/packages/pieces/date-helper",
+        "tsConfig": "packages/pieces/date-helper/tsconfig.lib.json",
+        "packageJson": "packages/pieces/date-helper/package.json",
+        "main": "packages/pieces/date-helper/src/index.ts",
+        "assets": ["packages/pieces/date-helper/*.md"],
         "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
@@ -24,7 +24,7 @@
       "executor": "@nx/linter:eslint",
       "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": ["packages/packages/date-helper/**/*.ts"]
+        "lintFilePatterns": ["packages/pieces/date-helper/**/*.ts"]
       }
     }
   },
