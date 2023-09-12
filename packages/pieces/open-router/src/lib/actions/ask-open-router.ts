@@ -3,19 +3,45 @@ import { Property, Validators, createAction } from "@activepieces/pieces-framewo
 import { openRouterModels, promptResponse } from "../common";
 import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from "@activepieces/pieces-common";
 
-
 export const askOpenRouterAction = createAction({
     name: 'ask-lmm',
     displayName: 'Ask Open Router',
     description: 'Ask any model supported by Open Router.',
     auth: openRouterAuth,
     props: {
-        model : Property.StaticDropdown({
+        model : Property.Dropdown({
             displayName: 'Model',
-            required: true,
             description: 'The model which will generate the completion. Some models are suitable for natural language tasks, others specialize in code.',
-            options: { options: openRouterModels },
-            defaultValue: 'pygmalionai/mythalion-13b'
+            required: true,
+            refreshers: [],
+            defaultValue: 'pygmalionai/mythalion-13b',
+            options: async () => {
+                const request: HttpRequest = {
+                    url: 'https://openrouter.ai/api/v1/models',
+                    method: HttpMethod.GET,
+                }
+                try {
+
+                    const response = await httpClient.sendRequest<openRouterModels>(request);
+    
+                    const options = response.body.data.map((model) => {
+                        return {
+                            label: model.id,
+                            value: model.id,
+                        };
+                    });
+                    return{
+                        options: options,
+                        disabled: false,
+                    }
+                }catch(error){
+                    return{
+                        options: [],
+                        disabled: true,
+                        placeholder: `Couldn't Load Models:\n${error}`
+                    }
+                }
+            },
         }),
         prompt : Property.LongText({
             displayName: 'Prompt',
