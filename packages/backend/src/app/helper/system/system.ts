@@ -1,7 +1,6 @@
 import { ActivepiecesError, ApEdition, ErrorCode } from '@activepieces/shared'
 import { SystemProp } from './system-prop'
 import { loadEncryptionKey } from '../encryption'
-import { logger } from '../logger'
 
 export enum QueueMode {
     REDIS = 'REDIS',
@@ -82,13 +81,12 @@ const getEnvVar = (prop: SystemProp): string | undefined => {
     return process.env[`AP_${prop}`] ?? systemPropDefaultValues[prop]
 }
 
-export const validateEnvPropsOnStartup = (): void => {
+export const validateEnvPropsOnStartup = async (): Promise<void> => {
     const executionMode = system.get(SystemProp.EXECUTION_MODE)
     const signedUpEnabled = system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
     const queueMode = system.getOrThrow<QueueMode>(SystemProp.QUEUE_MODE)
     const edition = system.get(SystemProp.EDITION)
-    loadEncryptionKey(queueMode)
-        .catch((e) => logger.error(e, '[System#validateEnvPropsOnStartup] loadEncryptionKey'))
+    await loadEncryptionKey(queueMode)
 
     if (executionMode !== ExecutionMode.SANDBOXED && edition !== ApEdition.COMMUNITY) {
         throw new ActivepiecesError({

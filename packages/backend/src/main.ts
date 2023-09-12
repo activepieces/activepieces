@@ -13,7 +13,7 @@ import { FastifyInstance } from 'fastify'
 const start = async (app: FastifyInstance): Promise<void> => {
     try {
         setupTimeZone()
-        validateEnvPropsOnStartup()
+        await validateEnvPropsOnStartup()
         await databaseConnection.initialize()
         await databaseConnection.runMigrations()
 
@@ -81,8 +81,15 @@ const stop = async (app: FastifyInstance): Promise<void> => {
 const main = async (): Promise<void> => {
     const app = await setupApp()
 
-    process.on('SIGINT', () => stop(app))
-    process.on('SIGTERM', () => stop(app))
+    process.on('SIGINT', () => {
+        stop(app)
+            .catch((e) => logger.error(e, '[Main#stop]'))
+    })
+
+    process.on('SIGTERM', () => {
+        stop(app)
+            .catch((e) => logger.error(e, '[Main#stop]'))
+    })
 
     await start(app)
 }
