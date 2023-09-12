@@ -16,7 +16,9 @@ Talkable’s marketing technology empowers e-commerce brands to acquire & retain
 - Find coupon
 - Get Loyalty actions
 - Create Event
+- Create batch of events
 - Create Purchase
+- Create batch of purchases
 - Refund origin
 - Find Person
 - Update Person data
