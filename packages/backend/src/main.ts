@@ -12,13 +12,6 @@ import { FastifyInstance } from 'fastify'
 
 const start = async (app: FastifyInstance): Promise<void> => {
     try {
-        setupTimeZone()
-        await validateEnvPropsOnStartup()
-        await databaseConnection.initialize()
-        await databaseConnection.runMigrations()
-
-        await seedDevData()
-
         const edition = getEdition()
         logger.info(`Activepieces ${edition} Edition`)
         switch (edition) {
@@ -42,7 +35,7 @@ const start = async (app: FastifyInstance): Promise<void> => {
  / ____ \\  | |____     | |     _| |_     \\  /    | |____  | |       _| |_  | |____  | |____  | |____   ____) |
 /_/    \\_\\  \\_____|    |_|    |_____|     \\/     |______| |_|      |_____| |______|  \\_____| |______| |_____/
 
-The application started on ${system.get(SystemProp.FRONTEND_URL)}, as specified by the AP_FRONTEND_URL variable.
+The application started on ${system.get(SystemProp.FRONTEND_URL)}, as specified by the AP_FRONTEND_URL variables.
     `)
     }
     catch (err) {
@@ -79,6 +72,12 @@ const stop = async (app: FastifyInstance): Promise<void> => {
 }
 
 const main = async (): Promise<void> => {
+
+    setupTimeZone()
+    await validateEnvPropsOnStartup()
+    await databaseConnection.initialize()
+    await databaseConnection.runMigrations()
+    await seedDevData()
     const app = await setupApp()
 
     process.on('SIGINT', () => {
