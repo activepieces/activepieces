@@ -554,6 +554,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "dennis-tra",
+      "name": "Dennis Trautwein",
+      "avatar_url": "https://avatars.githubusercontent.com/u/11836793?v=4",
+      "profile": "https://dtrautwein.eu",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "commitType": "docs"
