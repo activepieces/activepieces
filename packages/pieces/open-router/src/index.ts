@@ -41,7 +41,7 @@ export const openRouterAuth = PieceAuth.SecretText({
 });
 
 export const openRouter = createPiece({
-    displayName: "Open-router",
+    displayName: "OpenRouter",
     auth: openRouterAuth,
     minimumSupportedRelease: '0.8.0',
     logoUrl: "https://cdn.activepieces.com/pieces/open-router.png",
