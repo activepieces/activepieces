@@ -1,4 +1,4 @@
-import { FastifyInstance, FastifyRequest } from 'fastify'
+import { FastifyRequest } from 'fastify'
 import { webhookService } from '../webhooks/webhook-service'
 import { appEventRoutingService } from './app-event-routing.service'
 import { logger } from '../helper/logger'
@@ -10,6 +10,7 @@ import { slack } from '@activepieces/piece-slack'
 import { square } from '@activepieces/piece-square'
 import { Piece } from '@activepieces/pieces-framework'
 import { facebookLeads } from '@activepieces/piece-facebook-leads'
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 
 const appWebhooks: Record<string, Piece> = {
     slack,
@@ -23,11 +24,11 @@ const pieceNames: Record<string, string> = {
     'facebook-leads': '@activepieces/piece-facebook-leads',
 }
 
-export const appEventRoutingModule = async (app: FastifyInstance) => {
-    app.register(appEventRoutingController, { prefix: '/v1/app-events' })
+export const appEventRoutingModule: FastifyPluginAsyncTypebox = async (app) => {
+    await app.register(appEventRoutingController, { prefix: '/v1/app-events' })
 }
 
-export const appEventRoutingController = async (fastify: FastifyInstance) => {
+export const appEventRoutingController: FastifyPluginAsyncTypebox = async (fastify) => {
 
     fastify.all(
         '/:pieceUrl',
@@ -75,10 +76,10 @@ export const appEventRoutingController = async (fastify: FastifyInstance) => {
                     identifierValue,
                 })
                 listeners.map(listener => {
-                    callback(listener, eventPayload)
+                    return callback(listener, eventPayload)
                 })
             }
-            requestReply.status(200).headers(reply?.headers ?? {}).send(reply?.body ?? {})
+            return requestReply.status(200).headers(reply?.headers ?? {}).send(reply?.body ?? {})
         },
     )
 
@@ -86,7 +87,7 @@ export const appEventRoutingController = async (fastify: FastifyInstance) => {
 
 async function callback(listener: AppEventRouting, eventPayload: EventPayload) {
     const flow = await flowService.getOneOrThrow({ projectId: listener.projectId, id: listener.flowId })
-    webhookService.callback({
+    return webhookService.callback({
         flow,
         payload: eventPayload,
     })

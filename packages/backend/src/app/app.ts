@@ -1,4 +1,4 @@
-import fastify, { FastifyRequest, HTTPMethods } from 'fastify'
+import fastify, { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
 import cors from '@fastify/cors'
 import formBody from '@fastify/formbody'
 import qs from 'qs'
@@ -24,97 +24,99 @@ import { flowInstanceModule } from './flows/flow-instance/flow-instance.module'
 import { fastifyRawBody } from 'fastify-raw-body'
 import { stepFileModule } from './flows/step-file/step-file.module'
 
-export const app = fastify({
-    logger,
-    // Default 4MB, also set in nginx.conf
-    bodyLimit: 4 * 1024 * 1024,
-    ajv: {
-        customOptions: {
-            removeAdditional: 'all',
-            useDefaults: true,
-            coerceTypes: 'array',
-            formats: {
-
+export const setupApp = async (): Promise<FastifyInstance> => {
+    const app = fastify({
+        logger,
+        // Default 4MB, also set in nginx.conf
+        bodyLimit: 4 * 1024 * 1024,
+        ajv: {
+            customOptions: {
+                removeAdditional: 'all',
+                useDefaults: true,
+                coerceTypes: 'array',
+                formats: {},
             },
         },
-    },
-})
-
-app.register(swagger, {
-    openapi: {
-        info: {
-            title: 'Activepieces Documentation',
-            version: '0.3.6',
-        },
-        externalDocs: {
-            url: 'https://www.activepieces.com/docs',
-            description: 'Find more info here',
-        },
-    },
-})
-
-app.register(cors, {
-    origin: '*',
-    methods: ['*'],
-})
-app.register(fastifyMultipart, { addToBody: true })
-app.register(fastifyRawBody, {
-    field: 'rawBody',
-    global: false,
-    encoding: 'utf8',
-    runFirst: true,
-    routes: [],
-})
-app.register(formBody, { parser: str => qs.parse(str) })
-
-app.addHook('onRequest', async (request, reply) => {
-    const route = app.hasRoute({
-        method: request.method as HTTPMethods,
-        url: request.url,
     })
-    if (!route) {
-        reply.code(404).send(`
-            Oops! It looks like we hit a dead end.
-            The endpoint you're searching for is nowhere to be found.
-            We suggest turning around and trying another path. Good luck!
-        `)
-    }
-})
 
-app.addHook('onRequest', tokenVerifyMiddleware)
-app.register(projectModule)
-app.register(fileModule)
-app.register(flagModule)
-app.register(storeEntryModule)
-app.register(flowModule)
-app.register(flowWorkerModule)
-app.register(pieceModule)
-app.register(flowInstanceModule)
-app.register(flowRunModule)
-app.register(webhookModule)
-app.register(appConnectionModule)
-app.register(openapiModule)
-app.register(triggerEventModule)
-app.register(appEventRoutingModule)
-app.register(stepFileModule)
+    await app.register(swagger, {
+        openapi: {
+            info: {
+                title: 'Activepieces Documentation',
+                version: '0.3.6',
+            },
+            externalDocs: {
+                url: 'https://www.activepieces.com/docs',
+                description: 'Find more info here',
+            },
+        },
+    })
 
-app.get(
-    '/redirect',
-    async (
-        request: FastifyRequest<{ Querystring: { code: string } }>, reply,
-    ) => {
-        const params = {
-            'code': request.query.code,
-        }
-        if (!params.code) {
-            reply.send('The code is missing in url')
-        }
-        else {
-            reply.type('text/html').send(`<script>if(window.opener){window.opener.postMessage({ 'code': '${encodeURIComponent(params.code)}' },'*')}</script> <html>Redirect succuesfully, this window should close now</html>`)
-        }
-    },
-)
-app.setErrorHandler(errorHandler)
+    await app.register(cors, {
+        origin: '*',
+        methods: ['*'],
+    })
+    await app.register(fastifyMultipart, { addToBody: true })
+    await app.register(fastifyRawBody, {
+        field: 'rawBody',
+        global: false,
+        encoding: 'utf8',
+        runFirst: true,
+        routes: [],
+    })
+    await app.register(formBody, { parser: str => qs.parse(str) })
 
-// SurveyMonkey
-app.addContentTypeParser('application/vnd.surveymonkey.response.v1+json', { parseAs: 'string' }, app.getDefaultJsonParser('ignore', 'ignore'))
+    app.addHook('onRequest', async (request, reply) => {
+        const route = app.hasRoute({
+            method: request.method as HTTPMethods,
+            url: request.url,
+        })
+        if (!route) {
+            return reply.code(404).send(`
+                Oops! It looks like we hit a dead end.
+                The endpoint you're searching for is nowhere to be found.
+                We suggest turning around and trying another path. Good luck!
+            `)
+        }
+    })
+
+    app.addHook('onRequest', tokenVerifyMiddleware)
+    await app.register(projectModule)
+    await app.register(fileModule)
+    await app.register(flagModule)
+    await app.register(storeEntryModule)
+    await app.register(flowModule)
+    await app.register(flowWorkerModule)
+    await app.register(pieceModule)
+    await app.register(flowInstanceModule)
+    await app.register(flowRunModule)
+    await app.register(webhookModule)
+    await app.register(appConnectionModule)
+    await app.register(openapiModule)
+    await app.register(triggerEventModule)
+    await app.register(appEventRoutingModule)
+    await app.register(stepFileModule)
+
+    app.get(
+        '/redirect',
+        async (
+            request: FastifyRequest<{ Querystring: { code: string } }>, reply,
+        ) => {
+            const params = {
+                'code': request.query.code,
+            }
+            if (!params.code) {
+                return reply.send('The code is missing in url')
+            }
+            else {
+                return reply.type('text/html').send(`<script>if(window.opener){window.opener.postMessage({ 'code': '${encodeURIComponent(params.code)}' },'*')}</script> <html>Redirect succuesfully, this window should close now</html>`)
+            }
+        },
+    )
+    app.setErrorHandler(errorHandler)
+
+    // SurveyMonkey
+    app.addContentTypeParser('application/vnd.surveymonkey.response.v1+json', { parseAs: 'string' }, app.getDefaultJsonParser('ignore', 'ignore'))
+
+    return app
+}

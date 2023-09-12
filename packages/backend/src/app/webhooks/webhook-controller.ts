@@ -1,4 +1,4 @@
-import { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify'
+import { FastifyReply, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { ActivepiecesError, ErrorCode, EventPayload, ExecutionOutputStatus, Flow, FlowId, FlowRun, StopExecutionOutput, WebhookUrlParams } from '@activepieces/shared'
 import { webhookService } from './webhook-service'
@@ -7,8 +7,9 @@ import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { fileService } from '../file/file.service'
 import { isNil } from '@activepieces/shared'
 import { flowRepo } from '../flows/flow/flow.repo'
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 
-export const webhookController: FastifyPluginAsync = async (app) => {
+export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.all(
         '/:flowId/sync',
@@ -57,6 +58,7 @@ export const webhookController: FastifyPluginAsync = async (app) => {
                 return
             }
             asyncHandler(payload, flow)
+                .catch(captureException)
             await reply.status(StatusCodes.OK).headers({}).send({})
         },
     )
@@ -76,6 +78,7 @@ export const webhookController: FastifyPluginAsync = async (app) => {
                 return
             }
             asyncHandler(payload, flow)
+                .catch(captureException)
             await reply.status(StatusCodes.OK).send()
         },
     )
@@ -212,16 +215,10 @@ async function handshakeHandler(flow: Flow, payload: EventPayload, reply: Fastif
 }
 
 const asyncHandler = async (payload: EventPayload, flow: Flow) => {
-    // If we don't catch the error here, it will crash the Fastify API. Adding await before the function call can help, but since 3P services expect a fast response, we still don't want to wait for the callback to finish.
-    try {
-        await webhookService.callback({
-            flow,
-            payload,
-        })
-    }
-    catch (e) {
-        captureException(e)
-    }
+    return webhookService.callback({
+        flow,
+        payload,
+    })
 }
 
 const getFlowOrThrow = async (flowId: FlowId): Promise<Flow> => {
