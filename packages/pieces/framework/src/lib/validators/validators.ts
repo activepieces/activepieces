@@ -8,7 +8,7 @@ class Validators {
   static pattern(regex: string | RegExp): TypedValidatorFn<ValidationInputType.STRING> {
     return {
       type: ValidationInputType.STRING,
-      fn: (property, processedValue, userInput) => {  
+      fn: (property, processedValue, userInput) => {
         if (isEmpty(processedValue)) return null;
 
         if (typeof regex === 'string') {
@@ -25,7 +25,7 @@ class Validators {
   static maxLength(max: number): TypedValidatorFn<ValidationInputType.STRING> {
     return {
       type: ValidationInputType.STRING,
-      fn: (property, processedValue, userInput) => {  
+      fn: (property, processedValue, userInput) => {
         if (isEmpty(processedValue)) return null
 
         const isValid = processedValue.length <= max
@@ -42,7 +42,7 @@ class Validators {
   static minLength(min: number): TypedValidatorFn<ValidationInputType.STRING> {
     return {
       type: ValidationInputType.STRING,
-      fn: (property, processedValue, userInput) => {  
+      fn: (property, processedValue, userInput) => {
         if (isEmpty(processedValue)) return null
         const isValid = processedValue.length >= min
 
@@ -69,7 +69,7 @@ class Validators {
   static maxValue(max: number): TypedValidatorFn<ValidationInputType.NUMBER> {
     return {
       type: ValidationInputType.NUMBER,
-      fn: (property, processedValue, userInput) => {      
+      fn: (property, processedValue, userInput) => {
         const isValid = Number(processedValue) <= max
         if (isValid) return null;
 
@@ -118,7 +118,7 @@ class Validators {
 
   static email: TypedValidatorFn<ValidationInputType.STRING> = {
     type: ValidationInputType.STRING,
-    fn: (property, processedValue, userInput) => {  
+    fn: (property, processedValue, userInput) => {
       const pattern = new RegExp('^(([^<>()\\[\\].,;:\\s@"]+(\\.[^<>()\\[\\].,;:\\s@"]+)*)|(".+"))@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}])|(([a-zA-Z-0-9]+\\.)+[a-zA-Z]{2,}))$');
 
       if (isEmpty(processedValue)) {
@@ -187,7 +187,22 @@ class Validators {
 
       }
     }
-  }
+  };
+
+  static isRegex: TypedValidatorFn<ValidationInputType.STRING> = {
+    type: ValidationInputType.STRING,
+    fn: (property, processedValue, userInput) => {
+      if (isEmpty(processedValue)) return null;
+
+      try {
+        new RegExp(processedValue)
+      } catch (e) {
+        return formatErrorMessage(ErrorMessages.REGEX, userInput);
+      }
+
+      return null;
+    }
+  };
 }
 
 export {

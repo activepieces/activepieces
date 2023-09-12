@@ -173,6 +173,9 @@
         "packages/pieces/stability-ai/src/index.ts"
       ],
       "@activepieces/piece-store": ["packages/pieces/store/src/index.ts"],
+      "@activepieces/piece-string-utils": [
+        "packages/pieces/string-utils/src/index.ts"
+      ],
       "@activepieces/piece-stripe": ["packages/pieces/stripe/src/index.ts"],
       "@activepieces/piece-supabase": ["packages/pieces/supabase/src/index.ts"],
       "@activepieces/piece-surveymonkey": [

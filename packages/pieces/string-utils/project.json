@@ -1,0 +1,31 @@
+{
+  "name": "pieces-string-utils",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/string-utils/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/string-utils",
+        "tsConfig": "packages/pieces/string-utils/tsconfig.lib.json",
+        "packageJson": "packages/pieces/string-utils/package.json",
+        "main": "packages/pieces/string-utils/src/index.ts",
+        "assets": ["packages/pieces/string-utils/*.md"]
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-string-utils {args.ver} {args.tag}",
+      "dependsOn": ["build"]
+    },
+    "lint": {
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["packages/pieces/string-utils/**/*.ts"]
+      }
+    }
+  },
+  "tags": []
+}
