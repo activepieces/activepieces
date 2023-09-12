@@ -5,9 +5,9 @@ import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from "@active
 
 
 export const askOpenRouterAction = createAction({
-    name: 'ask-open-router',
+    name: 'ask-lmm',
     displayName: 'Ask Open Router',
-    description: 'Ask Open Router',
+    description: 'Ask any model supported by Open Router.',
     auth: openRouterAuth,
     props: {
         model : Property.StaticDropdown({
