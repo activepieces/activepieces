@@ -148,6 +148,12 @@
                     </context>
                     <context context-type="linenumber">36</context>
                 </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-header/src/lib/publish-button/publish-button.component.ts
+                    </context>
+                    <context context-type="linenumber">84</context>
+                </context-group>
             </trans-unit>
             <trans-unit id="4808589666930368915" datatype="html">
                 <source>Draft</source>
@@ -173,6 +179,69 @@
                         packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts
                     </context>
                     <context context-type="linenumber">124,125</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7585826646011739428" datatype="html">
+                <source>Edit</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-header/src/lib/publish-button/publish-button.component.ts
+                    </context>
+                    <context context-type="linenumber">79</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="8161497630812704942" datatype="html">
+                <source>Add 1 more step to publish</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-header/src/lib/publish-button/publish-button.component.ts
+                    </context>
+                    <context context-type="linenumber">82</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3433912835588025867" datatype="html">
+                <source>Your flow has invalid steps</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-header/src/lib/publish-button/publish-button.component.ts
+                    </context>
+                    <context context-type="linenumber">86</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6493545318293497285" datatype="html">
+                <source>Publish Flow</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-header/src/lib/publish-button/publish-button.component.ts
+                    </context>
+                    <context context-type="linenumber">88</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4636616640072565270" datatype="html">
+                <source>Saving</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-header/src/lib/publish-button/publish-button.component.ts
+                    </context>
+                    <context context-type="linenumber">94</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7132078449210987153" datatype="html">
+                <source>Publishing</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-header/src/lib/publish-button/publish-button.component.ts
+                    </context>
+                    <context context-type="linenumber">96</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7430416142942514215" datatype="html">
+                <source>Publish</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-header/src/lib/publish-button/publish-button.component.ts
+                    </context>
+                    <context context-type="linenumber">98</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="4130109056262417125" datatype="html">
@@ -706,7 +775,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html
                     </context>
-                    <context context-type="linenumber">55</context>
+                    <context context-type="linenumber">54</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="2792560466819244367" datatype="html">
@@ -715,7 +784,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html
                     </context>
-                    <context context-type="linenumber">71</context>
+                    <context context-type="linenumber">70</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="6621329748219109148" datatype="html">
@@ -724,7 +793,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html
                     </context>
-                    <context context-type="linenumber">78</context>
+                    <context context-type="linenumber">77</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="7022070615528435141" datatype="html">
@@ -733,7 +802,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html
                     </context>
-                    <context context-type="linenumber">85</context>
+                    <context context-type="linenumber">84</context>
                 </context-group>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
@@ -748,7 +817,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html
                     </context>
-                    <context context-type="linenumber">102</context>
+                    <context context-type="linenumber">101</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="2994670610835703888" datatype="html">
@@ -757,7 +826,34 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html
                     </context>
-                    <context context-type="linenumber">105</context>
+                    <context context-type="linenumber">104</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="8669717871933589565" datatype="html">
+                <source>Please publish the flow</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts
+                    </context>
+                    <context context-type="linenumber">235</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6655540167436629912" datatype="html">
+                <source>Flow is on</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts
+                    </context>
+                    <context context-type="linenumber">238</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2532250142169750361" datatype="html">
+                <source>Flow is off</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts
+                    </context>
+                    <context context-type="linenumber">238</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="1205037876874222931" datatype="html">

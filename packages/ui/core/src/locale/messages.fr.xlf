@@ -1192,6 +1192,76 @@
                     <context context-type="linenumber">10</context>
                 </context-group>
             </trans-unit>
+            <trans-unit id="7585826646011739428" datatype="html">
+                <source>Edit</source>
+                <target>Modifier</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-header/src/lib/publish-button/publish-button.component.ts
+                    </context>
+                    <context context-type="linenumber">79</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="8161497630812704942" datatype="html">
+                <source>Add 1 more step to publish</source>
+                <target>Ajouter 1 étape supplémentaire pour publier</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-header/src/lib/publish-button/publish-button.component.ts
+                    </context>
+                    <context context-type="linenumber">82</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3433912835588025867" datatype="html">
+                <source>Your flow has invalid steps</source>
+                <target>Votre flow comporte des étapes non valides</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-header/src/lib/publish-button/publish-button.component.ts
+                    </context>
+                    <context context-type="linenumber">86</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6493545318293497285" datatype="html">
+                <source>Publish Flow</source>
+                <target>Publier le Flow</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-header/src/lib/publish-button/publish-button.component.ts
+                    </context>
+                    <context context-type="linenumber">88</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4636616640072565270" datatype="html">
+                <source>Saving</source>
+                <target>Sauvegarde</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-header/src/lib/publish-button/publish-button.component.ts
+                    </context>
+                    <context context-type="linenumber">94</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7132078449210987153" datatype="html">
+                <source>Publishing</source>
+                <target>Publication</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-header/src/lib/publish-button/publish-button.component.ts
+                    </context>
+                    <context context-type="linenumber">96</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7430416142942514215" datatype="html">
+                <source>Publish</source>
+                <target>Publié</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-header/src/lib/publish-button/publish-button.component.ts
+                    </context>
+                    <context context-type="linenumber">98</context>
+                </context-group>
+            </trans-unit>
         </body>
     </file>
 </xliff>
