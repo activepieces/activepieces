@@ -760,7 +760,7 @@
                     <context context-type="linenumber">105</context>
                 </context-group>
             </trans-unit>
-            <trans-unit id="580819065027156786" datatype="html">
+            <trans-unit id="1205037876874222931" datatype="html">
                 <source>Folders</source>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
@@ -959,6 +959,34 @@
                     <context context-type="linenumber">59,60</context>
                 </context-group>
             </trans-unit>
+            <trans-unit id="8116094792018370870" datatype="html">
+                <source>Apps
+                </source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-templates/src/lib/templates-dialog/template-apps-dropdown/template-apps-dropdown.component.html
+                    </context>
+                    <context context-type="linenumber">1,3</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3797570084942068182" datatype="html">
+                <source>Select</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-templates/src/lib/templates-dialog/template-apps-dropdown/template-apps-dropdown.component.html
+                    </context>
+                    <context context-type="linenumber">6</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4580988005648117665" datatype="html">
+                <source>Search</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-templates/src/lib/templates-dialog/template-apps-dropdown/template-apps-dropdown.component.html
+                    </context>
+                    <context context-type="linenumber">10</context>
+                </context-group>
+            </trans-unit>
             <trans-unit id="6703947649972852818" datatype="html">
                 <source>Featured</source>
                 <context-group purpose="location">
@@ -1029,6 +1057,16 @@
                         packages/ui/feature-templates/src/lib/templates-dialog/templates-dialog.component.html
                     </context>
                     <context context-type="linenumber">114</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3814533228057776001" datatype="html">
+                <source>Filters
+                </source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-templates/src/lib/templates-dialog/templates-filters/templates-filters.component.html
+                    </context>
+                    <context context-type="linenumber">1,3</context>
                 </context-group>
             </trans-unit>
         </body>
