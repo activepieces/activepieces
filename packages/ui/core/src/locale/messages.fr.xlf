@@ -394,7 +394,7 @@
             </trans-unit>
             <trans-unit id="1068067937132498347" datatype="html">
                 <source>You don't have any flows yet</source>
-                <target>Vous n'avez pas encore de flux</target>
+                <target>Vous n'avez pas encore de flows</target>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html
@@ -404,7 +404,7 @@
             </trans-unit>
             <trans-unit id="2994670610835703888" datatype="html">
                 <source>This folder doesn't have any flows yet</source>
-                <target>Ce dossier ne contient pas encore de flux</target>
+                <target>Ce dossier ne contient pas encore de flows</target>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html
@@ -1116,6 +1116,26 @@
                         packages/ui/common/src/lib/components/user-avatar/user-avatar.component.html
                     </context>
                     <context context-type="linenumber">8,10</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6093210751404423786" datatype="html">
+                <source>Ascending</source>
+                <target>Ascendant</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/folders-list/folders-list.component.ts
+                    </context>
+                    <context context-type="linenumber">140</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2382330284069784226" datatype="html">
+                <source>Descending</source>
+                <target>Descendant</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/folders-list/folders-list.component.ts
+                    </context>
+                    <context context-type="linenumber">143</context>
                 </context-group>
             </trans-unit>
         </body>
