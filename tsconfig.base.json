@@ -173,9 +173,6 @@
         "packages/pieces/stability-ai/src/index.ts"
       ],
       "@activepieces/piece-store": ["packages/pieces/store/src/index.ts"],
-      "@activepieces/piece-string-utils": [
-        "packages/pieces/string-utils/src/index.ts"
-      ],
       "@activepieces/piece-stripe": ["packages/pieces/stripe/src/index.ts"],
       "@activepieces/piece-supabase": ["packages/pieces/supabase/src/index.ts"],
       "@activepieces/piece-surveymonkey": [
@@ -214,6 +211,9 @@
       ],
       "@activepieces/pieces/date-helper": [
         "packages/pieces/date-helper/src/index.ts"
+      ],
+      "@activepieces/pieces/text-helper": [
+        "packages/pieces/text-helper/src/index.ts"
       ],
       "@activepieces/shared": ["packages/shared/src/index.ts"],
       "@activepieces/ui/common": ["packages/ui/common/src/index.ts"],

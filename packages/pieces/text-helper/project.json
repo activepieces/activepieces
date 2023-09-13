@@ -1,18 +1,18 @@
 {
-  "name": "pieces-string-utils",
+  "name": "pieces-text-helper",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/pieces/string-utils/src",
+  "sourceRoot": "packages/pieces/text-helper/src",
   "projectType": "library",
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/packages/pieces/string-utils",
-        "tsConfig": "packages/pieces/string-utils/tsconfig.lib.json",
-        "packageJson": "packages/pieces/string-utils/package.json",
-        "main": "packages/pieces/string-utils/src/index.ts",
-        "assets": ["packages/pieces/string-utils/*.md"]
+        "outputPath": "dist/packages/pieces/text-helper",
+        "tsConfig": "packages/pieces/text-helper/tsconfig.lib.json",
+        "packageJson": "packages/pieces/text-helper/package.json",
+        "main": "packages/pieces/text-helper/src/index.ts",
+        "assets": ["packages/pieces/text-helper/*.md"]
       }
     },
     "publish": {
@@ -23,7 +23,7 @@
       "executor": "@nx/linter:eslint",
       "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": ["packages/pieces/string-utils/**/*.ts"]
+        "lintFilePatterns": ["packages/pieces/text-helper/**/*.ts"]
       }
     }
   },
