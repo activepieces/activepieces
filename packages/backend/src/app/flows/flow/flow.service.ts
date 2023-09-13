@@ -162,6 +162,8 @@ export const flowService = {
             created: Date.now().toString(),
             updated: Date.now().toString(),
             blogUrl: '',
+            featuredDescription: '',
+            isFeatured: false,
         }
         return template
     },
