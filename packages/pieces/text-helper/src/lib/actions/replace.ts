@@ -8,13 +8,13 @@ export const replace = createAction({
   displayName: 'Replace',
   name: 'replace',
   props: {
-    string: Property.ShortText({
+    text: Property.ShortText({
       displayName: 'Text',
       required: true,
     }),
     searchValue: Property.ShortText({
       displayName: 'Search Value',
-      description: 'Regex or string.',
+      description: 'Regex or text.',
       required: true,
       validators: [],
     }),
@@ -25,7 +25,7 @@ export const replace = createAction({
   },
   run: async (ctx) => {
     const expression = RegExp(ctx.propsValue.searchValue);
-    return ctx.propsValue.string.replace(
+    return ctx.propsValue.text.replace(
       expression,
       ctx.propsValue.replaceValue
     );

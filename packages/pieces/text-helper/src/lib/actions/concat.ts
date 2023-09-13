@@ -11,7 +11,7 @@ export const concat = createAction({
     }),
     seperator: Property.ShortText({
       displayName: 'Seperator',
-      description: 'String to join each string with.',
+      description: 'The text that seperates the texts you want to concatenate',
       required: false,
     }),
   },
