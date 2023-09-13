@@ -126,7 +126,7 @@ async function updatePieceMetadata(queryRunner: QueryRunner, revert: boolean): P
 
     for (const pieceMetadata of pieceMetadatas) {
         const updatedName = getPackageNameForPiece(pieceMetadata.name, revert)
-        const updateQuery = `UPDATE piece_metadata SET name = '${updatedName}' WHERE id = ${pieceMetadata.id};`
+        const updateQuery = `UPDATE piece_metadata SET name = '${updatedName}' WHERE id = '${pieceMetadata.id}';`
         await queryRunner.connection.query(updateQuery)
         count++
     }

@@ -191,6 +191,7 @@ We welcome contributions big or small and in different directions. The best way 
       <td align="center" valign="top" width="14.28%"><a href="https://lightspeed-it.nl/"><img src="https://avatars.githubusercontent.com/u/22002313?v=4?s=100" width="100px;" alt="Diego Nijboer"/><br /><sub><b>Diego Nijboer</b></sub></a><br /><a href="#plugin-lldiegon" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://ductan.me/"><img src="https://avatars.githubusercontent.com/u/24206229?v=4?s=100" width="100px;" alt="Tân Một Nắng"/><br /><sub><b>Tân Một Nắng</b></sub></a><br /><a href="#plugin-tanoggy" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://geteduca.com"><img src="https://avatars.githubusercontent.com/u/838788?v=4?s=100" width="100px;" alt="Gavin Foley"/><br /><sub><b>Gavin Foley</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=GFoley83" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://dtrautwein.eu"><img src="https://avatars.githubusercontent.com/u/11836793?v=4?s=100" width="100px;" alt="Dennis Trautwein"/><br /><sub><b>Dennis Trautwein</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/issues?q=author%3Adennis-tra" title="Bug reports">🐛</a></td>
     </tr>
   </tbody>
 </table>
