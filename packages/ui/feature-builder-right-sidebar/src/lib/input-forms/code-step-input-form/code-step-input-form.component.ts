@@ -30,8 +30,7 @@ export class CodeStepInputFormComponent implements ControlValueAccessor {
   }>;
   _stepArtifact$: Observable<Artifact>;
   formValueChanged$: Observable<unknown>;
-  artifactPackagedId = '';
-  artifactSourceId = '';
+
   markdown = `
   To use data from previous steps in your code, include them as pairs of keys and values below.
   <br>
@@ -73,8 +72,8 @@ export class CodeStepInputFormComponent implements ControlValueAccessor {
         const zippedArtifactEncodedB64 = btoa(zippedArtifact);
         this.onChange({
           input: this.codeStepForm.value.input || {},
-          artifactPackagedId: this.artifactPackagedId,
-          artifactSourceId: this.artifactSourceId,
+          artifactPackagedId: '',
+          artifactSourceId: '',
           artifact: zippedArtifactEncodedB64,
           type: ActionType.CODE,
         });
@@ -84,19 +83,7 @@ export class CodeStepInputFormComponent implements ControlValueAccessor {
 
   writeValue(obj: CodeStepInputFormSchema): void {
     if (obj.type === ActionType.CODE) {
-      this.artifactPackagedId = obj.artifactPackagedId || '' || '';
-      this.artifactSourceId = obj.artifactSourceId;
-      if (obj.artifact) {
-        this._stepArtifact$ = from(
-          this.codeService.readFile(atob(obj.artifact))
-        ).pipe(
-          tap((res) => {
-            this.codeStepForm.controls.artifact.setValue(res, {
-              emitEvent: false,
-            });
-          })
-        );
-      } else if (obj.artifactSourceId) {
+      if (obj.artifactSourceId) {
         this._stepArtifact$ = this.codeService
           .downloadAndReadFile(
             CodeService.constructFileUrl(obj.artifactSourceId)
@@ -108,7 +95,18 @@ export class CodeStepInputFormComponent implements ControlValueAccessor {
               });
             })
           );
+      } else if (obj.artifact) {
+        this._stepArtifact$ = from(
+          this.codeService.readFile(atob(obj.artifact))
+        ).pipe(
+          tap((res) => {
+            this.codeStepForm.controls.artifact.setValue(res, {
+              emitEvent: false,
+            });
+          })
+        );
       }
+
       this.codeStepForm.controls.input.setValue(obj.input, {
         emitEvent: false,
       });

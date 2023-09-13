@@ -21,11 +21,9 @@ import {
 import { Store } from '@ngrx/store';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import {
-  Action,
   ActionType,
   CodeActionSettings,
   PieceActionSettings,
-  PieceTrigger,
   PieceTriggerSettings,
   StepSettings,
   TriggerType,
@@ -39,6 +37,7 @@ import {
   FlowItem,
   FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
+import { TriggerBase, TriggerStrategy } from '@activepieces/pieces-framework';
 
 @Component({
   selector: 'app-edit-step-form-container',
@@ -135,53 +134,32 @@ export class EditStepFormContainerComponent {
             }),
             debounceTime(350),
             tap((res) => {
-              if (res.step === undefined) {
-                console.error('step is undefined');
-                return;
-              }
-              switch (res.step.type) {
-                case TriggerType.PIECE: {
-                  const newTriggerSettings =
-                    this.createTriggerPieceTriggerSettings(res.step);
+              if (
+                this._selectedStep.type === TriggerType.PIECE ||
+                this._selectedStep.type === TriggerType.WEBHOOK
+              ) {
+                if (this._selectedStep.type === TriggerType.WEBHOOK) {
+                  this.updateNonAppWebhookTrigger(res.step!);
+                } else {
+                  const newTriggerSettings = this.createPieceSettings(
+                    res.step!
+                  );
                   const trigger =
                     res.metadata?.triggers[newTriggerSettings.triggerName];
-                  if (trigger === undefined) {
-                    console.error(
-                      `trying to update trigger ${
-                        newTriggerSettings.triggerName
-                      } which is not found in metadata ${JSON.stringify(
-                        res.metadata
-                      )}`
-                    );
-                    return;
+                  if (trigger?.type === TriggerStrategy.APP_WEBHOOK) {
+                    this.updateAppWebhookTrigger(res.step!, trigger);
                   } else {
-                    this.updatePieceTrigger(res.step);
+                    this.updateNonAppWebhookTrigger(res.step!);
                   }
-                  break;
                 }
-                case TriggerType.WEBHOOK:
-                case TriggerType.EMPTY:
-                case ActionType.MISSING: {
-                  console.error(
-                    `tyring to update ${res.step.displayName} which is ${res.step.type}`
-                  );
-                  break;
-                }
-                case ActionType.BRANCH:
-                case ActionType.CODE:
-                case ActionType.LOOP_ON_ITEMS:
-                case ActionType.PIECE: {
-                  this.store.dispatch(
-                    FlowsActions.updateAction({
-                      operation: this.prepareStepDataToSave(res.step),
-                    })
-                  );
-                  break;
-                }
-                default: {
-                  const nvr: never = res.step;
-                  console.error('unhandeled case reached' + nvr);
-                }
+              } else {
+                this.store.dispatch(
+                  FlowsActions.updateAction({
+                    operation: this.prepareStepDataToSave(
+                      res.step!
+                    ) as UpdateActionRequest,
+                  })
+                );
               }
             }),
             map(() => void 0)
@@ -190,15 +168,37 @@ export class EditStepFormContainerComponent {
       );
   }
 
-  private updatePieceTrigger(trigger: PieceTrigger) {
+  private updateNonAppWebhookTrigger(step: FlowItem) {
     this.store.dispatch(
       FlowsActions.updateTrigger({
-        operation: this.prepareTriggerDataToSave(trigger),
+        operation: this.prepareStepDataToSave(step) as UpdateTriggerRequest,
+      })
+    );
+  }
+  private updateAppWebhookTrigger(step: FlowItem, trigger: TriggerBase) {
+    const dataToSave: UpdateTriggerRequest = this.prepareStepDataToSave(
+      step
+    ) as UpdateTriggerRequest;
+    const dataToSaveWithTriggerSampleData: UpdateTriggerRequest = {
+      ...dataToSave,
+      settings: {
+        ...dataToSave.settings,
+        inputUiInfo: {
+          ...dataToSave.settings,
+          currentSelectedData: trigger.sampleData,
+        },
+      },
+    };
+    this.store.dispatch(
+      FlowsActions.updateTrigger({
+        operation: dataToSaveWithTriggerSampleData,
       })
     );
   }
 
-  prepareStepDataToSave(currentStep: Action): UpdateActionRequest {
+  prepareStepDataToSave(
+    currentStep: FlowItem
+  ): UpdateActionRequest | UpdateTriggerRequest {
     const stepToSave: UpdateActionRequest = JSON.parse(
       JSON.stringify(currentStep)
     );
@@ -208,50 +208,37 @@ export class EditStepFormContainerComponent {
     return stepToSave;
   }
 
-  prepareTriggerDataToSave(trigger: PieceTrigger): UpdateTriggerRequest {
-    const triggerToSave: UpdateTriggerRequest = JSON.parse(
-      JSON.stringify(trigger)
-    );
-    triggerToSave.name = trigger.name;
-    triggerToSave.valid = this.stepForm.valid;
-    triggerToSave.settings = this.createTriggerPieceTriggerSettings(trigger);
-    return triggerToSave;
-  }
-
-  createNewStepSettings(step: Action) {
+  createNewStepSettings(currentStep: FlowItem) {
     const inputControlValue: StepSettings =
       this.stepForm.get('settings')?.value;
-
-    switch (step.type) {
-      case ActionType.PIECE: {
-        const stepSettings: PieceActionSettings = {
-          ...step.settings,
-          ...inputControlValue,
-          inputUiInfo: {
-            ...step.settings.inputUiInfo,
-            customizedInputs: (inputControlValue as PieceActionSettings)
-              .inputUiInfo.customizedInputs,
-          },
-        };
-        return stepSettings;
-      }
-      case ActionType.CODE: {
-        debugger;
-        const stepSettings: CodeActionSettings = {
-          ...step.settings,
-          ...inputControlValue,
-          inputUiInfo: step.settings.inputUiInfo,
-        };
-        return stepSettings;
-      }
-      case ActionType.BRANCH:
-      case ActionType.LOOP_ON_ITEMS:
-      case ActionType.MISSING:
-        return inputControlValue;
+    if (currentStep.type === ActionType.PIECE) {
+      const stepSettings: PieceActionSettings = {
+        ...currentStep.settings,
+        ...inputControlValue,
+        inputUiInfo: {
+          ...currentStep.settings.inputUiInfo,
+          customizedInputs: (inputControlValue as PieceActionSettings)
+            .inputUiInfo.customizedInputs,
+        },
+      };
+      return stepSettings;
     }
+    if (currentStep.type === ActionType.CODE) {
+      const stepSettings: CodeActionSettings = {
+        ...currentStep.settings,
+        ...inputControlValue,
+        inputUiInfo: currentStep.settings.inputUiInfo,
+      };
+      return stepSettings;
+    }
+
+    if (currentStep.type === TriggerType.PIECE) {
+      return this.createPieceSettings(currentStep);
+    }
+    return inputControlValue;
   }
 
-  createTriggerPieceTriggerSettings(step: PieceTrigger) {
+  createPieceSettings(step: FlowItem) {
     const inputControlValue: StepSettings =
       this.stepForm.get('settings')?.value;
     const stepSettings: PieceTriggerSettings = {
