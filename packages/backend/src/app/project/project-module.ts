@@ -1,10 +1,16 @@
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { ActivepiecesError, ErrorCode, UpdateProjectRequest } from '@activepieces/shared'
-import { projectService } from './project.service'
+import { projectService } from './project-service'
 import { FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
 
-export const projectController: FastifyPluginCallbackTypebox = (fastify, _opts, done) => {
+export const projectModule: FastifyPluginAsyncTypebox = async (app) => {
+    await app.register(projectController, { prefix: '/v1/projects' })
+}
+
+const projectController: FastifyPluginCallbackTypebox = (fastify, _opts, done) => {
+    
     fastify.get('/', async (request) => {
-        return await projectService.getAll(request.principal.id)
+        return [await projectService.getUserProject(request.principal.id)]
     })
 
 
