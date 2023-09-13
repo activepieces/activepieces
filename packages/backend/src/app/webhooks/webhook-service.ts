@@ -105,6 +105,7 @@ export const webhookService = {
                 payload,
                 projectId,
             })
+                .catch((e) => logger.error(e, '[WebhookService#callback] triggerEventService.saveEvent'))
         })
 
         const createFlowRuns = payloads.map((payload) =>
@@ -204,6 +205,7 @@ function saveSampleDataForWebhookTesting(
         payload,
         projectId: flow.projectId,
     })
+        .catch((e) => logger.error(e, '[WebhookService#saveSampleDataForWebhookTesting] triggerEventService.saveEvent'))
 }
 
 type WebhookUrlSuffix = '' | '/simulate'

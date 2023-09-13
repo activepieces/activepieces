@@ -7,6 +7,7 @@ import { projectService } from '../project/project.service'
 import { flagService } from '../flags/flag.service'
 import { QueryFailedError } from 'typeorm'
 import { telemetry } from '../helper/telemetry.utils'
+import { logger } from '../helper/logger'
 
 export const authenticationService = {
     signUp: async (request: SignUpRequest): Promise<AuthenticationResponse> => {
@@ -27,6 +28,8 @@ export const authenticationService = {
             })
 
             telemetry.identify(user, project.id)
+                .catch((e) => logger.error(e, '[AuthenticationService#signUp] telemetry.identify'))
+
             telemetry.trackProject(project.id, {
                 name: TelemetryEventName.SIGNED_UP,
                 payload: {
@@ -37,6 +40,7 @@ export const authenticationService = {
                     projectId: project.id,
                 },
             })
+                .catch((e) => logger.error(e, '[AuthenticationService#signUp] telemetry.trackProject'))
 
             const { password: _, ...filteredUser } = user
 

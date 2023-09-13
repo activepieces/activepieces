@@ -1,8 +1,8 @@
-import { FastifyInstance } from 'fastify'
 import { flowInstanceController } from './flow-instance.controller'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 
-export const flowInstanceModule = async (app: FastifyInstance) => {
+export const flowInstanceModule: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
-    app.register(flowInstanceController, { prefix: '/v1/flow-instances' })
+    await app.register(flowInstanceController, { prefix: '/v1/flow-instances' })
 }

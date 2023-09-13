@@ -125,7 +125,7 @@ export const flowRunService = {
             finishTime: new Date().toISOString(),
         })
         const flowRun = (await this.getOne({ id: flowRunId, projectId: undefined }))!
-        flowRunSideEffects.finish({ flowRun })
+        await flowRunSideEffects.finish({ flowRun })
         return flowRun
     },
 
@@ -160,6 +160,7 @@ export const flowRunService = {
                 environment: savedFlowRun.environment,
             },
         })
+            .catch((e) => logger.error(e, '[FlowRunService#Start] telemetry.trackProject'))
 
         await flowRunSideEffects.start({
             flowRun: savedFlowRun,
