@@ -11,8 +11,9 @@
       <mat-form-field class="ap-w-full" appearance="outline">
         <input cdkFocusInitial formControlName="confirmation" matInput type="text" placeholder="DELETE"
           class="!ap-uppercase" />
-        <mat-error *ngIf="confirmationForm.controls.confirmation.invalid">Please write the confirmation message
-          correctly</mat-error>
+        <mat-error *ngIf="confirmationForm.controls.confirmation.invalid" i18n>
+            Please write the confirmation message correctly
+        </mat-error>
       </mat-form-field>
     </form>
   </div>

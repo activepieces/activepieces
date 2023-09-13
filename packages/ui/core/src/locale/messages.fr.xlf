@@ -760,6 +760,211 @@
                     <context context-type="linenumber">26</context>
                 </context-group>
             </trans-unit>
+            <trans-unit id="8387651464002742246" datatype="html">
+                <source>Branch</source>
+                <target>Branche</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-canvas/src/lib/flow-item-tree/flow-item/flow-item-content/flow-item-content.component.ts
+                    </context>
+                    <context context-type="linenumber">187</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="5428454702447505852" datatype="html">
+                <source>Missing</source>
+                <target>Manquant</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-canvas/src/lib/flow-item-tree/flow-item/flow-item-content/flow-item-content.component.ts
+                    </context>
+                    <context context-type="linenumber">189</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="8186013988289067040" datatype="html">
+                <source>Code</source>
+                <target>Code</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-canvas/src/lib/flow-item-tree/flow-item/flow-item-content/flow-item-content.component.ts
+                    </context>
+                    <context context-type="linenumber">191</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2784956659778044823" datatype="html">
+                <source>Loop</source>
+                <target>Boucle</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-canvas/src/lib/flow-item-tree/flow-item/flow-item-content/flow-item-content.component.ts
+                    </context>
+                    <context context-type="linenumber">193</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3281993254947750204" datatype="html">
+                <source>Choose a trigger</source>
+                <target>Choisir un déclencheur</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-canvas/src/lib/flow-item-tree/flow-item/flow-item-content/flow-item-content.component.ts
+                    </context>
+                    <context context-type="linenumber">203</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2498487601274189013" datatype="html">
+                <source>Webhook trigger</source>
+                <target>Déclencheur Webhook</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-canvas/src/lib/flow-item-tree/flow-item/flow-item-content/flow-item-content.component.ts
+                    </context>
+                    <context context-type="linenumber">205</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4058575476871566236" datatype="html">
+                <source>Published</source>
+                <target>Publié</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-header/src/lib/draft-status/draft-status.component.ts
+                    </context>
+                    <context context-type="linenumber">36</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4808589666930368915" datatype="html">
+                <source>Draft</source>
+                <target>Brouillon</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-header/src/lib/draft-status/draft-status.component.ts
+                    </context>
+                    <context context-type="linenumber">38</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4130109056262417125" datatype="html">
+                <source>Select Trigger</source>
+                <target>Sélectionner un déclencheur</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-right-sidebar/src/lib/step-type-sidebar/step-type-sidebar.component.ts
+                    </context>
+                    <context context-type="linenumber">61</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4973271808417683361" datatype="html">
+                <source>Select Step</source>
+                <target>Sélectionnez l'étape</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-right-sidebar/src/lib/step-type-sidebar/step-type-sidebar.component.ts
+                    </context>
+                    <context context-type="linenumber">63</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-right-sidebar/src/lib/step-type-sidebar/step-type-sidebar.component.ts
+                    </context>
+                    <context context-type="linenumber">68</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2995024767956767595" datatype="html">
+                <source>Oops! We didn't find any results.</source>
+                <target>Oops! Nous n'avons trouvé aucun résultat.</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-right-sidebar/src/lib/step-type-sidebar/step-type-sidebar.component.ts
+                    </context>
+                    <context context-type="linenumber">130</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-right-sidebar/src/lib/step-type-sidebar/step-type-sidebar.component.ts
+                    </context>
+                    <context context-type="linenumber">136</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-right-sidebar/src/lib/step-type-sidebar/step-type-sidebar.component.ts
+                    </context>
+                    <context context-type="linenumber">142</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7027401708987643293" datatype="html">
+                <source>Core</source>
+                <target>Core</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-right-sidebar/src/lib/step-type-sidebar/step-type-sidebar.component.ts
+                    </context>
+                    <context context-type="linenumber">134</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3392444403919167176" datatype="html">
+                <source>App Events</source>
+                <target>Événements d'application</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-right-sidebar/src/lib/step-type-sidebar/step-type-sidebar.component.ts
+                    </context>
+                    <context context-type="linenumber">140</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="5431974576991822715" datatype="html">
+                <source>App Actions</source>
+                <target>Actions de l'application</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-right-sidebar/src/lib/step-type-sidebar/step-type-sidebar.component.ts
+                    </context>
+                    <context context-type="linenumber">140</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3564199105925922112" datatype="html">
+                <source>This will permanently delete the flow, all its data and any background runs.
+                    You can't undo this action.
+                </source>
+                <target>Cela supprimera définitivement le flux, toutes ses données et toutes les exécutions
+                    en arrière-plan.
+                    Vous ne pouvez pas annuler cette action.
+                </target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-header/src/lib/flow-builder-header.component.ts
+                    </context>
+                    <context context-type="linenumber">122,123</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts
+                    </context>
+                    <context context-type="linenumber">124,125</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7869199587095613616" datatype="html">
+                <source>Untitled</source>
+                <target>Sans titre</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/empty-flows-table/empty-flows-table.component.ts
+                    </context>
+                    <context context-type="linenumber">33</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table-title/flows-table-title.component.ts
+                    </context>
+                    <context context-type="linenumber">38</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2394434532665685744" datatype="html">
+                <source>Please write the confirmation message correctly</source>
+                <target>Veuillez rédiger correctement le message de confirmation</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/common/src/lib/components/delete-enity-dialog/delete-entity-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">14,16</context>
+                </context-group>
+            </trans-unit>
         </body>
     </file>
 </xliff>
