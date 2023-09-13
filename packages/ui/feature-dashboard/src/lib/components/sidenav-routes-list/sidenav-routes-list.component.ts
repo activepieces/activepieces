@@ -30,7 +30,7 @@ export class SidenavRoutesListComponent {
   sideNavRoutes: SideNavRoute[] = [
     {
       icon: '/assets/img/custom/dashboard/flows.svg',
-      caption: 'Flows',
+      caption: $localize`Flows`,
       route: 'flows',
       effect: () => {
         this.store.dispatch(FolderActions.showAllFlows());
@@ -38,12 +38,12 @@ export class SidenavRoutesListComponent {
     },
     {
       icon: 'assets/img/custom/dashboard/runs.svg',
-      caption: 'Runs',
+      caption: $localize`Runs`,
       route: 'runs',
     },
     {
       icon: 'assets/img/custom/dashboard/connections.svg',
-      caption: 'Connections',
+      caption: $localize`Connections`,
       route: 'connections',
     },
   ];

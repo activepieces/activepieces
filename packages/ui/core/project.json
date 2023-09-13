@@ -26,7 +26,9 @@
           "./node_modules/codemirror/theme/lucario.css",
           "packages/ui/core/src/styles.scss"
         ],
-        "scripts": ["node_modules/marked/marked.min.js"]
+        "scripts": ["node_modules/marked/marked.min.js"],
+        "i18nMissingTranslation": "warning",
+        "localize": ["en"]
       },
       "configurations": {
         "production": {
@@ -48,7 +50,8 @@
               "with": "packages/ui/common/src/lib/environments/environment.prod.ts"
             }
           ],
-          "outputHashing": "all"
+          "outputHashing": "all",
+          "localize": true
         },
         "development": {
           "buildOptimizer": false,
@@ -80,7 +83,8 @@
     "extract-i18n": {
       "executor": "@angular-devkit/build-angular:extract-i18n",
       "options": {
-        "browserTarget": "ui-core:build"
+        "browserTarget": "ui-core:build",
+        "outputPath": "packages/ui/core/src/locale"
       }
     },
     "lint": {
@@ -105,5 +109,18 @@
       }
     }
   },
-  "tags": []
+  "tags": [],
+  "i18n": {
+    "sourceLocale": "en-US",
+    "locales": {
+      "fr": {
+        "translation": "packages/ui/core/src/locale/messages.fr.xlf",
+        "baseHref": "fr"
+      },
+      "en": {
+        "translation": "packages/ui/core/src/locale/messages.en.xlf",
+        "baseHref": ""
+      }
+    }
+  }
 }

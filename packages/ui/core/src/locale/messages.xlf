@@ -1,0 +1,662 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+    <file source-language="en-US" datatype="plaintext" original="ng2.template">
+        <body>
+            <trans-unit id="20703455734868720" datatype="html">
+                <source>Page Size:</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/common/src/lib/components/pagination/ap-paginator.component.html
+                    </context>
+                    <context context-type="linenumber">2</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="638799406436586796" datatype="html">
+                <source>What&apos;s new</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/common/src/lib/components/user-avatar/user-avatar.component.html
+                    </context>
+                    <context context-type="linenumber">8,10</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3797778920049399855" datatype="html">
+                <source>Logout</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/common/src/lib/components/user-avatar/user-avatar.component.html
+                    </context>
+                    <context context-type="linenumber">12</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2821179408673282599" datatype="html">
+                <source>Home</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.html
+                    </context>
+                    <context context-type="linenumber">3</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="5578202866683959807" datatype="html">
+                <source>Ask the Community</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.html
+                    </context>
+                    <context context-type="linenumber">22</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2288513108450439427" datatype="html">
+                <source>Support</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.html
+                    </context>
+                    <context context-type="linenumber">29</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4895326106573044490" datatype="html">
+                <source>Documentation</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.html
+                    </context>
+                    <context context-type="linenumber">31</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4447668871712407032" datatype="html">
+                <source>Docs</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.html
+                    </context>
+                    <context context-type="linenumber">38</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3446912724041461894" datatype="html">
+                <source>Flows</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts
+                    </context>
+                    <context context-type="linenumber">33</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="5831959151852803859" datatype="html">
+                <source>Runs</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts
+                    </context>
+                    <context context-type="linenumber">41</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html
+                    </context>
+                    <context context-type="linenumber">3</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2557623954339695776" datatype="html">
+                <source>Connections</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts
+                    </context>
+                    <context context-type="linenumber">46</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/connections-table/connections-table.component.html
+                    </context>
+                    <context context-type="linenumber">3</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2818570902941667477" datatype="html">
+                <source>App</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/connections-table/connections-table.component.html
+                    </context>
+                    <context context-type="linenumber">7</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="8953033926734869941" datatype="html">
+                <source>Name</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/connections-table/connections-table.component.html
+                    </context>
+                    <context context-type="linenumber">13</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html
+                    </context>
+                    <context context-type="linenumber">15</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="5611592591303869712" datatype="html">
+                <source>Status</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/connections-table/connections-table.component.html
+                    </context>
+                    <context context-type="linenumber">18</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html
+                    </context>
+                    <context context-type="linenumber">33</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html
+                    </context>
+                    <context context-type="linenumber">34</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4207916966377787111" datatype="html">
+                <source>Created</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/connections-table/connections-table.component.html
+                    </context>
+                    <context context-type="linenumber">25</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html
+                    </context>
+                    <context context-type="linenumber">28</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7239750919884229270" datatype="html">
+                <source>Updated</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/connections-table/connections-table.component.html
+                    </context>
+                    <context context-type="linenumber">33</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4018267042970589486" datatype="html">
+                <source>No connections created yet</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/connections-table/connections-table.component.html
+                    </context>
+                    <context context-type="linenumber">58,60</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4578383372914193173" datatype="html">
+                <source>Create Your First Flow</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/empty-flows-table/empty-flows-table.component.html
+                    </context>
+                    <context context-type="linenumber">4</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3077777282169383075" datatype="html">
+                <source>Demo flow</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/empty-flows-table/empty-flows-table.component.html
+                    </context>
+                    <context context-type="linenumber">14</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="8549223348777613655" datatype="html">
+                <source>Learn from our Gelato maker demo flow</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/empty-flows-table/empty-flows-table.component.html
+                    </context>
+                    <context context-type="linenumber">15,17</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3292499463822135407" datatype="html">
+                <source>Build flow</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/empty-flows-table/empty-flows-table.component.html
+                    </context>
+                    <context context-type="linenumber">36</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="913302789306531927" datatype="html">
+                <source>Start building your first flow from scratch</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/empty-flows-table/empty-flows-table.component.html
+                    </context>
+                    <context context-type="linenumber">37,39</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6010972448112025437" datatype="html">
+                <source>All flows</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table-title/flows-table-title.component.html
+                    </context>
+                    <context context-type="linenumber">6</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/folders-list/folders-list.component.html
+                    </context>
+                    <context context-type="linenumber">16</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4890031060409002646" datatype="html">
+                <source>Uncategorized</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table-title/flows-table-title.component.html
+                    </context>
+                    <context context-type="linenumber">21</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/folders-list/folders-list.component.html
+                    </context>
+                    <context context-type="linenumber">27</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/move-flow-to-folder-dialog/move-flow-to-folder-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">11</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2428227617692008299" datatype="html">
+                <source>+ New Flow</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table-title/flows-table-title.component.html
+                    </context>
+                    <context context-type="linenumber">26</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="5417428761029126177" datatype="html">
+                <source>My Flows</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html
+                    </context>
+                    <context context-type="linenumber">5</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="1534367694207535197" datatype="html">
+                <source>Steps</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html
+                    </context>
+                    <context context-type="linenumber">22</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7046259383943324039" datatype="html">
+                <source>Folder</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html
+                    </context>
+                    <context context-type="linenumber">54</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2792560466819244367" datatype="html">
+                <source>Move to...</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html
+                    </context>
+                    <context context-type="linenumber">70</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6621329748219109148" datatype="html">
+                <source>Duplicate</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html
+                    </context>
+                    <context context-type="linenumber">77</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7022070615528435141" datatype="html">
+                <source>Delete</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html
+                    </context>
+                    <context context-type="linenumber">84</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/folders-list/folders-list.component.html
+                    </context>
+                    <context context-type="linenumber">65</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="1068067937132498347" datatype="html">
+                <source>You don&apos;t have any flows yet</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html
+                    </context>
+                    <context context-type="linenumber">101</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2994670610835703888" datatype="html">
+                <source>This folder doesn&apos;t have any flows yet</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html
+                    </context>
+                    <context context-type="linenumber">104</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="8669717871933589565" datatype="html">
+                <source>Please publish the flow</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts
+                    </context>
+                    <context context-type="linenumber">235</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6655540167436629912" datatype="html">
+                <source>Flow is on</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts
+                    </context>
+                    <context context-type="linenumber">238</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2532250142169750361" datatype="html">
+                <source>Flow is off</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts
+                    </context>
+                    <context context-type="linenumber">238</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="580819065027156786" datatype="html">
+                <source>Folders</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/folders-list/folders-list.component.html
+                    </context>
+                    <context context-type="linenumber">2</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6272889378364553386" datatype="html">
+                <source>New Folder</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/folders-list/folders-list.component.html
+                    </context>
+                    <context context-type="linenumber">8</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6041115344061899387" datatype="html">
+                <source>Rename</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/folders-list/folders-list.component.html
+                    </context>
+                    <context context-type="linenumber">58</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="9077429056049361829" datatype="html">
+                <source>New Folder
+                </source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/move-flow-to-folder-dialog/move-flow-to-folder-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">1,2</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6845813511844074904" datatype="html">
+                <source>Name your new folder</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/move-flow-to-folder-dialog/move-flow-to-folder-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">4,6</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7407917947213467151" datatype="html">
+                <source>Select Folder</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/move-flow-to-folder-dialog/move-flow-to-folder-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">9</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="1245322889153100633" datatype="html">
+                <source>No folders to move to</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/move-flow-to-folder-dialog/move-flow-to-folder-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">17</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2494941239288147237" datatype="html">
+                <source>Must select a folder</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/move-flow-to-folder-dialog/move-flow-to-folder-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">19</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2330577642930707695" datatype="html">
+                <source>Cancel</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/move-flow-to-folder-dialog/move-flow-to-folder-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">26,28</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="8389636361036124153" datatype="html">
+                <source>Move</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/move-flow-to-folder-dialog/move-flow-to-folder-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">29,31</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="987902700013871247" datatype="html">
+                <source>Filter by status</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html
+                    </context>
+                    <context context-type="linenumber">5</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="1616102757855967475" datatype="html">
+                <source>All</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html
+                    </context>
+                    <context context-type="linenumber">7</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2956098160626271284" datatype="html">
+                <source>Running</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html
+                    </context>
+                    <context context-type="linenumber">8</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7256395947475975935" datatype="html">
+                <source>Failed</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html
+                    </context>
+                    <context context-type="linenumber">9</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2807689216255894412" datatype="html">
+                <source>Succeeded</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html
+                    </context>
+                    <context context-type="linenumber">10</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="8803075308102273847" datatype="html">
+                <source>Send email notifications about failed runs</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html
+                    </context>
+                    <context context-type="linenumber">14,16</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="8888491308706722034" datatype="html">
+                <source>Flow</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html
+                    </context>
+                    <context context-type="linenumber">20</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3326877877555410533" datatype="html">
+                <source>Started</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html
+                    </context>
+                    <context context-type="linenumber">25</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="340430316261570792" datatype="html">
+                <source>Finished</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html
+                    </context>
+                    <context context-type="linenumber">30</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2388673916006005004" datatype="html">
+                <source>No runs instantiated yet</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html
+                    </context>
+                    <context context-type="linenumber">49,51</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="29870732231596621" datatype="html">
+                <source>Use Template</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-templates/src/lib/featured-template-card/featured-template-card.component.html
+                    </context>
+                    <context context-type="linenumber">52</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2047936376758344367" datatype="html">
+                <source>Verified icons created by lakonicon - Flaticon</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-templates/src/lib/featured-template-card/featured-template-card.component.html
+                    </context>
+                    <context context-type="linenumber">59,60</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6703947649972852818" datatype="html">
+                <source>Featured</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-templates/src/lib/templates-dialog/templates-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">9</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="5688462374174490321" datatype="html">
+                <source>Load more</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-templates/src/lib/templates-dialog/templates-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">23,25</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2264989214104883907" datatype="html">
+                <source>All ideas</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-templates/src/lib/templates-dialog/templates-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">41</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="5784653381187077675" datatype="html">
+                <source>Browse Templates</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-templates/src/lib/templates-dialog/templates-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">63</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3632453124332504959" datatype="html">
+                <source>A new way to explore fresh ideas from our partners</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-templates/src/lib/templates-dialog/templates-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">90</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3467902316108509147" datatype="html">
+                <source>View featured ideas</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-templates/src/lib/templates-dialog/templates-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">92,93</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2683765549895995966" datatype="html">
+                <source>Search templates</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-templates/src/lib/templates-dialog/templates-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">101</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2590054615761981950" datatype="html">
+                <source>Start from scratch</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-templates/src/lib/templates-dialog/templates-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">114</context>
+                </context-group>
+            </trans-unit>
+        </body>
+    </file>
+</xliff>

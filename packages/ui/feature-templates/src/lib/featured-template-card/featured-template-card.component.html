@@ -49,14 +49,14 @@
                 {{template.name}}
             </div>
             <ap-button btnColor="primary" btnStyle="flat" btnSize="small" (buttonClicked)="useTemplate()"
-                [loading]="!!useTemplate$">Use Template </ap-button>
+                [loading]="!!useTemplate$" i18n>Use Template </ap-button>
         </div>
         <img [src]="template.imageUrl || 'https://www.activepieces.com/pricing/feat_2.svg'"
             class="ap-object-contain ap-rounded-md ap-w-[280px] ap-h-[153px]">
     </div>
 </div>
 
-<a class="ap-hidden" href="https://www.flaticon.com/free-icons/verified" title="verified icons">Verified icons created
+<a class="ap-hidden" href="https://www.flaticon.com/free-icons/verified" title="verified icons" i18n>Verified icons created
     by lakonicon - Flaticon</a>
 
 <ng-container *ngIf="useTemplate$ | async"></ng-container>

@@ -5,7 +5,7 @@
     </div>
 </div>
 <mat-menu #menu="matMenu">
-    <div mat-menu-item (click)="showWhatIsNew()" *ngIf="environment.activateBeamer">
+    <div mat-menu-item (click)="showWhatIsNew()" *ngIf="environment.activateBeamer" i18n>
         What's new
     </div>
     <div mat-menu-item (click)="goToCommunity()">
@@ -17,6 +17,6 @@
         <div>My Pieces</div>
     </div>
     <div mat-menu-item (click)="logout()">
-        <div class="ap-text-danger">Logout</div>
+        <div class="ap-text-danger" i18n>Logout</div>
     </div>
 </mat-menu>

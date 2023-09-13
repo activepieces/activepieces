@@ -52,3 +52,5 @@ packages/backend/.env
 
 # produced by backend tests
 .npm-cache
+
+.env

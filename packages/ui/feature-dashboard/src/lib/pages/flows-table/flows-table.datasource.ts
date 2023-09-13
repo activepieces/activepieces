@@ -25,6 +25,7 @@ import { Params } from '@angular/router';
 import { FoldersService } from '@activepieces/ui/common';
 import { FolderActions } from '../../store/folders/folders.actions';
 import { Store } from '@ngrx/store';
+import {$localize} from "@angular/localize/init";
 
 type FlowListDtoWithInstanceStatusToggleControl = Flow & {
   instanceToggleControl: FormControl<boolean>;
@@ -99,7 +100,7 @@ export class FlowsTableDataSource extends DataSource<FlowListDtoWithInstanceStat
             ...flow,
             folderDisplayName:
               folders.data.find((folder) => folder.id === flow.folderId)
-                ?.displayName ?? 'Uncategorized',
+                ?.displayName ?? $localize`Uncategorized`,
             instanceToggleControl: instanceTogglesControls[flow.id],
           };
         });

@@ -44,6 +44,7 @@ import {
 } from '@activepieces/ui/common';
 import { constructUpdateOperation } from './step-type-list/utils';
 import { Actions, ofType } from '@ngrx/effects';
+import {$localize} from "@angular/localize/init";
 
 @Component({
   selector: 'app-step-type-sidebar',
@@ -58,14 +59,14 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
   @Input() set showTriggers(shouldShowTriggers: boolean) {
     this._showTriggers = shouldShowTriggers;
     if (this._showTriggers) {
-      this.sideBarDisplayName = 'Select Trigger';
+      this.sideBarDisplayName = $localize`Select Trigger`;
     } else {
-      this.sideBarDisplayName = 'Select Step';
+      this.sideBarDisplayName = $localize`Select Step`;
     }
     this.populateTabsAndTheirLists();
   }
 
-  sideBarDisplayName = 'Select Step';
+  sideBarDisplayName = $localize`Select Step`;
   tabsAndTheirLists: {
     displayName: string;
     list$: Observable<FlowItemDetails[]>;
@@ -125,21 +126,21 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
       })
     );
     this.tabsAndTheirLists.push({
-      displayName: 'All',
+      displayName: $localize`All`,
       list$: this.applySearchToObservable(allItemDetails$),
-      emptyListText: "Oops! We didn't find any results.",
+      emptyListText: $localize`Oops! We didn't find any results.`,
     });
 
     this.tabsAndTheirLists.push({
-      displayName: 'Core',
+      displayName: $localize`Core`,
       list$: this.applySearchToObservable(coreItemsDetails$),
-      emptyListText: "Oops! We didn't find any results.",
+      emptyListText: $localize`Oops! We didn't find any results.`,
     });
 
     this.tabsAndTheirLists.push({
-      displayName: this._showTriggers ? 'App Events' : 'App Actions',
+      displayName: this._showTriggers ? $localize`App Events` : $localize`App Actions`,
       list$: this.applySearchToObservable(customPiecesItemDetails$),
-      emptyListText: "Oops! We didn't find any results.",
+      emptyListText: $localize`Oops! We didn't find any results.`,
     });
   }
 

@@ -6,6 +6,7 @@ import {
   ViewModeEnum,
 } from '@activepieces/ui/feature-builder-store';
 import { Observable, combineLatest, map } from 'rxjs';
+import {$localize} from "@angular/localize/init";
 
 @Component({
   selector: 'app-draft-status',
@@ -33,9 +34,9 @@ export class DraftStatusComponent {
     }).pipe(
       map((res) => {
         if (res.isCurrentVersionPublished || res.isInPublishedVersionView) {
-          return 'Published';
+          return $localize`Published`;
         }
-        return 'Draft';
+        return $localize`Draft`;
       })
     );
   }
