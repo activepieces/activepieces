@@ -35,8 +35,7 @@
                 <div class="ap-px-1 ap-flex ap-gap-2 ap-items-center">
                   <mat-slide-toggle color="primary" [class.ap-cursor-not-allowed]="flow.instanceToggleControl.disabled"
                     (click)="$event.stopImmediatePropagation(); toggleFlowStatus(flow,flow.instanceToggleControl)"
-                    [formControl]="flow.instanceToggleControl" [matTooltip]="flow.instanceToggleControl.disabled? 'Please publish the flow':
-                    flow.instanceToggleControl.value? 'Flow is on' : 'Flow is off'" i18n-matTooltip></mat-slide-toggle>
+                    [formControl]="flow.instanceToggleControl" [matTooltip]="getStatusFlowMatTooltip(flow)"></mat-slide-toggle>
                   <div class="ap-min-h-[30px] ap-min-w-[30px] ap-flex ap-items-center ap-justify-center">
                     <svg-icon [src]="getTriggerIcon(flow)"
                       *ngIf="flow.instanceToggleControl.value && !flowsUpdateStatusRequest$[flow.id]"

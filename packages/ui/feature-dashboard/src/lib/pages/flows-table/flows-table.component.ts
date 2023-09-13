@@ -229,4 +229,12 @@ export class FlowsTableComponent implements OnInit {
         map(() => void 0)
       );
   }
+
+  getStatusFlowMatTooltip(flow: any) {
+    if (flow.instanceToggleControl.disabled) {
+      return $localize`Please publish the flow`;
+    }
+
+    return flow.instanceToggleControl.value? $localize`Flow is on` : $localize`Flow is off`
+  }
 }
