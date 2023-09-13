@@ -13,15 +13,16 @@ import {
 } from '@activepieces/ui/common';
 import { CodeService } from '@activepieces/ui/feature-builder-store';
 import { MatSnackBar } from '@angular/material/snack-bar';
+
 @Component({
   selector: 'app-install-community-piece-modal',
   templateUrl: './install-community-piece-modal.component.html',
 })
 export class InstallCommunityPieceModalComponent implements OnInit {
-  risksMarkdown = `
+  risksMarkdown = $localize`
   Use this to install a <a href="https://www.activepieces.com/docs/developers/building-pieces/create-action" target="_blank" rel="noopener">custom piece</a> that you (or someone else) created.
   Once the piece is installed, you can use it in the flow builder.
- <br><br>**Warning:** 
+ <br><br>**Warning:**
  Make sure you trust the author as the piece will have access to your flow data and it might not be compatible with the current version of Activepieces.
 
   `;

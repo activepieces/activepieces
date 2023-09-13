@@ -220,16 +220,6 @@
                     <context context-type="linenumber">2</context>
                 </context-group>
             </trans-unit>
-            <trans-unit id="638799406436586796" datatype="html">
-                <source>What's new</source>
-                <target>Quoi de neuf</target>
-                <context-group purpose="location">
-                    <context context-type="sourcefile">
-                        packages/ui/common/src/lib/components/user-avatar/user-avatar.component.html
-                    </context>
-                    <context context-type="linenumber">8,10</context>
-                </context-group>
-            </trans-unit>
             <trans-unit id="3797778920049399855" datatype="html">
                 <source>Logout</source>
                 <target>Déconnexion</target>
@@ -963,6 +953,169 @@
                         packages/ui/common/src/lib/components/delete-enity-dialog/delete-entity-dialog.component.html
                     </context>
                     <context context-type="linenumber">14,16</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2518237780867209325" datatype="html">
+                <source>What's new</source>
+                <target>Quoi de neuf</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/common/src/lib/components/user-avatar/user-avatar.component.html
+                    </context>
+                    <context context-type="linenumber">9</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3708656846739179305" datatype="html">
+                <source>My Pieces</source>
+                <target>Mes connecteurs</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/common/src/lib/components/user-avatar/user-avatar.component.html
+                    </context>
+                    <context context-type="linenumber">17</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7508420892157571847" datatype="html">
+                <source>This where you can install pieces made by yourself or other piece creators.</source>
+                <target>C'est ici que vous pouvez installer des connecteurs réalisés par vous-même ou
+                    par d'autres créateurs de connecteurs.
+                </target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/community-pieces-table/community-pieces-table.component.html
+                    </context>
+                    <context context-type="linenumber">4,6</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2724055831234181057" datatype="html">
+                <source>Version</source>
+                <target>Version</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/community-pieces-table/community-pieces-table.component.html
+                    </context>
+                    <context context-type="linenumber">22</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="9211272372634231639" datatype="html">
+                <source>Add Piece</source>
+                <target>Ajouter un Connecteur</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/community-pieces-table/community-pieces-table.component.html
+                    </context>
+                    <context context-type="linenumber">29,31</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3336001235735417463" datatype="html">
+                <source>No pieces installed</source>
+                <target>Aucun connecteur installé</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/community-pieces-table/community-pieces-table.component.html
+                    </context>
+                    <context context-type="linenumber">49,51</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6268667738811245350" datatype="html">
+                <source>
+                    Use this to install a &lt;a href=&quot;https://www.activepieces.com/docs/developers/building-pieces/create-action&quot;
+                    target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;custom piece&lt;/a&gt; that you (or someone
+                    else) created.
+                    Once the piece is installed, you can use it in the flow builder.
+                    &lt;br&gt;&lt;br&gt;**Warning:**
+                    Make sure you trust the author as the piece will have access to your flow data and it might not be
+                    compatible with the current version of Activepieces.
+
+                </source>
+                <target>
+                    Utilisez ce formulaire pour installer un &lt;a href=&quot;https://www.activepieces.com/docs/developers/building-pieces/create-action&quot;
+                    target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;connecteur personnalisé&lt;/a&gt; que vous (ou
+                    quelqu'un d'autre) avez créé.
+                    Une fois le connecteur installé, vous pouvez l'utiliser dans le générateur de flow.
+                    &lt;br&gt;&lt;br&gt;**Attention:**
+                    Assurez-vous de faire confiance à l'auteur, car le connecteur aura accès à vos données de flow et il
+                    se peut qu'il ne le soit pas
+                    compatible avec la version actuelle d'Activepieces.
+
+                </target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/community-pieces-table/install-community-piece/install-community-piece-modal.component.ts
+                    </context>
+                    <context context-type="linenumber">22,28</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2247331365648205687" datatype="html">
+                <source>Install Piece</source>
+                <target>Installer un connecteur</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/community-pieces-table/install-community-piece/install-community-piece-modal.component.html
+                    </context>
+                    <context context-type="linenumber">1</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3925841413372265651" datatype="html">
+                <source>Package Name</source>
+                <target>Nom du package</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/community-pieces-table/install-community-piece/install-community-piece-modal.component.html
+                    </context>
+                    <context context-type="linenumber">6</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2551188678245697614" datatype="html">
+                <source>Couldn't find package, please check the package name.</source>
+                <target>Impossible de trouver le package, veuillez vérifier le nom du package.</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/community-pieces-table/install-community-piece/install-community-piece-modal.component.html
+                    </context>
+                    <context context-type="linenumber">14,16</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="1421651112910563400" datatype="html">
+                <source>Couldn't install piece, please make sure your package is a piece.</source>
+                <target>Impossible d'installer le connecteur, veuillez vous assurer que votre package est un
+                    connecteur.
+                </target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/community-pieces-table/install-community-piece/install-community-piece-modal.component.html
+                    </context>
+                    <context context-type="linenumber">17,19</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6993437395710220266" datatype="html">
+                <source>Install</source>
+                <target>Installer</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/community-pieces-table/install-community-piece/install-community-piece-modal.component.html
+                    </context>
+                    <context context-type="linenumber">31,33</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4429446519625428933" datatype="html">
+                <source>Package name is required</source>
+                <target>Le nom du package est requis</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/community-pieces-table/install-community-piece/install-community-piece-modal.component.html
+                    </context>
+                    <context context-type="linenumber">10,12</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="638799406436586796" datatype="html">
+                <source>What's new</source>
+                <target>Quoi de neuf</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/common/src/lib/components/user-avatar/user-avatar.component.html
+                    </context>
+                    <context context-type="linenumber">8,10</context>
                 </context-group>
             </trans-unit>
         </body>

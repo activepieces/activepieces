@@ -1,20 +1,20 @@
-<ap-dialog-title-template>Install Piece</ap-dialog-title-template>
+<ap-dialog-title-template i18n>Install Piece</ap-dialog-title-template>
 <mat-dialog-content>
   <ap-markdown [data]='risksMarkdown'></ap-markdown>
   <form class="ap-flex ap-flex-col ap-gap-1 ap-mt-4" [formGroup]="npmForm" (submit)="lookForNpmPackage()">
     <mat-form-field class="ap-w-full" appearance="outline">
-      <mat-label>Package Name</mat-label>
+      <mat-label i18n>Package Name</mat-label>
       <input cdkFocusInitial formControlName="packageName" matInput type="text"
         placeholder="@activepieces/piece-google-sheets" />
       <mat-error *ngIf="npmForm.controls.packageName.invalid"><ng-container
-          *ngIf="npmForm.controls.packageName.hasError('required');else validationErrors">
+          *ngIf="npmForm.controls.packageName.hasError('required');else validationErrors" i18n>
           Package name is required
         </ng-container>
         <ng-template #validationErrors>
-          <ng-container *ngIf="npmForm.controls.packageName.hasError('invalid')">
+          <ng-container *ngIf="npmForm.controls.packageName.hasError('invalid')" i18n>
             Couldn't find package, please check the package name.
           </ng-container>
-          <ng-container *ngIf="npmForm.controls.packageName.hasError('failedInstall')">
+          <ng-container *ngIf="npmForm.controls.packageName.hasError('failedInstall')" i18n>
             Couldn't install piece, please make sure your package is a piece.
           </ng-container>
 
@@ -25,10 +25,10 @@
 </mat-dialog-content>
 <mat-dialog-actions align="end">
   <div class="ap-flex ap-gap-2.5">
-    <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic">
+    <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic" i18n>
       Cancel
     </ap-button>
-    <ap-button btnSize="default" (click)="lookForNpmPackage() " type="submit" btnColor="primary" [loading]="loading">
+    <ap-button btnSize="default" (click)="lookForNpmPackage() " type="submit" btnColor="primary" [loading]="loading" i18n>
       Install
     </ap-button>
   </div>
