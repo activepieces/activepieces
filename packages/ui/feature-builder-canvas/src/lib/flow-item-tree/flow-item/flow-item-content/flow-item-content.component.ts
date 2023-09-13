@@ -45,7 +45,6 @@ import {
   FlowRendererService,
   canvasActions,
 } from '@activepieces/ui/feature-builder-store';
-import {$localize} from "@angular/localize/init";
 
 @Component({
   selector: 'app-flow-item-content',

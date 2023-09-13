@@ -6,7 +6,6 @@ import { tap } from 'rxjs';
 import { FolderActions } from './folders.actions';
 import { FoldersSelectors } from './folders.selector';
 import { GenericSnackbarTemplateComponent } from '@activepieces/ui/common';
-import {$localize} from "@angular/localize/init";
 
 @Injectable()
 export class FoldersEffects {

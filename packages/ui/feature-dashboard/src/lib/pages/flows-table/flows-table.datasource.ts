@@ -25,7 +25,6 @@ import { Params } from '@angular/router';
 import { FoldersService } from '@activepieces/ui/common';
 import { FolderActions } from '../../store/folders/folders.actions';
 import { Store } from '@ngrx/store';
-import {$localize} from "@angular/localize/init";
 
 type FlowListDtoWithInstanceStatusToggleControl = Flow & {
   instanceToggleControl: FormControl<boolean>;

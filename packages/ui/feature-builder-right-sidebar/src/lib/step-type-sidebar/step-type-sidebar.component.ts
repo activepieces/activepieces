@@ -44,7 +44,6 @@ import {
 } from '@activepieces/ui/common';
 import { constructUpdateOperation } from './step-type-list/utils';
 import { Actions, ofType } from '@ngrx/effects';
-import {$localize} from "@angular/localize/init";
 
 @Component({
   selector: 'app-step-type-sidebar',

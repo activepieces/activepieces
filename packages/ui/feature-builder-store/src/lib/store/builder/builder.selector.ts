@@ -26,7 +26,6 @@ import {
 } from '@activepieces/ui/common';
 import { FlowInstanceState } from './flow-instance/flow-instance.reducer';
 import { StepRunResult } from '../../utils/stepRunResult';
-import {$localize} from "@angular/localize/init";
 
 export const BUILDER_STATE_NAME = 'builderState';
 

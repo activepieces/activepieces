@@ -6,7 +6,6 @@ import {
   ViewModeEnum,
 } from '@activepieces/ui/feature-builder-store';
 import { Observable, combineLatest, map } from 'rxjs';
-import {$localize} from "@angular/localize/init";
 
 @Component({
   selector: 'app-draft-status',
