@@ -80,6 +80,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     })
 
     app.addHook('onRequest', tokenVerifyMiddleware)
+    app.setErrorHandler(errorHandler)
     await app.register(fileModule)
     await app.register(flagModule)
     await app.register(storeEntryModule)
@@ -111,7 +112,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             }
         },
     )
-    app.setErrorHandler(errorHandler)
 
     // SurveyMonkey
     app.addContentTypeParser('application/vnd.surveymonkey.response.v1+json', { parseAs: 'string' }, app.getDefaultJsonParser('ignore', 'ignore'))
