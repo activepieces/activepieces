@@ -3,7 +3,7 @@ import { userService } from '../user/user-service'
 import { passwordHasher } from './lib/password-hasher'
 import { tokenUtils } from './lib/token-utils'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
-import { projectService } from '../project/project.service'
+import { projectService } from '../project/project-service'
 import { flagService } from '../flags/flag.service'
 import { QueryFailedError } from 'typeorm'
 import { telemetry } from '../helper/telemetry.utils'
@@ -90,12 +90,12 @@ export const authenticationService = {
         }
 
         // Currently each user have exactly one project.
-        const projects = await projectService.getAll(user.id)
+        const project = await projectService.getUserProject(user.id)
 
         const token = await tokenUtils.encode({
             id: user.id,
             type: PrincipalType.USER,
-            projectId: projects![0].id,
+            projectId: project.id,
         })
 
         const { password: _, ...filteredUser } = user
@@ -103,7 +103,7 @@ export const authenticationService = {
         return {
             ...filteredUser,
             token,
-            projectId: projects![0].id,
+            projectId: project.id,
         }
     },
 }
