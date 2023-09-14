@@ -5,6 +5,7 @@ import {
   QueryParams,
   httpClient,
   HttpError,
+  HttpMethod,
 } from '@activepieces/pieces-common';
 import { httpMethodDropdown } from '../common/props';
 import { assertNotNullOrUndefined } from '@activepieces/shared';
@@ -27,9 +28,21 @@ export const httpSendRequestAction = createAction({
         displayName: 'Query params',
         required: true,
       }),
-      body: Property.Json({
+      body: Property.DynamicProperties({
         displayName: 'Body',
         required: false,
+        refreshers: ['method'],
+        props: async ({ method }) => {
+          const methodName = method as unknown as HttpMethod;
+          if( methodName === HttpMethod.GET ) return {};
+          const properties: { [key: string]: any } = {}
+          properties['body'] = Property.Json({
+            displayName: 'Body',
+            required: false,
+          })
+
+          return properties;
+      }
       }),
       failsafe: Property.Checkbox({
         displayName: 'No Error On Failure',
@@ -51,11 +64,14 @@ export const httpSendRequestAction = createAction({
       const request: HttpRequest<Record<string, unknown>> = {
         method,
         url,
+        body,
         headers: headers as HttpHeaders,
         queryParams: queryParams as QueryParams,
-        body,
         timeout: timeout ? timeout * 1000 : 0,
       };
+      if( method !== HttpMethod.GET ) {
+        request.body = body;
+      }
 
       try {
           return await httpClient.sendRequest(request);
