@@ -1,6 +1,6 @@
 import { isNil } from '@activepieces/shared'
 import { databaseConnection } from '../database/database-connection'
-import { ProjectEntity } from './project.entity'
+import { ProjectEntity } from './project-entity'
 import { ActivepiecesError, apId, ErrorCode, NotificationStatus, Project, ProjectId, UpdateProjectRequest, UserId } from '@activepieces/shared'
 
 const projectRepo = databaseConnection.getRepository<Project>(ProjectEntity)
@@ -38,11 +38,9 @@ export const projectService = {
             id: projectId,
         })
     },
-    async getAll(ownerId: UserId): Promise<Project[] | null> {
-        return await projectRepo.find({
-            where: {
-                ownerId,
-            },
+    async getUserProject(ownerId: UserId): Promise<Project> {
+        return await projectRepo.findOneByOrFail({
+            ownerId,
         })
     },
 }

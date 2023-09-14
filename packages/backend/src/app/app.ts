@@ -3,7 +3,6 @@ import cors from '@fastify/cors'
 import formBody from '@fastify/formbody'
 import qs from 'qs'
 import fastifyMultipart from '@fastify/multipart'
-import { projectModule } from './project/project.module'
 import { openapiModule } from './helper/openapi/openapi.module'
 import { flowModule } from './flows/flow.module'
 import { fileModule } from './file/file.module'
@@ -81,7 +80,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     })
 
     app.addHook('onRequest', tokenVerifyMiddleware)
-    await app.register(projectModule)
+    app.setErrorHandler(errorHandler)
     await app.register(fileModule)
     await app.register(flagModule)
     await app.register(storeEntryModule)
@@ -113,7 +112,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             }
         },
     )
-    app.setErrorHandler(errorHandler)
 
     // SurveyMonkey
     app.addContentTypeParser('application/vnd.surveymonkey.response.v1+json', { parseAs: 'string' }, app.getDefaultJsonParser('ignore', 'ignore'))

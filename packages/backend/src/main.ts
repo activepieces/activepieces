@@ -9,6 +9,7 @@ import { seedDevData } from './app/database/seeds/dev-seeds'
 import { flowQueueConsumer } from './app/workers/flow-worker/flow-queue-consumer'
 import { setupApp } from './app/app'
 import { FastifyInstance } from 'fastify'
+import { projectModule } from './app/project/project-module'
 
 const start = async (app: FastifyInstance): Promise<void> => {
     try {
@@ -20,6 +21,7 @@ const start = async (app: FastifyInstance): Promise<void> => {
                 break
             case ApEdition.COMMUNITY:
                 await app.register(authenticationModule)
+                await app.register(projectModule)
                 break
         }
         await app.listen({
