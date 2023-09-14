@@ -12,10 +12,10 @@ export const fileController = async (fastify: FastifyInstance) => {
                     fileId: FileId
                 }
             }>,
-            _reply,
+            reply,
         ) => {
             const file = await fileService.getOneOrThrow({ projectId: request.principal.projectId, fileId: request.params.fileId })
-            _reply.type('application/zip').status(StatusCodes.OK).send(file.data)
+            return reply.type('application/zip').status(StatusCodes.OK).send(file.data)
         },
     )
 }

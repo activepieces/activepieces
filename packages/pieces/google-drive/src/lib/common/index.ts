@@ -64,6 +64,7 @@ export const common = {
             url: `https://www.googleapis.com/drive/v3/files`,
             queryParams: {
                 q: q.join(' and '),
+                fields: 'files(id, name, mimeType, webViewLink, kind)',
                 orderBy: order ?? 'createdTime asc'
             },
             authentication: {

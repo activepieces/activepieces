@@ -1,8 +1,12 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import { EMPTY, Observable, catchError, switchMap, tap } from 'rxjs';
-import { FlowService } from '@activepieces/ui/common';
-import { FlowOperationType, FlowTemplate } from '@activepieces/shared';
+import { FlowService, TelemetryService } from '@activepieces/ui/common';
+import {
+  FlowOperationType,
+  FlowTemplate,
+  TelemetryEventName,
+} from '@activepieces/shared';
 
 @Injectable({
   providedIn: 'root',
@@ -22,6 +26,16 @@ export class ImportFlowUriEncodedResolver {
           displayName: combinationJson.name,
         })
         .pipe(
+          tap(() => {
+            this.telemetryService.capture({
+              name: TelemetryEventName.FLOW_IMPORTED,
+              payload: {
+                id: combinationJson.id,
+                name: combinationJson.name,
+                location: `import flow by uri encoded query param`,
+              },
+            });
+          }),
           switchMap((res) => {
             return this.flowService.update(res.id, {
               type: FlowOperationType.IMPORT_FLOW,
@@ -43,5 +57,9 @@ export class ImportFlowUriEncodedResolver {
     }
     return EMPTY;
   }
-  constructor(private flowService: FlowService, private router: Router) {}
+  constructor(
+    private flowService: FlowService,
+    private router: Router,
+    private telemetryService: TelemetryService
+  ) {}
 }

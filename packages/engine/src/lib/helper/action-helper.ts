@@ -250,6 +250,13 @@ export const pieceHelper = {
         }
       };
 
+      // Legacy Code doesn't have test function
+      if (!isNil(action.test)) {
+        return {
+          output: await action.test(context),
+          success: true
+        };
+      }
       return {
         output: await action.run(context),
         success: true

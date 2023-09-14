@@ -1,6 +1,6 @@
-import { FastifyInstance } from 'fastify'
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { authenticationController } from './authentication.controller'
 
-export const authenticationModule = async (app: FastifyInstance) => {
-    app.register(authenticationController, { prefix: '/v1/authentication' })
+export const authenticationModule: FastifyPluginAsyncTypebox = async (app) => {
+    await app.register(authenticationController, { prefix: '/v1/authentication' })
 }

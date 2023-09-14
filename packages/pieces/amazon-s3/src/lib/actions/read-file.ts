@@ -1,6 +1,7 @@
 import { Property, createAction } from "@activepieces/pieces-framework";
 import { S3 } from "@aws-sdk/client-s3";
 import { amazonS3Auth } from "../..";
+import { createS3 } from "../common";
 
 export const readFile = createAction({
     auth: amazonS3Auth,
@@ -15,15 +16,9 @@ export const readFile = createAction({
         })
     },
     async run(context) {
-        const { accessKeyId, secretAccessKey, region, bucket } = context.auth;
+        const { bucket } = context.auth;
         const { key } = context.propsValue;
-        const s3 = new S3({
-            credentials: {
-                accessKeyId,
-                secretAccessKey
-            },
-            region: region || "us-east-1"
-        })
+        const s3 = createS3(context.auth);
 
         const file = (await s3.getObject({
             Bucket: bucket,

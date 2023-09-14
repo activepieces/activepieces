@@ -25,10 +25,10 @@ export const wordpressCommon = {
                     options: [],
                 };
             }
-            if (!wordpressCommon.urlExists(websiteUrl.trim())) {
+            if (!wordpressCommon.urlExists(websiteUrl.trim()) || !await wordpressCommon.isBaseUrl(websiteUrl.trim())) {
                 return {
                     disabled: true,
-                    placeholder: 'Incorrect website url',
+                    placeholder: "Please ensure that the website is valid and does not contain any paths, for example, https://example-website.com.",
                     options: [],
                 };
             }
@@ -143,6 +143,15 @@ export const wordpressCommon = {
             return true;
         }
         catch (e) {
+            return false;
+        }
+    },
+    async isBaseUrl(urlString: string): Promise<boolean> {
+        try {
+            const url = new URL(urlString);
+            return !url.pathname || url.pathname === '/';
+        } catch (error) {
+            // Handle invalid URLs here, e.g., return false or throw an error
             return false;
         }
     }
