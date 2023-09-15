@@ -1,0 +1,42 @@
+{
+  "name": "pieces-microsoft-excel",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/microsoft-excel/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/microsoft-excel",
+        "tsConfig": "packages/pieces/microsoft-excel/tsconfig.lib.json",
+        "packageJson": "packages/pieces/microsoft-excel/package.json",
+        "main": "packages/pieces/microsoft-excel/src/index.ts",
+        "assets": [
+          "packages/pieces/microsoft-excel/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies"
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-microsoft-excel {args.ver} {args.tag}",
+      "dependsOn": [
+        "build"
+      ]
+    },
+    "lint": {
+      "executor": "@nx/linter:eslint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/microsoft-excel/**/*.ts"
+        ]
+      }
+    }
+  },
+  "tags": []
+}
