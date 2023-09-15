@@ -66,7 +66,8 @@ export const newEmail = createTrigger({
         const lastMessage = (await context.store.get<number>('_imaplastmessage'))!;
         const { parsedEmails, totalMessages } = await imapCommon.fetchEmails({
             imapConfig: imapCommon.constructConfig(context.auth),
-            range: `${lastMessage + 1}:*`,
+            lastTotalMessages: lastMessage,
+            test: false,
             mailbox: context.propsValue.mailbox,
             files: context.files,
         })
@@ -76,10 +77,10 @@ export const newEmail = createTrigger({
         return parsedEmails;
     },
     test: async (context) => {
-        const totalMessage = await imapCommon.getTotalMessages(imapCommon.constructConfig(context.auth), context.propsValue.mailbox);
         const { parsedEmails } = await imapCommon.fetchEmails({
             imapConfig: imapCommon.constructConfig(context.auth),
-            range: totalMessage > 5 ? `${totalMessage - 5}:${totalMessage}` : '1:*',
+            lastTotalMessages: null,
+            test: true,
             mailbox: context.propsValue.mailbox,
             files: context.files,
         })
