@@ -5,9 +5,15 @@ import { StaticPropsValue } from "./property";
 import { ValidationInputType } from "../validators/types";
 
 
-export interface CustomAuthProps {
-	[name: string]: ShortTextProperty<boolean> | LongTextProperty<boolean> | SecretTextProperty<boolean> | NumberProperty<boolean> | StaticDropdownProperty<unknown, boolean> | CheckboxProperty<boolean>;
-}
+export type CustomAuthProps = Record<
+	string,
+	| ShortTextProperty<boolean>
+	| LongTextProperty<boolean>
+	| SecretTextProperty<boolean>
+	| NumberProperty<boolean>
+	| StaticDropdownProperty<unknown, boolean>
+	| CheckboxProperty<boolean>
+>
 
 export type CustomAuthPropertyValue<T extends CustomAuthProps> = StaticPropsValue<T>;
 
