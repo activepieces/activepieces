@@ -1,18 +1,17 @@
-import { FastifyInstance } from 'fastify'
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { allowWorkersOnly, entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { Type } from '@sinclair/typebox'
 import { stepFileService } from './step-file.service'
-import { FastifyPluginCallbackTypebox } from '@fastify/type-provider-typebox'
 import { StepFileUpsert } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
 
-export const stepFileModule = async (app: FastifyInstance) => {
+export const stepFileModule: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
     app.addHook('onRequest', allowWorkersOnly)
-    app.register(stepFileController, { prefix: '/v1/step-files' })
+    await app.register(stepFileController, { prefix: '/v1/step-files' })
 }
 
-export const stepFileController: FastifyPluginCallbackTypebox = (app, _opts, done) => {
+export const stepFileController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/:id', {
         schema: {
             params: Type.Object({
@@ -24,7 +23,7 @@ export const stepFileController: FastifyPluginCallbackTypebox = (app, _opts, don
             projectId: request.principal.projectId,
             id: request.params.id,
         })
-        reply.header('Content-Disposition', `attachment; filename="${stepFile?.name}"`)
+        return reply.header('Content-Disposition', `attachment; filename="${stepFile?.name}"`)
             .type('application/octet-stream')
             .status(StatusCodes.OK)
             .send(stepFile?.data)
@@ -54,6 +53,4 @@ export const stepFileController: FastifyPluginCallbackTypebox = (app, _opts, don
             id: request.params.id,
         })
     })
-
-    done()
 }

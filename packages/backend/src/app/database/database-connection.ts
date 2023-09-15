@@ -1,5 +1,5 @@
 import { UserEntity } from '../user/user-entity'
-import { ProjectEntity } from '../project/project.entity'
+import { ProjectEntity } from '../project/project-entity'
 import { FlowEntity } from '../flows/flow/flow.entity'
 import { FlowVersionEntity } from '../flows/flow-version/flow-version-entity'
 import { FileEntity } from '../file/file.entity'

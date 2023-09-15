@@ -91,7 +91,7 @@
                 "@typescript-eslint/space-infix-ops": "error",
                 "@typescript-eslint/keyword-spacing": "error",
                 "@typescript-eslint/explicit-function-return-type": "warn",
-                "@typescript-eslint/no-floating-promises": "warn",
+                "@typescript-eslint/no-floating-promises": "error",
                 "@typescript-eslint/no-misused-promises": "warn"
             }
         }

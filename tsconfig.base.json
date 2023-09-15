@@ -18,9 +18,6 @@
     "baseUrl": ".",
     "paths": {
       "@activepieces/engine": ["packages/engine/src/main.ts"],
-      "@activepieces/packages/date-helper": [
-        "packages/packages/date-helper/src/index.ts"
-      ],
       "@activepieces/piece-airtable": ["packages/pieces/airtable/src/index.ts"],
       "@activepieces/piece-amazon-s3": [
         "packages/pieces/amazon-s3/src/index.ts"
@@ -140,6 +137,9 @@
       "@activepieces/piece-notion": ["packages/pieces/notion/src/index.ts"],
       "@activepieces/piece-ntfy": ["packages/pieces/ntfy/src/index.ts"],
       "@activepieces/piece-onfleet": ["packages/pieces/onfleet/src/index.ts"],
+      "@activepieces/piece-open-router": [
+        "packages/pieces/open-router/src/index.ts"
+      ],
       "@activepieces/piece-openai": ["packages/pieces/openai/src/index.ts"],
       "@activepieces/piece-pastebin": ["packages/pieces/pastebin/src/index.ts"],
       "@activepieces/piece-pastefy": ["packages/pieces/pastefy/src/index.ts"],
@@ -208,6 +208,12 @@
       "@activepieces/pieces-common": ["packages/pieces/common/src/index.ts"],
       "@activepieces/pieces-framework": [
         "packages/pieces/framework/src/index.ts"
+      ],
+      "@activepieces/pieces/date-helper": [
+        "packages/pieces/date-helper/src/index.ts"
+      ],
+      "@activepieces/pieces/text-helper": [
+        "packages/pieces/text-helper/src/index.ts"
       ],
       "@activepieces/shared": ["packages/shared/src/index.ts"],
       "@activepieces/ui/common": ["packages/ui/common/src/index.ts"],

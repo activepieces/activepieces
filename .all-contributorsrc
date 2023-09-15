@@ -554,6 +554,24 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "dennis-tra",
+      "name": "Dennis Trautwein",
+      "avatar_url": "https://avatars.githubusercontent.com/u/11836793?v=4",
+      "profile": "https://dtrautwein.eu",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "inspiredclick",
+      "name": "Andrew Rosenblatt",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1548613?v=4",
+      "profile": "https://github.com/inspiredclick",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "commitType": "docs"
