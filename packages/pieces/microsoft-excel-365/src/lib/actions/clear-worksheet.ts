@@ -22,7 +22,7 @@ export const clearWorksheetAction = createAction({
         const worksheetId = propsValue['worksheet_id'];
         const range = propsValue['range'];
 
-        let url = `${excelCommon.baseUrl}/${workbookId}/workbook/worksheets/${worksheetId}/`
+        let url = `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/`
 
         // If range is not provided, clear the entire worksheet
         if (!range) {

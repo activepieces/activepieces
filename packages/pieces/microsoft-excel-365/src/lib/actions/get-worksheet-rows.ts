@@ -3,17 +3,17 @@ import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces
 import { excelCommon } from '../common/common';
 import { excelAuth } from '../../index';
 
-export const getRowsAction = createAction({
+export const getWorksheetRowsAction = createAction({
     auth: excelAuth,
-    name: 'get_rows',
+    name: 'get_worksheet_rows',
     description: 'Retrieve rows from a worksheet',
-    displayName: 'Get Rows',
+    displayName: 'Get Worksheet Rows',
     props: {
         workbook_id: excelCommon.workbook_id,
         worksheet_id: excelCommon.worksheet_id,
         range: Property.ShortText({
             displayName: 'Range',
-            description: 'Range of the rows to retrieve',
+            description: 'Range of the rows to retrieve (e.g., A2:B2)',
             required: false,
         }),
         headerRow: Property.Number({
@@ -34,7 +34,7 @@ export const getRowsAction = createAction({
         const headerRow = propsValue['headerRow'];
         const firstDataRow = propsValue['firstDataRow'];
 
-        let url = `${excelCommon.baseUrl}/${workbookId}/workbook/worksheets/${worksheetId}/`;
+        let url = `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/`;
 
         if (!range) {
             url += 'usedRange(valuesOnly=true)'

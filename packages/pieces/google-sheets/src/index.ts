@@ -9,7 +9,7 @@ import { findRowByNumAction } from './lib/actions/find-row-by-num';
 
 export const googleSheetsAuth = PieceAuth.OAuth2({
     description: "",
-    
+
     authUrl: "https://accounts.google.com/o/oauth2/auth",
     tokenUrl: "https://oauth2.googleapis.com/token",
     required: true,
@@ -17,11 +17,11 @@ export const googleSheetsAuth = PieceAuth.OAuth2({
 })
 
 export const googleSheets = createPiece({
-	minimumSupportedRelease: '0.5.0',
+    minimumSupportedRelease: '0.5.0',
     logoUrl: 'https://cdn.activepieces.com/pieces/google-sheets.png',
-    authors: ['abuaboud', 'AbdulTheActivepiecer', 'Shay Punter', 'Abdallah-Alwarawreh','Salem-Alaa'],
-	actions: [insertRowAction, deleteRowAction, updateRowAction, findRowsAction, clearSheetAction , findRowByNumAction],
-	displayName: "Google Sheets",
-	triggers: [readNewRows],
+    authors: ['abuaboud', 'AbdulTheActivepiecer', 'Shay Punter', 'Abdallah-Alwarawreh', 'Salem-Alaa'],
+    actions: [insertRowAction, deleteRowAction, updateRowAction, findRowsAction, clearSheetAction, findRowByNumAction],
+    displayName: "Google Sheets",
+    triggers: [readNewRows],
     auth: googleSheetsAuth,
 });

@@ -56,7 +56,7 @@ export const createTableAction = createAction({
         if (selectRange === 'auto') {
             const response = await httpClient.sendRequest({
                 method: HttpMethod.GET,
-                url: `${excelCommon.baseUrl}/${workbookId}/workbook/worksheets/${worksheetId}/usedRange`,
+                url: `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/usedRange`,
                 authentication: {
                     type: AuthenticationType.BEARER_TOKEN,
                     token: auth['access_token'],
@@ -72,7 +72,7 @@ export const createTableAction = createAction({
 
         const result = await httpClient.sendRequest({
             method: HttpMethod.POST,
-            url: `${excelCommon.baseUrl}/${workbookId}/workbook/worksheets/${worksheetId}/tables/add`,
+            url: `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/add`,
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
                 token: auth['access_token'],

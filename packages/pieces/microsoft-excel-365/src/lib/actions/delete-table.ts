@@ -20,7 +20,7 @@ export const deleteTableAction = createAction({
 
         const response = await httpClient.sendRequest({
             method: HttpMethod.DELETE,
-            url: `${excelCommon.baseUrl}/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}`,
+            url: `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}`,
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
                 token: auth['access_token'],

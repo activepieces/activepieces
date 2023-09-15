@@ -26,7 +26,7 @@ export const appendTableRowsAction = createAction({
 
         const response = await httpClient.sendRequest({
             method: HttpMethod.POST,
-            url: `${excelCommon.baseUrl}/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}/rows`,
+            url: `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}/rows`,
             body: {
                 values: valuesToAppend
             },

@@ -1,7 +1,7 @@
 {
-  "name": "pieces-microsoft-excel",
+  "name": "pieces-microsoft-excel-365",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/pieces/microsoft-excel/src",
+  "sourceRoot": "packages/pieces/microsoft-excel-365/src",
   "projectType": "library",
   "targets": {
     "build": {
@@ -10,18 +10,18 @@
         "{options.outputPath}"
       ],
       "options": {
-        "outputPath": "dist/packages/pieces/microsoft-excel",
-        "tsConfig": "packages/pieces/microsoft-excel/tsconfig.lib.json",
-        "packageJson": "packages/pieces/microsoft-excel/package.json",
-        "main": "packages/pieces/microsoft-excel/src/index.ts",
+        "outputPath": "dist/packages/pieces/microsoft-excel-365",
+        "tsConfig": "packages/pieces/microsoft-excel-365/tsconfig.lib.json",
+        "packageJson": "packages/pieces/microsoft-excel-365/package.json",
+        "main": "packages/pieces/microsoft-excel-365/src/index.ts",
         "assets": [
-          "packages/pieces/microsoft-excel/*.md"
+          "packages/pieces/microsoft-excel-365/*.md"
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "publish": {
-      "command": "node tools/scripts/publish.mjs pieces-microsoft-excel {args.ver} {args.tag}",
+      "command": "node tools/scripts/publish.mjs pieces-microsoft-excel-365 {args.ver} {args.tag}",
       "dependsOn": [
         "build"
       ]
@@ -33,7 +33,7 @@
       ],
       "options": {
         "lintFilePatterns": [
-          "packages/pieces/microsoft-excel/**/*.ts"
+          "packages/pieces/microsoft-excel-365/**/*.ts"
         ]
       }
     }

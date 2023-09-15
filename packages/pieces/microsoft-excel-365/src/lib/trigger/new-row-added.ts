@@ -1,7 +1,6 @@
 import {
     OAuth2PropertyValue,
     Property,
-    Validators,
     createTrigger
 } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
@@ -31,22 +30,17 @@ const polling: Polling<
                 auth.access_token
             )) ?? [];
 
-        // Extract headers (first row)
-        const headers = fetchedValues[0];
-
-        // Convert the 2D array into an array of objects
-        const currentValues = fetchedValues.slice(1).map((row: any[], rowIndex: number) => {
+        const currentValues = fetchedValues.map((row: any[], rowIndex: number) => {
             const rowObject: any = {};
-            row.forEach((cell: any, cellIndex: string | number) => {
-                rowObject[headers[cellIndex]] = cell;
+            row.forEach((cell: any, cellIndex: number) => {
+                const columnName = String.fromCharCode(65 + cellIndex);
+                rowObject[columnName] = cell;
             });
             return {
-                row: rowIndex + 1, // +1 because we skipped the header row
+                row: rowIndex + 1,
                 values: rowObject
             };
         });
-
-        // console.log("Converted values:", currentValues);
 
         const items = currentValues
             .filter((f: any) => Object.keys(f.values).length > 0)
@@ -56,8 +50,7 @@ const polling: Polling<
             }))
             .filter((f: any) => isNil(lastItemId) || f.data.row > (lastItemId as number));
 
-        // console.log("IIIIIIIIII : ", items.reverse())
-        return items;
+        return items.reverse();
     }
 };
 
@@ -73,7 +66,7 @@ export const readNewRows = createTrigger({
         max_rows_to_poll: Property.Number({
             displayName: 'Max Rows to Poll',
             description:
-                'The maximum number of rows to poll, the rest will be polled on the next run, maximum is 10 in order to avoid errors.',
+                'The maximum number of rows to poll, the rest will be polled on the next run.',
             required: false,
             defaultValue: 10,
             validators: []

@@ -31,7 +31,7 @@ export const updateRowAction = createAction({
 
         const request = {
             method: HttpMethod.PATCH,
-            url: `${excelCommon.baseUrl}/${workbook_id}/workbook/worksheets/${worksheet_id}/range(address='${range}')`,
+            url: `${excelCommon.baseUrl}/items/${workbook_id}/workbook/worksheets/${worksheet_id}/range(address='${range}')`,
             body: requestBody,
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN as const,

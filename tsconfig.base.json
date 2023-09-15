@@ -130,8 +130,8 @@
         "packages/pieces/mattermost/src/index.ts"
       ],
       "@activepieces/piece-mautic": ["packages/pieces/mautic/src/index.ts"],
-      "@activepieces/piece-microsoft-excel": [
-        "packages/pieces/microsoft-excel/src/index.ts"
+      "@activepieces/piece-microsoft-excel-365": [
+        "packages/pieces/microsoft-excel-365/src/index.ts"
       ],
       "@activepieces/piece-mindee": ["packages/pieces/mindee/src/index.ts"],
       "@activepieces/piece-monday": ["packages/pieces/monday/src/index.ts"],

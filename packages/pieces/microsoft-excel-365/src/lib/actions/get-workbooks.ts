@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
 import { excelAuth } from '../../index';
+import { excelCommon } from '../common/common';
 
 export const getWorkbooksAction = createAction({
     auth: excelAuth,
@@ -27,7 +28,7 @@ export const getWorkbooksAction = createAction({
 
         const request = {
             method: HttpMethod.GET,
-            url: `https://graph.microsoft.com/v1.0/me/drive/root/search(q='.xlsx')`,
+            url: `${excelCommon.baseUrl}/root/search(q='.xlsx')`,
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN as const,
                 token: auth['access_token'],

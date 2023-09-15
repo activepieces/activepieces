@@ -24,7 +24,7 @@ export const getTableColumnsAction = createAction({
         const tableId = propsValue['table'];
         const limit = propsValue['limit'];
 
-        let url = `${excelCommon.baseUrl}/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}/columns`;
+        let url = `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}/columns`;
 
         if (limit) {
             url += `?$top=${limit}`

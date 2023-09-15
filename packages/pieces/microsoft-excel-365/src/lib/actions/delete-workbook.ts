@@ -17,7 +17,7 @@ export const deleteWorkbookAction = createAction({
 
         const request: HttpRequest = {
             method: HttpMethod.DELETE,
-            url: `${excelCommon.baseUrl}/${workbookId}`,
+            url: `${excelCommon.baseUrl}/items/${workbookId}`,
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
                 token: accessToken,

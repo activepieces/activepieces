@@ -1,31 +1,32 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
-import { excelAuth } from '../../index';
 import { excelCommon } from '../common/common';
+import { excelAuth } from '../../index';
 
-export const deleteWorksheetAction = createAction({
+export const convertToRangeAction = createAction({
     auth: excelAuth,
-    name: 'delete_worksheet',
-    description: 'Delete a worksheet in a workbook',
-    displayName: 'Delete Worksheet',
+    name: 'convert_to_range',
+    description: 'Converts a table to a range',
+    displayName: 'Convert to Range',
     props: {
         workbook_id: excelCommon.workbook_id,
         worksheet_id: excelCommon.worksheet_id,
+        table_id: excelCommon.table_id,
     },
     async run({ propsValue, auth }) {
         const workbookId = propsValue['workbook_id'];
         const worksheetId = propsValue['worksheet_id'];
+        const tableId = propsValue['table_id'];
 
-        const request = {
-            method: HttpMethod.DELETE,
-            url: `${excelCommon.baseUrl}/${workbookId}/workbook/worksheets/${worksheetId}`,
+        const response = await httpClient.sendRequest({
+            method: HttpMethod.POST,
+            url: `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}/convertToRange`,
             authentication: {
-                type: AuthenticationType.BEARER_TOKEN as const,
+                type: AuthenticationType.BEARER_TOKEN,
                 token: auth['access_token'],
             }
-        };
+        });
 
-        const response = await httpClient.sendRequest(request);
         return response.body;
     },
 });

@@ -30,7 +30,7 @@ export const appendRowAction = createAction({
         const rangeFrom = `A${lastUsedRow + 1}`;
         const rangeTo = `${lastUserColumn}${lastUsedRow + numberOfRows}`;
 
-        const url = `https://graph.microsoft.com/v1.0/me/drive/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='${rangeFrom}:${rangeTo}')`;
+        const url = `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='${rangeFrom}:${rangeTo}')`;
 
         const requestBody = {
             values: values

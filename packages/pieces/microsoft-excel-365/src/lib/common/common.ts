@@ -2,7 +2,7 @@ import { Property, OAuth2PropertyValue } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod, AuthenticationType, HttpRequest, getAccessTokenOrThrow } from "@activepieces/pieces-common";
 
 export const excelCommon = {
-    baseUrl: "https://graph.microsoft.com/v1.0/me/drive/items",
+    baseUrl: "https://graph.microsoft.com/v1.0/me/drive",
     workbook_id: Property.Dropdown({
         displayName: "Workbook",
         required: true,
@@ -17,7 +17,7 @@ export const excelCommon = {
             const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
             const workbooks: { id: string, name: string }[] = (await httpClient.sendRequest<{ value: { id: string; name: string; }[]; }>({
                 method: HttpMethod.GET,
-                url: `https://graph.microsoft.com/v1.0/me/drive/root/search(q='.xlsx')`,
+                url: `${excelCommon.baseUrl}/items/root/search(q='.xlsx')`,
                 queryParams: {
                     filter: "file ne null and file/mimeType eq 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'",
                 },
@@ -53,7 +53,7 @@ export const excelCommon = {
             const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
             const worksheets: { id: string, name: string }[] = (await httpClient.sendRequest<{ value: { id: string, name: string }[] }>({
                 method: HttpMethod.GET,
-                url: `${excelCommon.baseUrl}/${workbook_id}/workbook/worksheets`,
+                url: `${excelCommon.baseUrl}/items/${workbook_id}/workbook/worksheets`,
                 authentication: {
                     type: AuthenticationType.BEARER_TOKEN,
                     token: authProp['access_token'],
@@ -86,7 +86,7 @@ export const excelCommon = {
             const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
             const tables: { id: string, name: string }[] = (await httpClient.sendRequest<{ value: { id: string, name: string }[] }>({
                 method: HttpMethod.GET,
-                url: `${excelCommon.baseUrl}/${workbook_id}/workbook/worksheets/${worksheet_id}/tables`,
+                url: `${excelCommon.baseUrl}/items/${workbook_id}/workbook/worksheets/${worksheet_id}/tables`,
                 authentication: {
                     type: AuthenticationType.BEARER_TOKEN,
                     token: authProp['access_token'],
@@ -107,7 +107,7 @@ export const excelCommon = {
     getHeaders: async function (workbookId: string, accessToken: string, worksheetId: string) {
         const response = await httpClient.sendRequest<{ values: string[][] }>({
             method: HttpMethod.GET,
-            url: `${excelCommon.baseUrl}/${workbookId}/workbook/worksheets/${worksheetId}/usedRange(valuesOnly=true)`,
+            url: `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/usedRange(valuesOnly=true)`,
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
                 token: accessToken,
@@ -116,7 +116,7 @@ export const excelCommon = {
         return response.body.values[0];
     },
     getLastUsedRow: async function (workbookId: string, worksheetId: string, accessToken: string): Promise<number> {
-        const url = `${excelCommon.baseUrl}/${workbookId}/workbook/worksheets/${worksheetId}/usedRange`;
+        const url = `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/usedRange`;
 
         const request: HttpRequest = {
             method: HttpMethod.GET,
@@ -135,7 +135,7 @@ export const excelCommon = {
         return lastRow;
     },
     getLastUsedColumn: async function (workbookId: string, worksheetId: string, accessToken: string): Promise<number> {
-        const url = `https://graph.microsoft.com/v1.0/me/drive/items/${workbookId}/workbook/worksheets/${worksheetId}/usedRange`;
+        const url = `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/usedRange`;
 
         const request: HttpRequest = {
             method: HttpMethod.GET,
@@ -156,7 +156,7 @@ export const excelCommon = {
     getAllRows: async function (workbookId: string, worksheetId: string, accessToken: string) {
         const response = await httpClient.sendRequest({
             method: HttpMethod.GET,
-            url: `${excelCommon.baseUrl}/${workbookId}/workbook/worksheets/${worksheetId}/usedRange(valuesOnly=true)`,
+            url: `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/usedRange(valuesOnly=true)`,
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
                 token: accessToken,
@@ -164,7 +164,6 @@ export const excelCommon = {
         });
 
         const rows = response.body["values"];
-        console.log("AAAAAAAAAAAAAAAAAA", rows)
         return rows;
     },
 }

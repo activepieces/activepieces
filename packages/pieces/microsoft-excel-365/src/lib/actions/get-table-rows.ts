@@ -24,7 +24,7 @@ export const getTableRowsAction = createAction({
         const tableId = propsValue['table'];
         const limit = propsValue['limit'];
 
-        let url = `${excelCommon.baseUrl}/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}/rows`;
+        let url = `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}/rows`;
 
         if (limit) {
             url += `?$top=${limit}`

@@ -6,7 +6,7 @@ import { excelCommon } from '../common/common';
 export const addWorksheetAction = createAction({
     auth: excelAuth,
     name: 'add_worksheet',
-    description: 'Add a worksheet to an existing workbook',
+    description: 'Add a worksheet to a workbook',
     displayName: 'Add a Worksheet to a Workbook',
     props: {
         workbook_id: excelCommon.workbook_id,
@@ -23,7 +23,7 @@ export const addWorksheetAction = createAction({
 
         const request: HttpRequest = {
             method: HttpMethod.POST,
-            url: `${excelCommon.baseUrl}/${workbook_id}/workbook/worksheets`,
+            url: `${excelCommon.baseUrl}/items/${workbook_id}/workbook/worksheets`,
             body: {
                 name: worksheet_name
             },

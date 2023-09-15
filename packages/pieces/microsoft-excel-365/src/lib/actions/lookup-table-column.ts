@@ -37,7 +37,7 @@ export const lookupTableColumnAction = createAction({
         const lookupValue = propsValue['lookup_value'];
         const returnAllMatches = propsValue['return_all_matches'];
 
-        const rowsUrl = `https://graph.microsoft.com/v1.0/me/drive/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableName}/rows`;
+        const rowsUrl = `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableName}/rows`;
         const rowsResponse = await httpClient.sendRequest({
             method: HttpMethod.GET,
             url: rowsUrl,
@@ -47,7 +47,7 @@ export const lookupTableColumnAction = createAction({
             }
         });
 
-        const columnsUrl = `https://graph.microsoft.com/v1.0/me/drive/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableName}/columns`;
+        const columnsUrl = `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableName}/columns`;
         const columnsResponse = await httpClient.sendRequest({
             method: HttpMethod.GET,
             url: columnsUrl,

@@ -28,7 +28,7 @@ export const getWorksheetsAction = createAction({
         const returnAll = propsValue['returnAll'];
         const limit = propsValue['limit'];
 
-        const endpoint = `https://graph.microsoft.com/v1.0/me/drive/items/${workbookId}/workbook/worksheets`;
+        const endpoint = `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets`;
         const headers = {
             'Authorization': `Bearer ${auth['access_token']}`,
             'Content-Type': 'application/json',
