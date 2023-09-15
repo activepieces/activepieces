@@ -33,14 +33,12 @@ export const imapCommon = {
             imapClient.connect();
         });
     },
-    async fetchEmails({ imapConfig, range, mailbox, files }: { imapConfig: any, range: string, mailbox: string, files: FilesService }): Promise<{
-        parsedEmails: ParsedMail[],
+    async fetchEmails({ imapConfig, lastTotalMessages, test, mailbox, files }: { imapConfig: any, lastTotalMessages: number | null, test: boolean, mailbox: string, files: FilesService }): Promise<{
+        parsedEmails: any[],
         totalMessages: number,
     }> {
-        const { parsedEmails, totalMessages } = await new Promise<{ parsedEmails: ParsedMail[], totalMessages: number }>((resolve, reject) => {
+        const { parsedEmails, totalMessages } = await new Promise<{ parsedEmails: any[], totalMessages: number }>((resolve, reject) => {
             const imapClient = new imap(imapConfig);
-            const parsedEmails: ParsedMail[] = [];
-            let messages = 0;
 
             imapClient.once('ready', () => {
                 imapClient.openBox(mailbox, (err, ml) => {
@@ -48,31 +46,37 @@ export const imapCommon = {
                         imapClient.end();
                         reject(err);
                     } else {
-                        messages = ml.messages.total;
-                        const listener = imapClient.seq.fetch(range, {
-                            bodies: "",
-                            struct: true,
-                        })
-                        listener.on('message', (msg, seqno) => {
-                            msg.on('body', stream => {
-                                simpleParser(stream, async (err, parsed) => {
-                                    parsedEmails.push(parsed);
+                        const messages = ml.messages.total;
+                        if (messages === lastTotalMessages && !test) {
+                            resolve({
+                                parsedEmails: [],
+                                totalMessages: messages,
+                            })
+                        } else {
+                            const finalEmails: any[] = [];
+                            const newMessages = test ? Math.min(5, messages) : messages - (lastTotalMessages ?? 0);
+                            const range = test ? `${Math.max(1, messages - 5)}:${messages}` : `${lastTotalMessages! + 1}:${messages}`;
+                            const listener = imapClient.seq.fetch(range, {
+                                bodies: "",
+                                struct: true,
+                            })
+                            listener.on('message', (msg, seqno) => {
+                                msg.on('body', stream => {
+                                    finalEmails.push(stream);
+                                    if (finalEmails.length === newMessages) {
+                                        imapClient.end();
+                                        resolve({
+                                            parsedEmails: finalEmails,
+                                            totalMessages: messages,
+                                        });
+                                    }
                                 });
                             });
-                        });
-                        listener.once('end', () => {
-                            imapClient.end();
-                        });
+                        }
                     }
                 });
             });
 
-            imapClient.once('end', () => {
-                resolve({
-                    parsedEmails,
-                    totalMessages: messages,
-                });
-            });
             imapClient.once('error', (err: any) => {
                 reject(err);
             });
@@ -80,7 +84,7 @@ export const imapCommon = {
             imapClient.connect();
         });
         const convertedItems = await Promise.all(parsedEmails.map(async (item) => {
-            const castedItem = item as ParsedMail;
+            const castedItem = await parseStream(item);
             return {
                 ...castedItem,
                 attachments: await convertAttachment(castedItem.attachments, files)
@@ -88,7 +92,7 @@ export const imapCommon = {
         }
         ));
         return {
-            parsedEmails,
+            parsedEmails: convertedItems,
             totalMessages,
         }
     },
@@ -105,3 +109,14 @@ async function convertAttachment(attachments: Attachment[], files: FilesService)
     return Promise.all(promises);
 }
 
+async function parseStream(stream: any) {
+    return new Promise<ParsedMail>((resolve, reject) => {
+        simpleParser(stream, (err, parsed) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(parsed);
+            }
+        });
+    });
+}
