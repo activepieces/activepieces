@@ -28,7 +28,7 @@ export const httpSendRequestAction = createAction({
       displayName: 'Query params',
       required: true,
     }),
-    extra: Property.DynamicProperties({
+    body: Property.DynamicProperties({
       displayName: 'Body',
       required: false,
       refreshers: ['method'],
@@ -40,7 +40,6 @@ export const httpSendRequestAction = createAction({
           displayName: 'Body',
           required: false,
         })
-
         return properties;
       }
     }),
@@ -55,7 +54,7 @@ export const httpSendRequestAction = createAction({
   },
 
   async run(context) {
-    const { method, url, headers, queryParams, extra, failsafe, timeout } =
+    const { method, url, headers, queryParams, body, failsafe, timeout } =
       context.propsValue;
 
     assertNotNullOrUndefined(method, 'Method');
@@ -69,7 +68,7 @@ export const httpSendRequestAction = createAction({
       timeout: timeout ? timeout * 1000 : 0,
     };
     if (method !== HttpMethod.GET) {
-      request.body = extra?.body;
+      request.body = body?.body;
     }
 
     try {
