@@ -72,7 +72,7 @@ export const sessionCommon = {
                 }
             })).body;
             const session = [];
-            for(let x in sessions){
+            for(const x in sessions){
                 session.push(sessions[x] as Pages);
             }
 
