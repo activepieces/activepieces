@@ -21,7 +21,7 @@ export const createOrUpdateContact = createAction({
       attributes: Property.Object({
         displayName: "Attributes",
         description: `Pass the set of attributes and their values. The attribute's parameter should be passed in capital letter while creating a contact. These attributes must be present in your SendinBlue account. For eg:
-      {"FNAME":"Elly", "LNAME":"Roger"}`,
+        {"FNAME":"Elly", "LNAME":"Roger"}`,
         required: false,
         defaultValue: {
           "FIRST_NAME": "",
@@ -61,14 +61,19 @@ export const createOrUpdateContact = createAction({
       })
     },
     async run(context) {
+      let listIds: number[] = [];
+      if( context.propsValue.list_ids ) {
+        listIds = context.propsValue.list_ids.map( (listId) =>{
+          return parseInt(listId as unknown as string);
+        });
+      }
       const contact = {
         email: context.propsValue.email,
         ext_id: context.propsValue.ext_id,
         attributes: context.propsValue.attributes,
         emailBlacklisted: context.propsValue.email_blacklisted,
         smsBlacklisted: context.propsValue.sms_blacklisted,
-        listIds: context.propsValue.list_ids,
-        unlinkListIds: context.propsValue.list_ids,
+        listIds: listIds,
         smtpBlacklistSender: context.propsValue.smtp_blacklist_sender,
         updateEnabled: true
       }
