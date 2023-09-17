@@ -1,6 +1,6 @@
-import { FastifyInstance } from 'fastify'
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { fileController } from './file.controller'
 
-export const fileModule = async (app: FastifyInstance) => {
-    app.register(fileController, { prefix: '/v1/files' })
+export const fileModule: FastifyPluginAsyncTypebox = async (app) => {
+    await app.register(fileController, { prefix: '/v1/files' })
 }

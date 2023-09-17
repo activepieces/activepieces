@@ -46,7 +46,7 @@ export class TelemetryService {
       });
   }
 
-  isFeatureEnabled(feature: string): Observable<boolean | undefined> {
+  isFeatureEnabled(feature: string): Observable<boolean> {
     return this.flagService.getAllFlags().pipe(
       map((flags) => {
         if (flags[ApFlagId.ENVIRONMENT] === ApEnvironment.DEVELOPMENT) {
@@ -55,7 +55,7 @@ export class TelemetryService {
         if (!flags[ApFlagId.TELEMETRY_ENABLED]) {
           return false;
         }
-        return posthog.isFeatureEnabled(feature);
+        return posthog.isFeatureEnabled(feature) || false;
       })
     );
   }
