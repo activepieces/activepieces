@@ -1,5 +1,14 @@
 import { sessionAuth } from "../..";
-import { createTrigger, TriggerStrategy } from "@activepieces/pieces-framework";
+import { createTrigger, Property, TriggerStrategy } from "@activepieces/pieces-framework";
+
+const markdown = `
+- Go to "Account Settings"
+- Click on Webhooks
+- Copy this URL:
+\`{{webhookUrl}}\`
+- Paste it into the Trigger you want
+- Should be good to go!
+`
 
 
 export const SessionData = createTrigger({
@@ -7,7 +16,11 @@ export const SessionData = createTrigger({
     name: "session_data",
     displayName: "Session Data",
     description: "Triggers when a data is transferred",
-    props: {},
+    props: {
+        md: Property.MarkDown({
+            value: markdown
+        })
+    },
     type: TriggerStrategy.WEBHOOK,
     sampleData: {
         "session": {
@@ -34,14 +47,10 @@ export const SessionData = createTrigger({
         },
     },
     async onEnable(context){
-        const url = context.webhookUrl;
-        await context.store.put("webhook",url);
-
+        //Empty
     },
     async onDisable(context){
-        const url = context.webhookUrl
-        await context.store.put("webhook",url);
-
+        //Empty
     },
     async run(context) {
         const body = context.payload.body;
