@@ -1,5 +1,5 @@
 import { Property } from "@activepieces/pieces-framework";
-import { httpClient, HttpMethod, HttpRequest } from "@activepieces/pieces-common";
+import { httpClient, HttpMethod } from "@activepieces/pieces-common";
 
 interface Pages {
     id: string;

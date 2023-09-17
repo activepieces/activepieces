@@ -1,4 +1,4 @@
-import { sessionAuth } from "../..";
+
 import { createTrigger, PieceAuth, Property, TriggerStrategy } from "@activepieces/pieces-framework";
 
 const markdown = `
