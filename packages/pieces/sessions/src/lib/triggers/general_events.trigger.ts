@@ -1,5 +1,5 @@
 import { sessionAuth } from "../..";
-import { createTrigger, Property, TriggerStrategy } from "@activepieces/pieces-framework";
+import { createTrigger, PieceAuth, Property, TriggerStrategy } from "@activepieces/pieces-framework";
 
 const markdown = `
 - Go to "Account Settings"
@@ -12,7 +12,7 @@ const markdown = `
 
 
 export const SessionData = createTrigger({
-    auth: sessionAuth,
+    auth: PieceAuth.None(),
     name: "session_data",
     displayName: "Session Data",
     description: "Triggers when a data is transferred",
