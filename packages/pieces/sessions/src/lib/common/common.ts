@@ -29,7 +29,7 @@ export const sessionCommon = {
                 }
             })).body;
             const books = [];
-            for(let x in bookings){
+            for(const x in bookings){
                 books.push(bookings[x] as Pages);
             }
 
