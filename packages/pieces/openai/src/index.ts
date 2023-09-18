@@ -1,6 +1,7 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { askOpenAI } from './lib/actions/send-prompt';
-
+import { transcribeAction } from './lib/actions/transcriptions';
+import { translateAction } from './lib/actions/translation';
 const markdownDescription = `
 Follow these instructions to get your OpenAI API Key:
 
@@ -22,7 +23,7 @@ export const openai = createPiece({
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/openai.png',
   auth: openaiAuth,
-  actions: [askOpenAI],
+  actions: [ askOpenAI , transcribeAction , translateAction ],
   authors: ['aboudzein', 'creed983', 'astorozhevsky'],
   triggers: []
 });
