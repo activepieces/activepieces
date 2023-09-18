@@ -37,7 +37,7 @@ export { TestFlowRunRequestBody } from "./lib/flow-run/test-flow-run-request";
 export { Trigger, EmptyTrigger, PieceTriggerSettings, PieceTrigger, WebhookTrigger, TriggerType, AUTHENTICATION_PROPERTY_NAME} from './lib/flows/triggers/trigger';
 export { FlowVersion, FlowVersionState, FlowVersionId } from './lib/flows/flow-version';
 export { Flow, FlowId } from './lib/flows/flow';
-export { File, FileId } from './lib/file/file'
+export * from './lib/file'
 export * from './lib/flows/flow-helper';
 export { FlowRun, FlowRunId, RunEnvironment } from './lib/flow-run/flow-run'
 export * from './lib/flow-run/execution/execution-state';
