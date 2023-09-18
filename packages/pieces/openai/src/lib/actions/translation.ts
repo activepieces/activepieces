@@ -15,18 +15,12 @@ export const translateAction = createAction({
             required: true,
             description: 'Audio file to translate',
         }),
-        fileName : Property.ShortText({
-            displayName: 'File name',
-            required: true,
-            description: 'Name of the file',
-        }),
     },
     run: async ( context ) => {
         const fileData = context.propsValue.audio;        
         const mimeType = mime.lookup(fileData.extension ? fileData.extension : '');
-
         const form = new FormData()
-        form.append("file", fileData.data , { filename: context.propsValue.fileName , contentType: mimeType as string });
+        form.append("file", fileData.data , { filename: fileData.filename , contentType: mimeType as string });
         form.append("model", "whisper-1");
 
         const request : HttpRequest = {
