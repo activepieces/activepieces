@@ -1,6 +1,7 @@
 import {
     ActionType,
     ActivepiecesError,
+    assertNotNullOrUndefined,
     CodeActionSettings,
     ErrorCode,
     ExecuteFlowOperation,
@@ -8,7 +9,9 @@ import {
     ExecutionOutputStatus,
     ExecutionType,
     File,
+    FileCompression,
     FileId,
+    FileType,
     flowHelper,
     FlowRunId,
     FlowVersion,
@@ -28,12 +31,12 @@ import { captureException, logger } from '../../helper/logger'
 import { isNil } from '@activepieces/shared'
 import { getServerUrl } from '../../helper/public-ip-utils'
 import { PackageInfo } from '../../helper/package-manager'
-import sizeof from 'object-sizeof'
 import { MAX_LOG_SIZE } from '@activepieces/shared'
 import { acquireLock } from '../../helper/lock'
 import { sandboxProvisioner } from '../sandbox/provisioner/sandbox-provisioner'
 import { SandBoxCacheType } from '../sandbox/provisioner/sandbox-cache-type'
 import { flowWorkerHooks } from './flow-worker-hooks'
+import { logSerializer } from '../../flows/common/log-serializer'
 
 type FinishExecutionParams = {
     flowRunId: FlowRunId
@@ -250,7 +253,10 @@ async function saveToLogFile({ fileId, projectId, executionOutput }: { fileId: F
     if (executionOutput.status !== ExecutionOutputStatus.PAUSED) {
         executionOutput.executionState.lastStepState = {}
     }
-    if (sizeof(executionOutput) > MAX_LOG_SIZE) {
+
+    const serializedLogs = await logSerializer.serialize(executionOutput)
+
+    if (serializedLogs.byteLength > MAX_LOG_SIZE) {
         const errors = new Error('Execution Output is too large, maximum size is ' + MAX_LOG_SIZE)
         captureException(errors)
         throw errors
@@ -260,8 +266,11 @@ async function saveToLogFile({ fileId, projectId, executionOutput }: { fileId: F
     const logsFile = await fileService.save({
         fileId,
         projectId,
-        data: Buffer.from(JSON.stringify(executionOutput)),
+        data: serializedLogs,
+        type: FileType.FLOW_RUN_LOG,
+        compression: FileCompression.GZIP,
     })
+
     return logsFile
 }
 
@@ -313,8 +322,11 @@ async function getCodeStepsWithoutLock(projectId: ProjectId, flowVersion: FlowVe
     return results.map((sourceEntity, index) => {
         const step = steps[index]
         const codeSettings = step.settings as CodeActionSettings
+
+        assertNotNullOrUndefined(codeSettings.artifactSourceId, '[FlowWorker#getCodeSteps] codeSettings.artifactSourceId')
+
         return {
-            sourceId: codeSettings.artifactSourceId!,
+            sourceId: codeSettings.artifactSourceId,
             zipFile: sourceEntity.data,
         }
     })
