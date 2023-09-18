@@ -33,6 +33,7 @@ import { MAX_LOG_SIZE } from '@activepieces/shared'
 import { acquireLock } from '../../helper/lock'
 import { sandboxProvisioner } from '../sandbox/provisioner/sandbox-provisioner'
 import { SandBoxCacheType } from '../sandbox/provisioner/sandbox-cache-type'
+import { flowWorkerHooks } from './flow-worker-hooks'
 
 type FinishExecutionParams = {
     flowRunId: FlowRunId
@@ -158,9 +159,18 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
 
     const startTime = Date.now()
 
+    const flowVersionWithLockedPieces = await flowVersionService.getOne(jobData.flowVersionId)
+
+    if (isNil(flowVersionWithLockedPieces)) {
+        logger.info({
+            message: 'Flow version not found, skipping execution',
+            flowVersionId: jobData.flowVersionId,
+        })
+        return
+    }
     const flowVersion = await flowVersionService.lockPieceVersions(
         jobData.projectId,
-        await flowVersionService.getOneOrThrow(jobData.flowVersionId),
+        flowVersionWithLockedPieces,
     )
 
     const sandbox = await getSandbox({
@@ -172,6 +182,8 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
     logger.info(`[FlowWorker#executeFlow] flowRunId=${jobData.runId} sandboxId=${sandbox.boxId} prepareTime=${Date.now() - startTime}ms`)
 
     try {
+        await flowWorkerHooks.getHooks().preExecute({ projectId: jobData.projectId })
+    
         const { input, logFileId } = await loadInputAndLogFileId({
             flowVersion,
             jobData,
