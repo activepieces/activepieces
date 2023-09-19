@@ -73,9 +73,6 @@
       "@activepieces/piece-github": ["packages/pieces/github/src/index.ts"],
       "@activepieces/piece-gitlab": ["packages/pieces/gitlab/src/index.ts"],
       "@activepieces/piece-gmail": ["packages/pieces/gmail/src/index.ts"],
-      "@activepieces/piece-google-business": [
-        "packages/pieces/google-business/src/index.ts"
-      ],
       "@activepieces/piece-google-calendar": [
         "packages/pieces/google-calendar/src/index.ts"
       ],
@@ -214,6 +211,9 @@
       ],
       "@activepieces/pieces/date-helper": [
         "packages/pieces/date-helper/src/index.ts"
+      ],
+      "@activepieces/pieces/google-my-business": [
+        "packages/pieces/google-my-business/src/index.ts"
       ],
       "@activepieces/pieces/text-helper": [
         "packages/pieces/text-helper/src/index.ts"
