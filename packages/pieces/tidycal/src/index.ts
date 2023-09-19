@@ -16,7 +16,7 @@ export const tidyCalAuth = PieceAuth.SecretText({
 	required: true,
 	validate: async ({auth}) => {
 		try{
-			const response = await calltidycalapi( HttpMethod.GET , "bookings" , auth , undefined);
+			await calltidycalapi( HttpMethod.GET , "bookings" , auth , undefined);
 			return{
 				valid: true,
 			};
