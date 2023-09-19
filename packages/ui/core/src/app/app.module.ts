@@ -7,7 +7,6 @@ import { BrowserModule } from '@angular/platform-browser';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { FlowBuilderModule } from './modules/flow-builder/flow-builder.module';
 import { HttpClientModule } from '@angular/common/http';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { UiCommonModule, environment } from '@activepieces/ui/common';
@@ -19,22 +18,47 @@ import { EffectsModule } from '@ngrx/effects';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { CommonModule } from '@angular/common';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
-import { CommonLayoutModule } from './modules/common/common-layout.module';
-import { FirebaseAuthLayoutModule } from '../../../../ee/firebase-auth/frontend/firebase-auth.module';
+import { MaterialLayoutModule } from './modules/common/common-layout.module';
 import { Route, Router } from '@angular/router';
 import { FlagService } from '@activepieces/ui/common';
 import { ApEdition } from '@activepieces/shared';
-import { FirebaseAuthContainerComponent } from '@ee/firebase-auth/frontend/auth-container/firebase-auth-container.component';
 import { UserLoggedIn } from './guards/user-logged-in.guard';
-import { DashboardContainerComponent } from '@activepieces/ui/feature-dashboard';
-import { FeatureCommandBarModule } from '@activepieces/ui/feature-command-bar';
-import { AuthLayoutComponent } from '@activepieces/ui/feature-authentication';
 import { ImportFlowComponent } from './modules/import-flow/import-flow.component';
+import { LottieCacheModule, LottieModule } from 'ngx-lottie';
+import player from 'lottie-web';
+import { ImportFlowUriEncodedComponent } from './modules/import-flow-uri-encoded/import-flow-uri-encoded.component';
+import { ImportFlowUriEncodedResolver } from './modules/import-flow-uri-encoded/import-flow-uri-encoded.resolver';
+import {
+  MonacoEditorModule,
+  NgxMonacoEditorConfig,
+} from 'ngx-monaco-editor-v2';
+import { apMonacoTheme } from './modules/common/monaco-themes/ap-monaco-theme';
+import { cobalt2 } from './modules/common/monaco-themes/cobalt-2-theme';
 
+const monacoConfig: NgxMonacoEditorConfig = {
+  baseUrl: '/assets', // configure base path for monaco editor. Starting with version 8.0.0 it defaults to './assets'. Previous releases default to '/assets'
+  defaultOptions: { scrollBeyondLastLine: false }, // pass default options to be used
+  onMonacoLoad: () => {
+    const monaco = (window as any).monaco;
+    monaco.editor.defineTheme('apTheme', apMonacoTheme);
+    monaco.editor.defineTheme('cobalt2', cobalt2);
+    const stopImportResolutionError = () => {
+      monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
+        diagnosticCodesToIgnore: [2792],
+      });
+    };
+    stopImportResolutionError();
+    // Assuming you have already initialized the Monaco editor instance as 'editor'
+  },
+};
 export function tokenGetter() {
   const jwtToken: any = localStorage.getItem(environment.jwtTokenName);
-
   return jwtToken;
+}
+// Note we need a separate function as it's required
+// by the AOT compiler.
+export function playerFactory() {
+  return player;
 }
 
 @NgModule({
@@ -43,14 +67,13 @@ export function tokenGetter() {
     NotFoundComponent,
     RedirectUrlComponent,
     ImportFlowComponent,
+    ImportFlowUriEncodedComponent,
   ],
   imports: [
     CommonModule,
     BrowserModule,
-    FlowBuilderModule,
     AppRoutingModule,
     BrowserAnimationsModule,
-    FeatureCommandBarModule,
     StoreModule.forRoot({}),
     StoreDevtoolsModule.instrument({
       maxAge: 25, // Retains last 25 states
@@ -65,10 +88,12 @@ export function tokenGetter() {
         allowedDomains: [extractHostname(environment.apiUrl)],
       },
     }),
-    ...dynamicModules(),
-    AngularSvgIconModule,
-    CommonLayoutModule,
+    AngularSvgIconModule.forRoot(),
+    MaterialLayoutModule,
     UiCommonModule,
+    LottieModule.forRoot({ player: playerFactory }),
+    LottieCacheModule.forRoot(),
+    MonacoEditorModule.forRoot(monacoConfig),
   ],
   providers: [
     {
@@ -102,7 +127,6 @@ function dynamicRoutes(edition: string) {
   const coreRoutes: Route[] = [
     {
       path: '',
-      component: DashboardContainerComponent,
       canActivate: [UserLoggedIn],
       children: [
         {
@@ -129,9 +153,17 @@ function dynamicRoutes(edition: string) {
   ];
   const suffixRoutes: Route[] = [
     {
+      path: 'import-flow-uri-encoded',
       canActivate: [UserLoggedIn],
+      resolve: {
+        combination: ImportFlowUriEncodedResolver,
+      },
+      component: ImportFlowUriEncodedComponent,
+    },
+    {
       path: 'templates/:templateId',
       component: ImportFlowComponent,
+      title: `Import Flow - ${environment.websiteTitle}`,
     },
     {
       path: 'redirect',
@@ -140,33 +172,21 @@ function dynamicRoutes(edition: string) {
     {
       path: '**',
       component: NotFoundComponent,
-      title: 'AP-404',
+      title: `404 - ${environment.websiteTitle}`,
     },
   ];
   let editionRoutes: Route[] = [];
   switch (edition) {
+    case ApEdition.CLOUD:
+      editionRoutes = [];
+      break;
     case ApEdition.ENTERPRISE:
-      editionRoutes = [
-        {
-          path: '',
-          component: FirebaseAuthContainerComponent,
-          children: [
-            {
-              path: '',
-              loadChildren: () =>
-                import(
-                  '../../../../ee/firebase-auth/frontend/firebase-auth.module'
-                ).then((m) => m.FirebaseAuthLayoutModule),
-            },
-          ],
-        },
-      ];
+      editionRoutes = [];
       break;
     case ApEdition.COMMUNITY:
       editionRoutes = [
         {
           path: '',
-          component: AuthLayoutComponent,
           children: [
             {
               path: '',
@@ -181,10 +201,6 @@ function dynamicRoutes(edition: string) {
       break;
   }
   return [...coreRoutes, ...editionRoutes, ...suffixRoutes];
-}
-
-function dynamicModules() {
-  return [FirebaseAuthLayoutModule];
 }
 
 function extractHostname(url: string): string {

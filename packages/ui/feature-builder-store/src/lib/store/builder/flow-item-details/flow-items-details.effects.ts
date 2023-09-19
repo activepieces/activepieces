@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
-import { forkJoin, map, of, switchMap } from 'rxjs';
+import { forkJoin, map, of, switchMap, take } from 'rxjs';
 import { ActionType, TriggerType } from '@activepieces/shared';
 import { FlowItemDetailsActions } from './flow-items-details.action';
 import {
-  ActionMetaService,
+  PieceMetadataService,
   CORE_PIECES_ACTIONS_NAMES,
   CORE_PIECES_TRIGGERS,
   FlowItemDetails,
@@ -17,14 +17,16 @@ export class FlowItemsDetailsEffects {
     return this.actions$.pipe(
       ofType(FlowItemDetailsActions.loadFlowItemsDetails),
       switchMap(() => {
-        const components$ = this.flowItemsDetailsService.getPiecesManifest();
+        const pieces$ = this.flowItemsDetailsService
+          .getPiecesManifest()
+          .pipe(take(1));
         const coreTriggersFlowItemsDetails$ = of(
           this.flowItemsDetailsService.triggerItemsDetails
         );
-        const customPiecesTriggersFlowItemDetails$ = components$.pipe(
+        const customPiecesTriggersFlowItemDetails$ = pieces$.pipe(
           map(this.createFlowItemDetailsForComponents(true))
         );
-        const customPiecesActions$ = components$.pipe(
+        const customPiecesActions$ = pieces$.pipe(
           map(this.createFlowItemDetailsForComponents(false))
         );
         const coreFlowItemsDetails$ = of(
@@ -72,7 +74,7 @@ export class FlowItemsDetailsEffects {
         const index = source.findIndex((p) => p.extra?.appName === n);
 
         if (index < 0) {
-          console.error(`piece ${n} is not found`);
+          console.warn(`piece ${n} is not found`);
         }
         return index;
       })
@@ -82,8 +84,10 @@ export class FlowItemsDetailsEffects {
     });
     piecesNamesToMove.forEach((pieceName) => {
       const index = source.findIndex((p) => p.extra?.appName === pieceName);
-      source.splice(index, 1);
-      return index;
+      // Remove the piece from the source if it is found
+      if (index > 0) {
+        source.splice(index, 1);
+      }
     });
     return target.sort((a, b) => {
       return a.name.localeCompare(b.name);
@@ -125,6 +129,6 @@ export class FlowItemsDetailsEffects {
   }
   constructor(
     private actions$: Actions,
-    private flowItemsDetailsService: ActionMetaService
+    private flowItemsDetailsService: PieceMetadataService
   ) {}
 }

@@ -9,6 +9,7 @@ import {
   of,
   take,
   BehaviorSubject,
+  filter,
 } from 'rxjs';
 import { FlowRun } from '@activepieces/shared';
 import {
@@ -18,6 +19,7 @@ import {
   DEFAULT_PAGE_SIZE,
   LIMIT_QUERY_PARAM,
   CURSOR_QUERY_PARAM,
+  STATUS_QUERY_PARAM,
 } from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
 import { Params } from '@angular/router';
@@ -47,13 +49,18 @@ export class RunsTableDataSource extends DataSource<FlowRun> {
   connect(): Observable<FlowRun[]> {
     return combineLatest({
       queryParams: this.queryParams$,
-      project: this.store.select(ProjectSelectors.selectProject).pipe(take(1)),
+      //wait till projects are loaded
+      project: this.store
+        .select(ProjectSelectors.selectProject)
+        .pipe(filter((project) => !!project))
+        .pipe(take(1)),
     }).pipe(
       tap(() => {
         this.isLoading$.next(true);
       }),
       switchMap((res) => {
         return this.instanceRunService.list(res.project.id, {
+          status: res.queryParams[STATUS_QUERY_PARAM],
           limit: res.queryParams[LIMIT_QUERY_PARAM] || DEFAULT_PAGE_SIZE,
           cursor: res.queryParams[CURSOR_QUERY_PARAM],
         });

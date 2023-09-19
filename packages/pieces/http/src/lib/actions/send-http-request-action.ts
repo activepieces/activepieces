@@ -1,6 +1,14 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
-import {assertNotNullOrUndefined, HttpRequest, HttpHeaders, QueryParams, httpClient} from "@activepieces/pieces-common";
-import { httpMethodDropdown } from "../common/props";
+import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  HttpRequest,
+  HttpHeaders,
+  QueryParams,
+  httpClient,
+  HttpError,
+  HttpMethod,
+} from '@activepieces/pieces-common';
+import { httpMethodDropdown } from '../common/props';
+import { assertNotNullOrUndefined } from '@activepieces/shared';
 
 export const httpSendRequestAction = createAction({
   name: 'send_request',
@@ -20,14 +28,34 @@ export const httpSendRequestAction = createAction({
       displayName: 'Query params',
       required: true,
     }),
-    body: Property.Json({
+    body: Property.DynamicProperties({
       displayName: 'Body',
+      required: false,
+      refreshers: ['method'],
+      props: async ({ method }) => {
+        const methodName = method as unknown as HttpMethod;
+        if (methodName === HttpMethod.GET) return {};
+        const properties: { [key: string]: any } = {}
+        properties['body'] = Property.Json({
+          displayName: 'Body',
+          required: false,
+        })
+        return properties;
+      }
+    }),
+    failsafe: Property.Checkbox({
+      displayName: 'No Error On Failure',
+      required: false,
+    }),
+    timeout: Property.Number({
+      displayName: 'Timeout(in seconds)',
       required: false,
     }),
   },
 
   async run(context) {
-    const { method, url, headers, queryParams, body } = context.propsValue;
+    const { method, url, headers, queryParams, body, failsafe, timeout } =
+      context.propsValue;
 
     assertNotNullOrUndefined(method, 'Method');
     assertNotNullOrUndefined(url, 'URL');
@@ -37,9 +65,19 @@ export const httpSendRequestAction = createAction({
       url,
       headers: headers as HttpHeaders,
       queryParams: queryParams as QueryParams,
-      body,
+      timeout: timeout ? timeout * 1000 : 0,
     };
+    if (method !== HttpMethod.GET) {
+      request.body = body?.body;
+    }
 
-    return await httpClient.sendRequest(request);
+    try {
+      return await httpClient.sendRequest(request);
+    } catch (error) {
+      if (failsafe) {
+        return (error as HttpError).errorMessage()
+      }
+      throw error;
+    }
   },
 });

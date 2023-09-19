@@ -21,7 +21,10 @@ import {
   CustomPathMentionDialogComponent,
   CustomPathMentionDialogData,
 } from '../custom-path-mention-dialog/custom-path-mention-dialog.component';
-import { FlowItem, FlowsActions } from '@activepieces/ui/feature-builder-store';
+import {
+  FlowItem,
+  canvasActions,
+} from '@activepieces/ui/feature-builder-store';
 
 @Component({
   selector: 'app-webhook-trigger-mention-item',
@@ -44,6 +47,7 @@ export class WebhookTriggerMentionItemComponent implements OnInit {
   customPathDialogClosed$: Observable<MentionListItem | undefined>;
   _stepMention: MentionListItem & { step: WebhookTrigger };
   pathFormGroup: FormGroup<{ path: FormControl<string> }>;
+  search$: Observable<string>;
   constructor(
     private dialogService: MatDialog,
     private mentionsTreeCache: MentionsTreeCacheService,
@@ -60,6 +64,11 @@ export class WebhookTriggerMentionItemComponent implements OnInit {
         children: this.sampleData,
       });
     }
+    this.search$ = this.mentionsTreeCache.listSearchBarObs$.pipe(
+      tap((res) => {
+        this.expandSample = !!res;
+      })
+    );
     this.nodesFilteredWithSearch$ =
       this.mentionsTreeCache.listSearchBarObs$.pipe(
         map((res) => {
@@ -94,7 +103,7 @@ export class WebhookTriggerMentionItemComponent implements OnInit {
   }
   selectStep() {
     this.store.dispatch(
-      FlowsActions.selectStepByName({ stepName: this._stepMention.step.name })
+      canvasActions.selectStepByName({ stepName: this._stepMention.step.name })
     );
   }
 }

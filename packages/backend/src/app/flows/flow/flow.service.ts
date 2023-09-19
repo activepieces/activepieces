@@ -3,13 +3,14 @@ import {
     apId,
     CreateFlowRequest,
     Cursor,
-    EmptyTrigger,
     Flow,
+    flowHelper,
     FlowId,
     FlowInstance,
     FlowInstanceStatus,
     FlowOperationRequest,
     FlowOperationType,
+    FlowTemplate,
     FlowVersion,
     FlowVersionId,
     FlowVersionState,
@@ -17,39 +18,40 @@ import {
     ProjectId,
     SeekPage,
     TelemetryEventName,
-    TriggerType,
+    UserId,
 } from '@activepieces/shared'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
-import { acquireLock } from '../../database/redis-connection'
+import { acquireLock } from '../../helper/lock'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { flowRepo } from './flow.repo'
 import { telemetry } from '../../helper/telemetry.utils'
 import { flowInstanceService } from '../flow-instance/flow-instance.service'
 import { IsNull } from 'typeorm'
-import { isNil } from 'lodash'
+import { isNil } from '@activepieces/shared'
+import { logger } from '../../helper/logger'
 
 export const flowService = {
     async create({ projectId, request }: { projectId: ProjectId, request: CreateFlowRequest }): Promise<Flow> {
+        const newFlowId = apId()
         const flow: Partial<Flow> = {
-            id: apId(),
-            projectId: projectId,
+            id: newFlowId,
+            projectId,
             folderId: request.folderId,
         }
         const savedFlow = await flowRepo.save(flow)
-        await flowVersionService.createVersion(savedFlow.id, {
+        await flowVersionService.createEmptyVersion(savedFlow.id, {
             displayName: request.displayName,
-            valid: false,
-            trigger: {
-                displayName: 'Select Trigger',
-                name: 'trigger',
-                type: TriggerType.EMPTY,
-                settings: {},
-                valid: false,
-            } as EmptyTrigger,
         })
-        const latestFlowVersion = await flowVersionService.getFlowVersion(projectId, savedFlow.id, undefined, FlowViewMode.NO_ARTIFACTS)
+        const latestFlowVersion = await flowVersionService.getFlowVersion({
+            projectId,
+            flowId: savedFlow.id,
+            versionId: undefined,
+            removeSecrets: false,
+            includeArtifactAsBase64: false,
+        })
+
         telemetry.trackProject(
             savedFlow.projectId,
             {
@@ -59,6 +61,8 @@ export const flowService = {
                 },
             },
         )
+            .catch((e) => logger.error(e, '[FlowService#create] telemetry.trackProject'))
+
         return {
             ...savedFlow,
             version: latestFlowVersion!,
@@ -91,18 +95,24 @@ export const flowService = {
         })
         const queryWhere: Record<string, unknown> = { projectId }
         if (folderId !== undefined) {
-            queryWhere['folderId'] = (folderId === 'NULL' ? IsNull() : folderId)
+            queryWhere.folderId = (folderId === 'NULL' ? IsNull() : folderId)
         }
 
         const paginationResult = await paginator.paginate(flowRepo.createQueryBuilder('flow').where(queryWhere))
-        const flowVersionsPromises: Array<Promise<FlowVersion | null>> = []
-        const flowInstancesPromises: Array<Promise<FlowInstance | null>> = []
+        const flowVersionsPromises: Promise<FlowVersion | null>[] = []
+        const flowInstancesPromises: Promise<FlowInstance | null>[] = []
         paginationResult.data.forEach((flow) => {
-            flowVersionsPromises.push(flowVersionService.getFlowVersion(projectId, flow.id, undefined, FlowViewMode.NO_ARTIFACTS))
-            flowInstancesPromises.push(flowInstanceService.get({ projectId: projectId, flowId: flow.id }))
+            flowVersionsPromises.push(flowVersionService.getFlowVersion({
+                projectId,
+                flowId: flow.id,
+                versionId: undefined,
+                includeArtifactAsBase64: false,
+                removeSecrets: false,
+            }))
+            flowInstancesPromises.push(flowInstanceService.get({ projectId, flowId: flow.id }))
         })
-        const versions: Array<FlowVersion | null> = await Promise.all(flowVersionsPromises)
-        const instances: Array<FlowInstance | null> = await Promise.all(flowInstancesPromises)
+        const versions: (FlowVersion | null)[] = await Promise.all(flowVersionsPromises)
+        const instances: (FlowInstance | null)[] = await Promise.all(flowInstancesPromises)
         const formattedFlows = paginationResult.data.map((flow, idx) => {
             let status = FlowInstanceStatus.UNPUBLISHED
             const instance = instances[idx]
@@ -112,22 +122,67 @@ export const flowService = {
             const formattedFlow: Flow = {
                 ...flow,
                 version: versions[idx]!,
-                status: status,
+                status,
+                schedule: instance?.schedule,
             }
             return formattedFlow
         })
         return paginationHelper.createPage<Flow>(formattedFlows, paginationResult.cursor)
+    },
+    async getTemplate({ flowId, versionId, projectId }: { flowId: FlowId, projectId: ProjectId, versionId: FlowVersionId | undefined }): Promise<FlowTemplate> {
+        const flow: Flow | null = await flowRepo.findOneBy({
+            projectId,
+            id: flowId,
+        })
+        if (isNil(flow)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.FLOW_NOT_FOUND,
+                params: {
+                    id: flowId,
+                },
+            })
+        }
+        const flowVersion = await flowVersionService.getFlowVersion({
+            projectId,
+            flowId,
+            versionId,
+            removeSecrets: true,
+            includeArtifactAsBase64: true,
+        })
+        const template: FlowTemplate =
+        {
+            id: apId(),
+            name: flowVersion.displayName,
+            description: '',
+            pieces: flowHelper.getUsedPieces(flowVersion.trigger),
+            template: flowVersion,
+            tags: [],
+            imageUrl: null,
+            userId: null,
+            created: Date.now().toString(),
+            updated: Date.now().toString(),
+            blogUrl: '',
+            featuredDescription: '',
+            isFeatured: false,
+        }
+        return template
     },
     async getOne({ projectId, id, versionId, viewMode = FlowViewMode.NO_ARTIFACTS }: { projectId: ProjectId, id: FlowId, versionId: FlowVersionId | undefined, viewMode: FlowViewMode }): Promise<Flow | null> {
         const flow: Flow | null = await flowRepo.findOneBy({
             projectId,
             id,
         })
-        if (flow === null) {
+        if (isNil(flow)) {
             return null
         }
-        const flowVersion = (await flowVersionService.getFlowVersion(projectId, id, versionId, viewMode))!
-        const instance = await flowInstanceService.get({ projectId: projectId, flowId: flow.id })
+        const flowVersion = (await flowVersionService.getFlowVersion({
+            projectId,
+            flowId: id,
+            versionId,
+            removeSecrets: false,
+            includeArtifactAsBase64: viewMode === FlowViewMode.WITH_ARTIFACTS,
+        }))
+        const instance = await flowInstanceService.get({ projectId, flowId: flow.id })
         return {
             ...flow,
             version: flowVersion,
@@ -135,12 +190,12 @@ export const flowService = {
         }
     },
 
-    async update({ flowId, projectId, request }: { projectId: ProjectId, flowId: FlowId, request: FlowOperationRequest }): Promise<Flow | null> {
+    async update({ userId, flowId, projectId, request: operation }: { userId: UserId, projectId: ProjectId, flowId: FlowId, request: FlowOperationRequest }): Promise<Flow> {
         const flowLock = await acquireLock({
             key: flowId,
-            timeout: 5000,
+            timeout: 10000,
         })
-        const flow: Omit<Flow, 'version'> | null = (await flowRepo.findOneBy({ projectId: projectId, id: flowId }))
+        const flow: Omit<Flow, 'version'> | null = (await flowRepo.findOneBy({ projectId, id: flowId }))
         if (isNil(flow)) {
             throw new ActivepiecesError({
                 code: ErrorCode.FLOW_NOT_FOUND,
@@ -150,28 +205,46 @@ export const flowService = {
             })
         }
         try {
-            if (request.type === FlowOperationType.CHANGE_FOLDER) {
+            if (operation.type === FlowOperationType.CHANGE_FOLDER) {
                 await flowRepo.update(flow.id, {
                     ...flow,
-                    folderId: request.request.folderId ?? null,
+                    folderId: operation.request.folderId ? operation.request.folderId : null,
                 })
             }
             else {
-                let lastVersion = (await flowVersionService.getFlowVersion(projectId, flowId, undefined, FlowViewMode.NO_ARTIFACTS))!
+                let lastVersion = (await flowVersionService.getFlowVersion({
+                    projectId, flowId,
+                    versionId: undefined,
+                    removeSecrets: false,
+                    includeArtifactAsBase64: false,
+                }))
                 if (lastVersion.state === FlowVersionState.LOCKED) {
-                    lastVersion = await flowVersionService.createVersion(flowId, lastVersion)
+                    const lastVersionWithArtifacts = (await flowVersionService.getFlowVersion({
+                        projectId, flowId,
+                        versionId: undefined,
+                        removeSecrets: false,
+                        includeArtifactAsBase64: true,
+                    }))
+                    lastVersion = await flowVersionService.createEmptyVersion(flowId, {
+                        displayName: lastVersionWithArtifacts.displayName,
+                    })
+                    // Duplicate the artifacts from the previous version, otherwise they will be deleted during update operation
+                    lastVersion = await flowVersionService.applyOperation(userId, projectId, lastVersion, {
+                        type: FlowOperationType.IMPORT_FLOW,
+                        request: lastVersionWithArtifacts,
+                    })
                 }
-                await flowVersionService.applyOperation(projectId, lastVersion, request)
+                await flowVersionService.applyOperation(userId, projectId, lastVersion, operation)
             }
         }
         finally {
             await flowLock.release()
         }
-        return await flowService.getOne({ id: flowId, versionId: undefined, projectId: projectId, viewMode: FlowViewMode.NO_ARTIFACTS })
+        return flowService.getOneOrThrow({ id: flowId, projectId })
     },
     async delete({ projectId, flowId }: { projectId: ProjectId, flowId: FlowId }): Promise<void> {
         await flowInstanceService.onFlowDelete({ projectId, flowId })
-        await flowRepo.delete({ projectId: projectId, id: flowId })
+        await flowRepo.delete({ projectId, id: flowId })
     },
     async count(req: {
         projectId: string

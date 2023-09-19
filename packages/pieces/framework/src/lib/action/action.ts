@@ -1,36 +1,54 @@
 import { ActionContext } from '../context';
 import { ActionBase } from '../piece-metadata';
-import { PiecePropertyMap, StaticPropsValue } from '../property/property';
+import { NonAuthPiecePropertyMap, PieceAuthProperty } from '../property/property';
 
-class IAction<T extends PiecePropertyMap> implements ActionBase {
+export type ActionRunner<PieceAuth extends PieceAuthProperty, ActionProps extends NonAuthPiecePropertyMap> =
+  (ctx: ActionContext<PieceAuth, ActionProps>) => Promise<unknown | void>
+
+type CreateActionParams<PieceAuth extends PieceAuthProperty, ActionProps extends NonAuthPiecePropertyMap> = {
+  /**
+   * A dummy parameter used to infer {@code PieceAuth} type
+   */
+  name: string
+  auth?: PieceAuth
+  displayName: string
+  description: string
+  props: ActionProps
+  run: ActionRunner<PieceAuth, ActionProps>
+  test?: ActionRunner<PieceAuth, ActionProps>
+  requireAuth?: boolean
+}
+
+export class IAction<PieceAuth extends PieceAuthProperty, ActionProps extends NonAuthPiecePropertyMap> implements ActionBase {
   constructor(
     public readonly name: string,
     public readonly displayName: string,
     public readonly description: string,
-    public readonly props: T,
-    public readonly run: (
-      ctx: ActionContext<StaticPropsValue<T>>
-    ) => Promise<unknown | void>,
-    public readonly sampleData: unknown = {}
-  ) {}
+    public readonly props: ActionProps,
+    public readonly run: ActionRunner<PieceAuth, ActionProps>,
+    public readonly test: ActionRunner<PieceAuth, ActionProps>,
+    public readonly requireAuth: boolean,
+  ) { }
 }
 
-export type Action = IAction<any>;
+export type Action<
+  PieceAuth extends PieceAuthProperty = any,
+  ActionProps extends NonAuthPiecePropertyMap = any,
+> = IAction<PieceAuth, ActionProps>
 
-export function createAction<T extends PiecePropertyMap>(request: {
-  name: string;
-  displayName: string;
-  description: string;
-  props: T;
-  run: (context: ActionContext<StaticPropsValue<T>>) => Promise<unknown | void>;
-  sampleData?: unknown;
-}): Action {
+export const createAction = <
+  PieceAuth extends PieceAuthProperty = PieceAuthProperty,
+  ActionProps extends NonAuthPiecePropertyMap = any
+>(
+  params: CreateActionParams<PieceAuth, ActionProps>,
+) => {
   return new IAction(
-    request.name,
-    request.displayName,
-    request.description,
-    request.props,
-    request.run,
-    request.sampleData
-  );
+    params.name,
+    params.displayName,
+    params.description,
+    params.props,
+    params.run,
+    params.test ?? params.run,
+    params.requireAuth ?? true,
+  )
 }

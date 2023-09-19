@@ -1,37 +1,25 @@
 import { BasicAuthPropertyValue, Property } from '@activepieces/pieces-framework';
 import {httpClient, HttpRequest, HttpMethod } from '@activepieces/pieces-common';
-const markdownProperty = `
-To obtain your API key and token, follow these steps:
 
-1. Go to https://trello.com/app-key
-2. Copy **Personal Key** and enter it into the Trello API Key connection
-3. Click **generate a Token** in trello
-4. Copy the token and paste it into the Trello Token connection
-5. Your connection should now work!
-`
+export interface WebhookInformation {
+    id: string
+    description: string
+    idModel: string
+    callbackURL: string
+    active: boolean
+    consecutiveFailures: number
+    firstConsecutiveFailDate: string
+}
 
 export const trelloCommon = {
     baseUrl: "https://api.trello.com/1/",
-    authentication: Property.BasicAuth({
-        description: markdownProperty,
-        displayName: "Trello Connection",
-        required: true,
-        username: {
-            displayName: "API Key",
-            description: "Trello API Key",
-        },
-        password: {
-            displayName: "Token",
-            description: "Trello Token",
-        }
-    }),
     board_id: Property.Dropdown({
         displayName: 'Boards',
         description: 'List of boards',
         required: true,
-        refreshers: ['authentication'],
-        options: async (propsValue) => {
-            if (propsValue['authentication'] === undefined) {
+        refreshers: [],
+        options: async ({ auth }) => {
+            if (!auth) {
                 return {
                     disabled: true,
                     placeholder: 'connect your account first',
@@ -39,7 +27,7 @@ export const trelloCommon = {
                 };
             }
 
-            const basicAuthProperty = propsValue['authentication'] as BasicAuthPropertyValue;
+            const basicAuthProperty = auth as BasicAuthPropertyValue;
             const user = await getAuthorisedUser(basicAuthProperty.username, basicAuthProperty.password);
             const boards = await listBoards(basicAuthProperty.username, basicAuthProperty.password, user['id']);
 
@@ -55,9 +43,9 @@ export const trelloCommon = {
         displayName: 'Lists',
         description: 'Get lists from a board',
         required: true,
-        refreshers: ['authentication', 'board_id'],
-        options: async (propsValue) => {
-            if (propsValue['authentication'] === undefined || propsValue['board_id'] === undefined) {
+        refreshers: ['board_id'],
+        options: async ({ auth, board_id }) => {
+            if ( !auth || !board_id ) {
                 return {
                     disabled: true,
                     placeholder: 'connect your account first and select board',
@@ -65,8 +53,8 @@ export const trelloCommon = {
                 };
             }
 
-            const basicAuthProperty = propsValue['authentication'] as BasicAuthPropertyValue;
-            const lists = await listBoardLists(basicAuthProperty.username, basicAuthProperty.password, propsValue['board_id'] as string);
+            const basicAuthProperty = auth as BasicAuthPropertyValue;
+            const lists = await listBoardLists(basicAuthProperty.username, basicAuthProperty.password, board_id as string);
 
             console.log(lists);
 
@@ -78,6 +66,66 @@ export const trelloCommon = {
             }
         }
     }),
+    list_id_opt: Property.Dropdown({
+        displayName: 'Lists',
+        description: 'Get lists from a board',
+        required: false,
+        refreshers: ['board_id'],
+        options: async ({ auth, board_id }) => {
+            if ( !auth || !board_id ) {
+                return {
+                    disabled: true,
+                    placeholder: 'connect your account first and select board',
+                    options: [],
+                };
+            }
+            const basicAuthProperty = auth as BasicAuthPropertyValue;
+            const lists = await listBoardLists(basicAuthProperty.username, basicAuthProperty.password, board_id as string);
+
+            console.log(lists);
+
+            return {
+                options: lists.map((list: { id: string; name: string; }) => ({
+                    value: list.id,
+                    label: list.name,
+                }))
+            }
+        }
+    }),
+    create_webhook: async (auth: BasicAuthPropertyValue, list_id: string, webhookUrl: string) => {
+        const request: HttpRequest = {
+            method: HttpMethod.POST,
+            url: `${trelloCommon.baseUrl}webhooks`
+                + `?key=` + auth.username
+                + `&token=` + auth.password
+                + `&callbackURL=` + webhookUrl
+                + `&idModel=` + list_id,
+        };
+        const response = await httpClient.sendRequest<WebhookInformation>(request);
+
+        return response.body;
+    },
+    delete_webhook: async (auth: BasicAuthPropertyValue , webhook_id: string) => {
+        const request: HttpRequest = {
+            method: HttpMethod.DELETE,
+            url: `${trelloCommon.baseUrl}webhooks/${webhook_id}`
+                + `?key=` + auth.username
+                + `&token=` + auth.password,
+        };
+        const response = await httpClient.sendRequest(request);
+
+        return response.body;
+    },
+    list_webhooks: async (auth: BasicAuthPropertyValue) => {
+        const request: HttpRequest = {
+            method: HttpMethod.GET,
+            url: `${trelloCommon.baseUrl}tokens/${auth.password}/webhooks`
+                + `?key=` + auth.username
+        };
+        const response = await httpClient.sendRequest<WebhookInformation[]>(request);
+
+        return response.body;
+    }
 }
 
 /**

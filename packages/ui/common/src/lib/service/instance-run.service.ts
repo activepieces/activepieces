@@ -2,8 +2,17 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../environments/environment';
 import { map, Observable, of, switchMap } from 'rxjs';
-import { ExecutionOutput, FlowRun, SeekPage } from '@activepieces/shared';
-import { CURSOR_QUERY_PARAM } from '../utils/tables.utils';
+import {
+  ExecutionOutput,
+  FlowRun,
+  ListFlowRunsRequestQuery,
+  SeekPage,
+} from '@activepieces/shared';
+import {
+  CURSOR_QUERY_PARAM,
+  LIMIT_QUERY_PARAM,
+  STATUS_QUERY_PARAM,
+} from '../utils/tables.utils';
 
 @Injectable({
   providedIn: 'root',
@@ -28,12 +37,17 @@ export class InstanceRunService {
 
   list(
     projectId: string,
-    params: { limit: number; cursor: string }
+    params: ListFlowRunsRequestQuery
   ): Observable<SeekPage<FlowRun>> {
     const queryParams: { [key: string]: string | number } = {
-      limit: params.limit,
       projectId: projectId,
     };
+    if (params.status) {
+      queryParams[STATUS_QUERY_PARAM] = params.status;
+    }
+    if (params.limit) {
+      queryParams[LIMIT_QUERY_PARAM] = params.limit;
+    }
     if (params.cursor) {
       queryParams[CURSOR_QUERY_PARAM] = params.cursor;
     }

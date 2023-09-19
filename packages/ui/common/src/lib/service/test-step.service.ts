@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Subject } from 'rxjs';
-import { SeekPage, TriggerEvent } from '@activepieces/shared';
+import { StepRunResponse, SeekPage, TriggerEvent } from '@activepieces/shared';
 import { environment } from '../environments/environment';
 
 @Injectable({
@@ -23,6 +23,12 @@ export class TestStepService {
       }
     );
   }
+  savePieceWebhookTriggerMockdata(flowId: string, mockData: unknown) {
+    return this.http.post<TriggerEvent>(
+      environment.apiUrl + '/trigger-events?flowId=' + flowId,
+      mockData
+    );
+  }
   getPollingResults(flowId: string) {
     return this.http.get<SeekPage<TriggerEvent>>(
       environment.apiUrl + '/trigger-events/poll',
@@ -33,8 +39,8 @@ export class TestStepService {
       }
     );
   }
-  testPieceStep(req: { stepName: string; flowVersionId: string }) {
-    return this.http.post<{ output: unknown; success: boolean }>(
+  testPieceOrCodeStep(req: { stepName: string; flowVersionId: string }) {
+    return this.http.post<StepRunResponse>(
       environment.apiUrl + '/step-run',
       req
     );

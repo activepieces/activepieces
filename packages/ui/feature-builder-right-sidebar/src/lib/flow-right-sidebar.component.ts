@@ -14,17 +14,20 @@ import { CdkDragMove } from '@angular/cdk/drag-drop';
 import { ActionType, TriggerType } from '@activepieces/shared';
 import {
   BuilderSelectors,
+  CollectionBuilderService,
   FlowItem,
   RightSideBarType,
   ViewModeEnum,
 } from '@activepieces/ui/feature-builder-store';
+import { forkJoin } from 'rxjs';
 import {
   TestStepService,
-  ActionMetaService,
+  PieceMetadataService,
   isOverflown,
+  CORE_SCHEDULE,
 } from '@activepieces/ui/common';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
-import { BuilderAutocompleteMentionsDropdownService } from '@activepieces/ui/feature-builder-form-controls';
+import { BuilderAutocompleteMentionsDropdownService } from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-flow-right-sidebar',
@@ -54,7 +57,7 @@ export class FlowRightSidebarComponent implements OnInit {
   ViewModeEnum = ViewModeEnum;
   currentStepPieceVersion$: Observable<
     | {
-        version: string;
+        version: string | undefined;
         latest: boolean;
         tooltipText: string;
       }
@@ -65,7 +68,8 @@ export class FlowRightSidebarComponent implements OnInit {
     private ngZone: NgZone,
     private testStepService: TestStepService,
     private renderer2: Renderer2,
-    private actionMetaDataService: ActionMetaService,
+    private pieceMetadaService: PieceMetadataService,
+    public builderService: CollectionBuilderService,
     private builderAutocompleteMentionsDropdownService: BuilderAutocompleteMentionsDropdownService
   ) {}
 
@@ -90,9 +94,9 @@ export class FlowRightSidebarComponent implements OnInit {
         if (
           step &&
           step.type === TriggerType.PIECE &&
-          step.settings.pieceName !== 'schedule'
+          step.settings.pieceName !== CORE_SCHEDULE
         ) {
-          return this.actionMetaDataService
+          return this.pieceMetadaService
             .getPieceMetadata(
               step.settings.pieceName,
               step.settings.pieceVersion
@@ -101,8 +105,10 @@ export class FlowRightSidebarComponent implements OnInit {
               map((res) => {
                 return (
                   res.triggers[step.settings.triggerName] &&
-                  res.triggers[step.settings.triggerName].type ===
-                    TriggerStrategy.POLLING
+                  (res.triggers[step.settings.triggerName].type ===
+                    TriggerStrategy.POLLING ||
+                    res.triggers[step.settings.triggerName].type ===
+                      TriggerStrategy.APP_WEBHOOK)
                 );
               })
             );
@@ -118,9 +124,9 @@ export class FlowRightSidebarComponent implements OnInit {
         if (
           step &&
           step.type === TriggerType.PIECE &&
-          step.settings.pieceName !== 'schedule'
+          step.settings.pieceName !== CORE_SCHEDULE
         ) {
-          return this.actionMetaDataService
+          return this.pieceMetadaService
             .getPieceMetadata(
               step.settings.pieceName,
               step.settings.pieceVersion
@@ -162,27 +168,33 @@ export class FlowRightSidebarComponent implements OnInit {
       );
   }
 
-  private checkCurrentStepPieceVersion() {
+  checkCurrentStepPieceVersion() {
     this.currentStepPieceVersion$ = this.store
       .select(BuilderSelectors.selectCurrentStepPieceVersionAndName)
       .pipe(
         switchMap((res) => {
           if (res) {
-            return this.actionMetaDataService.getPiecesManifest().pipe(
-              map((manifest) => {
-                const piece = manifest.find((p) => p.name === res?.pieceName);
-                if (piece && piece.version === res?.version) {
+            return forkJoin([
+              this.pieceMetadaService.getPieceMetadata(
+                res.pieceName,
+                res.version
+              ),
+              this.pieceMetadaService.getLatestVersion(res.pieceName),
+            ]).pipe(
+              map(([pieceManifest, latestVersion]) => {
+                if (pieceManifest && pieceManifest.version === latestVersion) {
                   return {
-                    version: res.version,
+                    version: pieceManifest.version,
                     latest: true,
-                    tooltipText: `You are using the latest version of ${piece.displayName}. Click to learn more`,
+                    tooltipText: `You are using the latest version of ${pieceManifest.displayName}. Click to learn more`,
                   };
                 }
+
                 return {
-                  version: res.version,
+                  version: pieceManifest.version,
                   latest: false,
                   tooltipText:
-                    `You are using an old version of ${piece?.displayName}. Click to learn more` ||
+                    `You are using an old version of ${pieceManifest?.displayName}. Click to learn more` ||
                     ``,
                 };
               })
@@ -237,7 +249,8 @@ export class FlowRightSidebarComponent implements OnInit {
   openVersionDocs() {
     window.open(
       'https://www.activepieces.com/docs/pieces/versioning',
-      '_blank'
+      '_blank',
+      'noopener'
     );
   }
   @HostListener('window:resize', ['$event'])

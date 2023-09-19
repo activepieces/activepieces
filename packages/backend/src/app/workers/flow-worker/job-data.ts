@@ -1,19 +1,36 @@
-import { FlowRunId, FlowVersion, FlowVersionId, ProjectId, RunEnvironment, TriggerType } from '@activepieces/shared'
+import { ExecutionType, FlowId, FlowRunId, FlowVersionId, ProjectId, RunEnvironment, TriggerType } from '@activepieces/shared'
+
+export const LATEST_JOB_DATA_SCHEMA_VERSION = 3
 
 type BaseJobData = {
-    environment: RunEnvironment
     projectId: ProjectId
+    environment: RunEnvironment
 }
 
-export type RepeatableJobData = {
-    flowVersion: FlowVersion
+// Never change without increasing LATEST_JOB_DATA_SCHEMA_VERSION, and adding a migration
+export type RepeatingJobData = BaseJobData & {
+    schemaVersion: number
+    flowVersionId: FlowVersionId
+    flowId: FlowId
     triggerType: TriggerType
-} & BaseJobData
+    executionType: ExecutionType.BEGIN
+}
 
-export type OneTimeJobData = {
+// Never change without increasing LATEST_JOB_DATA_SCHEMA_VERSION, and adding a migration
+export type DelayedJobData = BaseJobData & {
+    schemaVersion: number
+    flowVersionId: FlowVersionId
+    runId: FlowRunId
+    executionType: ExecutionType.RESUME
+}
+
+export type ScheduledJobData = RepeatingJobData | DelayedJobData
+
+export type OneTimeJobData = BaseJobData & {
     flowVersionId: FlowVersionId
     runId: FlowRunId
     payload: unknown
-} & BaseJobData
+    executionType: ExecutionType
+}
 
-export type JobData = RepeatableJobData | OneTimeJobData
+export type JobData = ScheduledJobData | OneTimeJobData

@@ -4,12 +4,16 @@ import {
   Component,
   Input,
   OnInit,
+  TemplateRef,
+  ViewChild,
 } from '@angular/core';
 import {
+  distinctUntilChanged,
   filter,
   map,
   Observable,
   of,
+  shareReplay,
   Subject,
   switchMap,
   takeUntil,
@@ -17,8 +21,6 @@ import {
 } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { RunDetailsService } from '@activepieces/ui/feature-builder-left-sidebar';
-import { DeleteStepDialogComponent } from './delete-step-dialog/delete-step-dialog.component';
-import { MatDialog } from '@angular/material/dialog';
 import {
   ActionType,
   ExecutionOutputStatus,
@@ -26,18 +28,22 @@ import {
   StepOutput,
   StepOutputStatus,
   TriggerType,
+  flowHelper,
 } from '@activepieces/shared';
 import {
+  PieceMetadataService,
+  CORE_PIECES_ACTIONS_NAMES,
+  CORE_PIECES_TRIGGERS,
   FlowItemDetails,
+  corePieceIconUrl,
   fadeIn400ms,
   isOverflown,
 } from '@activepieces/ui/common';
 import {
   BuilderSelectors,
   FlowItem,
-  FlowsActions,
-  NO_PROPS,
-  RightSideBarType,
+  FlowRendererService,
+  canvasActions,
 } from '@activepieces/ui/feature-builder-store';
 
 @Component({
@@ -49,6 +55,7 @@ import {
 })
 export class FlowItemContentComponent implements OnInit {
   //in case it is not reached, we return undefined
+  @ViewChild('stepDragTemplate') stepDragTemplate: TemplateRef<any>;
   stepStatus$: Observable<StepOutputStatus | undefined>;
   stepInsideLoopStatus$: Observable<StepOutputStatus | undefined>;
   hover = false;
@@ -56,33 +63,41 @@ export class FlowItemContentComponent implements OnInit {
   stepIconUrl: string;
   _flowItem: FlowItem;
   selectedRun$: Observable<FlowRun | undefined>;
-  readonly$: Observable<boolean>;
-  logoTooltipText = '';
+
+  stepAppName$: Observable<string>;
   isOverflown = isOverflown;
+  childStepsIconsUrls: Record<string, Observable<string>> = {};
+  StepOutputStatus = StepOutputStatus;
+  ExecutionOutputStatus = ExecutionOutputStatus;
+  TriggerType = TriggerType;
+  ActionType = ActionType;
   @Input() selected: boolean;
   @Input() trigger = false;
-  @Input() viewMode: boolean;
+  @Input() readOnly: boolean;
   @Input() set flowItem(newFlowItem: FlowItem) {
     this._flowItem = newFlowItem;
-    this.logoTooltipText = this.getLogoTooltipText();
+    this.stepAppName$ = this.getStepAppName();
+    this.childStepsIconsUrls = this.extractChildStepsIconsUrls();
     this.flowItemChanged$.next(true);
     this.fetchFlowItemDetailsAndLoadLogo();
   }
-
-  stepResult: StepOutput | undefined;
+  isDragging$: Observable<boolean>;
+  stepOutput: StepOutput | undefined;
   flowItemDetails$: Observable<FlowItemDetails | null | undefined>;
   constructor(
     private store: Store,
     private cd: ChangeDetectorRef,
     private runDetailsService: RunDetailsService,
-    private dialogService: MatDialog
+    private flowRendererService: FlowRendererService,
+    private actionMetaDataService: PieceMetadataService
   ) {}
 
   ngOnInit(): void {
-    this.readonly$ = this.store.select(BuilderSelectors.selectReadOnly);
+    this.isDragging$ = this.flowRendererService.draggingSubject.asObservable();
     this.selectedRun$ = this.store.select(
       BuilderSelectors.selectCurrentFlowRun
     );
+    this.childStepsIconsUrls = this.extractChildStepsIconsUrls();
     this.stepStatus$ = this.getStepStatusIfItsNotInsideLoop();
     this.stepInsideLoopStatus$ =
       this.runDetailsService.iterationStepResultState$.pipe(
@@ -90,8 +105,8 @@ export class FlowItemContentComponent implements OnInit {
           return stepNameAndStatus.stepName === this._flowItem.name;
         }),
         map((stepNameAndStatus) => {
-          this.stepResult = stepNameAndStatus.result;
-          return stepNameAndStatus.result?.status;
+          this.stepOutput = stepNameAndStatus.output;
+          return stepNameAndStatus.output?.status;
         })
       );
     this.fetchFlowItemDetailsAndLoadLogo();
@@ -130,19 +145,18 @@ export class FlowItemContentComponent implements OnInit {
 
   getStepStatusIfItsNotInsideLoop(): Observable<StepOutputStatus | undefined> {
     return this.selectedRun$.pipe(
+      distinctUntilChanged(),
       map((selectedRun) => {
         if (selectedRun) {
-          if (
-            selectedRun.status !== ExecutionOutputStatus.RUNNING &&
-            selectedRun.executionOutput?.executionState
-          ) {
+          if (selectedRun.status !== ExecutionOutputStatus.RUNNING) {
             const stepName = this._flowItem.name;
-            const result =
-              selectedRun.executionOutput?.executionState.steps[
-                stepName.toString()
-              ];
+            const executionState = selectedRun.executionOutput?.executionState;
+            if (!executionState) {
+              throw new Error('Flow is done but there is no executionState');
+            }
+            const result = executionState.steps[stepName.toString()];
             if (result) {
-              this.stepResult = result;
+              this.stepOutput = result;
             }
             return result === undefined ? undefined : result.status;
           } else {
@@ -150,66 +164,79 @@ export class FlowItemContentComponent implements OnInit {
           }
         }
         return undefined;
-      })
+      }),
+      shareReplay(1)
     );
   }
 
-  deleteStep() {
-    const stepName = this._flowItem.name;
-    if (stepName == undefined) {
-      return;
-    }
-    this.dialogService.open(DeleteStepDialogComponent, { data: stepName });
-  }
-
-  get actionStatusEnum() {
-    return StepOutputStatus;
-  }
-
-  get executionOutputstatus() {
-    return ExecutionOutputStatus;
-  }
-
-  get triggerType() {
-    return TriggerType;
-  }
-
-  changeTrigger() {
-    this.store.dispatch(
-      FlowsActions.setRightSidebar({
-        sidebarType: RightSideBarType.TRIGGER_TYPE,
-        props: NO_PROPS,
-      })
-    );
-  }
   selectStep() {
     this.store.dispatch(
-      FlowsActions.selectStepByName({
+      canvasActions.selectStepByName({
         stepName: this._flowItem.name,
       })
     );
     this.runDetailsService.currentStepResult$.next({
       stepName: this._flowItem.name,
-      result: this.stepResult,
+      output: this.stepOutput,
     });
   }
 
-  getLogoTooltipText() {
+  getStepAppName() {
     switch (this._flowItem.type) {
       case ActionType.BRANCH:
-        return 'Branch';
+        return of('Branch');
+      case ActionType.MISSING:
+        return of('Missing');
       case ActionType.CODE:
-        return 'Code';
+        return of('Code');
       case ActionType.LOOP_ON_ITEMS:
-        return 'Loop';
+        return of('Loop');
       case ActionType.PIECE:
-        return this._flowItem.settings.pieceName.replace(/-/g, ' ');
-      case TriggerType.EMPTY:
-        return 'Click to choose a trigger';
-      case TriggerType.WEBHOOK:
-        return 'Webhook trigger';
       case TriggerType.PIECE:
-        return this._flowItem.settings.pieceName.replace(/-/g, ' ');
+        return this.actionMetaDataService
+          .getPieceMetadata(
+            this._flowItem.settings.pieceName,
+            this._flowItem.settings.pieceVersion
+          )
+          .pipe(map((p) => p.displayName));
+      case TriggerType.EMPTY:
+        return of('Choose a trigger');
+      case TriggerType.WEBHOOK:
+        return of('Webhook trigger');
     }
+  }
+  extractChildStepsIconsUrls() {
+    const stepsIconsUrls: Record<string, Observable<string>> = {};
+    if (
+      this._flowItem.type === ActionType.BRANCH ||
+      this._flowItem.type === ActionType.LOOP_ON_ITEMS
+    ) {
+      const steps = flowHelper.getAllChildSteps(this._flowItem);
+      steps.forEach((s) => {
+        if (s.type === ActionType.PIECE) {
+          const pieceMetaData$ = this.actionMetaDataService
+            .getPieceMetadata(s.settings.pieceName, s.settings.pieceVersion)
+            .pipe(
+              map((md) => {
+                if (
+                  CORE_PIECES_ACTIONS_NAMES.find(
+                    (n) => s.settings.pieceName === n
+                  ) ||
+                  CORE_PIECES_TRIGGERS.find((n) => s.settings.pieceName === n)
+                ) {
+                  return corePieceIconUrl(s.settings.pieceName);
+                }
+                return md.logoUrl;
+              })
+            );
+          stepsIconsUrls[s.settings.pieceName] = pieceMetaData$;
+        } else if (s.type !== ActionType.MISSING) {
+          const icon = this.actionMetaDataService.findNonPieceStepIcon(s.type);
+          stepsIconsUrls[icon.key] = of(icon.url);
+        }
+      });
+    }
+
+    return stepsIconsUrls;
   }
 }

@@ -1,12 +1,11 @@
-import packageJson from '../package.json';
-import { createPiece } from '@activepieces/pieces-framework';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { rssNewItemTrigger } from './lib/triggers/new-item-trigger';
 
 export const rssFeed = createPiece({
-	name: 'rss',
 	displayName: "RSS Feed",
-	logoUrl: 'https://cdn.activepieces.com/pieces/rss.png',
-	version: packageJson.version,
+	    minimumSupportedRelease: '0.5.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/rss.png',
+	auth: PieceAuth.None(),
 	actions: [],
 	triggers: [rssNewItemTrigger],
 });

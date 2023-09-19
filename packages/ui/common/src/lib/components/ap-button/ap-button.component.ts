@@ -1,16 +1,27 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+} from '@angular/core';
 
 @Component({
   selector: 'ap-button',
   templateUrl: './ap-button.component.html',
   styleUrls: ['./ap-button.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ApButtonComponent {
+  _disabled: true | false | null = false;
+  @Input() onlyShowContent = false;
   @Input() loading = false;
   @Input() btnStyle: 'flat' | 'raised' | 'stroked' | 'basic' = 'flat';
   @Input() btnColor: 'primary' | 'warn' | 'success' | 'basic' | 'white' =
     'primary';
-  @Input() disabled: true | false | null = false;
+  @Input() set disabled(val: true | false | null) {
+    this._disabled = val;
+  }
   @Input() darkLoadingSpinner = false;
   @Input() fullWidthOfContainer = false;
   @Input() tooltipDisabled = false;
@@ -21,6 +32,10 @@ export class ApButtonComponent {
     value: 'extraSmall' | 'small' | 'medium' | 'large' | 'default'
   ) {
     this.btnSizeClass = this.btnClassesMap.get(value)!;
+  }
+
+  get disabled() {
+    return this._disabled;
   }
   btnClassesMap: Map<string, string> = new Map(
     Object.entries({

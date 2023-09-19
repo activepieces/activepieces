@@ -1,9 +1,10 @@
 import { Store } from "@activepieces/pieces-framework";
+import { isNil } from '@activepieces/shared'
 
-interface TimebasedPolling<INPUT> {
+interface TimebasedPolling<AuthValue, PropsValue> {
     strategy: DedupeStrategy.TIMEBASED;
     items: (
-        { propsValue, lastFetchEpochMS }: { propsValue: INPUT, lastFetchEpochMS: number },
+        params: { auth: AuthValue, store: Store, propsValue: PropsValue, lastFetchEpochMS: number },
     ) => Promise<{
         epochMilliSeconds: number;
         data: unknown;
@@ -11,10 +12,10 @@ interface TimebasedPolling<INPUT> {
     >;
 }
 
-interface LastItemPolling<INPUT> {
+interface LastItemPolling<AuthValue, PropsValue> {
     strategy: DedupeStrategy.LAST_ITEM;
     items: (
-        { propsValue }: { propsValue: INPUT },
+        params: { auth: AuthValue, store: Store, propsValue: PropsValue, lastItemId: unknown },
     ) => Promise<{
         id: unknown;
         data: unknown;
@@ -27,61 +28,76 @@ export enum DedupeStrategy {
     LAST_ITEM
 }
 
-export type Polling<T> = TimebasedPolling<T> | LastItemPolling<T>;
+export type Polling<AuthValue, PropsValue> = TimebasedPolling<AuthValue, PropsValue> | LastItemPolling<AuthValue, PropsValue>
 
 export const pollingHelper = {
-    async poll<INPUT>(polling: Polling<INPUT>, { store, propsValue }: { store: Store, propsValue: INPUT }): Promise<unknown[]> {
+    async poll<AuthValue, PropsValue>(polling: Polling<AuthValue, PropsValue>, { store, auth, propsValue, maxItemsToPoll }: { store: Store, auth: AuthValue, propsValue: PropsValue, maxItemsToPoll?: number }): Promise<unknown[]> {
         switch (polling.strategy) {
             case DedupeStrategy.TIMEBASED: {
                 const lastEpochMilliSeconds = (await store.get<number>("lastPoll")) ?? 0;
-                const items = await polling.items({ propsValue, lastFetchEpochMS: lastEpochMilliSeconds});
+                const items = await polling.items({ store, auth, propsValue, lastFetchEpochMS: lastEpochMilliSeconds });
                 const newLastEpochMilliSeconds = items.reduce((acc, item) => Math.max(acc, item.epochMilliSeconds), lastEpochMilliSeconds);
                 await store.put("lastPoll", newLastEpochMilliSeconds);
                 return items.filter(f => f.epochMilliSeconds > lastEpochMilliSeconds).map((item) => item.data);
             }
             case DedupeStrategy.LAST_ITEM: {
                 const lastItemId = (await store.get<unknown>("lastItem"));
-                const items = await polling.items({ propsValue });
-                const newLastItem = items?.[0]?.id;
-                if (!newLastItem) {
-                    return items;
-                }
-                await store.put("lastItem", newLastItem);
-                // get  items until you find the last item
+                const items = await polling.items({ store, auth, propsValue, lastItemId });
+
                 const lastItemIndex = items.findIndex(f => f.id === lastItemId);
-                return items?.slice(0, lastItemIndex).map((item) => item.data) ?? [];
+                let newItems = [];
+                if (isNil(lastItemId) || lastItemIndex == -1) {
+                    newItems = items ?? [];
+                } else {
+                    newItems = items?.slice(0, lastItemIndex) ?? [];
+                }
+                // Sorted from newest to oldest
+                if (!isNil(maxItemsToPoll)) {
+                    // Get the last polling.maxItemsToPoll items
+                    newItems = newItems.slice(-maxItemsToPoll);
+                }
+                const newLastItem = newItems?.[0]?.id;
+                if (!isNil(newLastItem)) {
+                    await store.put("lastItem", newLastItem);
+                }
+                return newItems.map((item) => item.data);
             }
         }
     },
-    async onEnable<INPUT>(polling: Polling<INPUT>, { store, propsValue }: { store: Store, propsValue: INPUT }): Promise<void> {
+    async onEnable<AuthValue, PropsValue>(polling: Polling<AuthValue, PropsValue>, { store, auth, propsValue }: { store: Store, auth: AuthValue, propsValue: PropsValue }): Promise<void> {
         switch (polling.strategy) {
             case DedupeStrategy.TIMEBASED: {
                 await store.put("lastPoll", Date.now());
                 break;
             }
             case DedupeStrategy.LAST_ITEM: {
-                const items = (await polling.items({ propsValue }));
-                await store.put("lastItem", items?.[0]?.id);
+                const items = (await polling.items({ store, auth, propsValue, lastItemId: null }));
+                const lastItemId = items?.[0]?.id;
+                if (!isNil(lastItemId)) {
+                    await store.put("lastItem", lastItemId);
+                } else {
+                    await store.delete("lastItem");
+                }
                 break;
             }
         }
     },
-    async onDisable<INPUT>(polling: Polling<INPUT>, { store, propsValue }: { store: Store, propsValue: INPUT }): Promise<void> {
+    async onDisable<AuthValue, PropsValue>(polling: Polling<AuthValue, PropsValue>, params: { store: Store, auth: AuthValue, propsValue: PropsValue }): Promise<void> {
         switch (polling.strategy) {
             case DedupeStrategy.TIMEBASED:
             case DedupeStrategy.LAST_ITEM:
                 return;
         }
     },
-    async test<INPUT>(polling: Polling<INPUT>, { propsValue }: { store: Store, propsValue: INPUT }): Promise<unknown[]> {
+    async test<AuthValue, PropsValue>(polling: Polling<AuthValue, PropsValue>, { auth, propsValue, store }: { store: Store, auth: AuthValue, propsValue: PropsValue }): Promise<unknown[]> {
         let items = [];
         switch (polling.strategy) {
             case DedupeStrategy.TIMEBASED: {
-                items = await polling.items({ propsValue, lastFetchEpochMS: 0 });
+                items = await polling.items({ store, auth, propsValue, lastFetchEpochMS: 0 });
                 break;
             }
             case DedupeStrategy.LAST_ITEM: {
-                items = await polling.items({ propsValue });
+                items = await polling.items({ store, auth, propsValue, lastItemId: null });
                 break;
             }
         }

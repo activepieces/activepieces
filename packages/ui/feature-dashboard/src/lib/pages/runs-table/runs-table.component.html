@@ -1,7 +1,16 @@
 <div class="ap-w-full ap-h-full ap-px-[30px] ap-pt-[50px]">
   <div class="ap-h-full">
     <app-page-title title="Runs"></app-page-title>
-    <mat-slide-toggle *ngIf="enterpriseEdition$ | async" [formControl]="toggleNotificationFormControl"
+    <mat-form-field>
+      <mat-label>Filter by status</mat-label>
+      <mat-select [formControl]="selectedStatus">
+        <mat-option value="null">All</mat-option>
+        <mat-option value="{{ExecutionOutputStatus.RUNNING}}">Running</mat-option>
+        <mat-option value="{{ExecutionOutputStatus.FAILED}}">Failed</mat-option>
+        <mat-option value="{{ExecutionOutputStatus.SUCCEEDED}}">Succeeded</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <mat-slide-toggle *ngIf="nonCommunityEdition$ | async" [formControl]="toggleNotificationFormControl"
       class="ap-mt-[-62px] ap-mb-2 ap-float-right" color="primary" [labelPosition]="'before'">Send email notifications
       about failed
       runs</mat-slide-toggle>
@@ -23,12 +32,8 @@
         </ng-container>
         <ng-container matColumnDef="status">
           <th mat-header-cell *matHeaderCellDef>Status</th>
-          <td mat-cell *matCellDef="let run"><ap-state-icon
-              *ngIf="run.status === ExecutionOutputStatus.SUCCEEDED || run.status === ExecutionOutputStatus.FAILED || run.status === ExecutionOutputStatus.INTERNAL_ERROR || run.status === ExecutionOutputStatus.TIMEOUT"
-              [succeeded]="run.status === ExecutionOutputStatus.SUCCEEDED"
-              [textAfter]="getStatusText(run.status)"></ap-state-icon>
-            <ng-container *ngIf="run.status === ExecutionOutputStatus.RUNNING">
-              Running</ng-container>
+          <td mat-cell *matCellDef="let run"><ap-state-icon [status]="run.status"
+              [showStatusText]="true"></ap-state-icon>
           </td>
         </ng-container>
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
@@ -53,3 +58,4 @@
   </div>
 </div>
 <ng-container *ngIf="updateNotificationsValue$ | async"></ng-container>
+<ng-container *ngIf="changeRunStatus$ | async"></ng-container>

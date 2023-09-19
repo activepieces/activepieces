@@ -1,147 +1,28 @@
-import fastify, { FastifyRequest, HTTPMethods } from 'fastify'
-import cors from '@fastify/cors'
-import formBody from '@fastify/formbody'
-import qs from 'qs'
 import { authenticationModule } from './app/authentication/authentication.module'
-import { projectModule } from './app/project/project.module'
-import { openapiModule } from './app/helper/openapi/openapi.module'
-import { flowModule } from './app/flows/flow.module'
-import { fileModule } from './app/file/file.module'
-import { piecesController } from './app/pieces/pieces.controller'
-import { tokenVerifyMiddleware } from './app/authentication/token-verify-middleware'
-import { storeEntryModule } from './app/store-entry/store-entry.module'
-import { flowRunModule } from './app/flows/flow-run/flow-run-module'
-import { flagModule } from './app/flags/flag.module'
-import { codeModule } from './app/workers/code-worker/code.module'
-import { flowWorkerModule } from './app/workers/flow-worker/flow-worker-module'
-import { webhookModule } from './app/webhooks/webhook-module'
-import { errorHandler } from './app/helper/error-handler'
-import { appConnectionModule } from './app/app-connection/app-connection.module'
 import { system, validateEnvPropsOnStartup } from './app/helper/system/system'
 import { SystemProp } from './app/helper/system/system-prop'
-import swagger from '@fastify/swagger'
 import { databaseConnection } from './app/database/database-connection'
-import { initilizeSentry, logger } from './app/helper/logger'
-import { firebaseAuthenticationModule } from '@ee/firebase-auth/backend/firebase-authentication.module'
-import { billingModule } from '@ee/billing/backend/billing.module'
+import { logger } from './app/helper/logger'
 import { getEdition } from './app/helper/secret-helper'
 import { ApEdition } from '@activepieces/shared'
-import { appEventRoutingModule } from './app/app-event-routing/app-event-routing.module'
-import { appCredentialModule } from '@ee/product-embed/backend/app-credentials/app-credentials.module'
-import { connectionKeyModule } from '@ee/product-embed/backend/connection-keys/connection-key.module'
-import { triggerEventModule } from './app/flows/trigger-events/trigger-event.module'
 import { seedDevData } from './app/database/seeds/dev-seeds'
-import { flowInstanceModule } from './app/flows/flow-instance/flow-instance.module'
+import { flowQueueConsumer } from './app/workers/flow-worker/flow-queue-consumer'
+import { setupApp } from './app/app'
+import { FastifyInstance } from 'fastify'
+import { projectModule } from './app/project/project-module'
 
-const app = fastify({
-    logger,
-    ajv: {
-        customOptions: {
-            removeAdditional: 'all',
-            useDefaults: true,
-            coerceTypes: true,
-            formats: {
-
-            },
-        },
-    },
-})
-
-app.register(swagger, {
-    openapi: {
-        info: {
-            title: 'Activepieces Documentation',
-            version: '0.3.6',
-        },
-        externalDocs: {
-            url: 'https://www.activepieces.com/docs',
-            description: 'Find more info here',
-        },
-    },
-})
-
-app.register(cors, {
-    origin: '*',
-    methods: ['*'],
-})
-app.register(import('fastify-raw-body'), {
-    field: 'rawBody',
-    global: false,
-    encoding: 'utf8',
-    runFirst: true,
-    routes: [],
-})
-app.register(formBody, { parser: str => qs.parse(str) })
-
-app.addHook('onRequest', async (request, reply) => {
-    const route = app.hasRoute({
-        method: request.method as HTTPMethods,
-        url: request.url,
-    })
-    if (!route) {
-        reply.code(404).send(`
-            Oops! It looks like we hit a dead end.
-            The endpoint you're searching for is nowhere to be found.
-            We suggest turning around and trying another path. Good luck!
-        `)
-    }
-})
-
-app.addHook('onRequest', tokenVerifyMiddleware)
-app.register(projectModule)
-app.register(fileModule)
-app.register(flagModule)
-app.register(storeEntryModule)
-app.register(flowModule)
-app.register(codeModule)
-app.register(flowWorkerModule)
-app.register(piecesController)
-app.register(flowInstanceModule)
-app.register(flowRunModule)
-app.register(webhookModule)
-app.register(appConnectionModule)
-app.register(openapiModule)
-app.register(triggerEventModule)
-app.register(appEventRoutingModule)
-
-app.get(
-    '/redirect',
-    async (
-        request: FastifyRequest<{ Querystring: { code: string } }>, reply,
-    ) => {
-        const params = {
-            'code': request.query.code,
-        }
-        if (params.code === undefined) {
-            reply.send('The code is missing in url')
-        }
-        else {
-            reply.type('text/html').send(`<script>if(window.opener){window.opener.postMessage({ 'code': '${encodeURIComponent(params['code'])}' },'*')}</script> <html>Redirect succuesfully, this window should close now</html>`)
-        }
-    },
-)
-app.setErrorHandler(errorHandler)
-
-const start = async () => {
+const start = async (app: FastifyInstance): Promise<void> => {
     try {
-
-        validateEnvPropsOnStartup()
-        await databaseConnection.initialize()
-        await databaseConnection.runMigrations()
-
-        await seedDevData()
-
-        const edition = await getEdition()
-        logger.info('Activepieces ' + (edition == ApEdition.ENTERPRISE ? 'Enterprise' : 'Community') + ' Edition')
-        if (edition === ApEdition.ENTERPRISE) {
-            app.register(firebaseAuthenticationModule)
-            app.register(billingModule)
-            app.register(appCredentialModule)
-            app.register(connectionKeyModule)
-            initilizeSentry()
-        }
-        else {
-            app.register(authenticationModule)
+        const edition = getEdition()
+        logger.info(`Activepieces ${edition} Edition`)
+        switch (edition) {
+            case ApEdition.CLOUD:
+            case ApEdition.ENTERPRISE:
+                break
+            case ApEdition.COMMUNITY:
+                await app.register(authenticationModule)
+                await app.register(projectModule)
+                break
         }
         await app.listen({
             host: '0.0.0.0',
@@ -156,7 +37,7 @@ const start = async () => {
  / ____ \\  | |____     | |     _| |_     \\  /    | |____  | |       _| |_  | |____  | |____  | |____   ____) |
 /_/    \\_\\  \\_____|    |_|    |_____|     \\/     |______| |_|      |_____| |______|  \\_____| |______| |_____/
 
-The application started on ${system.get(SystemProp.FRONTEND_URL)}, as specified by the AP_FRONTEND_URL variable.
+The application started on ${system.get(SystemProp.FRONTEND_URL)}, as specified by the AP_FRONTEND_URL variables.
     `)
     }
     catch (err) {
@@ -165,4 +46,54 @@ The application started on ${system.get(SystemProp.FRONTEND_URL)}, as specified 
     }
 }
 
-start()
+// This might be needed as it can be called twice
+let shuttingDown = false
+
+function setupTimeZone(): void {
+    // It's important to set the time zone to UTC when working with dates in PostgreSQL.
+    // If the time zone is not set to UTC, there can be problems when storing dates in UTC but not considering the UTC offset when converting them back to local time. This can lead to incorrect fields being displayed for the created
+    // https://stackoverflow.com/questions/68240368/typeorm-find-methods-returns-wrong-timestamp-time
+    process.env.TZ = 'UTC'
+}
+
+const stop = async (app: FastifyInstance): Promise<void> => {
+    if (shuttingDown) return
+    shuttingDown = true
+
+    try {
+        await app.close()
+        await flowQueueConsumer.close()
+        logger.info('Server stopped')
+        process.exit(0)
+    }
+    catch (err) {
+        logger.error('Error stopping server')
+        logger.error(err)
+        process.exit(1)
+    }
+}
+
+const main = async (): Promise<void> => {
+
+    setupTimeZone()
+    await validateEnvPropsOnStartup()
+    await databaseConnection.initialize()
+    await databaseConnection.runMigrations()
+    await seedDevData()
+    const app = await setupApp()
+
+    process.on('SIGINT', () => {
+        stop(app)
+            .catch((e) => logger.error(e, '[Main#stop]'))
+    })
+
+    process.on('SIGTERM', () => {
+        stop(app)
+            .catch((e) => logger.error(e, '[Main#stop]'))
+    })
+
+    await start(app)
+}
+
+main()
+    .catch((e) => logger.error(e, '[Main#main]'))

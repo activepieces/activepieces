@@ -7,11 +7,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import {
-  MentionListItem,
-  replaceArrayNotationsWithSpaces,
-  replaceDotsWithSpaces,
-} from '../../utils';
+import { MentionListItem, keysWithinPath } from '../../utils';
 
 export interface CustomPathMentionDialogData {
   stepDisplayName: string;
@@ -34,7 +30,7 @@ export class CustomPathMentionDialogComponent implements OnInit {
     private dialogRef: MatDialogRef<CustomPathMentionDialogComponent>
   ) {}
   ngOnInit(): void {
-    const pathRegex = `${this.data.stepName}(\\[([0-9])+\\])*((\\.[a-zA-Z_$][a-zA-Z_$0-9]*)(\\[([0-9])+\\])*)*`;
+    const pathRegex = `${this.data.stepName}(\\[([0-9]|'.+'|".+")+\\])*((\\.[a-zA-Z_$][a-zA-Z_$0-9]*)(\\[([0-9]|'.+'|".+"])+\\])*)*`;
     this.pathFormGroup = this.formBuilder.group({
       path: new FormControl<string>(this.data.defaultValue, {
         validators: [
@@ -47,29 +43,22 @@ export class CustomPathMentionDialogComponent implements OnInit {
   }
   emitCustomPathMention() {
     if (this.pathFormGroup.valid) {
-      const customPath = `\${${this.pathFormGroup.controls.path.value!}}`;
+      const customPath = `{{${this.pathFormGroup.controls.path.value!}}}`;
       const triggerPathWithoutInterpolationDenotation = customPath.slice(
         2,
-        customPath.length - 1
+        customPath.length - 2
       );
-      const mentionText = replaceArrayNotationsWithSpaces(
-        replaceDotsWithSpaces(
-          this.adjustItemPath(triggerPathWithoutInterpolationDenotation)
-        )
-      );
+
+      const mentionText = [
+        this.data.stepDisplayName,
+        ...keysWithinPath(triggerPathWithoutInterpolationDenotation).slice(1),
+      ].join(' ');
       const mentionItem: MentionListItem = {
         value: customPath,
         label: mentionText,
       };
       this.dialogRef.close(mentionItem);
     }
-  }
-  adjustItemPath(triggerPathWithoutInterpolationDenotation: string): string {
-    const triggerDisplayName = this.data.stepDisplayName;
-    return [
-      triggerDisplayName,
-      ...triggerPathWithoutInterpolationDenotation.split('.').slice(1),
-    ].join('.');
   }
 }
 

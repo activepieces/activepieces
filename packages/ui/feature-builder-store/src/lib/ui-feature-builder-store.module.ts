@@ -13,6 +13,8 @@ import { FlowItemsDetailsEffects } from './store/builder/flow-item-details/flow-
 import { EffectsModule } from '@ngrx/effects';
 import { FlowInstanceEffects } from './store/builder/flow-instance/flow-instance.effects';
 import { flowInstanceReducer } from './store/builder/flow-instance/flow-instance.reducer';
+import { canvasReducer } from './store/builder/canvas/canvas.reducer';
+import { CanvasEffects } from './store/builder/canvas/canvas.effects';
 
 @NgModule({
   imports: [
@@ -24,12 +26,14 @@ import { flowInstanceReducer } from './store/builder/flow-instance/flow-instance
       instance: flowInstanceReducer,
       flowItemsDetailsState: flowItemsDetailsReducer,
       appConnectionsState: appConnectionsReducer,
+      canvasState: canvasReducer,
     }),
     EffectsModule.forFeature([
       FlowsEffects,
       ViewModeEffects,
       FlowItemsDetailsEffects,
       FlowInstanceEffects,
+      CanvasEffects,
     ]),
   ],
   declarations: [TestRunBarComponent],

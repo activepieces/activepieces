@@ -12,9 +12,20 @@ import {
   Validators,
 } from '@angular/forms';
 import { forkJoin, map, Observable, of, shareReplay, take, tap } from 'rxjs';
-import { TriggerType, UpdateTriggerRequest } from '@activepieces/shared';
-import { TriggerStrategy } from '@activepieces/pieces-framework';
-import { ActionMetaService, fadeInUp400ms } from '@activepieces/ui/common';
+import {
+  TriggerType,
+  UpdateTriggerRequest,
+  AUTHENTICATION_PROPERTY_NAME,
+} from '@activepieces/shared';
+import {
+  PieceAuthProperty,
+  TriggerStrategy,
+} from '@activepieces/pieces-framework';
+import {
+  PieceMetadataService,
+  CORE_SCHEDULE,
+  fadeInUp400ms,
+} from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
 import {
   BuilderSelectors,
@@ -24,13 +35,18 @@ import {
 import { PiecePropertiesFormValue } from '@activepieces/ui/feature-builder-form-controls';
 import { ComponentTriggerInputFormSchema } from '../../input-forms-schema';
 import { PiecePropertyMap } from '@activepieces/pieces-framework';
+
 declare type TriggerDropdownOption = {
   label: {
     name: string;
     description: string;
     isWebhook: boolean;
   };
-  value: { triggerName: string; properties: PiecePropertyMap };
+  value: {
+    triggerName: string;
+    properties: PiecePropertyMap;
+    auth?: PieceAuthProperty;
+  };
   disabled?: boolean;
 };
 
@@ -59,6 +75,7 @@ const PIECE_PROPERTIES_FORM_CONTROL_NAME = 'configs';
 export class PieceTriggerInputFormComponent {
   readonly TRIGGER_FORM_CONTROL_NAME = TRIGGER_FORM_CONTROL_NAME;
   readonly CONFIGS_FORM_CONTROL_NAME = PIECE_PROPERTIES_FORM_CONTROL_NAME;
+  CORE_SCHEDULE = CORE_SCHEDULE;
   pieceTriggerInputForm: UntypedFormGroup;
   initialSetup$: Observable<TriggerDropdownOption[]>;
   pieceName: string;
@@ -85,7 +102,7 @@ export class PieceTriggerInputFormComponent {
 
   constructor(
     private fb: UntypedFormBuilder,
-    private actionMetaDataService: ActionMetaService,
+    private actionMetaDataService: PieceMetadataService,
     private cd: ChangeDetectorRef,
     private store: Store
   ) {
@@ -144,6 +161,7 @@ export class PieceTriggerInputFormComponent {
               },
               value: {
                 triggerName: triggerName,
+                auth: trigger.requireAuth ? pieceMetadata.auth : undefined,
                 properties: trigger.props,
               },
             };
@@ -184,7 +202,15 @@ export class PieceTriggerInputFormComponent {
       ).pipe(
         tap((selectedTrigger) => {
           if (selectedTrigger) {
-            const properties = { ...selectedTrigger.value.properties };
+            let properties = {
+              ...selectedTrigger.value.properties,
+            };
+            if (selectedTrigger.value.auth) {
+              properties = {
+                [AUTHENTICATION_PROPERTY_NAME]: selectedTrigger.value.auth!,
+                ...properties,
+              };
+            }
             const propertiesValues =
               this.intialComponentTriggerInputFormValue!.input;
             const propertiesFormValue: PiecePropertiesFormValue = {
@@ -259,12 +285,21 @@ export class PieceTriggerInputFormComponent {
   }
   private triggerSelected(selectedValue: {
     triggerName: string;
+    auth?: PieceAuthProperty;
     properties: PiecePropertyMap;
   }) {
     const propertiesForm = this.pieceTriggerInputForm.get(
       PIECE_PROPERTIES_FORM_CONTROL_NAME
     );
-    const properties = { ...selectedValue.properties };
+    let properties = {
+      ...selectedValue.properties,
+    };
+    if (selectedValue.auth) {
+      properties = {
+        [AUTHENTICATION_PROPERTY_NAME]: selectedValue.auth!,
+        ...properties,
+      };
+    }
     const propertiesFormValue: PiecePropertiesFormValue = {
       properties: properties,
       propertiesValues: {},

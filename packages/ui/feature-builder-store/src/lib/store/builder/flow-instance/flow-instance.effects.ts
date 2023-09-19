@@ -1,27 +1,28 @@
 import { Injectable } from '@angular/core';
 import { Actions, createEffect, ofType, concatLatestFrom } from '@ngrx/effects';
-import { EMPTY, catchError, of, tap } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { catchError, of, tap } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { FlowInstance, FlowInstanceStatus } from '@activepieces/shared';
+import { FlowInstanceStatus, FlowVersionState } from '@activepieces/shared';
 import { FlowInstanceActions } from './flow-instance.action';
-import { FlowInstanceService } from '@activepieces/ui/common';
+import { FlowInstanceService, FlowService } from '@activepieces/ui/common';
 import { BuilderSelectors } from '../builder.selector';
 import { BuilderActions } from '../builder.action';
+import { ViewModeActions } from '../viewmode/view-mode.action';
+import { ViewModeEnum } from '../../../model';
+import { canvasActions } from '../canvas/canvas.action';
 
 @Injectable()
 export class FlowInstanceEffects {
   loadInitial$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(BuilderActions.loadInitial),
-      switchMap(({ instance }: { instance?: FlowInstance }) => {
-        if (instance === undefined) {
-          return EMPTY;
-        }
+      switchMap((action) => {
         return of(
           FlowInstanceActions.setInitial({
-            instance: instance,
+            instance: action.instance,
+            publishedFlowVersion: action.publishedVersion,
           })
         );
       })
@@ -53,6 +54,7 @@ export class FlowInstanceEffects {
           }
           FlowInstanceActions.setInitial({
             instance: action.instance,
+            publishedFlowVersion: action.publishedFlowVersion,
           });
         })
       );
@@ -73,12 +75,17 @@ export class FlowInstanceEffects {
           })
           .pipe(
             switchMap((instance) => {
-              return of(
-                FlowInstanceActions.publishSuccess({
-                  instance: instance,
-                  showSnackbar: true,
-                })
-              );
+              return this.flowService
+                .get(instance.flowId, instance.flowVersionId)
+                .pipe(
+                  map((flow) => {
+                    return FlowInstanceActions.publishSuccess({
+                      instance: instance,
+                      showSnackbar: true,
+                      publishedFlowVersion: flow.version,
+                    });
+                  })
+                );
             }),
             catchError((err) => {
               console.error(err);
@@ -103,9 +110,8 @@ export class FlowInstanceEffects {
           .pipe(
             switchMap((instance) => {
               return of(
-                FlowInstanceActions.publishSuccess({
+                FlowInstanceActions.updateInstanceStatusSuccess({
                   instance: instance,
-                  showSnackbar: false,
                 })
               );
             }),
@@ -132,9 +138,8 @@ export class FlowInstanceEffects {
           .pipe(
             switchMap((instance) => {
               return of(
-                FlowInstanceActions.publishSuccess({
+                FlowInstanceActions.updateInstanceStatusSuccess({
                   instance: instance,
-                  showSnackbar: false,
                 })
               );
             }),
@@ -147,10 +152,51 @@ export class FlowInstanceEffects {
     );
   });
 
+  showPublishedVersion$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(ViewModeActions.setViewMode),
+      concatLatestFrom(() => [
+        this.store.select(BuilderSelectors.selectPublishedFlowVersion),
+        this.store.select(BuilderSelectors.selectCurrentFlow),
+      ]),
+      switchMap(([action, publishedVersion, currentFlow]) => {
+        switch (action.viewMode) {
+          case ViewModeEnum.SHOW_PUBLISHED:
+            if (publishedVersion) {
+              return of(
+                canvasActions.setInitial({
+                  displayedFlowVersion: publishedVersion,
+                })
+              );
+            } else {
+              throw Error(
+                'Trying to view published version when there is none'
+              );
+            }
+          case ViewModeEnum.BUILDING:
+            if (currentFlow.version.state === FlowVersionState.LOCKED) {
+              throw Error('Trying to view draft version when there is none');
+            } else {
+              return of(
+                canvasActions.setInitial({
+                  displayedFlowVersion: currentFlow.version,
+                })
+              );
+            }
+          case ViewModeEnum.VIEW_INSTANCE_RUN: {
+            throw Error(
+              'Trying to view run version, viewing run version should only be the initial state'
+            );
+          }
+        }
+      })
+    );
+  });
   constructor(
     private flowInstanceService: FlowInstanceService,
     private actions$: Actions,
     private store: Store,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private flowService: FlowService
   ) {}
 }

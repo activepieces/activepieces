@@ -1,54 +1,149 @@
-import { FastifyPluginAsync, FastifyRequest } from 'fastify'
-import { GetPieceRequestParams, GetPieceRequestQuery, PieceOptionRequest } from '@activepieces/shared'
+import { FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
+import { ActivepiecesError, ErrorCode, GetPieceRequestParams, GetPieceRequestQuery, GetPieceRequestWithScopeParams, InstallPieceRequest, ListPiecesRequestQuery, PieceOptionRequest } from '@activepieces/shared'
 import { engineHelper } from '../helper/engine-helper'
-import { pieceMetadataLoader } from './piece-metadata-loader'
+import { system } from '../helper/system/system'
+import { SystemProp } from '../helper/system/system-prop'
+import { pieceMetadataService } from './piece-metadata-service'
+import { PieceMetadata, PieceMetadataSummary } from '@activepieces/pieces-framework'
+import { FastifyRequest } from 'fastify'
+import { logger } from '../helper/logger'
+import { flagService } from '../flags/flag.service'
 
-export const piecesController: FastifyPluginAsync = async (app) => {
+const statsEnabled = system.getBoolean(SystemProp.STATS_ENABLED)
+
+export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done) => {
+
     app.post(
-        '/v1/pieces/:pieceName/options',
+        '/',
         {
-            schema: {
-                body: PieceOptionRequest,
-            },
+            schema: Type.Object({
+                body: InstallPieceRequest,
+            }),
         },
         async (
             request: FastifyRequest<{
-                Params: { pieceName: string }
-                Body: PieceOptionRequest
+                Body: InstallPieceRequest
             }>,
         ) => {
-            return engineHelper.executeProp({
-                pieceName: request.params.pieceName,
-                pieceVersion: request.body.pieceVersion,
-                propertyName: request.body.propertyName,
-                stepName: request.body.stepName,
-                input: request.body.input,
-                projectId: request.principal.projectId,
-            })
+            try {
+                const { result } = await engineHelper.extractPieceMetadata({
+                    pieceName: request.body.pieceName,
+                    pieceVersion: request.body.pieceVersion,
+                })
+                const pieceMetdata = await pieceMetadataService.create({
+                    projectId: request.principal.projectId,
+                    pieceMetadata: {
+                        ...result,
+                        minimumSupportedRelease: result.minimumSupportedRelease ?? '0.0.0',
+                        maximumSupportedRelease: result.maximumSupportedRelease ?? '999.999.999',
+                        name: request.body.pieceName,
+                        version: request.body.pieceVersion,
+                    },
+                })
+                return pieceMetdata
+            } 
+            catch (err) {
+                logger.error(JSON.stringify(err))
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: {
+                        message: 'Couldn\'t import package as piece',
+                    },
+                })
+            }
         },
     )
 
-    app.get('/v1/pieces', async () => {
-        return await pieceMetadataLoader.manifest()
+    app.get('/', {
+        schema: {
+            querystring: ListPiecesRequestQuery,
+        },
+    }, async (req): Promise<PieceMetadataSummary[]> => {
+        const latestRelease = await flagService.getCurrentVersion()
+        const release = req.query.release ?? latestRelease
+        return await pieceMetadataService.list({
+            release,
+            projectId: req.principal.projectId,
+        })
     })
 
-    app.get(
-        '/v1/pieces/:name',
-        {
-            schema: {
-                params: GetPieceRequestParams,
-                querystring: GetPieceRequestQuery,
-            },
+    app.get('/:scope/:name', {
+        schema: {
+            params: GetPieceRequestWithScopeParams,
+            querystring: GetPieceRequestQuery,
         },
-        async (
-            request: FastifyRequest<{
-                Params: GetPieceRequestParams
-                Querystring: GetPieceRequestQuery
-            }>,
-        ) => {
-            const { name } = request.params
-            const { version } = request.query
-            return await pieceMetadataLoader.pieceMetadata(name, version)
+    }, async (req): Promise<PieceMetadata> => {
+        const { name, scope } = req.params
+        const { version } = req.query
+
+        const decodeScope = decodeURIComponent(scope)
+        const decodedName = decodeURIComponent(name)
+        return await pieceMetadataService.get({
+            projectId: req.principal.projectId,
+            name: `${decodeScope}/${decodedName}`,
+            version,
+        })
+    })
+
+    app.get('/:name', {
+        schema: {
+            params: GetPieceRequestParams,
+            querystring: GetPieceRequestQuery,
         },
-    )
+    }, async (req): Promise<PieceMetadata> => {
+        const { name } = req.params
+        const { version } = req.query
+
+        const decodedName = decodeURIComponent(name)
+        return await pieceMetadataService.get({
+            projectId: req.principal.projectId,
+            name: decodedName,
+            version,
+        })
+    })
+
+    app.post('/options', {
+        schema: {
+            body: PieceOptionRequest,
+        },
+    }, async (req) => {
+        const { result } = await engineHelper.executeProp({
+            pieceName: req.body.pieceName,
+            pieceVersion: req.body.pieceVersion,
+            propertyName: req.body.propertyName,
+            stepName: req.body.stepName,
+            input: req.body.input,
+            projectId: req.principal.projectId,
+        })
+
+        return result
+    })
+
+    app.get('/stats', async () => {
+        if (!statsEnabled) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    message: 'not found',
+                },
+            })
+        }
+
+        return await pieceMetadataService.stats()
+    })
+
+    app.delete('/:id', {
+        schema: {
+            params: Type.Object({
+                id: Type.String(),
+            }),
+        },
+    }, async (req): Promise<void> => {
+        return await pieceMetadataService.delete({
+            projectId: req.principal.projectId,
+            id: req.params.id,
+        })
+    })
+
+    done()
 }

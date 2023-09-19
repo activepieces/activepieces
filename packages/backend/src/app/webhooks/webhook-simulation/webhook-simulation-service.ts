@@ -1,7 +1,6 @@
-import { Lock } from 'redlock'
-import { isNil } from 'lodash'
+import { isNil } from '@activepieces/shared'
 import { ActivepiecesError, apId, ErrorCode, FlowId, ProjectId, WebhookSimulation } from '@activepieces/shared'
-import { acquireLock } from '../../database/redis-connection'
+import { acquireLock, ApLock } from '../../helper/lock'
 import { databaseConnection } from '../../database/database-connection'
 import { WebhookSimulationEntity } from './webhook-simulation-entity'
 import { webhookSideEffects } from './webhook-simulation-side-effects'
@@ -12,18 +11,20 @@ type BaseParams = {
     projectId: ProjectId
 }
 
-type DeleteParams = BaseParams
+type DeleteParams = BaseParams & {
+    parentLock?: ApLock
+}
+
 type GetParams = BaseParams
 type CreateParams = BaseParams
 
 type AcquireLockParams = {
     flowId: FlowId
-    op: 'create' | 'delete'
 }
 
-const createLock = async ({ flowId, op }: AcquireLockParams): Promise<Lock> => {
-    const key = `${flowId}-${op}-webhook-simulation`
-    return await acquireLock({ key })
+const createLock = async ({ flowId }: AcquireLockParams): Promise<ApLock> => {
+    const key = `${flowId}-webhook-simulation`
+    return await acquireLock({ key, timeout: 5000 })
 }
 
 const webhookSimulationRepo = databaseConnection.getRepository(WebhookSimulationEntity)
@@ -36,7 +37,6 @@ export const webhookSimulationService = {
 
         const lock = await createLock({
             flowId,
-            op: 'create',
         })
 
         try {
@@ -46,6 +46,7 @@ export const webhookSimulationService = {
                 await this.delete({
                     flowId,
                     projectId,
+                    parentLock: lock,
                 })
             }
 
@@ -54,10 +55,12 @@ export const webhookSimulationService = {
                 ...params,
             }
 
-            const savedWebhookSimulation = await webhookSimulationRepo.save(webhookSimulation)
-            await webhookSideEffects.onCreate(savedWebhookSimulation)
-            return savedWebhookSimulation
+            await webhookSideEffects.preCreate({
+                flowId,
+                projectId,
+            })
 
+            return await webhookSimulationRepo.save(webhookSimulation)
         }
         finally {
             await lock.release()
@@ -90,23 +93,33 @@ export const webhookSimulationService = {
     async delete(params: DeleteParams): Promise<void> {
         logger.debug(params, '[WebhookSimulationService#deleteByFlowId] params')
 
-        const { flowId, projectId } = params
+        const { flowId, projectId, parentLock } = params
 
-        const lock = await createLock({
-            flowId,
-            op: 'delete',
-        })
+        let lock: ApLock | null = null
+
+        if (isNil(parentLock)) {
+            lock = await createLock({
+                flowId,
+            })
+        }
 
         try {
             const webhookSimulation = await this.get({
                 flowId,
                 projectId,
             })
-            const deletedWebhookSimulation = await webhookSimulationRepo.remove(webhookSimulation)
-            await webhookSideEffects.onDelete(deletedWebhookSimulation)
+
+            await webhookSideEffects.preDelete({
+                flowId,
+                projectId,
+            })
+
+            await webhookSimulationRepo.remove(webhookSimulation)
         }
         finally {
-            await lock.release()
+            if (lock) {
+                await lock.release()
+            }
         }
     },
 }

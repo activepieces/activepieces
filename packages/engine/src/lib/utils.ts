@@ -9,7 +9,7 @@ export class Utils {
       throw Error((e as Error).message);
     }
   }
-
+  
   public static writeToJsonFile(filePath: string, obj: any) {
     writeFileSync(
       filePath,
@@ -23,4 +23,13 @@ export class Utils {
       'utf-8'
     );
   }
+
+  public static tryParseJson(value: string): any {
+    try {
+      return JSON.parse(value);
+    } catch (e) {
+      return value;
+    }
+  }
+
 }

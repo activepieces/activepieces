@@ -13,7 +13,7 @@ import {
   MatTooltipModule,
   MAT_TOOLTIP_DEFAULT_OPTIONS,
 } from '@angular/material/tooltip';
-import { MonacoEditorModule } from '@materia-ui/ngx-monaco-editor';
+import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
 import {
   MatSnackBarModule,
   MAT_SNACK_BAR_DEFAULT_OPTIONS,
@@ -113,6 +113,7 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     ImgFallbackDirective,
     MatDividerModule,
     MatButtonToggleModule,
+    MatTabsModule,
   ],
   providers: [
     {
@@ -122,8 +123,8 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     { provide: MAT_TOOLTIP_DEFAULT_OPTIONS, useValue: materialTooltipDefaults },
     {
       provide: MAT_FORM_FIELD_DEFAULT_OPTIONS,
-      useValue: { appearance: 'outline' },
+      useValue: { appearance: 'outline', floatLabel: 'always' },
     },
   ],
 })
-export class CommonLayoutModule {}
+export class MaterialLayoutModule {}

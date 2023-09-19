@@ -5,14 +5,12 @@
     <mat-sidenav-content class="thin-scrollbars">
         <div class="ap-absolute  ap-w-full">
             <div class="ap-flex ap-items-center ap-justify-end ap-m-[20px]">
-                <ap-button btnColor="white" btnStyle="basic" btnSize="medium" id="beamerButton">
+                <ap-button btnColor="white" btnStyle="basic" btnSize="medium" id="beamerButton" *ngIf="environment.activateBeamer">
                     What's new</ap-button>
-                <ap-user-avatar class="ap-ml-[20px]"></ap-user-avatar>
+                <ap-user-avatar *ngIf="environment.showUserProfile" class="ap-ml-[20px]"></ap-user-avatar>
             </div>
 
         </div>
         <router-outlet></router-outlet>
     </mat-sidenav-content>
 </mat-sidenav-container>
-
-<ng-container *ngIf="showSnackbar$| async"></ng-container>

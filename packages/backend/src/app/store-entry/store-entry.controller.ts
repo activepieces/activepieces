@@ -1,9 +1,10 @@
-import { FastifyInstance, FastifyRequest } from 'fastify'
+import { FastifyRequest } from 'fastify'
 import { storeEntryService } from './store-entry.service'
 import { DeletStoreEntryRequest, GetStoreEntryRequest, PrincipalType, PutStoreEntryRequest } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 
-export const storeEntryController = async (fastify: FastifyInstance) => {
+export const storeEntryController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.post(
         '/',
         {
@@ -17,16 +18,10 @@ export const storeEntryController = async (fastify: FastifyInstance) => {
             }>,
             _reply,
         ) => {
-            if (request.principal.type !== PrincipalType.WORKER) {
-                _reply.status(StatusCodes.FORBIDDEN)
-                return
-            }
-            else {
-                return await storeEntryService.upsert({
-                    projectId: request.principal.projectId,
-                    request: request.body,
-                })
-            }
+            return storeEntryService.upsert({
+                projectId: request.principal.projectId,
+                request: request.body,
+            })
         },
     )
 
@@ -43,15 +38,9 @@ export const storeEntryController = async (fastify: FastifyInstance) => {
             }>,
             _reply,
         ) => {
-            if (request.principal.type !== PrincipalType.WORKER) {
-                _reply.status(StatusCodes.FORBIDDEN)
-                return
-            }
-            else {
-                return await storeEntryService.getOne({
-                    projectId: request.principal.projectId, key: request.query.key,
-                })
-            }
+            return storeEntryService.getOne({
+                projectId: request.principal.projectId, key: request.query.key,
+            })
         },
     )
 
@@ -67,11 +56,10 @@ export const storeEntryController = async (fastify: FastifyInstance) => {
             request: FastifyRequest<{
                 Querystring: DeletStoreEntryRequest
             }>,
-            _reply,
+            reply,
         ) => {
             if (request.principal.type !== PrincipalType.WORKER) {
-                _reply.status(StatusCodes.FORBIDDEN)
-                return
+                return reply.status(StatusCodes.FORBIDDEN)
             }
             else {
                 return await storeEntryService.delete({

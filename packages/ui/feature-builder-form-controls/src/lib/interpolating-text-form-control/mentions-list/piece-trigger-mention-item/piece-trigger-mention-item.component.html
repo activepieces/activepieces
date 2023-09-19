@@ -1,19 +1,20 @@
-<button mat-menu-item appTrackHover #hoverTracker="hoverTrackerDirective" class="!ap-px-[9px]"
-  (click)="_stepMention.step.settings.pieceName !=='schedule'? expandSample? expandSample=false : expandSample=true :mentionClicked.emit(_stepMention) ">
-  <div class="ap-flex">
+<button mat-menu-item apTrackHover #hoverTracker="hoverTrackerDirective" class="!ap-px-5"
+  (click)="_stepMention.step.settings.pieceName !== CORE_SCHEDULE? expandSample? expandSample=false : expandSample=true :mentionClicked.emit(_stepMention) ">
+  <div class="ap-flex ap-items-center">
+
+
+    <app-generic-step-mention-item [stepIndex]="stepIndex" [stepMention]="_stepMention"></app-generic-step-mention-item>
+    <div class="ap-flex-grow"></div>
+    <ap-button *ngIf="hoverTracker.isHovered && !!(sampleData$ | async)" btnColor="primary" btnStyle="basic"
+      type="button" btnSize="small" [buttonIsInsideAutocomplete]="true"
+      (click)="mentionClicked.emit(_stepMention)">Insert
+    </ap-button>
 
     <mat-icon class="mat-icon-rtl-mirror !ap-mr-[5px]"
+      [svgIcon]="expandSample ? 'custom_expand_less' : 'custom_expand_more'"
       *ngIf="(isScheduleTrigger$ | async) === false || (isScheduleTrigger$ | async) === undefined">
-      {{expandSample ? 'expand_less' : 'expand_more'}}
     </mat-icon>
-    <app-generic-step-mention-item [stepIndex]="stepIndex" [stepMention]="_stepMention"
-      [indentation]="(isScheduleTrigger$ | async) === true"></app-generic-step-mention-item>
-
   </div>
-  <ap-button *ngIf="hoverTracker.isHovered && !!(sampleData$ | async)" btnColor="primary" btnStyle="basic" type="button"
-    btnSize="small" class="ap-absolute ap-right-[10px]" [buttonIsInsideAutocomplete]="true"
-    (click)="mentionClicked.emit(_stepMention)">Select
-  </ap-button>
 
 </button>
 <ng-container *ngIf="expandSample">
@@ -30,7 +31,7 @@
     </ng-container>
 
     <ng-container *ngIf="result.value !==undefined && expandSample">
-      <button appTrackHover #resultNodeHoverTracker="hoverTrackerDirective" class="!ap-pl-0" mat-menu-item
+      <button apTrackHover #resultNodeHoverTracker="hoverTrackerDirective" class="!ap-pl-0" mat-menu-item
         (click)="mentionClicked.emit(_stepMention)">
         <span class=" ap-flex-grow ap-transition-all"
           [style.padding-left]="FIRST_LEVEL_PADDING_IN_MENTIONS_LIST+ 'px'">result:
@@ -39,13 +40,13 @@
         <ap-button *ngIf="resultNodeHoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button"
           btnSize="small" class="ap-absolute ap-right-[10px]" [buttonIsInsideAutocomplete]="true"
           [darkLoadingSpinner]="true" (click)="$event.stopPropagation();"
-          (buttonClicked)="mentionClicked.emit(_stepMention)">Select
+          (buttonClicked)="mentionClicked.emit(_stepMention)">Insert
         </ap-button>
       </button>
     </ng-container>
 
   </ng-container>
-  <ng-container *ngIf="!(sampleData$) && _stepMention.step.settings.pieceName !=='schedule'">
+  <ng-container *ngIf="!(sampleData$) && _stepMention.step.settings.pieceName !== CORE_SCHEDULE">
     <div class="ap-my-3 ap-px-2">
       <div class="ap-typography-body-1 ap-text-center ap-mb-1">
         {{
@@ -63,3 +64,4 @@
     </div>
   </ng-container>
 </ng-container>
+<ng-container *ngIf="search$ | async"></ng-container>

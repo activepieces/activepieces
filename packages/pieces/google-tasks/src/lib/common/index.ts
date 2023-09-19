@@ -43,7 +43,7 @@ export type Task = {
     due?: string,
 
     /**
-     * *Optional* RFC 3339 timestamp of completion.  
+     * *Optional* RFC 3339 timestamp of completion.
      * Filled automatically if `status === 'completed'`
      */
     completed?: string,
@@ -51,24 +51,16 @@ export type Task = {
 
 export const googleTasksCommon = {
     baseUrl: `https://tasks.googleapis.com`,
-    authentication: Property.OAuth2({
-        description: "",
-        displayName: 'Authentication',
-        authUrl: "https://accounts.google.com/o/oauth2/auth",
-        tokenUrl: "https://oauth2.googleapis.com/token",
-        required: true,
-        scope: ["https://www.googleapis.com/auth/tasks"]
-    }),
 
     /**
      * @property Target task list ID where the new task will be created
      */
     tasksList: Property.Dropdown<string>({
         displayName: 'Tasks List',
-        refreshers: ['authentication'],
+        refreshers: [],
         required: true,
-        options: async (propsValue) => {
-            if (!propsValue['authentication']) {
+        options: async ({ auth }) => {
+            if (!auth) {
                 return {
                     disabled: true,
                     placeholder: "Please connect your account first",
@@ -76,8 +68,8 @@ export const googleTasksCommon = {
                 };
             }
 
-            const authProp: OAuth2PropertyValue = propsValue['authentication'] as OAuth2PropertyValue;
-            const tasksLists = await getTasks(authProp);
+            const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
+            const tasksLists = await getLists(authProp);
 
             return {
                 disabled: false,
@@ -105,13 +97,30 @@ export const googleTasksCommon = {
     }),
 };
 
-export async function getTasks(
+export async function getLists(
     authProp: OAuth2PropertyValue
 ): Promise<TasksList[]> {
     // docs: https://developers.google.com/tasks/reference/rest/v1/tasklists/list
     const request: HttpRequest = {
         method: HttpMethod.GET,
         url: `${googleTasksCommon.baseUrl}/tasks/v1/users/@me/lists`,
+        authentication: {
+            type: AuthenticationType.BEARER_TOKEN,
+            token: authProp.access_token,
+        },
+    };
+    const response = await httpClient.sendRequest<TasksListResponse>(request);
+    return response.body.items;
+}
+
+export async function getTasks(
+    authProp: OAuth2PropertyValue,
+    tasklist: string
+): Promise<TasksList[]> {
+    // docs: https://developers.google.com/tasks/reference/rest/v1/tasklists/list
+    const request: HttpRequest = {
+        method: HttpMethod.GET,
+        url: `${googleTasksCommon.baseUrl}/tasks/v1/lists/${tasklist}/tasks`,
         authentication: {
             type: AuthenticationType.BEARER_TOKEN,
             token: authProp.access_token,

@@ -1,18 +1,15 @@
-import { globals } from '../globals';
+import process from "node:process";
+
+const BASE_CODE_DIRECTORY = process.env.AP_BASE_CODE_DIRECTORY ?? './codes';
+
+export const codeExecutor = {
+   async executeCode(artifact: string, params: unknown) {
+      const artifactPath = `${BASE_CODE_DIRECTORY}/${artifact}/index.js`;
+      const codePieceModule: CodePieceModule = await import(artifactPath);
+      return codePieceModule.code(params);
+  }
+}
 
 type CodePieceModule = {
   code(params: unknown): Promise<unknown>;
-}
-
-export class CodeExecutor {
-  public async executeCode(artifact: string, params: unknown) {
-      const artifactJs = `${artifact}.js`;
-      const artifactPath = `${globals.codeDirectory}/${artifactJs}`;
-      return await this.runCode(artifactPath, params);
-  }
-
-  private async runCode(codeFilePath: string, params: unknown) {
-    const codePieceModule: CodePieceModule = await import(codeFilePath);
-    return await codePieceModule.code(params);
-  }
 }

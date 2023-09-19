@@ -3,30 +3,13 @@ import { Property, DynamicPropsValue } from "@activepieces/pieces-framework";
 import { HttpMethod, AuthenticationType, httpClient, HttpRequest } from "@activepieces/pieces-common";
 import { AirtableBase, AirtableEnterpriseFields, AirtableField, AirtableFieldMapping, AirtableRecord, AirtableTable } from "./models";
 
-
-const markdownDescription = `
-To obtain your personal token, follow these steps:
-
-1. Log in to your Airtable account.
-2. Visit https://airtable.com/create/tokens/ to create one
-3. Click on "+ Add a base" and select the base you want to use or all bases.
-4. Click on "+ Add a scope" and select "data.records.read" and "schema.bases.read".
-5. Click on "Create token" and copy the token.
-`
-
 export const airtableCommon = {
-  authentication: Property.SecretText({
-    displayName: "Personal Token",
-    required: true,
-    description: markdownDescription
-  }),
-
   base: Property.Dropdown({
     displayName: 'Base',
     required: true,
-    refreshers: ["authentication"],
-    options: async (props) => {
-      if (!props['authentication']) {
+    refreshers: [],
+    options: async ({ auth }) => {
+      if (!auth) {
         return {
           disabled: true,
           options: [],
@@ -40,7 +23,7 @@ export const airtableCommon = {
           url: "https://api.airtable.com/v0/meta/bases",
           authentication: {
             type: AuthenticationType.BEARER_TOKEN,
-            token: props["authentication"] as string
+            token: auth as string
           }
         })
         if (response.status === 200) {
@@ -70,9 +53,9 @@ export const airtableCommon = {
   tableId: Property.Dropdown<string>({
     displayName: 'Table',
     required: true,
-    refreshers: ["authentication", "base"],
-    options: async ({ authentication, base }) => {
-      if (!authentication) {
+    refreshers: ["base"],
+    options: async ({ auth, base }) => {
+      if (!auth) {
         return {
           disabled: true,
           options: [],
@@ -89,7 +72,7 @@ export const airtableCommon = {
 
       try {
         const tables: AirtableTable[] = await airtableCommon.fetchTableList({
-          token: authentication as string,
+          token: auth as string,
           baseId: base as string
         })
 
@@ -121,10 +104,10 @@ export const airtableCommon = {
   fields: Property.DynamicProperties({
     displayName: 'Table',
     required: true,
-    refreshers: ["authentication", "base", "tableId"],
+    refreshers: ["base", "tableId"],
 
-    props: async ({ authentication, base, tableId }) => {
-      if (!authentication) return {}
+    props: async ({ auth, base, tableId }) => {
+      if (!auth) return {}
       if (!base) return {}
       if (!tableId) return {}
 
@@ -132,7 +115,7 @@ export const airtableCommon = {
 
       try {
         const airtable: AirtableTable = await airtableCommon.fetchTable({
-          token: authentication as unknown as string,
+          token: auth as unknown as string,
           baseId: base as unknown as string,
           tableId: tableId as unknown as string
         });
@@ -145,7 +128,7 @@ export const airtableCommon = {
             displayName: field.name,
             description: (
               (['date', 'dateTime'].includes(field.type))
-                ? `${field.description}. Expected format: mmmm d,yyyy`
+                ? `${field.description? field.description : ''}Expected format: mmmm d,yyyy`
                 : field.description
             ),
             required: false
@@ -207,9 +190,9 @@ export const airtableCommon = {
     return []
   },
 
-  async fetchTable({ token, baseId, tableId }: { token: string, baseId: string, tableId: string }) { 
-    const response = await airtableCommon.fetchTableList({ token, baseId }); 
-    return response.find(t => t.id === tableId)!; 
+  async fetchTable({ token, baseId, tableId }: { token: string, baseId: string, tableId: string }) {
+    const response = await airtableCommon.fetchTableList({ token, baseId });
+    return response.find(t => t.id === tableId)!;
   },
 
   async createRecord({ personalToken: token, fields, tableId, baseId }: Params) {

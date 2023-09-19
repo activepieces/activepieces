@@ -1,56 +1,20 @@
-import { createAction, Property, DynamicPropsValue } from '@activepieces/pieces-framework';
+import { Property, DynamicPropsValue, createAction } from '@activepieces/pieces-framework';
 import { AuthenticationType, httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common';
+import { bannerbearAuth } from '../../';
 
-export const createImageFromTemplate = createAction({
+export const bannerbearCreateImageAction = createAction({
+  auth: bannerbearAuth,
   name: 'bannerbear_create_image', // Must be a unique across the piece, this shouldn't be changed.
   displayName: 'Create Image',
   description: 'Create image from Bannerbear template',
-  sampleData: {
-    "created_at": "2023-02-13T23:53:05.445Z",
-    "status": "completed",
-    "self": "https://api.bannerbear.com/v2/images/VA54EW2ZqQr5eKOP6egGPNXJl",
-    "uid": "VA54EW2ZqQr5eKOP6egGPNXJl",
-    "image_url": "https://images.bannerbear.com/direct/2by4GqMJbkdMERad9x/requests/000/034/020/670/VA54EW2ZqQr5eKOP6egGPNXJl/0b067422c8a3023c3301a64a5e8fcb8d7099b8ad.png",
-    "image_url_png": "https://images.bannerbear.com/direct/2by4GqMJbkdMERad9x/requests/000/034/020/670/VA54EW2ZqQr5eKOP6egGPNXJl/0b067422c8a3023c3301a64a5e8fcb8d7099b8ad.png",
-    "image_url_jpg": "https://images.bannerbear.com/direct/2by4GqMJbkdMERad9x/requests/000/034/020/670/VA54EW2ZqQr5eKOP6egGPNXJl/0b067422c8a3023c3301a64a5e8fcb8d7099b8ad.jpg",
-    "template": "Rqg32K5QE6Y58V07Y6",
-    "template_version": null,
-    "modifications": [
-      {
-        "name": "message",
-        "text": "You can change this text",
-        "color": null,
-        "background": null
-      },
-      {
-        "name": "face",
-        "image_url": "https://cdn.bannerbear.com/sample_images/welcome_bear_photo.jpg"
-      }
-    ],
-    "webhook_url": null,
-    "webhook_response_code": null,
-    "transparent": false,
-    "metadata": null,
-    "template_name": "Template 1",
-    "width": 1200,
-    "height": 700,
-    "render_pdf": false,
-    "pdf_url": null,
-    "pdf_url_compressed": null
-  },
   props: {
-    authentication: Property.SecretText({
-      displayName: 'API Key',
-      description: 'Bannerbear API Key',
-      required: true,
-    }),
     template: Property.Dropdown({
       displayName: 'Template',
       description: 'The template to use in image creation.',
       required: true,
-      refreshers: ['authentication'],
-      options: async ({ authentication }) => {
-        if (!authentication) {
+      refreshers: [],
+      options: async ({ auth }) => {
+        if (!auth) {
           return {
             disabled: true,
             options: [],
@@ -63,7 +27,7 @@ export const createImageFromTemplate = createAction({
           url: `https://api.bannerbear.com/v2/templates`,
           authentication: {
             type: AuthenticationType.BEARER_TOKEN,
-            token: (authentication as string)
+            token: auth as string
           }
         })
 
@@ -95,13 +59,13 @@ export const createImageFromTemplate = createAction({
       displayName: 'Template modifications',
       description: 'A list of modifications you want to make on the template.',
       required: true,
-      refreshers: ["authentication", "template"],
-      props: async ({ authentication, template }) => {
-        if (!authentication) return {}
+      refreshers: ["template"],
+      props: async ({ auth, template }) => {
+        if (!auth) return {}
         if (!template) return {}
-  
+
         let fields: DynamicPropsValue = {};
-  
+
         (template as BannerbearTemplate).available_modifications.map((modification) => {
           if ('text' in modification) {
             fields = {
@@ -135,7 +99,7 @@ export const createImageFromTemplate = createAction({
             }
           }
         })
-  
+
         return fields
       }
     }),
@@ -155,7 +119,7 @@ export const createImageFromTemplate = createAction({
       required: false
     }),
   },
-  async run({ propsValue }) {
+  async run({ auth, propsValue }) {
     const body = {
       modifications: Object.keys(propsValue.modifications).length === 0 ? [] : [propsValue.modifications],
       template_version: propsValue.template_version,
@@ -171,7 +135,7 @@ export const createImageFromTemplate = createAction({
       body,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: propsValue.authentication
+        token: auth
       }
     }
 
@@ -183,7 +147,7 @@ export const createImageFromTemplate = createAction({
     } else {
       return result
     }
-  }
+  },
 })
 
 interface BannerbearTemplate {

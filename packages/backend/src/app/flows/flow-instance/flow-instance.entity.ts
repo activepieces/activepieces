@@ -1,6 +1,6 @@
 import { EntitySchema } from 'typeorm'
 import { Flow, FlowInstance, FlowVersion } from '@activepieces/shared'
-import { ApIdSchema, BaseColumnSchemaPart } from '../../helper/base-entity'
+import { ApIdSchema, BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../../database/database-common'
 
 export type FlowInstanceSchema = {
     flow: Flow
@@ -16,6 +16,10 @@ export const FlowInstanceEntity = new EntitySchema<FlowInstanceSchema>({
         flowVersionId: ApIdSchema,
         status: {
             type: String,
+        },
+        schedule: {
+            type: JSONB_COLUMN_TYPE,
+            nullable: true,
         },
     },
     indices: [

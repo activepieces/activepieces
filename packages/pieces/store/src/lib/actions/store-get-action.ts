@@ -13,9 +13,27 @@ export const storageGetAction = createAction({
         defaultValue: Property.ShortText({
             displayName: 'Default Value',
             required: false
+        }),
+        store_scope: Property.StaticDropdown({
+            displayName: 'Store Scope',
+            description: 'The storage scope of the value.',
+            required: true,
+            options: {
+                options: [
+                    {
+                        label: "Project",
+                        value: StoreScope.PROJECT
+                    },
+                    {
+                        label: "Flow",
+                        value: StoreScope.FLOW
+                    }
+                ]
+            },
+            defaultValue: StoreScope.PROJECT
         })
     },
-    async run(context) {
-        return await context.store.get(context.propsValue['key'], StoreScope.COLLECTION) ?? context.propsValue['defaultValue'];
+    async run({store, propsValue}) {
+        return await store.get(propsValue['key'], propsValue.store_scope) ?? propsValue['defaultValue'];
     }
 });

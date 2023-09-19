@@ -1,18 +1,19 @@
-
-import { createPiece } from '@activepieces/pieces-framework';
-import packageJson from '../package.json';
-import { delayAction } from './lib/actions/delay-action';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { delayForAction } from './lib/actions/delay-for-action';
+import { delayUntilAction } from './lib/actions/delay-untill-action';
 
 export const delay = createPiece({
-  name: 'delay',
   displayName: 'Delay',
-  logoUrl: 'https://cdn.activepieces.com/pieces/delay.png',
-  version: packageJson.version,
+      minimumSupportedRelease: '0.5.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/delay.png',
   authors: [
-    "abuaboud"
+    "abuaboud",
+    "nileshtrivedi"
   ],
+  auth: PieceAuth.None(),
   actions: [
-    delayAction
+    delayForAction, // Delay for a fixed duration
+    delayUntilAction // Takes a timestamp parameter instead of duration
   ],
   triggers: [
   ],

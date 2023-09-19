@@ -13,7 +13,7 @@ export const flowInstanceController = async (app: FastifyInstance) => {
             },
         },
         async (request: FastifyRequest<{ Body: UpsertFlowInstanceRequest }>) => {
-            return flowInstanceService.upsert({ projectId: request.principal.projectId, request: request.body })
+            return flowInstanceService.upsert({ userId: request.principal.id, projectId: request.principal.projectId, request: request.body })
         },
     )
 
@@ -43,16 +43,5 @@ export const flowInstanceController = async (app: FastifyInstance) => {
         return flowInstanceService.get({ projectId: request.principal.projectId, flowId: request.query.flowId })
     })
 
-
-    app.delete('/:flowId', {
-        schema: {
-            params: GetFlowInstanceRequest,
-        },
-
-    }, async (request: FastifyRequest<{
-        Params: GetFlowInstanceRequest
-    }>) => {
-        return flowInstanceService.delete({ projectId: request.principal.projectId, flowId: request.params.flowId })
-    })
 
 }

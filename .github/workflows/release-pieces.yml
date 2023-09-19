@@ -56,7 +56,6 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: update pieces metadata
-        run: npx nx update-pieces-metadata pieces-apps
+        run: npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/update-pieces-metadata/main.ts packages/pieces/framework
         env:
-          DO_SPACES_KEY: ${{ secrets.DO_SPACES_KEY }}
-          DO_SPACES_SECRET: ${{ secrets.DO_SPACES_SECRET }}
+          AP_CLOUD_API_KEY: ${{ secrets.AP_CLOUD_API_KEY }}

@@ -1,9 +1,40 @@
-import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ErrorCode } from '@activepieces/shared'
 import { SystemProp } from './system-prop'
+import { loadEncryptionKey } from '../encryption'
+
+export enum QueueMode {
+    REDIS = 'REDIS',
+    MEMORY = 'MEMORY',
+}
+
+export enum DatabaseType {
+    POSTGRES = 'POSTGRES',
+    SQLITE3 = 'SQLITE3',
+}
+
+const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
+    [SystemProp.CLOUD_AUTH_ENABLED]: 'true',
+    [SystemProp.DB_TYPE]: DatabaseType.POSTGRES,
+    [SystemProp.EDITION]: 'ce',
+    [SystemProp.ENGINE_EXECUTABLE_PATH]: 'dist/packages/engine/main.js',
+    [SystemProp.ENVIRONMENT]: 'prod',
+    [SystemProp.EXECUTION_MODE]: 'UNSANDBOXED',
+    [SystemProp.FLOW_WORKER_CONCURRENCY]: '10',
+    [SystemProp.LOG_LEVEL]: 'info',
+    [SystemProp.LOG_PRETTY]: 'false',
+    [SystemProp.QUEUE_MODE]: QueueMode.REDIS,
+    [SystemProp.SANDBOX_MEMORY_LIMIT]: '131072',
+    [SystemProp.SANDBOX_RUN_TIME_SECONDS]: '600',
+    [SystemProp.SIGN_UP_ENABLED]: 'false',
+    [SystemProp.STATS_ENABLED]: 'false',
+    [SystemProp.TELEMETRY_ENABLED]: 'true',
+    [SystemProp.TEMPLATES_SOURCE_URL]: 'https://cloud.activepieces.com/api/v1/flow-templates',
+    [SystemProp.TRIGGER_DEFAULT_POLL_INTERVAL]: '5',
+}
 
 export const system = {
-    get(prop: SystemProp): string | undefined {
-        return getEnvVar(prop)
+    get<T extends string>(prop: SystemProp): T | undefined {
+        return getEnvVar(prop) as T | undefined
     },
 
     getNumber(prop: SystemProp): number | null {
@@ -30,8 +61,8 @@ export const system = {
         return getEnvVar(prop) === 'true'
     },
 
-    getOrThrow(prop: SystemProp): string {
-        const value = getEnvVar(prop)
+    getOrThrow<T extends string>(prop: SystemProp): T {
+        const value = getEnvVar(prop) as T | undefined
 
         if (value === undefined) {
             throw new ActivepiecesError({
@@ -47,31 +78,31 @@ export const system = {
 }
 
 const getEnvVar = (prop: SystemProp): string | undefined => {
-    const value = process.env[`AP_${prop}`]
-    return value
+    return process.env[`AP_${prop}`] ?? systemPropDefaultValues[prop]
 }
 
-export const validateEnvPropsOnStartup = () => {
-    const encryptionKey = system.getOrThrow(SystemProp.ENCRYPTION_KEY)
-    const encryptionKeyLength = Buffer.from(encryptionKey, 'binary')
-    if (encryptionKeyLength.length !== 32) {
-        throw new ActivepiecesError({
-            code: ErrorCode.SYSTEM_PROP_INVALID,
-            params: {
-                prop: SystemProp.ENCRYPTION_KEY,
-            },
-        }, `System property AP_${SystemProp.ENCRYPTION_KEY} must be 256 bit (32 hex charaters)`)
-    }
-
+export const validateEnvPropsOnStartup = async (): Promise<void> => {
     const executionMode = system.get(SystemProp.EXECUTION_MODE)
     const signedUpEnabled = system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
-    if(executionMode === ExecutionMode.UNSANDBOXED && signedUpEnabled){
+    const queueMode = system.getOrThrow<QueueMode>(SystemProp.QUEUE_MODE)
+    const edition = system.get(SystemProp.EDITION)
+    await loadEncryptionKey(queueMode)
+
+    if (executionMode !== ExecutionMode.SANDBOXED && edition !== ApEdition.COMMUNITY) {
         throw new ActivepiecesError({
             code: ErrorCode.SYSTEM_PROP_INVALID,
             params: {
                 prop: SystemProp.EXECUTION_MODE,
             },
-        }, `Allowing users to sign up is not allowed in unsandboxed mode, please change the value of AP_${SystemProp.EXECUTION_MODE}, please check the documentation`)
+        }, 'Allowing users to sign up is not allowed in non community edtion')
+    }
+    if (executionMode === ExecutionMode.UNSANDBOXED && signedUpEnabled) {
+        throw new ActivepiecesError({
+            code: ErrorCode.SYSTEM_PROP_INVALID,
+            params: {
+                prop: SystemProp.EXECUTION_MODE,
+            },
+        }, 'Allowing users to sign up is not allowed in unsandboxed mode, please check the configuration section in the documentation')
     }
 }
 

@@ -4,7 +4,6 @@
 dist
 tmp
 /out-tsc
-.env
 firebase-admin-sdk.json
 
 # SDK Build
@@ -47,3 +46,9 @@ Thumbs.db
 activepieces-engine.js
 .history/
 packages/backend/.env
+
+# produced by unsandboxed engine execution
+.pnpm-store
+
+# produced by backend tests
+.npm-cache

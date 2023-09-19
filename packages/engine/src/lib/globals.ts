@@ -1,33 +1,38 @@
+import { FlowRunId } from "@activepieces/shared";
+
 class Globals {
-  private _collectionDirectory = './collections';
-  private _flowDirectory = './flows';
-  private _codeDirectory = './codes';
   private _inputFile = './input.json';
   private _outputFile = './output.json';
-  private _executorFile = './executor.js';
   private _workerToken = '';
   private _projectId = '';
   private _apiUrl = '';
-  private _flowId = '';
-  // One task is added because trigger is counted as a task
-  private _tasks = 1;
+  private _serverUrl = '';
+  private _flowRunId?: FlowRunId
+  private _resumePayload: unknown
 
-  addOneTask(){
-    this._tasks++;
+  set serverUrl(_serverUrl: string) {
+    this._serverUrl = _serverUrl;
   }
 
-  get tasks() {
-    return this._tasks;
+  get serverUrl(): string | undefined {
+    return this._serverUrl;
   }
 
-  set flowId(_flowId: string) {
-    this._flowId = _flowId;
+  set flowRunId(_flowRunId: string) {
+    this._flowRunId = _flowRunId;
   }
 
-  get flowId() {
-    return this._flowId;
+  get flowRunId(): string | undefined {
+    return this._flowRunId;
   }
 
+  set resumePayload(_resumePayload: unknown) {
+    this._resumePayload = _resumePayload;
+  }
+
+  get resumePayload() {
+    return this._resumePayload;
+  }
 
   set apiUrl(_apiUrl: string) {
     this._apiUrl = _apiUrl;
@@ -54,28 +59,12 @@ class Globals {
     return this._workerToken;
   }
 
-  get collectionDirectory() {
-    return this._collectionDirectory;
-  }
-
-  get flowDirectory() {
-    return this._flowDirectory;
-  }
-
-  get codeDirectory() {
-    return this._codeDirectory;
-  }
-
   get inputFile() {
     return this._inputFile;
   }
 
   get outputFile() {
     return this._outputFile;
-  }
-
-  get executorFile() {
-    return this._executorFile;
   }
 }
 

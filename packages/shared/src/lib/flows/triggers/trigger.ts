@@ -1,6 +1,8 @@
 import { Type, Static } from '@sinclair/typebox';
-import { SemVerType } from '../../pieces';
+import { VersionType } from '../../pieces';
 import { SampleDataSettingsObject } from '../sample-data';
+
+export const AUTHENTICATION_PROPERTY_NAME = "auth";
 
 export enum TriggerType {
   EMPTY = 'EMPTY',
@@ -23,7 +25,6 @@ export const EmptyTrigger = Type.Object({
 
 export type EmptyTrigger = Static<typeof EmptyTrigger>;
 
-
 export const WebhookTrigger = Type.Object({
   ...commonProps,
   type: Type.Literal(TriggerType.WEBHOOK),
@@ -36,7 +37,7 @@ export type WebhookTrigger = Static<typeof WebhookTrigger>;
 
 export const PieceTriggerSettings = Type.Object({
   pieceName: Type.String({}),
-  pieceVersion: SemVerType,
+  pieceVersion: VersionType,
   triggerName: Type.String({}),
   input: Type.Record(Type.String({}), Type.Any()),
   inputUiInfo: SampleDataSettingsObject

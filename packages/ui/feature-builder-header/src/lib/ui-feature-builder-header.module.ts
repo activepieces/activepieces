@@ -3,30 +3,30 @@ import { CommonModule } from '@angular/common';
 import { UiCommonModule } from '@activepieces/ui/common';
 import { UiFeatureBuilderStoreModule } from '@activepieces/ui/feature-builder-store';
 import { FeedbackComponent } from './feedback/feedback.component';
-import { MagicWandDialogComponent } from './magic-wand-dialog/magic-flow-dialog.component';
 import { FlowBuilderHeaderComponent } from './flow-builder-header.component';
 import { ToggleInstanceStateComponent } from './toggle-instance-state/toggle-instance-state.component';
 import { PublishButtonComponent } from './publish-button/publish-button.component';
-import { TestFlowModalComponent } from './test-flow-modal/test-flow-modal.component';
-import { CodemirrorModule } from '@ctrl/ngx-codemirror';
+import { DraftStatusComponent } from './draft-status/draft-status.component';
+import { ImportFlowDialogueComponent } from './import-flow-dialogue/import-flow-dialogue.component';
 
 const exportedDeclarations = [
   FlowBuilderHeaderComponent,
   FeedbackComponent,
-  MagicWandDialogComponent,
   ToggleInstanceStateComponent,
   PublishButtonComponent,
-  TestFlowModalComponent,
 ];
 @NgModule({
   imports: [
     CommonModule,
     UiCommonModule,
     UiFeatureBuilderStoreModule,
-    CodemirrorModule,
     UiCommonModule,
   ],
-  declarations: [...exportedDeclarations],
+  declarations: [
+    ...exportedDeclarations,
+    DraftStatusComponent,
+    ImportFlowDialogueComponent,
+  ],
   exports: [...exportedDeclarations],
 })
 export class UiFeatureBuilderHeaderModule {}

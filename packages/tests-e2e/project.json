@@ -7,11 +7,13 @@
     "test": {
       "executor": "nx:run-commands",
       "options": {
-        "commands": ["npx playwright test ./packages/tests-e2e/tests/ --project=chrome"]
+        "commands": [
+          "npx playwright test ./packages/tests-e2e/tests/ --project=chrome"
+        ]
       }
     },
     "lint": {
-      "executor": "@nrwl/linter:eslint",
+      "executor": "@nx/linter:eslint",
       "outputs": ["{options.outputFile}"],
       "options": {
         "lintFilePatterns": ["packages/tests-e2e/**/*.{js,ts}"]

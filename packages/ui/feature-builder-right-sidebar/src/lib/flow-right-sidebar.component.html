@@ -10,7 +10,8 @@
        (currentStep$ | async)?.type === TriggerType.WEBHOOK ||
        (isCurrentStepPieceWebhookTrigger$ | async)||
        (isCurrentStepPollingTrigger$ | async) ||
-       (currentStep$ | async)?.type === ActionType.PIECE || 
+       (currentStep$ | async)?.type === ActionType.PIECE ||
+       (currentStep$ | async)?.type === ActionType.BRANCH ||
        (currentStep$ | async)?.type === ActionType.CODE  && (viewMode$ | async) === ViewModeEnum.BUILDING"
       [class.ap-transition-all]="animateSectionsHeightChange">
       <app-edit-step-sidebar>
@@ -18,12 +19,12 @@
       <div *ngIf="currentStepPieceVersion$ | async as result"
         class="ap-left-[0px] ap-bottom-[0px] ap-bg-white ap-body-2 !ap-text-description ap-w-full ap-px-4 ap-py-1 ap-z-40 ap-flex "
         [class.ap-absolute]="!isOverflown(editStepSection)">
-        <div class="ap-flex ap-items-center ap-gap-2 ap-cursor-pointer" [matTooltip]="result.tooltipText"
-          (click)="openVersionDocs()">
-          v{{result.version}} <div *ngIf="!result.latest"
-            class="ap-rounded-full ap-border ap-border-warn ap-bg-warn ap-h-[8px] ap-w-[8px]">
-          </div>
-        </div>
+        <a href="https://activepieces.com/docs/developers/piece-reference/piece-versioning" target="_blank"
+          rel="noreferrer noopener" class="no-link-styling !ap-flex !ap-items-center !ap-gap-2 !ap-cursor-pointer "
+          [matTooltip]="result.tooltipText">
+          <div *ngIf="!result.latest" class="ap-rounded-full ap-border ap-border-warn ap-bg-warn ap-h-[8px] ap-w-[8px]">
+          </div> v{{result.version}}
+        </a>
       </div>
     </div>
 
@@ -63,13 +64,25 @@
             <app-test-piece-step></app-test-piece-step>
           </div>
         </ng-container>
+
+        <ng-container *ngIf="currentStep.type === ActionType.BRANCH">
+          <div class="resizer-area" #resizerArea>
+            <ap-horizontal-sidebar-separator [resizerArea]="resizerArea" topStyle="calc( 100% - 10px )"
+              (resetTopResizerSectionHeight)="resetTopResizerSectionHeight()" (resizerDragged)="resizerDragged($event)"
+              (resizerDragStopped)="isResizerGrabbed=false" (resizerDragStarted)="resizerDragStarted()">
+            </ap-horizontal-sidebar-separator>
+          </div>
+          <div class="bottom-resizer-section" #selectedStepResultContainer>
+            <app-test-piece-step></app-test-piece-step>
+          </div>
+        </ng-container>
       </ng-container>
 
       <ng-container *ngIf="isCurrentStepPieceWebhookTrigger$ | async">
         <div class="resizer-area" #resizerArea>
           <ap-horizontal-sidebar-separator [resizerArea]="resizerArea" topStyle="calc( 100% - 10px )"
             (resetTopResizerSectionHeight)="resetTopResizerSectionHeight()" (resizerDragged)="resizerDragged($event)"
-            (resizerDragStarted)="resizerDragStarted()">
+            (resizerDragStarted)="resizerDragStarted()" (resizerDragStopped)="isResizerGrabbed=false">
           </ap-horizontal-sidebar-separator>
         </div>
         <div class="bottom-resizer-section" #selectedStepResultContainer>
@@ -94,7 +107,7 @@
 
   </ng-container>
 
-</ng-container>
-<ng-container *ngIf="elevateResizer$ | async">
 
 </ng-container>
+<ng-container *ngIf="elevateResizer$ | async"></ng-container>
+<ng-container *ngIf="builderService.savingStepOrTriggerData$ | async"></ng-container>

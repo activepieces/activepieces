@@ -11,4 +11,5 @@ export type HttpRequest<RequestBody extends HttpMessageBody = any> = {
 	headers?: HttpHeaders;
 	authentication?: Authentication | undefined;
 	queryParams?: QueryParams | undefined;
+    timeout?: number;
 };

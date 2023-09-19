@@ -9,6 +9,49 @@ import { ErrorStateMatcher, mixinErrorState } from '@angular/material/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Subject } from 'rxjs';
 import { FlowItem } from '@activepieces/ui/feature-builder-store';
+import { InsertMentionOperation } from '@activepieces/ui/common';
+
+export const keysWithinPath = (path: string) => {
+  const result: string[] = [];
+  let insideBrackets = false;
+  let word = '';
+  let insideDot = true;
+  for (let i = 0; i < path.length; i++) {
+    if (path[i] === '.' && !insideDot && !insideBrackets) {
+      insideDot = true;
+      continue;
+    }
+    if (path[i] === '.' && insideDot) {
+      result.push(word);
+      word = '';
+    } else if (insideDot && path[i] !== '[') {
+      word += path[i];
+    } else if (path[i] === '[') {
+      if (word) {
+        result.push(word);
+      }
+      word = '';
+      insideBrackets = true;
+      insideDot = false;
+    } else if (path[i] === ']') {
+      result.push(word);
+      word = '';
+      insideBrackets = false;
+    } else {
+      word += path[i];
+    }
+  }
+  if (insideDot) {
+    result.push(word);
+  }
+
+  return result.map((w) => {
+    if (w.startsWith(`"`) || w.startsWith(`'`)) {
+      return w.slice(1, w.length - 1);
+    }
+    return w;
+  });
+};
 
 export const QuillMaterialBase = mixinErrorState(
   class {
@@ -47,52 +90,37 @@ export function fromTextToOps(
   ops: (TextInsertOperation | InsertMentionOperation)[];
 } {
   try {
-    const regex = /(\$\{.*?\})/;
+    const regex = /(\{\{.*?\}\})/;
     const matched = text.split(regex).filter((el) => el);
     const ops: (TextInsertOperation | InsertMentionOperation)[] = matched.map(
       (item) => {
         if (
-          item.length > 3 &&
-          item[0] === '$' &&
+          item.length > 5 &&
+          item[0] === '{' &&
           item[1] === '{' &&
-          item[item.length - 1] === '}'
+          item[item.length - 1] === '}' &&
+          item[item.length - 2] === '}'
         ) {
           const itemPathWithoutInterpolationDenotation = item.slice(
             2,
-            item.length - 1
+            item.length - 2
           );
-          const itemPrefix =
-            itemPathWithoutInterpolationDenotation.split('.')[0];
+          const keys = keysWithinPath(itemPathWithoutInterpolationDenotation);
+          const stepName = keys[0];
           let imageTag = '';
-          if (itemPrefix !== 'configs' && itemPrefix !== 'connections') {
-            const stepMetaData = allStepsMetaData.find(
-              (s) => s.step.name === itemPrefix
-            );
-            if (stepMetaData) {
-              imageTag =
-                getImageTemplateForStepLogo(stepMetaData.logoUrl || '') +
-                `${stepMetaData?.step.indexInDfsTraversal || 0 + 1}. `;
-            }
-          } else {
-            if (itemPrefix === 'connections') {
-              imageTag = getImageTemplateForStepLogo(
-                'assets/img/custom/piece/connection.png'
-              );
-            } else if (itemPrefix === 'configs') {
-              imageTag = getImageTemplateForStepLogo(
-                'assets/img/custom/piece/config.png'
-              );
-            }
-          }
-          const mentionText = replaceArrayNotationsWithSpaces(
-            replaceDotsWithSpaces(
-              adjustItemPath(
-                itemPathWithoutInterpolationDenotation,
-                allStepsMetaData
-              )
-            )
+          const stepMetaData = allStepsMetaData.find(
+            (s) => s.step.name === stepName
           );
-
+          if (stepMetaData) {
+            imageTag =
+              getImageTemplateForStepLogo(stepMetaData.logoUrl || '') +
+              `${stepMetaData?.step.indexInDfsTraversal || 0 + 1}. `;
+          }
+          //Mention text is the whole path joined with spaces
+          const mentionText = [
+            replaceStepNameWithDisplayName(stepName, allStepsMetaData),
+            ...keys.slice(1),
+          ].join(' ');
           return {
             insert: {
               mention: {
@@ -119,53 +147,18 @@ export function fromTextToOps(
   }
 }
 
-function adjustItemPath(
-  itemPath: string,
-  allStepsMetaData: (MentionListItem & { step: FlowItem })[]
-) {
-  const itemPrefix = itemPath.split('.')[0];
-  if (itemPrefix === 'configs') {
-    //remove configs prefix
-    return itemPath.replace('configs.', '');
-  } else if (itemPrefix === 'connections') {
-    return itemPath.replace('connections.', '');
-  } else {
-    //replace stepName with stepDisplayName
-    const stepDisplayName = replaceStepNameWithDisplayName(
-      itemPrefix,
-      allStepsMetaData
-    );
-    return [stepDisplayName, ...itemPath.split('.').slice(1)].join('.');
-  }
-}
 function replaceStepNameWithDisplayName(
   stepName: string,
   allStepsMetaData: (MentionListItem & { step: FlowItem })[]
 ) {
-  //search without array notation
-  const stepDisplayName = allStepsMetaData.find(
-    (s) => s.step.name === stepName.replace(arrayNotationRegex, '')
-  )?.step.displayName;
+  const stepDisplayName = allStepsMetaData.find((s) => s.step.name === stepName)
+    ?.step.displayName;
   if (stepDisplayName) {
-    const arrayNotationInStepName = stepName.match(arrayNotationRegex);
-    if (arrayNotationInStepName === null) return stepDisplayName;
-    return (
-      stepDisplayName +
-      ' ' +
-      arrayNotationInStepName[0].slice(1, arrayNotationInStepName[0].length - 1)
-    );
+    return stepDisplayName;
   }
   return 'unknown step';
 }
-export interface InsertMentionOperation {
-  insert: {
-    mention: {
-      value: string;
-      serverValue: string;
-      denotationChar: string;
-    };
-  };
-}
+
 export interface TextInsertOperation {
   insert: string;
 }
@@ -185,20 +178,6 @@ export function fromOpsToText(operations: QuillEditorOperationsObject) {
     })
     .join('');
   return result;
-}
-const dotRegex = /\./g;
-export function replaceDotsWithSpaces(str: string) {
-  return str.replace(dotRegex, ' ');
-}
-export const arrayNotationRegex = /\[[0-9]+\]/g;
-export function replaceArrayNotationsWithSpaces(str: string) {
-  return str.replace(arrayNotationRegex, (foundArrayNotation) => {
-    const indexOfArrayWitoutBrackets = foundArrayNotation.slice(
-      1,
-      foundArrayNotation.length - 1
-    );
-    return ` ${indexOfArrayWitoutBrackets}`;
-  });
 }
 
 export interface MentionTreeNode {
@@ -220,7 +199,7 @@ export function traverseStepOutputAndReturnMentionTree(
       children: Object.keys(stepOutput).map((k) => {
         const newPath = Array.isArray(stepOutput)
           ? `${path}[${k}]`
-          : `${path}.${k}`;
+          : `${path}['${k}']`;
         const newKey = Array.isArray(stepOutput) ? `${lastKey} ${k}` : k;
         return traverseStepOutputAndReturnMentionTree(
           (stepOutput as Record<string, unknown>)[k],

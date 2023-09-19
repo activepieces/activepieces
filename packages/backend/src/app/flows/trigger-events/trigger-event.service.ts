@@ -21,12 +21,13 @@ import { Order } from '../../helper/pagination/paginator'
 import { webhookService } from '../../webhooks/webhook-service'
 import { flowService } from '../flow/flow.service'
 import { TriggerEventEntity } from './trigger-event.entity'
+import { stepFileService } from '../step-file/step-file.service'
 
 const triggerEventRepo = databaseConnection.getRepository(TriggerEventEntity)
 
 export const triggerEventService = {
     async saveEvent({ projectId, flowId, payload }: { projectId: ProjectId, flowId: FlowId, payload: unknown }): Promise<TriggerEvent> {
-        const flow = await flowService.getOneOrThrow({ projectId: projectId, id: flowId })
+        const flow = await flowService.getOneOrThrow({ projectId, id: flowId })
         const sourceName = getSourceName(flow.version.trigger)
         return triggerEventRepo.save({
             id: apId(),
@@ -44,15 +45,20 @@ export const triggerEventService = {
             case TriggerType.WEBHOOK:
                 throw new Error('Cannot be tested')
             case TriggerType.PIECE: {
-                const testResult = (await engineHelper.executeTrigger({
+                await deleteOldFilesForTestData({
+                    projectId,
+                    flowId: flow.id,
+                    stepName: trigger.name,
+                })
+                const { result: testResult } = await engineHelper.executeTrigger({
                     hookType: TriggerHookType.TEST,
                     flowVersion: flow.version,
                     webhookUrl: await webhookService.getWebhookUrl({
                         flowId: flow.id,
                         simulate: true,
                     }),
-                    projectId: projectId,
-                }))
+                    projectId,
+                })
                 await triggerEventRepo.delete({
                     projectId,
                     flowId: flow.id,
@@ -65,13 +71,12 @@ export const triggerEventService = {
                         },
                     })
                 }
-               
-                for (let i = 0; i < testResult.output.length; i++) {
 
+                for (const output of testResult.output) {
                     await triggerEventService.saveEvent({
                         projectId,
                         flowId: flow.id,
-                        payload: testResult.output[i],
+                        payload: output,
                     })
                 }
                 return triggerEventService.list({
@@ -109,6 +114,13 @@ export const triggerEventService = {
     },
 }
 
+async function deleteOldFilesForTestData({ projectId, flowId, stepName }: { projectId: string, flowId: string, stepName: string }): Promise<void> {
+    await stepFileService.deleteAll({
+        projectId,
+        flowId,
+        stepName,
+    })
+}
 function getSourceName(trigger: Trigger): string {
     switch (trigger.type) {
         case TriggerType.WEBHOOK:

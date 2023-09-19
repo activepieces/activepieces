@@ -1,30 +1,31 @@
 <div [formGroup]="form" class="ap-flex ap-flex-col ap-gap-2 ap-rounded">
 
     <div #interpolatingTextControlContainer>
-        <mat-form-field class="ap-w-full" appearance="outline"
-            (click)="firstValueMentionsDropdown.showMenuSubject$.next(true)">
-            <mat-label>{{(showSecondValue())? 'First':''}} Value</mat-label>
+        <mat-form-field class="ap-w-full" appearance="outline" (click)="firstHandler.showMentionsDropdown()">
+            <mat-label>{{(showSecondValue)? 'First':''}} Value</mat-label>
             <app-interpolating-text-form-control #firstValueTextControl [formControl]="form.controls.firstValue"
-                (editorFocused)="firstValueMentionsDropdown.showMenuSubject$.next(true)" [attr.name]="'firstValue'"
-                (keyup)="$event.key ==='Escape'? firstValueMentionsDropdown.close(): null"></app-interpolating-text-form-control>
+                (editorFocused)="firstHandler.showMentionsDropdown()"
+                [attr.name]="'firstValue'"></app-interpolating-text-form-control>
             <mat-error *ngIf="form.controls.firstValue.invalid">
                 First value is required
             </mat-error>
         </mat-form-field>
-        <app-builder-autocomplete-mentions-dropdown #firstValueMentionsDropdown width="calc(100% - 2.4rem)"
-            (menuClosed)="firstValueTextControl.focusEditor()" marginTop="-20px"
-            [container]="interpolatingTextControlContainer"
-            (addMention)="addMention(firstValueTextControl,$event)"></app-builder-autocomplete-mentions-dropdown>
+
+        <app-builder-autocomplete-dropdown-handler #firstHandler [container]="interpolatingTextControlContainer"
+            (mentionEmitted)="addMention(firstValueTextControl,$event)">
+        </app-builder-autocomplete-dropdown-handler>
+
+
     </div>
 
 
 
-    <div class="ap-relative" appTrackHover #valueInput="hoverTrackerDirective">
+    <div class="ap-relative" apTrackHover #valueInput="hoverTrackerDirective">
         <ap-icon-button *ngIf="form.enabled && !(isLastAndOnlyCondition && isInLastAndOnlyGroup)" [width]="9"
             [height]="9" iconFilename="delete.svg"
             [tooltipText]=" !deleteButton.isHovered && !valueInput.isHovered ?'' :'Remove Condition'"
             class="delete-btn ap-z-40" [class.opacity-0]="!deleteButton.isHovered  && !valueInput.isHovered"
-            (buttonClicked)="removeConditionButtonClicked()" appTrackHover
+            (buttonClicked)="removeConditionButtonClicked()" apTrackHover
             #deleteButton="hoverTrackerDirective"></ap-icon-button>
 
         <mat-form-field class="ap-w-full" appearance="outline">
@@ -40,23 +41,29 @@
         </mat-form-field>
     </div>
 
-    <ng-container *ngIf="showSecondValue()">
-        <div #container>
-            <mat-form-field class="ap-w-full" appearance="outline"
-                (click)="secondMentionsDropdown.showMenuSubject$.next(true)">
+    <ng-container *ngIf="showSecondValue">
+        <div #secondInputContainer>
+            <mat-form-field class="ap-w-full" appearance="outline" (click)="secondHandler.showMentionsDropdown()">
                 <mat-label>Second Value</mat-label>
                 <app-interpolating-text-form-control #secondValueTextControl [formControl]="form.controls.secondValue"
-                    [attr.name]="'secondValue'" (editorFocused)="secondMentionsDropdown.showMenuSubject$.next(true)"
-                    (keyup)="$event.key ==='Escape'? secondMentionsDropdown.close() : null"></app-interpolating-text-form-control>
+                    [attr.name]="'secondValue'"
+                    (editorFocused)="secondHandler.showMentionsDropdown()"></app-interpolating-text-form-control>
                 <mat-error *ngIf="form.controls.secondValue.invalid">
                     Second value is required
                 </mat-error>
             </mat-form-field>
-            <app-builder-autocomplete-mentions-dropdown #secondMentionsDropdown width="calc(100% - 2.4rem)"
-                (menuClosed)="secondValueTextControl.focusEditor()" marginTop="-20px" [container]="container"
-                (addMention)="addMention(secondValueTextControl,$event)"></app-builder-autocomplete-mentions-dropdown>
+
+            <app-builder-autocomplete-dropdown-handler #secondHandler [container]="secondInputContainer"
+                (mentionEmitted)="addMention(secondValueTextControl,$event)">
+            </app-builder-autocomplete-dropdown-handler>
         </div>
 
+    </ng-container>
+
+    <ng-container *ngIf="showCaseSensitive">
+        <mat-slide-toggle color="primary" formControlName="caseSensitive">
+            Case sensitive
+        </mat-slide-toggle>
     </ng-container>
 
 </div>

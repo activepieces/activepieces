@@ -1,35 +1,33 @@
 import {
   ActionType,
-  BranchAction,
-  Flow,
-  LoopOnItemsAction,
+  FlowVersion,
   Trigger,
+  flowHelper,
 } from '@activepieces/shared';
-import { FlowStructureUtil } from './flowStructureUtil';
 import { FLOW_ITEM_HEIGHT, FLOW_ITEM_WIDTH } from './draw-utils';
 import { ActionFlowItem, FlowItem } from '../model/flow-item';
 
 export class FlowFactoryUtil {
-  public static createRootStep(flow: Flow): FlowItem | undefined {
-    const latestVersion = flow.version;
-    if (latestVersion?.trigger) {
-      const newFlow = FlowFactoryUtil.addCordDetails(latestVersion.trigger);
-      FlowFactoryUtil.buildHelper(newFlow);
-      return newFlow;
+  public static createRootStep(flowVersion: FlowVersion): FlowItem | undefined {
+    if (flowVersion.trigger) {
+      const newFlow = FlowFactoryUtil.addCordDetails(flowVersion.trigger);
+      return FlowFactoryUtil.buildHelper(newFlow, {
+        value: 1,
+      });
     }
     return undefined;
   }
 
   private static createStepFromAction(
-    content: ActionFlowItem | undefined
+    content: ActionFlowItem | undefined,
+    idx: { value: number }
   ): ActionFlowItem | undefined {
     if (content === undefined || content === null) {
       return undefined;
     } else {
       const clonedContent: ActionFlowItem = { ...content };
-      const simple = this.addCordDetails(clonedContent) as ActionFlowItem;
-      FlowFactoryUtil.buildHelper(simple);
-      return simple;
+      const simple = this.addCordDetails(clonedContent);
+      return FlowFactoryUtil.buildHelper(simple, idx) as ActionFlowItem;
     }
   }
 
@@ -37,52 +35,69 @@ export class FlowFactoryUtil {
     const cordDetails = {
       width: FLOW_ITEM_WIDTH,
       height: FLOW_ITEM_HEIGHT,
-      xOffset: 0,
-      yOffset: 0,
       boundingBox: { width: 0, height: 0 },
     };
     return { ...content, ...cordDetails };
   }
 
-  private static buildHelper(flowItemData: FlowItem) {
+  private static buildHelper(
+    flowItemData: FlowItem,
+    idx: { value: number }
+  ): FlowItem | undefined {
     if (!flowItemData) {
-      return;
+      return undefined;
     }
-    if (FlowStructureUtil.isTrigger(flowItemData)) {
-      const trigger = flowItemData as Trigger;
+    const modifiedFlowItemData: FlowItem = {
+      ...flowItemData,
+      indexInDfsTraversal: idx.value,
+    };
+    idx.value++;
+    if (flowHelper.isTrigger(modifiedFlowItemData.type)) {
+      const trigger = modifiedFlowItemData as Trigger;
       const nextAction = trigger.nextAction;
       if (nextAction) {
-        flowItemData.nextAction =
-          FlowFactoryUtil.createStepFromAction(nextAction);
-      }
-    } else {
-      const action = flowItemData;
-      if (action.nextAction) {
-        flowItemData.nextAction = FlowFactoryUtil.createStepFromAction(
-          action.nextAction
+        modifiedFlowItemData.nextAction = FlowFactoryUtil.createStepFromAction(
+          nextAction,
+          idx
         );
       }
-      if (action.type === ActionType.BRANCH) {
-        const branchAction = action as BranchAction;
-        if (branchAction.onSuccessAction) {
-          branchAction.onSuccessAction = FlowFactoryUtil.createStepFromAction(
-            branchAction.onSuccessAction
-          );
-        }
-        if (branchAction.onFailureAction) {
-          branchAction.onFailureAction = FlowFactoryUtil.createStepFromAction(
-            branchAction.onFailureAction
-          );
-        }
+    } else {
+      const action = modifiedFlowItemData;
+      switch (action.type) {
+        case ActionType.BRANCH:
+          if (action.onSuccessAction) {
+            action.onSuccessAction = FlowFactoryUtil.createStepFromAction(
+              action.onSuccessAction,
+              idx
+            )!;
+          }
+          if (action.onFailureAction) {
+            action.onFailureAction = FlowFactoryUtil.createStepFromAction(
+              action.onFailureAction,
+              idx
+            )!;
+          }
+          break;
+        case ActionType.LOOP_ON_ITEMS:
+          if (action.firstLoopAction) {
+            action.firstLoopAction = FlowFactoryUtil.createStepFromAction(
+              action.firstLoopAction,
+              idx
+            );
+          }
+          break;
+        case ActionType.CODE:
+        case ActionType.MISSING:
+        case ActionType.PIECE:
+          break;
       }
-      if (action.type === ActionType.LOOP_ON_ITEMS) {
-        const loopAction = action as LoopOnItemsAction;
-        if (loopAction.firstLoopAction) {
-          loopAction.firstLoopAction = FlowFactoryUtil.createStepFromAction(
-            loopAction.firstLoopAction
-          );
-        }
+      if (action.nextAction) {
+        modifiedFlowItemData.nextAction = FlowFactoryUtil.createStepFromAction(
+          action.nextAction,
+          idx
+        );
       }
     }
+    return modifiedFlowItemData;
   }
 }

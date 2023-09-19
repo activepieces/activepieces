@@ -1,49 +1,54 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { Dimension, ValueInputOption } from '../common/common';
-import { googleSheetsCommon } from '../common/common';
+import { Dimension, googleSheetsCommon, labelToColumn, objectToArray, stringifyArray, ValueInputOption } from '../common/common';
+import { googleSheetsAuth } from '../..';
+import { isNil } from '@activepieces/shared';
 
 export const insertRowAction = createAction({
+    auth: googleSheetsAuth,
     name: 'insert_row',
-    description: 'Append values to an existing sheet you have access to',
+    description: 'Append a row of values to an existing sheet',
     displayName: 'Insert Row',
     props: {
-        authentication: googleSheetsCommon.authentication,
         spreadsheet_id: googleSheetsCommon.spreadsheet_id,
+        include_team_drives: googleSheetsCommon.include_team_drives,
         sheet_id: googleSheetsCommon.sheet_id,
         as_string: Property.Checkbox({
             displayName: 'As String',
-            description: 'Inserted values that are dates and formulas will be strings and have no affect',
+            description: 'Inserted values that are dates and formulas will be entered strings and have no effect',
             required: false,
         }),
-        values: Property.Array({
-            displayName: 'Values',
-            description: 'These are the cell values of the row that will be added',
+        first_row_headers: Property.Checkbox({
+            displayName: 'Are the First row Headers?',
+            description: 'If the first row is headers',
             required: true,
+            defaultValue: false,
         }),
+        values: googleSheetsCommon.values,
+
     },
-    async run(context) {
-        const values = context.propsValue['values'];
-        const sheetName = await googleSheetsCommon.findSheetName(context.propsValue['authentication']['access_token'], 
-        context.propsValue['spreadsheet_id'], context.propsValue['sheet_id']);
-        if (!sheetName) {
-            throw Error("Sheet not found in spreadsheet");
+    async run({propsValue, auth}) {
+        const values = propsValue['values'];
+        const sheetName = await googleSheetsCommon.findSheetName(auth['access_token'], propsValue['spreadsheet_id'], propsValue['sheet_id']);            
+        let formattedValues;
+        if( propsValue.first_row_headers ){
+            formattedValues = objectToArray(values);
+            for( let i = 0 ; i < formattedValues.length ; i++ ){
+                if( isNil(formattedValues[i]) ) formattedValues[i] = '';
+            }
+        }else{
+            formattedValues = values['values'];
         }
-        if (Array.isArray(values)) {
-            await googleSheetsCommon.appendGoogleSheetValues({
-                accessToken: context.propsValue['authentication']['access_token'],
-                majorDimension: Dimension.COLUMNS,
-                range: sheetName,
-                spreadSheetId: context.propsValue['spreadsheet_id'],
-                valueInputOption: context.propsValue['as_string']
-                    ? ValueInputOption.RAW
-                    : ValueInputOption.USER_ENTERED,
-                values: values as string[],
-            });
-        } else {
-            throw Error("Values passed are not an array")
-        }
-        return {
-            success: true,
-        };
+        const res = await googleSheetsCommon.appendGoogleSheetValues({
+            accessToken: auth['access_token'],
+            majorDimension: Dimension.COLUMNS,
+            range: sheetName,
+            spreadSheetId: propsValue['spreadsheet_id'],
+            valueInputOption: propsValue['as_string']
+                ? ValueInputOption.RAW
+                : ValueInputOption.USER_ENTERED,
+            values: stringifyArray(formattedValues),
+        });
+        return res.body;
     },
+
 });

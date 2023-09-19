@@ -4,39 +4,19 @@
   stroke: $border;
   stroke-width: 2px;
 }
-.add-button {
-  position: absolute;
-  height: 17px;
-  width: 16px;
 
-  .drop-point-container {
-    position: absolute;
-    left: -4.5px;
-    top: -3.5px;
-  }
-  .drop-point-border {
-    height: $drop-point-height;
-    width: $drop-point-width;
-    transform: scale(0);
-    border: 2px $border dashed;
-    border-radius: 5px;
-    transition: 200ms transform ease;
-  }
-}
 .group {
   position: relative;
 }
 
-.scale-1 {
-  transform: scale(1) !important;
-}
+
 
 .empty-loop-add-button {
   background-color: #f0f1f3;
   border-radius: 8px;
   height: 40px;
   width: 40px;
-  z-index:100;
+  z-index:40;
   &:hover {
     .empty-loop-icon {
       transform: scale(1.1);

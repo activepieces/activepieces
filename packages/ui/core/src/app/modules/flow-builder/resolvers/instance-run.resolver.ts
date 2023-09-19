@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { ActivatedRouteSnapshot } from '@angular/router';
 import { Observable, map, of, switchMap } from 'rxjs';
 
 import { FlowService, FoldersService } from '@activepieces/ui/common';
 import { InstanceRunService } from '@activepieces/ui/common';
 import { Flow, FlowRun, Folder } from '@activepieces/shared';
 
-export type InstanceRunInfo = {
+export type InstanceRunResolverData = {
   flow: Flow;
   run: FlowRun;
   folder?: Folder;
@@ -15,16 +15,16 @@ export type InstanceRunInfo = {
 @Injectable({
   providedIn: 'root',
 })
-export class GetInstanceRunResolver
-  implements Resolve<Observable<InstanceRunInfo>>
-{
+export class GetInstanceRunResolver {
   constructor(
     private instanceRunService: InstanceRunService,
     private flowService: FlowService,
     private folderService: FoldersService
   ) {}
 
-  resolve(snapshot: ActivatedRouteSnapshot): Observable<InstanceRunInfo> {
+  resolve(
+    snapshot: ActivatedRouteSnapshot
+  ): Observable<InstanceRunResolverData> {
     const runId = snapshot.paramMap.get('runId') as string;
     return this.instanceRunService.get(runId).pipe(
       switchMap((run) => {
@@ -35,7 +35,7 @@ export class GetInstanceRunResolver
             }
             return this.folderService.get(flow.folderId).pipe(
               map((folder) => {
-                return { flow: flow, run: run, folder };
+                return { flow, run, folder };
               })
             );
           })

@@ -1,20 +1,37 @@
 import crypto from 'node:crypto'
-import { createPiece } from '@activepieces/pieces-framework'
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework'
 import { slackSendDirectMessageAction } from './lib/actions/send-direct-message-action'
-import { slackSendMessageAction } from './lib/actions/send-message-action'
-import { version } from '../package.json'
-import { newMessage } from './lib/triggers/new-message'
-import { newReactionAdded } from './lib/triggers/new-reaction-added'
+import { requestApprovalDirectMessageAction } from './lib/actions/request-approval-direct-message'
+import { slackSendMessageAction } from './lib/actions/send-message-action';
+import { newMessage } from './lib/triggers/new-message';
+import { newReactionAdded } from './lib/triggers/new-reaction-added';
+import { requestSendApprovalMessageAction } from './lib/actions/request-approval-message';
+import { requestActionDirectMessageAction } from './lib/actions/request-action-direct-message';
+import { requestActionMessageAction } from './lib/actions/request-action-message';
+
+export const slackAuth = PieceAuth.OAuth2({
+  
+  description: '',
+  authUrl: 'https://slack.com/oauth/authorize',
+  tokenUrl: 'https://slack.com/api/oauth.access',
+  required: true,
+  scope: [
+    'channels:read',
+    'channels:write',
+    'channels:history',
+    'chat:write:bot',
+    'groups:read',
+    'reactions:read',
+    'mpim:read',
+    'users:read',
+  ],
+})
 
 export const slack = createPiece({
-  name: 'slack',
   displayName: 'Slack',
+  minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/slack.png',
-  version,
-  actions: [
-    slackSendDirectMessageAction,
-    slackSendMessageAction,
-  ],
+  auth: slackAuth,
   events: {
     parseAndReply: ({ payload }) => {
       if (payload.body['challenge']) {
@@ -38,5 +55,16 @@ export const slack = createPiece({
       return signature === computedSignature;
     }
   },
-  triggers: [newMessage, newReactionAdded]
+  actions: [
+    slackSendDirectMessageAction,
+    slackSendMessageAction,
+    requestApprovalDirectMessageAction,
+    requestSendApprovalMessageAction,
+    requestActionDirectMessageAction,
+    requestActionMessageAction
+  ],
+  triggers: [
+    newMessage,
+    newReactionAdded,
+  ]
 })

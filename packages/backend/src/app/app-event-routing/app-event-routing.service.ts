@@ -18,30 +18,31 @@ export const appEventRoutingService = {
         identifierValue: string
         flowId: FlowId
         projectId: ProjectId
-    }): Promise<AppEventRouting[]> {
+    }): Promise<void> {
         logger.info(`Creating listeners for ${appName}, events=${events}, identifierValue=${identifierValue}`)
-        const upsertCommands: Promise<AppEventRouting>[] = []
+        const upsertCommands: Promise<unknown>[] = []
         events.forEach(event => {
-            upsertCommands.push(appEventRoutingRepo.save({
+            const upsert = appEventRoutingRepo.upsert({
                 id: apId(),
                 appName,
                 event,
                 identifierValue,
                 flowId,
                 projectId,
-            }))
+            }, ['appName', 'event', 'identifierValue', 'projectId'])
+            upsertCommands.push(upsert)
         })
-        return await Promise.all(upsertCommands)
+        await Promise.all(upsertCommands)
     },
     async deleteListeners({ projectId, flowId }: { projectId: ProjectId, flowId: FlowId }): Promise<void> {
-        appEventRoutingRepo.delete({
+        await appEventRoutingRepo.delete({
             projectId,
-            flowId: flowId,
+            flowId,
         })
     },
-    async getAppWebhookUrl({ appName }: { appName: string}): Promise<string | undefined> {
+    async getAppWebhookUrl({ appName }: { appName: string }): Promise<string | undefined> {
         const webhookUrl = system.get(SystemProp.WEBHOOK_URL)
-        if(webhookUrl){
+        if (webhookUrl) {
             return `${webhookUrl}/v1/app-events/${appName}`
         }
         const frontendUrl = system.get(SystemProp.FRONTEND_URL)

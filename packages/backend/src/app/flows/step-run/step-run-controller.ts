@@ -10,6 +10,7 @@ export const stepRunController: FastifyPluginCallbackTypebox = (app, _opts, done
         const result = await stepRunService.create({
             projectId,
             flowVersionId,
+            userId: req.principal.id, 
             stepName,
         })
 

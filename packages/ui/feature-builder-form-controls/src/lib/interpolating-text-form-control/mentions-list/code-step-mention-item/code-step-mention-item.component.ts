@@ -7,7 +7,7 @@ import {
   Output,
 } from '@angular/core';
 
-import { combineLatest, map, Observable, of } from 'rxjs';
+import { combineLatest, map, Observable, of, tap } from 'rxjs';
 import { ActionType } from '@activepieces/shared';
 
 import {
@@ -19,8 +19,9 @@ import {
 } from '../../utils';
 import { MentionsTreeCacheService } from '../mentions-tree-cache.service';
 
-import { FlowItem, FlowsActions } from '@activepieces/ui/feature-builder-store';
+import { FlowItem } from '@activepieces/ui/feature-builder-store';
 import { Store } from '@ngrx/store';
+import { canvasActions } from '@activepieces/ui/feature-builder-store';
 
 @Component({
   selector: 'app-code-step-mention-item',
@@ -40,6 +41,7 @@ export class CodeStepMentionItemComponent implements OnInit {
     value?: unknown;
     markedNodesToShow: Map<string, boolean>;
   }>;
+  search$: Observable<string>;
   constructor(
     private mentionsTreeCache: MentionsTreeCacheService,
     private store: Store
@@ -50,7 +52,11 @@ export class CodeStepMentionItemComponent implements OnInit {
       children: cacheResult?.children || [],
       value: cacheResult?.value,
     });
-
+    this.search$ = this.mentionsTreeCache.listSearchBarObs$.pipe(
+      tap((res) => {
+        this.expandCodeCollapse = !!res;
+      })
+    );
     if (cacheResult) {
       this.codeStepTest$ = combineLatest({
         stepTree: of({
@@ -94,7 +100,7 @@ export class CodeStepMentionItemComponent implements OnInit {
   }
   selectStep() {
     this.store.dispatch(
-      FlowsActions.selectStepByName({ stepName: this.stepMention.step.name })
+      canvasActions.selectStepByName({ stepName: this.stepMention.step.name })
     );
   }
 }

@@ -1,31 +1,44 @@
 import { Directive, HostListener } from '@angular/core';
 import { PannerService } from './panner.service';
+import { FlowRendererService } from '@activepieces/ui/feature-builder-store';
 
 @Directive({
   selector: '[appCanvasPanner]',
 })
 export class CanvasPannerDirective {
-  constructor(private pannerService: PannerService) {}
+  constructor(
+    private pannerService: PannerService,
+    private flowRendererService: FlowRendererService
+  ) {}
 
   @HostListener('mousedown', ['$event'])
   mouseDown(event: MouseEvent) {
-    if (event.which === 2) {
+    if (event.target) {
+      const scrollingWithinDataInsertionPopup = document
+        .getElementById('mentionsDropdownContainer')
+        ?.contains(event.target as Node);
+      const mentionsList = document.getElementById('mentionsList');
+      if (scrollingWithinDataInsertionPopup && mentionsList !== null) {
+        return;
+      }
+    }
+    if (event.which === 2 && !this.flowRendererService.draggingSubject.value) {
       this.pannerService.dragState.currentOffset.x = event.clientX;
       this.pannerService.dragState.currentOffset.y = event.clientY;
       this.pannerService.dragState.isDragging = true;
-      this.pannerService.isGrabbing$.next(true);
+      this.pannerService.isPanning$.next(true);
     }
   }
 
   @HostListener('mouseup', ['$event'])
   mouseUp(ignoredEvent: unknown) {
     this.pannerService.dragState.isDragging = false;
-    this.pannerService.isGrabbing$.next(false);
+    this.pannerService.isPanning$.next(false);
   }
   @HostListener('mouseleave', ['$event'])
   mouseleave(ignoredEvent: unknown) {
     this.pannerService.dragState.isDragging = false;
-    this.pannerService.isGrabbing$.next(false);
+    this.pannerService.isPanning$.next(false);
   }
 
   @HostListener('mousemove', ['$event'])
@@ -48,13 +61,24 @@ export class CanvasPannerDirective {
   }
   @HostListener('wheel', ['$event'])
   macPanning(event: WheelEvent) {
-    event.preventDefault();
-    this.pannerService.lastPanningOffset.x -= event.deltaX;
-    this.pannerService.lastPanningOffset.y -= event.deltaY;
-    this.pannerService.dragState.currentOffset.x = event.clientX;
-    this.pannerService.dragState.currentOffset.y = event.clientY;
-    this.pannerService.panningOffset$.next({
-      ...this.pannerService.lastPanningOffset,
-    });
+    if (event.target) {
+      const scrollingWithinDataInsertionPopup = document
+        .getElementById('mentionsDropdownContainer')
+        ?.contains(event.target as Node);
+      const mentionsList = document.getElementById('mentionsList');
+      if (scrollingWithinDataInsertionPopup && mentionsList !== null) {
+        return;
+      }
+    }
+
+    if (!this.flowRendererService.draggingSubject.value) {
+      this.pannerService.lastPanningOffset.x -= event.deltaX;
+      this.pannerService.lastPanningOffset.y -= event.deltaY;
+      this.pannerService.dragState.currentOffset.x = event.clientX;
+      this.pannerService.dragState.currentOffset.y = event.clientY;
+      this.pannerService.panningOffset$.next({
+        ...this.pannerService.lastPanningOffset,
+      });
+    }
   }
 }

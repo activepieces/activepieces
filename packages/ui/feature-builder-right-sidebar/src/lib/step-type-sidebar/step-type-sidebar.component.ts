@@ -9,7 +9,14 @@ import {
   tap,
 } from 'rxjs';
 
-import { Component, Input, OnInit } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  Input,
+  OnInit,
+  ViewChild,
+} from '@angular/core';
 import {
   Trigger,
   ActionType,
@@ -17,13 +24,15 @@ import {
   AddActionRequest,
   FlowVersion,
   StepLocationRelativeToParent,
+  flowHelper,
 } from '@activepieces/shared';
 import { FormControl } from '@angular/forms';
 import {
   BuilderSelectors,
+  canvasActions,
+  CanvasActionType,
   CodeService,
   FlowsActions,
-  FlowStructureUtil,
   NO_PROPS,
   RightSideBarType,
   StepTypeSideBarProps,
@@ -33,15 +42,19 @@ import {
   getDefaultDisplayNameForPiece,
   getDisplayNameForTrigger,
 } from '@activepieces/ui/common';
+import { constructUpdateOperation } from './step-type-list/utils';
+import { Actions, ofType } from '@ngrx/effects';
 
 @Component({
   selector: 'app-step-type-sidebar',
   templateUrl: './step-type-sidebar.component.html',
   styleUrls: ['./step-type-sidebar.component.scss'],
 })
-export class StepTypeSidebarComponent implements OnInit {
+export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
+  @ViewChild('searchInput') searchInput: ElementRef;
   _showTriggers = false;
   searchFormControl = new FormControl('');
+  focusSearchInput$: Observable<void>;
   @Input() set showTriggers(shouldShowTriggers: boolean) {
     this._showTriggers = shouldShowTriggers;
     if (this._showTriggers) {
@@ -61,12 +74,30 @@ export class StepTypeSidebarComponent implements OnInit {
   flowTypeSelected$: Observable<void>;
   flowItemDetailsLoaded$: Observable<boolean>;
   triggersDetails$: Observable<FlowItemDetails[]>;
-  constructor(private store: Store, private codeService: CodeService) {}
+  constructor(
+    private store: Store,
+    private codeService: CodeService,
+    private actions: Actions
+  ) {
+    this.focusSearchInput$ = this.actions.pipe(
+      ofType(CanvasActionType.SET_RIGHT_SIDEBAR),
+      tap(() => {
+        this.searchInput.nativeElement.focus();
+      }),
+      map(() => void 0)
+    );
+  }
 
   ngOnInit(): void {
     this.flowItemDetailsLoaded$ = this.store
       .select(BuilderSelectors.selectAllFlowItemsDetailsLoadedState)
       .pipe(tap(console.log));
+  }
+
+  ngAfterViewInit(): void {
+    setTimeout(() => {
+      this.searchInput.nativeElement.focus();
+    }, 350);
   }
 
   populateTabsAndTheirLists() {
@@ -114,9 +145,10 @@ export class StepTypeSidebarComponent implements OnInit {
 
   closeSidebar() {
     this.store.dispatch(
-      FlowsActions.setRightSidebar({
+      canvasActions.setRightSidebar({
         sidebarType: RightSideBarType.NONE,
         props: NO_PROPS,
+        deselectCurrentStep: true,
       })
     );
   }
@@ -129,6 +161,9 @@ export class StepTypeSidebarComponent implements OnInit {
       rightSideBar: this.store
         .select(BuilderSelectors.selectCurrentRightSideBar)
         .pipe(take(1)),
+      currentStep: this.store
+        .select(BuilderSelectors.selectCurrentStep)
+        .pipe(take(1)),
     }).pipe(
       take(1),
       tap((results) => {
@@ -137,8 +172,8 @@ export class StepTypeSidebarComponent implements OnInit {
         }
         if (this._showTriggers) {
           this.replaceTrigger(flowItemDetails);
-        } else {
-          const operation = this.constructOperation(
+        } else if (results.currentStep?.type !== ActionType.MISSING) {
+          const operation = this.constructAddOperation(
             (results.rightSideBar.props as StepTypeSideBarProps).stepName,
             results.currentFlow.version,
             flowItemDetails.type as ActionType,
@@ -146,10 +181,22 @@ export class StepTypeSidebarComponent implements OnInit {
             (results.rightSideBar.props as StepTypeSideBarProps)
               .stepLocationRelativeToParent
           );
-
           this.store.dispatch(
             FlowsActions.addAction({
               operation: operation,
+            })
+          );
+        } else {
+          const operation = constructUpdateOperation(
+            flowItemDetails,
+            results.currentStep.name,
+            results.currentStep.displayName,
+            this.codeService.helloWorldBase64()
+          );
+          this.store.dispatch(
+            FlowsActions.updateAction({
+              operation: operation,
+              updatingMissingStep: true,
             })
           );
         }
@@ -210,7 +257,7 @@ export class StepTypeSidebarComponent implements OnInit {
     );
   }
 
-  constructOperation(
+  constructAddOperation(
     parentStep: string,
     flowVersion: FlowVersion,
     actionType: ActionType,
@@ -218,7 +265,7 @@ export class StepTypeSidebarComponent implements OnInit {
     stepLocationRelativeToParent: StepLocationRelativeToParent
   ): AddActionRequest {
     const baseProps = {
-      name: FlowStructureUtil.findAvailableName(flowVersion, 'step'),
+      name: this.findAvailableName(flowVersion, 'step'),
       displayName: getDefaultDisplayNameForPiece(
         flowItemDetails.type as ActionType,
         flowItemDetails.name
@@ -237,7 +284,6 @@ export class StepTypeSidebarComponent implements OnInit {
             settings: {
               artifact: this.codeService.helloWorldBase64(),
               artifactSourceId: '',
-              artifactPackagedId: '',
               input: {},
             },
           },
@@ -278,6 +324,9 @@ export class StepTypeSidebarComponent implements OnInit {
           },
         };
       }
+      case ActionType.MISSING: {
+        throw new Error('Select missing action type should not be possible.');
+      }
       case ActionType.BRANCH: {
         return {
           parentStep: parentStep,
@@ -296,11 +345,27 @@ export class StepTypeSidebarComponent implements OnInit {
                   },
                 ],
               ],
+              inputUiInfo: {},
             },
           },
         };
       }
     }
+  }
+
+  findAvailableName(flowVersion: FlowVersion, stepPrefix: string): string {
+    const steps = flowHelper
+      .getAllSteps(flowVersion.trigger)
+      .map((f) => f.name);
+    let availableNumber = 1;
+    let availableName = `${stepPrefix}_${availableNumber}`;
+
+    while (steps.includes(availableName)) {
+      availableNumber++;
+      availableName = `${stepPrefix}_${availableNumber}`;
+    }
+
+    return availableName;
   }
 
   applySearchToObservable(

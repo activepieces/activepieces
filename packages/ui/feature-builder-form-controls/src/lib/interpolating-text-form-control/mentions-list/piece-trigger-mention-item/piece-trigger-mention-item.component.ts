@@ -7,7 +7,7 @@ import {
   Output,
 } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { combineLatest, map, Observable, of, Subject } from 'rxjs';
+import { combineLatest, map, Observable, of, Subject, tap } from 'rxjs';
 import { PieceTrigger, TriggerType } from '@activepieces/shared';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import {
@@ -20,9 +20,13 @@ import { MentionsTreeCacheService } from '../mentions-tree-cache.service';
 import {
   BuilderSelectors,
   FlowItem,
-  FlowsActions,
+  canvasActions,
 } from '@activepieces/ui/feature-builder-store';
-import { ActionMetaService, FlowItemDetails } from '@activepieces/ui/common';
+import {
+  PieceMetadataService,
+  CORE_SCHEDULE,
+  FlowItemDetails,
+} from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-piece-trigger-mention-item',
@@ -32,7 +36,9 @@ import { ActionMetaService, FlowItemDetails } from '@activepieces/ui/common';
 export class PieceTriggerMentionItemComponent implements OnInit {
   FIRST_LEVEL_PADDING_IN_MENTIONS_LIST = FIRST_LEVEL_PADDING_IN_MENTIONS_LIST;
   TriggerType = TriggerType;
+  CORE_SCHEDULE = CORE_SCHEDULE;
   expandSample = false;
+  search$: Observable<string>;
   @Input()
   set stepMention(val: MentionListItem & { step: FlowItem }) {
     if (val.step.type !== TriggerType.PIECE) {
@@ -57,17 +63,25 @@ export class PieceTriggerMentionItemComponent implements OnInit {
   isScheduleTrigger$: Observable<boolean>;
   constructor(
     private store: Store,
-    private actionMetaDataService: ActionMetaService,
+    private actionMetaDataService: PieceMetadataService,
     private mentionsTreeCache: MentionsTreeCacheService
   ) {}
   ngOnInit(): void {
     const cachedResult: undefined | MentionTreeNode = this.getChachedData();
+    this.search$ = this.mentionsTreeCache.listSearchBarObs$.pipe(
+      tap((res) => {
+        this.expandSample = !!res;
+      })
+    );
     this.isScheduleTrigger$ = this.store.select(
       BuilderSelectors.selectIsSchduleTrigger
     );
     this.isPollingTrigger$ = this.checkIfItIsPollingTrigger();
-
     if (cachedResult) {
+      this.mentionsTreeCache.setStepMentionsTree(this._stepMention.step.name, {
+        children: cachedResult?.children || [],
+        value: cachedResult?.value,
+      });
       this.sampleData$ = combineLatest({
         stepTree: of({
           children: cachedResult.children,
@@ -122,7 +136,7 @@ export class PieceTriggerMentionItemComponent implements OnInit {
             return (
               res.triggers[this._stepMention.step.settings.triggerName]
                 ?.type === TriggerStrategy.POLLING &&
-              this._stepMention.step.settings.pieceName !== 'schedule'
+              this._stepMention.step.settings.pieceName !== CORE_SCHEDULE
             );
           }
           return false;
@@ -131,7 +145,7 @@ export class PieceTriggerMentionItemComponent implements OnInit {
   }
   selectStep() {
     this.store.dispatch(
-      FlowsActions.selectStepByName({ stepName: this._stepMention.step.name })
+      canvasActions.selectStepByName({ stepName: this._stepMention.step.name })
     );
   }
 }

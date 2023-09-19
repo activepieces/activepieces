@@ -20,19 +20,21 @@ import { MoveFlowToFolderDialogComponent } from './pages/flows-table/move-flow-t
 import { EffectsModule } from '@ngrx/effects';
 import { FoldersEffects } from './store/folders/folders.effects';
 import { RenameFolderDialogComponent } from './pages/flows-table/rename-folder-dialog/rename-folder-dialog.component';
-import { EeBillingUiModule } from '@activepieces/ee/billing/ui';
-import { StepsListInFlowsTableComponent } from './pages/flows-table/steps-list-in-flows-table/steps-list-in-flows-table.component';
+import { UiFeatureTemplatesModule } from '@activepieces/ui/feature-templates';
+import { CommunityPiecesTableComponent } from './pages/community-pieces-table/community-pieces-table.component';
+import { InstallCommunityPieceModalComponent } from './pages/community-pieces-table/install-community-piece/install-community-piece-modal.component';
 
 @NgModule({
   imports: [
     CommonModule,
     UiCommonModule,
-    EeBillingUiModule,
     RouterModule.forChild(DashboardLayoutRouting),
     StoreModule.forFeature(FOLDERS_STATE_NAME, foldersReducer),
     EffectsModule.forFeature([FoldersEffects]),
+    UiFeatureTemplatesModule,
   ],
   declarations: [
+    InstallCommunityPieceModalComponent,
     DashboardContainerComponent,
     SidenavRoutesListComponent,
     RunsTableComponent,
@@ -41,11 +43,11 @@ import { StepsListInFlowsTableComponent } from './pages/flows-table/steps-list-i
     PageTitleComponent,
     ConnectionsTableComponent,
     FlowsTableTitleComponent,
+    CommunityPiecesTableComponent,
     FoldersListComponent,
     NewFolderDialogComponent,
     MoveFlowToFolderDialogComponent,
     RenameFolderDialogComponent,
-    StepsListInFlowsTableComponent,
   ],
 })
 export class UiFeatureDashboardModule {}

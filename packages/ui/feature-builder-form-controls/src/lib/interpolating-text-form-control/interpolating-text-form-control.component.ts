@@ -11,7 +11,6 @@ import {
   OnInit,
   Optional,
   Output,
-  SecurityContext,
   Self,
   ViewChild,
 } from '@angular/core';
@@ -33,7 +32,7 @@ import {
   fromOpsToText,
   fromTextToOps,
   getImageTemplateForStepLogo,
-  InsertMentionOperation,
+  keysWithinPath,
   MentionListItem,
   QuillEditorOperationsObject,
   QuillMaterialBase,
@@ -47,6 +46,7 @@ import {
   BuilderSelectors,
   FlowItem,
 } from '@activepieces/ui/feature-builder-store';
+import { InsertMentionOperation } from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-interpolating-text-form-control',
@@ -96,6 +96,9 @@ export class InterpolatingTextFormControlComponent
       allowedChars: /^[A-Za-z\sÅÄÖåäö]*$/,
     },
     toolbar: false,
+    keyboard: {
+      bindings: { ['list autofill']: undefined },
+    },
   };
 
   editorFormControl: FormControl<QuillEditorOperationsObject>;
@@ -201,27 +204,36 @@ export class InterpolatingTextFormControlComponent
       })
     );
   }
+
   editorCreated(): void {
     this.removeDefaultTabKeyBinding();
+    this.removeConvertingSpaceAndMinusToList();
+
     this.editor.quillEditor.clipboard.addMatcher(
       Node.ELEMENT_NODE,
-      (_node: unknown, delta: { ops: TextInsertOperation[] }) => {
-        const ops: TextInsertOperation[] = [];
-        delta.ops.forEach((op) => {
-          if (op.insert && typeof op.insert === 'string') {
-            ops.push({
-              insert:
-                this.sanitizer.sanitize(SecurityContext.HTML, op.insert) || '',
-            });
+      (_node: Element, delta: any) => {
+        const cleanedOps: (InsertMentionOperation | TextInsertOperation)[] = [];
+        delta.ops.forEach((op: any) => {
+          if (
+            (op.insert && typeof op.insert === 'string') ||
+            (typeof op.insert === 'object' && op.insert.mention)
+          ) {
+            // remove styling in case the user is pasting HTML
+            delete op['attributes'];
+            cleanedOps.push(op);
           }
         });
-        delta.ops = ops;
+        delta.ops = cleanedOps;
         return delta;
       }
     );
   }
+
   private removeDefaultTabKeyBinding() {
     delete this.editor.quillEditor.getModule('keyboard').bindings['9'];
+  }
+  private removeConvertingSpaceAndMinusToList() {
+    delete this.editor.quillEditor.getModule('keyboard').bindings['32'][0];
   }
   get placeholder() {
     return this._placeholder;
@@ -308,7 +320,7 @@ export class InterpolatingTextFormControlComponent
           .parentNode[
           'classList' as keyof ParentNode
         ] as unknown as DOMTokenList;
-        console.log(selection);
+
         if (classList && classList.contains('mention')) {
           fixSelection(selection.focusNode);
         }
@@ -348,29 +360,18 @@ export class InterpolatingTextFormControlComponent
       const itemPathWithoutInterpolationDenotation =
         mentionOp.insert.mention.serverValue.slice(
           2,
-          mentionOp.insert.mention.serverValue.length - 1
+          mentionOp.insert.mention.serverValue.length - 2
         );
-      const itemPrefix = itemPathWithoutInterpolationDenotation.split('.')[0];
+      const keys = keysWithinPath(itemPathWithoutInterpolationDenotation);
+      const stepName = keys[0];
       let imageTag = '';
-      if (itemPrefix !== 'configs' && itemPrefix !== 'connections') {
-        const stepMetaData = allStepsMetaData.find(
-          (s) => s.step.name === itemPrefix
-        );
-        if (stepMetaData) {
-          imageTag =
-            getImageTemplateForStepLogo(stepMetaData.logoUrl || '') +
-            `${stepMetaData.step.indexInDfsTraversal || 0 + 1}. `;
-        }
-      } else {
-        if (itemPrefix === 'connections') {
-          imageTag = getImageTemplateForStepLogo(
-            'assets/img/custom/piece/connection.png'
-          );
-        } else if (itemPrefix === 'configs') {
-          imageTag = getImageTemplateForStepLogo(
-            'assets/img/custom/piece/config.png'
-          );
-        }
+      const stepMetaData = allStepsMetaData.find(
+        (s) => s.step.name === stepName
+      );
+      if (stepMetaData) {
+        imageTag =
+          getImageTemplateForStepLogo(stepMetaData.logoUrl || '') +
+          `${stepMetaData.step.indexInDfsTraversal || 0 + 1}. `;
       }
       mentionOp.insert.mention.value =
         ' ' + imageTag + mentionOp.insert.mention.value + ' ';

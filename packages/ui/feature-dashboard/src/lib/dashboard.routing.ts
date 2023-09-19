@@ -7,26 +7,37 @@ import {
 } from './resolvers/are-there-flows.resolver';
 import { ConnectionsTableComponent } from './pages/connections-table/connections-table.component';
 import { FoldersResolver } from './resolvers/folders.resolver';
+import { DashboardContainerComponent } from './dashboard-container.component';
+import { CommunityPiecesTableComponent } from './pages/community-pieces-table/community-pieces-table.component';
+import { environment } from '@activepieces/ui/common';
+
 export const DashboardLayoutRouting: Routes = [
   {
     path: '',
     canActivate: [],
+    component: DashboardContainerComponent,
     children: [
       { path: '', pathMatch: 'full', redirectTo: '/flows' },
       {
-        title: 'AP-Runs',
+        title: `Runs - ${environment.websiteTitle}`,
         path: 'runs',
         pathMatch: 'full',
         component: RunsTableComponent,
       },
       {
-        title: 'AP-Connections',
+        title: `My Pieces - ${environment.websiteTitle}`,
+        path: 'settings/my-pieces',
+        pathMatch: 'full',
+        component: CommunityPiecesTableComponent,
+      },
+      {
+        title: `Connections - ${environment.websiteTitle}`,
         path: 'connections',
         pathMatch: 'full',
         component: ConnectionsTableComponent,
       },
       {
-        title: 'AP-Flows',
+        title: `Flows - ${environment.websiteTitle}`,
         path: 'flows',
         pathMatch: 'full',
         component: FlowsTableComponent,

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { CanDeactivate } from '@angular/router';
+
 import { Store } from '@ngrx/store';
 import { map, Observable, take } from 'rxjs';
 import { BuilderSelectors } from '@activepieces/ui/feature-builder-store';
@@ -7,7 +7,7 @@ import { BuilderSelectors } from '@activepieces/ui/feature-builder-store';
 @Injectable({
   providedIn: 'root',
 })
-export class BuilderSavingGuard implements CanDeactivate<boolean> {
+export class BuilderSavingGuard {
   constructor(private store: Store) {}
   canDeactivate(): Observable<boolean> {
     const isSaving$ = this.store.select(BuilderSelectors.selectIsSaving);

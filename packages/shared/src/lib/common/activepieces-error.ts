@@ -2,8 +2,8 @@ import { AppConnectionId } from "../app-connection/app-connection";
 import { FileId } from "../file/file";
 import { FlowRunId } from "../flow-run/flow-run";
 import { FlowId } from "../flows/flow";
+import { FlowInstanceId } from "../flows/flow-instances";
 import { FlowVersionId } from "../flows/flow-version";
-import { InstanceId } from "../instance";
 import { ApId } from "./id-generator";
 
 export class ActivepiecesError extends Error {
@@ -13,35 +13,41 @@ export class ActivepiecesError extends Error {
 }
 
 type ErrorParams =
+  | AppConnectionNotFoundErrorParams
+  | AuthorizationErrorParams
   | ConfigNotFoundErrorParams
+  | EngineOperationFailureParams
+  | EntityNotFoundErrorParams
+  | ExecutionTimeoutErrorParams
   | ExistingUserErrorParams
   | FileNotFoundErrorParams
-  | FlowNotFoundErrorParams
-  | FlowRunNotFoundErrorParams
-  | ProjectNotFoundErrorParams
-  | FlowVersionNotFoundErrorParams
   | FlowInstanceNotFoundErrorParams
+  | FlowNotFoundErrorParams
+  | FlowOperationErrorParams
+  | FlowRunNotFoundErrorParams
+  | FlowVersionNotFoundErrorParams
+  | InvalidApiKeyParams
+  | InvalidAppConnectionParams
   | InvalidBearerTokenParams
-  | InvalidCredentialsErrorParams
-  | JobRemovalFailureErrorParams
-  | PieceNotFoundErrorParams
-  | PieceTriggerNotFoundErrorParams
-  | StepNotFoundErrorParams
-  | AppConnectionNotFoundErrorParams
   | InvalidClaimParams
   | InvalidCloudClaimParams
+  | InvalidCredentialsErrorParams
   | InvalidJwtTokenErrorParams
-  | TaskQuotaExeceededErrorParams
-  | TriggerFailedErrorParams
+  | JobRemovalFailureErrorParams
+  | OpenAiFailedErrorParams
+  | PauseMetadataMissingErrorParams
+  | PieceNotFoundErrorParams
+  | PieceTriggerNotFoundErrorParams
+  | ProjectNotFoundErrorParams
+  | StepNotFoundErrorParams
   | SystemInvalidErrorParams
   | SystemPropNotDefinedErrorParams
-  | OpenAiFailedErrorParams
+  | TaskQuotaExceededErrorParams
   | TestTriggerFailedErrorParams
-  | FlowOperationErrorParams
-  | EntityNotFoundErrorParams
+  | TriggerDisableErrorParams
+  | TriggerEnableErrorParams
+  | TriggerFailedErrorParams
   | ValidationErrorParams
-  | ExecutionTimeoutErrorParams
-
 
 export interface BaseErrorParams<T, V> {
   code: T;
@@ -62,6 +68,11 @@ export type AppConnectionNotFoundErrorParams = BaseErrorParams<
   }
 >;
 
+export type AuthorizationErrorParams = BaseErrorParams<
+  ErrorCode.AUTHORIZATION,
+  Record<string, never>
+>;
+
 export type SystemInvalidErrorParams = BaseErrorParams<
   ErrorCode.SYSTEM_PROP_INVALID,
   {
@@ -79,7 +90,7 @@ export type FlowNotFoundErrorParams = BaseErrorParams<
 export type FlowInstanceNotFoundErrorParams = BaseErrorParams<
   ErrorCode.FLOW_INSTANCE_NOT_FOUND,
   {
-    id?: InstanceId
+    id?: FlowInstanceId
   }
 >
 
@@ -121,8 +132,8 @@ export type ExistingUserErrorParams = BaseErrorParams<
 export type StepNotFoundErrorParams = BaseErrorParams<
   ErrorCode.STEP_NOT_FOUND,
   {
-    pieceName: string;
-    pieceVersion: string;
+    pieceName?: string;
+    pieceVersion?: string;
     stepName: string;
   }
 >
@@ -131,7 +142,7 @@ export type PieceNotFoundErrorParams = BaseErrorParams<
   ErrorCode.PIECE_NOT_FOUND,
   {
     pieceName: string;
-    pieceVersion: string;
+    pieceVersion: string | undefined;
   }
 >
 
@@ -180,7 +191,7 @@ export type SystemPropNotDefinedErrorParams = BaseErrorParams<
 >;
 
 export type OpenAiFailedErrorParams = BaseErrorParams<
-  ErrorCode.OPENAI_FAILED,
+  ErrorCode.OPEN_AI_FAILED,
   Record<string, never>
 >;
 
@@ -196,7 +207,7 @@ export type InvalidJwtTokenErrorParams = BaseErrorParams<
   }
 >
 
-export type TaskQuotaExeceededErrorParams = BaseErrorParams<
+export type TaskQuotaExceededErrorParams = BaseErrorParams<
   ErrorCode.TASK_QUOTA_EXCEEDED,
   {
     projectId: string;
@@ -229,33 +240,78 @@ export type ValidationErrorParams = BaseErrorParams<
   }
 >
 
+export type TriggerEnableErrorParams = BaseErrorParams<
+  ErrorCode.TRIGGER_ENABLE,
+  {
+    flowVersionId?: FlowVersionId
+  }
+>
+
+export type TriggerDisableErrorParams = BaseErrorParams<
+  ErrorCode.TRIGGER_DISABLE,
+  {
+    flowVersionId?: FlowVersionId
+  }
+>
+
+export type PauseMetadataMissingErrorParams = BaseErrorParams<
+  ErrorCode.PAUSE_METADATA_MISSING,
+  Record<string, never>
+>
+
+export type InvalidApiKeyParams = BaseErrorParams<
+  ErrorCode.INVALID_API_KEY,
+  Record<string, never>
+>
+
+export type EngineOperationFailureParams = BaseErrorParams<
+  ErrorCode.ENGINE_OPERATION_FAILURE,
+  {
+    message: string
+  }
+>
+
+export type InvalidAppConnectionParams = BaseErrorParams<
+  ErrorCode.INVALID_APP_CONNECTION,
+  {
+    error: string
+  }
+>
+
 export enum ErrorCode {
-  CONFIG_NOT_FOUND = "CONFIG_NOT_FOUND",
-  EXISTING_USER = "EXISTING_USER",
   APP_CONNECTION_NOT_FOUND = "APP_CONNECTION_NOT_FOUND",
+  AUTHORIZATION = "AUTHORIZATION",
+  CONFIG_NOT_FOUND = "CONFIG_NOT_FOUND",
+  ENGINE_OPERATION_FAILURE = "ENGINE_OPERATION_FAILURE",
+  ENTITY_NOT_FOUND = "ENTITY_NOT_FOUND",
+  EXECUTION_TIMEOUT = "EXECUTION_TIMEOUT",
+  EXISTING_USER = "EXISTING_USER",
   FILE_NOT_FOUND = "FILE_NOT_FOUND",
-  FLOW_NOT_FOUND = "FLOW_NOT_FOUND",
-  FLOW_RUN_NOT_FOUND = "INSTANCE_NOT_FOUND",
-  FLOW_VERSION_NOT_FOUND = "FLOW_VERSION_NOT_FOUND",
   FLOW_INSTANCE_NOT_FOUND = "INSTANCE_NOT_FOUND",
+  FLOW_NOT_FOUND = "FLOW_NOT_FOUND",
+  FLOW_OPERATION_INVALID = "FLOW_OPERATION_INVALID",
+  FLOW_RUN_NOT_FOUND = "FLOW_RUN_NOT_FOUND",
+  FLOW_VERSION_NOT_FOUND = "FLOW_VERSION_NOT_FOUND",
+  INVALID_API_KEY = "INVALID_API_KEY",
+  INVALID_APP_CONNECTION = "INVALID_APP_CONNECTION",
   INVALID_BEARER_TOKEN = "INVALID_BEARER_TOKEN",
+  INVALID_CLAIM = "INVALID_CLAIM",
+  INVALID_CLOUD_CLAIM = "INVALID_CLOUD_CLAIM",
   INVALID_CREDENTIALS = "INVALID_CREDENTIALS",
+  INVALID_OR_EXPIRED_JWT_TOKEN = "INVALID_OR_EXPIRED_JWT_TOKEN",
   JOB_REMOVAL_FAILURE = "JOB_REMOVAL_FAILURE",
+  OPEN_AI_FAILED = "OPEN_AI_FAILED",
+  PAUSE_METADATA_MISSING = "PAUSE_METADATA_MISSING",
   PIECE_NOT_FOUND = "PIECE_NOT_FOUND",
   PIECE_TRIGGER_NOT_FOUND = "PIECE_TRIGGER_NOT_FOUND",
-  STEP_NOT_FOUND = "STEP_NOT_FOUND",
-  SYSTEM_PROP_NOT_DEFINED = "SYSTEM_PROP_NOT_DEFINED",
-  INVALID_CLAIM = "INVALID_CLAIM",
   PROJECT_NOT_FOUND = "PROJECT_NOT_FOUND",
-  INVALID_CLOUD_CLAIM = "INVALID_CLOUD_CLAIM",
-  INVALID_OR_EXPIRED_JWT_TOKEN = "INVALID_OR_EXPIRED_JWT_TOKEN",
-  TASK_QUOTA_EXCEEDED = "TASK_QUOTA_EXCEEDED",
+  STEP_NOT_FOUND = "STEP_NOT_FOUND",
   SYSTEM_PROP_INVALID = "SYSTEM_PROP_INVALID",
-  TRIGGER_FAILED = "TRIGGER_FAILED",
-  FLOW_OPERATION_INVALID = "FLOW_OPERATION_INVALID",
-  OPENAI_FAILED = "OPENAI_FAILED",
+  SYSTEM_PROP_NOT_DEFINED = "SYSTEM_PROP_NOT_DEFINED",
+  TASK_QUOTA_EXCEEDED = "TASK_QUOTA_EXCEEDED",
   TEST_TRIGGER_FAILED = "TEST_TRIGGER_FAILED",
-  ENTITY_NOT_FOUND = "ENTITY_NOT_FOUND",
+  TRIGGER_DISABLE = "TRIGGER_DISABLE",
+  TRIGGER_ENABLE = "TRIGGER_ENABLE",
+  TRIGGER_FAILED = "TRIGGER_FAILED",
   VALIDATION = "VALIDATION",
-  EXECUTION_TIMEOUT = "EXECUTION_TIMEOUT"
 }

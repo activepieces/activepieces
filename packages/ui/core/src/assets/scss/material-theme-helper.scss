@@ -72,13 +72,13 @@
 
 .mdc-dialog .mdc-dialog__content {
   padding: 3px 24px 20px 24px !important;
+  &.ap-p-0
+  {
+    padding:0px !important
+  }
 }
 
-.material-icons {
-  font-size: 20px !important;
-  height: 20px !important;
-  width: 20px !important;
-}
+
 
 .folder-list-item
 {

@@ -1,14 +1,20 @@
 
-import { createPiece } from "@activepieces/pieces-framework";
-import packageJson from "../package.json";
+import { PieceAuth, createPiece } from "@activepieces/pieces-framework";
 import { createOrUpdateContact } from "./lib/actions/create-or-update-contact";
 
+export const sendinblueAuth = PieceAuth.SecretText({
+  displayName: "Project API key",
+  description: "Your project API key",
+  required: true
+})
+
 export const sendinblue = createPiece({
-  name: "sendinblue",
-  displayName: "Sendinblue",
-  logoUrl: "https://cdn.activepieces.com/pieces/sendinblue.png",
-  version: packageJson.version,
+  displayName: "Brevo",
+  description:"sendinblue",
+      minimumSupportedRelease: '0.5.0',
+    logoUrl: "https://cdn.activepieces.com/pieces/brevo.png",
   authors: ['kanarelo'],
+  auth: sendinblueAuth,
   actions: [createOrUpdateContact],
   triggers: [],
 });

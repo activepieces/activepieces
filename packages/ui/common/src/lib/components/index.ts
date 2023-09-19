@@ -1,3 +1,4 @@
+export * from './pieces-icons-from-flow/pieces-icons-from-flow.component';
 export * from './ap-button/ap-button.component';
 export * from './editable-text/editable-text.component';
 export * from './hotspot/hotspot.component';
@@ -14,3 +15,4 @@ export * from './horizontal-sidebar-separator/horizontal-sidebar-separator.compo
 export * from './json-view/json-view-dialog/json-view-dialog.component';
 export * from './generic-snackbar-template/generic-snackbar-template.component';
 export * from './user-avatar/user-avatar.component';
+export * from './pieces-icons/piece-icon-container/piece-icon-container.component';

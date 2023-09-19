@@ -1,13 +1,12 @@
 
-import { createPiece } from "@activepieces/pieces-framework";
+import { PieceAuth, createPiece } from "@activepieces/pieces-framework";
 import { convertJsonToXml } from "./lib/actions/convert-json-to-xml";
-import packageJson from "../package.json";
 
 export const xml = createPiece({
-  name: "xml",
   displayName: "XML",
-  logoUrl: "https://cdn.activepieces.com/pieces/xml.png",
-  version: packageJson.version,
+      minimumSupportedRelease: '0.5.0',
+    logoUrl: "https://cdn.activepieces.com/pieces/xml.png",
+  auth: PieceAuth.None(),
   authors: ["Willianwg"],
   actions: [convertJsonToXml],
   triggers: [],

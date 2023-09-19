@@ -1,5 +1,5 @@
 <div class="box">
-  <div class="header">
+  <div class="header ap-z-50">
     <app-flow-builder-header></app-flow-builder-header>
   </div>
   <div class="content">
@@ -22,13 +22,25 @@
           </div>
         </mat-drawer>
         <mat-drawer-content [class.no-transition]="rightSidebarDragging || leftSidebarDragging">
-          <div class="box">
-            <div class="header">
-              <app-flow-builder-tabs></app-flow-builder-tabs>
-            </div>
-            <div class="content canvas" #canvasWrapper appCanvasPanner [style.cursor]="cursorStyle$ | async">
-              <app-canvas-utils class="ap-absolute ap-right-[15px] ap-bottom-[15px]"></app-canvas-utils>
+          <div class="box ap-relative ap-overflow-hidden"
+            [class.ap-cursor-grabbing]="(isPanning$| async) || (isDragging$ | async)"
+            [class.ap-cursor-default]="(isDragging$| async)===false && (isPanning$ | async) === false"
+            #draggingContainer id="draggingContainer">
+            <app-guess-flow-container #guessFlow></app-guess-flow-container>
+            <div class="content canvas" #canvasWrapper appCanvasPanner>
+              <div class="ap-absolute ap-right-[0px]  transition-ease ap-z-50 ap-bottom-[20px] ap-right-[20px]"
+                id="mentionsDropdownContainer" [class.ap-z-0]="dataInsertionPopupHidden$ | async"
+                [style.height]="(builderAutocompleteService.dataInsertionPopupSize$ | async) === 'fullscreen' ? 'calc(100% - 30px)' : mentionsDropdown.mentionsList?.nativeElement?.clientHeight + 'px'"
+                [style.width]="(builderAutocompleteService.dataInsertionPopupSize$ | async) === 'fullscreen' ? 'calc(100% - 30px)': mentionsDropdown.mentionsList?.nativeElement?.clientWidth + 'px'">
+                <app-builder-autocomplete-mentions-dropdown
+                  #mentionsDropdown></app-builder-autocomplete-mentions-dropdown>
+              </div>
+              <app-canvas-utils class="ap-absolute ap-left-[15px] ap-bottom-[30px] ap-z-40"></app-canvas-utils>
               <app-flow-item-tree></app-flow-item-tree>
+              <div
+                class="ap-absolute ap-left-[15px] ap-bottom-[80px] ap-bg-white ap-rounded-lg ap-z-40 ap-shadow-portal-ds">
+                <ng-template [cdkPortalOutlet]="builderService.componentToShowInsidePortal$ | async"> </ng-template>
+              </div>
             </div>
           </div>
         </mat-drawer-content>
@@ -50,3 +62,9 @@
   </div>
 </div>
 <ng-container *ngIf="loadInitialData$ | async"></ng-container>
+<ng-container *ngIf="graphChanged$ | async"></ng-container>
+<ng-container *ngIf="importTemplate$ | async"></ng-container>
+
+<div class="ap-hidden">
+  <ngx-monaco-editor [options]="codeEditorOptions"></ngx-monaco-editor>
+</div>

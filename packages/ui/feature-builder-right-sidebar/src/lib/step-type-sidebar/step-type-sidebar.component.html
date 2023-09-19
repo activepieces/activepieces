@@ -2,9 +2,9 @@
   <ap-sidebar-header (closeClicked)="closeSidebar()" [title]="sideBarDisplayName"></ap-sidebar-header>
 
   <ng-container *ngIf="flowItemDetailsLoaded$ | async; else loading">
-    <mat-form-field (click)="$event.stopPropagation();" appearance="outline" class="ap-w-full ap-px-5">
+    <mat-form-field (click)="$event.stopPropagation();" class="ap-w-full ap-px-5">
       <mat-icon matPrefix color="placeholder-icon" svgIcon="search"></mat-icon>
-      <input [formControl]="searchFormControl" matInput placeholder="Search" autocomplete="off">
+      <input #searchInput [formControl]="searchFormControl" matInput placeholder="Search" autocomplete="off">
     </mat-form-field>
     <mat-tab-group #tabGroup>
       <mat-tab *ngFor="let tab of tabsAndTheirLists; let i = index">
@@ -29,3 +29,5 @@
   </ng-template>
 
   <ng-container *ngIf="flowTypeSelected$ |async"></ng-container>
+
+  <ng-container *ngIf="focusSearchInput$ |async"></ng-container>

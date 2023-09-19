@@ -97,6 +97,9 @@ export function checkboxIsTrue(): ValidatorFn {
 export function jsonValidator(
   control: AbstractControl
 ): ValidationErrors | null {
+  if (!control.value) {
+    return null;
+  }
   try {
     JSON.parse(control.value);
   } catch (e) {

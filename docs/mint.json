@@ -5,7 +5,7 @@
     "dark": "./resources/logo/dark.svg",
     "href": "https://www.activepieces.com"
   },
-  "favicon": "./favicon.svg",
+  "favicon": "/favicon.png",
   "colors": {
     "primary": "#5155D7",
     "dark": "#3033A6",
@@ -23,22 +23,29 @@
     "name": "Get Started",
     "url": "https://www.activepieces.com/plans"
   },
+  "feedback": {
+    "suggestEdit": true,
+    "raiseIssue": true
+  },
   "topbarLinks": [
     {
       "name": "Github",
       "url": "https://github.com/activepieces/activepieces"
     }
   ],
-  "anchors": [
+  "primaryTab": {
+      "name": "Learn"
+  },
+  "tabs": [
+    {
+      "name": "Develop Pieces",
+      "icon": "code",
+      "url": "developers"
+    },
     {
       "name": "Pieces",
       "icon": "plug",
-      "url": "pieces"
-    },
-    {
-      "name": "Contributing",
-      "icon": "code",
-      "url": "contributing"
+      "url": "https://www.activepieces.com/pieces"
     },
     {
       "name": "Discord",
@@ -48,160 +55,97 @@
   ],
   "navigation": [
     {
-      "group": "Overview",
+      "group": "Getting Started",
       "pages": [
         "getting-started/introduction",
-        "getting-started/quickstart"
+        "getting-started/building-flows",
+        "getting-started/passing-data",
+        "getting-started/publishing-flows",
+        "getting-started/debugging-runs"
       ]
     },
     {
-      "group": "Pieces",
+      "group": "Helper Pieces",
       "pages": [
-        "pieces/overview",
-        "pieces/custom-pieces",
-        "pieces/versioning"
+        "helper-pieces/code"
       ]
     },
     {
-      "group": "Apps",
+      "group": "Self Host",
       "pages": [
-        "pieces/apps/airtable",
-        "pieces/apps/amazon-s3",
-        "pieces/apps/asana",
-        "pieces/apps/bannerbear",
-        "pieces/apps/binance",
-        "pieces/apps/blackbaud",
-        "pieces/apps/cal-com",
-        "pieces/apps/calendly",
-        "pieces/apps/clickup",
-        "pieces/apps/connections",
-        "pieces/apps/constant-contact",
-        "pieces/apps/csv",
-        "pieces/apps/data-mapper",
-        "pieces/apps/delay",
-        "pieces/apps/discord",
-        "pieces/apps/drip",
-        "pieces/apps/dropbox",
-        "pieces/apps/figma",
-        "pieces/apps/freshsales",
-        "pieces/apps/generatebanners",
-        "pieces/apps/github",
-        "pieces/apps/gmail",
-        "pieces/apps/google-calendar",
-        "pieces/apps/google-contacts",
-        "pieces/apps/google-drive",
-        "pieces/apps/google-forms",
-        "pieces/apps/google-sheets",
-        "pieces/apps/google-tasks",
-        "pieces/apps/gotify",
-        "pieces/apps/hackernews",
-        "pieces/apps/http",
-        "pieces/apps/hubspot",
-        "pieces/apps/intercom",
-        "pieces/apps/mailchimp",
-        "pieces/apps/mailer-lite",
-        "pieces/apps/mastodon",
-        "pieces/apps/matrix",
-        "pieces/apps/mattermost",
-        "pieces/apps/mindee",
-        "pieces/apps/monday",
-        "pieces/apps/notion",
-        "pieces/apps/ntfy",
-        "pieces/apps/openai",
-        "pieces/apps/pipedrive",
-        "pieces/apps/postgres",
-        "pieces/apps/posthog",
-        "pieces/apps/rss",
-        "pieces/apps/salesforce",
-        "pieces/apps/schedule",
-        "pieces/apps/sendgrid",
-        "pieces/apps/sendinblue",
-        "pieces/apps/shopify",
-        "pieces/apps/slack",
-        "pieces/apps/smtp",
-        "pieces/apps/square",
-        "pieces/apps/store",
-        "pieces/apps/stripe",
-        "pieces/apps/telegram-bot",
-        "pieces/apps/todoist",
-        "pieces/apps/trello",
-        "pieces/apps/twilio",
-        "pieces/apps/typeform",
-        "pieces/apps/vtex",
-        "pieces/apps/wordpress",
-        "pieces/apps/xero",
-        "pieces/apps/xml",
-        "pieces/apps/youtube",
-        "pieces/apps/zendesk",
-        "pieces/apps/zoho-crm",
-        "pieces/apps/zoom"
-      ]
-    },
-    {
-      "group": "Helpers",
-      "pages": [
-        "pieces/helpers/code"
-      ]
-    },
-    {
-      "group": "Flow Controls",
-      "pages": [
-        "pieces/flow-controls/loop",
-        "pieces/flow-controls/branch"
-      ]
-    },
-    {
-      "group": "Installing",
-      "pages": [
-        "install/overview",
-        "install/docker",
-        "install/digitalocean",
-        "install/easypanel",
-        "install/configurations",
+        {
+          "group": "Install Options",
+          "icon": "server",
+          "pages": [
+            "install/options/overview",
+            "install/options/docker",
+            "install/options/docker-compose",
+            "install/options/easypanel",            
+            "install/options/aws"
+          ]
+        },
+        {
+          "group": "Configurations",
+          "icon": "gear",
+          "pages": [
+            "install/configurations/environment-variables",
+            "install/configurations/error-notifications"
+          ]
+        },
+        "install/editions",
         "install/breaking-changes"
       ]
     },
     {
-      "group": "Building Flows",
+      "group": "Getting Started",
       "pages": [
-        "building-flows/overview",
-        "building-flows/triggers",
-        "building-flows/passing-data",
-        "building-flows/debugging"
+        "developers/overview"
       ]
     },
     {
-      "group": "Overview",
+      "group": "Tutorials",
       "pages": [
-        "contributing/overview"
+        {
+          "group": "Development Setup",
+          "icon": "circle-1",
+          "pages": [
+            "developers/development-setup/getting-started",
+            "developers/development-setup/codespaces",
+            "developers/development-setup/local",
+            "developers/development-setup/dev-container"
+          ]
+        },
+        "developers/building-pieces/create-action",
+        {
+          "group": "Create Triggers",
+          "icon": "circle-3",
+          "pages": [
+            "developers/building-pieces/triggers/overview",
+            "developers/building-pieces/triggers/create-polling-trigger",
+            "developers/building-pieces/triggers/create-webhook-trigger"
+          ]
+        },
+        "developers/building-pieces/publish-piece"
       ]
     },
     {
-      "group": "Development Setup",
+      "group": "Piece Reference",
       "pages": [
-        "contributing/development-setup/codespaces",
-        "contributing/development-setup/docker-compose",
-        "contributing/development-setup/local-development"
+        "developers/piece-reference/authentication",
+        "developers/piece-reference/properties",
+        "developers/piece-reference/properties-validation",
+        "developers/piece-reference/flow-control",
+        "developers/piece-reference/persistent-storage",
+        "developers/piece-reference/piece-versioning",
+        "developers/piece-reference/examples"
       ]
     },
     {
-      "group": "Building Pieces",
+      "group": "Worker Architecture",
       "pages": [
-        "contributing/building-pieces/overview",
-        "contributing/building-pieces/create-action",
-        "contributing/building-pieces/triggers",
-        "contributing/building-pieces/create-polling-trigger",
-        "contributing/building-pieces/create-webhook-trigger",
-        "contributing/building-pieces/reference",
-        "contributing/building-pieces/examples"
-      ]
-    },
-    {
-      "group": "Architecture",
-      "pages": [
-        "contributing/architecture/repo-structure",
-        "contributing/architecture/flow-worker",
-        "contributing/architecture/code-worker"
+        "developers/architecture/repo-structure",
+        "developers/architecture/flow-worker",
+        "developers/architecture/code-worker"
       ]
     },
     {
@@ -209,14 +153,21 @@
       "pages": [
         "telemetry",
         "changelog",
-        "license",
+        "license"
+      ]
+    },
+    {
+      "group": "Enterprise Edition",
+      "pages": [
+        "enterprise/whitelabel",
         {
-          "group": "Product Embed",
+          "group": "Connection Cards",
+          "icon": "cards-blank",
           "pages": [
-            "product-embed/overview",
-            "product-embed/user-authentication",
-            "product-embed/frontend-sdk",
-            "product-embed/user-flows"
+            "enterprise/connection-cards/overview",
+            "enterprise/connection-cards/user-authentication",
+            "enterprise/connection-cards/frontend-sdk",
+            "enterprise/connection-cards/user-flows"
           ]
         }
       ]

@@ -15,7 +15,6 @@ import { CodeService } from '@activepieces/ui/feature-builder-store';
 @Component({
   selector: 'app-code-step-input-form',
   templateUrl: './code-step-input-form.component.html',
-  styleUrls: ['./code-step-input-form.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -31,6 +30,17 @@ export class CodeStepInputFormComponent implements ControlValueAccessor {
   }>;
   _stepArtifact$: Observable<Artifact>;
   formValueChanged$: Observable<unknown>;
+
+  markdown = `
+  To use data from previous steps in your code, include them as pairs of keys and values below.
+  <br>
+  <br>
+  You can access these inputs in your code using **inputs.key**, where **key** is the name you assigned below.
+  <br>
+  <br>
+  **Warning: "const code" is the entry to the code, if it is removed or renamed, your step will fail.**
+  `;
+
   onChange: (val: CodeStepInputFormSchema) => void = (
     value: CodeStepInputFormSchema
   ) => {

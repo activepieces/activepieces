@@ -1,9 +1,29 @@
-import { FlowOperationType } from '@activepieces/shared';
-import { FlowService } from '@activepieces/ui/common';
-import { HttpClient } from '@angular/common/http';
+import {
+  Flow,
+  FlowOperationType,
+  FlowTemplate,
+  TelemetryEventName,
+} from '@activepieces/shared';
+import {
+  FlowService,
+  TelemetryService,
+  TemplatesService,
+} from '@activepieces/ui/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
+import { Meta } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { catchError, map, Observable, of, switchMap, tap } from 'rxjs';
+import { StatusCodes } from 'http-status-codes';
+import {
+  catchError,
+  EMPTY,
+  Observable,
+  switchMap,
+  tap,
+  map,
+  filter,
+  of,
+} from 'rxjs';
 
 @Component({
   selector: 'app-import-flow',
@@ -11,51 +31,117 @@ import { catchError, map, Observable, of, switchMap, tap } from 'rxjs';
   styleUrls: [],
 })
 export class ImportFlowComponent implements OnInit {
-  loadFlow$: Observable<void> = new Observable<void>();
+  loadFlow$: Observable<FlowTemplate>;
+
+  importFlow$: Observable<void>;
+  hasDirectFlag$: Observable<boolean> = of(false);
+
   constructor(
     private route: ActivatedRoute,
-    private http: HttpClient,
+    private templatesService: TemplatesService,
     private flowService: FlowService,
-    private router: Router
+    private router: Router,
+    private metaService: Meta,
+    private telemetryService: TelemetryService
   ) {}
+
   ngOnInit(): void {
-    this.loadFlow$ = this.route.params
+    this.loadFlow$ = this.route.params.pipe(
+      switchMap((params) => {
+        const templateId = encodeURIComponent(params['templateId']);
+        return this.templatesService.getTemplate(templateId).pipe(
+          catchError((err: HttpErrorResponse) => {
+            if (err.status === StatusCodes.NOT_FOUND) {
+              return this.templatesService.getTemplateDeprecated(templateId);
+            }
+            throw err;
+          })
+        );
+      }),
+      tap((res) => {
+        this.metaService.addTag({
+          name: 'description',
+          content: `Use this Activepieces automation template for yourself: ${res.name}`,
+        });
+      }),
+      catchError((error) => {
+        console.error(error);
+        this.router.navigate(['not-found']);
+        return EMPTY;
+      })
+    );
+
+    this.hasDirectFlag$ = this.route.queryParamMap.pipe(
+      map((queryParams) => queryParams.has('direct'))
+    );
+    this.importFlow$ = this.loadFlow$
       .pipe(
-        switchMap((params) => {
-          const templateId = encodeURIComponent(params['templateId']);
-          return this.http
-            .get<{ template: { displayName: string; trigger: any } }>(
-              `https://cdn.activepieces.com/templates/${templateId}.json`
-            )
-            .pipe(
-              switchMap((templateJson) => {
-                return this.flowService
-                  .create({
-                    displayName: templateJson.template.displayName,
-                  })
-                  .pipe(
-                    switchMap((flow) => {
-                      return this.flowService
-                        .update(flow.id, {
-                          type: FlowOperationType.IMPORT_FLOW,
-                          request: templateJson.template,
+        switchMap((templateJson) => {
+          return this.route.queryParamMap.pipe(
+            map((queryParams) => queryParams.has('direct')),
+            filter((hasDirectFlag) => hasDirectFlag), // Only continue if 'direct' flag is present
+            switchMap(() => {
+              return this.flowService
+                .create({
+                  displayName: templateJson.template.displayName,
+                })
+                .pipe(
+                  tap(() => {
+                    this.telemetryService.capture({
+                      name: TelemetryEventName.FLOW_IMPORTED,
+                      payload: {
+                        id: templateJson.id,
+                        name: templateJson.name,
+                        location: `import flow view`,
+                      },
+                    });
+                  }),
+                  switchMap((flow) => {
+                    return this.flowService
+                      .update(flow.id, {
+                        type: FlowOperationType.IMPORT_FLOW,
+                        request: templateJson.template,
+                      })
+                      .pipe(
+                        tap((updatedFlow: Flow) => {
+                          this.router.navigate(['flows', updatedFlow.id]);
                         })
-                        .pipe(
-                          tap((updatedFlow) => {
-                            this.router.navigate(['flows', updatedFlow.id]);
-                          })
-                        );
-                    })
-                  );
-              })
-            );
+                      );
+                  })
+                );
+            })
+          );
         }),
         catchError((error) => {
           console.error(error);
+          if (error.status === StatusCodes.UNAUTHORIZED) {
+            this.router.navigate(['/sign-up'], {
+              queryParams: {
+                redirect_url:
+                  `${window.location.origin}${window.location.pathname}`.split(
+                    '?'
+                  )[0],
+              },
+            });
+            return EMPTY;
+          }
           this.router.navigate(['not-found']);
-          return of(null);
+          return EMPTY;
         })
       )
       .pipe(map(() => void 0));
+  }
+
+  dashboard() {
+    this.router.navigate(['/flows']);
+  }
+
+  import() {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        direct: true,
+      },
+    });
   }
 }

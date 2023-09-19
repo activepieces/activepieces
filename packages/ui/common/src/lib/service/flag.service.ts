@@ -31,28 +31,6 @@ export class FlagService {
     );
   }
 
-  getWarningMessage(): Observable<
-    { title?: string; body?: string } | undefined
-  > {
-    return this.getAllFlags().pipe(
-      map((flags) => {
-        const warningTitle: string | undefined = flags[
-          'WARNING_TEXT_HEADER'
-        ] as string | undefined;
-        const warningBody: string | undefined = flags['WARNING_TEXT_BODY'] as
-          | string
-          | undefined;
-        if (warningTitle || warningBody) {
-          return {
-            title: warningTitle,
-            body: warningBody,
-          };
-        }
-        return undefined;
-      })
-    );
-  }
-
   isSignedUpEnabled(): Observable<boolean> {
     return this.getAllFlags().pipe(
       map((flags) => {
@@ -117,6 +95,14 @@ export class FlagService {
     return this.getAllFlags().pipe(
       map((flags) => {
         return flags[ApFlagId.FRONTEND_URL] as string;
+      })
+    );
+  }
+
+  getTemplatesSourceUrl(): Observable<string> {
+    return this.getAllFlags().pipe(
+      map((flags) => {
+        return flags[ApFlagId.TEMPLATES_SOURCE_URL] as string;
       })
     );
   }

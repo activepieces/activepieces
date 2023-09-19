@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import JSZip from 'jszip';
 import { catchError, from, map, Observable, of, switchMap } from 'rxjs';
 import { Artifact, environment } from '@activepieces/ui/common';
-import { CodeExecutionResult } from '@activepieces/shared';
+
 type NpmPkg = {
   'dist-tags': {
     latest: string;
@@ -60,34 +60,8 @@ export class CodeService {
     return this.cachedFile.get(url);
   }
 
-  executeTest(
-    artifact: Artifact,
-    context: any
-  ): Observable<CodeExecutionResult> {
-    return CodeService.zipFile(artifact).pipe(
-      switchMap((zippedArtifact) => {
-        const zippedArtifactEncodedB64 = btoa(zippedArtifact);
-        return this.http.post<CodeExecutionResult>(
-          environment.apiUrl + '/codes/execute',
-          {
-            artifact: zippedArtifactEncodedB64,
-            input: context,
-          }
-        );
-      })
-    );
-  }
-
-  public helloWorld(): Artifact {
-    return {
-      content:
-        'exports.code = async (params) => {\n' + '    return true;\n' + '};\n',
-      package: '{\n' + '  "dependencies": {\n' + '  }\n' + '}\n',
-    };
-  }
-
   public helloWorldBase64(): string {
-    return 'UEsDBAoAAAAAAIGZWlYSIpQ2PAAAADwAAAAIAAAAaW5kZXgudHNleHBvcnQgY29uc3QgY29kZSA9IGFzeW5jIChwYXJhbXMpID0+IHsKICAgIHJldHVybiB0cnVlOwp9OwpQSwMECgAAAAAAgZlaVhpS0QgcAAAAHAAAAAwAAABwYWNrYWdlLmpzb257CiAgImRlcGVuZGVuY2llcyI6IHsKICB9Cn0KUEsBAhQACgAAAAAAgZlaVhIilDY8AAAAPAAAAAgAAAAAAAAAAAAAAAAAAAAAAGluZGV4LnRzUEsBAhQACgAAAAAAgZlaVhpS0QgcAAAAHAAAAAwAAAAAAAAAAAAAAAAAYgAAAHBhY2thZ2UuanNvblBLBQYAAAAAAgACAHAAAACoAAAAAAA=';
+    return 'UEsDBBQDAAAIAF2qt1ZI5no5OgAAADwAAAAIAAAAaW5kZXgudHNLrSjILypRSM7PKwaRKakKtgqJxZV5yQoamXkFpSXFmgq2dgrVXApAUJRaUlqUp1BSVJpqzVVrzQUAUEsDBAoDAAAAAIGZWlYaUtEIHAAAABwAAAAMAAAAcGFja2FnZS5qc29uewogICJkZXBlbmRlbmNpZXMiOiB7CiAgfQp9ClBLAQI/AxQDAAAIAF2qt1ZI5no5OgAAADwAAAAIACQAAAAAAAAAIIC0gQAAAABpbmRleC50cwoAIAAAAAAAAQAYAICms2urjdkBgKaza6uN2QGAprNrq43ZAVBLAQI/AwoDAAAAAIGZWlYaUtEIHAAAABwAAAAMACQAAAAAAAAAIIC0gWAAAABwYWNrYWdlLmpzb24KACAAAAAAAAEAGAAAXUhxBUrZAQAvJWWrjdkBAC8lZauN2QFQSwUGAAAAAAIAAgC4AAAApgAAAAAA';
   }
 
   public downloadAndReadFile(filename: string): Observable<Artifact> {

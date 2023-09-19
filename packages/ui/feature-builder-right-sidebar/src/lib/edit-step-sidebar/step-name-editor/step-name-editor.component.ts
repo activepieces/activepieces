@@ -22,9 +22,7 @@ export class StepNameEditorComponent {
   currentStepName$: Observable<string>;
   updateStepName$: Observable<void>;
   constructor(private store: Store) {
-    this.isInDebugMode$ = this.store.select(
-      BuilderSelectors.selectIsInDebugMode
-    );
+    this.isInDebugMode$ = this.store.select(BuilderSelectors.selectReadOnly);
     this.currentStepName$ = this.store.select(
       BuilderSelectors.selectCurrentStepDisplayName
     );

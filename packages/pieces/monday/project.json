@@ -5,30 +5,22 @@
   "projectType": "library",
   "targets": {
     "build": {
-      "executor": "@nrwl/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/monday",
         "tsConfig": "packages/pieces/monday/tsconfig.lib.json",
         "packageJson": "packages/pieces/monday/package.json",
         "main": "packages/pieces/monday/src/index.ts",
-        "assets": [
-          "packages/pieces/monday/*.md"
-        ],
+        "assets": ["packages/pieces/monday/*.md"],
         "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {
-      "executor": "@nrwl/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": [
-          "packages/pieces/monday/**/*.ts"
-        ]
+        "lintFilePatterns": ["packages/pieces/monday/**/*.ts"]
       }
     }
   },

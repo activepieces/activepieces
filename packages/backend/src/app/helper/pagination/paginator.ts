@@ -105,10 +105,10 @@ export default class Paginator<Entity extends ObjectLiteral> {
         const clonedBuilder = new SelectQueryBuilder<Entity>(builder)
 
         if (this.hasAfterCursor()) {
-            Object.assign(cursors, this.decode(this.afterCursor as string))
+            Object.assign(cursors, this.decode(this.afterCursor!))
         }
         else if (this.hasBeforeCursor()) {
-            Object.assign(cursors, this.decode(this.beforeCursor as string))
+            Object.assign(cursors, this.decode(this.beforeCursor!))
         }
 
         if (Object.keys(cursors).length > 0) {

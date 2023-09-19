@@ -1,6 +1,6 @@
 import { EntitySchema } from 'typeorm'
 import { Project, User } from '@activepieces/shared'
-import { BaseColumnSchemaPart } from '../helper/base-entity'
+import { BaseColumnSchemaPart } from '../database/database-common'
 
 export type UserSchema = {
     projects: Project[]
@@ -32,6 +32,14 @@ export const UserEntity = new EntitySchema<UserSchema>({
         },
         newsLetter: {
             type: Boolean,
+            nullable: true,
+        },
+        imageUrl: {
+            type: String,
+            nullable: true,
+        },
+        title: {
+            type: String,
             nullable: true,
         },
     },

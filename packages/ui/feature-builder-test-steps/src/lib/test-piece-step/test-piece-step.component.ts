@@ -2,9 +2,11 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestStepService } from '@activepieces/ui/common';
 import {
   Observable,
+  catchError,
   distinctUntilChanged,
   forkJoin,
   map,
+  of,
   switchMap,
   take,
   tap,
@@ -14,9 +16,11 @@ import {
   BuilderSelectors,
   FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
-import { ActionType, PieceAction } from '@activepieces/shared';
+import { ActionType, BranchAction, PieceAction } from '@activepieces/shared';
 import { TestStepCoreComponent } from '../test-steps-core.component';
 import deepEqual from 'deep-equal';
+import { HttpErrorResponse } from '@angular/common/http';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-test-piece-step',
@@ -31,7 +35,11 @@ export class TestPieceStepComponent extends TestStepCoreComponent {
   saveStepAfterTesting$: Observable<void>;
   lastTestDate$: Observable<string | undefined>;
   errorResponse: null | unknown = null;
-  constructor(testStepService: TestStepService, store: Store) {
+  constructor(
+    testStepService: TestStepService,
+    store: Store,
+    private snackBar: MatSnackBar
+  ) {
     super(testStepService, store);
     this.currentStepValidity$ = this.store.select(
       BuilderSelectors.selectStepValidity
@@ -68,7 +76,7 @@ export class TestPieceStepComponent extends TestStepCoreComponent {
           if (!res.flowVersionId || !res.stepName) {
             throw new Error('some test piece step params are missing');
           }
-          return this.testStepService.testPieceStep({
+          return this.testStepService.testPieceOrCodeStep({
             flowVersionId: res.flowVersionId,
             stepName: res.stepName,
           });
@@ -81,6 +89,20 @@ export class TestPieceStepComponent extends TestStepCoreComponent {
           } else {
             this.errorResponse = res.output;
           }
+        }),
+        catchError((err: HttpErrorResponse) => {
+          if (err.status === 504) {
+            const errorBar = this.snackBar.open(
+              'This action timed out, refresh your page and recheck to see the step result',
+              'Refresh',
+              { duration: undefined, panelClass: 'error' }
+            );
+            return errorBar.afterDismissed().pipe(tap(() => location.reload()));
+          } else {
+            this.errorResponse = err;
+            this.loading = false;
+            return of({});
+          }
         })
       );
     }
@@ -91,23 +113,67 @@ export class TestPieceStepComponent extends TestStepCoreComponent {
       .pipe(
         take(1),
         tap((step) => {
-          if (step && step.type === ActionType.PIECE) {
-            const clone: PieceAction = {
-              ...step,
-              settings: {
-                ...step.settings,
-                inputUiInfo: {
-                  customizedInputs: step.settings.inputUiInfo.customizedInputs,
-                  currentSelectedData: testResult,
-                  lastTestDate: new Date().toString(),
-                },
-              },
-            };
-            this.store.dispatch(
-              FlowsActions.updateAction({
-                operation: clone,
-              })
-            );
+          if (step) {
+            switch (step.type) {
+              case ActionType.PIECE: {
+                const clone: PieceAction = {
+                  ...step,
+                  settings: {
+                    ...step.settings,
+                    inputUiInfo: {
+                      customizedInputs:
+                        step.settings.inputUiInfo.customizedInputs,
+                      currentSelectedData: testResult
+                        ? testResult
+                        : testResult === undefined
+                        ? 'undefined'
+                        : testResult === ''
+                        ? ''
+                        : JSON.stringify(testResult),
+                      lastTestDate: new Date().toString(),
+                    },
+                  },
+                };
+
+                this.store.dispatch(
+                  FlowsActions.updateAction({
+                    operation: clone,
+                  })
+                );
+
+                break;
+              }
+
+              case ActionType.BRANCH: {
+                const clone: BranchAction = {
+                  ...step,
+                  settings: {
+                    ...step.settings,
+                    inputUiInfo: {
+                      customizedInputs:
+                        step.settings.inputUiInfo.customizedInputs,
+                      currentSelectedData: testResult
+                        ? testResult
+                        : testResult === undefined
+                        ? 'undefined'
+                        : JSON.stringify(testResult),
+                      lastTestDate: new Date().toString(),
+                    },
+                  },
+                };
+
+                this.store.dispatch(
+                  FlowsActions.updateAction({
+                    operation: clone,
+                  })
+                );
+
+                break;
+              }
+
+              default:
+                break;
+            }
           }
         }),
         map(() => void 0)

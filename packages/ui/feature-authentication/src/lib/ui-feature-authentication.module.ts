@@ -27,15 +27,21 @@ import {
     AngularSvgIconModule,
     RouterModule.forChild([
       {
-        title: 'AP-Sign In',
-        path: 'sign-in',
-        component: SignInComponent,
-        resolve: { firstSignIn: IsFirstSignInResolver },
-      },
-      {
-        title: 'AP-Sign Up',
-        path: 'sign-up',
-        component: SignUpComponent,
+        path: '',
+        component: AuthLayoutComponent,
+        children: [
+          {
+            title: 'Activepieces',
+            path: 'sign-in',
+            component: SignInComponent,
+            resolve: { firstSignIn: IsFirstSignInResolver },
+          },
+          {
+            title: 'Activepieces',
+            path: 'sign-up',
+            component: SignUpComponent,
+          },
+        ],
       },
     ]),
   ],

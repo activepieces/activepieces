@@ -1,13 +1,14 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { AuthenticationType, httpClient, HttpMethod, HttpRequest } from "@activepieces/pieces-common";
-import { hubSpotAuthentication } from "../common/props";
+import { hubspotAuth } from "../../";
+import { hubspotCommon } from "../common";
 
 export const createHubspotContact = createAction({
+    auth: hubspotAuth,
     name: 'create_contact',
     displayName: "Create Contact",
     description: "Fails on duplicate email addresses",
     props: {
-        authentication: hubSpotAuthentication,
         firstName: Property.ShortText({
             displayName: 'First Name',
             description: 'First name of the new contact',
@@ -27,12 +28,27 @@ export const createHubspotContact = createAction({
             displayName: 'Email',
             description: 'Email of the new contact',
             required: false,
-        })
+        }),
+        choose_props: hubspotCommon.choose_props,
+        dynamicProperties: hubspotCommon.dynamicProperties,
     },
-    sampleData: {},
     async run(context) {
-        const configsWithoutAuthentication: Record<string, unknown> = { ...context.propsValue };
-        delete configsWithoutAuthentication['authentication'];
+        const dynamicProperties = context.propsValue.dynamicProperties as Record<string, any>;
+
+        const configsWithoutAuthentication: Record<string, unknown>= { 
+            firstName: context.propsValue.firstName,
+            lastName: context.propsValue.lastName,
+        };
+        if(context.propsValue.zip){
+            configsWithoutAuthentication['zip'] = context.propsValue.zip
+        }
+        if(context.propsValue.email){
+            configsWithoutAuthentication['email'] = context.propsValue.email
+        }
+        Object.entries(dynamicProperties).forEach(f => {
+            configsWithoutAuthentication[f[0]] = f[1]
+        });
+        
         const body = {
             properties: Object.entries(configsWithoutAuthentication).map(f => {
                 return {
@@ -47,7 +63,7 @@ export const createHubspotContact = createAction({
             body: body,
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
-                token: context.propsValue.authentication.access_token,
+                token: context.auth.access_token,
             },
             queryParams: {},
         };

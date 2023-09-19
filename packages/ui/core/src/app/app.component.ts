@@ -1,10 +1,5 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  HostListener,
-  OnInit,
-} from '@angular/core';
-import { map, Observable, of, Subject, tap } from 'rxjs';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { catchError, map, Observable, of, Subject, switchMap, tap } from 'rxjs';
 import { Store } from '@ngrx/store';
 import {
   NavigationCancel,
@@ -16,13 +11,21 @@ import {
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
 
-import { FlagService, CommonActions } from '@activepieces/ui/common';
+import {
+  FlagService,
+  CommonActions,
+  FlowService,
+} from '@activepieces/ui/common';
 import { compareVersions } from 'compare-versions';
-import { ApFlagId } from '@activepieces/shared';
-import { TelemetryService } from './modules/common/service/telemetry.service';
+import { ApFlagId, FlowOperationType } from '@activepieces/shared';
+import { TelemetryService } from '@activepieces/ui/common';
 import { AuthenticationService, fadeInUp400ms } from '@activepieces/ui/common';
 import { MatDialog } from '@angular/material/dialog';
-import { SwitchFlowDialogComponent } from '@activepieces/ui/feature-command-bar';
+import {
+  CollectionBuilderService,
+  FlowsActions,
+} from '@activepieces/ui/feature-builder-store';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 interface UpgradeNotificationMetaDataInLocalStorage {
   latestVersion: string;
@@ -40,11 +43,11 @@ const upgradeNotificationMetadataKeyInLocalStorage =
 export class AppComponent implements OnInit {
   routeLoader$: Observable<unknown>;
   loggedInUser$: Observable<void>;
-  warningMessage$: Observable<{ title?: string; body?: string } | undefined>;
   showUpgradeNotification$: Observable<boolean>;
   hideUpgradeNotification = false;
   openCommandBar$: Observable<void>;
   loading$: Subject<boolean> = new Subject();
+  importTemplate$: Observable<void>;
   constructor(
     public dialog: MatDialog,
     private store: Store,
@@ -53,14 +56,13 @@ export class AppComponent implements OnInit {
     private telemetryService: TelemetryService,
     private router: Router,
     private maticonRegistry: MatIconRegistry,
-    private domSanitizer: DomSanitizer
+    private domSanitizer: DomSanitizer,
+    private builderService: CollectionBuilderService,
+    private flowService: FlowService,
+    private snackbar: MatSnackBar
   ) {
-    this.maticonRegistry.addSvgIcon(
-      'search',
-      this.domSanitizer.bypassSecurityTrustResourceUrl(
-        '../assets/img/custom/search.svg'
-      )
-    );
+    this.registerSearchIconIntoMaterialIconRegistery();
+    this.listenToImportFlow();
     this.routeLoader$ = this.router.events.pipe(
       tap((event) => {
         if (
@@ -121,32 +123,70 @@ export class AppComponent implements OnInit {
     );
   }
 
-  @HostListener('window:keydown', ['$event'])
-  onKeyPress($event: KeyboardEvent) {
-    if (
-      ($event.ctrlKey || $event.metaKey) &&
-      ($event.key == 'k' || $event.key == 'K')
-    ) {
-      this.openCommandBar$ = this.telemetryService
-        .isFeatureEnabled('command-bar')
-        .pipe(
-          tap((enabled) => {
-            if (enabled) {
-              this.dialog.open(SwitchFlowDialogComponent, {
-                position: {
-                  top: '5%',
-                },
-              });
-              $event.preventDefault();
-            }
-          }),
-          map(() => void 0)
-        );
-    }
+  private listenToImportFlow() {
+    this.importTemplate$ = this.builderService.importTemplate$
+      .asObservable()
+      .pipe(
+        tap(() => {
+          this.loading$.next(true);
+        }),
+        switchMap((res) => {
+          return this.flowService
+            .update(res.flowId, {
+              type: FlowOperationType.IMPORT_FLOW,
+              request: {
+                displayName: res.template.name,
+                trigger: res.template.template.trigger,
+              },
+            })
+            .pipe(
+              tap((res) => {
+                this.loading$.next(false);
+                this.store.dispatch(FlowsActions.importFlow({ flow: res }));
+              }),
+              catchError((err) => {
+                this.loading$.next(false);
+                console.error(err);
+                this.snackbar.open(
+                  'Failed to import flow, check Console for erros',
+                  'Close'
+                );
+                return of(void 0);
+              })
+            );
+        }),
+        map(() => void 0)
+      );
+  }
+
+  private registerSearchIconIntoMaterialIconRegistery() {
+    this.maticonRegistry.addSvgIcon(
+      'info',
+      this.domSanitizer.bypassSecurityTrustResourceUrl(
+        '../assets/img/custom/info.svg'
+      )
+    );
+    this.maticonRegistry.addSvgIcon(
+      'search',
+      this.domSanitizer.bypassSecurityTrustResourceUrl(
+        '../assets/img/custom/search.svg'
+      )
+    );
+    this.maticonRegistry.addSvgIcon(
+      'custom_expand_less',
+      this.domSanitizer.bypassSecurityTrustResourceUrl(
+        '../assets/img/custom/expand_less.svg'
+      )
+    );
+    this.maticonRegistry.addSvgIcon(
+      'custom_expand_more',
+      this.domSanitizer.bypassSecurityTrustResourceUrl(
+        '../assets/img/custom/expand_more.svg'
+      )
+    );
   }
 
   ngOnInit(): void {
-    this.warningMessage$ = this.flagService.getWarningMessage();
     this.loggedInUser$ = this.authenticationService.currentUserSubject.pipe(
       tap((user) => {
         if (user == undefined || Object.keys(user).length == 0) {
@@ -188,7 +228,8 @@ export class AppComponent implements OnInit {
   openUpgradeDocs() {
     window.open(
       'https://www.activepieces.com/docs/install/docker#upgrading',
-      '_blank'
+      '_blank',
+      'noopener noreferrer'
     );
   }
 }

@@ -5,10 +5,7 @@ import {
   Input,
   Output,
 } from '@angular/core';
-import {
-  AuthenticationService,
-  FlowItemDetails,
-} from '@activepieces/ui/common';
+import { FlowItemDetails } from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-step-type-list',
@@ -20,9 +17,13 @@ export class StepTypeListComponent {
   @Input() typesList: FlowItemDetails[];
   @Output() typeSelected: EventEmitter<FlowItemDetails> = new EventEmitter();
   @Input() emptyListText: string;
+  @Input() takeFullHeightOfSidebar = true;
 
-  constructor(private authenticationService: AuthenticationService) {}
-  openFeedbackPopover() {
-    this.authenticationService.openFeedbackPopover$.next();
+  requestPiece() {
+    window.open(
+      'https://www.activepieces.com/pieces-roadmap',
+      '_blank',
+      'noopener'
+    );
   }
 }

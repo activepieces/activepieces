@@ -1,21 +1,29 @@
-
-import { createPiece } from '@activepieces/pieces-framework';
-import packageJson from '../package.json';
+import {
+  OAuth2AuthorizationMethod,
+  PieceAuth,
+  createPiece,
+} from '@activepieces/pieces-framework';
 import { newDatabaseItem } from './lib/triggers/new-database-item';
+import { createDatabaseItem } from './lib/action/create-database-item';
+import { updateDatabaseItem } from './lib/action/update-database-item';
+export const notionAuth = PieceAuth.OAuth2({
+  authUrl: 'https://api.notion.com/v1/oauth/authorize',
+  tokenUrl: 'https://api.notion.com/v1/oauth/token',
+  scope: [],
+  extra: {
+    owner: 'user',
+  },
+  authorizationMethod: OAuth2AuthorizationMethod.HEADER,
+  required: true,
+});
 
 export const notion = createPiece({
-  name: 'notion',
   displayName: 'Notion',
   logoUrl: 'https://cdn.activepieces.com/pieces/notion.png',
-  version: packageJson.version,
-  minimumSupportedRelease: '0.3.10',
-  authors: [
-    'ShayPunter', 'abuaboud'
-  ],
-  actions: [
+  minimumSupportedRelease: '0.5.0',
 
-  ],
-  triggers: [
-    newDatabaseItem
-  ],
+  authors: ['ShayPunter', 'abuaboud', 'kishanprmr'],
+  auth: notionAuth,
+  actions: [createDatabaseItem, updateDatabaseItem],
+  triggers: [newDatabaseItem],
 });

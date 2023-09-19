@@ -3,7 +3,7 @@ import { argv } from 'node:process'
 import { rm, writeFile } from 'node:fs/promises'
 import { getAvailablePieceNames } from './utils/get-available-piece-names'
 import { exec } from './utils/exec'
-import { readProjectJson, writeProjectJson } from './utils/files'
+import { readPackageJson, readProjectJson, writeProjectJson } from './utils/files'
 import chalk from 'chalk';
 
 const validatePieceName = async (pieceName: string) => {
@@ -19,7 +19,7 @@ const validatePieceName = async (pieceName: string) => {
 
 const nxGenerateNodeLibrary = async (pieceName: string) => {
   const nxGenerateCommand = `
-    npx nx generate @nrwl/node:library ${pieceName} \
+    npx nx generate @nx/node:library ${pieceName} \
       --directory=pieces \
       --importPath=@activepieces/piece-${pieceName} \
       --publishable \
@@ -29,11 +29,12 @@ const nxGenerateNodeLibrary = async (pieceName: string) => {
       --unitTestRunner=none
   `
 
+  console.log(nxGenerateCommand);
+
   await exec(nxGenerateCommand)
 }
 
 const removeUnusedFiles = async (pieceName: string) => {
-  await rm(`packages/pieces/${pieceName}/.babelrc`)
   await rm(`packages/pieces/${pieceName}/src/lib/pieces-${pieceName}.ts`)
 }
 
@@ -50,14 +51,13 @@ const generateIndexTsFile = async (pieceName: string) => {
     .join('')
 
   const indexTemplate = `
-import { createPiece } from "@activepieces/pieces-framework";
-import packageJson from "../package.json";
+import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
 
 export const ${pieceNameCamelCase} = createPiece({
-  name: "${pieceName}",
   displayName: "${capitalizeFirstLetter(pieceName)}",
+  auth: PieceAuth.None(),
+  minimumSupportedRelease: '0.8.0',
   logoUrl: "https://cdn.activepieces.com/pieces/${pieceName}.png",
-  version: packageJson.version,
   authors: [],
   actions: [],
   triggers: [],
@@ -81,6 +81,13 @@ const updateProjectJsonConfig = async (pieceName: string) => {
   await writeProjectJson(`packages/pieces/${pieceName}`, projectJson)
 }
 
+
+const updatePackageJsonConfig = async (pieceName: string) => {
+  const projectJson = await readPackageJson(`packages/pieces/${pieceName}`)
+  projectJson.keywords = ['activepieces'];
+  await writeProjectJson(`packages/pieces/${pieceName}`, projectJson)
+}
+
 const setupGeneratedLibrary = async (pieceName: string) => {
   await removeUnusedFiles(pieceName)
   await generateIndexTsFile(pieceName)
@@ -95,7 +102,6 @@ const main = async () => {
   await setupGeneratedLibrary(pieceName)
   console.log(chalk.green('✨  Done!'));
   console.log(chalk.yellow(`The piece has been generated at: packages/pieces/${pieceName}`));
-  console.log(chalk.blue("Don't forget to add the piece to the list of pieces in packages/pieces/apps/src/index.ts"));
 }
 
 main()

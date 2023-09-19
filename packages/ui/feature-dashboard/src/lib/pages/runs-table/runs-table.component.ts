@@ -32,11 +32,14 @@ export class RunsTableComponent implements OnInit {
   @ViewChild(ApPaginatorComponent, { static: true })
   paginator!: ApPaginatorComponent;
   runsPage$: Observable<SeekPage<FlowRun>>;
-  enterpriseEdition$: Observable<boolean>;
+  nonCommunityEdition$: Observable<boolean>;
   toggleNotificationFormControl: FormControl<boolean> = new FormControl();
   dataSource!: RunsTableDataSource;
   displayedColumns = ['flowName', 'status', 'started', 'finished'];
   updateNotificationsValue$: Observable<boolean>;
+  selectedStatus: FormControl<ExecutionOutputStatus | undefined> =
+    new FormControl();
+  changeRunStatus$: Observable<void>;
   readonly ExecutionOutputStatus = ExecutionOutputStatus;
 
   constructor(
@@ -48,9 +51,21 @@ export class RunsTableComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.enterpriseEdition$ = this.flagsService
+    this.changeRunStatus$ = this.selectedStatus.valueChanges.pipe(
+      distinctUntilChanged(),
+      tap((status) => {
+        this.router.navigate(['runs'], {
+          queryParams: {
+            status:
+              status && status in ExecutionOutputStatus ? status : undefined,
+          },
+        });
+      }),
+      map(() => undefined)
+    );
+    this.nonCommunityEdition$ = this.flagsService
       .getEdition()
-      .pipe(map((res) => res === ApEdition.ENTERPRISE));
+      .pipe(map((res) => res !== ApEdition.COMMUNITY));
     this.updateNotificationsValue$ = this.store
       .select(ProjectSelectors.selectIsNotificationsEnabled)
       .pipe(
@@ -85,21 +100,6 @@ export class RunsTableComponent implements OnInit {
       this.router.serializeUrl(this.router.createUrlTree(['/runs'])) +
       '/' +
       run.id;
-    window.open(url, '_blank');
-  }
-
-  public getStatusText(status: ExecutionOutputStatus): string {
-    switch (status) {
-      case ExecutionOutputStatus.RUNNING:
-        return 'Running';
-      case ExecutionOutputStatus.SUCCEEDED:
-        return 'Success';
-      case ExecutionOutputStatus.FAILED:
-        return 'Failed';
-      case ExecutionOutputStatus.TIMEOUT:
-        return 'Timed out';
-      default:
-        return 'Internal Error';
-    }
+    window.open(url, '_blank', 'noopener');
   }
 }

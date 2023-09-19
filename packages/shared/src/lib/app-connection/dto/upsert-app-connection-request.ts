@@ -9,6 +9,7 @@ const commonAuthProps = {
 
 export const UpsertCustomAuthRequest = Type.Object({
     ...commonAuthProps,
+    type: Type.Literal(AppConnectionType.CUSTOM_AUTH),
     value: Type.Object({
         type: Type.Literal(AppConnectionType.CUSTOM_AUTH),
         props: Type.Record(Type.String(), Type.Unknown())
@@ -18,6 +19,7 @@ export const UpsertCustomAuthRequest = Type.Object({
 
 export const UpsertCloudOAuth2Request = Type.Object({
     ...commonAuthProps,
+    type: Type.Literal(AppConnectionType.CLOUD_OAUTH2),
     value: Type.Object({
         client_id: Type.String(),
         authorization_method: Type.Optional(Type.Enum(OAuth2AuthorizationMethod)),
@@ -32,6 +34,7 @@ export const UpsertCloudOAuth2Request = Type.Object({
 
 export const UpsertSecretTextRequest = Type.Object({
     ...commonAuthProps,
+    type: Type.Literal(AppConnectionType.SECRET_TEXT),
     value: Type.Object({
         type: Type.Literal(AppConnectionType.SECRET_TEXT),
         secret_text: Type.String({})
@@ -40,6 +43,7 @@ export const UpsertSecretTextRequest = Type.Object({
 
 export const UpsertOAuth2Request = Type.Object({
     ...commonAuthProps,
+    type: Type.Literal(AppConnectionType.OAUTH2),
     value: Type.Object({
         client_id: Type.String({}),
         client_secret: Type.String({}),
@@ -56,6 +60,7 @@ export const UpsertOAuth2Request = Type.Object({
 
 export const UpsertBasicAuthRequest = Type.Object({
     ...commonAuthProps,
+    type: Type.Literal(AppConnectionType.BASIC_AUTH),
     value: Type.Object({
         username: Type.String({}),
         password: Type.String({}),
@@ -63,10 +68,17 @@ export const UpsertBasicAuthRequest = Type.Object({
     })
 });
 
+export const UpsertAppConnectionRequestBody = Type.Union([
+    UpsertSecretTextRequest,
+    UpsertOAuth2Request,
+    UpsertCloudOAuth2Request,
+    UpsertBasicAuthRequest,
+    UpsertCustomAuthRequest,
+]);
+
 export type UpsertCloudOAuth2Request = Static<typeof UpsertCloudOAuth2Request>;
 export type UpsertOAuth2Request = Static<typeof UpsertOAuth2Request>;
 export type UpsertSecretTextRequest = Static<typeof UpsertSecretTextRequest>;
 export type UpsertBasicAuthRequest = Static<typeof UpsertBasicAuthRequest>;
 export type UpsertCustomAuthRequest = Static<typeof UpsertCustomAuthRequest>;
-export type UpsertConnectionRequest = Static<typeof UpsertConnectionRequest>;
-export const UpsertConnectionRequest = Type.Union([UpsertSecretTextRequest, UpsertOAuth2Request, UpsertCloudOAuth2Request, UpsertBasicAuthRequest, UpsertCustomAuthRequest]);
+export type UpsertAppConnectionRequestBody = Static<typeof UpsertAppConnectionRequestBody>;

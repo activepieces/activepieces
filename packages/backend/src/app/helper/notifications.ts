@@ -1,10 +1,9 @@
 import { ExecutionOutputStatus, FlowRun, NotificationStatus, RunEnvironment, UserMeta } from '@activepieces/shared'
-import { logger } from './logger'
+import { captureException, logger } from './logger'
 import { system } from './system/system'
 import { SystemProp } from './system/system-prop'
 import axios from 'axios'
-import { captureException } from '@sentry/node'
-import { projectService } from '../project/project.service'
+import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
 
 const notificationUrl = system.get(SystemProp.NOTIFICATION_URL)
@@ -14,7 +13,7 @@ export const notifications = {
         if (flowRun.environment === RunEnvironment.TESTING) {
             return
         }
-        if ([ExecutionOutputStatus.FAILED, ExecutionOutputStatus.INTERNAL_ERROR].indexOf(flowRun.status) === -1) {
+        if (![ExecutionOutputStatus.FAILED, ExecutionOutputStatus.INTERNAL_ERROR].includes(flowRun.status)) {
             return
         }
         if (!notificationUrl) {
@@ -62,6 +61,5 @@ async function sendWebhook(payload: RunFailedWebhookPayload): Promise<void> {
     }
     catch (error) {
         captureException(error)
-        logger.error(`Error sending webhook: ${error}`)
     }
 }

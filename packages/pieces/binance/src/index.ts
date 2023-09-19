@@ -1,12 +1,11 @@
-import packageJson from '../package.json';
-import { createPiece } from '@activepieces/pieces-framework';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { fetchCryptoPairPrice } from './lib/actions/fetch-pair-price';
 
 export const binance = createPiece({
-  name: 'binance',
   displayName: 'Binance',
-  logoUrl: 'https://cdn.activepieces.com/pieces/binance.png',
-  version: packageJson.version,
+      minimumSupportedRelease: '0.5.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/binance.png',
+  auth: PieceAuth.None(),
   actions: [fetchCryptoPairPrice],
   authors: ['m-tabaza'],
   triggers: [],

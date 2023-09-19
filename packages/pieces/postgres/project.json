@@ -5,30 +5,22 @@
   "projectType": "library",
   "targets": {
     "build": {
-      "executor": "@nrwl/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/postgres",
         "tsConfig": "packages/pieces/postgres/tsconfig.lib.json",
         "packageJson": "packages/pieces/postgres/package.json",
         "main": "packages/pieces/postgres/src/index.ts",
-        "assets": [
-          "packages/pieces/postgres/*.md"
-        ],
+        "assets": ["packages/pieces/postgres/*.md"],
         "buildableProjectDepsInPackageJsonType": "dependencies"
       }
     },
     "lint": {
-      "executor": "@nrwl/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": [
-          "packages/pieces/postgres/**/*.ts"
-        ]
+        "lintFilePatterns": ["packages/pieces/postgres/**/*.ts"]
       }
     }
   },

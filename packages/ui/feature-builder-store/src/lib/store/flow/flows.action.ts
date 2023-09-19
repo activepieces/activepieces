@@ -8,12 +8,9 @@ import {
   UpdateTriggerRequest,
   FlowRun,
   FlowOperationRequest,
-  StepLocationRelativeToParent,
   Folder,
+  MoveActionRequest,
 } from '@activepieces/shared';
-import { RightSideBarType } from '../../model/enums/right-side-bar-type.enum';
-import { LeftSideBarType } from '../../model/enums/left-side-bar-type.enum';
-import { NO_PROPS } from '../../model';
 
 export enum FlowsActionType {
   // Flow Version Modifying Action
@@ -26,20 +23,21 @@ export enum FlowsActionType {
   SAVED_FAILED = '[FLOWS] SAVED_FAILED',
   SAVED_SUCCESS = '[FLOWS] SAVED_SUCCESS',
   APPLY_UPDATE_OPERATION = '[FLOWS] APPLY_UPDATE_OPERATION',
-  SET_LEFT_SIDEBAR = '[FLOWS] SET_LEFT_SIDEBAR',
-  SET_RIGHT_SIDEBAR = '[FLOWS] SET_RIGHT_BAR',
   DESELECT_STEP = '[FLOWS] DESELECT_STEP',
-  SET_RUN = '[FLOWS] SET_RUN',
-  EXIT_RUN = '[FLOWS] EXIT_RUN',
-  SELECT_STEP_BY_NAME = '[FLOWS] SELECT_STEP_BY_NAME',
   SELECT_FIRST_INVALID_STEP = '[FLOWS] SELECT_FIRST_INVALID_STEP',
+  MOVE_ACTION = '[FLOWS] MOVE_ACTION',
+  IMPORT_FLOW = '[FLOWS] IMPORT_FLOW',
+  TOGGLE_WAITING_TO_SAVE = '[FLOWS] TOGGLE_WAITING_TO_SAVE',
 }
 
 const updateTrigger = createAction(
   FlowsActionType.UPDATE_TRIGGER,
   props<{ operation: UpdateTriggerRequest }>()
 );
-
+const moveAction = createAction(
+  FlowsActionType.MOVE_ACTION,
+  props<{ operation: MoveActionRequest }>()
+);
 const selectFirstInvalidStep = createAction(
   FlowsActionType.SELECT_FIRST_INVALID_STEP
 );
@@ -51,7 +49,7 @@ const addAction = createAction(
 
 const updateAction = createAction(
   FlowsActionType.UPDATE_ACTION,
-  props<{ operation: UpdateActionRequest }>()
+  props<{ operation: UpdateActionRequest; updatingMissingStep?: boolean }>()
 );
 
 const deleteAction = createAction(
@@ -76,42 +74,26 @@ const changeName = createAction(
 
 const setInitial = createAction(
   FlowsActionType.SET_INITIAL,
-  props<{ flow: Flow; run: FlowRun | undefined; folder?: Folder }>()
+  props<{
+    flow: Flow;
+    run: FlowRun | undefined;
+    folder?: Folder;
+  }>()
 );
-
+const importFlow = createAction(
+  FlowsActionType.SET_INITIAL,
+  props<{
+    flow: Flow;
+  }>()
+);
 const applyUpdateOperation = createAction(
   FlowsActionType.APPLY_UPDATE_OPERATION,
   props<{ flow: Flow; operation: FlowOperationRequest; saveRequestId: UUID }>()
 );
-
-const exitRun = createAction(FlowsActionType.EXIT_RUN);
-
-const setRun = createAction(FlowsActionType.SET_RUN, props<{ run: FlowRun }>());
-
+const toggleWaitingToSave = createAction(
+  FlowsActionType.TOGGLE_WAITING_TO_SAVE
+);
 const deselectStep = createAction(FlowsActionType.DESELECT_STEP);
-
-const selectStepByName = createAction(
-  FlowsActionType.SELECT_STEP_BY_NAME,
-  props<{ stepName: string }>()
-);
-
-const setLeftSidebar = createAction(
-  FlowsActionType.SET_LEFT_SIDEBAR,
-  props<{ sidebarType: LeftSideBarType }>()
-);
-
-const setRightSidebar = createAction(
-  FlowsActionType.SET_RIGHT_SIDEBAR,
-  props<{
-    sidebarType: RightSideBarType;
-    props:
-      | {
-          stepLocationRelativeToParent: StepLocationRelativeToParent;
-          stepName: string;
-        }
-      | typeof NO_PROPS;
-  }>()
-);
 
 export const FlowsActions = {
   setInitial,
@@ -123,13 +105,11 @@ export const FlowsActions = {
   updateAction,
   changeName,
   applyUpdateOperation,
-  setLeftSidebar,
-  setRightSidebar,
-  setRun,
   deselectStep,
-  exitRun,
-  selectStepByName,
   selectFirstInvalidStep,
+  moveAction,
+  importFlow,
+  toggleWaitingToSave,
 };
 
 export const SingleFlowModifyingState = [
@@ -138,4 +118,5 @@ export const SingleFlowModifyingState = [
   addAction,
   updateTrigger,
   deleteAction,
+  moveAction,
 ];

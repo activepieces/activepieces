@@ -9,7 +9,6 @@ import { CodeArtifactFormControlComponent } from './code-artifact-form-control/c
 import { DictionaryFormControlComponent } from './dictionary-form-control/dictionary-form-control.component';
 import { InterpolatingTextFormControlComponent } from './interpolating-text-form-control/interpolating-text-form-control.component';
 import { AddNpmPackageModalComponent } from './code-artifact-form-control/code-artifact-control-fullscreen/add-npm-package-modal/add-npm-package-modal.component';
-import { TestCodeFormModalComponent } from './code-artifact-form-control/code-artifact-control-fullscreen/test-code-form-modal/test-code-form-modal.component';
 import { CodeArtifactControlFullscreenComponent } from './code-artifact-form-control/code-artifact-control-fullscreen/code-artifact-control-fullscreen.component';
 import { MentionsListComponent } from './interpolating-text-form-control/mentions-list/mentions-list.component';
 import { BuilderAutocompleteMentionsDropdownComponent } from './interpolating-text-form-control/builder-autocomplete-mentions-dropdown/builder-autocomplete-mentions-dropdown.component';
@@ -22,16 +21,18 @@ import { MentionListItemTemplateComponent } from './interpolating-text-form-cont
 import { PieceStepMentionItemComponent } from './interpolating-text-form-control/mentions-list/piece-step-mention-item/piece-step-mention-item.component';
 import { PieceTriggerMentionItemComponent } from './interpolating-text-form-control/mentions-list/piece-trigger-mention-item/piece-trigger-mention-item.component';
 import { StepMentionsTreeComponent } from './interpolating-text-form-control/mentions-list/step-mentions-tree/step-mentions-tree.component';
-import { TrackHoverDirective } from './dictionary-form-control/track-hover.directive';
 import { CodemirrorModule } from '@ctrl/ngx-codemirror';
-import { MonacoEditorModule } from '@materia-ui/ngx-monaco-editor';
+import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { AuthConfigsPipe } from './piece-properties-form/auth-configs.pipe';
 import { PiecePropertiesFormComponent } from './piece-properties-form/piece-properties-form.component';
 import { MatTreeModule } from '@angular/material/tree';
 import { QuillModule } from 'ngx-quill';
-
 import { WebhookTriggerMentionItemComponent } from './interpolating-text-form-control/mentions-list/webhook-trigger-mention-item/webhook-trigger-mention-item.component';
+import { BuilderAutocompleteDropdownHandlerComponent } from './interpolating-text-form-control/builder-autocomplete-dropdown-handler/builder-autocomplete-dropdown-handler.component';
+import { AutocompleteDropdownSizesButtonsComponent } from './interpolating-text-form-control/mentions-list/autocomplete-dropdown-sizes-buttons/autocomplete-dropdown-sizes-buttons.component';
+import { DropdownPropertySearchPipe } from './piece-properties-form/dropdown-search.pipe';
+import { MarkdownModule } from 'ngx-markdown';
 const exportedDeclarations = [
   ArrayFormControlComponent,
   BranchConditionFormControlComponent,
@@ -39,10 +40,9 @@ const exportedDeclarations = [
   CodeArtifactFormControlComponent,
   DictionaryFormControlComponent,
   InterpolatingTextFormControlComponent,
-  TrackHoverDirective,
   PiecePropertiesFormComponent,
   BuilderAutocompleteMentionsDropdownComponent,
-  TestCodeFormModalComponent,
+  BuilderAutocompleteDropdownHandlerComponent,
 ];
 @NgModule({
   imports: [
@@ -55,6 +55,7 @@ const exportedDeclarations = [
     UiFeatureConnectionsModule,
     MatTreeModule,
     QuillModule.forRoot({}),
+    MarkdownModule,
   ],
   declarations: [
     ...exportedDeclarations,
@@ -72,6 +73,8 @@ const exportedDeclarations = [
     StepMentionsTreeComponent,
     WebhookTriggerMentionItemComponent,
     AuthConfigsPipe,
+    AutocompleteDropdownSizesButtonsComponent,
+    DropdownPropertySearchPipe,
   ],
   exports: [...exportedDeclarations],
 })

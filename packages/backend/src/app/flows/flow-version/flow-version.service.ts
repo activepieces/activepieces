@@ -2,12 +2,12 @@ import { TSchema, Type } from '@sinclair/typebox'
 import { TypeCompiler } from '@sinclair/typebox/compiler'
 import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework'
 import {
-    Action,
     ActionType,
     apId,
     BranchActionSettingsWithValidation,
-    CloneFlowVersionRequest,
     CodeActionSettings,
+    FileCompression,
+    FileType,
     flowHelper,
     FlowId,
     FlowOperationRequest,
@@ -15,13 +15,13 @@ import {
     FlowVersion,
     FlowVersionId,
     FlowVersionState,
+    ImportFlowRequest,
     LoopOnItemsActionSettingsWithValidation,
     PieceActionSettings,
     PieceTriggerSettings,
     ProjectId,
-    StepLocationRelativeToParent,
-    Trigger,
     TriggerType,
+    UserId,
 } from '@activepieces/shared'
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity'
 import { fileService } from '../../file/file.service'
@@ -29,54 +29,65 @@ import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { FlowVersionEntity } from './flow-version-entity'
 import { flowVersionSideEffects } from './flow-version-side-effects'
-import { pieceMetadataLoader } from '../../pieces/piece-metadata-loader'
-import { FlowViewMode, DEFAULT_SAMPLE_DATA_SETTINGS } from '@activepieces/shared'
-import { isNil } from 'lodash'
+import { DEFAULT_SAMPLE_DATA_SETTINGS } from '@activepieces/shared'
+import { isNil } from '@activepieces/shared'
+import { pieceMetadataService } from '../../pieces/piece-metadata-service'
+import dayjs from 'dayjs'
+import { captureException } from '../../helper/logger'
+import { stepFileService } from '../step-file/step-file.service'
 
-const branchSetttingsValidaotr = TypeCompiler.Compile(BranchActionSettingsWithValidation)
+const branchSettingsValidator = TypeCompiler.Compile(BranchActionSettingsWithValidation)
 const loopSettingsValidator = TypeCompiler.Compile(LoopOnItemsActionSettingsWithValidation)
-const flowVersionRepo = databaseConnection.getRepository(FlowVersionEntity)
+const flowVersionRepo = databaseConnection.getRepository<FlowVersion>(FlowVersionEntity)
 
 export const flowVersionService = {
-    async overwriteVersion(flowVersionId: FlowVersionId, mutatedFlowVersion: FlowVersion) {
-        await flowVersionRepo.update(flowVersionId, mutatedFlowVersion as QueryDeepPartialEntity<FlowVersion>)
-        return await flowVersionRepo.findOneBy({
-            id: flowVersionId,
+    async lockPieceVersions(projectId: ProjectId, mutatedFlowVersion: FlowVersion): Promise<FlowVersion> {
+        return await flowHelper.transferFlowAsync(mutatedFlowVersion, async (step) => {
+            const clonedStep = JSON.parse(JSON.stringify(step))
+            switch (step.type) {
+                case ActionType.PIECE:
+                case TriggerType.PIECE: {
+                    const newVersion = await pieceMetadataService.get({
+                        projectId,
+                        name: step.settings.pieceName,
+                        version: step.settings.pieceVersion,
+                    })
+                    clonedStep.settings.pieceVersion = newVersion.version
+                    break
+                }
+                default:
+                    break
+            }
+            return clonedStep
         })
     },
-    async applyOperation(projectId: ProjectId, flowVersion: FlowVersion, userOperation: FlowOperationRequest): Promise<FlowVersion | null> {
-        let operations = [userOperation]
-        if (userOperation.type === FlowOperationType.IMPORT_FLOW) {
-            operations = []
-            const actionsToRemove = flowHelper.getAllSteps(flowVersion).filter(step => flowHelper.isAction(step.type))
-            for (const step of actionsToRemove) {
-                operations.push({
-                    type: FlowOperationType.DELETE_ACTION,
-                    request: {
-                        name: step.name,
-                    },
-                })
-            }
-            if (userOperation.request.trigger) {
-                operations.push({
-                    type: FlowOperationType.UPDATE_TRIGGER,
-                    request: userOperation.request.trigger,
-                })
-                operations.push(...getImportOperations(userOperation.request.trigger))
-            }
-        }
+    async applyOperation(userId: UserId, projectId: ProjectId, flowVersion: FlowVersion, userOperation: FlowOperationRequest): Promise<FlowVersion> {
+        let operations: FlowOperationRequest[] = []
         let mutatedFlowVersion = flowVersion
+        switch (userOperation.type) {
+            case FlowOperationType.IMPORT_FLOW:
+                operations = handleImportFlowOperation(flowVersion, userOperation.request)
+                break
+            case FlowOperationType.LOCK_FLOW:
+                mutatedFlowVersion = await this.lockPieceVersions(projectId, mutatedFlowVersion)
+                operations = [userOperation]
+                break
+            default:
+                operations = [userOperation]
+                break
+        }
         for (const operation of operations) {
             mutatedFlowVersion = await applySingleOperation(projectId, mutatedFlowVersion, operation)
         }
+        mutatedFlowVersion.updated = dayjs().toISOString()
+        mutatedFlowVersion.updatedBy = userId
         await flowVersionRepo.update(flowVersion.id, mutatedFlowVersion as QueryDeepPartialEntity<FlowVersion>)
-        return await flowVersionRepo.findOneBy({
+        return flowVersionRepo.findOneByOrFail({
             id: flowVersion.id,
         })
     },
-
     async getOne(id: FlowVersionId): Promise<FlowVersion | null> {
-        if (id === null || id === undefined) {
+        if (isNil(id)) {
             return null
         }
         return await flowVersionRepo.findOneBy({
@@ -85,7 +96,7 @@ export const flowVersionService = {
     },
     async getOneOrThrow(id: FlowVersionId): Promise<FlowVersion> {
         const flowVersion = await flowVersionService.getOne(id)
-        if (flowVersion === null) {
+        if (isNil(flowVersion)) {
             throw new ActivepiecesError({
                 code: ErrorCode.FLOW_VERSION_NOT_FOUND,
                 params: {
@@ -96,8 +107,8 @@ export const flowVersionService = {
 
         return flowVersion
     },
-    async getFlowVersion(projectId: ProjectId, flowId: FlowId, versionId: FlowVersionId | undefined, viewMode: FlowViewMode): Promise<FlowVersion | null> {
-        const flowVersion = await flowVersionRepo.findOne({
+    async getFlowVersion({ projectId, flowId, versionId, removeSecrets, includeArtifactAsBase64 }: { projectId: ProjectId, flowId: FlowId, versionId: FlowVersionId | undefined, removeSecrets: boolean, includeArtifactAsBase64: boolean }): Promise<FlowVersion> {
+        let flowVersion = await flowVersionRepo.findOneOrFail({
             where: {
                 flowId,
                 id: versionId,
@@ -106,97 +117,49 @@ export const flowVersionService = {
                 created: 'DESC',
             },
         })
-        if (viewMode === FlowViewMode.WITH_ARTIFACTS) {
-            return addArtifactsAsBase64(projectId, flowVersion)
+        if (removeSecrets) {
+            flowVersion = await removeSecretsFromFlow(flowVersion)
         }
-        if (viewMode === FlowViewMode.TEMPLATE) {
-            return addArtifactsAsBase64(projectId, await removeSecrets(flowVersion))
+        if (includeArtifactAsBase64) {
+            flowVersion = await addArtifactsAsBase64(projectId, flowVersion)
         }
         return flowVersion
     },
-    async createVersion(flowId: FlowId, flowRequest: CloneFlowVersionRequest): Promise<FlowVersion> {
+    async createEmptyVersion(flowId: FlowId, request: {
+        displayName: string
+    }): Promise<FlowVersion> {
         const flowVersion: Partial<FlowVersion> = {
             id: apId(),
-            displayName: flowRequest.displayName,
+            displayName: request.displayName,
             flowId,
-            trigger: flowRequest.trigger,
-            valid: flowRequest.valid,
+            trigger: {
+                type: TriggerType.EMPTY,
+                name: 'trigger',
+                settings: {},
+                valid: false,
+                displayName: 'Select Trigger',
+            },
+            valid: false,
             state: FlowVersionState.DRAFT,
         }
         return await flowVersionRepo.save(flowVersion)
     },
 }
 
-function getImportOperations(step: Action | Trigger | undefined): (FlowOperationRequest)[] {
-    const steps: FlowOperationRequest[] = []
-    while (step) {
-        if (step.nextAction) {
-            steps.push({
-                type: FlowOperationType.ADD_ACTION,
-                request: {
-                    parentStep: step.name,
-                    action: step.nextAction,
-                },
-            })
-        }
-        if (step.type === ActionType.BRANCH) {
-            if (step.onFailureAction) {
-                steps.push({
-                    type: FlowOperationType.ADD_ACTION,
-                    request: {
-                        parentStep: step.name,
-                        stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_FALSE_BRANCH,
-                        action: step.onFailureAction,
-                    },
-                })
-                steps.push(...getImportOperations(step.onFailureAction))
-            }
-            if (step.onSuccessAction) {
-                steps.push({
-                    type: FlowOperationType.ADD_ACTION,
-                    request: {
-                        parentStep: step.name,
-                        stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_TRUE_BRANCH,
-                        action: step.onSuccessAction,
-                    },
-                })
-                steps.push(...getImportOperations(step.onSuccessAction))
-            }
-        }
-        if (step.type === ActionType.LOOP_ON_ITEMS && step.firstLoopAction) {
-            steps.push({
-                type: FlowOperationType.ADD_ACTION,
-                request: {
-                    parentStep: step.name,
-                    stepLocationRelativeToParent: StepLocationRelativeToParent.INSIDE_LOOP,
-                    action: step.firstLoopAction,
-                },
-
-            })
-            steps.push(...getImportOperations(step.firstLoopAction))
-        }
-        step = step.nextAction
-    }
-    return steps
-}
-
 async function applySingleOperation(projectId: ProjectId, flowVersion: FlowVersion, operation: FlowOperationRequest): Promise<FlowVersion> {
     await flowVersionSideEffects.preApplyOperation({
         projectId,
         flowVersion,
-        operation: operation,
+        operation,
     })
     operation = await prepareRequest(projectId, flowVersion, operation)
     return flowHelper.apply(flowVersion, operation)
 }
 
-async function removeSecrets(flowVersion: FlowVersion | null) {
-    if (flowVersion === null) {
-        return null
-    }
+async function removeSecretsFromFlow(flowVersion: FlowVersion): Promise<FlowVersion> {
     const flowVersionWithArtifacts: FlowVersion = JSON.parse(JSON.stringify(flowVersion))
 
-    const steps = flowHelper.getAllSteps(flowVersionWithArtifacts)
+    const steps = flowHelper.getAllSteps(flowVersionWithArtifacts.trigger)
     for (const step of steps) {
         /*
         Remove Sample Data & connections
@@ -208,17 +171,20 @@ async function removeSecrets(flowVersion: FlowVersion | null) {
 }
 
 function replaceConnections(obj: Record<string, unknown>): Record<string, unknown> {
-    if(isNil(obj)){
+    if (isNil(obj)) {
         return obj
     }
     const replacedObj: Record<string, unknown> = {}
 
     for (const [key, value] of Object.entries(obj)) {
-        if (typeof value === 'object' && value !== null) {
+        if (Array.isArray(value)) {
+            replacedObj[key] = value
+        }
+        else if (typeof value === 'object' && value !== null) {
             replacedObj[key] = replaceConnections(value as Record<string, unknown>)
         }
         else if (typeof value === 'string') {
-            const replacedValue = value.replace(/\${connections\.[^}]*}/g, '')
+            const replacedValue = value.replace(/\{{connections\.[^}]*}}/g, '')
             replacedObj[key] = replacedValue === '' ? undefined : replacedValue
         }
         else {
@@ -229,73 +195,114 @@ function replaceConnections(obj: Record<string, unknown>): Record<string, unknow
 }
 
 
-async function addArtifactsAsBase64(projectId: ProjectId, flowVersion: FlowVersion | null) {
-    if (flowVersion === null) {
-        return null
-    }
-    const flowVersionWithArtifacts: FlowVersion = JSON.parse(JSON.stringify(flowVersion))
-    const artifactPromises = []
+function handleImportFlowOperation(flowVersion: FlowVersion, operation: ImportFlowRequest): FlowOperationRequest[] {
+    const actionsToRemove = flowHelper.getAllStepsAtFirstLevel(flowVersion.trigger).filter(step => flowHelper.isAction(step.type))
+    const operations: FlowOperationRequest[] = actionsToRemove.map(step => ({
+        type: FlowOperationType.DELETE_ACTION,
+        request: {
+            name: step.name,
+        },
+    }))
+    operations.push({
+        type: FlowOperationType.UPDATE_TRIGGER,
+        request: operation.trigger,
+    })
+    operations.push(...flowHelper.getImportOperations(operation.trigger))
+    return operations
+}
 
-    const steps = flowHelper.getAllSteps(flowVersionWithArtifacts)
-    for (const step of steps) {
-        if (step.type === ActionType.CODE) {
+async function addArtifactsAsBase64(projectId: ProjectId, flowVersion: FlowVersion) {
+    const flowVersionWithArtifacts: FlowVersion = JSON.parse(JSON.stringify(flowVersion))
+    const steps = flowHelper.getAllSteps(flowVersionWithArtifacts.trigger)
+
+    const artifactPromises = steps
+        .filter(step => step.type === ActionType.CODE)
+        .map(async (step) => {
             const codeSettings: CodeActionSettings = step.settings
-            const artifactPromise = fileService
-                .getOne({ projectId: projectId, fileId: codeSettings.artifactSourceId! })
-                .then((artifact) => {
-                    if (artifact !== null) {
-                        codeSettings.artifactSourceId = undefined
-                        codeSettings.artifact = artifact.data.toString('base64')
-                    }
-                })
-            artifactPromises.push(artifactPromise)
-        }
-    }
+            try {
+                const artifact = await fileService.getOne({ projectId, fileId: codeSettings.artifactSourceId! })
+                if (artifact !== null) {
+                    codeSettings.artifactSourceId = undefined
+                    codeSettings.artifact = artifact.data.toString('base64')
+                }
+            }
+            catch (error) {
+                captureException(error)
+            }
+        })
 
     await Promise.all(artifactPromises)
     return flowVersionWithArtifacts
 }
+
 
 async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, request: FlowOperationRequest) {
     const clonedRequest: FlowOperationRequest = JSON.parse(JSON.stringify(request))
     switch (clonedRequest.type) {
         case FlowOperationType.ADD_ACTION:
             clonedRequest.request.action.valid = true
-            if (clonedRequest.request.action.type === ActionType.LOOP_ON_ITEMS) {
-                clonedRequest.request.action.valid = loopSettingsValidator.Check(clonedRequest.request.action.settings)
-            }
-            else if (clonedRequest.request.action.type === ActionType.BRANCH) {
-                clonedRequest.request.action.valid = branchSetttingsValidaotr.Check(clonedRequest.request.action.settings)
-            }
-            else if (clonedRequest.request.action.type === ActionType.PIECE) {
-                clonedRequest.request.action.valid = await validateAction(clonedRequest.request.action.settings)
-            }
-            else if (clonedRequest.request.action.type === ActionType.CODE) {
-                const codeSettings: CodeActionSettings = clonedRequest.request.action.settings
-                await uploadArtifact(projectId, codeSettings)
+            switch (clonedRequest.request.action.type) {
+                case ActionType.MISSING:
+                    clonedRequest.request.action.valid = false
+                    break
+                case ActionType.LOOP_ON_ITEMS:
+                    clonedRequest.request.action.valid = loopSettingsValidator.Check(clonedRequest.request.action.settings)
+                    break
+                case ActionType.BRANCH:
+                    clonedRequest.request.action.valid = branchSettingsValidator.Check(clonedRequest.request.action.settings)
+                    break
+                case ActionType.PIECE:
+                    clonedRequest.request.action.valid = await validateAction({
+                        settings: clonedRequest.request.action.settings,
+                        projectId,
+                    })
+                    break
+                case ActionType.CODE: {
+                    const codeSettings: CodeActionSettings = clonedRequest.request.action.settings
+                    await uploadArtifact(projectId, codeSettings)
+                    break
+                }
             }
             break
         case FlowOperationType.UPDATE_ACTION:
             clonedRequest.request.valid = true
-            if (clonedRequest.request.type === ActionType.LOOP_ON_ITEMS) {
-                clonedRequest.request.valid = loopSettingsValidator.Check(clonedRequest.request.settings)
-            }
-            else if (clonedRequest.request.type === ActionType.BRANCH) {
-                clonedRequest.request.valid = branchSetttingsValidaotr.Check(clonedRequest.request.settings)
-            }
-            else if (clonedRequest.request.type === ActionType.PIECE) {
-                clonedRequest.request.valid = await validateAction(clonedRequest.request.settings)
-            }
-            else if (clonedRequest.request.type === ActionType.CODE) {
-                const codeSettings: CodeActionSettings = clonedRequest.request.settings
-                await uploadArtifact(projectId, codeSettings)
-                const previousStep = flowHelper.getStep(flowVersion, clonedRequest.request.name)
-                if (
-                    previousStep !== undefined &&
-                    previousStep.type === ActionType.CODE &&
-                    codeSettings.artifactSourceId !== previousStep.settings.artifactSourceId
-                ) {
-                    await deleteArtifact(projectId, previousStep.settings)
+            switch (clonedRequest.request.type) {
+                case ActionType.MISSING:
+                    clonedRequest.request.valid = false
+                    break
+                case ActionType.LOOP_ON_ITEMS:
+                    clonedRequest.request.valid = loopSettingsValidator.Check(clonedRequest.request.settings)
+                    break
+                case ActionType.BRANCH:
+                    clonedRequest.request.valid = branchSettingsValidator.Check(clonedRequest.request.settings)
+                    break
+                case ActionType.PIECE: {
+                    clonedRequest.request.valid = await validateAction({
+                        settings: clonedRequest.request.settings,
+                        projectId,
+                    })
+                    const previousStep = flowHelper.getStep(flowVersion, clonedRequest.request.name)
+                    if (
+                        previousStep !== undefined &&
+                        previousStep.type === ActionType.PIECE &&
+                        clonedRequest.request.settings.pieceName !== previousStep.settings.pieceName
+                    ) {
+                        await stepFileService.deleteAll({ projectId, flowId: flowVersion.flowId, stepName: previousStep.name })
+                    }
+                    break
+                }
+                case ActionType.CODE: {
+                    const codeSettings: CodeActionSettings = clonedRequest.request.settings
+                    await uploadArtifact(projectId, codeSettings)
+                    const previousStep = flowHelper.getStep(flowVersion, clonedRequest.request.name)
+                    if (
+                        previousStep !== undefined &&
+                        previousStep.type === ActionType.CODE &&
+                        codeSettings.artifactSourceId !== previousStep.settings.artifactSourceId
+                    ) {
+                        await deleteArtifact(projectId, previousStep.settings)
+                    }
+                    break
                 }
             }
             break
@@ -304,13 +311,26 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
             if (previousStep !== undefined && previousStep.type === ActionType.CODE) {
                 await deleteArtifact(projectId, previousStep.settings)
             }
+            if (previousStep !== undefined && previousStep.type === ActionType.PIECE) {
+                await stepFileService.deleteAll({ projectId, flowId: flowVersion.flowId, stepName: previousStep.name })
+            }
             break
         }
 
         case FlowOperationType.UPDATE_TRIGGER:
-            clonedRequest.request.valid = true
-            if (clonedRequest.request.type === TriggerType.PIECE) {
-                clonedRequest.request.valid = await validateTrigger(clonedRequest.request.settings)
+            switch (clonedRequest.request.type) {
+                case TriggerType.EMPTY:
+                    clonedRequest.request.valid = false
+                    break
+                case TriggerType.PIECE:
+                    clonedRequest.request.valid = await validateTrigger({
+                        settings: clonedRequest.request.settings,
+                        projectId,
+                    })
+                    break
+                default:
+                    clonedRequest.request.valid = true
+                    break
             }
             break
         default:
@@ -320,41 +340,54 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
 }
 
 
-async function validateAction(settings: PieceActionSettings) {
+async function validateAction({ projectId, settings }: { projectId: ProjectId, settings: PieceActionSettings }) {
+
     if (
-        settings.pieceName === undefined ||
-        settings.pieceVersion === undefined ||
-        settings.actionName === undefined ||
-        settings.input === undefined
+        isNil(settings.pieceName) ||
+        isNil(settings.pieceVersion) ||
+        isNil(settings.actionName) ||
+        isNil(settings.input)
     ) {
         return false
     }
-    const piece = await pieceMetadataLoader.pieceMetadata(settings.pieceName, settings.pieceVersion)
-    if (piece === undefined) {
+
+    const piece = await pieceMetadataService.get({
+        projectId,
+        name: settings.pieceName,
+        version: settings.pieceVersion,
+    })
+
+    if (isNil(piece)) {
         return false
     }
     const action = piece.actions[settings.actionName]
-    if (action === undefined) {
+    if (isNil(action)) {
         return false
     }
     return validateProps(action.props, settings.input)
 }
 
-async function validateTrigger(settings: PieceTriggerSettings) {
+async function validateTrigger({ settings, projectId }: { settings: PieceTriggerSettings, projectId: ProjectId }) {
     if (
-        settings.pieceName === undefined ||
-        settings.pieceVersion === undefined ||
-        settings.triggerName === undefined ||
-        settings.input === undefined
+        isNil(settings.pieceName) ||
+        isNil(settings.pieceVersion) ||
+        isNil(settings.triggerName) ||
+        isNil(settings.input)
     ) {
         return false
     }
-    const piece = await pieceMetadataLoader.pieceMetadata(settings.pieceName, settings.pieceVersion)
-    if (piece === undefined) {
+
+    const piece = await pieceMetadataService.get({
+        projectId,
+        name: settings.pieceName,
+        version: settings.pieceVersion,
+    })
+
+    if (isNil(piece)) {
         return false
     }
     const trigger = piece.triggers[settings.triggerName]
-    if (trigger === undefined) {
+    if (isNil(trigger)) {
         return false
     }
     return validateProps(trigger.props, settings.input)
@@ -368,14 +401,17 @@ function validateProps(props: PiecePropertyMap, input: Record<string, unknown>) 
 
 function buildSchema(props: PiecePropertyMap): TSchema {
     const entries = Object.entries(props)
-    const nonNullableUnknownPropType = Type.Not(Type.Null(), Type.Unknown())
+    const nonNullableUnknownPropType = Type.Not(Type.Union([Type.Null(), Type.Undefined()]), Type.Unknown())
     const propsSchema: Record<string, TSchema> = {}
-    for (let i = 0; i < entries.length; ++i) {
-        const property = entries[i][1]
-        const name: string = entries[i][0]
+    for (const [name, property] of entries) {
         switch (property.type) {
+            case PropertyType.MARKDOWN:
+                propsSchema[name] = Type.Optional(Type.Union([Type.Null(), Type.Undefined(), Type.Never()]))
+                break
+            case PropertyType.DATE_TIME:
             case PropertyType.SHORT_TEXT:
             case PropertyType.LONG_TEXT:
+            case PropertyType.FILE:
                 propsSchema[name] = Type.String({
                     minLength: property.required ? 1 : undefined,
                 })
@@ -393,9 +429,12 @@ function buildSchema(props: PiecePropertyMap): TSchema {
             case PropertyType.DROPDOWN:
                 propsSchema[name] = nonNullableUnknownPropType
                 break
+            case PropertyType.BASIC_AUTH:
+            case PropertyType.CUSTOM_AUTH:
+            case PropertyType.SECRET_TEXT:
             case PropertyType.OAUTH2:
                 // Only accepts connections variable.
-                propsSchema[name] = Type.Union([Type.RegEx(RegExp('[$]{1}{connections.(.*?)}')), Type.String()])
+                propsSchema[name] = Type.Union([Type.RegEx(RegExp('{{1}{connections.(.*?)}{1}}')), Type.String()])
                 break
             case PropertyType.ARRAY:
                 // Only accepts connections variable.
@@ -427,12 +466,9 @@ function buildSchema(props: PiecePropertyMap): TSchema {
 }
 
 async function deleteArtifact(projectId: ProjectId, codeSettings: CodeActionSettings): Promise<CodeActionSettings> {
-    const requests: Array<Promise<void>> = []
+    const requests: Promise<void>[] = []
     if (codeSettings.artifactSourceId !== undefined) {
-        requests.push(fileService.delete({ projectId: projectId, fileId: codeSettings.artifactSourceId }))
-    }
-    if (codeSettings.artifactPackagedId !== undefined) {
-        requests.push(fileService.delete({ projectId: projectId, fileId: codeSettings.artifactPackagedId }))
+        requests.push(fileService.delete({ projectId, fileId: codeSettings.artifactSourceId }))
     }
     await Promise.all(requests)
     return codeSettings
@@ -441,10 +477,16 @@ async function deleteArtifact(projectId: ProjectId, codeSettings: CodeActionSett
 async function uploadArtifact(projectId: ProjectId, codeSettings: CodeActionSettings): Promise<CodeActionSettings> {
     if (codeSettings.artifact !== undefined) {
         const bufferFromBase64 = Buffer.from(codeSettings.artifact, 'base64')
-        const savedFile = await fileService.save(projectId, bufferFromBase64)
+
+        const savedFile = await fileService.save({
+            projectId,
+            data: bufferFromBase64,
+            type: FileType.CODE_SOURCE,
+            compression: FileCompression.NONE,
+        })
+
         codeSettings.artifact = undefined
         codeSettings.artifactSourceId = savedFile.id
-        codeSettings.artifactPackagedId = undefined
     }
     return codeSettings
 }

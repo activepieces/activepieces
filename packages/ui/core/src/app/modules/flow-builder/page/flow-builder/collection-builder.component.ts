@@ -1,6 +1,8 @@
 import {
   Component,
   ElementRef,
+  HostListener,
+  Injector,
   NgZone,
   OnDestroy,
   OnInit,
@@ -11,25 +13,64 @@ import {
   BuilderActions,
   BuilderSelectors,
   CollectionBuilderService,
+  FlowFactoryUtil,
   FlowItemDetailsActions,
+  FlowRendererService,
   ViewModeEnum,
 } from '@activepieces/ui/feature-builder-store';
 import { Store } from '@ngrx/store';
-import { map, Observable, tap } from 'rxjs';
+import {
+  delay,
+  distinctUntilChanged,
+  EMPTY,
+  firstValueFrom,
+  map,
+  Observable,
+  of,
+  switchMap,
+  take,
+  tap,
+} from 'rxjs';
 import { MatDrawerContainer } from '@angular/material/sidenav';
 import { CdkDragMove } from '@angular/cdk/drag-drop';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { TestRunBarComponent } from '@activepieces/ui/feature-builder-store';
 import { RunDetailsService } from '@activepieces/ui/feature-builder-left-sidebar';
-import { InstanceRunInfo } from '../../resolvers/instance-run.resolver';
-import { ExecutionOutputStatus, TriggerType } from '@activepieces/shared';
+import {
+  ExecutionOutputStatus,
+  FlowTemplate,
+  FlowVersion,
+  TelemetryEventName,
+  TriggerType,
+} from '@activepieces/shared';
 import { Title } from '@angular/platform-browser';
 import {
   LeftSideBarType,
   RightSideBarType,
 } from '@activepieces/ui/feature-builder-store';
-import { TestStepService } from '@activepieces/ui/common';
+import {
+  FlagService,
+  TelemetryService,
+  TestStepService,
+  environment,
+  isThereAnyNewFeaturedTemplatesResolverKey,
+} from '@activepieces/ui/common';
 import { PannerService } from '@activepieces/ui/feature-builder-canvas';
+import { MatDialog } from '@angular/material/dialog';
+import {
+  BuilderRouteData,
+  RunRouteData,
+} from '../../resolvers/builder-route-data';
+import { ComponentPortal } from '@angular/cdk/portal';
+import {
+  TemplatesDialogComponent,
+  TemplateDialogData,
+  TemplateBlogNotificationComponent,
+  BLOG_URL_TOKEN,
+  TemplateDialogClosingResult,
+} from '@activepieces/ui/feature-templates';
+import { BuilderAutocompleteMentionsDropdownService } from '@activepieces/ui/common';
+
 @Component({
   selector: 'app-collection-builder',
   templateUrl: './collection-builder.component.html',
@@ -48,66 +89,137 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
   rightSidebarDragging = false;
   leftSidebarDragging = false;
   loadInitialData$: Observable<void> = new Observable<void>();
-  cursorStyle$: Observable<string>;
+  isPanning$: Observable<boolean>;
+  isDragging$: Observable<boolean>;
   TriggerType = TriggerType;
   testingStepSectionIsRendered$: Observable<boolean>;
+  graphChanged$: Observable<FlowVersion>;
+  showGuessFlowComponent = true;
+  importTemplate$: Observable<void>;
+  dataInsertionPopupHidden$: Observable<boolean>;
+  codeEditorOptions = {
+    minimap: { enabled: false },
+    theme: 'cobalt2',
+    language: 'typescript',
+    readOnly: false,
+    automaticLayout: true,
+  };
   constructor(
     private store: Store,
-    public pieceBuilderService: CollectionBuilderService,
     private actRoute: ActivatedRoute,
     private ngZone: NgZone,
     private snackbar: MatSnackBar,
     private runDetailsService: RunDetailsService,
     private titleService: Title,
     private pannerService: PannerService,
-    private testStepService: TestStepService
+    private testStepService: TestStepService,
+    private flowRendererService: FlowRendererService,
+    public builderService: CollectionBuilderService,
+    private matDialog: MatDialog,
+    private flagService: FlagService,
+    private telemetryService: TelemetryService,
+    public builderAutocompleteService: BuilderAutocompleteMentionsDropdownService
   ) {
+    this.listenToGraphChanges();
+    this.dataInsertionPopupHidden$ =
+      this.builderAutocompleteService.currentAutocompleteInputId$.pipe(
+        switchMap((val) => {
+          if (val === null) {
+            //wait for fade400ms animation to pass
+            return of(true).pipe(delay(400));
+          }
+          return of(false);
+        })
+      );
     this.testingStepSectionIsRendered$ =
       this.testStepService.testingStepSectionIsRendered$.asObservable();
-    this.cursorStyle$ = this.pannerService.isGrabbing$.asObservable().pipe(
-      map((val) => {
-        if (val) {
-          return 'grabbing !important';
-        }
-        return 'auto !important';
-      })
-    );
+    this.isPanning$ = this.pannerService.isPanning$.asObservable();
+    this.isDragging$ = this.flowRendererService.draggingSubject.asObservable();
+    if (localStorage.getItem('newFlow')) {
+      const TemplateDialogData: TemplateDialogData = {
+        insideBuilder: true,
+        isThereNewFeaturedTemplates$: this.actRoute.data.pipe(
+          map((val) => val[isThereAnyNewFeaturedTemplatesResolverKey])
+        ),
+      };
+      this.importTemplate$ = this.flagService.getTemplatesSourceUrl().pipe(
+        map((url) => !!url),
+        switchMap((showDialog) => {
+          if (showDialog) {
+            return this.matDialog
+              .open(TemplatesDialogComponent, {
+                data: TemplateDialogData,
+              })
+              .afterClosed()
+              .pipe(
+                switchMap((result?: TemplateDialogClosingResult) => {
+                  if (result) {
+                    return this.store
+                      .select(BuilderSelectors.selectCurrentFlow)
+                      .pipe(
+                        take(1),
+                        tap((flow) => {
+                          this.telemetryService.capture({
+                            name: TelemetryEventName.FLOW_IMPORTED,
+                            payload: {
+                              id: result.template.id,
+                              name: result.template.name,
+                              location: `inside the builder`,
+                              tab: `${result.activeTab}`,
+                            },
+                          });
+                          this.builderService.importTemplate$.next({
+                            flowId: flow.id,
+                            template: result.template,
+                          });
+                          if (result.template.blogUrl) {
+                            this.showBlogNotification(result.template);
+                          }
+                        })
+                      );
+                  }
+                  return EMPTY;
+                })
+              );
+          }
+          return EMPTY;
+        }),
+        map(() => void 0)
+      );
+      localStorage.removeItem('newFlow');
+    }
     this.loadInitialData$ = this.actRoute.data.pipe(
       tap((value) => {
-        const runInformation: InstanceRunInfo = value['runInformation'];
-        if (runInformation !== undefined) {
-          const flow = runInformation.flow;
-          const run = runInformation.run;
-          const folder = runInformation.folder;
-          const appConnections = value['connections'];
+        const routeData = value as BuilderRouteData | RunRouteData;
+        const runInformation = routeData.runInformation;
+        if (runInformation) {
           this.store.dispatch(
             BuilderActions.loadInitial({
-              flow,
+              flow: routeData.runInformation.flow,
               viewMode: ViewModeEnum.VIEW_INSTANCE_RUN,
-              run,
-              appConnections,
-              folder,
+              run: routeData.runInformation.run,
+              appConnections: routeData.connections,
+              folder: routeData.runInformation.folder,
             })
           );
-
-          this.titleService.setTitle(`AP-${flow.version.displayName}`);
+          this.titleService.setTitle(
+            `${routeData.runInformation.flow.version.displayName} - ${environment.websiteTitle}`
+          );
           this.snackbar.openFromComponent(TestRunBarComponent, {
             duration: undefined,
           });
         } else {
-          const flow = value['flowAndFolder'].flow;
-          const folder = value['flowAndFolder'].folder;
-          const instance = value['instance'];
-          const appConnections = value['connections'];
-          this.titleService.setTitle(`AP-${flow.version.displayName}`);
-
+          this.titleService.setTitle(
+            `${routeData.flowAndFolder.flow.version.displayName} - ${environment.websiteTitle}`
+          );
           this.store.dispatch(
             BuilderActions.loadInitial({
-              flow,
-              instance,
+              flow: routeData.flowAndFolder.flow,
+              instance: routeData.instanceData?.instance,
               viewMode: ViewModeEnum.BUILDING,
-              appConnections,
-              folder,
+              appConnections: routeData.connections,
+              folder: routeData.flowAndFolder.folder,
+              publishedVersion: routeData.instanceData?.publishedFlowVersion,
             })
           );
         }
@@ -122,10 +234,32 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
       BuilderSelectors.selectCurrentRightSideBarType
     );
   }
+  private showBlogNotification(template: FlowTemplate) {
+    this.builderService.componentToShowInsidePortal$.next(
+      new ComponentPortal(
+        TemplateBlogNotificationComponent,
+        null,
+        Injector.create({
+          providers: [
+            {
+              provide: BLOG_URL_TOKEN,
+              useValue: template.blogUrl,
+            },
+          ],
+        })
+      )
+    );
+  }
 
+  @HostListener('mousemove', ['$event'])
+  mouseMove(e: MouseEvent) {
+    this.flowRendererService.clientX = e.clientX;
+    this.flowRendererService.clientY = e.clientY;
+  }
   ngOnDestroy(): void {
     this.snackbar.dismiss();
     this.runDetailsService.currentStepResult$.next(undefined);
+    this.builderService.componentToShowInsidePortal$.next(undefined);
   }
 
   ngOnInit(): void {
@@ -188,5 +322,35 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
 
   leftDrawerHandleDragEnded() {
     this.leftSidebarDragging = false;
+  }
+  listenToGraphChanges() {
+    this.graphChanged$ = this.store
+      .select(BuilderSelectors.selectShownFlowVersion)
+      .pipe(
+        distinctUntilChanged(),
+        tap((version) => {
+          if (version) {
+            const rootStep = FlowFactoryUtil.createRootStep(version);
+            this.flowRendererService.refreshCoordinatesAndSetActivePiece(
+              rootStep
+            );
+          } else {
+            this.flowRendererService.refreshCoordinatesAndSetActivePiece(
+              undefined
+            );
+          }
+        })
+      );
+  }
+
+  @HostListener('window:beforeunload', ['$event'])
+  async onBeforeUnload(event) {
+    const isSaving = await firstValueFrom(
+      this.store.select(BuilderSelectors.selectIsSaving).pipe(take(1))
+    );
+    if (isSaving) {
+      event.preventDefault();
+      event.returnValue = false;
+    }
   }
 }

@@ -3,6 +3,7 @@ import {
   Component,
   EventEmitter,
   Input,
+  OnInit,
   Output,
 } from '@angular/core';
 
@@ -12,16 +13,24 @@ import {
   styleUrls: ['./icon-button.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class IconButtonComponent {
+export class IconButtonComponent implements OnInit {
   @Input() color: 'primary' | 'accent' | 'warn' | '' | undefined;
-  @Input() width = 15;
+  @Input() width: number | undefined = 15;
   @Input() iconFilename: string | undefined;
-  @Input() height = 15;
+  @Input() height: number | undefined = 15;
   @Input() tooltipText = '';
   @Input() buttonDisabled = false;
   @Input() ariaLabel = '';
   @Input() tabIndex = 0;
+  @Input() extraClasses = '';
+  @Input() useSvgDefault = false;
   @Output() buttonClicked: EventEmitter<boolean> = new EventEmitter();
+  ngOnInit(): void {
+    if (this.useSvgDefault) {
+      this.width = undefined;
+      this.height = undefined;
+    }
+  }
   emit() {
     this.buttonClicked.emit(true);
   }

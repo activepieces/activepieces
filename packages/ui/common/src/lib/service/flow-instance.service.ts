@@ -39,10 +39,4 @@ export class FlowInstanceService {
       },
     });
   }
-
-  delete(flowId: FlowId): Observable<void> {
-    return this.http.delete<void>(
-      environment.apiUrl + `/flow-instances/${flowId}`
-    );
-  }
 }

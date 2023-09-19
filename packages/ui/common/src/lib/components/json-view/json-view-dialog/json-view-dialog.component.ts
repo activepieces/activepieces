@@ -16,6 +16,7 @@ import { HighlightService } from '../../../service/highlight.service';
 export class JsonViewDialogComponent implements AfterViewInit {
   title = '';
   content = '';
+  highlight = false;
   constructor(
     @Inject(MAT_DIALOG_DATA) dialogData: { title: string; content: string },
     private highlightService: HighlightService
@@ -24,6 +25,9 @@ export class JsonViewDialogComponent implements AfterViewInit {
     this.content = dialogData.content;
   }
   ngAfterViewInit(): void {
-    this.highlightService.highlightAll();
+    if (typeof this.content !== 'string') {
+      this.highlight = true;
+      this.highlightService.highlightAll();
+    }
   }
 }

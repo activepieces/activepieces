@@ -1,8 +1,11 @@
 import { AuthenticationType, DedupeStrategy, httpClient, HttpMethod, Polling, pollingHelper, } from "@activepieces/pieces-common";
-import { createTrigger, OAuth2PropertyValue, Property, TriggerStrategy } from "@activepieces/pieces-framework";
+import { createTrigger, OAuth2PropertyValue, TriggerStrategy } from "@activepieces/pieces-framework";
 import dayjs from "dayjs";
+import { zohoCrmAuth } from "../..";
 
 export const newContact = createTrigger({
+    auth: zohoCrmAuth,
+
     name: "new_contact",
     displayName: "New Contact",
     description: "Triggers when a new contact is created",
@@ -75,62 +78,26 @@ export const newContact = createTrigger({
     },
     type: TriggerStrategy.POLLING,
     props: {
-        authentication: Property.OAuth2({
-            props: {
-                location: Property.StaticDropdown({
-                    displayName: "Location",
-                    description: "The location of your Zoho CRM account",
-                    required: true,
-                    options: {
-                        options: [
-                            {
-                                label: "zoho.eu",
-                                value: "zoho.eu"
-                            },
-                            {
-                                label: "zoho.com",
-                                value: "zoho.com"
-                            },
-                            {
-                                label: "zoho.com.au",
-                                value: "zoho.com.au"
-                            },
-                            {
-                                label: "zoho.jp",
-                                value: "zoho.jp"
-                            }
-                        ]
-                    }
-                })
-            },
-            displayName: "Authentication",
-            description: "Authentication for Zoho CRM",
-            scope: ["ZohoCRM.modules.READ"],
-            authUrl: "https://accounts.{location}/oauth/v2/auth",
-            tokenUrl: "https://accounts.{location}/oauth/v2/token",
-            required: true,
-        })
     },
     async run(context) {
-        return await pollingHelper.poll(polling, { store: context.store, propsValue: context.propsValue });
+        return await pollingHelper.poll(polling, { auth: context.auth, store: context.store, propsValue: context.propsValue });
     },
-    async test({ propsValue, store }): Promise<unknown[]> {
-        return await pollingHelper.test(polling, { store: store, propsValue: propsValue });
+    async test({ auth, propsValue, store }): Promise<unknown[]> {
+        return await pollingHelper.test(polling, { auth, store: store, propsValue: propsValue });
     },
-    async onEnable({ propsValue, store }): Promise<void> {
-        await pollingHelper.onEnable(polling, { store: store, propsValue: propsValue });
+    async onEnable({ auth, propsValue, store }): Promise<void> {
+        await pollingHelper.onEnable(polling, { auth, store: store, propsValue: propsValue });
     },
-    async onDisable({ propsValue, store }): Promise<void> {
-        await pollingHelper.onDisable(polling, { store: store, propsValue: propsValue });
+    async onDisable({ auth, propsValue, store }): Promise<void> {
+        await pollingHelper.onDisable(polling, { auth, store: store, propsValue: propsValue });
     }
 })
 
-
-const polling: Polling<{ authentication: OAuth2PropertyValue }> = {
+const polling: Polling<OAuth2PropertyValue, unknown> = {
     strategy: DedupeStrategy.TIMEBASED,
-    items: async ({ propsValue }) => {
+    items: async ({ auth }) => {
         const response = await httpClient.sendRequest<{ data: { Created_Time: string }[] }>({
-            url: `${propsValue.authentication['data']['api_domain']}/crm/v4/Contacts`,
+            url: `${auth.data.api_domain}/crm/v4/Contacts`,
             method: HttpMethod.GET,
             queryParams: {
                 perPage: "200",
@@ -140,7 +107,7 @@ const polling: Polling<{ authentication: OAuth2PropertyValue }> = {
             },
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
-                token: propsValue.authentication.access_token
+                token: auth.access_token
             }
         });
         return response.body.data.map((record) => ({

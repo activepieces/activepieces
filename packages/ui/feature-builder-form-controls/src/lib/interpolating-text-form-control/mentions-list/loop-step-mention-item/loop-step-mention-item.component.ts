@@ -35,11 +35,21 @@ export class LoopStepMentionItemComponent implements OnInit {
     children: MentionTreeNode[];
     markedNodesToShow: Record<string, boolean>;
   }>;
+  search$: Observable<string>;
   constructor(
     private mentionsTreeCache: MentionsTreeCacheService,
     private dialogService: MatDialog
   ) {
     this.mentionItemsToShow$ = this.mentionsTreeCache.listSearchBarObs$.pipe(
+      map((search) => {
+        if (
+          this.stepMention.step.displayName
+            .toLocaleLowerCase()
+            .includes(search.toLocaleLowerCase())
+        )
+          return '';
+        return search;
+      }),
       map((search) => {
         const markedNodesToShow = this.mentionsTreeCache.markNodesToShow(
           this.stepMention.step.name,
@@ -57,6 +67,11 @@ export class LoopStepMentionItemComponent implements OnInit {
     );
   }
   ngOnInit(): void {
+    this.search$ = this.mentionsTreeCache.listSearchBarObs$.pipe(
+      tap((res) => {
+        this.expandLoopCollapse = !!res;
+      })
+    );
     this.childrenNodes = traverseStepOutputAndReturnMentionTree(
       this.mentionsItems,
       this.stepMention.step.name,
@@ -92,7 +107,7 @@ export class LoopStepMentionItemComponent implements OnInit {
   emitIndexMention() {
     this.mentionClicked.emit({
       label: `${this.stepMention.label} index`,
-      value: `\${${this.stepMention.step.name}.index}`,
+      value: `{{${this.stepMention.step.name}.index}}`,
       logoUrl: this.stepMention.logoUrl,
     });
   }

@@ -47,7 +47,14 @@ import { MatDividerModule } from '@angular/material/divider';
 import { GenericSnackbarTemplateComponent } from './components/generic-snackbar-template/generic-snackbar-template.component';
 import { MatIconModule } from '@angular/material/icon';
 import { UserAvatarComponent } from './components/user-avatar/user-avatar.component';
-
+import { TrackHoverDirective } from './directives/track-hover.directive';
+import { PiecesIconsFromFlowComponent } from './components/pieces-icons-from-flow/pieces-icons-from-flow.component';
+import { PieceIconContainerComponent } from './components/pieces-icons/piece-icon-container/piece-icon-container.component';
+import { UploadImageControlComponent } from './components/upload-file-control/upload-file-control.component';
+import { DragDropDirective } from './directives/drag-drop.directive';
+import { ElementDirective } from './directives/element-ref.directive';
+import { CheckOverflowDirective } from './directives/check-overflow.directive';
+import { MatTabsModule } from '@angular/material/tabs';
 const exportedImports = [
   CommonModule,
   MatTooltipModule,
@@ -69,8 +76,11 @@ const exportedImports = [
   MatCheckboxModule,
   MatDividerModule,
   MatIconModule,
+  MatTabsModule,
 ];
 const exportedDeclarations = [
+  UploadImageControlComponent,
+  ElementDirective,
   MarkdownComponent,
   EditableTextComponent,
   ApButtonComponent,
@@ -95,6 +105,11 @@ const exportedDeclarations = [
   DeleteEntityDialogComponent,
   GenericSnackbarTemplateComponent,
   UserAvatarComponent,
+  PiecesIconsFromFlowComponent,
+  TrackHoverDirective,
+  PieceIconContainerComponent,
+  DragDropDirective,
+  CheckOverflowDirective,
 ];
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 0,
@@ -110,7 +125,7 @@ export function markedOptionsFactory(): MarkedOptions {
     const html = linkRenderer.call(renderer, href, title, text);
     return html.replace(
       /^<a /,
-      '<a role="link" tabindex="0" target="_blank" rel="nofollow noopener noreferrer" '
+      '<a role="link" tabindex="0" rel="noopener" target="_blank" rel="nofollow noopener noreferrer" '
     );
   };
 

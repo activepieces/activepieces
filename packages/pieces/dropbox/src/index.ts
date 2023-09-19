@@ -1,14 +1,22 @@
-import packageJson from '../package.json';
-import { createPiece } from '@activepieces/pieces-framework';
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { dropboxCreateNewFolder } from './lib/actions/create-new-folder';
 import { dropboxCreateNewTextFile } from './lib/actions/create-new-text-file';
 
+export const dropboxAuth = PieceAuth.OAuth2({
+  description: "",
+  
+  authUrl: "https://www.dropbox.com/oauth2/authorize",
+  tokenUrl: "https://api.dropboxapi.com/oauth2/token",
+  required: true,
+  scope: ["files.content.write"]
+})
+
 export const dropbox = createPiece({
-  name: 'dropbox',
-  logoUrl: 'https://cdn.activepieces.com/pieces/dropbox.png',
+      minimumSupportedRelease: '0.5.0',
+    logoUrl: 'https://cdn.activepieces.com/pieces/dropbox.png',
   actions: [dropboxCreateNewFolder, dropboxCreateNewTextFile],
   displayName: "DropBox",
   authors: ['kanarelo'],
   triggers: [],
-  version: packageJson.version,
+  auth: dropboxAuth,
 });

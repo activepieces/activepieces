@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
 import {
   ControlValueAccessor,
   FormArray,
@@ -8,7 +8,7 @@ import {
 } from '@angular/forms';
 import { map, Observable, tap } from 'rxjs';
 import { InterpolatingTextFormControlComponent } from '../interpolating-text-form-control/interpolating-text-form-control.component';
-import { InsertMentionOperation } from '../interpolating-text-form-control/utils';
+import { InsertMentionOperation } from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-array-form-control',
@@ -25,8 +25,8 @@ import { InsertMentionOperation } from '../interpolating-text-form-control/utils
 })
 export class ArrayFormControlComponent implements ControlValueAccessor {
   valueChanges$: Observable<void>;
-  formArray: FormArray<FormControl>;
-
+  formArray: FormArray<FormControl<string>>;
+  @ViewChild('textControl') firstInput: InterpolatingTextFormControlComponent;
   onChange: (val: unknown) => void = () => {
     //ignore
   };
@@ -35,10 +35,12 @@ export class ArrayFormControlComponent implements ControlValueAccessor {
   };
 
   constructor(private fb: FormBuilder) {
-    this.formArray = this.fb.array([new FormControl('')]);
+    this.formArray = this.fb.array([
+      new FormControl<string>(''),
+    ] as FormControl<string>[]);
     this.valueChanges$ = this.formArray.valueChanges.pipe(
       tap((val) => {
-        this.onChange(val);
+        this.onChange(val.filter((v) => v !== ''));
       }),
       map(() => {
         return void 0;
@@ -49,10 +51,22 @@ export class ArrayFormControlComponent implements ControlValueAccessor {
     if (obj) {
       this.formArray.clear();
       obj.forEach((val) => {
-        this.formArray.push(new FormControl(val), { emitEvent: false });
+        this.formArray.push(
+          new FormControl<string>(val, { nonNullable: true }),
+          { emitEvent: false }
+        );
       });
-      if (this.formArray.controls[this.formArray.length - 1].value) {
-        this.formArray.push(new FormControl(''));
+      if (obj.length === 0) {
+        this.formArray.push(
+          new FormControl<string>('', { nonNullable: true }),
+          { emitEvent: false }
+        );
+      }
+      if (
+        this.formArray.length > 0 &&
+        this.formArray.controls[this.formArray.length - 1].value
+      ) {
+        this.formArray.push(new FormControl<string>('', { nonNullable: true }));
       }
     }
   }
@@ -70,7 +84,7 @@ export class ArrayFormControlComponent implements ControlValueAccessor {
     }
   }
   addValue() {
-    this.formArray.push(new FormControl(''));
+    this.formArray.push(new FormControl<string>('', { nonNullable: true }));
   }
   removeValue(index: number) {
     if (this.formArray.controls.length > 1) {
@@ -83,5 +97,8 @@ export class ArrayFormControlComponent implements ControlValueAccessor {
     mention: InsertMentionOperation
   ) {
     await textControl.addMention(mention);
+  }
+  focusFirstInput() {
+    this.firstInput.focusEditor();
   }
 }

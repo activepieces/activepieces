@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { ActivatedRouteSnapshot } from '@angular/router';
 import { Observable, forkJoin, map, tap } from 'rxjs';
 import { FolderDto } from '@activepieces/shared';
 import { FoldersService } from '@activepieces/ui/common';
@@ -17,9 +17,7 @@ type FoldersResolverResult = {
 @Injectable({
   providedIn: 'root',
 })
-export class FoldersResolver
-  implements Resolve<Observable<FoldersResolverResult>>
-{
+export class FoldersResolver {
   constructor(
     private foldersService: FoldersService,
     private store: Store,

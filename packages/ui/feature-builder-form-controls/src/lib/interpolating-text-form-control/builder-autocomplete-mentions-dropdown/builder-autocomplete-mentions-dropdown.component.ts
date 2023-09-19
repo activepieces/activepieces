@@ -1,25 +1,24 @@
 import {
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
   ElementRef,
-  EventEmitter,
   Input,
-  Output,
   ViewChild,
 } from '@angular/core';
-import { UUID } from 'angular2-uuid';
-import { BehaviorSubject, Observable, of, switchMap, take, tap } from 'rxjs';
+
+import { Observable, of, switchMap, take, tap, map } from 'rxjs';
 import { fadeIn400ms } from '@activepieces/ui/common';
-import { BuilderAutocompleteMentionsDropdownService } from './builder-autocomplete-mentions-dropdown.service';
-import { InsertMentionOperation } from '../utils';
+import {
+  BuilderAutocompleteMentionsDropdownService,
+  InsertMentionOperation,
+} from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
 import {
   BuilderSelectors,
   ViewModeEnum,
 } from '@activepieces/ui/feature-builder-store';
 import { MatDialog } from '@angular/material/dialog';
-
+export const mentionsListId = 'mentionsList';
 @Component({
   selector: 'app-builder-autocomplete-mentions-dropdown',
   templateUrl: './builder-autocomplete-mentions-dropdown.component.html',
@@ -28,23 +27,18 @@ import { MatDialog } from '@angular/material/dialog';
   animations: [fadeIn400ms],
 })
 export class BuilderAutocompleteMentionsDropdownComponent {
-  @ViewChild('mentionsList', { read: ElementRef }) mentionsList: ElementRef;
-  @Output() addMention: EventEmitter<InsertMentionOperation> =
-    new EventEmitter();
-  showMenuSubject$: BehaviorSubject<boolean> = new BehaviorSubject(false);
+  @ViewChild(mentionsListId, { read: ElementRef }) mentionsList:
+    | ElementRef<HTMLDivElement>
+    | undefined;
   showMenuObs$: Observable<boolean>;
-  @Input() width = 'calc( 100% - 2.4rem )';
-  @Input() left = 'unset';
-  @Input() marginTop = '0px';
   @Input() focusSearch = false;
-  calculatedMarginTop = '0px';
-  id = new UUID();
+  @Input() mouseWithin = false;
   @Input() container: HTMLElement;
-  focusChecker: NodeJS.Timer;
+  focusChecker: NodeJS.Timer | undefined;
+  readonly mentionsListId = mentionsListId;
   constructor(
-    private interpolatingTextFormControlService: BuilderAutocompleteMentionsDropdownService,
+    public interpolatingTextFormControlService: BuilderAutocompleteMentionsDropdownService,
     private store: Store,
-    private cd: ChangeDetectorRef,
     private matDialog: MatDialog
   ) {
     this.showMenuObs$ = this.store.select(BuilderSelectors.selectViewMode).pipe(
@@ -53,71 +47,61 @@ export class BuilderAutocompleteMentionsDropdownComponent {
         if (val === ViewModeEnum.VIEW_INSTANCE_RUN) {
           return of(false);
         }
-        return this.showMenuSubject$.asObservable().pipe(
-          tap((val) => {
-            if (val) {
-              this.calculateDropdownOffset();
-              this.setFocusChecker();
-            }
-          })
-        );
+        return this.interpolatingTextFormControlService.currentAutocompleteInputId$
+          .asObservable()
+          .pipe(
+            map((val) => {
+              return val !== null;
+            }),
+            tap((val) => {
+              if (val) {
+                this.setFocusChecker();
+              }
+            })
+          );
       })
     );
   }
-
+  mentionEmitted(mention: InsertMentionOperation) {
+    this.interpolatingTextFormControlService.mentionEmitted.next({
+      id: this.interpolatingTextFormControlService.currentAutocompleteInputId$
+        .value!,
+      insert: mention,
+    });
+  }
   private setFocusChecker() {
     if (this.focusChecker) {
       clearInterval(this.focusChecker);
     }
     this.focusChecker = setInterval(() => {
       if (
-        !this.container.matches(':focus-within') &&
-        this.matDialog.openDialogs.length === 0
+        !this.interpolatingTextFormControlService
+          .currentAutoCompleteInputContainer$.value ||
+        (!this.interpolatingTextFormControlService.currentAutoCompleteInputContainer$.value.matches(
+          ':focus-within'
+        ) &&
+          !this.mentionsList?.nativeElement.matches(':focus-within') &&
+          this.matDialog.openDialogs.length === 0 &&
+          !this.mouseWithin &&
+          document.getElementsByClassName('mdc-tooltip--shown').length === 0)
       ) {
-        clearInterval(this.focusChecker);
+        if (this.focusChecker) {
+          clearInterval(this.focusChecker);
+        }
         this.close();
       }
-    }, 100);
+    }, 200);
   }
 
   close() {
-    this.showMenuSubject$.next(false);
+    this.interpolatingTextFormControlService.currentAutocompleteInputId$.next(
+      null
+    );
+    this.interpolatingTextFormControlService.currentAutoCompleteInputContainer$.next(
+      null
+    );
   }
-
-  calculateDropdownOffset() {
-    setTimeout(() => {
-      if (this.mentionsList && this.showMenuSubject$.value) {
-        const containerRect = this.container.getBoundingClientRect();
-        const MENTIONS_DROPDOWN_HEIGHT =
-          this.mentionsList.nativeElement.getBoundingClientRect().height;
-        const editStepSectionRect =
-          this.interpolatingTextFormControlService.editStepSection?.nativeElement?.getBoundingClientRect() || {
-            top: 0,
-            height: window.innerHeight,
-          };
-        const thereIsSpaceBeneath =
-          editStepSectionRect.top +
-            editStepSectionRect.height -
-            containerRect.top -
-            containerRect.height -
-            MENTIONS_DROPDOWN_HEIGHT >
-          0;
-        if (!thereIsSpaceBeneath) {
-          const offsetFromAboveContainer = 5;
-          this.calculatedMarginTop =
-            (containerRect.height +
-              offsetFromAboveContainer +
-              MENTIONS_DROPDOWN_HEIGHT) *
-              -1 +
-            'px';
-        } else {
-          this.calculatedMarginTop = this.marginTop;
-        }
-        this.cd.markForCheck();
-      } else {
-        this.calculatedMarginTop = this.marginTop;
-      }
-    }),
-      100;
+  mouseWithinToggle(val: boolean) {
+    this.mouseWithin = val;
   }
 }

@@ -11,6 +11,365 @@ Semantic versioning is a standardized way of versioning software projects. It us
 
 <Note>You will only see Version X.Y here as all Patch changes (Z) are added under their minor versions.</Note>
 
+### 24/08/2023
+
+**Pieces **:
+- DeepL: Translate Text Action by @BBND
+- Monday: Get Column Values / Get Item By Column Values / Change Multiple Column Values by @haseebrehmanpc
+- Slack: Support for multiple action buttons by @rita-gorokhod
+- Tags section: Ability to add tags for the run and query them through API only at this moment by @abuaboud
+- Github: Create Issue by @kishanprmr
+- Clarfai: Call Audio Model / Call Image Model / Call Post Inputs / Call Text Model / Call Workflow Actions by @zeiler
+- Kimai: Create timesheet Action by @facferreira
+- Supabase: Upload file to Storage Action by @abuaboud
+- Schedule: Add Every X minutes action by @abuaboud
+- SFTP: Read File Content Action / Added Path property inside New modified field by @abuaboud
+- Contiguity: Send SMS Action by @Owlcept
+- SimplePDF: New submission trigger by @bendersej
+- Nifty: Create new task by @Salem-Alaa
+- TidyCal: New Contact / New Booking / Cancelled booking by @Salem-Alaa
+- Branch Piece: The testing step will now resolve variables and return correct results by @khaledmashaly
+- Telegram: Added authentication instructions on how to obtain authentication by @abuaboud
+- Twitter: Added validation for authentication by @abuaboud
+- OpenAI: Improved error messages with instructions on how to avoid them by @abuaboud
+- Calendly: Added validation to authentication by @abuaboud
+- IMAP: Added validation to authentication with proper error messages, as well as instructions for Gmail by @abuaboud
+- SMTP: Added validation to authentication by @abuaboud
+- Google Contacts: Fixed the error when a phone number is entered in the create contact action by @abuaboud
+- Ntfy: Authentication error is fixed by @facferreira
+- RSS: New item trigger always sorts the RSS feed by date, even if it's not originally sorted by @abuaboud
+- Facebook Pages: Added instructions on how to create an application by @abuaboud
+
+**Enhancements / Fixes**:
+- Sidebar Icons have been redesigned.
+- Piece settings have been revamped. All piece properties are now visible by default, along with descriptions beneath them.
+- Code Piece is now built using `tsc` instead of being webpack, which allows for packages that work on node.
+- Flow title in the browser tab gets updated when the flow name is changed.
+- Connection Names: Allowed more characters
+- Dictionary field has been enhanced. If a large value is entered, it no longer makes the key field smaller.
+- Fixed internal errors when the same flow is triggered many times at the same moment.
+
+**Security Improvements**:
+- Connection values are no longer exposed through any endpoint. Users will need to reenter all information upon pressing "reconnect" in the connections.
+- All endpoints now have post validation to verify if the entity belongs to the user, adding a second layer of security.
+
+**Developer Experience**:
+- Fixed Docker Compose development environment for PostgreSQL migration.
+- Added developer credentials to the Dev Container page by @FlorinBuffet.
+- Included troubleshooting setups for codespaces by @fardeenpanjwani-codeglo.
+
+**Contributors**:
+- @BBND
+- @haseebrehmanpc
+- @rita-gorokhod
+- @facferreira
+- @kishanprmr
+- @FlorinBuffet
+- @Owlcept
+- @bendersej
+- @thatguynef
+- @fardeenpanjwani-codeglo m
+- @Salem-Alaa
+
+**Full Changelog**: https://github.com/activepieces/activepieces/compare/0.7.0...0.8.0
+
+### 8/8/2023
+<Warning>
+important Security Update: If you're allowing users to sign up, please upgrade to version 0.7.0 immediately to address a security concern, you won't effected If you have single user in your instance.
+</Warning>
+
+**New Additions:**
+- Google Drive: Now detects when new files or folders are added.
+- Slack: You can now easily change your username and profile picture.
+- SFTP: Introduces triggers for modified or new files.
+- Clarifai: Added an action to call a model.
+- Zoho Invoice: New trigger for when invoices are created.
+- Stablity AI: Includes the new Stable Diffusion XL 1.0 model.
+- Amazon S3: Can trigger actions for new or read files.
+
+**Bug Fixes:**
+- SFTP: Issue with creating new files when the path doesn't exist has been resolved.
+- Loading indicators for the Code Editor are now working correctly.
+- Icons have been added for the flow menu dropdown.
+
+**New Features / Improvements:**
+- You can now test branch steps.
+  
+**Developer Updates:**
+- Added a Markdown Property.
+- Improved validation and processors for properties in the framework (Thanks to @OsamaHaikal for these changes).
+
+** New Contributors **
+* @camilou contributed for the first time in https://github.com/activepieces/activepieces/pull/1773
+* @kishanprmr made their first contribution in https://github.com/activepieces/activepieces/pull/1813
+* @akatechis contributed for the first time in https://github.com/activepieces/activepieces/pull/1806
+* @zeiler made their first contribution in https://github.com/activepieces/activepieces/pull/1818
+
+**Full List of Changes**: Compare versions 0.6.0 and 0.7.0 at https://github.com/activepieces/activepieces/compare/0.6.0...0.7.0
+
+## 7/26/2023
+
+**New Pieces:**
+- API Table: Now supports Create Record, Find Record, Update Record actions, and New Record Trigger.
+- Approval: Added Generate Approval Links and Wait for Approval features.
+- GhostCMS: Included Create Member, Create Project, Find Members, Find User, and Update Member functionalities.
+- Google Sheets: Enhanced Find Rows feature.
+- Hubspot: Fixed an issue with the Create Contact action.
+- RSS: Addressed a problem with duplicated triggers.
+- Slack: Added Request Approval from User and Request Approval in Channel actions.
+- Discord: Included Request Approval from User and Request Approval in Channel features.
+
+**New Features:**
+- Support for SQLite 3 and In-memory queues. Redis and Postgres are no longer required for personal usage.
+
+**Developer Experience:**
+- Development environment no longer requires Docker; it now runs on SQLite3 and in-memory queues.
+
+**Contributors:**
+- @MoShizzle: Added Survey Monkey response trigger, WooCommerce triggers, Facebook Leads trigger, and provided contributions for IMAP and Google Docs.
+- @Abdallah-Alwarawreh: Enhanced Google Sheets actions.
+- @buttonsbond: Enhanced Invoice Ninja.
+
+**Full Changelog**: [Check it out here](https://github.com/activepieces/activepieces/compare/0.5.3...0.6.0)
+
+### 7/19/2023
+
+**New Pieces:**
+- Survey Monkey: Added new response trigger by @MoShizzle
+- WooCommerce: Added new triggers for coupon, customer, line item in order, order, and product by @MoShizzle
+- Freshdesk: Added actions to get contact from ID, get ticket status, and get tickets by @buttonsbond
+- Approval Piece: Added actions to generate new approval links and wait until approval by @khaledmashaly
+- Google Drive: Added upload file action by @BastienMe
+- Invoice Ninja: Added create task action by @buttonsbond
+- Facebook Leads: Added new lead trigger by @MoShizzle (Cloud only)
+- Hubspot: Added new triggers for company, contact, deal, and ticket by @MoShizzle
+
+** Enhancement**
+- Google Sheets: The "Find Row" action now returns the value of the whole row instead of the specified column by @Ozak93
+- Google Sheets: All actions can now load headers from the sheet and display them as a form by @Abdallah-Alwarawreh
+- Branch: Added a case-sensitive toggle for all text search operations.
+- Google Contacts: Fixed testing in the new contact trigger by @Abdallah-Alwarawreh
+- Ability to test Square and Slack triggers.
+- Schedule: Added support for time zones in all actions by @abuaboud
+- Mailchimp: Made first name and last name optional by @abdullahranginwala
+- IMAP: Added support for attachments in new email by @MoShizzle
+- Gmail: Added support for sending email with attachments by @BastienMe
+- Kizeo Forms: Changed download and export formats to be used in pieces that have a file property by @BastienMe
+
+**Features:**
+- Auto Upgrade: Pieces in draft mode will be automatically upgraded if possible without removing and adding steps again.
+- Dropdown Search: All dropdowns are now searchable.
+
+**Fixes / Enhancements:**
+- The mini code editor has been replaced with the Monaco (VS Code) editor, resulting in a 15% decrease in frontend and faster loading time.
+- Fixed an issue where connection refreshing sometimes fails due to high volume calling requests to the connection at the same time.
+- Fixed the ability to move a flow from a specific folder to uncategorized.
+- Polling time is now configurable from an environment variable.
+- Installing Pieces is now fixed.
+
+**Developer Experience:**
+- Added the ability to implement validate functions for connections in the piece framework and display custom errors.
+- Webhook Trigger Handshake: Added the ability to implement a method to reply to webhook verification requests by a third party by @JanHolger
+- Fixed the error "Module '@activepieces/pieces-framework' not found."
+- Implemented new strict linting rules in the backend package (https://github.com/activepieces/activepieces/pull/1663)
+- Removed the Lodash library, resulting in a 600kb decrease in the bundle size of the engine.
+- Upgraded to Nx 16 and Angular 16
+
+**Contributors:**
+- @MoShizzle: Added Survey Monkey response trigger, WooCommerce triggers, Facebook Leads trigger, and provided contributions for IMAP and Google Docs.
+- @Ozak93: Enhanced Google Sheets "Find Row" action.
+- @Abdallah-Alwarawreh: Enhanced Google Sheets actions and fixed Google Contacts testing.
+- @buttonsbond: Added actions to WooCommerce and Invoice Ninja pieces.
+- @khaledmashaly: Added actions to Approval Piece and provided contributions.
+- @BastienMe: Added Google Drive upload file action, added Gmail attachment support, and enhanced Kizeo Forms.
+- @abdullahranginwala: Made first name and last name optional in Mailchimp.
+- @JanHolger: Implemented webhook trigger handshake method.
+
+Full Changelog: [View on GitHub](https://github.com/activepieces/activepieces/compare/0.4.0...0.5.0)
+
+### 6/27/2023
+
+**Pieces:**
+- Wordpress: Support Upload Media in Create Post Action
+- Resend: Send Email Actions 
+- Instagram for Business: Upload Photo / Upload Reel Actions by @MoShizzle
+- Pastefy: Create Folder / Create Paste / Delete Folder / Delete Paste / Edit Paste / Get Folder / Get Paste Actions
+- Salsa: Search Supporter / Upsert Supporter / Offline Donation / Upsert offline donation by @mnatanek
+- IMAP: new Email trigger 
+- OpenAI: support for all models, It loads models dynamically from the account.
+- Google Sheets: Add support for Teams Drive in all actions & triggers.
+- Google Docs: Create Document Action by @MoShizzle
+
+**Features:**
+- Add Remove button for optional parameters.
+- Revamped Auto-complete variables user interface; it provides more space.
+- Show trigger type in Flow table and how often it runs if it's scheduled.
+- Improved onboarding by adding a demo flow.
+- Clicking the folder name inside the builder should redirect back to the dashboard with the folder opened.
+
+**Fixes:**
+- Fixed Test Step inside Loop to resolve the loop item.
+- cal.com: Updated webhook endpoints as they got changed.
+
+**Developer Experience:**
+- Restructured the documentation.
+- Added a guide on how to publish pieces as npm directly and use them without opening a PR to the main repository.
+
+**Contributors:**
+* @SFoskett fixed typos in docs.
+* @asuri0n improved publishing npm docs.
+* @mnatanek created Salsa piece.
+* @MoShizzle: for Instagram / LinkedIn / IMAP / Google Docs 
+
+**Full Changelog**: https://github.com/activepieces/activepieces/compare/0.3.17...0.4.0
+
+### 6/16/2023
+
+**Fixes:***
+- Connections tab now loads the connections again.
+
+### 06/15/2023
+
+**Features:**
+
+- Webhook URL trigger can now have a response by adding the response from the HTTP piece.
+- Documentation for pieces on the website now has properties.
+- Ability to import/export flows as JSON from the Chevron Dropdown in the Builder.
+- Added templates for different use cases.
+- Added the option to use mock data for webhook triggers instead of real data.
+- Ability to publish your pieces directly to npm and install them directly inside the dashboard.
+
+**Fixes:**
+- The auto-complete UI used to fail when the key contains a space. Now it's fixed.
+- Drag and drop of branches and loops used to delete steps inside. Now it's fixed.
+- Fixed inconsistency between sample data for webhook triggers before and after publishing the trigger.
+
+**Pieces:**
+
+- MySQL: Delete Row / Execute Query / Find Rows / Get Tables / Insert Row / Update Row actions by @JanHolger
+- Store: Append Action by @JanHolger
+- Spotify: Set Volume / Add Play Items / Create Playlist / Get Playback State / Get Playlist Info / Remove Playlist / Remove Items from Playlist / Update Playlist / Search / Play / Pause / Set Volume Action
+- Telegram: New Message by @Abdallah-Alwarawreh
+- Delay: Delay Until / Delay For Action by @nileshtrivedi
+- Pastebin: Create Paste / Get Paste Action by @JanHolger
+- Certopus: Create Credential Action by @VrajGohil
+- SFTP: Create Text File Action by @Abdallah-Alwarawreh
+- Discord: New Message Trigger by @Abdallah-Alwarawreh
+- Jotform: New Submission Trigger by @MoShizzle
+- Hubspot: New Task Trigger by @MoShizzle
+- Facebook Pages: Create Post / Create Post Video / Create Post Photo Actions by @MoShizzle
+- Webflow: New Form Submission by @Ahmad-AbuOsbeh
+- Google Sheets: Find Rows by @Abdallah-Alwarawreh
+- Twitter: Create Tweet with Image by @Abdallah-Alwarawreh
+
+**Developers:**
+- Fixed local link failure for shared, framework, and common packages.
+- Added file property to the piece framework.
+- Supported local development, making it smoother to develop pieces.
+
+**Contributors:**
+- @JanHolger: Contributed MySQL actions including Delete Row, Execute Query, Find Rows, Get Tables, Insert Row, and Update Row.
+- @Abdallah-Alwarawreh: Contributed Telegram's New Message trigger, SFTP's Create Text File action, and Discord's New Message trigger. Also contributed to the Google Sheets piece with the Find Rows action and Twitter with the Create Tweet with Image action.
+- @nileshtrivedi: Contributed the Delay piece with Delay Until and Delay For actions.
+- @MoShizzle: Contributed the Jotform piece with the New Submission trigger, Hubspot piece with the New Task trigger, and Facebook Pages with the Create Post, Create Post Video, and Create Post Photo actions.
+- @VrajGohil: Contributed the Certopus piece with the Create Credential action.
+- @Ahmad-AbuOsbeh: Contributed the Webflow piece with the New Form Submission action.
+
+**Full Changelog:** [View the full changelog here](https://github.com/activepieces/activepieces/compare/0.3.15..0.3.16)
+
+### 06/01/2023
+
+**Features:**
+
+- Filter Flow Runs by Status.
+- Ability to Reorder steps by drag and drop.
+- Ability to view Published/Draft Versions from the Builder.
+- Ability to disable Activepieces OAuth2 apps for self-hosters.
+- Payload dialog no longer appears on test flows if sample data is provided.
+- Testing Code Steps now resolve variables from previous steps, and the dialog to provide input has been removed.
+
+**Fixes:**
+
+- Fixed the saving indicator in the builder.
+- Wordpress will now show all categories and tags.
+- If a flow times out or has an internal error, a snackbar will now show up; before, it would just keep loading.
+- Fixed a bug in Branch Conditions where "or" between condition groups didn't work.
+- When you add a new folder, it will now scroll to the newest folder too.
+- Code Steps is no longer deleted from the published version when editing the draft version anymore.
+- Fixed copying autocomplete tags variables and removed unneeded keyboard shortcuts in the autocomplete UI.
+- The Webhook Trigger can now handle multipart format (files and fields).
+- Fixed a bug where duplicating a Flow could remove a code piece from the newest version in the original flow.
+
+**Pieces:**
+
+- Todoist: Added more inputs for the "Add Tasks" Action by @MyWay.
+- Matrix: Ability to send messages using Room Alias instead of ID by @MyWay.
+- Salesforce: Updated "Record (Advanced)" and "Create Record (Advanced)" Actions.
+- Google Sheets: Updated "Update Row" Action.
+- Twitter: "Create Tweet" Action.
+- Store: "Add Item to List" and "Delete Item From List" Actions.
+- Mautic: "Create Contact," "Search Contact," "Update Contact," "Create Company," "Search Company," and "Update Company" Actions by @bibhuti-did-this.
+- Gmail:"Add Reply To" for the "Send Email" Action.
+- WordPress: "Create Page" Action.
+- Asana: Added "Due Date" and "Assignee" inputs to the "Create Task" Action.
+- Google Calendar: "Add Events" Action by @bibhuti-did-this.
+- Clockodo: Added all types of Actions for Entry, Customer, Project, Service, Team, User, and Absence by @JanHolger.
+- Discord: The "Send Message" webhook now has an "embed" field by @Abdallah-Alwarawreh.
+- Blackbaud: "Create Gift," "Get Gift List," and "Get Fundraising Lists" Actions by @HKudria.
+
+**Development Experience:**
+
+- Docker Compose Development now works for ARM-based machines (like MacOS).
+- Turned on strict checking mode for the backend package.
+- In the piece framework, the Number property now gives a number instead of a string.
+- Added a new DateTime Property.
+- In Actions, you can now use hooks to stop and pause the flow in the context.
+
+**New Contributors:**
+
+- @tarunsamanta2k20: Fixed a typo in the Flows Run table.
+- @HKudria for contributing to Blackbaud.
+- @Abdallah-Alwarawreh: Enriched the Discord "Send Message" functionality.
+- @JanHolger: Created the perfect Clockodo piece.
+
+**Full Changelog**: [View full changelog here](https://github.com/activepieces/activepieces/compare/0.3.14..0.3.15)
+
+### 05/15/2023
+
+**Pieces:**
+- Salesforce: Run Query Action by @abuaboud.
+- Gotify: Notification Action sending supported by @MyWay.
+- Pushover: Notification Action sending supported by @MyWay.
+- Ntfy:  Notification Action sending supported by @MyWay.
+- StabilityAI (Text to Image) developed by @Willianwg.
+- Gmail: Multiple recipients support for email sending in Gmail by @abuaboud.
+- OpenAI roles supported by @Willianwg.
+
+**Features:**
+- Ability to Duplicate flow
+- Ability to open flows in a new tab when pressing Ctrl and clicking in the dashboard.
+- Enhanced complete settings experience and addition of notification settings.
+- Added inline functions support in the backend. You can use JS in variable syntax, `{{trigger.number + 1}}`
+- (Cloud only) Billing alerts.
+- (Cloud only) Flow AI Builder.
+
+**Bug Fixes:**
+- Saving loader now shows up again in the publish button.
+- Run Status Snackbar now shows on timeout and internal error.
+- Fixed "(or groups) was being calculated after every condition within an (and group)". That should be fixed now.
+- Added loader in the connections and runs table.
+- Scroll to the latest folder when creating a new folder.
+
+**Chores:**
+- Added playwright test.
+- Fixed project notify status not null.
+
+**Contributors:**
+- @MyWay contributed Gotify/Pushover/Ntfy.
+- @Willianwg contributed StabilityAI and enhanced OpenAI.
+
+**Full Changelog**: [https://github.com/activepieces/activepieces/compare/0.3.13...0.3.14](https://github.com/activepieces/activepieces/compare/0.3.13...0.3.14)
+
 ### 05/02/2023
 
 **Bug Fixes:**

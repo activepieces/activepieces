@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import {
   ControlValueAccessor,
   UntypedFormArray,
@@ -9,8 +9,8 @@ import {
 } from '@angular/forms';
 import { Observable, tap } from 'rxjs';
 import { InterpolatingTextFormControlComponent } from '../interpolating-text-form-control/interpolating-text-form-control.component';
-import { InsertMentionOperation } from '../interpolating-text-form-control/utils';
-import { BuilderAutocompleteMentionsDropdownComponent } from '../interpolating-text-form-control/builder-autocomplete-mentions-dropdown/builder-autocomplete-mentions-dropdown.component';
+import { InsertMentionOperation } from '@activepieces/ui/common';
+import { BuilderAutocompleteDropdownHandlerComponent } from '../interpolating-text-form-control/builder-autocomplete-dropdown-handler/builder-autocomplete-dropdown-handler.component';
 
 @Component({
   selector: 'app-dictonary-form-control',
@@ -30,6 +30,8 @@ export class DictionaryFormControlComponent
   form!: UntypedFormGroup;
   disabled = false;
   valueChanges$: Observable<void>;
+  @ViewChild('key', { read: ElementRef })
+  firstKeyInput: ElementRef<HTMLInputElement>;
   onChange: (val: unknown) => void = (val) => {
     val;
   };
@@ -72,13 +74,13 @@ export class DictionaryFormControlComponent
   get pairs() {
     return this.form.get('pairs') as UntypedFormArray;
   }
-  addNewPair(triggerChangeDetection: boolean = true) {
+  addNewPair(triggerChangeDetection = true) {
     this.addPair({ key: '', value: '' }, triggerChangeDetection);
   }
 
   addPair(
     pair: { key: string; value: unknown },
-    triggerChangeDetection: boolean = true
+    triggerChangeDetection = true
   ) {
     const pairGroup = this.fb.group({
       key: new UntypedFormControl(pair.key),
@@ -127,11 +129,15 @@ export class DictionaryFormControlComponent
   }
   showMenu(
     $event: MouseEvent | boolean,
-    mentionsDropdown: BuilderAutocompleteMentionsDropdownComponent
+    mentionsDropdown: BuilderAutocompleteDropdownHandlerComponent
   ) {
+    //if it is boolean it means that the invocation of this function was from editorfocused
     if (typeof $event !== 'boolean') {
       $event.stopImmediatePropagation();
     }
-    mentionsDropdown.showMenuSubject$.next(true);
+    mentionsDropdown.showMentionsDropdown();
+  }
+  focusFirstKeyInput() {
+    this.firstKeyInput.nativeElement.focus();
   }
 }

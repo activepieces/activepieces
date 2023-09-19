@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthenticationService } from '../../service/authentication.service';
 import { showBeamer } from '../../utils/beamer';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'ap-user-avatar',
@@ -26,6 +27,10 @@ export class UserAvatarComponent {
     return `${leftOffset}px`;
   }
 
+  goToDeveloperPage() {
+    this.router.navigate(['settings/my-pieces']);
+  }
+
   logout() {
     this.router.navigate(['sign-in']);
     this.authenticationService.logout();
@@ -41,9 +46,14 @@ export class UserAvatarComponent {
     return this.authenticationService.currentUser.firstName[0];
   }
   goToCommunity() {
-    window.open('https://discord.gg/GHgqTAJy', '_blank');
+    window.open('https://discord.gg/yvxF5k5AUb', '_blank', 'noopener');
   }
+
   showWhatIsNew() {
     showBeamer();
+  }
+
+  get environment() {
+    return environment;
   }
 }

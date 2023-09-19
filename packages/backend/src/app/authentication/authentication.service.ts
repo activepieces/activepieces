@@ -1,22 +1,23 @@
-import { SignUpRequest, AuthenticationResponse, PrincipalType, SignInRequest, TelemetryEventName, ApFlagId } from '@activepieces/shared'
+import { SignUpRequest, AuthenticationResponse, PrincipalType, SignInRequest, TelemetryEventName, ApFlagId, UserStatus } from '@activepieces/shared'
 import { userService } from '../user/user-service'
 import { passwordHasher } from './lib/password-hasher'
 import { tokenUtils } from './lib/token-utils'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
-import { projectService } from '../project/project.service'
+import { projectService } from '../project/project-service'
 import { flagService } from '../flags/flag.service'
 import { QueryFailedError } from 'typeorm'
 import { telemetry } from '../helper/telemetry.utils'
+import { logger } from '../helper/logger'
 
 export const authenticationService = {
     signUp: async (request: SignUpRequest): Promise<AuthenticationResponse> => {
         try {
-            const user = await userService.create(request)
+            const user = await userService.create(request, UserStatus.VERIFIED)
 
             await flagService.save({ id: ApFlagId.USER_CREATED, value: true })
 
             const project = await projectService.create({
-                displayName: 'Project',
+                displayName: user.firstName + '\'s Project',
                 ownerId: user.id,
             })
 
@@ -27,6 +28,8 @@ export const authenticationService = {
             })
 
             telemetry.identify(user, project.id)
+                .catch((e) => logger.error(e, '[AuthenticationService#signUp] telemetry.identify'))
+
             telemetry.trackProject(project.id, {
                 name: TelemetryEventName.SIGNED_UP,
                 payload: {
@@ -37,6 +40,7 @@ export const authenticationService = {
                     projectId: project.id,
                 },
             })
+                .catch((e) => logger.error(e, '[AuthenticationService#signUp] telemetry.trackProject'))
 
             const { password: _, ...filteredUser } = user
 
@@ -86,12 +90,12 @@ export const authenticationService = {
         }
 
         // Currently each user have exactly one project.
-        const projects = await projectService.getAll(user.id)
+        const project = await projectService.getUserProject(user.id)
 
         const token = await tokenUtils.encode({
             id: user.id,
             type: PrincipalType.USER,
-            projectId: projects![0].id,
+            projectId: project.id,
         })
 
         const { password: _, ...filteredUser } = user
@@ -99,7 +103,7 @@ export const authenticationService = {
         return {
             ...filteredUser,
             token,
-            projectId: projects![0].id,
+            projectId: project.id,
         }
     },
 }

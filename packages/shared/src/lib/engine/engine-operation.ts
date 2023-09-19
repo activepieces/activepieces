@@ -1,64 +1,115 @@
-import { FlowVersion, FlowVersionId } from "../flows/flow-version";
+import { File } from "../file/file";
+import { AppConnectionValue } from "../app-connection/app-connection";
+import { ResumeStepMetadata } from "../flow-run/execution/execution-output";
+import { ExecutionState } from "../flow-run/execution/execution-state";
+import { ExecutionType } from "../flow-run/execution/execution-type";
+import { FlowRunId } from "../flow-run/flow-run";
+import { CodeAction } from "../flows/actions/action";
+import { FlowVersion } from "../flows/flow-version";
 import { ProjectId } from "../project/project";
 
 export enum EngineOperationType {
+    EXTRACT_PIECE_METADATA = "EXTRACT_PIECE_METADATA",
     EXECUTE_ACTION = "EXECUTE_ACTION",
+    EXECUTE_CODE = "EXECUTE_CODE",
     EXECUTE_FLOW = "EXECUTE_FLOW",
     EXECUTE_PROPERTY = "EXECUTE_PROPERTY",
-    EXECUTE_TRIGGER_HOOK = "EXECUTE_TRIGGER_HOOK"
+    EXECUTE_TRIGGER_HOOK = "EXECUTE_TRIGGER_HOOK",
+    EXECUTE_VALIDATE_AUTH = "EXECUTE_VALIDATE_AUTH",
+    EXECUTE_TEST = "EXECUTE_TEST",
 }
 
 export enum TriggerHookType {
     ON_ENABLE = "ON_ENABLE",
     ON_DISABLE = "ON_DISABLE",
+    HANDSHAKE = "HANDSHAKE",
     RUN = "RUN",
     TEST = "TEST",
 }
 
 export type EngineOperation =
     | ExecuteActionOperation
+    | ExecuteCodeOperation
     | ExecuteFlowOperation
     | ExecutePropsOptions
     | ExecuteTriggerOperation<TriggerHookType>
+    | ExecuteExtractPieceMetadata
 
-export type ExecuteActionOperation = {
-    actionName: string
-    pieceName: string
-    pieceVersion: string
-    input: Record<string, unknown>
-    testExecutionContext: Record<string, unknown>
+type BaseEngineOperation = {
     projectId: ProjectId
     workerToken?: string
     apiUrl?: string
 }
 
-export interface ExecutePropsOptions {
+export type ExecuteActionOperation = BaseEngineOperation & {
+    actionName: string
+    flowVersion: FlowVersion
+    pieceName: string
+    pieceVersion: string
+    serverUrl: string,
+    input: Record<string, unknown>
+}
+
+export type ExecuteValidateAuthOperation = BaseEngineOperation & {
+    pieceName: string
+    pieceVersion: string
+    auth: AppConnectionValue
+}
+
+export type ExecuteExtractPieceMetadata = {
+    pieceName: string
+    pieceVersion: string
+}
+
+export type ExecuteCodeOperation = {
+    file: File
+    step: CodeAction
+    flowVersion: FlowVersion,
+    input: Record<string, unknown>
+    projectId: ProjectId
+}
+
+export type ExecutePropsOptions = BaseEngineOperation & {
     pieceName: string;
     pieceVersion: string;
     propertyName: string;
     stepName: string;
     input: Record<string, any>;
-    projectId: ProjectId;
-    apiUrl?: string;
-    workerToken?: string;
 }
 
-export interface ExecuteFlowOperation {
-    flowVersionId: FlowVersionId,
-    projectId: ProjectId,
-    triggerPayload: unknown,
-    workerToken?: string;
-    apiUrl?: string;
+type BaseExecuteFlowOperation<T extends ExecutionType> = BaseEngineOperation & {
+    flowVersion: FlowVersion;
+    flowRunId: FlowRunId;
+    triggerPayload: unknown;
+    serverUrl: string;
+    executionType: T;
 }
 
-export interface ExecuteTriggerOperation<HT extends TriggerHookType> {
+export type BeginExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.BEGIN> & {
+    executionState?: ExecutionState,
+}
+
+export type ResumeExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.RESUME> & {
+    executionState: ExecutionState,
+    resumeStepMetadata: ResumeStepMetadata,
+    resumePayload: unknown,
+}
+
+export type ExecuteFlowOperation = BeginExecuteFlowOperation | ResumeExecuteFlowOperation
+
+export type EngineTestOperation = BeginExecuteFlowOperation & {
+    /**
+     * original flow version that the current test flow version is derived from.
+     * Used to generate the test execution context.
+     */
+    sourceFlowVersion: FlowVersion
+}
+
+export type ExecuteTriggerOperation<HT extends TriggerHookType> = BaseEngineOperation & {
     hookType: HT,
     flowVersion: FlowVersion,
     webhookUrl: string,
     triggerPayload?: TriggerPayload,
-    projectId: ProjectId,
-    workerToken?: string;
-    apiUrl?: string;
     edition?: string;
     appWebhookUrl?: string;
     webhookSecret?: string;
@@ -99,12 +150,23 @@ interface ExecuteTestOrRunTriggerResponse {
     output: unknown[];
 }
 
+interface ExecuteHandshakeTriggerResponse {
+    success: boolean;
+    message?: string;
+    response?: {
+        status: number,
+        body?: any,
+        headers?: Record<string, string>
+    };
+}
+
 interface ExecuteOnEnableTriggerResponse {
     listeners: AppEventListener[];
-    scheduleOptions: ScheduleOptions;
+    scheduleOptions?: ScheduleOptions;
 }
 
 export type ExecuteTriggerResponse<H extends TriggerHookType> = H extends TriggerHookType.RUN ? ExecuteTestOrRunTriggerResponse :
+    H extends TriggerHookType.HANDSHAKE ? ExecuteHandshakeTriggerResponse :
     H extends TriggerHookType.TEST ? ExecuteTestOrRunTriggerResponse :
     H extends TriggerHookType.ON_DISABLE ? Record<string, never> :
     ExecuteOnEnableTriggerResponse;
@@ -115,9 +177,22 @@ export type ExecuteActionResponse = {
     message?: string;
 }
 
+type BaseExecuteValidateAuthResponseOutput<Valid extends boolean> = {
+    valid: Valid
+}
+
+type ValidExecuteValidateAuthResponseOutput = BaseExecuteValidateAuthResponseOutput<true>
+
+type InvalidExecuteValidateAuthResponseOutput = BaseExecuteValidateAuthResponseOutput<false> & {
+    error: string
+}
+export type ExecuteValidateAuthResponse =
+    | ValidExecuteValidateAuthResponseOutput
+    | InvalidExecuteValidateAuthResponseOutput
+
 export interface ScheduleOptions {
     cronExpression: string;
-    timezone?: string;
+    timezone: string;
 }
 
 export type EngineResponse<T> = {

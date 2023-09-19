@@ -1,4 +1,4 @@
-const { createGlobPatternsForDependencies } = require('@nrwl/angular/tailwind');
+const { createGlobPatternsForDependencies } = require('@nx/angular/tailwind');
 const { join } = require('path');
 const defaultTheme = require('tailwindcss/defaultTheme');
 
@@ -14,41 +14,53 @@ module.exports = {
       fontFamily: {
         sans: ['Open Sans,sans-serif', ...defaultTheme.fontFamily.sans],
       },
-      boxShadow:{
-        'step-container-ds':'0px 0px 22px rgba(186, 186, 191, 0.3)'
+      boxShadow: {
+        'step-container-ds': '0px 0px 22px rgba(186, 186, 191, 0.3)',
+        'portal-ds': '0px 0px 90px rgba(0, 0, 0, 0.14)',
       },
       backgroundImage: {
         authBg: "url('/assets/img/custom/auth/auth-bg.png')",
         nofbg: "url('/assets/img/custom/auth/404.svg')",
       },
+      spacing: {
+        7.5: '1.875rem',
+      },
       colors: {
-        body: '#4f4f4f',
-        border: '#c2c9d1',
-        white: '#ffffff',
-        grayCard: '#fafafa',
-        placeholder: '#c8c8c8',
-        danger: {
-          DEFAULT: '#dc3545',
-          light: '#efa2a980',
-        },
-        primary: { DEFAULT: '#6e41e2', light: '#EEE8FC', dark: '#472c8a' },
+        title:'var(--title)',
+        line:'var(--line)',
+        header: 'var(--header)',
+        dividers: 'var(--dividers)',
+        body: 'var(--body)',
+        border: 'var(--border)',
+        white: 'var(--white)',
+        'gray-card': 'var(--gray-card)',
+        placeholder: 'var(--placeholder)',
+        'form-label': 'var(--form-label)',
+        black: 'var(--black)',
+        disable: 'var(--disable)',
+        sidebar: 'var(--sidebar)',
+        hover:'var(--hover)',
+        avatar: 'var(--avatar)',
+        'blue-link': 'var(--blue-link)',
+        'gray-select': 'var(--gray-select)',
+        'add-piece': 'var(--add-piece)',
+        outline: 'var(--outline)',
+        description: 'var(--description)',
+        danger: 'var(--danger)',
+        primary: { DEFAULT: 'var(--primary-default)',
+        medium:'var(--primary-medium)',
+         light: 'var(--primary-light)', 
+         dark: 'var(--primary-dark)' },
         warn: {
-         DEFAULT:'#f78a3b',
-         light:"#FFF6E4",
-         dark:"#CC8805",
-         medium:"#F0D6A1"},
-        blueLink: '#1890ff',
-        sidebar: '#FAFBFC',
-        blueBorder: '#6385dc',
-        purpleBorder: '#af6cd9',
-        greenBorder: '#5Fd2b0',
-        description: '#8C8C8C',
-        hover: '#fafafa',
-        success: '#209e34',
-        dividers: '#e0e4e8',
-        graySelect: '#F5F5F5',
-        title:'#262626',
-        bleachedGray:'#A6B1BF'
+         DEFAULT:'var(--warn-default)',
+         light:"var(--warn-light)",
+         dark:"var(--warn-dark)",
+         medium:"var(--warn-medium)"},
+        success: {
+          DEFAULT:'var(--success-default)',
+          light:'var(--success-light)'
+        },
+       'bleached-gray':'var(--bleached-gray)',
       },
     },
     container: {
@@ -62,8 +74,8 @@ module.exports = {
   },
   variants: {
     extend: {
-        display: ["group-hover"],
+      display: ['group-hover'],
     },
-},
+  },
   plugins: [],
 };

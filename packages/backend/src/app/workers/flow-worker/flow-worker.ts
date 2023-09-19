@@ -1,47 +1,62 @@
-import fs from 'fs-extra'
 import {
     ActionType,
     ActivepiecesError,
-    apId,
+    assertNotNullOrUndefined,
     CodeActionSettings,
     ErrorCode,
+    ExecuteFlowOperation,
+    ExecutionOutput,
     ExecutionOutputStatus,
+    ExecutionType,
     File,
+    FileCompression,
+    FileId,
+    FileType,
     flowHelper,
+    FlowRunId,
     FlowVersion,
     FlowVersionState,
     ProjectId,
+    RunEnvironment,
     StepOutputStatus,
     TriggerType,
 } from '@activepieces/shared'
-import { Sandbox, sandboxManager } from '../sandbox'
+import { Sandbox } from '../sandbox'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { fileService } from '../../file/file.service'
-import { codeBuilder } from '../code-worker/code-builder'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { OneTimeJobData } from './job-data'
 import { engineHelper } from '../../helper/engine-helper'
-import { acquireLock } from '../../database/redis-connection'
 import { captureException, logger } from '../../helper/logger'
-import { pieceManager } from '../../flows/common/piece-installer'
-import { isNil } from 'lodash'
-import { usageService } from '@ee/billing/backend/usage.service'
+import { isNil } from '@activepieces/shared'
+import { getServerUrl } from '../../helper/public-ip-utils'
+import { PackageInfo } from '../../helper/package-manager'
+import { MAX_LOG_SIZE } from '@activepieces/shared'
+import { acquireLock } from '../../helper/lock'
+import { sandboxProvisioner } from '../sandbox/provisioner/sandbox-provisioner'
+import { SandBoxCacheType } from '../sandbox/provisioner/sandbox-cache-type'
+import { flowWorkerHooks } from './flow-worker-hooks'
+import { logSerializer } from '../../flows/common/log-serializer'
 
-type FlowPiece = {
-    name: string
-    version: string
+type FinishExecutionParams = {
+    flowRunId: FlowRunId
+    logFileId: FileId
+    executionOutput: ExecutionOutput
 }
 
-type InstallPiecesParams = {
-    path: string
+type LoadInputAndLogFileIdParams = {
     flowVersion: FlowVersion
+    jobData: OneTimeJobData
 }
 
-const log = logger.child({ file: 'FlowWorker' })
+type LoadInputAndLogFileIdResponse = {
+    input: ExecuteFlowOperation
+    logFileId?: FileId | undefined
+}
 
-const extractFlowPieces = (flowVersion: FlowVersion): FlowPiece[] => {
-    const pieces: FlowPiece[] = []
-    const steps = flowHelper.getAllSteps(flowVersion)
+const extractFlowPieces = async (flowVersion: FlowVersion): Promise<PackageInfo[]> => {
+    const pieces: PackageInfo[] = []
+    const steps = flowHelper.getAllSteps(flowVersion.trigger)
 
     for (const step of steps) {
         if (step.type === TriggerType.PIECE || step.type === ActionType.PIECE) {
@@ -56,153 +71,296 @@ const extractFlowPieces = (flowVersion: FlowVersion): FlowPiece[] => {
     return pieces
 }
 
-const installPieces = async (params: InstallPiecesParams): Promise<void> => {
-    const { path, flowVersion } = params
-    const pieces = extractFlowPieces(flowVersion)
+const finishExecution = async (params: FinishExecutionParams): Promise<void> => {
+    logger.trace(params, '[FlowWorker#finishExecution] params')
 
-    await pieceManager.install({
-        projectPath: path,
-        pieces,
+    const { flowRunId, logFileId, executionOutput } = params
+
+    if (executionOutput.status === ExecutionOutputStatus.PAUSED) {
+        await flowRunService.pause({
+            flowRunId,
+            logFileId,
+            pauseMetadata: executionOutput.pauseMetadata,
+        })
+    }
+    else {
+        await flowRunService.finish({
+            flowRunId,
+            status: executionOutput.status,
+            tasks: executionOutput.tasks,
+            logsFileId: logFileId,
+            tags: executionOutput.tags ?? [],
+        })
+    }
+}
+
+const loadInputAndLogFileId = async ({
+    flowVersion,
+    jobData,
+}: LoadInputAndLogFileIdParams): Promise<LoadInputAndLogFileIdResponse> => {
+    const baseInput = {
+        flowVersion,
+        flowRunId: jobData.runId,
+        projectId: jobData.projectId,
+        triggerPayload: {
+            duration: 0,
+            input: {},
+            output: jobData.payload,
+            status: StepOutputStatus.SUCCEEDED,
+        },
+    }
+
+    if (jobData.executionType === ExecutionType.BEGIN) {
+        return {
+            input: {
+                serverUrl: await getServerUrl(),
+                executionType: ExecutionType.BEGIN,
+                ...baseInput,
+            },
+        }
+    }
+
+    const flowRun = await flowRunService.getOneOrThrow({
+        id: jobData.runId,
+        projectId: jobData.projectId,
     })
+
+    if (isNil(flowRun.pauseMetadata) || isNil(flowRun.logsFileId)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: `flowRunId=${flowRun.id}`,
+            },
+        })
+    }
+
+    const logFile = await fileService.getOneOrThrow({
+        fileId: flowRun.logsFileId,
+        projectId: jobData.projectId,
+    })
+
+    const serializedExecutionOutput = logFile.data.toString('utf-8')
+    const executionOutput = JSON.parse(
+        serializedExecutionOutput,
+    ) as ExecutionOutput
+
+    return {
+        input: {
+            serverUrl: await getServerUrl(),
+            executionType: ExecutionType.RESUME,
+            executionState: executionOutput.executionState,
+            resumeStepMetadata: flowRun.pauseMetadata.resumeStepMetadata,
+            resumePayload: jobData.payload,
+            ...baseInput,
+        },
+        logFileId: logFile.id,
+    }
 }
 
 async function executeFlow(jobData: OneTimeJobData): Promise<void> {
-    const flowVersion = await flowVersionService.getOneOrThrow(jobData.flowVersionId)
+    logger.info(`[FlowWorker#executeFlow] flowRunId=${jobData.runId} executionType=${jobData.executionType}`)
 
-    await usageService.limit({
+    const startTime = Date.now()
+
+    const flowVersionWithLockedPieces = await flowVersionService.getOne(jobData.flowVersionId)
+
+    if (isNil(flowVersionWithLockedPieces)) {
+        logger.info({
+            message: 'Flow version not found, skipping execution',
+            flowVersionId: jobData.flowVersionId,
+        })
+        return
+    }
+    const flowVersion = await flowVersionService.lockPieceVersions(
+        jobData.projectId,
+        flowVersionWithLockedPieces,
+    )
+
+    const sandbox = await getSandbox({
         projectId: jobData.projectId,
         flowVersion,
+        runEnvironment: jobData.environment,
     })
 
-    // Don't use sandbox for draft versions, since they are mutable and we don't want to cache them.
-    const key = flowVersion.id + (FlowVersionState.DRAFT === flowVersion.state ? '-draft' + apId() : '')
-    const sandbox = await sandboxManager.obtainSandbox(key)
-    const startTime = Date.now()
-    logger.info(`[${jobData.runId}] Executing flow ${flowVersion.id} in sandbox ${sandbox.boxId}`)
+    logger.info(`[FlowWorker#executeFlow] flowRunId=${jobData.runId} sandboxId=${sandbox.boxId} prepareTime=${Date.now() - startTime}ms`)
+
     try {
-        if (!sandbox.cached) {
-            await sandbox.recreate()
-            await downloadFiles(sandbox, jobData.projectId, flowVersion)
-
-            const path = sandbox.getSandboxFolderPath()
-
-            await installPieces({
-                path,
-                flowVersion,
-            })
-
-            logger.info(`[${jobData.runId}] Preparing sandbox ${sandbox.boxId} took ${Date.now() - startTime}ms`)
-        }
-        else {
-            await sandbox.clean()
-            logger.info(`[${jobData.runId}] Reusing sandbox ${sandbox.boxId} took ${Date.now() - startTime}ms`)
-        }
-        const executionOutput = await engineHelper.executeFlow(sandbox, {
-            flowVersionId: flowVersion.id,
-            projectId: jobData.projectId,
-            triggerPayload: {
-                duration: 0,
-                input: {},
-                output: jobData.payload,
-                status: StepOutputStatus.SUCCEEDED,
-            },
+        await flowWorkerHooks.getHooks().preExecute({ projectId: jobData.projectId })
+    
+        const { input, logFileId } = await loadInputAndLogFileId({
+            flowVersion,
+            jobData,
         })
-        const logsFile = await fileService.save(jobData.projectId, Buffer.from(JSON.stringify(executionOutput)))
-        await flowRunService.finish(jobData.runId, executionOutput.status, logsFile.id, executionOutput.tasks)
+
+        const { result: executionOutput } = await engineHelper.executeFlow(
+            sandbox,
+            input,
+        )
+
+
+        const logsFile = await saveToLogFile({
+            fileId: logFileId,
+            projectId: jobData.projectId,
+            executionOutput,
+        })
+
+        await finishExecution({
+            flowRunId: jobData.runId,
+            logFileId: logsFile.id,
+            executionOutput,
+        })
+
+        logger.info(
+            `[FlowWorker#executeFlow] flowRunId=${jobData.runId
+            } executionOutputStats=${executionOutput.status} sandboxId=${sandbox.boxId
+            } duration=${Date.now() - startTime} ms`,
+        )
     }
     catch (e: unknown) {
-        if (e instanceof ActivepiecesError && (e as ActivepiecesError).error.code === ErrorCode.EXECUTION_TIMEOUT) {
-            await flowRunService.finish(jobData.runId, ExecutionOutputStatus.TIMEOUT, null, 1)
+        if (e instanceof ActivepiecesError && e.error.code === ErrorCode.EXECUTION_TIMEOUT) {
+            await flowRunService.finish({
+                flowRunId: jobData.runId,
+                status: ExecutionOutputStatus.TIMEOUT,
+                tasks: 1,
+                logsFileId: null,
+                tags: [],
+            })
         }
         else {
-            log.error(e, `[${jobData.runId}] Error executing flow`)
-            captureException(e as Error)
-            await flowRunService.finish(jobData.runId, ExecutionOutputStatus.INTERNAL_ERROR, null, 0)
+            await flowRunService.finish({
+                flowRunId: jobData.runId,
+                status: ExecutionOutputStatus.INTERNAL_ERROR,
+                tasks: 0,
+                logsFileId: null,
+                tags: [],
+            })
+            throwErrorToRetry(e as Error, jobData.runId)
         }
-
     }
     finally {
-        await sandboxManager.returnSandbox(sandbox.boxId)
+        await sandboxProvisioner.release({ sandbox })
     }
-    log.info(`[${jobData.runId}] Finished executing flow ${flowVersion.id} in sandbox ${sandbox.boxId} in ${Date.now() - startTime}ms`)
 }
 
-async function downloadFiles(
-    sandbox: Sandbox,
-    projectId: ProjectId,
-    flowVersion: FlowVersion,
-): Promise<void> {
-    log.info(`[${flowVersion.id}] Acquiring flow lock to build codes`)
+function throwErrorToRetry(error: Error, runId: string): void {
+    captureException(error)
+    logger.error(error, '[FlowWorker#executeFlow] Error executing flow run id' + runId)
+    throw error
+}
+
+async function saveToLogFile({ fileId, projectId, executionOutput }: { fileId: FileId | undefined, projectId: ProjectId, executionOutput: ExecutionOutput }): Promise<File> {
+    // TODO REMOVE THIS, DELETE TEMPORARY
+    if (executionOutput.status !== ExecutionOutputStatus.PAUSED) {
+        executionOutput.executionState.lastStepState = {}
+    }
+
+    const serializedLogs = await logSerializer.serialize(executionOutput)
+
+    if (serializedLogs.byteLength > MAX_LOG_SIZE) {
+        const errors = new Error('Execution Output is too large, maximum size is ' + MAX_LOG_SIZE)
+        captureException(errors)
+        throw errors
+    }
+    // END TODO REMOVE THIS, DELETE TEMPORARY
+
+    const logsFile = await fileService.save({
+        fileId,
+        projectId,
+        data: serializedLogs,
+        type: FileType.FLOW_RUN_LOG,
+        compression: FileCompression.GZIP,
+    })
+
+    return logsFile
+}
+
+async function getCodeSteps(projectId: ProjectId, flowVersion: FlowVersion): Promise<{ sourceId: string, zipFile: Buffer }[]> {
+    switch (flowVersion.state) {
+        case FlowVersionState.DRAFT:
+            return getCodeStepsWithLock(projectId, flowVersion)
+        case FlowVersionState.LOCKED:
+            return getCodeStepsWithoutLock(projectId, flowVersion)
+    }
+}
+
+async function getCodeStepsWithLock(projectId: ProjectId, flowVersion: FlowVersion): Promise<{ sourceId: string, zipFile: Buffer }[]> {
     const flowLock = await acquireLock({
         key: flowVersion.id,
-        timeout: 60000,
+        timeout: 180000,
     })
     try {
-        const buildPath = sandbox.getSandboxFolderPath()
-
-        // This has to be before flows, since it does modify code settings and fill it with packaged file id.
-        await fs.ensureDir(`${buildPath}/codes/`)
-        const artifacts: File[] = await buildCodes(projectId, flowVersion)
-
-        for (const artifact of artifacts) {
-            await fs.writeFile(`${buildPath}/codes/${artifact.id}.js`, artifact.data)
-        }
-
-        await fs.ensureDir(`${buildPath}/flows/`)
-        await fs.writeFile(`${buildPath}/flows/${flowVersion.id}.json`, JSON.stringify(flowVersion))
-
+        return getCodeStepsWithoutLock(projectId, flowVersion)
     }
     finally {
-        log.info(`[${flowVersion.id}] Releasing flow lock`)
         await flowLock.release()
     }
-
 }
 
+async function getCodeStepsWithoutLock(projectId: ProjectId, flowVersion: FlowVersion): Promise<{ sourceId: string, zipFile: Buffer }[]> {
+    const steps = flowHelper.getAllSteps(flowVersion.trigger).filter((step) => step.type === ActionType.CODE)
+    const promises = []
 
-async function buildCodes(projectId: ProjectId, flowVersion: FlowVersion): Promise<File[]> {
-    const buildRequests: Array<Promise<File>> = []
-    const steps = flowHelper.getAllSteps(flowVersion)
-    steps.forEach((step) => {
-        if (step.type === ActionType.CODE) {
-            const codeActionSettings: CodeActionSettings = step.settings
-            buildRequests.push(getArtifactFile(projectId, codeActionSettings))
-        }
-    })
-    const files: File[] = await Promise.all(buildRequests)
-    if (files.length > 0) {
-        await flowVersionService.overwriteVersion(flowVersion.id, flowVersion)
-    }
-    return files
-}
-
-const getArtifactFile = async (projectId: ProjectId, codeActionSettings: CodeActionSettings): Promise<File> => {
-    if (codeActionSettings.artifactPackagedId === undefined) {
-        log.info(`Building package for file id ${codeActionSettings.artifactSourceId}`)
-
-        const sourceId = codeActionSettings.artifactSourceId
-
-        if (isNil(sourceId)) {
+    for (const step of steps) {
+        const codeSettings = step.settings as CodeActionSettings
+        if (isNil(codeSettings.artifactSourceId)) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: {
-                    message: 'artifactSourceId is undefined',
+                    message: `Missing artifactSourceId for code step ${flowVersion.id}`,
                 },
             })
         }
-
-        const fileEntity = await fileService.getOneOrThrow({ projectId: projectId, fileId: sourceId })
-        const builtFile = await codeBuilder.build(fileEntity.data)
-        const savedPackagedFile = await fileService.save(projectId, builtFile)
-        codeActionSettings.artifactPackagedId = savedPackagedFile.id
+        const promise = fileService.getOneOrThrow({
+            fileId: codeSettings.artifactSourceId,
+            projectId,
+        })
+        promises.push(promise)
     }
 
-    const file = await fileService.getOneOrThrow({
-        projectId: projectId,
-        fileId: codeActionSettings.artifactPackagedId,
-    })
+    const results = await Promise.all(promises)
 
-    return file
+    return results.map((sourceEntity, index) => {
+        const step = steps[index]
+        const codeSettings = step.settings as CodeActionSettings
+
+        assertNotNullOrUndefined(codeSettings.artifactSourceId, '[FlowWorker#getCodeSteps] codeSettings.artifactSourceId')
+
+        return {
+            sourceId: codeSettings.artifactSourceId,
+            zipFile: sourceEntity.data,
+        }
+    })
+}
+
+const getSandbox = async ({ projectId, flowVersion, runEnvironment }: GetSandboxParams): Promise<Sandbox> => {
+    const pieces = await extractFlowPieces(flowVersion)
+    const codeSteps = await getCodeSteps(projectId, flowVersion)
+    const codeArchives = codeSteps.map((step) => ({
+        id: step.sourceId,
+        content: step.zipFile,
+    }))
+
+    switch (runEnvironment) {
+        case RunEnvironment.PRODUCTION:
+            return await sandboxProvisioner.provision({
+                type: SandBoxCacheType.FLOW,
+                flowVersionId: flowVersion.id,
+                pieces,
+                codeArchives,
+            })
+        case RunEnvironment.TESTING:
+            return await sandboxProvisioner.provision({
+                type: SandBoxCacheType.NONE,
+                pieces,
+                codeArchives,
+            })
+    }
+}
+
+type GetSandboxParams = {
+    projectId: ProjectId
+    flowVersion: FlowVersion
+    runEnvironment: RunEnvironment
 }
 
 export const flowWorker = {

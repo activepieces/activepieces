@@ -1,10 +1,9 @@
 @import 'packages/ui/core/src/assets/scss/variables';
 
-$dot-size: 2.5px;
-$dot-space: 20px;
+
 $drawer-min-width: 25.4375rem;
 $drawers-margin: 0.625rem;
-$drawer-max-width: 33.333333vw;
+$drawer-max-width: 47vw;
 
 .canvas {
   background: linear-gradient(
@@ -114,4 +113,8 @@ mat-drawer[position='start'] {
   &::-webkit-scrollbar {
     width: 4px;
   }
+}
+
+.transition-ease{
+  transition: width 0.2s ease, height 0.2s ease;
 }

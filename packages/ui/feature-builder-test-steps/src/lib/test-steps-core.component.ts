@@ -10,13 +10,14 @@ import { BuilderSelectors } from '@activepieces/ui/feature-builder-store';
 export class TestStepCoreComponent implements OnDestroy, OnInit {
   isSaving$: Observable<boolean>;
   readonly savingMessage = 'Saving...';
+
   constructor(
     protected testStepService: TestStepService,
     protected store: Store
   ) {
     this.isSaving$ = this.store.select(BuilderSelectors.selectIsSaving);
   }
-  readonly POLLING_TEST_INTERVAL_MS = 1100;
+  readonly POLLING_TEST_INTERVAL_MS = 500;
   ngOnInit(): void {
     this.testStepService.testingStepSectionIsRendered$.next(true);
   }

@@ -16,6 +16,18 @@ export class HttpError extends Error {
 		}));
 	}
 
+	public errorMessage(){
+		return {
+			response: {
+				status: this._err?.response?.status || 500,
+				body: this._err?.response?.data
+			},
+			request: {
+				body: this._requestBody
+			}
+		}
+	}
+
 	get response() {
 		return {
 			status: this._err?.response?.status || 500,

@@ -1,5 +1,12 @@
-import { TriggerBase, TriggerStrategy } from '@activepieces/pieces-framework'
 import {
+    TriggerBase,
+    TriggerStrategy,
+    WebhookHandshakeStrategy,
+    WebhookResponse,
+} from '@activepieces/pieces-framework'
+import {
+    ExecutionType,
+    EngineResponseStatus,
     FlowVersion,
     PieceTrigger,
     ProjectId,
@@ -9,48 +16,118 @@ import {
     TriggerType,
 } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
-import { JobType, flowQueue } from '../workers/flow-worker/flow-queue'
-import { engineHelper } from './engine-helper'
+import { flowQueue } from '../workers/flow-worker/flow-queue'
+import {
+    EngineHelperResponse,
+    EngineHelperTriggerResult,
+    engineHelper,
+} from './engine-helper'
 import { webhookService } from '../webhooks/webhook-service'
 import { appEventRoutingService } from '../app-event-routing/app-event-routing.service'
-import { captureException } from '@sentry/node'
-import {  isNil } from 'lodash'
-import { pieceMetadataLoader } from '../pieces/piece-metadata-loader'
+import { isNil } from '@activepieces/shared'
+import { LATEST_JOB_DATA_SCHEMA_VERSION } from '../workers/flow-worker/job-data'
+import { pieceMetadataService } from '../pieces/piece-metadata-service'
+import { logger } from './logger'
+import { system } from './system/system'
+import { SystemProp } from './system/system-prop'
+import { JobType } from '../workers/flow-worker/queues/queue'
+
+const POLLING_FREQUENCY_CRON_EXPRESSON = `*/${system.getNumber(
+    SystemProp.TRIGGER_DEFAULT_POLL_INTERVAL,
+) ?? 5} * * * *`
 
 export const triggerUtils = {
+    async tryHandshake(params: ExecuteTrigger): Promise<WebhookResponse | null> {
+        const { payload, flowVersion, projectId, simulate } = params
+        if (simulate) return null
+        const flowTrigger = flowVersion.trigger
+        if (flowTrigger.type === TriggerType.PIECE) {
+            const pieceTrigger = await getPieceTrigger({
+                trigger: flowTrigger,
+                projectId,
+            })
+            const handshakeConfig = pieceTrigger.handshakeConfiguration
+            if (isNil(handshakeConfig)) {
+                return null
+            }
+            const strategy =
+        handshakeConfig.strategy ?? WebhookHandshakeStrategy.NONE
+            switch (strategy) {
+                case WebhookHandshakeStrategy.HEADER_PRESENT: {
+                    if (
+                        handshakeConfig.paramName &&
+            handshakeConfig.paramName.toLowerCase() in payload.headers
+                    ) {
+                        return await executeHandshake({
+                            flowVersion,
+                            projectId,
+                            payload,
+                        })
+                    }
+                    break
+                }
+                case WebhookHandshakeStrategy.QUERY_PRESENT: {
+                    if (
+                        handshakeConfig.paramName &&
+            handshakeConfig.paramName in payload.queryParams
+                    ) {
+                        return await executeHandshake({
+                            flowVersion,
+                            projectId,
+                            payload,
+                        })
+                    }
+                    break
+                }
+                case WebhookHandshakeStrategy.BODY_PARAM_PRESENT: {
+                    if (
+                        handshakeConfig.paramName &&
+            typeof payload.body === 'object' &&
+            handshakeConfig.paramName in payload.body
+                    ) {
+                        return await executeHandshake({
+                            flowVersion,
+                            projectId,
+                            payload,
+                        })
+                    }
+                    break
+                }
+                default:
+                    break
+            }
+        }
+        return null
+    },
     async executeTrigger(params: ExecuteTrigger): Promise<unknown[]> {
         const { payload, flowVersion, projectId, simulate } = params
         const flowTrigger = flowVersion.trigger
         let payloads: unknown[] = []
         switch (flowTrigger.type) {
             case TriggerType.PIECE: {
-                const pieceTrigger = await getPieceTrigger(flowTrigger)
-                const result = await engineHelper.executeTrigger({
+                const pieceTrigger = await getPieceTrigger({
+                    trigger: flowTrigger,
+                    projectId,
+                })
+                const { result } = await engineHelper.executeTrigger({
                     hookType: TriggerHookType.RUN,
-                    flowVersion: flowVersion,
+                    flowVersion,
                     triggerPayload: payload,
                     webhookUrl: await webhookService.getWebhookUrl({
                         flowId: flowVersion.flowId,
                         simulate,
                     }),
-                    projectId: projectId,
+                    projectId,
                 })
-
 
                 if (result.success && Array.isArray(result.output)) {
                     payloads = result.output
-                } 
+                }
                 else {
-                    const error = new ActivepiecesError({
-                        code: ErrorCode.TRIGGER_FAILED,
-                        params: {
-                            triggerName: pieceTrigger.name,
-                            pieceName: flowTrigger.settings.pieceName,
-                            pieceVersion: flowTrigger.settings.pieceVersion,
-                            error: result.message,
-                        },
-                    }, `Flow ${flowTrigger.name} with ${pieceTrigger.name} trigger throws and error, returning as zero payload `)
-                    captureException(error)
+                    logger.error(
+                        `Flow ${flowTrigger.name} with ${pieceTrigger.name} trigger throws and error, returning as zero payload ` +
+              JSON.stringify(result),
+                    )
                     payloads = []
                 }
 
@@ -63,86 +140,139 @@ export const triggerUtils = {
         return payloads as unknown[]
     },
 
-    async enable({ flowVersion, projectId, simulate }: EnableOrDisableParams): Promise<void> {
-        switch (flowVersion.trigger.type) {
-            case TriggerType.PIECE:
-                await enablePieceTrigger({
-                    projectId,
-                    flowVersion,
-                    simulate,
-                })
-                break
-            default:
-                break
+    async enable(
+        params: EnableOrDisableParams,
+    ): Promise<EngineHelperResponse<
+        EngineHelperTriggerResult<TriggerHookType.ON_ENABLE>
+        > | null> {
+        const { flowVersion, projectId, simulate } = params
+
+        if (flowVersion.trigger.type !== TriggerType.PIECE) {
+            return null
         }
+
+        return enablePieceTrigger({
+            projectId,
+            flowVersion,
+            simulate,
+        })
     },
 
-    async disable({ flowVersion, projectId, simulate }: EnableOrDisableParams): Promise<void> {
-        switch (flowVersion.trigger.type) {
-            case TriggerType.PIECE:
-                await disablePieceTrigger({
-                    projectId,
-                    flowVersion,
-                    simulate,
-                })
-                break
-            default:
-                break
+    async disable(
+        params: EnableOrDisableParams,
+    ): Promise<EngineHelperResponse<
+        EngineHelperTriggerResult<TriggerHookType.ON_DISABLE>
+        > | null> {
+        const { flowVersion, projectId, simulate } = params
+
+        if (flowVersion.trigger.type !== TriggerType.PIECE) {
+            return null
         }
+
+        return await disablePieceTrigger({
+            projectId,
+            flowVersion,
+            simulate,
+        })
     },
 }
 
-const disablePieceTrigger = async (params: EnableOrDisableParams): Promise<void> => {
+async function executeHandshake(
+    params: ExecuteHandshakeParams,
+): Promise<WebhookResponse> {
+    const { flowVersion, projectId, payload } = params
+    const { result } = await engineHelper.executeTrigger({
+        hookType: TriggerHookType.HANDSHAKE,
+        flowVersion,
+        triggerPayload: payload,
+        webhookUrl: await webhookService.getWebhookUrl({
+            flowId: flowVersion.flowId,
+            simulate: false,
+        }),
+        projectId,
+    })
+    if (!result.success || result.response === undefined) {
+        return {
+            status: 500,
+            body: {
+                error: 'Failed to execute handshake',
+            },
+        }
+    }
+    return result.response
+}
+
+type ExecuteHandshakeParams = {
+    flowVersion: FlowVersion
+    projectId: ProjectId
+    payload: TriggerPayload
+}
+
+const disablePieceTrigger = async (params: EnableOrDisableParams) => {
     const { flowVersion, projectId, simulate } = params
     const flowTrigger = flowVersion.trigger as PieceTrigger
-    const pieceTrigger = await getPieceTrigger(flowTrigger)
+    const pieceTrigger = await getPieceTrigger({
+        trigger: flowTrigger,
+        projectId,
+    })
 
-    await engineHelper.executeTrigger({
+    const engineHelperResponse = await engineHelper.executeTrigger({
         hookType: TriggerHookType.ON_DISABLE,
-        flowVersion: flowVersion,
+        flowVersion,
         webhookUrl: await webhookService.getWebhookUrl({
             flowId: flowVersion.flowId,
             simulate,
         }),
-        projectId: projectId,
+        projectId,
     })
 
     switch (pieceTrigger.type) {
         case TriggerStrategy.APP_WEBHOOK:
-            await appEventRoutingService.deleteListeners({ projectId, flowId: flowVersion.flowId })
+            await appEventRoutingService.deleteListeners({
+                projectId,
+                flowId: flowVersion.flowId,
+            })
             break
         case TriggerStrategy.WEBHOOK:
             break
         case TriggerStrategy.POLLING:
-            await flowQueue.removeRepeatableJob({
+            await flowQueue.removeRepeatingJob({
                 id: flowVersion.id,
             })
             break
     }
+
+    return engineHelperResponse
 }
 
-const enablePieceTrigger = async (params: EnableOrDisableParams): Promise<void> => {
+const enablePieceTrigger = async (params: EnableOrDisableParams) => {
     const { flowVersion, projectId, simulate } = params
     const flowTrigger = flowVersion.trigger as PieceTrigger
-    const pieceTrigger = await getPieceTrigger(flowTrigger)
+    const pieceTrigger = await getPieceTrigger({
+        trigger: flowTrigger,
+        projectId,
+    })
 
     const webhookUrl = await webhookService.getWebhookUrl({
         flowId: flowVersion.flowId,
         simulate,
     })
 
-    const response = await engineHelper.executeTrigger({
+    const engineHelperResponse = await engineHelper.executeTrigger({
         hookType: TriggerHookType.ON_ENABLE,
-        flowVersion: flowVersion,
+        flowVersion,
         webhookUrl,
-        projectId: projectId,
+        projectId,
     })
+
+    if (engineHelperResponse.status !== EngineResponseStatus.OK) {
+        return engineHelperResponse
+    }
 
     switch (pieceTrigger.type) {
         case TriggerStrategy.APP_WEBHOOK: {
             const appName = flowTrigger.settings.pieceName
-            const listeners = response.listeners
-            for (const listener of listeners) {
+            for (const listener of engineHelperResponse.result.listeners) {
                 await appEventRoutingService.createListeners({
                     projectId,
                     flowId: flowVersion.flowId,
@@ -156,26 +286,46 @@ const enablePieceTrigger = async (params: EnableOrDisableParams): Promise<void> 
         case TriggerStrategy.WEBHOOK:
             break
         case TriggerStrategy.POLLING: {
-            const scheduleOptions = response.scheduleOptions
+            if (isNil(engineHelperResponse.result.scheduleOptions)) {
+                engineHelperResponse.result.scheduleOptions = {
+                    cronExpression: POLLING_FREQUENCY_CRON_EXPRESSON,
+                    timezone: 'UTC',
+                }
+            }
             await flowQueue.add({
                 id: flowVersion.id,
-                type: JobType.REPEATABLE,
+                type: JobType.REPEATING,
                 data: {
+                    schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                     projectId,
                     environment: RunEnvironment.PRODUCTION,
-                    flowVersion,
+                    flowVersionId: flowVersion.id,
+                    flowId: flowVersion.flowId,
                     triggerType: TriggerType.PIECE,
+                    executionType: ExecutionType.BEGIN,
                 },
-                scheduleOptions: scheduleOptions,
+                scheduleOptions: engineHelperResponse.result.scheduleOptions,
             })
             break
-
         }
     }
+
+    return engineHelperResponse
 }
 
-export async function getPieceTrigger(trigger: PieceTrigger): Promise<TriggerBase> {
-    const piece = await pieceMetadataLoader.pieceMetadata(trigger.settings.pieceName, trigger.settings.pieceVersion)
+async function getPieceTrigger({
+    trigger,
+    projectId,
+}: {
+    trigger: PieceTrigger
+    projectId: ProjectId
+}): Promise<TriggerBase> {
+    const piece = await pieceMetadataService.get({
+        projectId,
+        name: trigger.settings.pieceName,
+        version: trigger.settings.pieceVersion,
+    })
+
     if (isNil(piece)) {
         throw new ActivepiecesError({
             code: ErrorCode.PIECE_NOT_FOUND,

@@ -14,7 +14,8 @@ export const enum ApEnvironment {
 
 export const enum ApEdition {
     COMMUNITY = "ce",
-    ENTERPRISE = "ee"
+    ENTERPRISE = "ee",
+    CLOUD = "cloud"
 }
 
 export enum ApFlagId {
@@ -26,8 +27,8 @@ export enum ApFlagId {
     USER_CREATED = "USER_CREATED",
     SIGN_UP_ENABLED = "SIGN_UP_ENABLED",
     TELEMETRY_ENABLED = "TELEMETRY_ENABLED",
-    WARNING_TEXT_BODY = "WARNING_TEXT_BODY",
-    WARNING_TEXT_HEADER = "WARNING_TEXT_HEADER",
     CURRENT_VERSION = "CURRENT_VERSION",
     LATEST_VERSION = "LATEST_VERSION",
+    CLOUD_AUTH_ENABLED = "CLOUD_AUTH_ENABLED",
+    TEMPLATES_SOURCE_URL = "TEMPLATES_SOURCE_URL"
 }

@@ -8,13 +8,21 @@ type PackageManagerOutput = {
 }
 
 type PnpmCoreCommand = 'add' | 'init' | 'link'
-type PnpmDependencyCommand = 'webpack'
+type PnpmDependencyCommand = 'tsc'
 type PnpmCommand = PnpmCoreCommand | PnpmDependencyCommand
 
-export type PackageManagerDependencies = Record<string, string>
+export type PackageInfo = PackageMetdataInfo & {
+    name: string
+}
+
+export type PackageMetdataInfo = {
+    version: string
+}
+
+export type PackageManagerDependencies = Record<string, PackageMetdataInfo>
 
 const executePnpm = async (directory: string, command: PnpmCommand, ...args: string[]): Promise<PackageManagerOutput> => {
-    const fullCommand = `pnpm ${command} ${args.join(' ')}`
+    const fullCommand = `npx pnpm ${command} ${args.join(' ')}`
 
     const execOptions: ExecOptions = {
         cwd: directory,
@@ -44,7 +52,9 @@ export const packageManager = {
         ]
 
         const dependencyArgs = Object.entries(dependencies)
-            .map(([name, version]) => `${name}@${version}`)
+            .map(([name, meta]) => {
+                return `${name}@${meta.version}`
+            })
 
         return await executePnpm(directory, 'add', ...dependencyArgs, ...options)
     },
@@ -56,8 +66,8 @@ export const packageManager = {
     async runLocalDependency(directory: string, command: PnpmDependencyCommand): Promise<PackageManagerOutput> {
         return await executePnpm(directory, command)
     },
-
     async linkDependency(directory: string, dependencyDirectory: string) {
-        return await executePnpm(directory, 'link', dependencyDirectory)
+        const result = await executePnpm(directory, 'link', dependencyDirectory)
+        logger.trace(`[PackageManager#linkDependency] result: ${JSON.stringify(result)} for directory: ${directory} and dependencyDirectory: ${dependencyDirectory}`)
     },
 }
