@@ -1,21 +1,22 @@
-import { ActionType, ExecutionOutput, FlowVersion, LoopOnItemsStepOutput, StepOutput, applyFunctionToValues, isString } from "@activepieces/shared";
+import { ActionType, ExecutionOutput, LoopOnItemsStepOutput, StepOutput, applyFunctionToValues } from "@activepieces/shared";
 import sizeof from "object-sizeof";
-import { compressMemoryFileString, handleAPFile, isApFilePath, isMemoryFilePath } from "../services/files.service";
+import { isMemoryFilePath } from "../services/files.service";
 
 const TRIM_SIZE_BYTE = 512 * 1024;
+const TRUNCATION_TEXT_PLACEHOLDER = '(truncated)'
 
 export const loggerUtils = {
     async trimExecution(executionState: ExecutionOutput) {
         const steps = executionState.executionState.steps;
         for (const stepName in steps) {
             const stepOutput = steps[stepName];
-            steps[stepName] = await trimStepOuput(stepOutput);
+            steps[stepName] = await trimStepOutput(stepOutput);
         }
         return executionState;
     }
 }
 
-async function trimStepOuput(stepOutput: StepOutput): Promise<StepOutput> {
+async function trimStepOutput(stepOutput: StepOutput): Promise<StepOutput> {
     const modified: StepOutput = JSON.parse(JSON.stringify(stepOutput));
     modified.input = await applyFunctionToValues(modified.input, trim);
     switch (modified.type) {
@@ -39,13 +40,43 @@ async function trimStepOuput(stepOutput: StepOutput): Promise<StepOutput> {
     return modified;
 }
 
-const trim = async (obj: any) => {
+const trim = async (obj: unknown) => {
     if (isMemoryFilePath(obj)) {
-        return await compressMemoryFileString(obj);
+        return TRUNCATION_TEXT_PLACEHOLDER
     }
-    const size = sizeof(obj);
-    if (size > TRIM_SIZE_BYTE) {
-        return '(truncated)';
+
+    if (objectExceedMaxSize(obj) && isObject(obj)) {
+        const objectEntries = Object.entries(obj).sort(bySizeDesc)
+        let i = 0
+
+        while (i < objectEntries.length && objectEntriesExceedMaxSize(objectEntries)) {
+            objectEntries[i][1] = TRUNCATION_TEXT_PLACEHOLDER
+            i += 1
+        }
+
+        obj = Object.fromEntries(objectEntries)
     }
-    return obj;
-};
+
+    if (!objectExceedMaxSize(obj)) {
+        return obj
+    }
+
+    return TRUNCATION_TEXT_PLACEHOLDER
+}
+
+const objectEntriesExceedMaxSize = (objectEntries: [string, unknown][]): boolean => {
+    const obj = Object.fromEntries(objectEntries)
+    return objectExceedMaxSize(obj)
+}
+
+const objectExceedMaxSize = (obj: unknown): boolean => {
+    return sizeof(obj) > TRIM_SIZE_BYTE
+}
+
+const isObject = (obj: unknown): obj is Record<string, unknown> => {
+    return typeof obj === 'object' && !Array.isArray(obj) && obj !== null
+}
+
+const bySizeDesc = (a: [string, unknown], b: [string, unknown]): number => {
+    return sizeof(b[1]) - sizeof(a[1])
+}
