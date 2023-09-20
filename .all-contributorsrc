@@ -581,6 +581,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "cyrilselasi",
+      "name": "Cyril Selasi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/7190330?v=4",
+      "profile": "https://github.com/cyrilselasi",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
