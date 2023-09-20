@@ -193,6 +193,7 @@ We welcome contributions big or small and in different directions. The best way 
       <td align="center" valign="top" width="14.28%"><a href="https://geteduca.com"><img src="https://avatars.githubusercontent.com/u/838788?v=4?s=100" width="100px;" alt="Gavin Foley"/><br /><sub><b>Gavin Foley</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=GFoley83" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://dtrautwein.eu"><img src="https://avatars.githubusercontent.com/u/11836793?v=4?s=100" width="100px;" alt="Dennis Trautwein"/><br /><sub><b>Dennis Trautwein</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/issues?q=author%3Adennis-tra" title="Bug reports">🐛</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/inspiredclick"><img src="https://avatars.githubusercontent.com/u/1548613?v=4?s=100" width="100px;" alt="Andrew Rosenblatt"/><br /><sub><b>Andrew Rosenblatt</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/issues?q=author%3Ainspiredclick" title="Bug reports">🐛</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/w95"><img src="https://avatars.githubusercontent.com/u/6433752?v=4?s=100" width="100px;" alt="rika"/><br /><sub><b>rika</b></sub></a><br /><a href="#plugin-w95" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>
