@@ -33,7 +33,6 @@
     "@fastify/multipart": "7.7.3",
     "@fastify/swagger": "8.9.0",
     "@fastify/type-provider-typebox": "3.5.0",
-    "@firebase/auth": "0.21.6",
     "@fortawesome/angular-fontawesome": "0.12.1",
     "@fortawesome/fontawesome-svg-core": "6.4.2",
     "@fortawesome/free-solid-svg-icons": "6.4.2",
