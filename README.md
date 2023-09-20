@@ -195,6 +195,9 @@ We welcome contributions big or small and in different directions. The best way 
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/inspiredclick"><img src="https://avatars.githubusercontent.com/u/1548613?v=4?s=100" width="100px;" alt="Andrew Rosenblatt"/><br /><sub><b>Andrew Rosenblatt</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/issues?q=author%3Ainspiredclick" title="Bug reports">🐛</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/w95"><img src="https://avatars.githubusercontent.com/u/6433752?v=4?s=100" width="100px;" alt="rika"/><br /><sub><b>rika</b></sub></a><br /><a href="#plugin-w95" title="Plugin/utility libraries">🔌</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/cyrilselasi"><img src="https://avatars.githubusercontent.com/u/7190330?v=4?s=100" width="100px;" alt="Cyril Selasi"/><br /><sub><b>Cyril Selasi</b></sub></a><br /><a href="#plugin-cyrilselasi" title="Plugin/utility libraries">🔌</a></td>
+    </tr>
   </tbody>
 </table>
 
