@@ -1,7 +1,8 @@
 import Airtable from "airtable";
 import { Property, DynamicPropsValue } from "@activepieces/pieces-framework";
 import { HttpMethod, AuthenticationType, httpClient, HttpRequest } from "@activepieces/pieces-common";
-import { AirtableBase, AirtableEnterpriseFields, AirtableField, AirtableFieldMapping, AirtableRecord, AirtableTable } from "./models";
+import { AirtableBase, AirtableEnterpriseFields, AirtableField, AirtableFieldMapping, AirtableRecord, AirtableTable , AirtableFieldType} from "./models";
+import { isNil } from "lodash";
 
 export const airtableCommon = {
   base: Property.Dropdown({
@@ -120,35 +121,38 @@ export const airtableCommon = {
           tableId: tableId as unknown as string
         });
 
-        airtable.fields.map((field: AirtableField) => {
-          //skip these types
-          if (AirtableEnterpriseFields.includes(field.type)) return
-
-          const params = {
-            displayName: field.name,
-            description: (
-              (['date', 'dateTime'].includes(field.type))
-                ? `${field.description? field.description : ''}Expected format: mmmm d,yyyy`
-                : field.description
-            ),
-            required: false
-          }
-
-          if (field.type === "singleSelect" || field.type === "multipleSelects") {
-            const options = field.options?.choices.map((option: { id: string, name: string }) => ({
-              value: option.id,
-              label: option.name
-            }))
-
-            fields[field.id] = (AirtableFieldMapping[field.type])({
-              ...params,
-              options: {
-                options: options ?? []
-              }
-            })
-          } else {
-            fields[field.id] = (AirtableFieldMapping[field.type])(params)
-          }
+        airtable.fields.forEach((field: AirtableField) => {
+          if (!AirtableEnterpriseFields.includes(field.type)){
+            const params = {
+              displayName: field.name,
+              description: (
+                (['date', 'dateTime'].includes(field.type))
+                  ? `${field.description? field.description : ''}Expected format: mmmm d,yyyy`
+                  : field.description
+              ),
+              required: false
+            }
+            if( isNil(AirtableFieldMapping[field.type]) ){
+              fields[field.id] = Property.ShortText({
+                ...params,
+              })
+            }  
+            if (field.type === "singleSelect" || field.type === "multipleSelects") {
+              const options = field.options?.choices.map((option: { id: string, name: string }) => ({
+                value: option.id,
+                label: option.name
+              }))
+  
+              fields[field.id] = (AirtableFieldMapping[field.type])({
+                ...params,
+                options: {
+                  options: options ?? []
+                }
+              })
+            } else {
+              fields[field.id] = (AirtableFieldMapping[field.type])(params)
+            }
+          } 
         })
       } catch (e) {
         console.debug(e)
@@ -174,19 +178,19 @@ export const airtableCommon = {
       });
 
       let count = 0;
-      for( let i = 0 ; i < airtable.fields.length ; i++ ){
-        const field = airtable.fields[i];
-        const key = field.name;
-        if (AirtableEnterpriseFields.includes(field.type)) continue;
-        if( field.type === "multipleAttachments" ){
-          newFields[key] = [
-            {
-              url: fields[oldFieldNames[count]] as string,
-            }
-          ];
-        }else newFields[key] = fields[oldFieldNames[count]];
-        count++;
-      }
+      airtable.fields.forEach((field) => {
+        if ( !AirtableEnterpriseFields.includes(field.type) ){
+          const key = field.name;
+          if( field.type === "multipleAttachments" ){
+            newFields[key] = [
+              {
+                url: fields[oldFieldNames[count]] as string,
+              }
+            ];
+          }else newFields[key] = fields[oldFieldNames[count]];
+          count++;
+        }
+      });
     }catch(e){
       console.debug(e);
     }
