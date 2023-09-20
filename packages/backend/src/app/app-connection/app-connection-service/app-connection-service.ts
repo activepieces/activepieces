@@ -56,11 +56,16 @@ export class AppConnectionService {
             ...request.value,
         })
 
+        const existingConnection = await repo.findOneBy({
+            name: request.name,
+            projectId,
+        })
+
         const connection = {
             ...request,
             status: AppConnectionStatus.ACTIVE,
             value: encryptedConnectionValue,
-            id: apId(),
+            id: existingConnection?.id ?? apId(),
             projectId,
         }
 
@@ -76,7 +81,7 @@ export class AppConnectionService {
     async getOne({
         projectId,
         name,
-    }: GetOneParams): Promise<AppConnection | null> {
+    }: GetOneByName): Promise<AppConnection | null> {
         const encryptedAppConnection = await repo.findOneBy({
             projectId,
             name,
@@ -96,18 +101,22 @@ export class AppConnectionService {
     }
 
     async getOneOrThrow(params: GetOneParams): Promise<AppConnection> {
-        const connection = await this.getOne(params)
-
-        if (isNil(connection)) {
+        const connectionById = await repo.findOneBy({
+            id: params.id,
+            projectId: params.projectId,
+        })
+        if (isNil(connectionById)) {
             throw new ActivepiecesError({
                 code: ErrorCode.APP_CONNECTION_NOT_FOUND,
                 params: {
-                    id: params.name,
+                    id: params.id,
                 },
             })
         }
-
-        return connection
+        return (await this.getOne({
+            projectId: params.projectId,
+            name: connectionById.name,
+        }))!
     }
 
     async delete(params: DeleteParams): Promise<void> {
@@ -558,9 +567,14 @@ type UpsertParams = {
     request: UpsertAppConnectionRequestBody
 }
 
-type GetOneParams = {
+type GetOneByName = {
     projectId: ProjectId
     name: string
+}
+
+type GetOneParams = {
+    projectId: ProjectId
+    id: string
 }
 
 type DeleteParams = {

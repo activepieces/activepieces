@@ -1,6 +1,6 @@
 <div class="ap-relative" #relativeDiv>
   <button mat-icon-button [matTooltip]="tooltipText" [color]="color" [attr.aria-label]="ariaLabel || tooltipText"
-    [disabled]="buttonDisabled" (click)="emit()" [tabIndex]="tabIndex">
+    type="button" [disabled]="buttonDisabled" (click)="emit()" [tabIndex]="tabIndex">
     <svg-icon [svgStyle]="{ width:width? width + 'px':'initial', height:height? height + 'px':'initial' }"
       src="assets/img/custom/{{ iconFilename }}" [class]="'ap-flex ap-items-center ap-justify-center '+ extraClasses"
       [applyClass]="true"></svg-icon>
