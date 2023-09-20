@@ -42,7 +42,7 @@ export const upsertByExternalIdBulk = createAction({
       externalIdFieldName: external_field,
       contentType: 'CSV',
       operation: 'upsert',
-      lineEnding: 'LF',
+      lineEnding: 'CRLF',
     });
     if (create.status == 200) {
       jobId = create.body.id;
