@@ -6,6 +6,8 @@ import {
     apId,
     BranchActionSettingsWithValidation,
     CodeActionSettings,
+    FileCompression,
+    FileType,
     flowHelper,
     FlowId,
     FlowOperationRequest,
@@ -212,7 +214,7 @@ function handleImportFlowOperation(flowVersion: FlowVersion, operation: ImportFl
 async function addArtifactsAsBase64(projectId: ProjectId, flowVersion: FlowVersion) {
     const flowVersionWithArtifacts: FlowVersion = JSON.parse(JSON.stringify(flowVersion))
     const steps = flowHelper.getAllSteps(flowVersionWithArtifacts.trigger)
-    
+
     const artifactPromises = steps
         .filter(step => step.type === ActionType.CODE)
         .map(async (step) => {
@@ -479,6 +481,8 @@ async function uploadArtifact(projectId: ProjectId, codeSettings: CodeActionSett
         const savedFile = await fileService.save({
             projectId,
             data: bufferFromBase64,
+            type: FileType.CODE_SOURCE,
+            compression: FileCompression.NONE,
         })
 
         codeSettings.artifact = undefined

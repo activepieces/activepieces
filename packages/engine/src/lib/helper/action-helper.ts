@@ -224,10 +224,11 @@ export const pieceHelper = {
         propsValue: processedInput,
         files: createFilesService({
           stepName: actionName,
+          flowId: flowVersion.flowId,
           type: 'db'
         }),
         tags: createTagsManager(executionState),
-        store: createContextStore('', globals.flowVersionId),
+        store: createContextStore('', flowVersion.flowId),
         connections: {
           get: async (key: string) => {
             try {
@@ -249,6 +250,13 @@ export const pieceHelper = {
         }
       };
 
+      // Legacy Code doesn't have test function
+      if (!isNil(action.test)) {
+        return {
+          output: await action.test(context),
+          success: true
+        };
+      }
       return {
         output: await action.run(context),
         success: true

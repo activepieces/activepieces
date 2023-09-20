@@ -113,6 +113,7 @@ export const materialTooltipDefaults: MatTooltipDefaultOptions = {
     ImgFallbackDirective,
     MatDividerModule,
     MatButtonToggleModule,
+    MatTabsModule,
   ],
   providers: [
     {

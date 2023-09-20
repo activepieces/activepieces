@@ -27,8 +27,6 @@
     </div>
   </form>
 </div>
-
-<ng-container *ngIf="autoSaveListener$ | async"></ng-container>
 <ng-container *ngIf="readOnly$ | async"></ng-container>
 <ng-template #inputFormSelection>
   <div [formGroup]="stepForm">

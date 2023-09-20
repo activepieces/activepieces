@@ -81,12 +81,12 @@ const getEnvVar = (prop: SystemProp): string | undefined => {
     return process.env[`AP_${prop}`] ?? systemPropDefaultValues[prop]
 }
 
-export const validateEnvPropsOnStartup = (): void => {
+export const validateEnvPropsOnStartup = async (): Promise<void> => {
     const executionMode = system.get(SystemProp.EXECUTION_MODE)
     const signedUpEnabled = system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
     const queueMode = system.getOrThrow<QueueMode>(SystemProp.QUEUE_MODE)
     const edition = system.get(SystemProp.EDITION)
-    loadEncryptionKey(queueMode)
+    await loadEncryptionKey(queueMode)
 
     if (executionMode !== ExecutionMode.SANDBOXED && edition !== ApEdition.COMMUNITY) {
         throw new ActivepiecesError({

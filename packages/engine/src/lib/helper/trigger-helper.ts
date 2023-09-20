@@ -43,11 +43,6 @@ export const triggerHelper = {
     let scheduleOptions: ScheduleOptions | undefined = undefined;
     const context = {
       store: createContextStore(prefix, params.flowVersion.flowId),
-      // TODO move it to some other efficient place
-      files: createFilesService({
-        stepName: triggerName,
-        type: 'db'
-      }),
       app: {
         async createListeners({ events, identifierKey, identifierValue }: Listener) {
           appListeners.push({ events, identifierValue, identifierKey });
@@ -96,7 +91,14 @@ export const triggerHelper = {
         try {
           return {
             success: true,
-            output: await trigger.test(context)
+            output: await trigger.test({
+              ...context,
+              files: createFilesService({
+                stepName: triggerName,
+                flowId: params.flowVersion.flowId,
+                type: 'db'
+              })
+            })
           }
         } catch (e: any) {
           console.error(e);
@@ -147,7 +149,14 @@ export const triggerHelper = {
             }
           }
         }
-        const items = await trigger.run(context);
+        const items = await trigger.run({
+          ...context,
+          files: createFilesService({
+            flowId: params.flowVersion.flowId,
+            stepName: triggerName,
+            type: 'memory'
+          })
+        });
         if (!Array.isArray(items)) {
           throw new Error(`Trigger run should return an array of items, but returned ${typeof items}`)
         }

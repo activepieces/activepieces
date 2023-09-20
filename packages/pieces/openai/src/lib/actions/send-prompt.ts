@@ -56,9 +56,13 @@ export const askOpenAI = createAction({
               token: auth as string
             }
           });
+          // we need to get all the models not named whisper-1
+          const models = response.body.data.filter(
+            (model) => model.id !== 'whisper-1'
+          );
           return {
             disabled: false,
-            options: response.body.data.map((model) => {
+            options: models.map((model) => {
               return {
                 label: model.id,
                 value: model.id
@@ -205,8 +209,22 @@ export const askOpenAI = createAction({
         } else {
           if (error?.message?.includes('code 401')) {
             unaurthorized = true;
+			      throw error;
           }
-          throw error;
+          const new_error = error as {
+              response: {
+              status: number,
+              data:{
+                error: {
+                  message: string,
+                }[]
+              },
+            }
+          };
+          throw {
+            token: new_error.response.status,
+            error: new_error.response.data.error
+          };
         }
       }
     }

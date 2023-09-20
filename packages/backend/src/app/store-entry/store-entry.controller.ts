@@ -1,9 +1,10 @@
-import { FastifyInstance, FastifyRequest } from 'fastify'
+import { FastifyRequest } from 'fastify'
 import { storeEntryService } from './store-entry.service'
 import { DeletStoreEntryRequest, GetStoreEntryRequest, PrincipalType, PutStoreEntryRequest } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 
-export const storeEntryController = async (fastify: FastifyInstance) => {
+export const storeEntryController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.post(
         '/',
         {
@@ -55,11 +56,10 @@ export const storeEntryController = async (fastify: FastifyInstance) => {
             request: FastifyRequest<{
                 Querystring: DeletStoreEntryRequest
             }>,
-            _reply,
+            reply,
         ) => {
             if (request.principal.type !== PrincipalType.WORKER) {
-                _reply.status(StatusCodes.FORBIDDEN)
-                return
+                return reply.status(StatusCodes.FORBIDDEN)
             }
             else {
                 return await storeEntryService.delete({

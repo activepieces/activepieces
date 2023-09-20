@@ -8,6 +8,8 @@ import { AddAppConnectionTypeToTopLevel1691706020626 } from './migration/sqllite
 import { AddTagsToRunSqlite31692056190942 } from './migration/sqllite3/1692056190942-AddTagsToRunSqlite3'
 import { AddStepFileSqlite31692958076906 } from './migration/sqllite3/1692958076906-AddStepFileSqlite3'
 import { AddStatusToConnectionsSqlite31693402376520 } from './migration/sqllite3/1693402376520-AddStatusToConnectionsSqlite3'
+import { AddImageUrlAndTitleToUser1693774053027 } from './migration/sqllite3/1693774053027-AddImageUrlAndTitleToUser'
+import { FileTypeCompression1694695212159 } from './migration/sqllite3/1694695212159-file-type-compression'
 
 function getSQLiteFilePath(): string {
     const homeDirectory = os.homedir()
@@ -32,6 +34,8 @@ export const createSqlLiteDatasource = () => {
             AddTagsToRunSqlite31692056190942,
             AddStepFileSqlite31692958076906,
             AddStatusToConnectionsSqlite31693402376520,
+            AddImageUrlAndTitleToUser1693774053027,
+            FileTypeCompression1694695212159,
         ],
         ...commonProperties,
     })

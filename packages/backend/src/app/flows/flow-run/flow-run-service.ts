@@ -27,7 +27,6 @@ import { telemetry } from '../../helper/telemetry.utils'
 import { FlowRunEntity } from './flow-run-entity'
 import { flowRunSideEffects } from './flow-run-side-effects'
 import { logger } from '../../helper/logger'
-import { notifications } from '../../helper/notifications'
 import { flowService } from '../flow/flow.service'
 import { MoreThanOrEqual } from 'typeorm'
 
@@ -119,17 +118,14 @@ export const flowRunService = {
         },
     ): Promise<FlowRun> {
         await flowRunRepo.update(flowRunId, {
-            logsFileId,
+            ...spreadIfDefined('logsFileId', logsFileId),
             status,
             tasks,
             tags,
             finishTime: new Date().toISOString(),
-            pauseMetadata: null,
         })
         const flowRun = (await this.getOne({ id: flowRunId, projectId: undefined }))!
-        notifications.notifyRun({
-            flowRun,
-        })
+        await flowRunSideEffects.finish({ flowRun })
         return flowRun
     },
 
@@ -164,6 +160,7 @@ export const flowRunService = {
                 environment: savedFlowRun.environment,
             },
         })
+            .catch((e) => logger.error(e, '[FlowRunService#Start] telemetry.trackProject'))
 
         await flowRunSideEffects.start({
             flowRun: savedFlowRun,

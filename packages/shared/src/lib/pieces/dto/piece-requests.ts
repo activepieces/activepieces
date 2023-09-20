@@ -1,10 +1,10 @@
 import { Static, Type } from "@sinclair/typebox";
- 
-const semVerRegex = /^[0-9]+\.[0-9]+\.[0-9]+$/;
-const queryVersionRegex = /^([~^])?[0-9]+\.[0-9]+\.[0-9]+$/;
 
-export const SemVerType = Type.RegEx(semVerRegex);
-export const QueryVerType = Type.RegEx(queryVersionRegex);
+export const EXACT_VERSION_PATTERN = /^[0-9]+\.[0-9]+\.[0-9]+$/;
+export const VERSION_PATTERN = /^([~^])?[0-9]+\.[0-9]+\.[0-9]+$/;
+
+export const ExactVersionType = Type.RegEx(EXACT_VERSION_PATTERN);
+export const VersionType = Type.RegEx(VERSION_PATTERN);
 
 export const GetPieceRequestWithScopeParams = Type.Object({
     name: Type.String(),
@@ -21,20 +21,20 @@ export const GetPieceRequestParams = Type.Object({
 export type GetPieceRequestParams = Static<typeof GetPieceRequestParams>;
 
 export const ListPiecesRequestQuery = Type.Object({
-    release: Type.Optional(SemVerType),
+    release: Type.Optional(ExactVersionType),
 });
 
 export type ListPiecesRequestQuery = Static<typeof ListPiecesRequestQuery>;
 
 
 export const GetPieceRequestQuery = Type.Object({
-    version: Type.Optional(QueryVerType),
+    version: Type.Optional(VersionType),
 });
 
 export type GetPieceRequestQuery = Static<typeof GetPieceRequestQuery>;
 
 export const PieceOptionRequest = Type.Object({
-    pieceVersion: QueryVerType,
+    pieceVersion: VersionType,
     pieceName: Type.String({}),
     stepName: Type.String({}),
     propertyName: Type.String({}),
@@ -45,7 +45,7 @@ export type PieceOptionRequest = Static<typeof PieceOptionRequest>;
 
 export const InstallPieceRequest = Type.Object({
     pieceName: Type.String(),
-    pieceVersion: SemVerType,
+    pieceVersion: ExactVersionType,
 })
 
 export type InstallPieceRequest = Static<typeof InstallPieceRequest>
