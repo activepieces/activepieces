@@ -49,11 +49,10 @@ const trim = async (obj: unknown): Promise<unknown> => {
         let i = 0
 
         while (i < objectEntries.length && objectEntriesExceedMaxSize(objectEntries)) {
-            objectEntries[i][1] = TRUNCATION_TEXT_PLACEHOLDER
+            const key = objectEntries[i][0]
+            obj[key] = TRUNCATION_TEXT_PLACEHOLDER
             i += 1
         }
-
-        obj = Object.fromEntries(objectEntries)
     }
 
     if (!objectExceedMaxSize(obj)) {
