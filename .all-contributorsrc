@@ -590,6 +590,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "nijfranck",
+      "name": "Franck Nijimbere",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9940307?v=4",
+      "profile": "http://nijfranck.github.io",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
