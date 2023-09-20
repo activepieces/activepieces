@@ -25,13 +25,6 @@ export const wordpressCommon = {
                     options: [],
                 };
             }
-            if (!wordpressCommon.urlExists(websiteUrl.trim()) || !await wordpressCommon.isBaseUrl(websiteUrl.trim())) {
-                return {
-                    disabled: true,
-                    placeholder: "Please ensure that the website is valid and does not contain any paths, for example, https://example-website.com.",
-                    options: [],
-                };
-            }
             const request: HttpRequest = {
                 method: HttpMethod.GET,
                 url: `${websiteUrl.trim()}/wp-json/wp/v2/users`,

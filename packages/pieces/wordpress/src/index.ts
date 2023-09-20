@@ -11,13 +11,14 @@ import { AuthenticationType, HttpMethod, HttpRequest, httpClient } from '@active
 import { wordpressCommon } from './lib/common';
 
 const markdownPropertyDescription = `
-** Enable Basic Authentication: **
+**Enable Basic Authentication:**
 
 1. Download the plugin from: https://github.com/WP-API/Basic-Auth (Click on Code -> Download Zip)
 2. Log in to your Wordpress dashboard.
 3. Go to "Plugins" and click "Add New."
 4. Choose "Upload Plugin" and select the downloaded file.
 5. Install and activate the plugin.
+
 `;
 
 export const wordpressAuth = PieceAuth.CustomAuth({
@@ -41,25 +42,24 @@ export const wordpressAuth = PieceAuth.CustomAuth({
   },
   validate: async ({ auth }) => {
     const { username, password, website_url } = auth;
-    const connection = auth as PiecePropValueSchema<typeof wordpressAuth>;
-    const websiteUrl = connection.website_url;
-    if (!connection?.username || !connection?.password || !websiteUrl) {
+    if (!username || !password || !website_url) {
       return {
         valid: false,
         error: 'please fill all the fields [username, password, website_url] ',
       }
     }
-    if (!wordpressCommon.isBaseUrl(websiteUrl.trim())) {
+    if (!wordpressCommon.isBaseUrl(website_url.trim())) {
       return {
         valid: false,
         error: "Please ensure that the website is valid and does not contain any paths, for example, https://example-website.com.",
       }
     }
-    if (!wordpressCommon.urlExists(websiteUrl.trim())) {
-      return {
-        valid: false,
-        error: 'Incorrect website url',
-      }
+    const apiEnabled = await wordpressCommon.urlExists(website_url.trim() + '/wp-json');
+    if(!apiEnabled) {
+        return {
+            valid: false,
+            error: `REST API is not reachable, visit ${website_url.trim()}/wp-json" \n make sure your settings (Settings -> Permalinks) are set to "Post name" (or any option other than "Plain") and disable any security plugins that might block the REST API `,
+        };
     }
     try {
       const request: HttpRequest = {
@@ -75,10 +75,10 @@ export const wordpressAuth = PieceAuth.CustomAuth({
       return {
         valid: true,
       }
-    } catch (e) {
+    } catch (e: any) {
       return {
         valid: false,
-        error: "Credentials are invalid. Please verify that the basic plugin is installed and that your credentials are correct.",
+        error: "Credentials are invalid. " + e?.message,
       }
     }
   }

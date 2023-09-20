@@ -56,9 +56,13 @@ export const askOpenAI = createAction({
               token: auth as string
             }
           });
+          // we need to get all the models not named whisper-1
+          const models = response.body.data.filter(
+            (model) => model.id !== 'whisper-1'
+          );
           return {
             disabled: false,
-            options: response.body.data.map((model) => {
+            options: models.map((model) => {
               return {
                 label: model.id,
                 value: model.id
