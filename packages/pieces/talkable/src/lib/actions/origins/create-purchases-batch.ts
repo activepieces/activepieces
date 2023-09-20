@@ -76,6 +76,7 @@ export const createPurchasesBatch = createAction({
       body: {
         site_slug: site,
         data: context.propsValue.purchases,
+        create_offers: context.propsValue.create_offers
       },
     });
     return createPurchasesBatch.body;
