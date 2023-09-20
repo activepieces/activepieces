@@ -11,6 +11,12 @@ export const createEventsBatch = createAction({
   displayName: 'Create batch of events',
   description: 'Create batch of events in Talkable',
   props: {
+    create_offers: Property.Checkbox({
+      displayName: 'Create offers',
+      description: 'Create offers for campaign',
+      required: false,
+      defaultValue: false
+    }),
     events: Property.Json({
       displayName: 'Events',
       description: undefined,
@@ -71,6 +77,7 @@ export const createEventsBatch = createAction({
       body: {
         site_slug: site,
         data: context.propsValue.events,
+        create_offers: context.propsValue.create_offers
       },
     });
     return createEventsBatch.body;
