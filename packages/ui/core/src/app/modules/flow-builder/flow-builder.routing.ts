@@ -4,7 +4,7 @@ import { UserLoggedIn } from '../../guards/user-logged-in.guard';
 import { GetInstanceRunResolver } from './resolvers/instance-run.resolver';
 import { GetFlowResolver } from './resolvers/flow.resolver';
 import { InstanceResolver as GetInstanceResolver } from './resolvers/instance.resolver';
-import { ConnectionsResolver } from './resolvers/connections.resolver';
+import { ConnectionsResolver } from '@activepieces/ui/common';
 import { BuilderSavingGuard } from '../../guards/builder-saving.guard';
 import {
   isThereAnyNewFeaturedTemplatesResolver,

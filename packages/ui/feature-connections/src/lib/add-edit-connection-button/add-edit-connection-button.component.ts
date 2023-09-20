@@ -62,7 +62,7 @@ import { BuilderSelectors } from '@activepieces/ui/feature-builder-store';
 @Component({
   selector: 'app-add-edit-connection-button',
   templateUrl: './add-edit-connection-button.component.html',
-  styleUrls: ['./add-edit-connection-button.component.scss'],
+  styleUrls: [],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AddEditConnectionButtonComponent {
@@ -93,6 +93,12 @@ export class AddEditConnectionButtonComponent {
   connectionPropertyValueChanged: EventEmitter<{
     propertyKey: string;
     value: `{{connections['${string}']}}`;
+  }> = new EventEmitter();
+
+  @Output()
+  connectionIdChanged: EventEmitter<{
+    propertyKey: string;
+    value: string;
   }> = new EventEmitter();
   updateOrAddConnectionDialogClosed$: Observable<void>;
   cloudAuthCheck$: Observable<void>;
@@ -156,6 +162,10 @@ export class AddEditConnectionButtonComponent {
     this.connectionPropertyValueChanged.emit({
       propertyKey: this.propertyKey,
       value: authConfigOptionValue,
+    });
+    this.connectionIdChanged.emit({
+      propertyKey: this.propertyKey,
+      value: result.id,
     });
   }
 

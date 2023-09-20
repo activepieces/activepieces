@@ -3,11 +3,9 @@ import { Injectable } from '@angular/core';
 import { map, Observable, switchMap, take } from 'rxjs';
 import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
 
-import {
-  AppConnectionsService,
-  ProjectSelectors,
-} from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
+import { AppConnectionsService } from '../service/app-connections.service';
+import { ProjectSelectors } from '../store/project/project.selector';
 
 export type ConnectionsResolverData = AppConnectionWithoutSensitiveData[];
 
