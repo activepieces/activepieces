@@ -105,7 +105,7 @@ export const airtableCommon = {
     displayName: 'Table',
     required: true,
     refreshers: ["base", "tableId"],
-
+    
     props: async ({ auth, base, tableId }) => {
       if (!auth) return {}
       if (!base) return {}
@@ -157,8 +157,41 @@ export const airtableCommon = {
       return fields
     }
   }),
+  
+  async createNewFields( auth : string , base : string , tableId : string , fields : Record<string,unknown>){
+    if( !auth ) return fields;
+    if( !base ) return fields;
+    if( !tableId ) return fields;
 
+    const oldFieldNames = Object.keys(fields);
+    const newFields : Record<string,unknown> = {};
 
+    try{
+      const airtable: AirtableTable = await airtableCommon.fetchTable({
+        token: auth,
+        baseId: base,
+        tableId: tableId
+      });
+
+      let count = 0;
+      for( let i = 0 ; i < airtable.fields.length ; i++ ){
+        const field = airtable.fields[i];
+        const key = field.name;
+        if (AirtableEnterpriseFields.includes(field.type)) continue;
+        if( field.type === "multipleAttachments" ){
+          newFields[key] = [
+            {
+              url: fields[oldFieldNames[count]] as string,
+            }
+          ];
+        }else newFields[key] = fields[oldFieldNames[count]];
+        count++;
+      }
+    }catch(e){
+      console.debug(e);
+    }
+    return newFields;
+  },
   async getTableSnapshot(params: Params) {
     Airtable.configure({
       apiKey: params.personalToken,
