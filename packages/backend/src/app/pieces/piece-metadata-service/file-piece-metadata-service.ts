@@ -2,10 +2,11 @@ import { readdir } from 'node:fs/promises'
 import { resolve, join } from 'node:path'
 import { cwd } from 'node:process'
 import { Piece, PieceMetadata, PieceMetadataSummary } from '@activepieces/pieces-framework'
-import { ActivepiecesError, ErrorCode, extractPieceFromModule } from '@activepieces/shared'
+import { ActivepiecesError, EXACT_VERSION_PATTERN, ErrorCode, extractPieceFromModule } from '@activepieces/shared'
 import { captureException } from '../../helper/logger'
 import { GetParams, PieceMetadataService } from './piece-metadata-service'
 import { isNil } from '@activepieces/shared'
+import { AllPiecesStats } from './piece-stats-service'
 
 const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
     const ignoredPackages = ['framework', 'apps', 'dist', 'common']
@@ -76,15 +77,32 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
             return pieceMetadata
         },
 
-        async delete() {
+        async delete(): Promise<void> {
             throw new Error('Deleting pieces is not supported in development mode')
         },
-        async create() {
+
+        async create(): Promise<PieceMetadata> {
             throw new Error('Creating pieces is not supported in development mode')
         },
 
-        async stats() {
+        async stats(): Promise<AllPiecesStats> {
             return {}
+        },
+
+        async getExactPieceVersion({ projectId, name, version }): Promise<string> {
+            const isExactVersion = EXACT_VERSION_PATTERN.test(version)
+
+            if (isExactVersion) {
+                return version
+            }
+
+            const pieceMetadata = await this.get({
+                projectId,
+                name,
+                version,
+            })
+
+            return pieceMetadata.version
         },
     }
 }

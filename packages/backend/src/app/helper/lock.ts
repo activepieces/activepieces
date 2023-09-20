@@ -9,7 +9,7 @@ import { SystemProp } from './system/system-prop'
 let redLock: RedLock
 let redisConnection: Redis
 const memoryLocks = new Map<string, MutexLockWrapper>()
-const queueMode = system.get(SystemProp.QUEUE_MODE) as QueueMode
+const queueMode = system.get(SystemProp.QUEUE_MODE)!
 class MutexLockWrapper {
     private lock: Mutex
 
@@ -88,6 +88,8 @@ export const acquireLock = async ({ key, timeout = 3000 }: AcquireLockParams): P
             return acquireRedisLock(key, timeout)
         case QueueMode.MEMORY:
             return acquireMemoryLock(key)
+        default:
+            throw new Error(`Unknown queue mode: ${queueMode}`)
     }
 }
 

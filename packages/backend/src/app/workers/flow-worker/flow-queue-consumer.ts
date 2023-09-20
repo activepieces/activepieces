@@ -27,13 +27,14 @@ import { redisQueueManager } from './queues/redis/redis-queue'
 import { QueueMode, system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
 
-const queueMode = system.get(SystemProp.QUEUE_MODE) as QueueMode
+const queueMode = system.getOrThrow<QueueMode>(SystemProp.QUEUE_MODE)
 
 const initFlowQueueConsumer = async (): Promise<void> => {
     switch (queueMode) {
         case QueueMode.MEMORY: {
             await inMemoryQueueManager.init()
             consumeJobsInMemory()
+                .catch((e) => logger.error(e, '[FlowQueueConsumer#init] consumeJobsInMemory'))
             break
         }
         case QueueMode.REDIS: {

@@ -71,6 +71,7 @@
       ],
       "@activepieces/piece-ghostcms": ["packages/pieces/ghostcms/src/index.ts"],
       "@activepieces/piece-github": ["packages/pieces/github/src/index.ts"],
+      "@activepieces/piece-gitlab": ["packages/pieces/gitlab/src/index.ts"],
       "@activepieces/piece-gmail": ["packages/pieces/gmail/src/index.ts"],
       "@activepieces/piece-google-calendar": [
         "packages/pieces/google-calendar/src/index.ts"
@@ -115,6 +116,7 @@
       "@activepieces/piece-kizeo-forms": [
         "packages/pieces/kizeo-forms/src/index.ts"
       ],
+      "@activepieces/piece-linear": ["packages/pieces/linear/src/index.ts"],
       "@activepieces/piece-linkedin": ["packages/pieces/linkedin/src/index.ts"],
       "@activepieces/piece-mailchimp": [
         "packages/pieces/mailchimp/src/index.ts"
@@ -135,6 +137,9 @@
       "@activepieces/piece-notion": ["packages/pieces/notion/src/index.ts"],
       "@activepieces/piece-ntfy": ["packages/pieces/ntfy/src/index.ts"],
       "@activepieces/piece-onfleet": ["packages/pieces/onfleet/src/index.ts"],
+      "@activepieces/piece-open-router": [
+        "packages/pieces/open-router/src/index.ts"
+      ],
       "@activepieces/piece-openai": ["packages/pieces/openai/src/index.ts"],
       "@activepieces/piece-pastebin": ["packages/pieces/pastebin/src/index.ts"],
       "@activepieces/piece-pastefy": ["packages/pieces/pastefy/src/index.ts"],
@@ -150,6 +155,7 @@
         "packages/pieces/salesforce/src/index.ts"
       ],
       "@activepieces/piece-schedule": ["packages/pieces/schedule/src/index.ts"],
+      "@activepieces/piece-sendfox": ["packages/pieces/sendfox/src/index.ts"],
       "@activepieces/piece-sendgrid": ["packages/pieces/sendgrid/src/index.ts"],
       "@activepieces/piece-sendinblue": [
         "packages/pieces/sendinblue/src/index.ts"
@@ -174,6 +180,7 @@
         "packages/pieces/surveymonkey/src/index.ts"
       ],
       "@activepieces/piece-tags": ["packages/pieces/tags/src/index.ts"],
+      "@activepieces/piece-tally": ["packages/pieces/tally/src/index.ts"],
       "@activepieces/piece-telegram-bot": [
         "packages/pieces/telegram-bot/src/index.ts"
       ],
@@ -202,6 +209,12 @@
       "@activepieces/pieces-common": ["packages/pieces/common/src/index.ts"],
       "@activepieces/pieces-framework": [
         "packages/pieces/framework/src/index.ts"
+      ],
+      "@activepieces/pieces/date-helper": [
+        "packages/pieces/date-helper/src/index.ts"
+      ],
+      "@activepieces/pieces/text-helper": [
+        "packages/pieces/text-helper/src/index.ts"
       ],
       "@activepieces/shared": ["packages/shared/src/index.ts"],
       "@activepieces/ui/common": ["packages/ui/common/src/index.ts"],

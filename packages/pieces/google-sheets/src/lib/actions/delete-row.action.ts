@@ -18,12 +18,9 @@ export const deleteRowAction = createAction({
         })
     },
     async run({propsValue, auth}) {
-        const sheetName = await googleSheetsCommon.findSheetName(auth.access_token,
+        await googleSheetsCommon.findSheetName(auth.access_token,
             propsValue['spreadsheet_id'],
             propsValue['sheet_id']);
-        if (!sheetName) {
-            throw Error("Sheet not found in spreadsheet");
-        }
 
         // Subtract 1 from the row_id to convert it to 0-indexed
         const adjustedRowIndex = propsValue.row_id - 1;

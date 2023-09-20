@@ -76,6 +76,7 @@ export const inMemoryQueueManager: InMemoryQueueManager = {
                     timezone: flowInstance.schedule!.timezone,
                 },
             })
+                .catch((e) => logger.error(e, '[MemoryQueue#init] add'))
         })
 
         const flowRuns = await flowRunRepo.findBy({
@@ -84,7 +85,7 @@ export const inMemoryQueueManager: InMemoryQueueManager = {
         logger.info(`Adding ${flowRuns.length} flow runs to the queue manager.`)
         flowRuns.forEach((flowRun) => {
             if (flowRun.pauseMetadata?.type === PauseType.DELAY) {
-                
+
                 const delayPauseMetadata = flowRun.pauseMetadata as DelayPauseMetadata
                 const delay = Math.max(0, dayjs(delayPauseMetadata.resumeDateTime).diff(dayjs(), 'ms'))
 
@@ -101,6 +102,7 @@ export const inMemoryQueueManager: InMemoryQueueManager = {
                     },
                     delay,
                 })
+                    .catch((e) => logger.error(e, '[MemoryQueue#init] add'))
             }
         })
         // TODO add run with status RUNNING

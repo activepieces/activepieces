@@ -3,7 +3,7 @@ import { captureException, logger } from './logger'
 import { system } from './system/system'
 import { SystemProp } from './system/system-prop'
 import axios from 'axios'
-import { projectService } from '../project/project.service'
+import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
 
 const notificationUrl = system.get(SystemProp.NOTIFICATION_URL)

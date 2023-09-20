@@ -18,23 +18,24 @@ export const appEventRoutingService = {
         identifierValue: string
         flowId: FlowId
         projectId: ProjectId
-    }): Promise<AppEventRouting[]> {
+    }): Promise<void> {
         logger.info(`Creating listeners for ${appName}, events=${events}, identifierValue=${identifierValue}`)
-        const upsertCommands: Promise<AppEventRouting>[] = []
+        const upsertCommands: Promise<unknown>[] = []
         events.forEach(event => {
-            upsertCommands.push(appEventRoutingRepo.save({
+            const upsert = appEventRoutingRepo.upsert({
                 id: apId(),
                 appName,
                 event,
                 identifierValue,
                 flowId,
                 projectId,
-            }))
+            }, ['appName', 'event', 'identifierValue', 'projectId'])
+            upsertCommands.push(upsert)
         })
-        return await Promise.all(upsertCommands)
+        await Promise.all(upsertCommands)
     },
     async deleteListeners({ projectId, flowId }: { projectId: ProjectId, flowId: FlowId }): Promise<void> {
-        appEventRoutingRepo.delete({
+        await appEventRoutingRepo.delete({
             projectId,
             flowId,
         })

@@ -33,10 +33,6 @@ export const mondayCreateAnItem = createAction({
   async run(context) {
     const { ...itemValues } = context.propsValue
 
-    const item: string = Object
-      .entries(itemValues.column_values ?? {})
-      .map(value => `${value[0]}: "${value[1]}"`)
-      .join(', ')
 
     const query = `
       mutation {
@@ -44,8 +40,16 @@ export const mondayCreateAnItem = createAction({
           item_name: "${itemValues.item_name}",
           board_id: ${itemValues.board_id},
           ${itemValues.group_id ? `group_id: ${itemValues.group_id},` : ``}
-          create_labels_if_missing: ${itemValues.create_labels_if_missing ?? false},
-          ${itemValues.column_values ? `column_values: { ${item} },` : ``}
+          create_labels_if_missing: ${
+            itemValues.create_labels_if_missing ?? false
+          },
+          ${
+            itemValues.column_values
+              ? `column_values: " ${JSON.stringify(
+                  itemValues?.column_values
+                ).replace(/"/g, '\\"')}",`
+              : ``
+          }
         )
         { id }
       }

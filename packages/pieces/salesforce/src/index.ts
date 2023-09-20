@@ -20,7 +20,7 @@ export const salesforceAuth = PieceAuth.OAuth2({
               value: 'login'
             },
             {
-              label: 'Devleopment',
+              label: 'Development',
               value: 'test'
             }
           ]
@@ -28,7 +28,7 @@ export const salesforceAuth = PieceAuth.OAuth2({
         defaultValue: 'login'
     })
 },
-  
+
   required: true,
   description: "Authenticate with Salesforce Production",
   authUrl: "https://{environment}.salesforce.com/services/oauth2/authorize",

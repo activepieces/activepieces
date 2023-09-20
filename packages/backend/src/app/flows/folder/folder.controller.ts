@@ -1,5 +1,6 @@
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { CreateOrRenameFolderRequest, FolderId, ListFolderRequest } from '@activepieces/shared'
-import { FastifyInstance, FastifyRequest } from 'fastify'
+import { FastifyRequest } from 'fastify'
 import { flowFolderService as folderService } from './folder.service'
 import { StatusCodes } from 'http-status-codes'
 import { Static, Type } from '@sinclair/typebox'
@@ -13,7 +14,7 @@ const FolderIdParam = Type.Object({
 
 type FolderIdParam = Static<typeof FolderIdParam>
 
-export const folderController = async (fastify: FastifyInstance) => {
+export const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
 
     fastify.post(
         '/',
@@ -22,11 +23,7 @@ export const folderController = async (fastify: FastifyInstance) => {
                 body: CreateOrRenameFolderRequest,
             },
         },
-        async (
-            request: FastifyRequest<{
-                Body: CreateOrRenameFolderRequest
-            }>,
-        ) => {
+        async (request) => {
             return await folderService.create({ projectId: request.principal.projectId, request: request.body })
         },
     )
@@ -40,12 +37,7 @@ export const folderController = async (fastify: FastifyInstance) => {
                 body: CreateOrRenameFolderRequest,
             },
         },
-        async (
-            request: FastifyRequest<{
-                Params: FolderIdParam
-                Body: CreateOrRenameFolderRequest
-            }>,
-        ) => {
+        async (request) => {
             return await folderService.update({ projectId: request.principal.projectId, folderId: request.params.folderId, request: request.body })
         },
     )
@@ -72,11 +64,7 @@ export const folderController = async (fastify: FastifyInstance) => {
                 querystring: ListFolderRequest,
             },
         },
-        async (
-            request: FastifyRequest<{
-                Querystring: ListFolderRequest
-            }>,
-        ) => {
+        async (request) => {
             return await folderService.list({ projectId: request.principal.projectId, cursorRequest: request.query.cursor ?? null, limit: request.query.limit ?? DEFUALT_PAGE_SIZE })
         },
     )
@@ -90,10 +78,10 @@ export const folderController = async (fastify: FastifyInstance) => {
                     folderId: FolderId
                 }
             }>,
-            _reply,
+            reply,
         ) => {
             await folderService.delete({ projectId: request.principal.projectId, folderId: request.params.folderId })
-            _reply.status(StatusCodes.OK).send()
+            return reply.status(StatusCodes.OK).send()
         },
     )
 }
