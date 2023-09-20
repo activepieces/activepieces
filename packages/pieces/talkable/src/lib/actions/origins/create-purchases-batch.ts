@@ -11,6 +11,12 @@ export const createPurchasesBatch = createAction({
   displayName: 'Create batch of purchases',
   description: 'Create batch of purchases in Talkable',
   props: {
+    create_offers: Property.Checkbox({
+      displayName: 'Create offers',
+      description: 'Create offers for campaign',
+      required: false,
+      defaultValue: false
+    }),
     purchases: Property.Json({
       displayName: 'Purchases',
       description: undefined,
