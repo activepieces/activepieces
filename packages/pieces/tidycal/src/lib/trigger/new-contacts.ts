@@ -1,4 +1,4 @@
-import { createTrigger, OAuth2PropertyValue, TriggerStrategy } from "@activepieces/pieces-framework";
+import { createTrigger, TriggerStrategy } from "@activepieces/pieces-framework";
 import { DedupeStrategy, HttpMethod, Polling, pollingHelper } from "@activepieces/pieces-common";
 import { calltidycalapi } from "../common";
 import { tidyCalAuth } from "../../";
