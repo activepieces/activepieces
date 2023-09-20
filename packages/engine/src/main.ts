@@ -27,7 +27,7 @@ import { triggerHelper } from './lib/helper/trigger-helper';
 import { Piece } from '@activepieces/pieces-framework';
 import { VariableService } from './lib/services/variable-service';
 import { testExecution } from './lib/helper/test-execution-context';
-import { loggerUtils } from './lib/helper/logging-utils';
+import { loggingUtils } from './lib/helper/logging-utils';
 
 const initFlowExecutor = (input: ExecuteFlowOperation): FlowExecutor => {
   const { flowVersion } = input
@@ -105,7 +105,7 @@ const executeFlow = async (input?: ExecuteFlowOperation): Promise<void> => {
 
     writeOutput({
       status: EngineResponseStatus.OK,
-      response: await loggerUtils.trimExecution(output)
+      response: await loggingUtils.trimExecution(output)
     })
   } catch (e) {
     console.error(e);
