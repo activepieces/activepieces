@@ -18,8 +18,10 @@ export const FlowTemplate = Type.Object({
     blogUrl: Type.Optional(Type.String()),
     template: FlowVersionTemplate,
     userId: Type.Union([Type.Null(), Type.String()]),
-    user: Type.Optional(UserMeta),
+    user: Type.Optional(Type.Partial(UserMeta)),
     imageUrl: Type.Union([Type.Null(), Type.String()]),
+    featuredDescription:Type.Optional(Type.String()),
+    isFeatured:Type.Optional( Type.Boolean())
 })
 
 export type FlowTemplate = Static<typeof FlowTemplate>

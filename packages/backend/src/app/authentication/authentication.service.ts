@@ -17,7 +17,7 @@ export const authenticationService = {
             await flagService.save({ id: ApFlagId.USER_CREATED, value: true })
 
             const project = await projectService.create({
-                displayName: 'Project',
+                displayName: user.firstName + '\'s Project',
                 ownerId: user.id,
             })
 
