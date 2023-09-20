@@ -1,18 +1,17 @@
-import { ActionType, ExecutionOutput, LoopOnItemsStepOutput, StepOutput, applyFunctionToValues } from "@activepieces/shared";
+import { ActionType, ExecutionOutput, LoopOnItemsStepOutput, MAX_LOG_SIZE, StepOutput, applyFunctionToValues } from "@activepieces/shared";
 import sizeof from "object-sizeof";
 import { isMemoryFilePath } from "../services/files.service";
 
-const TRIM_SIZE_BYTE = 512 * 1024;
 const TRUNCATION_TEXT_PLACEHOLDER = '(truncated)'
 
-export const loggerUtils = {
-    async trimExecution(executionState: ExecutionOutput) {
-        const steps = executionState.executionState.steps;
+export const loggingUtils = {
+    async trimExecution(executionOutput: ExecutionOutput) {
+        const steps = executionOutput.executionState.steps;
         for (const stepName in steps) {
             const stepOutput = steps[stepName];
             steps[stepName] = await trimStepOutput(stepOutput);
         }
-        return executionState;
+        return executionOutput;
     }
 }
 
@@ -40,7 +39,7 @@ async function trimStepOutput(stepOutput: StepOutput): Promise<StepOutput> {
     return modified;
 }
 
-const trim = async (obj: unknown) => {
+const trim = async (obj: unknown): Promise<unknown> => {
     if (isMemoryFilePath(obj)) {
         return TRUNCATION_TEXT_PLACEHOLDER
     }
@@ -70,7 +69,7 @@ const objectEntriesExceedMaxSize = (objectEntries: [string, unknown][]): boolean
 }
 
 const objectExceedMaxSize = (obj: unknown): boolean => {
-    return sizeof(obj) > TRIM_SIZE_BYTE
+    return sizeof(obj) > MAX_LOG_SIZE
 }
 
 const isObject = (obj: unknown): obj is Record<string, unknown> => {
