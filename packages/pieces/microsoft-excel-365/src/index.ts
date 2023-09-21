@@ -19,7 +19,7 @@ import { convertToRangeAction } from "./lib/actions/convert-to-range";
 import { readNewRows } from "./lib/trigger/new-row-added";
 
 export const excelAuth = PieceAuth.OAuth2({
-  description: "Authentification pour Microsoft Excel",
+  description: "Authentication for Microsoft Excel 365",
   authUrl: "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
   tokenUrl: "https://login.microsoftonline.com/common/oauth2/v2.0/token",
   required: true,
