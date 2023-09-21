@@ -11,15 +11,20 @@ const polling: Polling<OAuth2PropertyValue, Record<string, any>> = {
     strategy: DedupeStrategy.TIMEBASED,
     items: async ({ auth, lastFetchEpochMS , propsValue }) => {
         const wantedFields = propsValue['choose_props'];
-        const fixedFields = wantedFields.map((field:{
-            name: string
-        }) => {
-            return field.name;
-        });
-        fixedFields.push('firstname');
-        fixedFields.push('lastname');
-        fixedFields.push('phone');
-        fixedFields.push('email');
+        let fixedFields : string[] ;
+        if( wantedFields === undefined ){
+            fixedFields = ['firstname', 'lastname', 'phone', 'email'];
+        }else{
+            fixedFields = wantedFields.map((field:{
+                name: string
+            }) => {
+                return field.name;
+            });
+            fixedFields.push('firstname');
+            fixedFields.push('lastname');
+            fixedFields.push('phone');
+            fixedFields.push('email');
+        }
         const currentValues = (await hubSpotClient.searchContacts(auth.access_token, fixedFields , {
             createdAt: lastFetchEpochMS
         })).results ?? []
@@ -37,7 +42,7 @@ export const newContactAdded = createTrigger({
     displayName: 'New Contact Added',
     description: 'Trigger when a new contact is added.',
     props: {
-        choose_props: hubspotCommon.choose_props,
+        contactProps: hubspotCommon.choose_props,
     },
     type: TriggerStrategy.POLLING,
     onEnable: async (context) => {
