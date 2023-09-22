@@ -28,7 +28,7 @@
         ],
         "scripts": ["node_modules/marked/marked.min.js"],
         "i18nMissingTranslation": "warning",
-        "localize": ["en"]
+        "localize": true
       },
       "configurations": {
         "production": {
@@ -50,8 +50,7 @@
               "with": "packages/ui/common/src/lib/environments/environment.prod.ts"
             }
           ],
-          "outputHashing": "all",
-          "localize": true
+          "outputHashing": "all"
         },
         "development": {
           "buildOptimizer": false,
@@ -60,6 +59,9 @@
           "extractLicenses": false,
           "sourceMap": true,
           "namedChunks": true
+        },
+        "fr": {
+          "localize": ["fr"]
         }
       },
       "defaultConfiguration": "production"
@@ -72,6 +74,9 @@
         },
         "development": {
           "browserTarget": "ui-core:build:development"
+        },
+        "fr": {
+          "browserTarget": "ui-core:build:development,fr"
         }
       },
       "defaultConfiguration": "development",
@@ -113,14 +118,7 @@
   "i18n": {
     "sourceLocale": "en-US",
     "locales": {
-      "fr": {
-        "translation": "packages/ui/core/src/locale/messages.fr.xlf",
-        "baseHref": "fr"
-      },
-      "en": {
-        "translation": "packages/ui/core/src/locale/messages.en.xlf",
-        "baseHref": ""
-      }
+      "fr": "packages/ui/core/src/locale/messages.fr.xlf"
     }
   }
 }
