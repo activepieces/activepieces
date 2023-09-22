@@ -14,3 +14,5 @@ export * from './lib/store/builder/flow-instance/flow-instance.action';
 export * from './lib/store/builder/viewmode/view-mode.action';
 export * from './lib/store/builder/canvas/canvas.action';
 export * from './lib/utils/stepRunResult';
+
+import '@angular/localize/init';
