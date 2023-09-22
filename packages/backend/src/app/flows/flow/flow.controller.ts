@@ -1,4 +1,4 @@
-import { FastifyInstance, FastifyRequest } from 'fastify'
+import { FastifyRequest } from 'fastify'
 import {
     CreateFlowRequest,
     FlowId,
@@ -14,10 +14,11 @@ import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { flowService } from './flow.service'
 import { CountFlowsRequest } from '@activepieces/shared'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 
 const DEFUALT_PAGE_SIZE = 10
 
-export const flowController = async (fastify: FastifyInstance) => {
+export const flowController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
     fastify.post(
         '/',
@@ -26,11 +27,7 @@ export const flowController = async (fastify: FastifyInstance) => {
                 body: CreateFlowRequest,
             },
         },
-        async (
-            request: FastifyRequest<{
-                Body: CreateFlowRequest
-            }>,
-        ) => {
+        async (request) => {
             return await flowService.create({ projectId: request.principal.projectId, request: request.body })
         },
     )
@@ -65,11 +62,7 @@ export const flowController = async (fastify: FastifyInstance) => {
                 querystring: ListFlowsRequest,
             },
         },
-        async (
-            request: FastifyRequest<{
-                Querystring: ListFlowsRequest
-            }>,
-        ) => {
+        async (request) => {
             return flowService.list({
                 projectId: request.principal.projectId,
                 folderId: request.query.folderId,
@@ -151,10 +144,10 @@ export const flowController = async (fastify: FastifyInstance) => {
                     flowId: FlowId
                 }
             }>,
-            _reply,
+            reply,
         ) => {
             await flowService.delete({ projectId: request.principal.projectId, flowId: request.params.flowId })
-            _reply.status(StatusCodes.OK).send()
+            return reply.status(StatusCodes.OK).send()
         },
     )
 

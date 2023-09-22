@@ -19,6 +19,7 @@ import { Observable } from 'rxjs';
 export class FeaturedTemplateCardComponent implements OnInit {
   useTemplate$: Observable<Flow>;
   showFullDescription = false;
+  readonly SEE_MORE_LIMIT = 255;
   @Output() useTemplateClicked = new EventEmitter<FlowTemplate>();
   @Input() template: FlowTemplate;
   activepiecesTeam = false;
@@ -26,8 +27,9 @@ export class FeaturedTemplateCardComponent implements OnInit {
   @Input() folderId?: FolderId | null;
   constructor(private cd: ChangeDetectorRef) {}
   ngOnInit(): void {
-    this.activepiecesTeam =
-      this.template.user?.email.endsWith('activepieces.com') || false;
+    this.activepiecesTeam = this.template.user
+      ? this.template.user.email?.endsWith('activepieces.com') || false
+      : false;
   }
   useTemplate() {
     this.useTemplateClicked.emit(this.template);

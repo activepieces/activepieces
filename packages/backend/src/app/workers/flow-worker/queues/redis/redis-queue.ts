@@ -114,6 +114,13 @@ export const redisQueueManager: QueueManager = {
     },
 }
 
+
+type MaybeJob = Job<ScheduledJobData, unknown> | undefined
+
+const jobDataSchemaVersionIsNotLatest = (job: MaybeJob): job is Job<ScheduledJobData, unknown> => {
+    return !isNil(job) && !isNil(job.data) && job.data.schemaVersion !== LATEST_JOB_DATA_SCHEMA_VERSION
+}
+
 const migrateScheduledJobs = async (): Promise<void> => {
     const migrationLock = await acquireLock({
         key: 'jobs_lock',
@@ -122,9 +129,9 @@ const migrateScheduledJobs = async (): Promise<void> => {
     try {
         logger.info('[migrateScheduledJobs] Starting migration')
         let migratedJobs = 0
-        const scheduledJobs = await scheduledJobQueue.getJobs()
+        const scheduledJobs: MaybeJob[] = await scheduledJobQueue.getJobs()
         logger.info(`[migrateScheduledJobs] Found  ${scheduledJobs.length} total jobs`)
-        const jobsToMigrate = scheduledJobs.filter((job) => job.data.schemaVersion !== LATEST_JOB_DATA_SCHEMA_VERSION)
+        const jobsToMigrate = scheduledJobs.filter(jobDataSchemaVersionIsNotLatest)
         for (const job of jobsToMigrate) {
             // Cast as we are not sure about the schema
             let modifiedJobData = JSON.parse(JSON.stringify(job.data))

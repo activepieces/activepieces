@@ -554,6 +554,51 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "dennis-tra",
+      "name": "Dennis Trautwein",
+      "avatar_url": "https://avatars.githubusercontent.com/u/11836793?v=4",
+      "profile": "https://dtrautwein.eu",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "inspiredclick",
+      "name": "Andrew Rosenblatt",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1548613?v=4",
+      "profile": "https://github.com/inspiredclick",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "w95",
+      "name": "rika",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6433752?v=4",
+      "profile": "https://github.com/w95",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "cyrilselasi",
+      "name": "Cyril Selasi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/7190330?v=4",
+      "profile": "https://github.com/cyrilselasi",
+      "contributions": [
+        "plugin"
+      ]
+    },
+    {
+      "login": "nijfranck",
+      "name": "Franck Nijimbere",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9940307?v=4",
+      "profile": "http://nijfranck.github.io",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

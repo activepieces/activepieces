@@ -1,13 +1,16 @@
-import { ActivepiecesError, apId, ErrorCode, File, FileId, ProjectId } from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, File, FileCompression, FileId, FileType, ProjectId } from '@activepieces/shared'
 import { isNil } from '@activepieces/shared'
 import { databaseConnection } from '../database/database-connection'
 import { logger } from '../helper/logger'
 import { FileEntity } from './file.entity'
+import { fileCompressor } from './utils/file-compressor'
 
 type SaveParams = {
     fileId?: FileId | undefined
     projectId: ProjectId
     data: Buffer
+    type: FileType
+    compression: FileCompression
 }
 
 type BaseOneParams = {
@@ -22,11 +25,13 @@ type DeleteOneParams = BaseOneParams
 const fileRepo = databaseConnection.getRepository<File>(FileEntity)
 
 export const fileService = {
-    async save({ fileId, projectId, data }: SaveParams): Promise<File> {
+    async save({ fileId, projectId, data, type, compression }: SaveParams): Promise<File> {
         const file = {
             id: fileId ?? apId(),
             projectId,
             data,
+            type,
+            compression,
         }
 
         const savedFile = await fileRepo.save(file)
@@ -37,10 +42,22 @@ export const fileService = {
     },
 
     async getOne({ projectId, fileId }: GetOneParams): Promise<File | null> {
-        return await fileRepo.findOneBy({
+        const file = await fileRepo.findOneBy({
             projectId,
             id: fileId,
         })
+
+        if (isNil(file)) {
+            return null
+        }
+
+        const decompressedData = await fileCompressor.decompress({
+            data: file.data,
+            compression: file.compression,
+        })
+
+        file.data = decompressedData
+        return file
     },
 
     async getOneOrThrow(params: GetOneParams): Promise<File> {

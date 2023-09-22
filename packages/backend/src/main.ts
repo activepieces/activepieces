@@ -7,17 +7,12 @@ import { getEdition } from './app/helper/secret-helper'
 import { ApEdition } from '@activepieces/shared'
 import { seedDevData } from './app/database/seeds/dev-seeds'
 import { flowQueueConsumer } from './app/workers/flow-worker/flow-queue-consumer'
-import { app } from './app/app'
+import { setupApp } from './app/app'
+import { FastifyInstance } from 'fastify'
+import { projectModule } from './app/project/project-module'
 
-const start = async () => {
+const start = async (app: FastifyInstance): Promise<void> => {
     try {
-        setupTimeZone()
-        validateEnvPropsOnStartup()
-        await databaseConnection.initialize()
-        await databaseConnection.runMigrations()
-
-        await seedDevData()
-
         const edition = getEdition()
         logger.info(`Activepieces ${edition} Edition`)
         switch (edition) {
@@ -25,7 +20,8 @@ const start = async () => {
             case ApEdition.ENTERPRISE:
                 break
             case ApEdition.COMMUNITY:
-                app.register(authenticationModule)
+                await app.register(authenticationModule)
+                await app.register(projectModule)
                 break
         }
         await app.listen({
@@ -41,7 +37,7 @@ const start = async () => {
  / ____ \\  | |____     | |     _| |_     \\  /    | |____  | |       _| |_  | |____  | |____  | |____   ____) |
 /_/    \\_\\  \\_____|    |_|    |_____|     \\/     |______| |_|      |_____| |______|  \\_____| |______| |_____/
 
-The application started on ${system.get(SystemProp.FRONTEND_URL)}, as specified by the AP_FRONTEND_URL variable.
+The application started on ${system.get(SystemProp.FRONTEND_URL)}, as specified by the AP_FRONTEND_URL variables.
     `)
     }
     catch (err) {
@@ -50,19 +46,17 @@ The application started on ${system.get(SystemProp.FRONTEND_URL)}, as specified 
     }
 }
 
-start()
-
 // This might be needed as it can be called twice
 let shuttingDown = false
 
-function setupTimeZone() {
+function setupTimeZone(): void {
     // It's important to set the time zone to UTC when working with dates in PostgreSQL.
     // If the time zone is not set to UTC, there can be problems when storing dates in UTC but not considering the UTC offset when converting them back to local time. This can lead to incorrect fields being displayed for the created
     // https://stackoverflow.com/questions/68240368/typeorm-find-methods-returns-wrong-timestamp-time
     process.env.TZ = 'UTC'
 }
 
-const stop = async () => {
+const stop = async (app: FastifyInstance): Promise<void> => {
     if (shuttingDown) return
     shuttingDown = true
 
@@ -79,5 +73,27 @@ const stop = async () => {
     }
 }
 
-process.on('SIGINT', stop)
-process.on('SIGTERM', stop)
+const main = async (): Promise<void> => {
+
+    setupTimeZone()
+    await validateEnvPropsOnStartup()
+    await databaseConnection.initialize()
+    await databaseConnection.runMigrations()
+    await seedDevData()
+    const app = await setupApp()
+
+    process.on('SIGINT', () => {
+        stop(app)
+            .catch((e) => logger.error(e, '[Main#stop]'))
+    })
+
+    process.on('SIGTERM', () => {
+        stop(app)
+            .catch((e) => logger.error(e, '[Main#stop]'))
+    })
+
+    await start(app)
+}
+
+main()
+    .catch((e) => logger.error(e, '[Main#main]'))
