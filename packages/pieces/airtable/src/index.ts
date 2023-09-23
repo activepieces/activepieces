@@ -12,7 +12,7 @@ export const airtableAuth = PieceAuth.SecretText({
     1. Log in to your Airtable account.
     2. Visit https://airtable.com/create/tokens/ to create one
     3. Click on "+ Add a base" and select the base you want to use or all bases.
-    4. Click on "+ Add a scope" and select "data.records.read" and "schema.bases.read".
+    4. Click on "+ Add a scope" and select "data.records.read", "data.records.write" and "schema.bases.read".
     5. Click on "Create token" and copy the token.
     `,
     validate: async (auth) => {
