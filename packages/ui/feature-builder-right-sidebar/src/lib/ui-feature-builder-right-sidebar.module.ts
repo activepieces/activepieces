@@ -25,7 +25,7 @@ import { ScrollingModule } from '@angular/cdk/scrolling';
     UiFeatureBuilderFormControlsModule,
     MatTabsModule,
     UiFeatureBuilderTestStepsModule,
-    ScrollingModule
+    ScrollingModule,
   ],
   declarations: [
     EditStepFormContainerComponent,
