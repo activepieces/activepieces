@@ -5,11 +5,27 @@ import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-com
 import { hubSpotAuthentication } from '../common/props'
 import { hubSpotClient } from '../common/client';
 import dayjs from 'dayjs';
+import { hubspotCommon } from '../common';
 
-const polling: Polling<OAuth2PropertyValue, Record<string, never>> = {
+const polling: Polling<OAuth2PropertyValue, Record<string, any>> = {
     strategy: DedupeStrategy.TIMEBASED,
-    items: async ({ auth, lastFetchEpochMS }) => {
-        const currentValues = (await hubSpotClient.searchContacts(auth.access_token, {
+    items: async ({ auth, lastFetchEpochMS , propsValue }) => {
+        const wantedFields = propsValue['contactProps'];
+        let fixedFields : string[] ;
+        if( wantedFields === undefined ){
+            fixedFields = ['firstname', 'lastname', 'phone', 'email'];
+        }else{
+            fixedFields = wantedFields.map((field:{
+                name: string
+            }) => {
+                return field.name;
+            });
+            fixedFields.push('firstname');
+            fixedFields.push('lastname');
+            fixedFields.push('phone');
+            fixedFields.push('email');
+        }
+        const currentValues = (await hubSpotClient.searchContacts(auth.access_token, fixedFields , {
             createdAt: lastFetchEpochMS
         })).results ?? []
         const items = currentValues.map((item: { createdAt: string }) => ({
@@ -25,7 +41,9 @@ export const newContactAdded = createTrigger({
     name: 'new_contact',
     displayName: 'New Contact Added',
     description: 'Trigger when a new contact is added.',
-    props: {},
+    props: {
+        contactProps: hubspotCommon.choose_props,
+    },
     type: TriggerStrategy.POLLING,
     onEnable: async (context) => {
         await pollingHelper.onEnable(polling, {
