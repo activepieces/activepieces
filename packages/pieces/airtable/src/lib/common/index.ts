@@ -1,7 +1,8 @@
 import Airtable from "airtable";
 import { Property, DynamicPropsValue } from "@activepieces/pieces-framework";
 import { HttpMethod, AuthenticationType, httpClient, HttpRequest } from "@activepieces/pieces-common";
-import { AirtableBase, AirtableEnterpriseFields, AirtableField, AirtableFieldMapping, AirtableRecord, AirtableTable } from "./models";
+import { AirtableBase, AirtableEnterpriseFields, AirtableField, AirtableFieldMapping, AirtableRecord, AirtableTable , AirtableFieldType} from "./models";
+import { isNil } from "lodash";
 
 export const airtableCommon = {
   base: Property.Dropdown({
@@ -105,7 +106,7 @@ export const airtableCommon = {
     displayName: 'Table',
     required: true,
     refreshers: ["base", "tableId"],
-
+    
     props: async ({ auth, base, tableId }) => {
       if (!auth) return {}
       if (!base) return {}
@@ -120,35 +121,38 @@ export const airtableCommon = {
           tableId: tableId as unknown as string
         });
 
-        airtable.fields.map((field: AirtableField) => {
-          //skip these types
-          if (AirtableEnterpriseFields.includes(field.type)) return
-
-          const params = {
-            displayName: field.name,
-            description: (
-              (['date', 'dateTime'].includes(field.type))
-                ? `${field.description? field.description : ''}Expected format: mmmm d,yyyy`
-                : field.description
-            ),
-            required: false
-          }
-
-          if (field.type === "singleSelect" || field.type === "multipleSelects") {
-            const options = field.options?.choices.map((option: { id: string, name: string }) => ({
-              value: option.id,
-              label: option.name
-            }))
-
-            fields[field.id] = (AirtableFieldMapping[field.type])({
-              ...params,
-              options: {
-                options: options ?? []
-              }
-            })
-          } else {
-            fields[field.id] = (AirtableFieldMapping[field.type])(params)
-          }
+        airtable.fields.forEach((field: AirtableField) => {
+          if (!AirtableEnterpriseFields.includes(field.type)){
+            const params = {
+              displayName: field.name,
+              description: (
+                (['date', 'dateTime'].includes(field.type))
+                  ? `${field.description? field.description : ''}Expected format: mmmm d,yyyy`
+                  : field.description
+              ),
+              required: false
+            }
+            if( isNil(AirtableFieldMapping[field.type]) ){
+              fields[field.id] = Property.ShortText({
+                ...params,
+              })
+            }  
+            if (field.type === "singleSelect" || field.type === "multipleSelects") {
+              const options = field.options?.choices.map((option: { id: string, name: string }) => ({
+                value: option.id,
+                label: option.name
+              }))
+  
+              fields[field.id] = (AirtableFieldMapping[field.type])({
+                ...params,
+                options: {
+                  options: options ?? []
+                }
+              })
+            } else {
+              fields[field.id] = (AirtableFieldMapping[field.type])(params)
+            }
+          } 
         })
       } catch (e) {
         console.debug(e)
@@ -157,8 +161,41 @@ export const airtableCommon = {
       return fields
     }
   }),
+  
+  async createNewFields( auth : string , base : string , tableId : string , fields : Record<string,unknown>){
+    if( !auth ) return fields;
+    if( !base ) return fields;
+    if( !tableId ) return fields;
 
+    const oldFieldNames = Object.keys(fields);
+    const newFields : Record<string,unknown> = {};
 
+    try{
+      const airtable: AirtableTable = await airtableCommon.fetchTable({
+        token: auth,
+        baseId: base,
+        tableId: tableId
+      });
+
+      let count = 0;
+      airtable.fields.forEach((field) => {
+        if ( !AirtableEnterpriseFields.includes(field.type) ){
+          const key = field.name;
+          if( field.type === "multipleAttachments" ){
+            newFields[key] = [
+              {
+                url: fields[oldFieldNames[count]] as string,
+              }
+            ];
+          }else newFields[key] = fields[oldFieldNames[count]];
+          count++;
+        }
+      });
+    }catch(e){
+      console.debug(e);
+    }
+    return newFields;
+  },
   async getTableSnapshot(params: Params) {
     Airtable.configure({
       apiKey: params.personalToken,
