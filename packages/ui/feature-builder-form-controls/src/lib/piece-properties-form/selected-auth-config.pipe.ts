@@ -9,10 +9,10 @@ export class SelectedAuthConfigsPipe implements PipeTransform {
   transform(
     value: ConnectionDropdownItem[],
     pieceName: string,
-    controlValue:string
+    controlValue: string
   ): ConnectionDropdownItem | undefined {
-    return value.filter(
-      (item) => item.label.appName === pieceName || !item.label.appName
-    ).find(item=> item.value === controlValue);
+    return value
+      .filter((item) => item.label.appName === pieceName || !item.label.appName)
+      .find((item) => item.value === controlValue);
   }
 }

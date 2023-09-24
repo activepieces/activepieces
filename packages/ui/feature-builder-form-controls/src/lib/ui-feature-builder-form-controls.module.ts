@@ -44,7 +44,6 @@ const exportedDeclarations = [
   PiecePropertiesFormComponent,
   BuilderAutocompleteMentionsDropdownComponent,
   BuilderAutocompleteDropdownHandlerComponent,
-  
 ];
 @NgModule({
   imports: [
@@ -77,7 +76,7 @@ const exportedDeclarations = [
     AuthConfigsPipe,
     AutocompleteDropdownSizesButtonsComponent,
     DropdownPropertySearchPipe,
-    SelectedAuthConfigsPipe
+    SelectedAuthConfigsPipe,
   ],
   exports: [...exportedDeclarations],
 })
