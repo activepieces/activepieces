@@ -8,7 +8,7 @@ import { newFolder } from './lib/triggers/new-folder';
 
 export const googleDriveAuth = PieceAuth.OAuth2({
     description: "",
-    
+
     authUrl: "https://accounts.google.com/o/oauth2/auth",
     tokenUrl: "https://oauth2.googleapis.com/token",
     required: true,
@@ -20,7 +20,7 @@ export const googleDrive = createPiece({
     logoUrl: 'https://cdn.activepieces.com/pieces/google-drive.png',
 	actions: [googleDriveCreateNewFolder, googleDriveCreateNewTextFile, googleDriveUploadFile],
 	displayName: "Google Drive",
-	authors: ['kanarelo', 'BastienMe', 'MoShizzle'],
+	authors: ['kanarelo', 'BastienMe', 'MoShizzle', 'vitalini'],
 	triggers: [newFile, newFolder],
     auth: googleDriveAuth,
 });

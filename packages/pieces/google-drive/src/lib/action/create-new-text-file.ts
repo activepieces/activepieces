@@ -20,12 +20,31 @@ export const googleDriveCreateNewTextFile = createAction({
         description: 'The text content to add to file',
         required: true,
       }),
+      fileType: Property.StaticDropdown({
+        displayName: 'Content type',
+        description: 'Select file type',
+        required: true,
+        defaultValue: 'plain/text',
+        options: {
+          options: [
+            {
+              label: 'Text', value: 'plain/text',
+            },
+            {
+              label: 'CSV', value: 'text/csv',
+            },
+            {
+              label: 'XML', value: 'text/xml',
+            },
+          ],
+        },
+      }),
       parentFolder: common.properties.parentFolder,
       include_team_drives: common.properties.include_team_drives
     },
     async run(context) {
       const meta = {
-        'mimeType': "plain/text",
+        'mimeType': context.propsValue.fileType,
         'name': context.propsValue.fileName,
         ...(context.propsValue.parentFolder ? { 'parents': [context.propsValue.parentFolder] } : {})
       }
@@ -35,7 +54,7 @@ export const googleDriveCreateNewTextFile = createAction({
 
       const form = new FormData()
       form.append("Metadata", metaBuffer, { contentType: 'application/json' });
-      form.append("Media", textBuffer, { contentType: 'plain/text' });
+      form.append("Media", textBuffer, { contentType: context.propsValue.fileType });
 
       const result = await httpClient.sendRequest({
         method: HttpMethod.POST,
