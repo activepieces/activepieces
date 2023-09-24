@@ -10,7 +10,7 @@ import { hubspotCommon } from '../common';
 const polling: Polling<OAuth2PropertyValue, Record<string, any>> = {
     strategy: DedupeStrategy.TIMEBASED,
     items: async ({ auth, lastFetchEpochMS , propsValue }) => {
-        const wantedFields = propsValue['choose_props'];
+        const wantedFields = propsValue['contactProps'];
         let fixedFields : string[] ;
         if( wantedFields === undefined ){
             fixedFields = ['firstname', 'lastname', 'phone', 'email'];
