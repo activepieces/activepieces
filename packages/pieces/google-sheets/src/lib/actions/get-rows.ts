@@ -1,6 +1,6 @@
 import { Property, Store, StoreScope, Validators, createAction } from "@activepieces/pieces-framework";
 import { googleSheetsAuth } from "../..";
-import { getGoogleSheetRows, googleSheetsCommon } from "../common/common";
+import { getAllGoogleSheetRows, getGoogleSheetRows, googleSheetsCommon } from "../common/common";
 import { isNil } from "@activepieces/shared";
 
 async function getRows( store: Store , accessToken:string , spreadsheetId:string , sheetId:number , memKey:string , groupSize:number , testing:boolean ){
@@ -24,7 +24,7 @@ async function getRows( store: Store , accessToken:string , spreadsheetId:string
     if (startingRow < 1) throw Error('Starting row : ' + startingRow + ' is less than 1' + memVal);
     const endRow = startingRow + groupSize;
     if( testing == false )await store.put(memKey, endRow, StoreScope.FLOW);
-    
+
     const row = await getGoogleSheetRows({
         accessToken: accessToken,
         sheetName: sheetName,
@@ -32,6 +32,16 @@ async function getRows( store: Store , accessToken:string , spreadsheetId:string
         rowIndex_s: startingRow,
         rowIndex_e: endRow - 1
     });
+
+    if( row.length == 0 ){
+        const allRows = await getAllGoogleSheetRows({
+            accessToken: accessToken,
+            sheetName: sheetName,
+            spreadSheetId: spreadsheetId,
+        });
+        const lastRow = allRows.length + 1;
+        if( testing == false )await store.put(memKey, lastRow, StoreScope.FLOW);
+    }
 
     return row;
 }
