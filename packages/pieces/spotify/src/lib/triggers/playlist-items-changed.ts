@@ -28,13 +28,19 @@ export default createTrigger({
         const newHash = createHash('md5').update(items.map(item => item.track.id).join(',')).digest('hex')
         if (oldHash != newHash) {
             await store.put('playlist_changed_trigger_hash', newHash, StoreScope.FLOW)
-            return [{ total: items.length, items }]
+            return {
+                payload: [{ total: items.length, items }],
+            }
         }
-        return []
+        return {
+            payload: [],
+        }
     },
     test: async ({auth,propsValue}) => {
         const client = makeClient({auth})
         const items = await client.getAllPlaylistItems(propsValue.playlist_id as string)
-        return [{ total: items.length, items }]
+        return {
+            payload: [{ total: items.length, items }],
+        }
     }
 })

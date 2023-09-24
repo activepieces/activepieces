@@ -42,18 +42,26 @@ export const newCompanyAdded = createTrigger({
         })
     },
     run: async (context) => {
-        return await pollingHelper.poll(polling, {
+        const payload = await pollingHelper.poll(polling, {
             auth: context.auth,
             store: context.store,
             propsValue: context.propsValue,
         });
+
+        return {
+            payload,
+        }
     },
     test: async (context) => {
-        return await pollingHelper.test(polling, {
+        const payload = await pollingHelper.test(polling, {
             auth: context.auth,
             store: context.store,
             propsValue: context.propsValue,
         });
+
+        return {
+            payload,
+        };
     },
 
 

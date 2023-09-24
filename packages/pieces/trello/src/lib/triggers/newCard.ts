@@ -44,32 +44,44 @@ export const newCardTrigger = createTrigger({
             webhook_id,
         );
     },
-    async run(context){
+    async run(context) {
         const body = context.payload.body as TrelloNewCard;
-        if( body.action.display.translationKey !== 'action_create_card' ) {
-            return [];
+        if (body.action.display.translationKey !== 'action_create_card') {
+            return {
+                payload: [],
+            };
         }
-        if( context.propsValue.list_id_opt ) {
-            if( body.action.display.entities.list.id !== context.propsValue.list_id_opt ) {
-                return [];
+        if (context.propsValue.list_id_opt) {
+            if (body.action.display.entities.list.id !== context.propsValue.list_id_opt) {
+                return {
+                    payload: [],
+                };
             }
         }
 
-        return [body];
+        return {
+            payload: [body],
+        };
     },
-    async test(context){
+    async test(context) {
         const body = context.payload.body as TrelloNewCard;
-        if( body.action.display.translationKey !== 'action_create_card' ) {
-            return [];
+        if (body.action.display.translationKey !== 'action_create_card') {
+            return {
+                payload: [],
+            };
         }
         // know check if the user chosen a list
-        if( context.propsValue.list_id_opt ) {
-            if( body.action.display.entities.list.id !== context.propsValue.list_id_opt ) {
-                return [];
+        if (context.propsValue.list_id_opt) {
+            if (body.action.display.entities.list.id !== context.propsValue.list_id_opt) {
+                return {
+                    payload: [],
+                };
             }
         }
 
-        return [body];
+        return {
+            payload: [body],
+        };
     },
     sampleData: {},
 });

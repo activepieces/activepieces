@@ -44,13 +44,20 @@ export const everyDayTrigger = createTrigger({
             timezone: ctx.propsValue.timezone,
         });
     },
-    run(ctx) {
+    async run(ctx) {
         const hourOfTheDay = validateHours(ctx.propsValue.hour_of_the_day);
-        return Promise.resolve([{
-            hour_of_the_day: hourOfTheDay,
-            timezone: ctx.propsValue.timezone,
-            cron_expression: ctx.propsValue.run_on_weekends ? `0 ${hourOfTheDay}  * * *` : `0 ${hourOfTheDay} * * 1-5`
-        }]);
+
+        const payload = [
+            {
+                hour_of_the_day: hourOfTheDay,
+                timezone: ctx.propsValue.timezone,
+                cron_expression: ctx.propsValue.run_on_weekends ? `0 ${hourOfTheDay}  * * *` : `0 ${hourOfTheDay} * * 1-5`
+            }
+        ];
+
+        return {
+            payload,
+        }
     },
     onDisable: async () => {
         console.log('onDisable');

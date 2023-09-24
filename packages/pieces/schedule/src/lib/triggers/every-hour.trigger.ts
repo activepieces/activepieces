@@ -21,12 +21,19 @@ export const everyHourTrigger = createTrigger({
                 timezone: 'UTC'
             });
         },
-        run(ctx) {
+        async run(ctx) {
             const cronExpression = ctx.propsValue.run_on_weekends ? `0 * * * *` : `0 * * * 1-5`
-            return Promise.resolve([{
-                cron_expression: cronExpression,
-                timezone: 'UTC'
-            }]);
+
+            const payload = [
+                {
+                    cron_expression: cronExpression,
+                    timezone: 'UTC'
+                }
+            ];
+
+            return {
+                payload,
+            }
         },
         onDisable: async () => {
             console.log('onDisable');

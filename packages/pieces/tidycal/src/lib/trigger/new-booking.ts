@@ -53,18 +53,26 @@ export const tidycalnewbooking = createTrigger({
         })
     },
     run: async (context) => {
-        return await pollingHelper.poll(polling, {
+        const payload = await pollingHelper.poll(polling, {
             auth: context.auth,
             store: context.store,
             propsValue: context.propsValue,
         });
+
+        return {
+            payload,
+        }
     },
     test: async (context) => {
-        return await pollingHelper.test(polling, {
+        const payload = await pollingHelper.test(polling, {
             auth: context.auth,
             store: context.store,
             propsValue: context.propsValue,
         });
+
+        return {
+            payload,
+        };
     },
 });
 
@@ -78,7 +86,7 @@ const polling: Polling<string, Record<string, never>> = {
                 created_at: string,
             }[]
         }>(HttpMethod.GET, `bookings?cancelled=false`, auth, undefined);
-        
+
         const createdBookings = currentValues.body;
         const bookings = createdBookings.data.filter((item) => {
             const created_at = dayjs(item.created_at);

@@ -69,8 +69,12 @@ export const newCommentTrigger = createTrigger({
 
     async run(context) {
       if ('event_type' in context.payload.body && context.payload.body["event_type"] === "PING") {
-        return [];
+        return {
+          payload: [],
+        };
       }
-      return [context.payload.body];
+      return {
+        payload: [context.payload.body],
+      };
     },
 })

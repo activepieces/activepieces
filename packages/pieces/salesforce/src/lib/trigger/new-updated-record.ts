@@ -31,11 +31,15 @@ export const newOrUpdatedRecord = createTrigger({
   sampleData: {},
   type: TriggerStrategy.POLLING,
   async test(ctx) {
-    return await pollingHelper.test(polling, {
+    const payload = await pollingHelper.test(polling, {
       auth: ctx.auth,
       store: ctx.store,
       propsValue: ctx.propsValue,
     });
+
+    return {
+      payload,
+    };
   },
   async onEnable(ctx) {
     await pollingHelper.onEnable(polling, {
@@ -52,11 +56,15 @@ export const newOrUpdatedRecord = createTrigger({
     });
   },
   async run(ctx) {
-    return await pollingHelper.poll(polling, {
+    const payload = await pollingHelper.poll(polling, {
       auth: ctx.auth,
       store: ctx.store,
       propsValue: ctx.propsValue,
     });
+
+    return {
+      payload,
+    };
   },
 });
 

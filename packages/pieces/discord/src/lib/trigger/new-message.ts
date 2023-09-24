@@ -101,7 +101,7 @@ export const newMessage = createTrigger({
             })
         },
         run: async (context) => {
-            return await pollingHelper.poll(polling, {
+            const payload = await pollingHelper.poll(polling, {
                 auth: context.auth,
                 store: context.store,
                 propsValue: {
@@ -109,9 +109,13 @@ export const newMessage = createTrigger({
                     limit: context.propsValue.limit ?? 50
                 },
             });
+
+            return {
+                payload,
+            }
         },
         test: async (context) => {
-            return await pollingHelper.test(polling, {
+            const payload = await pollingHelper.test(polling, {
                 auth: context.auth,
                 store: context.store,
                 propsValue: {
@@ -119,5 +123,9 @@ export const newMessage = createTrigger({
                     limit: context.propsValue.limit ?? 50
                 },
             });
+
+            return {
+                payload,
+            };
         }
 });

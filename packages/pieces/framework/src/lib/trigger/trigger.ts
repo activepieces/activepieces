@@ -15,21 +15,34 @@ export enum WebhookHandshakeStrategy {
   BODY_PARAM_PRESENT = 'BODY_PARAM_PRESENT'
 }
 
-export interface WebhookHandshakeConfiguration {
+export type WebhookHandshakeConfiguration = {
   strategy: WebhookHandshakeStrategy,
   paramName?: string
 }
 
-export interface WebhookResponse {
+export type WebhookResponse = {
   status: number,
-  body?: any,
+  body?: unknown,
   headers?: Record<string, string>
 }
+
+type TriggerRunResponse<TriggerRunResponseData> = {
+  payload: unknown[]
+  data?: TriggerRunResponseData
+}
+
+type TriggerRunHook<
+  PieceAuth extends PieceAuthProperty,
+  TriggerProps extends NonAuthPiecePropertyMap,
+  TS extends TriggerStrategy,
+  TriggerRunResponseData,
+> = (context: TestOrRunHookContext<PieceAuth, TriggerProps, TS>) => Promise<TriggerRunResponse<TriggerRunResponseData>>
 
 type CreateTriggerParams<
   PieceAuth extends PieceAuthProperty,
   TriggerProps extends NonAuthPiecePropertyMap,
   TS extends TriggerStrategy,
+  TriggerRunResponseData,
 > = {
   /**
    * A dummy parameter used to infer {@code PieceAuth} type
@@ -44,8 +57,8 @@ type CreateTriggerParams<
   onEnable: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>
   onHandshake?: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<WebhookResponse>
   onDisable: (context: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>
-  run: (context: TestOrRunHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>
-  test?: (context: TestOrRunHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>
+  run: TriggerRunHook<PieceAuth, TriggerProps, TS, TriggerRunResponseData>
+  test?: TriggerRunHook<PieceAuth, TriggerProps, TS, TriggerRunResponseData>
   requireAuth?: boolean
   sampleData: unknown
 }
@@ -54,6 +67,7 @@ export class ITrigger<
   TS extends TriggerStrategy,
   PieceAuth extends PieceAuthProperty,
   TriggerProps extends NonAuthPiecePropertyMap,
+  TriggerRunResponseData,
 > implements TriggerBase {
   constructor(
     public readonly name: string,
@@ -65,8 +79,8 @@ export class ITrigger<
     public readonly onEnable: (ctx: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>,
     public readonly onHandshake: (ctx: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<WebhookResponse>,
     public readonly onDisable: (ctx: TriggerHookContext<PieceAuth, TriggerProps, TS>) => Promise<void>,
-    public readonly run: (ctx: TestOrRunHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>,
-    public readonly test: (ctx: TestOrRunHookContext<PieceAuth, TriggerProps, TS>) => Promise<unknown[]>,
+    public readonly run: TriggerRunHook<PieceAuth, TriggerProps, TS, TriggerRunResponseData>,
+    public readonly test: TriggerRunHook<PieceAuth, TriggerProps, TS, TriggerRunResponseData>,
     public sampleData: unknown,
     public readonly requireAuth: boolean = true,
   ) { }
@@ -76,13 +90,15 @@ export type Trigger<
   PieceAuth extends PieceAuthProperty = any,
   TriggerProps extends NonAuthPiecePropertyMap = any,
   S extends TriggerStrategy = TriggerStrategy,
-> = ITrigger<S, PieceAuth, TriggerProps>
+  TriggerRunResponseData = unknown,
+> = ITrigger<S, PieceAuth, TriggerProps, TriggerRunResponseData>
 
 export const createTrigger = <
   TS extends TriggerStrategy,
   PieceAuth extends PieceAuthProperty,
   TriggerProps extends NonAuthPiecePropertyMap,
->(params: CreateTriggerParams<PieceAuth, TriggerProps, TS>) => {
+  TriggerRunResponseData,
+>(params: CreateTriggerParams<PieceAuth, TriggerProps, TS, TriggerRunResponseData>) => {
   return new ITrigger(
     params.name,
     params.displayName,
@@ -94,8 +110,10 @@ export const createTrigger = <
     params.onHandshake ?? (async () => ({ status: 200 })),
     params.onDisable,
     params.run,
-    params.test ?? (() => Promise.resolve([params.sampleData])),
+    params.test ?? defaultTestHook(params.sampleData),
     params.sampleData,
     params.requireAuth,
   )
 }
+
+const defaultTestHook = (sampleData: unknown) => () => Promise.resolve({ payload: [sampleData] });

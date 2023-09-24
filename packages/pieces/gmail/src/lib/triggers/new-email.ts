@@ -75,18 +75,26 @@ export const gmailNewEmailTrigger = createTrigger({
     });
   },
   async test({ auth, store, propsValue }) {
-    return pollingHelper.test(polling, {
+    const payload = await pollingHelper.test(polling, {
       auth,
       store,
       propsValue
     });
+
+    return {
+      payload,
+    };
   },
   async run({ auth, store, propsValue }) {
-    return pollingHelper.poll(polling, {
+    const payload = await pollingHelper.poll(polling, {
       auth,
       store,
       propsValue
     });
+
+    return {
+      payload,
+  };
   }
 });
 

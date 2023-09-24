@@ -38,18 +38,26 @@ export const tidycalnewcontact = createTrigger({
         })
     },
     run: async (context) => {
-        return await pollingHelper.poll(polling, {
+        const payload = await pollingHelper.poll(polling, {
             auth: context.auth,
             store: context.store,
             propsValue: context.propsValue,
         });
+
+        return {
+            payload,
+        }
     },
     test: async (context) => {
-        return await pollingHelper.test(polling, {
+        const payload = await pollingHelper.test(polling, {
             auth: context.auth,
             store: context.store,
             propsValue: context.propsValue,
         });
+
+        return {
+            payload,
+        };
     },
 });
 
@@ -63,7 +71,7 @@ const polling: Polling<string, Record<string, never>> = {
                 created_at: string,
             }[]
         }>(HttpMethod.GET, `contacts`, auth, undefined);
-        
+
         const createdcontacts = currentValues.body;
         const contact = createdcontacts.data.filter((item) => {
             const created_at = dayjs(item.created_at);

@@ -28,7 +28,9 @@ export const coupon = createTrigger({
     },
     //Return coupon data
     async run(context) {
-        return [context.payload.body];
+        return {
+            payload: [context.payload.body],
+        };
     },
 
     sampleData: {

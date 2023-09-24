@@ -146,14 +146,18 @@ export const issuesEventTrigger = createTrigger({
 
   async run(context) {
     const { actiontype } = context.propsValue;
-    if (isVerficationCall(context.payload.body, actiontype as string)) {
-      return [context.payload.body];
+    if (isVerificationCall(context.payload.body, actiontype as string)) {
+      return {
+        payload: [context.payload.body],
+      };
     }
-    return [];
+    return {
+      payload: [],
+    };
   },
 });
 
-function isVerficationCall(payload: Record<string, any>, actiontype: string) {
+function isVerificationCall(payload: Record<string, any>, actiontype: string) {
   if (actiontype == 'all') {
     return true;
   }

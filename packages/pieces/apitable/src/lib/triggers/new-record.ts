@@ -34,7 +34,7 @@ const polling: Polling<PiecePropValueSchema<typeof APITableAuth>, { datasheet: s
                 total: number
             }
         }>(request);
-        
+
         res.body.data.records = res.body.data.records.filter(record => record.updatedAt >= LastTime);
 
         return res.body.data.records.map(record => {
@@ -67,7 +67,11 @@ export const ApiTableNewRecord = createTrigger({
     },
     type: TriggerStrategy.POLLING,
     async test(context) {
-        return await pollingHelper.test(polling, { store: context.store, auth: context.auth, propsValue: {datasheet: context.propsValue.datasheet} });
+        const payload = await pollingHelper.test(polling, { store: context.store, auth: context.auth, propsValue: {datasheet: context.propsValue.datasheet} });
+
+        return {
+            payload,
+        }
     },
     async onEnable(context) {
         await pollingHelper.onEnable(polling, { store: context.store, auth: context.auth, propsValue: {datasheet: context.propsValue.datasheet} });
@@ -76,7 +80,10 @@ export const ApiTableNewRecord = createTrigger({
         await pollingHelper.onDisable(polling, { store: context.store, auth: context.auth, propsValue: {datasheet: context.propsValue.datasheet} });
     },
     async run(context) {
-        return await pollingHelper.poll(polling, { store: context.store, auth: context.auth, propsValue: {datasheet: context.propsValue.datasheet} });
+        const payload = await pollingHelper.poll(polling, { store: context.store, auth: context.auth, propsValue: {datasheet: context.propsValue.datasheet} });
+
+        return {
+            payload,
+        }
     },
 });
-  

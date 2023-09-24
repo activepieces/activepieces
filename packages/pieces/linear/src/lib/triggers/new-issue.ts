@@ -88,9 +88,13 @@ export const linearNewIssue = createTrigger({
     async run(context) {
         const body = context.payload.body as { action: string; data: unknown };
         if (body.action === 'create') {
-            return [body.data];
+            return {
+                payload: [body.data]
+            };
         }
-        return [];
+        return {
+            payload: [],
+        };
     },
 });
 

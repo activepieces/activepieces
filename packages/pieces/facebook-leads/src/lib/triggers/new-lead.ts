@@ -42,7 +42,9 @@ export const newLead = createTrigger({
             leadPings = context.payload.body.entry;
         }
 
-        return [leads];
+        return {
+            payload: [leads],
+        };
     },
     async test(context) {
         let form = context.propsValue.form as string;
@@ -54,6 +56,8 @@ export const newLead = createTrigger({
         }
 
         const data = await facebookLeadsCommon.loadSampleData(form, context.auth.access_token)
-        return [data.data]
+        return {
+            payload: [data.data],
+        }
     }
 })

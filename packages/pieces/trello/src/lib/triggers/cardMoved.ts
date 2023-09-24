@@ -51,29 +51,45 @@ export const cardMovedTrigger = createTrigger({
         const response = context.payload.body as TrelloCardMoved;
         const response_body = response.action.display;
         if( response.action.display.translationKey !== 'action_move_card_from_list_to_list' ) {
-            return [];
+            return {
+                payload: [],
+            };
         }
         if( response_body.entities.listAfter.id !== context.propsValue.list_id ) {
-            return [];
+            return {
+                payload: [],
+            };
         }
         if( response_body.entities.listBefore.id === context.propsValue.list_id ) {
-            return [];
+            return {
+                payload: [],
+            };
         }
-        return [response_body];
+        return {
+            payload: [response_body],
+        };
     },
     async test(context) {
         const response = context.payload.body as TrelloCardMoved;
         const response_body = response.action.display;
         if( response.action.display.translationKey !== 'action_move_card_from_list_to_list' ) {
-            return [];
+            return {
+                payload: [],
+            };
         }
         if( response_body.entities.listAfter.id !== context.propsValue.list_id ) {
-            return [];
+            return {
+                payload: [],
+            };
         }
         if( response_body.entities.listBefore.id === context.propsValue.list_id ) {
-            return [];
+            return {
+                payload: [],
+            };
         }
-        return [response_body];
+        return {
+            payload: [response_body],
+        };
     },
     sampleData: {},
 });

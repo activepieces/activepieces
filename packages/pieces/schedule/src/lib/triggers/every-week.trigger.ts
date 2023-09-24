@@ -51,16 +51,23 @@ export const everyWeekTrigger = createTrigger({
                 timezone: ctx.propsValue.timezone
             });
         },
-        run(ctx) {
+        async run(ctx) {
             const hourOfTheDay = validateHours(ctx.propsValue.hour_of_the_day);
             const dayOfTheWeek = validateWeekDays(ctx.propsValue.day_of_the_week);
             const cronExpression = `0 ${hourOfTheDay} * * ${dayOfTheWeek}`
-            return Promise.resolve([{
-                hour_of_the_day: hourOfTheDay,
-                day_of_the_week: dayOfTheWeek,
-                cron_expression: cronExpression,
-                timezone: ctx.propsValue.timezone
-            }]);
+
+            const payload = [
+                {
+                    hour_of_the_day: hourOfTheDay,
+                    day_of_the_week: dayOfTheWeek,
+                    cron_expression: cronExpression,
+                    timezone: ctx.propsValue.timezone
+                }
+            ];
+
+            return {
+                payload,
+            }
         },
         onDisable: async () => {
             console.log('onDisable');

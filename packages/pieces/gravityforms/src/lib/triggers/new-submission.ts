@@ -6,7 +6,7 @@ const markdown = `
 - Find and click on the "Webhook" plugin to activate it.
 - Now, locate the form where you want the trigger to occur.
 - Add a webhook to that form.
-- In the webhook settings, paste this URL: 
+- In the webhook settings, paste this URL:
   \`{{webhookUrl}}\`
 - Keep the other settings unchanged (default).
 `
@@ -30,9 +30,13 @@ export const gravityFormsNewSubmission = createTrigger({
         // Empty
     },
     async run(context) {
-        return [context.payload];
+        return {
+            payload: [context.payload],
+        }
     },
     async test(context) {
-        return [context.payload];
+        return {
+            payload: [context.payload],
+        }
     }
 });

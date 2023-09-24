@@ -36,13 +36,19 @@ export default createTrigger({
             const newHash = createHash('md5').update(paste.content + (context.propsValue.include_title ? paste.title : '')).digest('hex')
             if (oldHash != newHash) {
                 await context.store.put('paste_changed_trigger_hash', newHash, StoreScope.FLOW)
-                return [paste]
+                return {
+                    payload: [paste],
+                }
             }
-            return []
+            return {
+                payload: [],
+            }
         },
         test: async (context) => {
             const client = makeClient(context.auth, context.propsValue)
             const paste = await client.getPaste(context.propsValue.paste_id)
-            return [paste]
+            return {
+                payload: [paste],
+            }
         }
 })

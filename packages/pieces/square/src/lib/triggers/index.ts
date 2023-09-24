@@ -390,10 +390,14 @@ export const triggers = triggerData.map((trigger) =>
             // Ignored
         },
         test: async () => {
-            return [trigger.sampleData]
+            return {
+                payload: [trigger.sampleData],
+            }
         },
         run: async (context) => {
-            return [context.payload.body]
+            return {
+                payload: [context.payload.body],
+            }
         },
     })
 )

@@ -208,12 +208,19 @@ export const youtubeNewVideoTrigger = createTrigger({
             }
         }
     },
-    async test({ propsValue }): Promise<unknown[]> {
+    async test({ propsValue }) {
         const channelId = await getChannelId(propsValue.channel_identifier);
         if (!channelId) {
-            return [];
+            return {
+                payload: [],
+            };
         }
-        return (await getRssItems(channelId)) || [];
+
+        const payload = (await getRssItems(channelId)) || [];
+
+        return {
+            payload,
+        };
     },
     async onEnable({ propsValue, store }): Promise<void> {
         const channelId = await getChannelId(propsValue.channel_identifier);
@@ -232,14 +239,20 @@ export const youtubeNewVideoTrigger = createTrigger({
     async onDisable(): Promise<void> {
         return;
     },
-    async run({ store }): Promise<unknown[]> {
+    async run({ store }) {
         const channelId = await store.get<string>('channelId');
 
-        if (!channelId) return [];
+        if (!channelId) {
+            return {
+                payload: [],
+            };
+        }
 
         const items = (await getRssItems(channelId)) || [];
         if (items.length === 0) {
-            return [];
+            return {
+                payload: [],
+            };
         }
         const lastItemId = await store.get('lastFetchedYoutubeVideo');
         const storedLastUpdated = await store.get<string>('lastUpdatedYoutubeVideo');
@@ -251,7 +264,9 @@ export const youtubeNewVideoTrigger = createTrigger({
          * is replaced by the stream's video.
          */
         if (storedLastUpdated && dayjs(getUpdateDate(items?.[0])).isBefore(dayjs(storedLastUpdated))) {
-            return [];
+            return {
+                payload: [],
+            }
         }
 
         await store.put('lastFetchedYoutubeVideo', items?.[0]?.guid);
@@ -263,7 +278,9 @@ export const youtubeNewVideoTrigger = createTrigger({
             newItems.push(item);
         }
 
-        return newItems;
+        return {
+            payload: newItems,
+        };
     },
 });
 

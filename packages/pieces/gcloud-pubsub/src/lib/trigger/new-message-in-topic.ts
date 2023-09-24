@@ -78,7 +78,9 @@ export const newMessageInTopic = createTrigger({
     const { data } = context.payload.body.message;
     const object = data ? JSON.parse(Buffer.from(data, 'base64').toString()) : {};
 
-    return [object];
+    return {
+      payload: [object],
+    }
   },
   sampleData: {
     x: 1.0,

@@ -30,8 +30,10 @@ export const cronExpressionTrigger = createTrigger({
             timezone: ctx.propsValue.timezone
         })
     },
-    run(context) {
-        return Promise.resolve([{}]);
+    async run() {
+        return {
+            payload: [{}],
+        }
     },
     onDisable: async () => {
         console.log('onDisable');

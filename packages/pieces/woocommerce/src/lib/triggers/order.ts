@@ -28,7 +28,9 @@ export const order = createTrigger({
     },
     //Return order data
     async run(context) {
-        return [context.payload.body];
+        return {
+            payload: [context.payload.body],
+        };
     },
 
     sampleData: {

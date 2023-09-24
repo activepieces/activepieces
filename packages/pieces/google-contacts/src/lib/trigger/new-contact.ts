@@ -115,18 +115,26 @@ export const googleContactNewOrUpdatedContact = createTrigger({
         });
     },
     async run(ctx) {
-        return await pollingHelper.poll(polling, {
+        const payload = await pollingHelper.poll(polling, {
             store: ctx.store,
             auth: ctx.auth,
             propsValue: {}
         });
+
+        return {
+            payload,
+        };
     },
     test: async (ctx) => {
-        return await pollingHelper.poll(polling, {
+        const payload = await pollingHelper.test(polling, {
             store: ctx.store,
             auth: ctx.auth,
             propsValue: {}
         });
+
+        return {
+            payload,
+        };
     }
 });
 

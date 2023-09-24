@@ -28,7 +28,9 @@ export const lineItemInOrder = createTrigger({
     },
     //Return order data
     async run(context) {
-        return [context.payload.body.line_items];
+        return {
+            payload: [context.payload.body.line_items],
+        };
     },
 
     sampleData: {

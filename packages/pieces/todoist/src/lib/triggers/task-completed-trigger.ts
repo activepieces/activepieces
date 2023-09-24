@@ -2,7 +2,6 @@ import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { assertNotNullOrUndefined } from "@activepieces/shared";
 import dayjs from 'dayjs';
 import { todoistSyncClient } from '../common/client/sync-client'
-import { TodoistCompletedTask } from '../common/models'
 import { todoistProjectIdDropdown } from '../common/props'
 import { todoistAuth } from '../..';
 
@@ -49,7 +48,7 @@ export const todoistTaskCompletedTrigger = createTrigger({
     await store.put(TRIGGER_DATA_STORE_KEY, null);
   },
 
-  async run({ auth, propsValue, store }): Promise<TodoistCompletedTask[]> {
+  async run({ auth, propsValue, store }) {
     const token = auth.access_token
     const { project_id } = propsValue
 
@@ -71,6 +70,8 @@ export const todoistTaskCompletedTrigger = createTrigger({
       lastChecked: until,
     })
 
-    return response.items;
+    return {
+      payload: response.items,
+    }
   },
 })

@@ -80,10 +80,18 @@ export const newContact = createTrigger({
     props: {
     },
     async run(context) {
-        return await pollingHelper.poll(polling, { auth: context.auth, store: context.store, propsValue: context.propsValue });
+        const payload = await pollingHelper.poll(polling, { auth: context.auth, store: context.store, propsValue: context.propsValue });
+
+        return {
+            payload,
+        }
     },
-    async test({ auth, propsValue, store }): Promise<unknown[]> {
-        return await pollingHelper.test(polling, { auth, store: store, propsValue: propsValue });
+    async test({ auth, propsValue, store }) {
+        const payload = await pollingHelper.test(polling, { auth, store: store, propsValue: propsValue });
+
+        return {
+            payload,
+        }
     },
     async onEnable({ auth, propsValue, store }): Promise<void> {
         await pollingHelper.onEnable(polling, { auth, store: store, propsValue: propsValue });

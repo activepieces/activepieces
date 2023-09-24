@@ -10,7 +10,7 @@ const markdown = `
 - Select the form where you want the trigger to occur.
 - Click on "Integrations" section.
 - Find "Webhooks" integration and click on "connect" to activate it.
-- In the webhook settings, paste this URL: 
+- In the webhook settings, paste this URL:
   \`{{webhookUrl}}\`
 - Click on "Submit".
 `;
@@ -34,9 +34,13 @@ export const tallyFormsNewSubmission = createTrigger({
     // Empty
   },
   async run(context) {
-    return [context.payload];
+    return {
+      payload: [context.payload],
+    };
   },
   async test(context) {
-    return [context.payload];
+    return {
+      payload: [context.payload],
+    };
   },
 });

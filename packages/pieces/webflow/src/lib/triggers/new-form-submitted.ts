@@ -7,7 +7,7 @@ const triggerNameInStore = 'webflow_created_form_submissions_trigger';
 
 export const webflowNewSubmission = createTrigger({
     auth: webflowAuth,
-    
+
         name: 'new_submission',
         displayName: 'New Submission',
         description: 'Triggers when Webflow Site receives a new submission',
@@ -59,12 +59,18 @@ export const webflowNewSubmission = createTrigger({
             //if formName provided, trigger only required formName if it's matched; else trigger all forms in selected webflow site.
             if (formName) {
                 if (body.name == formName) {
-                    return [body];
+                    return {
+                        payload: [body],
+                    }
                 } else {
-                    return [];
+                    return {
+                        payload: [],
+                    }
                 }
             } else {
-                return [body];
+                return {
+                    payload: [body],
+                }
             }
         },
 });

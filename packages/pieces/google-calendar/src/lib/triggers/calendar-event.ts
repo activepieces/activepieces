@@ -87,6 +87,8 @@ export const calendarEventChanged = createTrigger({
         context.propsValue['calendar_id']!,
         authProp,
       );
-      return [event];
+      return {
+        payload: [event],
+      };
     },
 });

@@ -28,7 +28,9 @@ export const product = createTrigger({
     },
     //Return product data
     async run(context) {
-        return [context.payload.body];
+        return {
+            payload: [context.payload.body],
+        };
     },
 
     sampleData: {

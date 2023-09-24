@@ -74,7 +74,9 @@ export const newEmail = createTrigger({
         if (totalMessages) {
             await context.store.put<number>('_imaplastmessage', totalMessages);
         }
-        return parsedEmails;
+        return {
+            payload: parsedEmails,
+        };
     },
     test: async (context) => {
         const { parsedEmails } = await imapCommon.fetchEmails({
@@ -84,7 +86,9 @@ export const newEmail = createTrigger({
             mailbox: context.propsValue.mailbox,
             files: context.files,
         })
-        return parsedEmails;
+        return {
+            payload: parsedEmails,
+        };
     },
     sampleData: {
         html: 'My email body',

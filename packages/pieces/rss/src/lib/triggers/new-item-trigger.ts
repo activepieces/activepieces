@@ -127,8 +127,12 @@ export const rssNewItemTrigger = createTrigger({
     props: {
         rss_feed_url: rssFeedUrl,
     },
-    async test({ auth, propsValue, store }): Promise<unknown[]> {
-        return await pollingHelper.test(polling, { auth, store: store, propsValue: propsValue });
+    async test({ auth, propsValue, store }) {
+        const payload = await pollingHelper.test(polling, { auth, store: store, propsValue: propsValue });
+
+        return {
+            payload,
+        };
     },
     async onEnable({ auth, propsValue, store }): Promise<void> {
         await pollingHelper.onEnable(polling, { auth, store: store, propsValue: propsValue });
@@ -142,7 +146,7 @@ export const rssNewItemTrigger = createTrigger({
         await pollingHelper.onDisable(polling, { auth, store: store, propsValue: propsValue });
     },
 
-    async run({ auth, propsValue, store }): Promise<unknown[]> {
+    async run({ auth, propsValue, store }) {
         const lastFetchDate = await store.get<number>('_lastRssPublishDate')
         const newItems = (await pollingHelper.poll(polling, { auth, store: store, propsValue: propsValue })).filter(f => {
             if(isNil(lastFetchDate)){
@@ -169,7 +173,7 @@ export const rssNewItemTrigger = createTrigger({
         if(!isNil(newFetchDateUnix)){
             await store.put('_lastRssPublishDate', newFetchDateUnix)
         }
-        return newItems.sort((a, b) => {
+        const payload = newItems.sort((a, b) => {
             const aDate = (a as {pubdate: string, pubDate: string}).pubdate ?? (a as {pubdate: string, pubDate: string}).pubDate;
             const bDate = (b as {pubdate: string, pubDate: string}).pubdate ?? (b as {pubdate: string, pubDate: string}).pubDate;
             if (aDate && bDate) {
@@ -184,6 +188,10 @@ export const rssNewItemTrigger = createTrigger({
                 return newItems.indexOf(a) - newItems.indexOf(b);
             }
         });
+
+        return {
+            payload,
+        };
     }
 });
 

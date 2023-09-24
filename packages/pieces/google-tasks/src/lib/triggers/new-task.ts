@@ -11,7 +11,7 @@ const polling: Polling< OAuth2PropertyValue<OAuth2Props> , StaticPropsValue<type
     strategy: DedupeStrategy.TIMEBASED,
     items: async ({ auth, propsValue , lastFetchEpochMS }) => {
         const records =  await getTasks( auth , propsValue.tasks_list!);
-        
+
         const filtered_records = records.filter((record) => {
             const updated = Date.parse(record.updated);
             return updated > lastFetchEpochMS;
@@ -36,7 +36,10 @@ export const newTaskTrigger = createTrigger({
         const store = context.store;
         const auth = context.auth as OAuth2PropertyValue<OAuth2Props>;
         const propsValue = context.propsValue;
-        return await pollingHelper.test(polling, { store, auth, propsValue });
+        const payload = await pollingHelper.test(polling, { store, auth, propsValue });
+        return {
+            payload,
+        }
     },
     async onEnable(context) {
         const store = context.store;
@@ -54,6 +57,10 @@ export const newTaskTrigger = createTrigger({
         const store = context.store;
         const auth = context.auth as OAuth2PropertyValue<OAuth2Props>;
         const propsValue = context.propsValue;
-        return await pollingHelper.poll(polling, { store, auth, propsValue });
+        const payload = await pollingHelper.poll(polling, { store, auth, propsValue });
+
+        return {
+            payload,
+        };
     },
 })

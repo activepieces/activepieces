@@ -24,7 +24,9 @@ export const newDeal = createTrigger({
       }
     },
     async run(context) {
-      return [context.payload.body.current];
+      return {
+        payload: [context.payload.body.current]
+      }
     },
     sampleData:
     {

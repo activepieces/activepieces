@@ -48,13 +48,19 @@ export const newMessage = createTrigger({
             // Ignored
         },
         test: async (context) => {
-            return [sampleData];
+            return {
+                payload: [sampleData],
+            }
         },
         run: async (context) => {
             if (context.payload.body.event.channel === context.propsValue.channel) {
-                return [context.payload.body.event]
+                return {
+                    payload: [context.payload.body.event],
+                }
             }
 
-            return []
+            return {
+                payload: [],
+            }
         }
 });

@@ -90,10 +90,14 @@ export const clickupRegisterTrigger = ({
         }]
 
         console.debug("payload enriched", enriched)
-        return enriched
+        return {
+          payload: enriched,
+        }
       }
 
-      return [context.payload.body]
+      return {
+        payload: [context.payload.body],
+      }
     },
 });
 

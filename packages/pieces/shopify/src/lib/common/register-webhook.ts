@@ -65,7 +65,8 @@ export const createShopifyWebhookTrigger = ({
             },
             async run(context) {
                 console.debug("trigger running", context)
-                return [context.payload.body]
+                return {
+                    payload: [context.payload.body],
+                }
             }
     })
-

@@ -86,7 +86,9 @@ export const twilioNewIncomingSms = createTrigger({
         await context.store.put<LastMessage>('_new_incoming_sms_trigger', {
             lastMessageId: firstMessageId ?? lastMessage!.lastMessageId,
         });
-        return newMessages;
+        return {
+            payload: newMessages,
+        };
     }
 });
 

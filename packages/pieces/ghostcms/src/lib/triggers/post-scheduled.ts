@@ -27,7 +27,9 @@ export const postScheduled = createTrigger({
         }
     },
     async run(context) {
-        return [context.payload.body];
+        return {
+            payload: [context.payload.body],
+        };
     },
 
     sampleData: {

@@ -77,19 +77,27 @@ export const readNewRows = createTrigger({
     });
   },
   run: async (context) => {
-    return await pollingHelper.poll(polling, {
+    const payload = await pollingHelper.poll(polling, {
       auth: context.auth,
       store: context.store,
       // Max items to poll is 10, to avoid rate limit errors
       maxItemsToPoll: Math.max(1, Math.min(10, context.propsValue.max_rows_to_poll ?? 10)),
       propsValue: context.propsValue
     });
+
+    return {
+      payload,
+  };
   },
   test: async (context) => {
-    return await pollingHelper.test(polling, {
+    const payload = await pollingHelper.test(polling, {
       auth: context.auth,
       store: context.store,
       propsValue: context.propsValue
     });
+
+    return {
+      payload,
+    };
   }
 });

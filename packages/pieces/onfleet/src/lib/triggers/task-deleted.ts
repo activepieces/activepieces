@@ -29,7 +29,9 @@ export const taskDeleted = createTrigger({
     },
     //Return task
     async run(context) {
-        return [context.payload.body];
+        return {
+            payload: [context.payload.body],
+        };
     },
 
     handshakeConfiguration: {

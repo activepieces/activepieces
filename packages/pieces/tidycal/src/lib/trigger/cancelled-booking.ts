@@ -53,18 +53,26 @@ export const tidycalbookingcancelled = createTrigger({
         })
     },
     run: async (context) => {
-        return await pollingHelper.poll(polling, {
+        const payload = await pollingHelper.poll(polling, {
             auth: context.auth,
             store: context.store,
             propsValue: context.propsValue,
         });
+
+        return {
+            payload,
+        }
     },
     test: async (context) => {
-        return await pollingHelper.test(polling, {
+        const payload = await pollingHelper.test(polling, {
             auth: context.auth,
             store: context.store,
             propsValue: context.propsValue,
         });
+
+        return {
+            payload,
+        };
     },
 });
 
@@ -78,7 +86,7 @@ const polling: Polling<string, Record<string, never>> = {
                 cancelled_at: string,
             }[]
         }>(HttpMethod.GET, `bookings?cancelled=true`, auth, undefined);
-        
+
         const cancelledBookings = currentValues.body;
         const bookings = cancelledBookings.data.filter((item) => {
             const cancelledAt = dayjs(item.cancelled_at);

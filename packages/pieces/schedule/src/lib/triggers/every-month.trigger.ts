@@ -51,16 +51,23 @@ export const everyMonthTrigger = createTrigger({
             timezone: ctx.propsValue.timezone
         });
     },
-    run(ctx) {
+    async run(ctx) {
         const hourOfTheDay = validateHours(ctx.propsValue.hour_of_the_day);
         const dayOfTheMonth = validateMonthDays(ctx.propsValue.day_of_the_month);
         const cronExpression = `0 ${hourOfTheDay} ${dayOfTheMonth} * *`
-        return Promise.resolve([{
-            hour_of_the_day: hourOfTheDay,
-            day_of_the_month: dayOfTheMonth,
-            cron_expression: cronExpression,
-            timezone: ctx.propsValue.timezone
-        }]);
+
+        const payload = [
+            {
+                hour_of_the_day: hourOfTheDay,
+                day_of_the_month: dayOfTheMonth,
+                cron_expression: cronExpression,
+                timezone: ctx.propsValue.timezone
+            }
+        ];
+
+        return {
+            payload,
+        }
     },
     onDisable: async () => {
         console.log('onDisable');

@@ -30,13 +30,21 @@ export const mondayItemCreatedTrigger = createTrigger({
       })
     },
     run: async ({ auth, store, propsValue }) => {
-      return await pollingHelper.poll(itemPolling, {
+      const payload = await pollingHelper.poll(itemPolling, {
         auth, store, propsValue
       })
+
+      return {
+        payload,
+      }
     },
     test: async ({ auth, store, propsValue }) => {
-      return await pollingHelper.test(itemPolling, {
+      const payload = await pollingHelper.test(itemPolling, {
         auth, store, propsValue
       })
+
+      return {
+        payload,
+    };
     }
 })
