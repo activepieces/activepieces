@@ -23,7 +23,8 @@ async function getRows( store: Store , accessToken:string , spreadsheetId:string
 
     if (startingRow < 1) throw Error('Starting row : ' + startingRow + ' is less than 1' + memVal);
     const endRow = startingRow + groupSize;
-
+    if( testing == false )await store.put(memKey, endRow, StoreScope.FLOW);
+    
     const row = await getGoogleSheetRows({
         accessToken: accessToken,
         sheetName: sheetName,
@@ -31,8 +32,6 @@ async function getRows( store: Store , accessToken:string , spreadsheetId:string
         rowIndex_s: startingRow,
         rowIndex_e: endRow - 1
     });
-
-    if( testing == false )await store.put(memKey, endRow, StoreScope.FLOW);
 
     return row;
 }
