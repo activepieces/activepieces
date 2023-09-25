@@ -1254,7 +1254,7 @@
             </trans-unit>
             <trans-unit id="7430416142942514215" datatype="html">
                 <source>Publish</source>
-                <target>Publié</target>
+                <target>Publier</target>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
                         packages/ui/feature-builder-header/src/lib/publish-button/publish-button.component.ts
