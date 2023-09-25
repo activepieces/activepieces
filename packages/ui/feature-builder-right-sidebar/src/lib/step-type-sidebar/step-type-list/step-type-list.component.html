@@ -1,11 +1,3 @@
-<div class="ap-flex-grow list-container ap-mx-5 ap-my-1.5" *ngIf="typesList.length > 0"
-  [class.full-height-of-sidebar]="takeFullHeightOfSidebar">
-  <div class="list-item" *ngFor="let flowItemDetails of typesList">
-    <app-step-type-item [flowItemDetails]="flowItemDetails" (click)="typeSelected.emit(flowItemDetails)">
-    </app-step-type-item>
-  </div>
-</div>
-
 <div *ngIf="typesList.length === 0"
   class="ap-flex-grow ap-flex ap-flex-col ap-justify-center ap-items-center empty-list-Text ap-h-[40vh] ">
   <svg-icon src="assets/img/custom/variables-list.svg" [style]="{width:'70px', height:'70px'}"></svg-icon>
@@ -14,3 +6,12 @@
     Request Piece
   </ap-button>
 </div>
+
+
+<cdk-virtual-scroll-viewport itemSize="80" class="full-height-of-sidebar ap-flex-grow  thin-scrollbars  ap-my-2"
+  *ngIf="typesList.length > 0">
+  <div class="ap-my-2 ap-mx-5" *cdkVirtualFor="let flowItemDetails of typesList">
+    <app-step-type-item [flowItemDetails]="flowItemDetails" (click)="typeSelected.emit(flowItemDetails)">
+    </app-step-type-item>
+  </div>
+</cdk-virtual-scroll-viewport>

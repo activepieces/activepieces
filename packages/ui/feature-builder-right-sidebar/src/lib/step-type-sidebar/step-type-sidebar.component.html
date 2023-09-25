@@ -13,11 +13,13 @@
             {{ tab.displayName }}
           </div>
         </ng-template>
-        <ng-container *ngIf="tab.list$ | async as list; else loading">
-          <app-step-type-list [typesList]="list" (typeSelected)="onTypeSelected($event)"
-            [emptyListText]="tab.emptyListText">
-          </app-step-type-list>
-        </ng-container>
+        <ng-template matTabContent>
+          <ng-container *ngIf="tab.list$ | async as list; else loading">
+            <app-step-type-list [typesList]="list" (typeSelected)="onTypeSelected($event)"
+              [emptyListText]="tab.emptyListText">
+            </app-step-type-list>
+          </ng-container>
+        </ng-template>
       </mat-tab>
     </mat-tab-group>
   </ng-container>
