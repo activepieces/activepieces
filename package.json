@@ -1,6 +1,6 @@
 {
   "name": "activepieces",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "scripts": {
     "prepare": "husky install",
     "frontend": "nx serve ui-core",
@@ -71,7 +71,6 @@
     "decompress": "4.2.1",
     "deep-equal": "2.2.2",
     "drip-nodejs": "3.1.1",
-    "faiss-node": "0.3.0",
     "fastify": "4.12.0",
     "fastify-raw-body": "4.2.0",
     "feedparser": "2.2.10",
