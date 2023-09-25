@@ -1,6 +1,7 @@
 import { PieceAuth, Property, createPiece } from "@activepieces/pieces-framework";
-import imap from 'node-imap';
+import imap from 'imap';
 import { newEmail } from "./lib/triggers/new-email";
+import { imapCommon } from "./lib/common";
 
 const description = `
 **Gmail Users:**
@@ -39,15 +40,9 @@ export const imapAuth = PieceAuth.CustomAuth({
     },
     validate: async ({ auth }) => {
         try {
-            const imapClient = new imap({
-                host: auth.host,
-                user: auth.username,
-                password: auth.password,
-                port: auth.port,
-                tls: auth.tls
-            });
+            const imapClient = new imap(imapCommon.constructConfig(auth));
             return new Promise((resolve, reject) => {
-                imapClient.once('error', function (err) {
+                imapClient.once('error', function (err: any) {
                     resolve({ valid: false, error: JSON.stringify(err) });
                 });
                 imapClient.once('ready', function () {

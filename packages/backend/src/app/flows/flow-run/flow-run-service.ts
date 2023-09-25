@@ -118,15 +118,14 @@ export const flowRunService = {
         },
     ): Promise<FlowRun> {
         await flowRunRepo.update(flowRunId, {
-            logsFileId,
+            ...spreadIfDefined('logsFileId', logsFileId),
             status,
             tasks,
             tags,
             finishTime: new Date().toISOString(),
-            pauseMetadata: null,
         })
         const flowRun = (await this.getOne({ id: flowRunId, projectId: undefined }))!
-        flowRunSideEffects.finish({ flowRun })
+        await flowRunSideEffects.finish({ flowRun })
         return flowRun
     },
 
@@ -161,6 +160,7 @@ export const flowRunService = {
                 environment: savedFlowRun.environment,
             },
         })
+            .catch((e) => logger.error(e, '[FlowRunService#Start] telemetry.trackProject'))
 
         await flowRunSideEffects.start({
             flowRun: savedFlowRun,

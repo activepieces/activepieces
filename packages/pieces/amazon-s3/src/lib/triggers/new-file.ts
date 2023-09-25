@@ -2,23 +2,15 @@ import { PiecePropValueSchema, Property, createTrigger } from '@activepieces/pie
 import { TriggerStrategy } from "@activepieces/pieces-framework";
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 
-import { S3 } from "@aws-sdk/client-s3";
 import { amazonS3Auth } from '../..';
+import { createS3 } from '../common';
 
 const polling: Polling<PiecePropValueSchema<typeof amazonS3Auth>, { folderPath?: string }> = {
     strategy: DedupeStrategy.LAST_ITEM,
     items: async ({ auth, lastItemId, propsValue }) => {
-        const { accessKeyId, secretAccessKey, region, bucket } = auth;
-        const s3 = new S3({
-            credentials: {
-                accessKeyId,
-                secretAccessKey
-            },
-            region: region || "us-east-1"
-        });
-
+        const s3 = createS3(auth);
         const params: any = {
-            Bucket: bucket,
+            Bucket: auth.bucket,
             MaxKeys: 100,
             StartAfter: lastItemId
         };

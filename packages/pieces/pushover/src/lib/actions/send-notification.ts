@@ -18,6 +18,11 @@ export const sendNotification = createAction({
             description: "The message to send",
             required: true,
         }),
+        html: Property.Checkbox({
+            displayName: "Enable HTML",
+            description: "To enable HTML parsing",
+            required: false,
+        }),
         priority: Property.Number({
             displayName: "Priority",
             description: "The priority of the notification (-2 to 2). -2 is lowest priority. If set to 2, you should also specify Retry and Expire.",
@@ -61,6 +66,7 @@ export const sendNotification = createAction({
 
         const title = propsValue.title;
         const message = propsValue.message;
+        const html = propsValue.html;
         const priority = propsValue.priority;
         const url = propsValue.url;
         const url_title = propsValue.url_title;
@@ -77,6 +83,7 @@ export const sendNotification = createAction({
                 user: userKey,
                 title,
                 message,
+                html : html ? 1 : 0,
                 url,
                 url_title,
                 timestamp,

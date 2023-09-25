@@ -2,8 +2,9 @@ import { PostHog } from 'posthog-node'
 import { SystemProp } from './system/system-prop'
 import { system } from './system/system'
 import { ProjectId, TelemetryEvent, User, UserId } from '@activepieces/shared'
-import { projectService } from '../project/project.service'
+import { projectService } from '../project/project-service'
 import { getEdition } from './secret-helper'
+import { logger } from './logger'
 
 
 const telemetryEnabled = system.getBoolean(SystemProp.TELEMETRY_ENABLED)
@@ -34,6 +35,7 @@ export const telemetry = {
         }
         const project = await projectService.getOne(projectId)
         this.trackUser(project!.ownerId, event)
+            .catch((e) => logger.error(e, '[Telemetry#trackProject] this.trackUser'))
     },
     async trackUser(userId: UserId, event: TelemetryEvent): Promise<void> {
         if (!telemetryEnabled) {

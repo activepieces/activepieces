@@ -1,6 +1,6 @@
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BLOB_COLUMN_TYPE, BaseColumnSchemaPart } from '../database/database-common'
-import { File, Project } from '@activepieces/shared'
+import { File, FileCompression, FileType, Project } from '@activepieces/shared'
 
 type FileSchema = File & {
     project: Project
@@ -13,6 +13,16 @@ export const FileEntity = new EntitySchema<FileSchema>({
         projectId: { ...ApIdSchema, nullable: true },
         data: {
             type: BLOB_COLUMN_TYPE,
+            nullable: false,
+        },
+        type: {
+            type: String,
+            default: FileType.UNKNOWN,
+            nullable: false,
+        },
+        compression: {
+            type: String,
+            default: FileCompression.NONE,
             nullable: false,
         },
     },

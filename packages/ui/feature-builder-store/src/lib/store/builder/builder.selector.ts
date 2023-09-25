@@ -46,7 +46,9 @@ export const selectIsSaving = createSelector(
   selectFlowState,
   (state) =>
     (state.savingStatus & BuilderSavingStatusEnum.SAVING_FLOW) ===
-    BuilderSavingStatusEnum.SAVING_FLOW
+      BuilderSavingStatusEnum.SAVING_FLOW ||
+    (state.savingStatus & BuilderSavingStatusEnum.WAITING_TO_SAVE) ===
+      BuilderSavingStatusEnum.WAITING_TO_SAVE
 );
 
 export const selectFlowHasAnySteps = createSelector(
@@ -160,6 +162,7 @@ const selectTriggerSelectedSampleData = createSelector(
     return undefined;
   }
 );
+/**If string is empty will return the string equivalent of a space */
 const selectStepTestSampleData = createSelector(selectCurrentStep, (step) => {
   if (
     step &&
@@ -169,6 +172,9 @@ const selectStepTestSampleData = createSelector(selectCurrentStep, (step) => {
       step.type === TriggerType.PIECE) &&
     step.settings.inputUiInfo
   ) {
+    if (step.settings.inputUiInfo.currentSelectedData === '') {
+      return ' ';
+    }
     return step.settings.inputUiInfo.currentSelectedData;
   }
   return undefined;
@@ -434,6 +440,24 @@ const selectAppConnectionsDropdownOptions = createSelector(
   }
 );
 
+const selectAppConnectionsDropdownOptionsWithIds = createSelector(
+  selectAllAppConnections,
+  (connections: AppConnectionWithoutSensitiveData[]) => {
+    return [...connections].map((c) => {
+      const result: ConnectionDropdownItem = {
+        label: { appName: c.appName, name: c.name },
+        value: c.id,
+      };
+      return result;
+    });
+  }
+);
+
+const selectAppConnectionsDropdownOptionsForApp = (appName: string) => {
+  return createSelector(selectAppConnectionsDropdownOptions, (connections) => {
+    return connections.filter((opt) => opt.label.appName === appName);
+  });
+};
 const selectAppConnectionsForMentionsDropdown = createSelector(
   selectAllAppConnections,
   (connections: AppConnectionWithoutSensitiveData[]) => {
@@ -607,6 +631,7 @@ export const BuilderSelectors = {
   selectIsSchduleTrigger,
   selectCurrentStepPieceVersionAndName,
   selectCurrentFlowFolderName,
+  /**If string is empty will return the string equivalent of a space */
   selectStepTestSampleData,
   selectLastTestDate,
   selectNumberOfInvalidSteps,
@@ -620,4 +645,6 @@ export const BuilderSelectors = {
   selectLastClickedAddBtnId,
   selectCurrentFlowFolderId,
   selectFlowTriggerIsTested,
+  selectAppConnectionsDropdownOptionsForApp,
+  selectAppConnectionsDropdownOptionsWithIds,
 };

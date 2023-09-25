@@ -40,3 +40,5 @@ export * from './lib/directives/drag-drop.directive';
 export * from './lib/directives/element-ref.directive';
 export * from './lib/components/upload-file-control/upload-file-control.component';
 export * from './lib/service/builder-autocomplete-mentions-dropdown.service';
+export * from './lib/resolvers/connections.resolver';
+export * from './lib/resolvers/are-there-featured-templates.resolver';

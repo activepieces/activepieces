@@ -31,6 +31,30 @@ export class LinearClientWrapper {
   async updateIssue(issueId: string, input: LinearDocument.IssueUpdateInput) {
     return this.client.updateIssue(issueId, input);
   }
+  async createProject(input: LinearDocument.ProjectCreateInput) {
+    return this.client.createProject(input);
+  }
+  async listProjects(variables: LinearDocument.ProjectsQueryVariables = {}) {
+    return this.client.projects(variables);
+  }
+  async updateProject(
+    projectId: string,
+    input: LinearDocument.ProjectUpdateInput
+  ) {
+    return this.client.updateProject(projectId, input);
+  }
+  async createComment(input: LinearDocument.CommentCreateInput) {
+    return this.client.createComment(input);
+  }
+  async createWebhook(input: LinearDocument.WebhookCreateInput) {
+    return this.client.createWebhook(input);
+  }
+  async listWebhooks(variables: LinearDocument.WebhooksQueryVariables = {}) {
+    return this.client.webhooks(variables);
+  }
+  async deleteWebhook(webhookId: string) {
+    return this.client.deleteWebhook(webhookId);
+  }
 }
 
 export function makeClient(apiKey: string): LinearClientWrapper {
