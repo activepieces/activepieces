@@ -6,7 +6,7 @@
       </p>
     </app-page-title>
     <div class="ap-min-h-[70%]">
-      <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Runs">
+      <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Runs" i18n-aria-label>
         <ng-container matColumnDef="app">
           <th mat-header-cell *matHeaderCellDef i18n>App</th>
           <td mat-cell *matCellDef="let piece"><img appImgFallback="/assets/img/custom/generic_code.svg "

@@ -2,7 +2,7 @@
   <div class="ap-h-full">
     <app-page-title title="Connections" i18n-title></app-page-title>
     <div class="ap-min-h-[70%]">
-      <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Runs">
+      <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Runs" i18n-aria-label>
         <ng-container matColumnDef="app">
           <th mat-header-cell *matHeaderCellDef i18n>App</th>
           <td mat-cell *matCellDef="let connection"><img appImgFallback="/assets/img/custom/connections.svg "

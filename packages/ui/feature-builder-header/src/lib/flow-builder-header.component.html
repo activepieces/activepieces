@@ -13,7 +13,8 @@
         [width]="7"
         [height]="14"
         iconFilename="back.svg"
-        [tooltipText]="'Home'"
+        tooltipText="Home"
+        i18n-tooltipText
         (buttonClicked)="redirectHome(false)"
         (auxclick)="redirectHome(true)"
       ></ap-icon-button>
@@ -65,7 +66,7 @@
               class="ap-fill-body ap-w-[20px] ap-h-[20px]"
             >
             </svg-icon>
-            <span class="ap-text-body">Rename</span>
+            <span class="ap-text-body" i18n>Rename</span>
           </div>
         </button>
         <button
@@ -79,7 +80,7 @@
               class="ap-w-[20px] ap-h-[20px]"
               [applyClass]="true"
             ></svg-icon>
-            <span>Duplicate</span>
+            <span i18n>Duplicate</span>
           </div>
         </button>
         <button mat-menu-item *ngIf="flow$ | async as flow" (click)="import()">
@@ -89,7 +90,7 @@
               class="ap-w-[20px] ap-h-[20px]"
               [applyClass]="true"
             ></svg-icon>
-            <span>Import</span>
+            <span i18n>Import</span>
           </div>
         </button>
         <button
@@ -103,7 +104,7 @@
               class="ap-w-[20px] ap-h-[20px]"
               [applyClass]="true"
             ></svg-icon>
-            <span>Export</span>
+            <span i18n>Export</span>
           </div>
         </button>
         <button
@@ -117,7 +118,7 @@
               class="ap-fill-danger ap-w-[20px] ap-h-[20px]"
               [applyClass]="true"
             ></svg-icon>
-            <span class="ap-text-danger">Delete</span>
+            <span class="ap-text-danger" i18n>Delete</span>
           </div>
         </button>
       </mat-menu>

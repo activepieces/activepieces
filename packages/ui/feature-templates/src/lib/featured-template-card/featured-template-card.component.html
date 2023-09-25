@@ -12,7 +12,7 @@
             <div class="ap-flex  ap-items-center ap-gap-2 ap-typography-body-1 !ap-font-semibold">
                 {{template.user?.firstName}} {{template.user?.lastName}}
                 <img *ngIf="activepiecesTeam" src="assets/img/custom/verified.png" class="ap-w-[25px] ap-h-[25px]"
-                    matTooltip="Activepieces Team">
+                    matTooltip="Activepieces Team" i18n-matTooltip>
             </div>
             <div class="ap-typography-caption ap-text-description">
                 {{template.user?.title || 'Contributor'}} • {{template.created | timeago:false }}
@@ -23,17 +23,19 @@
     <div>
         <div class="ap-typography-body-1 " *ngIf="template.featuredDescription">
             <ng-container *ngIf="template.featuredDescription.length <= SEE_MORE_LIMIT ">
-                {{
-                template.featuredDescription
-                }}
+                {{template.featuredDescription}}
             </ng-container>
             <ng-container *ngIf="template.featuredDescription.length > SEE_MORE_LIMIT ">
-                {{
-                showFullDescription? template.description : template.description.slice(0,255)+"..."
-                }}
+                {{showFullDescription? template.description : template.description.slice(0,255)+"..."}}
                 &nbsp; <div class="ap-text-primary ap-cursor-pointer ap-inline"
                     (click)="showFullDescription = !showFullDescription" *ngIf="template.description.length > 225">
-                    {{showFullDescription? 'See less' : 'See more'}} </div>
+                    <ng-template *ngIf="showFullDescription; else seeMore">
+                        <span i18n>See less</span>
+                    </ng-template>
+                    <ng-template #seeMore>
+                        <span i18n>See more</span>
+                    </ng-template>
+                </div>
             </ng-container>
         </div>
 

@@ -4,7 +4,7 @@
         <body>
             <trans-unit id="465580375833195843" datatype="html">
                 <source>Switch Version</source>
-                <target>Changer de version</target>
+                <target state="new">Changer de version</target>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
                         packages/ui/feature-builder-header/src/lib/draft-status/draft-status.component.html
@@ -364,7 +364,7 @@
             </trans-unit>
             <trans-unit id="8549223348777613655" datatype="html">
                 <source>Learn from our Gelato maker demo flow</source>
-                <target>Apprenez avec notre flow de démonstration de création de glaces</target>
+                <target>Apprenez avec notre process de démonstration de création de glaces</target>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/flows-table/empty-flows-table/empty-flows-table.component.html
@@ -374,7 +374,7 @@
             </trans-unit>
             <trans-unit id="3292499463822135407" datatype="html">
                 <source>Build flow</source>
-                <target>Créer un flow</target>
+                <target>Créer un process</target>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/flows-table/empty-flows-table/empty-flows-table.component.html
@@ -384,7 +384,7 @@
             </trans-unit>
             <trans-unit id="913302789306531927" datatype="html">
                 <source>Start building your first flow from scratch</source>
-                <target>Commencez à créer votre premier flux à partir de zéro</target>
+                <target>Commencez à créer votre premier process à partir de zéro</target>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/flows-table/empty-flows-table/empty-flows-table.component.html
@@ -912,7 +912,7 @@
                 <source>This will permanently delete the flow, all its data and any background runs.
                     You can't undo this action.
                 </source>
-                <target>Cela supprimera définitivement le flux, toutes ses données et toutes les exécutions
+                <target>Cela supprimera définitivement le process, toutes ses données et toutes les exécutions
                     en arrière-plan.
                     Vous ne pouvez pas annuler cette action.
                 </target>
@@ -1260,6 +1260,2262 @@
                         packages/ui/feature-builder-header/src/lib/publish-button/publish-button.component.ts
                     </context>
                     <context context-type="linenumber">98</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2931230747167805179" datatype="html">
+                <source>Delete
+                    <x id="INTERPOLATION" equiv-text="{{data.entityName}}"/>
+                </source>
+                <target>Supprimer
+                    <x id="INTERPOLATION" equiv-text="{{data.entityName}}"/>
+                </target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/common/src/lib/components/delete-enity-dialog/delete-entity-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">1,3</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6560405483623875453" datatype="html">
+                <source>Type<x id="START_BOLD_TEXT" ctype="x-b" equiv-text="&lt;b&gt;"/>DELETE
+                    <x id="CLOSE_BOLD_TEXT" ctype="x-b" equiv-text="&lt;/b&gt;"/>
+                    and press confirm to continue.
+                </source>
+                <target>Taper<x id="START_BOLD_TEXT" ctype="x-b" equiv-text="&lt;b&gt;"/>DELETE
+                    <x id="CLOSE_BOLD_TEXT" ctype="x-b" equiv-text="&lt;/b&gt;"/>
+                    et appuyez sur confirmer pour continuer.
+                </target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/common/src/lib/components/delete-enity-dialog/delete-entity-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">8,10</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6249484391846924804" datatype="html">
+                <source>Confirm</source>
+                <target>Confirmer</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/common/src/lib/components/delete-enity-dialog/delete-entity-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">30,32</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/custom-path-mention-dialog/custom-path-mention-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">29,31</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="5547981558491672240" datatype="html">
+                <source>Close</source>
+                <target>Fermer</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/common/src/lib/components/json-view/json-view-dialog/json-view-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">13,15</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4593401671892965174" datatype="html">
+                <source>Upgrade</source>
+                <target>Mettre à jour</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">packages/ui/core/src/app/app.component.html</context>
+                    <context context-type="linenumber">5,6</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="1234782976282586575" datatype="html">
+                <source>Ignore</source>
+                <target>Ignorer</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">packages/ui/core/src/app/app.component.html</context>
+                    <context context-type="linenumber">7,8</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="9202148072595155250" datatype="html">
+                <source>Steps in this flow</source>
+                <target>Étapes de ce process</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/core/src/app/modules/import-flow/import-flow.component.html
+                    </context>
+                    <context context-type="linenumber">16</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3087857313586976299" datatype="html">
+                <source>Template Description</source>
+                <target>Description du modèle</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/core/src/app/modules/import-flow/import-flow.component.html
+                    </context>
+                    <context context-type="linenumber">23</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="1050001620607966490" datatype="html">
+                <source>Use Template</source>
+                <target>Utiliser le modèle</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/core/src/app/modules/import-flow/import-flow.component.html
+                    </context>
+                    <context context-type="linenumber">35,36</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4349518606715943395" datatype="html">
+                <source>Page not found 😢</source>
+                <target>Page non trouvée 😢</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/core/src/app/modules/not-found/not-found.component.html
+                    </context>
+                    <context context-type="linenumber">5</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="8233664048165935539" datatype="html">
+                <source>Looks like you are lost.</source>
+                <target>On dirait que tu es perdu.</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/core/src/app/modules/not-found/not-found.component.html
+                    </context>
+                    <context context-type="linenumber">6</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6220061776295222544" datatype="html">
+                <source>Return Home</source>
+                <target>Retourner à l'accueil</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/core/src/app/modules/not-found/not-found.component.html
+                    </context>
+                    <context context-type="linenumber">7</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6252811073109002958" datatype="html">
+                <source>redirect-url works!</source>
+                <target state="new">l'URL de redirection fonctionne !</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/core/src/app/modules/redirect-url/redirect-url.component.html
+                    </context>
+                    <context context-type="linenumber">1</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2668864227584228682" datatype="html">
+                <source>Welcome Back</source>
+                <target state="new">Content de te revoir</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html
+                    </context>
+                    <context context-type="linenumber">1</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4768749765465246664" datatype="html">
+                <source>Email</source>
+                <target state="new">Email</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html
+                    </context>
+                    <context context-type="linenumber">9</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html
+                    </context>
+                    <context context-type="linenumber">24</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html
+                    </context>
+                    <context context-type="linenumber">25</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="8232890416577573080" datatype="html">
+                <source>Email is invalid</source>
+                <target state="new">L'email est invalide</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html
+                    </context>
+                    <context context-type="linenumber">14,16</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html
+                    </context>
+                    <context context-type="linenumber">32,34</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="8552587679160911578" datatype="html">
+                <source>Email is required</source>
+                <target state="new">L'email est requis</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html
+                    </context>
+                    <context context-type="linenumber">17</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html
+                    </context>
+                    <context context-type="linenumber">36,37</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="1431416938026210429" datatype="html">
+                <source>Password</source>
+                <target state="new">Mot de passe</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html
+                    </context>
+                    <context context-type="linenumber">21</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html
+                    </context>
+                    <context context-type="linenumber">25</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html
+                    </context>
+                    <context context-type="linenumber">44</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html
+                    </context>
+                    <context context-type="linenumber">46</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="205044832662301680" datatype="html">
+                <source>Password is required</source>
+                <target state="new">Mot de passe requis</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html
+                    </context>
+                    <context context-type="linenumber">32</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4469513261081670706" datatype="html">
+                <source>Invalid email or password</source>
+                <target state="new">Email ou mot de passe invalide</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html
+                    </context>
+                    <context context-type="linenumber">36</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6663783128602596673" datatype="html">
+                <source>Sign in</source>
+                <target state="new">Se connecter</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html
+                    </context>
+                    <context context-type="linenumber">46,48</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="8164791295086777340" datatype="html">
+                <source>Don't have an account?</source>
+                <target state="new">Vous n'avez pas de compte ?</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html
+                    </context>
+                    <context context-type="linenumber">52</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="8390819766481399339" datatype="html">
+                <source>Get yours now</source>
+                <target state="new">Obtenez le vôtre maintenant</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html
+                    </context>
+                    <context context-type="linenumber">52</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2919058663947697555" datatype="html">
+                <source>Let's Get Started!</source>
+                <target state="new">Commençons !</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html
+                    </context>
+                    <context context-type="linenumber">2,4</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6028371114637047813" datatype="html">
+                <source>First Name</source>
+                <target state="new">Prénom</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html
+                    </context>
+                    <context context-type="linenumber">8</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3337540717284723401" datatype="html">
+                <source>First name is required</source>
+                <target state="new">Le prénom est requis</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html
+                    </context>
+                    <context context-type="linenumber">10,12</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4407559560004943843" datatype="html">
+                <source>Last Name</source>
+                <target state="new">Nom de famille</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html
+                    </context>
+                    <context context-type="linenumber">15</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="5202458308518213857" datatype="html">
+                <source>Last name is required</source>
+                <target state="new">Le nom de famille est obligatoire</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html
+                    </context>
+                    <context context-type="linenumber">17,19</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3285380396703325390" datatype="html">
+                <source>Email is used</source>
+                <target state="new">L'email est déjà utilisé</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html
+                    </context>
+                    <context context-type="linenumber">40,42</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="9132547751630599796" datatype="html">
+                <source>Password is required</source>
+                <target state="new">Mot de passe requis</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html
+                    </context>
+                    <context context-type="linenumber">48,50</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="5145449122692464963" datatype="html">
+                <source>Password is invalid</source>
+                <target state="new">Le mot de passe n'est pas valide</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html
+                    </context>
+                    <context context-type="linenumber">51</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="1831185355933631853" datatype="html">
+                <source>Lowercase</source>
+                <target state="new">Minuscule</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html
+                    </context>
+                    <context context-type="linenumber">66</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6131686574068357886" datatype="html">
+                <source>Uppercase</source>
+                <target state="new">Majuscule</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html
+                    </context>
+                    <context context-type="linenumber">76</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="5276080702883013396" datatype="html">
+                <source>Special Character</source>
+                <target state="new">Caractère spécial</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html
+                    </context>
+                    <context context-type="linenumber">87</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6370642728789544052" datatype="html">
+                <source>Number</source>
+                <target state="new">Nombre</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html
+                    </context>
+                    <context context-type="linenumber">96</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="179646624931045993" datatype="html">
+                <source>8-64 Characters</source>
+                <target state="new">8-64 caractères</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html
+                    </context>
+                    <context context-type="linenumber">109</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6315299944136778290" datatype="html">
+                <source>Receive updates and newsletters from activepieces</source>
+                <target state="new">Recevez des mises à jour et des newsletters d'activepieces</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html
+                    </context>
+                    <context context-type="linenumber">114,115</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7203320122205058413" datatype="html">
+                <source>Sign up</source>
+                <target state="new">S'inscrire</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html
+                    </context>
+                    <context context-type="linenumber">118,120</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="1534774055079359200" datatype="html">
+                <source>By creating an account, you agree to our</source>
+                <target state="new">En créant un compte, vous acceptez nos</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html
+                    </context>
+                    <context context-type="linenumber">125</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2029980907058777630" datatype="html">
+                <source>Terms of Service</source>
+                <target state="new">Conditions d'utilisation</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html
+                    </context>
+                    <context context-type="linenumber">126</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3929281485914893910" datatype="html">
+                <source>and</source>
+                <target state="new">et</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html
+                    </context>
+                    <context context-type="linenumber">127</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4721007402656921350" datatype="html">
+                <source>Privacy Policy</source>
+                <target state="new">politique de confidentialité</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html
+                    </context>
+                    <context context-type="linenumber">128,130</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6207438724033771807" datatype="html">
+                <source>Already have an account?</source>
+                <target state="new">Vous avez déjà un compte ?</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html
+                    </context>
+                    <context context-type="linenumber">134</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4860327484616227095" datatype="html">
+                <source>Signing up is disabled.</source>
+                <target state="new">L'inscription est désactivée.</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html
+                    </context>
+                    <context context-type="linenumber">139</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="8502548447094943346" datatype="html">
+                <source>If you are the owner, please refer to the configuration section in the documentation to learn
+                    how to enable it.
+                </source>
+                <target state="new">Si vous êtes propriétaire, veuillez vous référer à la section configuration dans la documentation
+                    pour savoir comment l'activer.
+                </target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html
+                    </context>
+                    <context context-type="linenumber">140,143</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3805341172871384186" datatype="html">
+                <source>Complete
+                    <x id="INTERPOLATION" equiv-text="{{numOfInvalidSteps}}"/>
+                    step
+                    <x id="INTERPOLATION_1" equiv-text="{{numOfInvalidSteps &gt; 1 ? 's' : ''}}"/>
+                </source>
+                <target state="new">Compléter
+                    <x id="INTERPOLATION" equiv-text="{{numOfInvalidSteps}}"/>
+                    étape
+                    <x id="INTERPOLATION_1" equiv-text="{{numOfInvalidSteps &gt; 1 ? 's' : ''}}"/>
+                </target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-canvas/src/lib/incomplete-steps-widget/incomplete-steps-widget.component.html
+                    </context>
+                    <context context-type="linenumber">5,7</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6212705197426717225" datatype="html">
+                <source>View Only
+                </source>
+                <target state="new">Lecture seule
+                </target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-canvas/src/lib/view-only-mode/view-only-mode.component.html
+                    </context>
+                    <context context-type="linenumber">2,4</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7336734700471735506" datatype="html">
+                <source>+ Add Item</source>
+                <target state="new">+ Ajouter un item</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/array-form-control/array-form-control.component.html
+                    </context>
+                    <context context-type="linenumber">30,31</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/dictionary-form-control/dictionary-form-control.component.html
+                    </context>
+                    <context context-type="linenumber">37,38</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4163163170493567215" datatype="html">
+                <source>
+                    <x id="INTERPOLATION" equiv-text="showSecondValue)? 'First':''}}"/>
+                    Value
+                </source>
+                <target state="new">
+                    <x id="INTERPOLATION" equiv-text="showSecondValue)? 'First':''}}"/>
+                    Valeur
+                </target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/branch-condition-form-control/branch-condition-form-control.component.html
+                    </context>
+                    <context context-type="linenumber">5</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="5736745948064769809" datatype="html">
+                <source>First value is required</source>
+                <target state="new">La première valeur est obligatoire</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/branch-condition-form-control/branch-condition-form-control.component.html
+                    </context>
+                    <context context-type="linenumber">9,11</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="8448328978191313077" datatype="html">
+                <source>Condition</source>
+                <target state="new">Condition</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/branch-condition-form-control/branch-condition-form-control.component.html
+                    </context>
+                    <context context-type="linenumber">32</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="996299283992999375" datatype="html">
+                <source>Condition is required</source>
+                <target state="new">La condition est requise</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/branch-condition-form-control/branch-condition-form-control.component.html
+                    </context>
+                    <context context-type="linenumber">38,40</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="9118432878528508253" datatype="html">
+                <source>Second Value</source>
+                <target state="new">Deuxième valeur</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/branch-condition-form-control/branch-condition-form-control.component.html
+                    </context>
+                    <context context-type="linenumber">47</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2581780998909888908" datatype="html">
+                <source>Second value is required</source>
+                <target state="new">La deuxième valeur est requise</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/branch-condition-form-control/branch-condition-form-control.component.html
+                    </context>
+                    <context context-type="linenumber">51,53</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="1601518217526203092" datatype="html">
+                <source>Case sensitive</source>
+                <target state="new">Sensible aux majuscules et minuscules</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/branch-condition-form-control/branch-condition-form-control.component.html
+                    </context>
+                    <context context-type="linenumber">64,66</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6681500251003895090" datatype="html">
+                <source>And</source>
+                <target state="new">Et</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/branch-conditions-group-form-control/branch-conditions-group-form-control.component.html
+                    </context>
+                    <context context-type="linenumber">11,13</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="5532053643727258773" datatype="html">
+                <source>+ And</source>
+                <target state="new">+ Et</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/branch-conditions-group-form-control/branch-conditions-group-form-control.component.html
+                    </context>
+                    <context context-type="linenumber">21,23</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7896829997070648469" datatype="html">
+                <source>+ Or</source>
+                <target state="new">+ Ou</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/branch-conditions-group-form-control/branch-conditions-group-form-control.component.html
+                    </context>
+                    <context context-type="linenumber">25,27</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2496825876408159474" datatype="html">
+                <source>Add NPM Package</source>
+                <target state="new">Ajouter un Package NPM</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/code-artifact-form-control/code-artifact-control-fullscreen/add-npm-package-modal/add-npm-package-modal.component.html
+                    </context>
+                    <context context-type="linenumber">1</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="8916992158425367122" datatype="html">
+                <source>Please type the name of an NPM package.
+                    <x id="LINE_BREAK" ctype="lb" equiv-text="&lt;br&gt;"/>
+                </source>
+                <target state="new">Veuillez saisir le nom d'un package NPM.
+                    <x id="LINE_BREAK" ctype="lb" equiv-text="&lt;br&gt;"/>
+                </target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/code-artifact-form-control/code-artifact-control-fullscreen/add-npm-package-modal/add-npm-package-modal.component.html
+                    </context>
+                    <context context-type="linenumber">3,6</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7247626109904878386" datatype="html">
+                <source>Package not found</source>
+                <target state="new">Package introuvable</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/code-artifact-form-control/code-artifact-control-fullscreen/add-npm-package-modal/add-npm-package-modal.component.html
+                    </context>
+                    <context context-type="linenumber">15,17</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3989217883668206850" datatype="html">
+                <source>The latest version will be fetched and added to package.json</source>
+                <target state="new">La dernière version sera récupérée et ajoutée à package.json</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/code-artifact-form-control/code-artifact-control-fullscreen/add-npm-package-modal/add-npm-package-modal.component.html
+                    </context>
+                    <context context-type="linenumber">21,23</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="577038887888857351" datatype="html">
+                <source>Add</source>
+                <target state="new">Add</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/code-artifact-form-control/code-artifact-control-fullscreen/add-npm-package-modal/add-npm-package-modal.component.html
+                    </context>
+                    <context context-type="linenumber">31,33</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="5280318900735007886" datatype="html">
+                <source>Code Editor</source>
+                <target state="new">Éditeur de code</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/code-artifact-form-control/code-artifact-control-fullscreen/code-artifact-control-fullscreen.component.html
+                    </context>
+                    <context context-type="linenumber">3</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3524658885997089516" datatype="html">
+                <source>Add npm package</source>
+                <target state="new">Ajouter un package npm</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/code-artifact-form-control/code-artifact-control-fullscreen/code-artifact-control-fullscreen.component.html
+                    </context>
+                    <context context-type="linenumber">6,8</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6555875325581285494" datatype="html">
+                <source>Test code</source>
+                <target state="new">Code d'essai</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/code-artifact-form-control/code-artifact-control-fullscreen/code-artifact-control-fullscreen.component.html
+                    </context>
+                    <context context-type="linenumber">10,11</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2272612543539034211" datatype="html">
+                <source>Test Code First</source>
+                <target state="new">Tester le code en premier</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/code-step-mention-item/code-step-mention-item.component.html
+                    </context>
+                    <context context-type="linenumber">42,44</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6240237049554265257" datatype="html">
+                <source>This step needs to be tested in order to view its data.</source>
+                <target state="new">Cette étape doit être testée afin de visualiser ses données.</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/code-step-mention-item/code-step-mention-item.component.html
+                    </context>
+                    <context context-type="linenumber">45,47</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="1247109697914602116" datatype="html">
+                <source>Go to step</source>
+                <target state="new">Aller à l'étape</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/code-step-mention-item/code-step-mention-item.component.html
+                    </context>
+                    <context context-type="linenumber">50,52</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4578163876314196724" datatype="html">
+                <source>Describe the path to the property using JSON format
+                    <x id="START_PARAGRAPH" ctype="x-p" equiv-text="&lt;p&gt;"/>
+                    <x id="INTERPOLATION" equiv-text="{{data.placeHolder}}"/>
+                    <x id="CLOSE_PARAGRAPH" ctype="x-p" equiv-text="&lt;/p&gt;"/>
+                </source>
+                <target state="new">Décrire le chemin d'accès à la propriété au format JSON
+                    <x id="START_PARAGRAPH" ctype="x-p" equiv-text="&lt;p&gt;"/>
+                    <x id="INTERPOLATION" equiv-text="{{data.placeHolder}}"/>
+                    <x id="CLOSE_PARAGRAPH" ctype="x-p" equiv-text="&lt;/p&gt;"/>
+                </target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/custom-path-mention-dialog/custom-path-mention-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">4,6</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="1303595947745715638" datatype="html">
+                <source>Path is invalid</source>
+                <target state="new">Le chemin n'est pas valide</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/custom-path-mention-dialog/custom-path-mention-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">12,14</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4407837587845744851" datatype="html">
+                <source>Path must begin with
+                    <x id="INTERPOLATION" equiv-text="{{data.stepName}}"/>
+                </source>
+                <target state="new">Le chemin doit commencer par
+                    <x id="INTERPOLATION" equiv-text="{{data.stepName}}"/>
+                </target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/custom-path-mention-dialog/custom-path-mention-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">16,18</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4745987606023884549" datatype="html">
+                <source>Select</source>
+                <target state="new">Sélectionner</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/generic-mention-item/generic-mention-item.component.html
+                    </context>
+                    <context context-type="linenumber">4,5</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="1483784557054514527" datatype="html">
+                <source>Insert</source>
+                <target state="new">Insérer</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/piece-step-mention-item/piece-step-mention-item.component.html
+                    </context>
+                    <context context-type="linenumber">10,11</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/piece-step-mention-item/piece-step-mention-item.component.html
+                    </context>
+                    <context context-type="linenumber">55,56</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/piece-trigger-mention-item/piece-trigger-mention-item.component.html
+                    </context>
+                    <context context-type="linenumber">43,44</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/step-mentions-tree/step-mentions-tree.component.html
+                    </context>
+                    <context context-type="linenumber">19,20</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/step-mentions-tree/step-mentions-tree.component.html
+                    </context>
+                    <context context-type="linenumber">44,45</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2382599479144636387" datatype="html">
+                <source>result:
+                    <x id="START_TAG_SPAN" ctype="x-span"
+                       equiv-text="&lt;span class=&quot;ap-transition-all ap-text-primary&quot; [matTooltip]=&quot;'' + result.value || ''&quot;&gt;"/>
+                    <x id="INTERPOLATION"/>
+                    <x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/>
+                </source>
+                <target state="new">résultat:
+                    <x id="START_TAG_SPAN" ctype="x-span"
+                       equiv-text="&lt;span class=&quot;ap-transition-all ap-text-primary&quot; [matTooltip]=&quot;'' + result.value || ''&quot;&gt;"/>
+                    <x id="INTERPOLATION"/>
+                    <x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/>
+                </target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/piece-step-mention-item/piece-step-mention-item.component.html
+                    </context>
+                    <context context-type="linenumber">49,52</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/piece-trigger-mention-item/piece-trigger-mention-item.component.html
+                    </context>
+                    <context context-type="linenumber">37,40</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="995418901058119655" datatype="html">
+                <source>Test step</source>
+                <target state="new">Étape de test</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/piece-step-mention-item/piece-step-mention-item.component.html
+                    </context>
+                    <context context-type="linenumber">63,65</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="31885550206889765" datatype="html">
+                <source>This step needs to be tested, to generate sample data.</source>
+                <target state="new">Cette étape doit être testée pour générer des exemples de données.</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/piece-step-mention-item/piece-step-mention-item.component.html
+                    </context>
+                    <context context-type="linenumber">66,68</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3363972622671896869" datatype="html">
+                <source>Go to step</source>
+                <target state="new">Aller à l'étape</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/piece-step-mention-item/piece-step-mention-item.component.html
+                    </context>
+                    <context context-type="linenumber">71,72</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="8902753740956283901" datatype="html">
+                <source>This trigger needs to have data loaded from your account, to use as sample data</source>
+                <target state="new">Ce déclencheur doit avoir des données chargées à partir de votre compte, pour être utilisé comme exemple de données
+                </target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/piece-trigger-mention-item/piece-trigger-mention-item.component.html
+                    </context>
+                    <context context-type="linenumber">56,58</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="806466970018409276" datatype="html">
+                <source>Go to trigger</source>
+                <target state="new">Aller au déclencheur</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/piece-trigger-mention-item/piece-trigger-mention-item.component.html
+                    </context>
+                    <context context-type="linenumber">61,62</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/webhook-trigger-mention-item/webhook-trigger-mention-item.component.html
+                    </context>
+                    <context context-type="linenumber">33,34</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="1705277357265501985" datatype="html">
+                <source>Send sample data first</source>
+                <target state="new">Envoyez d'abord des exemples de données</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/webhook-trigger-mention-item/webhook-trigger-mention-item.component.html
+                    </context>
+                    <context context-type="linenumber">25,27</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2776954849664294745" datatype="html">
+                <source>This trigger needs to have data sent to it, to use as sample data</source>
+                <target state="new">Ce déclencheur doit recevoir des données pour pouvoir être utilisé comme exemple de données.</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/webhook-trigger-mention-item/webhook-trigger-mention-item.component.html
+                    </context>
+                    <context context-type="linenumber">28,30</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="1071721880474488785" datatype="html">
+                <source>Import</source>
+                <target state="new">Importer</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-header/src/lib/flow-builder-header.component.html
+                    </context>
+                    <context context-type="linenumber">93</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7462301153729425254" datatype="html">
+                <source>Export</source>
+                <target state="new">Exporter</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-header/src/lib/flow-builder-header.component.html
+                    </context>
+                    <context context-type="linenumber">107</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3785740330706781283" datatype="html">
+                <source>Import Flow
+                </source>
+                <target state="new">Importer un process
+                </target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-header/src/lib/import-flow-dialogue/import-flow-dialogue.component.html
+                    </context>
+                    <context context-type="linenumber">1,3</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7723572148434820610" datatype="html">
+                <source><x id="START_BOLD_TEXT" ctype="x-b"/>Important:
+                    <x id="CLOSE_BOLD_TEXT" ctype="x-b" equiv-text="&lt;/b&gt;"/>
+                    Importing a flow will overwrite your current flow.
+                </source>
+                <target state="new"><x id="START_BOLD_TEXT" ctype="x-b"/>Important:
+                    <x id="CLOSE_BOLD_TEXT" ctype="x-b" equiv-text="&lt;/b&gt;"/>
+                    L’importation d’un process écrasera votre process actuel.
+                </target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-header/src/lib/import-flow-dialogue/import-flow-dialogue.component.html
+                    </context>
+                    <context context-type="linenumber">9</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="8455204924704616723" datatype="html">
+                <source>File</source>
+                <target state="new">Ficher</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-header/src/lib/import-flow-dialogue/import-flow-dialogue.component.html
+                    </context>
+                    <context context-type="linenumber">12</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="727310260821422069" datatype="html">
+                <source>Import</source>
+                <target state="new">Importer</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-header/src/lib/import-flow-dialogue/import-flow-dialogue.component.html
+                    </context>
+                    <context context-type="linenumber">24,26</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7612725427647519192" datatype="html">
+                <source>Edit Flow</source>
+                <target state="new">Modifier le process</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-header/src/lib/publish-button/publish-button.component.html
+                    </context>
+                    <context context-type="linenumber">16,18</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6310395472139498755" datatype="html">
+                <source>Run Details</source>
+                <target state="new">Détails de l'exécution</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-left-sidebar/src/lib/run-details/run-details.component.html
+                    </context>
+                    <context context-type="linenumber">2</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="1859826026585680442" datatype="html">
+                <source>No details available for this run.</source>
+                <target state="new">Aucun détail disponible pour cette exécution.</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-left-sidebar/src/lib/run-details/run-details.component.html
+                    </context>
+                    <context context-type="linenumber">49</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7238368002587743460" datatype="html">
+                <source>Step succeeded</source>
+                <target state="new">Étape réussie</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-left-sidebar/src/lib/run-details/selected-step-result/selected-step-result.component.html
+                    </context>
+                    <context context-type="linenumber">6</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-left-sidebar/src/lib/run-details/selected-step-result/selected-step-result.component.html
+                    </context>
+                    <context context-type="linenumber">10</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-piece-webhook-trigger/test-piece-webhook-trigger.component.html
+                    </context>
+                    <context context-type="linenumber">30</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="977525603391908118" datatype="html">
+                <source>Step paused</source>
+                <target state="new">Étape en pause</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-left-sidebar/src/lib/run-details/selected-step-result/selected-step-result.component.html
+                    </context>
+                    <context context-type="linenumber">14</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4220765745195024064" datatype="html">
+                <source>Duration:</source>
+                <target state="new">Durée:</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-left-sidebar/src/lib/run-details/selected-step-result/selected-step-result.component.html
+                    </context>
+                    <context context-type="linenumber">22</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="8968030053137661433" datatype="html">
+                <source>Output</source>
+                <target state="new">Output</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-left-sidebar/src/lib/run-details/selected-step-result/selected-step-result.component.html
+                    </context>
+                    <context context-type="linenumber">27</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="1464435073936969366" datatype="html">
+                <source>Done</source>
+                <target state="new">Fait</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-left-sidebar/src/lib/run-details/steps-results-list/step-result.component.html
+                    </context>
+                    <context context-type="linenumber">47,49</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/rename-folder-dialog/rename-folder-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">27,29</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="5112507844562615179" datatype="html">
+                <source>All Iterations</source>
+                <target state="new">Toutes les itérations</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-left-sidebar/src/lib/run-details/steps-results-list/step-result.component.html
+                    </context>
+                    <context context-type="linenumber">76,78</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4374922654589260717" datatype="html">
+                <source>If you are expecting a reply from this webhook, append &lt;b&gt;/sync&lt;/b&gt; to the URL.&lt;br&gt;
+                    &lt;br&gt;
+                    In that case, you will also have to add an &lt;b&gt;HTTP step&lt;/b&gt; with return response to the
+                    end of your flow.
+                </source>
+                <target state="new">Si vous attendez une réponse de ce webhook, ajoutez &lt;b&gt;/sync&lt;/b&gt; à
+                    l'URL.&lt;br&gt; &lt;br&gt;
+                    Dans ce cas, vous devrez également ajouter un &lt;b&gt;HTTP step&lt;/b&gt; avec réponse en retour à la
+                    fin du process.
+                </target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-right-sidebar/src/lib/edit-step-sidebar/edit-step-form-container/edit-step-form-container.component.html
+                    </context>
+                    <context context-type="linenumber">17,18</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="1164244071316602737" datatype="html">
+                <source>Edit step name</source>
+                <target state="new">Modifier le nom de l'étape</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-right-sidebar/src/lib/edit-step-sidebar/step-name-editor/step-name-editor.component.html
+                    </context>
+                    <context context-type="linenumber">6</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6867381603185205680" datatype="html">
+                <source>Or</source>
+                <target state="new">Ou</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-right-sidebar/src/lib/input-forms/branch-step-input-form/branch-step-input-form.component.html
+                    </context>
+                    <context context-type="linenumber">11,13</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-piece-webhook-trigger/test-piece-webhook-trigger.component.html
+                    </context>
+                    <context context-type="linenumber">19,21</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2537648413493478491" datatype="html">
+                <source>Inputs</source>
+                <target state="new">Inputs</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-right-sidebar/src/lib/input-forms/code-step-input-form/code-step-input-form.component.html
+                    </context>
+                    <context context-type="linenumber">4</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6162691442834560200" datatype="html">
+                <source>Items</source>
+                <target state="new">Items</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-right-sidebar/src/lib/input-forms/loop-step-input-form/loop-step-input-form.component.html
+                    </context>
+                    <context context-type="linenumber">4</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3349891418640044644" datatype="html">
+                <source>Items are required.</source>
+                <target state="new">Les items sont obligatoires.</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-right-sidebar/src/lib/input-forms/loop-step-input-form/loop-step-input-form.component.html
+                    </context>
+                    <context context-type="linenumber">7,9</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="97940262148604706" datatype="html">
+                <source>Action</source>
+                <target state="new">Action</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-right-sidebar/src/lib/input-forms/piece-input-forms/piece-action-input-form/piece-action-input-form.component.html
+                    </context>
+                    <context context-type="linenumber">4</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="8585958577229523205" datatype="html">
+                <source>No options available</source>
+                <target state="new">Aucune option disponible</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-right-sidebar/src/lib/input-forms/piece-input-forms/piece-action-input-form/piece-action-input-form.component.html
+                    </context>
+                    <context context-type="linenumber">23,25</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-right-sidebar/src/lib/input-forms/piece-input-forms/piece-trigger-input-form/piece-trigger-input-form.component.html
+                    </context>
+                    <context context-type="linenumber">40,42</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7863127620120051284" datatype="html">
+                <source>Action is required</source>
+                <target state="new">Une action est requise</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-right-sidebar/src/lib/input-forms/piece-input-forms/piece-action-input-form/piece-action-input-form.component.html
+                    </context>
+                    <context context-type="linenumber">27,29</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="8425620343514116260" datatype="html">
+                <source>Trigger</source>
+                <target state="new">Déclencher</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-right-sidebar/src/lib/input-forms/piece-input-forms/piece-trigger-input-form/piece-trigger-input-form.component.html
+                    </context>
+                    <context context-type="linenumber">4</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="628476928604062458" datatype="html">
+                <source>Select a Trigger</source>
+                <target state="new">Sélectionnez un déclencheur</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-right-sidebar/src/lib/input-forms/piece-input-forms/piece-trigger-input-form/piece-trigger-input-form.component.html
+                    </context>
+                    <context context-type="linenumber">5</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="5746253109350702685" datatype="html">
+                <source>Instantly triggered once change occurs</source>
+                <target state="new">Déclenché instantanément une fois le changement survenu</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-right-sidebar/src/lib/input-forms/piece-input-forms/piece-trigger-input-form/piece-trigger-input-form.component.html
+                    </context>
+                    <context context-type="linenumber">21</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4481618196785625765" datatype="html">
+                <source>Checks for changes periodically, based on your plan</source>
+                <target state="new">Vérifie périodiquement les changements, en fonction de votre abonnement</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-right-sidebar/src/lib/input-forms/piece-input-forms/piece-trigger-input-form/piece-trigger-input-form.component.html
+                    </context>
+                    <context context-type="linenumber">29</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="586223894042857512" datatype="html">
+                <source>Trigger is required</source>
+                <target state="new">Un déclencheur est requis</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-right-sidebar/src/lib/input-forms/piece-input-forms/piece-trigger-input-form/piece-trigger-input-form.component.html
+                    </context>
+                    <context context-type="linenumber">44,46</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6019850736144907892" datatype="html">
+                <source>Request Piece</source>
+                <target state="new">Demander un connecteur</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-right-sidebar/src/lib/step-type-sidebar/step-type-list/step-type-list.component.html
+                    </context>
+                    <context context-type="linenumber">13,15</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7453039164124655632" datatype="html">
+                <source>Run succeeded (<x id="INTERPOLATION" equiv-text="{{ selectedRun.id }}"/>)
+                </source>
+                <target state="new">Exécution réussie (<x id="INTERPOLATION" equiv-text="{{ selectedRun.id }}"/>)
+                </target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-store/src/lib/test-run-bar/test-run-bar.component.html
+                    </context>
+                    <context context-type="linenumber">7</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-store/src/lib/test-run-bar/test-run-bar.component.html
+                    </context>
+                    <context context-type="linenumber">11</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4934929429922486658" datatype="html">
+                <source>Run failed (<x id="INTERPOLATION" equiv-text="{{ selectedRun.id }}"/>)
+                </source>
+                <target state="new">Échec de l'exécution (<x id="INTERPOLATION" equiv-text="{{ selectedRun.id }}"/>)
+                </target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-store/src/lib/test-run-bar/test-run-bar.component.html
+                    </context>
+                    <context context-type="linenumber">15</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="691056332862512203" datatype="html">
+                <source>Flow is running</source>
+                <target state="new">Le process est en cours d'exécution</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-store/src/lib/test-run-bar/test-run-bar.component.html
+                    </context>
+                    <context context-type="linenumber">19</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4598207822643496236" datatype="html">
+                <source>Flow is paused ...</source>
+                <target state="new">Le process est interrompu ...</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-store/src/lib/test-run-bar/test-run-bar.component.html
+                    </context>
+                    <context context-type="linenumber">23</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7038602814235796780" datatype="html">
+                <source>Run exceeded
+                    <x id="INTERPOLATION" equiv-text="{{sandboxTimeoutSeconds$ | async}}"/>
+                    seconds, try to optimize your steps.
+                </source>
+                <target state="new">Exécution dépassée
+                    <x id="INTERPOLATION" equiv-text="{{sandboxTimeoutSeconds$ | async}}"/>
+                    secondes, essayez d'optimiser vos étapes.
+                </target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-store/src/lib/test-run-bar/test-run-bar.component.html
+                    </context>
+                    <context context-type="linenumber">27,28</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="601645365235785306" datatype="html">
+                <source>Run failed for an unknown reason, contact support.</source>
+                <target state="new">L'exécution a échoué pour une raison inconnue, contactez l'assistance.</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-store/src/lib/test-run-bar/test-run-bar.component.html
+                    </context>
+                    <context context-type="linenumber">32</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="8315482926074085909" datatype="html">
+                <source>Exit Run</source>
+                <target state="new">Quitter l'exécution</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-store/src/lib/test-run-bar/test-run-bar.component.html
+                    </context>
+                    <context context-type="linenumber">39</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="500133922719782601" datatype="html">
+                <source>Generate Sample Data</source>
+                <target state="new">Générer des exemples de données</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-code-step/test-code-step.component.html
+                    </context>
+                    <context context-type="linenumber">2,4</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-piece-step/test-piece-step.component.html
+                    </context>
+                    <context context-type="linenumber">2,4</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-piece-webhook-trigger/test-piece-webhook-trigger.component.html
+                    </context>
+                    <context context-type="linenumber">2,4</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-polling-trigger/test-polling-trigger.component.html
+                    </context>
+                    <context context-type="linenumber">2,4</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-webhook-trigger/test-webhook-trigger.component.html
+                    </context>
+                    <context context-type="linenumber">2,4</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7919787260081015275" datatype="html">
+                <source>Tested Successfully</source>
+                <target state="new">Testé avec succès</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-code-step/test-code-step.component.html
+                    </context>
+                    <context context-type="linenumber">15</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-piece-step/test-piece-step.component.html
+                    </context>
+                    <context context-type="linenumber">60</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-piece-webhook-trigger/test-piece-webhook-trigger.component.html
+                    </context>
+                    <context context-type="linenumber">31</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-webhook-trigger/test-webhook-trigger.component.html
+                    </context>
+                    <context context-type="linenumber">24</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3803178221894171065" datatype="html">
+                <source>Test Failed</source>
+                <target state="new">Test échoué</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-code-step/test-code-step.component.html
+                    </context>
+                    <context context-type="linenumber">20</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3541311390491548382" datatype="html">
+                <source>Retest</source>
+                <target state="new">Retester</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-code-step/test-code-step.component.html
+                    </context>
+                    <context context-type="linenumber">27</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-piece-step/test-piece-step.component.html
+                    </context>
+                    <context context-type="linenumber">72</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-piece-webhook-trigger/test-piece-webhook-trigger.component.html
+                    </context>
+                    <context context-type="linenumber">40</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-webhook-trigger/test-webhook-trigger.component.html
+                    </context>
+                    <context context-type="linenumber">30</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="8144434134010600908" datatype="html">
+                <source>Test step</source>
+                <target state="new">Étape de test</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-code-step/test-code-step.component.html
+                    </context>
+                    <context context-type="linenumber">46,47</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-piece-step/test-piece-step.component.html
+                    </context>
+                    <context context-type="linenumber">40,41</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2150150684765904117" datatype="html">
+                <source>Testing Failed</source>
+                <target state="new">Échec du test</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-piece-step/test-piece-step.component.html
+                    </context>
+                    <context context-type="linenumber">63</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4137681575855964026" datatype="html">
+                <source>Test this trigger to generate sample data that can be used in the next steps</source>
+                <target state="new">Testez ce déclencheur pour générer des exemples de données pouvant être utilisées dans les étapes suivantes
+                </target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-piece-webhook-trigger/test-piece-webhook-trigger.component.html
+                    </context>
+                    <context context-type="linenumber">10</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7772874305312537929" datatype="html">
+                <source>Test Trigger</source>
+                <target state="new">Déclencheur de test</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-piece-webhook-trigger/test-piece-webhook-trigger.component.html
+                    </context>
+                    <context context-type="linenumber">16,17</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7821978891866988357" datatype="html">
+                <source>Use Mock Data</source>
+                <target state="new">Utiliser des données fictives</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-piece-webhook-trigger/test-piece-webhook-trigger.component.html
+                    </context>
+                    <context context-type="linenumber">23</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="326819936092149573" datatype="html">
+                <source>Data</source>
+                <target state="new">Données</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-piece-webhook-trigger/test-piece-webhook-trigger.component.html
+                    </context>
+                    <context context-type="linenumber">44,46</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-polling-trigger/test-polling-trigger.component.html
+                    </context>
+                    <context context-type="linenumber">40,42</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-webhook-trigger/test-webhook-trigger.component.html
+                    </context>
+                    <context context-type="linenumber">34,36</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="1443544130994970867" datatype="html">
+                <source>(Result<x id="INTERPOLATION" equiv-text="{{currentResults.length-idx}}"/>)
+                </source>
+                <target state="new">(Résultat<x id="INTERPOLATION" equiv-text="{{currentResults.length-idx}}"/>)
+                </target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-piece-webhook-trigger/test-piece-webhook-trigger.component.html
+                    </context>
+                    <context context-type="linenumber">49</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-polling-trigger/test-polling-trigger.component.html
+                    </context>
+                    <context context-type="linenumber">45</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-webhook-trigger/test-webhook-trigger.component.html
+                    </context>
+                    <context context-type="linenumber">39</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="8101735558462006931" datatype="html">
+                <source>Testing trigger</source>
+                <target state="new">Déclencheur de test</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-piece-webhook-trigger/test-piece-webhook-trigger.component.html
+                    </context>
+                    <context context-type="linenumber">64</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-webhook-trigger/test-webhook-trigger.component.html
+                    </context>
+                    <context context-type="linenumber">54</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2159130950882492111" datatype="html">
+                <source>Cancel</source>
+                <target state="new">Annuler</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-piece-webhook-trigger/test-piece-webhook-trigger.component.html
+                    </context>
+                    <context context-type="linenumber">67</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-webhook-trigger/test-webhook-trigger.component.html
+                    </context>
+                    <context context-type="linenumber">57</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="1098411996448900439" datatype="html">
+                <source>Action Required</source>
+                <target state="new">Action requise</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-piece-webhook-trigger/test-piece-webhook-trigger.component.html
+                    </context>
+                    <context context-type="linenumber">73</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-webhook-trigger/test-webhook-trigger.component.html
+                    </context>
+                    <context context-type="linenumber">63</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="202666211146552310" datatype="html">
+                <source>Load sample data from your account to be used in the next steps</source>
+                <target state="new">Chargez des exemples de données de votre compte à utiliser dans les prochaines étapes</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-polling-trigger/test-polling-trigger.component.html
+                    </context>
+                    <context context-type="linenumber">13</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="8335477655941671361" datatype="html">
+                <source>Load data</source>
+                <target state="new">Charger des données</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-polling-trigger/test-polling-trigger.component.html
+                    </context>
+                    <context context-type="linenumber">18</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-polling-trigger/test-polling-trigger.component.html
+                    </context>
+                    <context context-type="linenumber">36</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-polling-trigger/test-polling-trigger.component.html
+                    </context>
+                    <context context-type="linenumber">69</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4385583003359794696" datatype="html">
+                <source>This sample data can be used in the next steps</source>
+                <target state="new">Ces exemples de données peuvent être utilisés dans les étapes suivantes</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-polling-trigger/test-polling-trigger.component.html
+                    </context>
+                    <context context-type="linenumber">49,51</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="1645193489541371451" datatype="html">
+                <source>No results found</source>
+                <target state="new">Aucun résultat trouvé</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-polling-trigger/test-polling-trigger.component.html
+                    </context>
+                    <context context-type="linenumber">60</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3854830088717420676" datatype="html">
+                <source>Please add some data then press &quot;Load Data&quot;</source>
+                <target state="new">Veuillez ajouter quelques données puis appuyez sur "Charger les données".</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-polling-trigger/test-polling-trigger.component.html
+                    </context>
+                    <context context-type="linenumber">72</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7790321446929337842" datatype="html">
+                <source>Testing data failed. Please ensure that the settings are correct or try again.</source>
+                <target state="new">Les données de test ont échoué. Veuillez vous assurer que les paramètres sont corrects ou réessayer.
+                </target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-polling-trigger/test-polling-trigger.component.html
+                    </context>
+                    <context context-type="linenumber">73,74</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="8201052275889392973" datatype="html">
+                <source>Send a request to generate sample data that can be used in the next steps</source>
+                <target state="new">Envoyer une demande pour générer des exemples de données pouvant être utilisées dans les étapes suivantes</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-webhook-trigger/test-webhook-trigger.component.html
+                    </context>
+                    <context context-type="linenumber">10</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4633860620352207300" datatype="html">
+                <source>Send Data</source>
+                <target state="new">Envoyer des données</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-webhook-trigger/test-webhook-trigger.component.html
+                    </context>
+                    <context context-type="linenumber">13,15</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="5226293457079438761" datatype="html">
+                <source>Please send data to the webhook endpoint to test the step.</source>
+                <target state="new">Veuillez envoyer des données au point de terminaison du webhook pour tester l'étape.</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-test-steps/src/lib/test-webhook-trigger/test-webhook-trigger.component.html
+                    </context>
+                    <context context-type="linenumber">65,68</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="8096108831936282703" datatype="html">
+                <source>New Connection</source>
+                <target state="new">Nouvelle connexion</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/basic-auth-connection-dialog/basic-auth-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">3</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/cloud-oauth2-connection-dialog/cloud-oauth2-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">3</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/custom-auth-connection-dialog/custom-auth-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">2</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">3</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4042902315677630519" datatype="html">
+                <source>Name is required</source>
+                <target state="new">Le nom est requis</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/basic-auth-connection-dialog/basic-auth-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">20,22</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/cloud-oauth2-connection-dialog/cloud-oauth2-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">18,20</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/custom-auth-connection-dialog/custom-auth-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">15,17</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">19,21</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/secret-text-connection-dialog/secret-text-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">19,21</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/new-folder-dialog/new-folder-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">14,16</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/rename-folder-dialog/rename-folder-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">14,16</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="828831341307092377" datatype="html">
+                <source>Name can only contain letters, numbers and underscores</source>
+                <target state="new">Le nom ne peut contenir que des lettres, des chiffres et des underscores (traits de soulignement)</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/basic-auth-connection-dialog/basic-auth-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">24,26</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/cloud-oauth2-connection-dialog/cloud-oauth2-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">22,24</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/custom-auth-connection-dialog/custom-auth-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">19,21</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">23,25</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/secret-text-connection-dialog/secret-text-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">23,25</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7467703008452363786" datatype="html">
+                <source>Name is already used</source>
+                <target state="new">Le nom est déjà utilisé</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/basic-auth-connection-dialog/basic-auth-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">27,29</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/cloud-oauth2-connection-dialog/cloud-oauth2-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">25,27</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/custom-auth-connection-dialog/custom-auth-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">22,24</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">26,28</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/secret-text-connection-dialog/secret-text-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">26,28</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6608576580294436927" datatype="html">
+                <source>is required</source>
+                <target state="new">est requis</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/basic-auth-connection-dialog/basic-auth-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">38</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/basic-auth-connection-dialog/basic-auth-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">47</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/cloud-oauth2-connection-dialog/cloud-oauth2-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">36</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/cloud-oauth2-connection-dialog/cloud-oauth2-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">48</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/custom-auth-connection-dialog/custom-auth-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">35</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/custom-auth-connection-dialog/custom-auth-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">43</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/custom-auth-connection-dialog/custom-auth-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">56</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">58</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">71</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/secret-text-connection-dialog/secret-text-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">37</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3620188369327429839" datatype="html">
+                <source>Save</source>
+                <target state="new">Sauvegarder</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/basic-auth-connection-dialog/basic-auth-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">59,61</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/cloud-oauth2-connection-dialog/cloud-oauth2-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">75,77</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/custom-auth-connection-dialog/custom-auth-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">76,78</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">99,101</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/secret-text-connection-dialog/secret-text-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">51,53</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2504830835198730128" datatype="html">
+                <source>You have to connect an account to continue</source>
+                <target state="new">Vous devez connecter un compte pour continuer</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/cloud-oauth2-connection-dialog/cloud-oauth2-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">58,60</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">84,86</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3543628236093406924" datatype="html">
+                <source>I would like to use my own app credentials</source>
+                <target state="new">Je souhaite utiliser mes propres identifiants d'application</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/cloud-oauth2-connection-dialog/cloud-oauth2-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">64,67</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6070859199120014907" datatype="html">
+                <source>Reconnect</source>
+                <target state="new">Reconnect</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/custom-auth-connection-dialog/custom-auth-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">3</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7022562336989577788" datatype="html">
+                <source>Redirect URL is required</source>
+                <target state="new">L'URL de redirection est requise</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">35,36</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="5273501066845923426" datatype="html">
+                <source>Client ID</source>
+                <target state="new">Client ID</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">40</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6157299238892357663" datatype="html">
+                <source>Client ID is required</source>
+                <target state="new">Client ID est requis</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">42,43</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3858350041926042177" datatype="html">
+                <source>Client Secret</source>
+                <target state="new">Client Secret</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">46</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="1073544708188299870" datatype="html">
+                <source>Client Secret is required</source>
+                <target state="new">Client Secret est requis</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">49,50</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2342935516799349752" datatype="html">
+                <source>I would like to use activepieces app credentials</source>
+                <target state="new">Je souhaite utiliser les identifiants de l'application Activepieces</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">90,91</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2903873185531053389" datatype="html">
+                <source>New Connection</source>
+                <target state="new">Nouvelle connexion</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/secret-text-connection-dialog/secret-text-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">2,4</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4804768288792909623" datatype="html">
+                <source>Connect</source>
+                <target state="new">Connecter</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/form-controls/o-auth2-connect-control/o-auth2-connect-control.component.html
+                    </context>
+                    <context context-type="linenumber">2</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2907016025519254862" datatype="html">
+                <source>Disconnect</source>
+                <target state="new">Déconnecter</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/form-controls/o-auth2-connect-control/o-auth2-connect-control.component.html
+                    </context>
+                    <context context-type="linenumber">4</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="5175055549231295483" datatype="html">
+                <source>Please make sure this connections's credentials are correct.
+                </source>
+                <target state="new">Veuillez vous assurer que les informations d'identification de cette connexion sont correctes.
+                </target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/form-controls/o-auth2-connect-control/o-auth2-connect-control.component.html
+                    </context>
+                    <context context-type="linenumber">5,7</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7697803500143402577" datatype="html">
+                <source>Name is already used</source>
+                <target state="new">Le nom est déjà utilisé</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/new-folder-dialog/new-folder-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">17</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/rename-folder-dialog/rename-folder-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">17</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7941428823403788384" datatype="html">
+                <source>Create</source>
+                <target state="new">Créer</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/new-folder-dialog/new-folder-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">27,29</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7466074960429522816" datatype="html">
+                <source>Rename Folder (<x id="INTERPOLATION" equiv-text="{{data.folderDisplayName}}"/>)
+                </source>
+                <target state="new">Renommer le dossier (<x id="INTERPOLATION" equiv-text="{{data.folderDisplayName}}"/>)
+                </target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/rename-folder-dialog/rename-folder-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">1,2</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4995711714357004792" datatype="html">
+                <source>Change the name of your folder</source>
+                <target state="new">Changez le nom de votre dossier</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/rename-folder-dialog/rename-folder-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">4,6</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2930524874557603286" datatype="html">
+                <source>Activepieces Team</source>
+                <target state="new">L'équipe d'Activepieces</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-templates/src/lib/featured-template-card/featured-template-card.component.html
+                    </context>
+                    <context context-type="linenumber">15</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="954840788512180203" datatype="html">
+                <source>See less</source>
+                <target state="new">Voir moins</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-templates/src/lib/featured-template-card/featured-template-card.component.html
+                    </context>
+                    <context context-type="linenumber">33</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4462165726005928867" datatype="html">
+                <source>See more</source>
+                <target state="new">Voir plus</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-templates/src/lib/featured-template-card/featured-template-card.component.html
+                    </context>
+                    <context context-type="linenumber">36</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="5949896491927456436" datatype="html">
+                <source>Learn about this flow</source>
+                <target state="new">En savoir plus sur ce process</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-templates/src/lib/template-blog-notification/template-blog-notification.component.html
+                    </context>
+                    <context context-type="linenumber">3,5</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3490041488928665412" datatype="html">
+                <source>You used a template for this flow and you can read our guide on how to set it up.</source>
+                <target state="new">Vous avez utilisé un modèle pour ce process et vous pouvez lire notre guide sur la façon de le configurer.
+                </target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-templates/src/lib/template-blog-notification/template-blog-notification.component.html
+                    </context>
+                    <context context-type="linenumber">6,8</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="9024715782279733035" datatype="html">
+                <source>Go to guide</source>
+                <target state="new">Aller au guide</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-templates/src/lib/template-blog-notification/template-blog-notification.component.html
+                    </context>
+                    <context context-type="linenumber">12</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="1892409467490527310" datatype="html">
+                <source>Ignore</source>
+                <target state="new">Ignorer</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-templates/src/lib/template-blog-notification/template-blog-notification.component.html
+                    </context>
+                    <context context-type="linenumber">18,20</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2778126117828123438" datatype="html">
+                <source>Use Template</source>
+                <target state="new">Utilise ce modèle</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-templates/src/lib/template-card/template-card.component.html
+                    </context>
+                    <context context-type="linenumber">8,10</context>
                 </context-group>
             </trans-unit>
         </body>
