@@ -18,9 +18,6 @@ export const openaiAuth = PieceAuth.SecretText({
   required: true,
   validate: async (auth) => {
     try{
-      console.log("-=-=-=-=-=-=-=-");
-      console.log(auth);
-      console.log("-=-=-=-=-=-=-=-");
       await httpClient.sendRequest<{
         data: { id: string }[];
       }>({
