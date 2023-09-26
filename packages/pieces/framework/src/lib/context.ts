@@ -67,6 +67,14 @@ export type PauseHookParams = {
 
 export type PauseHook = (params: PauseHookParams) => void
 
+export type PropertyContext = {
+	server: ServerContext
+}
+
+export type ServerContext = {
+    apiUrl: string,
+    token: string
+}
 export type BaseActionContext<
     ET extends ExecutionType,
     PieceAuth extends PieceAuthProperty,
@@ -75,6 +83,7 @@ export type BaseActionContext<
     executionType: ET,
     connections: ConnectionsManager,
     tags: TagsManager,
+    server: ServerContext,
     files: FilesService
     serverUrl: string,
     run: {
