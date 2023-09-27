@@ -50,7 +50,7 @@ export class TelemetryService {
     return this.flagService.getAllFlags().pipe(
       map((flags) => {
         if (flags[ApFlagId.ENVIRONMENT] === ApEnvironment.DEVELOPMENT) {
-          return false;
+          return true;
         }
         if (!flags[ApFlagId.TELEMETRY_ENABLED]) {
           return false;
