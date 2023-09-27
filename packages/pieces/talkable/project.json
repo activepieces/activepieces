@@ -6,35 +6,26 @@
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/talkable",
         "tsConfig": "packages/pieces/talkable/tsconfig.lib.json",
         "packageJson": "packages/pieces/talkable/package.json",
         "main": "packages/pieces/talkable/src/index.ts",
-        "assets": [
-          "packages/pieces/talkable/*.md"
-        ],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "assets": ["packages/pieces/talkable/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "publish": {
       "command": "node tools/scripts/publish.mjs pieces-talkable {args.ver} {args.tag}",
-      "dependsOn": [
-        "build"
-      ]
+      "dependsOn": ["build"]
     },
     "lint": {
       "executor": "@nx/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": [
-          "packages/pieces/talkable/**/*.ts"
-        ]
+        "lintFilePatterns": ["packages/pieces/talkable/**/*.ts"]
       }
     }
   },

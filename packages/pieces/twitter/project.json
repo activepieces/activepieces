@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/twitter/package.json",
         "main": "packages/pieces/twitter/src/index.ts",
         "assets": ["packages/pieces/twitter/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

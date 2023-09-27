@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/google-contacts/package.json",
         "main": "packages/pieces/google-contacts/src/index.ts",
         "assets": ["packages/pieces/google-contacts/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/discord/package.json",
         "main": "packages/pieces/discord/src/index.ts",
         "assets": ["packages/pieces/discord/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

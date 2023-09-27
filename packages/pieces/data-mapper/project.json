@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/data-mapper/package.json",
         "main": "packages/pieces/data-mapper/src/index.ts",
         "assets": ["packages/pieces/data-mapper/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

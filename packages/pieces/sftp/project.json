@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/sftp/package.json",
         "main": "packages/pieces/sftp/src/index.ts",
         "assets": ["packages/pieces/sftp/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

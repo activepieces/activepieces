@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/instagram-business/package.json",
         "main": "packages/pieces/instagram-business/src/index.ts",
         "assets": ["packages/pieces/instagram-business/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

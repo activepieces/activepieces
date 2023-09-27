@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/gcloud-pubsub/package.json",
         "main": "packages/pieces/gcloud-pubsub/src/index.ts",
         "assets": ["packages/pieces/gcloud-pubsub/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

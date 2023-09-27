@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/constant-contact/package.json",
         "main": "packages/pieces/constant-contact/src/index.ts",
         "assets": ["packages/pieces/constant-contact/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

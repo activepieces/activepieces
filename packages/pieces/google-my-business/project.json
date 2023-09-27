@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/google-my-business/package.json",
         "main": "packages/pieces/google-my-business/src/index.ts",
         "assets": ["packages/pieces/google-my-business/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

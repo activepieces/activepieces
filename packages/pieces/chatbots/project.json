@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/chatbots/package.json",
         "main": "packages/pieces/chatbots/src/index.ts",
         "assets": ["packages/pieces/chatbots/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "publish": {

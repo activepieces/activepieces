@@ -6,35 +6,26 @@
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/open-router",
         "tsConfig": "packages/pieces/open-router/tsconfig.lib.json",
         "packageJson": "packages/pieces/open-router/package.json",
         "main": "packages/pieces/open-router/src/index.ts",
-        "assets": [
-          "packages/pieces/open-router/*.md"
-        ],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "assets": ["packages/pieces/open-router/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "publish": {
       "command": "node tools/scripts/publish.mjs pieces-open-router {args.ver} {args.tag}",
-      "dependsOn": [
-        "build"
-      ]
+      "dependsOn": ["build"]
     },
     "lint": {
       "executor": "@nx/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": [
-          "packages/pieces/open-router/**/*.ts"
-        ]
+        "lintFilePatterns": ["packages/pieces/open-router/**/*.ts"]
       }
     }
   },

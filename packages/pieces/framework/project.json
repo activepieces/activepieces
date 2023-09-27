@@ -12,7 +12,8 @@
         "main": "packages/pieces/framework/src/index.ts",
         "tsConfig": "packages/pieces/framework/tsconfig.lib.json",
         "assets": ["packages/pieces/framework/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "publish": {

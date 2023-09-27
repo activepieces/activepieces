@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/facebook-leads/package.json",
         "main": "packages/pieces/facebook-leads/src/index.ts",
         "assets": ["packages/pieces/facebook-leads/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

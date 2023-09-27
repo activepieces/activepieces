@@ -6,35 +6,26 @@
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/tags",
         "tsConfig": "packages/pieces/tags/tsconfig.lib.json",
         "packageJson": "packages/pieces/tags/package.json",
         "main": "packages/pieces/tags/src/index.ts",
-        "assets": [
-          "packages/pieces/tags/*.md"
-        ],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "assets": ["packages/pieces/tags/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "publish": {
       "command": "node tools/scripts/publish.mjs pieces-tags {args.ver} {args.tag}",
-      "dependsOn": [
-        "build"
-      ]
+      "dependsOn": ["build"]
     },
     "lint": {
       "executor": "@nx/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": [
-          "packages/pieces/tags/**/*.ts"
-        ]
+        "lintFilePatterns": ["packages/pieces/tags/**/*.ts"]
       }
     }
   },

@@ -6,35 +6,26 @@
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/apitable",
         "tsConfig": "packages/pieces/apitable/tsconfig.lib.json",
         "packageJson": "packages/pieces/apitable/package.json",
         "main": "packages/pieces/apitable/src/index.ts",
-        "assets": [
-          "packages/pieces/apitable/*.md"
-        ],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "assets": ["packages/pieces/apitable/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "publish": {
       "command": "node tools/scripts/publish.mjs pieces-apitable {args.ver} {args.tag}",
-      "dependsOn": [
-        "build"
-      ]
+      "dependsOn": ["build"]
     },
     "lint": {
       "executor": "@nx/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": [
-          "packages/pieces/apitable/**/*.ts"
-        ]
+        "lintFilePatterns": ["packages/pieces/apitable/**/*.ts"]
       }
     }
   },

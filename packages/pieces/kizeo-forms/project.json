@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/kizeo-forms/package.json",
         "main": "packages/pieces/kizeo-forms/src/index.ts",
         "assets": ["packages/pieces/kizeo-forms/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {
