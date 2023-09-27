@@ -1,5 +1,5 @@
 import { FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
-import { ActivepiecesError, ErrorCode, GetPieceRequestParams, GetPieceRequestQuery, GetPieceRequestWithScopeParams, InstallPieceRequest, ListPiecesRequestQuery, PieceOptionRequest } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ErrorCode, GetPieceRequestParams, GetPieceRequestQuery, GetPieceRequestWithScopeParams, InstallPieceRequest, ListPiecesRequestQuery, PieceOptionRequest } from '@activepieces/shared'
 import { engineHelper } from '../helper/engine-helper'
 import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
@@ -41,7 +41,7 @@ export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done)
                     },
                 })
                 return pieceMetdata
-            } 
+            }
             catch (err) {
                 logger.error(JSON.stringify(err))
                 throw new ActivepiecesError({
@@ -61,9 +61,18 @@ export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done)
     }, async (req): Promise<PieceMetadataSummary[]> => {
         const latestRelease = await flagService.getCurrentVersion()
         const release = req.query.release ?? latestRelease
-        return await pieceMetadataService.list({
+        const edition = req.query.edition ?? ApEdition.COMMUNITY
+        const pieceMetadataSummary = await pieceMetadataService.list({
             release,
             projectId: req.principal.projectId,
+            edition,
+        })
+        // TODO: remove this when chatbots are released to open source
+        return pieceMetadataSummary.filter((piece) => {
+            if (piece.name === '@activepieces/piece-chatbots') {
+                return edition === ApEdition.CLOUD
+            }
+            return true
         })
     })
 

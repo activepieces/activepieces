@@ -38,7 +38,6 @@ export type EngineOperation =
 type BaseEngineOperation = {
     projectId: ProjectId
     workerToken?: string
-    apiUrl?: string
 }
 
 export type ExecuteActionOperation = BaseEngineOperation & {

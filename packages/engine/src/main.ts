@@ -92,7 +92,6 @@ const executeFlow = async (input?: ExecuteFlowOperation): Promise<void> => {
 
     globals.workerToken = input.workerToken!;
     globals.projectId = input.projectId;
-    globals.apiUrl = input.apiUrl!;
     globals.serverUrl = input.serverUrl!;
     globals.flowRunId = input.flowRunId;
 
@@ -122,7 +121,6 @@ const executeProps = async (): Promise<void> => {
 
     globals.workerToken = input.workerToken!;
     globals.projectId = input.projectId;
-    globals.apiUrl = input.apiUrl!;
 
     const output = await pieceHelper.executeProps(input);
     writeOutput({
@@ -145,7 +143,6 @@ const executeTrigger = async (): Promise<void> => {
 
     globals.workerToken = input.workerToken!;
     globals.projectId = input.projectId;
-    globals.apiUrl = input.apiUrl!;
 
     const output = await triggerHelper.executeTrigger(input);
     writeOutput({
@@ -189,7 +186,6 @@ const executeAction = async (): Promise<void> => {
 
     globals.workerToken = input.workerToken!;
     globals.projectId = input.projectId;
-    globals.apiUrl = input.apiUrl!;
     globals.serverUrl = input.serverUrl;
 
     const output = await pieceHelper.executeAction(input);
@@ -213,7 +209,6 @@ const executeValidateAuth = async (): Promise<void> => {
 
     globals.workerToken = input.workerToken!;
     globals.projectId = input.projectId;
-    globals.apiUrl = input.apiUrl!;
 
     const output = await pieceHelper.executeValidateAuth(input);
 

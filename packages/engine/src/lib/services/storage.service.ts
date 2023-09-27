@@ -5,7 +5,7 @@ import { globals } from '../globals';
 export const storageService = {
     async get(key: string): Promise<StoreEntry | null> {
         try {
-            const response = await fetch(globals.apiUrl + '/v1/store-entries?key=' + encodeURIComponent(key), {
+            const response = await fetch(globals.serverUrl + '/v1/store-entries?key=' + encodeURIComponent(key), {
                 headers: {
                     Authorization: 'Bearer ' + globals.workerToken
                 }
@@ -20,7 +20,7 @@ export const storageService = {
     },
     async put(request: PutStoreEntryRequest): Promise<StoreEntry | null> {
         try {
-            const response = await fetch(globals.apiUrl + '/v1/store-entries', {
+            const response = await fetch(globals.serverUrl + '/v1/store-entries', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -38,7 +38,7 @@ export const storageService = {
     },
     async delete(request: DeletStoreEntryRequest): Promise<StoreEntry | null> {
         try {
-            const response = await fetch(globals.apiUrl + '/v1/store-entries?key=' + encodeURIComponent(request.key), {
+            const response = await fetch(globals.serverUrl + '/v1/store-entries?key=' + encodeURIComponent(request.key), {
                 method: 'DELETE',
                 headers: {
                     Authorization: 'Bearer ' + globals.workerToken

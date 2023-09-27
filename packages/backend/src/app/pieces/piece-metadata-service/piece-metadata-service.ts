@@ -1,10 +1,11 @@
 import { PieceMetadata, PieceMetadataSummary } from '@activepieces/pieces-framework'
 import { AllPiecesStats } from './piece-stats-service'
-import { ProjectId } from '@activepieces/shared'
+import { ApEdition, ProjectId } from '@activepieces/shared'
 
 export type ListParams = {
     release: string
     projectId: string | null
+    edition: ApEdition
 }
 
 export type GetParams = {
