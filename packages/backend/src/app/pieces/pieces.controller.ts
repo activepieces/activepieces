@@ -8,6 +8,7 @@ import { PieceMetadata, PieceMetadataSummary } from '@activepieces/pieces-framew
 import { FastifyRequest } from 'fastify'
 import { logger } from '../helper/logger'
 import { flagService } from '../flags/flag.service'
+import { getServerUrl } from '../helper/public-ip-utils'
 
 const statsEnabled = system.getBoolean(SystemProp.STATS_ENABLED)
 
@@ -120,6 +121,7 @@ export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done)
             pieceName: req.body.pieceName,
             pieceVersion: req.body.pieceVersion,
             propertyName: req.body.propertyName,
+            serverUrl: await getServerUrl(),
             stepName: req.body.stepName,
             input: req.body.input,
             projectId: req.principal.projectId,

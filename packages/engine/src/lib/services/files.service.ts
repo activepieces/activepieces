@@ -79,7 +79,7 @@ async function writeDbFile({ stepName, flowId, fileName, data }: { stepName: str
     formData.append('flowId', flowId);
     formData.append('file', new Blob([data], { type: 'application/octet-stream' }));
 
-    const response = await fetch(globals.serverUrl + '/v1/step-files', {
+    const response = await fetch(globals.serverUrl + 'v1/step-files', {
         method: 'POST',
         headers: {
             Authorization: 'Bearer ' + globals.workerToken
@@ -96,7 +96,7 @@ async function writeDbFile({ stepName, flowId, fileName, data }: { stepName: str
 
 async function readDbFile(absolutePath: string): Promise<ApFile> {
     const fileId = absolutePath.replace(DB_PREFIX_URL, '');
-    const response = await fetch(globals.serverUrl + `/v1/step-files/${encodeURIComponent(fileId)}`, {
+    const response = await fetch(globals.serverUrl + `v1/step-files/${encodeURIComponent(fileId)}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
