@@ -131,6 +131,7 @@ async function executeCode({ step, flowVersion, projectId }: ExecuteParams<CodeA
         file,
         step,
         input: step.settings.input,
+        serverUrl: await getServerUrl(),
         flowVersion,
         projectId,
     })
