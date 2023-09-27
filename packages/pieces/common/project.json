@@ -12,7 +12,8 @@
         "main": "packages/pieces/common/src/index.ts",
         "tsConfig": "packages/pieces/common/tsconfig.lib.json",
         "assets": ["packages/pieces/common/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

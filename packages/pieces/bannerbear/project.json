@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/bannerbear/package.json",
         "main": "packages/pieces/bannerbear/src/index.ts",
         "assets": ["packages/pieces/bannerbear/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/gotify/package.json",
         "main": "packages/pieces/gotify/src/index.ts",
         "assets": ["packages/pieces/gotify/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

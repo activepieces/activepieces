@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/clickup/package.json",
         "main": "packages/pieces/clickup/src/index.ts",
         "assets": ["packages/pieces/clickup/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

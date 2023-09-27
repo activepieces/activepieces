@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/linkedin/package.json",
         "main": "packages/pieces/linkedin/src/index.ts",
         "assets": ["packages/pieces/linkedin/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/pastebin/package.json",
         "main": "packages/pieces/pastebin/src/index.ts",
         "assets": ["packages/pieces/pastebin/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

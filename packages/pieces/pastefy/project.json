@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/pastefy/package.json",
         "main": "packages/pieces/pastefy/src/index.ts",
         "assets": ["packages/pieces/pastefy/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

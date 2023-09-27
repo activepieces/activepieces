@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/freshsales/package.json",
         "main": "packages/pieces/freshsales/src/index.ts",
         "assets": ["packages/pieces/freshsales/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {
