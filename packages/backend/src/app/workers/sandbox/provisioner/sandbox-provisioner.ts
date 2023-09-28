@@ -1,9 +1,11 @@
 import { Sandbox } from '..'
 import { sandboxCachePool } from '../cache/sandbox-cache-pool'
 import { sandboxManager } from '../sandbox-manager'
-import { FileId, FlowVersionId, apId } from '@activepieces/shared'
+import { ApEnvironment, FileId, FlowVersionId, apId } from '@activepieces/shared'
 import { SandBoxCacheType } from './sandbox-cache-type'
 import { logger } from '../../../helper/logger'
+import { system } from '../../../helper/system/system'
+import { SystemProp } from '../../../helper/system/system-prop'
 
 export const sandboxProvisioner = {
     async provision({ pieces = [], codeArchives = [], ...cacheInfo }: ProvisionParams): Promise<Sandbox> {
@@ -44,7 +46,11 @@ export const sandboxProvisioner = {
 
 const extractCacheKey = (params: ProvisionCacheInfo): string => {
     logger.debug({ type: params.type }, '[SandboxProvisioner#extractCacheKey]')
-
+    const environment = system.get(SystemProp.ENVIRONMENT)
+    if (environment === ApEnvironment.DEVELOPMENT) {
+        // In development, we don't want to cache anything to prevent issue with linking packages in hot reload
+        return extractNoneCacheKey({ type: SandBoxCacheType.NONE })
+    }
     switch (params.type) {
         case SandBoxCacheType.CODE:
             return extractCodeCacheKey(params)
@@ -99,14 +105,14 @@ type PieceProvisionCacheInfo = BaseProvisionCacheInfo<SandBoxCacheType.PIECE> & 
 
 type ProvisionCacheInfo<T extends SandBoxCacheType = SandBoxCacheType> =
     T extends SandBoxCacheType.CODE
-        ? CodeProvisionCacheInfo
-        : T extends SandBoxCacheType.FLOW
-            ? FlowProvisionCacheInfo
-            : T extends SandBoxCacheType.NONE
-                ? NoneProvisionCacheInfo
-                : T extends SandBoxCacheType.PIECE
-                    ? PieceProvisionCacheInfo
-                    : never
+    ? CodeProvisionCacheInfo
+    : T extends SandBoxCacheType.FLOW
+    ? FlowProvisionCacheInfo
+    : T extends SandBoxCacheType.NONE
+    ? NoneProvisionCacheInfo
+    : T extends SandBoxCacheType.PIECE
+    ? PieceProvisionCacheInfo
+    : never
 
 type CodeArchive = {
     id: FileId
