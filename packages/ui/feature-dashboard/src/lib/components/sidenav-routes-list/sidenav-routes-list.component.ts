@@ -29,7 +29,7 @@ export class SidenavRoutesListComponent {
   ) {}
   sideNavRoutes: SideNavRoute[] = [
     {
-      icon: '/assets/img/custom/dashboard/flows.svg',
+      icon: 'assets/img/custom/dashboard/flows.svg',
       caption: $localize`Flows`,
       route: 'flows',
       effect: () => {
