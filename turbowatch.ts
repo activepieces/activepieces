@@ -14,9 +14,6 @@ export default defineConfig({
                 if (first) {
                     const pieces = process.env.AP_DEV_PIECES?.split(',').map(p => `pieces-${p}`).join(',');
                     await spawn`nx run-many -t build --projects=${pieces} --skip-cache`;
-
-                    // Print a fancy message to the console using chalk
-                    console.log(chalk.green.bold('✨ Pieces Changes are ready! Please refresh the frontend to see the new updates. ✨'));
                     return;
                 }
 
