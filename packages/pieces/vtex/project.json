@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/vtex/package.json",
         "main": "packages/pieces/vtex/src/index.ts",
         "assets": ["packages/pieces/vtex/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

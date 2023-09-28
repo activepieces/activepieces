@@ -33,6 +33,7 @@ import { isNil } from '@activepieces/shared'
 import { engineHelper } from '../../helper/engine-helper'
 import { acquireLock } from '../../helper/lock'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
+import { getServerUrl } from '../../helper/public-ip-utils'
 
 const repo = databaseConnection.getRepository(AppConnectionEntity)
 
@@ -240,6 +241,7 @@ const engineValidateAuth = async (
     })
     const engineInput: ExecuteValidateAuthOperation = {
         pieceName,
+        serverUrl: await getServerUrl(),
         pieceVersion: pieceMatadata.version,
         auth,
         projectId,

@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/connections/package.json",
         "main": "packages/pieces/connections/src/index.ts",
         "assets": ["packages/pieces/connections/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

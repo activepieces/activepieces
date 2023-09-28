@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/localai/package.json",
         "main": "packages/pieces/localai/src/index.ts",
         "assets": ["packages/pieces/localai/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

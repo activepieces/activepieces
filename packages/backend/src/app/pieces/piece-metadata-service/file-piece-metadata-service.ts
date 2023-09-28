@@ -7,6 +7,7 @@ import { captureException } from '../../helper/logger'
 import { GetParams, PieceMetadataService } from './piece-metadata-service'
 import { isNil } from '@activepieces/shared'
 import { AllPiecesStats } from './piece-stats-service'
+import importFresh from 'import-fresh'
 
 const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
     const ignoredPackages = ['framework', 'apps', 'dist', 'common']
@@ -18,8 +19,9 @@ const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
 
     for (const piecePackage of filteredPiecePackages) {
         try {
-            const packageJson = await import(join(piecesPath, piecePackage, 'package.json'))
-            const module = await import(join(piecesPath, piecePackage, 'src', 'index'))
+            const packageJson = importFresh<Record<string, string>>(join(piecesPath, piecePackage, 'package.json'))
+            const module = importFresh<Record<string, unknown>>(join(piecesPath, piecePackage, 'src', 'index'))
+
             const { name: pieceName, version: pieceVersion } = packageJson
             const piece = extractPieceFromModule<Piece>({
                 module,

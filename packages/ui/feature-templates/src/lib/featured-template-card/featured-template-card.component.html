@@ -26,16 +26,18 @@
                 {{template.featuredDescription}}
             </ng-container>
             <ng-container *ngIf="template.featuredDescription.length > SEE_MORE_LIMIT ">
-                {{showFullDescription? template.description : template.description.slice(0,255)+"..."}}
+                {{
+                showFullDescription? template.featuredDescription : template.featuredDescription.slice(0,255)+"..."
+                }}
                 &nbsp; <div class="ap-text-primary ap-cursor-pointer ap-inline"
-                    (click)="showFullDescription = !showFullDescription" *ngIf="template.description.length > 225">
+                    (click)="showFullDescription = !showFullDescription"
+                    *ngIf="template.featuredDescription.length > 225">
                     <ng-template *ngIf="showFullDescription; else seeMore">
                         <span i18n>See less</span>
                     </ng-template>
                     <ng-template #seeMore>
                         <span i18n>See more</span>
                     </ng-template>
-                </div>
             </ng-container>
         </div>
 

@@ -20,7 +20,8 @@
         "packageJson": "packages/pieces/slack/package.json",
         "main": "packages/pieces/slack/src/index.ts",
         "assets": ["packages/pieces/slack/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     }
   },

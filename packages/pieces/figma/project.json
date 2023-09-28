@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/figma/package.json",
         "main": "packages/pieces/figma/src/index.ts",
         "assets": ["packages/pieces/figma/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

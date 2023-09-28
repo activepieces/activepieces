@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/clarifai/package.json",
         "main": "packages/pieces/clarifai/src/index.ts",
         "assets": ["packages/pieces/clarifai/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

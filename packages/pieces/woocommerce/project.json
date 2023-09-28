@@ -6,29 +6,22 @@
   "targets": {
     "build": {
       "executor": "@nrwl/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/woocommerce",
         "tsConfig": "packages/pieces/woocommerce/tsconfig.lib.json",
         "packageJson": "packages/pieces/woocommerce/package.json",
         "main": "packages/pieces/woocommerce/src/index.ts",
-        "assets": [
-          "packages/pieces/woocommerce/*.md"
-        ],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "assets": ["packages/pieces/woocommerce/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {
       "executor": "@nrwl/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": [
-          "packages/pieces/woocommerce/**/*.ts"
-        ]
+        "lintFilePatterns": ["packages/pieces/woocommerce/**/*.ts"]
       }
     }
   },

@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/webflow/package.json",
         "main": "packages/pieces/webflow/src/index.ts",
         "assets": ["packages/pieces/webflow/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

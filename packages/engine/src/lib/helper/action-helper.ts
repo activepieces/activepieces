@@ -222,6 +222,10 @@ export const pieceHelper = {
         executionType: ExecutionType.BEGIN,
         auth: processedInput[AUTHENTICATION_PROPERTY_NAME],
         propsValue: processedInput,
+        server: {
+          token: globals.workerToken!,
+          apiUrl: globals.serverUrl!
+        },
         files: createFilesService({
           stepName: actionName,
           flowId: flowVersion.flowId,
@@ -280,10 +284,16 @@ export const pieceHelper = {
         executionState: new ExecutionState(),
         logs: false
       });
+      const ctx = {
+        server: {
+          token: globals.workerToken!,
+          apiUrl: globals.serverUrl!
+        },
+      }
 
       if (property.type === PropertyType.DYNAMIC) {
         const dynamicProperty = property as DynamicProperties<boolean>;
-        return dynamicProperty.props(resolvedProps);
+        return dynamicProperty.props(resolvedProps, ctx);
       }
 
       if (property.type === PropertyType.MULTI_SELECT_DROPDOWN) {
@@ -291,11 +301,11 @@ export const pieceHelper = {
           unknown,
           boolean
         >;
-        return multiSelectProperty.options(resolvedProps);
+        return multiSelectProperty.options(resolvedProps, ctx);
       }
 
       const dropdownProperty = property as DropdownProperty<unknown, boolean>;
-      return dropdownProperty.options(resolvedProps);
+      return dropdownProperty.options(resolvedProps, ctx);
     } catch (e) {
       console.error(e);
       return {

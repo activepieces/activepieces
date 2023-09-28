@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/smtp/package.json",
         "main": "packages/pieces/smtp/src/index.ts",
         "assets": ["packages/pieces/smtp/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

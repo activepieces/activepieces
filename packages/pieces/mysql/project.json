@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/mysql/package.json",
         "main": "packages/pieces/mysql/src/index.ts",
         "assets": ["packages/pieces/mysql/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

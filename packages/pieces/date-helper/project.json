@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/date-helper/package.json",
         "main": "packages/pieces/date-helper/src/index.ts",
         "assets": ["packages/pieces/date-helper/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "publish": {
