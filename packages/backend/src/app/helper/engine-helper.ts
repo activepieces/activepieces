@@ -39,7 +39,7 @@ import { pieceMetadataService } from '../pieces/piece-metadata-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { fileService } from '../file/file.service'
 import { sandboxProvisioner } from '../workers/sandbox/provisioner/sandbox-provisioner'
-import { SandBoxCacheType } from '../workers/sandbox/provisioner/sandbox-cache-type'
+import { SandBoxCacheType } from '../workers/sandbox/provisioner/sandbox-cache-key'
 
 type GenerateWorkerTokenParams = {
     projectId: ProjectId
