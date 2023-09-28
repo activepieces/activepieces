@@ -6,4 +6,8 @@ export const PropertyKeys = {
   ENTITY_ID: 'entityId',
   SEARCH_FIELDS: 'searchFields',
   QUERY: 'query',
+  QUERY_LIMIT: 'limit',
+  QUERY_SKIP: 'skip',
+  QUERY_INCLUDE: 'include',
+  QUERY_SELECT: 'select',
 };
