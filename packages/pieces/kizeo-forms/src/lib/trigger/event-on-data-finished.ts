@@ -69,7 +69,7 @@ export const eventOnDataFinished = createTrigger({
     if (response !== null && response !== undefined) {
       const request: HttpRequest = {
         method: HttpMethod.DELETE,
-        url: endpoint + `public/v4/forms/${formId}/third_party_webhooks/${response.webhookId}`,
+        url: endpoint + `public/v4/forms/${formId}/third_party_webhooks/${response.webhookId}?used-with-actives-pieces=`,
         headers: {
           'Authorization': context.auth
         },
