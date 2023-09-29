@@ -2,11 +2,14 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  OnInit,
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { FolderActions } from '../../store/folders/folders.actions';
+import { Observable, map, tap } from 'rxjs';
 import { supportUrl } from '@activepieces/shared';
+import { FlagService } from '@activepieces/ui/common';
 
 type SideNavRoute = {
   icon: string;
@@ -21,12 +24,28 @@ type SideNavRoute = {
   styleUrls: ['./sidenav-routes-list.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SidenavRoutesListComponent {
+export class SidenavRoutesListComponent implements OnInit {
+  removeChatbots$: Observable<void>;
+
   constructor(
     public router: Router,
     private store: Store,
+    private flagServices: FlagService,
     private cd: ChangeDetectorRef
-  ) {}
+  ) { }
+  ngOnInit(): void {
+    this.removeChatbots$ = this.flagServices.isChatbotEnabled().pipe(
+      tap((res) => {
+        if (!res) {
+          this.sideNavRoutes = this.sideNavRoutes.filter(
+            (route) => route.route !== 'chatbots'
+          );
+        }
+      }),
+      map(() => void 0)
+    );
+  }
+
   sideNavRoutes: SideNavRoute[] = [
     {
       icon: '/assets/img/custom/dashboard/flows.svg',
@@ -35,6 +54,11 @@ export class SidenavRoutesListComponent {
       effect: () => {
         this.store.dispatch(FolderActions.showAllFlows());
       },
+    },
+    {
+      icon: 'assets/img/custom/dashboard/chatbots.svg',
+      caption: 'Chatbots',
+      route: 'chatbots',
     },
     {
       icon: 'assets/img/custom/dashboard/runs.svg',

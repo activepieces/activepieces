@@ -9,7 +9,8 @@ import { ConnectionsTableComponent } from './pages/connections-table/connections
 import { FoldersResolver } from './resolvers/folders.resolver';
 import { DashboardContainerComponent } from './dashboard-container.component';
 import { CommunityPiecesTableComponent } from './pages/community-pieces-table/community-pieces-table.component';
-import { environment } from '@activepieces/ui/common';
+import { ConnectionsResolver, environment } from '@activepieces/ui/common';
+import { ChatbotsTableComponent, ChatbotSettingsComponent, chatbotSettingsResolver } from '@activepieces/ui/feature-chatbot';
 
 export const DashboardLayoutRouting: Routes = [
   {
@@ -29,6 +30,23 @@ export const DashboardLayoutRouting: Routes = [
         path: 'settings/my-pieces',
         pathMatch: 'full',
         component: CommunityPiecesTableComponent,
+      },
+      {
+        title: `Chatbots - ${environment.websiteTitle}`,
+        path: 'chatbots',
+        pathMatch: 'full',
+        component: ChatbotsTableComponent,
+      },
+      {
+        path: 'chatbots/:id/settings',
+        canActivate: [],
+        title: `Activepieces - Chatbot settings`,
+        pathMatch: 'full',
+        component: ChatbotSettingsComponent,
+        resolve: {
+          connections: ConnectionsResolver,
+          chatbot: chatbotSettingsResolver,
+        },
       },
       {
         title: `Connections - ${environment.websiteTitle}`,

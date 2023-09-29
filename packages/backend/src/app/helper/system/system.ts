@@ -27,6 +27,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [SystemProp.SANDBOX_RUN_TIME_SECONDS]: '600',
     [SystemProp.SIGN_UP_ENABLED]: 'false',
     [SystemProp.STATS_ENABLED]: 'false',
+    [SystemProp.CHATBOT_ENABLED]: 'true',
     [SystemProp.TELEMETRY_ENABLED]: 'true',
     [SystemProp.TEMPLATES_SOURCE_URL]: 'https://cloud.activepieces.com/api/v1/flow-templates',
     [SystemProp.TRIGGER_DEFAULT_POLL_INTERVAL]: '5',

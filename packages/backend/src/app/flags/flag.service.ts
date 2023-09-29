@@ -39,6 +39,12 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.CHATBOT_ENABLED,
+                value: system.getBoolean(SystemProp.CHATBOT_ENABLED) ?? false,
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.CLOUD_AUTH_ENABLED,
                 value: system.getBoolean(SystemProp.CLOUD_AUTH_ENABLED) ?? true,
                 created,
