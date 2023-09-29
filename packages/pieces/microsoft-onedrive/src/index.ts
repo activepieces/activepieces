@@ -3,6 +3,7 @@ import { uploadFile } from "./lib/actions/upload-file";
 import { listFiles } from "./lib/actions/list-files";
 import { listFolders } from "./lib/actions/list-folders";
 import { downloadFile } from "./lib/actions/download-file";
+import { newFile } from "./lib/triggers/new-file";
 
 export const oneDriveAuth = PieceAuth.OAuth2({
   description: "Authentication for Microsoft OneDrive",
@@ -20,5 +21,5 @@ export const microsoftExcel = createPiece({
   logoUrl: "https://zapier-images.imgix.net/storage/services/e67867e9f6f5c089e243dad54467ad33.128x128.png?auto=format%2Ccompress&ixlib=python-3.0.0&q=50",
   authors: ["BastienMe"],
   actions: [uploadFile, downloadFile, listFiles, listFolders],
-  triggers: [],
+  triggers: [newFile],
 });
