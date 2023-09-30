@@ -15,7 +15,7 @@ RUN npx nx run-many --target=build --projects=backend,ui-core --skip-nx-cache
 
 # Install backend production dependencies
 RUN cd dist/packages/backend && \
-    npm install --production
+    npm install --production --legacy-peer-deps
 
 ### STAGE 2: Run ###
 FROM activepieces/ap-base:7 AS run
