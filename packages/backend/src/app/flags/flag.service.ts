@@ -40,7 +40,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.CHATBOT_ENABLED,
-                value: system.getBoolean(SystemProp.CHATBOT_ENABLED) ?? false,
+                value: system.getBoolean(SystemProp.CHATBOT_ENABLED),
                 created,
                 updated,
             },
