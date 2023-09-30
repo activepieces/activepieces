@@ -68,13 +68,7 @@ export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done)
             projectId: req.principal.projectId,
             edition,
         })
-        // TODO: remove this when chatbots are released to open source
-        return pieceMetadataSummary.filter((piece) => {
-            if (piece.name === '@activepieces/piece-chatbots') {
-                return edition === ApEdition.CLOUD
-            }
-            return true
-        })
+        return pieceMetadataSummary
     })
 
     app.get('/:scope/:name', {

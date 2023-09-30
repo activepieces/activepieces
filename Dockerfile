@@ -5,6 +5,8 @@ FROM activepieces/ap-base:7 AS build
 WORKDIR /usr/src/app
 COPY . .
 
+RUN apt update && apt install -y cmake libopenblas-dev patchelf
+
 # Install backend dependencies and build the projects
 RUN npm ci
 RUN npx nx run-many --target=build --projects=backend,ui-core --skip-nx-cache
