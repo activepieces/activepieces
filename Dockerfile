@@ -5,18 +5,12 @@ FROM activepieces/ap-base:7 AS build
 WORKDIR /usr/src/app
 COPY . .
 
-RUN apt-get update \
- && apt-get install --assume-yes --no-install-recommends --quiet \
-    ca-certificates \
-    cmake \
-    git \
-    g++ \
-    make \
-    libzip-dev \
- && apt-get clean all
- 
-# Install backend dependencies and build the projects
+RUN apt update && apt install -y cmake libopenblas-dev patchelf
+
+# Install Node.js dependencies
 RUN npm ci
+
+# Build the projects
 RUN npx nx run-many --target=build --projects=backend,ui-core --skip-nx-cache
 
 # Install backend production dependencies
@@ -38,12 +32,9 @@ COPY packages/ui/core/nginx.conf /etc/nginx/nginx.conf
 
 # Copy Output files to appropriate directory from build stage
 COPY --from=build /usr/src/app/dist/ /usr/src/app/dist/
-
-# Copy Output files to appropriate directory from build stage
 COPY --from=build /usr/src/app/packages/ /usr/src/app/packages/
 
-
-# Copy frontend files to Nginx document root directory from build stage
+# Copy frontend files to Nginx document root directory
 COPY --from=build /usr/src/app/dist/packages/ui/core/ /usr/share/nginx/html/
 
 # Set up entrypoint script
