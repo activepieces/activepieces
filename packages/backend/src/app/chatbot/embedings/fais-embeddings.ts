@@ -42,7 +42,7 @@ export const faissEmbedding = ({ openAIApiKey, botId }: { botId: string, openAIA
         if (store.docstore._docs.size === 0) {
             return []
         }
-        const similarDocuments = await store.similaritySearch(input, 10, botId)
+        const similarDocuments = await store.similaritySearch(input, 5, botId)
         return similarDocuments.map((doc) => doc.pageContent)
     },
     async addDocuments({
