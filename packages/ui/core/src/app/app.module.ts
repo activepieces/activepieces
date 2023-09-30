@@ -34,7 +34,11 @@ import {
 } from 'ngx-monaco-editor-v2';
 import { apMonacoTheme } from './modules/common/monaco-themes/ap-monaco-theme';
 import { cobalt2 } from './modules/common/monaco-themes/cobalt-2-theme';
-import { ChatComponent, UiFeatureChatBotModule, chatbotMetadataResolver } from '@activepieces/ui/feature-chatbot';
+import {
+  ChatComponent,
+  UiFeatureChatBotModule,
+  chatbotMetadataResolver,
+} from '@activepieces/ui/feature-chatbot';
 
 const monacoConfig: NgxMonacoEditorConfig = {
   baseUrl: '/assets', // configure base path for monaco editor. Starting with version 8.0.0 it defaults to './assets'. Previous releases default to '/assets'
@@ -109,7 +113,7 @@ export function playerFactory() {
   exports: [],
   bootstrap: [AppComponent],
 })
-export class AppModule { }
+export class AppModule {}
 
 export function initializeAppCustomLogic(
   router: Router,

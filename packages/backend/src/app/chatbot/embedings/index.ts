@@ -10,7 +10,7 @@ export type ApEmbeddings = {
 
 type EmbeddingsFunction = ({ openAIApiKey, botId }: { openAIApiKey: string, botId: string }) => ApEmbeddings
 
-let embeddingsFactory: EmbeddingsFunction = faissEmbedding;
+let embeddingsFactory: EmbeddingsFunction = faissEmbedding
 
 export const embeddings = {
     set(embeddings: EmbeddingsFunction) {

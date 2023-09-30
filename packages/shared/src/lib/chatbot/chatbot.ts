@@ -1,6 +1,6 @@
 import { Static, Type } from '@sinclair/typebox';
 import { DataSource } from './datasource';
-import { BaseModelSchema } from '@activepieces/shared';
+import { BaseModelSchema } from '../common';
 
 export enum VisibilityStatus {
   PUBLIC = "PUBLIC",

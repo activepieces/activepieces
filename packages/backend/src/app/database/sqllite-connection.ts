@@ -37,7 +37,7 @@ export const createSqlLiteDatasource = () => {
             AddStatusToConnectionsSqlite31693402376520,
             AddImageUrlAndTitleToUser1693774053027,
             FileTypeCompression1694695212159,
-            AddChatBotSqlite31696029443045
+            AddChatBotSqlite31696029443045,
         ],
         ...commonProperties,
     })

@@ -32,7 +32,7 @@ export class SidenavRoutesListComponent implements OnInit {
     private store: Store,
     private flagServices: FlagService,
     private cd: ChangeDetectorRef
-  ) { }
+  ) {}
   ngOnInit(): void {
     this.removeChatbots$ = this.flagServices.isChatbotEnabled().pipe(
       tap((res) => {

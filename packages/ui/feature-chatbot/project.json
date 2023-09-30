@@ -2,7 +2,7 @@
   "name": "ui-feature-chatbot",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/ui/feature-chatbot/src",
-  "prefix": "activepieces",
+  "prefix": "app",
   "tags": [],
   "projectType": "library",
   "targets": {
