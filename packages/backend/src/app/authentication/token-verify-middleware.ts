@@ -3,12 +3,8 @@ import { tokenUtils } from './lib/token-utils'
 import { ActivepiecesError, ErrorCode, Principal, PrincipalType, apId } from '@activepieces/shared'
 
 const ignoredRoutes = new Set([
-    // BEGIN EE
-    '/v1/connection-keys/app-connections',
-    '/v1/firebase/users',
-    '/v1/firebase/sign-in',
-    '/v1/billing/stripe/webhook',
-    // END EE
+    '/v1/chatbots/:id/ask',
+    '/v1/chatbots/:id/metadata',
     '/v1/flow-runs/:id/resume',
     '/v1/pieces/stats',
     '/v1/pieces/:name',
