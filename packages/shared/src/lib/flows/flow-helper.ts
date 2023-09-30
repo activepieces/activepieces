@@ -12,8 +12,9 @@ import {
   Action,
   ActionType,
   BranchAction,
+  BranchOperator,
   LoopOnItemsAction,
-  SingleActionSchema
+  SingleActionSchema,
 } from './actions/action';
 import { Trigger, TriggerType } from './triggers/trigger';
 import { TypeCompiler } from '@sinclair/typebox/compiler';
@@ -731,6 +732,183 @@ function isLegacyApp({pieceName, pieceVersion}: {pieceName: string, pieceVersion
   return false;
 }
 
+function duplicateStep(step:Action):Action
+{
+  const newNameCreator = (oldName:string)=>`${oldName}_copy`;
+  const newStep:Action = JSON.parse(JSON.stringify(step));
+  newStep.displayName = `${newStep.displayName} Copy`;
+  newStep.nextAction = undefined;
+  newStep.name = newNameCreator(newStep.name);
+  const childSteps = traverseInternal(newStep).slice(1);
+  const childStepsNames = childSteps.map(c=> `${c.name}`);
+  debugger;
+  childSteps.forEach((c)=>{
+    const newName  = newNameCreator(c.name);
+    const newDisplayName = `${c.displayName} Copy`;
+    switch(c.type)
+    {
+      case ActionType.CODE:
+        {
+          if(c.settings.inputUiInfo?.currentSelectedData)
+          {
+            c.settings.inputUiInfo.currentSelectedData = undefined;
+          }
+          if(c.settings.inputUiInfo?.lastTestDate)
+          {
+            c.settings.inputUiInfo.lastTestDate = undefined;
+          }
+          c.name = newName;
+          c.displayName = newDisplayName;
+          childStepsNames.forEach(cn=>{
+            Object.entries(c.settings.input).forEach(([key,value])=>{
+              if(typeof value === "string")
+              {
+                c.settings.input[key]=replaceOldStepNameOccurancesWithNewOneWithinInput({
+                  input:c.settings.input[key],
+                  newStepName:newNameCreator(cn),
+                  oldStepName:cn
+                })
+              }
+            })
+          })
+          break;
+        }
+      case ActionType.BRANCH:{
+        if(c.settings.inputUiInfo?.currentSelectedData)
+        {
+          c.settings.inputUiInfo.currentSelectedData = undefined;
+        }
+        if(c.settings.inputUiInfo?.lastTestDate)
+        {
+          c.settings.inputUiInfo.lastTestDate = undefined;
+        }
+        c.name = newName;
+        c.displayName = newDisplayName;
+        childStepsNames.forEach(cn=>{
+          c.settings.conditions.forEach(con=>{
+            con.forEach(subCon=>{
+            subCon.firstValue =  replaceOldStepNameOccurancesWithNewOneWithinInput({
+                input:subCon.firstValue,
+                newStepName:newNameCreator(cn),
+                oldStepName:cn
+              });
+              if(subCon.operator !== undefined)
+              {
+                switch(subCon.operator)
+                {
+                  case BranchOperator.BOOLEAN_IS_FALSE:
+                  case BranchOperator.BOOLEAN_IS_TRUE:
+                  case BranchOperator.DOES_NOT_EXIST:
+                  case BranchOperator.EXISTS:
+                  {
+                    break;
+                  }
+                  case BranchOperator.NUMBER_IS_GREATER_THAN:
+                  case BranchOperator.NUMBER_IS_LESS_THAN:
+                  case BranchOperator.TEXT_CONTAINS:
+                  case BranchOperator.TEXT_DOES_NOT_CONTAIN:
+                  case BranchOperator.TEXT_DOES_NOT_END_WITH:
+                  case BranchOperator.TEXT_DOES_NOT_EXACTLY_MATCH:
+                  case BranchOperator.TEXT_DOES_NOT_START_WITH:
+                  case BranchOperator.TEXT_ENDS_WITH:
+                  case BranchOperator.TEXT_EXACTLY_MATCHES:
+                  case BranchOperator.TEXT_STARTS_WITH:
+                    {
+                      subCon.secondValue =  replaceOldStepNameOccurancesWithNewOneWithinInput({
+                        input:subCon.firstValue,
+                        newStepName:newNameCreator(cn),
+                        oldStepName:cn
+                      });
+                      break;
+                    }
+                    default:
+                      {
+                        const unhandled:never = subCon.operator;
+                        throw new Error(`${unhandled} operator is unhandled`);
+                      }
+                }
+                
+              }              
+            })
+          })
+        })
+        
+        break;
+      }
+      case ActionType.LOOP_ON_ITEMS:
+        {
+          
+         c.name = newName;
+         c.displayName = newDisplayName;
+         childStepsNames.forEach(cn=>{
+          c.settings.items = replaceOldStepNameOccurancesWithNewOneWithinInput({
+            input:c.settings.items,
+            newStepName:newNameCreator(cn),
+            oldStepName:cn
+          })
+         })
+        break;
+        }
+      case ActionType.PIECE:
+        {
+          if(c.settings.inputUiInfo?.currentSelectedData)
+          {
+            c.settings.inputUiInfo.currentSelectedData = undefined;
+          }
+          if(c.settings.inputUiInfo?.lastTestDate)
+          {
+            c.settings.inputUiInfo.lastTestDate = undefined;
+          }
+         childStepsNames.forEach((cn)=>{
+          Object.keys(c.settings.input).forEach((key)=>{
+            if(typeof c.settings.input[key] === "string")
+            {
+              c.settings.input[key] = replaceOldStepNameOccurancesWithNewOneWithinInput({
+                input:c.settings.input[key],
+                newStepName:newNameCreator(cn),
+                oldStepName:cn
+              })
+            }
+            if(typeof c.settings.input[key] === "object")
+            {
+              c.settings.input[key] = JSON.parse(replaceOldStepNameOccurancesWithNewOneWithinInput({
+                input:JSON.stringify(c.settings.input[key]),
+                newStepName:newNameCreator(cn),
+                oldStepName:cn
+              }))
+            }
+          })
+         })
+          break;
+        }
+      case TriggerType.EMPTY:
+      case TriggerType.PIECE:
+      case TriggerType.WEBHOOK:
+      {
+       throw new Error("Triggers are not duplicatable");
+      }
+      case ActionType.MISSING:{
+        break;
+      }
+      default:
+        {
+          const unhandeledStep:never = c;
+          throw new Error(`${unhandeledStep} is unhandeled`);
+        }
+    }
+  })
+return newStep;
+}
+
+function replaceOldStepNameOccurancesWithNewOneWithinInput({input,oldStepName,newStepName}:{input:string,oldStepName:string,newStepName:string})
+{
+  const delimeters =['\\.','\\[','\\}','\\s'];
+  let res=input;
+  delimeters.forEach(d=>{
+    res = res.replaceAll(new RegExp(`${oldStepName}${d}`,'g'),`${newStepName}${d.slice(1)}`);
+  })
+  return res;
+}
 export const flowHelper = {
   isValid: isValid,
   apply(
@@ -789,5 +967,6 @@ export const flowHelper = {
   isChildOf,
   transferFlowAsync,
   getAllChildSteps,
-  getAllStepsAtFirstLevel
+  getAllStepsAtFirstLevel,
+  duplicateStep
 };

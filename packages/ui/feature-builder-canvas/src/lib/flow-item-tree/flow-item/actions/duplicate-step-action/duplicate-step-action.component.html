@@ -1,2 +1,3 @@
 <ap-icon-button iconFilename="duplicate-step.svg" tooltipText="Duplicate Step" [width]="18"
-    [height]="18"></ap-icon-button>
+    (buttonClicked)="duplicateStep()" [height]="18"></ap-icon-button>
+<ng-container *ngIf="duplicate$ | async"></ng-container>
