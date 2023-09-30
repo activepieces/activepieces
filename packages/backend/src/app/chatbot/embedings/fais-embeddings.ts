@@ -5,6 +5,7 @@ import path from 'path'
 import os from 'os'
 import fs from 'fs/promises'
 import { localFileStore } from '../../helper/store'
+import { EMBEDINGS_SEARCH_RESULT } from './embedings-settings'
 
 const storeCache: Record<string, FaissStore> = {}
 
@@ -42,7 +43,7 @@ export const faissEmbedding = ({ openAIApiKey, botId }: { botId: string, openAIA
         if (store.docstore._docs.size === 0) {
             return []
         }
-        const similarDocuments = await store.similaritySearch(input, 5, botId)
+        const similarDocuments = await store.similaritySearch(input, EMBEDINGS_SEARCH_RESULT, botId)
         return similarDocuments.map((doc) => doc.pageContent)
     },
     async addDocuments({
