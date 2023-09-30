@@ -5,6 +5,16 @@ FROM activepieces/ap-base:7 AS build
 WORKDIR /usr/src/app
 COPY . .
 
+RUN apt-get update \
+ && apt-get install --assume-yes --no-install-recommends --quiet \
+    ca-certificates \
+    cmake \
+    git \
+    g++ \
+    make \
+    libzip-dev \
+ && apt-get clean all
+ 
 # Install backend dependencies and build the projects
 RUN npm ci
 RUN npx nx run-many --target=build --projects=backend,ui-core --skip-nx-cache
