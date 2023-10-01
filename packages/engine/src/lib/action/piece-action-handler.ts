@@ -160,7 +160,8 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
         }),
         server: {
           token: globals.workerToken!,
-          apiUrl: globals.serverUrl!
+          apiUrl: globals.apiUrl!,
+          publicUrl: globals.serverUrl!,
         },
         propsValue: processedInput,
         tags: createTagsManager(executionState),

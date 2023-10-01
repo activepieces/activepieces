@@ -8,6 +8,11 @@ class Globals {
   private _serverUrl = '';
   private _flowRunId?: FlowRunId
   private _resumePayload: unknown
+  private _apiUrl = 'http://127.0.0.1:3000/'
+
+  get apiUrl(): string | undefined {
+    return this._apiUrl;
+  }
 
   set serverUrl(_serverUrl: string) {
     this._serverUrl = _serverUrl;
