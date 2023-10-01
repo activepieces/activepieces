@@ -483,6 +483,7 @@ async function uploadArtifact(projectId: ProjectId, codeSettings: CodeActionSett
             data: bufferFromBase64,
             type: FileType.CODE_SOURCE,
             compression: FileCompression.NONE,
+            
         })
 
         codeSettings.artifact = undefined

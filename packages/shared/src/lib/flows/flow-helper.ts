@@ -13,6 +13,7 @@ import {
   ActionType,
   BranchAction,
   BranchOperator,
+  CodeAction,
   LoopOnItemsAction,
   SingleActionSchema,
 } from './actions/action';
@@ -21,6 +22,7 @@ import { TypeCompiler } from '@sinclair/typebox/compiler';
 import { FlowVersion, FlowVersionState } from './flow-version';
 import { ActivepiecesError, ErrorCode } from '../common/activepieces-error';
 import semver from 'semver';
+
 
 type Step = Action | Trigger;
 
@@ -732,33 +734,43 @@ function isLegacyApp({pieceName, pieceVersion}: {pieceName: string, pieceVersion
   return false;
 }
 
-function duplicateStep(step:Action):Action
-{
-  const newNameCreator = (oldName:string)=>`${oldName}_copy`;
+function duplicateStep(step:Action, codeStepsArtifacts:Record<string,string>):Action
+{ const newNameCreator = (oldStepName:string) => `${oldStepName}_copy`
+  const renameStep = (action:Action)=>{
+    action.name = newNameCreator(action.name)
+    action.displayName = `${action.displayName} Copy`
+  }
+  const addArtifactToCodeStep = (codeStep:CodeAction)=>{
+    if(codeStep.settings.inputUiInfo?.currentSelectedData)
+    {
+      codeStep.settings.inputUiInfo.currentSelectedData = undefined;
+    }
+    if(codeStep.settings.inputUiInfo?.lastTestDate)
+    {
+      codeStep.settings.inputUiInfo.lastTestDate = undefined;
+    }
+    codeStep.settings.artifact=codeStepsArtifacts[codeStep.name];
+    codeStep.settings.artifactSourceId=undefined;
+  }
+
   const newStep:Action = JSON.parse(JSON.stringify(step));
-  newStep.displayName = `${newStep.displayName} Copy`;
+  if(newStep.type === ActionType.CODE)
+  {
+    addArtifactToCodeStep(newStep);
+  }
+
   newStep.nextAction = undefined;
-  newStep.name = newNameCreator(newStep.name);
+  renameStep(newStep);
   const childSteps = traverseInternal(newStep).slice(1);
   const childStepsNames = childSteps.map(c=> `${c.name}`);
-  debugger;
   childSteps.forEach((c)=>{
-    const newName  = newNameCreator(c.name);
-    const newDisplayName = `${c.displayName} Copy`;
+ 
     switch(c.type)
     {
       case ActionType.CODE:
         {
-          if(c.settings.inputUiInfo?.currentSelectedData)
-          {
-            c.settings.inputUiInfo.currentSelectedData = undefined;
-          }
-          if(c.settings.inputUiInfo?.lastTestDate)
-          {
-            c.settings.inputUiInfo.lastTestDate = undefined;
-          }
-          c.name = newName;
-          c.displayName = newDisplayName;
+          addArtifactToCodeStep(c);
+          renameStep(c);
           childStepsNames.forEach(cn=>{
             Object.entries(c.settings.input).forEach(([key,value])=>{
               if(typeof value === "string")
@@ -782,8 +794,7 @@ function duplicateStep(step:Action):Action
         {
           c.settings.inputUiInfo.lastTestDate = undefined;
         }
-        c.name = newName;
-        c.displayName = newDisplayName;
+        renameStep(c);
         childStepsNames.forEach(cn=>{
           c.settings.conditions.forEach(con=>{
             con.forEach(subCon=>{
@@ -838,8 +849,7 @@ function duplicateStep(step:Action):Action
       case ActionType.LOOP_ON_ITEMS:
         {
           
-         c.name = newName;
-         c.displayName = newDisplayName;
+          renameStep(c);
          childStepsNames.forEach(cn=>{
           c.settings.items = replaceOldStepNameOccurancesWithNewOneWithinInput({
             input:c.settings.items,
@@ -899,6 +909,8 @@ function duplicateStep(step:Action):Action
   })
 return newStep;
 }
+
+
 
 function replaceOldStepNameOccurancesWithNewOneWithinInput({input,oldStepName,newStepName}:{input:string,oldStepName:string,newStepName:string})
 {
