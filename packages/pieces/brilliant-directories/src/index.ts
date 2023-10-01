@@ -5,21 +5,25 @@ import { createNewUser } from "./lib/actions/create-new-user";
 export const brilliantDirectoriesAuth = PieceAuth.CustomAuth({
   required: true,
   description: `
-  Enter your Brilliant Directories website URL & API Key
+  Brilliant Directories Authentication.
+
+  Please enter your API key which can be generated from here: https://ww2.managemydirectory.com/admin/apiSettings
+
+  Then enter your brilliant directories website instance URL appended with /api like the example.
   `,
   props: {
-    token: PieceAuth.SecretText({
+    api_key: PieceAuth.SecretText({
       displayName: 'API Key',
       description: 'The api key of the brilliant directories account account',
       required: true,
     }),
-    apiTableUrl: Property.ShortText({
+    site_url: Property.ShortText({
       displayName: 'Instance Url',
       description: 'The url of the brillant directories instance.',
       required: true,
-      defaultValue: 'https://brilliant-directories.com/api',
+      defaultValue: 'https://yoursitehere.com/api',
     }),
-  }
+  },
 })
 
 export const brilliantDirectories = createPiece({
