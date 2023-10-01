@@ -73,6 +73,7 @@ export type PropertyContext = {
 
 export type ServerContext = {
     apiUrl: string,
+    publicUrl: string,
     token: string
 }
 export type BaseActionContext<

@@ -224,7 +224,8 @@ export const pieceHelper = {
         propsValue: processedInput,
         server: {
           token: globals.workerToken!,
-          apiUrl: globals.serverUrl!
+          apiUrl: globals.apiUrl!,
+          publicUrl: globals.serverUrl!
         },
         files: createFilesService({
           stepName: actionName,
@@ -287,7 +288,8 @@ export const pieceHelper = {
       const ctx = {
         server: {
           token: globals.workerToken!,
-          apiUrl: globals.serverUrl!
+          apiUrl: globals.apiUrl!,
+          publicUrl: globals.serverUrl!
         },
       }
 
