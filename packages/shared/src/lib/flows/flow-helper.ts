@@ -964,6 +964,17 @@ export const flowHelper = {
           upgradePiece(step, operation.request.name)
         );
         break;
+      case FlowOperationType.ADD_DUPLICATED_STEP:
+        {
+          clonedVersion = transferFlow(
+            addAction(clonedVersion, {
+              action:operation.request.duplicatedStep,
+              parentStep:operation.request.originalStepName,
+              stepLocationRelativeToParent:StepLocationRelativeToParent.AFTER
+            }),
+            (step) => upgradePiece(step, operation.request.duplicatedStep.name)
+          );
+        }
     }
     clonedVersion.valid = isValid(clonedVersion);
     return clonedVersion;

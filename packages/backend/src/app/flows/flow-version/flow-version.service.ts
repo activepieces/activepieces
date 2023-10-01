@@ -211,7 +211,7 @@ function handleImportFlowOperation(flowVersion: FlowVersion, operation: ImportFl
     return operations
 }
 
-async function addArtifactsAsBase64(projectId: ProjectId, flowVersion: FlowVersion) {
+async function addArtifactsAsBase64(projectId: ProjectId, flowVersion: FlowVersion): Promise<FlowVersion> {
     const flowVersionWithArtifacts: FlowVersion = JSON.parse(JSON.stringify(flowVersion))
     const steps = flowHelper.getAllSteps(flowVersionWithArtifacts.trigger)
 
@@ -236,7 +236,7 @@ async function addArtifactsAsBase64(projectId: ProjectId, flowVersion: FlowVersi
 }
 
 
-async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, request: FlowOperationRequest) {
+async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, request: FlowOperationRequest): Promise<FlowOperationRequest> {
     const clonedRequest: FlowOperationRequest = JSON.parse(JSON.stringify(request))
     switch (clonedRequest.type) {
         case FlowOperationType.ADD_ACTION:
@@ -316,7 +316,6 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
             }
             break
         }
-
         case FlowOperationType.UPDATE_TRIGGER:
             switch (clonedRequest.request.type) {
                 case TriggerType.EMPTY:
@@ -333,6 +332,37 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
                     break
             }
             break
+        case FlowOperationType.ADD_DUPLICATED_STEP:{
+            
+            if (clonedRequest.request.duplicatedStep.type === ActionType.BRANCH || clonedRequest.request.duplicatedStep.type === ActionType.LOOP_ON_ITEMS) {
+                const childSteps = flowHelper.getAllChildSteps(clonedRequest.request.duplicatedStep)
+                for (const c of childSteps) {
+                    switch (c.type) {
+                        case ActionType.MISSING:
+                            c.valid = false
+                            break
+                        case ActionType.LOOP_ON_ITEMS:
+                            c.valid = loopSettingsValidator.Check(c.settings)
+                            break
+                        case ActionType.BRANCH:
+                            c.valid  = branchSettingsValidator.Check(c.settings)
+                            break
+                        case ActionType.PIECE:
+                            c.valid = await validateAction({
+                                settings: c.settings,
+                                projectId,
+                            })
+                            break
+                        case ActionType.CODE: {
+                            const codeSettings: CodeActionSettings = c.settings
+                            await uploadArtifact(projectId, codeSettings)
+                            break
+                        }
+                    }
+                }
+            }
+            break
+        }
         default:
             break
     }
@@ -340,7 +370,7 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
 }
 
 
-async function validateAction({ projectId, settings }: { projectId: ProjectId, settings: PieceActionSettings }) {
+async function validateAction({ projectId, settings }: { projectId: ProjectId, settings: PieceActionSettings }): Promise<boolean> {
 
     if (
         isNil(settings.pieceName) ||
@@ -367,7 +397,7 @@ async function validateAction({ projectId, settings }: { projectId: ProjectId, s
     return validateProps(action.props, settings.input)
 }
 
-async function validateTrigger({ settings, projectId }: { settings: PieceTriggerSettings, projectId: ProjectId }) {
+async function validateTrigger({ settings, projectId }: { settings: PieceTriggerSettings, projectId: ProjectId }): Promise<boolean> {
     if (
         isNil(settings.pieceName) ||
         isNil(settings.pieceVersion) ||
@@ -393,7 +423,7 @@ async function validateTrigger({ settings, projectId }: { settings: PieceTrigger
     return validateProps(trigger.props, settings.input)
 }
 
-function validateProps(props: PiecePropertyMap, input: Record<string, unknown>) {
+function validateProps(props: PiecePropertyMap, input: Record<string, unknown>): boolean {
     const propsSchema = buildSchema(props)
     const propsValidator = TypeCompiler.Compile(propsSchema)
     return propsValidator.Check(input)
@@ -483,7 +513,7 @@ async function uploadArtifact(projectId: ProjectId, codeSettings: CodeActionSett
             data: bufferFromBase64,
             type: FileType.CODE_SOURCE,
             compression: FileCompression.NONE,
-            
+
         })
 
         codeSettings.artifact = undefined

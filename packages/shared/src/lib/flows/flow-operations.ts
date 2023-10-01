@@ -14,7 +14,8 @@ export enum FlowOperationType {
     UPDATE_TRIGGER = "UPDATE_TRIGGER",
     ADD_ACTION = "ADD_ACTION",
     UPDATE_ACTION = "UPDATE_ACTION",
-    DELETE_ACTION = "DELETE_ACTION"
+    DELETE_ACTION = "DELETE_ACTION",
+    ADD_DUPLICATED_STEP = "ADD_DUPLICATED_STRING"
 }
 
 export enum StepLocationRelativeToParent {
@@ -43,8 +44,14 @@ export const ChangeFolderRequest = Type.Object({
     folderId: Type.Union([Type.String(),Type.Null()])
 });
 
-export type ChangeFolderRequest = Static<typeof ChangeFolderRequest>;
 
+
+export type ChangeFolderRequest = Static<typeof ChangeFolderRequest>;
+export const AddDuplicatedStepRequest = Type.Object({
+    duplicatedStep:Action,
+    originalStepName:Type.String()
+});
+export type AddDuplicatedStepRequest = Static<typeof AddDuplicatedStepRequest>;
 
 export const ChangeNameRequest = Type.Object({
     displayName: Type.String({}),
@@ -115,6 +122,10 @@ export const FlowOperationRequest = Type.Union([
     Type.Object({
         type: Type.Literal(FlowOperationType.CHANGE_FOLDER),
         request: ChangeFolderRequest
+    }),
+    Type.Object({
+        type: Type.Literal(FlowOperationType.ADD_DUPLICATED_STEP),
+        request: AddDuplicatedStepRequest
     })
 ]);
 
