@@ -42,12 +42,13 @@ export const sendEmail = createAction({
                 host: auth.host,
                 port: +auth.port,
                 auth: {
-                    user: auth.email,
-                    pass: auth.password,
+                  user: auth.email,
+                  pass: auth.password,
                 },
+                connectionTimeout: 10000, // 5 second timeout
                 secure: auth.TLS,
-            });
-
+                tls: { rejectUnauthorized: false },
+              });
             const info = await transporter.sendMail({
                 from: propsValue.from,
                 to: propsValue.to.join(','),
