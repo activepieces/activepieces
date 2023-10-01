@@ -52,9 +52,7 @@ Activepieces is a **automation** builder, designed to be **extensible** through 
 
 # 🤖 LLM Chatbots + Data Sources (BETA)
 
-![ezgif com-gif-maker](https://github.com/activepieces/activepieces/assets/1812998/7902e76a-4ba4-4130-9418-dba600fb5c15)
-
-
+![chatbots](https://github.com/activepieces/activepieces/assets/1812998/7902e76a-4ba4-4130-9418-dba600fb5c15)
 
 **Features:**
 - PDF datasource
