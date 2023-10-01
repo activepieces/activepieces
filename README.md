@@ -44,10 +44,31 @@ src="https://github.com/activepieces/activepieces/assets/1812998/76c97441-c285-4
 
 # ✨ What Is Activepieces?
 
-Activepieces is a **no-code** workflow builder, designed to be **extensible** through a **strongly typed** pieces framework written in **Typescript**.
+Activepieces is a **automation** builder, designed to be **extensible** through a **type-safe** pieces framework written in **Typescript**.
 
 <br>
 <br>
+
+
+# 🤖 LLM Chatbots + Data Sources (BETA)
+
+![chatbots](https://github.com/activepieces/activepieces/assets/1812998/7902e76a-4ba4-4130-9418-dba600fb5c15)
+
+**Features:**
+- PDF datasource
+- Sharable links
+- Native integration with flow builder using chatbot pieces
+- Prompt Customization
+
+
+
+# 🎨 Flow Builder
+<p>
+User-friendly Workflow Builder! Enjoy building fun and interactive flows with support for Branches, Loops, and Drag and Drop.
+  <br />
+</p>
+
+![build](https://github.com/activepieces/activepieces/assets/1812998/e75616ce-7801-45b7-b3fa-eba778bebde3)
 
 # 🔌 Pieces
 
@@ -61,20 +82,12 @@ Alternatively, if you are a developer, you can quickly build your own piece usin
 
 <br>
 <br>
-<h1> 🎨 Visual Builder</h1>
-<p>
-User-friendly Workflow Builder! Enjoy building fun and interactive flows with support for Branches, Loops, and Drag and Drop.
-  <br />
-</p>
-
-![build](https://github.com/activepieces/activepieces/assets/1812998/e75616ce-7801-45b7-b3fa-eba778bebde3)
-
 <br>
 <br>
 <h1>
 💡 Infinite Use Cases</h1>
 <p>
-Community templates provide inspiration and enable you to effortlessly build flows in no time.
+Community templates provide inspiration and enable you to effortlessly build automation in no time.
 <br />
 </p>
 

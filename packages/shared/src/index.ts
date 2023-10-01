@@ -56,6 +56,7 @@ export * from "./lib/flows/folders/folder-requests";
 export * from "./lib/flows/dto/flow-template-request";
 export * from "./lib/flows";
 export * from "./lib/flows/dto/list-flows-request";
+export * from './lib/chatbot'
 
 import { TypeSystem } from '@sinclair/typebox/system'
 // Look at https://github.com/sinclairzx81/typebox/issues/350
