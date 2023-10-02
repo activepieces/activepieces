@@ -34,6 +34,11 @@ import {
 } from 'ngx-monaco-editor-v2';
 import { apMonacoTheme } from './modules/common/monaco-themes/ap-monaco-theme';
 import { cobalt2 } from './modules/common/monaco-themes/cobalt-2-theme';
+import {
+  ChatComponent,
+  UiFeatureChatBotModule,
+  chatbotMetadataResolver,
+} from '@activepieces/ui/feature-chatbot';
 
 const monacoConfig: NgxMonacoEditorConfig = {
   baseUrl: '/assets', // configure base path for monaco editor. Starting with version 8.0.0 it defaults to './assets'. Previous releases default to '/assets'
@@ -94,6 +99,7 @@ export function playerFactory() {
     LottieModule.forRoot({ player: playerFactory }),
     LottieCacheModule.forRoot(),
     MonacoEditorModule.forRoot(monacoConfig),
+    UiFeatureChatBotModule,
   ],
   providers: [
     {
@@ -164,6 +170,16 @@ function dynamicRoutes(edition: string) {
       path: 'templates/:templateId',
       component: ImportFlowComponent,
       title: `Import Flow - ${environment.websiteTitle}`,
+    },
+    {
+      path: 'chatbots/:id',
+      canActivate: [],
+      title: `Activepieces - Chatbot`,
+      pathMatch: 'full',
+      component: ChatComponent,
+      resolve: {
+        chatbot: chatbotMetadataResolver,
+      },
     },
     {
       path: 'redirect',

@@ -21,7 +21,7 @@
     </div>
 
     <div>
-        <div class="ap-typography-body-1 " *ngIf="template.featuredDescription">
+        <div class="ap-typography-body-1 ap-whitespace-pre-line" *ngIf="template.featuredDescription">
             <ng-container *ngIf="template.featuredDescription.length <= SEE_MORE_LIMIT ">
                 {{template.featuredDescription}}
             </ng-container>

@@ -4,6 +4,10 @@ import { ProjectId } from "../project/project"
 import { UserId } from "../user/user"
 
 
+interface ChatbotCreated {
+    chatbotId: string
+}
+
 interface FlowCreated {
     flowId: FlowId
 }
@@ -35,6 +39,7 @@ interface FlowImported {
 
 export enum TelemetryEventName {
     SIGNED_UP = "signed.up",
+    CHATBOT_CREATED = "chatbot.created",
     FLOW_CREATED = "flow.created",
     DEMO_IMPORTED = "demo.imported",
     FLOW_IMPORTED = "flow.imported",
@@ -66,4 +71,5 @@ export type TelemetryEvent = BaseTelemetryEvent<TelemetryEventName.SIGNED_UP, Si
     | BaseTelemetryEvent<TelemetryEventName.DEMO_IMPORTED, Record<string, never>>
     | BaseTelemetryEvent<TelemetryEventName.FLOW_CREATED, FlowCreated>
     | BaseTelemetryEvent<TelemetryEventName.TEMPLATE_SEARCH, TemplateSearch>
+    | BaseTelemetryEvent<TelemetryEventName.CHATBOT_CREATED, ChatbotCreated>
     | BaseTelemetryEvent<TelemetryEventName.FEATURED_TAB_VIEWED, FeaturedTabViewed>;

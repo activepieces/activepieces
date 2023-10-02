@@ -40,13 +40,14 @@ const start = async (app: FastifyInstance): Promise<void> => {
 The application started on ${system.get(SystemProp.FRONTEND_URL)}, as specified by the AP_FRONTEND_URL variables.
     `)
 
-        const environemnt = system.get(SystemProp.ENVIRONMENT);
-        const pieces = process.env.AP_DEV_PIECES;
+        const environemnt = system.get(SystemProp.ENVIRONMENT)
+        const pieces = process.env.AP_DEV_PIECES
         if (environemnt === ApEnvironment.DEVELOPMENT) {
             logger.warn(`[WARNING]: The application is running in ${environemnt} mode.`)
             logger.warn(`[WARNING]: This is only shows pieces specified in AP_DEV_PIECES ${pieces} environment variable.`)
         }
-    } catch (err) {
+    }
+    catch (err) {
         logger.error(err)
         process.exit(1)
     }

@@ -19,6 +19,7 @@ import { DatabaseType, system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
 import { ArrayContains, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
 import { StepFileEntity } from '../flows/step-file/step-file.entity'
+import { ChatbotEntity } from '../chatbot/chatbot.entity'
 
 const databaseType = system.get(SystemProp.DB_TYPE)
 
@@ -41,6 +42,7 @@ export const commonProperties = {
         FolderEntity,
         PieceMetadataEntity,
         StepFileEntity,
+        ChatbotEntity,
     ],
     synchronize: false,
 }

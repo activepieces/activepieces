@@ -180,7 +180,7 @@ export const eventOnData = createTrigger({
   },
   sampleData: {
     "id": "1",
-    "eventType": "[finished]",
+    "eventType": "[finished, pull]",
     "data": {
       "format": "4",
       "answer_time": "2023-04-11T13:59:23+02:00",
@@ -245,6 +245,9 @@ export const eventOnData = createTrigger({
     }
   },
   async run(context) {
+    if (!context.payload.body) {
+      return []
+    }
     return [context.payload.body];
   },
 });

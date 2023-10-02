@@ -1,0 +1,2 @@
+
+export const EMBEDINGS_SEARCH_RESULT = 3
