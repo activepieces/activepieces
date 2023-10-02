@@ -8,7 +8,6 @@ import {
   FlowService,
   environment,
   fadeIn400ms,
-  initialiseBeamer,
 } from '@activepieces/ui/common';
 import { MatDialog } from '@angular/material/dialog';
 import {
@@ -37,6 +36,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
   folderDisplayName$: Observable<string>;
   duplicateFlow$: Observable<void>;
   openDashboardOnFolder$: Observable<string>;
+  environment = environment;
   constructor(
     public dialogService: MatDialog,
     private store: Store,
@@ -48,7 +48,6 @@ export class FlowBuilderHeaderComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    initialiseBeamer();
     this.instance$ = this.store.select(BuilderSelectors.selectCurrentInstance);
     this.isInDebugMode$ = this.store.select(
       BuilderSelectors.selectIsInDebugMode
@@ -150,9 +149,5 @@ export class FlowBuilderHeaderComponent implements OnInit {
           });
         })
       );
-  }
-
-  get environment() {
-    return environment;
   }
 }

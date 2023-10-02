@@ -1,9 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthenticationService } from '../../service/authentication.service';
-import { showBeamer } from '../../utils/beamer';
-import { environment } from '../../environments/environment';
-
 @Component({
   selector: 'ap-user-avatar',
   templateUrl: './user-avatar.component.html',
@@ -50,10 +47,10 @@ export class UserAvatarComponent {
   }
 
   showWhatIsNew() {
-    showBeamer();
-  }
-
-  get environment() {
-    return environment;
+    window.open(
+      'https://community.activepieces.com/c/announcements',
+      '_blank',
+      'noopener'
+    );
   }
 }
