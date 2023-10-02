@@ -46,8 +46,7 @@ export const sendEmail = createAction({
                   pass: auth.password,
                 },
                 connectionTimeout: 10000, // 5 second timeout
-                secure: auth.TLS,
-                tls: { rejectUnauthorized: false },
+                secure: auth.TLS === true ? true: undefined,
               });
             const info = await transporter.sendMail({
                 from: propsValue.from,
