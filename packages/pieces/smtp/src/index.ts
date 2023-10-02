@@ -37,8 +37,9 @@ export const smtpAuth = PieceAuth.CustomAuth({
           user: auth.email,
           pass: auth.password,
         },
-        connectionTimeout: 5000, // 5 second timeout
+        connectionTimeout: 10000, // 5 second timeout
         secure: auth.TLS,
+        tls: { rejectUnauthorized: false },
       });
       return new Promise((resolve, reject) => {
         transporter.verify(function (error, success) {
