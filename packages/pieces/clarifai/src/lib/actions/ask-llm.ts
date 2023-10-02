@@ -18,7 +18,7 @@ export const clarifaiAskLLM = createAction({
                     return {
                         disabled: true,
                         options: [],
-                        placeholder: "Please add an APT key"
+                        placeholder: "Please add an PAT key"
                     }
                 }
                 const request : HttpRequest = {
