@@ -29,7 +29,7 @@ export const llmrailsAuth = PieceAuth.SecretText({
 export const llmrails = createPiece({
 	displayName: "Llmrails",
 	minimumSupportedRelease: '0.5.0',
-	logoUrl: "https://cdn.llmrails.com/icon-black.png",
+	logoUrl: "https://cdn.activepieces.com/pieces/llmrails.png",
 	authors: ["w95"],
 	auth: llmrailsAuth,
 	actions: [datastoreSearch],
