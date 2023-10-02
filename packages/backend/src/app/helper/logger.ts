@@ -34,10 +34,10 @@ const initLogger = (): Logger => {
                 batching: true,
                 interval: 5,
                 host: lokiUrl,
-                basicAuth: {
-                    username: lokiUsername!,
-                    password: lokiPassword!,
-                },
+                basicAuth: lokiPassword && lokiPassword ? {
+                    username: lokiUsername,
+                    password: lokiPassword,
+                } : undefined,
             },
         })
         targets.push({
