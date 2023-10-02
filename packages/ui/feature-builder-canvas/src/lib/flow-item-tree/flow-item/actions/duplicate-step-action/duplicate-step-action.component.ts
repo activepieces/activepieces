@@ -1,7 +1,13 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
-import { CodeService, FlowItem } from '@activepieces/ui/feature-builder-store';
-import { Observable, forkJoin, map, of, switchMap, tap } from 'rxjs';
-import { ActionType, TriggerType, flowHelper } from '@activepieces/shared';
+import {
+  BuilderSelectors,
+  CodeService,
+  FlowItem,
+  FlowsActions,
+} from '@activepieces/ui/feature-builder-store';
+import { Observable, forkJoin, map, of, switchMap, take, tap } from 'rxjs';
+import { ActionType, flowHelper } from '@activepieces/shared';
+import { Store } from '@ngrx/store';
 @Component({
   selector: 'app-duplicate-step-action',
   templateUrl: './duplicate-step-action.component.html',
@@ -11,8 +17,76 @@ export class DuplicateStepActionComponent {
   @Input({ required: true })
   flowItem: FlowItem;
   duplicate$: Observable<void> | undefined;
-  constructor(private codeService: CodeService) {}
+  constructor(private codeService: CodeService, private store: Store) {}
   duplicateStep() {
+    const artifacts$ = this.getCodeArtifacts();
+    if (Object.keys(artifacts$).length > 0) {
+      this.duplicate$ = forkJoin(artifacts$).pipe(
+        switchMap((artifacts) => {
+          return this.store
+            .select(BuilderSelectors.selectShownFlowVersion)
+            .pipe(
+              take(1),
+              tap((flowVersion) => {
+                if (
+                  this.flowItem &&
+                  (this.flowItem.type === ActionType.CODE ||
+                    this.flowItem.type === ActionType.PIECE ||
+                    this.flowItem.type === ActionType.BRANCH ||
+                    this.flowItem.type === ActionType.LOOP_ON_ITEMS)
+                ) {
+                  const duplicatedStep = flowHelper.duplicateStep(
+                    this.flowItem,
+                    artifacts,
+                    flowHelper.findAvailableStepName(flowVersion, 'step')
+                  );
+                  this.store.dispatch(
+                    FlowsActions.AddDuplicatedStep({
+                      operation: {
+                        duplicatedStep,
+                        originalStepName: this.flowItem.name,
+                      },
+                    })
+                  );
+                }
+              })
+            );
+        }),
+        map(() => void 0)
+      );
+    } else {
+      this.duplicate$ = this.store
+        .select(BuilderSelectors.selectShownFlowVersion)
+        .pipe(
+          take(1),
+          tap((flowVersion) => {
+            if (
+              this.flowItem &&
+              (this.flowItem.type === ActionType.CODE ||
+                this.flowItem.type === ActionType.PIECE ||
+                this.flowItem.type === ActionType.BRANCH ||
+                this.flowItem.type === ActionType.LOOP_ON_ITEMS)
+            ) {
+              const duplicatedStep = flowHelper.duplicateStep(
+                this.flowItem,
+                {},
+                flowHelper.findAvailableStepName(flowVersion, 'step')
+              );
+              this.store.dispatch(
+                FlowsActions.AddDuplicatedStep({
+                  operation: {
+                    duplicatedStep,
+                    originalStepName: this.flowItem.name,
+                  },
+                })
+              );
+            }
+          }),
+          map(() => void 0)
+        );
+    }
+  }
+  private getCodeArtifacts() {
     const artifacts$: Record<string, Observable<string>> = {};
     if (this.flowItem.type === ActionType.CODE) {
       if (this.flowItem.settings.artifact) {
@@ -55,19 +129,6 @@ export class DuplicateStepActionComponent {
         }
       });
     }
-
-    this.duplicate$ = forkJoin(artifacts$).pipe(
-      tap((artifacts) => {
-        if (
-          this.flowItem &&
-          this.flowItem.type !== TriggerType.WEBHOOK &&
-          this.flowItem.type !== TriggerType.PIECE &&
-          this.flowItem.type !== TriggerType.EMPTY
-        ) {
-          console.log(flowHelper.duplicateStep(this.flowItem, artifacts));
-        }
-      }),
-      map(() => void 0)
-    );
+    return artifacts$;
   }
 }

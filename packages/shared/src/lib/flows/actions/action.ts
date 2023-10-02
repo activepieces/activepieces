@@ -202,9 +202,24 @@ export const SingleActionSchema = Type.Union([
 ])
 export type Action = Static<typeof Action>;
 
-export type BranchAction = Static<typeof BranchActionSchema> & { nextAction?: Action, onFailureAction?: Action, onSuccessAction?: Action };
 
-export type LoopOnItemsAction = Static<typeof LoopOnItemsActionSchema> & { nextAction?: Action, firstLoopAction?: Action };
+
+
+export const BranchActionFullSchema =  Type.Intersect([BranchActionSchema, Type.Object({
+  nextAction: Type.Optional(Action),
+  onSuccessAction: Type.Optional(Action),
+  onFailureAction: Type.Optional(Action)
+})])
+export type BranchAction = Static<typeof BranchActionFullSchema>;
+
+export const LoopOnItemsActionFullSchema = Type.Intersect([LoopOnItemsActionSchema, Type.Object({
+  nextAction: Type.Optional(Action),
+  firstLoopAction: Type.Optional(Action)
+})]);
+
+export type LoopOnItemsAction = Static<typeof LoopOnItemsActionFullSchema>;
+
+
 
 export type PieceAction = Static<typeof PieceActionSchema> & { nextAction?: Action };
 

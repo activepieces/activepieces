@@ -261,11 +261,23 @@ export class FlowsEffects {
               },
             };
             break;
-          case FlowsActionType.MOVE_ACTION:
+          case FlowsActionType.MOVE_ACTION: {
             flowOperation = {
               type: FlowOperationType.MOVE_ACTION,
               request: action.operation,
             };
+            break;
+          }
+          case FlowsActionType.ADD_DUPLICATED_ACTION: {
+            flowOperation = {
+              request: {
+                duplicatedStep: action.operation.duplicatedStep,
+                originalStepName: action.operation.originalStepName,
+              },
+              type: FlowOperationType.ADD_DUPLICATED_ACTION,
+            };
+            break;
+          }
         }
         if (flow) {
           return of(

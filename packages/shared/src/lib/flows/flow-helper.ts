@@ -6,15 +6,16 @@ import {
   UpdateActionRequest,
   UpdateTriggerRequest,
   StepLocationRelativeToParent,
-  MoveActionRequest
+  MoveActionRequest,
+  AddDuplicatedStepRequest
 } from './flow-operations';
 import {
   Action,
   ActionType,
   BranchAction,
+  LoopOnItemsAction,
   BranchOperator,
   CodeAction,
-  LoopOnItemsAction,
   SingleActionSchema,
 } from './actions/action';
 import { Trigger, TriggerType } from './triggers/trigger';
@@ -175,7 +176,6 @@ function transferStep<T extends Step>(
   transferFunction: (step: T) => T
 ): Step {
   const updatedStep = transferFunction(step as T);
-
   if (updatedStep.type === ActionType.BRANCH) {
     const { onSuccessAction, onFailureAction } = updatedStep;
     if (onSuccessAction) {
@@ -387,11 +387,52 @@ function moveAction(
   return flowVersion;
 }
 
+
+function addDuplicatedAction(
+  flowVersion: FlowVersion,
+  request: AddDuplicatedStepRequest
+): FlowVersion {
+  return transferFlow(flowVersion, (parentStep: Step) => {
+   
+    if (parentStep.name !== request.originalStepName) {
+      return parentStep;
+    }
+    
+    switch(request.duplicatedStep.type)
+    { case ActionType.PIECE:
+      case ActionType.CODE:{
+        parentStep.nextAction = createAction(request.duplicatedStep, {
+          nextAction: parentStep.nextAction,
+        });
+        break;
+      }
+      case ActionType.BRANCH:{
+        parentStep.nextAction = createAction(request.duplicatedStep, {
+          nextAction: parentStep.nextAction,
+          onFailureAction:request.duplicatedStep.onFailureAction,
+          onSuccessAction: request.duplicatedStep.onSuccessAction
+        });
+        break;
+      }
+      case ActionType.LOOP_ON_ITEMS:
+        {
+          parentStep.nextAction = createAction(request.duplicatedStep, {
+            nextAction: parentStep.nextAction,
+            firstLoopAction: request.duplicatedStep.firstLoopAction
+          });
+          break;
+        }
+    }
+    return parentStep;
+  });
+}
+
 function addAction(
   flowVersion: FlowVersion,
   request: AddActionRequest
 ): FlowVersion {
   return transferFlow(flowVersion, (parentStep: Step) => {
+   
     if (parentStep.name !== request.parentStep) {
       return parentStep;
     }
@@ -410,8 +451,10 @@ function addAction(
         request.stepLocationRelativeToParent ===
         StepLocationRelativeToParent.AFTER
       ) {
+
         parentStep.nextAction = createAction(request.action, {
-          nextAction: parentStep.nextAction
+          nextAction: parentStep.nextAction,
+          
         });
       } else {
         throw new ActivepiecesError(
@@ -525,6 +568,7 @@ function createAction(
         settings: request.settings
       };
   }
+  console.log(action);
   action.valid = (request.valid ?? true) && actionSchemaValidator.Check(action);
   return action;
 }
@@ -734,8 +778,8 @@ function isLegacyApp({pieceName, pieceVersion}: {pieceName: string, pieceVersion
   return false;
 }
 
-function duplicateStep(step:Action, codeStepsArtifacts:Record<string,string>):Action
-{ const newNameCreator = (oldStepName:string) => `${oldStepName}_copy`
+function duplicateStep<T extends Action>(step:T, codeStepsArtifacts:Record<string,string>,availableStepName:string):T
+{ const newNameCreator = (oldStepName:string) => `${availableStepName}_${oldStepName}`
   const renameStep = (action:Action)=>{
     action.name = newNameCreator(action.name)
     action.displayName = `${action.displayName} Copy`
@@ -753,14 +797,15 @@ function duplicateStep(step:Action, codeStepsArtifacts:Record<string,string>):Ac
     codeStep.settings.artifactSourceId=undefined;
   }
 
-  const newStep:Action = JSON.parse(JSON.stringify(step));
+  const newStep:T = JSON.parse(JSON.stringify(step));
   if(newStep.type === ActionType.CODE)
   {
     addArtifactToCodeStep(newStep);
   }
 
   newStep.nextAction = undefined;
-  renameStep(newStep);
+  newStep.name = availableStepName;
+  newStep.displayName = `${newStep.displayName} Copy`
   const childSteps = traverseInternal(newStep).slice(1);
   const childStepsNames = childSteps.map(c=> `${c.name}`);
   childSteps.forEach((c)=>{
@@ -869,6 +914,7 @@ function duplicateStep(step:Action, codeStepsArtifacts:Record<string,string>):Ac
           {
             c.settings.inputUiInfo.lastTestDate = undefined;
           }
+          renameStep(c);
          childStepsNames.forEach((cn)=>{
           Object.keys(c.settings.input).forEach((key)=>{
             if(typeof c.settings.input[key] === "string")
@@ -921,6 +967,20 @@ function replaceOldStepNameOccurancesWithNewOneWithinInput({input,oldStepName,ne
   })
   return res;
 }
+function findAvailableStepName(flowVersion: FlowVersion, stepPrefix: string): string {
+  const steps = flowHelper
+    .getAllSteps(flowVersion.trigger)
+    .map((f) => f.name);
+  let availableNumber = 1;
+  let availableName = `${stepPrefix}_${availableNumber}`;
+
+  while (steps.includes(availableName)) {
+    availableNumber++;
+    availableName = `${stepPrefix}_${availableNumber}`;
+  }
+
+  return availableName;
+}
 export const flowHelper = {
   isValid: isValid,
   apply(
@@ -964,13 +1024,12 @@ export const flowHelper = {
           upgradePiece(step, operation.request.name)
         );
         break;
-      case FlowOperationType.ADD_DUPLICATED_STEP:
+      case FlowOperationType.ADD_DUPLICATED_ACTION:
         {
           clonedVersion = transferFlow(
-            addAction(clonedVersion, {
-              action:operation.request.duplicatedStep,
-              parentStep:operation.request.originalStepName,
-              stepLocationRelativeToParent:StepLocationRelativeToParent.AFTER
+            addDuplicatedAction(clonedVersion, {
+              duplicatedStep:operation.request.duplicatedStep,
+              originalStepName:operation.request.originalStepName
             }),
             (step) => upgradePiece(step, operation.request.duplicatedStep.name)
           );
@@ -979,6 +1038,7 @@ export const flowHelper = {
     clonedVersion.valid = isValid(clonedVersion);
     return clonedVersion;
   },
+ 
   getStep,
   isAction,
   isTrigger,
@@ -991,5 +1051,6 @@ export const flowHelper = {
   transferFlowAsync,
   getAllChildSteps,
   getAllStepsAtFirstLevel,
-  duplicateStep
+  duplicateStep,
+  findAvailableStepName
 };

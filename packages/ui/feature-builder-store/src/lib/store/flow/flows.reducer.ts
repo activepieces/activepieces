@@ -70,6 +70,15 @@ const _flowsReducer = createReducer(
     });
     return clonedState;
   }),
+  on(FlowsActions.AddDuplicatedStep, (state, { operation }): FlowState => {
+    const clonedState: FlowState = JSON.parse(JSON.stringify(state));
+    debugger;
+    clonedState.flow.version = flowHelper.apply(clonedState.flow.version, {
+      type: FlowOperationType.ADD_DUPLICATED_ACTION,
+      request: JSON.parse(JSON.stringify(operation)),
+    });
+    return clonedState;
+  }),
   on(FlowsActions.updateAction, (state, { operation }): FlowState => {
     const clonedState: FlowState = JSON.parse(JSON.stringify(state));
     clonedState.flow.version = flowHelper.apply(clonedState.flow.version, {

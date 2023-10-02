@@ -1,5 +1,5 @@
 import {
-    CodeActionSchema, BranchActionSchema, LoopOnItemsActionSchema, PieceActionSchema, MissingActionSchema, Action,
+    CodeActionSchema, BranchActionSchema, LoopOnItemsActionSchema, PieceActionSchema, MissingActionSchema, Action, LoopOnItemsActionFullSchema, BranchActionFullSchema,
 } from "./actions/action";
 import { EmptyTrigger, PieceTrigger, WebhookTrigger } from "./triggers/trigger";
 import { Static, Type } from "@sinclair/typebox";
@@ -15,7 +15,7 @@ export enum FlowOperationType {
     ADD_ACTION = "ADD_ACTION",
     UPDATE_ACTION = "UPDATE_ACTION",
     DELETE_ACTION = "DELETE_ACTION",
-    ADD_DUPLICATED_STEP = "ADD_DUPLICATED_STRING"
+    ADD_DUPLICATED_ACTION = "ADD_DUPLICATED_ACTION"
 }
 
 export enum StepLocationRelativeToParent {
@@ -47,11 +47,6 @@ export const ChangeFolderRequest = Type.Object({
 
 
 export type ChangeFolderRequest = Static<typeof ChangeFolderRequest>;
-export const AddDuplicatedStepRequest = Type.Object({
-    duplicatedStep:Action,
-    originalStepName:Type.String()
-});
-export type AddDuplicatedStepRequest = Static<typeof AddDuplicatedStepRequest>;
 
 export const ChangeNameRequest = Type.Object({
     displayName: Type.String({}),
@@ -67,6 +62,16 @@ export type DeleteActionRequest = Static<typeof DeleteActionRequest>;
 
 export const UpdateActionRequest = Type.Union([CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema, BranchActionSchema, MissingActionSchema]);
 export type UpdateActionRequest = Static<typeof UpdateActionRequest>;
+export const AddDuplicatedStepRequestActions = Type.Union([CodeActionSchema, LoopOnItemsActionFullSchema, PieceActionSchema, BranchActionFullSchema]);
+export type AddDuplicatedStepRequestActions = Static<typeof AddDuplicatedStepRequestActions>;
+
+//TODO: Replace Type.Any with AddDuplicatedStepRequestActions
+export const AddDuplicatedStepRequest = Type.Object({
+    duplicatedStep:Type.Any(),
+    originalStepName:Type.String()
+});
+
+export type AddDuplicatedStepRequest = Static<typeof AddDuplicatedStepRequest>;
 
 export const MoveActionRequest = Type.Object({
     name: Type.String(),
@@ -124,7 +129,7 @@ export const FlowOperationRequest = Type.Union([
         request: ChangeFolderRequest
     }),
     Type.Object({
-        type: Type.Literal(FlowOperationType.ADD_DUPLICATED_STEP),
+        type: Type.Literal(FlowOperationType.ADD_DUPLICATED_ACTION),
         request: AddDuplicatedStepRequest
     })
 ]);

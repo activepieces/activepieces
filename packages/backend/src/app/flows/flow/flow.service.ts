@@ -191,6 +191,7 @@ export const flowService = {
     },
 
     async update({ userId, flowId, projectId, request: operation }: { userId: UserId, projectId: ProjectId, flowId: FlowId, request: FlowOperationRequest }): Promise<Flow> {
+     
         const flowLock = await acquireLock({
             key: flowId,
             timeout: 10000,

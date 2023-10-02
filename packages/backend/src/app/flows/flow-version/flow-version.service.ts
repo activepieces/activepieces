@@ -332,7 +332,7 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
                     break
             }
             break
-        case FlowOperationType.ADD_DUPLICATED_STEP:{
+        case FlowOperationType.ADD_DUPLICATED_ACTION:{
             
             if (clonedRequest.request.duplicatedStep.type === ActionType.BRANCH || clonedRequest.request.duplicatedStep.type === ActionType.LOOP_ON_ITEMS) {
                 const childSteps = flowHelper.getAllChildSteps(clonedRequest.request.duplicatedStep)

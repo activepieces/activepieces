@@ -163,6 +163,17 @@ const __CanvasReducer = createReducer(
     );
     return clonedState;
   }),
+  on(FlowsActions.AddDuplicatedStep, (state, { operation }): CanvasState => {
+    const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
+    clonedState.displayedFlowVersion = flowHelper.apply(
+      clonedState.displayedFlowVersion,
+      {
+        type: FlowOperationType.ADD_DUPLICATED_ACTION,
+        request: JSON.parse(JSON.stringify(operation)),
+      }
+    );
+    return clonedState;
+  }),
   on(FlowsActions.updateTrigger, (state, { operation }): CanvasState => {
     const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
     clonedState.displayedFlowVersion = flowHelper.apply(

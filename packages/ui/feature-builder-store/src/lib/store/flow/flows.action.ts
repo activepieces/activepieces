@@ -10,6 +10,7 @@ import {
   FlowOperationRequest,
   Folder,
   MoveActionRequest,
+  AddDuplicatedStepRequest,
 } from '@activepieces/shared';
 
 export enum FlowsActionType {
@@ -28,6 +29,7 @@ export enum FlowsActionType {
   MOVE_ACTION = '[FLOWS] MOVE_ACTION',
   IMPORT_FLOW = '[FLOWS] IMPORT_FLOW',
   TOGGLE_WAITING_TO_SAVE = '[FLOWS] TOGGLE_WAITING_TO_SAVE',
+  ADD_DUPLICATED_ACTION = `[FLOWS] ADD_DUPLICATED_ACTION`,
 }
 
 const updateTrigger = createAction(
@@ -86,6 +88,12 @@ const importFlow = createAction(
     flow: Flow;
   }>()
 );
+const AddDuplicatedStep = createAction(
+  FlowsActionType.ADD_DUPLICATED_ACTION,
+  props<{
+    operation: AddDuplicatedStepRequest;
+  }>()
+);
 const applyUpdateOperation = createAction(
   FlowsActionType.APPLY_UPDATE_OPERATION,
   props<{ flow: Flow; operation: FlowOperationRequest; saveRequestId: UUID }>()
@@ -110,6 +118,7 @@ export const FlowsActions = {
   moveAction,
   importFlow,
   toggleWaitingToSave,
+  AddDuplicatedStep,
 };
 
 export const SingleFlowModifyingState = [
@@ -119,4 +128,5 @@ export const SingleFlowModifyingState = [
   updateTrigger,
   deleteAction,
   moveAction,
+  AddDuplicatedStep,
 ];
