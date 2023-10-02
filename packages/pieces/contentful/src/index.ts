@@ -1,7 +1,6 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import { ContentfulAuth } from './lib/common';
-import { ContentfulCreateRecordAction } from './lib/actions/records';
-import { ContentfulGetRecordAction } from './lib/actions/records/get-record';
+import { ContentfulCreateRecordAction, ContentfulGetRecordAction, ContentfulSearchRecordsAction } from './lib/actions/records';
 
 export const contentful = createPiece({
   displayName: 'Contentful',
@@ -9,6 +8,6 @@ export const contentful = createPiece({
   minimumSupportedRelease: '0.6.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/contentful.png',
   authors: ['cyrilselasi'],
-  actions: [ContentfulGetRecordAction, ContentfulCreateRecordAction],
+  actions: [ContentfulSearchRecordsAction, ContentfulGetRecordAction, ContentfulCreateRecordAction],
   triggers: [],
 });
