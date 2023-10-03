@@ -78,6 +78,7 @@ const updateProjectJsonConfig = async (pieceName: string) => {
   assert(projectJson.targets?.build?.options, '[updateProjectJsonConfig] targets.build.options is required');
 
   projectJson.targets.build.options.buildableProjectDepsInPackageJsonType = 'dependencies'
+  projectJson.targets.build.options.updateBuildableProjectDepsInPackageJson = true
   await writeProjectJson(`packages/pieces/${pieceName}`, projectJson)
 }
 
