@@ -57,7 +57,7 @@ export const askBot = createAction({
       method: HttpMethod.POST,
       url:
         context.server.apiUrl +
-        '/v1/chatbots/' +
+        'v1/chatbots/' +
         context.propsValue.chatbot_id +
         '/ask',
       authentication: {
