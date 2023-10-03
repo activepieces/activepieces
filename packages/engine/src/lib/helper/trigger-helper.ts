@@ -32,7 +32,7 @@ export const triggerHelper = {
       logs: false,
     })
 
-    const {processedInput, errors} = await variableService.applyProcessorsAndValidators(resolvedProps, trigger.props, piece.auth);
+    const { processedInput, errors } = await variableService.applyProcessorsAndValidators(resolvedProps, trigger.props, piece.auth);
 
     if (Object.keys(errors).length > 0) {
       throw new Error(JSON.stringify(errors));
@@ -44,7 +44,7 @@ export const triggerHelper = {
     const context = {
       store: createContextStore(prefix, params.flowVersion.flowId),
       app: {
-        async createListeners({ events, identifierKey, identifierValue }: Listener) {
+        createListeners({ events, identifierKey, identifierValue }: Listener): void {
           appListeners.push({ events, identifierValue, identifierKey });
         }
       },
@@ -85,7 +85,7 @@ export const triggerHelper = {
             success: false,
             message: e.toString()
           }
-        } 
+        }
       }
       case TriggerHookType.TEST:
         try {
