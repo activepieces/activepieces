@@ -20,7 +20,9 @@ export const askBot = createAction({
       displayName: 'Chatbots',
       required: true,
       refreshers: [],
-      options: async ({ auth }, { server }) => {
+      options: async (ctx, { server }) => {
+        
+    
         const response = await httpClient.sendRequest<
           SeekPage<{
             id: string;
@@ -28,7 +30,7 @@ export const askBot = createAction({
           }>
         >({
           method: HttpMethod.GET,
-          url: server.apiUrl + '/v1/chatbots',
+          url: server.apiUrl + 'v1/chatbots',
           authentication: {
             type: AuthenticationType.BEARER_TOKEN,
             token: server.token,
@@ -55,7 +57,7 @@ export const askBot = createAction({
       method: HttpMethod.POST,
       url:
         context.server.apiUrl +
-        '/v1/chatbots/' +
+        'v1/chatbots/' +
         context.propsValue.chatbot_id +
         '/ask',
       authentication: {
