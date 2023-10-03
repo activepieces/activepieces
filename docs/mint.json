@@ -181,7 +181,8 @@
             "enterprise/connection-cards/frontend-sdk",
             "enterprise/connection-cards/user-flows"
           ]
-        }
+        },
+        "enterprise/install"
       ]
     }
   ],
