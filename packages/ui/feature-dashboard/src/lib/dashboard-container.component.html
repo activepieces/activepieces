@@ -5,7 +5,7 @@
     <mat-sidenav-content class="thin-scrollbars">
         <div class="ap-absolute  ap-w-full">
             <div class="ap-flex ap-items-center ap-justify-end ap-m-[20px]">
-                <ap-button btnColor="white" btnStyle="basic" btnSize="medium" id="beamerButton" *ngIf="environment.activateBeamer" i18n>
+                <ap-button btnColor="white" btnStyle="basic" btnSize="medium" (buttonClicked)="showWhatIsNew()" i18n>
                     What's new
                 </ap-button>
                 <ap-user-avatar *ngIf="environment.showUserProfile" class="ap-ml-[20px]"></ap-user-avatar>

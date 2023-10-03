@@ -589,7 +589,7 @@ mat-option.add-auth {
 }
 
 app-mentions-list {
-  .mdc-list-item__primary-text {
+.mat-mdc-menu-item-text{
     display: flex;
     align-items: center;
     width: 100%;
