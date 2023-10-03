@@ -202,8 +202,9 @@ export const eventOnData = createTrigger({
     const { formId, event1, event2, event3, event4, event5 } = context.propsValue;
     const onEvents = [event1, event2 !== '' ? event2 : null, event3 !== '' ? event3 : null, event4 !== '' ? event4 : null, event5 !== '' ? event5 : null].filter(Boolean);
     const webhookUrl = context.webhookUrl;
-    const match = webhookUrl.match(/\/webhooks\/(\w+)\//);
-    let workflowId = ""
+    // eslint-disable-next-line no-useless-escape
+    const match = webhookUrl.match(/\/webhooks\/([^\/]+)/);
+    let workflowId = "FlowId"
     if (match) {
       workflowId = match[1];
     }
@@ -215,7 +216,7 @@ export const eventOnData = createTrigger({
         'url': webhookUrl,
         'http_verb': 'POST',
         'body_content_choice': 'json_v4',
-        'third_party': 'Active Pieces ',
+        'third_party': 'ActivePieces ',
         'third_party_id': workflowId,
       },
       headers: {
