@@ -45,7 +45,7 @@ export const newReactionAdded = createTrigger({
     type: TriggerStrategy.APP_WEBHOOK,
     sampleData: sampleData,
     onEnable: async (context) => {
-        context.app.createListeners({ events: ['reaction_added'], identifierValue: context.auth.data['team_id'] })
+        await context.app.createListeners({ events: ['reaction_added'], identifierValue: context.auth.data['team_id'] })
     },
     onDisable: async (context) => {
         // Ignored
