@@ -9,6 +9,7 @@ import {
 } from '../../../model';
 import {
   FlowOperationType,
+  FlowVersion,
   FlowVersionState,
   TriggerType,
   flowHelper,
@@ -163,13 +164,18 @@ const __CanvasReducer = createReducer(
     );
     return clonedState;
   }),
-  on(FlowsActions.AddDuplicatedStep, (state, { operation }): CanvasState => {
+  on(FlowsActions.duplicateStep, (state, { operation }): CanvasState => {
     const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
+    const clonedFlowVersionWithArtifacts:FlowVersion = JSON.parse(
+      JSON.stringify(operation.flowVersionWithArtifacts)
+    );
     clonedState.displayedFlowVersion = flowHelper.apply(
-      clonedState.displayedFlowVersion,
+      clonedFlowVersionWithArtifacts,
       {
         type: FlowOperationType.ADD_DUPLICATED_ACTION,
-        request: JSON.parse(JSON.stringify(operation)),
+        request: {
+          originalStepName: operation.originalStepName,
+        },
       }
     );
     return clonedState;

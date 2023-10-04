@@ -242,6 +242,7 @@ export class TestPieceWebhookTriggerComponent extends TestStepCoreComponent {
   useMockData() {
     this.testing = true;
     this.savingMockData = true;
+    debugger;
     this.testStep$ = this.store.select(BuilderSelectors.selectCurrentFlow).pipe(
       take(1),
       switchMap((flow) => {
@@ -256,6 +257,7 @@ export class TestPieceWebhookTriggerComponent extends TestStepCoreComponent {
                 )
                 .pipe(
                   map((piece) => {
+                    debugger;
                     return piece.triggers[step.settings.triggerName].sampleData;
                   }),
                   switchMap((mockdata) => {

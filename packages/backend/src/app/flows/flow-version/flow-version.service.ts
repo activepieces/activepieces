@@ -75,9 +75,27 @@ export const flowVersionService = {
             default:
                 operations = [userOperation]
                 break
+            case FlowOperationType.ADD_DUPLICATED_ACTION:
+                mutatedFlowVersion = await this.getFlowVersion({
+                    flowId: flowVersion.flowId,
+                    includeArtifactAsBase64: true,
+                    projectId,
+                    removeSecrets: false,
+                    versionId: flowVersion.id,
+                })
+                operations = [userOperation]
+                break
         }
         for (const operation of operations) {
             mutatedFlowVersion = await applySingleOperation(projectId, mutatedFlowVersion, operation)
+            if(operation.type === FlowOperationType.ADD_DUPLICATED_ACTION)
+            {
+                const allCodeSteps = flowHelper.getAllSteps(mutatedFlowVersion.trigger).filter(c=> c.type === ActionType.CODE);
+                for(let cs of allCodeSteps)
+                {
+                    await uploadArtifact(projectId,cs.settings)
+                }
+            }
         }
         mutatedFlowVersion.updated = dayjs().toISOString()
         mutatedFlowVersion.updatedBy = userId
@@ -147,6 +165,7 @@ export const flowVersionService = {
 }
 
 async function applySingleOperation(projectId: ProjectId, flowVersion: FlowVersion, operation: FlowOperationRequest): Promise<FlowVersion> {
+    console.log(`applying ${operation.type} to ${flowVersion.displayName}`)
     await flowVersionSideEffects.preApplyOperation({
         projectId,
         flowVersion,
@@ -158,7 +177,6 @@ async function applySingleOperation(projectId: ProjectId, flowVersion: FlowVersi
 
 async function removeSecretsFromFlow(flowVersion: FlowVersion): Promise<FlowVersion> {
     const flowVersionWithArtifacts: FlowVersion = JSON.parse(JSON.stringify(flowVersion))
-
     const steps = flowHelper.getAllSteps(flowVersionWithArtifacts.trigger)
     for (const step of steps) {
         /*
@@ -332,37 +350,7 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
                     break
             }
             break
-        case FlowOperationType.ADD_DUPLICATED_ACTION:{
-            
-            if (clonedRequest.request.duplicatedStep.type === ActionType.BRANCH || clonedRequest.request.duplicatedStep.type === ActionType.LOOP_ON_ITEMS) {
-                const childSteps = flowHelper.getAllChildSteps(clonedRequest.request.duplicatedStep)
-                for (const c of childSteps) {
-                    switch (c.type) {
-                        case ActionType.MISSING:
-                            c.valid = false
-                            break
-                        case ActionType.LOOP_ON_ITEMS:
-                            c.valid = loopSettingsValidator.Check(c.settings)
-                            break
-                        case ActionType.BRANCH:
-                            c.valid  = branchSettingsValidator.Check(c.settings)
-                            break
-                        case ActionType.PIECE:
-                            c.valid = await validateAction({
-                                settings: c.settings,
-                                projectId,
-                            })
-                            break
-                        case ActionType.CODE: {
-                            const codeSettings: CodeActionSettings = c.settings
-                            await uploadArtifact(projectId, codeSettings)
-                            break
-                        }
-                    }
-                }
-            }
-            break
-        }
+    
         default:
             break
     }
@@ -505,7 +493,9 @@ async function deleteArtifact(projectId: ProjectId, codeSettings: CodeActionSett
 }
 
 async function uploadArtifact(projectId: ProjectId, codeSettings: CodeActionSettings): Promise<CodeActionSettings> {
+
     if (codeSettings.artifact !== undefined) {
+      
         const bufferFromBase64 = Buffer.from(codeSettings.artifact, 'base64')
 
         const savedFile = await fileService.save({
@@ -519,5 +509,6 @@ async function uploadArtifact(projectId: ProjectId, codeSettings: CodeActionSett
         codeSettings.artifact = undefined
         codeSettings.artifactSourceId = savedFile.id
     }
+    console.log(codeSettings)
     return codeSettings
 }

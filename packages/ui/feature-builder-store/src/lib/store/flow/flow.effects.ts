@@ -271,7 +271,6 @@ export class FlowsEffects {
           case FlowsActionType.ADD_DUPLICATED_ACTION: {
             flowOperation = {
               request: {
-                duplicatedStep: action.operation.duplicatedStep,
                 originalStepName: action.operation.originalStepName,
               },
               type: FlowOperationType.ADD_DUPLICATED_ACTION,

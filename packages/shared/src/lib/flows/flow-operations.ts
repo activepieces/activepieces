@@ -1,5 +1,5 @@
 import {
-    CodeActionSchema, BranchActionSchema, LoopOnItemsActionSchema, PieceActionSchema, MissingActionSchema, Action, LoopOnItemsActionFullSchema, BranchActionFullSchema,
+    CodeActionSchema, BranchActionSchema, LoopOnItemsActionSchema, PieceActionSchema, MissingActionSchema, Action
 } from "./actions/action";
 import { EmptyTrigger, PieceTrigger, WebhookTrigger } from "./triggers/trigger";
 import { Static, Type } from "@sinclair/typebox";
@@ -62,12 +62,10 @@ export type DeleteActionRequest = Static<typeof DeleteActionRequest>;
 
 export const UpdateActionRequest = Type.Union([CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema, BranchActionSchema, MissingActionSchema]);
 export type UpdateActionRequest = Static<typeof UpdateActionRequest>;
-export const AddDuplicatedStepRequestActions = Type.Union([CodeActionSchema, LoopOnItemsActionFullSchema, PieceActionSchema, BranchActionFullSchema]);
-export type AddDuplicatedStepRequestActions = Static<typeof AddDuplicatedStepRequestActions>;
+
 
 //TODO: Replace Type.Any with AddDuplicatedStepRequestActions
 export const AddDuplicatedStepRequest = Type.Object({
-    duplicatedStep:Type.Any(),
     originalStepName:Type.String()
 });
 

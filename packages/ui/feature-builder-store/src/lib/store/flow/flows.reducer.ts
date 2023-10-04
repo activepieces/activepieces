@@ -70,13 +70,20 @@ const _flowsReducer = createReducer(
     });
     return clonedState;
   }),
-  on(FlowsActions.AddDuplicatedStep, (state, { operation }): FlowState => {
+  on(FlowsActions.duplicateStep, (state, { operation }): FlowState => {
     const clonedState: FlowState = JSON.parse(JSON.stringify(state));
-    debugger;
-    clonedState.flow.version = flowHelper.apply(clonedState.flow.version, {
-      type: FlowOperationType.ADD_DUPLICATED_ACTION,
-      request: JSON.parse(JSON.stringify(operation)),
-    });
+    const clonedFlowVersionWithArtifacts = JSON.parse(
+      JSON.stringify(operation.flowVersionWithArtifacts)
+    );
+    clonedState.flow.version = flowHelper.apply(
+      clonedFlowVersionWithArtifacts,
+      {
+        type: FlowOperationType.ADD_DUPLICATED_ACTION,
+        request: {
+          originalStepName: operation.originalStepName,
+        },
+      }
+    );
     return clonedState;
   }),
   on(FlowsActions.updateAction, (state, { operation }): FlowState => {

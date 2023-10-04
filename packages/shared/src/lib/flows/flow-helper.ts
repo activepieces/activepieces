@@ -7,7 +7,6 @@ import {
   UpdateTriggerRequest,
   StepLocationRelativeToParent,
   MoveActionRequest,
-  AddDuplicatedStepRequest
 } from './flow-operations';
 import {
   Action,
@@ -390,13 +389,17 @@ function moveAction(
 
 function addDuplicatedAction(
   flowVersion: FlowVersion,
-  request: AddDuplicatedStepRequest
+  request: {
+    originalStepName:string,
+    duplicatedStep:Action
+  }
 ): FlowVersion {
   return transferFlow(flowVersion, (parentStep: Step) => {
    
     if (parentStep.name !== request.originalStepName) {
       return parentStep;
     }
+    
     
     switch(request.duplicatedStep.type)
     { case ActionType.PIECE:
@@ -426,6 +429,7 @@ function addDuplicatedAction(
     return parentStep;
   });
 }
+
 
 function addAction(
   flowVersion: FlowVersion,
@@ -568,7 +572,6 @@ function createAction(
         settings: request.settings
       };
   }
-  console.log(action);
   action.valid = (request.valid ?? true) && actionSchemaValidator.Check(action);
   return action;
 }
@@ -778,10 +781,23 @@ function isLegacyApp({pieceName, pieceVersion}: {pieceName: string, pieceVersion
   return false;
 }
 
-function duplicateStep<T extends Action>(step:T, codeStepsArtifacts:Record<string,string>,availableStepName:string):T
-{ const newNameCreator = (oldStepName:string) => `${availableStepName}_${oldStepName}`
+function duplicateStep<T extends Action>(step:T,flowVersionWithArtifacts:FlowVersion):T{
+  const codeStepsArtifacts:Record<string,string> = {};
+  getAllSteps(flowVersionWithArtifacts.trigger).forEach(ca=>{
+    if(ca.type === ActionType.CODE)
+    {
+      if(ca.settings.artifact)
+      {
+        codeStepsArtifacts[ca.name]=ca.settings.artifact;
+      }
+    else
+      {
+        console.error(`step with name '${ca.name}' has no artifact`)
+      }
+    }
+  })
   const renameStep = (action:Action)=>{
-    action.name = newNameCreator(action.name)
+    action.name = findAvailableStepName(flowVersionWithArtifacts,action.name)
     action.displayName = `${action.displayName} Copy`
   }
   const addArtifactToCodeStep = (codeStep:CodeAction)=>{
@@ -804,25 +820,24 @@ function duplicateStep<T extends Action>(step:T, codeStepsArtifacts:Record<strin
   }
 
   newStep.nextAction = undefined;
-  newStep.name = availableStepName;
+  newStep.name = findAvailableStepName(flowVersionWithArtifacts,newStep.name);
   newStep.displayName = `${newStep.displayName} Copy`
-  const childSteps = traverseInternal(newStep).slice(1);
-  const childStepsNames = childSteps.map(c=> `${c.name}`);
+  const childSteps = newStep.type === ActionType.BRANCH || newStep.type === ActionType.LOOP_ON_ITEMS? getAllChildSteps(newStep) : [];
+  const oldDuplicatedStepsNames = [step.name ,...childSteps.map(c=> `${c.name}`)];
   childSteps.forEach((c)=>{
- 
     switch(c.type)
     {
       case ActionType.CODE:
         {
           addArtifactToCodeStep(c);
           renameStep(c);
-          childStepsNames.forEach(cn=>{
+          oldDuplicatedStepsNames.forEach(cn=>{
             Object.entries(c.settings.input).forEach(([key,value])=>{
               if(typeof value === "string")
               {
                 c.settings.input[key]=replaceOldStepNameOccurancesWithNewOneWithinInput({
                   input:c.settings.input[key],
-                  newStepName:newNameCreator(cn),
+                  newStepName:findAvailableStepName(flowVersionWithArtifacts,cn),
                   oldStepName:cn
                 })
               }
@@ -840,12 +855,12 @@ function duplicateStep<T extends Action>(step:T, codeStepsArtifacts:Record<strin
           c.settings.inputUiInfo.lastTestDate = undefined;
         }
         renameStep(c);
-        childStepsNames.forEach(cn=>{
+        oldDuplicatedStepsNames.forEach(cn=>{
           c.settings.conditions.forEach(con=>{
             con.forEach(subCon=>{
             subCon.firstValue =  replaceOldStepNameOccurancesWithNewOneWithinInput({
                 input:subCon.firstValue,
-                newStepName:newNameCreator(cn),
+                newStepName:findAvailableStepName(flowVersionWithArtifacts,cn),
                 oldStepName:cn
               });
               if(subCon.operator !== undefined)
@@ -872,7 +887,7 @@ function duplicateStep<T extends Action>(step:T, codeStepsArtifacts:Record<strin
                     {
                       subCon.secondValue =  replaceOldStepNameOccurancesWithNewOneWithinInput({
                         input:subCon.firstValue,
-                        newStepName:newNameCreator(cn),
+                        newStepName:findAvailableStepName(flowVersionWithArtifacts,cn),
                         oldStepName:cn
                       });
                       break;
@@ -894,11 +909,11 @@ function duplicateStep<T extends Action>(step:T, codeStepsArtifacts:Record<strin
       case ActionType.LOOP_ON_ITEMS:
         {
           
-          renameStep(c);
-         childStepsNames.forEach(cn=>{
+        renameStep(c);
+         oldDuplicatedStepsNames.forEach(cn=>{
           c.settings.items = replaceOldStepNameOccurancesWithNewOneWithinInput({
             input:c.settings.items,
-            newStepName:newNameCreator(cn),
+            newStepName:findAvailableStepName(flowVersionWithArtifacts,cn),
             oldStepName:cn
           })
          })
@@ -915,13 +930,13 @@ function duplicateStep<T extends Action>(step:T, codeStepsArtifacts:Record<strin
             c.settings.inputUiInfo.lastTestDate = undefined;
           }
           renameStep(c);
-         childStepsNames.forEach((cn)=>{
+         oldDuplicatedStepsNames.forEach((cn)=>{
           Object.keys(c.settings.input).forEach((key)=>{
             if(typeof c.settings.input[key] === "string")
             {
               c.settings.input[key] = replaceOldStepNameOccurancesWithNewOneWithinInput({
                 input:c.settings.input[key],
-                newStepName:newNameCreator(cn),
+                newStepName:findAvailableStepName(flowVersionWithArtifacts,cn),
                 oldStepName:cn
               })
             }
@@ -929,7 +944,7 @@ function duplicateStep<T extends Action>(step:T, codeStepsArtifacts:Record<strin
             {
               c.settings.input[key] = JSON.parse(replaceOldStepNameOccurancesWithNewOneWithinInput({
                 input:JSON.stringify(c.settings.input[key]),
-                newStepName:newNameCreator(cn),
+                newStepName:findAvailableStepName(flowVersionWithArtifacts,cn),
                 oldStepName:cn
               }))
             }
@@ -937,12 +952,6 @@ function duplicateStep<T extends Action>(step:T, codeStepsArtifacts:Record<strin
          })
           break;
         }
-      case TriggerType.EMPTY:
-      case TriggerType.PIECE:
-      case TriggerType.WEBHOOK:
-      {
-       throw new Error("Triggers are not duplicatable");
-      }
       case ActionType.MISSING:{
         break;
       }
@@ -953,19 +962,14 @@ function duplicateStep<T extends Action>(step:T, codeStepsArtifacts:Record<strin
         }
     }
   })
-return newStep;
+  return newStep;
 }
 
 
 
 function replaceOldStepNameOccurancesWithNewOneWithinInput({input,oldStepName,newStepName}:{input:string,oldStepName:string,newStepName:string})
 {
-  const delimeters =['\\.','\\[','\\}','\\s'];
-  let res=input;
-  delimeters.forEach(d=>{
-    res = res.replaceAll(new RegExp(`${oldStepName}${d}`,'g'),`${newStepName}${d.slice(1)}`);
-  })
-  return res;
+    return input.replaceAll(new RegExp(`\\b${oldStepName}\\b`,'g'),`${newStepName}`)
 }
 function findAvailableStepName(flowVersion: FlowVersion, stepPrefix: string): string {
   const steps = flowHelper
@@ -1026,13 +1030,22 @@ export const flowHelper = {
         break;
       case FlowOperationType.ADD_DUPLICATED_ACTION:
         {
+          const stepToDuplicate = getStep(clonedVersion,operation.request.originalStepName);
+        
+          if(stepToDuplicate?.type === ActionType.BRANCH ||
+             stepToDuplicate?.type === ActionType.CODE ||
+             stepToDuplicate?.type === ActionType.LOOP_ON_ITEMS  || 
+             stepToDuplicate?.type === ActionType.PIECE)
+            {
+          const duplicatedStep = duplicateStep(stepToDuplicate,clonedVersion)
           clonedVersion = transferFlow(
             addDuplicatedAction(clonedVersion, {
-              duplicatedStep:operation.request.duplicatedStep,
+              duplicatedStep:duplicatedStep,
               originalStepName:operation.request.originalStepName
             }),
-            (step) => upgradePiece(step, operation.request.duplicatedStep.name)
+            (step) => upgradePiece(step, duplicatedStep.name)
           );
+        }
         }
     }
     clonedVersion.valid = isValid(clonedVersion);
