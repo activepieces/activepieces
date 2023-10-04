@@ -12,7 +12,7 @@ type FlagsMap = Record<string, boolean | string | object | undefined>;
 export class FlagService {
   flags$: Observable<FlagsMap> | undefined;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   getAllFlags() {
     if (!this.flags$) {
@@ -63,6 +63,14 @@ export class FlagService {
     return this.getAllFlags().pipe(
       map((flags) => {
         return flags[ApFlagId.WEBHOOK_URL_PREFIX] as string;
+      })
+    );
+  }
+
+  isFlagEnabled(flag: ApFlagId): Observable<boolean> {
+    return this.getAllFlags().pipe(
+      map((value) => {
+        return value[flag] === true;
       })
     );
   }

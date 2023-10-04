@@ -23,6 +23,7 @@ import { flowInstanceModule } from './flows/flow-instance/flow-instance.module'
 import { fastifyRawBody } from 'fastify-raw-body'
 import { stepFileModule } from './flows/step-file/step-file.module'
 import { chatbotModule } from './chatbot/chatbot.module'
+import { userModule } from './user/user.module'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -97,6 +98,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(appEventRoutingModule)
     await app.register(stepFileModule)
     await app.register(chatbotModule)
+    await app.register(userModule)
     
     app.get(
         '/redirect',

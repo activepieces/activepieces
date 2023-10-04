@@ -100,7 +100,7 @@ export class SignUpComponent {
         }),
         tap((response) => {
           if (response) {
-            this.authenticationService.saveToken(response);
+            this.authenticationService.saveToken(response.body?.token!);
             this.authenticationService.saveUser(response);
           }
         }),

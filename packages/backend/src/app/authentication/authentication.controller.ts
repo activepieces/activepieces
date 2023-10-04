@@ -40,10 +40,4 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (app) =
         },
     )
 
-    app.get(
-        '/me',
-        async (request: FastifyRequest) => {
-            return request.principal
-        },
-    )
 }
