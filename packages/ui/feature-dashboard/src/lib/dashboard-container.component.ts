@@ -10,10 +10,12 @@ import { ApFlagId } from '@activepieces/shared';
 })
 export class DashboardContainerComponent {
   environment = environment;
-  showCommunity$: Observable<boolean>
+  showCommunity$: Observable<boolean>;
 
   constructor(private flagService: FlagService) {
-    this.showCommunity$ = this.flagService.isFlagEnabled(ApFlagId.SHOW_COMMUNITY);  
+    this.showCommunity$ = this.flagService.isFlagEnabled(
+      ApFlagId.SHOW_COMMUNITY
+    );
   }
   showWhatIsNew() {
     window.open(

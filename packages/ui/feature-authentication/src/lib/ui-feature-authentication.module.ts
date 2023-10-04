@@ -57,6 +57,11 @@ import { AuthenticationComponent } from './pages/authenticate/authenticate.compo
       useValue: { appearance: 'outline' },
     },
   ],
-  declarations: [AuthLayoutComponent, SignInComponent, SignUpComponent, AuthenticationComponent],
+  declarations: [
+    AuthLayoutComponent,
+    SignInComponent,
+    SignUpComponent,
+    AuthenticationComponent,
+  ],
 })
-export class UiFeatureAuthenticationModule { }
+export class UiFeatureAuthenticationModule {}

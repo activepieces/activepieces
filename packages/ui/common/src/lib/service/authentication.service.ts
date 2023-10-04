@@ -3,7 +3,12 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
-import { AuthenticationResponse, SignInRequest, SignUpRequest, User } from '@activepieces/shared';
+import {
+  AuthenticationResponse,
+  SignInRequest,
+  SignUpRequest,
+  User,
+} from '@activepieces/shared';
 import { environment } from '../environments/environment';
 
 @Injectable({
@@ -35,7 +40,9 @@ export class AuthenticationService {
     );
   }
 
-  signUp(request: SignUpRequest): Observable<HttpResponse<AuthenticationResponse>> {
+  signUp(
+    request: SignUpRequest
+  ): Observable<HttpResponse<AuthenticationResponse>> {
     return this.http.post<AuthenticationResponse>(
       environment.apiUrl + '/authentication/sign-up',
       request,

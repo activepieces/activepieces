@@ -60,7 +60,7 @@ export const flagService = {
                 id: ApFlagId.SHOW_DOCS,
                 value: getEdition() !== ApEdition.ENTERPRISE,
                 created,
-                updated
+                updated,
             },
             {
                 id: ApFlagId.SHOW_COMMUNITY,

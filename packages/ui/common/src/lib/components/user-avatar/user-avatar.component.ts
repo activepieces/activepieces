@@ -12,14 +12,16 @@ import { ApFlagId } from '@activepieces/shared';
 })
 export class UserAvatarComponent {
   showAvatarOuterCircle = false;
-  showCommunity$: Observable<boolean>
+  showCommunity$: Observable<boolean>;
 
   constructor(
     public authenticationService: AuthenticationService,
     private router: Router,
     private flagService: FlagService
   ) {
-    this.showCommunity$ = this.flagService.isFlagEnabled(ApFlagId.SHOW_COMMUNITY);
+    this.showCommunity$ = this.flagService.isFlagEnabled(
+      ApFlagId.SHOW_COMMUNITY
+    );
   }
 
   getDropDownLeftOffset(

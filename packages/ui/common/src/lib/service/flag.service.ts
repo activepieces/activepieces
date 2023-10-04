@@ -12,7 +12,7 @@ type FlagsMap = Record<string, boolean | string | object | undefined>;
 export class FlagService {
   flags$: Observable<FlagsMap> | undefined;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
   getAllFlags() {
     if (!this.flags$) {

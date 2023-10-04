@@ -47,7 +47,9 @@ export class SidenavRoutesListComponent implements OnInit {
       map(() => void 0)
     );
     this.showDocs$ = this.flagServices.isFlagEnabled(ApFlagId.SHOW_DOCS);
-    this.showSupport$ = this.flagServices.isFlagEnabled(ApFlagId.SHOW_COMMUNITY);
+    this.showSupport$ = this.flagServices.isFlagEnabled(
+      ApFlagId.SHOW_COMMUNITY
+    );
   }
 
   sideNavRoutes: SideNavRoute[] = [
