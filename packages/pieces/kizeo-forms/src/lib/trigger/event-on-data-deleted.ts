@@ -35,8 +35,9 @@ export const eventOnDataDeleted = createTrigger({
   async onEnable(context) {
     const { formId } = context.propsValue;
     const webhookUrl = context.webhookUrl;
-    const match = webhookUrl.match(/\/webhooks\/(\w+)\//);
-    let workflowId = ""
+    // eslint-disable-next-line no-useless-escape
+    const match = webhookUrl.match(/\/webhooks\/([^\/]+)/);
+    let workflowId = "FlowId"
     if (match) {
       workflowId = match[1];
     }
@@ -48,7 +49,7 @@ export const eventOnDataDeleted = createTrigger({
         'url': webhookUrl,
         'http_verb': 'POST',
         'body_content_choice': 'json_v4',
-        'third_party': 'Active Pieces ',
+        'third_party': 'ActivePieces ',
         'third_party_id': workflowId,
       },
       headers: {
