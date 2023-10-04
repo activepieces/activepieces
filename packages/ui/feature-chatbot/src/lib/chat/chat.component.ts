@@ -19,6 +19,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Chatbot } from '@activepieces/shared';
 import { AuthenticationService, FlagService } from '@activepieces/ui/common';
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
+import { MatSnackBar } from '@angular/material/snack-bar';
 type Message = {
   text: string;
   sender: 'user' | 'bot';
@@ -49,7 +50,8 @@ export class ChatComponent {
     private actRoute: ActivatedRoute,
     private router: Router,
     private authService: AuthenticationService,
-    private flagService: FlagService
+    private flagService: FlagService,
+    private snackbar:MatSnackBar
   ) {
    this.fullLogoSmall$ = this.flagService.getLogos().pipe(map(logos=>logos.smallFullLogoUrl));
     this.messageControl = new FormControl('');
@@ -121,7 +123,6 @@ export class ChatComponent {
             });
           }
           this.sendingMessage$.next(false);
-          console.log(this.chatThreadHTML);
           this.scrollThreadDown();
           return EMPTY;
         }),
@@ -131,7 +132,6 @@ export class ChatComponent {
   }
   private scrollThreadDown() {
     setTimeout(() => {
-      console.log(this.chatThreadHTML);
       this.chatThreadHTML?.nativeElement.scrollTo({
         left: 0,
         top: this.chatThreadHTML.nativeElement?.scrollHeight,
@@ -150,5 +150,10 @@ export class ChatComponent {
       const fixedUrl = urlArrays.join('/');
       this.router.navigate([fixedUrl]);
     }
+  }
+
+  codeCopied()
+  {
+    this.snackbar.open('Copied to clipboard');
   }
 }

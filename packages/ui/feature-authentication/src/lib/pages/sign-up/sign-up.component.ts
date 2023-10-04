@@ -99,8 +99,8 @@ export class SignUpComponent {
           return of(null);
         }),
         tap((response) => {
-          if (response) {
-            this.authenticationService.saveToken(response);
+          if (response && response.body && response.body.token) {
+            this.authenticationService.saveToken(response.body.token);
             this.authenticationService.saveUser(response);
           }
         }),

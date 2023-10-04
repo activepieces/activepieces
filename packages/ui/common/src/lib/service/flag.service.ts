@@ -68,6 +68,14 @@ export class FlagService {
     );
   }
 
+  isFlagEnabled(flag: ApFlagId): Observable<boolean> {
+    return this.getAllFlags().pipe(
+      map((value) => {
+        return value[flag] === true;
+      })
+    );
+  }
+
   getEdition(): Observable<ApEdition> {
     return this.getAllFlags().pipe(
       map((flags) => {

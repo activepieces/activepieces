@@ -8,7 +8,7 @@ import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { FolderActions } from '../../store/folders/folders.actions';
 import { Observable, map, tap } from 'rxjs';
-import { supportUrl } from '@activepieces/shared';
+import { ApFlagId, supportUrl } from '@activepieces/shared';
 import { FlagService } from '@activepieces/ui/common';
 
 type SideNavRoute = {
@@ -27,6 +27,9 @@ type SideNavRoute = {
 export class SidenavRoutesListComponent implements OnInit {
   removeChatbots$: Observable<void>;
   logoUrl$: Observable<string>;
+  showSupport$: Observable<boolean>;
+  showDocs$: Observable<boolean>;
+
   constructor(
     public router: Router,
     private store: Store,
@@ -47,6 +50,10 @@ export class SidenavRoutesListComponent implements OnInit {
         }
       }),
       map(() => void 0)
+    );
+    this.showDocs$ = this.flagServices.isFlagEnabled(ApFlagId.SHOW_DOCS);
+    this.showSupport$ = this.flagServices.isFlagEnabled(
+      ApFlagId.SHOW_COMMUNITY
     );
   }
 
