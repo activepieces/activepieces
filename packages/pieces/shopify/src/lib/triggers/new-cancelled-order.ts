@@ -9,7 +9,7 @@ export const newCancelledOrder = createShopifyWebhookTrigger({
     sampleData: {
         "id": 5324790137142,
         "admin_graphql_api_id": "gid://shopify/Order/5324790137142",
-        "app_id": 16818700289,
+        "app_id": 16818700281,
         "browser_ip": "244.100.5.121",
         "buyer_accepts_marketing": false,
         "cancel_reason": "other",
