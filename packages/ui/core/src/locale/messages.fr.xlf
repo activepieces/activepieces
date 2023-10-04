@@ -1035,7 +1035,8 @@
                     quelqu'un d'autre) avez créé.
                     Une fois le connecteur installé, vous pouvez l'utiliser dans le générateur de flow.
                     &lt;br&gt;&lt;br&gt;**Attention:**
-                    Assurez-vous de faire confiance à l'auteur, car le connecteur aura accès à vos données de flow et il
+                    Assurez-vous de faire confiance à l'auteur, car le connecteur aura accès à vos données de flow
+                    et il
                     se peut qu'il ne le soit pas
                     compatible avec la version actuelle d'Activepieces.
 
@@ -3540,16 +3541,68 @@
             </trans-unit>
             <trans-unit id="7708270344948043036" datatype="html">
                 <source>
-                    <x id="INTERPOLATION" equiv-text="{{(isSaving$ | async)? 'Saving...': 'Test flow'}}"/>
+                    <x id="INTERPOLATION"
+                       equiv-text="{{(isSaving$ | async)? 'Saving...': 'Test flow'}}"/>
                 </source>
                 <target>
-                    <x id="INTERPOLATION" equiv-text="{{(isSaving$ | async)? 'Sauvegarde...': 'Process de test'}}"/>
+                    <x id="INTERPOLATION"
+                       equiv-text="{{(isSaving$ | async)? 'Sauvegarde...': 'Process de test'}}"/>
                 </target>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
                         packages/ui/feature-builder-canvas/src/lib/test-flow-widget/test-flow-widget.component.html
                     </context>
                     <context context-type="linenumber">11,13</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="8758303120670152799" datatype="html">
+                <source>Internal Error</source>
+                <target>Erreur interne</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/common/src/lib/components/status-icon/state-icon.component.ts
+                    </context>
+                    <context context-type="linenumber">72</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7606629882846319647" datatype="html">
+                <source>Timed Out</source>
+                <target>Temps de réponse trop long</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/common/src/lib/components/status-icon/state-icon.component.ts
+                    </context>
+                    <context context-type="linenumber">74</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="840264455199725883" datatype="html">
+                <source>Paused</source>
+                <target>En pause</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/common/src/lib/components/status-icon/state-icon.component.ts
+                    </context>
+                    <context context-type="linenumber">80</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="8204176479746810612" datatype="html">
+                <source>Active</source>
+                <target>Actif</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/common/src/lib/components/status-icon/state-icon.component.ts
+                    </context>
+                    <context context-type="linenumber">85</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="1519954996184640001" datatype="html">
+                <source>Error</source>
+                <target>Erreur</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/common/src/lib/components/status-icon/state-icon.component.ts
+                    </context>
+                    <context context-type="linenumber">87</context>
                 </context-group>
             </trans-unit>
         </body>
