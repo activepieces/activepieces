@@ -509,6 +509,5 @@ async function uploadArtifact(projectId: ProjectId, codeSettings: CodeActionSett
         codeSettings.artifact = undefined
         codeSettings.artifactSourceId = savedFile.id
     }
-    console.log(codeSettings)
     return codeSettings
 }
