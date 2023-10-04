@@ -120,7 +120,6 @@ export class ChatComponent {
             });
           }
           this.sendingMessage$.next(false);
-          console.log(this.chatThreadHTML);
           this.scrollThreadDown();
           return EMPTY;
         }),
@@ -130,7 +129,6 @@ export class ChatComponent {
   }
   private scrollThreadDown() {
     setTimeout(() => {
-      console.log(this.chatThreadHTML);
       this.chatThreadHTML?.nativeElement.scrollTo({
         left: 0,
         top: this.chatThreadHTML.nativeElement?.scrollHeight,

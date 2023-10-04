@@ -52,7 +52,6 @@ export class ChatBotService {
     ).pipe(map(res=>{
       const withHtmlNewLines= res.output;
       withHtmlNewLines.replaceAll('\n',' <br>');
-      console.log(withHtmlNewLines);
       return {...res, output: withHtmlNewLines};
     }));
   }
