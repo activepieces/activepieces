@@ -3605,6 +3605,16 @@
                     <context context-type="linenumber">87</context>
                 </context-group>
             </trans-unit>
+            <trans-unit id="3928717218923468734" datatype="html">
+                <source>Delete Connection</source>
+                <target>Supprimer la connexion</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/connections-table/connections-table.component.html
+                    </context>
+                    <context context-type="linenumber">43</context>
+                </context-group>
+            </trans-unit>
         </body>
     </file>
 </xliff>

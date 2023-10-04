@@ -2914,6 +2914,15 @@
                     <context context-type="linenumber">33</context>
                 </context-group>
             </trans-unit>
+            <trans-unit id="3928717218923468734" datatype="html">
+                <source>Delete Connection</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/connections-table/connections-table.component.html
+                    </context>
+                    <context context-type="linenumber">43</context>
+                </context-group>
+            </trans-unit>
             <trans-unit id="4018267042970589486" datatype="html">
                 <source>No connections created yet</source>
                 <context-group purpose="location">
