@@ -7,7 +7,7 @@ export const newOrder = createShopifyWebhookTrigger({
     topic: "orders/create",
     displayName: "New Order",
     sampleData: {
-        "id": 5324830114102,
+        "id": 5324830114101,
         "admin_graphql_api_id": "gid://shopify/Order/5324830114102",
         "app_id": 1354745,
         "browser_ip": "95.90.193.175",
