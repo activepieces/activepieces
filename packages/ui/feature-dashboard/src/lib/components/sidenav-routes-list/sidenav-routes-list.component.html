@@ -19,7 +19,7 @@
     </div>
   </div>
   <div class="ap-flex-grow"></div>
-  <div (click)="openSupport()" matTooltip="Ask the Community" matTooltipPosition="right"
+  <div *ngIf="showSupport$ | async" (click)="openSupport()" matTooltip="Ask the Community" matTooltipPosition="right"
     class="ap-w-full ap-flex-col ap-flex ap-border-transparent ap-justify-center ap-items-center ap-cursor-pointer ap-px-3 ap-mb-3">
     <div class="ap-p-3">
       <svg-icon [class]="'ap-fill-title'" [svgStyle]="{ width: '21px', height: '21px' }"
@@ -28,7 +28,7 @@
     </div>
     <div class="ap-font-medium ap-text-[10px]">Support</div>
   </div>
-  <div (click)="openDocs()" [matTooltip]="'Documentation'" [matTooltipPosition]="'right'"
+  <div *ngIf="showDocs$ | async" (click)="openDocs()" [matTooltip]="'Documentation'" [matTooltipPosition]="'right'"
     class="ap-w-full ap-flex-col ap-flex ap-border-transparent ap-justify-center ap-items-center ap-cursor-pointer ap-px-3">
     <div class="ap-p-3">
       <svg-icon [class]="'ap-fill-title'" [svgStyle]="{ width: '21px', height: '21px' }"
