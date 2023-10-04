@@ -92,7 +92,6 @@ const executeFlow = async (input?: ExecuteFlowOperation): Promise<void> => {
 
     globals.workerToken = input.workerToken!;
     globals.projectId = input.projectId;
-    globals.apiUrl = input.apiUrl!;
     globals.serverUrl = input.serverUrl!;
     globals.flowRunId = input.flowRunId;
 
@@ -122,7 +121,7 @@ const executeProps = async (): Promise<void> => {
 
     globals.workerToken = input.workerToken!;
     globals.projectId = input.projectId;
-    globals.apiUrl = input.apiUrl!;
+    globals.serverUrl = input.serverUrl;
 
     const output = await pieceHelper.executeProps(input);
     writeOutput({
@@ -145,7 +144,7 @@ const executeTrigger = async (): Promise<void> => {
 
     globals.workerToken = input.workerToken!;
     globals.projectId = input.projectId;
-    globals.apiUrl = input.apiUrl!;
+    globals.serverUrl = input.serverUrl;
 
     const output = await triggerHelper.executeTrigger(input);
     writeOutput({
@@ -167,7 +166,7 @@ const executeCode = async (): Promise<void> => {
     const operationInput: ExecuteCodeOperation = Utils.parseJsonFile(globals.inputFile);
 
     globals.projectId = operationInput.projectId;
-
+    globals.serverUrl = operationInput.serverUrl
     const output = await pieceHelper.executeCode(operationInput);
     writeOutput({
       status: EngineResponseStatus.OK,
@@ -189,7 +188,6 @@ const executeAction = async (): Promise<void> => {
 
     globals.workerToken = input.workerToken!;
     globals.projectId = input.projectId;
-    globals.apiUrl = input.apiUrl!;
     globals.serverUrl = input.serverUrl;
 
     const output = await pieceHelper.executeAction(input);
@@ -213,7 +211,7 @@ const executeValidateAuth = async (): Promise<void> => {
 
     globals.workerToken = input.workerToken!;
     globals.projectId = input.projectId;
-    globals.apiUrl = input.apiUrl!;
+    globals.serverUrl = input.serverUrl
 
     const output = await pieceHelper.executeValidateAuth(input);
 
@@ -235,6 +233,10 @@ const executeTest = async (): Promise<void> => {
   try {
     const input: EngineTestOperation = Utils.parseJsonFile(globals.inputFile);
 
+    globals.workerToken = input.workerToken!;
+    globals.projectId = input.projectId;
+    globals.serverUrl = input.serverUrl
+  
     const testExecutionState = await testExecution.stateFromFlowVersion({
       flowVersion: input.sourceFlowVersion,
     })

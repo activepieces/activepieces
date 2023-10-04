@@ -1,6 +1,6 @@
 import { rmdir, mkdir, readFile, writeFile, cp } from 'node:fs/promises'
 import path from 'node:path'
-import { exec } from 'node:child_process'
+import { spawn } from 'node:child_process'
 import { AbstractSandbox, ExecuteSandboxResult, SandboxCtorParams } from './abstract-sandbox'
 import { logger } from '../../helper/logger'
 import { system } from '../../helper/system/system'
@@ -79,14 +79,32 @@ export class FileSandbox extends AbstractSandbox {
         await writeFile(standardErrorPath, '')
 
         return new Promise((resolve, reject) => {
-            const process = exec(cmd, async (error, stdout: string | PromiseLike<string>, stderr) => {
-                if (error) {
-                    reject(error)
+            const [command, ...args] = cmd.split(' ')
+            const process = spawn(command, args, { shell: true })
+
+            let stdout = ''
+            let stderr = ''
+
+            process.stdout.on('data', (data: string) => {
+                stdout += data
+            })
+
+            process.stderr.on('data', (data: string) => {
+                stderr += data
+            })
+
+            process.on('error', (error: unknown) => {
+                reject(error)
+            })
+
+            process.on('close', async (code: number) => {
+                if (code !== 0) {
+                    reject(new Error(`Command failed with code ${code}: ${cmd}`))
                     return
                 }
 
                 if (stdout) {
-                    await writeFile(standardOutputPath, await stdout)
+                    await writeFile(standardOutputPath, stdout)
                 }
 
                 if (stderr) {

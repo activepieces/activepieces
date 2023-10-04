@@ -5,11 +5,11 @@
     </div>
 </div>
 <mat-menu #menu="matMenu">
-    <div mat-menu-item (click)="showWhatIsNew()" *ngIf="environment.activateBeamer">
+    <div mat-menu-item (click)="showWhatIsNew()">
         What's new
     </div>
     <div mat-menu-item (click)="goToCommunity()">
-        <div class="ap-flex ap-items-center ap-w-[214px]">Discord <div class="ap-flex-grow"></div><svg-icon
+        <div class="ap-flex ap-items-center ap-min-w-[214px]">Community <div class="ap-flex-grow"></div><svg-icon
                 src="assets/img/custom/external-link.svg" class="ap-h-[16px] ap-w-[16px] ap-fill-[#989898]"></svg-icon>
         </div>
     </div>

@@ -1,0 +1,25 @@
+---
+title: "External Libraries"
+icon: 'npm'
+description: "Learn how to install and use external libraries."
+---
+
+The Activepieces repository is structured as a monorepo, employing Nx as its build tool.
+
+To use an external library in your project, you can simply add it to the main `package.json` file and then use it in any part of your project.
+
+Nx will automatically detect where you're using the library and include it in the build.
+
+Here's how to install and use an external library:
+
+- Install the library using:
+
+```bash
+npm install --save <library-name>
+```
+
+- Import the library into your piece.
+
+Guidelines:
+- Make sure you are using well-maintained libraries.
+- Ensure that the library size is not too large to avoid bloating the bundle size; this will make the piece load faster in the sandbox.

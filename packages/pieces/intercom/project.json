@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/intercom/package.json",
         "main": "packages/pieces/intercom/src/index.ts",
         "assets": ["packages/pieces/intercom/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/amazon-s3/package.json",
         "main": "packages/pieces/amazon-s3/src/index.ts",
         "assets": ["packages/pieces/amazon-s3/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

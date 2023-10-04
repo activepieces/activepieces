@@ -38,7 +38,7 @@ export type EngineOperation =
 type BaseEngineOperation = {
     projectId: ProjectId
     workerToken?: string
-    apiUrl?: string
+    serverUrl: string,
 }
 
 export type ExecuteActionOperation = BaseEngineOperation & {
@@ -46,7 +46,6 @@ export type ExecuteActionOperation = BaseEngineOperation & {
     flowVersion: FlowVersion
     pieceName: string
     pieceVersion: string
-    serverUrl: string,
     input: Record<string, unknown>
 }
 
@@ -64,6 +63,7 @@ export type ExecuteExtractPieceMetadata = {
 export type ExecuteCodeOperation = {
     file: File
     step: CodeAction
+    serverUrl: string
     flowVersion: FlowVersion,
     input: Record<string, unknown>
     projectId: ProjectId

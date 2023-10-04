@@ -41,11 +41,11 @@
       "@activepieces/piece-constant-contact": [
         "packages/pieces/constant-contact/src/index.ts"
       ],
-      "@activepieces/piece-contiguity": [
-        "packages/pieces/contiguity/src/index.ts"
-      ],
       "@activepieces/piece-contentful": [
         "packages/pieces/contentful/src/index.ts"
+      ],
+      "@activepieces/piece-contiguity": [
+        "packages/pieces/contiguity/src/index.ts"
       ],
       "@activepieces/piece-csv": ["packages/pieces/csv/src/index.ts"],
       "@activepieces/piece-data-mapper": [
@@ -213,6 +213,9 @@
       "@activepieces/pieces-framework": [
         "packages/pieces/framework/src/index.ts"
       ],
+      "@activepieces/pieces/chatbots": [
+        "packages/pieces/chatbots/src/index.ts"
+      ],
       "@activepieces/pieces/date-helper": [
         "packages/pieces/date-helper/src/index.ts"
       ],
@@ -247,6 +250,9 @@
       ],
       "@activepieces/ui/feature-builder-test-steps": [
         "packages/ui/feature-builder-test-steps/src/index.ts"
+      ],
+      "@activepieces/ui/feature-chatbot": [
+        "packages/ui/feature-chatbot/src/index.ts"
       ],
       "@activepieces/ui/feature-connections": [
         "packages/ui/feature-connections/src/index.ts"

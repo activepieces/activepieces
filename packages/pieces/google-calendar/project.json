@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/google-calendar/package.json",
         "main": "packages/pieces/google-calendar/src/index.ts",
         "assets": ["packages/pieces/google-calendar/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

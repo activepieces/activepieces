@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { environment, initialiseBeamer } from '@activepieces/ui/common';
+import { environment } from '@activepieces/ui/common';
 
 @Component({
   templateUrl: './dashboard-container.component.html',
@@ -7,13 +7,12 @@ import { environment, initialiseBeamer } from '@activepieces/ui/common';
   selector: 'app-dashboard-container',
 })
 export class DashboardContainerComponent {
-  constructor() {
-    if (environment.activateBeamer) {
-      initialiseBeamer();
-    }
-  }
-
-  get environment() {
-    return environment;
+  environment = environment;
+  showWhatIsNew() {
+    window.open(
+      'https://community.activepieces.com/c/announcements',
+      '_blank',
+      'noopener'
+    );
   }
 }

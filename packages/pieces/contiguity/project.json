@@ -6,35 +6,26 @@
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/contiguity",
         "tsConfig": "packages/pieces/contiguity/tsconfig.lib.json",
         "packageJson": "packages/pieces/contiguity/package.json",
         "main": "packages/pieces/contiguity/src/index.ts",
-        "assets": [
-          "packages/pieces/contiguity/*.md"
-        ],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "assets": ["packages/pieces/contiguity/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "publish": {
       "command": "node tools/scripts/publish.mjs pieces-contiguity {args.ver} {args.tag}",
-      "dependsOn": [
-        "build"
-      ]
+      "dependsOn": ["build"]
     },
     "lint": {
       "executor": "@nx/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": [
-          "packages/pieces/contiguity/**/*.ts"
-        ]
+        "lintFilePatterns": ["packages/pieces/contiguity/**/*.ts"]
       }
     }
   },

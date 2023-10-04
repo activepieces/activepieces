@@ -1,18 +1,21 @@
 import { Mutex } from 'async-mutex'
 import { CachedSandbox } from './cached-sandbox'
-import { SandBoxCacheType } from '../provisioner/sandbox-cache-type'
 import { logger } from '../../../helper/logger'
-import { isNil } from '@activepieces/shared'
+import { ApEnvironment, isNil } from '@activepieces/shared'
+import { system } from '../../../helper/system/system'
+import { SystemProp } from '../../../helper/system/system-prop'
+import { ProvisionCacheInfo, SandBoxCacheType, extractProvisionCacheKey } from '../provisioner/sandbox-cache-key'
 
 const CACHED_SANDBOX_LIMIT = 1000
 
 const cachedSandboxes = new Map<string, CachedSandbox>()
 const lock: Mutex = new Mutex()
 
-export const sandboxCachePool = {
-    async findOrCreate({ type, key }: FindOrCreateParams): Promise<CachedSandbox> {
-        logger.debug({ type, key }, '[SandboxCachePool#get]')
+const sandboxKeyCachePool = {
+    async findOrCreate(cacheInfo: ProvisionCacheInfo): Promise<CachedSandbox> {
+        logger.debug(cacheInfo, '[SandboxCachePool#get]')
 
+        const key = extractProvisionCacheKey(cacheInfo)
         const cachedSandbox = await lock.runExclusive((): CachedSandbox => {
             const cachedSandbox = cachedSandboxes.get(key)
 
@@ -36,6 +39,19 @@ export const sandboxCachePool = {
         await cachedSandbox.decrementActiveSandboxCount()
     },
 }
+
+const sandboxNoCachePool = {
+    async findOrCreate(_cacheInfo: ProvisionCacheInfo): Promise<CachedSandbox> {
+        return sandboxKeyCachePool.findOrCreate({
+            type: SandBoxCacheType.NONE,
+        })
+    },
+    async release({ key }: ReleaseParams): Promise<void> {
+        return sandboxKeyCachePool.release({ key })
+    },
+}
+
+export const sandboxCachePool = system.get(SystemProp.ENVIRONMENT) === ApEnvironment.DEVELOPMENT ? sandboxNoCachePool : sandboxKeyCachePool
 
 const getOrThrow = ({ key }: GetOrThrowParams): CachedSandbox => {
     const cachedSandbox = cachedSandboxes.get(key)
@@ -79,10 +95,6 @@ const deleteOldestNotInUseOrThrow = (): void => {
     cachedSandboxes.delete(oldestNotInUseCachedSandbox.key)
 }
 
-type FindOrCreateParams = {
-    key: string
-    type: SandBoxCacheType
-}
 
 type ReleaseParams = {
     key: string

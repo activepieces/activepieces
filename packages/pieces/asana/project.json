@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/asana/package.json",
         "main": "packages/pieces/asana/src/index.ts",
         "assets": ["packages/pieces/asana/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

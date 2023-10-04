@@ -1,4 +1,5 @@
 import { Static, Type } from "@sinclair/typebox";
+import { ApEdition } from "../../flag/flag";
 
 export const EXACT_VERSION_PATTERN = /^[0-9]+\.[0-9]+\.[0-9]+$/;
 export const VERSION_PATTERN = /^([~^])?[0-9]+\.[0-9]+\.[0-9]+$/;
@@ -22,6 +23,7 @@ export type GetPieceRequestParams = Static<typeof GetPieceRequestParams>;
 
 export const ListPiecesRequestQuery = Type.Object({
     release: Type.Optional(ExactVersionType),
+    edition: Type.Optional(Type.Enum(ApEdition)),
 });
 
 export type ListPiecesRequestQuery = Static<typeof ListPiecesRequestQuery>;

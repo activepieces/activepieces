@@ -33,6 +33,7 @@ import { BuilderAutocompleteDropdownHandlerComponent } from './interpolating-tex
 import { AutocompleteDropdownSizesButtonsComponent } from './interpolating-text-form-control/mentions-list/autocomplete-dropdown-sizes-buttons/autocomplete-dropdown-sizes-buttons.component';
 import { DropdownPropertySearchPipe } from './piece-properties-form/dropdown-search.pipe';
 import { MarkdownModule } from 'ngx-markdown';
+import { SelectedAuthConfigsPipe } from './piece-properties-form/selected-auth-config.pipe';
 const exportedDeclarations = [
   ArrayFormControlComponent,
   BranchConditionFormControlComponent,
@@ -75,6 +76,7 @@ const exportedDeclarations = [
     AuthConfigsPipe,
     AutocompleteDropdownSizesButtonsComponent,
     DropdownPropertySearchPipe,
+    SelectedAuthConfigsPipe,
   ],
   exports: [...exportedDeclarations],
 })

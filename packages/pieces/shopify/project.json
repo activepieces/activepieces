@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/shopify/package.json",
         "main": "packages/pieces/shopify/src/index.ts",
         "assets": ["packages/pieces/shopify/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/postgres/package.json",
         "main": "packages/pieces/postgres/src/index.ts",
         "assets": ["packages/pieces/postgres/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

@@ -20,7 +20,7 @@ export const googleDrive = createPiece({
     logoUrl: 'https://cdn.activepieces.com/pieces/google-drive.png',
 	actions: [googleDriveCreateNewFolder, googleDriveCreateNewTextFile, googleDriveUploadFile, readFile],
 	displayName: "Google Drive",
-	authors: ['kanarelo', 'BastienMe', 'MoShizzle', 'Armangiau'],
+	authors: ['kanarelo', 'BastienMe', 'MoShizzle', 'Armangiau', 'vitalini'],
 	triggers: [newFile, newFolder],
     auth: googleDriveAuth,
 });

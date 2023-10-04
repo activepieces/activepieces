@@ -34,7 +34,7 @@ import { PackageInfo } from '../../helper/package-manager'
 import { MAX_LOG_SIZE } from '@activepieces/shared'
 import { acquireLock } from '../../helper/lock'
 import { sandboxProvisioner } from '../sandbox/provisioner/sandbox-provisioner'
-import { SandBoxCacheType } from '../sandbox/provisioner/sandbox-cache-type'
+import { SandBoxCacheType } from '../sandbox/provisioner/sandbox-cache-key'
 import { flowWorkerHooks } from './flow-worker-hooks'
 import { logSerializer } from '../../flows/common/log-serializer'
 

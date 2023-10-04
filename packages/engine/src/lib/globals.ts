@@ -5,10 +5,14 @@ class Globals {
   private _outputFile = './output.json';
   private _workerToken = '';
   private _projectId = '';
-  private _apiUrl = '';
   private _serverUrl = '';
   private _flowRunId?: FlowRunId
   private _resumePayload: unknown
+  private _apiUrl = 'http://127.0.0.1:3000/'
+
+  get apiUrl(): string | undefined {
+    return this._apiUrl;
+  }
 
   set serverUrl(_serverUrl: string) {
     this._serverUrl = _serverUrl;
@@ -32,14 +36,6 @@ class Globals {
 
   get resumePayload() {
     return this._resumePayload;
-  }
-
-  set apiUrl(_apiUrl: string) {
-    this._apiUrl = _apiUrl;
-  }
-
-  get apiUrl() {
-    return this._apiUrl;
   }
 
   set projectId(_projectId: string) {

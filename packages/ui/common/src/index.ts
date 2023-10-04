@@ -32,7 +32,6 @@ export * from './lib/pipe/index';
 export * from './lib/directives/index';
 export * from './lib/environments/environment';
 export * from './lib/components/delete-enity-dialog/delete-entity-dialog.component';
-export * from './lib/utils/beamer';
 export * from './lib/utils/insert-mention-operation';
 export * from './lib/directives/track-hover.directive';
 export * from './lib/service/templates.service';

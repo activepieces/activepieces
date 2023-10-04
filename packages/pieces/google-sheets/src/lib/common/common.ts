@@ -249,7 +249,34 @@ export async function getGoogleSheetRows(params: { accessToken: string; sheetNam
 
     return res;
 }
+export async function getAllGoogleSheetRows(params: { accessToken: string; sheetName: string; spreadSheetId: string; }) {
+    const request: HttpRequest = {
+        method: HttpMethod.GET,
+        url: `${googleSheetsCommon.baseUrl}/${params.spreadSheetId}/values/${params.sheetName}`,
+        authentication: {
+            type: AuthenticationType.BEARER_TOKEN,
+            token: params.accessToken,
+        }
+    };
+    const response = await httpClient.sendRequest<{ values: [string[]][] }>(request);
+    if (response.body.values === undefined) return [];
 
+    const res = [];
+    for (let i = 0; i < response.body.values.length; i++) {
+        const values: any = {}
+        for (let j = 0; j < response.body.values[i].length; j++) {
+            values[columnToLabel(j)] = response.body.values[i][j];
+        }
+        
+        res.push({
+            row: i + 1,
+            values
+        });
+
+    }
+
+    return res;
+}
 async function listSheetsName(access_token: string, spreadsheet_id: string) {
     return (await httpClient.sendRequest<{ sheets: { properties: { title: string, sheetId: number } }[] }>({
         method: HttpMethod.GET,

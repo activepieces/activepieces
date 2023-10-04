@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/wordpress/package.json",
         "main": "packages/pieces/wordpress/src/index.ts",
         "assets": ["packages/pieces/wordpress/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

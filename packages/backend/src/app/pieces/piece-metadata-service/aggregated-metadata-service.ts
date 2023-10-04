@@ -10,14 +10,16 @@ const dbPieceProvider = DbPieceMetadataService()
 
 export const AggregatedPieceMetadataService = (): PieceMetadataService => {
     return {
-        async list({ release, projectId }): Promise<PieceMetadataSummary[]> {
+        async list({ release, projectId, edition }): Promise<PieceMetadataSummary[]> {
             const cloudMetadata = await cloudPieceProvider.list({
                 release,
                 projectId,
+                edition,
             })
             const dbMetadata = await dbPieceProvider.list({
                 release,
                 projectId,
+                edition,
             })
             return [...cloudMetadata, ...dbMetadata]
         },
