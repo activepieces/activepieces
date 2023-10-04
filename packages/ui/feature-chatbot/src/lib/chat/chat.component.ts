@@ -17,7 +17,7 @@ import {
 import { FormControl } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Chatbot } from '@activepieces/shared';
-import { AuthenticationService } from '@activepieces/ui/common';
+import { AuthenticationService, FlagService } from '@activepieces/ui/common';
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 type Message = {
   text: string;
@@ -42,13 +42,16 @@ export class ChatComponent {
   chatbotDisplayName = '';
   dots$: Observable<string>;
   data$: Observable<void>;
+  fullLogoSmall$:Observable<string>;
   readonly isLoggedIn: boolean;
   constructor(
     private chatbotService: ChatBotService,
     private actRoute: ActivatedRoute,
     private router: Router,
-    private authService: AuthenticationService
+    private authService: AuthenticationService,
+    private flagService: FlagService
   ) {
+   this.fullLogoSmall$ = this.flagService.getLogos().pipe(map(logos=>logos.smallFullLogoUrl));
     this.messageControl = new FormControl('');
     this.chatbotId = this.actRoute.snapshot.params['id'];
     this.data$ = this.actRoute.data.pipe(

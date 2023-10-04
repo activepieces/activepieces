@@ -26,13 +26,17 @@ type SideNavRoute = {
 })
 export class SidenavRoutesListComponent implements OnInit {
   removeChatbots$: Observable<void>;
-
+  logoUrl$: Observable<string>;
   constructor(
     public router: Router,
     private store: Store,
     private flagServices: FlagService,
     private cd: ChangeDetectorRef
-  ) {}
+  ) {
+    this.logoUrl$ = this.flagServices
+      .getLogos()
+      .pipe(map((logos) => logos.logoIconUrl));
+  }
   ngOnInit(): void {
     this.removeChatbots$ = this.flagServices.isChatbotEnabled().pipe(
       tap((res) => {
