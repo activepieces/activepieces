@@ -40,7 +40,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.CHATBOT_ENABLED,
-                value: system.getBoolean(SystemProp.CHATBOT_ENABLED),
+                value: getEdition() === ApEdition.ENTERPRISE ? false : system.getBoolean(SystemProp.CHATBOT_ENABLED),
                 created,
                 updated,
             },
@@ -67,7 +67,7 @@ export const flagService = {
                 value: getEdition() !== ApEdition.ENTERPRISE,
                 created,
                 updated,
-            },  
+            },
             {
                 id: ApFlagId.SIGN_UP_ENABLED,
                 value: system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false,
