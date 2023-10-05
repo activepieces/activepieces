@@ -5,13 +5,12 @@ import { oneDriveCommon } from "../common/common";
 
 export const listFiles = createAction({
     auth: oneDriveAuth,
-    name: 'list_onedrive_files',
+    name: 'list_files',
     description: 'List files in a OneDrive folder',
     displayName: 'List Files',
     props: {
         parentFolder: Property.ShortText({
             displayName: 'Parent Folder ID',
-            description: 'The ID of the parent folder',
             required: false,
         }),
     },

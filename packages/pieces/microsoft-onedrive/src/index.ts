@@ -14,11 +14,11 @@ export const oneDriveAuth = PieceAuth.OAuth2({
 });
 
 
-export const microsoftExcel = createPiece({
+export const microsoftOneDrive = createPiece({
   displayName: "Microsoft OneDrive",
   auth: oneDriveAuth,
   minimumSupportedRelease: '0.8.0',
-  logoUrl: "https://zapier-images.imgix.net/storage/services/e67867e9f6f5c089e243dad54467ad33.128x128.png?auto=format%2Ccompress&ixlib=python-3.0.0&q=50",
+  logoUrl: "https://cdn.activepieces.com/pieces/oneDrive.png",
   authors: ["BastienMe"],
   actions: [uploadFile, downloadFile, listFiles, listFolders],
   triggers: [newFile],

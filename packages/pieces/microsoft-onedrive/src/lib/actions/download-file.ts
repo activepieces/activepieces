@@ -5,7 +5,7 @@ import { oneDriveCommon } from "../common/common";
 
 export const downloadFile = createAction({
     auth: oneDriveAuth,
-    name: 'download_onedrive_file',
+    name: 'download_file',
     description: 'Download a file from your Microsoft OneDrive',
     displayName: 'Download file',
     props: {

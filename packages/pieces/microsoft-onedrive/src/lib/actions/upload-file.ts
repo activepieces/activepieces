@@ -22,7 +22,7 @@ export const uploadFile = createAction({
     }),
     parentId: Property.ShortText({
       displayName: 'Parent ID',
-      description: 'The ID of the parent folder',
+      description: 'The ID of the parent folder to upload the file to',
       required: false,
     })
   },

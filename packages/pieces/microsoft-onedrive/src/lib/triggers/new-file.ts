@@ -29,7 +29,6 @@ export const newFile = createTrigger({
     props: {
         parentFolder: Property.ShortText({
             displayName: 'Parent Folder ID',
-            description: 'The ID of the parent folder',
             required: false,
         }),
     },
