@@ -3,7 +3,6 @@ import { createTask } from './lib/actions/create-task';
 import { existsTask } from './lib/actions/task-exists';
 import { getClient } from './lib/actions/get-client';
 import { getInvoices } from './lib/actions/get-invoices';
-
 export const invoiceninjaAuth = PieceAuth.CustomAuth({
   props: {
       base_url: Property.ShortText({
