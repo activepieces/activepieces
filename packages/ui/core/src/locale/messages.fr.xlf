@@ -1080,7 +1080,8 @@
             </trans-unit>
             <trans-unit id="1421651112910563400" datatype="html">
                 <source>Couldn't install piece, please make sure your package is a piece.</source>
-                <target>Impossible d'installer le connecteur, veuillez vous assurer que votre package est un
+                <target>Impossible d'installer le connecteur, veuillez vous assurer que votre package
+                    est un
                     connecteur.
                 </target>
                 <context-group purpose="location">
@@ -2599,7 +2600,8 @@
             <trans-unit id="4934929429922486658" datatype="html">
                 <source>Run failed (<x id="INTERPOLATION" equiv-text="{{ selectedRun.id }}"/>)
                 </source>
-                <target>Échec de l'exécution (<x id="INTERPOLATION" equiv-text="{{ selectedRun.id }}"/>)
+                <target>Échec de l'exécution (<x id="INTERPOLATION" equiv-text="{{ selectedRun.id }}"/>
+                    )
                 </target>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
@@ -3399,7 +3401,8 @@
             <trans-unit id="5175055549231295483" datatype="html">
                 <source>Please make sure this connections's credentials are correct.
                 </source>
-                <target>Veuillez vous assurer que les informations d'identification de cette connexion sont
+                <target>Veuillez vous assurer que les informations d'identification de cette connexion
+                    sont
                     correctes.
                 </target>
                 <context-group purpose="location">
@@ -3896,7 +3899,9 @@
             </trans-unit>
             <trans-unit id="2262594260554345070" datatype="html">
                 <source>Humans are still in command, create your first bot to start the revolution</source>
-                <target>Les humains sont toujours aux commandes, créez votre premier bot pour lancer la révolution</target>
+                <target>Les humains sont toujours aux commandes, créez votre premier bot pour lancer la
+                    révolution
+                </target>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
                         packages/ui/feature-chatbot/src/lib/chatbots-table/chatbots-table.component.html
@@ -3906,7 +3911,8 @@
             </trans-unit>
             <trans-unit id="8392398587604751887" datatype="html">
                 <source>Your bot is private, enable public access so you can share its link.</source>
-                <target>Votre bot est privé, activez l'accès public pour pouvoir partager son lien.</target>
+                <target>Votre bot est privé, activez l'accès public pour pouvoir partager son lien.
+                </target>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
                         packages/ui/feature-chatbot/src/lib/chatbots-table/chatbots-table.component.html
@@ -4016,6 +4022,25 @@
                         packages/ui/feature-chatbot/src/lib/datasources-table/datasources-table.component.html
                     </context>
                     <context context-type="linenumber">78,80</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4839864077429230055" datatype="html">
+                <source>Copy Code</source>
+                <target>Copier le code</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">packages/ui/feature-chatbot/src/lib/chat/chat.component.html
+                    </context>
+                    <context context-type="linenumber">72</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6012922099782115453" datatype="html">
+                <source>What's new</source>
+                <target>Quoi de neuf</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/dashboard-container.component.html
+                    </context>
+                    <context context-type="linenumber">9,10</context>
                 </context-group>
             </trans-unit>
         </body>

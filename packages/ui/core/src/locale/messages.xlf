@@ -46,7 +46,7 @@
                     <context context-type="sourcefile">
                         packages/ui/core/src/app/modules/import-flow/import-flow.component.html
                     </context>
-                    <context context-type="linenumber">32,33</context>
+                    <context context-type="linenumber">33,34</context>
                 </context-group>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
@@ -264,12 +264,6 @@
                     </context>
                     <context context-type="linenumber">8,10</context>
                 </context-group>
-                <context-group purpose="location">
-                    <context context-type="sourcefile">
-                        packages/ui/feature-dashboard/src/lib/dashboard-container.component.html
-                    </context>
-                    <context context-type="linenumber">8,10</context>
-                </context-group>
             </trans-unit>
             <trans-unit id="3708656846739179305" datatype="html">
                 <source>My Pieces</source>
@@ -315,7 +309,7 @@
                     <context context-type="sourcefile">
                         packages/ui/core/src/app/modules/import-flow/import-flow.component.html
                     </context>
-                    <context context-type="linenumber">16</context>
+                    <context context-type="linenumber">17</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="3087857313586976299" datatype="html">
@@ -324,7 +318,7 @@
                     <context context-type="sourcefile">
                         packages/ui/core/src/app/modules/import-flow/import-flow.component.html
                     </context>
-                    <context context-type="linenumber">23</context>
+                    <context context-type="linenumber">24</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="1050001620607966490" datatype="html">
@@ -333,7 +327,7 @@
                     <context context-type="sourcefile">
                         packages/ui/core/src/app/modules/import-flow/import-flow.component.html
                     </context>
-                    <context context-type="linenumber">35,36</context>
+                    <context context-type="linenumber">36,37</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="4349518606715943395" datatype="html">
@@ -1250,7 +1244,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.html
                     </context>
-                    <context context-type="linenumber">29</context>
+                    <context context-type="linenumber">30</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="2821179408673282599" datatype="html">
@@ -1259,7 +1253,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-builder-header/src/lib/flow-builder-header.component.html
                     </context>
-                    <context context-type="linenumber">16</context>
+                    <context context-type="linenumber">10</context>
                 </context-group>
                 <context-group purpose="location">
                     <context context-type="sourcefile">packages/ui/feature-chatbot/src/lib/chat/chat.component.html
@@ -1270,7 +1264,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.html
                     </context>
-                    <context context-type="linenumber">3</context>
+                    <context context-type="linenumber">4</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="6041115344061899387" datatype="html">
@@ -1279,7 +1273,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-builder-header/src/lib/flow-builder-header.component.html
                     </context>
-                    <context context-type="linenumber">69</context>
+                    <context context-type="linenumber">39</context>
                 </context-group>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
@@ -1294,7 +1288,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-builder-header/src/lib/flow-builder-header.component.html
                     </context>
-                    <context context-type="linenumber">83</context>
+                    <context context-type="linenumber">46</context>
                 </context-group>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
@@ -1309,7 +1303,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-builder-header/src/lib/flow-builder-header.component.html
                     </context>
-                    <context context-type="linenumber">93</context>
+                    <context context-type="linenumber">52</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="7462301153729425254" datatype="html">
@@ -1318,7 +1312,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-builder-header/src/lib/flow-builder-header.component.html
                     </context>
-                    <context context-type="linenumber">107</context>
+                    <context context-type="linenumber">59</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="7022070615528435141" datatype="html">
@@ -1327,7 +1321,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-builder-header/src/lib/flow-builder-header.component.html
                     </context>
-                    <context context-type="linenumber">121</context>
+                    <context context-type="linenumber">66</context>
                 </context-group>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
@@ -1350,7 +1344,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-builder-header/src/lib/flow-builder-header.component.ts
                     </context>
-                    <context context-type="linenumber">121,122</context>
+                    <context context-type="linenumber">128,129</context>
                 </context-group>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
@@ -2095,7 +2089,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-builder-test-steps/src/lib/test-piece-webhook-trigger/test-piece-webhook-trigger.component.html
                     </context>
-                    <context context-type="linenumber">23</context>
+                    <context context-type="linenumber">22,23</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="326819936092149573" datatype="html">
@@ -2284,7 +2278,7 @@
                 <context-group purpose="location">
                     <context context-type="sourcefile">packages/ui/feature-chatbot/src/lib/chat/chat.component.html
                     </context>
-                    <context context-type="linenumber">23</context>
+                    <context context-type="linenumber">24</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="5545607360676773950" datatype="html">
@@ -2292,7 +2286,7 @@
                 <context-group purpose="location">
                     <context context-type="sourcefile">packages/ui/feature-chatbot/src/lib/chat/chat.component.html
                     </context>
-                    <context context-type="linenumber">29</context>
+                    <context context-type="linenumber">30</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="2180814210179500088" datatype="html">
@@ -2300,7 +2294,15 @@
                 <context-group purpose="location">
                     <context context-type="sourcefile">packages/ui/feature-chatbot/src/lib/chat/chat.component.html
                     </context>
-                    <context context-type="linenumber">59</context>
+                    <context context-type="linenumber">64</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4839864077429230055" datatype="html">
+                <source>Copy Code</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">packages/ui/feature-chatbot/src/lib/chat/chat.component.html
+                    </context>
+                    <context context-type="linenumber">72</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="7484291313969220918" datatype="html">
@@ -3106,7 +3108,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.html
                     </context>
-                    <context context-type="linenumber">22</context>
+                    <context context-type="linenumber">23</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="4895326106573044490" datatype="html">
@@ -3115,7 +3117,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.html
                     </context>
-                    <context context-type="linenumber">31</context>
+                    <context context-type="linenumber">32</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="4447668871712407032" datatype="html">
@@ -3124,7 +3126,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.html
                     </context>
-                    <context context-type="linenumber">38</context>
+                    <context context-type="linenumber">39</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="3446912724041461894" datatype="html">
@@ -3133,7 +3135,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts
                     </context>
-                    <context context-type="linenumber">52</context>
+                    <context context-type="linenumber">63</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="5831959151852803859" datatype="html">
@@ -3142,7 +3144,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts
                     </context>
-                    <context context-type="linenumber">65</context>
+                    <context context-type="linenumber">76</context>
                 </context-group>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
@@ -3169,13 +3171,22 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts
                     </context>
-                    <context context-type="linenumber">70</context>
+                    <context context-type="linenumber">81</context>
                 </context-group>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/connections-table/connections-table.component.html
                     </context>
                     <context context-type="linenumber">3</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6012922099782115453" datatype="html">
+                <source>What's new</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/dashboard-container.component.html
+                    </context>
+                    <context context-type="linenumber">9,10</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="7508420892157571847" datatype="html">
