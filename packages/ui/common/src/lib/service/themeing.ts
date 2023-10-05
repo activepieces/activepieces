@@ -22,14 +22,10 @@ export const theme = {
     'selection-color': '8965e6',
   },
   logos: {
-    fullLogoUrl:
-      'https://cdn.activepieces.com/brand/full-logo.svg',
-    smallFullLogoUrl:
-      'https://cdn.activepieces.com/brand/full-logo-small.svg',
-    favIconUrl:
-      'https://cdn.activepieces.com/brand/favicon.ico',
-    logoIconUrl:
-      'https://cdn.activepieces.com/brand/logo.svg',
+    fullLogoUrl: 'https://cdn.activepieces.com/brand/full-logo.svg',
+    smallFullLogoUrl: 'https://cdn.activepieces.com/brand/full-logo-small.svg',
+    favIconUrl: 'https://cdn.activepieces.com/brand/favicon.ico',
+    logoIconUrl: 'https://cdn.activepieces.com/brand/logo.svg',
   },
   materialPrimaryPalette: {
     '50': '#eee8fc',
