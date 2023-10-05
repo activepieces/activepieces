@@ -1,4 +1,6 @@
+
 import { createChatbot } from '../framework/chatbot'
+
 
 export const customBot = createChatbot({
     name: 'custom-bot',
@@ -8,13 +10,12 @@ export const customBot = createChatbot({
     ${ctx.settings.prompt}
     [Information]:
     ${information.join('\n')}
-    [Question]:
-    ${ctx.input}
     `
-
         return ctx.llm.chat({
-            input: finalPrompt,
-            history: [],
+            input: ctx.input,
+            history: ctx.history,
+            settingsPrompt: finalPrompt,
         })
     },
 })
+

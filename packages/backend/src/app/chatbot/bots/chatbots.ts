@@ -1,7 +1,8 @@
-import { ActivepiecesError, ErrorCode, SecretTextConnectionValue } from '@activepieces/shared'
+import { AP_ChatMessage, ActivepiecesError, ErrorCode, SecretTextConnectionValue } from '@activepieces/shared'
 import { customBot } from './custom-bot'
 import { embeddings } from '../embedings'
 import { llm } from '../framework/llm'
+
 
 const chatbots = [customBot]
 
@@ -11,12 +12,14 @@ export const runBot = async ({
     input,
     auth,
     prompt,
+    history,
 }: {
     botId: string
     type: string
     auth: SecretTextConnectionValue
     input: string
     prompt: string
+    history: AP_ChatMessage[]
 }): Promise<string> => {
     const bot = chatbots.find((b) => b.name === type)
     if (!bot) {
@@ -31,6 +34,7 @@ export const runBot = async ({
             settings: {
                 prompt,
             },
+            history,
         })
     }
     catch (error) {

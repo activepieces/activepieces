@@ -1,30 +1,33 @@
 
+import { AP_ChatMessage } from '@activepieces/shared'
 import { ApEmbeddings } from '../embedings'
 import { APLLM } from './llm'
 
 
-type ChatbotAnswerContext = {
+type ChatbotAskContext = {
     settings: {
         prompt: string
     }
     input: string
     llm: APLLM
     embeddings: ApEmbeddings
+    history: AP_ChatMessage[]
 }
 
 class IChatbot {
     constructor(
         public readonly name: string,
-        public readonly run: (ctx: ChatbotAnswerContext) => Promise<string>,
+        public readonly run: (ctx: ChatbotAskContext) => Promise<string>,
     ) { }
 }
 
 export const createChatbot = (request: {
     name: string
-    run: (ctx: ChatbotAnswerContext) => Promise<string>
+    run: (ctx: ChatbotAskContext) => Promise<string>
 }) => {
     return new IChatbot(
         request.name,
         request.run,
     )
 }
+

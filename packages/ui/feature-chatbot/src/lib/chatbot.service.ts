@@ -15,7 +15,7 @@ import {
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { map } from 'rxjs';
-
+import {AskChatBotRequest} from '@activepieces/shared'
 @Injectable({
   providedIn: 'root',
 })
@@ -43,11 +43,12 @@ export class ChatBotService {
     );
   }
 
-  ask(req: { chatbotId: string; input: string }) {
+  ask(req: AskChatBotRequest) {
     return this.http.post<ChatbotResponse>(
       environment.apiUrl + '/chatbots/' + req.chatbotId + '/ask',
       {
         input: req.input,
+        history:req.history
       }
     ).pipe(map(res=>{
       const withHtmlNewLines= res.output;

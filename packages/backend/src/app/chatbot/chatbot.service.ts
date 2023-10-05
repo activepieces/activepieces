@@ -15,6 +15,7 @@ import {
     UpdateChatbotRequest,
     ChatbotResponse,
     ChatbotMetadata,
+    AP_ChatMessage,
 } from '@activepieces/shared'
 import { databaseConnection } from '../database/database-connection'
 import { ChatbotEntity } from './chatbot.entity'
@@ -92,10 +93,12 @@ export const chatbotService = {
         projectId,
         chatbotId,
         input,
+        history,
     }: {
         projectId: ProjectId
         chatbotId: string
         input: string
+        history: AP_ChatMessage[]
     }): Promise<ChatbotResponse> {
         const chatbot = await chatbotRepo.findOneBy({
             id: chatbotId,
@@ -126,6 +129,7 @@ export const chatbotService = {
             type: chatbot.type,
             auth: connection.value as SecretTextConnectionValue,
             prompt: chatbot.prompt,
+            history,
         })
         return {
             output,

@@ -16,14 +16,11 @@ import {
 } from 'rxjs';
 import { FormControl } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Chatbot } from '@activepieces/shared';
+import { AP_ChatMessage, Chatbot } from '@activepieces/shared';
 import { AuthenticationService, FlagService } from '@activepieces/ui/common';
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
-type Message = {
-  text: string;
-  sender: 'user' | 'bot';
-};
+
 
 @Component({
   selector: 'app-chat',
@@ -35,11 +32,11 @@ export class ChatComponent {
   @ViewChild('chatThread') chatThreadHTML:
     | ElementRef<HTMLDivElement>
     | undefined;
-  messages: Message[] = [];
+  messages: AP_ChatMessage[] = [];
   messageControl: FormControl<string | null>;
   sendMessage$: Observable<void> | undefined;
   sendingMessage$: BehaviorSubject<boolean> = new BehaviorSubject(false);
-  chatbotId: string | undefined;
+  chatbotId: string;
   chatbotDisplayName = '';
   dots$: Observable<string>;
   data$: Observable<void>;
@@ -75,28 +72,30 @@ export class ChatComponent {
   }
 
   send() {
-    if (this.sendingMessage$.value || !this.messageControl.value?.trim()) {
+    const input = this.messageControl.value?.trim();
+    if (this.sendingMessage$.value || !input) {
       return;
     }
-    const input = this.messageControl.value!;
+
     this.messages.push({
       text: input,
-      sender: 'user',
+      role: 'user',
     });
     this.messageControl.reset();
     this.scrollThreadDown();
     this.sendingMessage$.next(true);
     this.sendMessage$ = this.chatbotService
       .ask({
-        chatbotId: this.chatbotId!,
+        chatbotId: this.chatbotId,
         input,
+        history:this.messages
       })
       .pipe(
         tap((res) => {
           this.sendingMessage$.next(false);
           this.messages.push({
             text: res.output,
-            sender: 'bot',
+            role: 'bot',
           });
         }),
         tap(() => {
@@ -109,17 +108,17 @@ export class ChatComponent {
           ) {
             this.messages.push({
               text: 'Oops! make sure your OpenAI api key is valid, it seems it is not.',
-              sender: 'bot',
+              role: 'bot',
             });
           } else if (err.status === HttpStatusCode.PaymentRequired) {
             this.messages.push({
               text: 'Oops! Your OpenAI quota is exceeded, please check your OpenAI plan and billing details.',
-              sender: 'bot',
+              role: 'bot',
             });
           } else {
             this.messages.push({
               text: 'Oops! an unexpected error occured, please contact support.',
-              sender: 'bot',
+              role: 'bot',
             });
           }
           this.sendingMessage$.next(false);
