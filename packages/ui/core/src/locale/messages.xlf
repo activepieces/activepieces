@@ -68,6 +68,12 @@
                 </context-group>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbot-source-dialog/chatbot-source-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">36,38</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
                         packages/ui/feature-connections/src/lib/dialogs/basic-auth-connection-dialog/basic-auth-connection-dialog.component.html
                     </context>
                     <context context-type="linenumber">56,58</context>
@@ -134,6 +140,12 @@
                         packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/custom-path-mention-dialog/custom-path-mention-dialog.component.html
                     </context>
                     <context context-type="linenumber">29,31</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbot-source-dialog/chatbot-source-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">40,42</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="5547981558491672240" datatype="html">
@@ -1250,6 +1262,11 @@
                     <context context-type="linenumber">16</context>
                 </context-group>
                 <context-group purpose="location">
+                    <context context-type="sourcefile">packages/ui/feature-chatbot/src/lib/chat/chat.component.html
+                    </context>
+                    <context context-type="linenumber">5</context>
+                </context-group>
+                <context-group purpose="location">
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.html
                     </context>
@@ -2262,35 +2279,107 @@
                     <context context-type="linenumber">65,68</context>
                 </context-group>
             </trans-unit>
-            <trans-unit id="8096108831936282703" datatype="html">
-                <source>New Connection</source>
+            <trans-unit id="1862378442639081237" datatype="html">
+                <source>Ask me something</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">packages/ui/feature-chatbot/src/lib/chat/chat.component.html
+                    </context>
+                    <context context-type="linenumber">23</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="5545607360676773950" datatype="html">
+                <source>Send a message</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">packages/ui/feature-chatbot/src/lib/chat/chat.component.html
+                    </context>
+                    <context context-type="linenumber">29</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2180814210179500088" datatype="html">
+                <source>is thinking</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">packages/ui/feature-chatbot/src/lib/chat/chat.component.html
+                    </context>
+                    <context context-type="linenumber">59</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7484291313969220918" datatype="html">
+                <source>Chatbots</source>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
-                        packages/ui/feature-connections/src/lib/dialogs/basic-auth-connection-dialog/basic-auth-connection-dialog.component.html
+                        packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html
                     </context>
                     <context context-type="linenumber">3</context>
                 </context-group>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
-                        packages/ui/feature-connections/src/lib/dialogs/cloud-oauth2-connection-dialog/cloud-oauth2-connection-dialog.component.html
+                        packages/ui/feature-chatbot/src/lib/chatbots-table/chatbots-table.component.html
                     </context>
-                    <context context-type="linenumber">3</context>
+                    <context context-type="linenumber">5</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="5741643806400852859" datatype="html">
+                <source>Build Your Chatbot</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html
+                    </context>
+                    <context context-type="linenumber">6</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3407061818321766940" datatype="html">
+                <source>Saving...</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html
+                    </context>
+                    <context context-type="linenumber">18</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4527876130724554959" datatype="html">
+                <source>Chat with bot</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html
+                    </context>
+                    <context context-type="linenumber">22</context>
                 </context-group>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
-                        packages/ui/feature-connections/src/lib/dialogs/custom-auth-connection-dialog/custom-auth-connection-dialog.component.html
+                        packages/ui/feature-chatbot/src/lib/chatbots-table/chatbots-table.component.ts
                     </context>
-                    <context context-type="linenumber">2</context>
+                    <context context-type="linenumber">197</context>
                 </context-group>
+            </trans-unit>
+            <trans-unit id="3333558286965622662" datatype="html">
+                <source>Brand your bot</source>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
-                        packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html
+                        packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html
                     </context>
-                    <context context-type="linenumber">3</context>
+                    <context context-type="linenumber">31,33</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="8953033926734869941" datatype="html">
                 <source>Name</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html
+                    </context>
+                    <context context-type="linenumber">36</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbot-source-dialog/chatbot-source-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">6</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbots-table/chatbots-table.component.html
+                    </context>
+                    <context context-type="linenumber">13</context>
+                </context-group>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
                         packages/ui/feature-connections/src/lib/dialogs/basic-auth-connection-dialog/basic-auth-connection-dialog.component.html
@@ -2350,6 +2439,18 @@
                 <source>Name is required</source>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html
+                    </context>
+                    <context context-type="linenumber">38,40</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbot-source-dialog/chatbot-source-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">8,10</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
                         packages/ui/feature-connections/src/lib/dialogs/basic-auth-connection-dialog/basic-auth-connection-dialog.component.html
                     </context>
                     <context context-type="linenumber">20,22</context>
@@ -2389,6 +2490,337 @@
                         packages/ui/feature-dashboard/src/lib/pages/flows-table/rename-folder-dialog/rename-folder-dialog.component.html
                     </context>
                     <context context-type="linenumber">14,16</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6646050140250868107" datatype="html">
+                <source>Public Access</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html
+                    </context>
+                    <context context-type="linenumber">42,44</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="20069700830458864" datatype="html">
+                <source>Train your bot</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html
+                    </context>
+                    <context context-type="linenumber">48,50</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6070859199120014907" datatype="html">
+                <source>Reconnect</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html
+                    </context>
+                    <context context-type="linenumber">63</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/custom-auth-connection-dialog/custom-auth-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">3</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="8118288707779550236" datatype="html">
+                <source>OpenAI Connection</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html
+                    </context>
+                    <context context-type="linenumber">69</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="8096108831936282703" datatype="html">
+                <source>New Connection</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html
+                    </context>
+                    <context context-type="linenumber">83</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/basic-auth-connection-dialog/basic-auth-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">3</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/cloud-oauth2-connection-dialog/cloud-oauth2-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">3</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/custom-auth-connection-dialog/custom-auth-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">2</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">3</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="8451342921207487014" datatype="html">
+                <source>No connections</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html
+                    </context>
+                    <context context-type="linenumber">97</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="467321397227119929" datatype="html">
+                <source>+ Add</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html
+                    </context>
+                    <context context-type="linenumber">101,103</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="9003579679055018178" datatype="html">
+                <source>Connection is required</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html
+                    </context>
+                    <context context-type="linenumber">107,109</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7520676103251775009" datatype="html">
+                <source>+ New Connection</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html
+                    </context>
+                    <context context-type="linenumber">114,116</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6528092440862696599" datatype="html">
+                <source>Bot Attitude</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html
+                    </context>
+                    <context context-type="linenumber">120</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="730525045088357363" datatype="html">
+                <source>i.e. Act like Ironman's assistant, Jarvis.</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html
+                    </context>
+                    <context context-type="linenumber">122</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="5117293842173012454" datatype="html">
+                <source>Prompt is required</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html
+                    </context>
+                    <context context-type="linenumber">124,126</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6571227198408989826" datatype="html">
+                <source>Training Data Sources</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html
+                    </context>
+                    <context context-type="linenumber">129,131</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4845271368813752731" datatype="html">
+                <source>Add data source</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbot-source-dialog/chatbot-source-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">1</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7040053784562736722" datatype="html">
+                <source>PDF file</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbot-source-dialog/chatbot-source-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">14</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="544060981838694169" datatype="html">
+                <source>Invalid file extension</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbot-source-dialog/chatbot-source-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">19,20</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6901217071431261275" datatype="html">
+                <source>file size is above limit 4 mega bytes</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbot-source-dialog/chatbot-source-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">21,22</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="9060619059481211640" datatype="html">
+                <source>Please choose a file</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbot-source-dialog/chatbot-source-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">23</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7952700156372001331" datatype="html">
+                <source>BETA</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbots-table/chatbots-table.component.html
+                    </context>
+                    <context context-type="linenumber">6</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7719821538492912560" datatype="html">
+                <source>Create Chatbot</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbots-table/chatbots-table.component.html
+                    </context>
+                    <context context-type="linenumber">20,22</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2662932491840639564" datatype="html">
+                <source>Delete Bot</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbots-table/chatbots-table.component.html
+                    </context>
+                    <context context-type="linenumber">43</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2262594260554345070" datatype="html">
+                <source>Humans are still in command, create your first bot to start the revolution</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbots-table/chatbots-table.component.html
+                    </context>
+                    <context context-type="linenumber">63,66</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="8392398587604751887" datatype="html">
+                <source>Your bot is private, enable public access so you can share its link.</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbots-table/chatbots-table.component.html
+                    </context>
+                    <context context-type="linenumber">84,86</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3738005382472959888" datatype="html">
+                <source>Enable Public Access</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbots-table/chatbots-table.component.html
+                    </context>
+                    <context context-type="linenumber">89,91</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2342074086152439041" datatype="html">
+                <source>You exceeded your quota for creating bots</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbots-table/chatbots-table.component.ts
+                    </context>
+                    <context context-type="linenumber">69</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="1374900400795545794" datatype="html">
+                <source>Unexpected error occured, please contact support</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbots-table/chatbots-table.component.ts
+                    </context>
+                    <context context-type="linenumber">80</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbots-table/chatbots-table.component.ts
+                    </context>
+                    <context context-type="linenumber">155</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="662926185826907110" datatype="html">
+                <source>This will permanently delete this chatbot and all its data.</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbots-table/chatbots-table.component.ts
+                    </context>
+                    <context context-type="linenumber">112</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="5353033149908811861" datatype="html">
+                <source>&lt;b&gt;<x id="PH" equiv-text="metadata.displayName"/>&lt;/b&gt; deleted
+                </source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbots-table/chatbots-table.component.ts
+                    </context>
+                    <context context-type="linenumber">119</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3945386671791333467" datatype="html">
+                <source>Share bot chat link</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbots-table/chatbots-table.component.ts
+                    </context>
+                    <context context-type="linenumber">191</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="9113226481982013428" datatype="html">
+                <source>OpenAi connection is missing</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbots-table/chatbots-table.component.ts
+                    </context>
+                    <context context-type="linenumber">192</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbots-table/chatbots-table.component.ts
+                    </context>
+                    <context context-type="linenumber">198</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="1298031562362137366" datatype="html">
+                <source>No sources added yet</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/datasources-table/datasources-table.component.html
+                    </context>
+                    <context context-type="linenumber">62,64</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="1107754685050967654" datatype="html">
+                <source>+ New Source</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/datasources-table/datasources-table.component.html
+                    </context>
+                    <context context-type="linenumber">78,80</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="828831341307092377" datatype="html">
@@ -2575,15 +3007,6 @@
                         packages/ui/feature-connections/src/lib/dialogs/cloud-oauth2-connection-dialog/cloud-oauth2-connection-dialog.component.html
                     </context>
                     <context context-type="linenumber">64,67</context>
-                </context-group>
-            </trans-unit>
-            <trans-unit id="6070859199120014907" datatype="html">
-                <source>Reconnect</source>
-                <context-group purpose="location">
-                    <context context-type="sourcefile">
-                        packages/ui/feature-connections/src/lib/dialogs/custom-auth-connection-dialog/custom-auth-connection-dialog.component.html
-                    </context>
-                    <context context-type="linenumber">3</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="7022562336989577788" datatype="html">
