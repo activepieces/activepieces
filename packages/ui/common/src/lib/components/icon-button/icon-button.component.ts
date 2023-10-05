@@ -25,6 +25,7 @@ export class IconButtonComponent implements OnInit {
   @Input() extraClasses = '';
   @Input() useSvgDefault = false;
   @Output() buttonClicked: EventEmitter<boolean> = new EventEmitter();
+  @Input() iconUrl?: string;
   ngOnInit(): void {
     if (this.useSvgDefault) {
       this.width = undefined;

@@ -7,7 +7,9 @@
   "targets": {
     "build": {
       "executor": "@nx/angular:webpack-browser",
-      "outputs": ["{options.outputPath}"],
+      "outputs": [
+        "{options.outputPath}"
+      ],
       "options": {
         "statsJson": true,
         "outputPath": "dist/packages/ui/core",
@@ -48,7 +50,10 @@
           "./node_modules/codemirror/theme/lucario.css",
           "packages/ui/core/src/styles.scss"
         ],
-        "scripts": ["node_modules/marked/marked.min.js"],
+        "scripts": [
+          "node_modules/marked/marked.min.js",
+          "node_modules/clipboard/dist/clipboard.min.js"
+        ],
         "i18nMissingTranslation": "warning",
         "localize": true
       },
@@ -116,7 +121,9 @@
     },
     "lint": {
       "executor": "@nx/linter:eslint",
-      "outputs": ["{options.outputFile}"],
+      "outputs": [
+        "{options.outputFile}"
+      ],
       "options": {
         "lintFilePatterns": [
           "packages/ui/core/**/*.ts",
@@ -129,7 +136,10 @@
       "options": {
         "tsConfig": "packages/ui/core/tsconfig.spec.json",
         "karmaConfig": "packages/ui/core/karma.conf.js",
-        "polyfills": ["zone.js", "zone.js/testing"],
+        "polyfills": [
+          "zone.js",
+          "zone.js/testing"
+        ],
         "styles": [],
         "scripts": [],
         "assets": []

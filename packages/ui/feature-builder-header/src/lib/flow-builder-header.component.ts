@@ -5,6 +5,7 @@ import { map, Observable, switchMap, take, tap } from 'rxjs';
 import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
+  FlagService,
   FlowService,
   environment,
   fadeIn400ms,
@@ -37,6 +38,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
   duplicateFlow$: Observable<void>;
   openDashboardOnFolder$: Observable<string>;
   environment = environment;
+  fullLogoSmall$: Observable<string>;
   constructor(
     public dialogService: MatDialog,
     private store: Store,
@@ -44,8 +46,13 @@ export class FlowBuilderHeaderComponent implements OnInit {
     private title: Title,
     public collectionBuilderService: CollectionBuilderService,
     private flowService: FlowService,
-    private matDialog: MatDialog
-  ) {}
+    private matDialog: MatDialog,
+    private flagService: FlagService
+  ) {
+    this.fullLogoSmall$ = this.flagService
+      .getLogos()
+      .pipe(map((logos) => logos.smallFullLogoUrl));
+  }
 
   ngOnInit(): void {
     this.instance$ = this.store.select(BuilderSelectors.selectCurrentInstance);
