@@ -23,13 +23,13 @@ export const theme = {
   },
   logos: {
     fullLogoUrl:
-      'https://cdn.activepieces.com/testing-white-labelling/full-logo.svg',
+      'https://cdn.activepieces.com/brand/full-logo.svg',
     smallFullLogoUrl:
-      'https://cdn.activepieces.com/testing-white-labelling/full-logo-small.svg',
+      'https://cdn.activepieces.com/brand/full-logo-small.svg',
     favIconUrl:
-      'https://cdn.activepieces.com/testing-white-labelling/favicon.ico',
+      'https://cdn.activepieces.com/brand/favicon.ico',
     logoIconUrl:
-      'https://cdn.activepieces.com/testing-white-labelling/logo.svg',
+      'https://cdn.activepieces.com/brand/logo.svg',
   },
   materialPrimaryPalette: {
     '50': '#eee8fc',
