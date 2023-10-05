@@ -1,5 +1,3 @@
-import {OAuth2PropertyValue} from "@activepieces/pieces-framework";
-
 /**
  * Process the directory URL to ensure proper formatting and requests.
  *
