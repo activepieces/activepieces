@@ -1,7 +1,8 @@
 <div
   class="ap-h-screen ap-w-full ap-flex ap-items-center ap-justify-center ap-bg-center ap-bg-cover ap-bg-authBg ap-flex-col">
   <a href="https://www.activepieces.com/" rel="noopener" target="_blank">
-    <img alt="Activepieces Website" src="assets/img/custom/logo/full-logo.svg" class="ap-mb-2">
+    <img alt="Activepieces Website" [src]="(fullLogoUrl$ | async )|| 'assets/img/custom/logo/full-logo.svg'"
+      class="ap-mb-2">
   </a>
 
 

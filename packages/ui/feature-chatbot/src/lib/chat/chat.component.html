@@ -5,7 +5,8 @@
     [tooltipText]="'Home'" (buttonClicked)="redirectHome(false)" (auxclick)="redirectHome(true)"></ap-icon-button>
   <div
     class="ap-absolute ap-w-full ap-flex ap-items-center ap-justify-center ap-top-0 ap-p-[1.125rem] ap-pointer-events-none">
-    <svg-icon src="assets/img/custom/logo/full-logo-small.svg"> </svg-icon>
+
+    <img [src]=" (fullLogoSmall$| async) ||'assets/img/custom/logo/full-logo-small.svg'">
   </div>
   <div class="ap-typography-body-1 !ap-font-semibold">
     {{ chatbotDisplayName }}
