@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthenticationService } from '../../service/authentication.service';
-import { showBeamer } from '../../utils/beamer';
-import { environment } from '../../environments/environment';
-
+import { FlagService } from '../../service/flag.service';
+import { Observable } from 'rxjs';
+import { ApFlagId } from '@activepieces/shared';
 @Component({
   selector: 'ap-user-avatar',
   templateUrl: './user-avatar.component.html',
@@ -12,11 +12,17 @@ import { environment } from '../../environments/environment';
 })
 export class UserAvatarComponent {
   showAvatarOuterCircle = false;
+  showCommunity$: Observable<boolean>;
 
   constructor(
     public authenticationService: AuthenticationService,
-    private router: Router
-  ) {}
+    private router: Router,
+    private flagService: FlagService
+  ) {
+    this.showCommunity$ = this.flagService.isFlagEnabled(
+      ApFlagId.SHOW_COMMUNITY
+    );
+  }
 
   getDropDownLeftOffset(
     toggleElement: HTMLElement,
@@ -50,10 +56,10 @@ export class UserAvatarComponent {
   }
 
   showWhatIsNew() {
-    showBeamer();
-  }
-
-  get environment() {
-    return environment;
+    window.open(
+      'https://community.activepieces.com/c/announcements',
+      '_blank',
+      'noopener'
+    );
   }
 }

@@ -13,7 +13,7 @@ type AppWebhookTriggerHookContext<PieceAuth extends PieceAuthProperty, TriggerPr
         webhookUrl: string
         payload: TriggerPayload
         app: {
-            createListeners({ events, identifierValue }: { events: string[], identifierValue: string }): Promise<void>
+            createListeners({ events, identifierValue }: { events: string[], identifierValue: string }): void
         }
     }
 

@@ -14,6 +14,7 @@ import {
 } from '@activepieces/ui/common';
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { map } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -48,7 +49,11 @@ export class ChatBotService {
       {
         input: req.input,
       }
-    );
+    ).pipe(map(res=>{
+      const withHtmlNewLines= res.output;
+      withHtmlNewLines.replaceAll('\n',' <br>');
+      return {...res, output: withHtmlNewLines};
+    }));
   }
 
   list({ limit, cursor }: { limit: number; cursor?: string }) {

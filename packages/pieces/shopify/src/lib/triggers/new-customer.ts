@@ -27,7 +27,7 @@ export const newCustomer = createShopifyWebhookTrigger(  {
         "currency": "USD",
         "addresses": [
             {
-                "id": 9218699002166,
+                "id": 9218699002161,
                 "customer_id": 6972943892790,
                 "first_name": "John",
                 "last_name": "Doe",

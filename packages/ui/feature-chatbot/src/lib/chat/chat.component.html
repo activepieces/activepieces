@@ -5,7 +5,8 @@
     [tooltipText]="'Home'" (buttonClicked)="redirectHome(false)" (auxclick)="redirectHome(true)"></ap-icon-button>
   <div
     class="ap-absolute ap-w-full ap-flex ap-items-center ap-justify-center ap-top-0 ap-p-[1.125rem] ap-pointer-events-none">
-    <svg-icon src="assets/img/custom/logo/full-logo-small.svg"> </svg-icon>
+
+    <img [src]=" (fullLogoSmall$| async) ||'assets/img/custom/logo/full-logo-small.svg'">
   </div>
   <div class="ap-typography-body-1 !ap-font-semibold">
     {{ chatbotDisplayName }}
@@ -48,7 +49,11 @@
           src="assets/img/custom/dashboard/chatbots.svg" [applyClass]="true"></svg-icon>
         <svg-icon *ngIf="msg.sender === 'user'" class="ap-w-[24px] ap-h-[24px]" src="assets/img/custom/person.svg"
           [applyClass]="true"></svg-icon>
-        <markdown lineNumbers [data]="msg.text"></markdown>
+        <markdown clipboard lineNumbers [data]="msg.text" ngPreserveWhitespaces clip
+          [clipboardButtonTemplate]="buttonTemplate">
+
+
+        </markdown>
 
       </div>
     </ng-container>
@@ -62,3 +67,8 @@
 </ng-template>
 
 <ng-container *ngIf="data$ | async"></ng-container>
+
+<ng-template #buttonTemplate>
+  <ap-icon-button [width]="15" [height]="15" [iconFilename]="'copy.svg'" tooltipText="Copy Code"
+    (buttonClicked)="codeCopied()"></ap-icon-button>
+</ng-template>
