@@ -133,6 +133,9 @@
         "packages/pieces/mattermost/src/index.ts"
       ],
       "@activepieces/piece-mautic": ["packages/pieces/mautic/src/index.ts"],
+      "@activepieces/piece-microsoft-onedrive": [
+        "packages/pieces/microsoft-onedrive/src/index.ts"
+      ],
       "@activepieces/piece-mindee": ["packages/pieces/mindee/src/index.ts"],
       "@activepieces/piece-monday": ["packages/pieces/monday/src/index.ts"],
       "@activepieces/piece-mysql": ["packages/pieces/mysql/src/index.ts"],
