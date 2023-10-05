@@ -15,7 +15,7 @@ import {
     UpdateChatbotRequest,
     ChatbotResponse,
     ChatbotMetadata,
-    AP_ChatMessage,
+    APChatMessage,
 } from '@activepieces/shared'
 import { databaseConnection } from '../database/database-connection'
 import { ChatbotEntity } from './chatbot.entity'
@@ -98,7 +98,7 @@ export const chatbotService = {
         projectId: ProjectId
         chatbotId: string
         input: string
-        history: AP_ChatMessage[]
+        history: APChatMessage[]
     }): Promise<ChatbotResponse> {
         const chatbot = await chatbotRepo.findOneBy({
             id: chatbotId,

@@ -2,7 +2,7 @@ import {
     UpdateChatbotRequest,
     ListChatbotsRequest,
     CreateChatBotRequest,
-    AP_ChatMessage,
+    APChatMessage,
 } from '@activepieces/shared'
 import {
     FastifyPluginCallbackTypebox,
@@ -109,7 +109,7 @@ export const chatbotController: FastifyPluginCallbackTypebox = (
                 params: ChatBotIdParams,
                 body: Type.Object({
                     input: Type.String(),
-                    history: Type.Optional(Type.Array(AP_ChatMessage)),
+                    history: Type.Optional(Type.Array(APChatMessage)),
                 }),
             },
         },

@@ -5,7 +5,7 @@ import { OpenAI } from 'langchain/llms/openai'
 import { BufferWindowMemory } from 'langchain/memory'
 import { PromptTemplate } from 'langchain/prompts'
 import { ConversationChain } from 'langchain/chains'
-import { AP_ChatMessage } from '@activepieces/shared'
+import { APChatMessage } from '@activepieces/shared'
 export type APLLM = {
     chat: ({ input, temperature, maxTokens }: AskChat) => Promise<string>
 }
@@ -58,13 +58,13 @@ AI:`
 
 export type AskChat = {
     input: string
-    history: AP_ChatMessage[]
+    history: APChatMessage[]
     settingsPrompt: string
     temperature?: number
     maxTokens?: number
 }
 
-export const summarizeMessages = async (model: BaseLanguageModel, messages: AP_ChatMessage[]): Promise<string> => {
+export const summarizeMessages = async (model: BaseLanguageModel, messages: APChatMessage[]): Promise<string> => {
     const summary_memory = new ConversationSummaryMemory({
         llm: model, 
         chatHistory: await createChatMessageHistory(messages),  
@@ -74,7 +74,7 @@ export const summarizeMessages = async (model: BaseLanguageModel, messages: AP_C
     return summary
 } 
 
-export const createChatMessageHistory = async (messages: AP_ChatMessage[]): Promise<BaseChatMessageHistory> => {
+export const createChatMessageHistory = async (messages: APChatMessage[]): Promise<BaseChatMessageHistory> => {
     const history = new ChatMessageHistory()
     for (const message of messages) {
         switch (message.role) {

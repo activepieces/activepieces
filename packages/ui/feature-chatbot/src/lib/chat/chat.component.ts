@@ -16,7 +16,7 @@ import {
 } from 'rxjs';
 import { FormControl } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AP_ChatMessage, Chatbot } from '@activepieces/shared';
+import { APChatMessage, Chatbot } from '@activepieces/shared';
 import { AuthenticationService, FlagService } from '@activepieces/ui/common';
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -32,7 +32,7 @@ export class ChatComponent {
   @ViewChild('chatThread') chatThreadHTML:
     | ElementRef<HTMLDivElement>
     | undefined;
-  messages: AP_ChatMessage[] = [];
+  messages: APChatMessage[] = [];
   messageControl: FormControl<string | null>;
   sendMessage$: Observable<void> | undefined;
   sendingMessage$: BehaviorSubject<boolean> = new BehaviorSubject(false);

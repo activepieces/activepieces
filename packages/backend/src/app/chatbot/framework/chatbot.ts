@@ -1,5 +1,5 @@
 
-import { AP_ChatMessage } from '@activepieces/shared'
+import { APChatMessage } from '@activepieces/shared'
 import { ApEmbeddings } from '../embedings'
 import { APLLM } from './llm'
 
@@ -11,7 +11,7 @@ type ChatbotAskContext = {
     input: string
     llm: APLLM
     embeddings: ApEmbeddings
-    history: AP_ChatMessage[]
+    history: APChatMessage[]
 }
 
 class IChatbot {
