@@ -44,10 +44,10 @@
   <div class="ap-w-full">
     <ng-container *ngFor="let msg of messages">
       <div class="ap-p-7 ap-typography-body-1 ap-flex ap-items-center ap-gap-3"
-        [class.ap-bg-header]="msg.sender === 'bot'">
-        <svg-icon *ngIf="msg.sender === 'bot'" class="ap-w-[24px] ap-h-[24px] ap-fill-body"
+        [class.ap-bg-header]="msg.role === 'bot'">
+        <svg-icon *ngIf="msg.role === 'bot'" class="ap-w-[24px] ap-h-[24px] ap-fill-body"
           src="assets/img/custom/dashboard/chatbots.svg" [applyClass]="true"></svg-icon>
-        <svg-icon *ngIf="msg.sender === 'user'" class="ap-w-[24px] ap-h-[24px]" src="assets/img/custom/person.svg"
+        <svg-icon *ngIf="msg.role === 'user'" class="ap-w-[24px] ap-h-[24px]" src="assets/img/custom/person.svg"
           [applyClass]="true"></svg-icon>
         <markdown clipboard lineNumbers [data]="msg.text" ngPreserveWhitespaces clip
           [clipboardButtonTemplate]="buttonTemplate">
