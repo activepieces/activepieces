@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/hackernews/package.json",
         "main": "packages/pieces/hackernews/src/index.ts",
         "assets": ["packages/pieces/hackernews/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

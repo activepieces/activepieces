@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/square/package.json",
         "main": "packages/pieces/square/src/index.ts",
         "assets": ["packages/pieces/square/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

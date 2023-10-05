@@ -18,7 +18,7 @@ export const slackChannel = Property.Dropdown({
     const accessToken = authentication['access_token'];
     const request: HttpRequest = {
       method: HttpMethod.GET,
-      url: `https://slack.com/api/conversations.list?types=public_channel,private_channel`,
+      url: `https://slack.com/api/conversations.list?types=public_channel,private_channel&limit=1000`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: accessToken,

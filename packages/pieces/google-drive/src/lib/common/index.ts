@@ -1,4 +1,4 @@
-import { httpClient, HttpMethod, AuthenticationType } from "@activepieces/pieces-common";
+import { httpClient, HttpMethod, AuthenticationType, HttpRequest } from "@activepieces/pieces-common";
 import { Property, OAuth2PropertyValue } from "@activepieces/pieces-framework";
 import dayjs from "dayjs";
 
@@ -15,21 +15,40 @@ export const common = {
                   options: [],
                   placeholder: 'Please authenticate first'
                 }
-              }
+              }              
               const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
-              const folders = (await httpClient.sendRequest<{ files: { id: string, name: string }[] }>({
-                method: HttpMethod.GET,
-                url: `https://www.googleapis.com/drive/v3/files`,
-                queryParams: {
-                  q: "mimeType='application/vnd.google-apps.folder'",
-                  includeItemsFromAllDrives: include_team_drives ? "true" : "false",
-                  supportsAllDrives: "true"
-                },
-                authentication: {
-                  type: AuthenticationType.BEARER_TOKEN,
-                  token: authProp!['access_token'],
+              let folders : { id: string, name: string }[] = [];
+              let pageToken = null;
+              do{
+                const request: HttpRequest = {
+                  method: HttpMethod.GET,
+                  url: `https://www.googleapis.com/drive/v3/files`,
+                  queryParams: {
+                    q: "mimeType='application/vnd.google-apps.folder'",
+                    includeItemsFromAllDrives: include_team_drives ? "true" : "false",
+                    supportsAllDrives: "true"
+                  },
+                  authentication: {
+                    type: AuthenticationType.BEARER_TOKEN,
+                    token: authProp!['access_token'],
+                  }
+                };
+                if(pageToken){
+                  if(request.queryParams !== undefined){
+                    request.queryParams['pageToken'] = pageToken;
+                  }
                 }
-              })).body.files;
+                try{
+                  const response = await httpClient.sendRequest<{
+                    files: { id: string, name: string }[],
+                    nextPageToken: string
+                  }>(request);
+                  folders = folders.concat(response.body.files);
+                  pageToken = response.body.nextPageToken;
+                }catch(e){
+                  throw new Error(`Failed to get folders\nError:${e}`);
+                }
+              }while(pageToken);
     
               return {
                 disabled: false,
@@ -64,6 +83,7 @@ export const common = {
             url: `https://www.googleapis.com/drive/v3/files`,
             queryParams: {
                 q: q.join(' and '),
+                fields: 'files(id, name, mimeType, webViewLink, kind)',
                 orderBy: order ?? 'createdTime asc'
             },
             authentication: {

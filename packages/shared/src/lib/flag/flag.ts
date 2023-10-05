@@ -7,12 +7,12 @@ export interface Flag extends BaseModel<FlagId> {
     value: unknown;
 }
 
-export const enum ApEnvironment {
+export enum ApEnvironment {
     PRODUCTION = "prod",
     DEVELOPMENT = "dev"
 }
 
-export const enum ApEdition {
+export enum ApEdition {
     COMMUNITY = "ce",
     ENTERPRISE = "ee",
     CLOUD = "cloud"
@@ -23,9 +23,12 @@ export enum ApFlagId {
     FRONTEND_URL = "FRONTEND_URL",
     EDITION = "EDITION",
     ENVIRONMENT = "ENVIRONMENT",
+    CHATBOT_ENABLED = 'CHATBOT_ENABLED',
     WEBHOOK_URL_PREFIX = "WEBHOOK_URL_PREFIX",
     USER_CREATED = "USER_CREATED",
     SIGN_UP_ENABLED = "SIGN_UP_ENABLED",
+    SHOW_COMMUNITY = "SHOW_COMMUNITY",
+    SHOW_DOCS = "SHOW_DOCS",
     TELEMETRY_ENABLED = "TELEMETRY_ENABLED",
     CURRENT_VERSION = "CURRENT_VERSION",
     LATEST_VERSION = "LATEST_VERSION",

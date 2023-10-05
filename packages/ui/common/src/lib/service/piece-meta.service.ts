@@ -11,7 +11,6 @@ import {
   Observable,
   shareReplay,
   map,
-  forkJoin,
   switchMap,
   Subject,
   combineLatest,
@@ -58,21 +57,27 @@ export const CORE_PIECES_TRIGGERS = [CORE_SCHEDULE];
 export class PieceMetadataService {
   private release$ = this.flagsService.getRelease().pipe(shareReplay(1));
   private clearCache$ = new Subject<void>();
+  private edition$ = this.flagsService.getEdition();
   private piecesManifest$ = combineLatest([
+    this.edition$,
     this.release$,
     this.clearCache$.asObservable().pipe(startWith(void 0)),
   ]).pipe(
-    switchMap(([release]) => {
+    switchMap(([edition, release]) => {
       return this.http.get<PieceMetadataSummary[]>(
-        `${environment.apiUrl}/pieces?release=${release}`
+        `${environment.apiUrl}/pieces`,
+        {
+          params: {
+            release,
+            edition,
+          },
+        }
       );
     }),
     shareReplay(1)
   );
 
   private piecesCache = new Map<string, Observable<PieceMetadata>>();
-
-  private edition$ = this.flagsService.getEdition();
 
   public coreFlowItemsDetails: FlowItemDetails[] = [
     {
@@ -132,14 +137,23 @@ export class PieceMetadataService {
     return Object.fromEntries(filteredTriggersList);
   }
 
-  private fetchPieceMetadata(
-    pieceName: string,
-    pieceVersion: string
-  ): Observable<PieceMetadata> {
+  private fetchPieceMetadata({
+    pieceName,
+    pieceVersion,
+    edition,
+  }: {
+    pieceName: string;
+    pieceVersion: string;
+    edition: ApEdition;
+  }): Observable<PieceMetadata> {
     return this.http.get<PieceMetadata>(
-      `${environment.apiUrl}/pieces/${encodeURIComponent(
-        pieceName
-      )}?version=${pieceVersion}`
+      `${environment.apiUrl}/pieces/${encodeURIComponent(pieceName)}`,
+      {
+        params: {
+          version: pieceVersion,
+          edition,
+        },
+      }
     );
   }
 
@@ -200,16 +214,23 @@ export class PieceMetadataService {
     if (this.piecesCache.has(cacheKey)) {
       return this.piecesCache.get(cacheKey)!;
     }
-    const pieceMetadata$ = forkJoin({
-      pieceMetadata: this.fetchPieceMetadata(pieceName, pieceVersion),
-      edition: this.edition$,
-    }).pipe(
-      map(({ pieceMetadata, edition }) => {
-        pieceMetadata.triggers = this.filterAppWebhooks(
-          pieceMetadata.triggers,
-          edition
+
+    const pieceMetadata$ = this.edition$.pipe(
+      take(1),
+      switchMap((edition) => {
+        return this.fetchPieceMetadata({
+          pieceName,
+          pieceVersion,
+          edition,
+        }).pipe(
+          take(1),
+          map((pieceMetadata) => {
+            return {
+              ...pieceMetadata,
+              triggers: this.filterAppWebhooks(pieceMetadata.triggers, edition),
+            };
+          })
         );
-        return pieceMetadata;
       }),
       shareReplay(1)
     );

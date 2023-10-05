@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/ntfy/package.json",
         "main": "packages/pieces/ntfy/src/index.ts",
         "assets": ["packages/pieces/ntfy/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

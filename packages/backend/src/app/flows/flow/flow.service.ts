@@ -30,6 +30,7 @@ import { telemetry } from '../../helper/telemetry.utils'
 import { flowInstanceService } from '../flow-instance/flow-instance.service'
 import { IsNull } from 'typeorm'
 import { isNil } from '@activepieces/shared'
+import { logger } from '../../helper/logger'
 
 export const flowService = {
     async create({ projectId, request }: { projectId: ProjectId, request: CreateFlowRequest }): Promise<Flow> {
@@ -50,6 +51,7 @@ export const flowService = {
             removeSecrets: false,
             includeArtifactAsBase64: false,
         })
+
         telemetry.trackProject(
             savedFlow.projectId,
             {
@@ -59,6 +61,8 @@ export const flowService = {
                 },
             },
         )
+            .catch((e) => logger.error(e, '[FlowService#create] telemetry.trackProject'))
+
         return {
             ...savedFlow,
             version: latestFlowVersion!,
@@ -158,6 +162,8 @@ export const flowService = {
             created: Date.now().toString(),
             updated: Date.now().toString(),
             blogUrl: '',
+            featuredDescription: '',
+            isFeatured: false,
         }
         return template
     },

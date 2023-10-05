@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/mautic/package.json",
         "main": "packages/pieces/mautic/src/index.ts",
         "assets": ["packages/pieces/mautic/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

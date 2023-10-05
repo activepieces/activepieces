@@ -13,6 +13,9 @@ const chatId = `
 
 **Note: Remember to initiate the chat with the bot, or you'll get an error for "chat not found.**
 `
+const format = `
+[Link example](https://core.telegram.org/bots/api#formatting-options)
+`
 export const telegramSendMessageAction = createAction({
     auth: telegramBotAuth,
     name: 'send_text_message',
@@ -28,8 +31,30 @@ export const telegramSendMessageAction = createAction({
         }),
         message_thread_id: Property.ShortText({
             displayName: 'Message Thread Id',
-            description: 'Unique identifer for the target message thread of the forums; for forums supergroups only',
+            description: 'Unique identifier for the target message thread of the forums; for forums supergroups only',
             required: false,
+        }),
+        format: Property.StaticDropdown({
+            displayName: 'Format',
+            description: 'Choose format you want ',
+            required: false,
+            options: {
+                options: [
+                    {
+                        label: 'Markdown',
+                        value: 'MarkdownV2'
+                    },
+                    {
+                        label: 'HTML',
+                        value: 'HTML'
+                    }
+                ]
+            },
+            defaultValue: 'MarkdownV2'
+
+        }),
+        instructions_format: Property.MarkDown({
+            value: format,
         }),
         message: Property.LongText({
             displayName: 'Message',
@@ -45,6 +70,7 @@ export const telegramSendMessageAction = createAction({
                 chat_id: ctx.propsValue['chat_id'],
                 text: ctx.propsValue['message'],
                 message_thread_id: ctx.propsValue['message_thread_id'] ?? undefined,
+                parse_mode: ctx.propsValue['format'] ?? 'MarkdownV2'
             },
         });
     },

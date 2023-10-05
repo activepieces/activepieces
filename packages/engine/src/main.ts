@@ -27,7 +27,7 @@ import { triggerHelper } from './lib/helper/trigger-helper';
 import { Piece } from '@activepieces/pieces-framework';
 import { VariableService } from './lib/services/variable-service';
 import { testExecution } from './lib/helper/test-execution-context';
-import { loggerUtils } from './lib/helper/logging-utils';
+import { loggingUtils } from './lib/helper/logging-utils';
 
 const initFlowExecutor = (input: ExecuteFlowOperation): FlowExecutor => {
   const { flowVersion } = input
@@ -92,7 +92,6 @@ const executeFlow = async (input?: ExecuteFlowOperation): Promise<void> => {
 
     globals.workerToken = input.workerToken!;
     globals.projectId = input.projectId;
-    globals.apiUrl = input.apiUrl!;
     globals.serverUrl = input.serverUrl!;
     globals.flowRunId = input.flowRunId;
 
@@ -105,7 +104,7 @@ const executeFlow = async (input?: ExecuteFlowOperation): Promise<void> => {
 
     writeOutput({
       status: EngineResponseStatus.OK,
-      response: await loggerUtils.trimExecution(output)
+      response: await loggingUtils.trimExecution(output)
     })
   } catch (e) {
     console.error(e);
@@ -122,7 +121,7 @@ const executeProps = async (): Promise<void> => {
 
     globals.workerToken = input.workerToken!;
     globals.projectId = input.projectId;
-    globals.apiUrl = input.apiUrl!;
+    globals.serverUrl = input.serverUrl;
 
     const output = await pieceHelper.executeProps(input);
     writeOutput({
@@ -145,7 +144,7 @@ const executeTrigger = async (): Promise<void> => {
 
     globals.workerToken = input.workerToken!;
     globals.projectId = input.projectId;
-    globals.apiUrl = input.apiUrl!;
+    globals.serverUrl = input.serverUrl;
 
     const output = await triggerHelper.executeTrigger(input);
     writeOutput({
@@ -167,7 +166,7 @@ const executeCode = async (): Promise<void> => {
     const operationInput: ExecuteCodeOperation = Utils.parseJsonFile(globals.inputFile);
 
     globals.projectId = operationInput.projectId;
-
+    globals.serverUrl = operationInput.serverUrl
     const output = await pieceHelper.executeCode(operationInput);
     writeOutput({
       status: EngineResponseStatus.OK,
@@ -189,7 +188,6 @@ const executeAction = async (): Promise<void> => {
 
     globals.workerToken = input.workerToken!;
     globals.projectId = input.projectId;
-    globals.apiUrl = input.apiUrl!;
     globals.serverUrl = input.serverUrl;
 
     const output = await pieceHelper.executeAction(input);
@@ -213,7 +211,7 @@ const executeValidateAuth = async (): Promise<void> => {
 
     globals.workerToken = input.workerToken!;
     globals.projectId = input.projectId;
-    globals.apiUrl = input.apiUrl!;
+    globals.serverUrl = input.serverUrl
 
     const output = await pieceHelper.executeValidateAuth(input);
 
@@ -235,6 +233,10 @@ const executeTest = async (): Promise<void> => {
   try {
     const input: EngineTestOperation = Utils.parseJsonFile(globals.inputFile);
 
+    globals.workerToken = input.workerToken!;
+    globals.projectId = input.projectId;
+    globals.serverUrl = input.serverUrl
+  
     const testExecutionState = await testExecution.stateFromFlowVersion({
       flowVersion: input.sourceFlowVersion,
     })

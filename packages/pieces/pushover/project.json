@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/pushover/package.json",
         "main": "packages/pieces/pushover/src/index.ts",
         "assets": ["packages/pieces/pushover/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

@@ -13,7 +13,7 @@ type AppWebhookTriggerHookContext<PieceAuth extends PieceAuthProperty, TriggerPr
         webhookUrl: string
         payload: TriggerPayload
         app: {
-            createListeners({ events, identifierValue }: { events: string[], identifierValue: string }): Promise<void>
+            createListeners({ events, identifierValue }: { events: string[], identifierValue: string }): void
         }
     }
 
@@ -67,6 +67,15 @@ export type PauseHookParams = {
 
 export type PauseHook = (params: PauseHookParams) => void
 
+export type PropertyContext = {
+	server: ServerContext
+}
+
+export type ServerContext = {
+    apiUrl: string,
+    publicUrl: string,
+    token: string
+}
 export type BaseActionContext<
     ET extends ExecutionType,
     PieceAuth extends PieceAuthProperty,
@@ -75,6 +84,7 @@ export type BaseActionContext<
     executionType: ET,
     connections: ConnectionsManager,
     tags: TagsManager,
+    server: ServerContext,
     files: FilesService
     serverUrl: string,
     run: {

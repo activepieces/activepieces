@@ -5,7 +5,7 @@
         <div class="ap-flex ap-justify-end" *ngIf="!template.user?.imageUrl">
             <div
                 class="ap-typography-body-1 !ap-font-semibold ap-text-white ap-bg-primary ap-rounded-full ap-px-[12px] ap-py-[7px] ap-select-none ap-text-center ap-w-[45px] ap-h-[45px] ap-flex ap-items-center ap-justify-center">
-                {{ (template.user? template.user.firstName[0] : '') | uppercase }}
+                {{ (template.user && template.user.firstName? template.user.firstName[0] : '7') | uppercase }}
             </div>
         </div>
         <div class="ap-flex ap-flex-col ap-gap-1">
@@ -21,18 +21,19 @@
     </div>
 
     <div>
-        <div class="ap-typography-body-1 ">
-            <ng-container *ngIf="template.description.length <= 225 ">
+        <div class="ap-typography-body-1 ap-whitespace-pre-line" *ngIf="template.featuredDescription">
+            <ng-container *ngIf="template.featuredDescription.length <= SEE_MORE_LIMIT ">
                 {{
-                template.description
+                template.featuredDescription
                 }}
             </ng-container>
-            <ng-container *ngIf="template.description.length > 225 ">
+            <ng-container *ngIf="template.featuredDescription.length > SEE_MORE_LIMIT ">
                 {{
-                showFullDescription? template.description : template.description.slice(0,255)+"..."
+                showFullDescription? template.featuredDescription : template.featuredDescription.slice(0,255)+"..."
                 }}
                 &nbsp; <div class="ap-text-primary ap-cursor-pointer ap-inline"
-                    (click)="showFullDescription = !showFullDescription" *ngIf="template.description.length > 225">
+                    (click)="showFullDescription = !showFullDescription"
+                    *ngIf="template.featuredDescription.length > 225">
                     {{showFullDescription? 'See less' : 'See more'}} </div>
             </ng-container>
         </div>

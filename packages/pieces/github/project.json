@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/github/package.json",
         "main": "packages/pieces/github/src/index.ts",
         "assets": ["packages/pieces/github/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

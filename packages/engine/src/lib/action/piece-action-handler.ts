@@ -143,7 +143,7 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
       })
 
       assertNotNullOrUndefined(globals.flowRunId, 'globals.flowRunId')
-      const {processedInput, errors} = await this.variableService.applyProcessorsAndValidators(resolvedProps, action.props, piece.auth);
+      const { processedInput, errors } = await this.variableService.applyProcessorsAndValidators(resolvedProps, action.props, piece.auth);
 
       if (Object.keys(errors).length > 0) {
         throw new Error(JSON.stringify(errors));
@@ -158,6 +158,11 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
           flowId: executionContext.flowVersion.flowId,
           type: 'local'
         }),
+        server: {
+          token: globals.workerToken!,
+          apiUrl: globals.apiUrl!,
+          publicUrl: globals.serverUrl!,
+        },
         propsValue: processedInput,
         tags: createTagsManager(executionState),
         connections: createConnectionManager(executionState),

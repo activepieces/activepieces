@@ -41,6 +41,9 @@
       "@activepieces/piece-constant-contact": [
         "packages/pieces/constant-contact/src/index.ts"
       ],
+      "@activepieces/piece-contentful": [
+        "packages/pieces/contentful/src/index.ts"
+      ],
       "@activepieces/piece-contiguity": [
         "packages/pieces/contiguity/src/index.ts"
       ],
@@ -137,6 +140,9 @@
       "@activepieces/piece-notion": ["packages/pieces/notion/src/index.ts"],
       "@activepieces/piece-ntfy": ["packages/pieces/ntfy/src/index.ts"],
       "@activepieces/piece-onfleet": ["packages/pieces/onfleet/src/index.ts"],
+      "@activepieces/piece-open-router": [
+        "packages/pieces/open-router/src/index.ts"
+      ],
       "@activepieces/piece-openai": ["packages/pieces/openai/src/index.ts"],
       "@activepieces/piece-pastebin": ["packages/pieces/pastebin/src/index.ts"],
       "@activepieces/piece-pastefy": ["packages/pieces/pastefy/src/index.ts"],
@@ -146,6 +152,7 @@
       "@activepieces/piece-postgres": ["packages/pieces/postgres/src/index.ts"],
       "@activepieces/piece-posthog": ["packages/pieces/posthog/src/index.ts"],
       "@activepieces/piece-pushover": ["packages/pieces/pushover/src/index.ts"],
+      "@activepieces/piece-qdrant": ["packages/pieces/qdrant/src/index.ts"],
       "@activepieces/piece-rss": ["packages/pieces/rss/src/index.ts"],
       "@activepieces/piece-salesforce": [
         "packages/pieces/salesforce/src/index.ts"
@@ -206,6 +213,18 @@
       "@activepieces/pieces-framework": [
         "packages/pieces/framework/src/index.ts"
       ],
+      "@activepieces/pieces/chatbots": [
+        "packages/pieces/chatbots/src/index.ts"
+      ],
+      "@activepieces/pieces/date-helper": [
+        "packages/pieces/date-helper/src/index.ts"
+      ],
+      "@activepieces/pieces/google-my-business": [
+        "packages/pieces/google-my-business/src/index.ts"
+      ],
+      "@activepieces/pieces/text-helper": [
+        "packages/pieces/text-helper/src/index.ts"
+      ],
       "@activepieces/shared": ["packages/shared/src/index.ts"],
       "@activepieces/ui/common": ["packages/ui/common/src/index.ts"],
       "@activepieces/ui/feature-authentication": [
@@ -231,6 +250,9 @@
       ],
       "@activepieces/ui/feature-builder-test-steps": [
         "packages/ui/feature-builder-test-steps/src/index.ts"
+      ],
+      "@activepieces/ui/feature-chatbot": [
+        "packages/ui/feature-chatbot/src/index.ts"
       ],
       "@activepieces/ui/feature-connections": [
         "packages/ui/feature-connections/src/index.ts"

@@ -1,92 +1,134 @@
-import { Component, HostListener, Input } from '@angular/core';
+import {
+  Component,
+  DoCheck,
+  HostBinding,
+  HostListener,
+  Input,
+  OnDestroy,
+  Optional,
+  Self,
+} from '@angular/core';
 import {
   ControlValueAccessor,
-  NG_VALIDATORS,
-  NG_VALUE_ACCESSOR,
+  FormGroupDirective,
+  NgControl,
+  NgForm,
 } from '@angular/forms';
+import { MatFormFieldControl } from '@angular/material/form-field';
+import { Subject } from 'rxjs';
 
 @Component({
   selector: 'ap-file-upload',
   templateUrl: './upload-file-control.component.html',
   providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: UploadImageControlComponent,
-      multi: true,
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: UploadImageControlComponent,
-      multi: true,
-    },
+    { provide: MatFormFieldControl, useExisting: UploadFileControlComponent },
   ],
   styleUrls: ['./upload-file-control.component.scss'],
 })
-export class UploadImageControlComponent implements ControlValueAccessor {
-  @Input() public file: File | null = null;
+export class UploadFileControlComponent
+  implements
+    MatFormFieldControl<File>,
+    OnDestroy,
+    ControlValueAccessor,
+    DoCheck
+{
+  public get ngControl(): NgControl {
+    return this._ngControl;
+  }
+  public set ngControl(value: NgControl) {
+    this._ngControl = value;
+  }
+  value: File | null;
+  stateChanges: Subject<void> = new Subject();
+  static nextId = 0;
+  @HostBinding()
+  id = `file-input-${UploadFileControlComponent.nextId++}`;
+  placeholder: string;
+  focused = false;
+  empty: boolean;
+  shouldLabelFloat: true;
+  required: boolean;
+  disabled: boolean;
+  errorState = true;
+  controlType?: string | undefined;
+  autofilled?: boolean | undefined;
+  userAriaDescribedBy?: string | undefined;
   @Input() loadedImageUrl = '';
   @Input() extensions: string[] = ['.json'];
   @Input() fileMaxSize = 90000;
   @Input() placeHolder = 'Template.json';
   @Input() label = 'File';
+  touched = false;
+  onTouched = () => {
+    //ignore
+  };
   @HostListener('change', ['$event.target.files']) emitFiles(event: FileList) {
     const file = event && event.item(0);
     if (file) {
       this.fileDropped(file);
     }
   }
+  constructor(
+    @Optional()
+    @Self()
+    private _ngControl: NgControl,
+    @Optional() private _parentForm: NgForm,
+    @Optional() private _parentFormGroup: FormGroupDirective
+  ) {
+    if (this.ngControl != null) {
+      // Setting the value accessor directly (instead of using
+      // the providers) to avoid running into a circular import.
+      this.ngControl.valueAccessor = this;
+    }
+  }
+  setDescribedByIds(ids: string[]): void {
+    // console.log(ids);
+  }
+  onContainerClick(event: MouseEvent): void {
+    // console.log(event);
+  }
   onChange: (file: File | null) => void = (file: File | null) => {
     //ignore
   };
   fileDropped(file: File) {
-    if (this.validateFileType(file) === null) {
-      this.file = file;
-      this.onChange(file);
-    } else {
-      this.onChange(null);
-      this.file = null;
-    }
+    this.value = file;
+    this.onChange(file);
+    this.onTouched();
+    this.stateChanges?.next();
   }
-  validate() {
-    const err = this.validateFileType(this.file);
-    if (err) {
-      return err;
-    }
-    return null;
-  }
+
   writeValue(file: File) {
-    this.file = file;
+    this.value = file;
+    this.stateChanges.next();
   }
 
   registerOnChange(fn: (file: File | null) => void) {
     this.onChange = fn;
   }
 
-  registerOnTouched() {
-    // ignored
+  registerOnTouched(fn: () => void) {
+    this.onTouched = fn;
   }
 
-  validateFileType(file: File | null): Record<string, boolean> | null {
-    if (file) {
-      const parts = file.name.split('.');
-      if (parts.length === 0) {
-        return { emptyFile: true };
-      }
-      const extension = '.' + parts[parts.length - 1].toLowerCase();
-      if (
-        !this.extensions.find(
-          (allowedExtension) =>
-            allowedExtension.toLocaleLowerCase() ==
-            extension.toLocaleLowerCase()
-        )
-      ) {
-        return { invalidExtenstion: true };
-      }
-      if (file.size > this.fileMaxSize) {
-        return { sizeLimit: true };
-      }
-      return null;
+  ngOnDestroy(): void {
+    this.stateChanges.complete();
+  }
+  ngDoCheck() {
+    if (this.ngControl) {
+      this.updateErrorState();
+      this.touched = this.ngControl.touched || false;
     }
-    return { emptyFile: true };
+  }
+  private updateErrorState() {
+    const parent = this._parentFormGroup || this._parentForm;
+
+    const oldState = this.errorState;
+    const newState =
+      this.ngControl?.invalid && (this.touched || parent.submitted);
+
+    if (oldState !== newState) {
+      this.errorState = newState || false;
+      this.stateChanges.next();
+    }
   }
 }

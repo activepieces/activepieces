@@ -18,7 +18,7 @@ export function createFilesService({ stepName, type, flowId }: { stepName: strin
                 case 'local':
                     return writeLocalFile({ stepName, fileName, data });
                 case 'memory':
-                    return writeMemoryFile({ stepName, fileName, data });
+                    return writeMemoryFile({ fileName, data });
             }
         }
     }
@@ -28,17 +28,8 @@ export function isMemoryFilePath(dbPath: unknown): boolean {
     if (!isString(dbPath)) {
         return false;
     }
-    return dbPath.startsWith(MEMORY_PREFIX_URL);
-}
 
-export async function compressMemoryFileString(path: string) {
-    try {
-        const file = await handleAPFile(path);
-        return MEMORY_PREFIX_URL + file.filename
-    } catch (e) {
-        console.error(e);
-        return path;
-    }
+    return dbPath.startsWith(MEMORY_PREFIX_URL);
 }
 
 export function isApFilePath(dbPath: unknown): boolean {
@@ -60,7 +51,7 @@ export async function handleAPFile(path: string) {
     }
 }
 
-async function writeMemoryFile({ stepName, fileName, data }: { stepName: string, fileName: string, data: Buffer }): Promise<string> {
+async function writeMemoryFile({ fileName, data }: { fileName: string, data: Buffer }): Promise<string> {
     try {
         const base64Data = data.toString('base64');
         const base64String = JSON.stringify({ fileName, data: base64Data });
@@ -88,7 +79,7 @@ async function writeDbFile({ stepName, flowId, fileName, data }: { stepName: str
     formData.append('flowId', flowId);
     formData.append('file', new Blob([data], { type: 'application/octet-stream' }));
 
-    const response = await fetch(globals.apiUrl + '/v1/step-files', {
+    const response = await fetch(globals.apiUrl + 'v1/step-files', {
         method: 'POST',
         headers: {
             Authorization: 'Bearer ' + globals.workerToken
@@ -105,7 +96,7 @@ async function writeDbFile({ stepName, flowId, fileName, data }: { stepName: str
 
 async function readDbFile(absolutePath: string): Promise<ApFile> {
     const fileId = absolutePath.replace(DB_PREFIX_URL, '');
-    const response = await fetch(globals.apiUrl + `/v1/step-files/${encodeURIComponent(fileId)}`, {
+    const response = await fetch(globals.apiUrl + `v1/step-files/${encodeURIComponent(fileId)}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',

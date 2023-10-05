@@ -4,6 +4,7 @@ import { system } from '../../../../helper/system/system'
 import { SystemProp } from '../../../../helper/system/system-prop'
 import { flowQueueConsumer } from '../../flow-queue-consumer'
 import { OneTimeJobData, ScheduledJobData } from '../../job-data'
+import { logger } from '../../../../helper/logger'
 
 class Semaphore {
     private maxConcurrent: number
@@ -45,6 +46,7 @@ export async function consumeJobsInMemory(): Promise<void> {
         while (inMemoryQueueManager.queues.ONE_TIME.length > 0) {
             const job = inMemoryQueueManager.queues.ONE_TIME.shift()!
             processOneTimeJob(job.data)
+                .catch((e) => logger.error(e, '[MemoryConsumer#consumeJobsInMemory] processOneTimeJob'))
         }
 
         const delayedJobs = inMemoryQueueManager.queues.DELAYED.filter(
@@ -54,6 +56,7 @@ export async function consumeJobsInMemory(): Promise<void> {
             inMemoryQueueManager.queues.DELAYED =
         inMemoryQueueManager.queues.DELAYED.filter((j) => j.id !== job.id)
             processScheduledJob(job.data)
+                .catch((e) => logger.error(e, '[MemoryConsumer#consumeJobsInMemory] processScheduledJob'))
         }
 
         const repeatedJob = inMemoryQueueManager.queues.REPEATING.filter(
@@ -63,7 +66,9 @@ export async function consumeJobsInMemory(): Promise<void> {
             inMemoryQueueManager.queues.REPEATING =
         inMemoryQueueManager.queues.REPEATING.filter((j) => j.id !== job.id)
             processScheduledJob(job.data)
+                .catch((e) => logger.error(e, '[MemoryConsumer#consumeJobsInMemory] processScheduledJob'))
             inMemoryQueueManager.add(job)
+                .catch((e) => logger.error(e, '[MemoryConsumer#consumeJobsInMemory] inMemoryQueueManager.add'))
         }
 
         await new Promise((resolve) => setTimeout(resolve, 500))
@@ -76,7 +81,7 @@ async function processOneTimeJob(data: OneTimeJobData): Promise<void> {
         await flowQueueConsumer.consumeOnetimeJob(data)
     }
     finally {
-        concurrencySemaphore.release() 
+        concurrencySemaphore.release()
     }
 }
 
@@ -86,6 +91,6 @@ async function processScheduledJob(data: ScheduledJobData): Promise<void> {
         await flowQueueConsumer.consumeScheduledJobs(data)
     }
     finally {
-        concurrencySemaphore.release() 
+        concurrencySemaphore.release()
     }
 }

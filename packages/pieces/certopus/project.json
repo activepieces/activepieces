@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/certopus/package.json",
         "main": "packages/pieces/certopus/src/index.ts",
         "assets": ["packages/pieces/certopus/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

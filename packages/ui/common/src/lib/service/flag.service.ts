@@ -1,8 +1,9 @@
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { map, Observable, shareReplay } from 'rxjs';
+import { map, Observable, of, shareReplay } from 'rxjs';
 import { environment } from '../environments/environment';
+import { theme } from './themeing';
 
 type FlagsMap = Record<string, boolean | string | object | undefined>;
 
@@ -43,6 +44,14 @@ export class FlagService {
     );
   }
 
+  isChatbotEnabled(): Observable<boolean> {
+    return this.getAllFlags().pipe(
+      map((flags) => {
+        return flags['CHATBOT_ENABLED'] as boolean;
+      })
+    );
+  }
+
   isTelemetryEnabled(): Observable<boolean> {
     return this.getAllFlags().pipe(
       map((flags) => {
@@ -55,6 +64,14 @@ export class FlagService {
     return this.getAllFlags().pipe(
       map((flags) => {
         return flags[ApFlagId.WEBHOOK_URL_PREFIX] as string;
+      })
+    );
+  }
+
+  isFlagEnabled(flag: ApFlagId): Observable<boolean> {
+    return this.getAllFlags().pipe(
+      map((value) => {
+        return value[flag] === true;
       })
     );
   }
@@ -105,5 +122,26 @@ export class FlagService {
         return flags[ApFlagId.TEMPLATES_SOURCE_URL] as string;
       })
     );
+  }
+  getLogos(): Observable<{
+    fullLogoUrl: string;
+    smallFullLogoUrl: string;
+    favIconUrl: string;
+    logoIconUrl: string;
+  }> {
+    return of(theme.logos);
+  }
+  getColors(): Observable<Record<string, string | Record<string, string>>> {
+    return of(theme.colors);
+  }
+  getWarnPalette(): Observable<
+    Record<string, string | Record<string, string>>
+  > {
+    return of(theme.materialWarnPalette);
+  }
+  getPrimaryPalette(): Observable<
+    Record<string, string | Record<string, string>>
+  > {
+    return of(theme.materialPrimaryPalette);
   }
 }

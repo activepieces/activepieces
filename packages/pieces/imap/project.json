@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/imap/package.json",
         "main": "packages/pieces/imap/src/index.ts",
         "assets": ["packages/pieces/imap/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

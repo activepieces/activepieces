@@ -33,7 +33,7 @@ import { getServerUrl } from '../../helper/public-ip-utils'
 import { flowService } from '../flow/flow.service'
 import { stepFileService } from '../step-file/step-file.service'
 import { sandboxProvisioner } from '../../workers/sandbox/provisioner/sandbox-provisioner'
-import { SandBoxCacheType } from '../../workers/sandbox/provisioner/sandbox-cache-type'
+import { SandBoxCacheType } from '../../workers/sandbox/provisioner/sandbox-cache-key'
 
 export const stepRunService = {
     async create({ projectId, flowVersionId, stepName, userId }: CreateParams): Promise<StepRunResponse> {
@@ -131,6 +131,7 @@ async function executeCode({ step, flowVersion, projectId }: ExecuteParams<CodeA
         file,
         step,
         input: step.settings.input,
+        serverUrl: await getServerUrl(),
         flowVersion,
         projectId,
     })

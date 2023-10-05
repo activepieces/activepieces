@@ -5,6 +5,8 @@ FROM activepieces/ap-base:7 AS build
 WORKDIR /usr/src/app
 COPY . .
 
+RUN apt update && apt install -y cmake libopenblas-dev patchelf
+
 # Install backend dependencies and build the projects
 RUN npm ci
 RUN npx nx run-many --target=build --projects=backend,ui-core --skip-nx-cache
@@ -25,6 +27,8 @@ RUN apt-get update && \
 
 # Copy Nginx configuration template
 COPY packages/ui/core/nginx.conf /etc/nginx/nginx.conf
+
+COPY --from=build /usr/src/app/LICENSE /usr/src/app/LICENSE
 
 # Copy Output files to appropriate directory from build stage
 COPY --from=build /usr/src/app/dist/ /usr/src/app/dist/

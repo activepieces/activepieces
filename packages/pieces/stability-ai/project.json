@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/stability-ai/package.json",
         "main": "packages/pieces/stability-ai/src/index.ts",
         "assets": ["packages/pieces/stability-ai/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

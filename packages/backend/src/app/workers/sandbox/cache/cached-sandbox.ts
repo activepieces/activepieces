@@ -8,6 +8,8 @@ import { engineInstaller } from '../../engine/engine-installer'
 import { logger } from '../../../helper/logger'
 import { Mutex } from 'async-mutex'
 import dayjs from 'dayjs'
+import { FileId } from '@activepieces/shared'
+import { codeBuilder } from '../../code-worker/code-builder'
 
 export class CachedSandbox {
     private static readonly CACHE_PATH = system.get(SystemProp.CACHE_PATH) ?? resolve('dist', 'cache')
@@ -50,7 +52,7 @@ export class CachedSandbox {
         })
     }
 
-    async prepare({ pieces }: PrepareParams): Promise<void> {
+    async prepare({ pieces, codeArchives = [] }: PrepareParams): Promise<void> {
         logger.debug({ key: this.key, state: this._state, activeSandboxes: this._activeSandboxCount }, '[CachedSandbox#prepare]')
 
         await this.lock.runExclusive(async (): Promise<void> => {
@@ -76,6 +78,8 @@ export class CachedSandbox {
                 path: this.path(),
             })
 
+            await this.buildCodeArchives(codeArchives)
+
             this._state = CachedSandboxState.READY
         })
     }
@@ -95,6 +99,18 @@ export class CachedSandbox {
     private deletePathIfExists(): Promise<void> {
         return rm(this.path(), { recursive: true, force: true })
     }
+
+    private async buildCodeArchives(codeArchives: CodeArchive[]): Promise<void> {
+        const buildJobs = codeArchives.map((archive) =>
+            codeBuilder.processCodeStep({
+                sourceCodeId: archive.id,
+                codeZip: archive.content,
+                buildPath: this.path(),
+            }),
+        )
+
+        await Promise.all(buildJobs)
+    }
 }
 
 type CtorParams = {
@@ -106,6 +122,12 @@ type Piece = {
     version: string
 }
 
+type CodeArchive = {
+    id: FileId
+    content: Buffer
+}
+
 type PrepareParams = {
     pieces: Piece[]
+    codeArchives?: CodeArchive[]
 }

@@ -37,10 +37,9 @@ import { getEdition, getWebhookSecret } from './secret-helper'
 import { appEventRoutingService } from '../app-event-routing/app-event-routing.service'
 import { pieceMetadataService } from '../pieces/piece-metadata-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
-import { codeBuilder } from '../workers/code-worker/code-builder'
 import { fileService } from '../file/file.service'
 import { sandboxProvisioner } from '../workers/sandbox/provisioner/sandbox-provisioner'
-import { SandBoxCacheType } from '../workers/sandbox/provisioner/sandbox-cache-type'
+import { SandBoxCacheType } from '../workers/sandbox/provisioner/sandbox-cache-key'
 
 type GenerateWorkerTokenParams = {
     projectId: ProjectId
@@ -53,8 +52,8 @@ export type EngineHelperTriggerResult<
 > = ExecuteTriggerResponse<T>
 
 export type EngineHelperPropResult =
-  | DropdownState<unknown>
-  | Record<string, DynamicPropsValue>
+    | DropdownState<unknown>
+    | Record<string, DynamicPropsValue>
 
 export type EngineHelperActionResult = ExecuteActionResponse
 
@@ -67,13 +66,13 @@ PieceMetadata,
 >
 
 export type EngineHelperResult =
-  | EngineHelperFlowResult
-  | EngineHelperTriggerResult
-  | EngineHelperPropResult
-  | EngineHelperCodeResult
-  | EngineHelperExtractPieceInformation
-  | EngineHelperActionResult
-  | EngineHelperValidateAuthResult
+    | EngineHelperFlowResult
+    | EngineHelperTriggerResult
+    | EngineHelperPropResult
+    | EngineHelperCodeResult
+    | EngineHelperExtractPieceInformation
+    | EngineHelperActionResult
+    | EngineHelperValidateAuthResult
 
 export type EngineHelperResponse<Result extends EngineHelperResult> = {
     status: EngineResponseStatus
@@ -110,12 +109,8 @@ const execute = async <Result extends EngineHelperResult>(
 
     const sandboxPath = sandbox.getSandboxFolderPath()
 
-    const serializedInput = JSON.stringify({
-        ...input,
-        apiUrl: 'http://127.0.0.1:3000',
-    })
 
-    await fs.writeFile(`${sandboxPath}/input.json`, serializedInput)
+    await fs.writeFile(`${sandboxPath}/input.json`, JSON.stringify(input))
     const sandboxResponse = await sandbox.runOperation(operation)
 
     sandboxResponse.standardOutput.split('\n').forEach((f) => {
@@ -287,15 +282,15 @@ export const engineHelper = {
         const sandbox = await sandboxProvisioner.provision({
             type: SandBoxCacheType.CODE,
             artifactSourceId: sourceId,
+            codeArchives: [
+                {
+                    id: sourceId,
+                    content: fileEntity.data,
+                },
+            ],
         })
 
         try {
-            await codeBuilder.processCodeStep({
-                codeZip: fileEntity.data,
-                sourceCodeId: sourceId,
-                buildPath: sandbox.getSandboxFolderPath(),
-            })
-
             const input = {
                 ...operation,
                 workerToken: await generateWorkerToken({ projectId: operation.projectId }),

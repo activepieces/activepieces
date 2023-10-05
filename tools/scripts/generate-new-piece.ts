@@ -56,7 +56,7 @@ import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
 export const ${pieceNameCamelCase} = createPiece({
   displayName: "${capitalizeFirstLetter(pieceName)}",
   auth: PieceAuth.None(),
-  minimumSupportedRelease: '0.8.0',
+  minimumSupportedRelease: '0.9.0',
   logoUrl: "https://cdn.activepieces.com/pieces/${pieceName}.png",
   authors: [],
   actions: [],
@@ -78,6 +78,7 @@ const updateProjectJsonConfig = async (pieceName: string) => {
   assert(projectJson.targets?.build?.options, '[updateProjectJsonConfig] targets.build.options is required');
 
   projectJson.targets.build.options.buildableProjectDepsInPackageJsonType = 'dependencies'
+  projectJson.targets.build.options.updateBuildableProjectDepsInPackageJson = true
   await writeProjectJson(`packages/pieces/${pieceName}`, projectJson)
 }
 

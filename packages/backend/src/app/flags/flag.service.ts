@@ -1,4 +1,4 @@
-import { ApFlagId, Flag } from '@activepieces/shared'
+import { ApEdition, ApFlagId, Flag } from '@activepieces/shared'
 import { databaseConnection } from '../database/database-connection'
 import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
@@ -39,6 +39,12 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.CHATBOT_ENABLED,
+                value: getEdition() === ApEdition.ENTERPRISE ? false : system.getBoolean(SystemProp.CHATBOT_ENABLED),
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.CLOUD_AUTH_ENABLED,
                 value: system.getBoolean(SystemProp.CLOUD_AUTH_ENABLED) ?? true,
                 created,
@@ -47,6 +53,18 @@ export const flagService = {
             {
                 id: ApFlagId.EDITION,
                 value: getEdition(),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.SHOW_DOCS,
+                value: getEdition() !== ApEdition.ENTERPRISE,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.SHOW_COMMUNITY,
+                value: getEdition() !== ApEdition.ENTERPRISE,
                 created,
                 updated,
             },

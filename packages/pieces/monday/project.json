@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/monday/package.json",
         "main": "packages/pieces/monday/src/index.ts",
         "assets": ["packages/pieces/monday/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

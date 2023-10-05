@@ -1,5 +1,5 @@
 import { FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
-import { ActivepiecesError, ErrorCode, GetPieceRequestParams, GetPieceRequestQuery, GetPieceRequestWithScopeParams, InstallPieceRequest, ListPiecesRequestQuery, PieceOptionRequest } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ErrorCode, GetPieceRequestParams, GetPieceRequestQuery, GetPieceRequestWithScopeParams, InstallPieceRequest, ListPiecesRequestQuery, PieceOptionRequest } from '@activepieces/shared'
 import { engineHelper } from '../helper/engine-helper'
 import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
@@ -8,6 +8,7 @@ import { PieceMetadata, PieceMetadataSummary } from '@activepieces/pieces-framew
 import { FastifyRequest } from 'fastify'
 import { logger } from '../helper/logger'
 import { flagService } from '../flags/flag.service'
+import { getServerUrl } from '../helper/public-ip-utils'
 
 const statsEnabled = system.getBoolean(SystemProp.STATS_ENABLED)
 
@@ -41,7 +42,7 @@ export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done)
                     },
                 })
                 return pieceMetdata
-            } 
+            }
             catch (err) {
                 logger.error(JSON.stringify(err))
                 throw new ActivepiecesError({
@@ -61,10 +62,13 @@ export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done)
     }, async (req): Promise<PieceMetadataSummary[]> => {
         const latestRelease = await flagService.getCurrentVersion()
         const release = req.query.release ?? latestRelease
-        return await pieceMetadataService.list({
+        const edition = req.query.edition ?? ApEdition.COMMUNITY
+        const pieceMetadataSummary = await pieceMetadataService.list({
             release,
             projectId: req.principal.projectId,
+            edition,
         })
+        return pieceMetadataSummary
     })
 
     app.get('/:scope/:name', {
@@ -111,6 +115,7 @@ export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done)
             pieceName: req.body.pieceName,
             pieceVersion: req.body.pieceVersion,
             propertyName: req.body.propertyName,
+            serverUrl: await getServerUrl(),
             stepName: req.body.stepName,
             input: req.body.input,
             projectId: req.principal.projectId,

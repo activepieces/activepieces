@@ -1,5 +1,5 @@
 import { UserEntity } from '../user/user-entity'
-import { ProjectEntity } from '../project/project.entity'
+import { ProjectEntity } from '../project/project-entity'
 import { FlowEntity } from '../flows/flow/flow.entity'
 import { FlowVersionEntity } from '../flows/flow-version/flow-version-entity'
 import { FileEntity } from '../file/file.entity'
@@ -19,6 +19,7 @@ import { DatabaseType, system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
 import { ArrayContains, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
 import { StepFileEntity } from '../flows/step-file/step-file.entity'
+import { ChatbotEntity } from '../chatbot/chatbot.entity'
 
 const databaseType = system.get(SystemProp.DB_TYPE)
 
@@ -41,6 +42,7 @@ export const commonProperties = {
         FolderEntity,
         PieceMetadataEntity,
         StepFileEntity,
+        ChatbotEntity,
     ],
     synchronize: false,
 }

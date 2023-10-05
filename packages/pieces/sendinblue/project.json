@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/sendinblue/package.json",
         "main": "packages/pieces/sendinblue/src/index.ts",
         "assets": ["packages/pieces/sendinblue/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

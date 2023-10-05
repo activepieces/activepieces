@@ -28,9 +28,7 @@ export const updateRowAction = createAction({
     async run({propsValue, auth}) {
         const {spreadsheet_id, sheet_id, values, row_id, first_row_headers} = propsValue;
         const sheetName = await googleSheetsCommon.findSheetName(auth['access_token'], spreadsheet_id, sheet_id);
-        if (!sheetName) {
-            throw Error("Sheet not found in spreadsheet");
-        }
+
         let formattedValues = (first_row_headers ? objectToArray(values) : values['values']) as (string | null)[];
         formattedValues = formattedValues.map(value => value === "" ? null : value);
         if (formattedValues.length > 0) {
