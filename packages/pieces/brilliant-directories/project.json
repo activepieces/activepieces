@@ -17,7 +17,8 @@
         "assets": [
           "packages/pieces/brilliant-directories/*.md"
         ],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "publish": {
