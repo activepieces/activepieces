@@ -39,6 +39,11 @@ export const getInvoices = createAction({
                 description: 'Filter by Client ID, default is all clients.',
                 required: false,
             }),
+            numberOfResults: Property.Number({
+                displayName: 'Max Results',
+                description: 'Maximum number of results to return. 9999 is default.',
+                required: false,
+            })
         },
 
         async run(context) {
@@ -50,12 +55,17 @@ export const getInvoices = createAction({
 
             const queryParams = new URLSearchParams();
             queryParams.append('client_status', context.propsValue.invoiceStatus || 'unpaid');
-            queryParams.append('client_id', context.propsValue.clientID || '');
+            // only include client_id in the query parameters if it has been specified
+            if (context.propsValue.clientID?.valueOf != null || context.propsValue.clientID != undefined) {
+                queryParams.append('client_id', context.propsValue.clientID || '');
+            }
             queryParams.append('is_deleted', 'false'); // only return invoices that are not deleted
+            queryParams.append('per_page', context.propsValue.numberOfResults?.toString() || '9999'); // otherwise it only returns 20 per page hopefully 
 
             // Remove trailing slash from base_url
             const baseUrl = context.auth.base_url.replace(/\/$/, "");
             const url = `${baseUrl}/api/v1/invoices/?${queryParams.toString()}`;
+            // console.log("INVOICENINJA: " + url);
             const httprequestdata = {
                 method: HttpMethod.GET,
                 url,
@@ -64,56 +74,50 @@ export const getInvoices = createAction({
             
             try {
                   const response = await httpClient.sendRequest(httprequestdata);
-                  // Process the successful response here (status 2xx).
-                  //
+                  const my= [];
+                  // Process the response here (status 2xx).
                   if (response.body.meta.pagination.total>0) { 
                     // Each invoice that is found will have lots of information, lets remove the guff
-                    const NumberOfInvoices=response.body.data[0].contacts.length;
+                    // changed from .total to .count because we're only interested in those in the first page of results which
+                    // is what we set the per_page to to correspond to the number of records we wanted
+                    const NumberOfInvoices=response.body.meta.pagination.count;
+                    
                     for(let i=0; i < NumberOfInvoices; i++) {
-                    // theres a lot of extra data I don't really want in the actual response of contacts so I want to tr and just pick out
-                    // firstname, lastname, email, etc as I don't think we need the rest, just to keep it simpler
-                    delete response.body.data[i].id;
-                    delete response.body.data[i].user_id;
-                    delete response.body.data[i].assigned_user_id;
-                    delete response.body.data[i].vendor_id;
-                    delete response.body.data[i].design_id;
-                    delete response.body.data[i].created_at;
-                    delete response.body.data[i].updated_at;
-                    delete response.body.data[i].is_deleted;                    
+                        my.push({
+                            invoice: {
+                                clientid: response.body.data[i].client_id,
+                                invoiceno: response.body.data[i].number,
+                                ponumber: response.body.data[i].po_number,
+                                invdate: response.body.data[i].date,
+                                duedate: response.body.data[i].due_date,
+                                punote: response.body.data[i].public_notes,
+                                prnote: response.body.data[i].private_notes,
+                                reminder1: response.body.data[i].reminder1_sent,
+                                reminder2: response.body.data[i].reminder2_sent,
+                                reminder3: response.body.data[i].reminder3_sent,
+                                lastreminder: response.body.data[i].reminder_last_sent,
+                                firstsku: response.body.data[i].line_items[0].product_key,
+                                firstitem: response.body.data[i].line_items[0].notes,
+                                amount: response.body.data[i].amount, 
+                                balance: response.body.data[i].balance, 
+                                paid: response.body.data[i].paid_to_date,
+                                 }
+                    });
+                    // console.log("INVOICENINJA: (" + i.toString() + ") " + response.body.data[i].amount);
                     }
-                   /* const json=[{
-                        client_no_contacts: NumberOfInvoices,
-                        client_id: response.body.data[0].id,
-                        client_name: response.body.data[0].name,
-                        client_web: response.body.data[0].website,
-                        client_private_notes: response.body.data[0].private_notes,
-                        client_balance: response.body.data[0].balance,
-                        client_paid_to_date: response.body.data[0].paid_to_date,
-                        client_payment_balance: response.body.data[0].payment_balance,
-                        client_credit_balance: response.body.data[0].credit_balance,
-                        client_public_notes: response.body.data[0].public_notes,
-                        client_address1: response.body.data[0].address1,
-                        client_address2: response.body.data[0].address2,
-                        client_phone: response.body.data[0].phone,
-                        client_city: response.body.data[0].city,
-                        client_state: response.body.data[0].state,
-                        client_postcode: response.body.data[0].postal_code,
-                        client_vat: response.body.data[0].vat_number,
-                        client_display_name: response.body.data[0].display_name,
-                        client_contacts: response.body.data[0].contacts,
-                        //meta: response.body.meta,
-                        }]
-                        //return json;
-                        */
-                        return response.body;
-                    return true; 
+                    return my;
+ 
                 } else { 
                     return false; 
                 } // this is still returned so if it is false we'll return notfound or similar
                 } catch (error) {
                   // Handle the error when the request fails (status other than 2xx).
-                  return "There was a problem getting information from your Invoice Ninja";
+                  // console.log((error as Error).message);
+                  return ((error as Error).message);
+           //       return "There was a problem getting information from your Invoice Ninja";
                 }
 
             }             
 })
+
+
