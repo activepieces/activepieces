@@ -91,6 +91,6 @@ export const askOpenRouterAction = createAction({
             }
         };
         const response = await httpClient.sendRequest<promptResponse>(request);
-        return  response.body.choices[0].text;
+        return  response.body.choices[0].text.trim();
     }
 });
