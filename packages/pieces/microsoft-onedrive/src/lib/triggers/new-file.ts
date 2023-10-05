@@ -27,10 +27,7 @@ export const newFile = createTrigger({
     displayName: 'New File',
     description: 'Trigger when a new file is uploaded.',
     props: {
-        parentFolder: Property.ShortText({
-            displayName: 'Parent Folder ID',
-            required: false,
-        }),
+        parentFolder: oneDriveCommon.parentFolder
     },
     type: TriggerStrategy.POLLING,
     onEnable: async (context) => {
