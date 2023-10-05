@@ -116,7 +116,6 @@ export const getInvoices = createAction({
                   return ((error as Error).message);
            //       return "There was a problem getting information from your Invoice Ninja";
                 }
-
             }             
 })
 

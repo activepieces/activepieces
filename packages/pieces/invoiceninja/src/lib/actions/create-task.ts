@@ -43,7 +43,6 @@ export const createTask = createAction({
             const headers = {
                 'X-Api-Token': INapiToken,
             };
-
             const queryParams = new URLSearchParams();
             queryParams.append('number', context.propsValue.number || '');
             queryParams.append('client_id', context.propsValue.client_id || '');
