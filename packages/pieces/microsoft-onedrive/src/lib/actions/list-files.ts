@@ -9,10 +9,7 @@ export const listFiles = createAction({
     description: 'List files in a OneDrive folder',
     displayName: 'List Files',
     props: {
-        parentFolder: Property.ShortText({
-            displayName: 'Parent Folder ID',
-            required: false,
-        }),
+        parentFolder: oneDriveCommon.parentFolder,
     },
     async run(context) {
         const parentId = context.propsValue.parentFolder ?? 'root';

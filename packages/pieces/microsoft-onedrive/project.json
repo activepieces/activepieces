@@ -17,7 +17,8 @@
         "assets": [
           "packages/pieces/microsoft-onedrive/*.md"
         ],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "publish": {

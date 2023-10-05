@@ -20,11 +20,7 @@ export const uploadFile = createAction({
       description: "The file URL or base64 to upload",
       required: true,
     }),
-    parentId: Property.ShortText({
-      displayName: 'Parent ID',
-      description: 'The ID of the parent folder to upload the file to',
-      required: false,
-    })
+    parentId: oneDriveCommon.parentFolder
   },
   async run(context) {
     const fileData = context.propsValue.file;
