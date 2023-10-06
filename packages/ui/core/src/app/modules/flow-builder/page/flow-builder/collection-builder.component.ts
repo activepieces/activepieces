@@ -329,7 +329,6 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
       .pipe(
         distinctUntilChanged(),
         tap((version) => {
-          
           if (version) {
             const rootStep = FlowFactoryUtil.createRootStep(version);
             this.flowRendererService.refreshCoordinatesAndSetActivePiece(

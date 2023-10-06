@@ -268,12 +268,12 @@ export class FlowsEffects {
             };
             break;
           }
-          case FlowsActionType.ADD_DUPLICATED_ACTION: {
+          case FlowsActionType.DUPLICATE_ACTION: {
             flowOperation = {
               request: {
-                originalStepName: action.operation.originalStepName,
+                stepName: action.operation.originalStepName,
               },
-              type: FlowOperationType.ADD_DUPLICATED_ACTION,
+              type: FlowOperationType.DUPLICATE_ACTION,
             };
             break;
           }
