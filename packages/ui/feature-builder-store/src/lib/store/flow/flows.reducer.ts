@@ -78,9 +78,9 @@ const _flowsReducer = createReducer(
     clonedState.flow.version = flowHelper.apply(
       clonedFlowVersionWithArtifacts,
       {
-        type: FlowOperationType.ADD_DUPLICATED_ACTION,
+        type: FlowOperationType.DUPLICATE_ACTION,
         request: {
-          originalStepName: operation.originalStepName,
+          stepName: operation.originalStepName,
         },
       }
     );

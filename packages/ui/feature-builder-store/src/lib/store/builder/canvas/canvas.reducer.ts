@@ -166,15 +166,15 @@ const __CanvasReducer = createReducer(
   }),
   on(FlowsActions.duplicateStep, (state, { operation }): CanvasState => {
     const clonedState: CanvasState = JSON.parse(JSON.stringify(state));
-    const clonedFlowVersionWithArtifacts:FlowVersion = JSON.parse(
+    const clonedFlowVersionWithArtifacts: FlowVersion = JSON.parse(
       JSON.stringify(operation.flowVersionWithArtifacts)
     );
     clonedState.displayedFlowVersion = flowHelper.apply(
       clonedFlowVersionWithArtifacts,
       {
-        type: FlowOperationType.ADD_DUPLICATED_ACTION,
+        type: FlowOperationType.DUPLICATE_ACTION,
         request: {
-          originalStepName: operation.originalStepName,
+          stepName: operation.originalStepName,
         },
       }
     );

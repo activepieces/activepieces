@@ -5,7 +5,7 @@ import {
   FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
 import { Observable, forkJoin, map, switchMap, take, tap } from 'rxjs';
-import { ActionType, FlowVersion, FlowViewMode } from '@activepieces/shared';
+import { FlowVersion, FlowViewMode, flowHelper } from '@activepieces/shared';
 import { Store } from '@ngrx/store';
 import { FlowService } from '@activepieces/ui/common';
 @Component({
@@ -22,13 +22,7 @@ export class DuplicateStepActionComponent {
     const flowVersionWithArtifacts$ = this.getFlowVersionWithArtifacts();
     this.duplicate$ = flowVersionWithArtifacts$.pipe(
       tap((flowVersionWithArtifacts) => {
-        if (
-          this.flowItem &&
-          (this.flowItem.type === ActionType.CODE ||
-            this.flowItem.type === ActionType.PIECE ||
-            this.flowItem.type === ActionType.BRANCH ||
-            this.flowItem.type === ActionType.LOOP_ON_ITEMS)
-        ) {
+        if (this.flowItem && flowHelper.isAction(this.flowItem.type)) {
           this.store.dispatch(
             FlowsActions.duplicateStep({
               operation: {

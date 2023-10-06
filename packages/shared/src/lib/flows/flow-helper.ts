@@ -13,8 +13,6 @@ import {
   ActionType,
   BranchAction,
   LoopOnItemsAction,
-  BranchOperator,
-  CodeAction,
   SingleActionSchema,
 } from './actions/action';
 import { Trigger, TriggerType } from './triggers/trigger';
@@ -22,7 +20,7 @@ import { TypeCompiler } from '@sinclair/typebox/compiler';
 import { FlowVersion, FlowVersionState } from './flow-version';
 import { ActivepiecesError, ErrorCode } from '../common/activepieces-error';
 import semver from 'semver';
-
+import { applyFunctionToValuesSync, isString } from '../common';
 
 type Step = Action | Trigger;
 
@@ -387,56 +385,12 @@ function moveAction(
 }
 
 
-function addDuplicatedAction(
-  flowVersion: FlowVersion,
-  request: {
-    originalStepName:string,
-    duplicatedStep:Action
-  }
-): FlowVersion {
-  return transferFlow(flowVersion, (parentStep: Step) => {
-   
-    if (parentStep.name !== request.originalStepName) {
-      return parentStep;
-    }
-    
-    
-    switch(request.duplicatedStep.type)
-    { case ActionType.PIECE:
-      case ActionType.CODE:{
-        parentStep.nextAction = createAction(request.duplicatedStep, {
-          nextAction: parentStep.nextAction,
-        });
-        break;
-      }
-      case ActionType.BRANCH:{
-        parentStep.nextAction = createAction(request.duplicatedStep, {
-          nextAction: parentStep.nextAction,
-          onFailureAction:request.duplicatedStep.onFailureAction,
-          onSuccessAction: request.duplicatedStep.onSuccessAction
-        });
-        break;
-      }
-      case ActionType.LOOP_ON_ITEMS:
-        {
-          parentStep.nextAction = createAction(request.duplicatedStep, {
-            nextAction: parentStep.nextAction,
-            firstLoopAction: request.duplicatedStep.firstLoopAction
-          });
-          break;
-        }
-    }
-    return parentStep;
-  });
-}
-
-
 function addAction(
   flowVersion: FlowVersion,
   request: AddActionRequest
 ): FlowVersion {
   return transferFlow(flowVersion, (parentStep: Step) => {
-   
+
     if (parentStep.name !== request.parentStep) {
       return parentStep;
     }
@@ -458,7 +412,7 @@ function addAction(
 
         parentStep.nextAction = createAction(request.action, {
           nextAction: parentStep.nextAction,
-          
+
         });
       } else {
         throw new ActivepiecesError(
@@ -741,9 +695,9 @@ function upgradePiece(step: Step, stepName: string): Step {
   const clonedStep: Step = JSON.parse(JSON.stringify(step));
   switch (step.type) {
     case ActionType.PIECE:
-    case TriggerType.PIECE:{
+    case TriggerType.PIECE: {
       const { pieceVersion, pieceName } = step.settings;
-      if (isLegacyApp({pieceName, pieceVersion})) {
+      if (isLegacyApp({ pieceName, pieceVersion })) {
         return step;
       }
       if (pieceVersion.startsWith('^') || pieceVersion.startsWith('~')) {
@@ -761,9 +715,9 @@ function upgradePiece(step: Step, stepName: string): Step {
 }
 
 // TODO Remove this in 2024, these pieces didn't follow the standarad versioning where the minor version has to be increased when there is breaking change.
-function isLegacyApp({pieceName, pieceVersion}: {pieceName: string, pieceVersion: string}){
+function isLegacyApp({ pieceName, pieceVersion }: { pieceName: string, pieceVersion: string }) {
   let newVersion = pieceVersion;
-  if(newVersion.startsWith("^") || newVersion.startsWith("~")){
+  if (newVersion.startsWith("^") || newVersion.startsWith("~")) {
     newVersion = newVersion.substring(1)
   }
   if (
@@ -781,210 +735,85 @@ function isLegacyApp({pieceName, pieceVersion}: {pieceName: string, pieceVersion
   return false;
 }
 
-function duplicateStep<T extends Action>(step:T,flowVersionWithArtifacts:FlowVersion):T{
-  const codeStepsArtifacts:Record<string,string> = {};
-  getAllSteps(flowVersionWithArtifacts.trigger).forEach(ca=>{
-    if(ca.type === ActionType.CODE)
-    {
-      if(ca.settings.artifact)
-      {
-        codeStepsArtifacts[ca.name]=ca.settings.artifact;
-      }
-    else
-      {
-        console.error(`step with name '${ca.name}' has no artifact`)
-      }
-    }
-  })
-  const renameStep = (action:Action)=>{
-    action.name = findAvailableStepName(flowVersionWithArtifacts,action.name)
-    action.displayName = `${action.displayName} Copy`
+function duplicateStep(stepName: string, flowVersionWithArtifacts: FlowVersion): FlowVersion {
+  const clonedStep = JSON.parse(JSON.stringify(flowHelper.getStep(flowVersionWithArtifacts, stepName)));
+  clonedStep.nextAction = undefined;
+  if (!clonedStep) {
+    throw new Error(`step with name '${stepName}' not found`);
   }
-  const addArtifactToCodeStep = (codeStep:CodeAction)=>{
-    if(codeStep.settings.inputUiInfo?.currentSelectedData)
-    {
-      codeStep.settings.inputUiInfo.currentSelectedData = undefined;
-    }
-    if(codeStep.settings.inputUiInfo?.lastTestDate)
-    {
-      codeStep.settings.inputUiInfo.lastTestDate = undefined;
-    }
-    codeStep.settings.artifact=codeStepsArtifacts[codeStep.name];
-    codeStep.settings.artifactSourceId=undefined;
-  }
+  const existingNames = getAllSteps(flowVersionWithArtifacts.trigger).map((step) => step.name);
+  const oldStepsNameToReplace = getAllSteps(clonedStep).map((step) => step.name);
+  const oldNameToNewName: { [key: string]: string } = {};
 
-  const newStep:T = JSON.parse(JSON.stringify(step));
-  if(newStep.type === ActionType.CODE)
-  {
-    addArtifactToCodeStep(newStep);
-  }
+  oldStepsNameToReplace.forEach((name) => {
+    const newName = findUnusedName(existingNames, 'step');
+    oldNameToNewName[name] = newName;
+    existingNames.push(newName);
+  });
 
-  newStep.nextAction = undefined;
-  newStep.name = findAvailableStepName(flowVersionWithArtifacts,newStep.name);
-  newStep.displayName = `${newStep.displayName} Copy`
-  const childSteps = newStep.type === ActionType.BRANCH || newStep.type === ActionType.LOOP_ON_ITEMS? getAllChildSteps(newStep) : [];
-  const oldDuplicatedStepsNames = [step.name ,...childSteps.map(c=> `${c.name}`)];
-  childSteps.forEach((c)=>{
-    switch(c.type)
-    {
-      case ActionType.CODE:
-        {
-          addArtifactToCodeStep(c);
-          renameStep(c);
-          oldDuplicatedStepsNames.forEach(cn=>{
-            Object.entries(c.settings.input).forEach(([key,value])=>{
-              if(typeof value === "string")
-              {
-                c.settings.input[key]=replaceOldStepNameOccurancesWithNewOneWithinInput({
-                  input:c.settings.input[key],
-                  newStepName:findAvailableStepName(flowVersionWithArtifacts,cn),
-                  oldStepName:cn
-                })
-              }
-            })
-          })
-          break;
-        }
-      case ActionType.BRANCH:{
-        if(c.settings.inputUiInfo?.currentSelectedData)
-        {
-          c.settings.inputUiInfo.currentSelectedData = undefined;
-        }
-        if(c.settings.inputUiInfo?.lastTestDate)
-        {
-          c.settings.inputUiInfo.lastTestDate = undefined;
-        }
-        renameStep(c);
-        oldDuplicatedStepsNames.forEach(cn=>{
-          c.settings.conditions.forEach(con=>{
-            con.forEach(subCon=>{
-            subCon.firstValue =  replaceOldStepNameOccurancesWithNewOneWithinInput({
-                input:subCon.firstValue,
-                newStepName:findAvailableStepName(flowVersionWithArtifacts,cn),
-                oldStepName:cn
-              });
-              if(subCon.operator !== undefined)
-              {
-                switch(subCon.operator)
-                {
-                  case BranchOperator.BOOLEAN_IS_FALSE:
-                  case BranchOperator.BOOLEAN_IS_TRUE:
-                  case BranchOperator.DOES_NOT_EXIST:
-                  case BranchOperator.EXISTS:
-                  {
-                    break;
-                  }
-                  case BranchOperator.NUMBER_IS_GREATER_THAN:
-                  case BranchOperator.NUMBER_IS_LESS_THAN:
-                  case BranchOperator.TEXT_CONTAINS:
-                  case BranchOperator.TEXT_DOES_NOT_CONTAIN:
-                  case BranchOperator.TEXT_DOES_NOT_END_WITH:
-                  case BranchOperator.TEXT_DOES_NOT_EXACTLY_MATCH:
-                  case BranchOperator.TEXT_DOES_NOT_START_WITH:
-                  case BranchOperator.TEXT_ENDS_WITH:
-                  case BranchOperator.TEXT_EXACTLY_MATCHES:
-                  case BranchOperator.TEXT_STARTS_WITH:
-                    {
-                      subCon.secondValue =  replaceOldStepNameOccurancesWithNewOneWithinInput({
-                        input:subCon.firstValue,
-                        newStepName:findAvailableStepName(flowVersionWithArtifacts,cn),
-                        oldStepName:cn
-                      });
-                      break;
-                    }
-                    default:
-                      {
-                        const unhandled:never = subCon.operator;
-                        throw new Error(`${unhandled} operator is unhandled`);
-                      }
-                }
-                
-              }              
-            })
-          })
-        })
-        
-        break;
-      }
-      case ActionType.LOOP_ON_ITEMS:
-        {
-          
-        renameStep(c);
-         oldDuplicatedStepsNames.forEach(cn=>{
-          c.settings.items = replaceOldStepNameOccurancesWithNewOneWithinInput({
-            input:c.settings.items,
-            newStepName:findAvailableStepName(flowVersionWithArtifacts,cn),
-            oldStepName:cn
-          })
-         })
-        break;
-        }
-      case ActionType.PIECE:
-        {
-          if(c.settings.inputUiInfo?.currentSelectedData)
-          {
-            c.settings.inputUiInfo.currentSelectedData = undefined;
-          }
-          if(c.settings.inputUiInfo?.lastTestDate)
-          {
-            c.settings.inputUiInfo.lastTestDate = undefined;
-          }
-          renameStep(c);
-         oldDuplicatedStepsNames.forEach((cn)=>{
-          Object.keys(c.settings.input).forEach((key)=>{
-            if(typeof c.settings.input[key] === "string")
-            {
-              c.settings.input[key] = replaceOldStepNameOccurancesWithNewOneWithinInput({
-                input:c.settings.input[key],
-                newStepName:findAvailableStepName(flowVersionWithArtifacts,cn),
-                oldStepName:cn
-              })
-            }
-            if(typeof c.settings.input[key] === "object")
-            {
-              c.settings.input[key] = JSON.parse(replaceOldStepNameOccurancesWithNewOneWithinInput({
-                input:JSON.stringify(c.settings.input[key]),
-                newStepName:findAvailableStepName(flowVersionWithArtifacts,cn),
-                oldStepName:cn
-              }))
-            }
-          })
-         })
-          break;
-        }
-      case ActionType.MISSING:{
-        break;
-      }
-      default:
-        {
-          const unhandeledStep:never = c;
-          throw new Error(`${unhandeledStep} is unhandeled`);
-        }
+  const duplicatedStep = transferStep(clonedStep, (step: Step) => {
+    step.displayName = `${step.displayName} Copy`;
+    step.name = oldNameToNewName[step.name];
+    if (step.settings.inputUiInfo) {
+      step.settings.inputUiInfo.currentSelectedData = undefined;
+      step.settings.inputUiInfo.lastTestDate = undefined;
     }
+    if (step.type === ActionType.CODE) {
+      step.settings.artifactSourceId = undefined;
+    }
+    oldStepsNameToReplace.forEach((oldName) => {
+      step.settings.input = applyFunctionToValuesSync(step.settings.input, (value: unknown) => {
+        if (isString(value)) {
+          return replaceOldStepNameWithNewOne({ input: value, oldStepName: oldName, newStepName: oldNameToNewName[oldName] });
+        }
+        return value;
+      });
+    });
+    return step;
   })
-  return newStep;
+  let finalFlow = addAction(flowVersionWithArtifacts, {
+    action: duplicatedStep as Action,
+    parentStep: stepName,
+    stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER
+  });
+  const operations = getImportOperations(duplicatedStep);
+  operations.forEach((operation) => {
+    finalFlow = flowHelper.apply(finalFlow, operation);
+  });
+  return finalFlow;
+}
+
+function replaceOldStepNameWithNewOne({ input, oldStepName, newStepName }: { input: string, oldStepName: string, newStepName: string }) {
+  const regex = /{{(.*?)}}/g; // Regular expression to match strings inside {{ }}
+  return input.replace(regex, (match, content) => {
+    // Replace the content inside {{ }} using the provided function
+    const replacedContent = content.replaceAll(new RegExp(`\\b${oldStepName}\\b`, 'g'), `${newStepName}`)
+
+    // Reconstruct the {{ }} with the replaced content
+    return `{{${replacedContent}}}`;
+  });
 }
 
 
-
-function replaceOldStepNameOccurancesWithNewOneWithinInput({input,oldStepName,newStepName}:{input:string,oldStepName:string,newStepName:string})
-{
-    return input.replaceAll(new RegExp(`\\b${oldStepName}\\b`,'g'),`${newStepName}`)
-}
-function findAvailableStepName(flowVersion: FlowVersion, stepPrefix: string): string {
-  const steps = flowHelper
-    .getAllSteps(flowVersion.trigger)
-    .map((f) => f.name);
+function findUnusedName(names: string[], stepPrefix: string): string {
   let availableNumber = 1;
   let availableName = `${stepPrefix}_${availableNumber}`;
 
-  while (steps.includes(availableName)) {
+  while (names.includes(availableName)) {
     availableNumber++;
     availableName = `${stepPrefix}_${availableNumber}`;
   }
 
   return availableName;
 }
+
+function findAvailableStepName(flowVersion: FlowVersion, stepPrefix: string): string {
+  const steps = flowHelper
+    .getAllSteps(flowVersion.trigger)
+    .map((f) => f.name);
+  return findUnusedName(steps, stepPrefix);
+}
+
 export const flowHelper = {
   isValid: isValid,
   apply(
@@ -1028,30 +857,15 @@ export const flowHelper = {
           upgradePiece(step, operation.request.name)
         );
         break;
-      case FlowOperationType.ADD_DUPLICATED_ACTION:
+      case FlowOperationType.DUPLICATE_ACTION:
         {
-          const stepToDuplicate = getStep(clonedVersion,operation.request.originalStepName);
-        
-          if(stepToDuplicate?.type === ActionType.BRANCH ||
-             stepToDuplicate?.type === ActionType.CODE ||
-             stepToDuplicate?.type === ActionType.LOOP_ON_ITEMS  || 
-             stepToDuplicate?.type === ActionType.PIECE)
-            {
-          const duplicatedStep = duplicateStep(stepToDuplicate,clonedVersion)
-          clonedVersion = transferFlow(
-            addDuplicatedAction(clonedVersion, {
-              duplicatedStep:duplicatedStep,
-              originalStepName:operation.request.originalStepName
-            }),
-            (step) => upgradePiece(step, duplicatedStep.name)
-          );
-        }
+          clonedVersion = duplicateStep(operation.request.stepName, clonedVersion);
         }
     }
     clonedVersion.valid = isValid(clonedVersion);
     return clonedVersion;
   },
- 
+
   getStep,
   isAction,
   isTrigger,

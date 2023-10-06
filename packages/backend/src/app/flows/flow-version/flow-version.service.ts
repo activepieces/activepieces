@@ -33,7 +33,7 @@ import { DEFAULT_SAMPLE_DATA_SETTINGS } from '@activepieces/shared'
 import { isNil } from '@activepieces/shared'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import dayjs from 'dayjs'
-import { captureException } from '../../helper/logger'
+import { captureException, logger } from '../../helper/logger'
 import { stepFileService } from '../step-file/step-file.service'
 
 const branchSettingsValidator = TypeCompiler.Compile(BranchActionSettingsWithValidation)
@@ -75,7 +75,7 @@ export const flowVersionService = {
             default:
                 operations = [userOperation]
                 break
-            case FlowOperationType.ADD_DUPLICATED_ACTION:
+            case FlowOperationType.DUPLICATE_ACTION:
                 mutatedFlowVersion = await this.getFlowVersion({
                     flowId: flowVersion.flowId,
                     includeArtifactAsBase64: true,
@@ -88,13 +88,10 @@ export const flowVersionService = {
         }
         for (const operation of operations) {
             mutatedFlowVersion = await applySingleOperation(projectId, mutatedFlowVersion, operation)
-            if(operation.type === FlowOperationType.ADD_DUPLICATED_ACTION)
-            {
-                const allCodeSteps = flowHelper.getAllSteps(mutatedFlowVersion.trigger).filter(c=> c.type === ActionType.CODE);
-                for(let cs of allCodeSteps)
-                {
-                    await uploadArtifact(projectId,cs.settings)
-                }
+            if (operation.type === FlowOperationType.DUPLICATE_ACTION) {
+                flowHelper.getAllSteps(mutatedFlowVersion.trigger).filter(c => c.type === ActionType.CODE).forEach(async (cs) => {
+                    await uploadArtifact(projectId, cs.settings)
+                })
             }
         }
         mutatedFlowVersion.updated = dayjs().toISOString()
@@ -165,7 +162,7 @@ export const flowVersionService = {
 }
 
 async function applySingleOperation(projectId: ProjectId, flowVersion: FlowVersion, operation: FlowOperationRequest): Promise<FlowVersion> {
-    console.log(`applying ${operation.type} to ${flowVersion.displayName}`)
+    logger.info(`applying ${operation.type} to ${flowVersion.displayName}`)
     await flowVersionSideEffects.preApplyOperation({
         projectId,
         flowVersion,
@@ -350,7 +347,7 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
                     break
             }
             break
-    
+
         default:
             break
     }
@@ -495,7 +492,7 @@ async function deleteArtifact(projectId: ProjectId, codeSettings: CodeActionSett
 async function uploadArtifact(projectId: ProjectId, codeSettings: CodeActionSettings): Promise<CodeActionSettings> {
 
     if (codeSettings.artifact !== undefined) {
-      
+
         const bufferFromBase64 = Buffer.from(codeSettings.artifact, 'base64')
 
         const savedFile = await fileService.save({

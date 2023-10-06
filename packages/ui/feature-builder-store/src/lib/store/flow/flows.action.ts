@@ -29,7 +29,7 @@ export enum FlowsActionType {
   MOVE_ACTION = '[FLOWS] MOVE_ACTION',
   IMPORT_FLOW = '[FLOWS] IMPORT_FLOW',
   TOGGLE_WAITING_TO_SAVE = '[FLOWS] TOGGLE_WAITING_TO_SAVE',
-  ADD_DUPLICATED_ACTION = `[FLOWS] ADD_DUPLICATED_ACTION`,
+  DUPLICATE_ACTION = `[FLOWS] DUPLICATE_ACTION`,
 }
 
 const updateTrigger = createAction(
@@ -89,7 +89,7 @@ const importFlow = createAction(
   }>()
 );
 const duplicateStep = createAction(
-  FlowsActionType.ADD_DUPLICATED_ACTION,
+  FlowsActionType.DUPLICATE_ACTION,
   props<{
     operation: {
       flowVersionWithArtifacts: FlowVersion;
