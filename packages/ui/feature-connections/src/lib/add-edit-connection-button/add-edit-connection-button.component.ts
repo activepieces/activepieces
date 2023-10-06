@@ -447,7 +447,6 @@ export class AddEditConnectionButtonComponent {
   ) {
     this.updateOrAddConnectionDialogClosed$ = currentConnection$.pipe(
       switchMap((connection) => {
-        console.log(connection);
         if (connection.type === AppConnectionType.OAUTH2) {
           return this.dialogService
             .open(OAuth2ConnectionDialogComponent, {
