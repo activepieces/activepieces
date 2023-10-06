@@ -35,7 +35,6 @@ export const existsTask = createAction({
       url,
       headers
     };
-
     try {
       const response = await httpClient.sendRequest(httprequestdata);
       // meta data only present if ticket exists. had issues testing true and false on

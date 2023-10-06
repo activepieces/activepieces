@@ -1,4 +1,4 @@
-import { ApFlagId, Flag } from '@activepieces/shared'
+import { ApEdition, ApFlagId, Flag } from '@activepieces/shared'
 import { databaseConnection } from '../database/database-connection'
 import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
@@ -6,6 +6,7 @@ import { FlagEntity } from './flag.entity'
 import axios from 'axios'
 import { webhookService } from '../webhooks/webhook-service'
 import { getEdition } from '../helper/secret-helper'
+import { theme } from './theme'
 
 const flagRepo = databaseConnection.getRepository(FlagEntity)
 
@@ -40,7 +41,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.CHATBOT_ENABLED,
-                value: system.getBoolean(SystemProp.CHATBOT_ENABLED),
+                value: getEdition() === ApEdition.ENTERPRISE ? false : system.getBoolean(SystemProp.CHATBOT_ENABLED),
                 created,
                 updated,
             },
@@ -53,6 +54,24 @@ export const flagService = {
             {
                 id: ApFlagId.EDITION,
                 value: getEdition(),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.THEME,
+                value: theme,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.SHOW_DOCS,
+                value: false,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.SHOW_COMMUNITY,
+                value: false,
                 created,
                 updated,
             },

@@ -16,13 +16,11 @@ import {
 } from 'rxjs';
 import { FormControl } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Chatbot } from '@activepieces/shared';
-import { AuthenticationService } from '@activepieces/ui/common';
+import { APChatMessage, Chatbot } from '@activepieces/shared';
+import { AuthenticationService, FlagService } from '@activepieces/ui/common';
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
-type Message = {
-  text: string;
-  sender: 'user' | 'bot';
-};
+import { MatSnackBar } from '@angular/material/snack-bar';
+
 
 @Component({
   selector: 'app-chat',
@@ -34,21 +32,25 @@ export class ChatComponent {
   @ViewChild('chatThread') chatThreadHTML:
     | ElementRef<HTMLDivElement>
     | undefined;
-  messages: Message[] = [];
+  messages: APChatMessage[] = [];
   messageControl: FormControl<string | null>;
   sendMessage$: Observable<void> | undefined;
   sendingMessage$: BehaviorSubject<boolean> = new BehaviorSubject(false);
-  chatbotId: string | undefined;
+  chatbotId: string;
   chatbotDisplayName = '';
   dots$: Observable<string>;
   data$: Observable<void>;
+  fullLogoSmall$:Observable<string>;
   readonly isLoggedIn: boolean;
   constructor(
     private chatbotService: ChatBotService,
     private actRoute: ActivatedRoute,
     private router: Router,
-    private authService: AuthenticationService
+    private authService: AuthenticationService,
+    private flagService: FlagService,
+    private snackbar:MatSnackBar
   ) {
+   this.fullLogoSmall$ = this.flagService.getLogos().pipe(map(logos=>logos.smallFullLogoUrl));
     this.messageControl = new FormControl('');
     this.chatbotId = this.actRoute.snapshot.params['id'];
     this.data$ = this.actRoute.data.pipe(
@@ -70,28 +72,30 @@ export class ChatComponent {
   }
 
   send() {
-    if (this.sendingMessage$.value || !this.messageControl.value?.trim()) {
+    const input = this.messageControl.value?.trim();
+    if (this.sendingMessage$.value || !input) {
       return;
     }
-    const input = this.messageControl.value!;
+
     this.messages.push({
       text: input,
-      sender: 'user',
+      role: 'user',
     });
     this.messageControl.reset();
     this.scrollThreadDown();
     this.sendingMessage$.next(true);
     this.sendMessage$ = this.chatbotService
       .ask({
-        chatbotId: this.chatbotId!,
+        chatbotId: this.chatbotId,
         input,
+        history:this.messages
       })
       .pipe(
         tap((res) => {
           this.sendingMessage$.next(false);
           this.messages.push({
             text: res.output,
-            sender: 'bot',
+            role: 'bot',
           });
         }),
         tap(() => {
@@ -104,21 +108,20 @@ export class ChatComponent {
           ) {
             this.messages.push({
               text: 'Oops! make sure your OpenAI api key is valid, it seems it is not.',
-              sender: 'bot',
+              role: 'bot',
             });
           } else if (err.status === HttpStatusCode.PaymentRequired) {
             this.messages.push({
               text: 'Oops! Your OpenAI quota is exceeded, please check your OpenAI plan and billing details.',
-              sender: 'bot',
+              role: 'bot',
             });
           } else {
             this.messages.push({
               text: 'Oops! an unexpected error occured, please contact support.',
-              sender: 'bot',
+              role: 'bot',
             });
           }
           this.sendingMessage$.next(false);
-          console.log(this.chatThreadHTML);
           this.scrollThreadDown();
           return EMPTY;
         }),
@@ -128,7 +131,6 @@ export class ChatComponent {
   }
   private scrollThreadDown() {
     setTimeout(() => {
-      console.log(this.chatThreadHTML);
       this.chatThreadHTML?.nativeElement.scrollTo({
         left: 0,
         top: this.chatThreadHTML.nativeElement?.scrollHeight,
@@ -147,5 +149,10 @@ export class ChatComponent {
       const fixedUrl = urlArrays.join('/');
       this.router.navigate([fixedUrl]);
     }
+  }
+
+  codeCopied()
+  {
+    this.snackbar.open('Copied to clipboard');
   }
 }

@@ -67,6 +67,14 @@ export class FlagService {
     );
   }
 
+  isFlagEnabled(flag: ApFlagId): Observable<boolean> {
+    return this.getAllFlags().pipe(
+      map((value) => {
+        return value[flag] === true;
+      })
+    );
+  }
+
   getEdition(): Observable<ApEdition> {
     return this.getAllFlags().pipe(
       map((flags) => {
@@ -112,6 +120,38 @@ export class FlagService {
       map((flags) => {
         return flags[ApFlagId.TEMPLATES_SOURCE_URL] as string;
       })
+    );
+  }
+  getTheme() {
+    return this.getAllFlags().pipe(
+      map((flags) => {
+        return flags[ApFlagId.THEME] as Record<string, any>;
+      })
+    );
+  }
+
+  getLogos(): Observable<{
+    fullLogoUrl: string;
+    smallFullLogoUrl: string;
+    favIconUrl: string;
+    logoIconUrl: string;
+  }> {
+    return this.getTheme().pipe(map((theme) => theme['logos']));
+  }
+
+  getColors(): Observable<Record<string, string | Record<string, string>>> {
+    return this.getTheme().pipe(map((theme) => theme['colors']));
+  }
+  getWarnPalette(): Observable<
+    Record<string, string | Record<string, string>>
+  > {
+    return this.getTheme().pipe(map((theme) => theme['materialWarnPalette']));
+  }
+  getPrimaryPalette(): Observable<
+    Record<string, string | Record<string, string>>
+  > {
+    return this.getTheme().pipe(
+      map((theme) => theme['materialPrimaryPalette'])
     );
   }
 }
