@@ -12,7 +12,10 @@ export const errorHandler = async (
         const statusCodeMap: Partial<Record<ErrorCode, StatusCodes>> = {
             [ErrorCode.INVALID_API_KEY]: StatusCodes.UNAUTHORIZED,
             [ErrorCode.INVALID_BEARER_TOKEN]: StatusCodes.UNAUTHORIZED,
-            [ErrorCode.TASK_QUOTA_EXCEEDED]: StatusCodes.PAYMENT_REQUIRED,
+            // BEGIN EE
+            [ErrorCode.QUOTA_EXCEEDED]: StatusCodes.PAYMENT_REQUIRED,
+            [ErrorCode.PERMISSION_DENIED]: StatusCodes.FORBIDDEN,
+            // END EE
             [ErrorCode.ENTITY_NOT_FOUND]: StatusCodes.NOT_FOUND,
             [ErrorCode.EXISTING_USER]: StatusCodes.CONFLICT,
             [ErrorCode.AUTHORIZATION]: StatusCodes.FORBIDDEN,

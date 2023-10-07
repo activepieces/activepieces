@@ -8,6 +8,9 @@
                 <ap-button btnColor="white" btnStyle="basic" btnSize="medium" (buttonClicked)="showWhatIsNew()"
                     *ngIf="showCommunity$ | async">
                     What's new</ap-button>
+                <div class="ap-flex ap-mx-3">
+                    <app-tasks-progress></app-tasks-progress>
+                </div>
                 <ap-user-avatar class="ap-ml-[20px]"></ap-user-avatar>
             </div>
 

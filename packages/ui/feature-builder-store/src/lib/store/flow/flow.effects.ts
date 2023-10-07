@@ -40,6 +40,7 @@ import {
 import { canvasActions } from '../builder/canvas/canvas.action';
 import { ViewModeActions } from '../builder/viewmode/view-mode.action';
 import { ViewModeEnum } from '../../model';
+import { HttpStatusCode } from '@angular/common/http';
 import { FlowStructureUtil } from '../../utils/flowStructureUtil';
 @Injectable()
 export class FlowsEffects {
@@ -170,14 +171,6 @@ export class FlowsEffects {
               return of(
                 canvasActions.setRightSidebar({
                   sidebarType: RightSideBarType.TRIGGER_TYPE,
-                  props: NO_PROPS,
-                  deselectCurrentStep: false,
-                })
-              );
-            case ActionType.MISSING:
-              return of(
-                canvasActions.setRightSidebar({
-                  sidebarType: RightSideBarType.STEP_TYPE,
                   props: NO_PROPS,
                   deselectCurrentStep: false,
                 })
@@ -320,12 +313,21 @@ export class FlowsEffects {
         }),
         catchError((e) => {
           console.error(e);
-          const shownBar = this.snackBar.open(
-            'You have unsaved changes on this page due to network disconnection.',
-            'Refresh',
-            { duration: undefined, panelClass: 'error' }
-          );
-          shownBar.afterDismissed().subscribe(() => location.reload());
+          if (e.status === HttpStatusCode.Conflict) {
+            const shownBar = this.snackBar.open(
+              'The flow was edited by another teammate less than 1 minute ago. Please wait and try again later.',
+              'Refresh',
+              { duration: undefined, panelClass: 'error' }
+            );
+            shownBar.afterDismissed().subscribe(() => location.reload());
+          } else {
+            const shownBar = this.snackBar.open(
+              'You have unsaved changes on this page due to network disconnection.',
+              'Refresh',
+              { duration: undefined, panelClass: 'error' }
+            );
+            shownBar.afterDismissed().subscribe(() => location.reload());
+          }
           return of(FlowsActions.savedFailed(e));
         })
       );

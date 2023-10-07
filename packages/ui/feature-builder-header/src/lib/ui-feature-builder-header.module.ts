@@ -8,6 +8,9 @@ import { ToggleInstanceStateComponent } from './toggle-instance-state/toggle-ins
 import { PublishButtonComponent } from './publish-button/publish-button.component';
 import { DraftStatusComponent } from './draft-status/draft-status.component';
 import { ImportFlowDialogueComponent } from './import-flow-dialogue/import-flow-dialogue.component';
+import { UiFeatureBuilderFormControlsModule } from '@activepieces/ui/feature-builder-form-controls';
+import { EeComponentsModule } from '@activepieces/ee-components';
+import { EeBillingUiModule } from '@activepieces/ee-billing-ui';
 
 const exportedDeclarations = [
   FlowBuilderHeaderComponent,
@@ -17,10 +20,15 @@ const exportedDeclarations = [
 ];
 @NgModule({
   imports: [
+    EeComponentsModule,
     CommonModule,
     UiCommonModule,
     UiFeatureBuilderStoreModule,
     UiCommonModule,
+    UiFeatureBuilderFormControlsModule,
+    // BEGIN EE
+    EeBillingUiModule,
+    // END EE
   ],
   declarations: [
     ...exportedDeclarations,

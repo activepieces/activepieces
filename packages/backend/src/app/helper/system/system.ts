@@ -1,4 +1,4 @@
-import { ActivepiecesError, ApEdition, ErrorCode } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ApEnvironment, ErrorCode } from '@activepieces/shared'
 import { SystemProp } from './system-prop'
 import { loadEncryptionKey } from '../encryption'
 
@@ -87,9 +87,10 @@ export const validateEnvPropsOnStartup = async (): Promise<void> => {
     const signedUpEnabled = system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
     const queueMode = system.getOrThrow<QueueMode>(SystemProp.QUEUE_MODE)
     const edition = system.get(SystemProp.EDITION)
+    const environment = system.get(SystemProp.ENVIRONMENT)
     await loadEncryptionKey(queueMode)
 
-    if (executionMode !== ExecutionMode.SANDBOXED && edition !== ApEdition.COMMUNITY) {
+    if (executionMode !== ExecutionMode.SANDBOXED && edition !== ApEdition.COMMUNITY && environment === ApEnvironment.PRODUCTION) {
         throw new ActivepiecesError({
             code: ErrorCode.SYSTEM_PROP_INVALID,
             params: {
@@ -97,7 +98,7 @@ export const validateEnvPropsOnStartup = async (): Promise<void> => {
             },
         }, 'Allowing users to sign up is not allowed in non community edtion')
     }
-    if (executionMode === ExecutionMode.UNSANDBOXED && signedUpEnabled) {
+    if (executionMode === ExecutionMode.UNSANDBOXED && signedUpEnabled && environment === ApEnvironment.PRODUCTION) {
         throw new ActivepiecesError({
             code: ErrorCode.SYSTEM_PROP_INVALID,
             params: {

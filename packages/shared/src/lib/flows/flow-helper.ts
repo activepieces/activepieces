@@ -92,7 +92,6 @@ function deleteAction(
         break;
       }
       case ActionType.CODE:
-      case ActionType.MISSING:
       case ActionType.PIECE:
         break;
     }
@@ -519,12 +518,6 @@ function createAction(
         settings: request.settings
       };
       break;
-    case ActionType.MISSING:
-      action = {
-        ...baseProperties,
-        type: ActionType.MISSING,
-        settings: request.settings
-      };
   }
   action.valid = (request.valid ?? true) && actionSchemaValidator.Check(action);
   return action;
@@ -674,12 +667,6 @@ function keepBaseAction(action: Action): Action {
         ...commonProps
       };
     case ActionType.PIECE:
-      return {
-        type: action.type,
-        settings: action.settings,
-        ...commonProps
-      };
-    case ActionType.MISSING:
       return {
         type: action.type,
         settings: action.settings,

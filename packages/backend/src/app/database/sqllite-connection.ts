@@ -11,7 +11,15 @@ import { AddStatusToConnectionsSqlite31693402376520 } from './migration/sqllite3
 import { AddImageUrlAndTitleToUser1693774053027 } from './migration/sqllite3/1693774053027-AddImageUrlAndTitleToUser'
 import { FileTypeCompression1694695212159 } from './migration/sqllite3/1694695212159-file-type-compression'
 import { AddChatBotSqlite31696029443045 } from './migration/sqllite3/1696029443045-AddChatBotSqlite3'
+import { Sql3MigrationCloud1690478550304 } from '../ee/database/migrations/sqlite3/1690478550304-Sql3MigrationCloud'
+import { AddReferralsSqlLite31690547637542 } from '../ee/database/migrations/sqlite3/1690547637542-AddReferralsSqlLite3'
+import { FlowTemplateAddUserIdAndImageUrl1694380048802 } from '../ee/database/migrations/sqlite3/1694380048802-flow-template-add-user-id-and-image-url'
 
+const enterpriseMigrations = [
+    Sql3MigrationCloud1690478550304,
+    AddReferralsSqlLite31690547637542,
+    FlowTemplateAddUserIdAndImageUrl1694380048802,
+]
 function getSQLiteFilePath(): string {
     const homeDirectory = os.homedir()
     const hiddenFolderName = '.activepieces'
@@ -38,6 +46,7 @@ export const createSqlLiteDatasource = () => {
             AddImageUrlAndTitleToUser1693774053027,
             FileTypeCompression1694695212159,
             AddChatBotSqlite31696029443045,
+            ...enterpriseMigrations,
         ],
         ...commonProperties,
     })

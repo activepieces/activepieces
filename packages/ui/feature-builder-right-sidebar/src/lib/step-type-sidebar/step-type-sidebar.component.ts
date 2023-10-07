@@ -172,7 +172,7 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
         }
         if (this._showTriggers) {
           this.replaceTrigger(flowItemDetails);
-        } else if (results.currentStep?.type !== ActionType.MISSING) {
+        } else {
           const operation = this.constructAddOperation(
             (results.rightSideBar.props as StepTypeSideBarProps).stepName,
             results.currentFlow.version,
@@ -184,19 +184,6 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
           this.store.dispatch(
             FlowsActions.addAction({
               operation: operation,
-            })
-          );
-        } else {
-          const operation = constructUpdateOperation(
-            flowItemDetails,
-            results.currentStep.name,
-            results.currentStep.displayName,
-            this.codeService.helloWorldBase64()
-          );
-          this.store.dispatch(
-            FlowsActions.updateAction({
-              operation: operation,
-              updatingMissingStep: true,
             })
           );
         }
@@ -323,9 +310,6 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
             },
           },
         };
-      }
-      case ActionType.MISSING: {
-        throw new Error('Select missing action type should not be possible.');
       }
       case ActionType.BRANCH: {
         return {

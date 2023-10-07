@@ -13,6 +13,8 @@ import { StatusCodes } from 'http-status-codes'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { flowService } from './flow.service'
 import { CountFlowsRequest } from '@activepieces/shared'
+import dayjs from 'dayjs'
+import { isNil } from 'lodash'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 
@@ -46,11 +48,22 @@ export const flowController: FastifyPluginAsyncTypebox = async (fastify) => {
                 }
                 Body: FlowOperationRequest
             }>,
+            reply,
         ) => {
             const flow = await flowService.getOne({ id: request.params.flowId, versionId: undefined, projectId: request.principal.projectId, viewMode: FlowViewMode.NO_ARTIFACTS })
             if (flow === null) {
                 throw new ActivepiecesError({ code: ErrorCode.FLOW_NOT_FOUND, params: { id: request.params.flowId } })
             }
+            // BEGIN EE
+            const currentTime = dayjs()
+            if (!isNil(flow.version.updatedBy) &&
+              flow.version.updatedBy !== request.principal.id &&
+              currentTime.diff(dayjs(flow.version.updated), 'minute') <= 1
+            ) {
+                await reply.status(StatusCodes.CONFLICT).send()
+                return
+            }
+            // END EE
             return await flowService.update({ userId: request.principal.id, flowId: request.params.flowId, request: request.body, projectId: request.principal.projectId })
         },
     )

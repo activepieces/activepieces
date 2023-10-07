@@ -542,9 +542,6 @@ function findStepLogoUrlForMentions(
       return 'assets/img/custom/piece/loop_mention.png';
     case ActionType.CODE:
       return 'assets/img/custom/piece/code_mention.png';
-    case ActionType.MISSING:
-      // TODO EDIT
-      return 'assets/img/custom/piece/emptyTrigger.png';
   }
 }
 

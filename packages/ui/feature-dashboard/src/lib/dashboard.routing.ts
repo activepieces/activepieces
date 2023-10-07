@@ -8,13 +8,14 @@ import {
 import { ConnectionsTableComponent } from './pages/connections-table/connections-table.component';
 import { FoldersResolver } from './resolvers/folders.resolver';
 import { DashboardContainerComponent } from './dashboard-container.component';
-import { CommunityPiecesTableComponent } from './pages/community-pieces-table/community-pieces-table.component';
 import { ConnectionsResolver, environment } from '@activepieces/ui/common';
 import {
   ChatbotsTableComponent,
   ChatbotSettingsComponent,
   chatbotSettingsResolver,
 } from '@activepieces/ui/feature-chatbot';
+import { PlansPageComponent } from '@activepieces/ee-billing-ui';
+import { ProjectMembersTableComponent } from '@activepieces/ee/project-members';
 
 export const DashboardLayoutRouting: Routes = [
   {
@@ -30,10 +31,31 @@ export const DashboardLayoutRouting: Routes = [
         component: RunsTableComponent,
       },
       {
-        title: `My Pieces - ${environment.websiteTitle}`,
-        path: 'settings/my-pieces',
+        title: `Plans - ${environment.websiteTitle}`,
+        path: 'plans',
+        component: PlansPageComponent,
+      },
+      {
+        title: `Team - ${environment.websiteTitle}`,
+        path: 'team',
+        component: ProjectMembersTableComponent,
+      },
+      {
+        title: `Chatbots - ${environment.websiteTitle}`,
+        path: 'chatbots',
         pathMatch: 'full',
-        component: CommunityPiecesTableComponent,
+        component: ChatbotsTableComponent,
+      },
+      {
+        path: 'chatbots/:id/settings',
+        canActivate: [],
+        title: `Activepieces - Chatbot settings`,
+        pathMatch: 'full',
+        component: ChatbotSettingsComponent,
+        resolve: {
+          connections: ConnectionsResolver,
+          chatbot: chatbotSettingsResolver,
+        },
       },
       {
         title: `Chatbots - ${environment.websiteTitle}`,

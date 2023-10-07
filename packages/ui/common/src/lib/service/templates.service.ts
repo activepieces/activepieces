@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
-import { map, shareReplay, switchMap } from 'rxjs';
+import { Observable, map, shareReplay, switchMap } from 'rxjs';
 import { FlowTemplate, ListFlowTemplatesRequest } from '@activepieces/shared';
 import { FlagService } from './flag.service';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../environments/environment';
+import { ShareFlowRequest } from '@activepieces/ee-shared';
 import dayjs from 'dayjs';
 
 @Injectable({
@@ -49,6 +50,14 @@ export class TemplatesService {
       })
     );
   }
+
+  shareTemplate(request: ShareFlowRequest): Observable<FlowTemplate> {
+    return this.http.post<FlowTemplate>(
+      environment.apiUrl + '/flow-templates',
+      request
+    );
+  }
+
   getTemplate(flowId: string) {
     return this.http.get<FlowTemplate>(
       environment.apiUrl + `/flow-templates/${flowId}`

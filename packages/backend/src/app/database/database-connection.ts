@@ -12,20 +12,41 @@ import { TriggerEventEntity } from '../flows/trigger-events/trigger-event.entity
 import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-simulation-entity'
 import { FlowInstanceEntity } from '../flows/flow-instance/flow-instance.entity'
 import { FolderEntity } from '../flows/folder/folder.entity'
+import { FlowTemplateEntity } from '../ee/flow-template/flow-template.entity'
 import { PieceMetadataEntity } from '../pieces/piece-metadata-entity'
+import { AppCredentialEntity } from '../ee/app-credentials/app-credentials.entity'
+import { ConnectionKeyEntity } from '../ee/connection-keys/connection-key.entity'
+import { AppSumoEntity } from '../ee/appsumo/appsumo.entity'
+import { ReferralEntity } from '../ee/referrals/referral.entity'
 import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDatasource } from './sqllite-connection'
 import { DatabaseType, system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
 import { ArrayContains, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
 import { StepFileEntity } from '../flows/step-file/step-file.entity'
+import { ProjectPlanEntity } from '../ee/billing/plans/plan.entity'
+import { ProjectUsageEntity } from '../ee/billing/usage/usage-entity'
 import { ChatbotEntity } from '../chatbot/chatbot.entity'
+import { ProjectMemberEntity } from '../ee/project-members/project-member.entity'
 
 const databaseType = system.get(SystemProp.DB_TYPE)
+
+const enterprisesEntities = [
+    ProjectMemberEntity,
+    AppSumoEntity,
+    ReferralEntity,
+    ChatbotEntity,
+    ProjectPlanEntity,
+    ProjectUsageEntity,
+    FlowTemplateEntity,
+    AppCredentialEntity,
+    ConnectionKeyEntity,
+]
 
 export const commonProperties = {
     subscribers: [],
     entities: [
+        ...enterprisesEntities,
         TriggerEventEntity,
         FlowInstanceEntity,
         AppEventRoutingEntity,
@@ -48,9 +69,9 @@ export const commonProperties = {
 }
 
 export const databaseConnection =
-  databaseType === DatabaseType.SQLITE3
-      ? createSqlLiteDatasource()
-      : createPostgresDataSource()
+    databaseType === DatabaseType.SQLITE3
+        ? createSqlLiteDatasource()
+        : createPostgresDataSource()
 
 export function APArrayContains<T extends ObjectLiteral>(columnName: string, values: string[], query: SelectQueryBuilder<T>): SelectQueryBuilder<T> {
     const databaseType = system.get(SystemProp.DB_TYPE)

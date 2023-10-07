@@ -50,6 +50,7 @@ export class StateIconComponent implements OnInit, OnChanges {
       case ExecutionOutputStatus.TIMEOUT:
       case StepOutputStatus.FAILED:
       case AppConnectionStatus.ERROR:
+      case ExecutionOutputStatus.QUOTA_EXCEEDED:
         return 'assets/img/custom/status/error.svg';
       case ExecutionOutputStatus.PAUSED:
       case StepOutputStatus.PAUSED:
@@ -68,6 +69,8 @@ export class StateIconComponent implements OnInit, OnChanges {
       case StepOutputStatus.SUCCEEDED:
       case StepOutputStatus.STOPPED:
         return 'Succeeded';
+      case ExecutionOutputStatus.QUOTA_EXCEEDED:
+        return 'Quota Exceeded';
       case ExecutionOutputStatus.INTERNAL_ERROR:
         return 'Internal Error';
       case ExecutionOutputStatus.TIMEOUT:

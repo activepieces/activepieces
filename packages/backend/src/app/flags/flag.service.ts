@@ -57,6 +57,20 @@ export const flagService = {
                 created,
                 updated,
             },
+            // BEGIN EE
+            {
+                id: ApFlagId.BILLING_ENABLED,
+                value: getEdition() === ApEdition.CLOUD,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.PROJECT_MEMBERS_ENABLED,
+                value: getEdition() !== ApEdition.COMMUNITY,
+                created,
+                updated,
+            },
+            // END EE
             {
                 id: ApFlagId.THEME,
                 value: theme,
@@ -123,9 +137,21 @@ export const flagService = {
                 created,
                 updated,
             },
+            // BEGIN EE
+            {
+                id: ApFlagId.TEMPLATES_PROJECT_ID,
+                value: system.get(SystemProp.TEMPLATES_PROJECT_ID),
+                created,
+                updated,
+            },
+            // END EE
         )
 
         return flags
+    },
+    async getCurrentRelease() {
+        const currentVersion = (await import('package.json')).version
+        return currentVersion
     },
     async getLatestPackageDotJson() {
         try {

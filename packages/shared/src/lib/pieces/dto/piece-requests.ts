@@ -48,6 +48,13 @@ export type PieceOptionRequest = Static<typeof PieceOptionRequest>;
 export const InstallPieceRequest = Type.Object({
     pieceName: Type.String(),
     pieceVersion: ExactVersionType,
+    // BEGIN CLOUD
+    tarFile: Type.Optional(Type.Array(Type.Object({
+        data: Type.Unknown(),
+        mimetype: Type.String(),
+        filename: Type.String(),
+    }))),
+    // END CLOUD
 })
 
 export type InstallPieceRequest = Static<typeof InstallPieceRequest>

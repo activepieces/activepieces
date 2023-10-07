@@ -20,9 +20,11 @@ import { logger } from './helper/logger'
 import { appEventRoutingModule } from './app-event-routing/app-event-routing.module'
 import { triggerEventModule } from './flows/trigger-events/trigger-event.module'
 import { flowInstanceModule } from './flows/flow-instance/flow-instance.module'
+import { apiKeyAuthMiddleware } from './ee/authentication/api-key-auth-middleware.ee'
 import { fastifyRawBody } from 'fastify-raw-body'
 import { stepFileModule } from './flows/step-file/step-file.module'
 import { chatbotModule } from './chatbot/chatbot.module'
+import { rbacAuthMiddleware } from './ee/authentication/rbac-auth-middleware'
 import { userModule } from './user/user.module'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
@@ -81,7 +83,13 @@ export const setupApp = async (): Promise<FastifyInstance> => {
         }
     })
 
+    // BEGIN EE
+    app.addHook('onRequest', apiKeyAuthMiddleware)
+    // END EE
     app.addHook('onRequest', tokenVerifyMiddleware)
+    // BEGIN EE
+    app.addHook('onRequest', rbacAuthMiddleware)
+    // END EE
     app.setErrorHandler(errorHandler)
     await app.register(fileModule)
     await app.register(flagModule)

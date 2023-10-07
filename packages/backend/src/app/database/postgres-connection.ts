@@ -42,6 +42,23 @@ import { FixPieceMetadataOrderBug1694367186954 } from './migration/postgres/1694
 import { FileTypeCompression1694691554696 } from './migration/postgres/1694691554696-file-type-compression'
 import { Chatbot1694902537040 } from './migration/postgres/1694902537040-Chatbot'
 import { AddVisibilityStatusToChatbot1695719749099 } from './migration/postgres/1695719749099-AddVisibilityStatusToChatbot'
+import { MakeStripeSubscriptionNullable1685053959806 } from '../ee/database/migrations/postgres/1685053959806-MakeStripeSubscriptionNullable'
+import { AddTemplates1685538145476 } from '../ee/database/migrations/postgres/1685538145476-addTemplates'
+import { ChangeToJsonToKeepKeysOrder1685991260335 } from '../ee/database/migrations/postgres/1685991260335-ChangeToJsonToPeserveKeys'
+import { AddPinnedAndBlogUrlToTemplates1686133672743 } from '../ee/database/migrations/postgres/1686133672743-AddPinnedAndBlogUrlToTemplates'
+import { AddPinnedOrder1686154285890 } from '../ee/database/migrations/postgres/1686154285890-add_pinned_order'
+import { AddProjectIdToTemplate1688083336934 } from '../ee/database/migrations/postgres/1688083336934-AddProjectIdToTemplate'
+import { AddBillingParameters1688739844617 } from '../ee/database/migrations/postgres/1688739844617-AddBillingParameters'
+import { AddAppSumo1688943462327 } from '../ee/database/migrations/postgres/1688943462327-AddAppSumo'
+import { AddProjectMembers1689177797092 } from '../ee/database/migrations/postgres/1689177797092-AddProjectMembers'
+import { AddTasksPerDays1689336533370 } from '../ee/database/migrations/postgres/1689336533370-AddTasksPerDays'
+import { RemoveCalculatedMetrics1689806173642 } from '../ee/database/migrations/postgres/1689806173642-RemoveCalculatedMetrics'
+import { AddReferral1690459469381 } from '../ee/database/migrations/postgres/1690459469381-AddReferral'
+import { FlowTemplateAddUserIdAndImageUrl1694379223109 } from '../ee/database/migrations/postgres/1694379223109-flow-template-add-user-id-and-image-url'
+import { ProjectMemberRelations1694381968985 } from '../ee/database/migrations/postgres/1694381968985-project-member-relations'
+import { AddFeaturedDescriptionAndFlagToTemplates1694604120205 } from '../ee/database/migrations/postgres/1694604120205-AddFeaturedDescriptionAndFlagToTemplates'
+import { ModifyBilling1694902537045 } from '../ee/database/migrations/postgres/1694902537045-ModifyBilling'
+import { AddDatasourcesLimit1695916063833 } from '../ee/database/migrations/postgres/1695916063833-AddDatasourcesLimit'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
@@ -98,20 +115,37 @@ export const createPostgresDataSource = () => {
             ProjectNotifyStatusNotNull1683458275525,
             FlowRunPauseMetadata1683552928243,
             ChangeVariableSyntax1683898241599,
+            MakeStripeSubscriptionNullable1685053959806,
+            AddTemplates1685538145476,
             PieceMetadata1685537054805,
+            ChangeToJsonToKeepKeysOrder1685991260335,
+            AddPinnedAndBlogUrlToTemplates1686133672743,
+            AddPinnedOrder1686154285890,
             AddProjectIdToPieceMetadata1686090319016,
             UnifyPieceName1686138629812,
             AddScheduleOptions1687384796637,
+            AddProjectIdToTemplate1688083336934,
+            AddBillingParameters1688739844617,
             AddAuthToPiecesMetadata1688922241747,
+            AddAppSumo1688943462327,
+            AddProjectMembers1689177797092,
             AddUpdatedByInFlowVersion1689292797727,
             AddTasksToRun1689351564290,
+            AddTasksPerDays1689336533370,
+            RemoveCalculatedMetrics1689806173642,
+            AddReferral1690459469381,
             AddAppConnectionTypeToTopLevel1691703023866,
             AddTagsToRun1692106375081,
             AddFileToPostgres1693004806926,
             AddStatusToConnections1693402930301,
             AddUserMetaInformation1693850082449,
             FixPieceMetadataOrderBug1694367186954,
+            FlowTemplateAddUserIdAndImageUrl1694379223109,
+            ProjectMemberRelations1694381968985,
+            AddFeaturedDescriptionAndFlagToTemplates1694604120205,
+            ModifyBilling1694902537045,
             FileTypeCompression1694691554696,
+            AddDatasourcesLimit1695916063833,
             Chatbot1694902537040,
             AddVisibilityStatusToChatbot1695719749099,
         ],
