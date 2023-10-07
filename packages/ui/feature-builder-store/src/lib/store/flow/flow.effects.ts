@@ -57,24 +57,6 @@ export class FlowsEffects {
     );
   });
 
-  replaceEmptyStep = createEffect(() => {
-    return this.actions$.pipe(
-      ofType(FlowsActions.updateAction),
-      concatLatestFrom(() =>
-        this.store.select(BuilderSelectors.selectCurrentStepName)
-      ),
-      switchMap(([action, stepName]) => {
-        if (action.updatingMissingStep) {
-          return of(
-            canvasActions.selectStepByName({
-              stepName: stepName,
-            })
-          );
-        }
-        return EMPTY;
-      })
-    );
-  });
   replaceTrigger = createEffect(() => {
     return this.actions$.pipe(
       ofType(FlowsActions.updateTrigger),

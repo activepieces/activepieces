@@ -1,4 +1,4 @@
-import { ApEdition, isNil } from '@activepieces/shared'
+import { isNil } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { ActivepiecesError, ErrorCode, ExecutionType, FlowRun, PauseType } from '@activepieces/shared'
 import { flowQueue } from '../../workers/flow-worker/flow-queue'
@@ -6,8 +6,7 @@ import { logger } from '../../helper/logger'
 import { LATEST_JOB_DATA_SCHEMA_VERSION } from '../../workers/flow-worker/job-data'
 import { JobType } from '../../workers/flow-worker/queues/queue'
 import { notifications } from '../../helper/notifications'
-import { getEdition } from '../../helper/secret-helper'
-import { usageService } from '../../ee/billing/usage/usage-service'
+import { flowRunHooks } from './flow-run-hooks'
 
 type StartParams = {
     flowRun: FlowRun
@@ -36,15 +35,8 @@ export const flowRunSideEffects = {
     async finish({ flowRun }: {
         flowRun: FlowRun
     }): Promise<void> {
-        // BEGIN EE
-        const edition = getEdition()
-        if (edition === ApEdition.CLOUD) {
-            await usageService.addTasksConsumed({
-                projectId: flowRun.projectId,
-                tasks: flowRun.tasks!,
-            })
-        }
-        // END EE
+        await flowRunHooks.getHooks().onFinish({ projectId: flowRun.projectId, tasks: flowRun.tasks! })
+
         await notifications.notifyRun({
             flowRun,
         })

@@ -45,6 +45,8 @@ import { AddVisibilityStatusToChatbot1695719749099 } from './migration/postgres/
 import { MakeStripeSubscriptionNullable1685053959806 } from '../ee/database/migrations/postgres/1685053959806-MakeStripeSubscriptionNullable'
 import { AddTemplates1685538145476 } from '../ee/database/migrations/postgres/1685538145476-addTemplates'
 import { ChangeToJsonToKeepKeysOrder1685991260335 } from '../ee/database/migrations/postgres/1685991260335-ChangeToJsonToPeserveKeys'
+import { ApEdition } from '@activepieces/shared'
+import { getEdition } from '../helper/secret-helper'
 import { AddPinnedAndBlogUrlToTemplates1686133672743 } from '../ee/database/migrations/postgres/1686133672743-AddPinnedAndBlogUrlToTemplates'
 import { AddPinnedOrder1686154285890 } from '../ee/database/migrations/postgres/1686154285890-add_pinned_order'
 import { AddProjectIdToTemplate1688083336934 } from '../ee/database/migrations/postgres/1688083336934-AddProjectIdToTemplate'
@@ -52,13 +54,13 @@ import { AddBillingParameters1688739844617 } from '../ee/database/migrations/pos
 import { AddAppSumo1688943462327 } from '../ee/database/migrations/postgres/1688943462327-AddAppSumo'
 import { AddProjectMembers1689177797092 } from '../ee/database/migrations/postgres/1689177797092-AddProjectMembers'
 import { AddTasksPerDays1689336533370 } from '../ee/database/migrations/postgres/1689336533370-AddTasksPerDays'
-import { RemoveCalculatedMetrics1689806173642 } from '../ee/database/migrations/postgres/1689806173642-RemoveCalculatedMetrics'
-import { AddReferral1690459469381 } from '../ee/database/migrations/postgres/1690459469381-AddReferral'
-import { FlowTemplateAddUserIdAndImageUrl1694379223109 } from '../ee/database/migrations/postgres/1694379223109-flow-template-add-user-id-and-image-url'
 import { ProjectMemberRelations1694381968985 } from '../ee/database/migrations/postgres/1694381968985-project-member-relations'
-import { AddFeaturedDescriptionAndFlagToTemplates1694604120205 } from '../ee/database/migrations/postgres/1694604120205-AddFeaturedDescriptionAndFlagToTemplates'
-import { ModifyBilling1694902537045 } from '../ee/database/migrations/postgres/1694902537045-ModifyBilling'
 import { AddDatasourcesLimit1695916063833 } from '../ee/database/migrations/postgres/1695916063833-AddDatasourcesLimit'
+import { ModifyBilling1694902537045 } from '../ee/database/migrations/postgres/1694902537045-ModifyBilling'
+import { AddFeaturedDescriptionAndFlagToTemplates1694604120205 } from '../ee/database/migrations/postgres/1694604120205-AddFeaturedDescriptionAndFlagToTemplates'
+import { FlowTemplateAddUserIdAndImageUrl1694379223109 } from '../ee/database/migrations/postgres/1694379223109-flow-template-add-user-id-and-image-url'
+import { AddReferral1690459469381 } from '../ee/database/migrations/postgres/1690459469381-AddReferral'
+import { RemoveCalculatedMetrics1689806173642 } from '../ee/database/migrations/postgres/1689806173642-RemoveCalculatedMetrics'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
@@ -70,6 +72,80 @@ const getSslConfig = (): boolean | TlsOptions => {
     }
 
     return false
+}
+
+const getMigrations = () => {
+    const commonMigration = [
+        FlowAndFileProjectId1674788714498,
+        initializeSchema1676238396411,
+        encryptCredentials1676505294811,
+        removeStoreAction1676649852890,
+        billing1677286751592,
+        addVersionToPieceSteps1677521257188,
+        productEmbed1677894800372,
+        addtriggerevents1678621361185,
+        removeCollectionVersion1678492809093,
+        addEventRouting1678382946390,
+        bumpFixPieceVersions1678928503715,
+        migrateSchedule1679014156667,
+        addNotificationsStatus1680563747425,
+        AddInputUiInfo1681107443963,
+        CreateWebhookSimulationSchema1680698259291,
+        RemoveCollections1680986182074,
+        StoreAllPeriods1681019096716,
+        AllowNullableStoreEntryAndTrigger1683040965874,
+        RenameNotifications1683195711242,
+        ListFlowRunsIndices1683199709317,
+        ProjectNotifyStatusNotNull1683458275525,
+        FlowRunPauseMetadata1683552928243,
+        ChangeVariableSyntax1683898241599,
+        PieceMetadata1685537054805,
+        AddProjectIdToPieceMetadata1686090319016,
+        UnifyPieceName1686138629812,
+        AddScheduleOptions1687384796637,
+        AddAuthToPiecesMetadata1688922241747,
+        AddUpdatedByInFlowVersion1689292797727,
+        AddTasksToRun1689351564290,
+        AddAppConnectionTypeToTopLevel1691703023866,
+        AddTagsToRun1692106375081,
+        AddFileToPostgres1693004806926,
+        AddStatusToConnections1693402930301,
+        AddUserMetaInformation1693850082449,
+        FixPieceMetadataOrderBug1694367186954,
+        FileTypeCompression1694691554696,
+        Chatbot1694902537040,
+        AddVisibilityStatusToChatbot1695719749099,
+    ]
+
+    const edition = getEdition()
+    switch (edition) {
+        case ApEdition.CLOUD:
+            commonMigration.push(MakeStripeSubscriptionNullable1685053959806)
+            commonMigration.push(AddTemplates1685538145476)
+            commonMigration.push(ChangeToJsonToKeepKeysOrder1685991260335)
+            commonMigration.push(AddPinnedAndBlogUrlToTemplates1686133672743)
+            commonMigration.push(AddPinnedOrder1686154285890)
+            commonMigration.push(AddProjectIdToTemplate1688083336934)
+            commonMigration.push(AddBillingParameters1688739844617)
+            commonMigration.push(AddAppSumo1688943462327)
+            commonMigration.push(AddProjectMembers1689177797092)
+            commonMigration.push(AddTasksPerDays1689336533370)
+            commonMigration.push(RemoveCalculatedMetrics1689806173642)
+            commonMigration.push(AddReferral1690459469381)
+            commonMigration.push(ProjectMemberRelations1694381968985)
+            commonMigration.push(FlowTemplateAddUserIdAndImageUrl1694379223109)
+            commonMigration.push(AddFeaturedDescriptionAndFlagToTemplates1694604120205)
+            commonMigration.push(ModifyBilling1694902537045)
+            commonMigration.push(AddDatasourcesLimit1695916063833)
+            break
+        case ApEdition.ENTERPRISE:
+            commonMigration.push(AddProjectMembers1689177797092)
+            commonMigration.push(ProjectMemberRelations1694381968985)
+            break
+        case ApEdition.COMMUNITY:
+            break
+    }
+    return commonMigration
 }
 
 export const createPostgresDataSource = () => {
@@ -91,64 +167,7 @@ export const createPostgresDataSource = () => {
         migrationsRun: true,
         migrationsTransactionMode: 'each',
         ssl: getSslConfig(),
-        migrations: [
-            FlowAndFileProjectId1674788714498,
-            initializeSchema1676238396411,
-            encryptCredentials1676505294811,
-            removeStoreAction1676649852890,
-            billing1677286751592,
-            addVersionToPieceSteps1677521257188,
-            productEmbed1677894800372,
-            addtriggerevents1678621361185,
-            removeCollectionVersion1678492809093,
-            addEventRouting1678382946390,
-            bumpFixPieceVersions1678928503715,
-            migrateSchedule1679014156667,
-            addNotificationsStatus1680563747425,
-            AddInputUiInfo1681107443963,
-            CreateWebhookSimulationSchema1680698259291,
-            RemoveCollections1680986182074,
-            StoreAllPeriods1681019096716,
-            AllowNullableStoreEntryAndTrigger1683040965874,
-            RenameNotifications1683195711242,
-            ListFlowRunsIndices1683199709317,
-            ProjectNotifyStatusNotNull1683458275525,
-            FlowRunPauseMetadata1683552928243,
-            ChangeVariableSyntax1683898241599,
-            MakeStripeSubscriptionNullable1685053959806,
-            AddTemplates1685538145476,
-            PieceMetadata1685537054805,
-            ChangeToJsonToKeepKeysOrder1685991260335,
-            AddPinnedAndBlogUrlToTemplates1686133672743,
-            AddPinnedOrder1686154285890,
-            AddProjectIdToPieceMetadata1686090319016,
-            UnifyPieceName1686138629812,
-            AddScheduleOptions1687384796637,
-            AddProjectIdToTemplate1688083336934,
-            AddBillingParameters1688739844617,
-            AddAuthToPiecesMetadata1688922241747,
-            AddAppSumo1688943462327,
-            AddProjectMembers1689177797092,
-            AddUpdatedByInFlowVersion1689292797727,
-            AddTasksToRun1689351564290,
-            AddTasksPerDays1689336533370,
-            RemoveCalculatedMetrics1689806173642,
-            AddReferral1690459469381,
-            AddAppConnectionTypeToTopLevel1691703023866,
-            AddTagsToRun1692106375081,
-            AddFileToPostgres1693004806926,
-            AddStatusToConnections1693402930301,
-            AddUserMetaInformation1693850082449,
-            FixPieceMetadataOrderBug1694367186954,
-            FlowTemplateAddUserIdAndImageUrl1694379223109,
-            ProjectMemberRelations1694381968985,
-            AddFeaturedDescriptionAndFlagToTemplates1694604120205,
-            ModifyBilling1694902537045,
-            FileTypeCompression1694691554696,
-            AddDatasourcesLimit1695916063833,
-            Chatbot1694902537040,
-            AddVisibilityStatusToChatbot1695719749099,
-        ],
+        migrations: getMigrations(),
         ...commonProperties,
     })
 }

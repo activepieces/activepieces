@@ -20,7 +20,6 @@ import { referralModule } from './app/ee/referrals/referral.module'
 import { cloudDatasourceHooks } from './app/ee/chatbot/cloud/cloud-datasources.hook'
 import { projectModule } from './app/project/project-module'
 import { cloudChatbotHooks } from './app/ee/chatbot/cloud/cloud-chatbot.hook'
-import { cloudFlowWorkerHooks } from './app/ee/flow-worker/cloud-flow-worker-hooks'
 import { qdrantEmbeddings } from './app/ee/chatbot/cloud/qdrant-embeddings'
 import { chatbotHooks } from './app/chatbot/chatbot.hooks'
 import { datasourceHooks } from './app/chatbot/datasources/datasource.hooks'
@@ -32,6 +31,9 @@ import { verifyLicenseKey } from './app/ee/helper/licenese-validator'
 import { adminPieceModule } from './app/ee/pieces/admin-piece-module'
 import { appConnectionsHooks } from './app/app-connection/app-connection-service/app-connection-hooks'
 import { cloudAppConnectionsHooks } from './app/ee/app-connections/cloud-app-connection-service'
+import { flowRunHooks } from './app/flows/flow-run/flow-run-hooks'
+import { cloudRunHooks } from './app/ee/flow-run/cloud-flow-run-hooks'
+import { cloudWorkerHooks } from './app/ee/flow-worker/cloud-flow-worker-hooks'
 
 const start = async (app: FastifyInstance): Promise<void> => {
     try {
@@ -53,7 +55,8 @@ const start = async (app: FastifyInstance): Promise<void> => {
                 datasourceHooks.setHooks(cloudDatasourceHooks)
                 embeddings.set(qdrantEmbeddings)
                 appConnectionsHooks.setHooks(cloudAppConnectionsHooks)
-                flowWorkerHooks.setHooks(cloudFlowWorkerHooks)
+                flowWorkerHooks.setHooks(cloudWorkerHooks)
+                flowRunHooks.setHooks(cloudRunHooks)
                 initilizeSentry()
                 break
             case ApEdition.ENTERPRISE:

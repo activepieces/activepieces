@@ -42,7 +42,6 @@ import {
   getDefaultDisplayNameForPiece,
   getDisplayNameForTrigger,
 } from '@activepieces/ui/common';
-import { constructUpdateOperation } from './step-type-list/utils';
 import { Actions, ofType } from '@ngrx/effects';
 
 @Component({

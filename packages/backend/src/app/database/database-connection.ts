@@ -22,31 +22,20 @@ import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDatasource } from './sqllite-connection'
 import { DatabaseType, system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
-import { ArrayContains, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
+import { ArrayContains, EntitySchema, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
 import { StepFileEntity } from '../flows/step-file/step-file.entity'
 import { ProjectPlanEntity } from '../ee/billing/plans/plan.entity'
 import { ProjectUsageEntity } from '../ee/billing/usage/usage-entity'
 import { ChatbotEntity } from '../chatbot/chatbot.entity'
 import { ProjectMemberEntity } from '../ee/project-members/project-member.entity'
+import { getEdition } from '../helper/secret-helper'
+import { ApEdition } from '@activepieces/shared'
 
 const databaseType = system.get(SystemProp.DB_TYPE)
 
-const enterprisesEntities = [
-    ProjectMemberEntity,
-    AppSumoEntity,
-    ReferralEntity,
-    ChatbotEntity,
-    ProjectPlanEntity,
-    ProjectUsageEntity,
-    FlowTemplateEntity,
-    AppCredentialEntity,
-    ConnectionKeyEntity,
-]
-
-export const commonProperties = {
-    subscribers: [],
-    entities: [
-        ...enterprisesEntities,
+function getEntities() {
+    const edition = getEdition()
+    const entities: EntitySchema[] = [
         TriggerEventEntity,
         FlowInstanceEntity,
         AppEventRoutingEntity,
@@ -64,7 +53,33 @@ export const commonProperties = {
         PieceMetadataEntity,
         StepFileEntity,
         ChatbotEntity,
-    ],
+    ]
+    switch (edition) {
+        case ApEdition.CLOUD:
+            entities.push(ProjectMemberEntity)
+            entities.push(AppSumoEntity)
+            entities.push(ReferralEntity)
+            entities.push(ChatbotEntity)
+            entities.push(ProjectPlanEntity)
+            entities.push(ProjectUsageEntity)
+            entities.push(FlowTemplateEntity)
+            entities.push(ConnectionKeyEntity)
+            entities.push(AppCredentialEntity)
+            break
+        case ApEdition.ENTERPRISE:
+            entities.push(ProjectMemberEntity)
+            break
+        case ApEdition.COMMUNITY:
+            break
+        default:
+            throw new Error(`Unsupported edition: ${edition}`)
+    }
+    return entities
+}
+
+export const commonProperties = {
+    subscribers: [],
+    entities: getEntities(),
     synchronize: false,
 }
 

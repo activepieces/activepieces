@@ -14,12 +14,10 @@ import { AddChatBotSqlite31696029443045 } from './migration/sqllite3/16960294430
 import { Sql3MigrationCloud1690478550304 } from '../ee/database/migrations/sqlite3/1690478550304-Sql3MigrationCloud'
 import { AddReferralsSqlLite31690547637542 } from '../ee/database/migrations/sqlite3/1690547637542-AddReferralsSqlLite3'
 import { FlowTemplateAddUserIdAndImageUrl1694380048802 } from '../ee/database/migrations/sqlite3/1694380048802-flow-template-add-user-id-and-image-url'
+import { ApEdition } from '@activepieces/shared'
+import { getEdition } from '../helper/secret-helper'
 
-const enterpriseMigrations = [
-    Sql3MigrationCloud1690478550304,
-    AddReferralsSqlLite31690547637542,
-    FlowTemplateAddUserIdAndImageUrl1694380048802,
-]
+
 function getSQLiteFilePath(): string {
     const homeDirectory = os.homedir()
     const hiddenFolderName = '.activepieces'
@@ -30,6 +28,31 @@ function getSQLiteFilePath(): string {
     const sqliteFilePath = path.join(hiddenFolderPath, 'database.sqlite')
     return sqliteFilePath
 }
+const getMigration = () => {
+    const commonMigration = [
+        InitialSql3Migration1690195839899,
+        AddAppConnectionTypeToTopLevel1691706020626,
+        AddTagsToRunSqlite31692056190942,
+        AddStepFileSqlite31692958076906,
+        AddStatusToConnectionsSqlite31693402376520,
+        AddImageUrlAndTitleToUser1693774053027,
+        FileTypeCompression1694695212159,
+        AddChatBotSqlite31696029443045,
+    ]
+    const edition = getEdition()
+    switch (edition) {
+        case ApEdition.CLOUD:
+            commonMigration.push(Sql3MigrationCloud1690478550304)
+            commonMigration.push(AddReferralsSqlLite31690547637542)
+            commonMigration.push(FlowTemplateAddUserIdAndImageUrl1694380048802)
+            break
+        case ApEdition.ENTERPRISE:
+            break
+        case ApEdition.COMMUNITY:
+            break
+    }
+    return commonMigration
+}
 
 export const createSqlLiteDatasource = () => {
     return new DataSource({
@@ -37,17 +60,7 @@ export const createSqlLiteDatasource = () => {
         database: getSQLiteFilePath(),
         migrationsRun: true,
         migrationsTransactionMode: 'each',
-        migrations: [
-            InitialSql3Migration1690195839899,
-            AddAppConnectionTypeToTopLevel1691706020626,
-            AddTagsToRunSqlite31692056190942,
-            AddStepFileSqlite31692958076906,
-            AddStatusToConnectionsSqlite31693402376520,
-            AddImageUrlAndTitleToUser1693774053027,
-            FileTypeCompression1694695212159,
-            AddChatBotSqlite31696029443045,
-            ...enterpriseMigrations,
-        ],
+        migrations: getMigration(),
         ...commonProperties,
     })
 }

@@ -29,7 +29,7 @@ import { flowRunSideEffects } from './flow-run-side-effects'
 import { logger } from '../../helper/logger'
 import { flowService } from '../flow/flow.service'
 import { MoreThanOrEqual } from 'typeorm'
-import { tasksLimit } from '../../ee/billing/usage/limits/tasks-limit'
+import { flowRunHooks } from './flow-run-hooks'
 
 export const flowRunRepo = databaseConnection.getRepository(FlowRunEntity)
 
@@ -140,11 +140,7 @@ export const flowRunService = {
             projectId,
         })
 
-        // BEGIN EE TODO
-        await tasksLimit.limit({
-            projectId: flow.projectId,
-        })
-        // END EE TODO
+        await flowRunHooks.getHooks().onPreStart({ projectId })
 
         const flowRun = await getFlowRunOrCreate({
             id: flowRunId,

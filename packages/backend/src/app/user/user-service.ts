@@ -23,7 +23,6 @@ export const userService = {
             newsLetter: request.newsLetter,
             status,
         }
-        // BEGIN EE
         const existingUser = await userRepo.findOneBy({
             email: request.email,
         })
@@ -34,8 +33,7 @@ export const userService = {
                 email: request.email,
             })
         }
-        // END EE
-        return await userRepo.save(user)
+        return userRepo.save(user)
     },
     async getMetaInfo({ id }: { id: UserId }): Promise<UserMeta | null> {
         const user = await userRepo.findOneBy({ id })

@@ -1,7 +1,6 @@
 import {
     ActionType,
     ActivepiecesError,
-    ApEdition,
     assertNotNullOrUndefined,
     CodeActionSettings,
     ErrorCode,
@@ -35,11 +34,9 @@ import { PackageInfo } from '../../helper/package-manager'
 import { MAX_LOG_SIZE } from '@activepieces/shared'
 import { acquireLock } from '../../helper/lock'
 import { sandboxProvisioner } from '../sandbox/provisioner/sandbox-provisioner'
-import { tasksLimit } from '../../ee/billing/usage/limits/tasks-limit'
 import { SandBoxCacheType } from '../sandbox/provisioner/sandbox-cache-key'
 import { flowWorkerHooks } from './flow-worker-hooks'
 import { logSerializer } from '../../flows/common/log-serializer'
-import { getEdition } from '../../helper/secret-helper'
 
 type FinishExecutionParams = {
     flowRunId: FlowRunId
@@ -179,26 +176,7 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
         flowVersionWithLockedPieces,
     )
 
-    // BEGIN EE
-    // TODO FIX AND REFACTOR
-    const edition = getEdition()
-    if (edition === ApEdition.CLOUD) {
-        try {
-            await tasksLimit.limit({
-                projectId: jobData.projectId,
-            })
-        }
-        catch (e: unknown) {
-            if (e instanceof ActivepiecesError && (e as ActivepiecesError).error.code === ErrorCode.QUOTA_EXCEEDED) {
-                await flowRunService.finish({ flowRunId: jobData.runId, status: ExecutionOutputStatus.QUOTA_EXCEEDED, tasks: 0, logsFileId: null, tags: [] })
-                return
-            }
-            else {
-                captureException(e)
-            }
-        }
-    }
-    // END EE
+    await flowWorkerHooks.getHooks().preExecute({ projectId: jobData.projectId, runId: jobData.runId })
 
     const sandbox = await getSandbox({
         projectId: jobData.projectId,
@@ -209,7 +187,6 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
     logger.info(`[FlowWorker#executeFlow] flowRunId=${jobData.runId} sandboxId=${sandbox.boxId} prepareTime=${Date.now() - startTime}ms`)
 
     try {
-        await flowWorkerHooks.getHooks().preExecute({ projectId: jobData.projectId })
 
         const { input, logFileId } = await loadInputAndLogFileId({
             flowVersion,
