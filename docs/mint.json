@@ -81,7 +81,8 @@
             "install/options/docker",
             "install/options/docker-compose",
             "install/options/easypanel",            
-            "install/options/aws"
+            "install/options/aws",
+            "install/options/gcp"
           ]
         },
         {

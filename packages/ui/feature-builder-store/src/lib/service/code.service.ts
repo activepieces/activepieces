@@ -24,7 +24,10 @@ type ArtifactsCache = Map<string, ArtifactCacheResult>;
 export class CodeService {
   artifactsCacheForFlowConfigs: ArtifactsCache = new Map();
   artifactsCacheForSteps: ArtifactsCache = new Map();
-  cachedFile: Map<string, any> = new Map<string, Observable<ArrayBuffer>>();
+  cachedFile: Map<string, Observable<ArrayBuffer>> = new Map<
+    string,
+    Observable<ArrayBuffer>
+  >();
 
   constructor(private http: HttpClient) {}
 
@@ -57,7 +60,7 @@ export class CodeService {
         })
       );
     }
-    return this.cachedFile.get(url);
+    return this.cachedFile.get(url)!;
   }
 
   public helloWorldBase64(): string {
