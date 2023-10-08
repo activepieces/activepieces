@@ -59,22 +59,14 @@ const packageChangedFromMainBranch = async (path: string): Promise<boolean> => {
  * @param path path of package to run pre-publishing checks for
  */
 export const packagePrePublishChecks = async (path: string): Promise<boolean> => {
-  // console.info(`[packagePrePublishValidation] path=${path}`)
+  console.info(`[packagePrePublishValidation] path=${path}`)
 
-  // assert(path, '[packagePrePublishValidation] parameter "path" is required')
+  assert(path, '[packagePrePublishValidation] parameter "path" is required')
 
   const { name: packageName, version: currentVersion } = await readPackageJson(path)
   const latestPublishedVersion = await getLatestPublishedVersion(packageName)
   const currentVersionAlreadyPublished = latestPublishedVersion !== null && currentVersion === latestPublishedVersion
-  if(packageName !== '@activepieces/piece-store')
-  {
-    return true;
-  }
-   console.info(`[packagePrePublishValidation] path=${path}`)
 
-  assert(path, '[packagePrePublishValidation] parameter "path" is required')
-  const index = await import(`${path}/src/index`);
-  console.info(JSON.stringify(index));
   if (currentVersionAlreadyPublished) {
     const packageChanged = await packageChangedFromMainBranch(path)
 
