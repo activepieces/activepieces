@@ -36,6 +36,7 @@ export const APITableAuth = PieceAuth.CustomAuth({
 export const apitable = createPiece({
   displayName: "APITable",
   auth: APITableAuth,
+  description: `With APITable, you can create interactive dashboards, serve as a backend for web and mobile apps, enable team collaboration, prototype and develop apps, manage projects, and integrate and automate data workflows`,
   minimumSupportedRelease: '0.5.0',
   logoUrl: "https://cdn.activepieces.com/pieces/apitable.png",
   authors: ['abdallah-alwarawreh'],
