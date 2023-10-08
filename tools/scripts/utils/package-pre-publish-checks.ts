@@ -70,11 +70,14 @@ export const packagePrePublishChecks = async (path: string): Promise<boolean> =>
   {
     return true;
   }
+   console.info(`[packagePrePublishValidation] path=${path}`)
 
+  assert(path, '[packagePrePublishValidation] parameter "path" is required')
+  const index = await import(`${path}/src/index`);
+  console.info(JSON.stringify(index));
   if (currentVersionAlreadyPublished) {
     const packageChanged = await packageChangedFromMainBranch(path)
-    const index = await import(`${path}/src/index`);
-    console.info(JSON.stringify(index));
+
     if (packageChanged) {
       throw new Error(`[packagePrePublishValidation] package version not incremented, path=${path}, version=${currentVersion}`)
     }
