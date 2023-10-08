@@ -211,6 +211,7 @@ We welcome contributions big or small and in different directions. The best way 
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/cyrilselasi"><img src="https://avatars.githubusercontent.com/u/7190330?v=4?s=100" width="100px;" alt="Cyril Selasi"/><br /><sub><b>Cyril Selasi</b></sub></a><br /><a href="#plugin-cyrilselasi" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://nijfranck.github.io"><img src="https://avatars.githubusercontent.com/u/9940307?v=4?s=100" width="100px;" alt="Franck Nijimbere"/><br /><sub><b>Franck Nijimbere</b></sub></a><br /><a href="#plugin-nijfranck" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/alerdenisov"><img src="https://avatars.githubusercontent.com/u/3899837?v=4?s=100" width="100px;" alt="Aleksandr Denisov"/><br /><sub><b>Aleksandr Denisov</b></sub></a><br /><a href="#plugin-alerdenisov" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>
