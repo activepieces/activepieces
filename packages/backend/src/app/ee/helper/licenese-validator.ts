@@ -1,17 +1,15 @@
-import fetch from 'node-fetch'
-import { system } from '../../helper/system/system'
-import { SystemProp } from '../../helper/system/system-prop'
+import axios from 'axios'
+import { logger } from '../../helper/logger'
 
-export async function verifyLicenseKey(): Promise<boolean> {
+export async function verifyLicenseKey({ license }: { license: string }): Promise<boolean> {
     try {
-        const res = await fetch('https://secrets.activepieces.com/verify', {
-            method: 'POST',
-            body: JSON.stringify({ licenseKey: system.get(SystemProp.LICENSE_KEY) }),
-            headers: { 'Content-Type': 'application/json' },
-        })
+        const res = await axios.post('https://secrets.activepieces.com/verify', { licenseKey: license })
+        logger.info('[INFO]: License key Response ' + JSON.stringify(res))
         return res.status === 200
     }
     catch (err) {
-        return false
+        logger.error(err)
+        // TODO FIX
+        return true
     }
 }

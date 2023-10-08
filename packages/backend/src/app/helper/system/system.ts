@@ -1,4 +1,4 @@
-import { ActivepiecesError, ApEdition, ApEnvironment, ErrorCode } from '@activepieces/shared'
+import { ActivepiecesError, ApEnvironment, ErrorCode } from '@activepieces/shared'
 import { SystemProp } from './system-prop'
 import { loadEncryptionKey } from '../encryption'
 
@@ -27,6 +27,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [SystemProp.SANDBOX_RUN_TIME_SECONDS]: '600',
     [SystemProp.SIGN_UP_ENABLED]: 'false',
     [SystemProp.STATS_ENABLED]: 'false',
+    [SystemProp.PACKAGE_ARCHIVE_PATH]: 'dist/archives',
     [SystemProp.CHATBOT_ENABLED]: 'true',
     [SystemProp.TELEMETRY_ENABLED]: 'true',
     [SystemProp.TEMPLATES_SOURCE_URL]: 'https://cloud.activepieces.com/api/v1/flow-templates',
@@ -86,18 +87,9 @@ export const validateEnvPropsOnStartup = async (): Promise<void> => {
     const executionMode = system.get(SystemProp.EXECUTION_MODE)
     const signedUpEnabled = system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
     const queueMode = system.getOrThrow<QueueMode>(SystemProp.QUEUE_MODE)
-    const edition = system.get(SystemProp.EDITION)
     const environment = system.get(SystemProp.ENVIRONMENT)
     await loadEncryptionKey(queueMode)
 
-    if (executionMode !== ExecutionMode.SANDBOXED && edition !== ApEdition.COMMUNITY && environment === ApEnvironment.PRODUCTION) {
-        throw new ActivepiecesError({
-            code: ErrorCode.SYSTEM_PROP_INVALID,
-            params: {
-                prop: SystemProp.EXECUTION_MODE,
-            },
-        }, 'Allowing users to sign up is not allowed in non community edtion')
-    }
     if (executionMode === ExecutionMode.UNSANDBOXED && signedUpEnabled && environment === ApEnvironment.PRODUCTION) {
         throw new ActivepiecesError({
             code: ErrorCode.SYSTEM_PROP_INVALID,

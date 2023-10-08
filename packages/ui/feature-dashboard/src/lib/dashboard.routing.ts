@@ -16,6 +16,7 @@ import {
 } from '@activepieces/ui/feature-chatbot';
 import { PlansPageComponent } from '@activepieces/ee-billing-ui';
 import { ProjectMembersTableComponent } from '@activepieces/ee/project-members';
+import { CommunityPiecesTableComponent } from './pages/community-pieces-table/community-pieces-table.component';
 
 export const DashboardLayoutRouting: Routes = [
   {
@@ -56,6 +57,33 @@ export const DashboardLayoutRouting: Routes = [
           connections: ConnectionsResolver,
           chatbot: chatbotSettingsResolver,
         },
+      },
+      {
+        title: `Chatbots - ${environment.websiteTitle}`,
+        path: 'chatbots',
+        pathMatch: 'full',
+        component: ChatbotsTableComponent,
+      },
+      {
+        path: 'chatbots/:id/settings',
+        canActivate: [],
+        title: `Activepieces - Chatbot settings`,
+        pathMatch: 'full',
+        component: ChatbotSettingsComponent,
+        resolve: {
+          connections: ConnectionsResolver,
+          chatbot: chatbotSettingsResolver,
+        },
+      },
+      {
+        title: `My Pieces - ${environment.websiteTitle}`,
+        path: 'settings/my-pieces',
+        component: CommunityPiecesTableComponent,
+      },
+      {
+        title: `Team - ${environment.websiteTitle}`,
+        path: 'team',
+        component: ProjectMembersTableComponent,
       },
       {
         title: `Chatbots - ${environment.websiteTitle}`,

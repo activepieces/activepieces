@@ -1,7 +1,8 @@
 import { FastifyRequest } from 'fastify'
-import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ErrorCode, isNil } from '@activepieces/shared'
 import { projectMemberService } from '../../ee/project-members/project-member.service'
 import { ProjectMemberPermission, ProjectMemberRole, ProjectMemberRoleToPermissions } from '@activepieces/ee-shared'
+import { getEdition } from '../../helper/secret-helper'
 
 const ProjectMemberPermissionResourceAndAction = {
     [ProjectMemberPermission.READ_FLOW]: {
@@ -37,6 +38,10 @@ const managedResources = [
 ]
 
 export const rbacAuthMiddleware = async (req: FastifyRequest): Promise<void> => {
+    const edition = getEdition()
+    if (edition === ApEdition.COMMUNITY) {
+        return
+    }
     const action = req.method
     const resource = extractResourceName(req.url)
     const projectMemberRole = await projectMemberService.getRole({

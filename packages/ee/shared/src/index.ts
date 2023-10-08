@@ -1,4 +1,5 @@
 export * from './lib/project-members/project-member-role';
+export * from './lib/chatbot';
 export * from './lib/referral/referral';
 export * from './lib/project-members/project-member-request';
 export * from './lib/project-members/project-member';

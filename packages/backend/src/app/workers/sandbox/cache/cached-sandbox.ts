@@ -3,12 +3,12 @@ import { resolve } from 'node:path'
 import { system } from '../../../helper/system/system'
 import { SystemProp } from '../../../helper/system/system-prop'
 import { CachedSandboxState } from './cached-sandbox-state'
-import { pieceManager } from '../../../flows/common/piece-installer'
+import { pieceManager } from '../../../flows/common/piece-manager'
 import { engineInstaller } from '../../engine/engine-installer'
 import { logger } from '../../../helper/logger'
 import { Mutex } from 'async-mutex'
 import dayjs from 'dayjs'
-import { FileId } from '@activepieces/shared'
+import { FileId, PiecePackage } from '@activepieces/shared'
 import { codeBuilder } from '../../code-worker/code-builder'
 
 export class CachedSandbox {
@@ -117,17 +117,12 @@ type CtorParams = {
     key: string
 }
 
-type Piece = {
-    name: string
-    version: string
-}
-
 type CodeArchive = {
     id: FileId
     content: Buffer
 }
 
 type PrepareParams = {
-    pieces: Piece[]
+    pieces: PiecePackage[]
     codeArchives?: CodeArchive[]
 }

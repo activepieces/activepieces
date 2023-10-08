@@ -172,7 +172,7 @@ export const engineHelper = {
             operation.flowVersion,
         )
 
-        const { pieceName, pieceVersion } = (lockedFlowVersion.trigger as PieceTrigger).settings
+        const { packageType, pieceType, pieceName, pieceVersion } = (lockedFlowVersion.trigger as PieceTrigger).settings
 
         const exactPieceVersion = await pieceMetadataService.getExactPieceVersion({
             name: pieceName,
@@ -186,8 +186,11 @@ export const engineHelper = {
             pieceVersion: exactPieceVersion,
             pieces: [
                 {
-                    name: pieceName,
-                    version: exactPieceVersion,
+                    packageType,
+                    pieceType,
+                    pieceName,
+                    pieceVersion: exactPieceVersion,
+                    projectId: operation.projectId,
                 },
             ],
         })
@@ -220,36 +223,29 @@ export const engineHelper = {
         operation: ExecutePropsOptions,
     ): Promise<EngineHelperResponse<EngineHelperPropResult>> {
         logger.debug({
-            pieceName: operation.pieceName,
-            pieceVersion: operation.pieceVersion,
+            piece: operation.piece,
             projectId: operation.projectId,
             stepName: operation.stepName,
         }, '[EngineHelper#executeProp]')
 
-        const { pieceName, pieceVersion } = operation
+        const { piece } = operation
 
-        const exactPieceVersion = await pieceMetadataService.getExactPieceVersion({
-            name: pieceName,
-            version: pieceVersion,
-            projectId: operation.projectId,
+        piece.pieceVersion = await pieceMetadataService.getExactPieceVersion({
+            name: piece.pieceName,
+            version: piece.pieceVersion,
+            projectId: piece.projectId,
         })
 
         const sandbox = await sandboxProvisioner.provision({
             type: SandBoxCacheType.PIECE,
-            pieceName,
-            pieceVersion: exactPieceVersion,
-            pieces: [
-                {
-                    name: pieceName,
-                    version: exactPieceVersion,
-                },
-            ],
+            pieceName: piece.pieceName,
+            pieceVersion: piece.pieceVersion,
+            pieces: [piece],
         })
 
         try {
             const input = {
                 ...operation,
-                pieceVersion: exactPieceVersion,
                 workerToken: await generateWorkerToken({ projectId: operation.projectId }),
             }
 
@@ -305,23 +301,16 @@ export const engineHelper = {
     async extractPieceMetadata(
         operation: ExecuteExtractPieceMetadata,
     ): Promise<EngineHelperResponse<EngineHelperExtractPieceInformation>> {
-        logger.debug({
-            pieceName: operation.pieceName,
-            pieceVersion: operation.pieceVersion,
-        }, '[EngineHelper#extractPieceMetadata]')
+        logger.debug({ operation }, '[EngineHelper#extractPieceMetadata]')
 
         const { pieceName, pieceVersion } = operation
+        const piece = operation
 
         const sandbox = await sandboxProvisioner.provision({
             type: SandBoxCacheType.PIECE,
             pieceName,
             pieceVersion,
-            pieces: [
-                {
-                    name: pieceName,
-                    version: pieceVersion,
-                },
-            ],
+            pieces: [piece],
         })
 
         try {
@@ -339,35 +328,28 @@ export const engineHelper = {
     async executeAction(operation: ExecuteActionOperation): Promise<EngineHelperResponse<EngineHelperActionResult>> {
         logger.debug({
             flowVersionId: operation.flowVersion.id,
-            pieceName: operation.pieceName,
-            pieceVersion: operation.pieceVersion,
+            piece: operation.piece,
             actionName: operation.actionName,
         }, '[EngineHelper#executeAction]')
 
-        const { pieceName, pieceVersion } = operation
+        const { piece } = operation
 
-        const exactPieceVersion = await pieceMetadataService.getExactPieceVersion({
-            name: pieceName,
-            version: pieceVersion,
-            projectId: operation.projectId,
+        piece.pieceVersion = await pieceMetadataService.getExactPieceVersion({
+            name: piece.pieceName,
+            version: piece.pieceVersion,
+            projectId: piece.projectId,
         })
 
         const sandbox = await sandboxProvisioner.provision({
             type: SandBoxCacheType.PIECE,
-            pieceName,
-            pieceVersion: exactPieceVersion,
-            pieces: [
-                {
-                    name: pieceName,
-                    version: exactPieceVersion,
-                },
-            ],
+            pieceName: piece.pieceName,
+            pieceVersion: piece.pieceVersion,
+            pieces: [piece],
         })
 
         try {
             const input = {
                 ...operation,
-                pieceVersion: exactPieceVersion,
                 workerToken: await generateWorkerToken({ projectId: operation.projectId }),
             }
 
@@ -383,35 +365,26 @@ export const engineHelper = {
     async executeValidateAuth(
         operation: ExecuteValidateAuthOperation,
     ): Promise<EngineHelperResponse<EngineHelperValidateAuthResult>> {
-        logger.debug({
-            pieceName: operation.pieceName,
-            pieceVersion: operation.pieceVersion,
-        }, '[EngineHelper#executeValidateAuth]')
+        logger.debug({ piece: operation.piece }, '[EngineHelper#executeValidateAuth]')
 
-        const { pieceName, pieceVersion } = operation
+        const { piece } = operation
 
-        const exactPieceVersion = await pieceMetadataService.getExactPieceVersion({
-            name: pieceName,
-            version: pieceVersion,
+        piece.pieceVersion = await pieceMetadataService.getExactPieceVersion({
+            name: piece.pieceName,
+            version: piece.pieceVersion,
             projectId: operation.projectId,
         })
 
         const sandbox = await sandboxProvisioner.provision({
             type: SandBoxCacheType.PIECE,
-            pieceName,
-            pieceVersion: exactPieceVersion,
-            pieces: [
-                {
-                    name: pieceName,
-                    version: exactPieceVersion,
-                },
-            ],
+            pieceName: piece.pieceName,
+            pieceVersion: piece.pieceVersion,
+            pieces: [piece],
         })
 
         try {
             const input = {
                 ...operation,
-                pieceVersion: exactPieceVersion,
                 workerToken: await generateWorkerToken({ projectId: operation.projectId }),
             }
 

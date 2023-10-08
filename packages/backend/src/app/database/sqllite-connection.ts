@@ -10,13 +10,15 @@ import { AddStepFileSqlite31692958076906 } from './migration/sqllite3/1692958076
 import { AddStatusToConnectionsSqlite31693402376520 } from './migration/sqllite3/1693402376520-AddStatusToConnectionsSqlite3'
 import { AddImageUrlAndTitleToUser1693774053027 } from './migration/sqllite3/1693774053027-AddImageUrlAndTitleToUser'
 import { FileTypeCompression1694695212159 } from './migration/sqllite3/1694695212159-file-type-compression'
+import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
 import { AddChatBotSqlite31696029443045 } from './migration/sqllite3/1696029443045-AddChatBotSqlite3'
-import { Sql3MigrationCloud1690478550304 } from '../ee/database/migrations/sqlite3/1690478550304-Sql3MigrationCloud'
-import { AddReferralsSqlLite31690547637542 } from '../ee/database/migrations/sqlite3/1690547637542-AddReferralsSqlLite3'
-import { FlowTemplateAddUserIdAndImageUrl1694380048802 } from '../ee/database/migrations/sqlite3/1694380048802-flow-template-add-user-id-and-image-url'
 import { ApEdition } from '@activepieces/shared'
 import { getEdition } from '../helper/secret-helper'
 
+import { AddPieceTypeAndPackageTypeToPieceMetadata1696016228398 } from './migration/sqllite3/1696016228398-add-piece-type-and-package-type-to-piece-metadata'
+import { Sql3MigrationCloud1690478550304 } from '../ee/database/migrations/sqlite3/1690478550304-Sql3MigrationCloud'
+import { AddReferralsSqlLite31690547637542 } from '../ee/database/migrations/sqlite3/1690547637542-AddReferralsSqlLite3'
+import { FlowTemplateAddUserIdAndImageUrl1694380048802 } from '../ee/database/migrations/sqlite3/1694380048802-flow-template-add-user-id-and-image-url'
 
 function getSQLiteFilePath(): string {
     const homeDirectory = os.homedir()
@@ -36,8 +38,10 @@ const getMigration = () => {
         AddStepFileSqlite31692958076906,
         AddStatusToConnectionsSqlite31693402376520,
         AddImageUrlAndTitleToUser1693774053027,
-        FileTypeCompression1694695212159,
         AddChatBotSqlite31696029443045,
+        FileTypeCompression1694695212159,
+        AddPieceTypeAndPackageTypeToPieceMetadata1696016228398,
+        AddPieceTypeAndPackageTypeToFlowVersion1696245170061,
     ]
     const edition = getEdition()
     switch (edition) {
@@ -54,7 +58,7 @@ const getMigration = () => {
     return commonMigration
 }
 
-export const createSqlLiteDatasource = () => {
+export const createSqlLiteDatasource = (): DataSource => {
     return new DataSource({
         type: 'sqlite',
         database: getSQLiteFilePath(),

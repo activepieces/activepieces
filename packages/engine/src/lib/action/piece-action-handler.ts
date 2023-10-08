@@ -13,7 +13,7 @@ import {
 import { BaseActionHandler, ExecuteContext, InitStepOutputParams } from './action-handler';
 import { globals } from '../globals';
 import { isNil } from '@activepieces/shared'
-import { pieceHelper } from '../helper/action-helper';
+import { pieceHelper } from '../helper/piece-helper';
 import { createContextStore } from '../services/storage.service';
 import { Utils } from '../utils';
 import { ActionContext, PauseHook, PauseHookParams, PiecePropertyMap, StaticPropsValue, StopHook, StopHookParams } from '@activepieces/pieces-framework';

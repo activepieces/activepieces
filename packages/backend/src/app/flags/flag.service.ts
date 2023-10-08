@@ -77,13 +77,19 @@ export const flagService = {
             },
             {
                 id: ApFlagId.SHOW_DOCS,
-                value: false,
+                value: getEdition() !== ApEdition.ENTERPRISE,
                 created,
                 updated,
             },
             {
                 id: ApFlagId.SHOW_COMMUNITY,
-                value: false,
+                value: getEdition() !== ApEdition.ENTERPRISE,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.PRIVATE_PIECES_ENABLED,
+                value: getEdition() !== ApEdition.COMMUNITY,
                 created,
                 updated,
             },

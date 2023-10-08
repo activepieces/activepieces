@@ -59,7 +59,19 @@ export const setupApp = async (): Promise<FastifyInstance> => {
         origin: '*',
         methods: ['*'],
     })
-    await app.register(fastifyMultipart, { addToBody: true })
+
+    await app.register(
+        fastifyMultipart,
+        {
+            attachFieldsToBody: 'keyValues',
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            async onFile(part: any) {
+                const buffer = await part.toBuffer()
+                part.value = buffer
+            },
+        },
+    )
+
     await app.register(fastifyRawBody, {
         field: 'rawBody',
         global: false,

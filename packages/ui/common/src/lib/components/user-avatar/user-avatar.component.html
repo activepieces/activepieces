@@ -50,6 +50,9 @@
         </ng-container>
     </ng-container>
     <!-- END EE -->
+    <div mat-menu-item (click)="goToDeveloperPage()">
+        <div>My Pieces</div>
+    </div>
     <div mat-menu-item (click)="goToCommunity()" *ngIf="showCommunity$ | async">
         <div class="ap-flex ap-items-center ap-min-w-[214px]">Community <div class="ap-flex-grow"></div><svg-icon
                 src="assets/img/custom/external-link.svg" class="ap-h-[16px] ap-w-[16px] ap-fill-[#989898]"></svg-icon>

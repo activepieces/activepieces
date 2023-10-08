@@ -16,16 +16,14 @@ import { FlagService } from '../../service/flag.service';
 })
 export class UserAvatarComponent {
   showAvatarOuterCircle = false;
-
   // BEGIN EE
   private jwtHelper = new JwtHelperService();
   projects$: Observable<Project[]>;
   selectedProject$: Observable<Project | undefined>;
   switchProject$: Observable<void>;
+  overflownProjectsNames: Record<string, string> = {};
   billingEnabled$: Observable<boolean>;
   projectEnabled$: Observable<boolean>;
-  overflownProjectsNames: Record<string, string> = {};
-  // END EE
 
   showCommunity$: Observable<boolean>;
 

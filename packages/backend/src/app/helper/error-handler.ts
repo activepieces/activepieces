@@ -1,7 +1,7 @@
 import { FastifyError, FastifyReply, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
-import { captureException } from './logger'
+import { captureException, logger } from './logger'
 
 export const errorHandler = async (
     error: FastifyError,
@@ -27,6 +27,7 @@ export const errorHandler = async (
         })
     }
     else {
+        logger.error('[errorHandler]: ' + JSON.stringify(error))
         if (!error.statusCode || error.statusCode === StatusCodes.INTERNAL_SERVER_ERROR) {
             captureException(error)
         }

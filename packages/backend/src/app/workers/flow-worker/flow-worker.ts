@@ -16,6 +16,7 @@ import {
     FlowRunId,
     FlowVersion,
     FlowVersionState,
+    PiecePackage,
     ProjectId,
     RunEnvironment,
     StepOutputStatus,
@@ -30,7 +31,6 @@ import { engineHelper } from '../../helper/engine-helper'
 import { captureException, logger } from '../../helper/logger'
 import { isNil } from '@activepieces/shared'
 import { getServerUrl } from '../../helper/public-ip-utils'
-import { PackageInfo } from '../../helper/package-manager'
 import { MAX_LOG_SIZE } from '@activepieces/shared'
 import { acquireLock } from '../../helper/lock'
 import { sandboxProvisioner } from '../sandbox/provisioner/sandbox-provisioner'
@@ -54,16 +54,19 @@ type LoadInputAndLogFileIdResponse = {
     logFileId?: FileId | undefined
 }
 
-const extractFlowPieces = async (flowVersion: FlowVersion): Promise<PackageInfo[]> => {
-    const pieces: PackageInfo[] = []
+const extractFlowPieces = async ({ flowVersion, projectId }: ExtractFlowPiecesParams): Promise<PiecePackage[]> => {
+    const pieces: PiecePackage[] = []
     const steps = flowHelper.getAllSteps(flowVersion.trigger)
 
     for (const step of steps) {
         if (step.type === TriggerType.PIECE || step.type === ActionType.PIECE) {
-            const { pieceName, pieceVersion } = step.settings
+            const { packageType, pieceType, pieceName, pieceVersion } = step.settings
             pieces.push({
-                name: pieceName,
-                version: pieceVersion,
+                packageType,
+                pieceType,
+                pieceName,
+                pieceVersion,
+                projectId,
             })
         }
     }
@@ -332,7 +335,11 @@ async function getCodeStepsWithoutLock(projectId: ProjectId, flowVersion: FlowVe
 }
 
 const getSandbox = async ({ projectId, flowVersion, runEnvironment }: GetSandboxParams): Promise<Sandbox> => {
-    const pieces = await extractFlowPieces(flowVersion)
+    const pieces = await extractFlowPieces({
+        flowVersion,
+        projectId,
+    })
+
     const codeSteps = await getCodeSteps(projectId, flowVersion)
     const codeArchives = codeSteps.map((step) => ({
         id: step.sourceId,
@@ -360,6 +367,11 @@ type GetSandboxParams = {
     projectId: ProjectId
     flowVersion: FlowVersion
     runEnvironment: RunEnvironment
+}
+
+type ExtractFlowPiecesParams = {
+    flowVersion: FlowVersion
+    projectId: ProjectId
 }
 
 export const flowWorker = {

@@ -1,6 +1,6 @@
 import { Type, Static, } from '@sinclair/typebox';
 
-import { VersionType } from '../../pieces';
+import { PackageType, PieceType, VersionType } from '../../pieces';
 import { SampleDataSettingsObject } from '../sample-data';
 import { PieceTriggerSettings } from '../triggers/trigger';
 
@@ -38,6 +38,8 @@ export const CodeActionSchema = Type.Object({
 
 // Piece Action
 export const PieceActionSettings = Type.Object({
+  packageType: Type.Enum(PackageType),
+  pieceType: Type.Enum(PieceType),
   pieceName: Type.String({}),
   pieceVersion: VersionType,
   actionName: Type.Optional(Type.String({})),

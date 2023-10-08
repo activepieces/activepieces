@@ -231,15 +231,21 @@ const engineValidateAuth = async (
 ): Promise<void> => {
     const { pieceName, auth, projectId } = params
 
-    const pieceMatadata = await pieceMetadataService.get({
+    const pieceMetadata = await pieceMetadataService.get({
         name: pieceName,
         projectId,
         version: undefined,
     })
+
     const engineInput: ExecuteValidateAuthOperation = {
-        pieceName,
         serverUrl: await getServerUrl(),
-        pieceVersion: pieceMatadata.version,
+        piece: {
+            packageType: pieceMetadata.packageType,
+            pieceType: pieceMetadata.pieceType,
+            pieceName,
+            pieceVersion: pieceMetadata.version,
+            projectId,
+        },
         auth,
         projectId,
     }
@@ -324,7 +330,6 @@ async function lockAndRefreshConnection({
     }
     return appConnection
 }
-
 function needRefresh(connection: AppConnection): boolean {
     switch (connection.value.type) {
         case AppConnectionType.CLOUD_OAUTH2:

@@ -41,3 +41,4 @@ export * from './lib/components/upload-file-control/upload-file-control.componen
 export * from './lib/service/builder-autocomplete-mentions-dropdown.service';
 export * from './lib/resolvers/connections.resolver';
 export * from './lib/resolvers/are-there-featured-templates.resolver';
+export * from './lib/models/piece-metadata-model';

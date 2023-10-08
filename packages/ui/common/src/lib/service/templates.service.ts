@@ -50,14 +50,12 @@ export class TemplatesService {
       })
     );
   }
-
   shareTemplate(request: ShareFlowRequest): Observable<FlowTemplate> {
     return this.http.post<FlowTemplate>(
       environment.apiUrl + '/flow-templates',
       request
     );
   }
-
   getTemplate(flowId: string) {
     return this.http.get<FlowTemplate>(
       environment.apiUrl + `/flow-templates/${flowId}`

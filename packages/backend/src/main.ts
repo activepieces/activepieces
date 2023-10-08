@@ -92,7 +92,9 @@ The application started on ${system.get(SystemProp.FRONTEND_URL)}, as specified 
             logger.warn(`[WARNING]: This is only shows pieces specified in AP_DEV_PIECES ${pieces} environment variable.`)
         }
         if (edition !== ApEdition.COMMUNITY) {
-            const verified = await verifyLicenseKey()
+            const key = system.getOrThrow(SystemProp.LICENSE_KEY)
+            logger.info('[INFO]: Verifying license key ' + key)
+            const verified = await verifyLicenseKey({ license: key })
             if (!verified) {
                 logger.error('[ERROR]: License key is not valid. Please contact sales@activepieces.com')
                 process.exit(1)

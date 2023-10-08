@@ -158,6 +158,8 @@ export class AddEditConnectionButtonComponent {
       );
   }
 
+  // END EE
+
   private openNewCustomAuthConnection() {
     const dialogData: CustomAuthDialogData = {
       pieceAuthProperty: this.authProperty as CustomAuthProperty<

@@ -1,4 +1,3 @@
-import { env } from 'node:process';
 import {
   Action,
   ActionContext,
@@ -7,13 +6,13 @@ import {
   DynamicProperties,
   MultiSelectDropdownProperty,
   Piece,
+  PieceMetadata,
   PiecePropertyMap,
   PropertyType,
   StaticPropsValue
 } from '@activepieces/pieces-framework';
 import {
   ActivepiecesError,
-  ApEnvironment,
   ErrorCode,
   ExecuteActionOperation,
   ExecuteActionResponse,
@@ -22,13 +21,14 @@ import {
   ExecutionState,
   ExecutionType,
   extractPieceFromModule,
-  getPackageAliasForPiece,
   AUTHENTICATION_PROPERTY_NAME,
   ExecuteValidateAuthOperation,
   ExecuteValidateAuthResponse,
   BasicAuthConnectionValue,
   SecretTextConnectionValue,
-  CustomAuthConnectionValue
+  CustomAuthConnectionValue,
+  ExecuteExtractPieceMetadata,
+  getPackageAliasForPiece,
 } from '@activepieces/shared';
 import { VariableService } from '../services/variable-service';
 import { isNil } from '@activepieces/shared';
@@ -41,38 +41,14 @@ import { createTagsManager } from '../services/tags.service';
 import { testExecution } from './test-execution-context';
 import { createFilesService } from '../services/files.service';
 
-type GetPackageNameParams = {
-  pieceName: string;
-  pieceVersion: string;
-};
-
-type GetActionParams = {
-  pieceName: string;
-  pieceVersion: string;
-  actionName: string;
-};
-
-const apEnv = env['AP_ENVIRONMENT'];
 const variableService = new VariableService();
-
-const getPackageName = (params: GetPackageNameParams): string => {
-  const { pieceName, pieceVersion } = params;
-
-  if (apEnv === ApEnvironment.DEVELOPMENT) {
-    return pieceName;
-  } else {
-    return getPackageAliasForPiece({
-      pieceName,
-      pieceVersion
-    });
-  }
-};
+const env = process.env.AP_ENVIRONMENT
 
 const loadPieceOrThrow = async (
   pieceName: string,
   pieceVersion: string
 ): Promise<Piece> => {
-  const packageName = getPackageName({
+  const packageName = getPackageAlias({
     pieceName,
     pieceVersion
   });
@@ -119,9 +95,9 @@ const getActionOrThrow = async (params: GetActionParams): Promise<Action> => {
 };
 
 const getPropOrThrow = async (params: ExecutePropsOptions) => {
-  const { pieceName, pieceVersion, stepName, propertyName } = params;
+  const { piece: piecePackage, stepName, propertyName } = params;
 
-  const piece = await loadPieceOrThrow(pieceName, pieceVersion);
+  const piece = await loadPieceOrThrow(piecePackage.pieceName, piecePackage.pieceVersion);
 
   const action = piece.getAction(stepName) ?? piece.getTrigger(stepName);
 
@@ -129,8 +105,8 @@ const getPropOrThrow = async (params: ExecutePropsOptions) => {
     throw new ActivepiecesError({
       code: ErrorCode.STEP_NOT_FOUND,
       params: {
-        pieceName,
-        pieceVersion,
+        pieceName: piecePackage.pieceName,
+        pieceVersion: piecePackage.pieceVersion,
         stepName
       }
     });
@@ -142,9 +118,9 @@ const getPropOrThrow = async (params: ExecutePropsOptions) => {
     throw new ActivepiecesError({
       code: ErrorCode.CONFIG_NOT_FOUND,
       params: {
+        pieceName: piecePackage.pieceName,
+        pieceVersion: piecePackage.pieceVersion,
         stepName,
-        pieceName,
-        pieceVersion,
         configName: propertyName
       }
     });
@@ -186,14 +162,15 @@ export const pieceHelper = {
   },
 
   async executeAction(params: ExecuteActionOperation): Promise<ExecuteActionResponse> {
-    const { actionName, pieceName, pieceVersion, input, flowVersion } = params;
+    const { piece: piecePackage, actionName, input, flowVersion } = params;
 
     const action = await getActionOrThrow({
-      pieceName,
-      pieceVersion,
+      pieceName: piecePackage.pieceName,
+      pieceVersion: piecePackage.pieceVersion,
       actionName
     });
-    const piece = await pieceHelper.loadPieceOrThrow(pieceName, pieceVersion);
+
+    const piece = await pieceHelper.loadPieceOrThrow(piecePackage.pieceName, piecePackage.pieceVersion);
 
     const executionState = await testExecution.stateFromFlowVersion({
       flowVersion,
@@ -321,9 +298,9 @@ export const pieceHelper = {
   async executeValidateAuth(
     params: ExecuteValidateAuthOperation
   ): Promise<ExecuteValidateAuthResponse> {
-    const { pieceName, pieceVersion } = params;
+    const { piece: piecePackage } = params;
 
-    const piece = await loadPieceOrThrow(pieceName, pieceVersion);
+    const piece = await loadPieceOrThrow(piecePackage.pieceName, piecePackage.pieceVersion);
     if (piece.auth?.validate === undefined) {
       return {
         valid: true
@@ -358,5 +335,38 @@ export const pieceHelper = {
     }
   },
 
-  loadPieceOrThrow
+  async extractPieceMetadata(params: ExecuteExtractPieceMetadata): Promise<PieceMetadata> {
+    const { pieceName, pieceVersion } = params
+    const piece = await loadPieceOrThrow(pieceName, pieceVersion)
+
+    return {
+      ...piece.metadata(),
+      name: pieceName,
+      version: pieceVersion,
+    }
+  },
+
+  loadPieceOrThrow,
+};
+
+const getPackageAlias = ({ pieceName, pieceVersion }: GetPackageAliasParams) => {
+  if (env === 'dev') {
+    return pieceName
+  }
+
+  return getPackageAliasForPiece({
+    pieceName,
+    pieceVersion,
+  })
+}
+
+type GetPackageAliasParams = {
+  pieceName: string
+  pieceVersion: string
+}
+
+type GetActionParams = {
+  pieceName: string;
+  pieceVersion: string;
+  actionName: string;
 };

@@ -154,6 +154,19 @@ function dynamicRoutes(edition: string) {
     },
     {
       path: '',
+      canActivate: [UserLoggedIn],
+      children: [
+        {
+          path: '',
+          loadChildren: () =>
+            import('@activepieces/ui/feature-chatbot').then(
+              (m) => m.UiFeatureChatBotModule
+            ),
+        },
+      ],
+    },
+    {
+      path: '',
       children: [
         {
           path: '',

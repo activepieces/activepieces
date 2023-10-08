@@ -7,10 +7,6 @@ interface ChatbotCreated {
     chatbotId: string
 }
 
-interface ChatbotCreated {
-    chatbotId: string
-}
-
 interface FlowCreated {
     flowId: FlowId
 }
