@@ -85,7 +85,7 @@ export class InstallCommunityPieceModalComponent {
                 name: 'Packed Archive (.tgz)',
                 value: PackageType.ARCHIVE,
               },
-            ]
+            ];
           }
           return [
             {

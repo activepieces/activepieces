@@ -1,6 +1,5 @@
 import { EntitySchema } from 'typeorm'
 import { AppConnection, Flow, Folder, Project, TriggerEvent, User } from '@activepieces/shared'
-import { ConnectionKey, AppCredential } from '@activepieces/ee-shared'
 import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
 
 type ProjectSchema = {
