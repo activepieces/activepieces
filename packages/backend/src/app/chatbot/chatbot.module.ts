@@ -2,6 +2,7 @@ import {
     UpdateChatbotRequest,
     ListChatbotsRequest,
     CreateChatBotRequest,
+    APChatMessage,
 } from '@activepieces/shared'
 import {
     FastifyPluginCallbackTypebox,
@@ -108,6 +109,7 @@ export const chatbotController: FastifyPluginCallbackTypebox = (
                 params: ChatBotIdParams,
                 body: Type.Object({
                     input: Type.String(),
+                    history: Type.Optional(Type.Array(APChatMessage)),
                 }),
             },
         },
@@ -116,6 +118,7 @@ export const chatbotController: FastifyPluginCallbackTypebox = (
                 projectId: request.principal.projectId,
                 chatbotId: request.params.id,
                 input: request.body.input,
+                history: request.body.history ?? [],
             })
         },
     ),

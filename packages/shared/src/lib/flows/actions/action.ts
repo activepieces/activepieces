@@ -202,9 +202,11 @@ export const SingleActionSchema = Type.Union([
 ])
 export type Action = Static<typeof Action>;
 
+
 export type BranchAction = Static<typeof BranchActionSchema> & { nextAction?: Action, onFailureAction?: Action, onSuccessAction?: Action };
 
 export type LoopOnItemsAction = Static<typeof LoopOnItemsActionSchema> & { nextAction?: Action, firstLoopAction?: Action };
+
 
 export type PieceAction = Static<typeof PieceActionSchema> & { nextAction?: Action };
 

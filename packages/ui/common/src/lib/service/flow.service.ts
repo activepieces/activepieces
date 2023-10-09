@@ -50,11 +50,15 @@ export class FlowService {
 
   get(
     flowId: FlowId,
-    flowVersionId: undefined | FlowVersionId
+    flowVersionId?: FlowVersionId,
+    viewMode?: FlowViewMode
   ): Observable<Flow> {
     const params: Record<string, string> = {};
     if (flowVersionId) {
       params['versionId'] = flowVersionId;
+    }
+    if (viewMode) {
+      params['viewMode'] = viewMode;
     }
     return this.http.get<Flow>(environment.apiUrl + '/flows/' + flowId, {
       params: params,

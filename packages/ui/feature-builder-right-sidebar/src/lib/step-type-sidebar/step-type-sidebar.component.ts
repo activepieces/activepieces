@@ -265,7 +265,7 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
     stepLocationRelativeToParent: StepLocationRelativeToParent
   ): AddActionRequest {
     const baseProps = {
-      name: this.findAvailableName(flowVersion, 'step'),
+      name: flowHelper.findAvailableStepName(flowVersion, 'step'),
       displayName: getDefaultDisplayNameForPiece(
         flowItemDetails.type as ActionType,
         flowItemDetails.name
@@ -351,21 +351,6 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
         };
       }
     }
-  }
-
-  findAvailableName(flowVersion: FlowVersion, stepPrefix: string): string {
-    const steps = flowHelper
-      .getAllSteps(flowVersion.trigger)
-      .map((f) => f.name);
-    let availableNumber = 1;
-    let availableName = `${stepPrefix}_${availableNumber}`;
-
-    while (steps.includes(availableName)) {
-      availableNumber++;
-      availableName = `${stepPrefix}_${availableNumber}`;
-    }
-
-    return availableName;
   }
 
   applySearchToObservable(

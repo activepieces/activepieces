@@ -6,6 +6,7 @@ import { FlagEntity } from './flag.entity'
 import axios from 'axios'
 import { webhookService } from '../webhooks/webhook-service'
 import { getEdition } from '../helper/secret-helper'
+import { theme } from './theme'
 
 const flagRepo = databaseConnection.getRepository(FlagEntity)
 
@@ -57,14 +58,20 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.THEME,
+                value: theme,
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.SHOW_DOCS,
-                value: getEdition() !== ApEdition.ENTERPRISE,
+                value: false,
                 created,
                 updated,
             },
             {
                 id: ApFlagId.SHOW_COMMUNITY,
-                value: getEdition() !== ApEdition.ENTERPRISE,
+                value: false,
                 created,
                 updated,
             },
