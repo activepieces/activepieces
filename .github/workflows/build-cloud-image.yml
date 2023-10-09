@@ -7,7 +7,7 @@ on:
 jobs:
   Release:
     env:
-      MY_VERSION: 6
+      MY_VERSION: 20
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
@@ -33,7 +33,7 @@ jobs:
           token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
           context: .
           file: ./Dockerfile
-          args: |
+          build-args: |
             ENVIRONMENT=cloud
           platforms: |
             linux/amd64
