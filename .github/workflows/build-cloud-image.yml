@@ -33,7 +33,7 @@ jobs:
           token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
           context: .
           file: ./Dockerfile
-          args: |
+          build-args: |
             ENVIRONMENT=cloud
           platforms: |
             linux/amd64
