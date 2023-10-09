@@ -1845,11 +1845,11 @@
             </trans-unit>
             <trans-unit id="4163163170493567215" datatype="html">
                 <source>
-                    <x id="INTERPOLATION" equiv-text="showSecondValue)? 'First':''}}"/>
+                    <x id="INTERPOLATION" equiv-text="{{(showSecondValue)? 'First':''}}"/>
                     Value
                 </source>
-                <target>
-                    <x id="INTERPOLATION" equiv-text="showSecondValue)? 'First':''}}"/>
+                <target state="new">
+                    <x id="INTERPOLATION" equiv-text="{{(showSecondValue)? 'Première':''}}"/>
                     Valeur
                 </target>
                 <context-group purpose="location">
@@ -3568,10 +3568,12 @@
             </trans-unit>
             <trans-unit id="7708270344948043036" datatype="html">
                 <source>
-                    <x id="INTERPOLATION" equiv-text="{{(isSaving$ | async)? 'Saving...': 'Test flow'}}"/>
+                    <x id="INTERPOLATION"
+                       equiv-text="{{(isSaving$ | async)? 'Saving...': 'Test flow'}}"/>
                 </source>
                 <target>
-                    <x id="INTERPOLATION" equiv-text="{{(isSaving$ | async)? 'Sauvegarde...': 'Tester le process'}}"/>
+                    <x id="INTERPOLATION"
+                       equiv-text="{{(isSaving$ | async)? 'Sauvegarde...': 'Tester le process'}}"/>
                 </target>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
@@ -4267,10 +4269,10 @@
             </trans-unit>
             <trans-unit id="2999814213294266636" datatype="html">
                 <source>Runs
-                    <x id="PH" equiv-text="cronstrue.toString(cronExpression).toLocaleLowerCase()"/>
+                    <x id="PH" equiv-text="cronstrue.toString(cronExpression, { locale: this.locale }).toLocaleLowerCase()"/>
                 </source>
                 <target>S'exécute
-                    <x id="PH" equiv-text="cronstrue.toString(cronExpression).toLocaleLowerCase()"/>
+                    <x id="PH" equiv-text="cronstrue.toString(cronExpression, { locale: this.locale }).toLocaleLowerCase()"/>
                 </target>
                 <context-group purpose="location">
                     <context context-type="sourcefile">

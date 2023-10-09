@@ -867,7 +867,8 @@
             </trans-unit>
             <trans-unit id="7708270344948043036" datatype="html">
                 <source>
-                    <x id="INTERPOLATION" equiv-text="{{(isSaving$ | async)? 'Saving...': 'Test flow'}}"/>
+                    <x id="INTERPOLATION"
+                       equiv-text="{{(isSaving$ | async)? 'Saving...': 'Test flow'}}"/>
                 </source>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
@@ -1443,7 +1444,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts
                     </context>
-                    <context context-type="linenumber">124,125</context>
+                    <context context-type="linenumber">125,126</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="3785740330706781283" datatype="html">
@@ -3672,24 +3673,25 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts
                     </context>
-                    <context context-type="linenumber">198</context>
+                    <context context-type="linenumber">199</context>
                 </context-group>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts
                     </context>
-                    <context context-type="linenumber">203</context>
+                    <context context-type="linenumber">204</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="2999814213294266636" datatype="html">
                 <source>Runs
-                    <x id="PH" equiv-text="cronstrue.toString(cronExpression).toLocaleLowerCase()"/>
+                    <x id="PH"
+                       equiv-text="cronstrue.toString(cronExpression, { locale: this.locale }).toLocaleLowerCase()"/>
                 </source>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts
                     </context>
-                    <context context-type="linenumber">202</context>
+                    <context context-type="linenumber">203</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="2715156558483046254" datatype="html">
@@ -3698,7 +3700,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts
                     </context>
-                    <context context-type="linenumber">210</context>
+                    <context context-type="linenumber">211</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="8669717871933589565" datatype="html">
@@ -3707,7 +3709,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts
                     </context>
-                    <context context-type="linenumber">235</context>
+                    <context context-type="linenumber">236</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="6655540167436629912" datatype="html">
@@ -3716,7 +3718,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts
                     </context>
-                    <context context-type="linenumber">238</context>
+                    <context context-type="linenumber">239</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="2532250142169750361" datatype="html">
@@ -3725,7 +3727,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts
                     </context>
-                    <context context-type="linenumber">238</context>
+                    <context context-type="linenumber">239</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="1205037876874222931" datatype="html">

@@ -193,6 +193,8 @@ export class FlowsTableComponent implements OnInit {
   }
 
   getTriggerToolTip(flow: Flow) {
+    console.log(this.locale)
+
     const trigger = flow.version.trigger;
     switch (trigger.type) {
       case TriggerType.WEBHOOK:
