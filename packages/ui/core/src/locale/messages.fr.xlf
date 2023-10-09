@@ -1281,11 +1281,11 @@
                 </context-group>
             </trans-unit>
             <trans-unit id="6560405483623875453" datatype="html">
-                <source>Type<x id="START_BOLD_TEXT" ctype="x-b" equiv-text="&lt;b&gt;"/>DELETE
+                <source>Type <x id="START_BOLD_TEXT" ctype="x-b" equiv-text="&lt;b&gt;"/>DELETE
                     <x id="CLOSE_BOLD_TEXT" ctype="x-b" equiv-text="&lt;/b&gt;"/>
                     and press confirm to continue.
                 </source>
-                <target>Taper<x id="START_BOLD_TEXT" ctype="x-b" equiv-text="&lt;b&gt;"/>DELETE
+                <target>Taper <x id="START_BOLD_TEXT" ctype="x-b" equiv-text="&lt;b&gt;"/>DELETE
                     <x id="CLOSE_BOLD_TEXT" ctype="x-b" equiv-text="&lt;/b&gt;"/>
                     et appuyez sur confirmer pour continuer.
                 </target>
