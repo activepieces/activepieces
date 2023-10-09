@@ -3568,12 +3568,10 @@
             </trans-unit>
             <trans-unit id="7708270344948043036" datatype="html">
                 <source>
-                    <x id="INTERPOLATION"
-                       equiv-text="{{(isSaving$ | async)? 'Saving...': 'Test flow'}}"/>
+                    <x id="INTERPOLATION" equiv-text="{{(isSaving$ | async)? 'Saving...': 'Test flow'}}"/>
                 </source>
                 <target>
-                    <x id="INTERPOLATION"
-                       equiv-text="{{(isSaving$ | async)? 'Sauvegarde...': 'Process de test'}}"/>
+                    <x id="INTERPOLATION" equiv-text="{{(isSaving$ | async)? 'Sauvegarde...': 'Tester le process'}}"/>
                 </target>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
