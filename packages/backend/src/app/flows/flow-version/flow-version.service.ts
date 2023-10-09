@@ -33,7 +33,7 @@ import { DEFAULT_SAMPLE_DATA_SETTINGS } from '@activepieces/shared'
 import { isNil } from '@activepieces/shared'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import dayjs from 'dayjs'
-import { captureException } from '../../helper/logger'
+import { captureException, logger } from '../../helper/logger'
 import { stepFileService } from '../step-file/step-file.service'
 
 const branchSettingsValidator = TypeCompiler.Compile(BranchActionSettingsWithValidation)
@@ -75,9 +75,24 @@ export const flowVersionService = {
             default:
                 operations = [userOperation]
                 break
+            case FlowOperationType.DUPLICATE_ACTION:
+                mutatedFlowVersion = await this.getFlowVersion({
+                    flowId: flowVersion.flowId,
+                    includeArtifactAsBase64: true,
+                    projectId,
+                    removeSecrets: false,
+                    versionId: flowVersion.id,
+                })
+                operations = [userOperation]
+                break
         }
         for (const operation of operations) {
             mutatedFlowVersion = await applySingleOperation(projectId, mutatedFlowVersion, operation)
+            if (operation.type === FlowOperationType.DUPLICATE_ACTION) {
+                flowHelper.getAllSteps(mutatedFlowVersion.trigger).filter(c => c.type === ActionType.CODE).forEach(async (cs) => {
+                    await uploadArtifact(projectId, cs.settings)
+                })
+            }
         }
         mutatedFlowVersion.updated = dayjs().toISOString()
         mutatedFlowVersion.updatedBy = userId
@@ -147,6 +162,7 @@ export const flowVersionService = {
 }
 
 async function applySingleOperation(projectId: ProjectId, flowVersion: FlowVersion, operation: FlowOperationRequest): Promise<FlowVersion> {
+    logger.info(`applying ${operation.type} to ${flowVersion.displayName}`)
     await flowVersionSideEffects.preApplyOperation({
         projectId,
         flowVersion,
@@ -158,7 +174,6 @@ async function applySingleOperation(projectId: ProjectId, flowVersion: FlowVersi
 
 async function removeSecretsFromFlow(flowVersion: FlowVersion): Promise<FlowVersion> {
     const flowVersionWithArtifacts: FlowVersion = JSON.parse(JSON.stringify(flowVersion))
-
     const steps = flowHelper.getAllSteps(flowVersionWithArtifacts.trigger)
     for (const step of steps) {
         /*
@@ -211,7 +226,7 @@ function handleImportFlowOperation(flowVersion: FlowVersion, operation: ImportFl
     return operations
 }
 
-async function addArtifactsAsBase64(projectId: ProjectId, flowVersion: FlowVersion) {
+async function addArtifactsAsBase64(projectId: ProjectId, flowVersion: FlowVersion): Promise<FlowVersion> {
     const flowVersionWithArtifacts: FlowVersion = JSON.parse(JSON.stringify(flowVersion))
     const steps = flowHelper.getAllSteps(flowVersionWithArtifacts.trigger)
 
@@ -236,7 +251,7 @@ async function addArtifactsAsBase64(projectId: ProjectId, flowVersion: FlowVersi
 }
 
 
-async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, request: FlowOperationRequest) {
+async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, request: FlowOperationRequest): Promise<FlowOperationRequest> {
     const clonedRequest: FlowOperationRequest = JSON.parse(JSON.stringify(request))
     switch (clonedRequest.type) {
         case FlowOperationType.ADD_ACTION:
@@ -316,7 +331,6 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
             }
             break
         }
-
         case FlowOperationType.UPDATE_TRIGGER:
             switch (clonedRequest.request.type) {
                 case TriggerType.EMPTY:
@@ -333,6 +347,7 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
                     break
             }
             break
+
         default:
             break
     }
@@ -340,7 +355,7 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
 }
 
 
-async function validateAction({ projectId, settings }: { projectId: ProjectId, settings: PieceActionSettings }) {
+async function validateAction({ projectId, settings }: { projectId: ProjectId, settings: PieceActionSettings }): Promise<boolean> {
 
     if (
         isNil(settings.pieceName) ||
@@ -367,7 +382,7 @@ async function validateAction({ projectId, settings }: { projectId: ProjectId, s
     return validateProps(action.props, settings.input)
 }
 
-async function validateTrigger({ settings, projectId }: { settings: PieceTriggerSettings, projectId: ProjectId }) {
+async function validateTrigger({ settings, projectId }: { settings: PieceTriggerSettings, projectId: ProjectId }): Promise<boolean> {
     if (
         isNil(settings.pieceName) ||
         isNil(settings.pieceVersion) ||
@@ -393,7 +408,7 @@ async function validateTrigger({ settings, projectId }: { settings: PieceTrigger
     return validateProps(trigger.props, settings.input)
 }
 
-function validateProps(props: PiecePropertyMap, input: Record<string, unknown>) {
+function validateProps(props: PiecePropertyMap, input: Record<string, unknown>): boolean {
     const propsSchema = buildSchema(props)
     const propsValidator = TypeCompiler.Compile(propsSchema)
     return propsValidator.Check(input)
@@ -475,7 +490,9 @@ async function deleteArtifact(projectId: ProjectId, codeSettings: CodeActionSett
 }
 
 async function uploadArtifact(projectId: ProjectId, codeSettings: CodeActionSettings): Promise<CodeActionSettings> {
+
     if (codeSettings.artifact !== undefined) {
+
         const bufferFromBase64 = Buffer.from(codeSettings.artifact, 'base64')
 
         const savedFile = await fileService.save({
@@ -483,6 +500,7 @@ async function uploadArtifact(projectId: ProjectId, codeSettings: CodeActionSett
             data: bufferFromBase64,
             type: FileType.CODE_SOURCE,
             compression: FileCompression.NONE,
+
         })
 
         codeSettings.artifact = undefined

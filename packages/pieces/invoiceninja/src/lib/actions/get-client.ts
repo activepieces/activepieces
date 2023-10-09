@@ -23,7 +23,6 @@ export const getClient = createAction({
             const headers = {
                 'X-Api-Token': INapiToken,
             };
-
             const queryParams = new URLSearchParams();
             queryParams.append('email', context.propsValue.email || '');
 

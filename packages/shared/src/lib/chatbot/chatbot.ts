@@ -49,3 +49,16 @@ export const ChatbotResponse = Type.Object({
 });
 
 export type ChatbotResponse = Static<typeof ChatbotResponse>;
+
+export const APChatMessage = Type.Object({
+  role:Type.Union([Type.Literal('user'),Type.Literal('bot')]),
+  text:Type.String()
+})
+export type APChatMessage = Static<typeof APChatMessage>;
+
+export const AskChatBotRequest = Type.Object({
+  chatbotId:Type.String(),
+  input: Type.String(),
+  history: Type.Array(APChatMessage)
+})
+export type AskChatBotRequest = Static<typeof AskChatBotRequest>;
