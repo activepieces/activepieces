@@ -8,7 +8,7 @@ import { ApEdition } from '@activepieces/shared'
 export const emailService = {
     async sendInvitationEmail({ email, invitationId }: { email: string, invitationId: string }): Promise<void> {
         const edition = getEdition()
-        if (edition === ApEdition.CLOUD) {
+        if (edition !== ApEdition.CLOUD) {
             return
         }
         const token = await tokenUtils.encode({
