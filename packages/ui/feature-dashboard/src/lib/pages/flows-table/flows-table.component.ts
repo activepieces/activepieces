@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import {Component, Inject, LOCALE_ID, OnInit, ViewChild} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map, Observable, shareReplay, startWith, Subject, tap } from 'rxjs';
 import { FlowsTableDataSource } from './flows-table.datasource';
@@ -62,7 +62,8 @@ export class FlowsTableComponent implements OnInit {
     private foldersService: FoldersService,
     private router: Router,
     private instanceService: FlowInstanceService,
-    private store: Store
+    private store: Store,
+    @Inject(LOCALE_ID) private locale: string
   ) {
     this.listenToShowAllFolders();
     this.folderId$ = this.store.select(FoldersSelectors.selectCurrentFolderId);
@@ -195,19 +196,19 @@ export class FlowsTableComponent implements OnInit {
     const trigger = flow.version.trigger;
     switch (trigger.type) {
       case TriggerType.WEBHOOK:
-        return 'Real time flow';
+        return $localize`Real time flow`;
       case TriggerType.PIECE: {
         const cronExpression = flow.schedule?.cronExpression;
         return cronExpression
-          ? `Runs ${cronstrue.toString(cronExpression).toLocaleLowerCase()}`
-          : 'Real time flow';
+          ? $localize`Runs ${cronstrue.toString(cronExpression, { locale: this.locale }).toLocaleLowerCase()}`
+          : $localize`Real time flow`;
       }
       case TriggerType.EMPTY: {
         console.error(
           "Flow can't be published with empty trigger " +
             flow.version.displayName
         );
-        return 'Please contact support as your published flow has a problem';
+        return $localize`Please contact support as your published flow has a problem`;
       }
     }
   }

@@ -4219,6 +4219,78 @@
                     <context context-type="linenumber">40</context>
                 </context-group>
             </trans-unit>
+            <trans-unit id="2976564074018381687" datatype="html">
+                <source>Webhook Trigger</source>
+                <target>Déclencheur Webhook</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">packages/ui/common/src/lib/utils/utils.ts</context>
+                    <context context-type="linenumber">6</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2523469970175692723" datatype="html">
+                <source>Empty Trigger</source>
+                <target>Déclencheur vide</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">packages/ui/common/src/lib/utils/utils.ts</context>
+                    <context context-type="linenumber">10</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7343642247493540451" datatype="html">
+                <source>Trigger</source>
+                <target>Déclencher</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">packages/ui/common/src/lib/utils/utils.ts</context>
+                    <context context-type="linenumber">13</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="1437638433150622409" datatype="html">
+                <source>Loop on Items</source>
+                <target>Boucle sur les éléments</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">packages/ui/common/src/lib/utils/utils.ts</context>
+                    <context context-type="linenumber">25</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4156762084256299285" datatype="html">
+                <source>Real time flow</source>
+                <target>Process en temps réel</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts
+                    </context>
+                    <context context-type="linenumber">198</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts
+                    </context>
+                    <context context-type="linenumber">203</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2999814213294266636" datatype="html">
+                <source>Runs
+                    <x id="PH" equiv-text="cronstrue.toString(cronExpression).toLocaleLowerCase()"/>
+                </source>
+                <target>S'exécute
+                    <x id="PH" equiv-text="cronstrue.toString(cronExpression).toLocaleLowerCase()"/>
+                </target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts
+                    </context>
+                    <context context-type="linenumber">202</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2715156558483046254" datatype="html">
+                <source>Please contact support as your published flow has a problem</source>
+                <target>Veuillez contacter l'assistance, car votre process publié présente un problème.</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts
+                    </context>
+                    <context context-type="linenumber">210</context>
+                </context-group>
+            </trans-unit>
         </body>
     </file>
 </xliff>
