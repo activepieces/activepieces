@@ -89,7 +89,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.PRIVATE_PIECES_ENABLED,
-                value: getEdition() !== ApEdition.COMMUNITY,
+                value: false,
                 created,
                 updated,
             },
