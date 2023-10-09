@@ -96,7 +96,7 @@
             </trans-unit>
             <trans-unit id="5417428761029126177" datatype="html">
                 <source>My Flows</source>
-                <target>Mes Flows</target>
+                <target>Mes Process</target>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html
@@ -182,7 +182,7 @@
             </trans-unit>
             <trans-unit id="8235024849067365125" datatype="html">
                 <source>All flows</source>
-                <target>Tous les flows</target>
+                <target>Tous mes process</target>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/flows-table/folders-list/folders-list.component.html
@@ -282,7 +282,7 @@
             </trans-unit>
             <trans-unit id="3446912724041461894" datatype="html">
                 <source>Flows</source>
-                <target>Flows</target>
+                <target>Process</target>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts
@@ -344,7 +344,7 @@
             </trans-unit>
             <trans-unit id="4578383372914193173" datatype="html">
                 <source>Create Your First Flow</source>
-                <target>Créez votre premier flux</target>
+                <target>Créez votre premier process</target>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/flows-table/empty-flows-table/empty-flows-table.component.html
@@ -354,7 +354,7 @@
             </trans-unit>
             <trans-unit id="3077777282169383075" datatype="html">
                 <source>Demo flow</source>
-                <target>Flow de démonstration</target>
+                <target>Process de démonstration</target>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/flows-table/empty-flows-table/empty-flows-table.component.html
@@ -394,7 +394,7 @@
             </trans-unit>
             <trans-unit id="1068067937132498347" datatype="html">
                 <source>You don't have any flows yet</source>
-                <target>Vous n'avez pas encore de flows</target>
+                <target>Vous n'avez pas encore de process</target>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html
@@ -404,7 +404,7 @@
             </trans-unit>
             <trans-unit id="2994670610835703888" datatype="html">
                 <source>This folder doesn't have any flows yet</source>
-                <target>Ce dossier ne contient pas encore de flows</target>
+                <target>Ce dossier ne contient pas encore de process</target>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html
@@ -414,7 +414,7 @@
             </trans-unit>
             <trans-unit id="8669717871933589565" datatype="html">
                 <source>Please publish the flow</source>
-                <target>Veuillez publier le flow</target>
+                <target>Veuillez publier le process</target>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts
@@ -424,7 +424,7 @@
             </trans-unit>
             <trans-unit id="6655540167436629912" datatype="html">
                 <source>Flow is on</source>
-                <target>Le flow est activé</target>
+                <target>Le process est activé</target>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts
@@ -434,7 +434,7 @@
             </trans-unit>
             <trans-unit id="2532250142169750361" datatype="html">
                 <source>Flow is off</source>
-                <target>Le flow est désactivé</target>
+                <target>Le process est désactivé</target>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts
@@ -444,7 +444,7 @@
             </trans-unit>
             <trans-unit id="6010972448112025437" datatype="html">
                 <source>All flows</source>
-                <target>Tous les flows</target>
+                <target>Tous les process</target>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/flows-table/folders-list/folders-list.component.html
@@ -602,7 +602,7 @@
             </trans-unit>
             <trans-unit id="8888491308706722034" datatype="html">
                 <source>Flow</source>
-                <target>Flow</target>
+                <target>Process</target>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html
@@ -742,7 +742,7 @@
             </trans-unit>
             <trans-unit id="2428227617692008299" datatype="html">
                 <source>+ New Flow</source>
-                <target>+ Créer un Flow</target>
+                <target>+ Créer un Process</target>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table-title/flows-table-title.component.html
@@ -1033,9 +1033,10 @@
                     Utilisez ce formulaire pour installer un &lt;a href=&quot;https://www.activepieces.com/docs/developers/building-pieces/create-action&quot;
                     target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;connecteur personnalisé&lt;/a&gt; que vous (ou
                     quelqu'un d'autre) avez créé.
-                    Une fois le connecteur installé, vous pouvez l'utiliser dans le générateur de flow.
+                    Une fois le connecteur installé, vous pouvez l'utiliser dans le générateur de process.
                     &lt;br&gt;&lt;br&gt;**Attention:**
-                    Assurez-vous de faire confiance à l'auteur, car le connecteur aura accès à vos données de flow
+                    Assurez-vous de faire confiance à l'auteur, car le connecteur aura accès à vos données de
+                    process
                     et il
                     se peut qu'il ne le soit pas
                     compatible avec la version actuelle d'Activepieces.
@@ -1217,7 +1218,7 @@
             </trans-unit>
             <trans-unit id="3433912835588025867" datatype="html">
                 <source>Your flow has invalid steps</source>
-                <target>Votre flow comporte des étapes non valides</target>
+                <target>Votre process comporte des étapes non valides</target>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
                         packages/ui/feature-builder-header/src/lib/publish-button/publish-button.component.ts
@@ -1227,7 +1228,7 @@
             </trans-unit>
             <trans-unit id="6493545318293497285" datatype="html">
                 <source>Publish Flow</source>
-                <target>Publier le Flow</target>
+                <target>Publier le process</target>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
                         packages/ui/feature-builder-header/src/lib/publish-button/publish-button.component.ts
@@ -2600,7 +2601,8 @@
             <trans-unit id="4934929429922486658" datatype="html">
                 <source>Run failed (<x id="INTERPOLATION" equiv-text="{{ selectedRun.id }}"/>)
                 </source>
-                <target>Échec de l'exécution (<x id="INTERPOLATION" equiv-text="{{ selectedRun.id }}"/>
+                <target>Échec de l'exécution (
+                    <x id="INTERPOLATION" equiv-text="{{ selectedRun.id }}"/>
                     )
                 </target>
                 <context-group purpose="location">
@@ -4041,6 +4043,108 @@
                         packages/ui/feature-dashboard/src/lib/dashboard-container.component.html
                     </context>
                     <context context-type="linenumber">9,10</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6990457244801422864" datatype="html">
+                <source>Import Flow -
+                    <x id="PH" equiv-text="environment.websiteTitle"/>
+                </source>
+                <target>Importer un process -
+                    <x id="PH" equiv-text="environment.websiteTitle"/>
+                </target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">packages/ui/core/src/app/app.module.ts</context>
+                    <context context-type="linenumber">172</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6995566906550783900" datatype="html">
+                <source>Chatbot -
+                    <x id="PH" equiv-text="environment.websiteTitle"/>
+                </source>
+                <target>Chatbot -
+                    <x id="PH" equiv-text="environment.websiteTitle"/>
+                </target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">packages/ui/core/src/app/app.module.ts</context>
+                    <context context-type="linenumber">177</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="8843766099722567155" datatype="html">
+                <source>Runs -
+                    <x id="PH" equiv-text="environment.websiteTitle"/>
+                </source>
+                <target>Exécutions -
+                    <x id="PH" equiv-text="environment.websiteTitle"/>
+                </target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts
+                    </context>
+                    <context context-type="linenumber">27</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="567527397996996928" datatype="html">
+                <source>My Pieces -
+                    <x id="PH" equiv-text="environment.websiteTitle"/>
+                </source>
+                <target>Mes connecteurs -
+                    <x id="PH" equiv-text="environment.websiteTitle"/>
+                </target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts
+                    </context>
+                    <context context-type="linenumber">33</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3980934140000106258" datatype="html">
+                <source>Chatbots -
+                    <x id="PH" equiv-text="environment.websiteTitle"/>
+                </source>
+                <target>Chatbots -
+                    <x id="PH" equiv-text="environment.websiteTitle"/>
+                </target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts
+                    </context>
+                    <context context-type="linenumber">39</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3936753173520021803" datatype="html">
+                <source>Chatbot settings -
+                    <x id="PH" equiv-text="environment.websiteTitle"/>
+                </source>
+                <target>Paramètres du chatbot -
+                    <x id="PH" equiv-text="environment.websiteTitle"/>
+                </target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts
+                    </context>
+                    <context context-type="linenumber">47</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3811992826773282019" datatype="html">
+                <source>Connections -
+                    <x id="PH" equiv-text="environment.websiteTitle"/>
+                </source>
+                <target>Connexions -
+                    <x id="PH" equiv-text="environment.websiteTitle"/>
+                </target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts
+                    </context>
+                    <context context-type="linenumber">56</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="5636034445456630519" datatype="html">
+                <source>Flows -
+                    <x id="PH" equiv-text="environment.websiteTitle"/>
+                </source>
+                <target>Process -
+                    <x id="PH" equiv-text="environment.websiteTitle"/>
+                </target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts
+                    </context>
+                    <context context-type="linenumber">62</context>
                 </context-group>
             </trans-unit>
         </body>

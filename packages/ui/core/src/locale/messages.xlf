@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
-    <file source-language="en-US" datatype="plaintext" original="ng2.template">
+    <file source-language="en" datatype="plaintext" original="ng2.template">
         <body>
             <trans-unit id="2931230747167805179" datatype="html">
                 <source>Delete
@@ -301,6 +301,24 @@
                 <context-group purpose="location">
                     <context context-type="sourcefile">packages/ui/core/src/app/app.component.html</context>
                     <context context-type="linenumber">7,8</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6990457244801422864" datatype="html">
+                <source>Import Flow -
+                    <x id="PH" equiv-text="environment.websiteTitle"/>
+                </source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">packages/ui/core/src/app/app.module.ts</context>
+                    <context context-type="linenumber">172</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6995566906550783900" datatype="html">
+                <source>Chatbot -
+                    <x id="PH" equiv-text="environment.websiteTitle"/>
+                </source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">packages/ui/core/src/app/app.module.ts</context>
+                    <context context-type="linenumber">177</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="9202148072595155250" datatype="html">
@@ -3187,6 +3205,66 @@
                         packages/ui/feature-dashboard/src/lib/dashboard-container.component.html
                     </context>
                     <context context-type="linenumber">9,10</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="8843766099722567155" datatype="html">
+                <source>Runs -
+                    <x id="PH" equiv-text="environment.websiteTitle"/>
+                </source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts
+                    </context>
+                    <context context-type="linenumber">27</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="567527397996996928" datatype="html">
+                <source>My Pieces -
+                    <x id="PH" equiv-text="environment.websiteTitle"/>
+                </source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts
+                    </context>
+                    <context context-type="linenumber">33</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3980934140000106258" datatype="html">
+                <source>Chatbots -
+                    <x id="PH" equiv-text="environment.websiteTitle"/>
+                </source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts
+                    </context>
+                    <context context-type="linenumber">39</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3936753173520021803" datatype="html">
+                <source>Chatbot settings -
+                    <x id="PH" equiv-text="environment.websiteTitle"/>
+                </source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts
+                    </context>
+                    <context context-type="linenumber">47</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3811992826773282019" datatype="html">
+                <source>Connections -
+                    <x id="PH" equiv-text="environment.websiteTitle"/>
+                </source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts
+                    </context>
+                    <context context-type="linenumber">56</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="5636034445456630519" datatype="html">
+                <source>Flows -
+                    <x id="PH" equiv-text="environment.websiteTitle"/>
+                </source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts
+                    </context>
+                    <context context-type="linenumber">62</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="7508420892157571847" datatype="html">

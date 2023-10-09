@@ -24,19 +24,19 @@ export const DashboardLayoutRouting: Routes = [
     children: [
       { path: '', pathMatch: 'full', redirectTo: '/flows' },
       {
-        title: `Runs - ${environment.websiteTitle}`,
+        title: $localize`Runs - ${environment.websiteTitle}`,
         path: 'runs',
         pathMatch: 'full',
         component: RunsTableComponent,
       },
       {
-        title: `My Pieces - ${environment.websiteTitle}`,
+        title: $localize`My Pieces - ${environment.websiteTitle}`,
         path: 'settings/my-pieces',
         pathMatch: 'full',
         component: CommunityPiecesTableComponent,
       },
       {
-        title: `Chatbots - ${environment.websiteTitle}`,
+        title: $localize`Chatbots - ${environment.websiteTitle}`,
         path: 'chatbots',
         pathMatch: 'full',
         component: ChatbotsTableComponent,
@@ -44,7 +44,7 @@ export const DashboardLayoutRouting: Routes = [
       {
         path: 'chatbots/:id/settings',
         canActivate: [],
-        title: `Activepieces - Chatbot settings`,
+        title: $localize`Chatbot settings - ${environment.websiteTitle}`,
         pathMatch: 'full',
         component: ChatbotSettingsComponent,
         resolve: {
@@ -53,13 +53,13 @@ export const DashboardLayoutRouting: Routes = [
         },
       },
       {
-        title: `Connections - ${environment.websiteTitle}`,
+        title: $localize`Connections - ${environment.websiteTitle}`,
         path: 'connections',
         pathMatch: 'full',
         component: ConnectionsTableComponent,
       },
       {
-        title: `Flows - ${environment.websiteTitle}`,
+        title: $localize`Flows - ${environment.websiteTitle}`,
         path: 'flows',
         pathMatch: 'full',
         component: FlowsTableComponent,
