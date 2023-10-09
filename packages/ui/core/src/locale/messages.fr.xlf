@@ -1281,11 +1281,11 @@
                 </context-group>
             </trans-unit>
             <trans-unit id="6560405483623875453" datatype="html">
-                <source>Type <x id="START_BOLD_TEXT" ctype="x-b" equiv-text="&lt;b&gt;"/>DELETE
+                <source>Type <x id="START_BOLD_TEXT" ctype="x-b" equiv-text="&lt;b&gt;"/>DELETE
                     <x id="CLOSE_BOLD_TEXT" ctype="x-b" equiv-text="&lt;/b&gt;"/>
                     and press confirm to continue.
                 </source>
-                <target>Taper <x id="START_BOLD_TEXT" ctype="x-b" equiv-text="&lt;b&gt;"/>DELETE
+                <target>Taper <x id="START_BOLD_TEXT" ctype="x-b" equiv-text="&lt;b&gt;"/>DELETE
                     <x id="CLOSE_BOLD_TEXT" ctype="x-b" equiv-text="&lt;/b&gt;"/>
                     et appuyez sur confirmer pour continuer.
                 </target>
@@ -1778,13 +1778,11 @@
             <trans-unit id="3805341172871384186" datatype="html">
                 <source>Complete
                     <x id="INTERPOLATION" equiv-text="{{numOfInvalidSteps}}"/>
-                    step
-                    <x id="INTERPOLATION_1" equiv-text="{{numOfInvalidSteps &gt; 1 ? 's' : ''}}"/>
+                    step<x id="INTERPOLATION_1" equiv-text="{{numOfInvalidSteps &gt; 1 ? 's' : ''}}"/>
                 </source>
                 <target>Compléter
                     <x id="INTERPOLATION" equiv-text="{{numOfInvalidSteps}}"/>
-                    étape
-                    <x id="INTERPOLATION_1" equiv-text="{{numOfInvalidSteps &gt; 1 ? 's' : ''}}"/>
+                    étape<x id="INTERPOLATION_1" equiv-text="{{numOfInvalidSteps &gt; 1 ? 's' : ''}}"/>
                 </target>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
@@ -3546,12 +3544,10 @@
             </trans-unit>
             <trans-unit id="7708270344948043036" datatype="html">
                 <source>
-                    <x id="INTERPOLATION"
-                       equiv-text="{{(isSaving$ | async)? 'Saving...': 'Test flow'}}"/>
+                    <x id="INTERPOLATION" equiv-text="{{(isSaving$ | async)? 'Saving...': 'Test flow'}}"/>
                 </source>
                 <target>
-                    <x id="INTERPOLATION"
-                       equiv-text="{{(isSaving$ | async)? 'Sauvegarde...': 'Process de test'}}"/>
+                    <x id="INTERPOLATION" equiv-text="{{(isSaving$ | async)? 'Sauvegarde...': 'Process de test'}}"/>
                 </target>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
@@ -4145,6 +4141,56 @@
                     <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts
                     </context>
                     <context context-type="linenumber">62</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2884916036139572652" datatype="html">
+                <source>Please choose a connection first</source>
+                <target>Veuillez d'abord choisir une connexion</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.ts
+                    </context>
+                    <context context-type="linenumber">229</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7006228718285189938" datatype="html">
+                <source>Delete Step</source>
+                <target>Supprimer l'étape</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-canvas/src/lib/flow-item-tree/flow-item/actions/delete-flow-item-action/delete-flow-item-action.component.html
+                    </context>
+                    <context context-type="linenumber">1</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7736075512379733726" datatype="html">
+                <source>Duplicate Step</source>
+                <target>Dupliquer l'étape</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-canvas/src/lib/flow-item-tree/flow-item/actions/duplicate-step-action/duplicate-step-action.component.html
+                    </context>
+                    <context context-type="linenumber">1</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="1403002090052852025" datatype="html">
+                <source>Change Trigger</source>
+                <target>Changer de déclencheur</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-canvas/src/lib/flow-item-tree/flow-item/actions/replace-trigger-action/replace-trigger-action.component.html
+                    </context>
+                    <context context-type="linenumber">1</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="852013103273628574" datatype="html">
+                <source>Incomplete settings</source>
+                <target>Paramètres incomplets</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-canvas/src/lib/flow-item-tree/flow-item/flow-item-content/flow-item-content.component.html
+                    </context>
+                    <context context-type="linenumber">40</context>
                 </context-group>
             </trans-unit>
         </body>

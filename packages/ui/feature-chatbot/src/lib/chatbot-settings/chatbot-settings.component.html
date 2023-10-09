@@ -5,11 +5,10 @@
   </ap-icon-button>
   <ng-container i18n>Build Your Chatbot</ng-container>
   <div [class.ap-select-none]="saving" [class.ap-pointer-events-none]="saving">
-    <ap-button btnColor="primary" btnSize="medium" btnStyle="stroked" [darkLoadingSpinner]="true" [tooltipText]="
-        !formGroup.controls.connectionId.value
-          ? 'Please choose a connection first'
-          : ''
-      " [disabled]="!formGroup.controls.connectionId.value" (buttonClicked)="openChatbot()">
+    <ap-button btnColor="primary" btnSize="medium" btnStyle="stroked" [darkLoadingSpinner]="true"
+               [tooltipText]="chatWIthBotTooltipText()" [disabled]="!formGroup.controls.connectionId.value"
+               (buttonClicked)="openChatbot()"
+    >
       <ng-container *ngIf="saving">
         <div class="ap-flex ap-items-center ap-gap-2 ap-text-body">
           <svg-icon src="assets/img/custom/loading.svg" class="outline-loader loading-spin-animation"

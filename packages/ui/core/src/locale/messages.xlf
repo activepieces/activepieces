@@ -14,7 +14,7 @@
                 </context-group>
             </trans-unit>
             <trans-unit id="6560405483623875453" datatype="html">
-                <source>Type <x id="START_BOLD_TEXT" ctype="x-b" equiv-text="&lt;b&gt;"/>DELETE
+                <source>Type <x id="START_BOLD_TEXT" ctype="x-b" equiv-text="&lt;b&gt;"/>DELETE
                     <x id="CLOSE_BOLD_TEXT" ctype="x-b" equiv-text="&lt;/b&gt;"/>
                     and press confirm to continue.
                 </source>
@@ -716,6 +716,42 @@
                     <context context-type="linenumber">140,143</context>
                 </context-group>
             </trans-unit>
+            <trans-unit id="7006228718285189938" datatype="html">
+                <source>Delete Step</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-canvas/src/lib/flow-item-tree/flow-item/actions/delete-flow-item-action/delete-flow-item-action.component.html
+                    </context>
+                    <context context-type="linenumber">1</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7736075512379733726" datatype="html">
+                <source>Duplicate Step</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-canvas/src/lib/flow-item-tree/flow-item/actions/duplicate-step-action/duplicate-step-action.component.html
+                    </context>
+                    <context context-type="linenumber">1</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="1403002090052852025" datatype="html">
+                <source>Change Trigger</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-canvas/src/lib/flow-item-tree/flow-item/actions/replace-trigger-action/replace-trigger-action.component.html
+                    </context>
+                    <context context-type="linenumber">1</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="852013103273628574" datatype="html">
+                <source>Incomplete settings</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-builder-canvas/src/lib/flow-item-tree/flow-item/flow-item-content/flow-item-content.component.html
+                    </context>
+                    <context context-type="linenumber">40</context>
+                </context-group>
+            </trans-unit>
             <trans-unit id="8387651464002742246" datatype="html">
                 <source>Branch</source>
                 <context-group purpose="location">
@@ -779,8 +815,7 @@
             <trans-unit id="3805341172871384186" datatype="html">
                 <source>Complete
                     <x id="INTERPOLATION" equiv-text="{{numOfInvalidSteps}}"/>
-                    step
-                    <x id="INTERPOLATION_1" equiv-text="{{numOfInvalidSteps &gt; 1 ? 's' : ''}}"/>
+                    step<x id="INTERPOLATION_1" equiv-text="{{numOfInvalidSteps &gt; 1 ? 's' : ''}}"/>
                 </source>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
@@ -791,8 +826,7 @@
             </trans-unit>
             <trans-unit id="7708270344948043036" datatype="html">
                 <source>
-                    <x id="INTERPOLATION"
-                       equiv-text="{{(isSaving$ | async)? 'Saving...': 'Test flow'}}"/>
+                    <x id="INTERPOLATION" equiv-text="{{(isSaving$ | async)? 'Saving...': 'Test flow'}}"/>
                 </source>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
@@ -2353,7 +2387,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html
                     </context>
-                    <context context-type="linenumber">18</context>
+                    <context context-type="linenumber">17</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="4527876130724554959" datatype="html">
@@ -2362,7 +2396,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html
                     </context>
-                    <context context-type="linenumber">22</context>
+                    <context context-type="linenumber">21</context>
                 </context-group>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
@@ -2377,7 +2411,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html
                     </context>
-                    <context context-type="linenumber">31,33</context>
+                    <context context-type="linenumber">30,32</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="8953033926734869941" datatype="html">
@@ -2386,7 +2420,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html
                     </context>
-                    <context context-type="linenumber">36</context>
+                    <context context-type="linenumber">35</context>
                 </context-group>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
@@ -2461,7 +2495,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html
                     </context>
-                    <context context-type="linenumber">38,40</context>
+                    <context context-type="linenumber">37,39</context>
                 </context-group>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
@@ -2518,7 +2552,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html
                     </context>
-                    <context context-type="linenumber">42,44</context>
+                    <context context-type="linenumber">41,43</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="20069700830458864" datatype="html">
@@ -2527,7 +2561,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html
                     </context>
-                    <context context-type="linenumber">48,50</context>
+                    <context context-type="linenumber">47,49</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="6070859199120014907" datatype="html">
@@ -2536,7 +2570,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html
                     </context>
-                    <context context-type="linenumber">63</context>
+                    <context context-type="linenumber">62</context>
                 </context-group>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
@@ -2551,7 +2585,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html
                     </context>
-                    <context context-type="linenumber">69</context>
+                    <context context-type="linenumber">68</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="8096108831936282703" datatype="html">
@@ -2560,7 +2594,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html
                     </context>
-                    <context context-type="linenumber">83</context>
+                    <context context-type="linenumber">82</context>
                 </context-group>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
@@ -2593,7 +2627,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html
                     </context>
-                    <context context-type="linenumber">97</context>
+                    <context context-type="linenumber">96</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="467321397227119929" datatype="html">
@@ -2602,7 +2636,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html
                     </context>
-                    <context context-type="linenumber">101,103</context>
+                    <context context-type="linenumber">100,102</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="9003579679055018178" datatype="html">
@@ -2611,7 +2645,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html
                     </context>
-                    <context context-type="linenumber">107,109</context>
+                    <context context-type="linenumber">106,108</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="7520676103251775009" datatype="html">
@@ -2620,7 +2654,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html
                     </context>
-                    <context context-type="linenumber">114,116</context>
+                    <context context-type="linenumber">113,115</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="6528092440862696599" datatype="html">
@@ -2629,7 +2663,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html
                     </context>
-                    <context context-type="linenumber">120</context>
+                    <context context-type="linenumber">119</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="730525045088357363" datatype="html">
@@ -2638,7 +2672,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html
                     </context>
-                    <context context-type="linenumber">122</context>
+                    <context context-type="linenumber">121</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="5117293842173012454" datatype="html">
@@ -2647,7 +2681,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html
                     </context>
-                    <context context-type="linenumber">124,126</context>
+                    <context context-type="linenumber">123,125</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="6571227198408989826" datatype="html">
@@ -2656,7 +2690,16 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html
                     </context>
-                    <context context-type="linenumber">129,131</context>
+                    <context context-type="linenumber">128,130</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2884916036139572652" datatype="html">
+                <source>Please choose a connection first</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.ts
+                    </context>
+                    <context context-type="linenumber">229</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="4845271368813752731" datatype="html">
