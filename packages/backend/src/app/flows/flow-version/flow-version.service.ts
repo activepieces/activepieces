@@ -257,9 +257,6 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
         case FlowOperationType.ADD_ACTION:
             clonedRequest.request.action.valid = true
             switch (clonedRequest.request.action.type) {
-                case ActionType.MISSING:
-                    clonedRequest.request.action.valid = false
-                    break
                 case ActionType.LOOP_ON_ITEMS:
                     clonedRequest.request.action.valid = loopSettingsValidator.Check(clonedRequest.request.action.settings)
                     break
@@ -282,9 +279,6 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
         case FlowOperationType.UPDATE_ACTION:
             clonedRequest.request.valid = true
             switch (clonedRequest.request.type) {
-                case ActionType.MISSING:
-                    clonedRequest.request.valid = false
-                    break
                 case ActionType.LOOP_ON_ITEMS:
                     clonedRequest.request.valid = loopSettingsValidator.Check(clonedRequest.request.settings)
                     break

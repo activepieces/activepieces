@@ -15,6 +15,7 @@ export class ActivepiecesError extends Error {
 type ErrorParams =
   | AppConnectionNotFoundErrorParams
   | AuthorizationErrorParams
+  | PermissionDeniedErrorParams
   | ConfigNotFoundErrorParams
   | EngineOperationFailureParams
   | EntityNotFoundErrorParams
@@ -42,7 +43,7 @@ type ErrorParams =
   | StepNotFoundErrorParams
   | SystemInvalidErrorParams
   | SystemPropNotDefinedErrorParams
-  | TaskQuotaExceededErrorParams
+  | QuotaExceededParams
   | TestTriggerFailedErrorParams
   | TriggerDisableErrorParams
   | TriggerEnableErrorParams
@@ -71,6 +72,15 @@ export type AppConnectionNotFoundErrorParams = BaseErrorParams<
 export type AuthorizationErrorParams = BaseErrorParams<
   ErrorCode.AUTHORIZATION,
   Record<string, never>
+>;
+
+export type PermissionDeniedErrorParams = BaseErrorParams<
+  ErrorCode.PERMISSION_DENIED,
+  {
+    resource: string;
+    action: string;
+    projectId: string;
+  }
 >;
 
 export type SystemInvalidErrorParams = BaseErrorParams<
@@ -207,13 +217,6 @@ export type InvalidJwtTokenErrorParams = BaseErrorParams<
   }
 >
 
-export type TaskQuotaExceededErrorParams = BaseErrorParams<
-  ErrorCode.TASK_QUOTA_EXCEEDED,
-  {
-    projectId: string;
-  }
->
-
 export type TestTriggerFailedErrorParams = BaseErrorParams<
   ErrorCode.TEST_TRIGGER_FAILED,
   {
@@ -278,9 +281,19 @@ export type InvalidAppConnectionParams = BaseErrorParams<
   }
 >
 
+export type QuotaExceededParams = BaseErrorParams<
+  ErrorCode.QUOTA_EXCEEDED,
+  {
+    metric: 'connections' | 'tasks' | 'bots' | 'datasource' | 'team-members'
+    quota: number
+  }
+>
+
 export enum ErrorCode {
   APP_CONNECTION_NOT_FOUND = "APP_CONNECTION_NOT_FOUND",
+  QUOTA_EXCEEDED = "QUOTA_EXCEEDED",
   AUTHORIZATION = "AUTHORIZATION",
+  PERMISSION_DENIED = "PERMISSION_DENIED",
   CONFIG_NOT_FOUND = "CONFIG_NOT_FOUND",
   ENGINE_OPERATION_FAILURE = "ENGINE_OPERATION_FAILURE",
   ENTITY_NOT_FOUND = "ENTITY_NOT_FOUND",
@@ -308,7 +321,6 @@ export enum ErrorCode {
   STEP_NOT_FOUND = "STEP_NOT_FOUND",
   SYSTEM_PROP_INVALID = "SYSTEM_PROP_INVALID",
   SYSTEM_PROP_NOT_DEFINED = "SYSTEM_PROP_NOT_DEFINED",
-  TASK_QUOTA_EXCEEDED = "TASK_QUOTA_EXCEEDED",
   TEST_TRIGGER_FAILED = "TEST_TRIGGER_FAILED",
   TRIGGER_DISABLE = "TRIGGER_DISABLE",
   TRIGGER_ENABLE = "TRIGGER_ENABLE",

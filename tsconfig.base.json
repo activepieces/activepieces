@@ -17,6 +17,15 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
+      "@activepieces/ee-auth": ["packages/ee/auth/src/index.ts"],
+      "@activepieces/ee-billing-ui": ["packages/ee/billing/ui/src/index.ts"],
+      "@activepieces/ee-components": ["packages/ee/components/src/index.ts"],
+      "@activepieces/ee-shared": ["packages/ee/shared/src/index.ts"],
+      "@activepieces/ee/billing/ui": ["packages/ee/billing/ui/src/index.ts"],
+      "@activepieces/ee/components": ["packages/ee/components/src/index.ts"],
+      "@activepieces/ee/project-members": [
+        "packages/ee/project-members/src/index.ts"
+      ],
       "@activepieces/engine": ["packages/engine/src/main.ts"],
       "@activepieces/piece-airtable": ["packages/pieces/airtable/src/index.ts"],
       "@activepieces/piece-amazon-s3": [
@@ -266,7 +275,7 @@
       "@activepieces/ui/feature-templates": [
         "packages/ui/feature-templates/src/index.ts"
       ],
-      "@activepieces/ui/templates": ["packages/ui/templates/src/index.ts"]
+      "@ee/*": ["packages/ee/*"]
     },
     "resolveJsonModule": true
   },

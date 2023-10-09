@@ -1,6 +1,6 @@
 
 export type FlowWorkerHooks = {
-    preExecute({ projectId }: { projectId: string }): Promise<void>
+    preExecute({ projectId, runId }: { projectId: string, runId: string }): Promise<void>
 }
 
 const emptyHooks: FlowWorkerHooks = {
