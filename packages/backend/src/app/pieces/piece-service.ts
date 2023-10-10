@@ -37,12 +37,13 @@ export const pieceService = {
                 projectId: params.projectId,
                 packageType: params.packageType,
                 pieceType: PieceType.CUSTOM,
+                archiveId: piecePackage.archiveId,
             })
 
             return savedPiece
         }
         catch (error) {
-            logger.error({ error }, '[PieceService#add]')
+            logger.error(error, '[PieceService#add]')
 
             throw new ActivepiecesError({
                 code: ErrorCode.PIECE_NOT_FOUND,
@@ -75,6 +76,7 @@ const getPiecePackage = async (params: AddPieceParams): Promise<PiecePackage> =>
             return {
                 ...params,
                 ...common,
+                archiveId: undefined,
             }
         }
     }

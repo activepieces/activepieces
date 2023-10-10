@@ -7,7 +7,7 @@ type PiecePackageMetadata = {
     projectId?: ProjectId
     pieceType: PieceType
     packageType: PackageType
-    archiveId?: FileId
+    archiveId: FileId | undefined
 }
 
 export type PieceMetadataModel = PieceMetadata & PiecePackageMetadata
@@ -77,7 +77,10 @@ export const PieceMetadataEntity = new EntitySchema<PieceMetadataSchema>({
             type: String,
             nullable: false,
         },
-        archiveId: ApIdSchema,
+        archiveId: {
+            ...ApIdSchema,
+            nullable: true,
+        },
     },
     indices: [
         {
@@ -100,7 +103,8 @@ export const PieceMetadataEntity = new EntitySchema<PieceMetadataSchema>({
         archiveId: {
             type: 'one-to-one',
             target: 'file',
-            cascade: true,
+            onDelete: 'NO ACTION',
+            onUpdate: 'NO ACTION',
             joinColumn: {
                 name: 'archiveId',
                 referencedColumnName: 'id',

@@ -25,6 +25,7 @@ export type CreateParams = {
     projectId?: string
     packageType: PackageType
     pieceType: PieceType
+    archiveId?: string
 }
 
 export type GetExactPieceVersionParams = {
