@@ -123,10 +123,7 @@ export class ImportFlowComponent implements OnInit {
           if (error.status === StatusCodes.UNAUTHORIZED) {
             this.router.navigate(['/sign-up'], {
               queryParams: {
-                redirect_url:
-                  `${window.location.origin}${window.location.pathname}`.split(
-                    '?'
-                  )[0],
+                redirect_url: `${window.location.pathname}`.split('?')[0],
               },
             });
             return EMPTY;

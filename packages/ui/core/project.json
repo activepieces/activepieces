@@ -48,10 +48,19 @@
           "./node_modules/codemirror/addon/lint/lint.css",
           "./node_modules/codemirror/lib/codemirror.css",
           "./node_modules/codemirror/theme/lucario.css",
-          "packages/ui/core/src/styles.scss"
+          "packages/ui/core/src/styles.scss",
+          "packages/ui/core/src/assets/scss/prism-theme.scss",
+          "node_modules/prismjs/plugins/command-line/prism-command-line.css",
+          "node_modules/prismjs/plugins/line-highlight/prism-line-highlight.css",
+          "node_modules/prismjs/plugins/line-numbers/prism-line-numbers.css"
         ],
         "scripts": [
           "node_modules/marked/marked.min.js",
+          "node_modules/prismjs/prism.js",
+          "node_modules/prismjs/plugins/command-line/prism-command-line.js",
+          "node_modules/prismjs/plugins/highlight-keywords/prism-highlight-keywords.min.js",
+          "node_modules/prismjs/plugins/line-highlight/prism-line-highlight.js",
+          "node_modules/prismjs/plugins/line-numbers/prism-line-numbers.js",
           "node_modules/clipboard/dist/clipboard.min.js"
         ]
       },

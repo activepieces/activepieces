@@ -1,4 +1,9 @@
-import { ActionType, UpdateActionRequest } from '@activepieces/shared';
+import {
+  ActionType,
+  PackageType,
+  PieceType,
+  UpdateActionRequest,
+} from '@activepieces/shared';
 import { FlowItemDetails } from '@activepieces/ui/common';
 
 export function constructUpdateOperation(
@@ -60,8 +65,11 @@ export function constructUpdateOperation(
         type: ActionType.PIECE,
         valid: false,
         settings: {
-          pieceName: flowItemDetails.extra?.appName || 'NO_APP_NAME',
-          pieceVersion: flowItemDetails.extra?.appVersion || 'NO_APP_VERSION',
+          packageType:
+            flowItemDetails.extra?.packageType ?? PackageType.REGISTRY,
+          pieceType: flowItemDetails.extra?.pieceType ?? PieceType.OFFICIAL,
+          pieceName: flowItemDetails.extra?.pieceName ?? 'NO_APP_NAME',
+          pieceVersion: flowItemDetails.extra?.pieceVersion ?? 'NO_APP_VERSION',
           actionName: undefined,
           input: {},
           inputUiInfo: {

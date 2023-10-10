@@ -175,7 +175,6 @@ export class FlowExecutor {
       }
 
       case ActionType.CODE:
-      case ActionType.MISSING:
         throw new Error('missing action, this shouldn\'t happen')
     }
   }
@@ -269,6 +268,7 @@ export class FlowExecutor {
       case ExecutionOutputStatus.FAILED:
       case ExecutionOutputStatus.RUNNING:
       case ExecutionOutputStatus.TIMEOUT:
+      case ExecutionOutputStatus.QUOTA_EXCEEDED:
       case ExecutionOutputStatus.INTERNAL_ERROR:
         return {
           status: iterateFlowResponse.status,

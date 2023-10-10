@@ -1,6 +1,5 @@
-import { PieceMetadataSchema } from '../piece-metadata-entity'
+import { PieceMetadataModel, PieceMetadataModelSummary, PieceMetadataSchema } from '../piece-metadata-entity'
 import { GetParams, PieceMetadataService } from './piece-metadata-service'
-import { PieceMetadata, PieceMetadataSummary } from '@activepieces/pieces-framework'
 import { AllPiecesStats, pieceStatsService } from './piece-stats-service'
 import { StatusCodes } from 'http-status-codes'
 import { ActivepiecesError, EXACT_VERSION_PATTERN, ErrorCode } from '@activepieces/shared'
@@ -24,20 +23,20 @@ const handleHttpErrors = async (response: Response): Promise<void> => {
 
 export const CloudPieceMetadataService = (): PieceMetadataService => {
     return {
-        async list({ release }): Promise<PieceMetadataSummary[]> {
+        async list({ release }): Promise<PieceMetadataModelSummary[]> {
             const response = await fetch(`${CLOUD_API_URL}?release=${release}`)
 
             await handleHttpErrors(response)
 
-            return await response.json() as PieceMetadataSummary[]
+            return await response.json() as PieceMetadataModelSummary[]
         },
 
-        async get({ name, version }: GetParams): Promise<PieceMetadata> {
+        async get({ name, version }: GetParams): Promise<PieceMetadataModel> {
             const response = await fetch(`${CLOUD_API_URL}/${name}${version ? '?version=' + version : ''}`)
 
             await handleHttpErrors(response)
 
-            return await response.json() as PieceMetadata
+            return await response.json() as PieceMetadataModel
         },
 
         async create(): Promise<PieceMetadataSchema> {

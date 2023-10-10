@@ -61,6 +61,7 @@ import {
 import { InterpolatingTextFormControlComponent } from '../interpolating-text-form-control/interpolating-text-form-control.component';
 import { PiecePropertiesFormValue } from '../models/piece-properties-form-value';
 import { AddEditConnectionButtonComponent } from '@activepieces/ui/feature-connections';
+import { PackageType, PieceType } from '@activepieces/shared';
 
 type ConfigKey = string;
 
@@ -120,6 +121,8 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
   optionalProperties: PiecePropertyMap = {};
   optionalConfigsMenuOpened = false;
   @Input() actionOrTriggerName: string;
+  @Input() packageType: PackageType;
+  @Input() pieceType: PieceType;
   @Input() pieceName: string;
   @Input() pieceVersion: string;
   @Input() pieceDisplayName: string;
@@ -359,6 +362,8 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
       switchMap((res) => {
         return this.actionMetaDataService
           .getPieceActionConfigOptions<T>({
+            packageType: this.packageType,
+            pieceType: this.pieceType,
             pieceVersion: this.pieceVersion,
             pieceName: this.pieceName,
             propertyName: obj.propertyKey,

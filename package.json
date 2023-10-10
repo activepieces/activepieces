@@ -3,9 +3,11 @@
   "version": "0.10.1",
   "scripts": {
     "prepare": "husky install",
-    "frontend": "nx serve ui-core",
-    "backend": "nx serve backend",
-    "dev": "concurrently -p \"[{name}]\" -n \"GUI,API\" -c \"bgBlue.bold,bgGreen.bold\" \"npm:frontend\" \"npm:backend\"",
+    "serve:frontend": "nx serve ui-core",
+    "serve:backend": "nx serve backend",
+    "serve:engine": "nx serve engine",
+    "serve:pieces": "turbowatch turbowatch.ts",
+    "dev": "FORCE_COLOR=true concurrently -n \"GUI,API,ENG,PCS\" -c \"bgBlue.bold,bgGreen.bold,bgRed.bold,bgYellow.bold\" \"npm:serve:frontend\" \"npm:serve:backend\" \"npm:serve:engine\" \"npm:serve:pieces\"",
     "start": "npm i && npm run dev",
     "publish-piece": "npx ts-node tools/scripts/utils/publish-piece.ts",
     "create-piece": "npx ts-node tools/scripts/generate-new-piece.ts"

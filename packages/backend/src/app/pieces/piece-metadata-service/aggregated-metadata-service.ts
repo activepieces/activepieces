@@ -1,16 +1,16 @@
 import { GetParams, PieceMetadataService } from './piece-metadata-service'
-import { PieceMetadata, PieceMetadataSummary } from '@activepieces/pieces-framework'
 import { AllPiecesStats } from './piece-stats-service'
 import { CloudPieceMetadataService } from './cloud-piece-metadata-service'
 import { DbPieceMetadataService } from './db-piece-metadata-service'
 import { ActivepiecesError, EXACT_VERSION_PATTERN, ErrorCode } from '@activepieces/shared'
+import { PieceMetadataModel, PieceMetadataModelSummary } from '../piece-metadata-entity'
 
 const cloudPieceProvider = CloudPieceMetadataService()
 const dbPieceProvider = DbPieceMetadataService()
 
 export const AggregatedPieceMetadataService = (): PieceMetadataService => {
     return {
-        async list({ release, projectId, edition }): Promise<PieceMetadataSummary[]> {
+        async list({ release, projectId, edition }): Promise<PieceMetadataModelSummary[]> {
             const cloudMetadata = await cloudPieceProvider.list({
                 release,
                 projectId,
@@ -24,7 +24,7 @@ export const AggregatedPieceMetadataService = (): PieceMetadataService => {
             return [...cloudMetadata, ...dbMetadata]
         },
 
-        async get({ name, version, projectId }: GetParams): Promise<PieceMetadata> {
+        async get({ name, version, projectId }: GetParams): Promise<PieceMetadataModel> {
             try {
                 const dbMetadata = await dbPieceProvider.get({
                     name, version, projectId,
@@ -42,7 +42,7 @@ export const AggregatedPieceMetadataService = (): PieceMetadataService => {
             }
         },
 
-        async create(params): Promise<PieceMetadata> {
+        async create(params): Promise<PieceMetadataModel> {
             return dbPieceProvider.create(params)
         },
 

@@ -1,7 +1,7 @@
 import { Sandbox } from '..'
 import { sandboxCachePool } from '../cache/sandbox-cache-pool'
 import { sandboxManager } from '../sandbox-manager'
-import { FileId } from '@activepieces/shared'
+import { FileId, PiecePackage } from '@activepieces/shared'
 import { SandBoxCacheType, TypedProvisionCacheInfo } from './sandbox-cache-key'
 import { logger } from '../../../helper/logger'
 
@@ -38,20 +38,15 @@ export const sandboxProvisioner = {
     },
 }
 
-type ProvisionParams<T extends SandBoxCacheType = SandBoxCacheType> = TypedProvisionCacheInfo<T> & {
-    pieces?: Piece[]
-    codeArchives?: CodeArchive[]
-}
-
-
-type Piece = {
-    name: string
-    version: string
-}
 
 type CodeArchive = {
     id: FileId
     content: Buffer
+}
+
+type ProvisionParams<T extends SandBoxCacheType = SandBoxCacheType> = TypedProvisionCacheInfo<T> & {
+    pieces?: PiecePackage[]
+    codeArchives?: CodeArchive[]
 }
 
 type ReleaseParams = {

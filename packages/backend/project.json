@@ -28,7 +28,7 @@
         }
       }
     },
-    "build-watch": {
+    "serve": {
       "executor": "@nx/js:node",
       "options": {
         "buildTarget": "backend:build",
@@ -38,16 +38,6 @@
         "production": {
           "buildTarget": "backend:build:production"
         }
-      }
-    },
-    "serve": {
-      "executor": "nx:run-commands",
-      "options": {
-        "commands": [
-          "nx build-watch backend",
-          "nx serve engine",
-          "turbowatch turbowatch.ts"
-        ]
       }
     },
     "lint": {
