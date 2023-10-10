@@ -10,13 +10,12 @@ export const division = createAction({
             displayName: 'First Number',
             description: undefined,
             required: true,
-            validators: [Validators.number]
         }),
         second_number: Property.Number({
             displayName:  'Second Number',
             description: undefined,
             required: true,
-            validators: [Validators.number, Validators.nonZero]
+            validators: [Validators.nonZero]
         })
     },
     async run(context) {

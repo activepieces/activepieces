@@ -1,4 +1,4 @@
-import { createAction, PieceAuth, Property, Validators } from "@activepieces/pieces-framework";
+import { createAction, PieceAuth, Property } from "@activepieces/pieces-framework";
 
 export const modulo = createAction({
     name: 'modulo_math',
@@ -10,13 +10,11 @@ export const modulo = createAction({
             displayName: 'First Number',
             description: undefined,
             required: true,
-            validators: [Validators.number]
         }),
         second_number: Property.Number({
             displayName:  'Second Number',
             description: undefined,
             required: true,
-            validators: [Validators.number]
         })
     },
     async run(context) {
