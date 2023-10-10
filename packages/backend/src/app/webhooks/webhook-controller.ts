@@ -174,20 +174,23 @@ async function convertRequest(request: FastifyRequest): Promise<EventPayload> {
 }
 
 const convertBody = async (request: FastifyRequest) => {
-    if (request.isMultipart()) {
+    if ( request.isMultipart() ) {
+        const jsonRequestBody = await request.body as Record<string, unknown>
         const jsonResult: Record<string, unknown> = {}
-        const parts = request.parts()
-        for await (const part of parts) {
-            if (part.type === 'file') {
-                const chunks = []
-                for await (const chunk of part.file) {
-                    chunks.push(chunk)
+        for (const key in jsonRequestBody) {
+            const value = jsonRequestBody[key]
+            if (Array.isArray(value)) {
+                for (const file of value ) {
+                    const jsonFile = await file as Record<string, unknown>
+                    const encoding = jsonFile.encoding as BufferEncoding
+                    const data = jsonFile.data as string
+                    const fileBuffer = Buffer.from(data, encoding)
+                    const mimeType = jsonFile.mimetype as string
+                    jsonResult[key] = mimeType + ';base64,' + fileBuffer.toString('base64')
                 }
-                const fileBuffer = Buffer.concat(chunks)
-                jsonResult[part.fieldname] = fileBuffer.toString('base64')
             }
             else {
-                jsonResult[part.fieldname] = part.value
+                jsonResult[key] = value
             }
         }
         return jsonResult
