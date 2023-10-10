@@ -40,8 +40,8 @@ type BaseIterateFlowResponse<T extends ExecutionOutputStatus> = {
 type FinishIterateFlowResponse = BaseIterateFlowResponse<
   Exclude<
     ExecutionOutputStatus,
-      | ExecutionOutputStatus.PAUSED
-      | ExecutionOutputStatus.STOPPED
+    | ExecutionOutputStatus.PAUSED
+    | ExecutionOutputStatus.STOPPED
   >
 >
 
@@ -123,7 +123,7 @@ export class FlowExecutor {
   private generatePauseMetadata(params: GeneratePauseMetadata): PauseMetadata {
     const { actionHandler, stepOutput } = params
 
-    switch(actionHandler.currentAction.type) {
+    switch (actionHandler.currentAction.type) {
       case ActionType.PIECE: {
         if (isNil(stepOutput.pauseMetadata)) {
           throw new Error('pauseMetadata is undefined, this shouldn\'t happen')
@@ -252,11 +252,11 @@ export class FlowExecutor {
         }
 
       case ExecutionOutputStatus.STOPPED:
-          return {
-            status: ExecutionOutputStatus.STOPPED,
-            stopResponse: iterateFlowResponse.stopResponse,
-            ...baseExecutionOutput,
-          }
+        return {
+          status: ExecutionOutputStatus.STOPPED,
+          stopResponse: iterateFlowResponse.stopResponse,
+          ...baseExecutionOutput,
+        }
 
       case ExecutionOutputStatus.PAUSED:
         return {
@@ -291,7 +291,7 @@ export class FlowExecutor {
     return undefined;
   }
 
-  private async iterateFlow(params: IterateFlowParams) : Promise<IterateFlowResponse> {
+  private async iterateFlow(params: IterateFlowParams): Promise<IterateFlowResponse> {
     const { actionHandler, ancestors } = params
 
     if (isNil(actionHandler)) {
@@ -304,7 +304,7 @@ export class FlowExecutor {
 
     const stepOutput = await actionHandler.execute({
       flowVersion: this.flowVersion,
-    },this.executionState, ancestors);
+    }, this.executionState, ancestors);
 
     const endTime = dayjs()
 
@@ -314,8 +314,9 @@ export class FlowExecutor {
       ? stepOutput.duration + duration
       : duration
 
-    this.executionState.insertStep(stepOutput, actionHandler.currentAction.name, ancestors)
-
+    if (stepOutput.type !== ActionType.BRANCH) {
+      this.executionState.insertStep(stepOutput, actionHandler.currentAction.name, ancestors)
+    }
     switch (stepOutput.status) {
       case StepOutputStatus.PAUSED: {
         const pauseMetadata = this.generatePauseMetadata({
