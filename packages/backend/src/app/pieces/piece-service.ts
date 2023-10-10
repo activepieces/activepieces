@@ -1,10 +1,20 @@
-import { mkdir, writeFile } from 'node:fs/promises'
-import { ActivepiecesError, EngineResponseStatus, ErrorCode, PackageType, PiecePackage, PieceType, ProjectId } from '@activepieces/shared'
+import {
+    ActivepiecesError,
+    EngineResponseStatus,
+    ErrorCode,
+    FileCompression,
+    FileId,
+    FileType,
+    PackageType,
+    PiecePackage,
+    PieceType,
+    ProjectId,
+} from '@activepieces/shared'
 import { engineHelper } from '../helper/engine-helper'
 import { pieceMetadataService } from './piece-metadata-service'
 import { PieceMetadataModel } from './piece-metadata-entity'
-import { pieceManager } from '../flows/common/piece-manager'
 import { logger } from '../helper/logger'
+import { fileService } from '../file/file.service'
 
 export const pieceService = {
     async add(params: AddPieceParams): Promise<PieceMetadataModel> {
@@ -52,11 +62,12 @@ const getPiecePackage = async (params: AddPieceParams): Promise<PiecePackage> =>
 
     switch (params.packageType) {
         case PackageType.ARCHIVE: {
-            await saveArchive(params)
+            const archiveId = await saveArchive(params)
             const { archive: _, ...piecePackage } = params
             return {
                 ...piecePackage,
                 ...common,
+                archiveId,
             }
         }
 
@@ -69,16 +80,17 @@ const getPiecePackage = async (params: AddPieceParams): Promise<PiecePackage> =>
     }
 }
 
-const saveArchive = async (params: AddArchivePieceParams): Promise<void> => {
-    const { pieceName, pieceVersion, projectId, archive } = params
+const saveArchive = async (params: AddArchivePieceParams): Promise<FileId> => {
+    const { projectId, archive } = params
 
-    const projectPackageArchivePath = pieceManager.getProjectPackageArchivePath({
+    const archiveFile = await fileService.save({
         projectId,
+        data: archive,
+        type: FileType.PACKAGE_ARCHIVE,
+        compression: FileCompression.NONE,
     })
 
-    const piecePackageArchivePath = `${projectPackageArchivePath}/${pieceName}`
-    await mkdir(piecePackageArchivePath, { recursive: true })
-    await writeFile(`${piecePackageArchivePath}/${pieceVersion}.tgz`, archive)
+    return archiveFile.id
 }
 
 type BaseAddPieceParams<PT extends PackageType> = {

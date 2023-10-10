@@ -1,12 +1,13 @@
 import { EntitySchema } from 'typeorm'
 import { PieceMetadata, PieceMetadataSummary } from '@activepieces/pieces-framework'
-import { ApId, BaseModel, PackageType, PieceType, Project, ProjectId } from '@activepieces/shared'
-import { BaseColumnSchemaPart, COLLATION, JSON_COLUMN_TYPE } from '../database/database-common'
+import { ApId, BaseModel, FileId, PackageType, PieceType, Project, ProjectId } from '@activepieces/shared'
+import { ApIdSchema, BaseColumnSchemaPart, COLLATION, JSON_COLUMN_TYPE } from '../database/database-common'
 
 type PiecePackageMetadata = {
     projectId?: ProjectId
     pieceType: PieceType
     packageType: PackageType
+    archiveId?: FileId
 }
 
 export type PieceMetadataModel = PieceMetadata & PiecePackageMetadata
@@ -76,6 +77,7 @@ export const PieceMetadataEntity = new EntitySchema<PieceMetadataSchema>({
             type: String,
             nullable: false,
         },
+        archiveId: ApIdSchema,
     },
     indices: [
         {
@@ -93,6 +95,16 @@ export const PieceMetadataEntity = new EntitySchema<PieceMetadataSchema>({
             joinColumn: {
                 name: 'projectId',
                 foreignKeyConstraintName: 'fk_piece_metadata_project_id',
+            },
+        },
+        archiveId: {
+            type: 'one-to-one',
+            target: 'file',
+            cascade: true,
+            joinColumn: {
+                name: 'archiveId',
+                referencedColumnName: 'id',
+                foreignKeyConstraintName: 'fk_piece_metadata_file',
             },
         },
     },
