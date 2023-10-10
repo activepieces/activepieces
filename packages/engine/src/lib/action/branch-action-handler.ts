@@ -1,7 +1,7 @@
 import { FlowExecutor } from '../executors/flow-executor';
 import { VariableService } from '../services/variable-service';
-import { ExecutionState, BranchAction, Action, BranchStepOutput, BranchCondition, BranchOperator, BranchResumeStepMetadata, ActionType, BranchActionSettings, ExecutionOutputStatus } from '@activepieces/shared';
-import { BaseActionHandler, ExecuteContext, InitStepOutputParams } from './action-handler';
+import { ExecutionState, BranchAction, Action, BranchStepOutput, BranchCondition, BranchOperator, BranchResumeStepMetadata, ActionType, BranchActionSettings, ExecutionOutputStatus, PauseExecutionOutput, StopExecutionOutput } from '@activepieces/shared';
+import { BaseActionHandler, ExecuteActionOutput, ExecuteContext, InitStepOutputParams } from './action-handler';
 import { StepOutputStatus, StepOutput } from '@activepieces/shared';
 
 type CtorParams = {
@@ -54,7 +54,7 @@ export class BranchActionHandler extends BaseActionHandler<BranchAction, BranchR
     context: ExecuteContext,
     executionState: ExecutionState,
     ancestors: [string, number][]
-  ): Promise<StepOutput> {
+  ): Promise<ExecuteActionOutput> {
     const resolvedInput: BranchActionSettings = await this.variableService.resolve({
       unresolvedInput: this.currentAction.settings,
       executionState,
@@ -86,22 +86,29 @@ export class BranchActionHandler extends BaseActionHandler<BranchAction, BranchR
           resumeStepMetadata: this.resumeStepMetadata?.childResumeStepMetadata,
         })
 
-        const exeuctionOutput = await executor.execute({
+        const executionOutput = await executor.execute({
           ancestors,
         })
-
-        if (exeuctionOutput.status !== ExecutionOutputStatus.SUCCEEDED) {
+        if (executionOutput.status !== ExecutionOutputStatus.SUCCEEDED) {
+          stepOutput.status = StepOutputStatus.SUCCEEDED
           executionState.insertStep(stepOutput, this.currentAction.name, ancestors)
           return {
-            ...stepOutput,
-            status: convertExecutionOutputStatusToStepOutputStatus(exeuctionOutput.status),
+            stepOutput,
+            executionOutputStatus: executionOutput.status,
+            pauseMetadata: this.convertToPauseMetadata(executionOutput),
+            stopResponse: this.convertToStopResponse(executionOutput),
           }
         }
       }
 
       executionState.insertStep(stepOutput, this.currentAction.name, ancestors)
 
-      return stepOutput
+      return {
+        stepOutput,
+        executionOutputStatus: this.convertExecutionStatusToStepStatus(stepOutput.status),
+        pauseMetadata: undefined,
+        stopResponse: undefined,
+      }
     }
     catch (e) {
       console.error(e)
@@ -109,7 +116,12 @@ export class BranchActionHandler extends BaseActionHandler<BranchAction, BranchR
       stepOutput.status = StepOutputStatus.FAILED
       stepOutput.errorMessage = (e as Error).message
 
-      return stepOutput
+      return {
+        stepOutput,
+        executionOutputStatus: this.convertExecutionStatusToStepStatus(stepOutput.status),
+        pauseMetadata: undefined,
+        stopResponse: undefined,
+      }
     }
   }
 }
@@ -219,22 +231,4 @@ function toLowercaseIfCaseInsensitive(text: unknown, caseSensitive: boolean | un
 function parseStringToNumber(str: string): number | string {
   const num = Number(str);
   return isNaN(num) ? str : num;
-}
-
-function convertExecutionOutputStatusToStepOutputStatus(status: ExecutionOutputStatus): StepOutputStatus {
-  switch (status) {
-    case ExecutionOutputStatus.SUCCEEDED:
-      return StepOutputStatus.SUCCEEDED
-    case ExecutionOutputStatus.INTERNAL_ERROR:
-    case ExecutionOutputStatus.QUOTA_EXCEEDED:
-    case ExecutionOutputStatus.TIMEOUT:
-    case ExecutionOutputStatus.FAILED:
-      return StepOutputStatus.FAILED
-    case ExecutionOutputStatus.RUNNING:
-      return StepOutputStatus.RUNNING
-    case ExecutionOutputStatus.PAUSED:
-      return StepOutputStatus.PAUSED
-    case ExecutionOutputStatus.STOPPED:
-      return StepOutputStatus.STOPPED
-  }
 }
