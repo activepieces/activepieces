@@ -608,6 +608,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "rbnswartz",
+      "name": "Reuben Swartz",
+      "avatar_url": "https://avatars.githubusercontent.com/u/724704?v=4",
+      "profile": "https://github.com/rbnswartz",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "commitType": "docs"
