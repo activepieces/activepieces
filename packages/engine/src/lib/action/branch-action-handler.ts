@@ -34,7 +34,9 @@ export class BranchActionHandler extends BaseActionHandler<BranchAction, BranchR
    */
   protected override async initStepOutput({ executionState }: InitStepOutputParams): Promise<BranchStepOutput> {
     const censoredInput = await this.variableService.resolve({
-      unresolvedInput: this.currentAction.settings,
+      unresolvedInput: {
+        conditions: this.currentAction.settings.conditions
+      },
       executionState,
       logs: true,
     })
@@ -83,13 +85,8 @@ export class BranchActionHandler extends BaseActionHandler<BranchAction, BranchR
           resumeStepMetadata: this.resumeStepMetadata?.childResumeStepMetadata,
         })
 
-        const executionOutput = await executor.execute({
+        await executor.execute({
           ancestors,
-        })
-
-        this.handleFlowExecutorOutput({
-          executionOutput,
-          stepOutput,
         })
 
         if (stepOutput.status !== StepOutputStatus.RUNNING) {
