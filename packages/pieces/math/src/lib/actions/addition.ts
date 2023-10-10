@@ -1,4 +1,4 @@
-import { createAction, PieceAuth, Property, Validators } from "@activepieces/pieces-framework";
+import { createAction, PieceAuth, Property } from "@activepieces/pieces-framework";
 
 export const addition = createAction({
     name: 'addition_math',
