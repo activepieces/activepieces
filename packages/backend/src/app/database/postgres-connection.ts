@@ -44,6 +44,7 @@ import { Chatbot1694902537040 } from './migration/postgres/1694902537040-Chatbot
 import { FileTypeCompression1694691554696 } from './migration/postgres/1694691554696-file-type-compression'
 import { AddPieceTypeAndPackageTypeToPieceMetadata1695992551156 } from './migration/postgres/1695992551156-add-piece-type-and-package-type-to-piece-metadata'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
+import { AddPieceTypeAndPackageTypeToFlowTemplate1696245170062 } from './migration/common/1696245170062-add-piece-type-and-package-type-to-flow-template'
 import { AddVisibilityStatusToChatbot1695719749099 } from './migration/postgres/1695719749099-AddVisibilityStatusToChatbot'
 import { ApEdition } from '@activepieces/shared'
 import { getEdition } from '../helper/secret-helper'
@@ -64,7 +65,6 @@ import { AddProjectIdToTemplate1688083336934 } from '../ee/database/migrations/p
 import { AddPinnedOrder1686154285890 } from '../ee/database/migrations/postgres/1686154285890-add_pinned_order'
 import { AddPinnedAndBlogUrlToTemplates1686133672743 } from '../ee/database/migrations/postgres/1686133672743-AddPinnedAndBlogUrlToTemplates'
 import { ChangeToJsonToKeepKeysOrder1685991260335 } from '../ee/database/migrations/postgres/1685991260335-ChangeToJsonToPeserveKeys'
-
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
 
@@ -142,6 +142,7 @@ const getMigrations = () => {
             commonMigration.push(AddFeaturedDescriptionAndFlagToTemplates1694604120205)
             commonMigration.push(ModifyBilling1694902537045)
             commonMigration.push(AddDatasourcesLimit1695916063833)
+            commonMigration.push(AddPieceTypeAndPackageTypeToFlowTemplate1696245170062)
             break
         case ApEdition.ENTERPRISE:
             commonMigration.push(AddProjectMembers1689177797092)
