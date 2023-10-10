@@ -51,7 +51,7 @@ const addAction = createAction(
 
 const updateAction = createAction(
   FlowsActionType.UPDATE_ACTION,
-  props<{ operation: UpdateActionRequest; updatingMissingStep?: boolean }>()
+  props<{ operation: UpdateActionRequest }>()
 );
 
 const deleteAction = createAction(

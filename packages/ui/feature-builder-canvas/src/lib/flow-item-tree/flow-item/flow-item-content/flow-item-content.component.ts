@@ -185,8 +185,6 @@ export class FlowItemContentComponent implements OnInit {
     switch (this._flowItem.type) {
       case ActionType.BRANCH:
         return of($localize`Branch`);
-      case ActionType.MISSING:
-        return of($localize`Missing`);
       case ActionType.CODE:
         return of($localize`Code`);
       case ActionType.LOOP_ON_ITEMS:
@@ -230,7 +228,7 @@ export class FlowItemContentComponent implements OnInit {
               })
             );
           stepsIconsUrls[s.settings.pieceName] = pieceMetaData$;
-        } else if (s.type !== ActionType.MISSING) {
+        } else {
           const icon = this.actionMetaDataService.findNonPieceStepIcon(s.type);
           stepsIconsUrls[icon.key] = of(icon.url);
         }

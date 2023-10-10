@@ -29,6 +29,7 @@ export class SidenavRoutesListComponent implements OnInit {
   logoUrl$: Observable<string>;
   showSupport$: Observable<boolean>;
   showDocs$: Observable<boolean>;
+  showBilling$: Observable<boolean>;
 
   constructor(
     public router: Router,
@@ -55,6 +56,9 @@ export class SidenavRoutesListComponent implements OnInit {
     this.showSupport$ = this.flagServices.isFlagEnabled(
       ApFlagId.SHOW_COMMUNITY
     );
+    this.showBilling$ = this.flagServices.isFlagEnabled(
+      ApFlagId.BILLING_ENABLED
+    );
   }
 
   sideNavRoutes: SideNavRoute[] = [
@@ -80,6 +84,11 @@ export class SidenavRoutesListComponent implements OnInit {
       icon: 'assets/img/custom/dashboard/connections.svg',
       caption: $localize`Connections`,
       route: 'connections',
+    },
+    {
+      icon: 'assets/img/custom/dashboard/members.svg',
+      caption: 'Team',
+      route: 'team',
     },
   ];
 

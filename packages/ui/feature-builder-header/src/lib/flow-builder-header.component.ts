@@ -33,6 +33,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
   flow$: Observable<Flow>;
   editingFlowName = false;
   downloadFile$: Observable<void>;
+  shareFlow$: Observable<void>;
   deleteFlowDialogClosed$: Observable<void>;
   folderDisplayName$: Observable<string>;
   duplicateFlow$: Observable<void>;
@@ -68,7 +69,6 @@ export class FlowBuilderHeaderComponent implements OnInit {
   changeEditValue(event: boolean) {
     this.editingFlowName = event;
   }
-
   redirectHome(newWindow: boolean) {
     if (newWindow) {
       const url = this.router.serializeUrl(this.router.createUrlTree([``]));
@@ -96,6 +96,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
         map(() => void 0)
       );
   }
+
   download(id: string) {
     this.downloadFile$ = this.flowService.exportTemplate(id, undefined).pipe(
       tap((json) => {

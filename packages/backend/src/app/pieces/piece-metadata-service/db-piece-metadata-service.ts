@@ -1,8 +1,7 @@
 import { Equal, FindOperator, IsNull, LessThan, LessThanOrEqual, MoreThanOrEqual } from 'typeorm'
 import { databaseConnection } from '../../database/database-connection'
-import { PieceMetadataEntity, PieceMetadataSchema } from '../piece-metadata-entity'
+import { PieceMetadataEntity, PieceMetadataModel, PieceMetadataModelSummary, PieceMetadataSchema } from '../piece-metadata-entity'
 import { GetParams, ListParams, PieceMetadataService } from './piece-metadata-service'
-import { PieceMetadata, PieceMetadataSummary } from '@activepieces/pieces-framework'
 import { EXACT_VERSION_PATTERN, isNil } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode, apId } from '@activepieces/shared'
 import { AllPiecesStats, pieceStatsService } from './piece-stats-service'
@@ -12,7 +11,7 @@ const repo = databaseConnection.getRepository(PieceMetadataEntity)
 
 export const DbPieceMetadataService = (): PieceMetadataService => {
     return {
-        async list({ release, projectId }: ListParams): Promise<PieceMetadataSummary[]> {
+        async list({ release, projectId }: ListParams): Promise<PieceMetadataModelSummary[]> {
             const order = {
                 name: 'ASC',
                 version: 'DESC',
@@ -34,10 +33,11 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
                 .distinctOn(['name'])
                 .orderBy(order)
                 .getMany()
-            return toPieceMetadataSummary(pieceMetadataEntityList)
+
+            return toPieceMetadataModelSummary(pieceMetadataEntityList)
         },
 
-        async get({ name, version, projectId }: GetParams): Promise<PieceMetadata> {
+        async get({ name, version, projectId }: GetParams): Promise<PieceMetadataModel> {
             const projectPiece: Record<string, unknown> = {
                 name,
                 projectId: Equal(projectId),
@@ -71,15 +71,16 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
                 })
             }
 
-            return toPieceMetadata(pieceMetadataEntity)
+            return toPieceMetadataModel(pieceMetadataEntity)
         },
 
-        async create({ projectId, pieceMetadata }): Promise<PieceMetadataSchema> {
+        async create({ pieceMetadata, projectId, packageType, pieceType  }): Promise<PieceMetadataSchema> {
             const existingMetadata = await repo.findOneBy({
                 name: pieceMetadata.name,
                 version: pieceMetadata.version,
                 projectId: projectId ?? IsNull(),
             })
+
             if (!isNil(existingMetadata)) {
                 throw new ActivepiecesError({
                     code: ErrorCode.VALIDATION,
@@ -88,9 +89,12 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
                     },
                 })
             }
+
             return await repo.save({
                 id: apId(),
-                projectId: projectId ?? undefined,
+                projectId,
+                packageType,
+                pieceType,
                 ...pieceMetadata,
             })
         },
@@ -136,7 +140,7 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
     }
 }
 
-const toPieceMetadataSummary = (pieceMetadataEntityList: PieceMetadataSchema[]): PieceMetadataSummary[] => {
+const toPieceMetadataModelSummary = (pieceMetadataEntityList: PieceMetadataSchema[]): PieceMetadataModelSummary[] => {
     return pieceMetadataEntityList.map(pieceMetadataEntity => {
         return {
             ...pieceMetadataEntity,
@@ -146,7 +150,7 @@ const toPieceMetadataSummary = (pieceMetadataEntityList: PieceMetadataSchema[]):
     })
 }
 
-const toPieceMetadata = (pieceMetadataEntity: PieceMetadataSchema): PieceMetadata => {
+const toPieceMetadataModel = (pieceMetadataEntity: PieceMetadataSchema): PieceMetadataModel => {
     return {
         ...pieceMetadataEntity,
         actions: pieceMetadataEntity.actions,

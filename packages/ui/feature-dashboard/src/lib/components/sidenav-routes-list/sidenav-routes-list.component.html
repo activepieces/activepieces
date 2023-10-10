@@ -20,6 +20,7 @@
     </div>
   </div>
   <div class="ap-flex-grow"></div>
+  <app-billing-sidenav-item *ngIf="showBilling$ | async"></app-billing-sidenav-item>
   <div *ngIf="showSupport$ | async" (click)="openSupport()" matTooltip="Ask the Community" i18n-matTooltip matTooltipPosition="right"
     class="ap-w-full ap-flex-col ap-flex ap-border-transparent ap-justify-center ap-items-center ap-cursor-pointer ap-px-3 ap-mb-3">
     <div class="ap-p-3">

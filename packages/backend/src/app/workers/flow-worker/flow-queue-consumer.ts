@@ -133,7 +133,7 @@ const consumeRepeatingJob = async (data: RepeatingJobData): Promise<void> => {
     catch (e) {
         if (
             e instanceof ActivepiecesError &&
-            e.error.code === ErrorCode.TASK_QUOTA_EXCEEDED
+            e.error.code === ErrorCode.QUOTA_EXCEEDED
         ) {
             logger.info(
                 `[repeatableJobConsumer] removing project.id=${data.projectId} run out of flow quota`,

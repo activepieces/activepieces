@@ -60,9 +60,6 @@ export function createActionHandler(params: CreateActionHandlerParams): BaseActi
         resumeStepMetadata: resumeStepMetadata as LoopResumeStepMetadata,
       })
     }
-
-    case ActionType.MISSING:
-      throw new Error('Missing action, this should not happen')
   }
 
   return undefined

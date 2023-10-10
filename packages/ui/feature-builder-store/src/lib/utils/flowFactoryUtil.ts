@@ -87,7 +87,6 @@ export class FlowFactoryUtil {
           }
           break;
         case ActionType.CODE:
-        case ActionType.MISSING:
         case ActionType.PIECE:
           break;
       }

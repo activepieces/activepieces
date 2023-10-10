@@ -4,6 +4,7 @@
   "projectType": "library",
   "sourceRoot": "packages/ui/feature-builder-header/src",
   "prefix": "app",
+  "implicitDependencies": ["ee-components"],
   "targets": {
     "build": {
       "executor": "@nx/angular:ng-packagr-lite",

@@ -58,6 +58,10 @@ import {
   USE_MY_OWN_CREDENTIALS,
 } from '../dialogs/cloud-oauth2-connection-dialog/cloud-oauth2-connection-dialog.component';
 import { BuilderSelectors } from '@activepieces/ui/feature-builder-store';
+import {
+  BillingService,
+  UpgradeDialogComponent,
+} from '@activepieces/ee-billing-ui';
 
 @Component({
   selector: 'app-add-edit-connection-button',
@@ -101,6 +105,7 @@ export class AddEditConnectionButtonComponent {
     value: string;
   }> = new EventEmitter();
   updateOrAddConnectionDialogClosed$: Observable<void>;
+  checkConnectionLimit$: Observable<{ limit: number; exceeded: boolean }>;
   cloudAuthCheck$: Observable<void>;
   updateConnectionTap = tap((connection: AppConnection | null) => {
     if (connection) {
@@ -113,29 +118,47 @@ export class AddEditConnectionButtonComponent {
     private cloudAuthConfigsService: CloudAuthConfigsService,
     private flagService: FlagService,
     private pieceMetadataService: PieceMetadataService,
-    private cd: ChangeDetectorRef
+    private cd: ChangeDetectorRef,
+    private billingService: BillingService
   ) {}
 
   buttonClicked() {
     if (this.isEditConnectionButton) {
       this.editConnection();
     } else {
-      this.newConnectionDialogProcess();
+      this.checkThenOpenConnection();
     }
     this.cd.markForCheck();
   }
 
-  private newConnectionDialogProcess() {
-    if (this.authProperty.type === PropertyType.OAUTH2) {
-      this.newOAuth2AuthenticationDialogProcess();
-    } else if (this.authProperty.type === PropertyType.SECRET_TEXT) {
-      this.openNewSecretKeyConnection();
-    } else if (this.authProperty.type === PropertyType.CUSTOM_AUTH) {
-      this.openNewCustomAuthConnection();
-    } else {
-      this.openNewBasicAuthConnection();
-    }
+  // BEGIN EE
+  private checkThenOpenConnection() {
+    this.checkConnectionLimit$ = this.billingService
+      .checkConnectionLimit()
+      .pipe(
+        tap((limitExceeded) => {
+          if (limitExceeded.exceeded) {
+            return this.dialogService.open(UpgradeDialogComponent, {
+              data: {
+                limitType: 'connections',
+                limit: limitExceeded.limit,
+              },
+            });
+          }
+          const authDialogMap: Partial<Record<PropertyType, () => void>> = {
+            [PropertyType.OAUTH2]: this.newOAuth2AuthenticationDialogProcess,
+            [PropertyType.SECRET_TEXT]: this.openNewSecretKeyConnection,
+            [PropertyType.CUSTOM_AUTH]: this.openNewCustomAuthConnection,
+            [PropertyType.BASIC_AUTH]: this.openNewBasicAuthConnection,
+          };
+
+          const authDialog = authDialogMap[this.authProperty.type];
+          return authDialog?.call(this);
+        })
+      );
   }
+
+  // END EE
 
   private openNewCustomAuthConnection() {
     const dialogData: CustomAuthDialogData = {

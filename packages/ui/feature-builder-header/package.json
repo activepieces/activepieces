@@ -1,5 +1,5 @@
 {
-  "name": "@activepieces/ui/feature-builder-header",
+  "name": "@activepieces/ui-feature-builder-header",
   "version": "0.0.1",
   "peerDependencies": {
     "@angular/common": "^15.1.0",

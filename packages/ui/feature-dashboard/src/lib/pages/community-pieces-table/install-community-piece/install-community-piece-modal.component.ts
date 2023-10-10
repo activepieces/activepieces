@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import {
   FormBuilder,
   FormControl,
@@ -6,101 +6,134 @@ import {
   Validators,
 } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
-import { Observable, of, switchMap, tap, map, catchError } from 'rxjs';
+import { Observable, tap, catchError, map } from 'rxjs';
 import {
+  FlagService,
   GenericSnackbarTemplateComponent,
+  PieceMetadataModel,
   PieceMetadataService,
 } from '@activepieces/ui/common';
-import { CodeService } from '@activepieces/ui/feature-builder-store';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import {
+  ApFlagId,
+  EXACT_VERSION_PATTERN,
+  PackageType,
+} from '@activepieces/shared';
+
+type AddPackageFormControl = {
+  packageType: FormControl<PackageType>;
+  pieceName: FormControl<string>;
+  pieceVersion: FormControl<string>;
+  pieceArchive: FormControl<File | null>;
+};
 
 @Component({
   selector: 'app-install-community-piece-modal',
   templateUrl: './install-community-piece-modal.component.html',
 })
-export class InstallCommunityPieceModalComponent implements OnInit {
+export class InstallCommunityPieceModalComponent {
   risksMarkdown = $localize`
   Use this to install a <a href="https://www.activepieces.com/docs/developers/building-pieces/create-action" target="_blank" rel="noopener">custom piece</a> that you (or someone else) created.
   Once the piece is installed, you can use it in the flow builder.
  <br><br>**Warning:**
  Make sure you trust the author as the piece will have access to your flow data and it might not be compatible with the current version of Activepieces.
-
   `;
 
-  npmForm: FormGroup<{ packageName: FormControl<string> }>;
+  packageTypeOptions$: Observable<
+    {
+      name: string;
+      value: PackageType;
+    }[]
+  >;
+
   loading = false;
-  npmPackage$: Observable<PieceMetadataService | null>;
   submitted = false;
-  packageNameChanged$: Observable<string>;
+
+  addPieceForm: FormGroup<AddPackageFormControl>;
+  addPieceRequest$: Observable<PieceMetadataModel | null>;
+  pieceNameControlChanged$: Observable<string>;
+
   constructor(
-    private formBuilder: FormBuilder,
-    private codeService: CodeService,
+    private fb: FormBuilder,
     private pieceMetadataService: PieceMetadataService,
     private dialogRef: MatDialogRef<InstallCommunityPieceModalComponent>,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private flagService: FlagService
   ) {
-    this.npmForm = this.formBuilder.group({
-      packageName: new FormControl('', {
-        nonNullable: true,
-        validators: [Validators.required],
-      }),
+    this.addPieceForm = this.fb.group({
+      packageType: this.fb.nonNullable.control(PackageType.REGISTRY, [
+        Validators.required,
+      ]),
+      pieceName: this.fb.nonNullable.control('', [Validators.required]),
+      pieceVersion: this.fb.nonNullable.control('', [
+        Validators.required,
+        Validators.pattern(EXACT_VERSION_PATTERN),
+      ]),
+      pieceArchive: this.fb.control<File | null>(null),
     });
+    this.packageTypeOptions$ = this.flagService
+      .isFlagEnabled(ApFlagId.PRIVATE_PIECES_ENABLED)
+      .pipe(
+        map((enabled) => {
+          if (enabled) {
+            return [
+              {
+                name: 'NPM Registry',
+                value: PackageType.REGISTRY,
+              },
+              {
+                name: 'Packed Archive (.tgz)',
+                value: PackageType.ARCHIVE,
+              },
+            ];
+          }
+          return [
+            {
+              name: 'NPM Registry',
+              value: PackageType.REGISTRY,
+            },
+          ];
+        })
+      );
   }
-  ngOnInit(): void {
-    const packaageNameControl = this.npmForm.controls.packageName;
-    this.packageNameChanged$ = packaageNameControl.valueChanges.pipe(
-      tap((val) => {
-        if (val) packaageNameControl.setErrors(null);
-      })
-    );
+
+  get isPackageArchive(): boolean {
+    return this.addPieceForm.controls.packageType.value === PackageType.ARCHIVE;
   }
+
   hide() {
     this.dialogRef.close();
   }
-  lookForNpmPackage() {
+
+  addPiece() {
     this.submitted = true;
-    if (this.npmForm.valid && !this.loading) {
+    if (this.addPieceForm.valid && !this.loading) {
       this.loading = true;
-      this.npmPackage$ = this.codeService
-        .getLatestVersionOfNpmPackage(this.npmForm.controls.packageName.value)
+      const pieceInfo = this.addPieceForm.getRawValue();
+
+      this.addPieceRequest$ = this.pieceMetadataService
+        .installCommunityPiece(pieceInfo)
         .pipe(
-          switchMap((pkg) => {
-            if (pkg) {
-              return this.pieceMetadataService
-                .installCommunityPiece({
-                  pieceName: Object.keys(pkg)[0],
-                  pieceVersion: Object.values(pkg)[0],
-                })
-                .pipe(
-                  catchError((err) => {
-                    this.loading = false;
-                    this.npmForm.controls.packageName.setErrors({
-                      failedInstall: true,
-                    });
-                    throw err;
-                  }),
-                  tap(() => {
-                    this.snackBar.openFromComponent(
-                      GenericSnackbarTemplateComponent,
-                      {
-                        data: `<b>${Object.keys(pkg)[0]}</b> added`,
-                      }
-                    );
-                    this.dialogRef.close(pkg);
-                  }),
-                  map(() => {
-                    return null;
-                  })
-                );
-            } else {
-              this.npmForm.controls.packageName.setErrors({ invalid: true });
-              return of(null);
-            }
+          catchError((err) => {
+            this.loading = false;
+            this.addPieceForm.setErrors({
+              failedInstall: true,
+            });
+
+            throw err;
           }),
           tap(() => {
-            this.loading = false;
+            this.snackBar.openFromComponent(GenericSnackbarTemplateComponent, {
+              data: `<b>${pieceInfo.pieceName}@${pieceInfo.pieceVersion}</b> added`,
+            });
+
+            this.dialogRef.close(pieceInfo);
           })
         );
+    } else {
+      this.addPieceForm.setErrors({
+        failedInstall: true,
+      });
     }
   }
 }

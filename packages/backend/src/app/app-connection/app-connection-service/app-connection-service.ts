@@ -34,16 +34,13 @@ import { engineHelper } from '../../helper/engine-helper'
 import { acquireLock } from '../../helper/lock'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import { getServerUrl } from '../../helper/public-ip-utils'
+import { appConnectionsHooks } from './app-connection-hooks'
 
 const repo = databaseConnection.getRepository(AppConnectionEntity)
 
-export class AppConnectionService {
-    protected async preUpsertHook(_params: UpsertParams): Promise<void> {
-        return Promise.resolve()
-    }
-
+export const appConnectionService = {
     async upsert(params: UpsertParams): Promise<AppConnection> {
-        await this.preUpsertHook(params)
+        await appConnectionsHooks.getHooks().preUpsert({ projectId: params.projectId })
 
         const { projectId, request } = params
 
@@ -77,7 +74,7 @@ export class AppConnectionService {
             projectId,
         })
         return decryptConnection(updatedConnection)
-    }
+    },
 
     async getOne({
         projectId,
@@ -99,7 +96,7 @@ export class AppConnectionService {
         }
 
         return lockAndRefreshConnection({ projectId, name })
-    }
+    },
 
     async getOneOrThrow(params: GetOneParams): Promise<AppConnection> {
         const connectionById = await repo.findOneBy({
@@ -118,11 +115,11 @@ export class AppConnectionService {
             projectId: params.projectId,
             name: connectionById.name,
         }))!
-    }
+    },
 
     async delete(params: DeleteParams): Promise<void> {
         await repo.delete(params)
-    }
+    },
 
     async list({
         projectId,
@@ -170,11 +167,11 @@ export class AppConnectionService {
             refreshConnections,
             cursor,
         )
-    }
+    },
 
     async countByProject({ projectId }: CountByProjectParams): Promise<number> {
         return await repo.countBy({ projectId })
-    }
+    },
 }
 
 const validateConnectionValue = async (
@@ -234,15 +231,21 @@ const engineValidateAuth = async (
 ): Promise<void> => {
     const { pieceName, auth, projectId } = params
 
-    const pieceMatadata = await pieceMetadataService.get({
+    const pieceMetadata = await pieceMetadataService.get({
         name: pieceName,
         projectId,
         version: undefined,
     })
+
     const engineInput: ExecuteValidateAuthOperation = {
-        pieceName,
         serverUrl: await getServerUrl(),
-        pieceVersion: pieceMatadata.version,
+        piece: {
+            packageType: pieceMetadata.packageType,
+            pieceType: pieceMetadata.pieceType,
+            pieceName,
+            pieceVersion: pieceMetadata.version,
+            projectId,
+        },
         auth,
         projectId,
     }
@@ -327,7 +330,6 @@ async function lockAndRefreshConnection({
     }
     return appConnection
 }
-
 function needRefresh(connection: AppConnection): boolean {
     switch (connection.value.type) {
         case AppConnectionType.CLOUD_OAUTH2:
