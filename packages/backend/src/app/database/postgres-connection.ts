@@ -44,6 +44,7 @@ import { Chatbot1694902537040 } from './migration/postgres/1694902537040-Chatbot
 import { FileTypeCompression1694691554696 } from './migration/postgres/1694691554696-file-type-compression'
 import { AddPieceTypeAndPackageTypeToPieceMetadata1695992551156 } from './migration/postgres/1695992551156-add-piece-type-and-package-type-to-piece-metadata'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
+import { AddPieceTypeAndPackageTypeToFlowTemplate1696245170062 } from './migration/common/1696245170062-add-piece-type-and-package-type-to-flow-template'
 import { AddVisibilityStatusToChatbot1695719749099 } from './migration/postgres/1695719749099-AddVisibilityStatusToChatbot'
 import { ApEdition } from '@activepieces/shared'
 import { getEdition } from '../helper/secret-helper'
@@ -145,6 +146,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddFeaturedDescriptionAndFlagToTemplates1694604120205,
                 ModifyBilling1694902537045,
                 AddDatasourcesLimit1695916063833,
+                AddPieceTypeAndPackageTypeToFlowTemplate1696245170062,
             )
             break
         case ApEdition.ENTERPRISE:
