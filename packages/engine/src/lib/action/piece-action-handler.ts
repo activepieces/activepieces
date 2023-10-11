@@ -3,7 +3,6 @@ import {
   AUTHENTICATION_PROPERTY_NAME,
   Action,
   ActionType,
-  ExecutionOutputStatus,
   ExecutionState,
   ExecutionType,
   PauseMetadata,
@@ -158,10 +157,10 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
         throw new Error(JSON.stringify(errors));
       }
 
-      let stopResponse = {
+      const stopResponse = {
         stopResponse: undefined
       }
-      let pauseResponse = {
+      const pauseResponse = {
         pauseMetadata: undefined
       }
       const context: ActionContext = {
