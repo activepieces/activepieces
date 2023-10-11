@@ -3,7 +3,6 @@ import { Type, Static, } from '@sinclair/typebox';
 import { PackageType, PieceType, VersionType } from '../../pieces';
 import { SampleDataSettingsObject } from '../sample-data';
 import { PieceTriggerSettings } from '../triggers/trigger';
-import { ApId } from '../../common/id-generator';
 
 export enum ActionType {
   CODE = 'CODE',
@@ -36,14 +35,12 @@ export const CodeActionSchema = Type.Object({
   settings: CodeActionSettings
 });
 
-
 // Piece Action
 export const PieceActionSettings = Type.Object({
   packageType: Type.Enum(PackageType),
   pieceType: Type.Enum(PieceType),
   pieceName: Type.String({}),
   pieceVersion: VersionType,
-  pieceArchiveId: Type.Optional(ApId),
   actionName: Type.Optional(Type.String({})),
   input: Type.Record(Type.String({}), Type.Any()),
   inputUiInfo: SampleDataSettingsObject,

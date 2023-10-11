@@ -125,7 +125,6 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
   @Input() pieceType: PieceType;
   @Input() pieceName: string;
   @Input() pieceVersion: string;
-  @Input() pieceArchiveId: string | undefined;
   @Input() pieceDisplayName: string;
   @Input() isTriggerPieceForm = false;
   @ViewChildren('textControl', { read: ElementRef })
@@ -367,7 +366,6 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
             pieceType: this.pieceType,
             pieceVersion: this.pieceVersion,
             pieceName: this.pieceName,
-            pieceArchiveId: this.pieceArchiveId,
             propertyName: obj.propertyKey,
             stepName: this.actionOrTriggerName,
             input: res,

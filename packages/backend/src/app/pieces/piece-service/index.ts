@@ -63,7 +63,6 @@ const getPiecePackage = async (params: AddPieceParams): Promise<PiecePackage> =>
             return {
                 ...params,
                 pieceType: PieceType.CUSTOM,
-                archiveId: undefined,
             }
         }
     }

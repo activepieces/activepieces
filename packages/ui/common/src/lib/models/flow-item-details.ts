@@ -16,7 +16,6 @@ export class FlowItemDetails {
       pieceType: PieceType;
       pieceName: string;
       pieceVersion: string;
-      pieceArchiveId: string | undefined;
     }
   ) {}
 }

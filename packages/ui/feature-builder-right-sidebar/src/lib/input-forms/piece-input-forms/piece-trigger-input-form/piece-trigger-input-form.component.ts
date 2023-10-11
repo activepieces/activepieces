@@ -84,7 +84,6 @@ export class PieceTriggerInputFormComponent {
   pieceType: PieceType;
   pieceName: string;
   pieceVersion: string;
-  pieceArchiveId: string | undefined;
   initialComponentTriggerInputFormValue: {
     triggerName: string;
     input: { [key: string]: any };
@@ -245,7 +244,6 @@ export class PieceTriggerInputFormComponent {
     this.pieceType = obj.pieceType;
     this.pieceName = obj.pieceName;
     this.pieceVersion = obj.pieceVersion;
-    this.pieceArchiveId = obj.pieceArchiveId;
 
     this.pieceTriggerInputForm
       .get(TRIGGER_FORM_CONTROL_NAME)

@@ -84,7 +84,7 @@ export const piecesController: FastifyPluginAsyncTypebox = async (app) => {
             body: PieceOptionRequest,
         },
     }, async (req) => {
-        const { packageType, pieceType, pieceName, pieceVersion, pieceArchiveId, propertyName, stepName, input } = req.body
+        const { packageType, pieceType, pieceName, pieceVersion, propertyName, stepName, input } = req.body
         const { projectId } = req.principal
 
         const { result } = await engineHelper.executeProp({
@@ -95,7 +95,6 @@ export const piecesController: FastifyPluginAsyncTypebox = async (app) => {
                 pieceName,
                 pieceVersion,
                 projectId,
-                archiveId: pieceArchiveId,
             },
             propertyName,
             stepName,
