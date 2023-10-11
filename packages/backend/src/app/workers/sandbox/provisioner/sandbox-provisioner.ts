@@ -7,7 +7,6 @@ import { logger } from '../../../helper/logger'
 
 export const sandboxProvisioner = {
     async provision({ pieces = [], codeArchives = [], ...cacheInfo }: ProvisionParams): Promise<Sandbox> {
-
         const cachedSandbox = await sandboxCachePool.findOrCreate(cacheInfo)
 
         await cachedSandbox.prepare({
