@@ -60,13 +60,14 @@ const extractFlowPieces = async ({ flowVersion, projectId }: ExtractFlowPiecesPa
 
     for (const step of steps) {
         if (step.type === TriggerType.PIECE || step.type === ActionType.PIECE) {
-            const { packageType, pieceType, pieceName, pieceVersion } = step.settings
+            const { packageType, pieceType, pieceName, pieceVersion, pieceArchiveId } = step.settings
             pieces.push({
                 packageType,
                 pieceType,
                 pieceName,
                 pieceVersion,
                 projectId,
+                archiveId: pieceArchiveId,
             })
         }
     }

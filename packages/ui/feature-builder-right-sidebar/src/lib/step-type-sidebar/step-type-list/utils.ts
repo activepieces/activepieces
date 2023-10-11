@@ -70,6 +70,7 @@ export function constructUpdateOperation(
           pieceType: flowItemDetails.extra?.pieceType ?? PieceType.OFFICIAL,
           pieceName: flowItemDetails.extra?.pieceName ?? 'NO_APP_NAME',
           pieceVersion: flowItemDetails.extra?.pieceVersion ?? 'NO_APP_VERSION',
+          pieceArchiveId: flowItemDetails.extra?.pieceArchiveId,
           actionName: undefined,
           input: {},
           inputUiInfo: {

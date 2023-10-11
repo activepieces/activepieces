@@ -1,4 +1,4 @@
-import { DataSource } from 'typeorm'
+import { DataSource, MigrationInterface } from 'typeorm'
 import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
 import { TlsOptions } from 'node:tls'
@@ -65,6 +65,8 @@ import { AddProjectIdToTemplate1688083336934 } from '../ee/database/migrations/p
 import { AddPinnedOrder1686154285890 } from '../ee/database/migrations/postgres/1686154285890-add_pinned_order'
 import { AddPinnedAndBlogUrlToTemplates1686133672743 } from '../ee/database/migrations/postgres/1686133672743-AddPinnedAndBlogUrlToTemplates'
 import { ChangeToJsonToKeepKeysOrder1685991260335 } from '../ee/database/migrations/postgres/1685991260335-ChangeToJsonToPeserveKeys'
+import { AddArchiveIdToPieceMetadata1696950789636 } from './migration/postgres/1696950789636-add-archive-id-to-piece-metadata'
+
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
 
@@ -77,7 +79,7 @@ const getSslConfig = (): boolean | TlsOptions => {
     return false
 }
 
-const getMigrations = () => {
+const getMigrations = (): (new () => MigrationInterface)[] => {
     const commonMigration = [
         FlowAndFileProjectId1674788714498,
         initializeSchema1676238396411,
@@ -120,41 +122,47 @@ const getMigrations = () => {
         AddVisibilityStatusToChatbot1695719749099,
         AddPieceTypeAndPackageTypeToPieceMetadata1695992551156,
         AddPieceTypeAndPackageTypeToFlowVersion1696245170061,
+        AddArchiveIdToPieceMetadata1696950789636,
     ]
 
     const edition = getEdition()
     switch (edition) {
         case ApEdition.CLOUD:
-            commonMigration.push(MakeStripeSubscriptionNullable1685053959806)
-            commonMigration.push(AddTemplates1685538145476)
-            commonMigration.push(ChangeToJsonToKeepKeysOrder1685991260335)
-            commonMigration.push(AddPinnedAndBlogUrlToTemplates1686133672743)
-            commonMigration.push(AddPinnedOrder1686154285890)
-            commonMigration.push(AddProjectIdToTemplate1688083336934)
-            commonMigration.push(AddBillingParameters1688739844617)
-            commonMigration.push(AddAppSumo1688943462327)
-            commonMigration.push(AddProjectMembers1689177797092)
-            commonMigration.push(AddTasksPerDays1689336533370)
-            commonMigration.push(RemoveCalculatedMetrics1689806173642)
-            commonMigration.push(AddReferral1690459469381)
-            commonMigration.push(ProjectMemberRelations1694381968985)
-            commonMigration.push(FlowTemplateAddUserIdAndImageUrl1694379223109)
-            commonMigration.push(AddFeaturedDescriptionAndFlagToTemplates1694604120205)
-            commonMigration.push(ModifyBilling1694902537045)
-            commonMigration.push(AddDatasourcesLimit1695916063833)
-            commonMigration.push(AddPieceTypeAndPackageTypeToFlowTemplate1696245170062)
+            commonMigration.push(
+                MakeStripeSubscriptionNullable1685053959806,
+                AddTemplates1685538145476,
+                ChangeToJsonToKeepKeysOrder1685991260335,
+                AddPinnedAndBlogUrlToTemplates1686133672743,
+                AddPinnedOrder1686154285890,
+                AddProjectIdToTemplate1688083336934,
+                AddBillingParameters1688739844617,
+                AddAppSumo1688943462327,
+                AddProjectMembers1689177797092,
+                AddTasksPerDays1689336533370,
+                RemoveCalculatedMetrics1689806173642,
+                AddReferral1690459469381,
+                ProjectMemberRelations1694381968985,
+                FlowTemplateAddUserIdAndImageUrl1694379223109,
+                AddFeaturedDescriptionAndFlagToTemplates1694604120205,
+                ModifyBilling1694902537045,
+                AddDatasourcesLimit1695916063833,
+                AddPieceTypeAndPackageTypeToFlowTemplate1696245170062,
+            )
             break
         case ApEdition.ENTERPRISE:
-            commonMigration.push(AddProjectMembers1689177797092)
-            commonMigration.push(ProjectMemberRelations1694381968985)
+            commonMigration.push(
+                AddProjectMembers1689177797092,
+                ProjectMemberRelations1694381968985,
+            )
             break
         case ApEdition.COMMUNITY:
             break
     }
+
     return commonMigration
 }
 
-export const createPostgresDataSource = () => {
+export const createPostgresDataSource = (): DataSource => {
 
     const database = system.getOrThrow(SystemProp.POSTGRES_DATABASE)
     const host = system.getOrThrow(SystemProp.POSTGRES_HOST)

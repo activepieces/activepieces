@@ -1,3 +1,4 @@
+import { FileId } from "../file"
 import { ProjectId } from "../project/project"
 
 export enum PackageType {
@@ -16,4 +17,5 @@ export type PiecePackage = {
     pieceName: string
     pieceVersion: string
     projectId: ProjectId
+    archiveId: FileId | undefined
 }

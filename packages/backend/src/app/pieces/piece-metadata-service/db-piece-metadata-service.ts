@@ -74,7 +74,7 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
             return toPieceMetadataModel(pieceMetadataEntity)
         },
 
-        async create({ pieceMetadata, projectId, packageType, pieceType  }): Promise<PieceMetadataSchema> {
+        async create({ pieceMetadata, projectId, packageType, pieceType, archiveId  }): Promise<PieceMetadataSchema> {
             const existingMetadata = await repo.findOneBy({
                 name: pieceMetadata.name,
                 version: pieceMetadata.version,
@@ -95,6 +95,7 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
                 projectId,
                 packageType,
                 pieceType,
+                archiveId,
                 ...pieceMetadata,
             })
         },
