@@ -111,6 +111,7 @@ export class PieceActionInputFormComponent
   pieceType: PieceType;
   pieceName: string;
   pieceVersion: string;
+  pieceArchiveId: string | undefined;
   initialComponentInputFormValue: PieceActionInputFormSchema | null;
   selectedAction$: Observable<ActionDropdownOption | undefined>;
   actions$: Observable<ActionDropdownOption[]>;
@@ -281,6 +282,7 @@ export class PieceActionInputFormComponent
     this.pieceType = obj.pieceType;
     this.pieceName = obj.pieceName;
     this.pieceVersion = obj.pieceVersion;
+    this.pieceArchiveId = obj.pieceArchiveId;
 
     this.pieceActionForm
       .get(ACTION_FORM_CONTROL_NAME)
@@ -381,6 +383,7 @@ export class PieceActionInputFormComponent
       pieceType: this.pieceType,
       pieceName: this.pieceName,
       pieceVersion: this.pieceVersion,
+      pieceArchiveId: this.pieceArchiveId!,
       inputUiInfo: { customizedInputs: customizedInputs },
     };
 

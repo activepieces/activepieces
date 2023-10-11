@@ -1,7 +1,7 @@
 import { FlowExecutor } from '../executors/flow-executor';
 import { VariableService } from '../services/variable-service';
-import { ExecutionState, BranchAction, Action, BranchStepOutput, BranchCondition, BranchOperator, BranchResumeStepMetadata, ActionType, BranchActionSettings } from '@activepieces/shared';
-import { BaseActionHandler, ExecuteContext, InitStepOutputParams } from './action-handler';
+import { ExecutionState, BranchAction, Action, BranchStepOutput, BranchCondition, BranchOperator, BranchResumeStepMetadata, ActionType, BranchActionSettings, ExecutionOutputStatus, PauseExecutionOutput, StopExecutionOutput } from '@activepieces/shared';
+import { BaseActionHandler, ExecuteActionOutput, ExecuteContext, InitStepOutputParams } from './action-handler';
 import { StepOutputStatus, StepOutput } from '@activepieces/shared';
 
 type CtorParams = {
@@ -34,7 +34,9 @@ export class BranchActionHandler extends BaseActionHandler<BranchAction, BranchR
    */
   protected override async initStepOutput({ executionState }: InitStepOutputParams): Promise<BranchStepOutput> {
     const censoredInput = await this.variableService.resolve({
-      unresolvedInput: this.currentAction.settings,
+      unresolvedInput: {
+        conditions: this.currentAction.settings.conditions
+      },
       executionState,
       logs: true,
     })
@@ -52,7 +54,7 @@ export class BranchActionHandler extends BaseActionHandler<BranchAction, BranchR
     context: ExecuteContext,
     executionState: ExecutionState,
     ancestors: [string, number][]
-  ): Promise<StepOutput> {
+  ): Promise<ExecuteActionOutput> {
     const resolvedInput: BranchActionSettings = await this.variableService.resolve({
       unresolvedInput: this.currentAction.settings,
       executionState,
@@ -70,6 +72,7 @@ export class BranchActionHandler extends BaseActionHandler<BranchAction, BranchR
       stepOutput.output = {
         condition: stepOutput.output?.condition ?? evaluateConditions(resolvedInput.conditions)
       }
+      stepOutput.status = StepOutputStatus.SUCCEEDED
 
       const firstStep = stepOutput.output.condition
         ? this.onSuccessAction
@@ -86,22 +89,26 @@ export class BranchActionHandler extends BaseActionHandler<BranchAction, BranchR
         const executionOutput = await executor.execute({
           ancestors,
         })
-
-        this.handleFlowExecutorOutput({
-          executionOutput,
-          stepOutput,
-        })
-
-        if (stepOutput.status !== StepOutputStatus.RUNNING) {
+        if (executionOutput.status !== ExecutionOutputStatus.SUCCEEDED) {
+          stepOutput.status = StepOutputStatus.SUCCEEDED
           executionState.insertStep(stepOutput, this.currentAction.name, ancestors)
-          return stepOutput
+          return {
+            stepOutput,
+            executionOutputStatus: executionOutput.status,
+            pauseMetadata: this.convertToPauseMetadata(executionOutput),
+            stopResponse: this.convertToStopResponse(executionOutput),
+          }
         }
       }
 
-      stepOutput.status = StepOutputStatus.SUCCEEDED
       executionState.insertStep(stepOutput, this.currentAction.name, ancestors)
 
-      return stepOutput
+      return {
+        stepOutput,
+        executionOutputStatus: this.convertExecutionStatusToStepStatus(stepOutput.status),
+        pauseMetadata: undefined,
+        stopResponse: undefined,
+      }
     }
     catch (e) {
       console.error(e)
@@ -109,7 +116,12 @@ export class BranchActionHandler extends BaseActionHandler<BranchAction, BranchR
       stepOutput.status = StepOutputStatus.FAILED
       stepOutput.errorMessage = (e as Error).message
 
-      return stepOutput
+      return {
+        stepOutput,
+        executionOutputStatus: this.convertExecutionStatusToStepStatus(stepOutput.status),
+        pauseMetadata: undefined,
+        stopResponse: undefined,
+      }
     }
   }
 }
@@ -174,7 +186,7 @@ function evaluateConditions(conditionGroups: BranchCondition[][]): boolean {
           );
           andGroup = andGroup && firstValueDoesNotEndWith;
           break;
-        }        
+        }
         case BranchOperator.NUMBER_IS_GREATER_THAN: {
           const firstValue = parseStringToNumber(castedCondition.firstValue);
           const secondValue = parseStringToNumber(castedCondition.secondValue);

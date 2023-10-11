@@ -121,6 +121,7 @@ const toPieceMetadataModel = ({ pieceMetadata, projectId }: ToPieceMetadataModel
         projectId,
         packageType: PackageType.REGISTRY,
         pieceType: PieceType.OFFICIAL,
+        archiveId: undefined,
     }
 }
 
