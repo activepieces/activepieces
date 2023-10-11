@@ -348,7 +348,7 @@ async function getPieceTrigger({
     trigger: PieceTrigger
     projectId: ProjectId
 }): Promise<TriggerBase> {
-    const piece = await pieceMetadataService.get({
+    const piece = await pieceMetadataService.getOrThrow({
         projectId,
         name: trigger.settings.pieceName,
         version: trigger.settings.pieceVersion,
