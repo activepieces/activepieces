@@ -1,0 +1,44 @@
+{
+  "name": "pieces-read-file",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/read-file/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/read-file",
+        "tsConfig": "packages/pieces/read-file/tsconfig.lib.json",
+        "packageJson": "packages/pieces/read-file/package.json",
+        "main": "packages/pieces/read-file/src/index.ts",
+        "assets": [
+          "packages/pieces/read-file/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-read-file {args.ver} {args.tag}",
+      "dependsOn": [
+        "build"
+      ]
+    },
+    "lint": {
+      "executor": "@nx/linter:eslint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/read-file/**/*.ts",
+          "packages/pieces/read-file/package.json"
+        ]
+      }
+    }
+  },
+  "tags": []
+}

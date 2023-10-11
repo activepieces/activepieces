@@ -156,6 +156,9 @@
       "@activepieces/piece-posthog": ["packages/pieces/posthog/src/index.ts"],
       "@activepieces/piece-pushover": ["packages/pieces/pushover/src/index.ts"],
       "@activepieces/piece-qdrant": ["packages/pieces/qdrant/src/index.ts"],
+      "@activepieces/piece-read-file": [
+        "packages/pieces/read-file/src/index.ts"
+      ],
       "@activepieces/piece-rss": ["packages/pieces/rss/src/index.ts"],
       "@activepieces/piece-salesforce": [
         "packages/pieces/salesforce/src/index.ts"
