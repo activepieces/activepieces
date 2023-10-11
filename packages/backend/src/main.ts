@@ -34,6 +34,8 @@ import { cloudAppConnectionsHooks } from './app/ee/app-connections/cloud-app-con
 import { flowRunHooks } from './app/flows/flow-run/flow-run-hooks'
 import { cloudRunHooks } from './app/ee/flow-run/cloud-flow-run-hooks'
 import { cloudWorkerHooks } from './app/ee/flow-worker/cloud-flow-worker-hooks'
+import { pieceServiceHooks } from './app/pieces/piece-service/piece-service-hooks'
+import { cloudPieceServiceHooks } from './app/ee/pieces/piece-service/cloud-piece-service-hooks'
 
 const start = async (app: FastifyInstance): Promise<void> => {
     try {
@@ -57,12 +59,14 @@ const start = async (app: FastifyInstance): Promise<void> => {
                 appConnectionsHooks.setHooks(cloudAppConnectionsHooks)
                 flowWorkerHooks.setHooks(cloudWorkerHooks)
                 flowRunHooks.setHooks(cloudRunHooks)
+                pieceServiceHooks.set(cloudPieceServiceHooks)
                 initilizeSentry()
                 break
             case ApEdition.ENTERPRISE:
                 await app.register(authenticationModule)
                 await app.register(enterpriseProjectModule)
                 await app.register(projectMemberModule)
+                pieceServiceHooks.set(cloudPieceServiceHooks)
                 break
             case ApEdition.COMMUNITY:
                 await app.register(authenticationModule)

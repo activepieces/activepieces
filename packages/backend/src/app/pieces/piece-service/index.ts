@@ -2,19 +2,16 @@ import {
     ActivepiecesError,
     EngineResponseStatus,
     ErrorCode,
-    FileCompression,
-    FileId,
-    FileType,
     PackageType,
     PiecePackage,
     PieceType,
     ProjectId,
 } from '@activepieces/shared'
-import { engineHelper } from '../helper/engine-helper'
-import { pieceMetadataService } from './piece-metadata-service'
-import { PieceMetadataModel } from './piece-metadata-entity'
-import { logger } from '../helper/logger'
-import { fileService } from '../file/file.service'
+import { engineHelper } from '../../helper/engine-helper'
+import { pieceMetadataService } from '../piece-metadata-service'
+import { PieceMetadataModel } from '../piece-metadata-entity'
+import { logger } from '../../helper/logger'
+import { pieceServiceHooks } from './piece-service-hooks'
 
 export const pieceService = {
     async add(params: AddPieceParams): Promise<PieceMetadataModel> {
@@ -57,42 +54,19 @@ export const pieceService = {
 }
 
 const getPiecePackage = async (params: AddPieceParams): Promise<PiecePackage> => {
-    const common = {
-        pieceType: PieceType.CUSTOM,
-    }
-
     switch (params.packageType) {
         case PackageType.ARCHIVE: {
-            const archiveId = await saveArchive(params)
-            const { archive: _, ...piecePackage } = params
-            return {
-                ...piecePackage,
-                ...common,
-                archiveId,
-            }
+            return await pieceServiceHooks.get().getPieceArchivePackage(params)
         }
 
         case PackageType.REGISTRY: {
             return {
                 ...params,
-                ...common,
+                pieceType: PieceType.CUSTOM,
                 archiveId: undefined,
             }
         }
     }
-}
-
-const saveArchive = async (params: AddArchivePieceParams): Promise<FileId> => {
-    const { projectId, archive } = params
-
-    const archiveFile = await fileService.save({
-        projectId,
-        data: archive,
-        type: FileType.PACKAGE_ARCHIVE,
-        compression: FileCompression.NONE,
-    })
-
-    return archiveFile.id
 }
 
 type BaseAddPieceParams<PT extends PackageType> = {
