@@ -1,7 +1,7 @@
 import { FlowExecutor } from '../executors/flow-executor';
 import { VariableService } from '../services/variable-service';
-import { Action, ActionType, ExecutionState, LoopOnItemsAction, LoopOnItemsActionSettings, LoopResumeStepMetadata } from '@activepieces/shared';
-import { BaseActionHandler, ExecuteContext, InitStepOutputParams } from './action-handler';
+import { Action, ActionType, ExecutionOutputStatus, ExecutionState, LoopOnItemsAction, LoopOnItemsActionSettings, LoopResumeStepMetadata, PauseExecutionOutput, PauseMetadata, StopExecutionOutput, StopResponse } from '@activepieces/shared';
+import { BaseActionHandler, ExecuteActionOutput, ExecuteContext, InitStepOutputParams } from './action-handler';
 import { LoopOnItemsStepOutput, StepOutputStatus, StepOutput } from '@activepieces/shared';
 
 type CtorParams = {
@@ -62,7 +62,7 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
     context: ExecuteContext,
     executionState: ExecutionState,
     ancestors: [string, number][]
-  ): Promise<StepOutput> {
+  ): Promise<ExecuteActionOutput> {
     const resolvedInput: LoopOnItemsActionSettings = await this.variableService.resolve({
       unresolvedInput: this.currentAction.settings,
       executionState,
@@ -113,14 +113,24 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
 
         if (stepOutput.status !== StepOutputStatus.RUNNING) {
           executionState.insertStep(stepOutput, this.currentAction.name, ancestors)
-          return stepOutput
+          return {
+            stepOutput,
+            pauseMetadata: this.convertToPauseMetadata(executionOutput),
+            stopResponse: this.convertToStopResponse(executionOutput),
+            executionOutputStatus: executionOutput.status,
+          }
         }
       }
 
       stepOutput.status = StepOutputStatus.SUCCEEDED
       executionState.insertStep(stepOutput, this.currentAction.name, ancestors)
 
-      return stepOutput
+      return {
+        stepOutput,
+        executionOutputStatus: this.convertExecutionStatusToStepStatus(stepOutput.status),
+        pauseMetadata: undefined,
+        stopResponse: undefined,
+      }
     }
     catch (e) {
       console.error(e)
@@ -128,7 +138,12 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
       stepOutput.errorMessage = (e as Error).message
       stepOutput.status = StepOutputStatus.FAILED
 
-      return Promise.resolve(stepOutput)
+      return {
+        stepOutput: await Promise.resolve(stepOutput),
+        executionOutputStatus: this.convertExecutionStatusToStepStatus(stepOutput.status),
+        pauseMetadata: undefined,
+        stopResponse: undefined,
+      }
     }
   }
 

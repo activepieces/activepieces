@@ -38,7 +38,8 @@ export const storageService = {
         if (!response.ok) {
             throw new Error('Failed to delete store entry');
         }
-        return (await response.json()) ?? null;
+        await response.text();
+        return null;
     }
 };
 

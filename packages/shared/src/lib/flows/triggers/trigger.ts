@@ -1,6 +1,7 @@
 import { Type, Static } from '@sinclair/typebox';
 import { PackageType, PieceType, VersionType } from '../../pieces';
 import { SampleDataSettingsObject } from '../sample-data';
+import { ApId } from '../../common/id-generator';
 
 export const AUTHENTICATION_PROPERTY_NAME = "auth";
 
@@ -40,6 +41,7 @@ export const PieceTriggerSettings = Type.Object({
   pieceVersion: VersionType,
   pieceType: Type.Enum(PieceType),
   packageType: Type.Enum(PackageType),
+  pieceArchiveId: Type.Optional(ApId),
   triggerName: Type.String({}),
   input: Type.Record(Type.String({}), Type.Any()),
   inputUiInfo: SampleDataSettingsObject

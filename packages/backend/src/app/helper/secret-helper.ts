@@ -7,11 +7,13 @@ import { captureException } from './logger'
 let webhookSecrets: Record<string, string> | undefined = undefined
 
 export function getEdition(): ApEdition {
-    const edition = system.get(SystemProp.EDITION)
+    const edition = system.get<ApEdition>(SystemProp.EDITION)
+
     if (isNil(edition)) {
         return ApEdition.COMMUNITY
     }
-    return edition as ApEdition
+
+    return edition
 }
 
 export async function getWebhookSecret(
