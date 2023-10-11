@@ -1,7 +1,7 @@
 {
-  "name": "pieces-read-file",
+  "name": "pieces-files",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/pieces/read-file/src",
+  "sourceRoot": "packages/pieces/files/src",
   "projectType": "library",
   "targets": {
     "build": {
@@ -10,19 +10,19 @@
         "{options.outputPath}"
       ],
       "options": {
-        "outputPath": "dist/packages/pieces/read-file",
-        "tsConfig": "packages/pieces/read-file/tsconfig.lib.json",
-        "packageJson": "packages/pieces/read-file/package.json",
-        "main": "packages/pieces/read-file/src/index.ts",
+        "outputPath": "dist/packages/pieces/files",
+        "tsConfig": "packages/pieces/files/tsconfig.lib.json",
+        "packageJson": "packages/pieces/files/package.json",
+        "main": "packages/pieces/files/src/index.ts",
         "assets": [
-          "packages/pieces/read-file/*.md"
+          "packages/pieces/files/*.md"
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "publish": {
-      "command": "node tools/scripts/publish.mjs pieces-read-file {args.ver} {args.tag}",
+      "command": "node tools/scripts/publish.mjs pieces-files {args.ver} {args.tag}",
       "dependsOn": [
         "build"
       ]
@@ -34,8 +34,8 @@
       ],
       "options": {
         "lintFilePatterns": [
-          "packages/pieces/read-file/**/*.ts",
-          "packages/pieces/read-file/package.json"
+          "packages/pieces/files/**/*.ts",
+          "packages/pieces/files/package.json"
         ]
       }
     }
