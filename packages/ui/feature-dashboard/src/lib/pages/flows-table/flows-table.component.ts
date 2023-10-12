@@ -1,4 +1,4 @@
-import {Component, Inject, LOCALE_ID, OnInit, ViewChild} from '@angular/core';
+import { Component, Inject, LOCALE_ID, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map, Observable, shareReplay, startWith, Subject, tap } from 'rxjs';
 import { FlowsTableDataSource } from './flows-table.datasource';
@@ -29,7 +29,7 @@ import {
   MoveFlowToFolderDialogData,
 } from './move-flow-to-folder-dialog/move-flow-to-folder-dialog.component';
 import { FoldersSelectors } from '../../store/folders/folders.selector';
-import cronstrue from 'cronstrue';
+import cronstrue from 'cronstrue/i18n';
 
 @Component({
   templateUrl: './flows-table.component.html',
@@ -200,7 +200,9 @@ export class FlowsTableComponent implements OnInit {
       case TriggerType.PIECE: {
         const cronExpression = flow.schedule?.cronExpression;
         return cronExpression
-          ? $localize`Runs ${cronstrue.toString(cronExpression, { locale: this.locale }).toLocaleLowerCase()}`
+          ? $localize`Runs ${cronstrue
+              .toString(cronExpression, { locale: this.locale })
+              .toLocaleLowerCase()}`
           : $localize`Real time flow`;
       }
       case TriggerType.EMPTY: {
