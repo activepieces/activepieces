@@ -27,7 +27,7 @@ import {
 import axios from 'axios'
 import { decryptObject, encryptObject } from '../../helper/encryption'
 import { getEdition } from '../../helper/secret-helper'
-import { logger } from '../../helper/logger'
+import { captureException, logger } from '../../helper/logger'
 import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
 import { isNil } from '@activepieces/shared'
 import { engineHelper } from '../../helper/engine-helper'
@@ -231,7 +231,7 @@ const engineValidateAuth = async (
 ): Promise<void> => {
     const { pieceName, auth, projectId } = params
 
-    const pieceMetadata = await pieceMetadataService.get({
+    const pieceMetadata = await pieceMetadataService.getOrThrow({
         name: pieceName,
         projectId,
         version: undefined,
@@ -245,7 +245,6 @@ const engineValidateAuth = async (
             pieceName: pieceMetadata.name,
             pieceVersion: pieceMetadata.version,
             projectId,
-            archiveId: pieceMetadata.archiveId,
         },
         auth,
         projectId,
@@ -311,19 +310,18 @@ async function lockAndRefreshConnection({
         const refreshedAppConnection = await refresh(appConnection)
 
         await repo.update(refreshedAppConnection.id, {
-            id: refreshedAppConnection.id,
-            name: refreshedAppConnection.name,
-            appName: refreshedAppConnection.appName,
             status: refreshedAppConnection.status,
-            projectId: refreshedAppConnection.projectId,
             value: encryptObject(refreshedAppConnection.value),
         })
         return refreshedAppConnection
     }
     catch (e) {
-        logger.error(e)
+        captureException(e)
         if (!isNil(appConnection)) {
             appConnection.status = AppConnectionStatus.ERROR
+            await repo.update(appConnection.id, {
+                status: appConnection.status,
+            })
         }
     }
     finally {

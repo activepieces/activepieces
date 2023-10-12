@@ -7,7 +7,7 @@ type PiecePackageMetadata = {
     projectId?: ProjectId
     pieceType: PieceType
     packageType: PackageType
-    archiveId: FileId | undefined
+    archiveId?: FileId
 }
 
 export type PieceMetadataModel = PieceMetadata & PiecePackageMetadata
