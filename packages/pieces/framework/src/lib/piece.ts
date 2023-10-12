@@ -69,6 +69,10 @@ export const createPiece = <PieceAuth extends PieceAuthProperty>(params: CreateP
   )
 }
 
+export enum PieceCategory {
+  core = 'core',
+}
+
 type CreatePieceParams<PieceAuth extends PieceAuthProperty = PieceAuthProperty> = {
   displayName: string
   logoUrl: string
@@ -80,6 +84,8 @@ type CreatePieceParams<PieceAuth extends PieceAuthProperty = PieceAuthProperty> 
   maximumSupportedRelease?: string
   actions: Action<PieceAuth>[]
   triggers: Trigger<PieceAuth>[]
+  mentionIconUrl?:string
+  categories?: PieceCategory[]
 }
 
 type PieceEventProcessors = {
