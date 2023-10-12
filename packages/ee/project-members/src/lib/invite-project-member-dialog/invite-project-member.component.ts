@@ -59,7 +59,7 @@ export class InviteProjectMemberDialogComponent {
               });
             } else {
               this.snackbar.open(
-                'Internal error occurred please contact support@activepieces.com',
+                $localize`Internal error occurred please contact support@activepieces.com`,
                 '',
                 {
                   duration: undefined,

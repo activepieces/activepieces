@@ -87,7 +87,7 @@ export class SidenavRoutesListComponent implements OnInit {
     },
     {
       icon: 'assets/img/custom/dashboard/members.svg',
-      caption: 'Team',
+      caption: $localize`Team`,
       route: 'team',
     },
   ];

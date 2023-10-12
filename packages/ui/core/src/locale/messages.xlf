@@ -2,40 +2,85 @@
 <xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
     <file source-language="en" datatype="plaintext" original="ng2.template">
         <body>
-            <trans-unit id="2931230747167805179" datatype="html">
-                <source>Delete
-                    <x id="INTERPOLATION" equiv-text="{{data.entityName}}"/>
+            <trans-unit id="8503408630418561538" datatype="html">
+                <source>Team Invitation Accepted</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ee/project-members/src/lib/accept-invitation/accept-invitation.component.html
+                    </context>
+                    <context context-type="linenumber">3,5</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4395110422147815828" datatype="html">
+                <source>Thank you for accepting the invitation. We are redirecting you right now...</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ee/project-members/src/lib/accept-invitation/accept-invitation.component.html
+                    </context>
+                    <context context-type="linenumber">6,8</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="8331641771927553330" datatype="html">
+                <source>Invalid invitation token. Please try again.</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ee/project-members/src/lib/accept-invitation/accept-invitation.component.html
+                    </context>
+                    <context context-type="linenumber">11,13</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="1104679811553007900" datatype="html">
+                <source>Type the email address of the user you want to invite.</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.html
+                    </context>
+                    <context context-type="linenumber">5,7</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7389095488851921033" datatype="html">
+                <source>The invited email already has an account. Please contact support@activepieces.com for
+                    assistance.
                 </source>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
-                        packages/ui/common/src/lib/components/delete-enity-dialog/delete-entity-dialog.component.html
+                        packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.html
                     </context>
-                    <context context-type="linenumber">1,3</context>
+                    <context context-type="linenumber">13</context>
                 </context-group>
             </trans-unit>
-            <trans-unit id="6560405483623875453" datatype="html">
-                <source>Type <x id="START_BOLD_TEXT" ctype="x-b" equiv-text="&lt;b&gt;"/>DELETE
-                    <x id="CLOSE_BOLD_TEXT" ctype="x-b" equiv-text="&lt;/b&gt;"/>
-                    and press confirm to continue.
-                </source>
+            <trans-unit id="1257197684303803009" datatype="html">
+                <source>Email is Required</source>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
-                        packages/ui/common/src/lib/components/delete-enity-dialog/delete-entity-dialog.component.html
+                        packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.html
                     </context>
-                    <context context-type="linenumber">8,10</context>
+                    <context context-type="linenumber">16</context>
                 </context-group>
             </trans-unit>
-            <trans-unit id="2394434532665685744" datatype="html">
-                <source>Please write the confirmation message correctly</source>
+            <trans-unit id="4145496584631696119" datatype="html">
+                <source>Role</source>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
-                        packages/ui/common/src/lib/components/delete-enity-dialog/delete-entity-dialog.component.html
+                        packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.html
                     </context>
-                    <context context-type="linenumber">15,17</context>
+                    <context context-type="linenumber">21</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ee/project-members/src/lib/project-members-table/project-members-table.component.html
+                    </context>
+                    <context context-type="linenumber">22</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="2330577642930707695" datatype="html">
                 <source>Cancel</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.html
+                    </context>
+                    <context context-type="linenumber">33,35</context>
+                </context-group>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
                         packages/ui/common/src/lib/components/delete-enity-dialog/delete-entity-dialog.component.html
@@ -106,7 +151,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/community-pieces-table/install-community-piece/install-community-piece-modal.component.html
                     </context>
-                    <context context-type="linenumber">28,30</context>
+                    <context context-type="linenumber">55,57</context>
                 </context-group>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
@@ -125,6 +170,176 @@
                         packages/ui/feature-dashboard/src/lib/pages/flows-table/rename-folder-dialog/rename-folder-dialog.component.html
                     </context>
                     <context context-type="linenumber">24,26</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7927354222438929134" datatype="html">
+                <source>Invite</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.html
+                    </context>
+                    <context context-type="linenumber">37,39</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7949744301909849109" datatype="html">
+                <source>Internal error occurred please contact support@activepieces.com</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.ts
+                    </context>
+                    <context context-type="linenumber">62</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2304614617903385642" datatype="html">
+                <source>Project Members</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ee/project-members/src/lib/project-members-table/project-members-table.component.html
+                    </context>
+                    <context context-type="linenumber">4</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ee/project-members/src/lib/project-members-table/project-members-table.component.html
+                    </context>
+                    <context context-type="linenumber">8</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4768749765465246664" datatype="html">
+                <source>Email</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ee/project-members/src/lib/project-members-table/project-members-table.component.html
+                    </context>
+                    <context context-type="linenumber">10</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html
+                    </context>
+                    <context context-type="linenumber">9</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html
+                    </context>
+                    <context context-type="linenumber">24</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html
+                    </context>
+                    <context context-type="linenumber">25</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="5611592591303869712" datatype="html">
+                <source>Status</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ee/project-members/src/lib/project-members-table/project-members-table.component.html
+                    </context>
+                    <context context-type="linenumber">17</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/connections-table/connections-table.component.html
+                    </context>
+                    <context context-type="linenumber">18</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html
+                    </context>
+                    <context context-type="linenumber">33</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html
+                    </context>
+                    <context context-type="linenumber">34</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="753844560726167738" datatype="html">
+                <source>Invited At</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ee/project-members/src/lib/project-members-table/project-members-table.component.html
+                    </context>
+                    <context context-type="linenumber">27</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3463797202358605584" datatype="html">
+                <source>Invite</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ee/project-members/src/lib/project-members-table/project-members-table.component.html
+                    </context>
+                    <context context-type="linenumber">34</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4701552962997211350" datatype="html">
+                <source>Delete Invitation</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ee/project-members/src/lib/project-members-table/project-members-table.component.html
+                    </context>
+                    <context context-type="linenumber">38</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="8204176479746810612" datatype="html">
+                <source>Active</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ee/project-members/src/lib/project-members-table/project-members-table.component.ts
+                    </context>
+                    <context context-type="linenumber">79</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/common/src/lib/components/status-icon/state-icon.component.ts
+                    </context>
+                    <context context-type="linenumber">88</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4416413576346763682" datatype="html">
+                <source>Pending</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ee/project-members/src/lib/project-members-table/project-members-table.component.ts
+                    </context>
+                    <context context-type="linenumber">81</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2931230747167805179" datatype="html">
+                <source>Delete
+                    <x id="INTERPOLATION" equiv-text="{{data.entityName}}"/>
+                </source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/common/src/lib/components/delete-enity-dialog/delete-entity-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">1,3</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="6560405483623875453" datatype="html">
+                <source>Type <x id="START_BOLD_TEXT" ctype="x-b" equiv-text="&lt;b&gt;"/>DELETE
+                    <x id="CLOSE_BOLD_TEXT" ctype="x-b" equiv-text="&lt;/b&gt;"/>
+                    and press confirm to continue.
+                </source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/common/src/lib/components/delete-enity-dialog/delete-entity-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">8,10</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2394434532665685744" datatype="html">
+                <source>Please write the confirmation message correctly</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/common/src/lib/components/delete-enity-dialog/delete-entity-dialog.component.html
+                    </context>
+                    <context context-type="linenumber">15,17</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="6249484391846924804" datatype="html">
@@ -172,7 +387,7 @@
                     <context context-type="sourcefile">
                         packages/ui/common/src/lib/components/status-icon/state-icon.component.ts
                     </context>
-                    <context context-type="linenumber">70</context>
+                    <context context-type="linenumber">71</context>
                 </context-group>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
@@ -187,7 +402,7 @@
                     <context context-type="sourcefile">
                         packages/ui/common/src/lib/components/status-icon/state-icon.component.ts
                     </context>
-                    <context context-type="linenumber">72</context>
+                    <context context-type="linenumber">75</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="7606629882846319647" datatype="html">
@@ -196,7 +411,7 @@
                     <context context-type="sourcefile">
                         packages/ui/common/src/lib/components/status-icon/state-icon.component.ts
                     </context>
-                    <context context-type="linenumber">74</context>
+                    <context context-type="linenumber">77</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="7256395947475975935" datatype="html">
@@ -205,7 +420,7 @@
                     <context context-type="sourcefile">
                         packages/ui/common/src/lib/components/status-icon/state-icon.component.ts
                     </context>
-                    <context context-type="linenumber">77</context>
+                    <context context-type="linenumber">80</context>
                 </context-group>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
@@ -220,7 +435,7 @@
                     <context context-type="sourcefile">
                         packages/ui/common/src/lib/components/status-icon/state-icon.component.ts
                     </context>
-                    <context context-type="linenumber">80</context>
+                    <context context-type="linenumber">83</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="2956098160626271284" datatype="html">
@@ -229,7 +444,7 @@
                     <context context-type="sourcefile">
                         packages/ui/common/src/lib/components/status-icon/state-icon.component.ts
                     </context>
-                    <context context-type="linenumber">83</context>
+                    <context context-type="linenumber">86</context>
                 </context-group>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
@@ -238,22 +453,13 @@
                     <context context-type="linenumber">8</context>
                 </context-group>
             </trans-unit>
-            <trans-unit id="8204176479746810612" datatype="html">
-                <source>Active</source>
-                <context-group purpose="location">
-                    <context context-type="sourcefile">
-                        packages/ui/common/src/lib/components/status-icon/state-icon.component.ts
-                    </context>
-                    <context context-type="linenumber">85</context>
-                </context-group>
-            </trans-unit>
             <trans-unit id="1519954996184640001" datatype="html">
                 <source>Error</source>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
                         packages/ui/common/src/lib/components/status-icon/state-icon.component.ts
                     </context>
-                    <context context-type="linenumber">87</context>
+                    <context context-type="linenumber">90</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="638799406436586796" datatype="html">
@@ -271,7 +477,7 @@
                     <context context-type="sourcefile">
                         packages/ui/common/src/lib/components/user-avatar/user-avatar.component.html
                     </context>
-                    <context context-type="linenumber">17</context>
+                    <context context-type="linenumber">54</context>
                 </context-group>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
@@ -286,7 +492,7 @@
                     <context context-type="sourcefile">
                         packages/ui/common/src/lib/components/user-avatar/user-avatar.component.html
                     </context>
-                    <context context-type="linenumber">20</context>
+                    <context context-type="linenumber">62</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="2976564074018381687" datatype="html">
@@ -320,7 +526,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-builder-canvas/src/lib/flow-item-tree/flow-item/flow-item-content/flow-item-content.component.ts
                     </context>
-                    <context context-type="linenumber">191</context>
+                    <context context-type="linenumber">189</context>
                 </context-group>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
@@ -349,19 +555,6 @@
                     <context context-type="linenumber">187</context>
                 </context-group>
             </trans-unit>
-            <trans-unit id="5428454702447505852" datatype="html">
-                <source>Missing</source>
-                <context-group purpose="location">
-                    <context context-type="sourcefile">packages/ui/common/src/lib/utils/utils.ts</context>
-                    <context context-type="linenumber">34</context>
-                </context-group>
-                <context-group purpose="location">
-                    <context context-type="sourcefile">
-                        packages/ui/feature-builder-canvas/src/lib/flow-item-tree/flow-item/flow-item-content/flow-item-content.component.ts
-                    </context>
-                    <context context-type="linenumber">189</context>
-                </context-group>
-            </trans-unit>
             <trans-unit id="4593401671892965174" datatype="html">
                 <source>Upgrade</source>
                 <context-group purpose="location">
@@ -382,7 +575,7 @@
                 </source>
                 <context-group purpose="location">
                     <context context-type="sourcefile">packages/ui/core/src/app/app.module.ts</context>
-                    <context context-type="linenumber">172</context>
+                    <context context-type="linenumber">193</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="6995566906550783900" datatype="html">
@@ -391,7 +584,7 @@
                 </source>
                 <context-group purpose="location">
                     <context context-type="sourcefile">packages/ui/core/src/app/app.module.ts</context>
-                    <context context-type="linenumber">177</context>
+                    <context context-type="linenumber">198</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="9202148072595155250" datatype="html">
@@ -464,27 +657,6 @@
                         packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html
                     </context>
                     <context context-type="linenumber">1</context>
-                </context-group>
-            </trans-unit>
-            <trans-unit id="4768749765465246664" datatype="html">
-                <source>Email</source>
-                <context-group purpose="location">
-                    <context context-type="sourcefile">
-                        packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html
-                    </context>
-                    <context context-type="linenumber">9</context>
-                </context-group>
-                <context-group purpose="location">
-                    <context context-type="sourcefile">
-                        packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html
-                    </context>
-                    <context context-type="linenumber">24</context>
-                </context-group>
-                <context-group purpose="location">
-                    <context context-type="sourcefile">
-                        packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html
-                    </context>
-                    <context context-type="linenumber">25</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="8232890416577573080" datatype="html">
@@ -822,7 +994,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-builder-canvas/src/lib/flow-item-tree/flow-item/flow-item-content/flow-item-content.component.html
                     </context>
-                    <context context-type="linenumber">40</context>
+                    <context context-type="linenumber">36</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="2784956659778044823" datatype="html">
@@ -831,7 +1003,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-builder-canvas/src/lib/flow-item-tree/flow-item/flow-item-content/flow-item-content.component.ts
                     </context>
-                    <context context-type="linenumber">193</context>
+                    <context context-type="linenumber">191</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="3281993254947750204" datatype="html">
@@ -840,7 +1012,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-builder-canvas/src/lib/flow-item-tree/flow-item/flow-item-content/flow-item-content.component.ts
                     </context>
-                    <context context-type="linenumber">203</context>
+                    <context context-type="linenumber">201</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="2498487601274189013" datatype="html">
@@ -849,7 +1021,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-builder-canvas/src/lib/flow-item-tree/flow-item/flow-item-content/flow-item-content.component.ts
                     </context>
-                    <context context-type="linenumber">205</context>
+                    <context context-type="linenumber">203</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="3805341172871384186" datatype="html">
@@ -1022,12 +1194,6 @@
                         packages/ui/feature-builder-form-controls/src/lib/code-artifact-form-control/code-artifact-control-fullscreen/add-npm-package-modal/add-npm-package-modal.component.html
                     </context>
                     <context context-type="linenumber">11,13</context>
-                </context-group>
-                <context-group purpose="location">
-                    <context context-type="sourcefile">
-                        packages/ui/feature-dashboard/src/lib/pages/community-pieces-table/install-community-piece/install-community-piece-modal.component.html
-                    </context>
-                    <context context-type="linenumber">10,12</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="7247626109904878386" datatype="html">
@@ -1338,7 +1504,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.html
                     </context>
-                    <context context-type="linenumber">30</context>
+                    <context context-type="linenumber">31</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="2821179408673282599" datatype="html">
@@ -1415,7 +1581,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-builder-header/src/lib/flow-builder-header.component.html
                     </context>
-                    <context context-type="linenumber">66</context>
+                    <context context-type="linenumber">67</context>
                 </context-group>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
@@ -1438,7 +1604,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-builder-header/src/lib/flow-builder-header.component.ts
                     </context>
-                    <context context-type="linenumber">128,129</context>
+                    <context context-type="linenumber">129,130</context>
                 </context-group>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
@@ -1845,7 +2011,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-builder-right-sidebar/src/lib/step-type-sidebar/step-type-sidebar.component.ts
                     </context>
-                    <context context-type="linenumber">61</context>
+                    <context context-type="linenumber">70</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="4973271808417683361" datatype="html">
@@ -1854,13 +2020,13 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-builder-right-sidebar/src/lib/step-type-sidebar/step-type-sidebar.component.ts
                     </context>
-                    <context context-type="linenumber">63</context>
+                    <context context-type="linenumber">72</context>
                 </context-group>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
                         packages/ui/feature-builder-right-sidebar/src/lib/step-type-sidebar/step-type-sidebar.component.ts
                     </context>
-                    <context context-type="linenumber">68</context>
+                    <context context-type="linenumber">77</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="1616102757855967475" datatype="html">
@@ -1869,7 +2035,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-builder-right-sidebar/src/lib/step-type-sidebar/step-type-sidebar.component.ts
                     </context>
-                    <context context-type="linenumber">128</context>
+                    <context context-type="linenumber">159</context>
                 </context-group>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
@@ -1884,19 +2050,19 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-builder-right-sidebar/src/lib/step-type-sidebar/step-type-sidebar.component.ts
                     </context>
-                    <context context-type="linenumber">130</context>
+                    <context context-type="linenumber">161</context>
                 </context-group>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
                         packages/ui/feature-builder-right-sidebar/src/lib/step-type-sidebar/step-type-sidebar.component.ts
                     </context>
-                    <context context-type="linenumber">136</context>
+                    <context context-type="linenumber">167</context>
                 </context-group>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
                         packages/ui/feature-builder-right-sidebar/src/lib/step-type-sidebar/step-type-sidebar.component.ts
                     </context>
-                    <context context-type="linenumber">142</context>
+                    <context context-type="linenumber">173</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="7027401708987643293" datatype="html">
@@ -1905,7 +2071,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-builder-right-sidebar/src/lib/step-type-sidebar/step-type-sidebar.component.ts
                     </context>
-                    <context context-type="linenumber">134</context>
+                    <context context-type="linenumber">165</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="3392444403919167176" datatype="html">
@@ -1914,7 +2080,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-builder-right-sidebar/src/lib/step-type-sidebar/step-type-sidebar.component.ts
                     </context>
-                    <context context-type="linenumber">140</context>
+                    <context context-type="linenumber">171</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="5431974576991822715" datatype="html">
@@ -1923,7 +2089,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-builder-right-sidebar/src/lib/step-type-sidebar/step-type-sidebar.component.ts
                     </context>
-                    <context context-type="linenumber">140</context>
+                    <context context-type="linenumber">171</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="4890031060409002646" datatype="html">
@@ -3211,7 +3377,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.html
                     </context>
-                    <context context-type="linenumber">23</context>
+                    <context context-type="linenumber">24</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="4895326106573044490" datatype="html">
@@ -3220,7 +3386,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.html
                     </context>
-                    <context context-type="linenumber">32</context>
+                    <context context-type="linenumber">33</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="4447668871712407032" datatype="html">
@@ -3229,7 +3395,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.html
                     </context>
-                    <context context-type="linenumber">39</context>
+                    <context context-type="linenumber">40</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="3446912724041461894" datatype="html">
@@ -3238,7 +3404,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts
                     </context>
-                    <context context-type="linenumber">63</context>
+                    <context context-type="linenumber">67</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="5831959151852803859" datatype="html">
@@ -3247,7 +3413,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts
                     </context>
-                    <context context-type="linenumber">76</context>
+                    <context context-type="linenumber">80</context>
                 </context-group>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
@@ -3274,13 +3440,22 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts
                     </context>
-                    <context context-type="linenumber">81</context>
+                    <context context-type="linenumber">85</context>
                 </context-group>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/connections-table/connections-table.component.html
                     </context>
                     <context context-type="linenumber">3</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3724068243287682962" datatype="html">
+                <source>Team</source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts
+                    </context>
+                    <context context-type="linenumber">90</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="6012922099782115453" datatype="html">
@@ -3299,17 +3474,32 @@
                 <context-group purpose="location">
                     <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts
                     </context>
-                    <context context-type="linenumber">27</context>
+                    <context context-type="linenumber">29</context>
                 </context-group>
             </trans-unit>
-            <trans-unit id="567527397996996928" datatype="html">
-                <source>My Pieces -
+            <trans-unit id="2904760683826257752" datatype="html">
+                <source>Plans -
                     <x id="PH" equiv-text="environment.websiteTitle"/>
                 </source>
                 <context-group purpose="location">
                     <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts
                     </context>
-                    <context context-type="linenumber">33</context>
+                    <context context-type="linenumber">35</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2457363351157132607" datatype="html">
+                <source>Team -
+                    <x id="PH" equiv-text="environment.websiteTitle"/>
+                </source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts
+                    </context>
+                    <context context-type="linenumber">40</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts
+                    </context>
+                    <context context-type="linenumber">84</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="3980934140000106258" datatype="html">
@@ -3319,7 +3509,17 @@
                 <context-group purpose="location">
                     <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts
                     </context>
-                    <context context-type="linenumber">39</context>
+                    <context context-type="linenumber">45</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts
+                    </context>
+                    <context context-type="linenumber">62</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts
+                    </context>
+                    <context context-type="linenumber">89</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="3936753173520021803" datatype="html">
@@ -3329,7 +3529,27 @@
                 <context-group purpose="location">
                     <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts
                     </context>
-                    <context context-type="linenumber">47</context>
+                    <context context-type="linenumber">53</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts
+                    </context>
+                    <context context-type="linenumber">70</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts
+                    </context>
+                    <context context-type="linenumber">97</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="567527397996996928" datatype="html">
+                <source>My Pieces -
+                    <x id="PH" equiv-text="environment.websiteTitle"/>
+                </source>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts
+                    </context>
+                    <context context-type="linenumber">79</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="3811992826773282019" datatype="html">
@@ -3339,7 +3559,7 @@
                 <context-group purpose="location">
                     <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts
                     </context>
-                    <context context-type="linenumber">56</context>
+                    <context context-type="linenumber">106</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="5636034445456630519" datatype="html">
@@ -3349,7 +3569,7 @@
                 <context-group purpose="location">
                     <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts
                     </context>
-                    <context context-type="linenumber">62</context>
+                    <context context-type="linenumber">112</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="7508420892157571847" datatype="html">
@@ -3412,31 +3632,31 @@
                     <context context-type="linenumber">1</context>
                 </context-group>
             </trans-unit>
-            <trans-unit id="3925841413372265651" datatype="html">
-                <source>Package Name</source>
+            <trans-unit id="1183032279513578972" datatype="html">
+                <source>Piece name</source>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/community-pieces-table/install-community-piece/install-community-piece-modal.component.html
                     </context>
-                    <context context-type="linenumber">6</context>
+                    <context context-type="linenumber">7</context>
                 </context-group>
             </trans-unit>
-            <trans-unit id="2551188678245697614" datatype="html">
-                <source>Couldn't find package, please check the package name.</source>
+            <trans-unit id="5376544880787061544" datatype="html">
+                <source>NPM package name</source>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/community-pieces-table/install-community-piece/install-community-piece-modal.component.html
                     </context>
-                    <context context-type="linenumber">14,16</context>
+                    <context context-type="linenumber">8</context>
                 </context-group>
             </trans-unit>
-            <trans-unit id="1421651112910563400" datatype="html">
-                <source>Couldn't install piece, please make sure your package is a piece.</source>
+            <trans-unit id="7515584469189435123" datatype="html">
+                <source>This is required</source>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/community-pieces-table/install-community-piece/install-community-piece-modal.component.html
                     </context>
-                    <context context-type="linenumber">17,19</context>
+                    <context context-type="linenumber">11,13</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="6993437395710220266" datatype="html">
@@ -3445,10 +3665,10 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/community-pieces-table/install-community-piece/install-community-piece-modal.component.html
                     </context>
-                    <context context-type="linenumber">31,33</context>
+                    <context context-type="linenumber">58,60</context>
                 </context-group>
             </trans-unit>
-            <trans-unit id="6268667738811245350" datatype="html">
+            <trans-unit id="2206632393383450361" datatype="html">
                 <source>
                     Use this to install a &lt;a href=&quot;https://www.activepieces.com/docs/developers/building-pieces/create-action&quot;
                     target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;custom piece&lt;/a&gt; that you (or someone
@@ -3457,34 +3677,12 @@
                     &lt;br&gt;&lt;br&gt;**Warning:**
                     Make sure you trust the author as the piece will have access to your flow data and it might not be
                     compatible with the current version of Activepieces.
-
                 </source>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/community-pieces-table/install-community-piece/install-community-piece-modal.component.ts
                     </context>
-                    <context context-type="linenumber">22,28</context>
-                </context-group>
-            </trans-unit>
-            <trans-unit id="5611592591303869712" datatype="html">
-                <source>Status</source>
-                <context-group purpose="location">
-                    <context context-type="sourcefile">
-                        packages/ui/feature-dashboard/src/lib/pages/connections-table/connections-table.component.html
-                    </context>
-                    <context context-type="linenumber">18</context>
-                </context-group>
-                <context-group purpose="location">
-                    <context context-type="sourcefile">
-                        packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html
-                    </context>
-                    <context context-type="linenumber">33</context>
-                </context-group>
-                <context-group purpose="location">
-                    <context context-type="sourcefile">
-                        packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html
-                    </context>
-                    <context context-type="linenumber">34</context>
+                    <context context-type="linenumber">35,40</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="4207916966377787111" datatype="html">
@@ -3679,19 +3877,20 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts
                     </context>
-                    <context context-type="linenumber">204</context>
+                    <context context-type="linenumber">206</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="2999814213294266636" datatype="html">
                 <source>Runs
-                    <x id="PH"
-                       equiv-text="cronstrue.toString(cronExpression, { locale: this.locale }).toLocaleLowerCase()"/>
+                    <x id="PH" equiv-text="cronstrue
+              .toString(cronExpression, { locale: this.locale })
+              .toLocaleLowerCase()"/>
                 </source>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts
                     </context>
-                    <context context-type="linenumber">203</context>
+                    <context context-type="linenumber">203,205</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="2715156558483046254" datatype="html">
@@ -3700,7 +3899,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts
                     </context>
-                    <context context-type="linenumber">211</context>
+                    <context context-type="linenumber">213</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="8669717871933589565" datatype="html">
@@ -3709,7 +3908,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts
                     </context>
-                    <context context-type="linenumber">236</context>
+                    <context context-type="linenumber">238</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="6655540167436629912" datatype="html">
@@ -3718,7 +3917,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts
                     </context>
-                    <context context-type="linenumber">239</context>
+                    <context context-type="linenumber">241</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="2532250142169750361" datatype="html">
@@ -3727,7 +3926,7 @@
                     <context context-type="sourcefile">
                         packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts
                     </context>
-                    <context context-type="linenumber">239</context>
+                    <context context-type="linenumber">241</context>
                 </context-group>
             </trans-unit>
             <trans-unit id="1205037876874222931" datatype="html">

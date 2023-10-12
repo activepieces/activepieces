@@ -1848,7 +1848,7 @@
                     <x id="INTERPOLATION" equiv-text="{{(showSecondValue)? 'First':''}}"/>
                     Value
                 </source>
-                <target state="new">
+                <target>
                     <x id="INTERPOLATION" equiv-text="{{(showSecondValue)? 'Première':''}}"/>
                     Valeur
                 </target>
@@ -3568,12 +3568,10 @@
             </trans-unit>
             <trans-unit id="7708270344948043036" datatype="html">
                 <source>
-                    <x id="INTERPOLATION"
-                       equiv-text="{{(isSaving$ | async)? 'Saving...': 'Test flow'}}"/>
+                    <x id="INTERPOLATION" equiv-text="{{(isSaving$ | async)? 'Saving...': 'Test flow'}}"/>
                 </source>
                 <target>
-                    <x id="INTERPOLATION"
-                       equiv-text="{{(isSaving$ | async)? 'Sauvegarde...': 'Tester le process'}}"/>
+                    <x id="INTERPOLATION" equiv-text="{{(isSaving$ | async)? 'Sauvegarde...': 'Tester le process'}}"/>
                 </target>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
@@ -4269,10 +4267,12 @@
             </trans-unit>
             <trans-unit id="2999814213294266636" datatype="html">
                 <source>Runs
-                    <x id="PH" equiv-text="cronstrue.toString(cronExpression, { locale: this.locale }).toLocaleLowerCase()"/>
+                    <x id="PH"
+                       equiv-text="cronstrue.toString(cronExpression, { locale: this.locale }).toLocaleLowerCase()"/>
                 </source>
                 <target>S'exécute
-                    <x id="PH" equiv-text="cronstrue.toString(cronExpression, { locale: this.locale }).toLocaleLowerCase()"/>
+                    <x id="PH"
+                       equiv-text="cronstrue.toString(cronExpression, { locale: this.locale }).toLocaleLowerCase()"/>
                 </target>
                 <context-group purpose="location">
                     <context context-type="sourcefile">
@@ -4289,6 +4289,261 @@
                         packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts
                     </context>
                     <context context-type="linenumber">210</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="8503408630418561538" datatype="html">
+                <source>Team Invitation Accepted</source>
+                <target>Invitation d'équipe acceptée</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ee/project-members/src/lib/accept-invitation/accept-invitation.component.html
+                    </context>
+                    <context context-type="linenumber">3,5</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4395110422147815828" datatype="html">
+                <source>Thank you for accepting the invitation. We are redirecting you right now...</source>
+                <target>Merci d'avoir accepté l'invitation. Nous vous redirigeons en ce moment...</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ee/project-members/src/lib/accept-invitation/accept-invitation.component.html
+                    </context>
+                    <context context-type="linenumber">6,8</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="8331641771927553330" datatype="html">
+                <source>Invalid invitation token. Please try again.</source>
+                <target>Jeton d'invitation invalide. Veuillez réessayer.</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ee/project-members/src/lib/accept-invitation/accept-invitation.component.html
+                    </context>
+                    <context context-type="linenumber">11,13</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="1104679811553007900" datatype="html">
+                <source>Type the email address of the user you want to invite.</source>
+                <target>Saisissez l'adresse e-mail de l'utilisateur que vous souhaitez inviter.</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.html
+                    </context>
+                    <context context-type="linenumber">5,7</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7389095488851921033" datatype="html">
+                <source>The invited email already has an account. Please contact support@activepieces.com for
+                    assistance.
+                </source>
+                <target>L'e-mail invité a déjà un compte. Veuillez contacter support@activepieces.com
+                    pour assistance.
+                </target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.html
+                    </context>
+                    <context context-type="linenumber">13</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="1257197684303803009" datatype="html">
+                <source>Email is Required</source>
+                <target>L'e-mail est requis</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.html
+                    </context>
+                    <context context-type="linenumber">16</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4145496584631696119" datatype="html">
+                <source>Role</source>
+                <target>Rôle</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.html
+                    </context>
+                    <context context-type="linenumber">21</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ee/project-members/src/lib/project-members-table/project-members-table.component.html
+                    </context>
+                    <context context-type="linenumber">22</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7927354222438929134" datatype="html">
+                <source>Invite</source>
+                <target>Inviter</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.html
+                    </context>
+                    <context context-type="linenumber">37,39</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7949744301909849109" datatype="html">
+                <source>Internal error occurred please contact support@activepieces.com</source>
+                <target>Une erreur interne s'est produite, veuillez contacter support@activepieces.com</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.ts
+                    </context>
+                    <context context-type="linenumber">62</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2304614617903385642" datatype="html">
+                <source>Project Members</source>
+                <target>Membres du projet</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ee/project-members/src/lib/project-members-table/project-members-table.component.html
+                    </context>
+                    <context context-type="linenumber">4</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ee/project-members/src/lib/project-members-table/project-members-table.component.html
+                    </context>
+                    <context context-type="linenumber">8</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="753844560726167738" datatype="html">
+                <source>Invited At</source>
+                <target>Invité à</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ee/project-members/src/lib/project-members-table/project-members-table.component.html
+                    </context>
+                    <context context-type="linenumber">27</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3463797202358605584" datatype="html">
+                <source>Invite</source>
+                <target>Inviter</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ee/project-members/src/lib/project-members-table/project-members-table.component.html
+                    </context>
+                    <context context-type="linenumber">34</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4701552962997211350" datatype="html">
+                <source>Delete Invitation</source>
+                <target>Supprimer l'invitation</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ee/project-members/src/lib/project-members-table/project-members-table.component.html
+                    </context>
+                    <context context-type="linenumber">38</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="4416413576346763682" datatype="html">
+                <source>Pending</source>
+                <target>En attente</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ee/project-members/src/lib/project-members-table/project-members-table.component.ts
+                    </context>
+                    <context context-type="linenumber">81</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2904760683826257752" datatype="html">
+                <source>Plans -
+                    <x id="PH" equiv-text="environment.websiteTitle"/>
+                </source>
+                <target>Abonnement -
+                    <x id="PH" equiv-text="environment.websiteTitle"/>
+                </target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts
+                    </context>
+                    <context context-type="linenumber">35</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2457363351157132607" datatype="html">
+                <source>Team -
+                    <x id="PH" equiv-text="environment.websiteTitle"/>
+                </source>
+                <target>Équipe -
+                    <x id="PH" equiv-text="environment.websiteTitle"/>
+                </target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts
+                    </context>
+                    <context context-type="linenumber">40</context>
+                </context-group>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts
+                    </context>
+                    <context context-type="linenumber">84</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="1183032279513578972" datatype="html">
+                <source>Piece name</source>
+                <target>Nom de la pièce</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/community-pieces-table/install-community-piece/install-community-piece-modal.component.html
+                    </context>
+                    <context context-type="linenumber">7</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="5376544880787061544" datatype="html">
+                <source>NPM package name</source>
+                <target>Nom du package NPM</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/community-pieces-table/install-community-piece/install-community-piece-modal.component.html
+                    </context>
+                    <context context-type="linenumber">8</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="7515584469189435123" datatype="html">
+                <source>This is required</source>
+                <target>Ceci est nécessaire</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/community-pieces-table/install-community-piece/install-community-piece-modal.component.html
+                    </context>
+                    <context context-type="linenumber">11,13</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="2206632393383450361" datatype="html">
+                <source>
+                    Use this to install a &lt;a href=&quot;https://www.activepieces.com/docs/developers/building-pieces/create-action&quot;
+                    target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;custom piece&lt;/a&gt; that you (or someone
+                    else) created.
+                    Once the piece is installed, you can use it in the flow builder.
+                    &lt;br&gt;&lt;br&gt;**Warning:**
+                    Make sure you trust the author as the piece will have access to your flow data and it might not be
+                    compatible with the current version of Activepieces.
+                </source>
+                <target>
+                    Utilisez-le pour installer un &lt;a href=&quot;https://www.activepieces.com/docs/developers/building-pieces/create-action&quot;
+                    target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;connecteur personnalisée&lt;/a&gt; que vous
+                    (ou quelqu'un
+                    autre) a créé.
+                    Une fois la pièce installée, vous pouvez l'utiliser dans le générateur de flux.
+                    &lt;br&gt;&lt;br&gt;**Attention :**
+                    Assurez-vous de faire confiance à l'auteur, car l'article aura accès à vos données de flux et il se
+                    peut qu'il ne le soit pas.
+                    compatible avec la version actuelle d'Activepieces.
+                </target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/pages/community-pieces-table/install-community-piece/install-community-piece-modal.component.ts
+                    </context>
+                    <context context-type="linenumber">35,40</context>
+                </context-group>
+            </trans-unit>
+            <trans-unit id="3724068243287682962" datatype="html">
+                <source>Team</source>
+                <target>Équipe</target>
+                <context-group purpose="location">
+                    <context context-type="sourcefile">
+                        packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts
+                    </context>
+                    <context context-type="linenumber">90</context>
                 </context-group>
             </trans-unit>
         </body>
