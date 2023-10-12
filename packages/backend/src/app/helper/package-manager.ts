@@ -1,3 +1,4 @@
+import { enrichErrorContext } from './error-handler'
 import { exec } from './exec'
 import { logger } from './logger'
 import { isEmpty } from '@activepieces/shared'
@@ -23,30 +24,6 @@ export type PackageInfo = {
     spec: string
 }
 
-const enrichErrorContext = (error: unknown, key: string, value: unknown): unknown => {
-    if (error instanceof Error) {
-        if ('context' in error && error.context instanceof Object) {
-            const enrichedError = Object.assign(error, {
-                ...error.context,
-                [key]: value,
-            })
-
-            return enrichedError
-        }
-        else {
-            const enrichedError = Object.assign(error, {
-                context: {
-                    [key]: value,
-                },
-            })
-
-            return enrichedError
-        }
-    }
-
-    return error
-}
-
 const runCommand = async (path: string, command: Command, ...args: string[]): Promise<PackageManagerOutput> => {
     try {
         logger.debug({ path, command, args }, '[PackageManager#execute]')
@@ -54,19 +31,17 @@ const runCommand = async (path: string, command: Command, ...args: string[]): Pr
         const commandLine = `pnpm ${command} ${args.join(' ')}`
         return await exec(commandLine, { cwd: path })
     }
-    catch(e) {
-        const error = e as Record<string, object>
+    catch (error) {
+        const contextKey = '[PackageManager#runCommand]'
+        const contextValue = { path, command, args }
 
-        error.context = {
-            ...error.context,
-            ['PackageManager#execute']: {
-                path,
-                command,
-                args,
-            },
-        }
+        const enrichedError = enrichErrorContext({
+            error,
+            key: contextKey,
+            value: contextValue,
+        })
 
-        throw error as Error
+        throw enrichedError
     }
 }
 
