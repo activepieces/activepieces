@@ -55,7 +55,7 @@ export const piecesController: FastifyPluginAsyncTypebox = async (app) => {
 
         const decodeScope = decodeURIComponent(scope)
         const decodedName = decodeURIComponent(name)
-        return await pieceMetadataService.get({
+        return await pieceMetadataService.getOrThrow({
             projectId: req.principal.projectId,
             name: `${decodeScope}/${decodedName}`,
             version,
@@ -72,7 +72,7 @@ export const piecesController: FastifyPluginAsyncTypebox = async (app) => {
         const { version } = req.query
 
         const decodedName = decodeURIComponent(name)
-        return await pieceMetadataService.get({
+        return await pieceMetadataService.getOrThrow({
             projectId: req.principal.projectId,
             name: decodedName,
             version,
@@ -84,7 +84,7 @@ export const piecesController: FastifyPluginAsyncTypebox = async (app) => {
             body: PieceOptionRequest,
         },
     }, async (req) => {
-        const { packageType, pieceType, pieceName, pieceVersion, pieceArchiveId, propertyName, stepName, input } = req.body
+        const { packageType, pieceType, pieceName, pieceVersion, propertyName, stepName, input } = req.body
         const { projectId } = req.principal
 
         const { result } = await engineHelper.executeProp({
@@ -95,7 +95,6 @@ export const piecesController: FastifyPluginAsyncTypebox = async (app) => {
                 pieceName,
                 pieceVersion,
                 projectId,
-                archiveId: pieceArchiveId,
             },
             propertyName,
             stepName,

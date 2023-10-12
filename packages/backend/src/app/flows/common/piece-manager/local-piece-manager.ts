@@ -25,7 +25,7 @@ export class LocalPieceManager extends PieceManager {
         await linkFrameworkPackages(projectPath, baseLinkPath, frameworkPackages)
 
         for (const piece of pieces) {
-            const pieceMetadata = await pieceMetadataService.get({
+            const pieceMetadata = await pieceMetadataService.getOrThrow({
                 name: piece.pieceName,
                 version: piece.pieceVersion,
             })
