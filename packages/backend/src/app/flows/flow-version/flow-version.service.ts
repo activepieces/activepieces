@@ -47,7 +47,7 @@ export const flowVersionService = {
             switch (step.type) {
                 case ActionType.PIECE:
                 case TriggerType.PIECE: {
-                    const newVersion = await pieceMetadataService.get({
+                    const newVersion = await pieceMetadataService.getOrThrow({
                         projectId,
                         name: step.settings.pieceName,
                         version: step.settings.pieceVersion,
@@ -360,7 +360,7 @@ async function validateAction({ projectId, settings }: { projectId: ProjectId, s
         return false
     }
 
-    const piece = await pieceMetadataService.get({
+    const piece = await pieceMetadataService.getOrThrow({
         projectId,
         name: settings.pieceName,
         version: settings.pieceVersion,
@@ -386,7 +386,7 @@ async function validateTrigger({ settings, projectId }: { settings: PieceTrigger
         return false
     }
 
-    const piece = await pieceMetadataService.get({
+    const piece = await pieceMetadataService.getOrThrow({
         projectId,
         name: settings.pieceName,
         version: settings.pieceVersion,

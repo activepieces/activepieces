@@ -109,7 +109,6 @@ export class FlowItemsDetailsEffects {
                 pieceType: piece.pieceType,
                 pieceName: piece.name,
                 pieceVersion: piece.version,
-                pieceArchiveId: piece.archiveId,
               }
             );
           } else if (piece.triggers > 0 && forTriggers) {
@@ -123,7 +122,6 @@ export class FlowItemsDetailsEffects {
                 pieceType: piece.pieceType,
                 pieceName: piece.name,
                 pieceVersion: piece.version,
-                pieceArchiveId: piece.archiveId,
               }
             );
           } else {

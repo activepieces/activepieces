@@ -27,7 +27,6 @@ export const demoTemplate: FlowVersionTemplate = {
         actionName: 'send_request',
         inputUiInfo: {},
         pieceVersion: '0.2.4',
-        pieceArchiveId: undefined,
       },
       nextAction: {
         name: 'step_2',

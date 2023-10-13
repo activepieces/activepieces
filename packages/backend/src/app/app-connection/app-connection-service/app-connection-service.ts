@@ -231,7 +231,7 @@ const engineValidateAuth = async (
 ): Promise<void> => {
     const { pieceName, auth, projectId } = params
 
-    const pieceMetadata = await pieceMetadataService.get({
+    const pieceMetadata = await pieceMetadataService.getOrThrow({
         name: pieceName,
         projectId,
         version: undefined,
@@ -245,7 +245,6 @@ const engineValidateAuth = async (
             pieceName: pieceMetadata.name,
             pieceVersion: pieceMetadata.version,
             projectId,
-            archiveId: pieceMetadata.archiveId,
         },
         auth,
         projectId,

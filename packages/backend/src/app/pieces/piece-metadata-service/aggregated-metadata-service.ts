@@ -1,4 +1,4 @@
-import { GetParams, PieceMetadataService } from './piece-metadata-service'
+import { PieceMetadataService } from './piece-metadata-service'
 import { AllPiecesStats } from './piece-stats-service'
 import { CloudPieceMetadataService } from './cloud-piece-metadata-service'
 import { DbPieceMetadataService } from './db-piece-metadata-service'
@@ -24,16 +24,16 @@ export const AggregatedPieceMetadataService = (): PieceMetadataService => {
             return [...cloudMetadata, ...dbMetadata]
         },
 
-        async get({ name, version, projectId }: GetParams): Promise<PieceMetadataModel> {
+        async getOrThrow({ name, version, projectId }): Promise<PieceMetadataModel> {
             try {
-                const dbMetadata = await dbPieceProvider.get({
+                const dbMetadata = await dbPieceProvider.getOrThrow({
                     name, version, projectId,
                 })
                 return dbMetadata
             }
             catch (e) {
                 if (e instanceof ActivepiecesError && (e as ActivepiecesError).error.code === ErrorCode.ENTITY_NOT_FOUND) {
-                    const cloudMetadata = await cloudPieceProvider.get({
+                    const cloudMetadata = await cloudPieceProvider.getOrThrow({
                         name, version, projectId,
                     })
                     return cloudMetadata
@@ -61,7 +61,7 @@ export const AggregatedPieceMetadataService = (): PieceMetadataService => {
                 return version
             }
 
-            const pieceMetadata = await this.get({
+            const pieceMetadata = await this.getOrThrow({
                 projectId,
                 name,
                 version,
