@@ -12,6 +12,7 @@ import { PieceManager } from './piece-manager'
 import { fileService } from '../../../file/file.service'
 import { fileExists } from '../../../helper/file-system'
 import { mkdir, writeFile } from 'node:fs/promises'
+import { pieceMetadataService } from '../../../pieces/piece-metadata-service'
 
 export class RegistryPieceManager extends PieceManager {
     protected override async installDependencies({ projectPath, pieces }: InstallParams): Promise<void> {
@@ -59,19 +60,11 @@ export class RegistryPieceManager extends PieceManager {
     }
 
     private async getArchiveAndSaveToDisk(piece: PiecePackage): Promise<void> {
-        if (isNil(piece.archiveId)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.PIECE_NOT_FOUND,
-                params: {
-                    pieceName: piece.pieceName,
-                    pieceVersion: piece.pieceVersion,
-                },
-            })
-        }
+        const archiveId = piece.archiveId ?? await this.getArchiveIdOrThrow(piece)
 
         const archiveFile = await fileService.getOneOrThrow({
             projectId: piece.projectId,
-            fileId: piece.archiveId,
+            fileId: archiveId,
         })
 
         const projectPackageArchivePath = this.getProjectPackageArchivePath({
@@ -86,6 +79,26 @@ export class RegistryPieceManager extends PieceManager {
 
         await mkdir(dirname(archivePath), { recursive: true })
         await writeFile(archivePath, archiveFile.data)
+    }
+
+    private async getArchiveIdOrThrow(piece: PiecePackage): Promise<string> {
+        const pieceMetadata = await pieceMetadataService.getOrThrow({
+            name: piece.pieceName,
+            version: piece.pieceVersion,
+            projectId: piece.projectId,
+        })
+
+        if (isNil(pieceMetadata.archiveId)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.PIECE_NOT_FOUND,
+                params: {
+                    pieceName: piece.pieceName,
+                    pieceVersion: piece.pieceVersion,
+                },
+            })
+        }
+
+        return pieceMetadata.archiveId
     }
 }
 

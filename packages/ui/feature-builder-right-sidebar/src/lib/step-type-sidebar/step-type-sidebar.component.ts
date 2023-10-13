@@ -263,7 +263,6 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
             pieceName: triggerDetails.extra?.pieceName ?? 'NO_APP_NAME',
             pieceVersion:
               triggerDetails.extra?.pieceVersion ?? 'NO_APP_VERSION',
-            pieceArchiveId: triggerDetails.extra?.pieceArchiveId,
             triggerName: '',
             input: {},
             inputUiInfo: {
@@ -341,7 +340,6 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
               pieceName: flowItemDetails.extra?.pieceName ?? 'NO_APP_NAME',
               pieceVersion:
                 flowItemDetails.extra?.pieceVersion ?? 'NO_APP_VERSION',
-              pieceArchiveId: flowItemDetails.extra?.pieceArchiveId,
               actionName: undefined,
               input: {},
               inputUiInfo: {

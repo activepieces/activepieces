@@ -173,7 +173,7 @@ export const engineHelper = {
         )
 
         const triggerSettings = (lockedFlowVersion.trigger as PieceTrigger).settings
-        const { packageType, pieceType, pieceName, pieceVersion, pieceArchiveId } = triggerSettings
+        const { packageType, pieceType, pieceName, pieceVersion } = triggerSettings
 
         const exactPieceVersion = await pieceMetadataService.getExactPieceVersion({
             name: pieceName,
@@ -192,7 +192,6 @@ export const engineHelper = {
                     pieceName,
                     pieceVersion: exactPieceVersion,
                     projectId: operation.projectId,
-                    archiveId: pieceArchiveId,
                 },
             ],
         })

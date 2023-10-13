@@ -32,7 +32,6 @@ export interface PieceActionInputFormSchema extends InputFormsSchemaBase {
   pieceType: PieceType;
   pieceName: string;
   pieceVersion: string;
-  pieceArchiveId: string | undefined;
   actionName: string;
   input: ConfigsAndTheirValues;
   inputUiInfo: {
@@ -45,7 +44,6 @@ export interface ComponentTriggerInputFormSchema extends InputFormsSchemaBase {
   pieceType: PieceType;
   pieceName: string;
   pieceVersion: string;
-  pieceArchiveId: string | undefined;
   triggerName: string;
   input: ConfigsAndTheirValues;
 }
