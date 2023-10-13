@@ -84,6 +84,31 @@ export class InviteProjectMemberDialogComponent {
     }
   }
   get ProjectMemberRole() {
-    return Object.keys(ProjectMemberRole);
+    const projectMemberRole: any[] = [];
+
+    for (const projectMemberRoleElement of Object.keys(ProjectMemberRole)) {
+      switch (projectMemberRoleElement) {
+        case ProjectMemberRole.ADMIN:
+          projectMemberRole.push({
+            value: projectMemberRoleElement,
+            label: $localize`ADMIN`,
+          });
+          break;
+        case ProjectMemberRole.EDITIOR:
+          projectMemberRole.push({
+            value: projectMemberRoleElement,
+            label: $localize`EDITOR`,
+          });
+          break;
+        case ProjectMemberRole.VIEWER:
+          projectMemberRole.push({
+            value: projectMemberRoleElement,
+            label: $localize`VIEWER`,
+          });
+          break;
+      }
+    }
+
+    return projectMemberRole;
   }
 }
