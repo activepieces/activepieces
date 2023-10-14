@@ -617,6 +617,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "joselupianez",
+      "name": "joselupianez",
+      "avatar_url": "https://avatars.githubusercontent.com/u/4380557?v=4",
+      "profile": "http://lupianezjose.com",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
