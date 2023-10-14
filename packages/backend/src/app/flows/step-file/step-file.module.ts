@@ -33,7 +33,7 @@ export const stepFileController: FastifyPluginAsyncTypebox = async (app) => {
         schema: {
             body: StepFileUpsert,
         },
-    }, async (request) => {
+    }, async (request) => {    
         return stepFileService.upsert({
             projectId: request.principal.projectId,
             request: request.body,

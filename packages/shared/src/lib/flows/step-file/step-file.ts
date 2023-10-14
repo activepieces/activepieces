@@ -1,6 +1,5 @@
 import { Static, Type } from "@sinclair/typebox";
 import { BaseModelSchema } from "../../common";
-import { FileData } from "../../file/file";
 
 export const StepFile = Type.Object({
     ...BaseModelSchema,
@@ -18,7 +17,7 @@ export const StepFileUpsert = Type.Object({
     name: Type.String(),
     flowId: Type.String(),
     stepName: Type.String(),
-    file: Type.Array(FileData),
+    file: Type.Unknown(),
 })
 
 export type StepFileUpsert = Static<typeof StepFileUpsert>;
