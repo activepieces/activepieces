@@ -3,6 +3,7 @@ import { PiecePackage, ProjectId, getPackageAliasForPiece, getPackageSpecForPiec
 import { system } from '../../../helper/system/system'
 import { SystemProp } from '../../../helper/system/system-prop'
 import { PackageInfo, packageManager } from '../../../helper/package-manager'
+import { enrichErrorContext } from '../../../helper/error-handler'
 
 const PACKAGE_ARCHIVE_PATH = system.getOrThrow(SystemProp.PACKAGE_ARCHIVE_PATH)
 
@@ -10,20 +11,34 @@ export abstract class PieceManager {
     private readonly baseArchivePath = resolve(PACKAGE_ARCHIVE_PATH)
 
     async install({ projectPath, pieces }: InstallParams): Promise<void> {
-        if (isEmpty(pieces)) {
-            return
+        try {
+            if (isEmpty(pieces)) {
+                return
+            }
+
+            await packageManager.init({
+                path: projectPath,
+            })
+
+            const uniquePieces = this.removeDuplicatedPieces(pieces)
+
+            await this.installDependencies({
+                projectPath,
+                pieces: uniquePieces,
+            })
         }
+        catch (error) {
+            const contextKey = '[PieceManager#install]'
+            const contextValue = { projectPath, pieces }
 
-        await packageManager.init({
-            path: projectPath,
-        })
+            const enrichedError = enrichErrorContext({
+                error,
+                key: contextKey,
+                value: contextValue,
+            })
 
-        const uniquePieces = this.removeDuplicatedPieces(pieces)
-
-        await this.installDependencies({
-            projectPath,
-            pieces: uniquePieces,
-        })
+            throw enrichedError
+        }
     }
 
     getProjectPackageArchivePath({ projectId }: GetProjectPackageArchivePathParams): string {
