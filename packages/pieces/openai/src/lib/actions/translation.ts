@@ -36,7 +36,7 @@ export const translateAction = createAction({
             const response = await httpClient.sendRequest(request)
             return response.body;
         }catch(e){
-            return e;
+            throw new Error( `Error while excution:\n${e}` );
         }
     },
 });

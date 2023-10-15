@@ -47,6 +47,6 @@ export const openai = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/openai.png',
   auth: openaiAuth,
   actions: [ askOpenAI , transcribeAction , translateAction ],
-  authors: ['aboudzein', 'creed983', 'astorozhevsky'],
+  authors: ['aboudzein', 'creed983', 'astorozhevsky' , 'Salem-Alaa'],
   triggers: []
 });
