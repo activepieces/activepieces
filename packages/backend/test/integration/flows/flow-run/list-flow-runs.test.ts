@@ -1,13 +1,8 @@
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { setupApp } from '../../../../src/app/app'
 import { generateTestToken } from '../../../helpers/auth'
-import { logger } from '../../../../src/app/helper/logger'
 
 beforeAll(async () => {
-    logger.error(process.env, '#########################################################################################')
-    logger.warn(process.env, '#########################################################################################')
-    logger.info(process.env, '#########################################################################################')
-    console.log(process.env, '#########################################################################################')
     await databaseConnection.initialize()
 })
 
