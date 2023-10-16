@@ -189,7 +189,7 @@ const executeBranch = async ({ step, flowVersion, projectId }: ExecuteParams<Bra
         triggerPayload: {
             duration: 0,
             input: {},
-            output: flowVersion.trigger.settings.inputUiInfo.currentSelectedData,
+            output: flowVersion.trigger.settings.inputUiInfo?.currentSelectedData,
             status: StepOutputStatus.SUCCEEDED,
         },
         sourceFlowVersion: flowVersion,
