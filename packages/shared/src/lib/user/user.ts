@@ -5,7 +5,8 @@ import { ApId } from "../common/id-generator";
 export type UserId = ApId;
 
 export enum UserStatus {
-  VERIFIED = "VERIFIED"
+  VERIFIED = "VERIFIED",
+  SHADOW = "SHADOW"
 }
 
 export const User = Type.Object({

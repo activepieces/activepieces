@@ -1,7 +1,7 @@
 import { AUTHENTICATION_PROPERTY_NAME, ApEdition, EventPayload, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecutionState, PieceTrigger, ScheduleOptions, TriggerHookType } from "@activepieces/shared";
 import { createContextStore } from "../services/storage.service";
 import { VariableService } from "../services/variable-service";
-import { pieceHelper } from "./action-helper";
+import { pieceHelper } from "./piece-helper";
 import { isValidCron } from 'cron-validator';
 import { PiecePropertyMap, StaticPropsValue, TriggerStrategy } from "@activepieces/pieces-framework";
 import { createFilesService } from "../services/files.service";

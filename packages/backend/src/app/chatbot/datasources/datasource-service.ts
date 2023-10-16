@@ -6,7 +6,7 @@ import { Chatbot, CreateDataSourceRequest, DataSource } from '@activepieces/shar
 import { embeddings } from '../embedings'
 import { datasources } from '../framework/datasource'
 import { databaseConnection } from '../../database/database-connection'
-import { appConnectionService } from '../../app-connection/app-connection-service'
+import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
 
 const chatbotRepo = databaseConnection.getRepository(ChatbotEntity)
 

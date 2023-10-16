@@ -79,7 +79,7 @@ export class TemplatesDialogComponent {
       tap(() => {
         this.loading$.next(true);
       }),
-      debounceTime(300),
+      debounceTime(1000),
       switchMap(() => {
         this.telemetryService.capture({
           name: TelemetryEventName.TEMPLATE_SEARCH,

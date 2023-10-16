@@ -28,7 +28,7 @@
         }
       }
     },
-    "build-watch": {
+    "serve": {
       "executor": "@nx/js:node",
       "options": {
         "buildTarget": "backend:build",
@@ -38,16 +38,6 @@
         "production": {
           "buildTarget": "backend:build:production"
         }
-      }
-    },
-    "serve": {
-      "executor": "nx:run-commands",
-      "options": {
-        "commands": [
-          "nx build-watch backend",
-          "nx serve engine",
-          "turbowatch turbowatch.ts"
-        ]
       }
     },
     "lint": {
@@ -79,7 +69,7 @@
     "db-migration": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "nx db backend -- migration:generate -d packages/backend/src/app/database/database-connection.ts packages/backend/src/app/database/migration/{args.name}"
+        "command": "nx db backend -- migration:generate -p -d packages/backend/src/app/database/database-connection.ts packages/backend/src/app/database/migration/{args.name}"
       }
     }
   },

@@ -52,3 +52,6 @@ packages/backend/.env
 
 # produced by backend tests
 .npm-cache
+
+# scratch pad
+scratch.md

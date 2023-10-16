@@ -1,9 +1,10 @@
-import { readFile, access } from 'node:fs/promises'
+import { readFile } from 'node:fs/promises'
 import process from 'node:process'
 import { system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
 import { logger } from '../../helper/logger'
 import { EngineResponse, EngineResponseStatus } from '@activepieces/shared'
+import { fileExists } from '../../helper/file-system'
 
 export abstract class AbstractSandbox {
     protected static readonly sandboxRunTimeSeconds = system.getNumber(SystemProp.SANDBOX_RUN_TIME_SECONDS) ?? 600
@@ -53,23 +54,13 @@ export abstract class AbstractSandbox {
     protected async parseFunctionOutput(): Promise<EngineResponse<unknown>> {
         const outputFile = this.getSandboxFilePath('output.json')
 
-        if (!(await this.fileExists(outputFile))) {
+        if (!(await fileExists(outputFile))) {
             throw new Error(`Output file not found in ${outputFile}`)
         }
 
         const output = JSON.parse(await readFile(outputFile, { encoding: 'utf-8' }))
         logger.trace(output, '[Sandbox#parseFunctionOutput] output')
         return output
-    }
-
-    private async fileExists(filePath: string): Promise<boolean> {
-        try {
-            await access(filePath)
-            return true
-        }
-        catch (e) {
-            return false
-        }
     }
 
     protected getSandboxFilePath(subFile: string): string {

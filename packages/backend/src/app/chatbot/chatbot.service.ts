@@ -22,10 +22,10 @@ import { ChatbotEntity } from './chatbot.entity'
 import { chatbotHooks } from './chatbot.hooks'
 import { telemetry } from '../helper/telemetry.utils'
 import { logger } from '../helper/logger'
-import { appConnectionService } from '../app-connection/app-connection-service'
 import { runBot } from './bots/chatbots'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { buildPaginator } from '../helper/pagination/build-paginator'
+import { appConnectionService } from '../app-connection/app-connection-service/app-connection-service'
 
 
 const chatbotRepo = databaseConnection.getRepository(ChatbotEntity)

@@ -1,28 +1,42 @@
 import { Sandbox } from '..'
 import { sandboxCachePool } from '../cache/sandbox-cache-pool'
 import { sandboxManager } from '../sandbox-manager'
-import { FileId } from '@activepieces/shared'
+import { FileId, PiecePackage } from '@activepieces/shared'
 import { SandBoxCacheType, TypedProvisionCacheInfo } from './sandbox-cache-key'
 import { logger } from '../../../helper/logger'
+import { enrichErrorContext } from '../../../helper/error-handler'
 
 export const sandboxProvisioner = {
     async provision({ pieces = [], codeArchives = [], ...cacheInfo }: ProvisionParams): Promise<Sandbox> {
+        try {
+            const cachedSandbox = await sandboxCachePool.findOrCreate(cacheInfo)
 
-        const cachedSandbox = await sandboxCachePool.findOrCreate(cacheInfo)
+            await cachedSandbox.prepare({
+                pieces,
+                codeArchives,
+            })
 
-        await cachedSandbox.prepare({
-            pieces,
-            codeArchives,
-        })
+            const sandbox = await sandboxManager.allocate()
 
-        const sandbox = await sandboxManager.allocate()
+            await sandbox.assignCache({
+                cacheKey: cachedSandbox.key,
+                cachePath: cachedSandbox.path(),
+            })
 
-        await sandbox.assignCache({
-            cacheKey: cachedSandbox.key,
-            cachePath: cachedSandbox.path(),
-        })
+            return sandbox
+        }
+        catch (error) {
+            const contextKey = '[SandboxProvisioner#provision]'
+            const contextValue = { pieces, codeArchives, cacheInfo }
 
-        return sandbox
+            const enrichedError = enrichErrorContext({
+                error,
+                key: contextKey,
+                value: contextValue,
+            })
+
+            throw enrichedError
+        }
     },
 
     async release({ sandbox }: ReleaseParams): Promise<void> {
@@ -38,20 +52,15 @@ export const sandboxProvisioner = {
     },
 }
 
-type ProvisionParams<T extends SandBoxCacheType = SandBoxCacheType> = TypedProvisionCacheInfo<T> & {
-    pieces?: Piece[]
-    codeArchives?: CodeArchive[]
-}
-
-
-type Piece = {
-    name: string
-    version: string
-}
 
 type CodeArchive = {
     id: FileId
     content: Buffer
+}
+
+type ProvisionParams<T extends SandBoxCacheType = SandBoxCacheType> = TypedProvisionCacheInfo<T> & {
+    pieces?: PiecePackage[]
+    codeArchives?: CodeArchive[]
 }
 
 type ReleaseParams = {

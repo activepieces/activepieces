@@ -9,9 +9,9 @@ import {
     UpsertAppConnectionRequestBody,
     isNil,
 } from '@activepieces/shared'
-import { appConnectionService } from './app-connection-service'
 import { FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
+import { appConnectionService } from './app-connection-service/app-connection-service'
 
 export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts, done) => {
     app.post('/', UpsertAppConnectionRequest, async (request): Promise<AppConnectionWithoutSensitiveData> => {

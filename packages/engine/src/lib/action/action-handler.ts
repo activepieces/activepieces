@@ -1,4 +1,4 @@
-import { StepOutput, Action, ExecutionState, ResumeStepMetadata, ExecutionOutput, ExecutionOutputStatus, StepOutputStatus, StepOutputForActionType, FlowVersion } from '@activepieces/shared';
+import { StepOutput, Action, ExecutionState, ResumeStepMetadata, ExecutionOutput, ExecutionOutputStatus, StepOutputStatus, StepOutputForActionType, FlowVersion, StopResponse, PauseMetadata } from '@activepieces/shared';
 import { isNil } from '@activepieces/shared'
 
 export type ActionHandler = BaseActionHandler
@@ -16,6 +16,13 @@ type CtorParams<CA extends Action, RSM extends ResumeStepMetadata = ResumeStepMe
 
 export type InitStepOutputParams = {
   executionState: ExecutionState
+}
+
+export type ExecuteActionOutput = {
+  stepOutput: StepOutput  
+  pauseMetadata: PauseMetadata | undefined
+  stopResponse: StopResponse | undefined
+  executionOutputStatus: ExecutionOutputStatus
 }
 
 export type ExecuteContext = {
@@ -59,7 +66,6 @@ export abstract class BaseActionHandler<CA extends Action = Action, RSM extends 
 
     if (oldStepOutput) {
       oldStepOutput.status = StepOutputStatus.RUNNING
-      delete oldStepOutput.pauseMetadata
     }
 
     return oldStepOutput ?? this.initStepOutput({
@@ -67,16 +73,44 @@ export abstract class BaseActionHandler<CA extends Action = Action, RSM extends 
     })
   }
 
+  protected convertExecutionStatusToStepStatus(status: StepOutputStatus): ExecutionOutputStatus {
+    switch (status) {
+      case StepOutputStatus.SUCCEEDED:
+        return ExecutionOutputStatus.SUCCEEDED
+      case StepOutputStatus.FAILED:
+        return ExecutionOutputStatus.FAILED
+      case StepOutputStatus.RUNNING:
+        return ExecutionOutputStatus.RUNNING
+      case StepOutputStatus.PAUSED:
+        return ExecutionOutputStatus.PAUSED
+      case StepOutputStatus.STOPPED:
+        return ExecutionOutputStatus.STOPPED
+    }
+  }
+
+
+  protected convertToStopResponse(executionOutput: ExecutionOutput): StopResponse | undefined {
+    if(executionOutput.status === ExecutionOutputStatus.STOPPED){
+      return executionOutput.stopResponse
+    }
+    return undefined
+  }
+
+  protected convertToPauseMetadata(executionOutput: ExecutionOutput): PauseMetadata | undefined {
+    if(executionOutput.status === ExecutionOutputStatus.PAUSED){
+      return executionOutput.pauseMetadata
+    }
+    return undefined
+  }
+  
   protected handleFlowExecutorOutput({ executionOutput, stepOutput }: HandleFlowExecutorOutput) {
     switch (executionOutput.status) {
       case ExecutionOutputStatus.STOPPED:
         stepOutput.status = StepOutputStatus.STOPPED
-        stepOutput.stopResponse = executionOutput.stopResponse
         break
 
       case ExecutionOutputStatus.PAUSED:
         stepOutput.status = StepOutputStatus.PAUSED
-        stepOutput.pauseMetadata = executionOutput.pauseMetadata
         break
 
       case ExecutionOutputStatus.FAILED:
@@ -96,5 +130,5 @@ export abstract class BaseActionHandler<CA extends Action = Action, RSM extends 
     context: ExecuteContext,
     executionState: ExecutionState,
     ancestors: [string, number][]
-  ): Promise<StepOutput>;
+  ): Promise<ExecuteActionOutput>;
 }

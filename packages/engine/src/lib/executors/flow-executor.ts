@@ -40,8 +40,8 @@ type BaseIterateFlowResponse<T extends ExecutionOutputStatus> = {
 type FinishIterateFlowResponse = BaseIterateFlowResponse<
   Exclude<
     ExecutionOutputStatus,
-      | ExecutionOutputStatus.PAUSED
-      | ExecutionOutputStatus.STOPPED
+    | ExecutionOutputStatus.PAUSED
+    | ExecutionOutputStatus.STOPPED
   >
 >
 
@@ -70,6 +70,7 @@ type IterateFlowParams = {
 
 type GeneratePauseMetadata = {
   actionHandler: ActionHandler
+  pauseMetadata: PauseMetadata
   stepOutput: StepOutput
 }
 
@@ -121,21 +122,21 @@ export class FlowExecutor {
   }
 
   private generatePauseMetadata(params: GeneratePauseMetadata): PauseMetadata {
-    const { actionHandler, stepOutput } = params
+    const { actionHandler, pauseMetadata, stepOutput } = params
 
-    switch(actionHandler.currentAction.type) {
+    switch (actionHandler.currentAction.type) {
       case ActionType.PIECE: {
-        if (isNil(stepOutput.pauseMetadata)) {
+        if (isNil(pauseMetadata)) {
           throw new Error('pauseMetadata is undefined, this shouldn\'t happen')
         }
 
-        return stepOutput.pauseMetadata
+        return pauseMetadata
       }
 
       case ActionType.BRANCH: {
         const { output } = stepOutput as BranchStepOutput
 
-        if (isNil(output) || isNil(stepOutput.pauseMetadata)) {
+        if (isNil(output) || isNil(pauseMetadata)) {
           throw new ActivepiecesError({
             code: ErrorCode.PAUSE_METADATA_MISSING,
             params: {}
@@ -143,12 +144,12 @@ export class FlowExecutor {
         }
 
         return {
-          ...stepOutput.pauseMetadata,
+          ...pauseMetadata,
           resumeStepMetadata: {
             type: ActionType.BRANCH,
             conditionEvaluation: output.condition,
             name: actionHandler.currentAction.name,
-            childResumeStepMetadata: stepOutput.pauseMetadata.resumeStepMetadata,
+            childResumeStepMetadata: pauseMetadata.resumeStepMetadata,
           }
         }
       }
@@ -156,7 +157,7 @@ export class FlowExecutor {
       case ActionType.LOOP_ON_ITEMS: {
         const { output } = stepOutput as LoopOnItemsStepOutput
 
-        if (isNil(output) || isNil(stepOutput.pauseMetadata)) {
+        if (isNil(output) || isNil(pauseMetadata)) {
           throw new ActivepiecesError({
             code: ErrorCode.PAUSE_METADATA_MISSING,
             params: {}
@@ -164,18 +165,17 @@ export class FlowExecutor {
         }
 
         return {
-          ...stepOutput.pauseMetadata,
+          ...pauseMetadata,
           resumeStepMetadata: {
             type: ActionType.LOOP_ON_ITEMS,
             iteration: output.index,
             name: actionHandler.currentAction.name,
-            childResumeStepMetadata: stepOutput.pauseMetadata.resumeStepMetadata,
+            childResumeStepMetadata: pauseMetadata.resumeStepMetadata,
           }
         }
       }
 
       case ActionType.CODE:
-      case ActionType.MISSING:
         throw new Error('missing action, this shouldn\'t happen')
     }
   }
@@ -253,11 +253,11 @@ export class FlowExecutor {
         }
 
       case ExecutionOutputStatus.STOPPED:
-          return {
-            status: ExecutionOutputStatus.STOPPED,
-            stopResponse: iterateFlowResponse.stopResponse,
-            ...baseExecutionOutput,
-          }
+        return {
+          status: ExecutionOutputStatus.STOPPED,
+          stopResponse: iterateFlowResponse.stopResponse,
+          ...baseExecutionOutput,
+        }
 
       case ExecutionOutputStatus.PAUSED:
         return {
@@ -269,6 +269,7 @@ export class FlowExecutor {
       case ExecutionOutputStatus.FAILED:
       case ExecutionOutputStatus.RUNNING:
       case ExecutionOutputStatus.TIMEOUT:
+      case ExecutionOutputStatus.QUOTA_EXCEEDED:
       case ExecutionOutputStatus.INTERNAL_ERROR:
         return {
           status: iterateFlowResponse.status,
@@ -291,7 +292,7 @@ export class FlowExecutor {
     return undefined;
   }
 
-  private async iterateFlow(params: IterateFlowParams) : Promise<IterateFlowResponse> {
+  private async iterateFlow(params: IterateFlowParams): Promise<IterateFlowResponse> {
     const { actionHandler, ancestors } = params
 
     if (isNil(actionHandler)) {
@@ -302,25 +303,25 @@ export class FlowExecutor {
 
     const startTime = dayjs()
 
-    const stepOutput = await actionHandler.execute({
+    const actionHandlerOutput = await actionHandler.execute({
       flowVersion: this.flowVersion,
-    },this.executionState, ancestors);
+    }, this.executionState, ancestors);
 
     const endTime = dayjs()
 
     const duration = endTime.diff(startTime)
 
-    stepOutput.duration = stepOutput.duration
-      ? stepOutput.duration + duration
+    actionHandlerOutput.stepOutput.duration = actionHandlerOutput.stepOutput.duration
+      ? actionHandlerOutput.stepOutput.duration + duration
       : duration
 
-    this.executionState.insertStep(stepOutput, actionHandler.currentAction.name, ancestors)
-
-    switch (stepOutput.status) {
-      case StepOutputStatus.PAUSED: {
+    this.executionState.insertStep(actionHandlerOutput.stepOutput, actionHandler.currentAction.name, ancestors)
+    switch (actionHandlerOutput.executionOutputStatus) {
+      case ExecutionOutputStatus.PAUSED: {
         const pauseMetadata = this.generatePauseMetadata({
           actionHandler,
-          stepOutput,
+          pauseMetadata: actionHandlerOutput.pauseMetadata!,
+          stepOutput: actionHandlerOutput.stepOutput,
         })
 
         return {
@@ -329,24 +330,24 @@ export class FlowExecutor {
         }
       }
 
-      case StepOutputStatus.STOPPED: {
+      case ExecutionOutputStatus.STOPPED: {
         return {
           status: ExecutionOutputStatus.STOPPED,
-          stopResponse: stepOutput.stopResponse,
+          stopResponse: actionHandlerOutput.stopResponse!,
         }
       }
 
-      case StepOutputStatus.FAILED: {
+      case ExecutionOutputStatus.FAILED: {
         return {
           status: ExecutionOutputStatus.FAILED
         }
       }
 
-      case StepOutputStatus.RUNNING: {
+      case ExecutionOutputStatus.RUNNING: {
         throw new Error('this shouldn\'t happen')
       }
 
-      case StepOutputStatus.SUCCEEDED:
+      case ExecutionOutputStatus.SUCCEEDED:
         break
     }
 

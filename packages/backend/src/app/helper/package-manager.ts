@@ -1,73 +1,102 @@
-import { ExecOptions } from 'node:child_process'
+import { enrichErrorContext } from './error-handler'
 import { exec } from './exec'
 import { logger } from './logger'
+import { isEmpty } from '@activepieces/shared'
 
 type PackageManagerOutput = {
     stdout: string
     stderr: string
 }
 
-type PnpmCoreCommand = 'add' | 'init' | 'link'
-type PnpmDependencyCommand = 'tsc'
-type PnpmCommand = PnpmCoreCommand | PnpmDependencyCommand
+type CoreCommand = 'add' | 'init' | 'link'
+type ExecCommand = 'tsc'
+type Command = CoreCommand | ExecCommand
 
-export type PackageInfo = PackageMetdataInfo & {
-    name: string
+export type PackageInfo = {
+    /**
+     * name or alias
+     */
+    alias: string
+
+    /**
+     * where to get the package from, could be an npm tag, a local path, or a tarball.
+     */
+    spec: string
 }
 
-export type PackageMetdataInfo = {
-    version: string
-}
+const runCommand = async (path: string, command: Command, ...args: string[]): Promise<PackageManagerOutput> => {
+    try {
+        logger.debug({ path, command, args }, '[PackageManager#execute]')
 
-export type PackageManagerDependencies = Record<string, PackageMetdataInfo>
-
-const executePnpm = async (directory: string, command: PnpmCommand, ...args: string[]): Promise<PackageManagerOutput> => {
-    const fullCommand = `npx pnpm ${command} ${args.join(' ')}`
-
-    const execOptions: ExecOptions = {
-        cwd: directory,
+        const commandLine = `pnpm ${command} ${args.join(' ')}`
+        return await exec(commandLine, { cwd: path })
     }
+    catch (error) {
+        const contextKey = '[PackageManager#runCommand]'
+        const contextValue = { path, command, args }
 
-    logger.info(`[PackageManager#executePnpm] directory: ${directory}, fullCommand: ${fullCommand}`)
+        const enrichedError = enrichErrorContext({
+            error,
+            key: contextKey,
+            value: contextValue,
+        })
 
-    return await exec(fullCommand, execOptions)
+        throw enrichedError
+    }
 }
 
 export const packageManager = {
-    async addDependencies(directory: string, dependencies: PackageManagerDependencies): Promise<PackageManagerOutput> {
-        const depsCount = Object.keys(dependencies).length
-
-        if (depsCount === 0) {
-            logger.info('[PackageManager#addDependencies] skip adding deps, depsCount=0')
+    async add({ path, dependencies }: AddParams): Promise<PackageManagerOutput> {
+        if (isEmpty(dependencies)) {
             return {
                 stdout: '',
                 stderr: '',
             }
         }
 
-        const options = [
+        const config = [
             '--prefer-offline',
             '--config.lockfile=false',
             '--config.auto-install-peers=true',
         ]
 
-        const dependencyArgs = Object.entries(dependencies)
-            .map(([name, meta]) => {
-                return `${name}@${meta.version}`
-            })
-
-        return await executePnpm(directory, 'add', ...dependencyArgs, ...options)
+        const dependencyArgs = dependencies.map(d => `${d.alias}@${d.spec}`)
+        return await runCommand(path, 'add', ...dependencyArgs, ...config)
     },
 
-    async initProject(directory: string): Promise<PackageManagerOutput> {
-        return await executePnpm(directory, 'init')
+    async init({ path }: InitParams): Promise<PackageManagerOutput> {
+        return await runCommand(path, 'init')
     },
 
-    async runLocalDependency(directory: string, command: PnpmDependencyCommand): Promise<PackageManagerOutput> {
-        return await executePnpm(directory, command)
+    async exec({ path, command }: ExecParams): Promise<PackageManagerOutput> {
+        return await runCommand(path, command)
     },
-    async linkDependency(directory: string, dependencyDirectory: string) {
-        const result = await executePnpm(directory, 'link', dependencyDirectory)
-        logger.trace(`[PackageManager#linkDependency] result: ${JSON.stringify(result)} for directory: ${directory} and dependencyDirectory: ${dependencyDirectory}`)
+
+    async link({ path, linkPath }: LinkParams): Promise<PackageManagerOutput> {
+        const config = [
+            '--config.lockfile=false',
+            '--config.auto-install-peers=true',
+        ]
+
+        return await runCommand(path, 'link', linkPath, ...config)
     },
+}
+
+type AddParams = {
+    path: string
+    dependencies: PackageInfo[]
+}
+
+type InitParams = {
+    path: string
+}
+
+type ExecParams = {
+    path: string
+    command: ExecCommand
+}
+
+type LinkParams = {
+    path: string
+    linkPath: string
 }

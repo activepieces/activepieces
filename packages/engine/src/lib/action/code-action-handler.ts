@@ -3,11 +3,12 @@ import {
   Action,
   ActionType,
   CodeAction,
+  ExecutionOutputStatus,
   ExecutionState,
   StepOutput,
   StepOutputStatus
 } from '@activepieces/shared';
-import { BaseActionHandler, ExecuteContext, InitStepOutputParams } from './action-handler';
+import { BaseActionHandler, ExecuteActionOutput, ExecuteContext, InitStepOutputParams } from './action-handler';
 import { codeExecutor } from '../executors/code-executer';
 import { isNil } from '@activepieces/shared'
 
@@ -45,7 +46,7 @@ export class CodeActionHandler extends BaseActionHandler<CodeAction> {
     }
   }
 
-  override async execute(context: ExecuteContext, executionState: ExecutionState, ancestors: [string, number][]): Promise<StepOutput> {
+  override async execute(context: ExecuteContext, executionState: ExecutionState, ancestors: [string, number][]): Promise<ExecuteActionOutput> {
     const stepOutput = await this.loadStepOutput({
       executionState,
       ancestors,
@@ -70,7 +71,12 @@ export class CodeActionHandler extends BaseActionHandler<CodeAction> {
       )
 
       stepOutput.status = StepOutputStatus.SUCCEEDED
-      return stepOutput
+      return {
+        stepOutput,
+        executionOutputStatus: this.convertExecutionStatusToStepStatus(stepOutput.status),
+        pauseMetadata: undefined,
+        stopResponse: undefined,
+      }
     }
     catch (e) {
       console.error(e)
@@ -78,7 +84,12 @@ export class CodeActionHandler extends BaseActionHandler<CodeAction> {
       stepOutput.status = StepOutputStatus.FAILED
       stepOutput.errorMessage = (e as Error).message
 
-      return stepOutput
+      return {
+        stepOutput,
+        executionOutputStatus: this.convertExecutionStatusToStepStatus(stepOutput.status),
+        stopResponse: undefined,
+        pauseMetadata: undefined
+      }
     }
   }
 }
