@@ -1,5 +1,5 @@
 import { PieceMetadataModel, PieceMetadataModelSummary, PieceMetadataSchema } from '../piece-metadata-entity'
-import { GetParams, PieceMetadataService } from './piece-metadata-service'
+import { PieceMetadataService } from './piece-metadata-service'
 import { AllPiecesStats, pieceStatsService } from './piece-stats-service'
 import { StatusCodes } from 'http-status-codes'
 import { ActivepiecesError, EXACT_VERSION_PATTERN, ErrorCode } from '@activepieces/shared'
@@ -31,7 +31,7 @@ export const CloudPieceMetadataService = (): PieceMetadataService => {
             return await response.json() as PieceMetadataModelSummary[]
         },
 
-        async get({ name, version }: GetParams): Promise<PieceMetadataModel> {
+        async getOrThrow({ name, version }): Promise<PieceMetadataModel> {
             const response = await fetch(`${CLOUD_API_URL}/${name}${version ? '?version=' + version : ''}`)
 
             await handleHttpErrors(response)
@@ -58,7 +58,7 @@ export const CloudPieceMetadataService = (): PieceMetadataService => {
                 return version
             }
 
-            const pieceMetadata = await this.get({
+            const pieceMetadata = await this.getOrThrow({
                 projectId,
                 name,
                 version,

@@ -1,7 +1,7 @@
 import { Equal, FindOperator, IsNull, LessThan, LessThanOrEqual, MoreThanOrEqual } from 'typeorm'
 import { databaseConnection } from '../../database/database-connection'
 import { PieceMetadataEntity, PieceMetadataModel, PieceMetadataModelSummary, PieceMetadataSchema } from '../piece-metadata-entity'
-import { GetParams, ListParams, PieceMetadataService } from './piece-metadata-service'
+import { PieceMetadataService } from './piece-metadata-service'
 import { EXACT_VERSION_PATTERN, isNil } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode, apId } from '@activepieces/shared'
 import { AllPiecesStats, pieceStatsService } from './piece-stats-service'
@@ -11,7 +11,7 @@ const repo = databaseConnection.getRepository(PieceMetadataEntity)
 
 export const DbPieceMetadataService = (): PieceMetadataService => {
     return {
-        async list({ release, projectId }: ListParams): Promise<PieceMetadataModelSummary[]> {
+        async list({ release, projectId }): Promise<PieceMetadataModelSummary[]> {
             const order = {
                 name: 'ASC',
                 version: 'DESC',
@@ -37,7 +37,7 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
             return toPieceMetadataModelSummary(pieceMetadataEntityList)
         },
 
-        async get({ name, version, projectId }: GetParams): Promise<PieceMetadataModel> {
+        async getOrThrow({ name, version, projectId }): Promise<PieceMetadataModel> {
             const projectPiece: Record<string, unknown> = {
                 name,
                 projectId: Equal(projectId),
@@ -130,7 +130,7 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
                 return version
             }
 
-            const pieceMetadata = await this.get({
+            const pieceMetadata = await this.getOrThrow({
                 projectId,
                 name,
                 version,

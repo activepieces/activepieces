@@ -3,24 +3,24 @@ import { AllPiecesStats } from './piece-stats-service'
 import { ApEdition, PackageType, PieceType, ProjectId } from '@activepieces/shared'
 import { PieceMetadataModel, PieceMetadataModelSummary } from '../piece-metadata-entity'
 
-export type ListParams = {
+type ListParams = {
     release: string
     projectId?: string
     edition: ApEdition
 }
 
-export type GetParams = {
+type GetOrThrowParams = {
     name: string
     version?: string
     projectId?: string
 }
 
-export type DeleteParams = {
+type DeleteParams = {
     id: string
     projectId?: string
 }
 
-export type CreateParams = {
+type CreateParams = {
     pieceMetadata: PieceMetadata
     projectId?: string
     packageType: PackageType
@@ -28,7 +28,7 @@ export type CreateParams = {
     archiveId?: string
 }
 
-export type GetExactPieceVersionParams = {
+type GetExactPieceVersionParams = {
     name: string
     version: string
     projectId: ProjectId
@@ -36,7 +36,7 @@ export type GetExactPieceVersionParams = {
 
 export type PieceMetadataService = {
     list(params: ListParams): Promise<PieceMetadataModelSummary[]>
-    get(params: GetParams): Promise<PieceMetadataModel>
+    getOrThrow(params: GetOrThrowParams): Promise<PieceMetadataModel>
     create(params: CreateParams): Promise<PieceMetadataModel>
     delete(params: DeleteParams): Promise<void>
     stats(): Promise<AllPiecesStats>

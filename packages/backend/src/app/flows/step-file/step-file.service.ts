@@ -7,13 +7,14 @@ const stepFileRepo = databaseConnection.getRepository<StepFile>(StepFileEntity)
 export const stepFileService = {
     async upsert({ request, projectId }: { request: StepFileUpsert, projectId: string }): Promise<StepFile | null> {
         const fileId = apId()
+        const bufferFile = request.file as Buffer
         await stepFileRepo.upsert({
             id: fileId,
             flowId: request.flowId,
             projectId,
             stepName: request.stepName,
-            size: request.file[0].data.length,
-            data: request.file[0].data,
+            size: bufferFile.byteLength,
+            data: bufferFile,
             name: request.name,
         }, ['flowId', 'projectId', 'stepName', 'name'])
         return stepFileRepo.findOneByOrFail({

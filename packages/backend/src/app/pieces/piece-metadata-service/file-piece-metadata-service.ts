@@ -4,7 +4,7 @@ import { cwd } from 'node:process'
 import { Piece, PieceMetadata } from '@activepieces/pieces-framework'
 import { ActivepiecesError, EXACT_VERSION_PATTERN, ErrorCode, PackageType, PieceType, ProjectId, extractPieceFromModule } from '@activepieces/shared'
 import { captureException } from '../../helper/logger'
-import { GetParams, PieceMetadataService } from './piece-metadata-service'
+import { PieceMetadataService } from './piece-metadata-service'
 import { isNil } from '@activepieces/shared'
 import { AllPiecesStats } from './piece-stats-service'
 import importFresh from 'import-fresh'
@@ -55,7 +55,7 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
             }))
         },
 
-        async get({ name, version, projectId }: GetParams): Promise<PieceMetadataModel> {
+        async getOrThrow({ name, version, projectId }): Promise<PieceMetadataModel> {
             const piecesMetadata = await loadPiecesMetadata()
             const pieceMetadata = piecesMetadata.find(p => p.name === name)
 
@@ -94,7 +94,7 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
                 return version
             }
 
-            const pieceMetadata = await this.get({
+            const pieceMetadata = await this.getOrThrow({
                 projectId,
                 name,
                 version,
@@ -121,7 +121,6 @@ const toPieceMetadataModel = ({ pieceMetadata, projectId }: ToPieceMetadataModel
         projectId,
         packageType: PackageType.REGISTRY,
         pieceType: PieceType.OFFICIAL,
-        archiveId: undefined,
     }
 }
 

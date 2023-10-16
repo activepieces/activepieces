@@ -17,5 +17,5 @@ export type PiecePackage = {
     pieceName: string
     pieceVersion: string
     projectId: ProjectId
-    archiveId: FileId | undefined
+    archiveId?: FileId
 }

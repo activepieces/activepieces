@@ -1,7 +1,6 @@
 import { Static, Type } from "@sinclair/typebox";
 import { ApEdition } from "../../flag/flag";
 import { PackageType, PieceType } from "../piece";
-import { ApId } from "../../common/id-generator";
 
 export const EXACT_VERSION_PATTERN = /^[0-9]+\.[0-9]+\.[0-9]+$/;
 export const VERSION_PATTERN = /^([~^])?[0-9]+\.[0-9]+\.[0-9]+$/;
@@ -42,7 +41,6 @@ export const PieceOptionRequest = Type.Object({
     pieceType: Type.Enum(PieceType),
     pieceName: Type.String({}),
     pieceVersion: VersionType,
-    pieceArchiveId: Type.Optional(ApId),
     stepName: Type.String({}),
     propertyName: Type.String({}),
     input: Type.Any({}),
