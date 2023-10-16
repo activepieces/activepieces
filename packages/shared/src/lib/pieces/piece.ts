@@ -19,3 +19,8 @@ export type PiecePackage = {
     projectId: ProjectId
     archiveId?: FileId
 }
+
+export enum PieceCategory
+{
+    CORE= "CORE"
+}
