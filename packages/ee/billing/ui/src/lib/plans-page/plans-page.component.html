@@ -61,11 +61,11 @@
             </div>
             <div class="ap-typography-body-2 ap-text-description">
 
-              <ng-container *ngIf="!response.currentPlan.tasksPerDay">
+              <ng-container *ngIf="response.currentUsage.daysLeftBeforeReset === 0">
                 Resets in {{ response.currentUsage.hoursLeftBeforeReset }}
                 hour{{response.currentUsage.hoursLeftBeforeReset > 1 ? 's': ''}}
               </ng-container>
-              <ng-container *ngIf="!!response.currentPlan.tasksPerDay">
+              <ng-container *ngIf="response.currentUsage.daysLeftBeforeReset > 0">
                 Resets in {{ response.currentUsage.daysLeftBeforeReset }} day{{response.currentUsage.daysLeftBeforeReset
                 > 1 ? 's': ''}}
               </ng-container>
