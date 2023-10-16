@@ -9,7 +9,7 @@ const requiredVersions = ['v18','v20'];
 if (requiredVersions.some(version=>nodeVersion.startsWith(version))) {
   console.log(`Node.js version is compatible ${nodeVersion}.`);
 } else {
-  console.log(`Node.js version is not compatible. Required version: ${requiredVersion}`);
+  console.log(`Node.js version is not compatible. Required version: ${requiredVersions.toString()}`);
   process.exit(1);
 }
 
