@@ -26,7 +26,7 @@ const getSqliteDatabaseFilePath = (): string => {
     const homeDirectoryPath = os.homedir()
     const apConfigDirectoryName = '.activepieces'
     const apConfigDirectoryPath = path.join(homeDirectoryPath, apConfigDirectoryName)
-    mkdirSync(apConfigDirectoryPath)
+    mkdirSync(apConfigDirectoryPath, { recursive: true })
     return path.join(apConfigDirectoryPath, 'database.sqlite')
 }
 
