@@ -1,6 +1,6 @@
-import os from 'os'
-import path from 'path'
-import fs from 'fs'
+import os from 'node:os'
+import path from 'node:path'
+import { mkdirSync } from 'node:fs'
 import { DataSource, MigrationInterface } from 'typeorm'
 import { InitialSql3Migration1690195839899 } from './migration/sqllite3/1690195839899-InitialSql3Migration'
 import { commonProperties } from './database-connection'
@@ -22,15 +22,26 @@ import { AddArchiveIdToPieceMetadata1696956123632 } from './migration/sqllite3/1
 import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
 
-const getSQLiteFilePath = (): string => {
-    const homeDirectory = os.homedir()
-    const hiddenFolderName = '.activepieces'
-    const hiddenFolderPath = path.join(homeDirectory, hiddenFolderName)
-    if (!fs.existsSync(hiddenFolderPath)) {
-        fs.mkdirSync(hiddenFolderPath)
+const getSqliteDatabaseFilePath = (): string => {
+    const homeDirectoryPath = os.homedir()
+    const apConfigDirectoryName = '.activepieces'
+    const apConfigDirectoryPath = path.join(homeDirectoryPath, apConfigDirectoryName)
+    mkdirSync(apConfigDirectoryPath)
+    return path.join(apConfigDirectoryPath, 'database.sqlite')
+}
+
+const getSqliteDatabaseInMemory = (): string => {
+    return ':memory:'
+}
+
+const getSqliteDatabase = (): string => {
+    const env = system.getOrThrow<ApEnvironment>(SystemProp.ENVIRONMENT)
+
+    if (env === ApEnvironment.TESTING) {
+        return getSqliteDatabaseInMemory()
     }
-    const sqliteFilePath = path.join(hiddenFolderPath, 'database.sqlite')
-    return sqliteFilePath
+
+    return getSqliteDatabaseFilePath()
 }
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
@@ -83,7 +94,7 @@ export const createSqlLiteDataSource = (): DataSource => {
 
     return new DataSource({
         type: 'sqlite',
-        database: getSQLiteFilePath(),
+        database: getSqliteDatabase(),
         ...migrationConfig,
         ...commonProperties,
     })
