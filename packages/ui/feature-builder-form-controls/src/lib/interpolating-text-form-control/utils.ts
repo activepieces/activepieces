@@ -204,7 +204,7 @@ export function traverseStepOutputAndReturnMentionTree(
           .replaceAll(/\n/g, '\\n')
           .replaceAll(/\r/g, '\\r')
           .replaceAll(/\t/g, '\\t')
-          .replaceAll(/\’/g, '\\’');
+          .replaceAll(/’/g, '\\’');
         const newPath = Array.isArray(stepOutput)
           ? `${path}[${k}]`
           : `${path}['${escpaedKey}']`;
