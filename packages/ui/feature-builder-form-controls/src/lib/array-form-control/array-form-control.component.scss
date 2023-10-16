@@ -1,9 +1,8 @@
-@import "../../../../core/src//assets/scss/variables.scss";
+@import '../../../../core/src//assets/scss/variables.scss';
 
 .add-btn {
   margin-top: 0.5rem;
 }
-
 
 .value-control {
   border-radius: 0px 0px 0px 0px;
@@ -20,9 +19,8 @@
   &.only-one {
     border-radius: 4px;
   }
-  
-  margin-bottom: -1px;
 
+  margin-bottom: -1px;
 }
 
 .delete-btn-container {
@@ -42,3 +40,12 @@
   opacity: 0;
 }
 
+.card-title {
+  font-size: 1rem;
+  color: rgba(0, 0, 0, 0.6);
+}
+.card-header {
+  background-color: #f5f5f5;
+  padding: 1rem;
+  margin-bottom: 16px;
+}

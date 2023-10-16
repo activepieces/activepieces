@@ -1,5 +1,4 @@
 import {
-    ArrayProperty,
     CheckboxProperty,
     DateTimeProperty,
     FileProperty,
@@ -19,6 +18,7 @@ import { DynamicProperties } from "./dynamic-prop";
 import { OAuth2Property, OAuth2Props } from "./oauth2-prop";
 import { Processors } from "../processors/processors";
 import { Validators } from "../validators/validators";
+import { ArrayProperty } from "./array-prop";
 
 export enum PropertyType {
 	SHORT_TEXT = 'SHORT_TEXT',

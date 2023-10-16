@@ -10,7 +10,7 @@
   </div>
 </form>
 
-<ng-template let-property let-propertyIndex="propertyIndex" #formFieldsTemplate let-formGroup="formGroup">
+<ng-template let-property let-propertyIndex="propertyIndex" #formFieldsTemplate let-formGroup="formGroup" let-prefix="prefix">
 
   <ng-container [ngSwitch]="property.value.type" [formGroup]="formGroup">
 
@@ -71,14 +71,14 @@
         <ng-template #dropdownInputTemplate>
           <mat-form-field subscriptSizing="dynamic" class="ap-w-full" appearance="outline" #dropdown>
 
-            <mat-label> {{ (refreshableConfigsLoadingFlags$[property.key] | async)? 'Loading...' :
+            <mat-label> {{ (getRefreshableConfigsLoadingFlag(property.key, prefix) | async)? 'Loading...' :
               property.value.displayName
               }}</mat-label>
             <mat-select [formControlName]="property.key" (closed)="searchControl.setValue('')"
               [compareWith]="dropdownCompareWithFunction">
-              <ng-container *ngIf="dropdownOptionsObservables$[property.key]| async as state">
+              <ng-container *ngIf="getDrowDownOptionsObservable(property.key, prefix) | async as state">
                 <ng-container
-                  *ngIf="!(state.disabled && ((refreshableConfigsLoadingFlags$[property.key] | async) === false || !refreshableConfigsLoadingFlags$[property.key]))">
+                  *ngIf="!(state.disabled && ((getRefreshableConfigsLoadingFlag(property.key, prefix) | async) === false || !getRefreshableConfigsLoadingFlag(property.key, prefix)))">
                   <ng-container *ngTemplateOutlet="searchInputForDropdowns"></ng-container>
                 </ng-container>
 
@@ -89,7 +89,7 @@
                   </mat-option>
                 </div>
                 <mat-option [disabled]="true"
-                  *ngIf="state.disabled && ((refreshableConfigsLoadingFlags$[property.key] | async) === false || !refreshableConfigsLoadingFlags$[property.key])">
+                  *ngIf="state.disabled && ((getRefreshableConfigsLoadingFlag(property.key, prefix) | async) === false || !getRefreshableConfigsLoadingFlag(property.key, prefix))">
                   <div> {{state.placeholder}} </div>
                 </mat-option>
               </ng-container>
@@ -119,14 +119,14 @@
         <ng-template #multiDropdownInputTemplate>
           <mat-form-field subscriptSizing="dynamic" class="ap-w-full" appearance="outline" #dropdown>
 
-            <mat-label> {{ (refreshableConfigsLoadingFlags$[property.key] | async)? 'Loading...' :
+            <mat-label> {{ (getRefreshableConfigsLoadingFlag(property.key, prefix) | async)? 'Loading...' :
               property.value.displayName
               }}</mat-label>
-            <mat-select (closed)="searchControl.setValue('')" [style.display]="((dropdownOptionsObservables$[property.key] | async) === undefined 
-                || (dropdownOptionsObservables$[property.key] | async) === null || 
-                 (dropdownOptionsObservables$[property.key] | async)?.disabled === true)? 'none':'block' " multiple
+            <mat-select (closed)="searchControl.setValue('')" [style.display]="((getDrowDownOptionsObservable(property.key, prefix) | async) === undefined 
+                || (getDrowDownOptionsObservable(property.key, prefix) | async) === null || 
+                 (getDrowDownOptionsObservable(property.key, prefix) | async)?.disabled === true)? 'none':'block' " multiple
               [formControlName]="property.key" [compareWith]="dropdownCompareWithFunction">
-              <ng-container *ngIf="dropdownOptionsObservables$[property.key]| async as state">
+              <ng-container *ngIf="getDrowDownOptionsObservable(property.key, prefix)| async as state">
                 <ng-container *ngTemplateOutlet="searchInputForDropdowns"></ng-container>
                 <div class="thin-scrollbars ap-max-h-[190px] ap-overflow-y-auto">
                   <mat-option *ngFor="let opt of state.options| dropdownSearch:searchControl.value"
@@ -137,11 +137,11 @@
               </ng-container>
             </mat-select>
             <ng-container
-              *ngIf="!!(dropdownOptionsObservables$[property.key] | async) &&  (dropdownOptionsObservables$[property.key] | async)?.disabled === true">
+              *ngIf="!!(getDrowDownOptionsObservable(property.key, prefix) | async) &&  (getDrowDownOptionsObservable(property.key, prefix) | async)?.disabled === true">
               <mat-select [formControlName]="property.key" [compareWith]="dropdownCompareWithFunction">
-                <ng-container *ngIf="dropdownOptionsObservables$[property.key]| async as state">
+                <ng-container *ngIf="getDrowDownOptionsObservable(property.key, prefix)| async as state">
                   <mat-option [disabled]="true"
-                    *ngIf="state.disabled && ((refreshableConfigsLoadingFlags$[property.key] | async) === false || !refreshableConfigsLoadingFlags$[property.key])">
+                    *ngIf="state.disabled && ((getRefreshableConfigsLoadingFlag(property.key, prefix) | async) === false || !getRefreshableConfigsLoadingFlag(property.key, prefix))">
                     <div> {{state.placeholder}} </div>
                   </mat-option>
                 </ng-container>
@@ -248,11 +248,7 @@
 
       <ng-template #arrayInputTemplate>
         <div [class.ap-mb-5]="form.disabled" #hoverContainer="hoverTrackerDirective" apTrackHover>
-          <div class="ap-mb-2 ap-flex ap-gap-2 ap-items-center">
-            <div class="ap-cursor-pointer" (click)="array.focusFirstInput()">{{property.value.displayName}}
-            </div>
-          </div>
-          <app-array-form-control #array [formControlName]="property.key"></app-array-form-control>
+          <app-array-form-control #array [formControlName]="property.key" [property]="property.value" [formFieldsTemplate]="formFieldsTemplate" [prefix]="property.key" [createConfigsFormControls]="createConfigsFormControls"></app-array-form-control>
         </div>
         <ng-container *ngTemplateOutlet="description; context:{$implicit:property}">
         </ng-container>
@@ -407,11 +403,11 @@
     </ng-container>
 
     <ng-container *ngSwitchCase="PropertyType.DYNAMIC">
-      <ng-container *ngIf="(refreshableConfigsLoadingFlags$[property.key] | async) === false ||
-        (refreshableConfigsLoadingFlags$[property.key] | async) === undefined ||
-        (refreshableConfigsLoadingFlags$[property.key] | async) === null; else loading">
+      <ng-container *ngIf="(getRefreshableConfigsLoadingFlag(property.key, prefix) | async) === false ||
+        (getRefreshableConfigsLoadingFlag(property.key, prefix) | async) === undefined ||
+        (getRefreshableConfigsLoadingFlag(property.key, prefix) | async) === null; else loading">
         <div class="ap-flex ap-flex-col ap-gap-2">
-          <div *ngFor="let cp of (dynamicPropsObservables$[property.key] | async)| objectToArray; let i = index">
+          <div *ngFor="let cp of (getDynamicPropsObservable(property.key, prefix) | async)| objectToArray; let i = index">
             <ng-container
               *ngTemplateOutlet="formFieldsTemplate;context:{$implicit:cp, configIndex:i, formGroup:formGroup.get(property.key)}">
             </ng-container>
