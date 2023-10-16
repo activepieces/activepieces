@@ -58,8 +58,6 @@ export type CheckboxProperty<R extends boolean> = BasePropertySchema & TProperty
 
 export type NumberProperty<R extends boolean> = BasePropertySchema & TPropertyValue<number, PropertyType.NUMBER, ValidationInputType.NUMBER, R>;
 
-export type ArrayProperty<R extends boolean> = BasePropertySchema & TPropertyValue<unknown[], PropertyType.ARRAY, ValidationInputType.ARRAY, R>;
-
 export type ObjectProperty<R extends boolean> = BasePropertySchema & TPropertyValue<Record<string, unknown>, PropertyType.OBJECT, ValidationInputType.OBJECT, R>;
 
 export type JsonProperty<R extends boolean> = BasePropertySchema & TPropertyValue<Record<string, unknown>, PropertyType.JSON, ValidationInputType.JSON, R>;

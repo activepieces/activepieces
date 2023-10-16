@@ -5,3 +5,4 @@ export * from './oauth2-prop';
 export * from './property';
 export * from './dynamic-prop';
 export * from './custom-auth-prop';
+export * from './array-prop';

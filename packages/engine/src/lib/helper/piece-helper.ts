@@ -44,6 +44,31 @@ import { createFilesService } from '../services/files.service';
 const variableService = new VariableService();
 const env = process.env.AP_ENVIRONMENT
 
+const getPieceProps = <T>(obj: T, path: string, defaultValue?: any): any => {
+  if (obj === undefined || obj === null) return defaultValue;
+
+  const keys = path.split('.') as (keyof T)[];
+  if (keys.length === 0) return defaultValue;
+
+  let result: any = obj;
+  for (let i = 0; i < keys.length; i++) {
+    const key = keys[i];
+
+    if (result[key] === undefined) {
+      return defaultValue;
+    }
+    result = result[key];
+
+    // If the object type is array and we're not at the last key, look inside 'properties' for the next key
+    if (result.type === 'ARRAY' && i < keys.length - 1) {
+      result = result['properties'];
+      continue;
+    }
+  }
+
+  return result;
+};
+
 const loadPieceOrThrow = async (
   pieceName: string,
   pieceVersion: string
@@ -112,7 +137,7 @@ const getPropOrThrow = async (params: ExecutePropsOptions) => {
     });
   }
 
-  const prop = action.props[propertyName];
+  const prop = getPieceProps(action.props, propertyName);
 
   if (isNil(prop)) {
     throw new ActivepiecesError({

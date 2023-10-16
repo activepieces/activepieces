@@ -205,8 +205,8 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
       ...optionalConfigsControls,
     });
 
-    this.createDropdownConfigsObservables();
-    this.createDynamicConfigsObservables();
+    this.createDropdownConfigsObservables(this.properties);
+    this.createDynamicConfigsObservables(this.properties);
     this.updateValueOnChange$ = this.form.valueChanges.pipe(
       tap((value) => {
         this.OnChange(this.formValueMiddleWare(value));
@@ -219,18 +219,21 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
   addNewConnectionButtonPress() {
     this.addConnectionBtn.buttonClicked();
   }
-  createDropdownConfigsObservables() {
-    Object.keys(this.properties).forEach((pk) => {
-      const property = this.properties[pk];
+  getPathWithPrefix(prefix: string, path: string) {
+    return prefix ? prefix + '.' + path : path;
+  }
+  createDropdownConfigsObservables(properties: PiecePropertyMap, prefix = '') {
+    Object.keys(properties).forEach((pk) => {
+      const property = properties[pk];
       if (
         property.type === PropertyType.DROPDOWN ||
         property.type === PropertyType.MULTI_SELECT_DROPDOWN
       ) {
-        this.dropdownOptionsObservables$[pk] =
+        this.dropdownOptionsObservables$[this.getPathWithPrefix(prefix, pk)] =
           this.createRefreshableConfigObservables<DropdownState<unknown>>(
             {
               property: property,
-              propertyKey: pk,
+              propertyKey: this.getPathWithPrefix(prefix, pk),
             },
             {
               options: [],
@@ -261,18 +264,27 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
             }),
             shareReplay(1)
           );
+      } else if (
+        property.type === PropertyType.ARRAY &&
+        property.properties &&
+        Object.keys(property.properties).length > 0
+      ) {
+        this.createDropdownConfigsObservables(
+          property.properties,
+          this.getPathWithPrefix(prefix, pk)
+        );
       }
     });
   }
-  createDynamicConfigsObservables() {
-    Object.keys(this.properties).forEach((pk) => {
-      const parentProperty = this.properties[pk];
+  createDynamicConfigsObservables(properties: PiecePropertyMap, prefix = '') {
+    Object.keys(properties).forEach((pk) => {
+      const parentProperty = properties[pk];
       if (parentProperty.type == PropertyType.DYNAMIC) {
         this.dynamicPropsObservables$[pk] =
           this.createRefreshableConfigObservables<PiecePropertyMap>(
             {
               property: parentProperty,
-              propertyKey: pk,
+              propertyKey: this.getPathWithPrefix(prefix, pk),
             },
             {}
           ).pipe(
@@ -309,6 +321,15 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
             }),
             shareReplay(1)
           );
+      } else if (
+        parentProperty.type === PropertyType.ARRAY &&
+        parentProperty.properties &&
+        Object.keys(parentProperty.properties).length > 0
+      ) {
+        this.createDynamicConfigsObservables(
+          parentProperty.properties,
+          this.getPathWithPrefix(prefix, pk)
+        );
       }
     });
   }
@@ -384,7 +405,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
     );
   }
 
-  private createConfigsFormControls(
+  createConfigsFormControls(
     properties: PiecePropertyMap,
     propertiesValues: Record<string, unknown>
   ) {
@@ -522,7 +543,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
           break;
         }
         default: {
-          const exhaustiveCheck: never = prop;
+          const exhaustiveCheck = prop;
           console.error(`Unhandled color case: ${exhaustiveCheck}`);
         }
       }
@@ -675,5 +696,22 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
         );
       })
     );
+  }
+
+  getDrowDownOptionsObservable(configKey: string, prefix = '') {
+    return this.dropdownOptionsObservables$[
+      this.getPathWithPrefix(prefix, configKey)
+    ];
+  }
+
+  getDynamicPropsObservable(configKey: string, prefix = '') {
+    return this.dynamicPropsObservables$[
+      this.getPathWithPrefix(prefix, configKey)
+    ];
+  }
+  getRefreshableConfigsLoadingFlag(configKey: string, prefix = '') {
+    return this.refreshableConfigsLoadingFlags$[
+      this.getPathWithPrefix(prefix, configKey)
+    ];
   }
 }
