@@ -15,11 +15,9 @@ jobs:
     with:
       number-of-agents: 3
       init-commands: |
-        npx nx-cloud start-ci-run --stop-agents-after="build" --agent-count=3
+        npx nx-cloud start-ci-run --stop-agents-after="build" --agent-count=1
       parallel-commands-on-agents: |
-        npx nx affected --target=lint --parallel=3
-        npx nx affected --target=build --parallel=3
-        npx nx run-many --target=test --projects=engine,shared,backend --parallel=3
+        npx nx test backend
 
   agents:
     name: Nx Cloud - Agents
@@ -27,4 +25,4 @@ jobs:
       NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
     uses: nrwl/ci/.github/workflows/nx-cloud-agents.yml@v0.11.2
     with:
-      number-of-agents: 3
+      number-of-agents: 1

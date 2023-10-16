@@ -1,6 +1,7 @@
 import { ActivepiecesError, ApEnvironment, ErrorCode, isNil } from '@activepieces/shared'
 import { SystemProp } from './system-prop'
 import { loadEncryptionKey } from '../encryption'
+import { logger } from '../logger'
 
 export enum QueueMode {
     REDIS = 'REDIS',
@@ -33,6 +34,8 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [SystemProp.TEMPLATES_SOURCE_URL]: 'https://cloud.activepieces.com/api/v1/flow-templates',
     [SystemProp.TRIGGER_DEFAULT_POLL_INTERVAL]: '5',
 }
+
+logger.error(process.env, '#########################################################################################')
 
 export const system = {
     get<T extends string>(prop: SystemProp): T | undefined {
