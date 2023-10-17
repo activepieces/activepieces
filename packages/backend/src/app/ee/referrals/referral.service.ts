@@ -78,9 +78,10 @@ async function addExtraTasks(userId: string) {
         projectId: ownerProject.id,
     })
     const newTasks = projectPlan!.tasks + 500
-    await plansService.increaseTasks({
+
+    await plansService.removeDailyTasksAndUpdateTasks({
         projectId: ownerProject.id,
-        tasks: 500,
+        tasks: newTasks,
     })
     logger.info(`Referral from ${userId}  created and plan for project ${ownerProject.id} updated to add ${newTasks} tasks.`)
 }
