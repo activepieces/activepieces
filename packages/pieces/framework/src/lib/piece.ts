@@ -19,7 +19,6 @@ export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty> impl
     public readonly minimumSupportedRelease?: string,
     public readonly maximumSupportedRelease?: string,
     public readonly description: string = '',
-    public readonly mentionIconUrl?:string,
     public readonly categories?:PieceCategory[]
   ) {
     actions.forEach(action => this._actions[action.name] = action)
@@ -68,7 +67,6 @@ export const createPiece = <PieceAuth extends PieceAuthProperty>(params: CreateP
     params.minimumSupportedRelease,
     params.maximumSupportedRelease,
     params.description,
-    params.mentionIconUrl,
     params.categories
   )
 }
@@ -84,7 +82,6 @@ type CreatePieceParams<PieceAuth extends PieceAuthProperty = PieceAuthProperty> 
   maximumSupportedRelease?: string
   actions: Action<PieceAuth>[]
   triggers: Trigger<PieceAuth>[],
-  mentionIconUrl?:string,
   categories?: PieceCategory[]
 }
 
