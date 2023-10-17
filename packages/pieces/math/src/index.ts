@@ -12,11 +12,11 @@ Perform mathematical operations.
 `;
 
 export const math = createPiece({
-  displayName: "Math",
+  displayName: "Math Helper",
   description: markdownDescription,
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.9.0',
-  logoUrl: "https://cdn.activepieces.com/pieces/math.png",
+  logoUrl: "https://cdn.activepieces.com/pieces/math-helper.svg",
   authors: [ "lisander-lopez" ],
   actions: [ addition, subtraction, multiplication, division, modulo, generateRandom],
   triggers: [],
