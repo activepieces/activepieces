@@ -93,14 +93,14 @@ export class PlansPageComponent implements OnInit {
           });
           formControl.setValue(plan.tasks[0]);
         });
-        const nextResetDatetime = response.usage.nextResetDatetime
+        const nextResetDatetime = response.plan.tasksPerDay
           ? dayjs().utc().endOf('day')
           : dayjs(response.usage.nextResetDatetime);
 
-        const daysLeftBeforeReset = Math.round(
+        const daysLeftBeforeReset = Math.floor(
           nextResetDatetime.diff(dayjs(), 'day', false)
         );
-        const hoursLeftBeforeReset = Math.round(
+        const hoursLeftBeforeReset = Math.floor(
           nextResetDatetime.diff(dayjs(), 'hour', true)
         );
         return {

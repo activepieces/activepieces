@@ -213,6 +213,7 @@ We welcome contributions big or small and in different directions. The best way 
       <td align="center" valign="top" width="14.28%"><a href="http://nijfranck.github.io"><img src="https://avatars.githubusercontent.com/u/9940307?v=4?s=100" width="100px;" alt="Franck Nijimbere"/><br /><sub><b>Franck Nijimbere</b></sub></a><br /><a href="#plugin-nijfranck" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/alerdenisov"><img src="https://avatars.githubusercontent.com/u/3899837?v=4?s=100" width="100px;" alt="Aleksandr Denisov"/><br /><sub><b>Aleksandr Denisov</b></sub></a><br /><a href="#plugin-alerdenisov" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/rbnswartz"><img src="https://avatars.githubusercontent.com/u/724704?v=4?s=100" width="100px;" alt="Reuben Swartz"/><br /><sub><b>Reuben Swartz</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=rbnswartz" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://lupianezjose.com"><img src="https://avatars.githubusercontent.com/u/4380557?v=4?s=100" width="100px;" alt="joselupianez"/><br /><sub><b>joselupianez</b></sub></a><br /><a href="#plugin-joselupianez" title="Plugin/utility libraries">🔌</a></td>
     </tr>
   </tbody>
 </table>

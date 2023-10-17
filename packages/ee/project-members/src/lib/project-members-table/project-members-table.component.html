@@ -34,7 +34,7 @@
               (buttonClicked)="openInviteMember()">Invite</ap-button>
           </th>
           <td mat-cell *matCellDef="let invitation">
-            <ap-icon-button *ngIf="projectMemberRole.ADMIN !== invitation.role" class="ap-float-right"
+            <ap-icon-button *ngIf="projectMemberRole.ADMIN === invitation.role" class="ap-float-right"
               tooltipText="Delete Invitation" iconFilename="trash.svg" color="warn" [width]="20" [height]="20"
               (buttonClicked)="deleteInvitation(invitation.id)"></ap-icon-button>
           </td>
