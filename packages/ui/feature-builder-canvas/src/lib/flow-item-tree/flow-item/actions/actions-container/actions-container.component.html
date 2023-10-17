@@ -35,7 +35,7 @@
                     ap-border-line ap-w-[40px] ap-h-[40px] ap-overflow-hidden" apTrackHover
             #duplicateStepContainer="hoverTrackerDirective"
             [class.ap-opacity-100]="(stepHovered || duplicateStepContainer.isHovered || deleteStepContainer.isHovered)"
-            [class.ap-opacity-0]="(!stepHovered && !duplicateStepContainer.isHovered)"
+            [class.ap-opacity-0]="(!stepHovered && !duplicateStepContainer.isHovered && !deleteStepContainer.isHovered )"
             [class.ap-hidden]="isDragging$ | async">
             <app-duplicate-step-action [flowItem]="flowItem"></app-duplicate-step-action>
 
