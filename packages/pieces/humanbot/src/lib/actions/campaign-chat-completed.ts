@@ -1,5 +1,5 @@
-import { createAction, PieceAuth, Property } from "@activepieces/pieces-framework";
-import { httpClient, HttpMethod } from "@activepieces/pieces-common";
+import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const campaignChatCompletedAction = createAction({
     name: 'campaign_chat_completed_action', // Must be a unique across the piece, this shouldn't be changed.
@@ -7,7 +7,11 @@ export const campaignChatCompletedAction = createAction({
     displayName: 'Campaign Chat Completed',
     description: 'Triggers when the campaign chat is complete.',
     props: {
-        // Properties to ask from the user, in this ask we will take number of
+        api_key: Property.ShortText({
+            displayName: 'User API key',
+            description: undefined,
+            required: true,
+        }),
         campaign_embed_id: Property.ShortText({
             displayName: 'Campaign Embed ID',
             description: undefined,

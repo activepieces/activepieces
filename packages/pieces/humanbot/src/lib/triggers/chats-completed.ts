@@ -2,14 +2,13 @@ import { createTrigger, PieceAuth, TriggerStrategy } from '@activepieces/pieces-
 import { pollingHelper } from '@activepieces/pieces-common';
 import { humanbotCommon, polling } from '../common';
 
-export const campaignChatCompletedTrigger = createTrigger({
+export const chatsCompletedTrigger = createTrigger({
     auth: PieceAuth.None(),
-    name: 'campaign_chat_completed_trigger', // Unique name across the piece.
-    displayName: 'Campaign Chat Completed', // Display name on the interface.
-    description: 'Triggers when the campaign chat is complete.', // Description for the action
+    name: 'chats_completed_trigger', // Unique name across the piece.
+    displayName: 'Chat Completed', // Display name on the interface.
+    description: 'Triggers when the any chat is complete.', // Description for the action
     props: {
-        api_key: humanbotCommon.propApiKey,
-        campaign_embed_id: humanbotCommon.propCampaignEmbedId
+        api_key: humanbotCommon.propApiKey
     }, // Required properties from the user.
     sampleData: [
         {
@@ -39,28 +38,28 @@ export const campaignChatCompletedTrigger = createTrigger({
         return await pollingHelper.test(polling, {
             auth: ctx.auth,
             store: ctx.store,
-            propsValue: Object.assign(ctx.propsValue, {type: 'campaign_chats_latest'})
+            propsValue: Object.assign(ctx.propsValue, {type: 'chats_latest'})
         });
     },
     async onEnable(ctx) {
         await pollingHelper.onEnable(polling, {
             auth: ctx.auth,
             store: ctx.store,
-            propsValue: Object.assign(ctx.propsValue, {type: 'campaign_chats_latest'})
+            propsValue: Object.assign(ctx.propsValue, {type: 'chats_latest'})
         });
     },
     async onDisable(ctx) {
         await pollingHelper.onDisable(polling, {
             auth: ctx.auth,
             store: ctx.store,
-            propsValue: Object.assign(ctx.propsValue, {type: 'campaign_chats_latest'})
+            propsValue: Object.assign(ctx.propsValue, {type: 'chats_latest'})
         });
     },
     async run(ctx) {
         return await pollingHelper.poll(polling, {
             auth: ctx.auth,
             store: ctx.store,
-            propsValue: Object.assign(ctx.propsValue, {type: 'campaign_chats_latest'})
+            propsValue: Object.assign(ctx.propsValue, {type: 'chats_latest'})
         });
     }
 });
