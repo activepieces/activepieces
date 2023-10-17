@@ -196,7 +196,6 @@
     "autoprefixer": "10.4.15",
     "chalk": "4.1.2",
     "concurrently": "8.2.1",
-    "dotenv": "16.3.1",
     "esbuild": "0.19.3",
     "eslint": "8.46.0",
     "eslint-config-prettier": "8.10.0",
