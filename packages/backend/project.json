@@ -47,7 +47,7 @@
         "lintFilePatterns": ["packages/backend/**/*.ts"]
       }
     },
-    "run-tests": {
+    "test-jest": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
@@ -58,6 +58,13 @@
       }
     },
     "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "nx test-jest backend --output-style stream-without-prefixes",
+        "dotenv": "packages/backend/.test.env"
+      }
+    },
+    "test:docker": {
       "command": "UID=\"$(id -u)\" GID=\"$(id -g)\" docker compose --profile full -f docker-compose.test.yml up --exit-code-from app --attach app"
     },
     "db": {
