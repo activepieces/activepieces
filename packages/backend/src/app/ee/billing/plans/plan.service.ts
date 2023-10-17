@@ -17,8 +17,11 @@ export const plansService = {
         return projectPlanRepo.findOneByOrFail({ stripeCustomerId })
     },
 
-    async increaseTasks({ projectId, tasks }: { projectId: ProjectId, tasks: number }): Promise<void> {
-        await projectPlanRepo.increment({ projectId }, 'tasks', tasks)
+    async removeDailyTasksAndUpdateTasks({ projectId, tasks }: { projectId: ProjectId, tasks: number }): Promise<void> {
+        await projectPlanRepo.update(projectId, {
+            tasks,
+            tasksPerDay: null,
+        })
     },
 
     async getOrCreateDefaultPlan({ projectId }: { projectId: ProjectId }): Promise<ProjectPlan> {
