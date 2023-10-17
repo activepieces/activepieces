@@ -113,11 +113,15 @@
       "@activepieces/piece-gravityforms": [
         "packages/pieces/gravityforms/src/index.ts"
       ],
+      "@activepieces/piece-hacker-news": [
+        "packages/pieces/hacker-news/src/index.ts"
+      ],
       "@activepieces/piece-hackernews": [
         "packages/pieces/hackernews/src/index.ts"
       ],
       "@activepieces/piece-http": ["packages/pieces/http/src/index.ts"],
       "@activepieces/piece-hubspot": ["packages/pieces/hubspot/src/index.ts"],
+      "@activepieces/piece-humanbot": ["packages/pieces/humanbot/src/index.ts"],
       "@activepieces/piece-imap": ["packages/pieces/imap/src/index.ts"],
       "@activepieces/piece-instagram-business": [
         "packages/pieces/instagram-business/src/index.ts"

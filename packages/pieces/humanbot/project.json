@@ -1,0 +1,44 @@
+{
+  "name": "pieces-humanbot",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/humanbot/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/humanbot",
+        "tsConfig": "packages/pieces/humanbot/tsconfig.lib.json",
+        "packageJson": "packages/pieces/humanbot/package.json",
+        "main": "packages/pieces/humanbot/src/index.ts",
+        "assets": [
+          "packages/pieces/humanbot/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs pieces-humanbot {args.ver} {args.tag}",
+      "dependsOn": [
+        "build"
+      ]
+    },
+    "lint": {
+      "executor": "@nx/linter:eslint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/pieces/humanbot/**/*.ts",
+          "packages/pieces/humanbot/package.json"
+        ]
+      }
+    }
+  },
+  "tags": []
+}
