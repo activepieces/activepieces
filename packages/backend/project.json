@@ -60,9 +60,8 @@
     "test": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "AP_ENVIRONMENT=test nx test-jest backend --output-style stream-without-prefixes",
-        "color": true,
-        "dotenv": "packages/backend/.env"
+        "command": "nx test-jest backend --output-style stream-without-prefixes",
+        "dotenv": "packages/backend/.test.env"
       }
     },
     "test:docker": {

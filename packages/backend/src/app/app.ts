@@ -28,8 +28,6 @@ import { rbacAuthMiddleware } from './ee/authentication/rbac-auth-middleware'
 import { userModule } from './user/user.module'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
-    logger.error(process.env, '#########################################################################################')
-
     const app = fastify({
         logger,
         // Default 4MB, also set in nginx.conf

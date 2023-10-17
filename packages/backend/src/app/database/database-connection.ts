@@ -31,8 +31,6 @@ import { ProjectMemberEntity } from '../ee/project-members/project-member.entity
 import { getEdition } from '../helper/secret-helper'
 import { ApEdition, ApEnvironment } from '@activepieces/shared'
 
-throw new Error(JSON.stringify(process.env))
-
 const databaseType = system.get(SystemProp.DB_TYPE)
 
 function getEntities(): EntitySchema<unknown>[] {
