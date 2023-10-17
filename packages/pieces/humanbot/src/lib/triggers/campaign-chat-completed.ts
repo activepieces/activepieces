@@ -1,7 +1,7 @@
 import { createTrigger, PieceAuth, TriggerStrategy } from "@activepieces/pieces-framework";
 import { DedupeStrategy, Polling, pollingHelper } from "@activepieces/pieces-common";
 
-export const campaignChatCompleted = createTrigger({
+export const campaignChatCompletedTrigger = createTrigger({
     auth: PieceAuth.None(),
     name: 'campaign_chat_completed_trigger', // Unique name across the piece.
     displayName: 'Campaign Chat Completed', // Display name on the interface.

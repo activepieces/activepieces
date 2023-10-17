@@ -1,7 +1,7 @@
 import { createAction, PieceAuth, Property } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
 
-export const campaignChatCompleted = createAction({
+export const campaignChatCompletedAction = createAction({
     name: 'campaign_chat_completed_action', // Must be a unique across the piece, this shouldn't be changed.
     auth: PieceAuth.None(),
     displayName: 'Campaign Chat Completed',
