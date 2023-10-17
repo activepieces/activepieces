@@ -3,7 +3,6 @@
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
     "declaration": true,
-    "noPropertyAccessFromIndexSignature": false,
     "types": ["node"]
   },
   "include": ["src/**/*.ts"],
