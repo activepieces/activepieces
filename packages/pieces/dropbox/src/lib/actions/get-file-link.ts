@@ -1,16 +1,16 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod, AuthenticationType } from "@activepieces/pieces-common";
-import { dropboxAuth } from "../../";
+import { dropboxAuth } from "../..";
 
-export const dropboxDownloadFile = createAction({
+export const dropboxGetFileLink = createAction({
     auth: dropboxAuth,
-    name: 'download_dropbox_file',
-    description: 'Download a file from your Dropbox',
-    displayName: 'Download file',
+    name: 'get_dropbox_file_link',
+    description: 'Get a temporary file link',
+    displayName: 'Get temporary file link',
     props: {
         path: Property.ShortText({
             displayName: 'Path',
-            description: 'The path in Dropbox of the file you want to download (e.g. /folder1/file.txt)',
+            description: 'The path of the file (e.g. /folder1/file.txt)',
             required: true,
         }),
     },

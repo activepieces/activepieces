@@ -5,17 +5,17 @@ import { dropboxAuth } from "../../";
 export const dropboxCopyFolder = createAction({
     auth: dropboxAuth,
     name: 'copy_dropbox_folder',
-    description: 'Copy a folder within your Dropbox',
+    description: 'Copy a folder',
     displayName: 'Copy folder',
     props: {
         from_path: Property.ShortText({
             displayName: 'From Path',
-            description: 'The source path of the folder in Dropbox (e.g. /folder1/sourceFolder)',
+            description: 'The source path of the folder (e.g. /folder1/sourceFolder)',
             required: true,
         }),
         to_path: Property.ShortText({
             displayName: 'To Path',
-            description: 'The destination path for the copied folder in Dropbox (e.g. /folder2/destinationFolder)',
+            description: 'The destination path for the copied folder (e.g. /folder2/destinationFolder)',
             required: true,
         }),
         autorename: Property.Checkbox({

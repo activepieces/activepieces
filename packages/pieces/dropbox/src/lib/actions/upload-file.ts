@@ -5,12 +5,12 @@ import { dropboxAuth } from "../../";
 export const dropboxUploadFile = createAction({
     auth: dropboxAuth,
     name: 'upload_dropbox_file',
-    description: 'Upload a file to your Dropbox',
+    description: 'Upload a file',
     displayName: 'Upload file',
     props: {
         path: Property.ShortText({
             displayName: 'Path',
-            description: 'The path in Dropbox where the file should be saved (e.g. /folder1/file.txt)',
+            description: 'The path where the file should be saved (e.g. /folder1/file.txt)',
             required: true,
         }),
         file: Property.File({

@@ -5,12 +5,12 @@ import { dropboxAuth } from "../../";
 export const dropboxListAFolder = createAction({
     auth: dropboxAuth,
     name: 'list_dropbox_folder',
-    description: 'List the contents of a folder in your Dropbox',
+    description: 'List the contents of a folder',
     displayName: 'List a folder',
     props: {
         path: Property.ShortText({
             displayName: 'Path',
-            description: 'The path in Dropbox of the folder to be listed (e.g. /folder1). Use an empty string for the root folder.',
+            description: 'The path of the folder to be listed (e.g. /folder1). Use an empty string for the root folder.',
             required: true,
         }),
         recursive: Property.Checkbox({

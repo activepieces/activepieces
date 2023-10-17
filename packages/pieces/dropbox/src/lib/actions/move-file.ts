@@ -5,17 +5,17 @@ import { dropboxAuth } from "../../";
 export const dropboxMoveFile = createAction({
     auth: dropboxAuth,
     name: 'move_dropbox_file',
-    description: 'Move a file within your Dropbox',
+    description: 'Move a file',
     displayName: 'Move file',
     props: {
         from_path: Property.ShortText({
             displayName: 'From Path',
-            description: 'The current path of the file in Dropbox (e.g. /folder1/oldfile.txt)',
+            description: 'The current path of the file (e.g. /folder1/oldfile.txt)',
             required: true,
         }),
         to_path: Property.ShortText({
             displayName: 'To Path',
-            description: 'The new path for the file in Dropbox (e.g. /folder2/newfile.txt)',
+            description: 'The new path for the file (e.g. /folder2/newfile.txt)',
             required: true,
         }),
         autorename: Property.Checkbox({

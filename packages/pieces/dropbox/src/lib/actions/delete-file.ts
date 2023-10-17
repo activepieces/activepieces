@@ -5,12 +5,12 @@ import { dropboxAuth } from "../../";
 export const dropboxDeleteFile = createAction({
     auth: dropboxAuth,
     name: 'delete_dropbox_file',
-    description: 'Delete a file from your Dropbox',
+    description: 'Delete a file',
     displayName: 'Delete file',
     props: {
         path: Property.ShortText({
             displayName: 'Path',
-            description: 'The path in Dropbox of the file to be deleted (e.g. /folder1/file.txt)',
+            description: 'The path of the file to be deleted (e.g. /folder1/file.txt)',
             required: true,
         }),
     },
