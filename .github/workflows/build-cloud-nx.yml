@@ -13,7 +13,7 @@ jobs:
       NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
     uses: nrwl/ci/.github/workflows/nx-cloud-main.yml@v0.11.2
     with:
-      number-of-agents: 3
+      number-of-agents: 1
       init-commands: |
         npx nx-cloud start-ci-run --stop-agents-after="build" --agent-count=1
       parallel-commands-on-agents: |

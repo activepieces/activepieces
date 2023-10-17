@@ -47,7 +47,7 @@
         "lintFilePatterns": ["packages/backend/**/*.ts"]
       }
     },
-    "test": {
+    "test-jest": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
@@ -55,6 +55,14 @@
         "passWithNoTests": true,
         "bail": true,
         "codeCoverage": true
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "AP_ENVIRONMENT=test nx test-jest backend --output-style stream-without-prefixes",
+        "color": true,
+        "dotenv": "packages/backend/.env"
       }
     },
     "test:docker": {
