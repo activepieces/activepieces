@@ -645,8 +645,14 @@ mat-icon[data-mat-icon-name="custom_expand_less"] {
  }
  
  .mat-mdc-raised-button.mat-warn {
-   --mdc-protected-button-label-text-color: var(--warn-palette-contrast-500) ;
+   --mdc-protected-button-label-text-color: var(--warn-palette-contrast-300) ;
  }
+ .mat-mdc-checkbox.mat-primary {
+  --mdc-checkbox-selected-checkmark-color:  var(--primary-palette-contrast-500);
+}
+.mat-mdc-checkbox.mat-warn {
+  --mdc-checkbox-selected-checkmark-color:  var(--primary-palette-contrast-500);
+}
 
 .material-suffix-icon {
   padding-right:  max(16px, calc(var(--mdc-shape-small, 4px) + 4px));;
