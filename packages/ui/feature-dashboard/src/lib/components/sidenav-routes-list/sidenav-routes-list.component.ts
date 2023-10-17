@@ -8,7 +8,7 @@ import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { FolderActions } from '../../store/folders/folders.actions';
 import { Observable, map, tap } from 'rxjs';
-import { supportUrl } from '@activepieces/shared';
+import { ApFlagId, supportUrl } from '@activepieces/shared';
 import { FlagService } from '@activepieces/ui/common';
 
 type SideNavRoute = {
@@ -26,13 +26,21 @@ type SideNavRoute = {
 })
 export class SidenavRoutesListComponent implements OnInit {
   removeChatbots$: Observable<void>;
+  logoUrl$: Observable<string>;
+  showSupport$: Observable<boolean>;
+  showDocs$: Observable<boolean>;
+  showBilling$: Observable<boolean>;
 
   constructor(
     public router: Router,
     private store: Store,
     private flagServices: FlagService,
     private cd: ChangeDetectorRef
-  ) {}
+  ) {
+    this.logoUrl$ = this.flagServices
+      .getLogos()
+      .pipe(map((logos) => logos.logoIconUrl));
+  }
   ngOnInit(): void {
     this.removeChatbots$ = this.flagServices.isChatbotEnabled().pipe(
       tap((res) => {
@@ -43,6 +51,13 @@ export class SidenavRoutesListComponent implements OnInit {
         }
       }),
       map(() => void 0)
+    );
+    this.showDocs$ = this.flagServices.isFlagEnabled(ApFlagId.SHOW_DOCS);
+    this.showSupport$ = this.flagServices.isFlagEnabled(
+      ApFlagId.SHOW_COMMUNITY
+    );
+    this.showBilling$ = this.flagServices.isFlagEnabled(
+      ApFlagId.BILLING_ENABLED
     );
   }
 
@@ -69,6 +84,11 @@ export class SidenavRoutesListComponent implements OnInit {
       icon: 'assets/img/custom/dashboard/connections.svg',
       caption: 'Connections',
       route: 'connections',
+    },
+    {
+      icon: 'assets/img/custom/dashboard/members.svg',
+      caption: 'Team',
+      route: 'team',
     },
   ];
 

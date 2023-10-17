@@ -1,6 +1,6 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "../common/src/lib/service/themeing.ts"],
   "compilerOptions": {
     "types": ["jasmine", "node"]
   }

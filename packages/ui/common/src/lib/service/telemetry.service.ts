@@ -8,12 +8,20 @@ import {
 } from '@activepieces/shared';
 import { FlagService } from '../service/flag.service';
 import { Observable, map, take } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { AuthenticationService } from './authentication.service';
+import { productFruits } from 'product-fruits';
 
 @Injectable({
   providedIn: 'root',
 })
 export class TelemetryService {
-  constructor(private flagService: FlagService) {}
+  productFruitsInitialized = false;
+  constructor(
+    private flagService: FlagService,
+    private http: HttpClient,
+    private authService: AuthenticationService
+  ) {}
   init(user: User) {
     if (user !== null && user !== undefined) {
       this.flagService.getAllFlags().subscribe((flags) => {
@@ -30,6 +38,7 @@ export class TelemetryService {
             activepiecesVersion: currentVersion,
             activepiecesEnvironment: environment,
           });
+          this.initializePf(user);
         }
       });
     }
@@ -59,4 +68,40 @@ export class TelemetryService {
       })
     );
   }
+  savePiecesSearch(request: {
+    search: string;
+    target: 'steps' | 'triggers' | 'both';
+    insideTemplates: boolean;
+  }) {
+    return this.http.post(
+      'https://cloud.activepieces.com/api/v1/webhooks/C6khe7pYMdiLPrBpVIWZg',
+      {
+        ...request,
+        email: this.authService.currentUser.email,
+      }
+    );
+  }
+
+  // BEGIN EE
+  initializePf(user: User) {
+    if (!this.productFruitsInitialized) {
+      productFruits.init(
+        'cLCwk9nBPS1DBBiE',
+        'en',
+        {
+          username: user.id,
+          email: user.email,
+          firstname: user.firstName,
+          lastname: user.lastName,
+          signUpAt: user.created,
+        },
+        { disableLocationChangeDetection: false }
+      );
+      productFruits.safeExec(($pf) => {
+        console.log('PF is Initialized');
+        this.productFruitsInitialized = true;
+      });
+    }
+  }
+  // END EE
 }

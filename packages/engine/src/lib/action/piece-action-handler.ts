@@ -5,15 +5,17 @@ import {
   ActionType,
   ExecutionState,
   ExecutionType,
+  PauseMetadata,
   PieceAction,
   StepOutput,
   StepOutputStatus,
+  StopResponse,
   assertNotNullOrUndefined
 } from '@activepieces/shared';
-import { BaseActionHandler, ExecuteContext, InitStepOutputParams } from './action-handler';
+import { BaseActionHandler, ExecuteActionOutput, ExecuteContext, InitStepOutputParams } from './action-handler';
 import { globals } from '../globals';
 import { isNil } from '@activepieces/shared'
-import { pieceHelper } from '../helper/action-helper';
+import { pieceHelper } from '../helper/piece-helper';
 import { createContextStore } from '../services/storage.service';
 import { Utils } from '../utils';
 import { ActionContext, PauseHook, PauseHookParams, PiecePropertyMap, StaticPropsValue, StopHook, StopHookParams } from '@activepieces/pieces-framework';
@@ -35,10 +37,16 @@ type LoadActionParams = {
 
 type GenerateStopHookParams = {
   stepOutput: StepOutput<ActionType.PIECE>
+  objectResponse: {
+    stopResponse: StopResponse | undefined
+  }
 }
 
 type GeneratePauseHookParams = {
   stepOutput: StepOutput<ActionType.PIECE>
+  objectResponse: {
+    pauseMetadata: PauseMetadata | undefined
+  }
 }
 
 export class PieceActionHandler extends BaseActionHandler<PieceAction> {
@@ -73,19 +81,19 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
     return action
   }
 
-  private generateStopHook({ stepOutput }: GenerateStopHookParams): StopHook {
+  private generateStopHook({ stepOutput, objectResponse }: GenerateStopHookParams): StopHook {
     return ({ response }: StopHookParams) => {
       stepOutput.status = StepOutputStatus.STOPPED
-      stepOutput.stopResponse = response
+      objectResponse.stopResponse = response
     }
   }
 
-  private generatePauseHook({ stepOutput }: GeneratePauseHookParams): PauseHook {
+  private generatePauseHook({ stepOutput, objectResponse }: GeneratePauseHookParams): PauseHook {
     const actionName = this.currentAction.name
 
     return ({ pauseMetadata }: PauseHookParams) => {
       stepOutput.status = StepOutputStatus.PAUSED
-      stepOutput.pauseMetadata = {
+      objectResponse.pauseMetadata = {
         ...pauseMetadata,
         resumeStepMetadata: {
           type: ActionType.PIECE,
@@ -116,7 +124,7 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
     executionContext: ExecuteContext,
     executionState: ExecutionState,
     ancestors: [string, number][],
-  ): Promise<StepOutput> {
+  ): Promise<ExecuteActionOutput> {
     const { input, pieceName, pieceVersion, actionName } = this.currentAction.settings;
 
     const stepOutput = await this.loadStepOutput({
@@ -149,6 +157,12 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
         throw new Error(JSON.stringify(errors));
       }
 
+      const stopResponse = {
+        stopResponse: undefined
+      }
+      const pauseResponse = {
+        pauseMetadata: undefined
+      }
       const context: ActionContext = {
         executionType: this.executionType,
         store: createContextStore('', executionContext.flowVersion.flowId),
@@ -169,8 +183,8 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
         serverUrl: globals.serverUrl!,
         run: {
           id: globals.flowRunId,
-          stop: this.generateStopHook({ stepOutput }),
-          pause: this.generatePauseHook({ stepOutput }),
+          stop: this.generateStopHook({ stepOutput, objectResponse: stopResponse }),
+          pause: this.generatePauseHook({ stepOutput, objectResponse: pauseResponse }),
         },
         resumePayload: globals.resumePayload,
       }
@@ -181,7 +195,12 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
         stepOutput.status = StepOutputStatus.SUCCEEDED
       }
 
-      return stepOutput
+      return {
+        stepOutput,
+        executionOutputStatus: this.convertExecutionStatusToStepStatus(stepOutput.status),
+        pauseMetadata: pauseResponse.pauseMetadata,
+        stopResponse: stopResponse.stopResponse,
+      }
     }
     catch (e) {
       console.error(e)
@@ -189,7 +208,12 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
       stepOutput.status = StepOutputStatus.FAILED
       stepOutput.errorMessage = Utils.tryParseJson((e as Error).message);
 
-      return stepOutput
+      return {
+        stepOutput,
+        executionOutputStatus: this.convertExecutionStatusToStepStatus(stepOutput.status),
+        pauseMetadata: undefined,
+        stopResponse: undefined,
+      }
     }
   }
 }

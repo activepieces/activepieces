@@ -81,7 +81,8 @@
             "install/options/docker",
             "install/options/docker-compose",
             "install/options/easypanel",            
-            "install/options/aws"
+            "install/options/aws",
+            "install/options/gcp"
           ]
         },
         {
@@ -181,7 +182,8 @@
             "enterprise/connection-cards/frontend-sdk",
             "enterprise/connection-cards/user-flows"
           ]
-        }
+        },
+        "enterprise/install"
       ]
     }
   ],

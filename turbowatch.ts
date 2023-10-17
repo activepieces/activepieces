@@ -1,5 +1,8 @@
 import { defineConfig, type ChangeEvent } from 'turbowatch';
 import chalk from 'chalk'; // Import chalk for styling console messages
+import { config } from 'dotenv'; // Import the dotenv library
+
+config({ path: 'packages/backend/.env' });
 
 export default defineConfig({
     project: `${__dirname}/packages/pieces`,
@@ -11,8 +14,10 @@ export default defineConfig({
             interruptible: false,
             persistent: false,
             onChange: async ({ spawn, first, files }: ChangeEvent) => {
+                const pieces = process.env.AP_DEV_PIECES?.split(',').map(p => `pieces-${p}`).join(',');
+
+                console.log(chalk.yellow.bold('👀 Detected changes in pieces. Building... 👀 ' + pieces))
                 if (first) {
-                    const pieces = process.env.AP_DEV_PIECES?.split(',').map(p => `pieces-${p}`).join(',');
                     await spawn`nx run-many -t build --projects=${pieces} --skip-cache`;
                     return;
                 }

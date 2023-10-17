@@ -6,20 +6,21 @@ import {
   UpdateActionRequest,
   UpdateTriggerRequest,
   StepLocationRelativeToParent,
-  MoveActionRequest
+  MoveActionRequest,
 } from './flow-operations';
 import {
   Action,
   ActionType,
   BranchAction,
   LoopOnItemsAction,
-  SingleActionSchema
+  SingleActionSchema,
 } from './actions/action';
 import { Trigger, TriggerType } from './triggers/trigger';
 import { TypeCompiler } from '@sinclair/typebox/compiler';
 import { FlowVersion, FlowVersionState } from './flow-version';
 import { ActivepiecesError, ErrorCode } from '../common/activepieces-error';
 import semver from 'semver';
+import { applyFunctionToValuesSync, isString } from '../common';
 
 type Step = Action | Trigger;
 
@@ -91,7 +92,6 @@ function deleteAction(
         break;
       }
       case ActionType.CODE:
-      case ActionType.MISSING:
       case ActionType.PIECE:
         break;
     }
@@ -172,7 +172,6 @@ function transferStep<T extends Step>(
   transferFunction: (step: T) => T
 ): Step {
   const updatedStep = transferFunction(step as T);
-
   if (updatedStep.type === ActionType.BRANCH) {
     const { onSuccessAction, onFailureAction } = updatedStep;
     if (onSuccessAction) {
@@ -384,11 +383,13 @@ function moveAction(
   return flowVersion;
 }
 
+
 function addAction(
   flowVersion: FlowVersion,
   request: AddActionRequest
 ): FlowVersion {
   return transferFlow(flowVersion, (parentStep: Step) => {
+
     if (parentStep.name !== request.parentStep) {
       return parentStep;
     }
@@ -407,8 +408,10 @@ function addAction(
         request.stepLocationRelativeToParent ===
         StepLocationRelativeToParent.AFTER
       ) {
+
         parentStep.nextAction = createAction(request.action, {
-          nextAction: parentStep.nextAction
+          nextAction: parentStep.nextAction,
+
         });
       } else {
         throw new ActivepiecesError(
@@ -515,12 +518,6 @@ function createAction(
         settings: request.settings
       };
       break;
-    case ActionType.MISSING:
-      action = {
-        ...baseProperties,
-        type: ActionType.MISSING,
-        settings: request.settings
-      };
   }
   action.valid = (request.valid ?? true) && actionSchemaValidator.Check(action);
   return action;
@@ -675,12 +672,6 @@ function keepBaseAction(action: Action): Action {
         settings: action.settings,
         ...commonProps
       };
-    case ActionType.MISSING:
-      return {
-        type: action.type,
-        settings: action.settings,
-        ...commonProps
-      };
   }
 }
 
@@ -691,9 +682,9 @@ function upgradePiece(step: Step, stepName: string): Step {
   const clonedStep: Step = JSON.parse(JSON.stringify(step));
   switch (step.type) {
     case ActionType.PIECE:
-    case TriggerType.PIECE:{
+    case TriggerType.PIECE: {
       const { pieceVersion, pieceName } = step.settings;
-      if (isLegacyApp({pieceName, pieceVersion})) {
+      if (isLegacyApp({ pieceName, pieceVersion })) {
         return step;
       }
       if (pieceVersion.startsWith('^') || pieceVersion.startsWith('~')) {
@@ -711,9 +702,9 @@ function upgradePiece(step: Step, stepName: string): Step {
 }
 
 // TODO Remove this in 2024, these pieces didn't follow the standarad versioning where the minor version has to be increased when there is breaking change.
-function isLegacyApp({pieceName, pieceVersion}: {pieceName: string, pieceVersion: string}){
+function isLegacyApp({ pieceName, pieceVersion }: { pieceName: string, pieceVersion: string }) {
   let newVersion = pieceVersion;
-  if(newVersion.startsWith("^") || newVersion.startsWith("~")){
+  if (newVersion.startsWith("^") || newVersion.startsWith("~")) {
     newVersion = newVersion.substring(1)
   }
   if (
@@ -729,6 +720,85 @@ function isLegacyApp({pieceName, pieceVersion}: {pieceName: string, pieceVersion
     return true;
   }
   return false;
+}
+
+function duplicateStep(stepName: string, flowVersionWithArtifacts: FlowVersion): FlowVersion {
+  const clonedStep = JSON.parse(JSON.stringify(flowHelper.getStep(flowVersionWithArtifacts, stepName)));
+  clonedStep.nextAction = undefined;
+  if (!clonedStep) {
+    throw new Error(`step with name '${stepName}' not found`);
+  }
+  const existingNames = getAllSteps(flowVersionWithArtifacts.trigger).map((step) => step.name);
+  const oldStepsNameToReplace = getAllSteps(clonedStep).map((step) => step.name);
+  const oldNameToNewName: { [key: string]: string } = {};
+
+  oldStepsNameToReplace.forEach((name) => {
+    const newName = findUnusedName(existingNames, 'step');
+    oldNameToNewName[name] = newName;
+    existingNames.push(newName);
+  });
+
+  const duplicatedStep = transferStep(clonedStep, (step: Step) => {
+    step.displayName = `${step.displayName} Copy`;
+    step.name = oldNameToNewName[step.name];
+    if (step.settings.inputUiInfo) {
+      step.settings.inputUiInfo.currentSelectedData = undefined;
+      step.settings.inputUiInfo.lastTestDate = undefined;
+    }
+    if (step.type === ActionType.CODE) {
+      step.settings.artifactSourceId = undefined;
+    }
+    oldStepsNameToReplace.forEach((oldName) => {
+      step.settings.input = applyFunctionToValuesSync(step.settings.input, (value: unknown) => {
+        if (isString(value)) {
+          return replaceOldStepNameWithNewOne({ input: value, oldStepName: oldName, newStepName: oldNameToNewName[oldName] });
+        }
+        return value;
+      });
+    });
+    return step;
+  })
+  let finalFlow = addAction(flowVersionWithArtifacts, {
+    action: duplicatedStep as Action,
+    parentStep: stepName,
+    stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER
+  });
+  const operations = getImportOperations(duplicatedStep);
+  operations.forEach((operation) => {
+    finalFlow = flowHelper.apply(finalFlow, operation);
+  });
+  return finalFlow;
+}
+
+function replaceOldStepNameWithNewOne({ input, oldStepName, newStepName }: { input: string, oldStepName: string, newStepName: string }) {
+  const regex = /{{(.*?)}}/g; // Regular expression to match strings inside {{ }}
+  return input.replace(regex, (match, content) => {
+    // Replace the content inside {{ }} using the provided function
+    const replacedContent = content.replaceAll(new RegExp(`\\b${oldStepName}\\b`, 'g'), `${newStepName}`)
+
+    // Reconstruct the {{ }} with the replaced content
+    return `{{${replacedContent}}}`;
+  });
+}
+
+
+function findUnusedName(names: string[], stepPrefix: string): string {
+  let availableNumber = 1;
+  let availableName = `${stepPrefix}_${availableNumber}`;
+
+  while (names.includes(availableName)) {
+    availableNumber++;
+    availableName = `${stepPrefix}_${availableNumber}`;
+  }
+
+  return availableName;
+}
+
+function findAvailableStepName(flowVersion: FlowVersion, stepPrefix: string): string {
+  const steps = flowHelper
+    .getAllSteps(flowVersion.trigger)
+    .map((f) => f.name);
+  return findUnusedName(steps, stepPrefix);
 }
 
 export const flowHelper = {
@@ -774,10 +844,15 @@ export const flowHelper = {
           upgradePiece(step, operation.request.name)
         );
         break;
+      case FlowOperationType.DUPLICATE_ACTION:
+        {
+          clonedVersion = duplicateStep(operation.request.stepName, clonedVersion);
+        }
     }
     clonedVersion.valid = isValid(clonedVersion);
     return clonedVersion;
   },
+
   getStep,
   isAction,
   isTrigger,
@@ -789,5 +864,7 @@ export const flowHelper = {
   isChildOf,
   transferFlowAsync,
   getAllChildSteps,
-  getAllStepsAtFirstLevel
+  getAllStepsAtFirstLevel,
+  duplicateStep,
+  findAvailableStepName
 };

@@ -1,0 +1,25 @@
+.grey-check {
+	display: none;
+}
+.green-check {
+	display: block;
+}
+
+.invalid-password-condition {
+	.grey-check {
+		display: block;
+	}
+	.green-check {
+		display: none;
+	}
+}
+
+.hidden-trigger {
+	left: -200px;
+	top: 0;
+	position: absolute;
+	@media screen and (max-width: 800px) {
+		left: 0px;
+		top: 50px;
+	}
+}

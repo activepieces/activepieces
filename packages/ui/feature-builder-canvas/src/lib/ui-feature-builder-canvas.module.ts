@@ -22,6 +22,7 @@ import { ViewOnlyModeComponent } from './view-only-mode/view-only-mode.component
 import { DeleteFlowItemActionComponent } from './flow-item-tree/flow-item/actions/delete-flow-item-action/delete-flow-item-action.component';
 import { ReplaceTriggerActionComponent } from './flow-item-tree/flow-item/actions/replace-trigger-action/replace-trigger-action.component';
 import { ActionsContainerComponent } from './flow-item-tree/flow-item/actions/actions-container/actions-container.component';
+import { DuplicateStepActionComponent } from './flow-item-tree/flow-item/actions/duplicate-step-action/duplicate-step-action.component';
 @NgModule({
   imports: [CommonModule, UiCommonModule, DragAndDropModule, CodemirrorModule],
   declarations: [
@@ -44,6 +45,7 @@ import { ActionsContainerComponent } from './flow-item-tree/flow-item/actions/ac
     DeleteFlowItemActionComponent,
     ReplaceTriggerActionComponent,
     ActionsContainerComponent,
+    DuplicateStepActionComponent,
   ],
   exports: [FlowItemTreeComponent, CanvasUtilsComponent, CanvasPannerDirective],
 })

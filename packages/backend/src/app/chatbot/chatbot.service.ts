@@ -15,16 +15,17 @@ import {
     UpdateChatbotRequest,
     ChatbotResponse,
     ChatbotMetadata,
+    APChatMessage,
 } from '@activepieces/shared'
 import { databaseConnection } from '../database/database-connection'
 import { ChatbotEntity } from './chatbot.entity'
 import { chatbotHooks } from './chatbot.hooks'
 import { telemetry } from '../helper/telemetry.utils'
 import { logger } from '../helper/logger'
-import { appConnectionService } from '../app-connection/app-connection-service'
 import { runBot } from './bots/chatbots'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { buildPaginator } from '../helper/pagination/build-paginator'
+import { appConnectionService } from '../app-connection/app-connection-service/app-connection-service'
 
 
 const chatbotRepo = databaseConnection.getRepository(ChatbotEntity)
@@ -92,10 +93,12 @@ export const chatbotService = {
         projectId,
         chatbotId,
         input,
+        history,
     }: {
         projectId: ProjectId
         chatbotId: string
         input: string
+        history: APChatMessage[]
     }): Promise<ChatbotResponse> {
         const chatbot = await chatbotRepo.findOneBy({
             id: chatbotId,
@@ -126,6 +129,7 @@ export const chatbotService = {
             type: chatbot.type,
             auth: connection.value as SecretTextConnectionValue,
             prompt: chatbot.prompt,
+            history,
         })
         return {
             output,

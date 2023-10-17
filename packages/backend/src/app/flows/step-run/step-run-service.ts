@@ -72,7 +72,7 @@ export const stepRunService = {
 }
 
 async function executePiece({ step, projectId, flowVersion, userId }: ExecuteParams<PieceAction>): Promise<StepRunResponse> {
-    const { pieceName, pieceVersion, actionName, input } = step.settings
+    const { packageType, pieceType, pieceName, pieceVersion, actionName, input } = step.settings
 
     if (isNil(actionName)) {
         throw new ActivepiecesError({
@@ -91,8 +91,13 @@ async function executePiece({ step, projectId, flowVersion, userId }: ExecutePar
 
     const operation: ExecuteActionOperation = {
         serverUrl: await getServerUrl(),
-        pieceName,
-        pieceVersion,
+        piece: {
+            packageType,
+            pieceType,
+            pieceName,
+            pieceVersion,
+            projectId,
+        },
         actionName,
         input,
         flowVersion,
@@ -183,7 +188,7 @@ const executeBranch = async ({ step, flowVersion, projectId }: ExecuteParams<Bra
         triggerPayload: {
             duration: 0,
             input: {},
-            output: flowVersion.trigger.settings.inputUiInfo.currentSelectedData,
+            output: flowVersion.trigger.settings?.inputUiInfo?.currentSelectedData,
             status: StepOutputStatus.SUCCEEDED,
         },
         sourceFlowVersion: flowVersion,

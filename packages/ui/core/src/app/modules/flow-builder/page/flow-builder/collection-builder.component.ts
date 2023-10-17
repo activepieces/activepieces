@@ -94,7 +94,6 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
   TriggerType = TriggerType;
   testingStepSectionIsRendered$: Observable<boolean>;
   graphChanged$: Observable<FlowVersion>;
-  showGuessFlowComponent = true;
   importTemplate$: Observable<void>;
   dataInsertionPopupHidden$: Observable<boolean>;
   codeEditorOptions = {
