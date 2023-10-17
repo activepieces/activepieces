@@ -1,3 +1,4 @@
+import { enrichErrorContext } from './error-handler'
 import { exec } from './exec'
 import { logger } from './logger'
 import { isEmpty } from '@activepieces/shared'
@@ -24,10 +25,24 @@ export type PackageInfo = {
 }
 
 const runCommand = async (path: string, command: Command, ...args: string[]): Promise<PackageManagerOutput> => {
-    logger.debug({ path, command, args }, '[PackageManager#execute]')
+    try {
+        logger.debug({ path, command, args }, '[PackageManager#execute]')
 
-    const commandLine = `pnpm ${command} ${args.join(' ')}`
-    return await exec(commandLine, { cwd: path })
+        const commandLine = `pnpm ${command} ${args.join(' ')}`
+        return await exec(commandLine, { cwd: path })
+    }
+    catch (error) {
+        const contextKey = '[PackageManager#runCommand]'
+        const contextValue = { path, command, args }
+
+        const enrichedError = enrichErrorContext({
+            error,
+            key: contextKey,
+            value: contextValue,
+        })
+
+        throw enrichedError
+    }
 }
 
 export const packageManager = {

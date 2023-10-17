@@ -1,4 +1,4 @@
-import { ActivepiecesError, ApEnvironment, ErrorCode } from '@activepieces/shared'
+import { ActivepiecesError, ApEnvironment, ErrorCode, isNil } from '@activepieces/shared'
 import { SystemProp } from './system-prop'
 import { loadEncryptionKey } from '../encryption'
 
@@ -56,11 +56,13 @@ export const system = {
     },
 
     getBoolean(prop: SystemProp): boolean | undefined {
-        const env = getEnvVar(prop)
-        if (env === undefined) {
+        const value = getEnvVar(prop)
+
+        if (isNil(value)) {
             return undefined
         }
-        return getEnvVar(prop) === 'true'
+
+        return value === 'true'
     },
 
     getOrThrow<T extends string>(prop: SystemProp): T {

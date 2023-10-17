@@ -45,6 +45,10 @@ export const CORE_PIECES_ACTIONS_NAMES = [
   '@activepieces/piece-sftp',
   '@activepieces/piece-approval',
   '@activepieces/piece-tags',
+  '@activepieces/piece-text-helper',
+  '@activepieces/piece-date-helper',
+  '@activepieces/piece-file-helper',
+  '@activepieces/piece-math-helper',
 ];
 export const corePieceIconUrl = (pieceName: string) =>
   `assets/img/custom/piece/${pieceName.replace(

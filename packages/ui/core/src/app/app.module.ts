@@ -45,7 +45,7 @@ import {
 
 const monacoConfig: NgxMonacoEditorConfig = {
   baseUrl: '/assets', // configure base path for monaco editor. Starting with version 8.0.0 it defaults to './assets'. Previous releases default to '/assets'
-  defaultOptions: { scrollBeyondLastLine: false }, // pass default options to be used
+  defaultOptions: { scrollBeyondLastLine: false, fixedOverflowWidgets: true }, // pass default options to be used
   onMonacoLoad: () => {
     const monaco = (window as any).monaco;
     monaco.editor.defineTheme('apTheme', apMonacoTheme);
