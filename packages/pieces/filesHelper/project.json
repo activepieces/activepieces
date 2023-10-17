@@ -1,7 +1,7 @@
 {
-  "name": "pieces-files",
+  "name": "pieces-filesHelper",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/pieces/files/src",
+  "sourceRoot": "packages/pieces/filesHelper/src",
   "projectType": "library",
   "targets": {
     "build": {
@@ -10,19 +10,19 @@
         "{options.outputPath}"
       ],
       "options": {
-        "outputPath": "dist/packages/pieces/files",
-        "tsConfig": "packages/pieces/files/tsconfig.lib.json",
-        "packageJson": "packages/pieces/files/package.json",
-        "main": "packages/pieces/files/src/index.ts",
+        "outputPath": "dist/packages/pieces/filesHelper",
+        "tsConfig": "packages/pieces/filesHelper/tsconfig.lib.json",
+        "packageJson": "packages/pieces/filesHelper/package.json",
+        "main": "packages/pieces/filesHelper/src/index.ts",
         "assets": [
-          "packages/pieces/files/*.md"
+          "packages/pieces/filesHelper/*.md"
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "publish": {
-      "command": "node tools/scripts/publish.mjs pieces-files {args.ver} {args.tag}",
+      "command": "node tools/scripts/publish.mjs pieces-filesHelper {args.ver} {args.tag}",
       "dependsOn": [
         "build"
       ]
@@ -34,8 +34,8 @@
       ],
       "options": {
         "lintFilePatterns": [
-          "packages/pieces/files/**/*.ts",
-          "packages/pieces/files/package.json"
+          "packages/pieces/filesHelper/**/*.ts",
+          "packages/pieces/filesHelper/package.json"
         ]
       }
     }

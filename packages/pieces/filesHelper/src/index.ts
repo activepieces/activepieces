@@ -2,8 +2,8 @@
 import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
 import { readFileAction } from "./lib/actions/read-file";
 
-export const readFile = createPiece({
-  displayName: "files",
+export const filesHelper = createPiece({
+  displayName: "Files helper",
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.9.0',
   logoUrl: "https://cdn.activepieces.com/pieces/file-piece.svg",
