@@ -43,7 +43,7 @@ function constructEveryXMinuteCron(minute: number) {
             return `*/${minute} * * * *`
         case ApEdition.COMMUNITY:
         case ApEdition.ENTERPRISE:
-            return `*/$${system.getNumber(
+            return `*/${system.getNumber(
                 SystemProp.TRIGGER_DEFAULT_POLL_INTERVAL,
             ) ?? 5} * * * *`
     }
