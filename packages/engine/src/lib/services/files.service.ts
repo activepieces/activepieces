@@ -32,7 +32,7 @@ export function isMemoryFilePath(dbPath: unknown): boolean {
     return dbPath.startsWith(MEMORY_PREFIX_URL)
 }
 
-export function isApFilePath(dbPath: unknown): boolean {
+export function isApFilePath(dbPath: unknown): dbPath is string {
     if (!isString(dbPath)) {
         return false
     }

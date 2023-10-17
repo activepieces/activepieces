@@ -17,7 +17,7 @@ import { globals } from '../globals'
 import { isNil } from '@activepieces/shared'
 import { pieceHelper } from '../helper/piece-helper'
 import { createContextStore } from '../services/storage.service'
-import { Utils } from '../utils'
+import { utils } from '../utils'
 import { ActionContext, PauseHook, PauseHookParams, PiecePropertyMap, StaticPropsValue, StopHook, StopHookParams } from '@activepieces/pieces-framework'
 import { createConnectionManager } from '../services/connections.service'
 import { createTagsManager } from '../services/tags.service'
@@ -206,7 +206,7 @@ export class PieceActionHandler extends BaseActionHandler<PieceAction> {
             console.error(e)
 
             stepOutput.status = StepOutputStatus.FAILED
-            stepOutput.errorMessage = Utils.tryParseJson((e as Error).message)
+            stepOutput.errorMessage = await utils.tryParseJson((e as Error).message)
 
             return {
                 stepOutput,

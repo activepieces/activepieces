@@ -1,6 +1,5 @@
 import { argv } from 'node:process'
 import { FlowExecutor } from './lib/executors/flow-executor'
-import { Utils } from './lib/utils'
 import { globals } from './lib/globals'
 import {
     EngineOperationType,
@@ -25,6 +24,7 @@ import { triggerHelper } from './lib/helper/trigger-helper'
 import { VariableService } from './lib/services/variable-service'
 import { testExecution } from './lib/helper/test-execution-context'
 import { loggingUtils } from './lib/helper/logging-utils'
+import { utils } from './lib/utils'
 
 const initFlowExecutor = (input: ExecuteFlowOperation): FlowExecutor => {
     const { flowVersion } = input
@@ -61,17 +61,17 @@ const initFlowExecutor = (input: ExecuteFlowOperation): FlowExecutor => {
 
 const extractPieceMetadata = async (): Promise<void> => {
     try {
-        const input: ExecuteExtractPieceMetadata = Utils.parseJsonFile(globals.inputFile)
+        const input: ExecuteExtractPieceMetadata = await utils.parseJsonFile(globals.inputFile)
         const output = await pieceHelper.extractPieceMetadata(input)
 
-        writeOutput({
+        await writeOutput({
             status: EngineResponseStatus.OK,
             response: output,
         })
     }
     catch (e) {
         console.error(e)
-        writeOutput({
+        await writeOutput({
             status: EngineResponseStatus.ERROR,
             response: (e as Error).message,
         })
@@ -80,7 +80,7 @@ const extractPieceMetadata = async (): Promise<void> => {
 
 const executeFlow = async (input?: ExecuteFlowOperation): Promise<void> => {
     try {
-        input = input ?? Utils.parseJsonFile(globals.inputFile) as ExecuteFlowOperation
+        input = input ?? await utils.parseJsonFile<ExecuteFlowOperation>(globals.inputFile)
 
         globals.workerToken = input.workerToken!
         globals.projectId = input.projectId
@@ -94,14 +94,14 @@ const executeFlow = async (input?: ExecuteFlowOperation): Promise<void> => {
         const executor = initFlowExecutor(input)
         const output = await executor.safeExecute()
 
-        writeOutput({
+        await writeOutput({
             status: EngineResponseStatus.OK,
             response: await loggingUtils.trimExecution(output),
         })
     }
     catch (e) {
         console.error(e)
-        writeOutput({
+        await writeOutput({
             status: EngineResponseStatus.ERROR,
             response: (e as Error).message,
         })
@@ -110,21 +110,22 @@ const executeFlow = async (input?: ExecuteFlowOperation): Promise<void> => {
 
 const executeProps = async (): Promise<void> => {
     try {
-        const input: ExecutePropsOptions = Utils.parseJsonFile(globals.inputFile)
+        const input: ExecutePropsOptions = await utils.parseJsonFile(globals.inputFile)
 
         globals.workerToken = input.workerToken!
         globals.projectId = input.projectId
         globals.serverUrl = input.serverUrl
 
         const output = await pieceHelper.executeProps(input)
-        writeOutput({
+
+        await writeOutput({
             status: EngineResponseStatus.OK,
             response: output,
         })
     }
     catch (e) {
         console.error(e)
-        writeOutput({
+        await writeOutput({
             status: EngineResponseStatus.ERROR,
             response: (e as Error).message,
         })
@@ -133,21 +134,21 @@ const executeProps = async (): Promise<void> => {
 
 const executeTrigger = async (): Promise<void> => {
     try {
-        const input: ExecuteTriggerOperation<TriggerHookType> = Utils.parseJsonFile(globals.inputFile)
+        const input: ExecuteTriggerOperation<TriggerHookType> = await utils.parseJsonFile(globals.inputFile)
 
         globals.workerToken = input.workerToken!
         globals.projectId = input.projectId
         globals.serverUrl = input.serverUrl
 
         const output = await triggerHelper.executeTrigger(input)
-        writeOutput({
+        await writeOutput({
             status: EngineResponseStatus.OK,
             response: output,
         })
     }
     catch (e) {
         console.error(e)
-        writeOutput({
+        await writeOutput({
             status: EngineResponseStatus.ERROR,
             response: (e as Error).message,
         })
@@ -156,51 +157,51 @@ const executeTrigger = async (): Promise<void> => {
 
 const executeCode = async (): Promise<void> => {
     try {
-        const operationInput: ExecuteCodeOperation = Utils.parseJsonFile(globals.inputFile)
+        const operationInput: ExecuteCodeOperation = await utils.parseJsonFile(globals.inputFile)
 
         globals.projectId = operationInput.projectId
         globals.serverUrl = operationInput.serverUrl
         const output = await pieceHelper.executeCode(operationInput)
-        writeOutput({
+        await writeOutput({
             status: EngineResponseStatus.OK,
             response: output,
         })
     }
     catch (e) {
         console.error(e)
-        writeOutput({
+        await writeOutput({
             status: EngineResponseStatus.ERROR,
-            response: Utils.tryParseJson((e as Error).message),
+            response: utils.tryParseJson((e as Error).message),
         })
     }
 }
 
 const executeAction = async (): Promise<void> => {
     try {
-        const input: ExecuteActionOperation = Utils.parseJsonFile(globals.inputFile)
+        const input: ExecuteActionOperation = await utils.parseJsonFile(globals.inputFile)
 
         globals.workerToken = input.workerToken!
         globals.projectId = input.projectId
         globals.serverUrl = input.serverUrl
 
         const output = await pieceHelper.executeAction(input)
-        writeOutput({
+        await writeOutput({
             status: EngineResponseStatus.OK,
             response: output,
         })
     }
     catch (e) {
         console.error(e)
-        writeOutput({
+        await writeOutput({
             status: EngineResponseStatus.ERROR,
-            response: Utils.tryParseJson((e as Error).message),
+            response: utils.tryParseJson((e as Error).message),
         })
     }
 }
 
 const executeValidateAuth = async (): Promise<void> => {
     try {
-        const input: ExecuteValidateAuthOperation = Utils.parseJsonFile(globals.inputFile)
+        const input: ExecuteValidateAuthOperation = await utils.parseJsonFile(globals.inputFile)
 
         globals.workerToken = input.workerToken!
         globals.projectId = input.projectId
@@ -208,28 +209,28 @@ const executeValidateAuth = async (): Promise<void> => {
 
         const output = await pieceHelper.executeValidateAuth(input)
 
-        writeOutput({
+        await writeOutput({
             status: EngineResponseStatus.OK,
             response: output,
         })
     }
     catch (e) {
         console.error(e)
-        writeOutput({
+        await writeOutput({
             status: EngineResponseStatus.ERROR,
-            response: Utils.tryParseJson((e as Error).message),
+            response: utils.tryParseJson((e as Error).message),
         })
     }
 }
 
 const executeTest = async (): Promise<void> => {
     try {
-        const input: EngineTestOperation = Utils.parseJsonFile(globals.inputFile)
+        const input: EngineTestOperation = await utils.parseJsonFile(globals.inputFile)
 
         globals.workerToken = input.workerToken!
         globals.projectId = input.projectId
         globals.serverUrl = input.serverUrl
-  
+
         const testExecutionState = await testExecution.stateFromFlowVersion({
             flowVersion: input.sourceFlowVersion,
         })
@@ -241,44 +242,44 @@ const executeTest = async (): Promise<void> => {
     }
     catch (e) {
         console.error(e)
-        writeOutput({
+        await writeOutput({
             status: EngineResponseStatus.ERROR,
-            response: Utils.tryParseJson((e as Error).message),
+            response: utils.tryParseJson((e as Error).message),
         })
     }
 }
 
-async function writeOutput(result: EngineResponse<unknown>) {
-    Utils.writeToJsonFile(globals.outputFile, result)
+async function writeOutput(result: EngineResponse<unknown>): Promise<void> {
+    await utils.writeToJsonFile(globals.outputFile, result)
 }
 
-async function execute() {
+const execute = async (): Promise<void> => {
     const operationType = argv[2]
 
     switch (operationType) {
         case EngineOperationType.EXTRACT_PIECE_METADATA:
-            extractPieceMetadata()
+            await extractPieceMetadata()
             break
         case EngineOperationType.EXECUTE_FLOW:
-            executeFlow()
+            await executeFlow()
             break
         case EngineOperationType.EXECUTE_PROPERTY:
-            executeProps()
+            await executeProps()
             break
         case EngineOperationType.EXECUTE_TRIGGER_HOOK:
-            executeTrigger()
+            await executeTrigger()
             break
         case EngineOperationType.EXECUTE_ACTION:
-            executeAction()
+            await executeAction()
             break
         case EngineOperationType.EXECUTE_CODE:
-            executeCode()
+            await executeCode()
             break
         case EngineOperationType.EXECUTE_VALIDATE_AUTH:
-            executeValidateAuth()
+            await executeValidateAuth()
             break
         case EngineOperationType.EXECUTE_TEST:
-            executeTest()
+            await executeTest()
             break
         default:
             console.error('unknown operation')
@@ -287,3 +288,4 @@ async function execute() {
 }
 
 execute()
+    .catch(e => console.error(e))

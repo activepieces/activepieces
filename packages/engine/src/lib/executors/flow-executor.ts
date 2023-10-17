@@ -91,7 +91,7 @@ export class FlowExecutor {
         this.resumeStepMetadata = resumeStepMetadata
     }
 
-    private getResumeStep({ resumeStepMetadata }: GetResumeStepParams) {
+    private getResumeStep({ resumeStepMetadata }: GetResumeStepParams): Action {
         console.debug('[FlowExecutor#getResumeStep] resumeStepMetadata:', resumeStepMetadata)
 
         const resumeStep = flowHelper.getStepFromSubFlow({
@@ -108,7 +108,7 @@ export class FlowExecutor {
             })
         }
 
-        return resumeStep
+        return resumeStep as Action
     }
 
     private getStartStep() {
@@ -347,7 +347,10 @@ export class FlowExecutor {
                 throw new Error('this shouldn\'t happen')
             }
 
+            case ExecutionOutputStatus.TIMEOUT:
             case ExecutionOutputStatus.SUCCEEDED:
+            case ExecutionOutputStatus.QUOTA_EXCEEDED:
+            case ExecutionOutputStatus.INTERNAL_ERROR:
                 break
         }
 

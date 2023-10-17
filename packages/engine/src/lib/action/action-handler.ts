@@ -19,7 +19,7 @@ export type InitStepOutputParams = {
 }
 
 export type ExecuteActionOutput = {
-    stepOutput: StepOutput  
+    stepOutput: StepOutput
     pauseMetadata: PauseMetadata | undefined
     stopResponse: StopResponse | undefined
     executionOutputStatus: ExecutionOutputStatus
@@ -102,8 +102,8 @@ export abstract class BaseActionHandler<CA extends Action = Action, RSM extends 
         }
         return undefined
     }
-  
-    protected handleFlowExecutorOutput({ executionOutput, stepOutput }: HandleFlowExecutorOutput) {
+
+    protected handleFlowExecutorOutput({ executionOutput, stepOutput }: HandleFlowExecutorOutput): void {
         switch (executionOutput.status) {
             case ExecutionOutputStatus.STOPPED:
                 stepOutput.status = StepOutputStatus.STOPPED
@@ -116,6 +116,7 @@ export abstract class BaseActionHandler<CA extends Action = Action, RSM extends 
             case ExecutionOutputStatus.FAILED:
             case ExecutionOutputStatus.INTERNAL_ERROR:
             case ExecutionOutputStatus.TIMEOUT:
+            case ExecutionOutputStatus.QUOTA_EXCEEDED:
                 stepOutput.status = StepOutputStatus.FAILED
                 stepOutput.errorMessage = executionOutput.errorMessage
                 break

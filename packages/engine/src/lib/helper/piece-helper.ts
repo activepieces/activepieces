@@ -35,7 +35,7 @@ import { isNil } from '@activepieces/shared'
 import { createContextStore } from '../services/storage.service'
 import { globals } from '../globals'
 import { connectionService } from '../services/connections.service'
-import { Utils } from '../utils'
+import { utils } from '../utils'
 import { codeExecutor } from '../executors/code-executer'
 import { createTagsManager } from '../services/tags.service'
 import { testExecution } from './test-execution-context'
@@ -248,7 +248,7 @@ export const pieceHelper = {
         }
         catch (e) {
             return {
-                output: e instanceof Error ? Utils.tryParseJson(e.message) : e,
+                output: e instanceof Error ? await utils.tryParseJson(e.message) : e,
                 success: false,
             }
         }

@@ -1,4 +1,4 @@
-import { Action, ActionType, BranchAction, BranchResumeStepMetadata, ExecutionType, LoopOnItemsAction, LoopResumeStepMetadata, ResumeStepMetadata, Trigger } from '@activepieces/shared'
+import { Action, ActionType, BranchAction, BranchResumeStepMetadata, ExecutionType, LoopOnItemsAction, LoopResumeStepMetadata, ResumeStepMetadata } from '@activepieces/shared'
 import { BaseActionHandler } from './action-handler'
 import { CodeActionHandler } from './code-action-handler'
 import { PieceActionHandler } from './piece-action-handler'
@@ -7,7 +7,7 @@ import { BranchActionHandler } from './branch-action-handler'
 import { isNil } from '@activepieces/shared'
 
 type CreateActionHandlerParams = {
-    action: Action | Trigger | undefined
+    action: Action | undefined
     resumeStepMetadata?: ResumeStepMetadata
 }
 

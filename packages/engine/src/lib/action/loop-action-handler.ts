@@ -1,8 +1,8 @@
 import { FlowExecutor } from '../executors/flow-executor'
 import { VariableService } from '../services/variable-service'
-import { Action, ActionType, ExecutionOutputStatus, ExecutionState, LoopOnItemsAction, LoopOnItemsActionSettings, LoopResumeStepMetadata, PauseExecutionOutput, PauseMetadata, StopExecutionOutput, StopResponse } from '@activepieces/shared'
+import { Action, ActionType, ExecutionState, LoopOnItemsAction, LoopOnItemsActionSettings, LoopResumeStepMetadata } from '@activepieces/shared'
 import { BaseActionHandler, ExecuteActionOutput, ExecuteContext, InitStepOutputParams } from './action-handler'
-import { LoopOnItemsStepOutput, StepOutputStatus, StepOutput } from '@activepieces/shared'
+import { LoopOnItemsStepOutput, StepOutputStatus } from '@activepieces/shared'
 
 type CtorParams = {
     currentAction: LoopOnItemsAction
@@ -26,11 +26,11 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
         this.variableService = new VariableService()
     }
 
-    private iterationIsResuming(i: number) {
+    private iterationIsResuming(i: number): boolean {
         return this.resumeStepMetadata?.iteration === i + 1
     }
 
-    private iterationIsNotResuming(i: number) {
+    private iterationIsNotResuming(i: number): boolean {
         return !this.iterationIsResuming(i)
     }
 
@@ -156,7 +156,7 @@ export class LoopOnItemActionHandler extends BaseActionHandler<LoopOnItemsAction
     updateExecutionStateWithLoopDetails(
         executionState: ExecutionState,
         loopOutput: LoopOnItemsStepOutput['output'],
-    ) {
+    ): void {
         executionState.updateLastStep(
             {
                 ...loopOutput,

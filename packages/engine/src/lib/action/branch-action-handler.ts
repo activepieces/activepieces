@@ -1,8 +1,8 @@
 import { FlowExecutor } from '../executors/flow-executor'
 import { VariableService } from '../services/variable-service'
-import { ExecutionState, BranchAction, Action, BranchStepOutput, BranchCondition, BranchOperator, BranchResumeStepMetadata, ActionType, BranchActionSettings, ExecutionOutputStatus, PauseExecutionOutput, StopExecutionOutput } from '@activepieces/shared'
+import { ExecutionState, BranchAction, Action, BranchStepOutput, BranchCondition, BranchOperator, BranchResumeStepMetadata, ActionType, BranchActionSettings, ExecutionOutputStatus } from '@activepieces/shared'
 import { BaseActionHandler, ExecuteActionOutput, ExecuteContext, InitStepOutputParams } from './action-handler'
-import { StepOutputStatus, StepOutput } from '@activepieces/shared'
+import { StepOutputStatus } from '@activepieces/shared'
 
 type CtorParams = {
     currentAction: BranchAction

@@ -3,7 +3,6 @@ import {
     Action,
     ActionType,
     CodeAction,
-    ExecutionOutputStatus,
     ExecutionState,
     StepOutput,
     StepOutputStatus,

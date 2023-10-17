@@ -518,7 +518,7 @@ describe('Variable Service', () => {
                 validators: [Validators.email],
             }),
         }
-        const { processedInput, errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.CustomAuth({
+        const { errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.CustomAuth({
             required: false,
             props: {
                 email: Property.LongText({
@@ -548,7 +548,7 @@ describe('Variable Service', () => {
                 validators: [Validators.url, Validators.oneOf(['activepieces.com', 'www.activepieces.com'])],
             }),
         }
-        const { processedInput, errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.None())
+        const { errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.None())
         expect(errors).toEqual({
             text: [
                 'The value: activepiecescom. is not a valid URL',
@@ -580,7 +580,7 @@ describe('Variable Service', () => {
                 validators: [Validators.maxLength(10)],
             }),
         }
-        const { processedInput, errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.None())
+        const { errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.None())
         expect(errors).toEqual({
             text1: ['The value: short must be at least 10 characters'],
             text2: ['The value: short1234678923145678 may not be greater than 10 characters'],
@@ -614,7 +614,7 @@ describe('Variable Service', () => {
                 validators: [Validators.minValue(10)],
             }),
         }
-        const { processedInput, errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.None())
+        const { errors } = await variableService.applyProcessorsAndValidators(input, props, PieceAuth.None())
         expect(errors).toEqual({
             value1: ['The value: 40 must be 2 or less', 'The 40 is not a valid value, valid choices are: 1,2'],
             value2: ['The value: 4 must be at least 5 and less than or equal 10'],

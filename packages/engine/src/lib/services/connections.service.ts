@@ -32,7 +32,7 @@ export const connectionService = {
             if (!response.ok) {
                 throw new Error('Connection information failed to load. URL: ' + url)
             }
-            const result: AppConnection = await response.json()
+            const result: AppConnection | null = await response.json()
             if (result === null) {
                 return null
             }

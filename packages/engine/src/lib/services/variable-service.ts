@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
     AUTHENTICATION_PROPERTY_NAME,
     ExecutionState,
@@ -96,7 +97,7 @@ export class VariableService {
         return paths[1]
     }
 
-    private evalInScope(js: string, contextAsScope: Record<string, unknown>) {
+    private evalInScope(js: string, contextAsScope: Record<string, unknown>): any {
         try {
             const keys = Object.keys(contextAsScope)
             const values = Object.values(contextAsScope)
@@ -134,8 +135,7 @@ export class VariableService {
         }
         else if (typeof unresolvedInput === 'object') {
             const entries = Object.entries(unresolvedInput)
-            for (let i = 0; i < entries.length; ++i) {
-                const [key, value] = entries[i]
+            for (const [key, value] of entries) {
                 unresolvedInput[key] = await this.resolveInternally(
                     value,
                     valuesMap,
@@ -180,7 +180,7 @@ export class VariableService {
         auth: PieceAuthProperty | undefined,
     ): Promise<{ processedInput: any, errors: any }> {
         const processedInput = { ...resolvedInput }
-        const errors: any = {}
+        const errors: Record<string, unknown> = {}
 
         if (auth && auth.type === PropertyType.CUSTOM_AUTH) {
             const { processedInput: authProcessedInput, errors: authErrors } =
@@ -203,12 +203,12 @@ export class VariableService {
                 continue
             }
             const processors = [
-                ...(property.defaultProcessors || []),
-                ...(property.processors || []),
+                ...(property.defaultProcessors ?? []),
+                ...(property.processors ?? []),
             ]
             const validators = [
-                ...(property.defaultValidators || []),
-                ...(property.validators || []),
+                ...(property.defaultValidators ?? []),
+                ...(property.validators ?? []),
             ]
             // TODO remove the hard coding part
             if (property.type === PropertyType.FILE && isApFilePath(value)) {
@@ -244,7 +244,7 @@ export class VariableService {
     extractConnectionNames(input: any): string[] {
         const connectionNames: string[] = []
 
-        const extractFromValue = (value: any) => {
+        const extractFromValue = (value: any): void => {
             if (typeof value === 'string') {
                 const matchedTokens = value.match(this.VARIABLE_TOKEN)
                 if (

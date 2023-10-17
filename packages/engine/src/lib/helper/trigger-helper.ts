@@ -80,11 +80,12 @@ export const triggerHelper = {
                         response,
                     }
                 }
-                catch (e: any) {
+                catch (e) {
                     console.error(e)
+
                     return {
                         success: false,
-                        message: e.toString(),
+                        message: JSON.stringify(e),
                     }
                 }
             }
@@ -102,11 +103,12 @@ export const triggerHelper = {
                         }),
                     }
                 }
-                catch (e: any) {
+                catch (e) {
                     console.error(e)
+
                     return {
                         success: false,
-                        message: e.toString(),
+                        message: JSON.stringify(e),
                         output: [],
                     }
                 }

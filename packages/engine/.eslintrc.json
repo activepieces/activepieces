@@ -12,6 +12,9 @@
         "project": [
           "packages/engine/tsconfig.*?.json"
         ]
+      },
+      "rules": {
+        "no-console": "off"
       }
     }
   ]
