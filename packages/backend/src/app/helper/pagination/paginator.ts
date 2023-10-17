@@ -7,6 +7,8 @@ import {
     WhereExpressionBuilder,
 } from 'typeorm'
 import { atob, btoa, decodeByType, encodeByType } from './pagination-utils'
+import { DatabaseType, system } from '../system/system'
+import { SystemProp } from '../system/system-prop'
 
 export enum Order {
     ASC = 'ASC',
@@ -122,8 +124,21 @@ export default class Paginator<Entity extends ObjectLiteral> {
     }
 
     private buildCursorQuery(where: WhereExpressionBuilder, cursors: CursorParam): void {
+        const dbType = system.get(SystemProp.DB_TYPE)
         const operator = this.getOperator()
-        where.orWhere(`DATE_TRUNC('second', ${this.alias}.${PAGINATION_KEY}) ${operator} DATE_TRUNC('second', :${PAGINATION_KEY}::timestamp)`, cursors)
+        let queryString: string
+
+        if (dbType === DatabaseType.SQLITE3) {
+            queryString = `strftime('%s', ${this.alias}.${PAGINATION_KEY}) ${operator} strftime('%s', :${PAGINATION_KEY})`
+        }
+        else if (dbType === DatabaseType.POSTGRES) {
+            queryString = `DATE_TRUNC('second', ${this.alias}.${PAGINATION_KEY}) ${operator} DATE_TRUNC('second', :${PAGINATION_KEY}::timestamp)`
+        }
+        else {
+            throw new Error('Unsupported database type')
+        }
+    
+        where.orWhere(queryString, cursors)
     }
 
     private getOperator(): string {
