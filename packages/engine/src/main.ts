@@ -17,14 +17,11 @@ import {
   ExecuteCodeOperation,
   ExecuteExtractPieceMetadata,
   ExecuteValidateAuthOperation,
-  extractPieceFromModule,
   flowHelper,
   EngineTestOperation,
-  applyFunctionToValues
 } from '@activepieces/shared';
-import { pieceHelper } from './lib/helper/action-helper';
+import { pieceHelper } from './lib/helper/piece-helper';
 import { triggerHelper } from './lib/helper/trigger-helper';
-import { Piece } from '@activepieces/pieces-framework';
 import { VariableService } from './lib/services/variable-service';
 import { testExecution } from './lib/helper/test-execution-context';
 import { loggingUtils } from './lib/helper/logging-utils';
@@ -62,20 +59,14 @@ const initFlowExecutor = (input: ExecuteFlowOperation): FlowExecutor => {
   })
 }
 
-const extractInformation = async (): Promise<void> => {
+const extractPieceMetadata = async (): Promise<void> => {
   try {
     const input: ExecuteExtractPieceMetadata = Utils.parseJsonFile(globals.inputFile);
-
-    const pieceModule = await import(input.pieceName);
-    const piece = extractPieceFromModule<Piece>({
-      module: pieceModule,
-      pieceName: input.pieceName,
-      pieceVersion: input.pieceVersion
-    })
+    const output = await pieceHelper.extractPieceMetadata(input)
 
     writeOutput({
       status: EngineResponseStatus.OK,
-      response: piece.metadata()
+      response: output,
     })
   } catch (e) {
     console.error(e);
@@ -264,7 +255,7 @@ async function execute() {
 
   switch (operationType) {
     case EngineOperationType.EXTRACT_PIECE_METADATA:
-      extractInformation();
+      extractPieceMetadata();
       break;
     case EngineOperationType.EXECUTE_FLOW:
       executeFlow();

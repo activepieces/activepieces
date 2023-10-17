@@ -59,6 +59,7 @@
             <span>Export</span>
           </div>
         </button>
+        <ap-share-flow-template-dialog></ap-share-flow-template-dialog>
         <button mat-menu-item *ngIf="flow$ | async as flow" (click)="deleteFlow(flow)">
           <div class="ap-flex ap-gap-3 ap-items-center">
             <svg-icon src="assets/img/custom/trash.svg" class="ap-fill-danger ap-w-[20px] ap-h-[20px]"
@@ -72,7 +73,6 @@
     <div class="ap-flex-grow"></div>
     <div class="ap-flex ap-items-center ap-gap-2">
       <app-feedback class="ap-z-50 ap-flex ap-items-center"></app-feedback>
-
       <ng-container *ngIf="(isInDebugMode$ | async) === false">
         <div class="ap-flex ap-items-center ap-gap-1">
           <app-draft-status></app-draft-status>
@@ -90,3 +90,4 @@
 <ng-container *ngIf="downloadFile$ | async"></ng-container>
 <ng-container *ngIf="duplicateFlow$ | async"></ng-container>
 <ng-container *ngIf="openDashboardOnFolder$ | async"></ng-container>
+<ng-container *ngIf="shareFlow$ | async"></ng-container>

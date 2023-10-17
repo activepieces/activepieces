@@ -1,9 +1,13 @@
 import pino, { Logger, Level } from 'pino'
+import 'pino-loki'
 import { system } from './system/system'
 import { SystemProp } from './system/system-prop'
+import { exceptionHandler } from '../ee/helper/exception-handler'
 
 export const captureException = (error: unknown): void => {
     logger.error(error)
+    exceptionHandler.handle(error)
+        .catch((e) => logger.error(e, '[Logger#captureException] exceptionHandler.handle'))
 }
 
 const lokiUrl = system.get(SystemProp.LOKI_URL)

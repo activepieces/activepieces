@@ -621,6 +621,13 @@ mat-icon[data-mat-icon-name="custom_expand_less"] {
   height: 10px;
 }
 
+.progress-success circle {
+  stroke: #209E34 !important;
+}
+.progress-success-bg circle {
+  stroke: #F0F0F0 !important;
+}
+
 .material-suffix-icon {
   padding-right:  max(16px, calc(var(--mdc-shape-small, 4px) + 4px));;
 }
@@ -640,3 +647,7 @@ mat-icon[data-mat-icon-name="custom_expand_less"] {
  .mat-mdc-raised-button.mat-warn {
    --mdc-protected-button-label-text-color: var(--warn-palette-contrast-500) ;
  }
+
+.material-suffix-icon {
+  padding-right:  max(16px, calc(var(--mdc-shape-small, 4px) + 4px));;
+}

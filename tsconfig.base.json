@@ -17,6 +17,15 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
+      "@activepieces/ee-auth": ["packages/ee/auth/src/index.ts"],
+      "@activepieces/ee-billing-ui": ["packages/ee/billing/ui/src/index.ts"],
+      "@activepieces/ee-components": ["packages/ee/components/src/index.ts"],
+      "@activepieces/ee-shared": ["packages/ee/shared/src/index.ts"],
+      "@activepieces/ee/billing/ui": ["packages/ee/billing/ui/src/index.ts"],
+      "@activepieces/ee/components": ["packages/ee/components/src/index.ts"],
+      "@activepieces/ee/project-members": [
+        "packages/ee/project-members/src/index.ts"
+      ],
       "@activepieces/engine": ["packages/engine/src/main.ts"],
       "@activepieces/piece-airtable": ["packages/pieces/airtable/src/index.ts"],
       "@activepieces/piece-amazon-s3": [
@@ -30,6 +39,9 @@
       ],
       "@activepieces/piece-binance": ["packages/pieces/binance/src/index.ts"],
       "@activepieces/piece-box": ["packages/pieces/box/src/index.ts"],
+      "@activepieces/piece-brilliant-directories": [
+        "packages/pieces/brilliant-directories/src/index.ts"
+      ],
       "@activepieces/piece-cal-com": ["packages/pieces/cal-com/src/index.ts"],
       "@activepieces/piece-calendly": ["packages/pieces/calendly/src/index.ts"],
       "@activepieces/piece-certopus": ["packages/pieces/certopus/src/index.ts"],
@@ -269,7 +281,7 @@
       "@activepieces/ui/feature-templates": [
         "packages/ui/feature-templates/src/index.ts"
       ],
-      "@activepieces/ui/templates": ["packages/ui/templates/src/index.ts"]
+      "@ee/*": ["packages/ee/*"]
     },
     "resolveJsonModule": true
   },

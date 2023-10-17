@@ -1,5 +1,5 @@
 import {
-    CodeActionSchema, BranchActionSchema, LoopOnItemsActionSchema, PieceActionSchema, MissingActionSchema, Action
+    CodeActionSchema, BranchActionSchema, LoopOnItemsActionSchema, PieceActionSchema, Action
 } from "./actions/action";
 import { EmptyTrigger, PieceTrigger, WebhookTrigger } from "./triggers/trigger";
 import { Static, Type } from "@sinclair/typebox";
@@ -60,7 +60,7 @@ export const DeleteActionRequest = Type.Object({
 
 export type DeleteActionRequest = Static<typeof DeleteActionRequest>;
 
-export const UpdateActionRequest = Type.Union([CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema, BranchActionSchema, MissingActionSchema]);
+export const UpdateActionRequest = Type.Union([CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema, BranchActionSchema]);
 export type UpdateActionRequest = Static<typeof UpdateActionRequest>;
 
 export const DuplicateStepRequest = Type.Object({

@@ -13,10 +13,16 @@ RUN npx nx run-many --target=build --projects=backend,ui-core --skip-nx-cache
 
 # Install backend production dependencies
 RUN cd dist/packages/backend && \
-    npm install --production
+    npm install --production --force
 
 ### STAGE 2: Run ###
 FROM activepieces/ap-base:7 AS run
+
+ARG AP_CACHE_PATH=/usr/src/cache
+ARG AP_PACKAGE_ARCHIVE_PATH=/usr/src/packages
+
+# Set default environment to "standard" if not specified
+ARG ENVIRONMENT=standard
 
 # Set up backend
 WORKDIR /usr/src/app
@@ -26,7 +32,7 @@ RUN apt-get update && \
     apt-get install -y nginx gettext
 
 # Copy Nginx configuration template
-COPY packages/ui/core/nginx.conf /etc/nginx/nginx.conf
+COPY packages/ui/core/nginx.${ENVIRONMENT}.conf /etc/nginx/nginx.conf
 
 COPY --from=build /usr/src/app/LICENSE /usr/src/app/LICENSE
 
@@ -39,6 +45,8 @@ COPY --from=build /usr/src/app/packages/ /usr/src/app/packages/
 
 # Copy frontend files to Nginx document root directory from build stage
 COPY --from=build /usr/src/app/dist/packages/ui/core/ /usr/share/nginx/html/
+
+VOLUME [${AP_CACHE_PATH}, ${AP_PACKAGE_ARCHIVE_PATH}]
 
 # Set up entrypoint script
 COPY docker-entrypoint.sh /

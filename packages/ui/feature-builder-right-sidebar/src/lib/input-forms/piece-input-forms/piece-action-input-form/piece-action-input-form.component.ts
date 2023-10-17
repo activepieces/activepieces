@@ -31,7 +31,9 @@ import { Store } from '@ngrx/store';
 import {
   ActionType,
   AUTHENTICATION_PROPERTY_NAME,
+  PackageType,
   PieceActionSettings,
+  PieceType,
   UpdateActionRequest,
 } from '@activepieces/shared';
 import { PiecePropertiesFormValue } from '@activepieces/ui/feature-builder-form-controls';
@@ -105,9 +107,11 @@ export class PieceActionInputFormComponent
   pieceActionForm: UntypedFormGroup;
   initialSetup$: Observable<ActionDropdownOption[]>;
   triggerInitialSetup$: Subject<true> = new Subject();
+  packageType: PackageType;
+  pieceType: PieceType;
   pieceName: string;
   pieceVersion: string;
-  intialComponentInputFormValue: PieceActionInputFormSchema | null;
+  initialComponentInputFormValue: PieceActionInputFormSchema | null;
   selectedAction$: Observable<ActionDropdownOption | undefined>;
   actions$: Observable<ActionDropdownOption[]>;
   valueChanges$: Observable<void>;
@@ -207,8 +211,8 @@ export class PieceActionInputFormComponent
   }
   private setInitialFormValue(items: ActionDropdownOption[]) {
     if (
-      this.intialComponentInputFormValue &&
-      this.intialComponentInputFormValue.actionName
+      this.initialComponentInputFormValue &&
+      this.initialComponentInputFormValue.actionName
     ) {
       this.pieceActionForm
         .get(ACTION_FORM_CONTROL_NAME)!
@@ -216,7 +220,7 @@ export class PieceActionInputFormComponent
           items.find(
             (i) =>
               i.value.actionName ===
-              this.intialComponentInputFormValue?.actionName
+              this.initialComponentInputFormValue?.actionName
           )?.value,
           {
             emitEvent: false,
@@ -226,7 +230,7 @@ export class PieceActionInputFormComponent
         items.find(
           (it) =>
             it.value.actionName ===
-            this.intialComponentInputFormValue?.actionName
+            this.initialComponentInputFormValue?.actionName
         )
       ).pipe(
         tap((selectedAction) => {
@@ -239,7 +243,7 @@ export class PieceActionInputFormComponent
   private setInitialPropertiesFormValue(
     selectedAction: ActionDropdownOption | undefined
   ) {
-    if (selectedAction && this.intialComponentInputFormValue?.input) {
+    if (selectedAction && this.initialComponentInputFormValue?.input) {
       let properties = {
         ...selectedAction.value.properties,
       };
@@ -249,13 +253,13 @@ export class PieceActionInputFormComponent
           ...properties,
         };
       }
-      const propertiesValues = this.intialComponentInputFormValue.input;
+      const propertiesValues = this.initialComponentInputFormValue.input;
       const propertiesFormValue: PiecePropertiesFormValue = {
         properties: properties,
         propertiesValues: propertiesValues,
         setDefaultValues: false,
         customizedInputs:
-          this.intialComponentInputFormValue.inputUiInfo?.customizedInputs ||
+          this.initialComponentInputFormValue.inputUiInfo?.customizedInputs ||
           {},
       };
       this.pieceActionForm.addControl(
@@ -272,7 +276,9 @@ export class PieceActionInputFormComponent
   }
 
   writeValue(obj: PieceActionInputFormSchema): void {
-    this.intialComponentInputFormValue = obj;
+    this.initialComponentInputFormValue = obj;
+    this.packageType = obj.packageType;
+    this.pieceType = obj.pieceType;
     this.pieceName = obj.pieceName;
     this.pieceVersion = obj.pieceVersion;
 
@@ -371,6 +377,8 @@ export class PieceActionInputFormComponent
       input: {
         ...configs.input,
       },
+      packageType: this.packageType,
+      pieceType: this.pieceType,
       pieceName: this.pieceName,
       pieceVersion: this.pieceVersion,
       inputUiInfo: { customizedInputs: customizedInputs },

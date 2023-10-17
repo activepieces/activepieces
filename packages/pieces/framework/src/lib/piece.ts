@@ -1,6 +1,6 @@
 import { Trigger } from './trigger/trigger'
 import { Action } from './action/action'
-import { EventPayload, ParseEventResponse } from '@activepieces/shared'
+import { EventPayload, ParseEventResponse, PieceCategory } from '@activepieces/shared'
 import { PieceBase, PieceMetadata } from './piece-metadata'
 import { PieceAuthProperty } from './property'
 
@@ -19,6 +19,7 @@ export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty> impl
     public readonly minimumSupportedRelease?: string,
     public readonly maximumSupportedRelease?: string,
     public readonly description: string = '',
+    public readonly categories?:PieceCategory[]
   ) {
     actions.forEach(action => this._actions[action.name] = action)
     triggers.forEach(trigger => this._triggers[trigger.name] = trigger)
@@ -66,6 +67,7 @@ export const createPiece = <PieceAuth extends PieceAuthProperty>(params: CreateP
     params.minimumSupportedRelease,
     params.maximumSupportedRelease,
     params.description,
+    params.categories
   )
 }
 
@@ -79,7 +81,8 @@ type CreatePieceParams<PieceAuth extends PieceAuthProperty = PieceAuthProperty> 
   minimumSupportedRelease?: string
   maximumSupportedRelease?: string
   actions: Action<PieceAuth>[]
-  triggers: Trigger<PieceAuth>[]
+  triggers: Trigger<PieceAuth>[],
+  categories?: PieceCategory[]
 }
 
 type PieceEventProcessors = {
