@@ -22,7 +22,8 @@ export const airtableCreateRecordAction = createAction({
         fieldsWithoutEmptyStrings[k] = fields[k]
       }
     })
-    const newFields : Record<string,any> = await airtableCommon.createNewFields( personalToken , baseId , tableId as string , fieldsWithoutEmptyStrings );
+    const newFields : Record<string,unknown> = await airtableCommon.createNewFields( personalToken , baseId , tableId as string , fieldsWithoutEmptyStrings );
+   
     return airtableCommon.createRecord({
       personalToken,
       baseId,
