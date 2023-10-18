@@ -29,19 +29,19 @@ export { PrincipalType } from "./lib/authentication/model/principal-type";
 export { Principal } from "./lib/authentication/model/principal";
 export {
     CodeAction, PieceAction, LoopOnItemsAction,
-    PieceActionSettings, LoopOnItemsActionSettings, Action, ActionType, CodeActionSettings,StepSettings
+    PieceActionSettings, LoopOnItemsActionSettings, Action, ActionType, CodeActionSettings, StepSettings
 } from './lib/flows/actions/action'
 export { StoreEntry, StoreEntryId } from './lib/store-entry/store-entry';
 export * from './lib/user/user';
 export { TestFlowRunRequestBody } from "./lib/flow-run/test-flow-run-request";
-export { Trigger, EmptyTrigger, PieceTriggerSettings, PieceTrigger, WebhookTrigger, TriggerType, AUTHENTICATION_PROPERTY_NAME} from './lib/flows/triggers/trigger';
+export { Trigger, EmptyTrigger, PieceTriggerSettings, PieceTrigger, WebhookTrigger, TriggerType, AUTHENTICATION_PROPERTY_NAME } from './lib/flows/triggers/trigger';
 export { FlowVersion, FlowVersionState, FlowVersionId } from './lib/flows/flow-version';
 export { Flow, FlowId } from './lib/flows/flow';
 export * from './lib/file'
 export * from './lib/flows/flow-helper';
 export { FlowRun, FlowRunId, RunEnvironment } from './lib/flow-run/flow-run'
 export * from './lib/flow-run/execution/execution-state';
-export { Project, ProjectId } from './lib/project/project';
+export { Project, ProjectId, ProjectType } from './lib/project/project';
 export * from './lib/flows/dto/create-flow-request';
 export { SeekPage, Cursor } from './lib/common/seek-page';
 export { apId, ApId } from './lib/common/id-generator'
