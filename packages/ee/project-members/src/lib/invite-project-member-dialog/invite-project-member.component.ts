@@ -35,7 +35,7 @@ export class InviteProjectMemberDialogComponent {
         nonNullable: true,
         validators: [Validators.required],
       }),
-      role: new FormControl(ProjectMemberRole.EDITIOR, {
+      role: new FormControl(ProjectMemberRole.EDITOR, {
         nonNullable: true,
         validators: [Validators.required],
       }),
