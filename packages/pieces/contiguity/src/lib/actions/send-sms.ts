@@ -1,8 +1,9 @@
 import { HttpMethod, httpClient, HttpRequest } from "@activepieces/pieces-common";
 import { contigAuth } from "../..";
 import { Property, createAction } from "@activepieces/pieces-framework";
+import { ActivepiecesError, ErrorCode } from "@activepieces/shared";
 
-
+import {phone} from 'phone';
 
 export const sendSMS = createAction({
     auth: contigAuth,
@@ -12,8 +13,8 @@ export const sendSMS = createAction({
     props: {
         to: Property.ShortText({
             displayName: "To",
-            description: "number to send to in international format - no spacing (+<int><number>)",
-            required: true,
+            description: `number to send to in international format - no spacing [+][country code][subscriber number]`,
+            required: true,  
         }),
         message: Property.LongText({
             displayName: "Content",
@@ -23,6 +24,12 @@ export const sendSMS = createAction({
     },
     async run(context){
         const { to, message } = context.propsValue;
+        const validity = phone(to);
+          
+        if(validity.isValid===false)
+        throw new Error(
+          `Number entered ${to} does not conform to the following format \n [+][country code][subscriber number]`)
+        
         const request: HttpRequest = {
             method: HttpMethod.POST,
             url: "https://api.contiguity.co/send/text",
