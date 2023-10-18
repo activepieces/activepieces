@@ -1,5 +1,5 @@
 import { Type, Static } from '@sinclair/typebox';
-import { QueryVerType } from '../../pieces';
+import { PackageType, PieceType, VersionType } from '../../pieces';
 import { SampleDataSettingsObject } from '../sample-data';
 
 export const AUTHENTICATION_PROPERTY_NAME = "auth";
@@ -37,7 +37,9 @@ export type WebhookTrigger = Static<typeof WebhookTrigger>;
 
 export const PieceTriggerSettings = Type.Object({
   pieceName: Type.String({}),
-  pieceVersion: QueryVerType,
+  pieceVersion: VersionType,
+  pieceType: Type.Enum(PieceType),
+  packageType: Type.Enum(PackageType),
   triggerName: Type.String({}),
   input: Type.Record(Type.String({}), Type.Any()),
   inputUiInfo: SampleDataSettingsObject

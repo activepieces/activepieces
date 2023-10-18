@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/calendly/package.json",
         "main": "packages/pieces/calendly/src/index.ts",
         "assets": ["packages/pieces/calendly/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

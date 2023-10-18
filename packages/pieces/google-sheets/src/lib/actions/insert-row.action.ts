@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { Dimension, googleSheetsCommon, objectToArray, stringifyArray, ValueInputOption } from '../common/common';
+import { Dimension, googleSheetsCommon, labelToColumn, objectToArray, stringifyArray, ValueInputOption } from '../common/common';
 import { googleSheetsAuth } from '../..';
+import { isNil } from '@activepieces/shared';
 
 export const insertRowAction = createAction({
     auth: googleSheetsAuth,
@@ -27,12 +28,16 @@ export const insertRowAction = createAction({
     },
     async run({propsValue, auth}) {
         const values = propsValue['values'];
-        const sheetName = await googleSheetsCommon.findSheetName(auth['access_token'],
-            propsValue['spreadsheet_id'], propsValue['sheet_id']);
-        if (!sheetName) {
-            return {}
+        const sheetName = await googleSheetsCommon.findSheetName(auth['access_token'], propsValue['spreadsheet_id'], propsValue['sheet_id']);            
+        let formattedValues;
+        if( propsValue.first_row_headers ){
+            formattedValues = objectToArray(values);
+            for( let i = 0 ; i < formattedValues.length ; i++ ){
+                if( isNil(formattedValues[i]) ) formattedValues[i] = '';
+            }
+        }else{
+            formattedValues = values['values'];
         }
-        const formattedValues = propsValue.first_row_headers ? objectToArray(values) : values['values'];
         const res = await googleSheetsCommon.appendGoogleSheetValues({
             accessToken: auth['access_token'],
             majorDimension: Dimension.COLUMNS,

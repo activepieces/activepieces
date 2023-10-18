@@ -11,6 +11,147 @@ Semantic versioning is a standardized way of versioning software projects. It us
 
 <Note>You will only see Version X.Y here as all Patch changes (Z) are added under their minor versions.</Note>
 
+Here's the revised text with improved grammar and spelling:
+
+
+### 18/10/2023
+
+**Features**:
+- Added Duplicate Step
+- Released Role-Based Permissions in Paid Version (EE & Cloud)
+- Enhanced Private Pieces Support in EE Version
+- Activepieces Chatbots now retain chat history
+- Added 'Copy to Clipboard' for code, fixed paragraph spacing, and improved list item numbering for Markdown in Chatbots
+
+**Pieces:**
+- Kizeo: Fixed Triggers by @BastienMe
+- Dropbox: Added search, upload file, get file link, delete file, move file, copy file, delete folder, move folder, copy folder, list a folder actions
+- Invoice Ninja: Added Get Report Action, Add Update Invoice, Get Invoices
+- Notion: Fixed Updating Number Fields
+- Files: Read File Content
+- Google Contacts: New Contact Error Creation
+- SMTP: Fixed connection errors
+- Contentful: Added entry search action by 
+- Clarfai: Added Ask Large Model and Ask Image Generation Model Action
+- Brilliant Directories: Created User Action
+- AiTable: Added Filter Field
+- OpenRouter: Removed Leading and Trailing Spaces
+- Microsoft One Drive: Added Download File, Upload File, List Files, List Folders Actions, and New File Trigger
+- Google Drive: Now supports showing all folders
+- Slack Message: Added New Message where not triggering sometimes.
+
+**Fixes**
+- Formatted whitespaces and paragraph spaces inside featured templates
+- Fixed schedules in Community & Enterprise cron jobs
+- Resolved pagination issues in Sqlite3
+- Fixed apostrophes in keys in steps' output
+- Introduced Team Member Email Invitations (In Cloud)
+- Fixed Store Piece functionality
+- Branch no longer fails when a step inside the branch fails.
+
+**Developers Experience:**
+- Added support for streaming logs to Loki for Self Hosted Instances
+- Enhanced error messages with Sandbox Context on Failure
+- Merged Enterprise Code under a different license in this repository
+- Fixed the Generate New Piece script to include the latest nx changes.
+
+please visit the [Full Changelog](https://github.com/activepieces/activepieces/compare/0.10.0...0.11.0) on GitHub.
+
+
+### 30/09/2023
+
+**Chatbots**
+- PDF Datasource Support
+- Bot Sharing via Link
+- Custom API Key Integration
+- Seamless Chatbot Integration with Activepieces Flow
+
+**Pieces:**
+- OpenAI: Enhanced API Key Validation
+- Chatbots: Seamless Integration of Activepieces Bots within Flows
+- ContentFul: Action Entry Retrieval Capability
+
+**Developers Experience:**
+- Resolved Hot Reload Issues
+- Upgraded NX to Address Cache Problems
+
+please visit the [Full Changelog](https://github.com/activepieces/activepieces/compare/0.9.0...0.10.0) on GitHub.
+
+### 26/09/2023
+
+**Pieces**:
+- GitHub: Added Additional Props in Create Issue Action
+- Monday: Added Item / Update Item Actions
+- Google Drive: Added Support for Team Drives in Dropdown / Added Read File Action / Added Sharable Link to Output
+- Google Tasks: New Task Trigger
+- Sendfox: Added Create List / Create Contact / Unsubscribe Contact Actions
+- Linear: Added Create Issue / Update Issue Actions / Create Project / Update Project / Create Comment / New Issue Trigger
+- ClickUp: Added Additional Properties to Create Task / Update Task Actions
+- Storage: Fixed Add Object to List / Remove Object from List
+- Gmail: Added CC / BCC / Sender Name as Optional Props in Send Email Action
+- Mautic: Added Authentication Validator
+- SFTP: Added Authentication Validator with Proper Errors
+- Shopify: Authentication is now fixed, and all triggers are available.
+- Google Sheets: Find Rows / Get By Row Number Action / Get Next Row (Iterate through the whole sheet)
+- OpenAI: Shows Readable Error in Output Section
+- Twitter: Shows Readable Error in Output Section
+- Notion: Fixed Database Dropdown Loading Issue.
+- IMAP: Fixed Load Sample Data and Support Files now
+- Tally: New Form Submission
+- Invoice Ninja: Get Client by Email Action
+- Telegram: Added Instructions to Find Chat ID / Added Optional Thread for Subgroups / Supported Style Format Property
+- LinkedIn: Fixed Posting Posts with Images
+- Trello: Card Moved To List / New Card Trigger / Added Authentication Validation
+- Gitlab: Create Issue Action / Issue Updated Trigger
+- WordPress: Added Authentication Validator
+- Stripe: Create Customer / Create An Invoice / Search for A Customer by Email
+- Pushover: Added HTML/Message Styling Support
+- Hubspot: Added Custom Properties for Create Contact Action
+- Amazon S3: Added Optional Endpoint Property / Allow Customization for Region
+- Kizeo Forms: Added GetListDefinition, GetListItem, GetAllListItems, CreateListItem, EditListItem, DeleteListItem Actions
+- Notion: Create Database Item / Update Database Item
+- Google Pubsub: Publish Message to Topic / New Message Trigger
+- Slack: Fixed Loading more than 100 Channels
+- Date Helper: Get Current Date / Format Date / Extract Date / Date Difference / Add and Subtract Date
+- Open Router: Ask LLM Action
+- Brevo: Fixed Create Contact to add the contact to the selected list.
+- Whisper: Translate Audio / Transcribe Audio Action
+- Google My Business: Create Reply Action / New Review Trigger
+- Airtable: Added API Key Validation
+- Talkable: Added Find Coupon / Create Event / Create Batch of Events / Create Purchase / Update Person and more actions by @Vitalini
+- Salesforce: Added Conditions to Trigger / Bulk Upsert Action
+- Contentful: Create Record Action
+- Qdrant: Get Collection Infos / Delete Collection / Delete Points / Get Points / Add Points to Collection / Get Collection List / Search Points Actions by @Armangiau3
+- Tidycal: Added API Key Validation
+- LocalAI: Send Prompt Action
+- Text Helper: Concatenate Texts / Find / Replace / Split Actions
+
+**Fixes**:
+- HTML/XML now show up in the Output Section
+- Log Truncation is now fixed, no longer truncating steps.
+- Stopped connections dropdown from overflowing the reconnect button
+- Removed a small delay between clicking on the add button and showing the right sidebar
+- Failed OAuth2 Connections should show Error Status Now
+
+**Developer Experience**:
+- Fixed Failing Migration due to unquoted parameter for self-hosters
+- Added Pulumi Template for AWS + Documentation
+
+**Features**:
+- Added Support for Files in the Pieces framework
+- Added Sorting for Folders List by Name
+- Added Suffix Icons for Files / Date Properties
+- Sandboxes are now cached, a huge improvement in speed for executing pieces.
+- Fixed slow saving for steps with long sample data.
+- Speeded up saving for flows
+- Ability to be invited to Multiple Projects (Cloud Only)
+- Added a Dedicated Tab to share Featured Templates
+
+**Contributors**:
+@landonmoir, @Vitalini, @Salem-Alaa, @AbdulTheActivePiecer, @hkboujrida, @BLaidzX, @lldiegon, @mattlung, @Armangiau3, @DGurskij, @tanoggy, @dennis-tra, @GFoley83, @cyrilselasi, @w95
+
+**Full Changelog**: https://github.com/activepieces/activepieces/compare/0.8.0...0.9.0
+
 ### 24/08/2023
 
 **Pieces **:

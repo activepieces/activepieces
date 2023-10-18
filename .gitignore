@@ -4,7 +4,6 @@
 dist
 tmp
 /out-tsc
-.env
 firebase-admin-sdk.json
 
 # SDK Build
@@ -53,3 +52,6 @@ packages/backend/.env
 
 # produced by backend tests
 .npm-cache
+
+# scratch pad
+scratch.md

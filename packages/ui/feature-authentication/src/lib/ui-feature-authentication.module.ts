@@ -14,6 +14,7 @@ import {
   MatFormFieldModule,
   MAT_FORM_FIELD_DEFAULT_OPTIONS,
 } from '@angular/material/form-field';
+import { AuthenticationComponent } from './pages/authenticate/authenticate.component';
 
 @NgModule({
   imports: [
@@ -26,6 +27,11 @@ import {
     MatCardModule,
     AngularSvgIconModule,
     RouterModule.forChild([
+      {
+        title: 'Activepieces',
+        path: 'authenticate',
+        component: AuthenticationComponent,
+      },
       {
         path: '',
         component: AuthLayoutComponent,
@@ -51,6 +57,11 @@ import {
       useValue: { appearance: 'outline' },
     },
   ],
-  declarations: [AuthLayoutComponent, SignInComponent, SignUpComponent],
+  declarations: [
+    AuthLayoutComponent,
+    SignInComponent,
+    SignUpComponent,
+    AuthenticationComponent,
+  ],
 })
 export class UiFeatureAuthenticationModule {}

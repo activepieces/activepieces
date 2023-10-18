@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/hubspot/package.json",
         "main": "packages/pieces/hubspot/src/index.ts",
         "assets": ["packages/pieces/hubspot/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

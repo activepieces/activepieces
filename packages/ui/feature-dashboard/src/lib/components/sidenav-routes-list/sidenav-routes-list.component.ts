@@ -2,11 +2,14 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  OnInit,
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { FolderActions } from '../../store/folders/folders.actions';
-import { environment } from '@activepieces/ui/common';
+import { Observable, map, tap } from 'rxjs';
+import { ApFlagId, supportUrl } from '@activepieces/shared';
+import { FlagService } from '@activepieces/ui/common';
 
 type SideNavRoute = {
   icon: string;
@@ -21,12 +24,42 @@ type SideNavRoute = {
   styleUrls: ['./sidenav-routes-list.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SidenavRoutesListComponent {
+export class SidenavRoutesListComponent implements OnInit {
+  removeChatbots$: Observable<void>;
+  logoUrl$: Observable<string>;
+  showSupport$: Observable<boolean>;
+  showDocs$: Observable<boolean>;
+  showBilling$: Observable<boolean>;
+
   constructor(
     public router: Router,
     private store: Store,
+    private flagServices: FlagService,
     private cd: ChangeDetectorRef
-  ) {}
+  ) {
+    this.logoUrl$ = this.flagServices
+      .getLogos()
+      .pipe(map((logos) => logos.logoIconUrl));
+  }
+  ngOnInit(): void {
+    this.removeChatbots$ = this.flagServices.isChatbotEnabled().pipe(
+      tap((res) => {
+        if (!res) {
+          this.sideNavRoutes = this.sideNavRoutes.filter(
+            (route) => route.route !== 'chatbots'
+          );
+        }
+      }),
+      map(() => void 0)
+    );
+    this.showDocs$ = this.flagServices.isFlagEnabled(ApFlagId.SHOW_DOCS);
+    this.showSupport$ = this.flagServices.isFlagEnabled(
+      ApFlagId.SHOW_COMMUNITY
+    );
+    this.showBilling$ = this.flagServices.isFlagEnabled(
+      ApFlagId.BILLING_ENABLED
+    );
+  }
 
   sideNavRoutes: SideNavRoute[] = [
     {
@@ -38,6 +71,11 @@ export class SidenavRoutesListComponent {
       },
     },
     {
+      icon: 'assets/img/custom/dashboard/chatbots.svg',
+      caption: 'Chatbots',
+      route: 'chatbots',
+    },
+    {
       icon: 'assets/img/custom/dashboard/runs.svg',
       caption: 'Runs',
       route: 'runs',
@@ -46,6 +84,11 @@ export class SidenavRoutesListComponent {
       icon: 'assets/img/custom/dashboard/connections.svg',
       caption: 'Connections',
       route: 'connections',
+    },
+    {
+      icon: 'assets/img/custom/dashboard/members.svg',
+      caption: 'Team',
+      route: 'team',
     },
   ];
 
@@ -72,7 +115,7 @@ export class SidenavRoutesListComponent {
     return this.router.url.includes(route);
   }
 
-  get environment() {
-    return environment;
+  openSupport() {
+    window.open(supportUrl, '_blank', 'noopener');
   }
 }

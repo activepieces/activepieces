@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/zendesk/package.json",
         "main": "packages/pieces/zendesk/src/index.ts",
         "assets": ["packages/pieces/zendesk/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

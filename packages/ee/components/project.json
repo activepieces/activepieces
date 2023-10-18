@@ -1,0 +1,44 @@
+{
+  "name": "ee-components",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "packages/ee/components/src",
+  "prefix": "ap",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/angular:ng-packagr-lite",
+      "outputs": ["{workspaceRoot}/dist/{projectRoot}"],
+      "options": {
+        "project": "packages/ee/components/ng-package.json"
+      },
+      "configurations": {
+        "production": {
+          "tsConfig": "packages/ee/components/tsconfig.lib.prod.json"
+        },
+        "development": {
+          "tsConfig": "packages/ee/components/tsconfig.lib.json"
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "test": {
+      "executor": "@angular-devkit/build-angular:karma",
+      "options": {
+        "tsConfig": "packages/ee/components/tsconfig.spec.json",
+        "karmaConfig": "packages/ee/components/karma.conf.js",
+        "polyfills": ["zone.js", "zone.js/testing"]
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": [
+          "packages/ee/components/**/*.ts",
+          "packages/ee/components/**/*.html"
+        ]
+      }
+    }
+  },
+  "tags": []
+}

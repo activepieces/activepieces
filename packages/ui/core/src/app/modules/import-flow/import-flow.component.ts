@@ -1,5 +1,15 @@
-import { Flow, FlowOperationType, FlowTemplate } from '@activepieces/shared';
-import { FlowService, TemplatesService } from '@activepieces/ui/common';
+import {
+  Flow,
+  FlowOperationType,
+  FlowTemplate,
+  TelemetryEventName,
+} from '@activepieces/shared';
+import {
+  FlagService,
+  FlowService,
+  TelemetryService,
+  TemplatesService,
+} from '@activepieces/ui/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { Meta } from '@angular/platform-browser';
@@ -26,14 +36,20 @@ export class ImportFlowComponent implements OnInit {
 
   importFlow$: Observable<void>;
   hasDirectFlag$: Observable<boolean> = of(false);
-
+  fullLogoUrl$: Observable<string>;
   constructor(
     private route: ActivatedRoute,
     private templatesService: TemplatesService,
     private flowService: FlowService,
     private router: Router,
-    private metaService: Meta
-  ) {}
+    private metaService: Meta,
+    private telemetryService: TelemetryService,
+    private flagService: FlagService
+  ) {
+    this.fullLogoUrl$ = this.flagService
+      .getLogos()
+      .pipe(map((logos) => logos.fullLogoUrl));
+  }
 
   ngOnInit(): void {
     this.loadFlow$ = this.route.params.pipe(
@@ -76,6 +92,16 @@ export class ImportFlowComponent implements OnInit {
                   displayName: templateJson.template.displayName,
                 })
                 .pipe(
+                  tap(() => {
+                    this.telemetryService.capture({
+                      name: TelemetryEventName.FLOW_IMPORTED,
+                      payload: {
+                        id: templateJson.id,
+                        name: templateJson.name,
+                        location: `import flow view`,
+                      },
+                    });
+                  }),
                   switchMap((flow) => {
                     return this.flowService
                       .update(flow.id, {
@@ -97,10 +123,7 @@ export class ImportFlowComponent implements OnInit {
           if (error.status === StatusCodes.UNAUTHORIZED) {
             this.router.navigate(['/sign-up'], {
               queryParams: {
-                redirect_url:
-                  `${window.location.origin}${window.location.pathname}`.split(
-                    '?'
-                  )[0],
+                redirect_url: `${window.location.pathname}`.split('?')[0],
               },
             });
             return EMPTY;

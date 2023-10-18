@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/dropbox/package.json",
         "main": "packages/pieces/dropbox/src/index.ts",
         "assets": ["packages/pieces/dropbox/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

@@ -1,14 +1,13 @@
-import { PieceMetadataSchema } from '../piece-metadata-entity'
-import { GetParams, PieceMetadataService } from './piece-metadata-service'
-import { PieceMetadata, PieceMetadataSummary } from '@activepieces/pieces-framework'
+import { PieceMetadataModel, PieceMetadataModelSummary, PieceMetadataSchema } from '../piece-metadata-entity'
+import { PieceMetadataService } from './piece-metadata-service'
 import { AllPiecesStats, pieceStatsService } from './piece-stats-service'
 import { StatusCodes } from 'http-status-codes'
-import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
+import { ActivepiecesError, EXACT_VERSION_PATTERN, ErrorCode } from '@activepieces/shared'
 
 const CLOUD_API_URL = 'https://cloud.activepieces.com/api/v1/pieces'
 
-const handleHttpErrors = async (response: Response) => {
-    if (response.status === StatusCodes.NOT_FOUND) {
+const handleHttpErrors = async (response: Response): Promise<void> => {
+    if (response.status === StatusCodes.NOT_FOUND.valueOf()) {
         throw new ActivepiecesError({
             code: ErrorCode.ENTITY_NOT_FOUND,
             params: {
@@ -17,27 +16,27 @@ const handleHttpErrors = async (response: Response) => {
         })
     }
 
-    if (response.status !== StatusCodes.OK) {
+    if (response.status !== StatusCodes.OK.valueOf()) {
         throw new Error(await response.text())
     }
 }
 
 export const CloudPieceMetadataService = (): PieceMetadataService => {
     return {
-        async list({ release }): Promise<PieceMetadataSummary[]> {
+        async list({ release }): Promise<PieceMetadataModelSummary[]> {
             const response = await fetch(`${CLOUD_API_URL}?release=${release}`)
 
             await handleHttpErrors(response)
 
-            return await response.json() as PieceMetadataSummary[]
+            return await response.json() as PieceMetadataModelSummary[]
         },
 
-        async get({ name, version }: GetParams): Promise<PieceMetadata> {
+        async getOrThrow({ name, version }): Promise<PieceMetadataModel> {
             const response = await fetch(`${CLOUD_API_URL}/${name}${version ? '?version=' + version : ''}`)
 
             await handleHttpErrors(response)
 
-            return await response.json() as PieceMetadata
+            return await response.json() as PieceMetadataModel
         },
 
         async create(): Promise<PieceMetadataSchema> {
@@ -47,9 +46,25 @@ export const CloudPieceMetadataService = (): PieceMetadataService => {
         async delete(): Promise<void> {
             throw new Error('operation not supported')
         },
-        
+
         async stats(): Promise<AllPiecesStats> {
             return await pieceStatsService.get()
+        },
+
+        async getExactPieceVersion({ name, version, projectId }): Promise<string> {
+            const isExactVersion = EXACT_VERSION_PATTERN.test(version)
+
+            if (isExactVersion) {
+                return version
+            }
+
+            const pieceMetadata = await this.getOrThrow({
+                projectId,
+                name,
+                version,
+            })
+
+            return pieceMetadata.version
         },
     }
 }

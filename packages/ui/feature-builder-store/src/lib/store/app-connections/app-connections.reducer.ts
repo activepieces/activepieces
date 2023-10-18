@@ -19,6 +19,15 @@ const _appConnectionsReducer = createReducer(
     }
   ),
   on(
+    appConnectionsActions.loadInitial,
+    (state, { connections }): AppConnectionsState => {
+      return {
+        loaded: true,
+        connections: connections,
+      };
+    }
+  ),
+  on(
     appConnectionsActions.upsert,
     (state, { connection }): AppConnectionsState => {
       const clonedConnections = [...state.connections];

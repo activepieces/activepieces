@@ -37,7 +37,7 @@ export { TestFlowRunRequestBody } from "./lib/flow-run/test-flow-run-request";
 export { Trigger, EmptyTrigger, PieceTriggerSettings, PieceTrigger, WebhookTrigger, TriggerType, AUTHENTICATION_PROPERTY_NAME} from './lib/flows/triggers/trigger';
 export { FlowVersion, FlowVersionState, FlowVersionId } from './lib/flows/flow-version';
 export { Flow, FlowId } from './lib/flows/flow';
-export { File, FileId } from './lib/file/file'
+export * from './lib/file'
 export * from './lib/flows/flow-helper';
 export { FlowRun, FlowRunId, RunEnvironment } from './lib/flow-run/flow-run'
 export * from './lib/flow-run/execution/execution-state';
@@ -56,7 +56,9 @@ export * from "./lib/flows/folders/folder-requests";
 export * from "./lib/flows/dto/flow-template-request";
 export * from "./lib/flows";
 export * from "./lib/flows/dto/list-flows-request";
+export * from './lib/chatbot'
 
 import { TypeSystem } from '@sinclair/typebox/system'
 // Look at https://github.com/sinclairzx81/typebox/issues/350
 TypeSystem.ExactOptionalPropertyTypes = false;
+export * from './lib/support-url'

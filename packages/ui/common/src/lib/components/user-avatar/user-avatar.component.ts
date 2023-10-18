@@ -1,9 +1,13 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthenticationService } from '../../service/authentication.service';
-import { showBeamer } from '../../utils/beamer';
 import { environment } from '../../environments/environment';
-
+import { ProjectService } from '../../service/project.service';
+import { ApFlagId, Project } from '@activepieces/shared';
+import { Observable, map, tap } from 'rxjs';
+import { JwtHelperService } from '@auth0/angular-jwt';
+import { HttpClient } from '@angular/common/http';
+import { FlagService } from '../../service/flag.service';
 @Component({
   selector: 'ap-user-avatar',
   templateUrl: './user-avatar.component.html',
@@ -12,11 +16,48 @@ import { environment } from '../../environments/environment';
 })
 export class UserAvatarComponent {
   showAvatarOuterCircle = false;
+  // BEGIN EE
+  private jwtHelper = new JwtHelperService();
+  projects$: Observable<Project[]>;
+  selectedProject$: Observable<Project | undefined>;
+  switchProject$: Observable<void>;
+  overflownProjectsNames: Record<string, string> = {};
+  billingEnabled$: Observable<boolean>;
+  projectEnabled$: Observable<boolean>;
+
+  showCommunity$: Observable<boolean>;
 
   constructor(
     public authenticationService: AuthenticationService,
-    private router: Router
-  ) {}
+    private router: Router,
+    private flagService: FlagService,
+    // BEGIN EE
+    private projectService: ProjectService,
+    private http: HttpClient // END EE
+  ) {
+    this.showCommunity$ = this.flagService.isFlagEnabled(
+      ApFlagId.SHOW_COMMUNITY
+    );
+    // BEGIN EE
+    this.billingEnabled$ = this.flagService.isFlagEnabled(
+      ApFlagId.BILLING_ENABLED
+    );
+    this.projectEnabled$ = this.flagService.isFlagEnabled(
+      ApFlagId.PROJECT_MEMBERS_ENABLED
+    );
+    this.projects$ = this.projectService.list();
+    const currentProjectId = this.jwtHelper.decodeToken(
+      localStorage.getItem(environment.jwtTokenName) || ''
+    )?.projectId;
+    this.selectedProject$ = this.projects$.pipe(
+      map((projects) => {
+        return projects.find((f) => {
+          return f.id === currentProjectId;
+        });
+      })
+    );
+    // END EE
+  }
 
   getDropDownLeftOffset(
     toggleElement: HTMLElement,
@@ -36,6 +77,27 @@ export class UserAvatarComponent {
     this.authenticationService.logout();
   }
 
+  // BEGIN EE
+  viewPlans() {
+    this.router.navigate(['plans']);
+  }
+  switchProject(projectId: string) {
+    this.switchProject$ = this.http
+      .post<{
+        token: string;
+      }>(`${environment.apiUrl}/projects/${projectId}/token`, {
+        projectId,
+      })
+      .pipe(
+        tap(({ token }) => {
+          localStorage.setItem(environment.jwtTokenName, token);
+          window.location.reload();
+        }),
+        map(() => void 0)
+      );
+  }
+  // END EE
+
   get userFirstLetter() {
     if (
       this.authenticationService.currentUser == undefined ||
@@ -46,14 +108,14 @@ export class UserAvatarComponent {
     return this.authenticationService.currentUser.firstName[0];
   }
   goToCommunity() {
-    window.open('https://discord.gg/yvxF5k5AUb', '_blank', 'noopener');
+    window.open('https://community.activepieces.com/', '_blank', 'noopener');
   }
 
   showWhatIsNew() {
-    showBeamer();
-  }
-
-  get environment() {
-    return environment;
+    window.open(
+      'https://community.activepieces.com/c/announcements',
+      '_blank',
+      'noopener'
+    );
   }
 }

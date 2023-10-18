@@ -17,6 +17,15 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
+      "@activepieces/ee-auth": ["packages/ee/auth/src/index.ts"],
+      "@activepieces/ee-billing-ui": ["packages/ee/billing/ui/src/index.ts"],
+      "@activepieces/ee-components": ["packages/ee/components/src/index.ts"],
+      "@activepieces/ee-shared": ["packages/ee/shared/src/index.ts"],
+      "@activepieces/ee/billing/ui": ["packages/ee/billing/ui/src/index.ts"],
+      "@activepieces/ee/components": ["packages/ee/components/src/index.ts"],
+      "@activepieces/ee/project-members": [
+        "packages/ee/project-members/src/index.ts"
+      ],
       "@activepieces/engine": ["packages/engine/src/main.ts"],
       "@activepieces/piece-airtable": ["packages/pieces/airtable/src/index.ts"],
       "@activepieces/piece-amazon-s3": [
@@ -30,6 +39,9 @@
       ],
       "@activepieces/piece-binance": ["packages/pieces/binance/src/index.ts"],
       "@activepieces/piece-box": ["packages/pieces/box/src/index.ts"],
+      "@activepieces/piece-brilliant-directories": [
+        "packages/pieces/brilliant-directories/src/index.ts"
+      ],
       "@activepieces/piece-cal-com": ["packages/pieces/cal-com/src/index.ts"],
       "@activepieces/piece-calendly": ["packages/pieces/calendly/src/index.ts"],
       "@activepieces/piece-certopus": ["packages/pieces/certopus/src/index.ts"],
@@ -40,6 +52,9 @@
       ],
       "@activepieces/piece-constant-contact": [
         "packages/pieces/constant-contact/src/index.ts"
+      ],
+      "@activepieces/piece-contentful": [
+        "packages/pieces/contentful/src/index.ts"
       ],
       "@activepieces/piece-contiguity": [
         "packages/pieces/contiguity/src/index.ts"
@@ -133,6 +148,9 @@
       "@activepieces/piece-microsoft-excel-365": [
         "packages/pieces/microsoft-excel-365/src/index.ts"
       ],
+      "@activepieces/piece-microsoft-onedrive": [
+        "packages/pieces/microsoft-onedrive/src/index.ts"
+      ],
       "@activepieces/piece-mindee": ["packages/pieces/mindee/src/index.ts"],
       "@activepieces/piece-monday": ["packages/pieces/monday/src/index.ts"],
       "@activepieces/piece-mysql": ["packages/pieces/mysql/src/index.ts"],
@@ -140,6 +158,9 @@
       "@activepieces/piece-notion": ["packages/pieces/notion/src/index.ts"],
       "@activepieces/piece-ntfy": ["packages/pieces/ntfy/src/index.ts"],
       "@activepieces/piece-onfleet": ["packages/pieces/onfleet/src/index.ts"],
+      "@activepieces/piece-open-router": [
+        "packages/pieces/open-router/src/index.ts"
+      ],
       "@activepieces/piece-openai": ["packages/pieces/openai/src/index.ts"],
       "@activepieces/piece-pastebin": ["packages/pieces/pastebin/src/index.ts"],
       "@activepieces/piece-pastefy": ["packages/pieces/pastefy/src/index.ts"],
@@ -149,6 +170,10 @@
       "@activepieces/piece-postgres": ["packages/pieces/postgres/src/index.ts"],
       "@activepieces/piece-posthog": ["packages/pieces/posthog/src/index.ts"],
       "@activepieces/piece-pushover": ["packages/pieces/pushover/src/index.ts"],
+      "@activepieces/piece-qdrant": ["packages/pieces/qdrant/src/index.ts"],
+      "@activepieces/piece-read-file": [
+        "packages/pieces/read-file/src/index.ts"
+      ],
       "@activepieces/piece-rss": ["packages/pieces/rss/src/index.ts"],
       "@activepieces/piece-salesforce": [
         "packages/pieces/salesforce/src/index.ts"
@@ -209,6 +234,18 @@
       "@activepieces/pieces-framework": [
         "packages/pieces/framework/src/index.ts"
       ],
+      "@activepieces/pieces/chatbots": [
+        "packages/pieces/chatbots/src/index.ts"
+      ],
+      "@activepieces/pieces/date-helper": [
+        "packages/pieces/date-helper/src/index.ts"
+      ],
+      "@activepieces/pieces/google-my-business": [
+        "packages/pieces/google-my-business/src/index.ts"
+      ],
+      "@activepieces/pieces/text-helper": [
+        "packages/pieces/text-helper/src/index.ts"
+      ],
       "@activepieces/shared": ["packages/shared/src/index.ts"],
       "@activepieces/ui/common": ["packages/ui/common/src/index.ts"],
       "@activepieces/ui/feature-authentication": [
@@ -235,6 +272,9 @@
       "@activepieces/ui/feature-builder-test-steps": [
         "packages/ui/feature-builder-test-steps/src/index.ts"
       ],
+      "@activepieces/ui/feature-chatbot": [
+        "packages/ui/feature-chatbot/src/index.ts"
+      ],
       "@activepieces/ui/feature-connections": [
         "packages/ui/feature-connections/src/index.ts"
       ],
@@ -244,7 +284,7 @@
       "@activepieces/ui/feature-templates": [
         "packages/ui/feature-templates/src/index.ts"
       ],
-      "@activepieces/ui/templates": ["packages/ui/templates/src/index.ts"]
+      "@ee/*": ["packages/ee/*"]
     },
     "resolveJsonModule": true
   },

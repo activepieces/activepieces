@@ -4,12 +4,14 @@
   "projectType": "library",
   "sourceRoot": "packages/ui/feature-builder-header/src",
   "prefix": "app",
+  "implicitDependencies": ["ee-components"],
   "targets": {
     "build": {
       "executor": "@nx/angular:ng-packagr-lite",
       "outputs": ["{workspaceRoot}/dist/{projectRoot}"],
       "options": {
-        "project": "packages/ui/feature-builder-header/ng-package.json"
+        "project": "packages/ui/feature-builder-header/ng-package.json",
+        "updateBuildableProjectDepsInPackageJson": true
       },
       "configurations": {
         "production": {

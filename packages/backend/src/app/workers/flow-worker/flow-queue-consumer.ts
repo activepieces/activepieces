@@ -26,14 +26,16 @@ import { redisConsumer } from './queues/redis/redis-consumer'
 import { redisQueueManager } from './queues/redis/redis-queue'
 import { QueueMode, system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
+import { enrichErrorContext } from '../../helper/error-handler'
 
-const queueMode = system.get(SystemProp.QUEUE_MODE)!
+const queueMode = system.getOrThrow<QueueMode>(SystemProp.QUEUE_MODE)
 
 const initFlowQueueConsumer = async (): Promise<void> => {
     switch (queueMode) {
         case QueueMode.MEMORY: {
             await inMemoryQueueManager.init()
             consumeJobsInMemory()
+                .catch((e) => logger.error(e, '[FlowQueueConsumer#init] consumeJobsInMemory'))
             break
         }
         case QueueMode.REDIS: {
@@ -57,11 +59,26 @@ const close = async (): Promise<void> => {
     }
 }
 
-async function consumeOnetimeJob(data: OneTimeJobData) {
-    return await flowWorker.executeFlow(data)
+async function consumeOnetimeJob(data: OneTimeJobData): Promise<void> {
+    try {
+        await flowWorker.executeFlow(data)
+    }
+    catch (error) {
+        const contextKey = '[FlowQueueConsumer#consumeOnetimeJob]'
+        const contextValue = { jobData: data }
+
+        const enrichedError = enrichErrorContext({
+            error,
+            key: contextKey,
+            value: contextValue,
+        })
+
+        logger.error(enrichedError)
+        throw enrichedError
+    }
 }
 
-async function consumeScheduledJobs(data: ScheduledJobData) {
+async function consumeScheduledJobs(data: ScheduledJobData): Promise<void> {
     try {
         switch (data.executionType) {
             case ExecutionType.BEGIN:
@@ -92,16 +109,15 @@ const consumeDelayedJob = async (data: DelayedJobData): Promise<void> => {
 
 const consumeRepeatingJob = async (data: RepeatingJobData): Promise<void> => {
     try {
-    // TODO REMOVE AND FIND PERMANENT SOLUTION
+        // TODO REMOVE AND FIND PERMANENT SOLUTION
         const instance = await flowInstanceService.get({
             projectId: data.projectId,
             flowId: data.flowId,
         })
 
-        if (
-            isNil(instance) ||
-      instance.status !== FlowInstanceStatus.ENABLED ||
-      instance.flowVersionId !== data.flowVersionId
+        if (isNil(instance) ||
+            instance.status !== FlowInstanceStatus.ENABLED ||
+            instance.flowVersionId !== data.flowVersionId
         ) {
             captureException(
                 new Error(
@@ -133,7 +149,7 @@ const consumeRepeatingJob = async (data: RepeatingJobData): Promise<void> => {
     catch (e) {
         if (
             e instanceof ActivepiecesError &&
-      e.error.code === ErrorCode.TASK_QUOTA_EXCEEDED
+            e.error.code === ErrorCode.QUOTA_EXCEEDED
         ) {
             logger.info(
                 `[repeatableJobConsumer] removing project.id=${data.projectId} run out of flow quota`,

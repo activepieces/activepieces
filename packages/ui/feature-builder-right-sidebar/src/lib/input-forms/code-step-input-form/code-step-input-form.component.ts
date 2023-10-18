@@ -32,10 +32,13 @@ export class CodeStepInputFormComponent implements ControlValueAccessor {
   formValueChanged$: Observable<unknown>;
 
   markdown = `
-  To use data from previous steps in your code, add them as key/values below.
+  To use data from previous steps in your code, include them as pairs of keys and values below.
   <br>
   <br>
-  Use **inputs.key** to access any of these inputs in your code.
+  You can access these inputs in your code using **inputs.key**, where **key** is the name you assigned below.
+  <br>
+  <br>
+  **Warning: "const code" is the entry to the code, if it is removed or renamed, your step will fail.**
   `;
 
   onChange: (val: CodeStepInputFormSchema) => void = (

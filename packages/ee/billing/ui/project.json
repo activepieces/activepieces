@@ -1,0 +1,44 @@
+{
+  "name": "ee-billing-ui",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "packages/ee/billing/ui/src",
+  "prefix": "app",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/angular:ng-packagr-lite",
+      "outputs": ["{workspaceRoot}/dist/{projectRoot}"],
+      "options": {
+        "project": "packages/ee/billing/ui/ng-package.json"
+      },
+      "configurations": {
+        "production": {
+          "tsConfig": "packages/ee/billing/ui/tsconfig.lib.prod.json"
+        },
+        "development": {
+          "tsConfig": "packages/ee/billing/ui/tsconfig.lib.json"
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "test": {
+      "executor": "@angular-devkit/build-angular:karma",
+      "options": {
+        "tsConfig": "packages/ee/billing/ui/tsconfig.spec.json",
+        "karmaConfig": "packages/ee/billing/ui/karma.conf.js",
+        "polyfills": ["zone.js", "zone.js/testing"]
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": [
+          "packages/ee/billing/ui/**/*.ts",
+          "packages/ee/billing/ui/**/*.html"
+        ]
+      }
+    }
+  },
+  "tags": []
+}

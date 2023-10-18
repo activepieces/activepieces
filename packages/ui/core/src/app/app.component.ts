@@ -1,5 +1,15 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { catchError, map, Observable, of, Subject, switchMap, tap } from 'rxjs';
+import {
+  BehaviorSubject,
+  catchError,
+  forkJoin,
+  map,
+  Observable,
+  of,
+  Subject,
+  switchMap,
+  tap,
+} from 'rxjs';
 import { Store } from '@ngrx/store';
 import {
   NavigationCancel,
@@ -17,11 +27,7 @@ import {
   FlowService,
 } from '@activepieces/ui/common';
 import { compareVersions } from 'compare-versions';
-import {
-  ApFlagId,
-  FlowOperationType,
-  TelemetryEventName,
-} from '@activepieces/shared';
+import { ApFlagId, FlowOperationType } from '@activepieces/shared';
 import { TelemetryService } from '@activepieces/ui/common';
 import { AuthenticationService, fadeInUp400ms } from '@activepieces/ui/common';
 import { MatDialog } from '@angular/material/dialog';
@@ -52,6 +58,8 @@ export class AppComponent implements OnInit {
   openCommandBar$: Observable<void>;
   loading$: Subject<boolean> = new Subject();
   importTemplate$: Observable<void>;
+  loadingTheme$: BehaviorSubject<boolean> = new BehaviorSubject(true);
+  theme$: Observable<void>;
   constructor(
     public dialog: MatDialog,
     private store: Store,
@@ -67,11 +75,12 @@ export class AppComponent implements OnInit {
   ) {
     this.registerSearchIconIntoMaterialIconRegistery();
     this.listenToImportFlow();
+    this.theme$ = this.setTheme();
     this.routeLoader$ = this.router.events.pipe(
       tap((event) => {
         if (
           event instanceof NavigationStart &&
-          event.url.startsWith('/flows/')
+          (event.url.startsWith('/flows/') || event.url.endsWith('/settings'))
         ) {
           this.loading$.next(true);
         }
@@ -131,15 +140,7 @@ export class AppComponent implements OnInit {
     this.importTemplate$ = this.builderService.importTemplate$
       .asObservable()
       .pipe(
-        tap((res) => {
-          this.telemetryService.capture({
-            name: TelemetryEventName.FLOW_IMPORTED,
-            payload: {
-              id: res.template.id,
-              name: res.template.name,
-              location: 'Inside the builder after creation',
-            },
-          });
+        tap(() => {
           this.loading$.next(true);
         }),
         switchMap((res) => {
@@ -243,5 +244,50 @@ export class AppComponent implements OnInit {
       '_blank',
       'noopener noreferrer'
     );
+  }
+
+  setTheme() {
+    const colors$ = this.flagService.getColors().pipe(
+      tap((colors) => {
+        this.setColorsVariables(colors, '');
+      })
+    );
+    const primaryPalette$ = this.flagService.getPrimaryPalette().pipe(
+      tap((palette) => {
+        this.setColorsVariables(palette, 'primary-palette-');
+      })
+    );
+    const warnPalette$ = this.flagService.getWarnPalette().pipe(
+      tap((palette) => {
+        this.setColorsVariables(palette, 'warn-palette-');
+      })
+    );
+    const palettes$ = forkJoin([colors$, primaryPalette$, warnPalette$]).pipe(
+      tap(() => this.loadingTheme$.next(false)),
+      map(() => void 0)
+    );
+    return palettes$;
+  }
+
+  setColorsVariables(
+    colors: Record<string, string | object>,
+    paletteName: string
+  ) {
+    Object.entries(colors).forEach(([colorName, value]) => {
+      if (typeof value == 'string') {
+        document.documentElement.style.setProperty(
+          `--${paletteName}${colorName}`,
+          value
+        );
+      }
+      if (typeof value === 'object') {
+        Object.entries(value).forEach(([shade, shadeValue]) => {
+          document.documentElement.style.setProperty(
+            `--${paletteName}${colorName}-${shade}`,
+            shadeValue
+          );
+        });
+      }
+    });
   }
 }

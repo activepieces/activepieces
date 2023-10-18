@@ -5,31 +5,31 @@ import { googleSheetsAuth } from '../..';
 export const findRowsAction = createAction({
     auth: googleSheetsAuth,
     name: 'find_rows',
-    description: 'Find rows in a Google Sheet',
+    description: 'Find rows in a Google Sheet by column name and search value',
     displayName: 'Find Rows',
     props: {
         spreadsheet_id: googleSheetsCommon.spreadsheet_id,
         include_team_drives: googleSheetsCommon.include_team_drives,
         sheet_id: googleSheetsCommon.sheet_id,
-        column_name: googleSheetsCommon.column_name,
-        search_value: Property.ShortText({
+        columnName: googleSheetsCommon.columnName,
+        searchValue: Property.ShortText({
             displayName: 'Search Value',
             description: 'The value to search for',
             required: false
         }),
-        match_case: Property.Checkbox({
+        matchCase: Property.Checkbox({
             displayName: 'Exact match',
             description: 'Whether to choose the rows with exact match or choose the rows that contain the search value',
             required: true,
             defaultValue: false
         }),
-        starting_row: Property.Number({
+        startingRow: Property.Number({
             displayName: 'Starting Row',
             description: 'The row number to start searching from',
             required: false,
             validators: [ Validators.minValue(1) ],
         }),
-        number_of_rows: Property.Number({
+        numberOfRows: Property.Number({
             displayName: 'Number of Rows',
             description: 'The number of rows to search ( the default is 1 if not specified )',
             required: false,
@@ -43,66 +43,66 @@ export const findRowsAction = createAction({
             propsValue['spreadsheet_id'],
             propsValue['sheet_id']
         );
-        if (!sheetName) {
-            throw Error('Sheet not found in spreadsheet');
-        }
 
+        let rows = [] ;
         let values = [];
-        if( !propsValue.starting_row ){
-            values = await googleSheetsCommon.getValues(
+        if( !propsValue.startingRow ){
+            rows = await googleSheetsCommon.getValues(
                 propsValue.spreadsheet_id,
                 auth['access_token'],
                 propsValue.sheet_id
             );
 
-            values = values.map((value) => {
-                return value.values;
+            values = rows.map((row) => {
+                return row.values;
             });
-
         }else{
-            const number_of_rows = propsValue.number_of_rows ?? 1;
+            const numberOfRows = propsValue.numberOfRows ?? 1;
 
-            values = await getGoogleSheetRows({
+            rows = await getGoogleSheetRows({
                 accessToken: auth['access_token'],
                 sheetName: sheetName,
                 spreadSheetId: propsValue['spreadsheet_id'],
-                rowIndex_s: propsValue['starting_row'],
-                rowIndex_e: propsValue['starting_row'] + number_of_rows - 1
+                rowIndex_s: propsValue['startingRow'],
+                rowIndex_e: propsValue['startingRow'] + numberOfRows - 1
             });
-            
+
+            values = rows.map((row) => {
+                return row.values;
+            });
         }
 
         const matchingRows: any[] = [];
-        const columnName = propsValue.column_name ? propsValue.column_name : 'A';
-        const column_number = labelToColumn(columnName);
-        const search_value = propsValue.search_value ?? '';
+        const columnName = propsValue.columnName ? propsValue.columnName : 'A';
+        const columnNumber = labelToColumn(columnName);
+        const searchValue = propsValue.searchValue ?? '';
 
-        for( const row of values ){
-
-            if( search_value === '' ){
-                matchingRows.push(row);
+        for( let i = 0 ; i < values.length ; i++ ){
+            const row = values[i];
+            if( searchValue === '' ){
+                matchingRows.push(rows[i]);
                 continue;
             }
 
             const keys = Object.keys(row);
-            if( keys.length <= column_number ) continue;
-            const entry_value = row[ keys[column_number] ];
+            if( keys.length <= columnNumber ) continue;
+            const entry_value = row[ keys[columnNumber] ];
 
             if( entry_value === undefined ){
                 continue;
             }
-            if( propsValue.match_case ){
-                if( entry_value === search_value ){
-                    matchingRows.push(row);
+            if( propsValue.matchCase ){
+                if( entry_value === searchValue ){
+                    matchingRows.push(rows[i]);
                 }
             }else{
-                if( entry_value.toLowerCase().includes(search_value.toLowerCase()) ){
-                    matchingRows.push(row);
+                if( entry_value.toLowerCase().includes(searchValue.toLowerCase()) ){
+                    matchingRows.push(rows[i]);
                 }
             }
         }
-
-
+        
+        
         return matchingRows;
     }
 });

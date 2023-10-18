@@ -8,7 +8,10 @@
             <svg-icon [svgStyle]="{ width: '20px', height: '20px' }" src="assets/img/custom/warn.svg"></svg-icon>
             <div><b>Important:</b> Importing a flow will overwrite your current flow.</div>
         </div>
-        <ap-file-upload [formControl]="fileControl"></ap-file-upload>
+        <mat-form-field class="ap-w-full">
+            <mat-label>File</mat-label>
+            <ap-file-upload [formControl]="fileControl"></ap-file-upload>
+        </mat-form-field>
     </div>
 
 </mat-dialog-content>

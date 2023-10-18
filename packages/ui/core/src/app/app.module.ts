@@ -26,6 +26,9 @@ import { UserLoggedIn } from './guards/user-logged-in.guard';
 import { ImportFlowComponent } from './modules/import-flow/import-flow.component';
 import { LottieCacheModule, LottieModule } from 'ngx-lottie';
 import player from 'lottie-web';
+
+import { AngularFireAuthModule } from '@angular/fire/compat/auth';
+import { AngularFireModule } from '@angular/fire/compat';
 import { ImportFlowUriEncodedComponent } from './modules/import-flow-uri-encoded/import-flow-uri-encoded.component';
 import { ImportFlowUriEncodedResolver } from './modules/import-flow-uri-encoded/import-flow-uri-encoded.resolver';
 import {
@@ -34,10 +37,15 @@ import {
 } from 'ngx-monaco-editor-v2';
 import { apMonacoTheme } from './modules/common/monaco-themes/ap-monaco-theme';
 import { cobalt2 } from './modules/common/monaco-themes/cobalt-2-theme';
+import {
+  ChatComponent,
+  UiFeatureChatBotModule,
+  chatbotMetadataResolver,
+} from '@activepieces/ui/feature-chatbot';
 
 const monacoConfig: NgxMonacoEditorConfig = {
   baseUrl: '/assets', // configure base path for monaco editor. Starting with version 8.0.0 it defaults to './assets'. Previous releases default to '/assets'
-  defaultOptions: { scrollBeyondLastLine: false }, // pass default options to be used
+  defaultOptions: { scrollBeyondLastLine: false, fixedOverflowWidgets: true }, // pass default options to be used
   onMonacoLoad: () => {
     const monaco = (window as any).monaco;
     monaco.editor.defineTheme('apTheme', apMonacoTheme);
@@ -93,7 +101,13 @@ export function playerFactory() {
     UiCommonModule,
     LottieModule.forRoot({ player: playerFactory }),
     LottieCacheModule.forRoot(),
+    // BEING EE
+    // This can't be lazy loaded
+    AngularFireModule.initializeApp(environment.firebase),
+    AngularFireAuthModule,
+    // END EE
     MonacoEditorModule.forRoot(monacoConfig),
+    UiFeatureChatBotModule,
   ],
   providers: [
     {
@@ -140,6 +154,19 @@ function dynamicRoutes(edition: string) {
     },
     {
       path: '',
+      canActivate: [UserLoggedIn],
+      children: [
+        {
+          path: '',
+          loadChildren: () =>
+            import('@activepieces/ui/feature-chatbot').then(
+              (m) => m.UiFeatureChatBotModule
+            ),
+        },
+      ],
+    },
+    {
+      path: '',
       children: [
         {
           path: '',
@@ -166,6 +193,16 @@ function dynamicRoutes(edition: string) {
       title: `Import Flow - ${environment.websiteTitle}`,
     },
     {
+      path: 'chatbots/:id',
+      canActivate: [],
+      title: `Activepieces - Chatbot`,
+      pathMatch: 'full',
+      component: ChatComponent,
+      resolve: {
+        chatbot: chatbotMetadataResolver,
+      },
+    },
+    {
       path: 'redirect',
       component: RedirectUrlComponent,
     },
@@ -178,11 +215,22 @@ function dynamicRoutes(edition: string) {
   let editionRoutes: Route[] = [];
   switch (edition) {
     case ApEdition.CLOUD:
-      editionRoutes = [];
+      editionRoutes = [
+        {
+          path: '',
+          children: [
+            {
+              path: '',
+              loadChildren: () =>
+                import('@activepieces/ee-auth').then(
+                  (m) => m.FirebaseAuthLayoutModule
+                ),
+            },
+          ],
+        },
+      ];
       break;
     case ApEdition.ENTERPRISE:
-      editionRoutes = [];
-      break;
     case ApEdition.COMMUNITY:
       editionRoutes = [
         {

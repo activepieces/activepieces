@@ -6,29 +6,22 @@
   "targets": {
     "build": {
       "executor": "@nrwl/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/gravityforms",
         "tsConfig": "packages/pieces/gravityforms/tsconfig.lib.json",
         "packageJson": "packages/pieces/gravityforms/package.json",
         "main": "packages/pieces/gravityforms/src/index.ts",
-        "assets": [
-          "packages/pieces/gravityforms/*.md"
-        ],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "assets": ["packages/pieces/gravityforms/*.md"],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {
       "executor": "@nrwl/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": [
-          "packages/pieces/gravityforms/**/*.ts"
-        ]
+        "lintFilePatterns": ["packages/pieces/gravityforms/**/*.ts"]
       }
     }
   },

@@ -52,10 +52,12 @@
     "@nx/angular:application": {
       "style": "scss",
       "linter": "eslint",
+      "unitTestRunner": "jest",
       "e2eTestRunner": "none"
     },
     "@nx/angular:library": {
-      "linter": "eslint"
+      "linter": "eslint",
+      "unitTestRunner": "jest"
     },
     "@nx/angular:component": {
       "style": "scss"

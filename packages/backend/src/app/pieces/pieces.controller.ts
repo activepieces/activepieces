@@ -1,70 +1,47 @@
-import { FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
-import { ActivepiecesError, ErrorCode, GetPieceRequestParams, GetPieceRequestQuery, GetPieceRequestWithScopeParams, InstallPieceRequest, ListPiecesRequestQuery, PieceOptionRequest } from '@activepieces/shared'
+import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
+import { ActivepiecesError, AddPieceRequestBody, ApEdition, ErrorCode, GetPieceRequestParams, GetPieceRequestQuery, GetPieceRequestWithScopeParams, ListPiecesRequestQuery, PieceOptionRequest } from '@activepieces/shared'
 import { engineHelper } from '../helper/engine-helper'
 import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
 import { pieceMetadataService } from './piece-metadata-service'
-import { PieceMetadata, PieceMetadataSummary } from '@activepieces/pieces-framework'
-import { FastifyRequest } from 'fastify'
-import { logger } from '../helper/logger'
+import { PieceMetadata } from '@activepieces/pieces-framework'
 import { flagService } from '../flags/flag.service'
+import { pieceService } from './piece-service'
+import { PieceMetadataModel, PieceMetadataModelSummary } from './piece-metadata-entity'
+import { getServerUrl } from '../helper/public-ip-utils'
 
 const statsEnabled = system.getBoolean(SystemProp.STATS_ENABLED)
 
-export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done) => {
+export const piecesController: FastifyPluginAsyncTypebox = async (app) => {
+    app.post('/', AddPieceRequest, async (req, res): Promise<PieceMetadataModel> => {
+        const { packageType, pieceName, pieceVersion, pieceArchive } = req.body
+        const { projectId } = req.principal
 
-    app.post(
-        '/',
-        {
-            schema: Type.Object({
-                body: InstallPieceRequest,
-            }),
-        },
-        async (
-            request: FastifyRequest<{
-                Body: InstallPieceRequest
-            }>,
-        ) => {
-            try {
-                const { result } = await engineHelper.extractPieceMetadata({
-                    pieceName: request.body.pieceName,
-                    pieceVersion: request.body.pieceVersion,
-                })
-                const pieceMetdata = await pieceMetadataService.create({
-                    projectId: request.principal.projectId,
-                    pieceMetadata: {
-                        ...result,
-                        minimumSupportedRelease: result.minimumSupportedRelease ?? '0.0.0',
-                        maximumSupportedRelease: result.maximumSupportedRelease ?? '999.999.999',
-                        name: request.body.pieceName,
-                        version: request.body.pieceVersion,
-                    },
-                })
-                return pieceMetdata
-            } 
-            catch (err) {
-                logger.error(JSON.stringify(err))
-                throw new ActivepiecesError({
-                    code: ErrorCode.VALIDATION,
-                    params: {
-                        message: 'Couldn\'t import package as piece',
-                    },
-                })
-            }
-        },
-    )
+        const pieceMetadata = await pieceService.add({
+            packageType,
+            pieceName,
+            pieceVersion,
+            archive: pieceArchive as Buffer,
+            projectId,
+        })
+
+        return res.code(201).send(pieceMetadata)
+    })
 
     app.get('/', {
         schema: {
             querystring: ListPiecesRequestQuery,
         },
-    }, async (req): Promise<PieceMetadataSummary[]> => {
+    }, async (req): Promise<PieceMetadataModelSummary[]> => {
         const latestRelease = await flagService.getCurrentVersion()
         const release = req.query.release ?? latestRelease
-        return await pieceMetadataService.list({
+        const edition = req.query.edition ?? ApEdition.COMMUNITY
+        const pieceMetadataSummary = await pieceMetadataService.list({
             release,
             projectId: req.principal.projectId,
+            edition,
         })
+        return pieceMetadataSummary
     })
 
     app.get('/:scope/:name', {
@@ -78,7 +55,7 @@ export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done)
 
         const decodeScope = decodeURIComponent(scope)
         const decodedName = decodeURIComponent(name)
-        return await pieceMetadataService.get({
+        return await pieceMetadataService.getOrThrow({
             projectId: req.principal.projectId,
             name: `${decodeScope}/${decodedName}`,
             version,
@@ -90,12 +67,12 @@ export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done)
             params: GetPieceRequestParams,
             querystring: GetPieceRequestQuery,
         },
-    }, async (req): Promise<PieceMetadata> => {
+    }, async (req): Promise<PieceMetadataModel> => {
         const { name } = req.params
         const { version } = req.query
 
         const decodedName = decodeURIComponent(name)
-        return await pieceMetadataService.get({
+        return await pieceMetadataService.getOrThrow({
             projectId: req.principal.projectId,
             name: decodedName,
             version,
@@ -107,13 +84,22 @@ export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done)
             body: PieceOptionRequest,
         },
     }, async (req) => {
+        const { packageType, pieceType, pieceName, pieceVersion, propertyName, stepName, input } = req.body
+        const { projectId } = req.principal
+
         const { result } = await engineHelper.executeProp({
-            pieceName: req.body.pieceName,
-            pieceVersion: req.body.pieceVersion,
-            propertyName: req.body.propertyName,
-            stepName: req.body.stepName,
-            input: req.body.input,
-            projectId: req.principal.projectId,
+            serverUrl: await getServerUrl(),
+            piece: {
+                packageType,
+                pieceType,
+                pieceName,
+                pieceVersion,
+                projectId,
+            },
+            propertyName,
+            stepName,
+            input,
+            projectId,
         })
 
         return result
@@ -144,6 +130,10 @@ export const piecesController: FastifyPluginCallbackTypebox = (app, _opts, done)
             id: req.params.id,
         })
     })
+}
 
-    done()
+const AddPieceRequest = {
+    schema: {
+        body: AddPieceRequestBody,
+    },
 }

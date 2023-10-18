@@ -1,7 +1,6 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
+import { createAction, Property, Validators } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { invoiceninjaAuth } from "../..";
-
 export const getClient = createAction({
     auth: invoiceninjaAuth,
         name: 'getclient_task',
@@ -13,6 +12,8 @@ export const getClient = createAction({
                 displayName: 'Client e-mail address',
                 description: 'A valid e-mail address to get client details for',
                 required: true,
+                processors: [],
+                validators: [Validators.email]
             }),
         },
 
@@ -22,7 +23,6 @@ export const getClient = createAction({
             const headers = {
                 'X-Api-Token': INapiToken,
             };
-
             const queryParams = new URLSearchParams();
             queryParams.append('email', context.propsValue.email || '');
 

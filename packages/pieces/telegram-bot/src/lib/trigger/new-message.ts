@@ -29,6 +29,7 @@ export const telegramNewMessage = createTrigger({
                         "first_name": "Abdallah",
                         "language_code": "en"
                     },
+                    "parse_mode": "MarkdownV2",
                     "text": "Hello world",
                     "message_id": 21
                 },

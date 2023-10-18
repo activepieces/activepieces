@@ -1,31 +1,44 @@
-import { PieceMetadata, PieceMetadataSummary } from '@activepieces/pieces-framework'
+import { PieceMetadata } from '@activepieces/pieces-framework'
 import { AllPiecesStats } from './piece-stats-service'
+import { ApEdition, PackageType, PieceType, ProjectId } from '@activepieces/shared'
+import { PieceMetadataModel, PieceMetadataModelSummary } from '../piece-metadata-entity'
 
-export type ListParams = {
+type ListParams = {
     release: string
-    projectId: string | null
+    projectId?: string
+    edition: ApEdition
 }
 
-export type GetParams = {
+type GetOrThrowParams = {
     name: string
-    version: string | undefined 
-    projectId: string | null
+    version?: string
+    projectId?: string
 }
 
-export type DeleteParams = {
+type DeleteParams = {
     id: string
-    projectId: string | null
+    projectId?: string
 }
 
-export type CreateParams = {
+type CreateParams = {
     pieceMetadata: PieceMetadata
-    projectId: string | null
+    projectId?: string
+    packageType: PackageType
+    pieceType: PieceType
+    archiveId?: string
+}
+
+type GetExactPieceVersionParams = {
+    name: string
+    version: string
+    projectId: ProjectId
 }
 
 export type PieceMetadataService = {
-    list(params: ListParams): Promise<PieceMetadataSummary[]>
-    get(params: GetParams): Promise<PieceMetadata>
-    create(params: CreateParams): Promise<PieceMetadata>
+    list(params: ListParams): Promise<PieceMetadataModelSummary[]>
+    getOrThrow(params: GetOrThrowParams): Promise<PieceMetadataModel>
+    create(params: CreateParams): Promise<PieceMetadataModel>
     delete(params: DeleteParams): Promise<void>
     stats(): Promise<AllPiecesStats>
+    getExactPieceVersion(params: GetExactPieceVersionParams): Promise<string>
 }

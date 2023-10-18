@@ -1,4 +1,4 @@
-import { FastifyInstance, FastifyRequest } from 'fastify'
+import { FastifyRequest } from 'fastify'
 import {
     CreateFlowRequest,
     FlowId,
@@ -13,11 +13,14 @@ import { StatusCodes } from 'http-status-codes'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { flowService } from './flow.service'
 import { CountFlowsRequest } from '@activepieces/shared'
+import dayjs from 'dayjs'
+import { isNil } from 'lodash'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 
 const DEFUALT_PAGE_SIZE = 10
 
-export const flowController = async (fastify: FastifyInstance) => {
+export const flowController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
     fastify.post(
         '/',
@@ -26,11 +29,7 @@ export const flowController = async (fastify: FastifyInstance) => {
                 body: CreateFlowRequest,
             },
         },
-        async (
-            request: FastifyRequest<{
-                Body: CreateFlowRequest
-            }>,
-        ) => {
+        async (request) => {
             return await flowService.create({ projectId: request.principal.projectId, request: request.body })
         },
     )
@@ -49,11 +48,22 @@ export const flowController = async (fastify: FastifyInstance) => {
                 }
                 Body: FlowOperationRequest
             }>,
+            reply,
         ) => {
             const flow = await flowService.getOne({ id: request.params.flowId, versionId: undefined, projectId: request.principal.projectId, viewMode: FlowViewMode.NO_ARTIFACTS })
             if (flow === null) {
                 throw new ActivepiecesError({ code: ErrorCode.FLOW_NOT_FOUND, params: { id: request.params.flowId } })
             }
+            // BEGIN EE
+            const currentTime = dayjs()
+            if (!isNil(flow.version.updatedBy) &&
+              flow.version.updatedBy !== request.principal.id &&
+              currentTime.diff(dayjs(flow.version.updated), 'minute') <= 1
+            ) {
+                await reply.status(StatusCodes.CONFLICT).send()
+                return
+            }
+            // END EE
             return await flowService.update({ userId: request.principal.id, flowId: request.params.flowId, request: request.body, projectId: request.principal.projectId })
         },
     )
@@ -65,11 +75,7 @@ export const flowController = async (fastify: FastifyInstance) => {
                 querystring: ListFlowsRequest,
             },
         },
-        async (
-            request: FastifyRequest<{
-                Querystring: ListFlowsRequest
-            }>,
-        ) => {
+        async (request) => {
             return flowService.list({
                 projectId: request.principal.projectId,
                 folderId: request.query.folderId,
@@ -151,10 +157,10 @@ export const flowController = async (fastify: FastifyInstance) => {
                     flowId: FlowId
                 }
             }>,
-            _reply,
+            reply,
         ) => {
             await flowService.delete({ projectId: request.principal.projectId, flowId: request.params.flowId })
-            _reply.status(StatusCodes.OK).send()
+            return reply.status(StatusCodes.OK).send()
         },
     )
 

@@ -6,6 +6,7 @@ import { logger } from '../../helper/logger'
 import { LATEST_JOB_DATA_SCHEMA_VERSION } from '../../workers/flow-worker/job-data'
 import { JobType } from '../../workers/flow-worker/queues/queue'
 import { notifications } from '../../helper/notifications'
+import { flowRunHooks } from './flow-run-hooks'
 
 type StartParams = {
     flowRun: FlowRun
@@ -34,6 +35,8 @@ export const flowRunSideEffects = {
     async finish({ flowRun }: {
         flowRun: FlowRun
     }): Promise<void> {
+        await flowRunHooks.getHooks().onFinish({ projectId: flowRun.projectId, tasks: flowRun.tasks! })
+
         await notifications.notifyRun({
             flowRun,
         })

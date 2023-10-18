@@ -1,5 +1,6 @@
 import { FastifyRequest } from 'fastify'
 import { tokenUtils } from './lib/token-utils'
+import { API_KEY_PROTECTED_ROUTES } from '../ee/authentication/api-key-auth-middleware.ee'
 import { ActivepiecesError, ErrorCode, Principal, PrincipalType, apId } from '@activepieces/shared'
 
 const ignoredRoutes = new Set([
@@ -8,7 +9,15 @@ const ignoredRoutes = new Set([
     '/v1/firebase/users',
     '/v1/firebase/sign-in',
     '/v1/billing/stripe/webhook',
+    '/v1/flow-templates',
+    '/v1/appsumo/token',
+    '/v1/appsumo/action',
+    '/v1/flow-templates/:id',
+    '/v1/project-members/accept',
+    ...(API_KEY_PROTECTED_ROUTES.map(f => f.url)),
     // END EE
+    '/v1/chatbots/:id/ask',
+    '/v1/chatbots/:id/metadata',
     '/v1/flow-runs/:id/resume',
     '/v1/pieces/stats',
     '/v1/pieces/:name',
