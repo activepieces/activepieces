@@ -10,6 +10,7 @@ import { getRowsAction } from './lib/actions/get-rows';
 
 export const googleSheetsAuth = PieceAuth.OAuth2({
     description: "",
+    
     authUrl: "https://accounts.google.com/o/oauth2/auth",
     tokenUrl: "https://oauth2.googleapis.com/token",
     required: true,
