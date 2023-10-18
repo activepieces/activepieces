@@ -176,23 +176,17 @@ async function convertRequest(request: FastifyRequest): Promise<EventPayload> {
     return payload
 }
 
-const convertBody = async (request: FastifyRequest) => {
+const convertBody = async (request: FastifyRequest): Promise<unknown> => {
     if (request.isMultipart()) {
         const jsonResult: Record<string, unknown> = {}
-        const parts = request.parts()
-        for await (const part of parts) {
-            if (part.type === 'file') {
-                const chunks = []
-                for await (const chunk of part.file) {
-                    chunks.push(chunk)
-                }
-                const fileBuffer = Buffer.concat(chunks)
-                jsonResult[part.fieldname] = fileBuffer.toString('base64')
-            }
-            else {
-                jsonResult[part.fieldname] = part.value
-            }
+        const requestBodyEntries = Object.entries(request.body as Record<string, unknown>)
+
+        for (const [key, value] of requestBodyEntries) {
+            jsonResult[key] = value instanceof Buffer ? value.toString('base64') : value
         }
+
+        logger.debug({ name: 'WebhookController#convertBody', jsonResult })
+
         return jsonResult
     }
     return request.body
