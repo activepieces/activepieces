@@ -5,30 +5,30 @@ import { excelCommon } from '../common/common';
 
 export const appendRowAction = createAction({
     auth: excelAuth,
-    name: 'append_rows',
-    description: 'Append rows of values to a worksheet',
-    displayName: 'Append Rows to Worksheet',
+    name: 'append_row',
+    description: 'Append row of values to a worksheet',
+    displayName: 'Append Row to Worksheet',
     props: {
         workbook_id: excelCommon.workbook_id,
         worksheet_id: excelCommon.worksheet_id,
-        values: Property.Json({
-            displayName: 'Values',
-            description: 'The values to insert in JSON format (e.g. [["Sara","1/2/2006","Berlin"], ["Jean","8/4/2001","Paris"]])',
+        first_row_headers: Property.Checkbox({
+            displayName: 'Are the First row Headers?',
+            description: 'If the first row is headers',
             required: true,
+            defaultValue: false,
         }),
+        values: excelCommon.values,
     },
     async run({ propsValue, auth }) {
         const workbookId = propsValue['workbook_id'];
         const worksheetId = propsValue['worksheet_id'];
-        const values = propsValue['values'];
+        const values = propsValue.first_row_headers ? [Object.values(propsValue['values'])] : Object.values(propsValue['values']);
 
         const lastUsedRow = await excelCommon.getLastUsedRow(workbookId, worksheetId, auth['access_token']);
-        const lastUserColumn = await excelCommon.getLastUsedColumn(workbookId, worksheetId, auth['access_token']);
-
-        const numberOfRows = Object.values(values).length;
+        const lastUsedColumn = excelCommon.numberToColumnName(Object.values(values[0]).length);
 
         const rangeFrom = `A${lastUsedRow + 1}`;
-        const rangeTo = `${lastUserColumn}${lastUsedRow + numberOfRows}`;
+        const rangeTo = `${lastUsedColumn}${lastUsedRow + 1}`;
 
         const url = `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='${rangeFrom}:${rangeTo}')`;
 

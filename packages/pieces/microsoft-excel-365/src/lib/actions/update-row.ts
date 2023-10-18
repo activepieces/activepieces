@@ -11,27 +11,37 @@ export const updateRowAction = createAction({
     props: {
         workbook_id: excelCommon.workbook_id,
         worksheet_id: excelCommon.worksheet_id,
-        range: Property.ShortText({
-            displayName: 'Range',
-            description: 'The range to update in A1 notation (e.g., A2:B2)',
+        row_number: Property.Number({
+            displayName: 'Row number',
+            description: 'The row number to update',
             required: true,
         }),
-        values: Property.Json({
-            displayName: 'Values',
-            description: 'The values to update in the specified range in JSON format (e.g. [["Sara","1/2/2006","Berlin"], ["Jean","8/4/2001","Paris"]])',
+        first_row_headers: Property.Checkbox({
+            displayName: 'Are the First row Headers?',
+            description: 'If the first row is headers',
             required: true,
+            defaultValue: false,
         }),
+        values: excelCommon.values,
     },
     async run({ propsValue, auth }) {
-        const { workbook_id, worksheet_id, range, values } = propsValue;
+        const workbookId = propsValue['workbook_id'];
+        const worksheetId = propsValue['worksheet_id'];
+        const rowNumber = propsValue['row_number']
+        const values = propsValue.first_row_headers ? [Object.values(propsValue['values'])] : Object.values(propsValue['values']);
 
         const requestBody = {
             values: values
         };
 
+        const lastUsedColumn = excelCommon.numberToColumnName(Object.values(values[0]).length);
+
+        const rangeFrom = `A${rowNumber}`;
+        const rangeTo = `${lastUsedColumn}${rowNumber}`;
+
         const request = {
             method: HttpMethod.PATCH,
-            url: `${excelCommon.baseUrl}/items/${workbook_id}/workbook/worksheets/${worksheet_id}/range(address='${range}')`,
+            url: `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/range(address='${rangeFrom}:${rangeTo}')`,
             body: requestBody,
             authentication: {
                 type: AuthenticationType.BEARER_TOKEN as const,

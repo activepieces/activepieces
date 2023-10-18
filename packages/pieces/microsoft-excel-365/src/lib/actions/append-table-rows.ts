@@ -12,17 +12,13 @@ export const appendTableRowsAction = createAction({
         workbook_id: excelCommon.workbook_id,
         worksheet_id: excelCommon.worksheet_id,
         table_id: excelCommon.table_id,
-        values: Property.Json({
-            displayName: 'Values',
-            description: 'The rows to append to the table in JSON format (e.g. [["Sara","1/2/2006","Berlin"], ["Jean","8/4/2001","Paris"]])',
-            required: true,
-        }),
+        values: excelCommon.table_values
     },
     async run({ propsValue, auth }) {
         const workbookId = propsValue['workbook_id'];
         const worksheetId = propsValue['worksheet_id'];
         const tableId = propsValue['table_id'];
-        const valuesToAppend = propsValue['values'];
+        const valuesToAppend = [Object.values(propsValue['values'])];
 
         const response = await httpClient.sendRequest({
             method: HttpMethod.POST,

@@ -13,7 +13,7 @@ export const clearWorksheetAction = createAction({
         worksheet_id: excelCommon.worksheet_id,
         range: Property.ShortText({
             displayName: 'Range',
-            description: 'The range in A1 notation (e.g., A2:B2) to clear in the worksheet',
+            description: 'The range in A1 notation (e.g., A2:B2) to clear in the worksheet, if not provided, clear the entire worksheet',
             required: false,
         }),
     },

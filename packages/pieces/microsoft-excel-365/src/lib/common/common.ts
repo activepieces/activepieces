@@ -104,6 +104,80 @@ export const excelCommon = {
             };
         }
     }),
+    values: Property.DynamicProperties({
+        displayName: 'Values',
+        description: 'The values to insert',
+        required: true,
+        refreshers: ['workbook_id', 'worksheet_id', 'first_row_headers'],
+        props: async ({ auth, workbook_id, worksheet_id, first_row_headers }) => {
+            if (!auth || (workbook_id ?? '').toString().length === 0 || (worksheet_id ?? '').toString().length === 0) {
+                return {}
+            }
+
+            const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
+
+            if (!first_row_headers) {
+                return {
+                    values: Property.Array({
+                        displayName: 'Values',
+                        required: true,
+                    })
+                }
+            }
+            const firstRow = await excelCommon.getHeaders(
+                workbook_id as unknown as string,
+                authProp['access_token'],
+                worksheet_id as unknown as string,
+            );
+
+            const properties: {
+                [key: string]: any
+            } = {}
+            for (const key in firstRow) {
+                properties[key] = Property.ShortText({
+                    displayName: firstRow[key].toString(),
+                    description: firstRow[key].toString(),
+                    required: false,
+                    defaultValue: ''
+                })
+            }
+            return properties;
+        }
+    }),
+    table_values: Property.DynamicProperties({
+        displayName: 'Values',
+        description: 'The values to insert',
+        required: true,
+        refreshers: ['workbook_id', 'worksheet_id', 'table_id'],
+        props: async ({ auth, workbook_id, worksheet_id, table_id }) => {
+            if (!auth || (workbook_id ?? '').toString().length === 0 || (worksheet_id ?? '').toString().length === 0
+                || (worksheet_id ?? '').toString().length === 0) {
+                return {}
+            }
+
+            const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
+
+            const headers = await excelCommon.getTableHeaders(
+                workbook_id as unknown as string,
+                authProp['access_token'],
+                worksheet_id as unknown as string,
+                table_id as unknown as string
+            );
+
+            const properties: {
+                [key: string]: any
+            } = {}
+            for (const key in headers) {
+                properties[key] = Property.ShortText({
+                    displayName: headers[key].toString(),
+                    description: headers[key].toString(),
+                    required: false,
+                    defaultValue: ''
+                })
+            }
+            return properties;
+        }
+    }),
     getHeaders: async function (workbookId: string, accessToken: string, worksheetId: string) {
         const response = await httpClient.sendRequest<{ values: string[][] }>({
             method: HttpMethod.GET,
@@ -113,7 +187,21 @@ export const excelCommon = {
                 token: accessToken,
             }
         });
+
         return response.body.values[0];
+    },
+    getTableHeaders: async function (workbookId: string, accessToken: string, worksheetId: string, tableId: string) {
+        const response = await httpClient.sendRequest({
+            method: HttpMethod.GET,
+            url: `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/tables/${tableId}/columns`,
+            authentication: {
+                type: AuthenticationType.BEARER_TOKEN,
+                token: accessToken,
+            }
+        });
+
+        const columnNames = response.body["value"].map((column: { name: any; }) => column.name);
+        return columnNames;
     },
     getLastUsedRow: async function (workbookId: string, worksheetId: string, accessToken: string): Promise<number> {
         const url = `${excelCommon.baseUrl}/items/${workbookId}/workbook/worksheets/${worksheetId}/usedRange`;
@@ -166,4 +254,13 @@ export const excelCommon = {
         const rows = response.body["values"];
         return rows;
     },
+    numberToColumnName: function (num: number): string {
+        let columnName = '';
+        while (num > 0) {
+            const modulo = (num - 1) % 26;
+            columnName = String.fromCharCode(65 + modulo) + columnName;
+            num = Math.floor((num - modulo) / 26);
+        }
+        return columnName;
+    }
 }
