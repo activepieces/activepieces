@@ -398,7 +398,6 @@ async function refreshWithCredentials(
         return appConnection
     }
     const body: Record<string, string> = {
-        redirect_uri: appConnection.redirect_url,
         grant_type: 'refresh_token',
         refresh_token: appConnection.refresh_token,
     }
