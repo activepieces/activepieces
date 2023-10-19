@@ -31,7 +31,7 @@ export const microsoftExcel = createPiece({
   displayName: "Microsoft Excel 365",
   auth: excelAuth,
   minimumSupportedRelease: '0.8.0',
-  logoUrl: "https://zapier-images.imgix.net/storage/services/296388d714e0dcd78105c9b165ca751e.128x128.png?auto=format%2Ccompress&ixlib=python-3.0.0&q=50",
+  logoUrl: "https://cdn.activepieces.com/pieces/microsoft-excel-365.png",
   authors: ["BastienMe"],
   actions: [appendRowAction, getWorksheetsAction, getWorksheetRowsAction, updateRowAction, clearWorksheetAction, deleteWorksheetAction, getWorkbooksAction, deleteWorkbookAction, addWorksheetAction, getTableRowsAction, getTableColumnsAction, createTableAction, deleteTableAction, lookupTableColumnAction, appendTableRowsAction, convertToRangeAction],
   triggers: [readNewRows],
