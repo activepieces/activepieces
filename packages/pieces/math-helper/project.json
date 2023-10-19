@@ -26,8 +26,7 @@
       "outputs": ["{options.outputFile}"],
       "options": {
         "lintFilePatterns": [
-          "packages/pieces/math-helper/**/*.ts",
-          "packages/pieces/math-helper/package.json"
+          "packages/pieces/math-helper/**/*.ts"
         ]
       }
     }
