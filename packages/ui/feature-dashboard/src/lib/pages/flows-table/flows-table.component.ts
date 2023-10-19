@@ -238,6 +238,8 @@ export class FlowsTableComponent implements OnInit {
       return $localize`Please publish the flow`;
     }
 
-    return flow.instanceToggleControl.value? $localize`Flow is on` : $localize`Flow is off`
+    return flow.instanceToggleControl.value
+      ? $localize`Flow is on`
+      : $localize`Flow is off`;
   }
 }

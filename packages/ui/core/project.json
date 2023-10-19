@@ -158,7 +158,10 @@
   },
   "tags": [],
   "i18n": {
-    "sourceLocale": "en",
+    "sourceLocale": {
+      "code": "en",
+      "baseHref": ""
+  },
     "locales": {
       "fr": "packages/ui/core/src/locale/messages.fr.xlf"
     }

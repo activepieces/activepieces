@@ -168,7 +168,9 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
     });
 
     this.tabsAndTheirLists.push({
-      displayName: this._showTriggers ? $localize`App Events` : $localize`App Actions`,
+      displayName: this._showTriggers
+        ? $localize`App Events`
+        : $localize`App Actions`,
       list$: this.applySearchToObservable(customPiecesItemDetails$),
       emptyListText: $localize`Oops! We didn't find any results.`,
     });
