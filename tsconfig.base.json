@@ -243,6 +243,9 @@
       "@activepieces/pieces/google-my-business": [
         "packages/pieces/google-my-business/src/index.ts"
       ],
+      "@activepieces/pieces/math-helper": [
+        "packages/pieces/math-helper/src/index.ts"
+      ],
       "@activepieces/pieces/text-helper": [
         "packages/pieces/text-helper/src/index.ts"
       ],

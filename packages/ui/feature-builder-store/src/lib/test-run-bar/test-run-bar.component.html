@@ -4,39 +4,39 @@
       [showStatusText]="false"></ap-state-icon>
     <ng-container [ngSwitch]="selectedRun.status">
       <ng-container *ngSwitchCase="instanceRunStatus.SUCCEEDED">
-        <span class="ap-text-white">Run succeeded ({{ selectedRun.id }})</span>
+        <span class="ap-text-white" i18n>Run succeeded ({{ selectedRun.id }})</span>
         <div class="ap-flex-grow"></div>
       </ng-container>
       <ng-container *ngSwitchCase="instanceRunStatus.STOPPED">
-        <span class="ap-text-white">Run succeeded ({{ selectedRun.id }})</span>
+        <span class="ap-text-white" i18n>Run succeeded ({{ selectedRun.id }})</span>
         <div class="ap-flex-grow"></div>
       </ng-container>
       <ng-container *ngSwitchCase="instanceRunStatus.FAILED">
-        <span class="ap-text-white">Run failed ({{ selectedRun.id }})</span>
+        <span class="ap-text-white" i18n>Run failed ({{ selectedRun.id }})</span>
         <div class="ap-flex-grow"></div>
       </ng-container>
       <ng-container *ngSwitchCase="instanceRunStatus.RUNNING">
-        <span class="ap-text-white">Flow is running</span>
+        <span class="ap-text-white" i18n>Flow is running</span>
         <div class="ap-flex-grow"></div>
       </ng-container>
       <ng-container *ngSwitchCase="instanceRunStatus.PAUSED">
-        <span class="ap-text-white">Flow is paused ...</span>
+        <span class="ap-text-white" i18n>Flow is paused ...</span>
         <div class="ap-flex-grow"></div>
       </ng-container>
       <ng-container *ngSwitchCase="instanceRunStatus.TIMEOUT">
-        <span class="ap-text-white">Run exceeded {{sandboxTimeoutSeconds$ | async}} seconds, try to optimize your
+        <span class="ap-text-white" i18n>Run exceeded {{sandboxTimeoutSeconds$ | async}} seconds, try to optimize your
           steps.</span>
         <div class="ap-flex-grow"></div>
       </ng-container>
       <ng-container *ngSwitchCase="instanceRunStatus.INTERNAL_ERROR">
-        <span class="ap-text-white">Run failed for an unknown reason, contact support.</span>
+        <span class="ap-text-white" i18n>Run failed for an unknown reason, contact support.</span>
         <div class="ap-flex-grow"></div>
       </ng-container>
     </ng-container>
   </ng-container>
   <ng-template #InitialisingRunTemplate> Initialising run...</ng-template>
   <ap-button [hidden]="hideExit$ | async" btnColor="basic" btnStyle="basic" btnSize="medium"
-    (buttonClicked)="exitButtonClicked.next()"> Exit Run </ap-button>
+    (buttonClicked)="exitButtonClicked.next()" i18n> Exit Run </ap-button>
 </div>
 
 <ng-container *ngIf="exitRun$|async"></ng-container>

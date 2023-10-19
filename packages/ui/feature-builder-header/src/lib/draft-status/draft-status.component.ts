@@ -33,9 +33,9 @@ export class DraftStatusComponent {
     }).pipe(
       map((res) => {
         if (res.isCurrentVersionPublished || res.isInPublishedVersionView) {
-          return 'Published';
+          return $localize`Published`;
         }
-        return 'Draft';
+        return $localize`Draft`;
       })
     );
   }

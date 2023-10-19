@@ -1,13 +1,13 @@
 <div class="code-editor ap-h-full ap-flex ap-flex-col">
   <div class="modal-header  ap-p-3 ap-typography-headline-6 ap-flex ap-text-white  ap-items-center">
-    Code Editor
+    <span i18n>Code Editor</span>
     <div class="ap-flex-grow"></div>
 
-    <ap-button *ngIf="!readOnly" btnStyle="flat" (buttonClicked)="openNpmPackageModal()" btnSize="small">
+    <ap-button *ngIf="!readOnly" btnStyle="flat" (buttonClicked)="openNpmPackageModal()" btnSize="small" i18n>
       Add npm package
     </ap-button>
     <ap-button [loading]="testLoading" btnStyle="flat" class="ap-ml-1" btnSize="small"
-      (buttonClicked)="openTestCodeModal()">Test code
+      (buttonClicked)="openTestCodeModal()" i18n>Test code
     </ap-button>
     <ap-icon-button (click)="hide()" iconFilename="minimize.svg" matTooltip="Close"></ap-icon-button>
   </div>
