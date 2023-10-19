@@ -8,7 +8,11 @@ import {
 import { ConnectionsTableComponent } from './pages/connections-table/connections-table.component';
 import { FoldersResolver } from './resolvers/folders.resolver';
 import { DashboardContainerComponent } from './dashboard-container.component';
-import { ConnectionsResolver, environment } from '@activepieces/ui/common';
+import {
+  ConnectionsResolver,
+  environment,
+  isEeEditionGuard,
+} from '@activepieces/ui/common';
 import {
   ChatbotsTableComponent,
   ChatbotSettingsComponent,
@@ -17,6 +21,7 @@ import {
 import { PlansPageComponent } from '@activepieces/ee-billing-ui';
 import { ProjectMembersTableComponent } from '@activepieces/ee/project-members';
 import { CommunityPiecesTableComponent } from './pages/community-pieces-table/community-pieces-table.component';
+import { PlatformComponent } from './pages/platform/platform.component';
 
 export const DashboardLayoutRouting: Routes = [
   {
@@ -117,6 +122,13 @@ export const DashboardLayoutRouting: Routes = [
           [ARE_THERE_FLOWS_FLAG]: AreThereFlowsResovler,
           folders: FoldersResolver,
         },
+      },
+      {
+        title: `Platform - ${environment.websiteTitle}`,
+        path: 'platform',
+        pathMatch: 'full',
+        component: PlatformComponent,
+        canActivate: [isEeEditionGuard],
       },
     ],
   },

@@ -25,6 +25,7 @@ import { UiFeatureTemplatesModule } from '@activepieces/ui/feature-templates';
 import { CommunityPiecesTableComponent } from './pages/community-pieces-table/community-pieces-table.component';
 import { InstallCommunityPieceModalComponent } from './pages/community-pieces-table/install-community-piece/install-community-piece-modal.component';
 import { EeProjectMembersModule } from '@activepieces/ee/project-members';
+import { PlatformComponent } from './pages/platform/platform.component';
 
 @NgModule({
   imports: [
@@ -52,6 +53,7 @@ import { EeProjectMembersModule } from '@activepieces/ee/project-members';
     NewFolderDialogComponent,
     MoveFlowToFolderDialogComponent,
     RenameFolderDialogComponent,
+    PlatformComponent,
   ],
 })
 export class UiFeatureDashboardModule {}
