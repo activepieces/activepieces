@@ -13,7 +13,7 @@
 </div>
 <div [matTooltip]="(buttonTooltipText$ | async)!" *ngIf="(flowState$|async)?.isShowingPublishedVersion">
   <ap-button btnSize="medium" btnStyle="stroked" btnColor="primary" placement="bottom"
-    (buttonClicked)="editFlowButtonClicked()">
+    (buttonClicked)="editFlowButtonClicked()" i18n>
     Edit Flow
   </ap-button>
 </div>

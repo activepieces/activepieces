@@ -1,19 +1,21 @@
 <ap-dialog-title-template>{{data.dialogTitle}}
 </ap-dialog-title-template>
 <mat-dialog-content>
-    <div class="ap-typography-body-1 ap-text-description ap-mb-4 ap-max-w-[500px]">Describe the path to the property
-        using JSON format
+    <div class="ap-typography-body-1 ap-text-description ap-mb-4 ap-max-w-[500px]" i18n>
+        Describe the path to the property using JSON format
         <p>{{data.placeHolder}}</p>
     </div>
     <form class="ap-flex ap-flex-col ap-gap-1" [formGroup]="pathFormGroup" (submit)="emitCustomPathMention()">
         <mat-form-field class="ap-w-full" appearance="outline">
             <input cdkFocusInitial formControlName="path" matInput type="text" [placeholder]="data.placeHolder" />
             <mat-error
-                *ngIf="pathFormGroup.controls.path.invalid && !pathFormGroup.controls.path.getError('invalid-path')">Path
-                is invalid</mat-error>
+                *ngIf="pathFormGroup.controls.path.invalid && !pathFormGroup.controls.path.getError('invalid-path')" i18n>
+                Path is invalid
+            </mat-error>
             <mat-error
-                *ngIf="pathFormGroup.controls.path.invalid && pathFormGroup.controls.path.getError('invalid-path')">Path
-                must begin with {{data.stepName}}</mat-error>
+                *ngIf="pathFormGroup.controls.path.invalid && pathFormGroup.controls.path.getError('invalid-path')" i18n>
+                Path must begin with {{data.stepName}}
+            </mat-error>
         </mat-form-field>
     </form>
 
@@ -21,10 +23,10 @@
 
 <mat-dialog-actions align="end">
     <div class="ap-flex ap-gap-2.5">
-        <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic">
+        <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic" i18n>
             Cancel
         </ap-button>
-        <ap-button cdkFocusInitial btnSize="default" type="submit" (click)="emitCustomPathMention()" btnColor="primary">
+        <ap-button cdkFocusInitial btnSize="default" type="submit" (click)="emitCustomPathMention()" btnColor="primary" i18n>
             Confirm
         </ap-button>
     </div>

@@ -184,11 +184,11 @@ export class FlowItemContentComponent implements OnInit {
   getStepAppName() {
     switch (this._flowItem.type) {
       case ActionType.BRANCH:
-        return of('Branch');
+        return of($localize`Branch`);
       case ActionType.CODE:
-        return of('Code');
+        return of($localize`Code`);
       case ActionType.LOOP_ON_ITEMS:
-        return of('Loop');
+        return of($localize`Loop`);
       case ActionType.PIECE:
       case TriggerType.PIECE:
         return this.actionMetaDataService
@@ -198,9 +198,9 @@ export class FlowItemContentComponent implements OnInit {
           )
           .pipe(map((p) => p.displayName));
       case TriggerType.EMPTY:
-        return of('Choose a trigger');
+        return of($localize`Choose a trigger`);
       case TriggerType.WEBHOOK:
-        return of('Webhook trigger');
+        return of($localize`Webhook trigger`);
     }
   }
   extractChildStepsIconsUrls() {

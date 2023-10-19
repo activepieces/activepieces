@@ -76,9 +76,9 @@ export class ProjectMembersTableComponent {
   statusText(status: ProjectMemberStatus) {
     switch (status) {
       case ProjectMemberStatus.ACTIVE:
-        return 'Active';
+        return $localize`Active`;
       case ProjectMemberStatus.PENDING:
-        return 'Pending';
+        return $localize`Pending`;
     }
   }
 

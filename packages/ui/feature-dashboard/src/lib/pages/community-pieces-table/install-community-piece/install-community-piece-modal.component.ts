@@ -32,7 +32,7 @@ type AddPackageFormControl = {
   templateUrl: './install-community-piece-modal.component.html',
 })
 export class InstallCommunityPieceModalComponent {
-  risksMarkdown = `
+  risksMarkdown = $localize`
   Use this to install a <a href="https://www.activepieces.com/docs/developers/building-pieces/create-action" target="_blank" rel="noopener">custom piece</a> that you (or someone else) created.
   Once the piece is installed, you can use it in the flow builder.
  <br><br>**Warning:**

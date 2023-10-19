@@ -1,6 +1,6 @@
 <ap-dialog-title-template>
-    <ng-container *ngIf="!dialogData.connectionToUpdate; else editConnectionHeader">New Connection</ng-container>
-    <ng-template #editConnectionHeader>Reconnect {{dialogData!.connectionToUpdate?.name}}</ng-template>
+    <ng-container *ngIf="!dialogData.connectionToUpdate; else editConnectionHeader" i18n>New Connection</ng-container>
+    <ng-template #editConnectionHeader><span i18n>Reconnect</span> {{dialogData!.connectionToUpdate?.name}}</ng-template>
 </ap-dialog-title-template>
 
 <mat-dialog-content>
@@ -9,17 +9,17 @@
     <form class="ap-pt-4 ap-flex ap-flex-col ap-gap-2 ap-max-w-[720px] ap-min-w-[420px]" [formGroup]="settingsForm"
         (keyup.enter)="submit()" (submit)="submit()">
         <mat-form-field class="ap-w-full" appearance="outline">
-            <mat-label>Name</mat-label>
+            <mat-label i18n>Name</mat-label>
             <input cdkFocusInitial [matTooltip]="keyTooltip" formControlName="name" matInput type="text" />
             <mat-error *ngIf="settingsForm.controls['name'].invalid">
-                <ng-container *ngIf="settingsForm.get('name')!.getError('required'); else patternErrorOrAlreadyUsed">
+                <ng-container *ngIf="settingsForm.get('name')!.getError('required'); else patternErrorOrAlreadyUsed" i18n>
                     Name is required
                 </ng-container>
                 <ng-template #patternErrorOrAlreadyUsed>
-                    <ng-container *ngIf="settingsForm.get('name')!.getError('pattern');">
+                    <ng-container *ngIf="settingsForm.get('name')!.getError('pattern');" i18n>
                         Name can only contain letters, numbers and underscores
                     </ng-container>
-                    <ng-container *ngIf="settingsForm.get('name')!.getError('nameUsed');">
+                    <ng-container *ngIf="settingsForm.get('name')!.getError('nameUsed');" i18n>
                         Name is already used
                     </ng-container>
                 </ng-template></mat-error>
@@ -32,7 +32,7 @@
                 <input [matTooltip]="prop.value.description||''" [formControlName]="prop.key" matInput
                     [type]="prop.value.type === PropertyType.SECRET_TEXT? 'password':'text'" />
                 <mat-error *ngIf="settingsForm.get(prop.key)!.invalid">
-                    {{prop.value.displayName}} is required
+                    {{prop.value.displayName}} <span i18n>is required</span>
                 </mat-error>
             </mat-form-field>
             <mat-form-field class="ap-w-full" appearance="outline"
@@ -40,7 +40,7 @@
                 <mat-label>{{prop.value.displayName}} {{prop.value.required?'': '(Optional)'}}</mat-label>
                 <textarea [matTooltip]="prop.value.description||''" [formControlName]="prop.key" matInput></textarea>
                 <mat-error *ngIf="settingsForm.get(prop.key)!.invalid">
-                    {{prop.value.displayName}} is required
+                    {{prop.value.displayName}} <span i18n>is required</span>
                 </mat-error>
              </mat-form-field>
             <ng-container *ngIf="prop.value.type === PropertyType.STATIC_DROPDOWN">
@@ -53,7 +53,7 @@
                         </mat-option>
                     </mat-select>
                     <mat-error *ngIf="settingsForm.controls[prop.key]!.invalid">
-                        {{prop.value.displayName}} is required
+                        {{prop.value.displayName}} <span i18n>is required</span>
                     </mat-error>
                 </mat-form-field>
             </ng-container>
@@ -69,11 +69,11 @@
 
 <mat-dialog-actions align="end">
     <div class="ap-flex ap-gap-2.5">
-        <ap-button btnColor="basic" mat-dialog-close btnSize="default">
+        <ap-button btnColor="basic" mat-dialog-close btnSize="default" i18n>
             Cancel
         </ap-button>
         <ap-button cdkFocusInitial btnSize="default" (click)="submit()" btnColor="primary" type="submit"
-            [loading]="loading">
+            [loading]="loading" i18n>
             Save
         </ap-button>
     </div>

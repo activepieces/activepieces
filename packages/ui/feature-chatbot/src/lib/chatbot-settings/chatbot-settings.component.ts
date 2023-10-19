@@ -224,4 +224,8 @@ export class ChatbotSettingsComponent {
   openChatbot() {
     window.open(`/chatbots/${this.chatbotId}`, '_blank', 'noopener');
   }
+
+  chatWIthBotTooltipText() {
+      return !this.formGroup.controls.connectionId.value ? $localize`Please choose a connection first` : ''
+  }
 }
