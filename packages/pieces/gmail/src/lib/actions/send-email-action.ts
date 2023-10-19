@@ -4,7 +4,6 @@ import { gmailAuth } from "../../";
 import MailComposer from 'nodemailer/lib/mail-composer';
 import mime from 'mime-types';
 import Mail, { Attachment } from "nodemailer/lib/mailer";
-import { send } from "process";
 
 export const gmailSendEmailAction = createAction({
 	auth: gmailAuth,
@@ -60,12 +59,14 @@ export const gmailSendEmailAction = createAction({
 	async run(configValue) {
 		const subjectBase64 = Buffer.from(configValue.propsValue['subject']).toString("base64");
 		const attachment = configValue.propsValue['attachment'];
-		const replyTo = configValue.propsValue['reply_to'];
-
+		const replyTo = configValue.propsValue['reply_to']?.filter((email) => email !== '');
+		const reciever = configValue.propsValue['receiver']?.filter((email) => email !== '');
+		const cc = configValue.propsValue['cc']?.filter((email) => email !== '');
+		const bcc = configValue.propsValue['bcc']?.filter((email) => email !== '');
 		const mailOptions: Mail.Options = {
-			to: configValue.propsValue['receiver'].join(', '), // Join all email addresses with a comma
-			cc: configValue.propsValue['cc'] ? configValue.propsValue['cc'].join(', ') : undefined,
-			bcc: configValue.propsValue['bcc'] ? configValue.propsValue['bcc'].join(', ') : undefined,
+			to: reciever.join(', '), // Join all email addresses with a comma
+			cc: cc ? cc.join(', ') : undefined,
+			bcc: bcc ? bcc.join(', ') : undefined,
 			subject: `=?UTF-8?B?${subjectBase64}?=`,
 			replyTo: replyTo ? replyTo.join(', ') : "",
 			text: configValue.propsValue['body_text'].replace(/\n/g, '<br>'),
