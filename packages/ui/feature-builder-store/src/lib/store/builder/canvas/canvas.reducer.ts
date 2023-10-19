@@ -169,6 +169,11 @@ const __CanvasReducer = createReducer(
     const clonedFlowVersionWithArtifacts: FlowVersion = JSON.parse(
       JSON.stringify(operation.flowVersionWithArtifacts)
     );
+    const newStepName = flowHelper.findAvailableStepName(
+      state.displayedFlowVersion,
+      'step'
+    );
+
     clonedState.displayedFlowVersion = flowHelper.apply(
       clonedFlowVersionWithArtifacts,
       {
@@ -178,7 +183,17 @@ const __CanvasReducer = createReducer(
         },
       }
     );
-    return clonedState;
+    return {
+      ...clonedState,
+      focusedStep: flowHelper.getStep(
+        clonedState.displayedFlowVersion,
+        newStepName
+      ),
+      rightSidebar: {
+        type: RightSideBarType.EDIT_STEP,
+        props: 'NO_PROPS',
+      },
+    };
   }),
   on(FlowsActions.updateTrigger, (state, { operation }): CanvasState => {
     const clonedState: CanvasState = JSON.parse(JSON.stringify(state));

@@ -28,7 +28,7 @@
             #draggingContainer id="draggingContainer">
             <div class="content canvas" #canvasWrapper appCanvasPanner>
               <div class="ap-absolute ap-right-[0px]  transition-ease ap-z-50 ap-bottom-[20px] ap-right-[20px]"
-                id="mentionsDropdownContainer" [class.ap-z-0]="dataInsertionPopupHidden$ | async"
+                id="mentionsDropdownContainer" [class.!ap-z-0]="dataInsertionPopupHidden$ | async"
                 [style.height]="(builderAutocompleteService.dataInsertionPopupSize$ | async) === 'fullscreen' ? 'calc(100% - 30px)' : mentionsDropdown.mentionsList?.nativeElement?.clientHeight + 'px'"
                 [style.width]="(builderAutocompleteService.dataInsertionPopupSize$ | async) === 'fullscreen' ? 'calc(100% - 30px)': mentionsDropdown.mentionsList?.nativeElement?.clientWidth + 'px'">
                 <app-builder-autocomplete-mentions-dropdown

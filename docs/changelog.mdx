@@ -14,6 +14,50 @@ Semantic versioning is a standardized way of versioning software projects. It us
 Here's the revised text with improved grammar and spelling:
 
 
+### 18/10/2023
+
+**Features**:
+- Added Duplicate Step
+- Released Role-Based Permissions in Paid Version (EE & Cloud)
+- Enhanced Private Pieces Support in EE Version
+- Activepieces Chatbots now retain chat history
+- Added 'Copy to Clipboard' for code, fixed paragraph spacing, and improved list item numbering for Markdown in Chatbots
+
+**Pieces:**
+- Kizeo: Fixed Triggers by @BastienMe
+- Dropbox: Added search, upload file, get file link, delete file, move file, copy file, delete folder, move folder, copy folder, list a folder actions
+- Invoice Ninja: Added Get Report Action, Add Update Invoice, Get Invoices
+- Notion: Fixed Updating Number Fields
+- Files: Read File Content
+- Google Contacts: New Contact Error Creation
+- SMTP: Fixed connection errors
+- Contentful: Added entry search action by 
+- Clarfai: Added Ask Large Model and Ask Image Generation Model Action
+- Brilliant Directories: Created User Action
+- AiTable: Added Filter Field
+- OpenRouter: Removed Leading and Trailing Spaces
+- Microsoft One Drive: Added Download File, Upload File, List Files, List Folders Actions, and New File Trigger
+- Google Drive: Now supports showing all folders
+- Slack Message: Added New Message where not triggering sometimes.
+
+**Fixes**
+- Formatted whitespaces and paragraph spaces inside featured templates
+- Fixed schedules in Community & Enterprise cron jobs
+- Resolved pagination issues in Sqlite3
+- Fixed apostrophes in keys in steps' output
+- Introduced Team Member Email Invitations (In Cloud)
+- Fixed Store Piece functionality
+- Branch no longer fails when a step inside the branch fails.
+
+**Developers Experience:**
+- Added support for streaming logs to Loki for Self Hosted Instances
+- Enhanced error messages with Sandbox Context on Failure
+- Merged Enterprise Code under a different license in this repository
+- Fixed the Generate New Piece script to include the latest nx changes.
+
+please visit the [Full Changelog](https://github.com/activepieces/activepieces/compare/0.10.0...0.11.0) on GitHub.
+
+
 ### 30/09/2023
 
 **Chatbots**
@@ -204,7 +248,7 @@ important Security Update: If you're allowing users to sign up, please upgrade t
 
 **Full List of Changes**: Compare versions 0.6.0 and 0.7.0 at https://github.com/activepieces/activepieces/compare/0.6.0...0.7.0
 
-## 7/26/2023
+### 7/26/2023
 
 **New Pieces:**
 - API Table: Now supports Create Record, Find Record, Update Record actions, and New Record Trigger.

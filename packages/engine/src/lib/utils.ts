@@ -1,35 +1,35 @@
-import { readFileSync, writeFileSync } from 'fs';
+import { readFile, writeFile } from 'node:fs/promises'
 
-export class Utils {
-  public static parseJsonFile(filePath: string) {
-    try {
-      const file = readFileSync(filePath, 'utf-8');
-      return JSON.parse(file.toString());
-    } catch (e) {
-      throw Error((e as Error).message);
-    }
-  }
-  
-  public static writeToJsonFile(filePath: string, obj: any) {
-    writeFileSync(
-      filePath,
-      JSON.stringify(obj, (key: string, value: any) => {
-        if (value instanceof Map) {
-          return Object.fromEntries(value);
-        } else {
-          return value;
+export const utils = {
+    async parseJsonFile<T>(filePath: string): Promise<T> {
+        try {
+            const file = await readFile(filePath, 'utf-8')
+            return JSON.parse(file)
         }
-      }),
-      'utf-8'
-    );
-  }
+        catch (e) {
+            throw Error((e as Error).message)
+        }
+    },
 
-  public static tryParseJson(value: string): any {
-    try {
-      return JSON.parse(value);
-    } catch (e) {
-      return value;
-    }
-  }
+    async writeToJsonFile(filePath: string, obj: unknown): Promise<void> {
+        const serializedObj = JSON.stringify(obj, (_key: string, value: unknown) => {
+            if (value instanceof Map) {
+                return Object.fromEntries(value)
+            }
+            else {
+                return value
+            }
+        })
 
+        await writeFile(filePath, serializedObj, 'utf-8')
+    },
+
+    tryParseJson(value: string): unknown {
+        try {
+            return JSON.parse(value)
+        }
+        catch (e) {
+            return value
+        }
+    },
 }

@@ -79,6 +79,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
         runFirst: true,
         routes: [],
     })
+
     await app.register(formBody, { parser: str => qs.parse(str) })
 
     app.addHook('onRequest', async (request, reply) => {
@@ -119,7 +120,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(stepFileModule)
     await app.register(chatbotModule)
     await app.register(userModule)
-    
+
     app.get(
         '/redirect',
         async (

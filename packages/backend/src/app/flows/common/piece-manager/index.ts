@@ -11,6 +11,7 @@ const getPieceManager = (): PieceManager => {
     const pieceManagerVariant: Record<ApEnvironment, new () => PieceManager> = {
         [ApEnvironment.DEVELOPMENT]: LocalPieceManager,
         [ApEnvironment.PRODUCTION]: RegistryPieceManager,
+        [ApEnvironment.TESTING]: RegistryPieceManager,
     }
 
     return new pieceManagerVariant[env]()

@@ -626,6 +626,24 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "awais000",
+      "name": "Awais Manzoor",
+      "avatar_url": "https://avatars.githubusercontent.com/u/24081860?v=4",
+      "profile": "http://www.zidoary.com",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "andchir",
+      "name": "Andrei",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6392311?v=4",
+      "profile": "https://github.com/andchir",
+      "contributions": [
+        "bug"
+      ]
     }
   ],
   "commitType": "docs"

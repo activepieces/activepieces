@@ -93,6 +93,7 @@
             "install/configurations/error-notifications"
           ]
         },
+        "install/archiecture",
         "install/editions",
         "install/breaking-changes"
       ]

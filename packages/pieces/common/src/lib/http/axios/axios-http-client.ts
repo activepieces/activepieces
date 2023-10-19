@@ -29,6 +29,7 @@ export class AxiosHttpClient extends BaseHttpClient {
             const config:AxiosRequestConfig = {
                 method: axiosRequestMethod,
                 url,
+                params: request.queryParams,
                 headers,
                 data: request.body,
                 timeout
