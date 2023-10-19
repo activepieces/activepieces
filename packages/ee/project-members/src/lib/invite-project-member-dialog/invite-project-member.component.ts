@@ -91,7 +91,7 @@ export class InviteProjectMemberDialogComponent {
     switch (role) {
       case ProjectMemberRole.ADMIN:
         return $localize`ADMIN`;
-      case ProjectMemberRole.EDITIOR:
+      case ProjectMemberRole.EDITOR:
         return $localize`EDITOR`;
       case ProjectMemberRole.VIEWER:
         return $localize`VIEWER`;
