@@ -1,3 +1,4 @@
+export * from './lib/custom-domains';
 export * from './lib/project-members/project-member-role';
 export * from './lib/chatbot';
 export * from './lib/referral/referral';

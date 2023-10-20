@@ -30,6 +30,7 @@ import { ChatbotEntity } from '../chatbot/chatbot.entity'
 import { ProjectMemberEntity } from '../ee/project-members/project-member.entity'
 import { getEdition } from '../helper/secret-helper'
 import { ApEdition, ApEnvironment } from '@activepieces/shared'
+import { CustomDomainEntity } from '../ee/custom-domains/custom-domain.entity'
 
 const databaseType = system.get(SystemProp.DB_TYPE)
 
@@ -54,6 +55,8 @@ function getEntities(): EntitySchema<unknown>[] {
         PieceMetadataEntity,
         StepFileEntity,
         ChatbotEntity,
+        // TODO REMOVE
+        CustomDomainEntity,
     ]
 
     switch (edition) {

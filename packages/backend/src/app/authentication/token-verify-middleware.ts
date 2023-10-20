@@ -16,6 +16,11 @@ const ignoredRoutes = new Set([
     '/v1/project-members/accept',
     ...(API_KEY_PROTECTED_ROUTES.map(f => f.url)),
     // END EE
+    '/v1/custom-domains',
+    // TODO REMOVE AFTER ATTACH TO PLATFROM
+    '/v1/custom-domains/:id/verify',
+    '/v1/custom-domains/:id',
+
     '/v1/chatbots/:id/ask',
     '/v1/chatbots/:id/metadata',
     '/v1/flow-runs/:id/resume',
