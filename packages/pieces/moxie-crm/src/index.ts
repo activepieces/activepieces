@@ -3,7 +3,7 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
-
+import { moxieCRMTriggers } from './lib/triggers';
 export const moxieCRMAuth = PieceAuth.CustomAuth({
   required: true,
   description: `
@@ -35,5 +35,5 @@ export const moxieCrm = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/moxie-crm.png',
   authors: ['kishanprmr'],
   actions: [],
-  triggers: [],
+  triggers: moxieCRMTriggers,
 });
