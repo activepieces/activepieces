@@ -153,6 +153,9 @@
       ],
       "@activepieces/piece-mindee": ["packages/pieces/mindee/src/index.ts"],
       "@activepieces/piece-monday": ["packages/pieces/monday/src/index.ts"],
+      "@activepieces/piece-moxie-crm": [
+        "packages/pieces/moxie-crm/src/index.ts"
+      ],
       "@activepieces/piece-mysql": ["packages/pieces/mysql/src/index.ts"],
       "@activepieces/piece-nifty": ["packages/pieces/nifty/src/index.ts"],
       "@activepieces/piece-notion": ["packages/pieces/notion/src/index.ts"],
