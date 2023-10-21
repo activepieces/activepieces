@@ -27,7 +27,7 @@ import { flowWorkerHooks } from './app/workers/flow-worker/flow-worker-hooks'
 import { embeddings } from './app/chatbot/embedings'
 import { projectMemberModule } from './app/ee/project-members/project-member.module'
 import { enterpriseProjectModule } from './app/ee/projects/enterprise-project-controller'
-import { verifyLicenseKey } from './app/ee/helper/licenese-validator'
+import { licenseValidator } from './app/ee/helper/license-validator'
 import { adminPieceModule } from './app/ee/pieces/admin-piece-module'
 import { appConnectionsHooks } from './app/app-connection/app-connection-service/app-connection-hooks'
 import { cloudAppConnectionsHooks } from './app/ee/app-connections/cloud-app-connection-service'
@@ -91,14 +91,14 @@ The application started on ${system.get(SystemProp.FRONTEND_URL)}, as specified 
 
         const environemnt = system.get(SystemProp.ENVIRONMENT)
         const pieces = process.env.AP_DEV_PIECES
+
         if (environemnt === ApEnvironment.DEVELOPMENT) {
             logger.warn(`[WARNING]: The application is running in ${environemnt} mode.`)
             logger.warn(`[WARNING]: This is only shows pieces specified in AP_DEV_PIECES ${pieces} environment variable.`)
         }
+
         if (edition !== ApEdition.COMMUNITY) {
-            const key = system.getOrThrow(SystemProp.LICENSE_KEY)
-            logger.info('[INFO]: Verifying license key ' + key)
-            const verified = await verifyLicenseKey({ license: key })
+            const verified = await licenseValidator.validate()
             if (!verified) {
                 logger.error('[ERROR]: License key is not valid. Please contact sales@activepieces.com')
                 process.exit(1)
