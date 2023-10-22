@@ -8,6 +8,7 @@ export class DashboardService {
   private hideSideNavRoutes$: BehaviorSubject<boolean> = new BehaviorSubject(
     false
   );
+
   hideSideNavRoutes() {
     this.hideSideNavRoutes$.next(true);
   }

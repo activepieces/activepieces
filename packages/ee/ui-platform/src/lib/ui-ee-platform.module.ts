@@ -7,6 +7,7 @@ import { PlatformComponent } from './components/platform/platform.component';
 import { ProjectsTableComponent } from './components/projects-table/projects-table.component';
 import { CreateProjectDialogComponent } from './components/projects-table/create-project-dialog/create-project-dialog.component';
 import { UpdateProjectDialogComponent } from './components/projects-table/update-project-dialog/update-project-dialog.component';
+import { PlatformAppearanceComponent } from './components/platform-appearance/platform-appearance.component';
 
 @NgModule({
   imports: [
@@ -19,6 +20,7 @@ import { UpdateProjectDialogComponent } from './components/projects-table/update
     ProjectsTableComponent,
     CreateProjectDialogComponent,
     UpdateProjectDialogComponent,
+    PlatformAppearanceComponent,
   ],
 })
 export class UiEePlatformModule {}

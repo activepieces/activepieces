@@ -1,12 +1,14 @@
 import {
   Component,
   DoCheck,
+  ElementRef,
   HostBinding,
   HostListener,
   Input,
   OnDestroy,
   Optional,
   Self,
+  ViewChild,
 } from '@angular/core';
 import {
   ControlValueAccessor,
@@ -32,6 +34,7 @@ export class UploadFileControlComponent
     ControlValueAccessor,
     DoCheck
 {
+  @ViewChild('fileInput') fileInput: ElementRef<HTMLInputElement>;
   public get ngControl(): NgControl {
     return this._ngControl;
   }
@@ -53,11 +56,9 @@ export class UploadFileControlComponent
   controlType?: string | undefined;
   autofilled?: boolean | undefined;
   userAriaDescribedBy?: string | undefined;
-  @Input() loadedImageUrl = '';
   @Input() extensions: string[] = ['.json'];
   @Input() fileMaxSize = 90000;
   @Input() placeHolder = 'Template.json';
-  @Input() label = 'File';
   touched = false;
   onTouched = () => {
     //ignore
@@ -81,6 +82,7 @@ export class UploadFileControlComponent
       this.ngControl.valueAccessor = this;
     }
   }
+
   setDescribedByIds(ids: string[]): void {
     // console.log(ids);
   }
