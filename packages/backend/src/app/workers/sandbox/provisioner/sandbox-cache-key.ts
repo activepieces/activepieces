@@ -39,7 +39,7 @@ export const extractProvisionCacheKey = (params: ProvisionCacheInfo): string => 
 
 
 const extractCodeCacheKey = ({ sourceCodeHash }: CodeProvisionCacheInfo): string => {
-    return `CODE-artifactSourceId-${sourceCodeHash}`
+    return `CODE-sourceCodeHash-${sourceCodeHash}`
 }
 
 const extractFlowCacheKey = ({ flowVersionId }: FlowProvisionCacheInfo): string => {
