@@ -1,7 +1,7 @@
 <div
   class="ap-w-[75px] ap-bg-transparent ap-h-full ap-flex ap-flex-col ap-typegraphy-body-2 ap-items-center ap-gap-[20px] ap-p-3">
   <ap-icon-button class="ap-mb-[10px]" [useSvgDefault]="true" [iconFilename]="'logo/logo.svg'"
-    [iconUrl]="(logoUrl$ | async )|| ''" [tooltipText]="'Home'" (buttonClicked)="redirectHome(false)"
+    [iconUrl]="(logoUrl$ | async )|| ''" tooltipText="Home" i18n-tooltipText (buttonClicked)="redirectHome(false)"
     (auxclick)="redirectHome(true)"></ap-icon-button>
 
   <div *ngFor="let r of sideNavRoutes" [matTooltip]="r.caption" [matTooltipPosition]="'right'"
@@ -21,23 +21,23 @@
   </div>
   <div class="ap-flex-grow"></div>
   <app-billing-sidenav-item *ngIf="showBilling$ | async"></app-billing-sidenav-item>
-  <div *ngIf="showSupport$ | async" (click)="openSupport()" matTooltip="Ask the Community" matTooltipPosition="right"
+  <div *ngIf="showSupport$ | async" (click)="openSupport()" matTooltip="Ask the Community" i18n-matTooltip matTooltipPosition="right"
     class="ap-w-full ap-flex-col ap-flex ap-border-transparent ap-justify-center ap-items-center ap-cursor-pointer ap-px-3 ap-mb-3">
     <div class="ap-p-3">
       <svg-icon [class]="'ap-fill-title'" [svgStyle]="{ width: '21px', height: '21px' }"
         src="assets/img/custom/support.svg" [applyClass]="true">
       </svg-icon>
     </div>
-    <div class="ap-font-medium ap-text-[10px]">Support</div>
+    <div class="ap-font-medium ap-text-[10px]" i18n>Support</div>
   </div>
-  <div *ngIf="showDocs$ | async" (click)="openDocs()" [matTooltip]="'Documentation'" [matTooltipPosition]="'right'"
+  <div *ngIf="showDocs$ | async" (click)="openDocs()" matTooltip="Documentation" i18n-matTooltip [matTooltipPosition]="'right'"
     class="ap-w-full ap-flex-col ap-flex ap-border-transparent ap-justify-center ap-items-center ap-cursor-pointer ap-px-3">
     <div class="ap-p-3">
       <svg-icon [class]="'ap-fill-title'" [svgStyle]="{ width: '21px', height: '21px' }"
         src="assets/img/custom/dashboard/documentation.svg" [applyClass]="true">
       </svg-icon>
     </div>
-    <div class="ap-font-medium ap-text-[10px]">Docs</div>
+    <div class="ap-font-medium ap-text-[10px]" i18n>Docs</div>
   </div>
 </div>
 

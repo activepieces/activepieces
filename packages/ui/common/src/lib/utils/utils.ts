@@ -3,14 +3,14 @@ import { ActionType, TriggerType } from '@activepieces/shared';
 export function getDisplayNameForTrigger(triggerType: TriggerType) {
   switch (triggerType) {
     case TriggerType.WEBHOOK: {
-      return 'Webhook Trigger';
+      return $localize`Webhook Trigger`;
       break;
     }
     case TriggerType.EMPTY: {
-      return 'Empty Trigger';
+      return $localize`Empty Trigger`;
     }
   }
-  return 'Trigger';
+  return $localize`Trigger`;
 }
 
 export function getDefaultDisplayNameForPiece(
@@ -19,16 +19,16 @@ export function getDefaultDisplayNameForPiece(
 ) {
   switch (pieceType) {
     case ActionType.CODE: {
-      return 'Code';
+      return $localize`Code`;
     }
     case ActionType.LOOP_ON_ITEMS: {
-      return 'Loop on Items';
+      return $localize`Loop on Items`;
     }
     case ActionType.PIECE: {
       return pieceName;
     }
     case ActionType.BRANCH: {
-      return 'Branch';
+      return $localize`Branch`;
     }
   }
 }

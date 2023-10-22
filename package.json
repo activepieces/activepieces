@@ -23,6 +23,7 @@
     "@angular/elements": "16.2.6",
     "@angular/fire": "7.6.1",
     "@angular/forms": "16.2.6",
+    "@angular/localize": "16.2.6",
     "@angular/material": "16.2.6",
     "@angular/platform-browser": "16.2.6",
     "@angular/platform-browser-dynamic": "16.2.6",

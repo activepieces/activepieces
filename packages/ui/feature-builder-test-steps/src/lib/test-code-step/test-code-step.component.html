@@ -1,5 +1,5 @@
 <div class="ap-px-4  ap-py-3">
-    <div class="ap-typography-body-1 !ap-font-semibold">
+    <div class="ap-typography-body-1 !ap-font-semibold" i18n>
         Generate Sample Data
     </div>
     <ng-container
@@ -12,19 +12,19 @@
                         *ngIf="(stepTest$ | async)?.success === true || (!stepTest$ && (lastTestResult$ | async)) ; else errorTemplate">
                         <svg-icon src="assets/img/custom/success-step-result.svg"
                             [svgStyle]="{ width: '21px', height: '20px' }" matTooltip="Step succeeded"></svg-icon>
-                        Tested Successfully
+                        <span i18n>Tested Successfully</span>
                     </ng-container>
                     <ng-template #errorTemplate>
                         <svg-icon src="assets/img/custom/failure-step-result.svg"
                             [svgStyle]="{ width: '21px', height: '20px' }" matTooltip="Step failed"></svg-icon>
-                        Test Failed
+                        <span i18n>Test Failed</span>
                     </ng-template>
                 </div>
                 <div class="ap-flex-grow">
                 </div>
                 <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium"
                     tooltipText="Test step to generate sample data to use in the next steps"
-                    (buttonClicked)="testStep()">Retest</ap-button>
+                    (buttonClicked)="testStep()" i18n>Retest</ap-button>
             </div>
             <div class="ap-typography-body-2 ap-text-body ap--mt-2 ap-mb-4 ap-pl-0.5"
                 *ngIf="!(stepTest$ | async)?.standardError || (stepTest$ | async) === undefined">
@@ -43,7 +43,7 @@
             <ap-hotspot class="ap-absolute ap-top-[13px] ap-left-[-27px]"
                 matTooltip="Test step to generate sample data to use in the next steps" matTooltipPosition="above">
             </ap-hotspot>
-            <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium" (buttonClicked)="testStep()">Test
+            <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium" (buttonClicked)="testStep()" i18n>Test
                 step</ap-button>
         </div>
     </div>

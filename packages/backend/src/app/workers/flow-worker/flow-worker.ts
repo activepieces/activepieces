@@ -1,8 +1,8 @@
 import {
+    Action,
     ActionType,
     ActivepiecesError,
-    assertNotNullOrUndefined,
-    CodeActionSettings,
+    CodeAction,
     ErrorCode,
     ExecuteFlowOperation,
     ExecutionOutput,
@@ -15,11 +15,12 @@ import {
     flowHelper,
     FlowRunId,
     FlowVersion,
-    FlowVersionState,
     PiecePackage,
     ProjectId,
     RunEnvironment,
+    SourceCode,
     StepOutputStatus,
+    Trigger,
     TriggerType,
 } from '@activepieces/shared'
 import { Sandbox } from '../sandbox'
@@ -32,7 +33,6 @@ import { captureException, logger } from '../../helper/logger'
 import { isNil } from '@activepieces/shared'
 import { getServerUrl } from '../../helper/public-ip-utils'
 import { MAX_LOG_SIZE } from '@activepieces/shared'
-import { acquireLock } from '../../helper/lock'
 import { sandboxProvisioner } from '../sandbox/provisioner/sandbox-provisioner'
 import { SandBoxCacheType } from '../sandbox/provisioner/sandbox-cache-key'
 import { flowWorkerHooks } from './flow-worker-hooks'
@@ -276,62 +276,15 @@ async function saveToLogFile({ fileId, projectId, executionOutput }: { fileId: F
     return logsFile
 }
 
-async function getCodeSteps(projectId: ProjectId, flowVersion: FlowVersion): Promise<{ sourceId: string, zipFile: Buffer }[]> {
-    switch (flowVersion.state) {
-        case FlowVersionState.DRAFT:
-            return getCodeStepsWithLock(projectId, flowVersion)
-        case FlowVersionState.LOCKED:
-            return getCodeStepsWithoutLock(projectId, flowVersion)
-    }
-}
 
-async function getCodeStepsWithLock(projectId: ProjectId, flowVersion: FlowVersion): Promise<{ sourceId: string, zipFile: Buffer }[]> {
-    const flowLock = await acquireLock({
-        key: flowVersion.id,
-        timeout: 180000,
-    })
-    try {
-        return getCodeStepsWithoutLock(projectId, flowVersion)
-    }
-    finally {
-        await flowLock.release()
-    }
-}
-
-async function getCodeStepsWithoutLock(projectId: ProjectId, flowVersion: FlowVersion): Promise<{ sourceId: string, zipFile: Buffer }[]> {
-    const steps = flowHelper.getAllSteps(flowVersion.trigger).filter((step) => step.type === ActionType.CODE)
-    const promises = []
-
-    for (const step of steps) {
-        const codeSettings = step.settings as CodeActionSettings
-        if (isNil(codeSettings.artifactSourceId)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: `Missing artifactSourceId for code step ${flowVersion.id}`,
-                },
-            })
-        }
-        const promise = fileService.getOneOrThrow({
-            fileId: codeSettings.artifactSourceId,
-            projectId,
-        })
-        promises.push(promise)
-    }
-
-    const results = await Promise.all(promises)
-
-    return results.map((sourceEntity, index) => {
-        const step = steps[index]
-        const codeSettings = step.settings as CodeActionSettings
-
-        assertNotNullOrUndefined(codeSettings.artifactSourceId, '[FlowWorker#getCodeSteps] codeSettings.artifactSourceId')
-
+function getCodeSteps(flowVersion: FlowVersion): { name: string, sourceCode: SourceCode }[] {
+    return flowHelper.getAllSteps(flowVersion.trigger).filter((step) => step.type === ActionType.CODE).map(((step: Action | Trigger) => {
+        const codeAction = step as CodeAction
         return {
-            sourceId: codeSettings.artifactSourceId,
-            zipFile: sourceEntity.data,
+            name: codeAction.name,
+            sourceCode: codeAction.settings.sourceCode,
         }
-    })
+    }))
 }
 
 const getSandbox = async ({ projectId, flowVersion, runEnvironment }: GetSandboxParams): Promise<Sandbox> => {
@@ -340,25 +293,20 @@ const getSandbox = async ({ projectId, flowVersion, runEnvironment }: GetSandbox
         projectId,
     })
 
-    const codeSteps = await getCodeSteps(projectId, flowVersion)
-    const codeArchives = codeSteps.map((step) => ({
-        id: step.sourceId,
-        content: step.zipFile,
-    }))
-
+    const codeSteps = getCodeSteps(flowVersion)
     switch (runEnvironment) {
         case RunEnvironment.PRODUCTION:
             return await sandboxProvisioner.provision({
                 type: SandBoxCacheType.FLOW,
                 flowVersionId: flowVersion.id,
                 pieces,
-                codeArchives,
+                codeSteps,
             })
         case RunEnvironment.TESTING:
             return await sandboxProvisioner.provision({
                 type: SandBoxCacheType.NONE,
                 pieces,
-                codeArchives,
+                codeSteps,
             })
     }
 }

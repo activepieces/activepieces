@@ -1,14 +1,14 @@
-<ap-dialog-title-template>Install Piece</ap-dialog-title-template>
+<ap-dialog-title-template i18n>Install Piece</ap-dialog-title-template>
 
 <mat-dialog-content>
   <ap-markdown [data]="risksMarkdown"></ap-markdown>
   <form class="ap-flex ap-flex-col ap-gap-1 ap-mt-4" [formGroup]="addPieceForm" (submit)="addPiece()">
     <mat-form-field class="ap-w-full ap-mb-2" appearance="outline">
-      <mat-label>Piece name</mat-label>
-      <input cdkFocusInitial formControlName="pieceName" matInput type="text" placeholder="NPM package name" />
+      <mat-label i18n>Piece name</mat-label>
+      <input cdkFocusInitial formControlName="pieceName" matInput type="text" placeholder="NPM package name" i18n-placeholder />
 
       <mat-error *ngIf="addPieceForm.controls.pieceName.invalid">
-        <ng-container *ngIf="addPieceForm.controls.pieceName.hasError('required')">
+        <ng-container *ngIf="addPieceForm.controls.pieceName.hasError('required')" i18n>
           This is required
         </ng-container>
       </mat-error>
@@ -52,10 +52,10 @@
 
 <mat-dialog-actions align="end">
   <div class="ap-flex ap-gap-2.5">
-    <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic">
+    <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic" i18n>
       Cancel
     </ap-button>
-    <ap-button btnSize="default" (click)="addPiece()" type="submit" btnColor="primary" [loading]="loading">
+    <ap-button btnSize="default" (click)="addPiece()" type="submit" btnColor="primary" [loading]="loading" i18n>
       Install
     </ap-button>
   </div>

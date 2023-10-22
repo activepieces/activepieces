@@ -190,12 +190,12 @@ function dynamicRoutes(edition: string) {
     {
       path: 'templates/:templateId',
       component: ImportFlowComponent,
-      title: `Import Flow - ${environment.websiteTitle}`,
+      title: $localize`Import Flow - ${environment.websiteTitle}`,
     },
     {
       path: 'chatbots/:id',
       canActivate: [],
-      title: `Activepieces - Chatbot`,
+      title: $localize`Chatbot - ${environment.websiteTitle}`,
       pathMatch: 'full',
       component: ChatComponent,
       resolve: {

@@ -66,7 +66,7 @@ export class ChatbotsTableComponent {
         catchError((err: HttpErrorResponse) => {
           if (err.status === HttpStatusCode.PaymentRequired) {
             const snackbar = this.snackBar.open(
-              'You exceeded your quota for creating bots',
+              $localize`You exceeded your quota for creating bots`,
               'Plans'
             );
             return snackbar.onAction().pipe(
@@ -77,7 +77,7 @@ export class ChatbotsTableComponent {
             );
           } else {
             const snackbar = this.snackBar.open(
-              'Unexpected error occured, please contact support',
+                $localize`Unexpected error occured, please contact support`,
               'Support',
               {
                 panelClass: 'error',
@@ -109,14 +109,14 @@ export class ChatbotsTableComponent {
           })
         ),
         entityName: metadata.displayName,
-        note: `This will permanently delete this chatbot and all its data.`,
+        note: $localize`This will permanently delete this chatbot and all its data.`,
       } as DeleteEntityDialogData,
     });
     this.deleteBot$ = dialogRef.afterClosed().pipe(
       map((res) => {
         if (res) {
           this.snackBar.openFromComponent(GenericSnackbarTemplateComponent, {
-            data: `<b>${metadata.displayName}</b> deleted`,
+            data: $localize`<b>${metadata.displayName}</b> deleted`,
           });
         }
         return void 0;
@@ -152,7 +152,7 @@ export class ChatbotsTableComponent {
             console.error(err);
             menuTrigger.closeMenu();
             const snackbar = this.snackBar.open(
-              'Unexpected error occured, please contact support',
+                $localize`Unexpected error occured, please contact support`,
               'Support',
               {
                 panelClass: 'error',
@@ -184,5 +184,17 @@ export class ChatbotsTableComponent {
           map(() => void 0)
         );
     }
+  }
+
+  shareChatbotLinkTooltipText(chatbot: Chatbot) {
+    return chatbot.connectionId
+      ? $localize`Share bot chat link`
+      : $localize`OpenAi connection is missing`;
+  }
+
+  chatWithBotTooltipText(chatbot: Chatbot) {
+    return chatbot.connectionId
+      ? $localize`Chat with bot`
+      : $localize`OpenAi connection is missing`;
   }
 }

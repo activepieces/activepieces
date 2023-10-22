@@ -62,7 +62,9 @@
           "node_modules/prismjs/plugins/line-highlight/prism-line-highlight.js",
           "node_modules/prismjs/plugins/line-numbers/prism-line-numbers.js",
           "node_modules/clipboard/dist/clipboard.min.js"
-        ]
+        ],
+        "i18nMissingTranslation": "warning",
+        "localize": true
       },
       "configurations": {
         "production": {
@@ -92,7 +94,11 @@
           "vendorChunk": true,
           "extractLicenses": false,
           "sourceMap": true,
-          "namedChunks": true
+          "namedChunks": true,
+          "localize": ["en"]
+        },
+        "fr": {
+          "localize": ["fr"]
         }
       },
       "defaultConfiguration": "production"
@@ -105,6 +111,9 @@
         },
         "development": {
           "browserTarget": "ui-core:build:development"
+        },
+        "fr": {
+          "browserTarget": "ui-core:build:development,fr"
         }
       },
       "defaultConfiguration": "development",
@@ -116,7 +125,8 @@
     "extract-i18n": {
       "executor": "@angular-devkit/build-angular:extract-i18n",
       "options": {
-        "browserTarget": "ui-core:build"
+        "browserTarget": "ui-core:build",
+        "outputPath": "packages/ui/core/src/locale"
       }
     },
     "lint": {
@@ -146,5 +156,14 @@
       }
     }
   },
-  "tags": []
+  "tags": [],
+  "i18n": {
+    "sourceLocale": {
+      "code": "en",
+      "baseHref": ""
+  },
+    "locales": {
+      "fr": "packages/ui/core/src/locale/messages.fr.xlf"
+    }
+  }
 }

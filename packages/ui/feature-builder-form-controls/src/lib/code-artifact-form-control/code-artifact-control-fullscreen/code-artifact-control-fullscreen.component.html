@@ -1,13 +1,13 @@
 <div class="code-editor ap-h-full ap-flex ap-flex-col">
   <div class="modal-header  ap-p-3 ap-typography-headline-6 ap-flex ap-text-white  ap-items-center">
-    Code Editor
+    <span i18n>Code Editor</span>
     <div class="ap-flex-grow"></div>
 
-    <ap-button *ngIf="!readOnly" btnStyle="flat" (buttonClicked)="openNpmPackageModal()" btnSize="small">
+    <ap-button *ngIf="!readOnly" btnStyle="flat" (buttonClicked)="openNpmPackageModal()" btnSize="small" i18n>
       Add npm package
     </ap-button>
     <ap-button [loading]="testLoading" btnStyle="flat" class="ap-ml-1" btnSize="small"
-      (buttonClicked)="openTestCodeModal()">Test code
+      (buttonClicked)="openTestCodeModal()" i18n>Test code
     </ap-button>
     <ap-icon-button (click)="hide()" iconFilename="minimize.svg" matTooltip="Close"></ap-icon-button>
   </div>
@@ -46,12 +46,12 @@
         <div class="ap-h-full">
           <!-- Use ngModel to update the editor outside the modal -->
           <ngx-monaco-editor class="!ap-h-full" *ngIf="selectedFile === SelectedFileInFullscreenCodeEditor.CONTENT"
-            [options]="codeEditorOptions" [ngModel]="codeFilesForm.controls.content.value"
-            (ngModelChange)="codeFilesForm.controls.content.setValue($event)"></ngx-monaco-editor>
+            [options]="codeEditorOptions" [ngModel]="codeFilesForm.controls.code.value"
+            (ngModelChange)="codeFilesForm.controls.code.setValue($event)"></ngx-monaco-editor>
 
           <ngx-monaco-editor class="!ap-h-full" *ngIf="selectedFile ===  SelectedFileInFullscreenCodeEditor.PACKAGE"
-            [ngModel]="codeFilesForm.controls.package.value"
-            (ngModelChange)="codeFilesForm.controls.package.setValue($event)"
+            [ngModel]="codeFilesForm.controls.packageJson.value"
+            (ngModelChange)="codeFilesForm.controls.packageJson.setValue($event)"
             [options]="packageDotJsonOptions"></ngx-monaco-editor>
         </div>
 

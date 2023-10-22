@@ -35,7 +35,7 @@ export class InviteProjectMemberDialogComponent {
         nonNullable: true,
         validators: [Validators.required],
       }),
-      role: new FormControl(ProjectMemberRole.EDITIOR, {
+      role: new FormControl(ProjectMemberRole.EDITOR, {
         nonNullable: true,
         validators: [Validators.required],
       }),
@@ -59,7 +59,7 @@ export class InviteProjectMemberDialogComponent {
               });
             } else {
               this.snackbar.open(
-                'Internal error occurred please contact support@activepieces.com',
+                $localize`Internal error occurred please contact support@activepieces.com`,
                 '',
                 {
                   duration: undefined,
@@ -85,5 +85,18 @@ export class InviteProjectMemberDialogComponent {
   }
   get ProjectMemberRole() {
     return Object.keys(ProjectMemberRole);
+  }
+
+  projectMemberRoleText(role: string): string {
+    switch (role) {
+      case ProjectMemberRole.ADMIN:
+        return $localize`ADMIN`;
+      case ProjectMemberRole.EDITOR:
+        return $localize`EDITOR`;
+      case ProjectMemberRole.VIEWER:
+        return $localize`VIEWER`;
+      default:
+        return $localize`UNKNOWN`;
+    }
   }
 }

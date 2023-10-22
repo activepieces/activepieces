@@ -7,7 +7,7 @@
         [indentation]="(!result.children || result.children.length===0) && !result.value"></app-generic-step-mention-item>
       <div class="ap-flex-grow"></div>
       <ap-button *ngIf="hoverTracker.isHovered " btnColor="primary" btnStyle="basic" type="button" btnSize="small"
-        [buttonIsInsideAutocomplete]="true" (click)="mentionClicked.emit(_stepMention)">Insert
+        [buttonIsInsideAutocomplete]="true" (click)="mentionClicked.emit(_stepMention)" i18n>Insert
       </ap-button>
       <mat-icon class="mat-icon-rtl-mirror !ap-mr-[5px]"
         [svgIcon]="expandSample ? 'custom_expand_less' : 'custom_expand_more'"
@@ -46,13 +46,13 @@
       <button apTrackHover #resultNodeHoverTracker="hoverTrackerDirective" class="!ap-pl-0" mat-menu-item
         (click)="mentionClicked.emit(_stepMention)">
         <span class=" ap-flex-grow ap-transition-all"
-          [style.padding-left]="FIRST_LEVEL_PADDING_IN_MENTIONS_LIST+ 'px'">result:
+          [style.padding-left]="FIRST_LEVEL_PADDING_IN_MENTIONS_LIST+ 'px'" i18n>result:
           <span class="ap-transition-all ap-text-primary" [matTooltip]="'' + result.value || ''">{{result.value}}
           </span></span>
         <ap-button *ngIf="resultNodeHoverTracker.isHovered" btnColor="primary" btnStyle="basic" type="button"
           btnSize="small" class="ap-absolute ap-right-[10px]" [buttonIsInsideAutocomplete]="true"
           [darkLoadingSpinner]="true" (click)="$event.stopPropagation();"
-          (buttonClicked)="mentionClicked.emit(_stepMention)">Insert
+          (buttonClicked)="mentionClicked.emit(_stepMention)" i18n>Insert
         </ap-button>
       </button>
     </ng-container>
@@ -60,15 +60,15 @@
   </ng-container>
   <ng-template #testStepTemplate>
     <div class="ap-my-3 ap-px-2">
-      <div class="ap-typography-body-1 ap-text-center ap-mb-1">
+      <div class="ap-typography-body-1 ap-text-center ap-mb-1" i18n>
         Test step
       </div>
-      <div class="ap-typography-body-2 ap-text-center ap-mb-3">
+      <div class="ap-typography-body-2 ap-text-center ap-mb-3" i18n>
         This step needs to be tested, to generate sample data.
       </div>
       <div class="ap-text-center">
         <ap-button btnColor="primary" btnStyle="flat" type="button" btnSize="default" [darkLoadingSpinner]="false"
-          (click)="$event.stopPropagation(); selectStep()">Go to step
+          (click)="$event.stopPropagation(); selectStep()" i18n>Go to step
         </ap-button>
       </div>
     </div>

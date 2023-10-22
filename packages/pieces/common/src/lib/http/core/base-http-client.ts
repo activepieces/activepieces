@@ -24,13 +24,6 @@ export abstract class BaseHttpClient implements HttpClient {
     request: HttpRequest<RequestBody>
   ): string {
     const url = new URL(`${this.baseUrl}${request.url}`);
-
-    if (request.queryParams) {
-      for (const [name, value] of Object.entries(request.queryParams)) {
-        url.searchParams.append(name, value);
-      }
-    }
-
     return url.toString();
   }
 
