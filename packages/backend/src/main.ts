@@ -36,6 +36,7 @@ import { cloudRunHooks } from './app/ee/flow-run/cloud-flow-run-hooks'
 import { cloudWorkerHooks } from './app/ee/flow-worker/cloud-flow-worker-hooks'
 import { pieceServiceHooks } from './app/pieces/piece-service/piece-service-hooks'
 import { cloudPieceServiceHooks } from './app/ee/pieces/piece-service/cloud-piece-service-hooks'
+import { platformModule } from './app/ee/platform/platform.module'
 
 const start = async (app: FastifyInstance): Promise<void> => {
     try {
@@ -53,6 +54,7 @@ const start = async (app: FastifyInstance): Promise<void> => {
                 await app.register(appSumoModule)
                 await app.register(referralModule)
                 await app.register(adminPieceModule)
+                await app.register(platformModule)
                 chatbotHooks.setHooks(cloudChatbotHooks)
                 datasourceHooks.setHooks(cloudDatasourceHooks)
                 embeddings.set(qdrantEmbeddings)
@@ -66,6 +68,7 @@ const start = async (app: FastifyInstance): Promise<void> => {
                 await app.register(authenticationModule)
                 await app.register(enterpriseProjectModule)
                 await app.register(projectMemberModule)
+                await app.register(platformModule)
                 pieceServiceHooks.set(cloudPieceServiceHooks)
                 break
             case ApEdition.COMMUNITY:

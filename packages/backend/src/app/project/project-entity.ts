@@ -1,16 +1,15 @@
 import { EntitySchema } from 'typeorm'
 import { AppConnection, Flow, Folder, Project, TriggerEvent, User } from '@activepieces/shared'
 import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
-import { ProjectType } from '@activepieces/shared'
 
-type ProjectSchema = {
+type ProjectSchema = Project & {
     owner: User
     flows: Flow[]
     files: File[]
     folders: Folder[]
     events: TriggerEvent[]
     appConnections: AppConnection[]
-} & Project
+}
 
 export const ProjectEntity = new EntitySchema<ProjectSchema>({
     name: 'project',
@@ -22,14 +21,6 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
         },
         notifyStatus: {
             type: String,
-        },
-        type: {
-            type: String,
-            enum: [ProjectType.MANAGED, ProjectType.UNMANAGED],
-        },
-        platformId: {
-            type: String,
-            nullable: true,
         },
     },
     indices: [
