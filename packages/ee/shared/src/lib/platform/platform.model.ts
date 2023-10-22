@@ -6,6 +6,7 @@ export type PlatformId = ApId;
 export const Platform = Type.Object({
     ...BaseModelSchema,
     ownerId: ApId,
+    name: Type.String(),
     primaryColor: Type.String(),
     logoIconUrl: Type.String(),
     fullLogoUrl: Type.String(),

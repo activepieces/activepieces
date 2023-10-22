@@ -15,6 +15,10 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             ...ApIdSchema,
             nullable: false,
         },
+        name: {
+            type: String,
+            nullable: false,
+        },
         primaryColor: {
             type: String,
             nullable: false,

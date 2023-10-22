@@ -11,10 +11,11 @@ const FULL_LOGO_URL_DEFAULT = 'https://activepieces.com/assets/images/logo-full.
 const FAV_ICON_URL_DEFAULT = 'https://activepieces.com/assets/images/favicon.png'
 
 export const platformService = {
-    async add({ ownerId, primaryColor, logoIconUrl, fullLogoUrl, favIconUrl }: AddParams): Promise<Platform> {
+    async add({ ownerId, name, primaryColor, logoIconUrl, fullLogoUrl, favIconUrl }: AddParams): Promise<Platform> {
         const newPlatform: NewPlatform = {
             id: apId(),
             ownerId,
+            name,
             primaryColor: primaryColor ?? PRIMARY_COLOR_DEFAULT,
             logoIconUrl: logoIconUrl ?? LOGO_ICON_URL_DEFAULT,
             fullLogoUrl: fullLogoUrl ?? FULL_LOGO_URL_DEFAULT,
@@ -24,12 +25,13 @@ export const platformService = {
         return await repo.save(newPlatform)
     },
 
-    async update({ id, userId, primaryColor, logoIconUrl, fullLogoUrl, favIconUrl }: UpdateParams): Promise<Platform> {
+    async update({ id, userId, name, primaryColor, logoIconUrl, fullLogoUrl, favIconUrl }: UpdateParams): Promise<Platform> {
         const platform = await this.getOneOrThrow(id)
         assertPlatformOwnedByUser(platform, userId)
 
         const updatedPlatform: Platform = {
             ...platform,
+            ...spreadIfDefined('name', name),
             ...spreadIfDefined('primaryColor', primaryColor),
             ...spreadIfDefined('logoIconUrl', logoIconUrl),
             ...spreadIfDefined('fullLogoUrl', fullLogoUrl),
@@ -71,6 +73,7 @@ const assertPlatformOwnedByUser = (platform: Platform, userId: UserId): void => 
 
 type AddParams = {
     ownerId: UserId
+    name: string
     primaryColor?: string
     logoIconUrl?: string
     fullLogoUrl?: string

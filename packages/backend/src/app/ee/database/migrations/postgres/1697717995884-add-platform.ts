@@ -11,6 +11,7 @@ export class AddPlatform1697717995884 implements MigrationInterface {
                 "created" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
                 "updated" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
                 "ownerId" character varying(21) NOT NULL,
+                "name" character varying NOT NULL,
                 "primaryColor" character varying NOT NULL,
                 "logoIconUrl" character varying NOT NULL,
                 "fullLogoUrl" character varying NOT NULL,
