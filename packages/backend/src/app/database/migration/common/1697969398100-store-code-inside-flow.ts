@@ -6,27 +6,28 @@ import decompress from 'decompress'
 
 type FlowTemplate = {
     id: string
+    projectId: string
     template: {
         trigger: Step
     }
 }
 
-type FunctionTransformer = (s: CodeStep, fileRepo: Repository<File>) => Promise<void>
+type FunctionTransformer = (s: CodeStep, fileRepo: Repository<File>, flowId: string, flowVersionId: string) => Promise<void>
 
-export class StoreCodeInsideFlow1697969398100 implements MigrationInterface {
+export class StoreCodeInsideFlow1697969398200 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await this.processFlowVersions(queryRunner, flattenCodeStep)
         await this.processFlowTemplates(queryRunner, flattenCodeStep)
 
-        logger.info('StoreCodeInsideFlow1697969398100: up finished')
+        logger.info('StoreCodeInsideFlow1697969398200: up finished')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await this.processFlowVersions(queryRunner, removeNewCodeField)
         await this.processFlowTemplates(queryRunner, removeNewCodeField)
 
-        logger.info('StoreCodeInsideFlow1697969398100: down finished')
+        logger.info('StoreCodeInsideFlow1697969398200: down finished')
     }
 
     private async processFlowVersions(queryRunner: QueryRunner, stepFunction: FunctionTransformer) {
@@ -38,7 +39,7 @@ export class StoreCodeInsideFlow1697969398100 implements MigrationInterface {
             const flowVersion = await flowVersionRepo.findOneBy({ id })
 
             if (flowVersion) {
-                const updated = await traverseAndUpdateSubFlow(stepFunction, flowVersion.trigger, fileRepo)
+                const updated = await traverseAndUpdateSubFlow(stepFunction, flowVersion.trigger, fileRepo, flowVersion.flowId, flowVersion.id)
 
                 if (updated) {
                     await flowVersionRepo.update(flowVersion.id, flowVersion)
@@ -59,7 +60,7 @@ export class StoreCodeInsideFlow1697969398100 implements MigrationInterface {
             const fileRepo = queryRunner.connection.getRepository<File>('file')
 
             for (const template of templates) {
-                const updated = await traverseAndUpdateSubFlow(stepFunction, template.template.trigger, fileRepo)
+                const updated = await traverseAndUpdateSubFlow(stepFunction, template.template.trigger, fileRepo, template.projectId, template.id)
 
                 if (updated) {
                     await flowTemplateRepo.update(template.id, template)
@@ -69,7 +70,7 @@ export class StoreCodeInsideFlow1697969398100 implements MigrationInterface {
     }
 }
 
-const traverseAndUpdateSubFlow = async (updater: FunctionTransformer, root: Step | undefined, fileRepo: Repository<File>): Promise<boolean> => {
+const traverseAndUpdateSubFlow = async (updater: FunctionTransformer, root: Step | undefined, fileRepo: Repository<File>, flowId: string, flowVersionId: string): Promise<boolean> => {
     if (!root) {
         return false
     }
@@ -78,25 +79,25 @@ const traverseAndUpdateSubFlow = async (updater: FunctionTransformer, root: Step
 
     switch (root.type) {
         case 'BRANCH':
-            updated = await traverseAndUpdateSubFlow(updater, root.onSuccessAction, fileRepo) || updated
-            updated = await traverseAndUpdateSubFlow(updater, root.onFailureAction, fileRepo) || updated
+            updated = await traverseAndUpdateSubFlow(updater, root.onSuccessAction, fileRepo, flowId, flowVersionId) || updated
+            updated = await traverseAndUpdateSubFlow(updater, root.onFailureAction, fileRepo, flowId, flowVersionId) || updated
             break
         case 'LOOP_ON_ITEMS':
-            updated = await traverseAndUpdateSubFlow(updater, root.firstLoopAction, fileRepo) || updated
+            updated = await traverseAndUpdateSubFlow(updater, root.firstLoopAction, fileRepo, flowId, flowVersionId) || updated
             break
         case 'CODE':
-            await updater(root, fileRepo)
+            await updater(root, fileRepo, flowId, flowVersionId)
             updated = true
             break
         default:
             break
     }
 
-    updated = await traverseAndUpdateSubFlow(updater, root.nextAction, fileRepo) || updated
+    updated = await traverseAndUpdateSubFlow(updater, root.nextAction, fileRepo, flowId, flowVersionId) || updated
     return updated
 }
 
-const flattenCodeStep = async (codeStep: CodeStep, fileRepo: Repository<File>): Promise<void> => {
+const flattenCodeStep = async (codeStep: CodeStep, fileRepo: Repository<File>, flowVersionId: string, flowId: string): Promise<void> => {
     const sourceCodeId = codeStep.settings.artifactSourceId
     const sourceCode = codeStep.settings.sourceCode
     if (!isNil(sourceCodeId) && isNil(sourceCode)) {
@@ -104,13 +105,14 @@ const flattenCodeStep = async (codeStep: CodeStep, fileRepo: Repository<File>): 
             id: sourceCodeId,
         })
         if (isNil(file)) {
+            logger.warn(`StoreCodeInsideFlow1697969398100: file not found for file id ${sourceCodeId} in flow ${flowId} of flow version ${flowVersionId}`)
             return
         }
         const buffer = await decompress(file.data)
         const code = buffer.find((f: { path: string | string[] }) => f.path.includes('index.ts') || f.path.includes('index.js'))
         const packageJson = buffer.find((f: { path: string | string[] }) => f.path.includes('package.json'))
         if (isNil(code) || isNil(packageJson)) {
-            logger.warn(`StoreCodeInsideFlow1697969398100: code or package.json not found for file ${file.id}`)
+            logger.warn(`StoreCodeInsideFlow1697969398100: code or package.json not found for file ${file.id} in flow ${flowId} of flow version ${flowVersionId}`)
             return
         }
         codeStep.settings.sourceCode = {
@@ -169,5 +171,6 @@ type Step =
 
 type FlowVersion = {
     id: string
+    flowId: string;
     trigger?: Step
 }
