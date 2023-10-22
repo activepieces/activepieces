@@ -1,40 +1,49 @@
 import { EntitySchema } from 'typeorm'
 import { Platform } from '@activepieces/ee-shared'
-import { ApIdSchema, BLOB_COLUMN_TYPE, BaseColumnSchemaPart } from '../../database/database-common'
+import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 import { User } from '@activepieces/shared'
 
+type PlatformSchema = Platform & {
+    owner: User
+}
 
-export const PlatformEntity = new EntitySchema<Platform & { owner: User }>({
+export const PlatformEntity = new EntitySchema<PlatformSchema>({
     name: 'platform',
     columns: {
         ...BaseColumnSchemaPart,
+        ownerId: {
+            ...ApIdSchema,
+            nullable: false,
+        },
         primaryColor: {
             type: String,
+            nullable: false,
         },
-        ownerId: ApIdSchema,
-        logoIcon: {
-            type: BLOB_COLUMN_TYPE,
-            nullable: true,
+        logoIconUrl: {
+            type: String,
+            nullable: false,
         },
-        fullLogo: {
-            type: BLOB_COLUMN_TYPE,
-            nullable: true,
+        fullLogoUrl: {
+            type: String,
+            nullable: false,
         },
-        favIcon: {
-            type: BLOB_COLUMN_TYPE,
-            nullable: true,
+        favIconUrl: {
+            type: String,
+            nullable: false,
         },
     },
     indices: [
-
     ],
     relations: {
         owner: {
-            type: 'many-to-one',
+            type: 'one-to-one',
             target: 'user',
+            onDelete: 'RESTRICT',
+            onUpdate: 'RESTRICT',
             joinColumn: {
                 name: 'ownerId',
-                foreignKeyConstraintName: 'fk_platform_owner_id',
+                referencedColumnName: 'id',
+                foreignKeyConstraintName: 'fk_platform_user',
             },
         },
     },
