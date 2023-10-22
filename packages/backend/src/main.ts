@@ -1,81 +1,17 @@
-import { authenticationModule } from './app/authentication/authentication.module'
 import { system, validateEnvPropsOnStartup } from './app/helper/system/system'
 import { SystemProp } from './app/helper/system/system-prop'
 import { databaseConnection } from './app/database/database-connection'
 import { logger } from './app/helper/logger'
-import { getEdition } from './app/helper/secret-helper'
 import { ApEdition, ApEnvironment } from '@activepieces/shared'
 import { seedDevData } from './app/database/seeds/dev-seeds'
 import { flowQueueConsumer } from './app/workers/flow-worker/flow-queue-consumer'
 import { setupApp } from './app/app'
 import { FastifyInstance } from 'fastify'
-import { firebaseAuthenticationModule } from './app/ee/firebase-auth/firebase-authentication.module'
-import { billingModule } from './app/ee/billing/billing.module'
-import { appCredentialModule } from './app/ee/app-credentials/app-credentials.module'
-import { connectionKeyModule } from './app/ee/connection-keys/connection-key.module'
-import { flowTemplateModule } from './app/ee/flow-template/flow-template.module'
-import { initilizeSentry } from './app/ee/helper/exception-handler'
-import { appSumoModule } from './app/ee/appsumo/appsumo.module'
-import { referralModule } from './app/ee/referrals/referral.module'
-import { cloudDatasourceHooks } from './app/ee/chatbot/cloud/cloud-datasources.hook'
-import { projectModule } from './app/project/project-module'
-import { cloudChatbotHooks } from './app/ee/chatbot/cloud/cloud-chatbot.hook'
-import { qdrantEmbeddings } from './app/ee/chatbot/cloud/qdrant-embeddings'
-import { chatbotHooks } from './app/chatbot/chatbot.hooks'
-import { datasourceHooks } from './app/chatbot/datasources/datasource.hooks'
-import { flowWorkerHooks } from './app/workers/flow-worker/flow-worker-hooks'
-import { embeddings } from './app/chatbot/embedings'
-import { projectMemberModule } from './app/ee/project-members/project-member.module'
-import { enterpriseProjectModule } from './app/ee/projects/enterprise-project-controller'
 import { licenseValidator } from './app/ee/helper/license-validator'
-import { adminPieceModule } from './app/ee/pieces/admin-piece-module'
-import { appConnectionsHooks } from './app/app-connection/app-connection-service/app-connection-hooks'
-import { cloudAppConnectionsHooks } from './app/ee/app-connections/cloud-app-connection-service'
-import { flowRunHooks } from './app/flows/flow-run/flow-run-hooks'
-import { cloudRunHooks } from './app/ee/flow-run/cloud-flow-run-hooks'
-import { cloudWorkerHooks } from './app/ee/flow-worker/cloud-flow-worker-hooks'
-import { pieceServiceHooks } from './app/pieces/piece-service/piece-service-hooks'
-import { cloudPieceServiceHooks } from './app/ee/pieces/piece-service/cloud-piece-service-hooks'
-import { platformModule } from './app/ee/platform/platform.module'
+import { getEdition } from './app/helper/secret-helper'
 
 const start = async (app: FastifyInstance): Promise<void> => {
     try {
-        const edition = getEdition()
-        logger.info(`Activepieces ${edition} Edition`)
-        switch (edition) {
-            case ApEdition.CLOUD:
-                await app.register(firebaseAuthenticationModule)
-                await app.register(billingModule)
-                await app.register(appCredentialModule)
-                await app.register(connectionKeyModule)
-                await app.register(flowTemplateModule)
-                await app.register(enterpriseProjectModule)
-                await app.register(projectMemberModule)
-                await app.register(appSumoModule)
-                await app.register(referralModule)
-                await app.register(adminPieceModule)
-                await app.register(platformModule)
-                chatbotHooks.setHooks(cloudChatbotHooks)
-                datasourceHooks.setHooks(cloudDatasourceHooks)
-                embeddings.set(qdrantEmbeddings)
-                appConnectionsHooks.setHooks(cloudAppConnectionsHooks)
-                flowWorkerHooks.setHooks(cloudWorkerHooks)
-                flowRunHooks.setHooks(cloudRunHooks)
-                pieceServiceHooks.set(cloudPieceServiceHooks)
-                initilizeSentry()
-                break
-            case ApEdition.ENTERPRISE:
-                await app.register(authenticationModule)
-                await app.register(enterpriseProjectModule)
-                await app.register(projectMemberModule)
-                await app.register(platformModule)
-                pieceServiceHooks.set(cloudPieceServiceHooks)
-                break
-            case ApEdition.COMMUNITY:
-                await app.register(authenticationModule)
-                await app.register(projectModule)
-                break
-        }
         await app.listen({
             host: '0.0.0.0',
             port: 3000,
@@ -100,6 +36,7 @@ The application started on ${system.get(SystemProp.FRONTEND_URL)}, as specified 
             logger.warn(`[WARNING]: This is only shows pieces specified in AP_DEV_PIECES ${pieces} environment variable.`)
         }
 
+        const edition = getEdition()
         if (edition !== ApEdition.COMMUNITY) {
             const verified = await licenseValidator.validate()
             if (!verified) {
