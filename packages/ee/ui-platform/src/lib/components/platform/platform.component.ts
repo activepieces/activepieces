@@ -4,7 +4,7 @@ import {
   OnDestroy,
   OnInit,
 } from '@angular/core';
-import { DashboardService } from '../../dashboard.service';
+import { DashboardService } from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-platform',

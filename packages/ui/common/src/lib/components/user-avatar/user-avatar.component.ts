@@ -8,6 +8,7 @@ import { Observable, map, tap } from 'rxjs';
 import { JwtHelperService } from '@auth0/angular-jwt';
 import { HttpClient } from '@angular/common/http';
 import { FlagService } from '../../service/flag.service';
+import { showPlatform$ } from '../../guards/platform.guard';
 @Component({
   selector: 'ap-user-avatar',
   templateUrl: './user-avatar.component.html',
@@ -24,9 +25,8 @@ export class UserAvatarComponent {
   overflownProjectsNames: Record<string, string> = {};
   billingEnabled$: Observable<boolean>;
   projectEnabled$: Observable<boolean>;
-
+  showPlatform$: Observable<boolean> = showPlatform$;
   showCommunity$: Observable<boolean>;
-
   constructor(
     public authenticationService: AuthenticationService,
     private router: Router,
@@ -95,6 +95,9 @@ export class UserAvatarComponent {
         }),
         map(() => void 0)
       );
+  }
+  viewPlatformSettings() {
+    this.router.navigate(['/platform']);
   }
   // END EE
 

@@ -11,7 +11,7 @@ import { DashboardContainerComponent } from './dashboard-container.component';
 import {
   ConnectionsResolver,
   environment,
-  isEeEditionGuard,
+  platformGuard,
 } from '@activepieces/ui/common';
 import {
   ChatbotsTableComponent,
@@ -21,7 +21,6 @@ import {
 import { PlansPageComponent } from '@activepieces/ee-billing-ui';
 import { ProjectMembersTableComponent } from '@activepieces/ee/project-members';
 import { CommunityPiecesTableComponent } from './pages/community-pieces-table/community-pieces-table.component';
-import { PlatformComponent } from './pages/platform/platform.component';
 
 export const DashboardLayoutRouting: Routes = [
   {
@@ -127,8 +126,11 @@ export const DashboardLayoutRouting: Routes = [
         title: `Platform - ${environment.websiteTitle}`,
         path: 'platform',
         pathMatch: 'full',
-        component: PlatformComponent,
-        canActivate: [isEeEditionGuard],
+        loadChildren: () =>
+          import('@activepieces/ui-ee-platform').then(
+            (res) => res.UiEePlatformModule
+          ),
+        canActivate: [platformGuard],
       },
     ],
   },

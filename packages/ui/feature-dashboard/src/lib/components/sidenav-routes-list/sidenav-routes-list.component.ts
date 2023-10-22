@@ -9,8 +9,8 @@ import { Store } from '@ngrx/store';
 import { FolderActions } from '../../store/folders/folders.actions';
 import { Observable, map, tap } from 'rxjs';
 import { ApFlagId, supportUrl } from '@activepieces/shared';
-import { FlagService } from '@activepieces/ui/common';
-import { DashboardService } from '../../dashboard.service';
+import { DashboardService, FlagService } from '@activepieces/ui/common';
+
 type SideNavRoute = {
   icon: string;
   caption: string;
