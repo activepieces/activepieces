@@ -84,7 +84,10 @@ const flowVersionWithBranching: FlowVersion = {
                     'input': {
 
                     },
-                    'artifactSourceId': 'pJskIPz1ZL3RYiyUX1HPm',
+                    "sourceCode": {
+                        "code": "test",
+                        "packageJson": "{}"
+                    },
                 },
                 'displayName': 'Code',
             },
@@ -124,6 +127,10 @@ function createCodeAction(name: string): Action {
         'type': ActionType.CODE,
         'valid': true,
         'settings': {
+            "sourceCode": {
+                "code": "test",
+                "packageJson": "{}"
+            },
             'input': {
             }
         }
@@ -299,7 +306,10 @@ describe('Flow Helper', () => {
                     'valid': true,
                     'settings': {
                         'input': {},
-                        'artifactSourceId': 'pJskIPz1ZL3RYiyUX1HPm'
+                        "sourceCode": {
+                            "code": "test",
+                            "packageJson": "{}"
+                        },
                     },
                     'displayName': 'Code'
                 },
@@ -438,7 +448,11 @@ describe('Flow Helper', () => {
                     'valid': true,
                     'type': 'CODE',
                     'settings': {
-                        'input': {}
+                        'input': {},
+                        "sourceCode": {
+                            "code": "test",
+                            "packageJson": "{}"
+                        },
                     }
                 },
                 'onFailureAction': {
@@ -447,7 +461,11 @@ describe('Flow Helper', () => {
                     'valid': true,
                     'type': 'CODE',
                     'settings': {
-                        'input': {}
+                        'input': {},
+                        "sourceCode": {
+                            "code": "test",
+                            "packageJson": "{}"
+                        },
                     }
                 },
                 'nextAction': {
@@ -456,7 +474,11 @@ describe('Flow Helper', () => {
                     'valid': true,
                     'type': 'CODE',
                     'settings': {
-                        'input': {}
+                        'input': {},
+                        "sourceCode": {
+                            "code": "test",
+                            "packageJson": "{}"
+                        },
                     }
                 }
             }
@@ -531,7 +553,11 @@ describe('Flow Helper', () => {
                     'valid': true,
                     'type': 'CODE',
                     'settings': {
-                        'input': {}
+                        'input': {},
+                        "sourceCode": {
+                            "code": "test",
+                            "packageJson": "{}"
+                        },
                     }
                 },
                 'nextAction': {
@@ -540,7 +566,11 @@ describe('Flow Helper', () => {
                     'valid': true,
                     'type': 'CODE',
                     'settings': {
-                        'input': {}
+                        'input': {},
+                        "sourceCode": {
+                            "code": "test",
+                            "packageJson": "{}"
+                        },
                     }
                 }
             }
@@ -620,7 +650,10 @@ test('Duplicate Flow With Branch', () => {
                         'input':{
 
                         },
-                        'artifactSourceId':'pJskIPz1ZL3RYiyUX1HPm',
+                        "sourceCode": {
+                            "code": "test",
+                            "packageJson": "{}"
+                        },
                     },
                     'displayName':'Code',
                 },
@@ -714,7 +747,10 @@ test('Duplicate Flow With Branch', () => {
                     'displayName': 'Code',
                     'settings': {
                         'input': {},
-                        'artifactSourceId': undefined,
+                        "sourceCode": {
+                            "code": "test",
+                            "packageJson": "{}"
+                        },
                     },
                     'valid': true,
                 },
@@ -795,7 +831,10 @@ test('Duplicate Flow With Loops using Import', () => {
                         'input': {
 
                         },
-                        'artifact': 'BASE64',
+                        "sourceCode": {
+                            "code": "test",
+                            "packageJson": "{}"
+                        },
                     },
                     'displayName': 'Code',
                 },
@@ -808,7 +847,10 @@ test('Duplicate Flow With Loops using Import', () => {
                         'input': {
 
                         },
-                        'artifact': 'BASE64',
+                        "sourceCode": {
+                            "code": "test",
+                            "packageJson": "{}"
+                        },
                     },
                     'displayName': 'Code',
                 },
@@ -844,7 +886,10 @@ test('Duplicate Flow With Loops using Import', () => {
                     valid: true,
                     settings: {
                         input: {},
-                        artifact: 'BASE64',
+                        "sourceCode": {
+                            "code": "test",
+                            "packageJson": "{}"
+                        },
                     },
                     displayName: 'Code',
                 },
@@ -861,7 +906,10 @@ test('Duplicate Flow With Loops using Import', () => {
                     valid: true,
                     settings: {
                         input: {},
-                        artifact: 'BASE64',
+                        "sourceCode": {
+                            "code": "test",
+                            "packageJson": "{}"
+                        },
                     },
                     displayName: 'Code',
                 },

@@ -144,9 +144,11 @@ export const pieceHelper = {
         })
 
         try {
-            const artifactSourceId = step.settings.artifactSourceId
 
-            const result = await codeExecutor.executeCode(artifactSourceId!, resolvedInput)
+            const result = await codeExecutor.executeCode({
+                params: resolvedInput,
+                stepName: step.name,
+            })
             return {
                 success: true,
                 output: result,
@@ -187,11 +189,11 @@ export const pieceHelper = {
 
         try {
             const { processedInput, errors } =
-        await variableService.applyProcessorsAndValidators(
-            resolvedProps,
-            action.props,
-            piece.auth,
-        )
+                await variableService.applyProcessorsAndValidators(
+                    resolvedProps,
+                    action.props,
+                    piece.auth,
+                )
             if (Object.keys(errors).length > 0) {
                 throw new Error(JSON.stringify(errors))
             }

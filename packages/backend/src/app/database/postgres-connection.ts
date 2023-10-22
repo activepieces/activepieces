@@ -66,6 +66,7 @@ import { AddPinnedOrder1686154285890 } from '../ee/database/migrations/postgres/
 import { AddPinnedAndBlogUrlToTemplates1686133672743 } from '../ee/database/migrations/postgres/1686133672743-AddPinnedAndBlogUrlToTemplates'
 import { ChangeToJsonToKeepKeysOrder1685991260335 } from '../ee/database/migrations/postgres/1685991260335-ChangeToJsonToPeserveKeys'
 import { AddArchiveIdToPieceMetadata1696950789636 } from './migration/postgres/1696950789636-add-archive-id-to-piece-metadata'
+import { StoreCodeInsideFlow1697969398100 } from './migration/common/1697969398100-store-code-inside-flow'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
@@ -123,6 +124,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddPieceTypeAndPackageTypeToPieceMetadata1695992551156,
         AddPieceTypeAndPackageTypeToFlowVersion1696245170061,
         AddArchiveIdToPieceMetadata1696950789636,
+        StoreCodeInsideFlow1697969398100,
     ]
 
     const edition = getEdition()

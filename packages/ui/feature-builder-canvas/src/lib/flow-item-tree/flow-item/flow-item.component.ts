@@ -36,7 +36,7 @@ export class FlowItemComponent implements OnInit {
   @Input() hoverState = false;
   @Input() trigger = false;
   _flowItemData: FlowItem;
-  delayTimer: NodeJS.Timeout;
+  delayTimer: ReturnType<typeof setTimeout>;
   delayTimerSet = false;
   touchStartLongPress = { delay: 750, delta: 10 };
 

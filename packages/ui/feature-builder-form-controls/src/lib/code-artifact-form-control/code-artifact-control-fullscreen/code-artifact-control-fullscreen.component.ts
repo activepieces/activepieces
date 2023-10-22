@@ -118,12 +118,12 @@ export class CodeArtifactControlFullscreenComponent implements OnInit {
   addNewPackage(pkg: { [key: PackageName]: PackageVersion }) {
     const packageDotJson = this.getPackageDotJsonObject();
     packageDotJson.dependencies = { ...packageDotJson.dependencies, ...pkg };
-    this.codeFilesForm.controls.package.setValue(
+    this.codeFilesForm.controls.packageJson.setValue(
       this.codeService.beautifyJson(packageDotJson)
     );
   }
   getPackageDotJsonObject(): { dependencies: PackagesMetada } {
-    const packageControlValue = this.codeFilesForm.controls.package.value;
+    const packageControlValue = this.codeFilesForm.controls.packageJson.value;
     try {
       const packageDotJson = JSON.parse(packageControlValue);
       if (!packageDotJson.dependencies) {

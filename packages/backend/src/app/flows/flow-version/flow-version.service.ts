@@ -5,9 +5,6 @@ import {
     ActionType,
     apId,
     BranchActionSettingsWithValidation,
-    CodeActionSettings,
-    FileCompression,
-    FileType,
     flowHelper,
     FlowId,
     FlowOperationRequest,
@@ -24,7 +21,6 @@ import {
     UserId,
 } from '@activepieces/shared'
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity'
-import { fileService } from '../../file/file.service'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { FlowVersionEntity } from './flow-version-entity'
@@ -33,7 +29,7 @@ import { DEFAULT_SAMPLE_DATA_SETTINGS } from '@activepieces/shared'
 import { isNil } from '@activepieces/shared'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
 import dayjs from 'dayjs'
-import { captureException, logger } from '../../helper/logger'
+import { logger } from '../../helper/logger'
 import { stepFileService } from '../step-file/step-file.service'
 
 const branchSettingsValidator = TypeCompiler.Compile(BranchActionSettingsWithValidation)
@@ -78,8 +74,6 @@ export const flowVersionService = {
             case FlowOperationType.DUPLICATE_ACTION:
                 mutatedFlowVersion = await this.getFlowVersion({
                     flowId: flowVersion.flowId,
-                    includeArtifactAsBase64: true,
-                    projectId,
                     removeSecrets: false,
                     versionId: flowVersion.id,
                 })
@@ -88,11 +82,6 @@ export const flowVersionService = {
         }
         for (const operation of operations) {
             mutatedFlowVersion = await applySingleOperation(projectId, mutatedFlowVersion, operation)
-            if (operation.type === FlowOperationType.DUPLICATE_ACTION) {
-                flowHelper.getAllSteps(mutatedFlowVersion.trigger).filter(c => c.type === ActionType.CODE).forEach(async (cs) => {
-                    await uploadArtifact(projectId, cs.settings)
-                })
-            }
         }
         mutatedFlowVersion.updated = dayjs().toISOString()
         mutatedFlowVersion.updatedBy = userId
@@ -122,7 +111,7 @@ export const flowVersionService = {
 
         return flowVersion
     },
-    async getFlowVersion({ projectId, flowId, versionId, removeSecrets, includeArtifactAsBase64 }: { projectId: ProjectId, flowId: FlowId, versionId: FlowVersionId | undefined, removeSecrets: boolean, includeArtifactAsBase64: boolean }): Promise<FlowVersion> {
+    async getFlowVersion({ flowId, versionId, removeSecrets }: { flowId: FlowId, versionId: FlowVersionId | undefined, removeSecrets: boolean }): Promise<FlowVersion> {
         let flowVersion = await flowVersionRepo.findOneOrFail({
             where: {
                 flowId,
@@ -134,9 +123,6 @@ export const flowVersionService = {
         })
         if (removeSecrets) {
             flowVersion = await removeSecretsFromFlow(flowVersion)
-        }
-        if (includeArtifactAsBase64) {
-            flowVersion = await addArtifactsAsBase64(projectId, flowVersion)
         }
         return flowVersion
     },
@@ -226,31 +212,6 @@ function handleImportFlowOperation(flowVersion: FlowVersion, operation: ImportFl
     return operations
 }
 
-async function addArtifactsAsBase64(projectId: ProjectId, flowVersion: FlowVersion): Promise<FlowVersion> {
-    const flowVersionWithArtifacts: FlowVersion = JSON.parse(JSON.stringify(flowVersion))
-    const steps = flowHelper.getAllSteps(flowVersionWithArtifacts.trigger)
-
-    const artifactPromises = steps
-        .filter(step => step.type === ActionType.CODE)
-        .map(async (step) => {
-            const codeSettings: CodeActionSettings = step.settings
-            try {
-                const artifact = await fileService.getOne({ projectId, fileId: codeSettings.artifactSourceId! })
-                if (artifact !== null) {
-                    codeSettings.artifactSourceId = undefined
-                    codeSettings.artifact = artifact.data.toString('base64')
-                }
-            }
-            catch (error) {
-                captureException(error)
-            }
-        })
-
-    await Promise.all(artifactPromises)
-    return flowVersionWithArtifacts
-}
-
-
 async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, request: FlowOperationRequest): Promise<FlowOperationRequest> {
     const clonedRequest: FlowOperationRequest = JSON.parse(JSON.stringify(request))
     switch (clonedRequest.type) {
@@ -270,8 +231,6 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
                     })
                     break
                 case ActionType.CODE: {
-                    const codeSettings: CodeActionSettings = clonedRequest.request.action.settings
-                    await uploadArtifact(projectId, codeSettings)
                     break
                 }
             }
@@ -301,25 +260,12 @@ async function prepareRequest(projectId: ProjectId, flowVersion: FlowVersion, re
                     break
                 }
                 case ActionType.CODE: {
-                    const codeSettings: CodeActionSettings = clonedRequest.request.settings
-                    await uploadArtifact(projectId, codeSettings)
-                    const previousStep = flowHelper.getStep(flowVersion, clonedRequest.request.name)
-                    if (
-                        previousStep !== undefined &&
-                        previousStep.type === ActionType.CODE &&
-                        codeSettings.artifactSourceId !== previousStep.settings.artifactSourceId
-                    ) {
-                        await deleteArtifact(projectId, previousStep.settings)
-                    }
                     break
                 }
             }
             break
         case FlowOperationType.DELETE_ACTION: {
             const previousStep = flowHelper.getStep(flowVersion, clonedRequest.request.name)
-            if (previousStep !== undefined && previousStep.type === ActionType.CODE) {
-                await deleteArtifact(projectId, previousStep.settings)
-            }
             if (previousStep !== undefined && previousStep.type === ActionType.PIECE) {
                 await stepFileService.deleteAll({ projectId, flowId: flowVersion.flowId, stepName: previousStep.name })
             }
@@ -474,31 +420,3 @@ function buildSchema(props: PiecePropertyMap): TSchema {
     return Type.Object(propsSchema)
 }
 
-async function deleteArtifact(projectId: ProjectId, codeSettings: CodeActionSettings): Promise<CodeActionSettings> {
-    const requests: Promise<void>[] = []
-    if (codeSettings.artifactSourceId !== undefined) {
-        requests.push(fileService.delete({ projectId, fileId: codeSettings.artifactSourceId }))
-    }
-    await Promise.all(requests)
-    return codeSettings
-}
-
-async function uploadArtifact(projectId: ProjectId, codeSettings: CodeActionSettings): Promise<CodeActionSettings> {
-
-    if (codeSettings.artifact !== undefined) {
-
-        const bufferFromBase64 = Buffer.from(codeSettings.artifact, 'base64')
-
-        const savedFile = await fileService.save({
-            projectId,
-            data: bufferFromBase64,
-            type: FileType.CODE_SOURCE,
-            compression: FileCompression.NONE,
-
-        })
-
-        codeSettings.artifact = undefined
-        codeSettings.artifactSourceId = savedFile.id
-    }
-    return codeSettings
-}
