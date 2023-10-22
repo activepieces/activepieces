@@ -14,7 +14,6 @@ export const discordCommon = {
     displayName: 'Channel',
     description: 'List of channels',
     required: true,
-
     refreshers: [],
     options: async ({ auth }) => {
       if (!auth) {
