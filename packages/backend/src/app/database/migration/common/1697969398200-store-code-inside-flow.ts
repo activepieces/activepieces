@@ -53,7 +53,7 @@ export class StoreCodeInsideFlow1697969398200 implements MigrationInterface {
         const doesTableExist = await queryRunner.hasTable('flow_template')
 
         if (doesTableExist) {
-            logger.info('StoreCodeInsideFlow1697969398100: flow template table exists')
+            logger.info('StoreCodeInsideFlow1697969398200: flow template table exists')
             const flowTemplateRepo = queryRunner.connection.getRepository<FlowTemplate>('flow_template')
             const templates = await flowTemplateRepo.find()
 
