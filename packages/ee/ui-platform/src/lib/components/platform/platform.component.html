@@ -2,7 +2,7 @@
     Platform Settings</div>
 
 <div class="ap-px-7.5 ap-py-4">
-    <mat-tab-group mat-stretch-tabs="false" mat-align-tabs="start" animationDuration="0">
+    <mat-tab-group #group mat-stretch-tabs="false" mat-align-tabs="start" animationDuration="0" class="ap-h-full">
         <mat-tab>
             <ng-template mat-tab-label>
                 <div class="ap-typegraphy-body-1 ap-font-semibold">
@@ -20,11 +20,13 @@
                     Appearance
                 </div>
             </ng-template>
-            <div class="ap-my-4">
-                <app-platform-appearance></app-platform-appearance>
 
-            </div>
         </mat-tab>
     </mat-tab-group>
 
 </div>
+<ng-container *ngIf="group.selectedIndex === 1">
+    <div class="ap-my-4 ap-px-7.5 ap-h-[calc(100%-280px)]">
+        <app-platform-appearance></app-platform-appearance>
+    </div>
+</ng-container>

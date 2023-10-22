@@ -18,7 +18,7 @@ import {
 } from '@angular/forms';
 import { MatFormFieldControl } from '@angular/material/form-field';
 import { Subject } from 'rxjs';
-
+import { coerceBooleanProperty, BooleanInput } from '@angular/cdk/coercion';
 @Component({
   selector: 'ap-file-upload',
   templateUrl: './upload-file-control.component.html',
@@ -28,11 +28,7 @@ import { Subject } from 'rxjs';
   styleUrls: ['./upload-file-control.component.scss'],
 })
 export class UploadFileControlComponent
-  implements
-    MatFormFieldControl<File>,
-    OnDestroy,
-    ControlValueAccessor,
-    DoCheck
+  implements OnDestroy, ControlValueAccessor, DoCheck
 {
   @ViewChild('fileInput') fileInput: ElementRef<HTMLInputElement>;
   public get ngControl(): NgControl {
@@ -50,7 +46,15 @@ export class UploadFileControlComponent
   focused = false;
   empty: boolean;
   shouldLabelFloat: true;
-  required: boolean;
+  @Input()
+  get required() {
+    return this._required;
+  }
+  set required(req: BooleanInput) {
+    this._required = coerceBooleanProperty(req);
+    this.stateChanges.next();
+  }
+  private _required = false;
   disabled: boolean;
   errorState = true;
   controlType?: string | undefined;
@@ -117,8 +121,8 @@ export class UploadFileControlComponent
   }
   ngDoCheck() {
     if (this.ngControl) {
-      this.updateErrorState();
       this.touched = this.ngControl.touched || false;
+      this.updateErrorState();
     }
   }
   private updateErrorState() {

@@ -8,12 +8,13 @@ import { ProjectsTableComponent } from './components/projects-table/projects-tab
 import { CreateProjectDialogComponent } from './components/projects-table/create-project-dialog/create-project-dialog.component';
 import { UpdateProjectDialogComponent } from './components/projects-table/update-project-dialog/update-project-dialog.component';
 import { PlatformAppearanceComponent } from './components/platform-appearance/platform-appearance.component';
-
+import { PortalModule } from '@angular/cdk/portal';
 @NgModule({
   imports: [
     UiCommonModule,
     CommonModule,
     RouterModule.forChild(uiEePlatformRoutes),
+    PortalModule,
   ],
   declarations: [
     PlatformComponent,
