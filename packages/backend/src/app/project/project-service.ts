@@ -1,7 +1,7 @@
 import { isNil } from '@activepieces/shared'
 import { databaseConnection } from '../database/database-connection'
 import { ProjectEntity } from './project-entity'
-import { ActivepiecesError, apId, ErrorCode, NotificationStatus, Project, ProjectId, UpdateProjectRequest, UserId, ProjectType } from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, NotificationStatus, Project, ProjectId, UpdateProjectRequest, UserId } from '@activepieces/shared'
 
 const projectRepo = databaseConnection.getRepository<Project>(ProjectEntity)
 
@@ -10,8 +10,6 @@ export const projectService = {
         return await projectRepo.save<Partial<Project>>({
             id: apId(),
             ...request,
-            type: ProjectType.UNMANAGED,
-            platformId: null,
             notifyStatus: NotificationStatus.ALWAYS,
         })
     },
