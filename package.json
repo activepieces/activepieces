@@ -157,6 +157,7 @@
     "@angular/language-service": "16.2.6",
     "@commitlint/cli": "17.7.1",
     "@commitlint/config-conventional": "17.7.0",
+    "@faker-js/faker": "8.2.0",
     "@ngrx/eslint-plugin": "16.0.1",
     "@nx/angular": "16.9.1",
     "@nx/esbuild": "16.9.1",
