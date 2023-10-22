@@ -53,9 +53,9 @@ function generateColors(hex: string) {
 function generateColorVariations(defaultColor: string) {
     const defaultColorObj = tinycolor(defaultColor)
 
-    const darkColor = defaultColorObj.darken(0.7 * 100)
-    const lightColor = defaultColorObj.lighten(1.3 * 100)
-    const mediumColor = defaultColorObj
+    const darkColor = defaultColorObj.clone().darken(2)
+    const lightColor = defaultColorObj.clone().lighten(38)
+    const mediumColor = defaultColorObj.clone().lighten(26)
 
     return {
         default: defaultColorObj.toHexString(),
@@ -67,7 +67,7 @@ function generateColorVariations(defaultColor: string) {
 
 function generateLigherColor(defaultColor: string) {
     const defaultColorObj = tinycolor(defaultColor)
-    const lightColor = defaultColorObj.lighten(1.2 * 100)
+    const lightColor = defaultColorObj.lighten(20)
     return lightColor.toHexString()
 }
 
@@ -77,13 +77,13 @@ function generateTheme({ primaryColor }: { primaryColor: string }) {
             avatar: '#515151',
             'blue-link': '#1890ff',
             danger: '#dc3545',
-            'primary-color': generateColorVariations(primaryColor),
-            'warn-color': {
+            'primary': generateColorVariations(primaryColor),
+            'warn': {
                 default: '#f78a3b',
                 light: '#fff6e4',
                 dark: '#cc8805',
             },
-            'success-color': {
+            'success': {
                 default: '#14ae5c',
                 light: '#3cad71',
             },
