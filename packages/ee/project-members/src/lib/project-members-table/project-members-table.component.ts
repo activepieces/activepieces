@@ -50,6 +50,7 @@ export class ProjectMembersTableComponent {
             .afterClosed()
             .pipe(map(() => void 0));
         }
+
         return this.dialogRef
           .open(InviteProjectMemberDialogComponent)
           .afterClosed()

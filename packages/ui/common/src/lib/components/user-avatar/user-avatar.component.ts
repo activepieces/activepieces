@@ -4,9 +4,8 @@ import { AuthenticationService } from '../../service/authentication.service';
 import { environment } from '../../environments/environment';
 import { ProjectService } from '../../service/project.service';
 import { ApFlagId, Project } from '@activepieces/shared';
-import { Observable, map, tap } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { JwtHelperService } from '@auth0/angular-jwt';
-import { HttpClient } from '@angular/common/http';
 import { FlagService } from '../../service/flag.service';
 import { showPlatform$ } from '../../guards/platform.guard';
 @Component({
@@ -32,8 +31,7 @@ export class UserAvatarComponent {
     private router: Router,
     private flagService: FlagService,
     // BEGIN EE
-    private projectService: ProjectService,
-    private http: HttpClient // END EE
+    private projectService: ProjectService // END EE
   ) {
     this.showCommunity$ = this.flagService.isFlagEnabled(
       ApFlagId.SHOW_COMMUNITY
@@ -82,19 +80,7 @@ export class UserAvatarComponent {
     this.router.navigate(['plans']);
   }
   switchProject(projectId: string) {
-    this.switchProject$ = this.http
-      .post<{
-        token: string;
-      }>(`${environment.apiUrl}/projects/${projectId}/token`, {
-        projectId,
-      })
-      .pipe(
-        tap(({ token }) => {
-          localStorage.setItem(environment.jwtTokenName, token);
-          window.location.reload();
-        }),
-        map(() => void 0)
-      );
+    this.switchProject$ = this.projectService.switchProject(projectId);
   }
   viewPlatformSettings() {
     this.router.navigate(['/platform']);

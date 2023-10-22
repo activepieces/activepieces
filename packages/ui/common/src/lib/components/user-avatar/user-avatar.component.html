@@ -47,7 +47,8 @@
             </ng-container>
         </ng-container>
     </ng-container>
-    <div class="ap-border-b ap-border-solid  ap-border-outline ap-mx-2"></div>
+    <div class="ap-border-b ap-border-solid  ap-border-outline ap-mx-2"
+        *ngIf="(projectEnabled$ | async) || (showPlatform$ | async) "></div>
     <!-- END EE -->
     <div mat-menu-item (click)="showWhatIsNew()" *ngIf="showCommunity$ | async">
         What's new
