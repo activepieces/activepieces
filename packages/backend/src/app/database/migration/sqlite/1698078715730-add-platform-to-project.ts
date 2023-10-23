@@ -1,4 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { logger } from '../../../helper/logger'
 
 export class AddPlatformToProject1698078715730 implements MigrationInterface {
     name = 'AddPlatformToProject1698078715730'
@@ -47,6 +48,8 @@ export class AddPlatformToProject1698078715730 implements MigrationInterface {
         await queryRunner.query(`
             CREATE INDEX "idx_project_owner_id" ON "project" ("ownerId")
         `)
+
+        logger.info('AddPlatformToProject1698078715730 up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -91,6 +94,8 @@ export class AddPlatformToProject1698078715730 implements MigrationInterface {
         await queryRunner.query(`
             CREATE INDEX "idx_project_owner_id" ON "project" ("ownerId")
         `)
+
+        logger.info('AddPlatformToProject1698078715730 down')
     }
 
 }
