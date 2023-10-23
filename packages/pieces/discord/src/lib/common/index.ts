@@ -101,8 +101,6 @@ export const discordCommon = {
 
       const res = await httpClient.sendRequest<Guild[]>(request);
 
-      console.log('Roles discord response', res.body);
-
       const options: { options: { value: string; label: string }[] } = {
         options: [],
       };
