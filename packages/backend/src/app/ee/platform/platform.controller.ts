@@ -4,7 +4,7 @@ import { ApId } from '@activepieces/shared'
 import { platformService } from './platform.service'
 
 export const platformController: FastifyPluginCallbackTypebox = (app, _opts, done) => {
-    app.patch('/:id', UpdatePlatformRequest, async (req) => {
+    app.post('/:id', UpdatePlatformRequest, async (req) => {
         return await platformService.update({
             id: req.params.id,
             userId: req.principal.id,

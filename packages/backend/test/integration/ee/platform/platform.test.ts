@@ -30,7 +30,7 @@ describe('update platform endpoint', () => {
 
         // act
         const response = await app?.inject({
-            method: 'PATCH',
+            method: 'POST',
             url: `/v1/platform/${mockPlatform.id}`,
             headers: {
                 authorization: `Bearer ${testToken}`,
@@ -65,7 +65,7 @@ describe('update platform endpoint', () => {
 
         // act
         const response = await app?.inject({
-            method: 'PATCH',
+            method: 'POST',
             url: `/v1/platform/${mockPlatform.id}`,
             headers: {
                 authorization: `Bearer ${testToken}`,
@@ -86,7 +86,7 @@ describe('update platform endpoint', () => {
 
         // act
         const response = await app?.inject({
-            method: 'PATCH',
+            method: 'POST',
             url: `/v1/platform/${randomPlatformId}`,
             headers: {
                 authorization: `Bearer ${testToken}`,
