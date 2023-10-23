@@ -4,6 +4,7 @@ import { projectMemberService } from './project-member.service'
 import { tokenUtils } from '../../authentication/lib/token-utils'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { logger } from '../../helper/logger'
+import { Principal } from '@activepieces/shared'
 
 export const projectMemberModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(projectMemberController, { prefix: '/v1/project-members' })
@@ -63,7 +64,7 @@ const projectMemberController: FastifyPluginAsyncTypebox = async (fastify) => {
             return {
                 token: await tokenUtils.encode({
                     id: invitation.id,
-                }),
+                } as Principal),
             }
         },
     )

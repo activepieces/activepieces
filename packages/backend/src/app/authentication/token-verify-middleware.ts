@@ -1,7 +1,7 @@
 import { FastifyRequest } from 'fastify'
 import { tokenUtils } from './lib/token-utils'
 import { API_KEY_PROTECTED_ROUTES } from '../ee/authentication/api-key-auth-middleware.ee'
-import { ActivepiecesError, ErrorCode, Principal, PrincipalType, apId } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, Principal, PrincipalType, ProjectType, apId } from '@activepieces/shared'
 
 const ignoredRoutes = new Set([
     // BEGIN EE
@@ -46,6 +46,7 @@ export const tokenVerifyMiddleware = async (request: FastifyRequest): Promise<vo
         id: `ANONYMOUS_${apId()}`,
         type: PrincipalType.UNKNOWN,
         projectId: `ANONYMOUS_${apId()}`,
+        projectType: ProjectType.STANDALONE,
     }
     const rawToken = request.headers.authorization
     if (!rawToken) {
