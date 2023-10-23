@@ -40,7 +40,7 @@ export class ChatComponent {
   chatbotDisplayName = '';
   dots$: Observable<string>;
   data$: Observable<void>;
-  fullLogoSmall$:Observable<string>;
+  fullLogo$:Observable<string>;
   readonly isLoggedIn: boolean;
   constructor(
     private chatbotService: ChatBotService,
@@ -50,7 +50,7 @@ export class ChatComponent {
     private flagService: FlagService,
     private snackbar:MatSnackBar
   ) {
-   this.fullLogoSmall$ = this.flagService.getLogos().pipe(map(logos=>logos.smallFullLogoUrl));
+   this.fullLogo$ = this.flagService.getLogos().pipe(map(logos=>logos.fullLogoUrl));
     this.messageControl = new FormControl('');
     this.chatbotId = this.actRoute.snapshot.params['id'];
     this.data$ = this.actRoute.data.pipe(
