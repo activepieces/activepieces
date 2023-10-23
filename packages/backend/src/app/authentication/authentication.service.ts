@@ -25,6 +25,8 @@ export const authenticationService = {
                 id: user.id,
                 type: PrincipalType.USER,
                 projectId: project.id,
+                projectType: project.type,
+                projectPlatformId: project.platformId,
             })
 
             telemetry.identify(user, project.id)
@@ -96,6 +98,8 @@ export const authenticationService = {
             id: user.id,
             type: PrincipalType.USER,
             projectId: project.id,
+            projectType: project.type,
+            projectPlatformId: project.platformId,
         })
 
         const { password: _, ...filteredUser } = user
