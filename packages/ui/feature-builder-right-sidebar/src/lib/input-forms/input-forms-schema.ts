@@ -4,6 +4,7 @@ import {
   BranchCondition,
   PackageType,
   PieceType,
+  SourceCode,
 } from '@activepieces/shared';
 declare type ConfigsAndTheirValues = { [key: string]: any };
 interface InputFormsSchemaBase {
@@ -13,9 +14,7 @@ export interface LoopStepInputFormSchema extends InputFormsSchemaBase {
   items: string;
 }
 export interface CodeStepInputFormSchema extends InputFormsSchemaBase {
-  artifact?: string;
-  artifactSourceId: string;
-  artifactPackagedId: string;
+  sourceCode: SourceCode;
   input: Record<string, unknown>;
 }
 
