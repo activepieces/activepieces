@@ -9,6 +9,7 @@ export enum CustomDomainStatus {
 export const CustomDomain = Type.Object({
     ...BaseModelSchema,
     domain: Type.String(),
+    platformId: Type.String(),
     status: Type.Enum(CustomDomainStatus),
 })
 

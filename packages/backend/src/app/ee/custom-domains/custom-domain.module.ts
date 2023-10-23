@@ -1,43 +1,46 @@
-import { CreateDomainRequest, ListCustomDomainsRequest } from "@activepieces/ee-shared"
-import { FastifyPluginAsyncTypebox, Static, Type } from "@fastify/type-provider-typebox"
-import { customDomainService } from "./custom-domain.service"
-import { HttpStatusCode } from "axios"
+import { CreateDomainRequest, ListCustomDomainsRequest } from '@activepieces/ee-shared'
+import { FastifyPluginAsyncTypebox, Static, Type } from '@fastify/type-provider-typebox'
+import { customDomainService } from './custom-domain.service'
+import { HttpStatusCode } from 'axios'
+import { assertNotNullOrUndefined } from '@activepieces/shared'
 
 
 const GetOneRequest = Type.Object({
     id: Type.String(),
 })
-type GetOneRequest = Static<typeof GetOneRequest>;
+type GetOneRequest = Static<typeof GetOneRequest>
 
 export const customDomainModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(customDomainController, { prefix: '/v1/custom-domains' })
 }
 
-// TODO MAKE SURE ATTACH IT TO PLATFORM AUTHENTICATION
 const customDomainController: FastifyPluginAsyncTypebox = async (fastify) => {
 
     fastify.post(
         '/',
         {
             schema: {
-                body: CreateDomainRequest
+                body: CreateDomainRequest,
             },
         },
         async (
             request,
             reply,
         ) => {
+            const platformId = request.principal.platformId
+            assertNotNullOrUndefined(platformId, 'platformId')
             const domain = await customDomainService.getOneByDomain({
-                domain: request.body.domain
+                domain: request.body.domain,
             })
             if (domain) {
-                reply.status(HttpStatusCode.Conflict).send({
-                    message: `Domain ${request.body.domain} already exists`
+                await reply.status(HttpStatusCode.Conflict).send({
+                    message: `Domain ${request.body.domain} already exists`,
                 })
-                return;
+                return
             }
             return customDomainService.create({
-                domain: request.body.domain
+                domain: request.body.domain,
+                platformId,
             })
         },
     )
@@ -47,14 +50,16 @@ const customDomainController: FastifyPluginAsyncTypebox = async (fastify) => {
         {
             schema: {
                 params: GetOneRequest,
-            }
+            },
         },
         async (
             request,
-            reply,
         ) => {
+            const platformId = request.principal.platformId
+            assertNotNullOrUndefined(platformId, 'platformId')
             return customDomainService.check({
-                id: request.params.id
+                id: request.params.id,
+                platformId,
             })
         },
     )
@@ -64,7 +69,12 @@ const customDomainController: FastifyPluginAsyncTypebox = async (fastify) => {
             querystring: ListCustomDomainsRequest,
         },
     }, async (request) => {
-        return customDomainService.list(request.query)
+        const platformId = request.principal.platformId
+        assertNotNullOrUndefined(platformId, 'platformId')
+        return customDomainService.list({
+            platformId,
+            request: request.query,
+        })
     })
 
     fastify.delete(
@@ -72,14 +82,16 @@ const customDomainController: FastifyPluginAsyncTypebox = async (fastify) => {
         {
             schema: {
                 params: GetOneRequest,
-            }
+            },
         },
         async (
             request,
-            reply,
         ) => {
+            const platformId = request.principal.platformId
+            assertNotNullOrUndefined(platformId, 'platformId')
             return customDomainService.delete({
-                id: request.params.id
+                id: request.params.id,
+                platformId,
             })
         },
     )

@@ -72,7 +72,7 @@ function generateSelectionColor(defaultColor: string) {
     return lightColor.toHexString()
 }
 
-function generateTheme({ primaryColor }: { primaryColor: string }) {
+export function generateTheme({ primaryColor, fullLogoUrl, favIconUrl, logoIconUrl }: { primaryColor: string, fullLogoUrl: string, favIconUrl: string, logoIconUrl: string }) {
     return {
         colors: {
             avatar: '#515151',
@@ -91,12 +91,9 @@ function generateTheme({ primaryColor }: { primaryColor: string }) {
             'selection': generateSelectionColor(primaryColor),
         },
         logos: {
-            fullLogoUrl:
-            'https://cdn.activepieces.com/brand/full-logo.svg',
-            favIconUrl:
-                'https://cdn.activepieces.com/brand/favicon.ico',
-            logoIconUrl:
-                'https://cdn.activepieces.com/brand/logo.svg',
+            fullLogoUrl,
+            favIconUrl,
+            logoIconUrl,
         },
         materialPrimaryPalette: generateColors(primaryColor),
         materialWarnPalette: {
@@ -134,6 +131,12 @@ function generateTheme({ primaryColor }: { primaryColor: string }) {
     }
 }
 
-export const theme = generateTheme({
+export const defaultTheme = generateTheme({
     primaryColor: '#6e41e2',
+    fullLogoUrl:
+        'https://cdn.activepieces.com/brand/full-logo.svg',
+    favIconUrl:
+        'https://cdn.activepieces.com/brand/favicon.ico',
+    logoIconUrl:
+        'https://cdn.activepieces.com/brand/logo.svg',
 })

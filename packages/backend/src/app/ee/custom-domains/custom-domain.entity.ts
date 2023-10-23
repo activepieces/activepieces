@@ -1,17 +1,25 @@
-import { CustomDomain, CustomDomainStatus } from '@activepieces/ee-shared'
+import { CustomDomain, CustomDomainStatus, Platform } from '@activepieces/ee-shared'
 import { EntitySchema } from 'typeorm'
-import { BaseColumnSchemaPart } from '../../database/database-common'
+import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 
-export const CustomDomainEntity = new EntitySchema<CustomDomain>({
+type CustomDomainSchema = CustomDomain & {
+    platform?: Platform
+}
+
+export const CustomDomainEntity = new EntitySchema<CustomDomainSchema>({
     name: 'custom_domain',
     columns: {
         ...BaseColumnSchemaPart,
         domain: {
             type: String,
         },
+        platformId: {
+            ...ApIdSchema,
+            nullable: false,
+        },
         status: {
             type: String,
-            enum: CustomDomainStatus
+            enum: CustomDomainStatus,
         },
     },
     indices: [
@@ -22,5 +30,15 @@ export const CustomDomainEntity = new EntitySchema<CustomDomain>({
         },
     ],
     relations: {
+        platform: {
+            type: 'many-to-one',
+            target: 'platform',
+            cascade: true,
+            onDelete: 'CASCADE',
+            joinColumn: {
+                name: 'platformId',
+                foreignKeyConstraintName: 'fk_custom_domain_platform_id',
+            },
+        },
     },
 })

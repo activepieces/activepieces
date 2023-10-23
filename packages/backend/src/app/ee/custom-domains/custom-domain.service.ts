@@ -1,34 +1,36 @@
-import { CustomDomain, CustomDomainStatus, ListCustomDomainsRequest } from "@activepieces/ee-shared"
-import { databaseConnection } from "../../database/database-connection"
-import { CustomDomainEntity } from "./custom-domain.entity"
-import { paginationHelper } from "../../helper/pagination/pagination-utils"
-import { buildPaginator } from "../../helper/pagination/build-paginator"
-import * as dns from 'dns';
-import { ActivepiecesError, ErrorCode, apId, isNil } from "@activepieces/shared"
-import { logger } from "../../helper/logger"
+import { CustomDomain, CustomDomainStatus, ListCustomDomainsRequest } from '@activepieces/ee-shared'
+import { databaseConnection } from '../../database/database-connection'
+import { CustomDomainEntity } from './custom-domain.entity'
+import { paginationHelper } from '../../helper/pagination/pagination-utils'
+import { buildPaginator } from '../../helper/pagination/build-paginator'
+import * as dns from 'dns'
+import { ActivepiecesError, ErrorCode, apId, isNil } from '@activepieces/shared'
+import { logger } from '../../helper/logger'
 
 const customDomainRepo = databaseConnection.getRepository<CustomDomain>(CustomDomainEntity)
 
 export const customDomainService = {
-    async delete(request: { id: string }) {
+    async delete(request: { id: string, platformId: string }): Promise<void> {
         await customDomainRepo.delete({
-            id: request.id
+            id: request.id,
+            platformId: request.platformId,
         })
     },
-    async getOneByDomain(request: { domain: string }) {
+    async getOneByDomain(request: { domain: string }): Promise<CustomDomain | null> {
         return customDomainRepo.findOneBy({
-            domain: request.domain
+            domain: request.domain,
         })
     },
-    async create(request: { domain: string }) {
+    async create(request: { domain: string, platformId: string }) {
         const customDomain = customDomainRepo.create({
             id: apId(),
             domain: request.domain,
-            status: CustomDomainStatus.PENDING
+            platformId: request.platformId,
+            status: CustomDomainStatus.PENDING,
         })
         return customDomainRepo.save(customDomain)
     },
-    async list(request: ListCustomDomainsRequest) {
+    async list({ request, platformId }: { platformId: string, request: ListCustomDomainsRequest }) {
         const decodedCursor = paginationHelper.decodeCursor(request.cursor ?? null)
         const paginator = buildPaginator({
             entity: CustomDomainEntity,
@@ -41,16 +43,19 @@ export const customDomainService = {
         })
         const queryBuilder = customDomainRepo
             .createQueryBuilder('custom_domain')
-            .where({})
+            .where({
+                platformId,
+            })
         const { data, cursor } = await paginator.paginate(queryBuilder)
         return paginationHelper.createPage<CustomDomain>(
             data,
             cursor,
         )
     },
-    async check(request: { id: string }) {
+    async check(request: { id: string, platformId: string }): Promise<CustomDomain> {
         const customDomain = await customDomainRepo.findOneBy({
-            id: request.id
+            id: request.id,
+            platformId: request.platformId,
         })
         if (isNil(customDomain)) {
             throw new ActivepiecesError({
@@ -62,21 +67,24 @@ export const customDomainService = {
         }
         const cnameExists = await verifyCnameExists(customDomain.domain)
         await customDomainRepo.update({
-            id: request.id
+            id: request.id,
         }, {
-            status: cnameExists ? CustomDomainStatus.ACTIVE : CustomDomainStatus.PENDING
+            status: cnameExists ? CustomDomainStatus.ACTIVE : CustomDomainStatus.PENDING,
         })
-        return customDomain
-    }
+        return customDomainRepo.findOneByOrFail({
+            id: customDomain.id,
+        })
+    },
 }
 
 async function verifyCnameExists(domain: string): Promise<boolean> {
     try {
-        const cnameRecords = await dns.promises.resolveCname(domain);
-        logger.info(`CNAME records for ${domain}: ${cnameRecords}`);
-        return cnameRecords.length > 0 && cnameRecords[0] === 'cloud.activepieces.com';
-    } catch (error) {
+        const cnameRecords = await dns.promises.resolveCname(domain)
+        logger.info(`CNAME records for ${domain}: ${cnameRecords}`)
+        return cnameRecords.length > 0 && cnameRecords[0] === 'cloud.activepieces.com'
+    }
+    catch (error) {
         logger.info(`CNAME records for ${domain} errors out: ${error}`)
-        return false;
+        return false
     }
 }

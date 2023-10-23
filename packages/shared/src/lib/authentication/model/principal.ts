@@ -7,5 +7,5 @@ export type Principal = {
     type: PrincipalType,
     projectId: ProjectId,
     projectType?: ProjectType,
-    projectPlatformId?: ApId,
+    platformId?: ApId,
 }
