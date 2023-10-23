@@ -41,8 +41,7 @@ services:
     working_dir: /usr/src/app
     entrypoint:
       - npm
-      - run
-      - dev
+      - start
     depends_on:
      - postgres
      - redis
