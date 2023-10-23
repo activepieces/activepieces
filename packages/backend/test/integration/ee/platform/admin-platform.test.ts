@@ -25,7 +25,7 @@ describe('admin add platform endpoint', () => {
         // act
         const response = await app?.inject({
             method: 'POST',
-            url: '/v1/admin/platform',
+            url: '/v1/admin/platforms',
             headers: {
                 'api-key': 'api-key',
             },

@@ -31,7 +31,7 @@ describe('update platform endpoint', () => {
         // act
         const response = await app?.inject({
             method: 'POST',
-            url: `/v1/platform/${mockPlatform.id}`,
+            url: `/v1/platforms/${mockPlatform.id}`,
             headers: {
                 authorization: `Bearer ${testToken}`,
             },
@@ -66,7 +66,7 @@ describe('update platform endpoint', () => {
         // act
         const response = await app?.inject({
             method: 'POST',
-            url: `/v1/platform/${mockPlatform.id}`,
+            url: `/v1/platforms/${mockPlatform.id}`,
             headers: {
                 authorization: `Bearer ${testToken}`,
             },
@@ -87,7 +87,7 @@ describe('update platform endpoint', () => {
         // act
         const response = await app?.inject({
             method: 'POST',
-            url: `/v1/platform/${randomPlatformId}`,
+            url: `/v1/platforms/${randomPlatformId}`,
             headers: {
                 authorization: `Bearer ${testToken}`,
             },
@@ -115,7 +115,7 @@ describe('get platform endpoint', () => {
         // act
         const response = await app?.inject({
             method: 'GET',
-            url: `/v1/platform/${mockPlatform.id}`,
+            url: `/v1/platforms/${mockPlatform.id}`,
             headers: {
                 authorization: `Bearer ${testToken}`,
             },
@@ -142,7 +142,7 @@ describe('get platform endpoint', () => {
         // act
         const response = await app?.inject({
             method: 'GET',
-            url: `/v1/platform/${randomPlatformId}`,
+            url: `/v1/platforms/${randomPlatformId}`,
             headers: {
                 authorization: `Bearer ${testToken}`,
             },

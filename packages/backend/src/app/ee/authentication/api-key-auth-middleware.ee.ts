@@ -28,7 +28,7 @@ export const API_KEY_PROTECTED_ROUTES = [
     },
     {
         method: 'POST',
-        url: '/v1/admin/platform',
+        url: '/v1/admin/platforms',
     },
 ]
 
