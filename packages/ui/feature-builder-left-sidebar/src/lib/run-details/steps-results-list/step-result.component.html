@@ -44,7 +44,7 @@
                         </span>
 
                         <button class="btn btn-text ap-text-center ap-text-primary"
-                          (click)="doneClicked($event, iterationInput)">
+                          (click)="doneClicked($event, iterationInput)" i18n>
                           Done
                         </button>
                       </div>
@@ -73,7 +73,7 @@
                       _selectedStepName === stepResult.stepName;
                       else statusIconTemplate
                     ">
-                    <div class="all-iterations-text" @fadeIn>
+                    <div class="all-iterations-text" @fadeIn i18n>
                       All Iterations
                     </div>
                   </ng-container>

@@ -5,7 +5,7 @@
     </div>
 </div>
 <mat-menu #menu="matMenu">
-    <div mat-menu-item (click)="showWhatIsNew()" *ngIf="showCommunity$ | async">
+    <div mat-menu-item (click)="showWhatIsNew()" *ngIf="showCommunity$ | async" i18n>
         What's new
     </div>
     <!-- BEGIN EE -->
@@ -51,7 +51,7 @@
     </ng-container>
     <!-- END EE -->
     <div mat-menu-item (click)="goToDeveloperPage()">
-        <div>My Pieces</div>
+        <div i18n>My Pieces</div>
     </div>
     <div mat-menu-item (click)="goToCommunity()" *ngIf="showCommunity$ | async">
         <div class="ap-flex ap-items-center ap-min-w-[214px]">Community <div class="ap-flex-grow"></div><svg-icon
@@ -59,7 +59,7 @@
         </div>
     </div>
     <div mat-menu-item (click)="logout()">
-        <div class="ap-text-danger">Logout</div>
+        <div class="ap-text-danger" i18n>Logout</div>
     </div>
 </mat-menu>
 

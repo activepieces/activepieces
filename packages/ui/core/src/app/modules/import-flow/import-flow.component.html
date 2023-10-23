@@ -14,14 +14,14 @@
         </div>
         <hr class="ap-border-dividers ap-w-full ap-mt-7.5 ap-mb-7.5" />
         <div class="ap-flex ap-justify-between ap-items-center">
-          <p class="ap-text-sm ap-font-bold">Steps in this flow</p>
+          <p class="ap-text-sm ap-font-bold" i18n>Steps in this flow</p>
           <ap-pieces-icons-from-flow [flowVersion]="flowTemplate.template"></ap-pieces-icons-from-flow>
         </div>
         <div *ngIf="flowTemplate.description">
           <hr class="ap-border-dividers ap-w-full ap-mt-7.5 ap-mb-7.5" />
           <div class="ap-flex ap-justify-start ap-items-start">
             <div class="ap-flex ap-flex-col ap-items-start">
-              <p class="ap-text-sm ap-font-bold">Template Description</p>
+              <p class="ap-text-sm ap-font-bold" i18n>Template Description</p>
               <p class="ap-text-sm ap-font-medium ap-mt-2">
                 {{flowTemplate.description }}
               </p>
@@ -30,10 +30,10 @@
         </div>
         <div class="ap-flex ap-justify-center ap-mt-7.5 ap-gap-[15px]">
           <ap-button btnSize="default" btnStyle="stroked" btnColor="primary" class="ap-w-[150px]"
-            [fullWidthOfContainer]="true" (click)="dashboard()"> Cancel
+            [fullWidthOfContainer]="true" (click)="dashboard()" i18n> Cancel
           </ap-button>
           <ap-button btnSize="default" btnColor="primary" class="ap-w-[150px]" [fullWidthOfContainer]="true"
-            [loading]="(hasDirectFlag$ | async )|| false" (click)="import()">Use
+            [loading]="(hasDirectFlag$ | async )|| false" (click)="import()" i18n>Use
             Template</ap-button>
         </div>
       </div>

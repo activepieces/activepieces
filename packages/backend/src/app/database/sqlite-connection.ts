@@ -21,6 +21,7 @@ import { FlowTemplateAddUserIdAndImageUrl1694380048802 } from '../ee/database/mi
 import { AddArchiveIdToPieceMetadata1696956123632 } from './migration/sqllite3/1696956123632-add-archive-id-to-piece-metadata'
 import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
+import { StoreCodeInsideFlow1697969398200 } from './migration/common/1697969398200-store-code-inside-flow'
 
 const getSqliteDatabaseFilePath = (): string => {
     const homeDirectoryPath = os.homedir()
@@ -57,6 +58,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddPieceTypeAndPackageTypeToPieceMetadata1696016228398,
         AddPieceTypeAndPackageTypeToFlowVersion1696245170061,
         AddArchiveIdToPieceMetadata1696956123632,
+        StoreCodeInsideFlow1697969398200,
     ]
     const edition = getEdition()
     switch (edition) {

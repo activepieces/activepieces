@@ -99,7 +99,7 @@ export class FlowsTableDataSource extends DataSource<FlowListDtoWithInstanceStat
             ...flow,
             folderDisplayName:
               folders.data.find((folder) => folder.id === flow.folderId)
-                ?.displayName ?? 'Uncategorized',
+                ?.displayName ?? $localize`Uncategorized`,
             instanceToggleControl: instanceTogglesControls[flow.id],
           };
         });

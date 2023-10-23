@@ -24,7 +24,6 @@ export * from './lib/store/project/project.reducer';
 export * from './lib/store/project/project.selector';
 export * from './lib/models/flow-item-details';
 export * from './lib/models/chevron-dropdown-option';
-export * from './lib/models/artifact.interface';
 export * from './lib/models/flow-run.interface';
 export * from './lib/environments/environment';
 export * from './lib/service/test-step.service';
@@ -42,3 +41,5 @@ export * from './lib/service/builder-autocomplete-mentions-dropdown.service';
 export * from './lib/resolvers/connections.resolver';
 export * from './lib/resolvers/are-there-featured-templates.resolver';
 export * from './lib/models/piece-metadata-model';
+
+import '@angular/localize/init';
