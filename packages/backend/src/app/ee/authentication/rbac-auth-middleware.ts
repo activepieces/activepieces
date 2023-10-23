@@ -42,7 +42,7 @@ export const rbacAuthMiddleware = async (req: FastifyRequest): Promise<void> => 
     if (edition === ApEdition.COMMUNITY) {
         return
     }
-    if (req.url === '/redirect') {
+    if (req.url.startsWith('/redirect')) {
         return
     }
     const action = req.method
