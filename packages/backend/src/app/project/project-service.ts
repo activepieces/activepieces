@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/shared'
+import { isNil, ProjectType } from '@activepieces/shared'
 import { databaseConnection } from '../database/database-connection'
 import { ProjectEntity } from './project-entity'
 import { ActivepiecesError, apId, ErrorCode, NotificationStatus, Project, ProjectId, UpdateProjectRequest, UserId } from '@activepieces/shared'
@@ -11,6 +11,7 @@ export const projectService = {
             id: apId(),
             ...request,
             notifyStatus: NotificationStatus.ALWAYS,
+            type: ProjectType.STANDALONE,
         })
     },
     async update(projectId: ProjectId, request: UpdateProjectRequest): Promise<Project | null> {

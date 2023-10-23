@@ -6,8 +6,8 @@ import { Static, Type } from "@sinclair/typebox";
 export type ProjectId = ApId;
 
 export enum ProjectType {
-  MANAGED = "MANAGED",
-  UNMANAGED = "UNMANAGED",
+  PLATFORM_MANAGED = "PLATFORM_MANAGED",
+  STANDALONE = "STANDALONE",
 }
 
 export const Project = Type.Object({
@@ -15,8 +15,8 @@ export const Project = Type.Object({
   ownerId: Type.String(),
   displayName: Type.String(),
   notifyStatus: Type.Enum(NotificationStatus),
-  platformId: Type.Union([Type.String(), Type.Null()]),
   type: Type.Enum(ProjectType),
+  platformId: Type.Optional(ApId),
 });
 
 export type Project = Static<typeof Project>;

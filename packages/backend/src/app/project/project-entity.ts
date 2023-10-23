@@ -1,6 +1,7 @@
 import { EntitySchema } from 'typeorm'
-import { AppConnection, Flow, Folder, Project, TriggerEvent, User } from '@activepieces/shared'
+import { AppConnection, Flow, Folder, Project, ProjectType, TriggerEvent, User } from '@activepieces/shared'
 import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
+import { Platform } from '@activepieces/ee-shared'
 
 type ProjectSchema = Project & {
     owner: User
@@ -9,6 +10,7 @@ type ProjectSchema = Project & {
     folders: Folder[]
     events: TriggerEvent[]
     appConnections: AppConnection[]
+    platform: Platform
 }
 
 export const ProjectEntity = new EntitySchema<ProjectSchema>({
@@ -21,6 +23,15 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
         },
         notifyStatus: {
             type: String,
+        },
+        type: {
+            type: String,
+            nullable: false,
+            default: ProjectType.STANDALONE,
+        },
+        platformId: {
+            ...ApIdSchema,
+            nullable: true,
         },
     },
     indices: [
@@ -63,6 +74,17 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
             type: 'one-to-many',
             target: 'flow',
             inverseSide: 'project',
+        },
+        platform: {
+            type: 'many-to-one',
+            target: 'platform',
+            onDelete: 'RESTRICT',
+            onUpdate: 'RESTRICT',
+            joinColumn: {
+                name: 'platformId',
+                referencedColumnName: 'id',
+                foreignKeyConstraintName: 'fk_project_platform_id',
+            },
         },
     },
 })
