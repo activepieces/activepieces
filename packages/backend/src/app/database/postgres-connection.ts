@@ -69,6 +69,7 @@ import { AddArchiveIdToPieceMetadata1696950789636 } from './migration/postgres/1
 import { AddPlatform1697717995884 } from '../ee/database/migrations/postgres/1697717995884-add-platform'
 import { StoreCodeInsideFlow1697969398200 } from './migration/common/1697969398200-store-code-inside-flow'
 import { AddPlatformToProject1698065083750 } from './migration/postgres/1698065083750-add-platform-to-project'
+import { AddCustomDomain1698077078271 } from '../ee/database/migrations/postgres/1698077078271-AddCustomDomain'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
@@ -153,6 +154,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddDatasourcesLimit1695916063833,
                 AddPieceTypeAndPackageTypeToFlowTemplate1696245170062,
                 AddPlatform1697717995884,
+                AddCustomDomain1698077078271,
             )
             break
         case ApEdition.ENTERPRISE:
@@ -160,6 +162,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddProjectMembers1689177797092,
                 ProjectMemberRelations1694381968985,
                 AddPlatform1697717995884,
+                AddCustomDomain1698077078271,
             )
             break
         case ApEdition.COMMUNITY:

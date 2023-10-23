@@ -1,4 +1,4 @@
-import { SignUpRequest, AuthenticationResponse, PrincipalType, SignInRequest, TelemetryEventName, ApFlagId, UserStatus } from '@activepieces/shared'
+import { SignUpRequest, AuthenticationResponse, PrincipalType, SignInRequest, TelemetryEventName, ApFlagId, UserStatus, ProjectType } from '@activepieces/shared'
 import { userService } from '../user/user-service'
 import { passwordHasher } from './lib/password-hasher'
 import { tokenUtils } from './lib/token-utils'
@@ -8,6 +8,7 @@ import { flagService } from '../flags/flag.service'
 import { QueryFailedError } from 'typeorm'
 import { telemetry } from '../helper/telemetry.utils'
 import { logger } from '../helper/logger'
+import { platformService } from '../ee/platform/platform.service'
 
 export const authenticationService = {
     signUp: async (request: SignUpRequest): Promise<AuthenticationResponse> => {
@@ -19,6 +20,8 @@ export const authenticationService = {
             const project = await projectService.create({
                 displayName: user.firstName + '\'s Project',
                 ownerId: user.id,
+                platformId: undefined,
+                type: ProjectType.STANDALONE,
             })
 
             const token = await tokenUtils.encode({
@@ -26,7 +29,7 @@ export const authenticationService = {
                 type: PrincipalType.USER,
                 projectId: project.id,
                 projectType: project.type,
-                projectPlatformId: project.platformId,
+                platformId: undefined,
             })
 
             telemetry.identify(user, project.id)
@@ -99,7 +102,9 @@ export const authenticationService = {
             type: PrincipalType.USER,
             projectId: project.id,
             projectType: project.type,
-            projectPlatformId: project.platformId,
+            platformId: await platformService.getPlatformIdByOwner({
+                ownerId: user.id,
+            }),
         })
 
         const { password: _, ...filteredUser } = user
@@ -111,3 +116,4 @@ export const authenticationService = {
         }
     },
 }
+
