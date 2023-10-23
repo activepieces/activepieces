@@ -44,7 +44,7 @@ src="https://github.com/activepieces/activepieces/assets/1812998/76c97441-c285-4
 
 # ✨ What Is Activepieces?
 
-Activepieces is a **automation** builder, designed to be **extensible** through a **type-safe** pieces framework written in **Typescript**.
+Activepieces is an **automation** builder, designed to be **extensible** through a **type-safe** pieces framework written in **Typescript**.
 
 <br>
 <br>
