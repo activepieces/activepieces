@@ -75,16 +75,5 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
             target: 'flow',
             inverseSide: 'project',
         },
-        platform: {
-            type: 'many-to-one',
-            target: 'platform',
-            onDelete: 'RESTRICT',
-            onUpdate: 'RESTRICT',
-            joinColumn: {
-                name: 'platformId',
-                referencedColumnName: 'id',
-                foreignKeyConstraintName: 'fk_project_platform_id',
-            },
-        },
     },
 })
