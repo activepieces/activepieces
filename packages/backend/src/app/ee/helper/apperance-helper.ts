@@ -31,13 +31,19 @@ const getPlatformByIdOrFallback = async (platformId: string | null) => {
     })
 }
 
-export const themeHelper = {
+const getPlatformId = async ({ projectId, hostname }: { projectId: string, hostname: string }) => {
+    const platformIdFromCustomDomain = await getPlatformIdFromCustomDomain(hostname)
+    const platformIdFromProject = await getPlatformIdFromProject(projectId)
+
+    return platformIdFromCustomDomain ?? platformIdFromProject
+}
+export const apperanceHelper = {
     async getTheme({ projectId, hostname }: { projectId: string, hostname: string }) {
-        const platformIdFromCustomDomain = await getPlatformIdFromCustomDomain(hostname)
-        const platformIdFromProject = await getPlatformIdFromProject(projectId)
-
-        const platformId = platformIdFromCustomDomain || platformIdFromProject
-
+        const platformId = await getPlatformId({ projectId, hostname })
         return getPlatformByIdOrFallback(platformId)
+    },
+    async isWhiteLabeled({ projectId, hostname }: { projectId: string, hostname: string }): Promise<boolean> {
+        const platformId = await getPlatformId({ projectId, hostname })
+        return !isNil(platformId)
     },
 }
