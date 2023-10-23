@@ -8,7 +8,7 @@ import { engineInstaller } from '../../engine/engine-installer'
 import { logger } from '../../../helper/logger'
 import { Mutex } from 'async-mutex'
 import dayjs from 'dayjs'
-import { FileId, PiecePackage } from '@activepieces/shared'
+import { PiecePackage, SourceCode } from '@activepieces/shared'
 import { codeBuilder } from '../../code-worker/code-builder'
 import { enrichErrorContext } from '../../../helper/error-handler'
 
@@ -53,7 +53,7 @@ export class CachedSandbox {
         })
     }
 
-    async prepare({ pieces, codeArchives = [] }: PrepareParams): Promise<void> {
+    async prepare({ pieces, codeSteps = [] }: PrepareParams): Promise<void> {
         logger.debug({ key: this.key, state: this._state, activeSandboxes: this._activeSandboxCount }, '[CachedSandbox#prepare]')
 
         try {
@@ -80,7 +80,7 @@ export class CachedSandbox {
                     path: this.path(),
                 })
 
-                await this.buildCodeArchives(codeArchives)
+                await this.buildCodeArchives(codeSteps)
 
                 this._state = CachedSandboxState.READY
             })
@@ -88,7 +88,7 @@ export class CachedSandbox {
         catch (error) {
             const contextKey = '[CachedSandbox#prepare]'
             const contextValue = {
-                args: { pieces, codeArchives },
+                args: { pieces, codeSteps },
                 state: this._state,
                 activeSandboxes: this._activeSandboxCount,
                 key: this.key,
@@ -123,15 +123,14 @@ export class CachedSandbox {
         return rm(this.path(), { recursive: true, force: true })
     }
 
-    private async buildCodeArchives(codeArchives: CodeArchive[]): Promise<void> {
+    private async buildCodeArchives(codeArchives: CodeArtifact[]): Promise<void> {
         const buildJobs = codeArchives.map((archive) =>
             codeBuilder.processCodeStep({
-                sourceCodeId: archive.id,
-                codeZip: archive.content,
+                sourceCodeId: archive.name,
+                sourceCode: archive.sourceCode,
                 buildPath: this.path(),
             }),
         )
-
         await Promise.all(buildJobs)
     }
 }
@@ -140,12 +139,12 @@ type CtorParams = {
     key: string
 }
 
-type CodeArchive = {
-    id: FileId
-    content: Buffer
+type CodeArtifact = {
+    name: string
+    sourceCode: SourceCode
 }
 
 type PrepareParams = {
     pieces: PiecePackage[]
-    codeArchives?: CodeArchive[]
+    codeSteps?: CodeArtifact[]
 }

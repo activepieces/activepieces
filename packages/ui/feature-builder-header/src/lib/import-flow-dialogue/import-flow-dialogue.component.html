@@ -1,4 +1,4 @@
-<ap-dialog-title-template>
+<ap-dialog-title-template i18n>
     Import Flow
 </ap-dialog-title-template>
 
@@ -6,10 +6,10 @@
     <div class="ap-max-w-[550px]">
         <div class="ap-typography-body-1  ap-items-center ap-text-description ap-mb-2 ap-flex ap-gap-1 ap-mb-4">
             <svg-icon [svgStyle]="{ width: '20px', height: '20px' }" src="assets/img/custom/warn.svg"></svg-icon>
-            <div><b>Important:</b> Importing a flow will overwrite your current flow.</div>
+            <div i18n><b>Important:</b> Importing a flow will overwrite your current flow.</div>
         </div>
         <mat-form-field class="ap-w-full">
-            <mat-label>File</mat-label>
+            <mat-label i18n>File</mat-label>
             <ap-file-upload [formControl]="fileControl"></ap-file-upload>
         </mat-form-field>
     </div>
@@ -17,11 +17,11 @@
 </mat-dialog-content>
 <mat-dialog-actions align="end">
     <div class="ap-flex ap-gap-2.5">
-        <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic">
+        <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic" i18n>
             Cancel
         </ap-button>
         <ap-button [loading]="loading" [disabled]="!fileControl.valid" (buttonClicked)="importFlow()" btnColor="success"
-            btnSize="default">
+            btnSize="default" i18n>
             Import
         </ap-button>
     </div>

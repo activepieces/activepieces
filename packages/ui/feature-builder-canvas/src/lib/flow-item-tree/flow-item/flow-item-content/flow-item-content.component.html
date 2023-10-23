@@ -33,7 +33,7 @@
             <div class="ap-justify-self-end" @fadeIn *ngIf="!_flowItem.valid || (selectedRun$ | async)">
               <ng-container *ngIf="!_flowItem.valid">
                 <svg-icon src="assets/img/custom/incomplete-settings.svg" class="ap-w-[16px] ap-h-[16px]"
-                  matTooltip="Incomplete settings" [applyClass]="true"></svg-icon>
+                  matTooltip="Incomplete settings" i18n-matTooltip [applyClass]="true"></svg-icon>
               </ng-container>
               <ng-container *ngIf="(selectedRun$ | async) as selectedRun; else noSelectedRun">
 

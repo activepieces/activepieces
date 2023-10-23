@@ -22,15 +22,15 @@
   </ng-container>
   <ng-template #testTriggerTemplate>
     <div class="ap-my-3 ap-px-2">
-      <div class="ap-typography-body-1 ap-text-center ap-mb-1">
+      <div class="ap-typography-body-1 ap-text-center ap-mb-1" i18n>
         Send sample data first
       </div>
-      <div class="ap-typography-body-2 ap-text-center ap-mb-3">
+      <div class="ap-typography-body-2 ap-text-center ap-mb-3" i18n>
         This trigger needs to have data sent to it, to use as sample data
       </div>
       <div class="ap-text-center">
         <ap-button btnColor="primary" btnStyle="flat" type="button" btnSize="default" [darkLoadingSpinner]="false"
-          (click)="$event.stopPropagation(); selectStep()">Go to trigger
+          (click)="$event.stopPropagation(); selectStep()" i18n>Go to trigger
         </ap-button>
       </div>
     </div>

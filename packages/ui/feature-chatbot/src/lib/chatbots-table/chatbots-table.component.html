@@ -2,22 +2,22 @@
   <div class="ap-h-full">
     <div class="ap-py-4 ap-mb-4 ap-text-left ap-border-b-[1px]">
       <div class="ap-flex ap-gap-2 ap-items-center">
-        <div class="ap-font-semibold ap-typography-headline-6">Chatbots</div>
-        <div class="ap-typography-caption ap-text-primary ap-mt-1">BETA</div>
+        <div class="ap-font-semibold ap-typography-headline-6" i18n>Chatbots</div>
+        <div class="ap-typography-caption ap-text-primary ap-mt-1" i18n>BETA</div>
       </div>
     </div>
 
     <div class="ap-min-h-[70%]">
       <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Chatbots">
         <ng-container matColumnDef="displayName">
-          <th mat-header-cell *matHeaderCellDef>Name</th>
+          <th mat-header-cell *matHeaderCellDef i18n>Name</th>
           <td mat-cell *matCellDef="let chatbot">{{ chatbot.displayName }}</td>
         </ng-container>
 
         <ng-container matColumnDef="action">
           <th mat-header-cell *matHeaderCellDef class="!ap-text-center">
             <div class="ap-flex ap-justify-end">
-              <ap-button btnColor="primary" btnSize="small" (buttonClicked)="createChatbot()">
+              <ap-button btnColor="primary" btnSize="small" (buttonClicked)="createChatbot()" i18n>
                 Create Chatbot
               </ap-button>
             </div>
@@ -30,20 +30,17 @@
               <ng-container *ngIf="chatbot.visibilityStatus === VisiblityStatus.PUBLIC || !chatbot.connectionId">
                 <ap-icon-button
                   (click)="$event.stopPropagation(); chatbot.connectionId? copyChatbotUrl(chatbot):openSettings(chatbot.id)"
-                  [tooltipText]="!chatbot.connectionId? 'OpenAi connection is missing': 'Share bot chat link'"
+                  [tooltipText]="shareChatbotLinkTooltipText(chatbot)"
                   iconFilename="share.svg" color="primary" [width]="20" [height]="20"
                   [buttonDisabled]="!chatbot.connectionId" [height]="16"></ap-icon-button>
               </ng-container>
 
               <ap-icon-button
                 (click)="$event.stopPropagation();chatbot.connectionId? openChatbot(chatbot.id):openSettings(chatbot.id)"
-                [tooltipText]="
-                  chatbot.connectionId
-                    ? 'Chat with bot'
-                    : 'OpenAi connection is missing'
-                " iconFilename="chat-bubble.svg" color="primary" [width]="20" [height]="20"
+                [tooltipText]="chatWithBotTooltipText(chatbot)" iconFilename="chat-bubble.svg" color="primary" [width]="20" [height]="20"
                 [buttonDisabled]="!chatbot.connectionId" [height]="16"></ap-icon-button>
-              <ap-icon-button (click)="deleteChatbot(chatbot); $event.stopPropagation()" tooltipText="Delete Bot"
+              <ap-icon-button (click)="deleteChatbot(chatbot); $event.stopPropagation()"
+                tooltipText="Delete Bot" i18n-tooltipText
                 iconFilename="trash.svg" color="warn" [width]="20" [height]="20" [height]="16"></ap-icon-button>
             </div>
           </td>
@@ -63,7 +60,7 @@
           dataSource.data.length === 0 &&
           (dataSource.isLoading$ | async) === false
         ">
-        <div class="ap-flex ap-items-center ap-justify-center ap-h-full ap-h-[500px] ap-py-8">
+        <div class="ap-flex ap-items-center ap-justify-center ap-h-full ap-h-[500px] ap-py-8" i18n>
           Humans are still in command, create your first bot to start the
           revolution
         </div>
@@ -84,12 +81,12 @@
 
   <mat-menu #menu="matMenu" xPosition="before">
     <div (click)="$event.stopPropagation()" class="ap-flex ap-flex-col ap-gap-4 ap-max-w-[250px] md:ap-max-w-[325px] ">
-      <div class="ap-typography-body-2 ap-px-4 ">
+      <div class="ap-typography-body-2 ap-px-4 " i18n>
         Your bot is private, enable public access so you can share its link.
       </div>
       <div class="ap-flex ap-px-4 ">
         <ap-button btnSize="medium" placement="bottom" btnStyle="stroked" [darkLoadingSpinner]="true"
-          (buttonClicked)="enablePublicSharingForBot(chatbot,menuTrigger);" [loading]="updatingBot">
+          (buttonClicked)="enablePublicSharingForBot(chatbot,menuTrigger);" [loading]="updatingBot" i18n>
           Enable Public Access
         </ap-button>
       </div>

@@ -1,5 +1,5 @@
 <div class="ap-px-4  ap-py-3 ">
-    <div class="ap-typography-body-1 !ap-font-semibold">
+    <div class="ap-typography-body-1 !ap-font-semibold" i18n>
         Generate Sample Data
     </div>
     <ng-container *ngIf="currentResults$ | async as currentResults; else loadingSpinner">
@@ -8,17 +8,18 @@
             <div class="ap-relative">
                 <ap-hotspot class="ap-absolute ap-top-[13px] ap-left-[-27px]"
                     matTooltip="Test this trigger to generate sample data that can be used in the next steps"
+                    i18n-matTooltip
                     matTooltipPosition="above"> </ap-hotspot>
                 <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium" (buttonClicked)="testStep()"
                     [tooltipText]=" (isValid$ | async) === false ? 'Please fix the trigger inputs first' :
                     (isSaving$| async) === false? 'After the trigger is tested, you will be able to use its sample data in the next steps': savingMessage"
-                    [disabled]="(isValid$ | async) === false || (isSaving$ | async) === true">Test
+                    [disabled]="(isValid$ | async) === false || (isSaving$ | async) === true" i18n>Test
                     Trigger </ap-button>
             </div>
-            <div class="ap-typography-subtitle-2 ap-text-description">
+            <div class="ap-typography-subtitle-2 ap-text-description" i18n>
                 Or
             </div>
-            <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium" (buttonClicked)="useMockData()">Use Mock
+            <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium" (buttonClicked)="useMockData()" i18n>Use Mock
                 Data </ap-button>
         </div>
 
@@ -26,27 +27,26 @@
             <div class="ap-flex ap-items-center">
                 <div class="ap-min-h-[48px] ap-gap-2  ap-flex ap-items-center">
                     <svg-icon src="assets/img/custom/success-step-result.svg"
-                        [svgStyle]="{ width: '21px', height: '20px' }" matTooltip="Step succeeded"></svg-icon>
-                    Tested
-                    Successfully
+                        [svgStyle]="{ width: '21px', height: '20px' }" matTooltip="Step succeeded" i18n-matTooltip></svg-icon>
+                    <span i18n>Tested Successfully</span>
                 </div>
                 <div class="ap-flex-grow">
 
                 </div>
                 <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium"
-                    [tooltipText]=" (isValid$ | async) === false ? 'Please fix the trigger inputs first' : 
+                    [tooltipText]=" (isValid$ | async) === false ? 'Please fix the trigger inputs first' :
                     (isSaving$ | async) === false?  'After the trigger is tested, you will be able to use its sample data in the next steps' : savingMessage"
                     [disabled]="(isValid$ | async) === false || (isSaving$ | async) === true"
-                    (buttonClicked)="testStep()">Retest</ap-button>
+                    (buttonClicked)="testStep()" i18n>Retest</ap-button>
             </div>
 
             <mat-form-field class="ap-w-full ap-my-2" appearance="outline" subscriptSizing="dynamic">
-                <mat-label>
+                <mat-label i18n>
                     Data
                 </mat-label>
                 <mat-select [formControl]="selectedDataControl" [compareWith]="dropdownCompareWithFunction">
                     <mat-option *ngFor="let res of currentResults; let idx= index" [value]="res.payload">
-                        <div> (Result {{currentResults.length-idx}})</div>
+                        <div i18n> (Result {{currentResults.length-idx}})</div>
                         <div class="ap-text-description ap-typography-body-2"> {{res.created | date:"short"}}</div>
                     </mat-option>
                 </mat-select>
@@ -60,16 +60,17 @@
             <ng-container *ngIf="!savingMockData; else loadingSpinner">
                 <div class="ap-flex ap-flex-col ap-gap-2.5">
                     <div class="ap-flex ap-gap-2 ap-items-center">
-                        <div class="spinner-border dark-spinner" role="status"></div> Testing trigger
+                        <div class="spinner-border dark-spinner" role="status"></div>
+                        <span i18n>Testing trigger</span>
                         <div class="ap-flex-grow"></div>
                         <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium"
-                            (buttonClicked)="cancelTesting()">Cancel</ap-button>
+                            (buttonClicked)="cancelTesting()" i18n>Cancel</ap-button>
                     </div>
 
                     <ap-warning-box>
                         <div class="ap-flex ap-items-center ap-gap-2 ap-ml-[-3px] ">
                             <svg-icon [svgStyle]="{ width: '20px', height: '20px' }" src="assets/img/custom/warn.svg">
-                            </svg-icon> Action Required
+                            </svg-icon> <span i18n>Action Required</span>
                         </div>
                         <p>
                             {{ simulationMessage$|async }}
