@@ -1,41 +1,77 @@
-<form class="ap-flex ap-flex-col ap-gap-5 ap-max-w-[327px] ap-h-full" [formGroup]="formGroup" (ngSubmit)="save()"
+<form class="ap-flex ap-flex-col ap-gap-5 ap-h-full" [formGroup]="formGroup" (ngSubmit)="save()"
     #appearanceForm="ngForm">
-    <mat-form-field class="ap-w-full">
+    <mat-form-field class=" ap-max-w-[327px] ap-w-full">
         <mat-label>Name</mat-label>
         <input matInput placeholder="Awesome platform" [formControl]="formGroup.controls.displayName" />
         <mat-error *ngIf="formGroup.controls.displayName.invalid">Name is required </mat-error>
     </mat-form-field>
-    <mat-form-field class="ap-w-full">
-        <mat-label>Logo</mat-label>
-        <ap-file-upload [required]="true" #logoInput [formControl]="formGroup.controls.logo"
-            [extensions]="['.png','.svg','.webp','.jpeg']" placeHolder="logo.png"></ap-file-upload>
-        <ap-icon-button [height]="25" [width]="25" iconFilename="attach.svg" matSuffix
-            (buttonClicked)="logoInput.fileInput.nativeElement.click()"></ap-icon-button>
-        <mat-error *ngIf="formGroup.controls.logo.invalid">
-            <ng-container *ngIf="formGroup.controls.logo.getError('invalidExtenstion')">Invalid file
-                extension</ng-container>
-            <ng-container *ngIf="formGroup.controls.logo.getError('sizeLimit')">file size is above limit 4 mega
-                bytes</ng-container>
-            <ng-container *ngIf="formGroup.controls.logo.getError('emptyFile')">Logo is required</ng-container>
-        </mat-error>
-    </mat-form-field>
-    <mat-form-field class="ap-w-full">
-        <mat-label>Fav icon</mat-label>
-        <ap-file-upload [required]="true" #favIconInput [formControl]="formGroup.controls.favIcon"
-            [extensions]="['.ico']" placeHolder="favicon.ico"></ap-file-upload>
-        <ap-icon-button [height]="25" [width]="25" iconFilename="attach.svg" matSuffix
-            (buttonClicked)="favIconInput.fileInput.nativeElement.click()"></ap-icon-button>
-        <mat-error *ngIf="formGroup.controls.logo.invalid">
-            <ng-container *ngIf="formGroup.controls.logo.getError('invalidExtenstion')">Invalid file
-                extension</ng-container>
-            <ng-container *ngIf="formGroup.controls.logo.getError('sizeLimit')">file size is above limit 4 mega
-                bytes</ng-container>
-            <ng-container *ngIf="formGroup.controls.logo.getError('emptyFile')">Logo is required</ng-container>
-        </mat-error>
-    </mat-form-field>
+    <div class="ap-flex ap-gap-2 ap-items-center">
+        <mat-form-field class=" ap-max-w-[327px] ap-w-full">
+            <mat-label>Full logo</mat-label>
+            <ap-file-upload [required]="true" #logoInput [formControl]="formGroup.controls.fullLogo"
+                [extensions]="['.png','.svg','.webp','.jpeg']" placeHolder="full-logo.png"></ap-file-upload>
+            <ap-icon-button [height]="25" [width]="25" iconFilename="attach.svg" matSuffix
+                (buttonClicked)="logoInput.fileInput.nativeElement.click()"></ap-icon-button>
+            <mat-error *ngIf="formGroup.controls.logo.invalid">
+                <ng-container *ngIf="formGroup.controls.logo.getError('invalidExtenstion')">Invalid file
+                    extension</ng-container>
+                <ng-container *ngIf="formGroup.controls.logo.getError('sizeLimit')">file size is above limit 4 mega
+                    bytes</ng-container>
+                <ng-container *ngIf="formGroup.controls.logo.getError('emptyFile')">Full logo is required</ng-container>
+            </mat-error>
+        </mat-form-field>
+        <div class="ap-flex ap-items-center ap-gap-1 ap-typography-body-1 -ap-mt-5">
+            example: <img src="assets/img/custom/full-logo.svg">
+        </div>
+    </div>
+
+    <div class="ap-flex ap-items-center ap-gap-2">
+        <mat-form-field class=" ap-max-w-[327px] ap-w-full">
+            <mat-label>Logo</mat-label>
+            <ap-file-upload [required]="true" #logoInput [formControl]="formGroup.controls.logo"
+                [extensions]="['.png','.svg','.webp','.jpeg']" placeHolder="logo.png"></ap-file-upload>
+            <ap-icon-button [height]="25" [width]="25" iconFilename="attach.svg" matSuffix
+                (buttonClicked)="logoInput.fileInput.nativeElement.click()"></ap-icon-button>
+            <mat-error *ngIf="formGroup.controls.logo.invalid">
+                <ng-container *ngIf="formGroup.controls.logo.getError('invalidExtenstion')">Invalid file
+                    extension</ng-container>
+                <ng-container *ngIf="formGroup.controls.logo.getError('sizeLimit')">file size is above limit 4 mega
+                    bytes</ng-container>
+                <ng-container *ngIf="formGroup.controls.logo.getError('emptyFile')">Logo is required</ng-container>
+            </mat-error>
+        </mat-form-field>
+        <div class="ap-flex ap-items-center">
+            <div class="ap-flex ap-items-center ap-gap-1 ap-typography-body-1 -ap-mt-5">
+                example: <img src="assets/img/custom/logo.svg">
+            </div>
+        </div>
+    </div>
 
 
-    <mat-form-field class="ap-w-full">
+    <div class="ap-flex ap-items-center ap-gap-2">
+        <mat-form-field class=" ap-max-w-[327px] ap-w-full">
+            <mat-label>Fav icon</mat-label>
+            <ap-file-upload [required]="true" #favIconInput [formControl]="formGroup.controls.favIcon"
+                [extensions]="['.ico']" placeHolder="favicon.ico"></ap-file-upload>
+            <ap-icon-button [height]="25" [width]="25" iconFilename="attach.svg" matSuffix
+                (buttonClicked)="favIconInput.fileInput.nativeElement.click()"></ap-icon-button>
+            <mat-error *ngIf="formGroup.controls.logo.invalid">
+                <ng-container *ngIf="formGroup.controls.logo.getError('invalidExtenstion')">Invalid file
+                    extension</ng-container>
+                <ng-container *ngIf="formGroup.controls.logo.getError('sizeLimit')">file size is above limit 4 mega
+                    bytes</ng-container>
+                <ng-container *ngIf="formGroup.controls.logo.getError('emptyFile')">Logo is required</ng-container>
+            </mat-error>
+        </mat-form-field>
+        <div class="ap-flex ap-items-center">
+            <div class="ap-flex ap-items-center ap-gap-1 ap-typography-body-1 -ap-mt-5">
+                example: <img src="assets/img/custom/favicon.ico">
+            </div>
+        </div>
+    </div>
+
+
+    <mat-form-field class=" ap-max-w-[327px] ap-w-full">
         <mat-label>Primary Color</mat-label>
         <input matInput [formControl]="formGroup.controls.primaryColor">
         <ngx-colors class="ap-px-[40px]" matSuffix ngx-colors-trigger [formControl]="formGroup.controls.pickerCtrl"

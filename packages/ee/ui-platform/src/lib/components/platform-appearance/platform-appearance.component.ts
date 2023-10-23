@@ -11,6 +11,7 @@ import { validateFileControl } from '@activepieces/ui/common';
 interface AppearanceForm {
   displayName: FormControl<string>;
   logo: FormControl<File | null>;
+  fullLogo: FormControl<File | null>;
   favIcon: FormControl<File | null>;
   primaryColor: FormControl<string>;
   pickerCtrl: FormControl<string>;
@@ -52,6 +53,18 @@ export class PlatformAppearanceComponent {
           ],
         }
       ),
+      fullLogo: this.fb.control<File | null>(
+        {
+          disabled: false,
+          value: null,
+        },
+        {
+          validators: [
+            Validators.required,
+            validateFileControl(this.logoFileExtensions, 4000000),
+          ],
+        }
+      ),
       primaryColor: this.fb.control(
         {
           disabled: false,
@@ -82,6 +95,10 @@ export class PlatformAppearanceComponent {
         console.error('logo is null');
         return;
       }
+      if (!this.formGroup.value.fullLogo) {
+        console.error('full logo is null');
+        return;
+      }
       this.loading = true;
       const filesToRead: Record<string, { file: File; value: string }> = {
         logo: {
@@ -90,6 +107,10 @@ export class PlatformAppearanceComponent {
         },
         favIcon: {
           file: this.formGroup.value.favIcon,
+          value: '',
+        },
+        fullLogo: {
+          file: this.formGroup.value.fullLogo,
           value: '',
         },
       };
