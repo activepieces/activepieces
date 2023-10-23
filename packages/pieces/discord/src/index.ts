@@ -38,6 +38,6 @@ export const discord = createPiece({
     discordRenameChannel,
     discordFindChannel,
   ],
-  authors: ['creed983', 'Abdallah-Alwarawreh'],
+  authors: ['creed983', 'Abdallah-Alwarawreh', 'TaskMagicKyle'],
   triggers: [newMessage],
 });
