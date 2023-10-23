@@ -43,6 +43,8 @@ export const firebaseAuthenticationController = async (app: FastifyInstance) => 
                         id: user.id,
                         type: PrincipalType.USER,
                         projectId: project.id,
+                        projectType: project.type,
+                        projectPlatformId: project.platformId,
                     })
                     const response: AuthenticationResponse = {
                         projectId: project.id,
@@ -96,6 +98,8 @@ export const firebaseAuthenticationController = async (app: FastifyInstance) => 
                         id: user.id,
                         type: PrincipalType.USER,
                         projectId: project.id,
+                        projectType: project.type,
+                        projectPlatformId: project.platformId,
                     })
                     const response: AuthenticationResponse = {
                         projectId: project.id,
