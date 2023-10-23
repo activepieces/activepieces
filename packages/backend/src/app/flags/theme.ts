@@ -54,20 +54,21 @@ function generateColorVariations(defaultColor: string) {
     const defaultColorObj = tinycolor(defaultColor)
 
     const darkColor = defaultColorObj.clone().darken(2)
-    const lightColor = defaultColorObj.clone().lighten(38)
+    const baseLight = tinycolor('#ffffff')
+    const lightColor = tinycolor.mix(baseLight, defaultColorObj.toHex(), 12).toHexString()
     const mediumColor = defaultColorObj.clone().lighten(26)
 
     return {
         default: defaultColorObj.toHexString(),
         dark: darkColor.toHexString(),
-        light: lightColor.toHexString(),
+        light: lightColor,
         medium: mediumColor.toHexString(),
     }
 }
 
-function generateLigherColor(defaultColor: string) {
+function generateSelectionColor(defaultColor: string) {
     const defaultColorObj = tinycolor(defaultColor)
-    const lightColor = defaultColorObj.lighten(20)
+    const lightColor = defaultColorObj.lighten(8)
     return lightColor.toHexString()
 }
 
@@ -87,13 +88,11 @@ function generateTheme({ primaryColor }: { primaryColor: string }) {
                 default: '#14ae5c',
                 light: '#3cad71',
             },
-            'selection-color': generateLigherColor(primaryColor),
+            'selection': generateSelectionColor(primaryColor),
         },
         logos: {
             fullLogoUrl:
-                'https://cdn.activepieces.com/brand/full-logo.svg',
-            smallFullLogoUrl:
-                'https://cdn.activepieces.com/brand/full-logo-small.svg',
+            'https://cdn.activepieces.com/brand/full-logo.svg',
             favIconUrl:
                 'https://cdn.activepieces.com/brand/favicon.ico',
             logoIconUrl:
