@@ -13,18 +13,11 @@ export class AddPlatformToProject1698065083750 implements MigrationInterface {
             ALTER TABLE "project"
             ADD "platformId" character varying(21)
         `)
-        await queryRunner.query(`
-            ALTER TABLE "project"
-            ADD CONSTRAINT "fk_project_platform_id" FOREIGN KEY ("platformId") REFERENCES "platform"("id") ON DELETE RESTRICT ON UPDATE RESTRICT
-        `)
 
         logger.info('AddPlatformToProject1698065083750 up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
-            ALTER TABLE "project" DROP CONSTRAINT "fk_project_platform_id"
-        `)
         await queryRunner.query(`
             ALTER TABLE "project" DROP COLUMN "platformId"
         `)
