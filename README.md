@@ -217,6 +217,9 @@ We welcome contributions big or small and in different directions. The best way 
       <td align="center" valign="top" width="14.28%"><a href="http://www.zidoary.com"><img src="https://avatars.githubusercontent.com/u/24081860?v=4?s=100" width="100px;" alt="Awais Manzoor"/><br /><sub><b>Awais Manzoor</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/issues?q=author%3Aawais000" title="Bug reports">🐛</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/andchir"><img src="https://avatars.githubusercontent.com/u/6392311?v=4?s=100" width="100px;" alt="Andrei"/><br /><sub><b>Andrei</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/issues?q=author%3Aandchir" title="Bug reports">🐛</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/derbbre"><img src="https://avatars.githubusercontent.com/u/281843?v=4?s=100" width="100px;" alt="derbbre"/><br /><sub><b>derbbre</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=derbbre" title="Documentation">📖</a></td>
+    </tr>
   </tbody>
 </table>
 
