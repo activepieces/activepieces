@@ -22,6 +22,7 @@ import { AddArchiveIdToPieceMetadata1696956123632 } from './migration/sqllite3/1
 import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
 import { StoreCodeInsideFlow1697969398200 } from './migration/common/1697969398200-store-code-inside-flow'
+import { AddPlatformToProject1698078715730 } from './migration/sqllite3/1698078715730-add-platform-to-project'
 
 const getSqliteDatabaseFilePath = (): string => {
     const homeDirectoryPath = os.homedir()
@@ -59,6 +60,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddPieceTypeAndPackageTypeToFlowVersion1696245170061,
         AddArchiveIdToPieceMetadata1696956123632,
         StoreCodeInsideFlow1697969398200,
+        AddPlatformToProject1698078715730,
     ]
     const edition = getEdition()
     switch (edition) {
