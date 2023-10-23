@@ -39,7 +39,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
   duplicateFlow$: Observable<void>;
   openDashboardOnFolder$: Observable<string>;
   environment = environment;
-  fullLogoSmall$: Observable<string>;
+  fullLogo$: Observable<string>;
   constructor(
     public dialogService: MatDialog,
     private store: Store,
@@ -50,9 +50,9 @@ export class FlowBuilderHeaderComponent implements OnInit {
     private matDialog: MatDialog,
     private flagService: FlagService
   ) {
-    this.fullLogoSmall$ = this.flagService
+    this.fullLogo$ = this.flagService
       .getLogos()
-      .pipe(map((logos) => logos.smallFullLogoUrl));
+      .pipe(map((logos) => logos.fullLogoUrl));
   }
 
   ngOnInit(): void {

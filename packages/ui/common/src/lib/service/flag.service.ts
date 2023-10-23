@@ -132,7 +132,6 @@ export class FlagService {
 
   getLogos(): Observable<{
     fullLogoUrl: string;
-    smallFullLogoUrl: string;
     favIconUrl: string;
     logoIconUrl: string;
   }> {
