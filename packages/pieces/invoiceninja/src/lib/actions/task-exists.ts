@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { invoiceninjaAuth } from '../..';
-
+// 05/09/23 - returns 1 or 0 instead of true or false as was having issues
 export const existsTask = createAction({
   auth: invoiceninjaAuth,
   name: 'exists_task',
@@ -23,6 +23,8 @@ export const existsTask = createAction({
     };
 
     const queryParams = new URLSearchParams();
+    // number=context.propsValue.number - last update 'number' was also on the const url which
+    // was incorrect
     queryParams.append('number', context.propsValue.number || '');
 
     // Remove trailing slash from base_url
@@ -33,15 +35,15 @@ export const existsTask = createAction({
       url,
       headers
     };
-
     try {
       const response = await httpClient.sendRequest(httprequestdata);
-      // Process the successful response here (status 2xx).
-      // count is the number of tickets with that number so return true if it is 1.
+      // meta data only present if ticket exists. had issues testing true and false on
+      // branch piece so switched to 1 and 0 respectively instead to see if that works
+      // better.
       if (response.body.meta.pagination.total > 0) {
-        return true;
+        return 1;
       } else {
-        return false;
+        return 0;
       }
     } catch (error) {
       // Handle the error when the request fails (status other than 2xx).

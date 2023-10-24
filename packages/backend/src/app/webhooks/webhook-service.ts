@@ -105,6 +105,7 @@ export const webhookService = {
                 payload,
                 projectId,
             })
+                .catch((e) => logger.error(e, '[WebhookService#callback] triggerEventService.saveEvent'))
         })
 
         const createFlowRuns = payloads.map((payload) =>
@@ -172,11 +173,9 @@ const getLatestFlowVersionOrThrow = async (
     projectId: ProjectId,
 ): Promise<FlowVersion> => {
     const flowVersion = await flowVersionService.getFlowVersion({
-        projectId,
         flowId,
         versionId: undefined,
         removeSecrets: false,
-        includeArtifactAsBase64: false,
     })
 
     if (isNil(flowVersion)) {
@@ -204,6 +203,7 @@ function saveSampleDataForWebhookTesting(
         payload,
         projectId: flow.projectId,
     })
+        .catch((e) => logger.error(e, '[WebhookService#saveSampleDataForWebhookTesting] triggerEventService.saveEvent'))
 }
 
 type WebhookUrlSuffix = '' | '/simulate'

@@ -4,16 +4,10 @@ export const environment = {
   jwtTokenName: 'token',
   redirectUrl: 'http://localhost:8080/redirect',
   userPropertyNameInLocalStorage: 'currentUser',
-  //You need to edit index.html manually
-  websiteTitle: 'Activepieces',
-  activateBeamer: true,
-  showFeedbackButton: true,
-  showDocsButton: true,
-  showUserProfile: true,
   // BEGIN EE
   firebase: {
     apiKey: 'AIzaSyBik7RRZ6S8QIpG4GqzwoF_SCNn3Dr9PPw',
-    authDomain: 'activepieces-b3803.firebaseapp.com',
+    authDomain: 'cloud.activepieces.com',
     projectId: 'activepieces-b3803',
     storageBucket: 'activepieces-b3803.appspot.com',
     messagingSenderId: '89039225374',

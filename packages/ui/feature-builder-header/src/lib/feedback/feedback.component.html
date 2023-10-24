@@ -1,38 +1,8 @@
-<ap-button [matMenuTriggerFor]="menu" #menuTrigger="matMenuTrigger" btnStyle="basic" btnColor="basic" btnSize="medium"
-    (menuOpened)="menuOpened()">
-    <div class="ap-flex ap-items-center ap-typography-body-2 ap-gap-2" *ngIf="environment.showFeedbackButton">
-        <svg-icon src="assets/img/custom/feedback.svg" class="ap-fill-body ap-w-[20px] ap-h-[25px]"
-            [applyClass]="true"></svg-icon>Feedback
+<ap-button btnStyle="basic" btnColor="basic" btnSize="medium" (buttonClicked)="openSupport()" *ngIf="showSupport$ | async"
+    tooltipText="Ask the Community">
+    <div class="ap-flex ap-items-center ap-typography-body-2 ap-gap-2">
+        <svg-icon src="assets/img/custom/support.svg" class="ap-fill-body ap-w-[20px] ap-h-[25px]"
+            [applyClass]="true"></svg-icon>
+        <span i18n>Support</span>
     </div>
 </ap-button>
-<mat-menu #menu="matMenu" xPosition="before">
-    <div (click)="$event.stopPropagation()"
-        class="ap-flex ap-flex-col ap-gap-2 ap-min-w-[250px] md:ap-min-w-[325px] -ap-mt-2">
-        <mat-form-field appearance="fill" class="ap-w-full !ap-bg-white" subscriptSizing="dynamic">
-            <textarea #focusItem [formControl]="feedbackControl" rows="4" matInput
-                placeholder="Have any feedback for us? "></textarea>
-        </mat-form-field>
-        <div class="ap-flex ap-px-4">
-            <ap-button btnSize="medium" btnColor="basic" btnStyle="stroked" placement="bottom"
-                (click)="menuTrigger.closeMenu()">
-                Close
-            </ap-button>
-            <div class="ap-flex-grow"></div>
-            <ap-button btnSize="medium" placement="bottom" [loading]="sendingFeedback" (buttonClicked)="sendFeedback()">
-                Send Feedback
-            </ap-button>
-        </div>
-        <div class="ap-px-4 ap-typography-body-2 ap-text-description">
-            <span class="ap-font-semibold">Need Help?</span>&nbsp; <span><a class="!ap-typography-body-2"
-                    href="https://github.com/activepieces/activepieces/issues" target="_blank" rel="noopener">Open an
-                    issue</a>
-                or <a class="!ap-typography-body-2" href="https://activepieces.com/docs/" target="_blank"
-                    rel="noopener">visit our
-                    docs</a></span>
-        </div>
-    </div>
-</mat-menu>
-<ng-container *ngIf="sendFeedback$ | async">
-
-</ng-container>
-<ng-container *ngIf="openFeedbackPopOver$ | async"></ng-container>

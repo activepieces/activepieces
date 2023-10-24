@@ -1,10 +1,10 @@
 <mat-toolbar @fadeInUp class="!ap-bg-primary ap-min-h-[64px]" *ngIf="showUpgradeNotification$ | async">
   <div class="ap-typography-body-1 ap-flex ap-flex-col ap-items-center ap-flex ap-flex-grow ap-justify-center">
     <div class="ap-typography-body-2 ap-text-white !ap-font-bold ap-flex ap-gap-1 ap-items-center">
-      Upgrade Activepieces to enjoy the latest added features and pieces!
-      <ap-button btnColor="white" btnStyle="basic" class="ap-ml-1" btnSize="small" (buttonClicked)="openUpgradeDocs()">
+        <span>Upgrade Activepieces to enjoy the latest added features and pieces!</span>
+      <ap-button btnColor="white" btnStyle="basic" class="ap-ml-1" btnSize="small" (buttonClicked)="openUpgradeDocs()" i18n>
         Upgrade</ap-button>
-      <ap-button btnColor="basic" btnStyle="basic" btnSize="small" (buttonClicked)="ignoreUpgradeNotification()">
+      <ap-button btnColor="basic" btnStyle="basic" btnSize="small" (buttonClicked)="ignoreUpgradeNotification()" i18n>
         Ignore</ap-button>
     </div>
   </div>
@@ -13,7 +13,7 @@
   <router-outlet></router-outlet>
 </div>
 
-<div *ngIf="loading$ | async"
+<div *ngIf="(loading$ | async) || (loadingTheme$ | async)"
   class="ap-flex ap-flex-grow ap-justify-center ap-items-center ap-h-full route-loader ap-w-full">
   <svg-icon [svgStyle]="{ width: '50px', height: '50px' }" src="assets/img/custom/loading.svg"
     class="loading-spin-animation grey-spinner" [applyClass]="true"></svg-icon>
@@ -22,3 +22,5 @@
 <ng-container *ngIf="routeLoader$ | async"></ng-container>
 <ng-container *ngIf="openCommandBar$ | async"></ng-container>
 <ng-container *ngIf="importTemplate$ | async"></ng-container>
+<ng-container *ngIf="theme$ | async"> </ng-container>
+<ng-container *ngIf="setTitle$ | async"></ng-container>

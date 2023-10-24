@@ -1,11 +1,14 @@
 import { readdir } from 'node:fs/promises'
 import { resolve, join } from 'node:path'
 import { cwd } from 'node:process'
-import { Piece, PieceMetadata, PieceMetadataSummary } from '@activepieces/pieces-framework'
-import { ActivepiecesError, ErrorCode, extractPieceFromModule } from '@activepieces/shared'
+import { Piece, PieceMetadata } from '@activepieces/pieces-framework'
+import { ActivepiecesError, EXACT_VERSION_PATTERN, ErrorCode, PackageType, PieceType, ProjectId, extractPieceFromModule } from '@activepieces/shared'
 import { captureException } from '../../helper/logger'
-import { GetParams, PieceMetadataService } from './piece-metadata-service'
+import { PieceMetadataService } from './piece-metadata-service'
 import { isNil } from '@activepieces/shared'
+import { AllPiecesStats } from './piece-stats-service'
+import importFresh from 'import-fresh'
+import { PieceMetadataModel, PieceMetadataModelSummary } from '../piece-metadata-entity'
 
 const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
     const ignoredPackages = ['framework', 'apps', 'dist', 'common']
@@ -17,8 +20,9 @@ const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
 
     for (const piecePackage of filteredPiecePackages) {
         try {
-            const packageJson = await import(join(piecesPath, piecePackage, 'package.json'))
-            const module = await import(join(piecesPath, piecePackage, 'src', 'index'))
+            const packageJson = importFresh<Record<string, string>>(join(piecesPath, piecePackage, 'package.json'))
+            const module = importFresh<Record<string, unknown>>(join(piecesPath, piecePackage, 'src', 'index'))
+
             const { name: pieceName, version: pieceVersion } = packageJson
             const piece = extractPieceFromModule<Piece>({
                 module,
@@ -42,24 +46,16 @@ const loadPiecesMetadata = async (): Promise<PieceMetadata[]> => {
 
 export const FilePieceMetadataService = (): PieceMetadataService => {
     return {
-        async list(): Promise<PieceMetadataSummary[]> {
+        async list({ projectId }): Promise<PieceMetadataModelSummary[]> {
             const piecesMetadata = await loadPiecesMetadata()
 
-            return piecesMetadata.map(p => ({
-                name: p.name,
-                displayName: p.displayName,
-                description: p.description,
-                logoUrl: p.logoUrl,
-                version: p.version,
-                auth: p.auth,
-                minimumSupportedRelease: p.minimumSupportedRelease,
-                maximumSupportedRelease: p.maximumSupportedRelease,
-                actions: Object.keys(p.actions).length,
-                triggers: Object.keys(p.triggers).length,
+            return piecesMetadata.map(p => toPieceMetadataModelSummary({
+                pieceMetadata: p,
+                projectId,
             }))
         },
 
-        async get({ name, version }: GetParams): Promise<PieceMetadata> {
+        async getOrThrow({ name, version, projectId }): Promise<PieceMetadataModel> {
             const piecesMetadata = await loadPiecesMetadata()
             const pieceMetadata = piecesMetadata.find(p => p.name === name)
 
@@ -73,18 +69,75 @@ export const FilePieceMetadataService = (): PieceMetadataService => {
                 })
             }
 
-            return pieceMetadata
+            return toPieceMetadataModel({
+                pieceMetadata,
+                projectId,
+            })
         },
 
-        async delete() {
+        async delete(): Promise<void> {
             throw new Error('Deleting pieces is not supported in development mode')
         },
-        async create() {
+
+        async create(): Promise<PieceMetadataModel> {
             throw new Error('Creating pieces is not supported in development mode')
         },
 
-        async stats() {
+        async stats(): Promise<AllPiecesStats> {
             return {}
         },
+
+        async getExactPieceVersion({ projectId, name, version }): Promise<string> {
+            const isExactVersion = EXACT_VERSION_PATTERN.test(version)
+
+            if (isExactVersion) {
+                return version
+            }
+
+            const pieceMetadata = await this.getOrThrow({
+                projectId,
+                name,
+                version,
+            })
+
+            return pieceMetadata.version
+        },
     }
+}
+
+const toPieceMetadataModel = ({ pieceMetadata, projectId }: ToPieceMetadataModelParams): PieceMetadataModel => {
+    return {
+        name: pieceMetadata.name,
+        displayName: pieceMetadata.displayName,
+        description: pieceMetadata.description,
+        logoUrl: pieceMetadata.logoUrl,
+        version: pieceMetadata.version,
+        auth: pieceMetadata.auth,
+        minimumSupportedRelease: pieceMetadata.minimumSupportedRelease,
+        maximumSupportedRelease: pieceMetadata.maximumSupportedRelease,
+        actions: pieceMetadata.actions,
+        triggers: pieceMetadata.triggers,
+        directoryName: pieceMetadata.directoryName,
+        projectId,
+        packageType: PackageType.REGISTRY,
+        pieceType: PieceType.OFFICIAL,
+    }
+}
+
+const toPieceMetadataModelSummary = ({ pieceMetadata, projectId }: ToPieceMetadataModelParams): PieceMetadataModelSummary => {
+    const pieceMetadataModel = toPieceMetadataModel({
+        pieceMetadata,
+        projectId,
+    })
+
+    return {
+        ...pieceMetadataModel,
+        actions: Object.keys(pieceMetadataModel.actions).length,
+        triggers: Object.keys(pieceMetadataModel.triggers).length,
+    }
+}
+
+type ToPieceMetadataModelParams = {
+    pieceMetadata: PieceMetadata
+    projectId?: ProjectId
 }

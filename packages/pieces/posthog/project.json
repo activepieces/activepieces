@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/posthog/package.json",
         "main": "packages/pieces/posthog/src/index.ts",
         "assets": ["packages/pieces/posthog/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

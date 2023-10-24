@@ -12,7 +12,8 @@
         "main": "packages/shared/src/index.ts",
         "tsConfig": "packages/shared/tsconfig.lib.json",
         "assets": ["packages/shared/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "test": {

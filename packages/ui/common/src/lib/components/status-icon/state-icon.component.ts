@@ -37,13 +37,12 @@ export class StateIconComponent implements OnInit, OnChanges {
   }
   findIconUrl(
     status: ExecutionOutputStatus | StepOutputStatus | AppConnectionStatus
-  ) {
+  ): string {
     switch (status) {
       case ExecutionOutputStatus.STOPPED:
       case ExecutionOutputStatus.SUCCEEDED:
       case StepOutputStatus.SUCCEEDED:
       case StepOutputStatus.STOPPED:
-      case AppConnectionStatus.EXPIRED:
       case AppConnectionStatus.ACTIVE:
         return 'assets/img/custom/status/success.svg';
       case ExecutionOutputStatus.FAILED:
@@ -51,6 +50,7 @@ export class StateIconComponent implements OnInit, OnChanges {
       case ExecutionOutputStatus.TIMEOUT:
       case StepOutputStatus.FAILED:
       case AppConnectionStatus.ERROR:
+      case ExecutionOutputStatus.QUOTA_EXCEEDED:
         return 'assets/img/custom/status/error.svg';
       case ExecutionOutputStatus.PAUSED:
       case StepOutputStatus.PAUSED:
@@ -62,31 +62,32 @@ export class StateIconComponent implements OnInit, OnChanges {
   }
   findTextAfter(
     status: ExecutionOutputStatus | StepOutputStatus | AppConnectionStatus
-  ) {
+  ): string {
     switch (status) {
       case ExecutionOutputStatus.STOPPED:
       case ExecutionOutputStatus.SUCCEEDED:
       case StepOutputStatus.SUCCEEDED:
       case StepOutputStatus.STOPPED:
-        return 'Succeeded';
+        return $localize`Succeeded`;
+      case ExecutionOutputStatus.QUOTA_EXCEEDED:
+        return 'Quota Exceeded';
       case ExecutionOutputStatus.INTERNAL_ERROR:
-        return 'Internal Error';
+        return $localize`Internal Error`;
       case ExecutionOutputStatus.TIMEOUT:
-        return 'Timed Out';
+        return $localize`Timed Out`;
       case ExecutionOutputStatus.FAILED:
       case StepOutputStatus.FAILED:
-        return 'Failed';
+        return $localize`Failed`;
       case ExecutionOutputStatus.PAUSED:
       case StepOutputStatus.PAUSED:
-        return 'Paused';
+        return $localize`Paused`;
       case ExecutionOutputStatus.RUNNING:
       case StepOutputStatus.RUNNING:
-        return 'Running';
+        return $localize`Running`;
       case AppConnectionStatus.ACTIVE:
-      case AppConnectionStatus.EXPIRED:
-        return 'Active';
+        return $localize`Active`;
       case AppConnectionStatus.ERROR:
-        return 'Error';
+        return $localize`Error`;
     }
   }
 }

@@ -161,3 +161,50 @@ ap-markdown{
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 1;
 }
+
+app-templates-dialog 
+{
+  .thin-scrollbars.black-scrollbars
+  {
+    &::-webkit-scrollbar {
+      width: 16px;
+    }
+  
+    &::-webkit-scrollbar-thumb {
+      background: $body;
+      background-clip: content-box;
+      border: 5px solid transparent;
+      border-radius: 40px;
+      scrollbar-width: thin;
+    }
+    &::-webkit-scrollbar-thumb:hover {
+      background: $body;
+      background-clip: content-box;
+      border: 5px solid transparent;
+      border-radius: 40px;
+      scrollbar-width: thin;
+    }
+  }
+  mat-tab-header{
+    border-bottom-color: $outline;
+    border-style: solid;
+    border-bottom-width: 1px;
+    .mat-mdc-tab-labels
+    {
+      padding-left: .75rem;
+    }
+  
+    .mdc-tab
+    {
+      fill:var(--mat-tab-header-inactive-label-text-color)
+    }
+    .mdc-tab--active
+    {
+      fill:var(--mat-tab-header-active-label-text-color);
+    }
+  }
+  
+ 
+
+}
+

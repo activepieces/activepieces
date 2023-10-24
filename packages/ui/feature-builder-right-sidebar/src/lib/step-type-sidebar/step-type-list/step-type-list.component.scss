@@ -1,18 +1,9 @@
-.list-container {
-  padding: 7.5px 0px;
-  scrollbar-width: thin;
-  &::-webkit-scrollbar {
-    width: 4px;
-  }  
-}
+
 .full-height-of-sidebar 
 {
   height: calc(100vh - 204px - 76px) !important;
 }
 
-.list-item {
-  margin: 7.5px 0px;
-}
 
 .empty-list-text
 {

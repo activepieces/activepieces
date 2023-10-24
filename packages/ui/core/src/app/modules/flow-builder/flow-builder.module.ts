@@ -23,6 +23,7 @@ import { UiFeatureBuilderFormControlsModule } from '@activepieces/ui/feature-bui
 import { UiFeatureBuilderRightSidebarModule } from '@activepieces/ui/feature-builder-right-sidebar';
 import { PortalModule } from '@angular/cdk/portal';
 import { UiFeatureTemplatesModule } from '@activepieces/ui/feature-templates';
+import { TimeagoModule } from 'ngx-timeago';
 
 @NgModule({
   imports: [
@@ -35,6 +36,7 @@ import { UiFeatureTemplatesModule } from '@activepieces/ui/feature-templates';
     CodemirrorModule,
     DragDropModule,
     AngularSvgIconModule.forRoot(),
+    TimeagoModule.forRoot(),
     FontAwesomeModule,
     MatExpansionModule,
     MonacoEditorModule,

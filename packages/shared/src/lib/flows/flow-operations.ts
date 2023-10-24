@@ -1,5 +1,5 @@
 import {
-    CodeActionSchema, BranchActionSchema, LoopOnItemsActionSchema, PieceActionSchema, MissingActionSchema, Action,
+    CodeActionSchema, BranchActionSchema, LoopOnItemsActionSchema, PieceActionSchema, Action
 } from "./actions/action";
 import { EmptyTrigger, PieceTrigger, WebhookTrigger } from "./triggers/trigger";
 import { Static, Type } from "@sinclair/typebox";
@@ -14,7 +14,8 @@ export enum FlowOperationType {
     UPDATE_TRIGGER = "UPDATE_TRIGGER",
     ADD_ACTION = "ADD_ACTION",
     UPDATE_ACTION = "UPDATE_ACTION",
-    DELETE_ACTION = "DELETE_ACTION"
+    DELETE_ACTION = "DELETE_ACTION",
+    DUPLICATE_ACTION = "DUPLICATE_ACTION"
 }
 
 export enum StepLocationRelativeToParent {
@@ -43,8 +44,9 @@ export const ChangeFolderRequest = Type.Object({
     folderId: Type.Union([Type.String(),Type.Null()])
 });
 
-export type ChangeFolderRequest = Static<typeof ChangeFolderRequest>;
 
+
+export type ChangeFolderRequest = Static<typeof ChangeFolderRequest>;
 
 export const ChangeNameRequest = Type.Object({
     displayName: Type.String({}),
@@ -58,8 +60,14 @@ export const DeleteActionRequest = Type.Object({
 
 export type DeleteActionRequest = Static<typeof DeleteActionRequest>;
 
-export const UpdateActionRequest = Type.Union([CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema, BranchActionSchema, MissingActionSchema]);
+export const UpdateActionRequest = Type.Union([CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema, BranchActionSchema]);
 export type UpdateActionRequest = Static<typeof UpdateActionRequest>;
+
+export const DuplicateStepRequest = Type.Object({
+    stepName:Type.String()
+});
+
+export type DuplicateStepRequest = Static<typeof DuplicateStepRequest>;
 
 export const MoveActionRequest = Type.Object({
     name: Type.String(),
@@ -115,6 +123,10 @@ export const FlowOperationRequest = Type.Union([
     Type.Object({
         type: Type.Literal(FlowOperationType.CHANGE_FOLDER),
         request: ChangeFolderRequest
+    }),
+    Type.Object({
+        type: Type.Literal(FlowOperationType.DUPLICATE_ACTION),
+        request: DuplicateStepRequest
     })
 ]);
 

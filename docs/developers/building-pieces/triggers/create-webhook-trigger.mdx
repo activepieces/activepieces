@@ -1,6 +1,6 @@
 ---
-title: "Create Webhook Trigger"
-description: ""
+title: 'Create Webhook Trigger'
+description: ''
 ---
 
 The way webhook triggers usually work is as follows:
@@ -18,11 +18,12 @@ You can find the HTTP body inside `context.payload.body`. If needed, alter the b
 Using the `context.store`, fetch the webhook ID from the enable step and delete the webhook on the third-party app.
 
 **Testing:**
-You cannot test it with Test Flow, as it uses static sample data provided in the piece. 
+You cannot test it with Test Flow, as it uses static sample data provided in the piece.
 To test the trigger, publish the collection, perform the event. Then check the flow runs from the main dashboard.
 
 **Examples:**
-- [New Form Submission on Typeform](https://github.com/activepieces/activepieces/blob/main/packages/pieces/apps/src/lib/typeform/trigger/new-submission.ts)
+
+- [New Form Submission on Typeform](https://github.com/activepieces/activepieces/blob/main/packages/pieces/typeform/src/lib/trigger/new-submission.ts)
 
 <Warning>
 To make your webhook accessible from the internet, you need to configure the backend URL. Follow these steps:
@@ -32,4 +33,5 @@ To make your webhook accessible from the internet, you need to configure the bac
 3. Replace the `AP_WEBHOOK_URL` environment variable in `packages/backend/.env` with the ngrok URL.
 
 Once you have completed these configurations, you are good to go!
+
 </Warning>

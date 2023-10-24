@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/pipedrive/package.json",
         "main": "packages/pieces/pipedrive/src/index.ts",
         "assets": ["packages/pieces/pipedrive/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

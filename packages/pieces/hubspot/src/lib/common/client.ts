@@ -155,7 +155,7 @@ export const hubSpotClient = {
         return response.body;
     },
 
-    async searchContacts(accessToken: string, filters?: {
+    async searchContacts(accessToken: string , wantedFields: string[] , filters?: {
         createdAt?: number,
         createdAtOperator?: string
     }) {
@@ -168,7 +168,11 @@ export const hubSpotClient = {
                 value: filters.createdAt
             })
         }
-
+        const requestBody : Record<string,any> = {
+            filters: searchParams,
+            properties: wantedFields
+        };
+        
         const response = await httpClient.sendRequest({
             method: HttpMethod.POST,
             url: `${API}/crm/v3/objects/contacts/search`,
@@ -179,9 +183,7 @@ export const hubSpotClient = {
             headers: {
                 "Content-Type": 'application/json'
             },
-            body: {
-                filters: searchParams
-            }
+            body: requestBody
         });
 
         return response.body;

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { NewFolderDialogComponent } from '../new-folder-dialog/new-folder-dialog.component';
-import { Observable, tap, map, switchMap, take } from 'rxjs';
+import { Observable, tap, map, switchMap, take, BehaviorSubject } from 'rxjs';
 import { FolderDto } from '@activepieces/shared';
 import { Store } from '@ngrx/store';
 import { FoldersSelectors } from '../../../store/folders/folders.selector';
@@ -24,6 +24,9 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FoldersListComponent {
+  sortFolders$: BehaviorSubject<'asc' | 'desc'> = new BehaviorSubject<
+    'asc' | 'desc'
+  >('asc');
   allFlowsNumber$: Observable<number>;
   uncategorizedFlowsNumber$: Observable<number>;
   folders$: Observable<FolderDto[]>;
@@ -38,7 +41,15 @@ export class FoldersListComponent {
     private route: ActivatedRoute,
     private folderService: FoldersService
   ) {
-    this.folders$ = this.store.select(FoldersSelectors.selectFolders);
+    this.folders$ = this.sortFolders$.pipe(
+      switchMap((res) => {
+        if (res === 'asc') {
+          return this.store.select(FoldersSelectors.selectFoldersAsc);
+        } else {
+          return this.store.select(FoldersSelectors.selectFoldersDesc);
+        }
+      })
+    );
     this.allFlowsNumber$ = this.store.select(
       FoldersSelectors.selectAllFlowsNumber
     );
@@ -115,5 +126,20 @@ export class FoldersListComponent {
   scrollToFolder(folderId: string) {
     const folderDiv = document.getElementById(folderId);
     folderDiv?.scrollIntoView({ behavior: 'smooth' });
+  }
+  toggleFolderSorting() {
+    if (this.sortFolders$.value === 'desc') {
+      this.sortFolders$.next('asc');
+    } else {
+      this.sortFolders$.next('desc');
+    }
+  }
+
+  getSortFoldersTooltipText() {
+    if (this.sortFolders$.value === 'asc') {
+      return $localize`Ascending`;
+    }
+
+    return $localize`Descending`;
   }
 }

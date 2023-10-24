@@ -9,14 +9,26 @@ import {
   switchMap,
   tap,
 } from 'rxjs';
-import { FlowTemplate, FolderId } from '@activepieces/shared';
+import {
+  FlowTemplate,
+  FolderId,
+  TelemetryEventName,
+} from '@activepieces/shared';
 
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { TemplatesService } from '@activepieces/ui/common';
+import { TelemetryService, TemplatesService } from '@activepieces/ui/common';
+import { MatTabGroup } from '@angular/material/tabs';
 
 export interface TemplateDialogData {
   insideBuilder: boolean;
   folderId$?: Observable<FolderId | undefined>;
+  isThereNewFeaturedTemplates$: Observable<boolean>;
+}
+type tabsNames = 'all ideas' | 'featured';
+
+export interface TemplateDialogClosingResult {
+  template: FlowTemplate;
+  activeTab: tabsNames;
 }
 
 @Component({
@@ -37,6 +49,9 @@ export class TemplatesDialogComponent {
   loading$: BehaviorSubject<boolean> = new BehaviorSubject(true);
   templates$: Observable<FlowTemplate[]>;
   searchFormControl = new FormControl<string>('');
+  featuredListOverflowing = false;
+  featuredTemplates$: Observable<FlowTemplate[]>;
+  showAllFeaturedTemplates = false;
   filters = [
     'ChatGPT',
     'Content Creation',
@@ -45,9 +60,11 @@ export class TemplatesDialogComponent {
     'Marketing Automation',
     'Analysis',
   ];
+  isThereNewFeaturedTemplates$: Observable<boolean>;
   constructor(
     private templatesService: TemplatesService,
     private dialogRef: MatDialogRef<TemplatesDialogComponent>,
+    private telemetryService: TelemetryService,
     @Inject(MAT_DIALOG_DATA)
     public data?: TemplateDialogData
   ) {
@@ -62,8 +79,12 @@ export class TemplatesDialogComponent {
       tap(() => {
         this.loading$.next(true);
       }),
-      debounceTime(300),
+      debounceTime(1000),
       switchMap(() => {
+        this.telemetryService.capture({
+          name: TelemetryEventName.TEMPLATE_SEARCH,
+          payload: this.dialogForm.getRawValue(),
+        });
         return this.templatesService.getTemplates(
           this.dialogForm.getRawValue()
         );
@@ -73,9 +94,30 @@ export class TemplatesDialogComponent {
       }),
       shareReplay(1)
     );
+
+    this.featuredTemplates$ = this.templatesService
+      .getTemplates({ featuredOnly: true })
+      .pipe(shareReplay(1));
   }
-  useTemplate(template: FlowTemplate) {
-    this.dialogRef.close(template);
+  useTemplate(template: FlowTemplate, tab: tabsNames) {
+    const result: TemplateDialogClosingResult = {
+      template,
+      activeTab: tab,
+    };
+    this.dialogRef.close(result);
+  }
+
+  showFeaturedTab(
+    tabGroup: MatTabGroup,
+    buttonPressed: 'banner button' | 'tab button'
+  ) {
+    this.telemetryService.capture({
+      name: TelemetryEventName.FEATURED_TAB_VIEWED,
+      payload: {
+        buttonPressed,
+      },
+    });
+    tabGroup.selectedIndex = 0;
   }
   closeDialog() {
     this.dialogRef.close();

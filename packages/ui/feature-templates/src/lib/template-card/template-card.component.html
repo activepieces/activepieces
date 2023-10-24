@@ -1,11 +1,11 @@
-<div class="ap-border ap-border-outline ap-bg-white ap-rounded-lg  ap-p-5 ap-flex ap-flex-col ap-gap-5">
+<div class="ap-border ap-border-outline ap-bg-white ap-rounded-lg  ap-p-4 ap-flex ap-flex-col ap-gap-5">
     <div class="ap-flex">
         <ap-pieces-icons-from-flow [flowVersion]="template.template"></ap-pieces-icons-from-flow>
     </div>
     <div class="ap-typography-subtitle-1 ap-h-[96px] ap-text-body ap-clamp-4 ap-w-[212px]">
         {{template.name}}
     </div>
-    <ap-button btnSize="medium" btnStyle="flat" btnColor="primary" (buttonClicked)="useTemplate()"
-        [loading]="!!useTemplate$">Use Template</ap-button>
+    <ap-button btnSize="medium" btnStyle="flat" btnColor="primary" (buttonClicked)="useTemplateClicked.emit()" i18n>
+        Use Template
+    </ap-button>
 </div>
-<ng-container *ngIf="useTemplate$ | async"></ng-container>

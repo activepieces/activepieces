@@ -2,6 +2,7 @@ import { apId, SignUpRequest, User, UserId, UserMeta, UserStatus } from '@active
 import { passwordHasher } from '../authentication/lib/password-hasher'
 import { databaseConnection } from '../database/database-connection'
 import { UserEntity } from './user-entity'
+import { isNil } from 'lodash'
 
 const userRepo = databaseConnection.getRepository(UserEntity)
 
@@ -22,7 +23,17 @@ export const userService = {
             newsLetter: request.newsLetter,
             status,
         }
-        return await userRepo.save(user)
+        const existingUser = await userRepo.findOneBy({
+            email: request.email,
+        })
+        if (!isNil(existingUser) && existingUser.status === UserStatus.SHADOW) {
+            user.id = existingUser.id
+            await userRepo.update(user.id, user)
+            return userRepo.findOneByOrFail({
+                email: request.email,
+            })
+        }
+        return userRepo.save(user)
     },
     async getMetaInfo({ id }: { id: UserId }): Promise<UserMeta | null> {
         const user = await userRepo.findOneBy({ id })
@@ -34,6 +45,8 @@ export const userService = {
             email: user.email,
             firstName: user.firstName,
             lastName: user.lastName,
+            imageUrl: user.imageUrl,
+            title: user.title,
         }
     },
     async getOneByEmail(query: GetOneQuery): Promise<User | null> {

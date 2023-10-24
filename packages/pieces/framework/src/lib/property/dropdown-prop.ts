@@ -1,6 +1,7 @@
 import {  PropertyType } from "./property";
 import { BasePropertySchema, TPropertyValue } from "./base-prop";
 import { ValidationInputType } from "../validators/types";
+import { PropertyContext } from "../context";
 
 export type DropdownState<T> = {
 	disabled?: boolean;
@@ -13,7 +14,7 @@ export type DropdownOption<T> = {
 	value: T;
 };
 
-export type DynamicDropdownOptions<T> = (propsValue: Record<string, unknown>) => Promise<DropdownState<T>>
+export type DynamicDropdownOptions<T> = (propsValue: Record<string, unknown>, ctx: PropertyContext) => Promise<DropdownState<T>>
 
 export type DropdownProperty<T, R extends boolean> = BasePropertySchema & {
 	refreshers: string[];

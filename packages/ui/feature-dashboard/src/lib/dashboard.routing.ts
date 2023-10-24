@@ -8,8 +8,15 @@ import {
 import { ConnectionsTableComponent } from './pages/connections-table/connections-table.component';
 import { FoldersResolver } from './resolvers/folders.resolver';
 import { DashboardContainerComponent } from './dashboard-container.component';
+import { ConnectionsResolver } from '@activepieces/ui/common';
+import {
+  ChatbotsTableComponent,
+  ChatbotSettingsComponent,
+  chatbotSettingsResolver,
+} from '@activepieces/ui/feature-chatbot';
+import { PlansPageComponent } from '@activepieces/ee-billing-ui';
+import { ProjectMembersTableComponent } from '@activepieces/ee/project-members';
 import { CommunityPiecesTableComponent } from './pages/community-pieces-table/community-pieces-table.component';
-import { environment } from '@activepieces/ui/common';
 
 export const DashboardLayoutRouting: Routes = [
   {
@@ -19,25 +26,88 @@ export const DashboardLayoutRouting: Routes = [
     children: [
       { path: '', pathMatch: 'full', redirectTo: '/flows' },
       {
-        title: `Runs - ${environment.websiteTitle}`,
+        data: {
+          title: $localize`Runs`,
+        },
         path: 'runs',
         pathMatch: 'full',
         component: RunsTableComponent,
       },
       {
-        title: `My Pieces - ${environment.websiteTitle}`,
-        path: 'settings/my-pieces',
+        data: {
+          title: $localize`Plans`,
+        },
+        path: 'plans',
+        component: PlansPageComponent,
+      },
+      {
+        data: {
+          title: $localize`Team`,
+        },
+        path: 'team',
+        component: ProjectMembersTableComponent,
+      },
+      {
+        data: {
+          title: $localize`Chatbots`,
+        },
+        path: 'chatbots',
         pathMatch: 'full',
+        component: ChatbotsTableComponent,
+      },
+      {
+        path: 'chatbots/:id/settings',
+        canActivate: [],
+        data: {
+          title: $localize`Chatbot settings`,
+        },
+        pathMatch: 'full',
+        component: ChatbotSettingsComponent,
+        resolve: {
+          connections: ConnectionsResolver,
+          chatbot: chatbotSettingsResolver,
+        },
+      },
+      {
+        data: {
+          title: $localize`Chatbots`,
+        },
+        path: 'chatbots',
+        pathMatch: 'full',
+        component: ChatbotsTableComponent,
+      },
+      {
+        path: 'chatbots/:id/settings',
+        canActivate: [],
+        data: {
+          title: $localize`Chatbot settings`,
+        },
+        pathMatch: 'full',
+        component: ChatbotSettingsComponent,
+        resolve: {
+          connections: ConnectionsResolver,
+          chatbot: chatbotSettingsResolver,
+        },
+      },
+      {
+        data: {
+          title: $localize`My Pieces`,
+        },
+        path: 'settings/my-pieces',
         component: CommunityPiecesTableComponent,
       },
       {
-        title: `Connections - ${environment.websiteTitle}`,
+        data: {
+          title: $localize`Connections`,
+        },
         path: 'connections',
         pathMatch: 'full',
         component: ConnectionsTableComponent,
       },
       {
-        title: `Flows - ${environment.websiteTitle}`,
+        data: {
+          title: $localize`Flows`,
+        },
         path: 'flows',
         pathMatch: 'full',
         component: FlowsTableComponent,

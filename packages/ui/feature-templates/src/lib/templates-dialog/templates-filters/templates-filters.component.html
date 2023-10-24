@@ -1,7 +1,7 @@
-<div class="ap-typography-subtitle-1 ap-text-title">
+<div class="ap-typography-subtitle-1 ap-text-title" i18n>
     Filters
 </div>
-<form [formGroup]="filtersForm" class="ap-mt-4 -ap-ml-2.5 ap-h-[205px] thin-scrollbars ap-overflow-y-scroll">
+<form [formGroup]="filtersForm" class="ap-mt-4 -ap-ml-2.5 ap-h-[260px] thin-scrollbars ap-overflow-y-scroll">
     <ng-container *ngFor="let filter of filters; let idx=index">
         <div formArrayName="filters">
             <mat-checkbox color="primary" [formControlName]="idx">

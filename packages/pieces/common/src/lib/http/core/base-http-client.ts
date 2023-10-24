@@ -1,57 +1,64 @@
-import { URL } from 'node:url';
-import type {HttpClient} from './http-client';
-import {HttpHeader} from './http-header';
-import type {HttpMessageBody} from './http-message-body';
-import type {HttpRequest} from './http-request';
-import {MediaType} from './media-type';
-import type {HttpHeaders} from './http-headers';
-import { HttpResponse } from './http-response';
-import { DelegatingAuthenticationConverter } from './delegating-authentication-converter';
 import { Authentication } from '../../authentication';
+import { DelegatingAuthenticationConverter } from './delegating-authentication-converter';
+import type { HttpClient } from './http-client';
+import { HttpHeader } from './http-header';
+import type { HttpHeaders } from './http-headers';
+import type { HttpMessageBody } from './http-message-body';
+import type { HttpRequest } from './http-request';
+import { HttpResponse } from './http-response';
+import { MediaType } from './media-type';
+import { URL } from 'node:url';
 
 export abstract class BaseHttpClient implements HttpClient {
-	constructor(
-		private readonly baseUrl: string,
-		private readonly authenticationConverter: DelegatingAuthenticationConverter,
-	) {}
+  constructor(
+    private readonly baseUrl: string,
+    private readonly authenticationConverter: DelegatingAuthenticationConverter
+  ) {}
 
-	abstract sendRequest<RequestBody extends HttpMessageBody, ResponseBody extends HttpMessageBody>(
-		request: HttpRequest<RequestBody>,
-	): Promise<HttpResponse<ResponseBody>>;
+  abstract sendRequest<
+    RequestBody extends HttpMessageBody,
+    ResponseBody extends HttpMessageBody
+  >(request: HttpRequest<RequestBody>): Promise<HttpResponse<ResponseBody>>;
 
-	protected getUrl<RequestBody extends HttpMessageBody>(request: HttpRequest<RequestBody>): string {
-		const url = new URL(`${this.baseUrl}${request.url}`);
+  protected getUrl<RequestBody extends HttpMessageBody>(
+    request: HttpRequest<RequestBody>
+  ): string {
+    const url = new URL(`${this.baseUrl}${request.url}`);
+    return url.toString();
+  }
 
-		if (request.queryParams) {
-			for (const [name, value] of Object.entries(request.queryParams)) {
-				url.searchParams.append(name, value);
-			}
-		}
+  protected getHeaders<RequestBody extends HttpMessageBody>(
+    request: HttpRequest<RequestBody>
+  ): HttpHeaders {
+    let requestHeaders: HttpHeaders = {
+      [HttpHeader.ACCEPT]: MediaType.APPLICATION_JSON,
+    };
 
-		return url.toString();
-	}
+    if (request.authentication) {
+      this.populateAuthentication(request.authentication, requestHeaders);
+    }
 
-	protected getHeaders<RequestBody extends HttpMessageBody>(
-		request: HttpRequest<RequestBody>,
-	): HttpHeaders {
-		let requestHeaders: HttpHeaders = {
-			[HttpHeader.ACCEPT]: MediaType.APPLICATION_JSON,
-		};
+    if (request.body) {
+      switch (request.headers?.['Content-Type']) {
+        case 'text/csv':
+          requestHeaders[HttpHeader.CONTENT_TYPE] = MediaType.TEXT_CSV;
+          break;
 
-		if (request.authentication) {
-			this.populateAuthentication(request.authentication, requestHeaders);
-		}
+        default:
+          requestHeaders[HttpHeader.CONTENT_TYPE] = MediaType.APPLICATION_JSON;
+          break;
+      }
+    }
+    if (request.headers) {
+      requestHeaders = { ...requestHeaders, ...request.headers };
+    }
+    return requestHeaders;
+  }
 
-		if (request.body) {
-			requestHeaders[HttpHeader.CONTENT_TYPE] = MediaType.APPLICATION_JSON;
-		}
-		if(request.headers){
-			requestHeaders = {...requestHeaders, ...request.headers};
-		}
-		return requestHeaders;
-	}
-
-	private populateAuthentication(authentication: Authentication, headers: HttpHeaders): void {
-		this.authenticationConverter.convert(authentication, headers);
-	}
+  private populateAuthentication(
+    authentication: Authentication,
+    headers: HttpHeaders
+  ): void {
+    this.authenticationConverter.convert(authentication, headers);
+  }
 }

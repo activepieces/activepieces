@@ -1,13 +1,26 @@
-import { BaseModel } from "../common/base-model";
-import { UserId } from "../user/user";
+import { BaseModelSchema } from "../common/base-model";
 import { ApId } from "../common/id-generator";
-import { NotificationStatus } from "./update-project-request";
+import { Static, Type } from "@sinclair/typebox";
 
 export type ProjectId = ApId;
 
-
-export interface Project extends BaseModel<ProjectId> {
-  ownerId: UserId;
-  displayName: string;
-  notifyStatus: NotificationStatus;
+export enum NotificationStatus {
+  NEVER = "NEVER",
+  ALWAYS = "ALWAYS",
 }
+
+export enum ProjectType {
+  PLATFORM_MANAGED = "PLATFORM_MANAGED",
+  STANDALONE = "STANDALONE",
+}
+
+export const Project = Type.Object({
+  ...BaseModelSchema,
+  ownerId: Type.String(),
+  displayName: Type.String(),
+  notifyStatus: Type.Enum(NotificationStatus),
+  type: Type.Enum(ProjectType),
+  platformId: Type.Optional(ApId),
+});
+
+export type Project = Static<typeof Project>;

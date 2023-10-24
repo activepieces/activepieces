@@ -1,16 +1,16 @@
-import { ActionType, Flow, TriggerType } from '@activepieces/shared';
+import { ActionType, TriggerType } from '@activepieces/shared';
 
 export function getDisplayNameForTrigger(triggerType: TriggerType) {
   switch (triggerType) {
     case TriggerType.WEBHOOK: {
-      return 'Webhook Trigger';
+      return $localize`Webhook Trigger`;
       break;
     }
     case TriggerType.EMPTY: {
-      return 'Empty Trigger';
+      return $localize`Empty Trigger`;
     }
   }
-  return 'Trigger';
+  return $localize`Trigger`;
 }
 
 export function getDefaultDisplayNameForPiece(
@@ -19,43 +19,19 @@ export function getDefaultDisplayNameForPiece(
 ) {
   switch (pieceType) {
     case ActionType.CODE: {
-      return 'Code';
+      return $localize`Code`;
     }
     case ActionType.LOOP_ON_ITEMS: {
-      return 'Loop on Items';
+      return $localize`Loop on Items`;
     }
     case ActionType.PIECE: {
       return pieceName;
     }
     case ActionType.BRANCH: {
-      return 'Branch';
-    }
-    case ActionType.MISSING: {
-      return 'Missing';
+      return $localize`Branch`;
     }
   }
 }
-
-export function isOfTypeTriggerType(value: string) {
-  const enumHolderObject = Object.keys(TriggerType);
-  return enumHolderObject.includes(value);
-}
-
-export function findDefaultFlowDisplayName(flows: Flow[]) {
-  let defaultFlowIndex = 1;
-
-  while (
-    flows.find(
-      (f) => f.version?.displayName.toLowerCase() == `flow ${defaultFlowIndex}`
-    )
-  ) {
-    defaultFlowIndex++;
-  }
-  return `Flow ${defaultFlowIndex}`;
-}
-
-export const autoSaveDebounceTime = 600;
-export const cacheArtifactDebounceTime = 200;
 
 export function isOverflown(element: HTMLElement) {
   return (

@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/zoom/package.json",
         "main": "packages/pieces/zoom/src/index.ts",
         "assets": ["packages/pieces/zoom/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

@@ -53,10 +53,11 @@ export const httpSendRequestAction = createAction({
         url,
         headers: headers as HttpHeaders,
         queryParams: queryParams as QueryParams,
-        body,
         timeout: timeout ? timeout * 1000 : 0,
       };
-
+      if (body) {
+        request.body = body;
+      }
       try {
           return await httpClient.sendRequest(request);
       } catch (error) {

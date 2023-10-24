@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/resend/package.json",
         "main": "packages/pieces/resend/src/index.ts",
         "assets": ["packages/pieces/resend/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

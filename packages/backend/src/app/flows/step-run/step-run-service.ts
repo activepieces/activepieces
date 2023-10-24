@@ -27,12 +27,12 @@ import {
 } from '@activepieces/shared'
 import { engineHelper } from '../../helper/engine-helper'
 import { flowVersionService } from '../flow-version/flow-version.service'
-import { fileService } from '../../file/file.service'
 import { isNil } from '@activepieces/shared'
 import { getServerUrl } from '../../helper/public-ip-utils'
-import { sandboxManager } from '../../workers/sandbox'
 import { flowService } from '../flow/flow.service'
 import { stepFileService } from '../step-file/step-file.service'
+import { sandboxProvisioner } from '../../workers/sandbox/provisioner/sandbox-provisioner'
+import { SandBoxCacheType } from '../../workers/sandbox/provisioner/sandbox-cache-key'
 
 export const stepRunService = {
     async create({ projectId, flowVersionId, stepName, userId }: CreateParams): Promise<StepRunResponse> {
@@ -71,7 +71,7 @@ export const stepRunService = {
 }
 
 async function executePiece({ step, projectId, flowVersion, userId }: ExecuteParams<PieceAction>): Promise<StepRunResponse> {
-    const { pieceName, pieceVersion, actionName, input } = step.settings
+    const { packageType, pieceType, pieceName, pieceVersion, actionName, input } = step.settings
 
     if (isNil(actionName)) {
         throw new ActivepiecesError({
@@ -87,10 +87,16 @@ async function executePiece({ step, projectId, flowVersion, userId }: ExecutePar
         flowId: flowVersion.flowId,
         stepName: step.name,
     })
+
     const operation: ExecuteActionOperation = {
         serverUrl: await getServerUrl(),
-        pieceName,
-        pieceVersion,
+        piece: {
+            packageType,
+            pieceType,
+            pieceName,
+            pieceVersion,
+            projectId,
+        },
         actionName,
         input,
         flowVersion,
@@ -98,6 +104,7 @@ async function executePiece({ step, projectId, flowVersion, userId }: ExecutePar
     }
 
     const { result, standardError, standardOutput } = await engineHelper.executeAction(operation)
+
     if (result.success) {
         step.settings.inputUiInfo.currentSelectedData = result.output
         await flowService.update({
@@ -119,15 +126,11 @@ async function executePiece({ step, projectId, flowVersion, userId }: ExecutePar
 }
 
 async function executeCode({ step, flowVersion, projectId }: ExecuteParams<CodeAction>): Promise<StepRunResponse> {
-    const file = await fileService.getOneOrThrow({
-        projectId,
-        fileId: step.settings.artifactSourceId!,
-    })
 
     const { result, standardError, standardOutput } = await engineHelper.executeCode({
-        file,
         step,
         input: step.settings.input,
+        serverUrl: await getServerUrl(),
         flowVersion,
         projectId,
     })
@@ -179,45 +182,51 @@ const executeBranch = async ({ step, flowVersion, projectId }: ExecuteParams<Bra
         triggerPayload: {
             duration: 0,
             input: {},
-            output: flowVersion.trigger.settings.inputUiInfo.currentSelectedData,
+            output: flowVersion.trigger.settings?.inputUiInfo?.currentSelectedData,
             status: StepOutputStatus.SUCCEEDED,
         },
         sourceFlowVersion: flowVersion,
     }
 
-    const testSandbox = await sandboxManager.obtainSandbox(apId())
-    await testSandbox.recreate()
-
-    const { status, result, standardError, standardOutput } = await engineHelper.executeTest(testSandbox, testInput)
-
-    if (status !== EngineResponseStatus.OK || result.status !== ExecutionOutputStatus.SUCCEEDED) {
-        return {
-            success: false,
-            output: null,
-            standardError,
-            standardOutput,
-        }
-    }
-
-    const branchStepOutput = new ExecutionState(result.executionState).getStepOutput<BranchStepOutput>({
-        stepName: branchStep.name,
-        ancestors: [],
+    const sandbox = await sandboxProvisioner.provision({
+        type: SandBoxCacheType.NONE,
     })
 
-    if (isNil(branchStepOutput)) {
+    try {
+        const { status, result, standardError, standardOutput } = await engineHelper.executeTest(sandbox, testInput)
+
+        if (status !== EngineResponseStatus.OK || result.status !== ExecutionOutputStatus.SUCCEEDED) {
+            return {
+                success: false,
+                output: null,
+                standardError,
+                standardOutput,
+            }
+        }
+
+        const branchStepOutput = new ExecutionState(result.executionState).getStepOutput<BranchStepOutput>({
+            stepName: branchStep.name,
+            ancestors: [],
+        })
+
+        if (isNil(branchStepOutput)) {
+            return {
+                success: false,
+                output: null,
+                standardError,
+                standardOutput,
+            }
+        }
+
         return {
-            success: false,
-            output: null,
+            success: true,
+            output: branchStepOutput.output,
             standardError,
             standardOutput,
         }
     }
-
-    return {
-        success: true,
-        output: branchStepOutput.output,
-        standardError,
-        standardOutput,
+    finally {
+        await sandboxProvisioner.release({ sandbox })
     }
 }
 

@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/matrix/package.json",
         "main": "packages/pieces/matrix/src/index.ts",
         "assets": ["packages/pieces/matrix/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

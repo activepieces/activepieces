@@ -41,7 +41,8 @@ export const sftpAuth = PieceAuth.CustomAuth({
         host,
         port,
         username,
-        password
+        password,
+        timeout: 10000
       });
       return {
         valid: true

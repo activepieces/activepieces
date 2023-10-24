@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/openai/package.json",
         "main": "packages/pieces/openai/src/index.ts",
         "assets": ["packages/pieces/openai/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

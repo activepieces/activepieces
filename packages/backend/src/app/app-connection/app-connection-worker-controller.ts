@@ -1,7 +1,7 @@
 import { ActivepiecesError, AppConnection, ErrorCode, isNil } from '@activepieces/shared'
 import { FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
-import { appConnectionService } from './app-connection-service'
 import { allowWorkersOnly } from '../authentication/authorization'
+import { appConnectionService } from './app-connection-service/app-connection-service'
 
 export const appConnectionWorkerController: FastifyPluginCallbackTypebox = (app, _opts, done) => {
     app.addHook('onRequest', allowWorkersOnly)

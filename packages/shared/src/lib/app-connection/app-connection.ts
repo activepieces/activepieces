@@ -6,7 +6,6 @@ import { ApId } from "../common/id-generator";
 export type AppConnectionId = string;
 
 export enum AppConnectionStatus {
-  EXPIRED = "EXPIRED",
   ACTIVE = "ACTIVE",
   ERROR = "ERROR"
 }

@@ -70,6 +70,22 @@ const _flowsReducer = createReducer(
     });
     return clonedState;
   }),
+  on(FlowsActions.duplicateStep, (state, { operation }): FlowState => {
+    const clonedState: FlowState = JSON.parse(JSON.stringify(state));
+    const clonedFlowVersionWithArtifacts = JSON.parse(
+      JSON.stringify(operation.flowVersionWithArtifacts)
+    );
+    clonedState.flow.version = flowHelper.apply(
+      clonedFlowVersionWithArtifacts,
+      {
+        type: FlowOperationType.DUPLICATE_ACTION,
+        request: {
+          stepName: operation.originalStepName,
+        },
+      }
+    );
+    return clonedState;
+  }),
   on(FlowsActions.updateAction, (state, { operation }): FlowState => {
     const clonedState: FlowState = JSON.parse(JSON.stringify(state));
     clonedState.flow.version = flowHelper.apply(clonedState.flow.version, {
@@ -110,6 +126,7 @@ const _flowsReducer = createReducer(
     clonedState.lastSaveId = action.saveRequestId;
     clonedState.flow.version.state = FlowVersionState.DRAFT;
     clonedState.savingStatus |= BuilderSavingStatusEnum.SAVING_FLOW;
+    clonedState.savingStatus &= ~BuilderSavingStatusEnum.WAITING_TO_SAVE;
     return clonedState;
   }),
   on(ViewModeActions.setViewMode, (flowState, action) => {
@@ -161,6 +178,11 @@ const _flowsReducer = createReducer(
   on(FlowsActions.importFlow, (state, { flow }) => {
     const clonedState: FlowState = JSON.parse(JSON.stringify(state));
     clonedState.flow = flow;
+    return clonedState;
+  }),
+  on(FlowsActions.toggleWaitingToSave, (state) => {
+    const clonedState: FlowState = JSON.parse(JSON.stringify(state));
+    clonedState.savingStatus |= BuilderSavingStatusEnum.WAITING_TO_SAVE;
     return clonedState;
   })
 );

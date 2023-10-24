@@ -24,6 +24,7 @@ module.exports = {
       },
       spacing: {
         7.5: '1.875rem',
+        15: '3.75rem'
       },
       colors: {
         title:'var(--title)',
@@ -61,6 +62,7 @@ module.exports = {
           light:'var(--success-light)'
         },
        'bleached-gray':'var(--bleached-gray)',
+       'selection': 'var(--selection)'
       },
     },
     container: {

@@ -35,7 +35,7 @@ export class FlowsTableTitleComponent {
         switchMap((res) => {
           return this.flowService
             .create({
-              displayName: 'Untitled',
+              displayName: $localize`Untitled`,
               folderId: res?.id,
             })
             .pipe(

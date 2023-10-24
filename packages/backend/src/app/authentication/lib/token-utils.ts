@@ -13,7 +13,7 @@ const EXPIRES_IN_SECONDS = 7 * 24 * 3600
 const ISSUER = 'activepieces'
 
 let secret: string | null = null
-const queueMode: QueueMode = system.get(SystemProp.QUEUE_MODE) as QueueMode
+const queueMode: QueueMode = system.getOrThrow<QueueMode>(SystemProp.QUEUE_MODE)
 
 const getSecret = async (): Promise<string> => {
     if (secret !== null) {
@@ -53,7 +53,7 @@ const generateAndStoreSecret = async (): Promise<string> => {
 }
 
 export const tokenUtils = {
-    encode: async (principal: Record<string, unknown>): Promise<string> => {
+    encode: async (principal: Principal): Promise<string> => {
         const secret = await getSecret()
 
         const signOptions: SignOptions = {
@@ -83,7 +83,7 @@ export const tokenUtils = {
         })
     },
 
-    decode: async (token: string): Promise<unknown> => {
+    decode: async (token: string): Promise<Principal> => {
         const secret = await getSecret()
 
         const verifyOptions: VerifyOptions = {

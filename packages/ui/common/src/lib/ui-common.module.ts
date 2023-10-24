@@ -50,10 +50,12 @@ import { UserAvatarComponent } from './components/user-avatar/user-avatar.compon
 import { TrackHoverDirective } from './directives/track-hover.directive';
 import { PiecesIconsFromFlowComponent } from './components/pieces-icons-from-flow/pieces-icons-from-flow.component';
 import { PieceIconContainerComponent } from './components/pieces-icons/piece-icon-container/piece-icon-container.component';
-import { UploadImageControlComponent } from './components/upload-file-control/upload-file-control.component';
+import { UploadFileControlComponent } from './components/upload-file-control/upload-file-control.component';
 import { DragDropDirective } from './directives/drag-drop.directive';
 import { ElementDirective } from './directives/element-ref.directive';
 import { CheckOverflowDirective } from './directives/check-overflow.directive';
+import { MatTabsModule } from '@angular/material/tabs';
+import { FileDroppedDirective } from './directives/file-dropped.directive';
 const exportedImports = [
   CommonModule,
   MatTooltipModule,
@@ -75,9 +77,10 @@ const exportedImports = [
   MatCheckboxModule,
   MatDividerModule,
   MatIconModule,
+  MatTabsModule,
 ];
 const exportedDeclarations = [
-  UploadImageControlComponent,
+  UploadFileControlComponent,
   ElementDirective,
   MarkdownComponent,
   EditableTextComponent,
@@ -149,7 +152,7 @@ export function markedOptionsFactory(): MarkedOptions {
   providers: [
     { provide: MAT_TOOLTIP_DEFAULT_OPTIONS, useValue: materialTooltipDefaults },
   ],
-  declarations: [...exportedDeclarations],
-  exports: [...exportedImports, ...exportedDeclarations],
+  declarations: [...exportedDeclarations, FileDroppedDirective],
+  exports: [...exportedImports, ...exportedDeclarations, MarkdownModule],
 })
 export class UiCommonModule {}

@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/mastodon/package.json",
         "main": "packages/pieces/mastodon/src/index.ts",
         "assets": ["packages/pieces/mastodon/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

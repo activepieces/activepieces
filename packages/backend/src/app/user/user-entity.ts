@@ -34,6 +34,14 @@ export const UserEntity = new EntitySchema<UserSchema>({
             type: Boolean,
             nullable: true,
         },
+        imageUrl: {
+            type: String,
+            nullable: true,
+        },
+        title: {
+            type: String,
+            nullable: true,
+        },
     },
     relations: {
         projects: {

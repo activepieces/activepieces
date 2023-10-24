@@ -1,9 +1,14 @@
 <div class="ap-relative" #relativeDiv>
   <button mat-icon-button [matTooltip]="tooltipText" [color]="color" [attr.aria-label]="ariaLabel || tooltipText"
-    [disabled]="buttonDisabled" (click)="emit()" [tabIndex]="tabIndex">
-    <svg-icon [svgStyle]="{ width:width? width + 'px':'initial', height:height? height + 'px':'initial' }"
+    type="button" [disabled]="buttonDisabled" (click)="emit()" [tabIndex]="tabIndex">
+    <svg-icon *ngIf="iconFilename && !iconUrl"
+      [svgStyle]="{ width:width? width + 'px':'initial', height:height? height + 'px':'initial' }"
       src="assets/img/custom/{{ iconFilename }}" [class]="'ap-flex ap-items-center ap-justify-center '+ extraClasses"
       [applyClass]="true"></svg-icon>
+    <div *ngIf="iconUrl" [class]="'ap-flex ap-items-center ap-justify-center '+ extraClasses">
+      <img [src]="iconUrl" [style]="{ width:width? width + 'px':'initial', height:height? height + 'px':'initial' }">
+    </div>
+
   </button>
   <div *ngIf="buttonDisabled" class="ap-absolute ap-h-full ap-w-full ap-left-0 ap-top-0 ap-z-50"
     [matTooltip]="tooltipText"></div>

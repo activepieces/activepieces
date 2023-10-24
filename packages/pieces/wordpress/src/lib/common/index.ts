@@ -25,13 +25,6 @@ export const wordpressCommon = {
                     options: [],
                 };
             }
-            if (!wordpressCommon.urlExists(websiteUrl.trim())) {
-                return {
-                    disabled: true,
-                    placeholder: 'Incorrect website url',
-                    options: [],
-                };
-            }
             const request: HttpRequest = {
                 method: HttpMethod.GET,
                 url: `${websiteUrl.trim()}/wp-json/wp/v2/users`,
@@ -143,6 +136,15 @@ export const wordpressCommon = {
             return true;
         }
         catch (e) {
+            return false;
+        }
+    },
+    async isBaseUrl(urlString: string): Promise<boolean> {
+        try {
+            const url = new URL(urlString);
+            return !url.pathname || url.pathname === '/';
+        } catch (error) {
+            // Handle invalid URLs here, e.g., return false or throw an error
             return false;
         }
     }
