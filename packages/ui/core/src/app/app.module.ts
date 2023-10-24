@@ -121,7 +121,7 @@ export function playerFactory() {
   exports: [],
   bootstrap: [AppComponent],
 })
-export class AppModule { }
+export class AppModule {}
 
 export function initializeAppCustomLogic(
   router: Router,

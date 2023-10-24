@@ -258,5 +258,4 @@ export class AppComponent implements OnInit {
       'noopener noreferrer'
     );
   }
- 
 }

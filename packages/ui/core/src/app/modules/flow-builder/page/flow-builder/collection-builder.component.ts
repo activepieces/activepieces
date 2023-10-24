@@ -201,12 +201,16 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
               folder: routeData.runInformation.folder,
             })
           );
-          this.setTitle$ = this.appearanceService.setTitle(routeData.runInformation.flow.version.displayName);
+          this.setTitle$ = this.appearanceService.setTitle(
+            routeData.runInformation.flow.version.displayName
+          );
           this.snackbar.openFromComponent(TestRunBarComponent, {
             duration: undefined,
           });
         } else {
-          this.setTitle$ = this.appearanceService.setTitle(routeData.flowAndFolder.flow.version.displayName);
+          this.setTitle$ = this.appearanceService.setTitle(
+            routeData.flowAndFolder.flow.version.displayName
+          );
           this.store.dispatch(
             BuilderActions.loadInitial({
               flow: routeData.flowAndFolder.flow,
