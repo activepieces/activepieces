@@ -64,7 +64,7 @@ const enterpriseProjectController: FastifyPluginCallbackTypebox = (fastify, _opt
                     type: request.principal.type,
                     projectId: request.params.projectId,
                     projectType: project.type,
-                    platformId: project.platformId,
+                    platformId: request.principal.platformId,
                 }),
             }
         },
