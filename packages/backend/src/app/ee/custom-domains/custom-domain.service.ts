@@ -81,7 +81,7 @@ async function verifyCnameExists(domain: string): Promise<boolean> {
     try {
         const cnameRecords = await dns.promises.resolveCname(domain)
         logger.info(`CNAME records for ${domain}: ${cnameRecords}`)
-        return cnameRecords.length > 0 && cnameRecords[0] === 'cloud.activepieces.com'
+        return cnameRecords.length > 0 && ['cloud.activepieces.com', 'customers.activepieces.com'].includes(cnameRecords[0])
     }
     catch (error) {
         logger.info(`CNAME records for ${domain} errors out: ${error}`)
