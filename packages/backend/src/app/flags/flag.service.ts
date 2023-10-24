@@ -64,6 +64,12 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.SHOW_AUTH_PROVIDERS,
+                value: getEdition() !== ApEdition.CLOUD,
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.PROJECT_MEMBERS_ENABLED,
                 value: getEdition() !== ApEdition.COMMUNITY,
                 created,

@@ -27,6 +27,7 @@ export const flagController: FastifyPluginAsyncTypebox = async (app) => {
                     flagsMap[ApFlagId.SHOW_COMMUNITY] = false
                     flagsMap[ApFlagId.SHOW_DOCS] = false
                     flagsMap[ApFlagId.BILLING_ENABLED] = false
+                    flagsMap[ApFlagId.SHOW_AUTH_PROVIDERS] = false
                 }
             }
             return flagsMap
