@@ -65,7 +65,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.SHOW_AUTH_PROVIDERS,
-                value: getEdition() !== ApEdition.CLOUD,
+                value: getEdition() === ApEdition.CLOUD,
                 created,
                 updated,
             },
