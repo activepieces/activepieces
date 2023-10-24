@@ -1,12 +1,11 @@
-<form class="ap-flex ap-flex-col ap-gap-5 ap-h-full" [formGroup]="formGroup" (ngSubmit)="save()"
-    #appearanceForm="ngForm">
+<form class="ap-flex ap-flex-col ap-gap-5 ap-h-full" [formGroup]="formGroup" (ngSubmit)="save()">
     <mat-form-field class=" ap-max-w-[327px] ap-w-full">
         <mat-label>Name</mat-label>
         <input matInput placeholder="Awesome platform" [formControl]="formGroup.controls.displayName" />
         <mat-error *ngIf="formGroup.controls.displayName.invalid">Name is required </mat-error>
     </mat-form-field>
     <div class="ap-flex ap-gap-2 ap-items-center">
-        <mat-form-field class=" ap-max-w-[327px] ap-w-full">
+        <mat-form-field class=" ap-max-w-[20.4375rem] ap-w-full">
             <mat-label>Full logo</mat-label>
             <ap-file-upload [required]="true" #logoInput [formControl]="formGroup.controls.fullLogo"
                 [extensions]="['.png','.svg','.webp','.jpeg']" placeHolder="full-logo.png"></ap-file-upload>
@@ -23,7 +22,7 @@
     </div>
 
     <div class="ap-flex ap-items-center ap-gap-2">
-        <mat-form-field class=" ap-max-w-[327px] ap-w-full">
+        <mat-form-field class=" ap-max-w-[20.4375rem] ap-w-full">
             <mat-label>Logo</mat-label>
             <ap-file-upload [required]="true" #logoInput [formControl]="formGroup.controls.logo"
                 [extensions]="['.png','.svg','.webp','.jpeg']" placeHolder="logo.png"></ap-file-upload>
@@ -42,7 +41,7 @@
 
 
     <div class="ap-flex ap-items-center ap-gap-2">
-        <mat-form-field class=" ap-max-w-[327px] ap-w-full">
+        <mat-form-field class=" ap-max-w-[20.4375rem] ap-w-full">
             <mat-label>Fav icon</mat-label>
             <ap-file-upload [required]="true" #favIconInput [formControl]="formGroup.controls.favIcon"
                 [extensions]="['.ico']" placeHolder="favicon.ico"></ap-file-upload>
@@ -60,7 +59,7 @@
     </div>
 
 
-    <mat-form-field class=" ap-max-w-[327px] ap-w-full">
+    <mat-form-field class=" ap-max-w-[20.4375rem] ap-w-full">
         <mat-label>Primary Color</mat-label>
         <input matInput [formControl]="formGroup.controls.primaryColor">
         <ngx-colors class="ap-px-[40px]" matSuffix ngx-colors-trigger [formControl]="formGroup.controls.pickerCtrl"

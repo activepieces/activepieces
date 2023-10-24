@@ -9,6 +9,7 @@ import { CreateProjectDialogComponent } from './components/projects-table/create
 import { UpdateProjectDialogComponent } from './components/projects-table/update-project-dialog/update-project-dialog.component';
 import { PlatformAppearanceComponent } from './components/platform-appearance/platform-appearance.component';
 import { PortalModule } from '@angular/cdk/portal';
+import { PlatformSettingsComponent } from './components/platform-settings/platform-settings.component';
 @NgModule({
   imports: [
     UiCommonModule,
@@ -22,6 +23,7 @@ import { PortalModule } from '@angular/cdk/portal';
     CreateProjectDialogComponent,
     UpdateProjectDialogComponent,
     PlatformAppearanceComponent,
+    PlatformSettingsComponent,
   ],
 })
 export class UiEePlatformModule {}
