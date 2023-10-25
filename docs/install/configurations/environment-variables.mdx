@@ -45,10 +45,6 @@ The frontend URL is essential for webhooks and app triggers to work.
 It must be accessible to third parties to send data. 
 </Warning>
 
-### Queue User Interface
-
-The queue UI is a tool that allows you to monitor the queue and debug scheduled jobs. It is only available when using Redis as the queue mode. In production mode, you can find it at `/api/ui`, while in development mode, it is located at `/ui`.
-
 ### Setting Webhook (Frontend URL):
 
 The default URL is set to the machine's IP address. To ensure proper operation, ensure that this address is accessible or specify an `AP_FRONTEND_URL` environment variable.
