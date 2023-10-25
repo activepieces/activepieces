@@ -190,12 +190,16 @@ function dynamicRoutes(edition: string) {
     {
       path: 'templates/:templateId',
       component: ImportFlowComponent,
-      title: `Import Flow - ${environment.websiteTitle}`,
+      data: {
+        title: $localize`Import Flow`,
+      },
     },
     {
       path: 'chatbots/:id',
       canActivate: [],
-      title: `Activepieces - Chatbot`,
+      data: {
+        title: $localize`Chatbot`,
+      },
       pathMatch: 'full',
       component: ChatComponent,
       resolve: {
@@ -209,7 +213,9 @@ function dynamicRoutes(edition: string) {
     {
       path: '**',
       component: NotFoundComponent,
-      title: `404 - ${environment.websiteTitle}`,
+      data: {
+        title: '404',
+      },
     },
   ];
   let editionRoutes: Route[] = [];

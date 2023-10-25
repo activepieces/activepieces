@@ -10,10 +10,10 @@
     <form class="ap-flex ap-flex-col ap-gap-5 ap-h-full">
         <div class="ap-flex ap-gap-3 ap-items-center">
             <mat-form-field class=" ap-max-w-[20.4375rem] ap-w-full" subscriptSizing="dynamic">
-                <mat-label>Custom domain</mat-label>
+                <mat-label i18n>Custom domain</mat-label>
                 <input matInput placeholder="xyz.customdomain.com" [formControl]="formGroup.controls.customDomain" />
             </mat-form-field>
-            <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium" type="button"
+            <ap-button btnColor="primary" btnStyle="stroked" btnSize="medium" type="button" i18n
                 [darkLoadingSpinner]="true">Add</ap-button>
         </div>
 
@@ -24,8 +24,7 @@
 
 <ng-template #customDomainRecordsTable>
     <div class=" ap-mb-4 ap-max-w-[46.25rem]">
-        <ap-markdown [fullWidth]="true"
-            [data]="'<div class=\'ap-typography-body-1\'>Please set the following TXT and CNAME records in your DNS provider, then click verify to confirm your control over the domain. </div>'">
+        <ap-markdown [fullWidth]="true" [data]="'<div class=\'ap-typography-body-1\'>'+ message + '</div>'">
         </ap-markdown>
     </div>
 
@@ -61,7 +60,7 @@
     </div>
 
     <div class="ap-mt-4 ap-flex ap-justify-end ap-max-w-[46.25rem] ">
-        <ap-button btnSize="medium">
+        <ap-button btnSize="medium" i18n>
             Verify
         </ap-button>
     </div>
@@ -78,13 +77,13 @@
 
     <div class="ap-flex ap-gap-4 ap-items-center">
         <mat-form-field class=" ap-max-w-[20.4375rem] ap-w-full" subscriptSizing="dynamic">
-            <mat-label>Custom domain</mat-label>
+            <mat-label i18n>Custom domain</mat-label>
             <input matInput placeholder="xyz.customdomain.com" readonly
                 [formControl]="formGroup.controls.customDomain" />
         </mat-form-field>
 
 
-        <ap-button btnSize="medium" btnColor="warn">
+        <ap-button btnSize="medium" btnColor="warn" i18n>
             Delete
         </ap-button>
 

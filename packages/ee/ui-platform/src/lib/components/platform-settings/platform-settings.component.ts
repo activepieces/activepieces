@@ -37,6 +37,7 @@ export class PlatformSettingsComponent {
     },
   ];
   customDomainNote$: Observable<string>;
+  message = $localize`Please set the following TXT and CNAME records in your DNS provider, then click verify to confirm your control over the domain.`;
   constructor(private fb: FormBuilder, private matSnakcbar: MatSnackBar) {
     this.formGroup = this.fb.group({
       customDomain: this.fb.control({

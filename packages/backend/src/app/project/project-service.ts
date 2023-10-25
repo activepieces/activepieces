@@ -1,16 +1,18 @@
-import { isNil } from '@activepieces/shared'
+import { isNil, ProjectType } from '@activepieces/shared'
 import { databaseConnection } from '../database/database-connection'
 import { ProjectEntity } from './project-entity'
-import { ActivepiecesError, apId, ErrorCode, NotificationStatus, Project, ProjectId, UpdateProjectRequest, UserId } from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, NotificationStatus, Project, ProjectId, UserId } from '@activepieces/shared'
+import { UpdateProjectRequest } from '@activepieces/ee-shared'
 
 const projectRepo = databaseConnection.getRepository<Project>(ProjectEntity)
 
 export const projectService = {
-    async create(request: { ownerId: UserId, displayName: string }): Promise<Project> {
+    async create(request: { ownerId: UserId, displayName: string, platformId: string | undefined, type: ProjectType }): Promise<Project> {
         return await projectRepo.save<Partial<Project>>({
             id: apId(),
             ...request,
             notifyStatus: NotificationStatus.ALWAYS,
+            type: request.type,
         })
     },
     async update(projectId: ProjectId, request: UpdateProjectRequest): Promise<Project | null> {

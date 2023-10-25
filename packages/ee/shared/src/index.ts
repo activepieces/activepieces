@@ -1,3 +1,6 @@
+export * from './lib/project/project-requests';
+export * from './lib/custom-domains';
+export * from './lib/platform';
 export * from './lib/project-members/project-member-role';
 export * from './lib/chatbot';
 export * from './lib/referral/referral';

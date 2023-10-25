@@ -1,13 +1,15 @@
 <nav class="navbar-container navbar-expand ap-relative">
-  <div class="ap-absolute ap-w-full ap-flex ap-items-center ap-justify-center ap-p-4 ap-pointer-events-none">
-    <img [src]=" (fullLogoSmall$| async) ||'assets/img/custom/logo/full-logo-small.svg'">
+  <div class="ap-absolute ap-w-full ap-flex ap-items-center ap-justify-center ap-p-3 ap-pointer-events-none">
+    <div class="ap-h-[30px]">
+      <img [src]=" (fullLogo$| async) ||'assets/img/custom/logo/full-logo.svg'" class="ap-max-w-full ap-h-full">
+    </div>
   </div>
 
   <div class="ap-text-center ap-flex ap-items-center ap-justify-center"></div>
 
   <div class="ap-flex ap-items-center">
     <div class="ap-flex ap-items-center ap-gap-2">
-      <ap-icon-button [width]="7" [height]="14" iconFilename="back.svg" [tooltipText]="'Home'"
+      <ap-icon-button [width]="7" [height]="14" iconFilename="back.svg" tooltipText="Home" i18n-tooltipText
         (buttonClicked)="redirectHome(false)" (auxclick)="redirectHome(true)"></ap-icon-button>
       <div class="ap-flex-grow ap-flex ap-items-center ap-gap-2" #spacer>
         <div class="ap-typography-body-1 ap-truncate ap-max-w-[150px] ap-cursor-pointer hover:ap-text-[#000000]"
@@ -36,27 +38,27 @@
             <svg-icon [applyClass]="true" src="assets/img/custom/pencil-underline.svg"
               class="ap-fill-body ap-w-[20px] ap-h-[20px]">
             </svg-icon>
-            <span class="ap-text-body">Rename</span>
+            <span class="ap-text-body" i18n>Rename</span>
           </div>
         </button>
         <button mat-menu-item *ngIf="flow$ | async as flow" (click)="duplicate()">
           <div class="ap-flex ap-gap-3 ap-items-center">
             <svg-icon src="assets/img/custom/duplicate.svg" class="ap-w-[20px] ap-h-[20px]"
               [applyClass]="true"></svg-icon>
-            <span>Duplicate</span>
+            <span i18n>Duplicate</span>
           </div>
         </button>
         <button mat-menu-item *ngIf="flow$ | async as flow" (click)="import()">
           <div class="ap-flex ap-gap-3 ap-items-center">
             <svg-icon src="assets/img/custom/import.svg" class="ap-w-[20px] ap-h-[20px]" [applyClass]="true"></svg-icon>
-            <span>Import</span>
+            <span i18n>Import</span>
           </div>
         </button>
         <button mat-menu-item *ngIf="flow$ | async as flow" (click)="download(flow.id)">
           <div class="ap-flex ap-gap-3 ap-items-center">
             <svg-icon src="assets/img/custom/download.svg" class="ap-w-[20px] ap-h-[20px]"
               [applyClass]="true"></svg-icon>
-            <span>Export</span>
+            <span i18n>Export</span>
           </div>
         </button>
         <ap-share-flow-template-dialog></ap-share-flow-template-dialog>
@@ -64,7 +66,7 @@
           <div class="ap-flex ap-gap-3 ap-items-center">
             <svg-icon src="assets/img/custom/trash.svg" class="ap-fill-danger ap-w-[20px] ap-h-[20px]"
               [applyClass]="true"></svg-icon>
-            <span class="ap-text-danger">Delete</span>
+            <span class="ap-text-danger" i18n>Delete</span>
           </div>
         </button>
       </mat-menu>
@@ -91,3 +93,4 @@
 <ng-container *ngIf="duplicateFlow$ | async"></ng-container>
 <ng-container *ngIf="openDashboardOnFolder$ | async"></ng-container>
 <ng-container *ngIf="shareFlow$ | async"></ng-container>
+<ng-container *ngIf="setTitle$ | async"></ng-container>

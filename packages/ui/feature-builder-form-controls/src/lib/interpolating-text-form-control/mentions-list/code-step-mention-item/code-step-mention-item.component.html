@@ -39,16 +39,16 @@
 <ng-container *ngIf="!codeStepTest$">
   <ng-container *ngIf="expandCodeCollapse">
     <div class="ap-my-3 ap-px-2">
-      <div class="ap-typography-body-1 ap-text-center ap-mb-1">
+      <div class="ap-typography-body-1 ap-text-center ap-mb-1" i18n>
         Test Code First
       </div>
-      <div class="ap-typography-body-2 ap-text-center ap-mb-3">
+      <div class="ap-typography-body-2 ap-text-center ap-mb-3" i18n>
         This step needs to be tested in order to view its data.
       </div>
       <div class="ap-text-center">
         <ap-button btnColor="primary" btnStyle="flat" type="button" btnSize="default" [darkLoadingSpinner]="false"
-          (buttonClicked)="selectStep();">Go to
-          step
+          (buttonClicked)="selectStep();" i18n>
+            Go to step
         </ap-button>
       </div>
     </div>

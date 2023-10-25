@@ -3,10 +3,10 @@
   [class.ap-px-3]="!isLoggedIn">
   <ap-icon-button [useSvgDefault]="true" [width]="7" [height]="14" iconFilename="back.svg" *ngIf="isLoggedIn"
     [tooltipText]="'Home'" (buttonClicked)="redirectHome(false)" (auxclick)="redirectHome(true)"></ap-icon-button>
-  <div
-    class="ap-absolute ap-w-full ap-flex ap-items-center ap-justify-center ap-top-0 ap-p-[1.125rem] ap-pointer-events-none">
-
-    <img [src]=" (fullLogoSmall$| async) ||'assets/img/custom/logo/full-logo-small.svg'">
+  <div class="ap-absolute ap-w-full ap-flex ap-items-center ap-justify-center ap-top-0 ap-p-4 ap-pointer-events-none">
+    <div class="ap-h-[30px]">
+      <img [src]=" (fullLogo$| async) ||'assets/img/custom/logo/full-logo.svg'" class="ap-max-w-full ap-h-full">
+    </div>
   </div>
   <div class="ap-typography-body-1 !ap-font-semibold">
     {{ chatbotDisplayName }}
@@ -21,13 +21,13 @@
     <ng-container *ngIf=" messages.length===0 && (sendingMessage$ | async)===false; else messageThread ">
       <svg-icon src=" assets/img/custom/dashboard/chatbots.svg" [applyClass]="true"
         class="ap-fill-body ap-h-[60px] ap-w-[60px]"></svg-icon>
-      <div class="ap-typography-headline-6 ap-text-body">Ask me something</div>
+      <div class="ap-typography-headline-6 ap-text-body" i18n>Ask me something</div>
     </ng-container>
   </div>
   <div #textareaContainer>
     <mat-form-field class="ap-w-full" appearance="outline">
       <textarea autosize matInput [minRows]="1" [maxRows]="8" class="!ap-resize-none thin-scrollbars ap-mb-3"
-        (keyDown.enter)="$event.preventDefault(); send()" [formControl]="messageControl" placeholder="Send a message">
+        (keyDown.enter)="$event.preventDefault(); send()" [formControl]="messageControl" placeholder="Send a message" i18n-placeholder>
       </textarea>
       <div matSuffix class="ap-mx-2">
         <ap-icon-button [useSvgDefault]="true" [iconFilename]="'send.svg'"
@@ -61,7 +61,7 @@
       class="ap-p-7 ap-typography-body-1 ap-flex ap-items-center ap-gap-3 ap-bg-header">
       <svg-icon class="ap-w-[24px] ap-h-[24px] ap-fill-body" src="assets/img/custom/dashboard/chatbots.svg"
         [applyClass]="true"></svg-icon>
-      {{ chatbotDisplayName }} is thinking {{ dots$ | async }}
+        {{ chatbotDisplayName }} <ng-container i18n>is thinking</ng-container> {{ dots$ | async }}
     </div>
   </div>
 </ng-template>
@@ -69,6 +69,6 @@
 <ng-container *ngIf="data$ | async"></ng-container>
 
 <ng-template #buttonTemplate>
-  <ap-icon-button [width]="15" [height]="15" [iconFilename]="'copy.svg'" tooltipText="Copy Code"
+  <ap-icon-button [width]="15" [height]="15" [iconFilename]="'copy.svg'" tooltipText="Copy Code" i18n-tooltipText
     (buttonClicked)="codeCopied()"></ap-icon-button>
 </ng-template>

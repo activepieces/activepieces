@@ -6,7 +6,7 @@ import { FlagEntity } from './flag.entity'
 import axios from 'axios'
 import { webhookService } from '../webhooks/webhook-service'
 import { getEdition } from '../helper/secret-helper'
-import { theme } from './theme'
+import { defaultTheme } from './theme'
 
 const flagRepo = databaseConnection.getRepository(FlagEntity)
 
@@ -64,6 +64,12 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.SHOW_AUTH_PROVIDERS,
+                value: getEdition() === ApEdition.CLOUD,
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.PROJECT_MEMBERS_ENABLED,
                 value: getEdition() !== ApEdition.COMMUNITY,
                 created,
@@ -71,7 +77,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.THEME,
-                value: theme,
+                value: defaultTheme,
                 created,
                 updated,
             },

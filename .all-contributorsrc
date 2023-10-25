@@ -635,6 +635,24 @@
       "contributions": [
         "bug"
       ]
+    },
+    {
+      "login": "andchir",
+      "name": "Andrei",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6392311?v=4",
+      "profile": "https://github.com/andchir",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "derbbre",
+      "name": "derbbre",
+      "avatar_url": "https://avatars.githubusercontent.com/u/281843?v=4",
+      "profile": "https://github.com/derbbre",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "commitType": "docs"

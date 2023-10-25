@@ -134,4 +134,12 @@ export class FoldersListComponent {
       this.sortFolders$.next('desc');
     }
   }
+
+  getSortFoldersTooltipText() {
+    if (this.sortFolders$.value === 'asc') {
+      return $localize`Ascending`;
+    }
+
+    return $localize`Descending`;
+  }
 }

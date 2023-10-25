@@ -232,6 +232,17 @@ class Validators {
     },
   };
 
+  static nonZero: TypedValidatorFn<ValidationInputType.NUMBER> = {
+    type: ValidationInputType.NUMBER,
+    fn: (property, processedValue, userInput) => {
+      if (processedValue === 0) {
+        return formatErrorMessage(ErrorMessages.NON_ZERO, { userInput });
+      }
+
+      return null;
+    },
+  }
+
   static integer: TypedValidatorFn<ValidationInputType.NUMBER> = {
     type: ValidationInputType.NUMBER,
     fn: (property, processedValue, userInput) => {

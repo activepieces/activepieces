@@ -65,8 +65,8 @@ export class SidenavRoutesListComponent implements OnInit {
 
   sideNavRoutes: SideNavRoute[] = [
     {
-      icon: '/assets/img/custom/dashboard/flows.svg',
-      caption: 'Flows',
+      icon: 'assets/img/custom/dashboard/flows.svg',
+      caption: $localize`Flows`,
       route: 'flows',
       effect: () => {
         this.store.dispatch(FolderActions.showAllFlows());
@@ -79,17 +79,17 @@ export class SidenavRoutesListComponent implements OnInit {
     },
     {
       icon: 'assets/img/custom/dashboard/runs.svg',
-      caption: 'Runs',
+      caption: $localize`Runs`,
       route: 'runs',
     },
     {
       icon: 'assets/img/custom/dashboard/connections.svg',
-      caption: 'Connections',
+      caption: $localize`Connections`,
       route: 'connections',
     },
     {
       icon: 'assets/img/custom/dashboard/members.svg',
-      caption: 'Team',
+      caption: $localize`Team`,
       route: 'team',
     },
   ];

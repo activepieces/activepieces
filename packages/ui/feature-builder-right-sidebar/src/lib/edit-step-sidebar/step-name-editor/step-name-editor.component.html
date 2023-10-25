@@ -1,9 +1,13 @@
 <div class="ap-flex ap-items-center ap-gap-1" #editTextContainer>
-    <ap-editable-text [editing]="isEditingStepName" (editingChanges)="editingStepNameToggle($event)"
-        cssClasses="!ap-font-semibold" [hideOverflowWhileEditing]="false"
-        [viewedTextMaxWidth]="editTextContainer.clientWidth - 12 - 4 -36 + 'px'" [hideOverflownTextTooltip]="true"
-        matTooltip="Edit step name" [value]="(currentStepName$ | async) || ''" (valueChanges)="saveStepName($event)"
-        [disableEditing]="isInDebugMode$ | async | defaultTrue" [allowClick]="true"></ap-editable-text>
+    <ap-editable-text
+            [editing]="isEditingStepName" (editingChanges)="editingStepNameToggle($event)"
+            cssClasses="!ap-font-semibold" [hideOverflowWhileEditing]="false"
+            [viewedTextMaxWidth]="editTextContainer.clientWidth - 12 - 4 -36 + 'px'" [hideOverflownTextTooltip]="true"
+            matTooltip="Edit step name"
+            i18n-matTooltip
+            [value]="(currentStepName$ | async) || ''" (valueChanges)="saveStepName($event)"
+            [disableEditing]="isInDebugMode$ | async | defaultTrue" [allowClick]="true"
+    ></ap-editable-text>
     <svg-icon [class.ap-opacity-0]="isEditingStepName" [svgStyle]="{ width: '16px', height: '16px' }"
         *ngIf="!(isInDebugMode$ | async | defaultTrue)" (click)="isEditingStepName = true" [applyClass]="true"
         src="assets/img/custom/pencil-underline.svg" class="ap-flex ap-items-center ap-fill-body">

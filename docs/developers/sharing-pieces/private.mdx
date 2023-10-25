@@ -4,49 +4,27 @@ description: "Learn how to share your pieces privately."
 ---
 
 <Tip>
-This feature is only available for Enterprise edition, if you want to use it, please contact us at `sales@activepieces.com`.
+This feature is only available for Paid edition, if you want to use it, please contact us at `sales@activepieces.com`.
 </Tip>
 
 This guide assume you have already created a piece, and created private fork of our repository.
 
-You can install your piece in your project by using activepieces CLI:
-
-<Tip>
-Activepieces CLI is already installed inside the repository, you can use it by running `npx ap` inside the repository.
-</Tip>
 
 ## Step 1
 
-First step you need to login by providing api url of your instance and your secret key.
-
-<Warning>
-Work in progress, Please contact activepieces for instructions on how to get your secret key.
-</Warning>
+Build the piece using the following command, make sure to replace `${name}` with your piece name.
 
 ```bash
-npx ap auth login
+npx nx build pieces-${name}
 ```
 
 ## Step 2
 
-Then you can install your piece by providing the name of your pieces.
+Then pack your pieces as npm package, make sure to replace `${name}` with your piece name.
 
 ```bash
-npx ap pieces publish my-private-piece
+cd dist/packages/pieces/${name} && npm pack
 ```
-
-<Tip>
-You can't publish a piece with the same name and version, if you want to update your piece, you need to change the version in `package.json` and publish it again.
-</Tip>
-
 ## Step 3
 
-Verify that your piece is installed by running, you should see your piece in the table.
-
-```bash
-npx ap pieces list
-```
-
-<Tip>
-For more information about the CLI, please use `npx ap --help`.
-</Tip>
+Upload generated tarbar inside `dist/packages/pieces/${name}` to activepieces using the interface.

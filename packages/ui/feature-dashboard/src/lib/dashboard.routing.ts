@@ -8,11 +8,7 @@ import {
 import { ConnectionsTableComponent } from './pages/connections-table/connections-table.component';
 import { FoldersResolver } from './resolvers/folders.resolver';
 import { DashboardContainerComponent } from './dashboard-container.component';
-import {
-  ConnectionsResolver,
-  environment,
-  platformGuard,
-} from '@activepieces/ui/common';
+import { ConnectionsResolver, platformGuard } from '@activepieces/ui/common';
 import {
   ChatbotsTableComponent,
   ChatbotSettingsComponent,
@@ -30,23 +26,31 @@ export const DashboardLayoutRouting: Routes = [
     children: [
       { path: '', pathMatch: 'full', redirectTo: '/flows' },
       {
-        title: `Runs - ${environment.websiteTitle}`,
+        data: {
+          title: $localize`Runs`,
+        },
         path: 'runs',
         pathMatch: 'full',
         component: RunsTableComponent,
       },
       {
-        title: `Plans - ${environment.websiteTitle}`,
+        data: {
+          title: $localize`Plans`,
+        },
         path: 'plans',
         component: PlansPageComponent,
       },
       {
-        title: `Team - ${environment.websiteTitle}`,
+        data: {
+          title: $localize`Team`,
+        },
         path: 'team',
         component: ProjectMembersTableComponent,
       },
       {
-        title: `Chatbots - ${environment.websiteTitle}`,
+        data: {
+          title: $localize`Chatbots`,
+        },
         path: 'chatbots',
         pathMatch: 'full',
         component: ChatbotsTableComponent,
@@ -54,7 +58,9 @@ export const DashboardLayoutRouting: Routes = [
       {
         path: 'chatbots/:id/settings',
         canActivate: [],
-        title: `Activepieces - Chatbot settings`,
+        data: {
+          title: $localize`Chatbot settings`,
+        },
         pathMatch: 'full',
         component: ChatbotSettingsComponent,
         resolve: {
@@ -63,7 +69,9 @@ export const DashboardLayoutRouting: Routes = [
         },
       },
       {
-        title: `Chatbots - ${environment.websiteTitle}`,
+        data: {
+          title: $localize`Chatbots`,
+        },
         path: 'chatbots',
         pathMatch: 'full',
         component: ChatbotsTableComponent,
@@ -71,7 +79,9 @@ export const DashboardLayoutRouting: Routes = [
       {
         path: 'chatbots/:id/settings',
         canActivate: [],
-        title: `Activepieces - Chatbot settings`,
+        data: {
+          title: $localize`Chatbot settings`,
+        },
         pathMatch: 'full',
         component: ChatbotSettingsComponent,
         resolve: {
@@ -80,40 +90,24 @@ export const DashboardLayoutRouting: Routes = [
         },
       },
       {
-        title: `My Pieces - ${environment.websiteTitle}`,
+        data: {
+          title: $localize`My Pieces`,
+        },
         path: 'settings/my-pieces',
         component: CommunityPiecesTableComponent,
       },
       {
-        title: `Team - ${environment.websiteTitle}`,
-        path: 'team',
-        component: ProjectMembersTableComponent,
-      },
-      {
-        title: `Chatbots - ${environment.websiteTitle}`,
-        path: 'chatbots',
-        pathMatch: 'full',
-        component: ChatbotsTableComponent,
-      },
-      {
-        path: 'chatbots/:id/settings',
-        canActivate: [],
-        title: `Activepieces - Chatbot settings`,
-        pathMatch: 'full',
-        component: ChatbotSettingsComponent,
-        resolve: {
-          connections: ConnectionsResolver,
-          chatbot: chatbotSettingsResolver,
+        data: {
+          title: $localize`Connections`,
         },
-      },
-      {
-        title: `Connections - ${environment.websiteTitle}`,
         path: 'connections',
         pathMatch: 'full',
         component: ConnectionsTableComponent,
       },
       {
-        title: `Flows - ${environment.websiteTitle}`,
+        data: {
+          title: $localize`Flows`,
+        },
         path: 'flows',
         pathMatch: 'full',
         component: FlowsTableComponent,
@@ -123,7 +117,7 @@ export const DashboardLayoutRouting: Routes = [
         },
       },
       {
-        title: `Platform - ${environment.websiteTitle}`,
+        title: $localize`Platform`,
         path: 'platform',
         pathMatch: 'full',
         loadChildren: () =>

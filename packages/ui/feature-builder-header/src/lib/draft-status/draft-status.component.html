@@ -15,13 +15,13 @@
 
 <mat-menu #versionsMenu="matMenu" xPosition="before">
     <div class="ap-w-[182px]">
-        <div class="ap-text-description ap-px-3 ap-py-2">
+        <div class="ap-text-description ap-px-3 ap-py-2" i18n>
             Switch Version
         </div>
-        <div class="!ap-px-3 !ap-py-2" mat-menu-item (click)="showDraftVersion()">
+        <div class="!ap-px-3 !ap-py-2" mat-menu-item (click)="showDraftVersion()" i18n>
             Draft
         </div>
-        <div class="!ap-px-3 !ap-py-2" mat-menu-item (click)="showPublishedVersion()">
+        <div class="!ap-px-3 !ap-py-2" mat-menu-item (click)="showPublishedVersion()" i18n>
             Published
         </div>
     </div>
