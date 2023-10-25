@@ -14,8 +14,8 @@ import { ProjectService } from '../../service/project.service';
 export class ProjectEffects {
   loadInitial$ = createEffect(() => {
     return this.actions$.pipe(
-      ofType(CommonActions.loadInitial),
-      switchMap(({ user }) => {
+      ofType(CommonActions.loadProjects),
+      switchMap(({ user, currentProjectId }) => {
         if (user === undefined) {
           return EMPTY;
         }
@@ -26,7 +26,14 @@ export class ProjectEffects {
               this.authenticationService.logout();
             }
           }),
-          map((projects) => ProjectActions.setProjects({ projects })),
+          map((projects) => {
+            return ProjectActions.setProjects({
+              projects,
+              selectedIndex: projects.findIndex(
+                (p) => p.id === currentProjectId
+              ),
+            });
+          }),
           catchError((error) => {
             this.snackBar.open(
               `Error loading projects: ${error.message}`,

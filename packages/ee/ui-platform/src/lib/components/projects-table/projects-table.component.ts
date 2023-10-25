@@ -1,11 +1,16 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Observable, Subject, map, startWith, tap } from 'rxjs';
 import { ProjectsDataSource } from './projects-table.datasource';
-import { ProjectService } from '@activepieces/ui/common';
+import {
+  AuthenticationService,
+  CommonActions,
+  ProjectService,
+} from '@activepieces/ui/common';
 import { Project } from '@activepieces/shared';
 import { MatDialog } from '@angular/material/dialog';
 import { CreateProjectDialogComponent } from './create-project-dialog/create-project-dialog.component';
 import { UpdateProjectDialogComponent } from './update-project-dialog/update-project-dialog.component';
+import { Store } from '@ngrx/store';
 
 @Component({
   selector: 'app-projects-table',
@@ -22,7 +27,9 @@ export class ProjectsTableComponent {
   updateProject$: Observable<void> | undefined;
   constructor(
     private projectsService: ProjectService,
-    private matDialog: MatDialog
+    private matDialog: MatDialog,
+    private authenticationService: AuthenticationService,
+    private store: Store
   ) {
     this.dataSource = new ProjectsDataSource(
       this.projectsService,
@@ -59,6 +66,20 @@ export class ProjectsTableComponent {
         tap((res) => {
           if (res) {
             this.refreshTable$.next(true);
+            const user = this.authenticationService.currentUserSubject.value;
+            const decodedToken = this.authenticationService.getDecodedToken();
+            if (!decodedToken) {
+              console.error('Token is invalid or not set');
+              return;
+            }
+            if (user) {
+              this.store.dispatch(
+                CommonActions.loadProjects({
+                  user,
+                  currentProjectId: decodedToken['projectId'],
+                })
+              );
+            }
           }
         }),
         map(() => void 0)

@@ -1,23 +1,23 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthenticationService } from '../../service/authentication.service';
-import { environment } from '../../environments/environment';
 import { ProjectService } from '../../service/project.service';
 import { ApFlagId, Project } from '@activepieces/shared';
-import { Observable, map } from 'rxjs';
-import { JwtHelperService } from '@auth0/angular-jwt';
+import { Observable } from 'rxjs';
 import { FlagService } from '../../service/flag.service';
 import { showPlatform$ } from '../../guards/platform.guard';
+import { Store } from '@ngrx/store';
+import { ProjectSelectors } from '../../store/project/project.selector';
 @Component({
   selector: 'ap-user-avatar',
   templateUrl: './user-avatar.component.html',
   styleUrls: ['./user-avatar.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class UserAvatarComponent {
+export class UserAvatarComponent implements OnInit {
   showAvatarOuterCircle = false;
+  currentUserEmail = 'Dev@ap.com';
   // BEGIN EE
-  private jwtHelper = new JwtHelperService();
   projects$: Observable<Project[]>;
   selectedProject$: Observable<Project | undefined>;
   switchProject$: Observable<void>;
@@ -30,6 +30,7 @@ export class UserAvatarComponent {
     public authenticationService: AuthenticationService,
     private router: Router,
     private flagService: FlagService,
+    private store: Store,
     // BEGIN EE
     private projectService: ProjectService // END EE
   ) {
@@ -43,18 +44,12 @@ export class UserAvatarComponent {
     this.projectEnabled$ = this.flagService.isFlagEnabled(
       ApFlagId.PROJECT_MEMBERS_ENABLED
     );
-    this.projects$ = this.projectService.list();
-    const currentProjectId = this.jwtHelper.decodeToken(
-      localStorage.getItem(environment.jwtTokenName) || ''
-    )?.projectId;
-    this.selectedProject$ = this.projects$.pipe(
-      map((projects) => {
-        return projects.find((f) => {
-          return f.id === currentProjectId;
-        });
-      })
-    );
+    this.projects$ = this.store.select(ProjectSelectors.selectAllProjects);
+    this.selectedProject$ = this.store.select(ProjectSelectors.selectProject);
     // END EE
+  }
+  ngOnInit(): void {
+    this.currentUserEmail = this.authenticationService.currentUser.email;
   }
 
   getDropDownLeftOffset(
