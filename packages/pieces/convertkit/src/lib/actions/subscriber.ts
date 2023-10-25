@@ -8,14 +8,14 @@ export const API_ENDPOINT = 'subscribers/';
 export const getSubscriberById = createAction({
   auth: convertkitAuth,
   name: 'get_subscriber_by_id',
-  displayName: 'Get Subscriber By Id',
+  displayName: 'Subscriber: Get Subscriber By Id',
   description: 'Returns data for a single subscriber',
   props: {
     subscriberId,
   },
   async run(context) {
     const { subscriberId } = context.propsValue;
-    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}/${subscriberId}?api_secret=${context.auth}`;
+    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}${subscriberId}?api_secret=${context.auth}`;
 
     // Fetch URL using fetch api
     const response = await fetch(url);
@@ -31,7 +31,7 @@ export const getSubscriberById = createAction({
 export const listSubscribers = createAction({
   auth: convertkitAuth,
   name: 'list_subscribers',
-  displayName: 'List Subscribers',
+  displayName: 'Subscriber: List Subscribers',
   description: 'Returns a list of all subscribers',
   props: {
     page: Property.Number({
@@ -98,7 +98,7 @@ export const listSubscribers = createAction({
 export const updateSubscriber = createAction({
   auth: convertkitAuth,
   name: 'update_subscriber',
-  displayName: 'Update Subscriber',
+  displayName: 'Subscriber: Update Subscriber',
   description: 'Update a subscriber',
   props: {
     subscriberId,
@@ -120,18 +120,69 @@ export const updateSubscriber = createAction({
   },
   async run(context) {
     const { subscriberId } = context.propsValue;
-    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}/${subscriberId}?api_secret=${context.auth}`;
+    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}${subscriberId}`;
 
     // Fetch URL using fetch api
     const response = await fetch(url, {
       method: 'PUT',
-      body: JSON.stringify(context.propsValue),
+      body: JSON.stringify({ ...context.propsValue, api_secret: context.auth }),
       headers: {
         'Content-Type': 'application/json',
       },
     });
 
     // Get response body x
+    const data = await response.json();
+
+    // Return response body
+    return data;
+  },
+});
+
+// TODO: Test Action
+export const unsubscribeSubscriber = createAction({
+  auth: convertkitAuth,
+  name: 'unsubscribe_subscriber',
+  displayName: 'Subscriber: Unsubscribe Subscriber',
+  description: 'Unsubscribe a subscriber',
+  props: {
+    subscriberId,
+  },
+  async run(context) {
+    const { subscriberId } = context.propsValue;
+    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}${subscriberId}/unsubscribe`;
+
+    // Fetch URL using fetch api
+    const response = await fetch(url, {
+      method: 'PUT',
+      body: JSON.stringify({ ...context.propsValue, api_secret: context.auth }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    // Get response body
+    const data = await response.json();
+
+    // Return response body
+    return data;
+  },
+});
+
+export const listSubscriberTags = createAction({
+  auth: convertkitAuth,
+  name: 'list_tags',
+  displayName: 'Subscriber: List Tags',
+  description: 'Returns a list of all tags',
+  props: { subscriberId },
+  async run(context) {
+    const { subscriberId } = context.propsValue;
+    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}${subscriberId}/tags?api_secret=${context.auth}`;
+
+    // Fetch URL using fetch api
+    const response = await fetch(url);
+
+    // Get response body
     const data = await response.json();
 
     // Return response body
