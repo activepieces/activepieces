@@ -7,6 +7,8 @@ import {
   listSubscriberTags,
 } from './lib/actions/subscriber';
 
+import { createWebhook, destroyWebhook } from './lib/actions/webhook';
+
 export const convertkitAuth = PieceAuth.SecretText({
   displayName: 'API Secret',
   description: 'Enter your API Secret key',
@@ -26,6 +28,8 @@ export const convertkit = createPiece({
     updateSubscriber,
     unsubscribeSubscriber,
     listSubscriberTags,
+    createWebhook,
+    destroyWebhook,
   ],
   triggers: [],
 });
