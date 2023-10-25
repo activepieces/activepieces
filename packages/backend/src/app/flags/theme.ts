@@ -72,8 +72,9 @@ function generateSelectionColor(defaultColor: string) {
     return lightColor.toHexString()
 }
 
-export function generateTheme({ primaryColor, fullLogoUrl, favIconUrl, logoIconUrl }: { primaryColor: string, fullLogoUrl: string, favIconUrl: string, logoIconUrl: string }) {
+export function generateTheme({ primaryColor, fullLogoUrl, favIconUrl, logoIconUrl, websiteName }: { primaryColor: string, fullLogoUrl: string, favIconUrl: string, logoIconUrl: string, websiteName: string }) {
     return {
+        websiteName,
         colors: {
             avatar: '#515151',
             'blue-link': '#1890ff',
@@ -133,6 +134,7 @@ export function generateTheme({ primaryColor, fullLogoUrl, favIconUrl, logoIconU
 
 export const defaultTheme = generateTheme({
     primaryColor: '#6e41e2',
+    websiteName: 'Activepieces',
     fullLogoUrl:
         'https://cdn.activepieces.com/brand/full-logo.svg',
     favIconUrl:

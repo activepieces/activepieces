@@ -27,6 +27,7 @@ export * from './lib/models/chevron-dropdown-option';
 export * from './lib/models/flow-run.interface';
 export * from './lib/environments/environment';
 export * from './lib/service/test-step.service';
+export * from './lib/service/dashboard.service';
 export * from './lib/pipe/index';
 export * from './lib/directives/index';
 export * from './lib/environments/environment';
@@ -41,5 +42,7 @@ export * from './lib/service/builder-autocomplete-mentions-dropdown.service';
 export * from './lib/resolvers/connections.resolver';
 export * from './lib/resolvers/are-there-featured-templates.resolver';
 export * from './lib/models/piece-metadata-model';
+export * from './lib/guards/show-platform-settings.guard';
+export * from './lib/service/appearance-service';
 
 import '@angular/localize/init';

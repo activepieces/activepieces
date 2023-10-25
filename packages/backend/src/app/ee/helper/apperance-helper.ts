@@ -24,6 +24,7 @@ const getPlatformByIdOrFallback = async (platformId: string | null) => {
 
     const platform = await platformService.getOneOrThrow(platformId)
     return generateTheme({
+        websiteName: platform.name,
         fullLogoUrl: platform.fullLogoUrl,
         favIconUrl: platform.favIconUrl,
         logoIconUrl: platform.logoIconUrl,

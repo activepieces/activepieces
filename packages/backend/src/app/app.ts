@@ -60,6 +60,7 @@ import { customDomainModule } from './ee/custom-domains/custom-domain.module'
 import { authenticationServiceHooks } from './authentication/authentication-service/hooks'
 import { enterpriseAuthenticationServiceHooks } from './ee/authentication/authentication-service/hooks/enterprise-authentication-service-hooks'
 import { flowQueueConsumer } from './workers/flow-worker/flow-queue-consumer'
+import { setupBullMQBoard } from './workers/flow-worker/queues/redis/redis-queue'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -154,6 +155,8 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(stepFileModule)
     await app.register(chatbotModule)
     await app.register(userModule)
+
+    await setupBullMQBoard(app)
 
     app.get(
         '/redirect',
