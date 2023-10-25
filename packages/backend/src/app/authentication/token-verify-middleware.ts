@@ -42,6 +42,9 @@ export const tokenVerifyMiddleware = async (request: FastifyRequest): Promise<vo
         projectId: `ANONYMOUS_${apId()}`,
         projectType: ProjectType.STANDALONE,
     }
+    if (request.routerPath.startsWith('/ui')) {
+        return
+    }
     const rawToken = request.headers.authorization
     if (!rawToken) {
         if (requiresAuthentication(request.routerPath, request.method)) {
