@@ -57,6 +57,8 @@ import { pieceServiceHooks } from './pieces/piece-service/piece-service-hooks'
 import { projectModule } from './project/project-module'
 import { flowWorkerHooks } from './workers/flow-worker/flow-worker-hooks'
 import { customDomainModule } from './ee/custom-domains/custom-domain.module'
+import { authenticationServiceHooks } from './authentication/authentication-service/hooks'
+import { enterpriseAuthenticationServiceHooks } from './ee/authentication/authentication-service/hooks/enterprise-authentication-service-hooks'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -204,6 +206,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(platformModule)
             await app.register(customDomainModule)
             pieceServiceHooks.set(cloudPieceServiceHooks)
+            authenticationServiceHooks.set(enterpriseAuthenticationServiceHooks)
             break
         case ApEdition.COMMUNITY:
             await app.register(authenticationModule)

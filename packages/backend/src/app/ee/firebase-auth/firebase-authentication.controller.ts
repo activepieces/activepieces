@@ -1,30 +1,30 @@
-import { FastifyInstance, FastifyRequest } from 'fastify'
+import { FastifyRequest } from 'fastify'
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { cert, initializeApp } from 'firebase-admin/app'
 import { getAuth } from 'firebase-admin/auth'
 import * as crypto from 'crypto'
-import { FirebaseSignInRequest, FirebaseSignUpRequest } from '@activepieces/ee-shared'
-import { PrincipalType, ActivepiecesError, ErrorCode, UserStatus, isNil } from '@activepieces/shared'
-
-
+import { FirebaseSignInRequest, FirebaseSignUpRequest, Platform, PlatformId } from '@activepieces/ee-shared'
+import { PrincipalType, ActivepiecesError, ErrorCode, UserStatus, isNil, UserId, Project } from '@activepieces/shared'
 import { AuthenticationResponse } from '@activepieces/shared'
 import { system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
 import { userService } from '../../user/user-service'
 import { tokenUtils } from '../../authentication/lib/token-utils'
-import { authenticationService } from '../../authentication/authentication.service'
+import { authenticationService } from '../../authentication/authentication-service'
 import { logger } from '../../helper/logger'
 import { referralService } from '../referrals/referral.service'
 import { enterpriseProjectService } from '../projects/enterprise-project-service'
 import { platformService } from '../platform/platform.service'
 
+const credential = system.get(SystemProp.FIREBASE_ADMIN_CREDENTIALS)
+    ? cert(JSON.parse(system.getOrThrow(SystemProp.FIREBASE_ADMIN_CREDENTIALS)))
+    : undefined
 
-const credential = system.get(SystemProp.FIREBASE_ADMIN_CREDENTIALS) ? cert(JSON.parse(system.getOrThrow(SystemProp.FIREBASE_ADMIN_CREDENTIALS))) : undefined
-const firebaseAuth = credential ? getAuth(initializeApp({
-    credential,
-})) : undefined
+const firebaseAuth = credential
+    ? getAuth(initializeApp({ credential }))
+    : undefined
 
-export const firebaseAuthenticationController = async (app: FastifyInstance) => {
-
+export const firebaseAuthenticationController: FastifyPluginAsyncTypebox = async (app) => {
     app.post(
         '/sign-in',
         {
@@ -37,18 +37,17 @@ export const firebaseAuthenticationController = async (app: FastifyInstance) => 
                 const verifiedToken = await firebaseAuth!.verifyIdToken(request.body.token)
                 const user = await userService.getOneByEmail({ email: verifiedToken.email! })
                 if (!isNil(user) && user.status !== UserStatus.SHADOW) {
-                    const project = (await enterpriseProjectService.getAll({
-                        ownerId: user.id,
-                    }))[0]
+                    const project = await getProjectByUser(user.id)
+                    const platform = await getPlatform(project.platformId)
+
                     const token = await tokenUtils.encode({
                         id: user.id,
                         type: PrincipalType.USER,
                         projectId: project.id,
                         projectType: project.type,
-                        platformId: await platformService.getPlatformIdByOwner({
-                            ownerId: user.id,
-                        }),
+                        platformId: platform?.id,
                     })
+
                     const response: AuthenticationResponse = {
                         projectId: project.id,
                         token,
@@ -94,18 +93,17 @@ export const firebaseAuthenticationController = async (app: FastifyInstance) => 
                 const user = await userService.getOneByEmail({ email: verifiedToken.email! })
                 const referringUserId = request.body.referringUserId
                 if (!isNil(user) && user.status !== UserStatus.SHADOW) {
-                    const project = (await enterpriseProjectService.getAll({
-                        ownerId: user.id,
-                    }))[0]
+                    const project = await getProjectByUser(user.id)
+                    const platform = await getPlatform(project.platformId)
+
                     const token = await tokenUtils.encode({
                         id: user.id,
                         type: PrincipalType.USER,
                         projectId: project.id,
                         projectType: project.type,
-                        platformId: await platformService.getPlatformIdByOwner({
-                            ownerId: user.id,
-                        }),
+                        platformId: platform?.id,
                     })
+
                     const response: AuthenticationResponse = {
                         projectId: project.id,
                         token,
@@ -152,4 +150,21 @@ export const firebaseAuthenticationController = async (app: FastifyInstance) => 
         },
     )
 
+}
+
+
+const getProjectByUser = async (userId: UserId): Promise<Project> => {
+    const userProjects = await enterpriseProjectService.getAll({
+        ownerId: userId,
+    })
+
+    return userProjects[0]
+}
+
+const getPlatform = async (platformId: PlatformId | undefined): Promise<Platform | null> => {
+    if (isNil(platformId)) {
+        return null
+    }
+
+    return platformService.getOne(platformId)
 }

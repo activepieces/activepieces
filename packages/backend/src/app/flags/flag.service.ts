@@ -22,16 +22,13 @@ export const flagService = {
             id: flagId,
         })
     },
-    async getCurrentVersion(): Promise<string> {
-        return (await import('package.json')).version
-    },
     async getAll(): Promise<Flag[]> {
         const flags = await flagRepo.find({})
         const now = new Date().toISOString()
         const created = now
         const updated = now
-        const currentVersion = (await this.getCurrentVersion())
-        const latestVersion = (await this.getLatestPackageDotJson()).version
+        const currentVersion = await this.getCurrentRelease()
+        const latestVersion = await this.getLatestRelease()
         flags.push(
             {
                 id: ApFlagId.ENVIRONMENT,
@@ -151,28 +148,35 @@ export const flagService = {
 
         return flags
     },
-    async getCurrentRelease() {
-        const currentVersion = (await import('package.json')).version
-        return currentVersion
+
+    async getCurrentRelease(): Promise<string> {
+        const packageJson = await import('package.json')
+        return packageJson.version
     },
-    async getLatestPackageDotJson() {
+
+    async getLatestRelease(): Promise<string> {
         try {
-            const pkgJson = (await axios.get('https://raw.githubusercontent.com/activepieces/activepieces/main/package.json')).data
-            return pkgJson
+            const response = await axios.get<PackageJson>('https://raw.githubusercontent.com/activepieces/activepieces/main/package.json')
+            return response.data.version
         }
         catch (ex) {
-            return { version: '0.0.0' }
+            return '0.0.0'
         }
     },
 }
 
 export type FlagType =
     | BaseFlagStructure<ApFlagId.FRONTEND_URL, string>
-    | BaseFlagStructure<ApFlagId.WEBHOOK_URL_PREFIX, string>
-    | BaseFlagStructure<ApFlagId.USER_CREATED, boolean>
+    | BaseFlagStructure<ApFlagId.PLATFORM_CREATED, boolean>
     | BaseFlagStructure<ApFlagId.TELEMETRY_ENABLED, boolean>
+    | BaseFlagStructure<ApFlagId.USER_CREATED, boolean>
+    | BaseFlagStructure<ApFlagId.WEBHOOK_URL_PREFIX, string>
 
 type BaseFlagStructure<K extends ApFlagId, V> = {
     id: K
     value: V
+}
+
+type PackageJson = {
+    version: string
 }

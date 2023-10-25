@@ -1,8 +1,7 @@
-import { ActivepiecesError, ApEdition, ErrorCode, UserId, apId, isNil, spreadIfDefined } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, UserId, apId, isNil, spreadIfDefined } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { PlatformEntity } from './platform.entity'
 import { Platform, PlatformId, UpdatePlatformRequestBody } from '@activepieces/ee-shared'
-import { getEdition } from '../../helper/secret-helper'
 
 const repo = databaseConnection.getRepository<Platform>(PlatformEntity)
 
@@ -50,15 +49,17 @@ export const platformService = {
         assertPlatformExists(platform)
         return platform
     },
-    async getPlatformIdByOwner({ ownerId }: { ownerId: string }): Promise<string  | undefined> {
-        const edition = getEdition()
-        if (edition === ApEdition.COMMUNITY) {
-            return undefined
-        }
-        const platform = await repo.findOneBy({
+
+    async getOne(id: PlatformId): Promise<Platform | null> {
+        return repo.findOneBy({
+            id,
+        })
+    },
+
+    async getOneByOwner({ ownerId }: GetOneByOwnerParams): Promise<Platform | null> {
+        return repo.findOneBy({
             ownerId,
         })
-        return platform?.id
     },
 }
 
@@ -96,4 +97,8 @@ type NewPlatform = Omit<Platform, 'created' | 'updated'>
 type UpdateParams = UpdatePlatformRequestBody & {
     id: PlatformId
     userId: UserId
+}
+
+type GetOneByOwnerParams = {
+    ownerId: UserId
 }
