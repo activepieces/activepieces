@@ -42,6 +42,7 @@ export * from './lib/service/builder-autocomplete-mentions-dropdown.service';
 export * from './lib/resolvers/connections.resolver';
 export * from './lib/resolvers/are-there-featured-templates.resolver';
 export * from './lib/models/piece-metadata-model';
-export * from './lib/guards/platform.guard';
+export * from './lib/guards/show-platform-settings.guard';
 export * from './lib/service/appearance-service';
+
 import '@angular/localize/init';

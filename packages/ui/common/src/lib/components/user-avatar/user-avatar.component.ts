@@ -5,9 +5,10 @@ import { ProjectService } from '../../service/project.service';
 import { ApFlagId, Project } from '@activepieces/shared';
 import { Observable } from 'rxjs';
 import { FlagService } from '../../service/flag.service';
-import { showPlatform$ } from '../../guards/platform.guard';
+
 import { Store } from '@ngrx/store';
 import { ProjectSelectors } from '../../store/project/project.selector';
+
 @Component({
   selector: 'ap-user-avatar',
   templateUrl: './user-avatar.component.html',
@@ -24,7 +25,7 @@ export class UserAvatarComponent implements OnInit {
   overflownProjectsNames: Record<string, string> = {};
   billingEnabled$: Observable<boolean>;
   projectEnabled$: Observable<boolean>;
-  showPlatform$: Observable<boolean> = showPlatform$;
+  showPlatform = false;
   showCommunity$: Observable<boolean>;
   constructor(
     public authenticationService: AuthenticationService,
@@ -39,7 +40,7 @@ export class UserAvatarComponent implements OnInit {
     );
     // BEGIN EE
     this.billingEnabled$ = this.flagService.isFlagEnabled(
-      ApFlagId.BILLING_ENABLED
+      ApFlagId.SHOW_BILLING
     );
     this.projectEnabled$ = this.flagService.isFlagEnabled(
       ApFlagId.PROJECT_MEMBERS_ENABLED
@@ -50,6 +51,8 @@ export class UserAvatarComponent implements OnInit {
   }
   ngOnInit(): void {
     this.currentUserEmail = this.authenticationService.currentUser.email;
+    const decodedToken = this.authenticationService.getDecodedToken();
+    this.showPlatform = !!decodedToken && !!decodedToken['platformId'];
   }
 
   getDropDownLeftOffset(
