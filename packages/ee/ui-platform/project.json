@@ -28,8 +28,7 @@
       "options": {
         "lintFilePatterns": [
           "packages/ee/ui-platform/**/*.ts",
-          "packages/ee/ui-platform/**/*.html",
-          "packages/ee/ui-platform/package.json"
+          "packages/ee/ui-platform/**/*.html"
         ]
       }
     }
