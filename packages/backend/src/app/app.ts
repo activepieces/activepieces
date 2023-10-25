@@ -57,6 +57,7 @@ import { pieceServiceHooks } from './pieces/piece-service/piece-service-hooks'
 import { projectModule } from './project/project-module'
 import { flowWorkerHooks } from './workers/flow-worker/flow-worker-hooks'
 import { customDomainModule } from './ee/custom-domains/custom-domain.module'
+import { setupBullMQBoard } from './workers/flow-worker/queues/redis/redis-queue'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -151,6 +152,8 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(stepFileModule)
     await app.register(chatbotModule)
     await app.register(userModule)
+
+    await setupBullMQBoard(app)
 
     app.get(
         '/redirect',

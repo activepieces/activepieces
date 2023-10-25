@@ -15,6 +15,7 @@ const ignoredRoutes = new Set([
     '/v1/flow-templates/:id',
     '/v1/project-members/accept',
     ...(API_KEY_PROTECTED_ROUTES.map(f => f.url)),
+    // END EE
     '/v1/chatbots/:id/ask',
     '/v1/chatbots/:id/metadata',
     '/v1/flow-runs/:id/resume',
@@ -62,8 +63,11 @@ export const tokenVerifyMiddleware = async (request: FastifyRequest): Promise<vo
     }
 }
 
-function requiresAuthentication(routerPath: string, method: string) {
+function requiresAuthentication(routerPath: string, method: string): boolean {
     if (ignoredRoutes.has(routerPath)) {
+        return false
+    }
+    if (routerPath.startsWith('/ui')) {
         return false
     }
     if (routerPath == '/v1/app-credentials' && method == 'GET') {

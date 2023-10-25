@@ -124,6 +124,12 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.SHOW_BLOG_GUIDE,
+                value: true,
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.SANDBOX_RUN_TIME_SECONDS,
                 value: system.getNumber(SystemProp.SANDBOX_RUN_TIME_SECONDS),
                 created,

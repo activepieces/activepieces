@@ -32,6 +32,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [SystemProp.TELEMETRY_ENABLED]: 'true',
     [SystemProp.TEMPLATES_SOURCE_URL]: 'https://cloud.activepieces.com/api/v1/flow-templates',
     [SystemProp.TRIGGER_DEFAULT_POLL_INTERVAL]: '5',
+    [SystemProp.QUEUE_UI_ENABLED]: 'false',
 }
 
 export const system = {
@@ -61,7 +62,6 @@ export const system = {
         if (isNil(value)) {
             return undefined
         }
-
         return value === 'true'
     },
 
