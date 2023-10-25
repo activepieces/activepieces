@@ -83,15 +83,13 @@ const enterpriseProjectController: FastifyPluginCallbackTypebox = (fastify, _opt
             },
         },
         async (request) => {
-            if (request.params.projectId !== request.principal.projectId) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.PROJECT_NOT_FOUND,
-                    params: {
-                        id: request.params.projectId,
-                    },
-                })
-            }
-            return await projectService.update(request.principal.projectId, request.body)
+          
+            return await projectService.update({
+                platformId: request.principal.platformId,
+                projectId: request.principal.projectId,
+                request: request.body,
+            })
+            
         },
     )
 

@@ -657,3 +657,17 @@ mat-icon[data-mat-icon-name="custom_expand_less"] {
 .material-suffix-icon {
   padding-right:  max(16px, calc(var(--mdc-shape-small, 4px) + 4px));;
 }
+
+ngx-colors-panel { 
+  .manual-input-wrapper{
+    font-family: $font-family  !important;
+    @apply ap-typography-body-2 #{!important};
+    p{
+      @apply ap-cursor-pointer;
+    }
+    input{
+      font-family: $font-family  !important;
+      @apply ap-typography-body-2 #{!important};
+    }
+  }
+}

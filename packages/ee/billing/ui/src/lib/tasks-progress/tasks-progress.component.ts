@@ -27,7 +27,7 @@ export class TasksProgressComponent {
     private flagsService: FlagService
   ) {
     this.billingEnabled$ = this.flagsService.isFlagEnabled(
-      ApFlagId.BILLING_ENABLED
+      ApFlagId.SHOW_BILLING
     );
     this.tasksStats$ = this.billingService.getUsage().pipe(
       map((res) => {

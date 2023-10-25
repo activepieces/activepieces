@@ -8,7 +8,10 @@ import {
 import { ConnectionsTableComponent } from './pages/connections-table/connections-table.component';
 import { FoldersResolver } from './resolvers/folders.resolver';
 import { DashboardContainerComponent } from './dashboard-container.component';
-import { ConnectionsResolver } from '@activepieces/ui/common';
+import {
+  ConnectionsResolver,
+  showPlatformSettingsGuard,
+} from '@activepieces/ui/common';
 import {
   ChatbotsTableComponent,
   ChatbotSettingsComponent,
@@ -115,6 +118,18 @@ export const DashboardLayoutRouting: Routes = [
           [ARE_THERE_FLOWS_FLAG]: AreThereFlowsResovler,
           folders: FoldersResolver,
         },
+      },
+      {
+        data: {
+          title: $localize`Platform`,
+        },
+        path: 'platform',
+        pathMatch: 'full',
+        loadChildren: () =>
+          import('@activepieces/ui-ee-platform').then(
+            (res) => res.UiEePlatformModule
+          ),
+        canActivate: [showPlatformSettingsGuard],
       },
     ],
   },

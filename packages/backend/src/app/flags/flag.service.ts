@@ -58,7 +58,7 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.BILLING_ENABLED,
+                id: ApFlagId.SHOW_BILLING,
                 value: getEdition() === ApEdition.CLOUD,
                 created,
                 updated,
