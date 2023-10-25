@@ -15,6 +15,11 @@ When you execute the deploy.sh script in the Docker installation tutorial, it wi
 | ---------------------------- | ----------------------------------------------------------------------------------------------------------- | ---------------------   | --------
 | `AP_JWT_SECRET`              | ❗️ Encryption key used for generating JWT tokens                                                             | `None`                  | https://demo.activepieces.com
 | `AP_FRONTEND_URL`            | ❗️ Url that will be used to specify redirect url and webhook url.                                            | `None`                  | https://demo.activepieces.com/api
+| `AP_DB_TYPE`                 | The type of database to use. (POSTGRES / SQLITE3)                                                             | `SQLITE3`              |
+| `AP_QUEUE_MODE`              | The queue mode to use. (MEMORY / REDIS)                                                                       | `MEMORY`                 |
+| `AP_QUEUE_UI_ENABLED`        | Enable the queue UI (only works with redis)                                                                   | `true`                  |
+| `AP_QUEUE_UI_USERNAME`       | The username for the queue UI                                                                                 | None                 |
+| `AP_QUEUE_UI_PASSWORD`       | The password for the queue UI                                                                                 | None                 |
 | `AP_TRIGGER_DEFAULT_POLL_INTERVAL`  | The default polling internal for app triggers in minutes                                                  | `5`                     |
 | `AP_POSTGRES_DATABASE`       | ❗️ The name of the PostgreSQL database                                                                       | `None`                  |
 | `AP_POSTGRES_HOST`           | ❗️ The hostname or IP address of the PostgreSQL server                                                       | `None`                  |
@@ -39,6 +44,10 @@ When you execute the deploy.sh script in the Docker installation tutorial, it wi
 The frontend URL is essential for webhooks and app triggers to work. 
 It must be accessible to third parties to send data. 
 </Warning>
+
+### Queue User Interface
+
+The queue UI is a tool that allows you to monitor the queue and debug scheduled jobs. It is only available when using Redis as the queue mode. In production mode, you can find it at `/api/ui`, while in development mode, it is located at `/ui`.
 
 ### Setting Webhook (Frontend URL):
 
