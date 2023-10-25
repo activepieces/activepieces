@@ -35,8 +35,7 @@
     </mat-tab-group>
 
 </div>
-<ng-container *ngIf="group.selectedIndex === 1">
-    <div class=" ap-px-7.5 ap-h-[calc(100%-17.5rem)]">
-        <app-platform-appearance></app-platform-appearance>
-    </div>
-</ng-container>
+
+<div class=" ap-px-7.5 ap-h-[calc(100%-17.5rem)]" [class.ap-hidden]="group.selectedIndex !== 1">
+    <app-platform-appearance [platform]="platform"></app-platform-appearance>
+</div>

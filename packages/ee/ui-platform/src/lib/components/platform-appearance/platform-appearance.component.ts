@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  Input,
+  OnInit,
+} from '@angular/core';
 import {
   FormBuilder,
   FormControl,
@@ -6,13 +11,16 @@ import {
   Validators,
 } from '@angular/forms';
 import { validColorValidator } from 'ngx-colors';
-import { validateFileControl } from '@activepieces/ui/common';
+import { Platform, UpdatePlatformRequestBody } from '@activepieces/ee-shared';
+import { Observable, map, tap } from 'rxjs';
+import { PlatformService } from '../../platform.service';
+import { AuthenticationService } from '@activepieces/ui/common';
 
 interface AppearanceForm {
-  displayName: FormControl<string>;
-  logo: FormControl<File | null>;
-  fullLogo: FormControl<File | null>;
-  favIcon: FormControl<File | null>;
+  name: FormControl<string>;
+  fullLogoUrl: FormControl<string>;
+  logoIconUrl: FormControl<string>;
+  favIconUrl: FormControl<string>;
   primaryColor: FormControl<string>;
   pickerCtrl: FormControl<string>;
 }
@@ -21,48 +29,50 @@ interface AppearanceForm {
   templateUrl: './platform-appearance.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PlatformAppearanceComponent {
+export class PlatformAppearanceComponent implements OnInit {
   logoFileExtensions: string[] = ['.png', '.jpeg', '.jpg', '.svg', '.webp'];
   formGroup: FormGroup<AppearanceForm>;
   loading = false;
-  constructor(private fb: FormBuilder) {
+  updatePlatform$?: Observable<void>;
+  @Input({ required: true }) platform!: Platform;
+  constructor(
+    private fb: FormBuilder,
+    private platformService: PlatformService,
+    private authenticationService: AuthenticationService
+  ) {
     this.formGroup = this.fb.group({
-      displayName: this.fb.control(
+      name: this.fb.control(
         {
           disabled: false,
           value: '',
         },
         { validators: [Validators.required], nonNullable: true }
       ),
-      favIcon: this.fb.control<File | null>(
+      favIconUrl: this.fb.control(
         {
           disabled: false,
-          value: null,
+          value: '',
         },
-        { validators: [Validators.required] }
+        { validators: [Validators.required], nonNullable: true }
       ),
-      logo: this.fb.control<File | null>(
+      logoIconUrl: this.fb.control(
         {
           disabled: false,
-          value: null,
+          value: '',
         },
         {
-          validators: [
-            Validators.required,
-            validateFileControl(this.logoFileExtensions, 4000000),
-          ],
+          validators: [Validators.required],
+          nonNullable: true,
         }
       ),
-      fullLogo: this.fb.control<File | null>(
+      fullLogoUrl: this.fb.control(
         {
           disabled: false,
-          value: null,
+          value: '',
         },
         {
-          validators: [
-            Validators.required,
-            validateFileControl(this.logoFileExtensions, 4000000),
-          ],
+          validators: [Validators.required],
+          nonNullable: true,
         }
       ),
       primaryColor: this.fb.control(
@@ -84,58 +94,39 @@ export class PlatformAppearanceComponent {
       ),
     });
   }
+  ngOnInit(): void {
+    this.formGroup.patchValue({
+      ...this.platform,
+      pickerCtrl: this.platform.primaryColor,
+    });
+  }
   save() {
     this.formGroup.markAllAsTouched();
     if (this.formGroup.valid && !this.loading) {
-      if (!this.formGroup.value.favIcon) {
-        console.error('favIcon is null');
-        return;
-      }
-      if (!this.formGroup.value.logo) {
-        console.error('logo is null');
-        return;
-      }
-      if (!this.formGroup.value.fullLogo) {
-        console.error('full logo is null');
-        return;
-      }
       this.loading = true;
-      const filesToRead: Record<string, { file: File; value: string }> = {
-        logo: {
-          file: this.formGroup.value.logo,
-          value: '',
-        },
-        favIcon: {
-          file: this.formGroup.value.favIcon,
-          value: '',
-        },
-        fullLogo: {
-          file: this.formGroup.value.fullLogo,
-          value: '',
-        },
+      const request: UpdatePlatformRequestBody = {
+        favIconUrl: this.formGroup.value.favIconUrl,
+        fullLogoUrl: this.formGroup.value.fullLogoUrl,
+        logoIconUrl: this.formGroup.value.logoIconUrl,
+        name: this.formGroup.value.name,
+        primaryColor: this.formGroup.value.primaryColor,
       };
-      Object.keys(filesToRead).forEach((k) => {
-        const fileReader = new FileReader();
-        fileReader.readAsDataURL(filesToRead[k].file);
-        fileReader.onload = () => {
-          if (typeof fileReader.result === 'string') {
-            filesToRead[k].value = fileReader.result;
-            if (filesToRead['logo'].value && filesToRead['favIcon'].value) {
-              this._saveRequest({
-                logo: filesToRead['logo'].value,
-                favIcon: filesToRead['favIcon'].value,
-              });
-            }
-          }
-        };
-      });
+      request;
+      this.platformService;
+      const decodedToken = this.authenticationService.getDecodedToken();
+      if (!decodedToken) {
+        console.error('no jwt token in localstorage or it is invalid');
+        return;
+      }
+      const platformId = decodedToken['platformId'];
+      this.updatePlatform$ = this.platformService
+        .updatePlatform(request, platformId)
+        .pipe(
+          tap(() => {
+            this.loading = false;
+          }),
+          map(() => void 0)
+        );
     }
-  }
-  private _saveRequest(filesRead: { logo: string; favIcon: string }) {
-    const req = {
-      ...this.formGroup.value,
-      ...filesRead,
-    };
-    console.log(req);
   }
 }

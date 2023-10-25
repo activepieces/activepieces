@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../environments/environment';
 import { Observable, map, tap } from 'rxjs';
-import { Project, ProjectId, UpdateProjectRequest } from '@activepieces/shared';
+import { Project, ProjectId } from '@activepieces/shared';
+import { UpdateProjectRequest } from '@activepieces/ee-shared';
 
 @Injectable({
   providedIn: 'root',

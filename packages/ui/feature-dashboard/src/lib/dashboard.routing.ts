@@ -117,7 +117,9 @@ export const DashboardLayoutRouting: Routes = [
         },
       },
       {
-        title: $localize`Platform`,
+        data: {
+          title: $localize`Platform`,
+        },
         path: 'platform',
         pathMatch: 'full',
         loadChildren: () =>
