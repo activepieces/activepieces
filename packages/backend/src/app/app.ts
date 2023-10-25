@@ -59,6 +59,7 @@ import { flowWorkerHooks } from './workers/flow-worker/flow-worker-hooks'
 import { customDomainModule } from './ee/custom-domains/custom-domain.module'
 import { authenticationServiceHooks } from './authentication/authentication-service/hooks'
 import { enterpriseAuthenticationServiceHooks } from './ee/authentication/authentication-service/hooks/enterprise-authentication-service-hooks'
+import { flowQueueConsumer } from './workers/flow-worker/flow-queue-consumer'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -213,6 +214,10 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(projectModule)
             break
     }
+
+    app.addHook('onClose', async () => {
+        await flowQueueConsumer.close()
+    })
 
     return app
 }
