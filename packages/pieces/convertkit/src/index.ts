@@ -6,6 +6,12 @@ import {
   unsubscribeSubscriber,
   listSubscriberTags,
 } from './lib/actions/subscriber';
+import {
+  listFields,
+  createField,
+  updateField,
+  destroyField,
+} from './lib/actions/custom-fields';
 
 import { createWebhook, destroyWebhook } from './lib/actions/webhook';
 
@@ -30,6 +36,10 @@ export const convertkit = createPiece({
     listSubscriberTags,
     createWebhook,
     destroyWebhook,
+    listFields,
+    createField,
+    updateField,
+    destroyField,
   ],
   triggers: [],
 });

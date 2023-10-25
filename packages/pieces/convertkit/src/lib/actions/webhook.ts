@@ -6,7 +6,7 @@ import {
 import { convertkitAuth } from '../..';
 import { CONVERTKIT_API_URL } from '../common';
 
-export const API_ENDPOINT = 'automations/hooks/';
+const API_ENDPOINT = 'automations/hooks/';
 
 const createWebhookParameterOptions = [
   {
@@ -107,7 +107,7 @@ export const createWebhook = createAction({
     }),
     event_parameter: Property.DynamicProperties({
       displayName: 'Event Parameter',
-      description: 'The parameter for the event',
+      description: 'The required parameter for the event',
       required: false,
       refreshers: ['event'],
       props: async ({ event }) => {
