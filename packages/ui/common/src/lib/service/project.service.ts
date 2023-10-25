@@ -3,7 +3,10 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../environments/environment';
 import { Observable, map, tap } from 'rxjs';
 import { Project, ProjectId } from '@activepieces/shared';
-import { UpdateProjectRequest } from '@activepieces/ee-shared';
+import {
+  CreateProjectRequest,
+  UpdateProjectRequest,
+} from '@activepieces/ee-shared';
 
 @Injectable({
   providedIn: 'root',
@@ -11,6 +14,9 @@ import { UpdateProjectRequest } from '@activepieces/ee-shared';
 export class ProjectService {
   constructor(private http: HttpClient) {}
 
+  create(req: CreateProjectRequest) {
+    return this.http.post<void>(environment.apiUrl + '/projects/', req);
+  }
   update(
     projectId: ProjectId,
     request: UpdateProjectRequest

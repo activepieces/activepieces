@@ -18,8 +18,11 @@
         <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic">
             Cancel
         </ap-button>
-        <ap-button [loading]="loading" (buttonClicked)="createProject()" btnColor="success" btnSize="default">
+        <ap-button [loading]="loading" (buttonClicked)="createProject()" btnColor="success" btnSize="default"
+            [loading]="loading">
             Create
         </ap-button>
     </div>
 </mat-dialog-actions>
+
+<ng-container *ngIf="createProject$ | async"></ng-container>

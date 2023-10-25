@@ -51,6 +51,7 @@ export class ProjectEffects {
           return this.projectService
             .update(project.id, {
               notifyStatus: notifyStatus,
+              displayName: project.displayName,
             })
             .pipe(
               catchError((error) => {

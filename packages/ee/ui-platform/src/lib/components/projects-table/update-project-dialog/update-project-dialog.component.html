@@ -1,5 +1,5 @@
 <ap-dialog-title-template>
-    Edit Project
+    Edit {{data.project.displayName}}
 </ap-dialog-title-template>
 
 <mat-dialog-content>
@@ -18,8 +18,11 @@
         <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic">
             Cancel
         </ap-button>
-        <ap-button [loading]="loading" (buttonClicked)="updateProject()" btnColor="primary" btnSize="default">
+        <ap-button [loading]="loading" (buttonClicked)="updateProject()" btnColor="primary" btnSize="default"
+            [loading]="loading">
             Update
         </ap-button>
     </div>
 </mat-dialog-actions>
+
+<ng-container *ngIf="updateProject$ | async"></ng-container>

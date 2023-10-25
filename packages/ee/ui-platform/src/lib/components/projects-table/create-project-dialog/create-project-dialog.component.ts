@@ -6,6 +6,8 @@ import {
   Validators,
 } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
+import { ProjectService } from '@activepieces/ui/common';
+import { Observable, catchError, tap } from 'rxjs';
 
 interface CreateProjectForm {
   displayName: FormControl<string>;
@@ -18,9 +20,11 @@ interface CreateProjectForm {
 export class CreateProjectDialogComponent {
   formGroup: FormGroup<CreateProjectForm>;
   loading = false;
+  createProject$?: Observable<void>;
   constructor(
     private fb: FormBuilder,
-    private dialogRef: MatDialogRef<CreateProjectDialogComponent>
+    private dialogRef: MatDialogRef<CreateProjectDialogComponent>,
+    private projectService: ProjectService
   ) {
     this.formGroup = this.fb.group({
       displayName: this.fb.control(
@@ -37,6 +41,21 @@ export class CreateProjectDialogComponent {
   }
   createProject() {
     //Create project logic
-    if (this.formGroup.valid) this.dialogRef.close(true);
+    if (this.formGroup.valid && !this.loading) {
+      this.createProject$ = this.projectService
+        .create({
+          displayName: this.formGroup.getRawValue().displayName,
+        })
+        .pipe(
+          tap(() => {
+            this.loading = true;
+            this.dialogRef.close(true);
+          }),
+          catchError((err) => {
+            console.error(err);
+            throw err;
+          })
+        );
+    }
   }
 }
