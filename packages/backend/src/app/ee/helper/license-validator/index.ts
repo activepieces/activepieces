@@ -6,7 +6,7 @@ import { system } from '../../../helper/system/system'
 import { SystemProp } from '../../../helper/system/system-prop'
 
 const variant: Record<ApEnvironment, LicenseValidator> = {
-    [ApEnvironment.PRODUCTION]: noOpLicenseValidator,
+    [ApEnvironment.PRODUCTION]: networkLicenseValidator,
     [ApEnvironment.DEVELOPMENT]: noOpLicenseValidator,
     [ApEnvironment.TESTING]: noOpLicenseValidator,
 }
