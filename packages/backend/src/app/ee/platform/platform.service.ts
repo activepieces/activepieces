@@ -61,6 +61,11 @@ export const platformService = {
             ownerId,
         })
     },
+
+    async checkUserIsOwner({ platformId, userId }: CheckUserIsOwnerParams): Promise<boolean> {
+        const platform = await this.getOneOrThrow(platformId)
+        return platform.ownerId === userId
+    },
 }
 
 const assertPlatformExists: (platform: Platform | null) => asserts platform is Platform = (platform) => {
@@ -101,4 +106,9 @@ type UpdateParams = UpdatePlatformRequestBody & {
 
 type GetOneByOwnerParams = {
     ownerId: UserId
+}
+
+type CheckUserIsOwnerParams = {
+    platformId: PlatformId
+    userId: UserId
 }
