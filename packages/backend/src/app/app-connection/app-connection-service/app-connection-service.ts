@@ -310,7 +310,7 @@ async function lockAndRefreshConnection({
         const refreshedAppConnection = await refresh(appConnection)
 
         await repo.update(refreshedAppConnection.id, {
-            status: refreshedAppConnection.status,
+            status: AppConnectionStatus.ACTIVE,
             value: encryptObject(refreshedAppConnection.value),
         })
         return refreshedAppConnection
