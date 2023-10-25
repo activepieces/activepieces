@@ -3,7 +3,7 @@ import { convertkitAuth } from '../..';
 import { subscriberId } from '../common';
 import { CONVERTKIT_API_URL } from '../common';
 
-export const API_ENDPOINT = 'subscribers/';
+const API_ENDPOINT = 'subscribers/';
 
 export const getSubscriberById = createAction({
   auth: convertkitAuth,
