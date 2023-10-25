@@ -124,6 +124,7 @@ export class PlatformAppearanceComponent implements OnInit {
         .pipe(
           tap(() => {
             this.loading = false;
+            window.location.reload();
           }),
           map(() => void 0)
         );
