@@ -105,10 +105,12 @@ export class MentionsListComponent implements OnInit, AfterViewInit {
   mentionClicked(mention: MentionListItem) {
     this.addMention.emit({
       insert: {
-        mention: {
+        apMention: {
           serverValue: mention.value,
           value: mention.label,
-          denotationChar: '',
+          data: {
+            logoUrl: mention.logoUrl,
+          },
         },
       },
     });
