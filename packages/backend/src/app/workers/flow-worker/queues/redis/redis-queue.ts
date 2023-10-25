@@ -39,20 +39,22 @@ let scheduledJobQueue: Queue<ScheduledJobData, unknown>
 
 const repeatingJobKey = (id: ApId): string => `activepieces:repeatJobKey:${id}`
 
-const queueEnabled = system.getBoolean(SystemProp.QUEUE_UI_ENABLED)
-const queueUsername = system.get(SystemProp.QUEUE_UI_USERNAME)
-const queuePassword = system.get(SystemProp.QUEUE_UI_PASSWORD)
-const edition = getEdition()
 const QUEUE_BASE_PATH = '/ui'
 
-export async function setupBullMQBoard(app: FastifyInstance): Promise<void> {
-    logger.info(system.get(SystemProp.QUEUE_UI_ENABLED) + ' ' + queueEnabled, '[setupBullMQBoard] queueEnabled')
-    if (!queueEnabled) {
-        return
-    }
+function isQueueEnabled(): boolean {
+    const edition = getEdition()
     if (edition === ApEdition.CLOUD) {
+        return false
+    }
+    return system.getBoolean(SystemProp.QUEUE_UI_ENABLED) ?? false
+}
+
+export async function setupBullMQBoard(app: FastifyInstance): Promise<void> {
+    if (!isQueueEnabled()) {
         return
     }
+    const queueUsername = system.getOrThrow(SystemProp.QUEUE_UI_USERNAME)
+    const queuePassword = system.getOrThrow(SystemProp.QUEUE_UI_PASSWORD)
     logger.info('[setupBullMQBoard] Setting up bull board, visit /ui to see the queues')
 
     await app.register(basicAuth, {
@@ -78,13 +80,12 @@ export async function setupBullMQBoard(app: FastifyInstance): Promise<void> {
     app.addHook('onRequest', (req, reply, next) => {
         if (!req.routerPath.startsWith(QUEUE_BASE_PATH)) {
             next()
-        } 
+        }
         else {
-            app.basicAuth(req, reply, function (error) {
-                const casted = error as unknown as { statusCode: number, name: string }
-                if (casted) {
-                    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                    reply.code(casted.statusCode || 500).send({ error: casted.name })
+            app.basicAuth(req, reply, function (error?: unknown) {
+                const castedError = error as { statusCode: number, name: string }
+                if (!isNil(castedError)) {
+                    void reply.code(castedError.statusCode || 500).send({ error: castedError.name })
                 }
                 else {
                     next()
