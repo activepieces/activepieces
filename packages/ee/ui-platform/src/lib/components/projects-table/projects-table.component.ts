@@ -45,6 +45,7 @@ export class ProjectsTableComponent {
         tap((res) => {
           if (res) {
             this.refreshTable$.next(true);
+            this.reinitializeProjectsInStore();
           }
         }),
         map(() => void 0)
@@ -66,23 +67,26 @@ export class ProjectsTableComponent {
         tap((res) => {
           if (res) {
             this.refreshTable$.next(true);
-            const user = this.authenticationService.currentUserSubject.value;
-            const decodedToken = this.authenticationService.getDecodedToken();
-            if (!decodedToken) {
-              console.error('Token is invalid or not set');
-              return;
-            }
-            if (user) {
-              this.store.dispatch(
-                CommonActions.loadProjects({
-                  user,
-                  currentProjectId: decodedToken['projectId'],
-                })
-              );
-            }
+            this.reinitializeProjectsInStore();
           }
         }),
         map(() => void 0)
       );
+  }
+  reinitializeProjectsInStore() {
+    const user = this.authenticationService.currentUserSubject.value;
+    const decodedToken = this.authenticationService.getDecodedToken();
+    if (!decodedToken) {
+      console.error('Token is invalid or not set');
+      return;
+    }
+    if (user) {
+      this.store.dispatch(
+        CommonActions.loadProjects({
+          user,
+          currentProjectId: decodedToken['projectId'],
+        })
+      );
+    }
   }
 }
