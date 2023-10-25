@@ -57,9 +57,7 @@ export class SidenavRoutesListComponent implements OnInit {
     this.showSupport$ = this.flagServices.isFlagEnabled(
       ApFlagId.SHOW_COMMUNITY
     );
-    this.showBilling$ = this.flagServices.isFlagEnabled(
-      ApFlagId.BILLING_ENABLED
-    );
+    this.showBilling$ = this.flagServices.isFlagEnabled(ApFlagId.SHOW_BILLING);
     this.hideSideRoutes$ = this.dashboardService.gethideSideNaveRoutesObs();
   }
 
