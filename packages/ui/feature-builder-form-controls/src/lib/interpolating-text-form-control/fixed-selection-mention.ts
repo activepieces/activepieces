@@ -1,5 +1,5 @@
 import Quill from 'quill';
-import { fixSelection } from './utils';
+import { customCodeMentionDisplayName, fixSelection } from './utils';
 import { ApMention } from '@activepieces/ui/common';
 
 export function init() {
@@ -33,7 +33,11 @@ export function init() {
       }
 
       node.innerHTML += op.value;
-      node.className = 'mention-content';
+      const cursor =
+        op.value === customCodeMentionDisplayName
+          ? 'ap-cursor-pointer'
+          : 'ap-cursor-auto';
+      node.className = `mention-content ${cursor}`;
       return MentionBlot.setDataValues(node, op);
     }
 
@@ -82,6 +86,19 @@ export function init() {
         if (typeof window.getSelection != 'undefined') {
           fixSelection(this.domNode);
         }
+        if (
+          this.domNode.getAttribute('data-value') ===
+          customCodeMentionDisplayName
+        ) {
+          const textNode = document.createTextNode(
+            this.domNode.getAttribute('data-server-value') || ''
+          );
+          if (this.domNode.parentNode) {
+            this.domNode.parentNode.insertBefore(textNode, this.domNode);
+            this.domNode.parentNode.removeChild(this.domNode);
+          }
+        }
+
         const event = this.buildEvent('mention-clicked', e);
         window.dispatchEvent(event);
         e.preventDefault();

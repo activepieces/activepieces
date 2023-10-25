@@ -9,7 +9,7 @@ import { Subject } from 'rxjs';
 import { FlowItem } from '@activepieces/ui/feature-builder-store';
 import { InsertMentionOperation } from '@activepieces/ui/common';
 
-const customCodeMentionDisplayName = 'Custom Code';
+export const customCodeMentionDisplayName = 'Custom Code';
 export const keysWithinPath = (path: string) => {
   const result: string[] = [];
   let insideBrackets = false;
