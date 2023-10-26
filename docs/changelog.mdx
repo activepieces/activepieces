@@ -13,6 +13,42 @@ Semantic versioning is a standardized way of versioning software projects. It us
 
 Here's the revised text with improved grammar and spelling:
 
+### 27/10/2023
+
+**Features**:
+- Internationalization is now supported by @Doskyft; you can see Activepieces in French by adding /fr to the URL and as well the ability to contribute other languages. 
+- Ability to turn bull board to visualize redis queues and trouble shoot further, check environment variables. 
+- Private Pieces are now supported by uploading the tar file directly into "My Pieces" and the documentation (Paid feature).
+- Platform (Admin) Settings are now supported in Enterprise Edition / Cloud Edition (Paid Feature).
+- Added the ability to create projects in Platform Settings (Paid Feature).
+- Added the ability to change branding / theme from Platform Admin Settings (Paid Feature).
+- Added the ability to whitelabel Activepieces using your custom domain (Cloud feature only).
+
+**Pieces**:
+- Airtable: Fixed Field Mapping when Updating a Record
+- Microsoft Excel: Actions - Append Row to Worksheet, Get Worksheets, Get Worksheet Rows, Update Worksheet Row, Clear Worksheet, Delete Worksheet, Add a Worksheet to a Workbook, Get Table Rows, Get Table Columns, Create Table, Delete Table, Lookup Table Column, Append Row to a Table, and Convert to Range, all by @BastienMe
+- Saastic: Actions - Create/Update Customer and Create Customer Charge by @leolupianez
+- Shopify: Sample data for triggers is now fixed.
+- Math: Actions - Division, Addition, Subtraction, Multiplication, Modulo, Generate Random Number, all by @lisander-lopez
+- Discord: Actions - Add Role to User, Remove Role from User, Rename Channel, Find Channel, Find User, all by @TaskMagicKyle
+- OpenRouter: The load models list is now fixed.
+- Talkable: Added a "No Error On Failure" parameter for all actions by @Vitalini
+
+**Fixes**:
+- Made the area under the data to insert popup clickable when hidden.
+- Webhook Multipart is now fixed and supported again.
+- The "Delete Team Member" button is now fixed.
+- Code pieces are now stored inside flow JSON, which should prevent code from disappearing sometimes after publishing or when duplicating a flow.
+
+**Developers Experience**:
+- The HTTP library in the piece framework now sends query parameters correctly, thanks to @andchir.
+- Improved Docker layer caching and ignored files, contributed by @maor-rozenfeld.
+- Added integration tests for the platform APIs as well improved the e2e playwright tests to be error prone.
+
+**Contributors**:
+Big shoutout to @andchir, @leolupianez, @lisander-lopez, @Doskyft, @UdayKharatmol, @derbbre, @TaskMagicKyle, @maor-rozenfeld
+
+**Full Changelog**: https://github.com/activepieces/activepieces/compare/0.11.0...0.12.0
 
 ### 18/10/2023
 
