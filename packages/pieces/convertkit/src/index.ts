@@ -35,6 +35,11 @@ import {
   listSupscriptionsToSequence,
 } from './lib/actions/sequences';
 
+import { addTag } from './lib/triggers/tag-add';
+
+export const ENVIRONMENT = 'dev'
+// export const ENVIRONMENT = 'prod'
+
 export const convertkitAuth = PieceAuth.SecretText({
   displayName: 'API Secret',
   description: 'Enter your API Secret key',
@@ -72,5 +77,5 @@ export const convertkit = createPiece({
     addSubscriberToSequence,
     listSupscriptionsToSequence,
   ],
-  triggers: [],
+  triggers: [addTag],
 });
