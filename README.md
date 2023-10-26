@@ -219,6 +219,7 @@ We welcome contributions big or small and in different directions. The best way 
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/derbbre"><img src="https://avatars.githubusercontent.com/u/281843?v=4?s=100" width="100px;" alt="derbbre"/><br /><sub><b>derbbre</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=derbbre" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/maor-rozenfeld"><img src="https://avatars.githubusercontent.com/u/49363375?v=4?s=100" width="100px;" alt="Maor Rozenfeld"/><br /><sub><b>Maor Rozenfeld</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=maor-rozenfeld" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
