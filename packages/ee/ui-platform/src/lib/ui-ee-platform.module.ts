@@ -10,6 +10,8 @@ import { UpdateProjectDialogComponent } from './components/projects-table/update
 import { PlatformAppearanceComponent } from './components/platform-appearance/platform-appearance.component';
 import { PortalModule } from '@angular/cdk/portal';
 import { PlatformSettingsComponent } from './components/platform-settings/platform-settings.component';
+import { SigningKeysTableComponent } from './components/signing-keys-table/signing-keys-table.component';
+import { CreateSigningKeyDialogComponent } from './components/signing-keys-table/create-signing-key-dialog/create-signing-key-dialog.component';
 @NgModule({
   imports: [
     UiCommonModule,
@@ -24,6 +26,8 @@ import { PlatformSettingsComponent } from './components/platform-settings/platfo
     UpdateProjectDialogComponent,
     PlatformAppearanceComponent,
     PlatformSettingsComponent,
+    SigningKeysTableComponent,
+    CreateSigningKeyDialogComponent,
   ],
 })
 export class UiEePlatformModule {}
