@@ -161,11 +161,11 @@ export const updateField = createAction({
   },
 });
 
-export const destroyField = createAction({
+export const deleteField = createAction({
   auth: convertkitAuth,
   name: 'delete_field',
-  displayName: 'Custom Fields: Destroy Field',
-  description: 'Destroy a custom field',
+  displayName: 'Custom Fields: Delete Field',
+  description: 'Delete a custom field',
   props: {
     label: Property.Dropdown({
       displayName: 'Custom Label',

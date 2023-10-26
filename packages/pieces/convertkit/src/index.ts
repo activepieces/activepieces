@@ -10,10 +10,30 @@ import {
   listFields,
   createField,
   updateField,
-  destroyField,
+  deleteField,
 } from './lib/actions/custom-fields';
 
-import { createWebhook, destroyWebhook } from './lib/actions/webhook';
+import { createWebhook, deleteWebhook } from './lib/actions/webhook';
+
+import {
+  listBroadcasts,
+  createBroadcast,
+  getBroadcastById,
+  updateBroadcast,
+  deleteBroadcast,
+} from './lib/actions/broadcasts';
+
+import {
+  listForms,
+  addSubscriberToForm,
+  listFormSubscriptions,
+} from './lib/actions/forms';
+
+import {
+  listSequences,
+  addSubscriberToSequence,
+  listSupscriptionsToSequence,
+} from './lib/actions/sequences';
 
 export const convertkitAuth = PieceAuth.SecretText({
   displayName: 'API Secret',
@@ -35,11 +55,22 @@ export const convertkit = createPiece({
     unsubscribeSubscriber,
     listSubscriberTags,
     createWebhook,
-    destroyWebhook,
+    deleteWebhook,
     listFields,
     createField,
     updateField,
-    destroyField,
+    deleteField,
+    listBroadcasts,
+    createBroadcast,
+    getBroadcastById,
+    updateBroadcast,
+    deleteBroadcast,
+    listForms,
+    addSubscriberToForm,
+    listFormSubscriptions,
+    listSequences,
+    addSubscriberToSequence,
+    listSupscriptionsToSequence,
   ],
   triggers: [],
 });
