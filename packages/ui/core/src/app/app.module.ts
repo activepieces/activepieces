@@ -42,6 +42,7 @@ import {
   UiFeatureChatBotModule,
   chatbotMetadataResolver,
 } from '@activepieces/ui/feature-chatbot';
+import { EeComponentsModule } from '@activepieces/ee-components';
 
 const monacoConfig: NgxMonacoEditorConfig = {
   baseUrl: '/assets', // configure base path for monaco editor. Starting with version 8.0.0 it defaults to './assets'. Previous releases default to '/assets'
@@ -105,6 +106,7 @@ export function playerFactory() {
     // This can't be lazy loaded
     AngularFireModule.initializeApp(environment.firebase),
     AngularFireAuthModule,
+    EeComponentsModule,
     // END EE
     MonacoEditorModule.forRoot(monacoConfig),
     UiFeatureChatBotModule,
