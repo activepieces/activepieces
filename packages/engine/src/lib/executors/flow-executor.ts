@@ -41,7 +41,7 @@ type FinishIterateFlowResponse = BaseIterateFlowResponse<
 Exclude<
 ExecutionOutputStatus,
 | ExecutionOutputStatus.PAUSED
-| ExecutionOutputStatus.STOPPED
+| ExecutionOutputStatus.SUCCEEDED
 >
 >
 
@@ -49,7 +49,7 @@ type PauseIterateFlowResponse = BaseIterateFlowResponse<ExecutionOutputStatus.PA
     pauseMetadata: PauseMetadata
 }
 
-type StopIterateFlowResponse = BaseIterateFlowResponse<ExecutionOutputStatus.STOPPED> & {
+type StopIterateFlowResponse = BaseIterateFlowResponse<ExecutionOutputStatus.SUCCEEDED> & {
     stopResponse?: StopResponse
 }
 
@@ -249,16 +249,9 @@ export class FlowExecutor {
             case ExecutionOutputStatus.SUCCEEDED:
                 return {
                     status: ExecutionOutputStatus.SUCCEEDED,
-                    ...baseExecutionOutput,
-                }
-
-            case ExecutionOutputStatus.STOPPED:
-                return {
-                    status: ExecutionOutputStatus.STOPPED,
                     stopResponse: iterateFlowResponse.stopResponse,
                     ...baseExecutionOutput,
                 }
-
             case ExecutionOutputStatus.PAUSED:
                 return {
                     status: ExecutionOutputStatus.PAUSED,
@@ -330,9 +323,9 @@ export class FlowExecutor {
                 }
             }
 
-            case ExecutionOutputStatus.STOPPED: {
+            case ExecutionOutputStatus.SUCCEEDED: {
                 return {
-                    status: ExecutionOutputStatus.STOPPED,
+                    status: ExecutionOutputStatus.SUCCEEDED,
                     stopResponse: actionHandlerOutput.stopResponse!,
                 }
             }
@@ -348,7 +341,6 @@ export class FlowExecutor {
             }
 
             case ExecutionOutputStatus.TIMEOUT:
-            case ExecutionOutputStatus.SUCCEEDED:
             case ExecutionOutputStatus.QUOTA_EXCEEDED:
             case ExecutionOutputStatus.INTERNAL_ERROR:
                 break
