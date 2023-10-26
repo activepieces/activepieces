@@ -8,7 +8,6 @@ export enum ExecutionOutputStatus {
   INTERNAL_ERROR = 'INTERNAL_ERROR',
   PAUSED = 'PAUSED',
   RUNNING = "RUNNING",
-  STOPPED = 'STOPPED',
   SUCCEEDED = 'SUCCEEDED',
   TIMEOUT = 'TIMEOUT',
 }
@@ -82,15 +81,15 @@ export type FinishExecutionOutput = BaseExecutionOutput<
   Exclude<
     ExecutionOutputStatus,
       | ExecutionOutputStatus.PAUSED
-      | ExecutionOutputStatus.STOPPED
+      | ExecutionOutputStatus.SUCCEEDED
   >
 >
 
-export type StopExecutionOutput = BaseExecutionOutput<ExecutionOutputStatus.STOPPED> & {
+export type SucceededExecutionOutput = BaseExecutionOutput<ExecutionOutputStatus.SUCCEEDED> & {
   stopResponse?: StopResponse
 }
 
 export type ExecutionOutput =
   | FinishExecutionOutput
   | PauseExecutionOutput
-  | StopExecutionOutput
+  | SucceededExecutionOutput

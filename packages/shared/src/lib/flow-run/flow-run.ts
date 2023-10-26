@@ -12,6 +12,10 @@ import { FlowId } from '../flows/flow';
 
 export type FlowRunId = ApId;
 
+export enum RunTerminationReason {
+  STOPPED_BY_HOOK = 'STOPPED_BY_HOOK',
+}
+
 export type FlowRun = BaseModel<FlowRunId> & {
   id: FlowRunId;
   projectId: ProjectId;
@@ -19,6 +23,7 @@ export type FlowRun = BaseModel<FlowRunId> & {
   tags?: string[];
   flowVersionId: FlowVersionId;
   flowDisplayName: string;
+  terminationReason?: RunTerminationReason;
   logsFileId: FileId | null;
   tasks?: number;
   status: ExecutionOutputStatus;
