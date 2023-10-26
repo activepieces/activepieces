@@ -51,10 +51,10 @@ describe('admin add platform endpoint', () => {
         expect(responseBody.id).toHaveLength(21)
         expect(responseBody.ownerId).toBe(mockUser.id)
         expect(responseBody.name).toBe(mockPlatformName)
-        expect(responseBody.primaryColor).toBe('#000000')
-        expect(responseBody.logoIconUrl).toBe('https://activepieces.com/assets/images/logo-icon.png')
-        expect(responseBody.fullLogoUrl).toBe('https://activepieces.com/assets/images/logo-full.png')
-        expect(responseBody.favIconUrl).toBe('https://activepieces.com/assets/images/favicon.png')
+        expect(responseBody.primaryColor).toBe('#6e41e2')
+        expect(responseBody.logoIconUrl).toBe('https://cdn.activepieces.com/brand/logo.svg')
+        expect(responseBody.fullLogoUrl).toBe('https://cdn.activepieces.com/brand/full-logo.svg')
+        expect(responseBody.favIconUrl).toBe('https://cdn.activepieces.com/brand/favicon.ico')
     })
 
     it('updates project to be platform-managed', async () => {

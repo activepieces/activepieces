@@ -2,13 +2,9 @@ import { ActivepiecesError, ErrorCode, UserId, apId, isNil, spreadIfDefined } fr
 import { databaseConnection } from '../../database/database-connection'
 import { PlatformEntity } from './platform.entity'
 import { Platform, PlatformId, UpdatePlatformRequestBody } from '@activepieces/ee-shared'
+import { defaultTheme } from '../../flags/theme'
 
 const repo = databaseConnection.getRepository<Platform>(PlatformEntity)
-
-const PRIMARY_COLOR_DEFAULT = '#000000'
-const LOGO_ICON_URL_DEFAULT = 'https://activepieces.com/assets/images/logo-icon.png'
-const FULL_LOGO_URL_DEFAULT = 'https://activepieces.com/assets/images/logo-full.png'
-const FAV_ICON_URL_DEFAULT = 'https://activepieces.com/assets/images/favicon.png'
 
 export const platformService = {
     async add({ ownerId, name, primaryColor, logoIconUrl, fullLogoUrl, favIconUrl }: AddParams): Promise<Platform> {
@@ -16,10 +12,10 @@ export const platformService = {
             id: apId(),
             ownerId,
             name,
-            primaryColor: primaryColor ?? PRIMARY_COLOR_DEFAULT,
-            logoIconUrl: logoIconUrl ?? LOGO_ICON_URL_DEFAULT,
-            fullLogoUrl: fullLogoUrl ?? FULL_LOGO_URL_DEFAULT,
-            favIconUrl: favIconUrl ?? FAV_ICON_URL_DEFAULT,
+            primaryColor: primaryColor ?? defaultTheme.colors.primary.default,
+            logoIconUrl: logoIconUrl ?? defaultTheme.logos.logoIconUrl,
+            fullLogoUrl: fullLogoUrl ?? defaultTheme.logos.fullLogoUrl,
+            favIconUrl: favIconUrl ?? defaultTheme.logos.favIconUrl,
         }
 
         return await repo.save(newPlatform)
