@@ -6,6 +6,10 @@ export type UserId = ApId;
 
 export enum UserStatus {
   VERIFIED = "VERIFIED",
+
+  /**
+   * A user that was invited to a project but has not yet accepted the invitation.
+   */
   SHADOW = "SHADOW"
 }
 
