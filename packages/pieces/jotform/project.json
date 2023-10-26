@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/jotform/package.json",
         "main": "packages/pieces/jotform/src/index.ts",
         "assets": ["packages/pieces/jotform/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

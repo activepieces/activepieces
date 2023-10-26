@@ -24,15 +24,14 @@ export * from './lib/store/project/project.reducer';
 export * from './lib/store/project/project.selector';
 export * from './lib/models/flow-item-details';
 export * from './lib/models/chevron-dropdown-option';
-export * from './lib/models/artifact.interface';
 export * from './lib/models/flow-run.interface';
 export * from './lib/environments/environment';
 export * from './lib/service/test-step.service';
+export * from './lib/service/dashboard.service';
 export * from './lib/pipe/index';
 export * from './lib/directives/index';
 export * from './lib/environments/environment';
 export * from './lib/components/delete-enity-dialog/delete-entity-dialog.component';
-export * from './lib/utils/beamer';
 export * from './lib/utils/insert-mention-operation';
 export * from './lib/directives/track-hover.directive';
 export * from './lib/service/templates.service';
@@ -42,3 +41,8 @@ export * from './lib/components/upload-file-control/upload-file-control.componen
 export * from './lib/service/builder-autocomplete-mentions-dropdown.service';
 export * from './lib/resolvers/connections.resolver';
 export * from './lib/resolvers/are-there-featured-templates.resolver';
+export * from './lib/models/piece-metadata-model';
+export * from './lib/guards/show-platform-settings.guard';
+export * from './lib/service/appearance-service';
+
+import '@angular/localize/init';

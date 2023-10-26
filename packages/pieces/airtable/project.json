@@ -20,7 +20,8 @@
         "packageJson": "packages/pieces/airtable/package.json",
         "main": "packages/pieces/airtable/src/index.ts",
         "assets": ["packages/pieces/airtable/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     }
   },

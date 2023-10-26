@@ -7,8 +7,13 @@ import { canvasActions } from './canvas.action';
 import { EMPTY, of } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { BuilderSelectors } from '../builder.selector';
-import { LeftSideBarType, RightSideBarType } from '../../../model';
+import {
+  LeftSideBarType,
+  RightSideBarType,
+  ViewModeEnum,
+} from '../../../model';
 import { RunDetailsService } from '../../../service/run-details.service';
+import { ViewModeActions } from '../viewmode/view-mode.action';
 
 @Injectable()
 export class CanvasEffects {
@@ -48,6 +53,14 @@ export class CanvasEffects {
           return of(canvasActions.deselectStep());
         }
         return EMPTY;
+      })
+    );
+  });
+  generateFlowSuccessful$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(canvasActions.generateFlowSuccessful),
+      map(() => {
+        return ViewModeActions.setViewMode({ viewMode: ViewModeEnum.BUILDING });
       })
     );
   });

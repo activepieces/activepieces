@@ -42,7 +42,7 @@ export const newMessage = createTrigger({
         type: TriggerStrategy.APP_WEBHOOK,
         sampleData: sampleData,
         onEnable: async (context) => {
-            context.app.createListeners({ events: ['message'], identifierValue: context.auth.data['team_id'] })
+            await context.app.createListeners({ events: ['message'], identifierValue: context.auth.data['team_id'] })
         },
         onDisable: async (context) => {
             // Ignored

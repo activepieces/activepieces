@@ -44,10 +44,31 @@ src="https://github.com/activepieces/activepieces/assets/1812998/76c97441-c285-4
 
 # ✨ What Is Activepieces?
 
-Activepieces is a **no-code** workflow builder, designed to be **extensible** through a **strongly typed** pieces framework written in **Typescript**.
+Activepieces is an **automation** builder, designed to be **extensible** through a **type-safe** pieces framework written in **Typescript**.
 
 <br>
 <br>
+
+
+# 🤖 LLM Chatbots + Data Sources (BETA)
+
+![chatbots](https://github.com/activepieces/activepieces/assets/1812998/7902e76a-4ba4-4130-9418-dba600fb5c15)
+
+**Features:**
+- PDF datasource
+- Sharable links
+- Native integration with flow builder using chatbot pieces
+- Prompt Customization
+
+
+
+# 🎨 Flow Builder
+<p>
+User-friendly Workflow Builder! Enjoy building fun and interactive flows with support for Branches, Loops, and Drag and Drop.
+  <br />
+</p>
+
+![build](https://github.com/activepieces/activepieces/assets/1812998/e75616ce-7801-45b7-b3fa-eba778bebde3)
 
 # 🔌 Pieces
 
@@ -61,20 +82,12 @@ Alternatively, if you are a developer, you can quickly build your own piece usin
 
 <br>
 <br>
-<h1> 🎨 Visual Builder</h1>
-<p>
-User-friendly Workflow Builder! Enjoy building fun and interactive flows with support for Branches, Loops, and Drag and Drop.
-  <br />
-</p>
-
-![build](https://github.com/activepieces/activepieces/assets/1812998/e75616ce-7801-45b7-b3fa-eba778bebde3)
-
 <br>
 <br>
 <h1>
 💡 Infinite Use Cases</h1>
 <p>
-Community templates provide inspiration and enable you to effortlessly build flows in no time.
+Community templates provide inspiration and enable you to effortlessly build automation in no time.
 <br />
 </p>
 
@@ -198,6 +211,14 @@ We welcome contributions big or small and in different directions. The best way 
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/cyrilselasi"><img src="https://avatars.githubusercontent.com/u/7190330?v=4?s=100" width="100px;" alt="Cyril Selasi"/><br /><sub><b>Cyril Selasi</b></sub></a><br /><a href="#plugin-cyrilselasi" title="Plugin/utility libraries">🔌</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://nijfranck.github.io"><img src="https://avatars.githubusercontent.com/u/9940307?v=4?s=100" width="100px;" alt="Franck Nijimbere"/><br /><sub><b>Franck Nijimbere</b></sub></a><br /><a href="#plugin-nijfranck" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/alerdenisov"><img src="https://avatars.githubusercontent.com/u/3899837?v=4?s=100" width="100px;" alt="Aleksandr Denisov"/><br /><sub><b>Aleksandr Denisov</b></sub></a><br /><a href="#plugin-alerdenisov" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/rbnswartz"><img src="https://avatars.githubusercontent.com/u/724704?v=4?s=100" width="100px;" alt="Reuben Swartz"/><br /><sub><b>Reuben Swartz</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=rbnswartz" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://lupianezjose.com"><img src="https://avatars.githubusercontent.com/u/4380557?v=4?s=100" width="100px;" alt="joselupianez"/><br /><sub><b>joselupianez</b></sub></a><br /><a href="#plugin-joselupianez" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://www.zidoary.com"><img src="https://avatars.githubusercontent.com/u/24081860?v=4?s=100" width="100px;" alt="Awais Manzoor"/><br /><sub><b>Awais Manzoor</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/issues?q=author%3Aawais000" title="Bug reports">🐛</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/andchir"><img src="https://avatars.githubusercontent.com/u/6392311?v=4?s=100" width="100px;" alt="Andrei"/><br /><sub><b>Andrei</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/issues?q=author%3Aandchir" title="Bug reports">🐛</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/derbbre"><img src="https://avatars.githubusercontent.com/u/281843?v=4?s=100" width="100px;" alt="derbbre"/><br /><sub><b>derbbre</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=derbbre" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>

@@ -27,22 +27,20 @@ import {
 import axios from 'axios'
 import { decryptObject, encryptObject } from '../../helper/encryption'
 import { getEdition } from '../../helper/secret-helper'
-import { logger } from '../../helper/logger'
+import { captureException, logger } from '../../helper/logger'
 import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
 import { isNil } from '@activepieces/shared'
 import { engineHelper } from '../../helper/engine-helper'
 import { acquireLock } from '../../helper/lock'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
+import { getServerUrl } from '../../helper/public-ip-utils'
+import { appConnectionsHooks } from './app-connection-hooks'
 
 const repo = databaseConnection.getRepository(AppConnectionEntity)
 
-export class AppConnectionService {
-    protected async preUpsertHook(_params: UpsertParams): Promise<void> {
-        return Promise.resolve()
-    }
-
+export const appConnectionService = {
     async upsert(params: UpsertParams): Promise<AppConnection> {
-        await this.preUpsertHook(params)
+        await appConnectionsHooks.getHooks().preUpsert({ projectId: params.projectId })
 
         const { projectId, request } = params
 
@@ -76,7 +74,7 @@ export class AppConnectionService {
             projectId,
         })
         return decryptConnection(updatedConnection)
-    }
+    },
 
     async getOne({
         projectId,
@@ -98,7 +96,7 @@ export class AppConnectionService {
         }
 
         return lockAndRefreshConnection({ projectId, name })
-    }
+    },
 
     async getOneOrThrow(params: GetOneParams): Promise<AppConnection> {
         const connectionById = await repo.findOneBy({
@@ -117,11 +115,11 @@ export class AppConnectionService {
             projectId: params.projectId,
             name: connectionById.name,
         }))!
-    }
+    },
 
     async delete(params: DeleteParams): Promise<void> {
         await repo.delete(params)
-    }
+    },
 
     async list({
         projectId,
@@ -169,11 +167,11 @@ export class AppConnectionService {
             refreshConnections,
             cursor,
         )
-    }
+    },
 
     async countByProject({ projectId }: CountByProjectParams): Promise<number> {
         return await repo.countBy({ projectId })
-    }
+    },
 }
 
 const validateConnectionValue = async (
@@ -233,14 +231,21 @@ const engineValidateAuth = async (
 ): Promise<void> => {
     const { pieceName, auth, projectId } = params
 
-    const pieceMatadata = await pieceMetadataService.get({
+    const pieceMetadata = await pieceMetadataService.getOrThrow({
         name: pieceName,
         projectId,
         version: undefined,
     })
+
     const engineInput: ExecuteValidateAuthOperation = {
-        pieceName,
-        pieceVersion: pieceMatadata.version,
+        serverUrl: await getServerUrl(),
+        piece: {
+            packageType: pieceMetadata.packageType,
+            pieceType: pieceMetadata.pieceType,
+            pieceName: pieceMetadata.name,
+            pieceVersion: pieceMetadata.version,
+            projectId,
+        },
         auth,
         projectId,
     }
@@ -305,19 +310,18 @@ async function lockAndRefreshConnection({
         const refreshedAppConnection = await refresh(appConnection)
 
         await repo.update(refreshedAppConnection.id, {
-            id: refreshedAppConnection.id,
-            name: refreshedAppConnection.name,
-            appName: refreshedAppConnection.appName,
-            status: refreshedAppConnection.status,
-            projectId: refreshedAppConnection.projectId,
+            status: AppConnectionStatus.ACTIVE,
             value: encryptObject(refreshedAppConnection.value),
         })
         return refreshedAppConnection
     }
     catch (e) {
-        logger.error(e)
+        captureException(e)
         if (!isNil(appConnection)) {
             appConnection.status = AppConnectionStatus.ERROR
+            await repo.update(appConnection.id, {
+                status: appConnection.status,
+            })
         }
     }
     finally {
@@ -325,7 +329,6 @@ async function lockAndRefreshConnection({
     }
     return appConnection
 }
-
 function needRefresh(connection: AppConnection): boolean {
     switch (connection.value.type) {
         case AppConnectionType.CLOUD_OAUTH2:
@@ -395,7 +398,6 @@ async function refreshWithCredentials(
         return appConnection
     }
     const body: Record<string, string> = {
-        redirect_uri: appConnection.redirect_url,
         grant_type: 'refresh_token',
         refresh_token: appConnection.refresh_token,
     }

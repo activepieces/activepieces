@@ -6,8 +6,8 @@ import mime from 'mime-types';
 
 export const translateAction = createAction({
     name: 'translate',
-    displayName: 'translate',
-    description: 'translate audio to text using whisper-1 model',
+    displayName: 'Translate Audio',
+    description: 'Translate audio to text using whisper-1 model',
     auth: openaiAuth,
     props: {
         audio : Property.File({
@@ -36,7 +36,7 @@ export const translateAction = createAction({
             const response = await httpClient.sendRequest(request)
             return response.body;
         }catch(e){
-            return e;
+            throw new Error( `Error while excution:\n${e}` );
         }
     },
 });

@@ -1,29 +1,17 @@
-import { authenticationModule } from './app/authentication/authentication.module'
 import { system, validateEnvPropsOnStartup } from './app/helper/system/system'
 import { SystemProp } from './app/helper/system/system-prop'
 import { databaseConnection } from './app/database/database-connection'
 import { logger } from './app/helper/logger'
-import { getEdition } from './app/helper/secret-helper'
-import { ApEdition } from '@activepieces/shared'
+import { ApEdition, ApEnvironment } from '@activepieces/shared'
 import { seedDevData } from './app/database/seeds/dev-seeds'
 import { flowQueueConsumer } from './app/workers/flow-worker/flow-queue-consumer'
 import { setupApp } from './app/app'
 import { FastifyInstance } from 'fastify'
-import { projectModule } from './app/project/project-module'
+import { licenseValidator } from './app/ee/helper/license-validator'
+import { getEdition } from './app/helper/secret-helper'
 
 const start = async (app: FastifyInstance): Promise<void> => {
     try {
-        const edition = getEdition()
-        logger.info(`Activepieces ${edition} Edition`)
-        switch (edition) {
-            case ApEdition.CLOUD:
-            case ApEdition.ENTERPRISE:
-                break
-            case ApEdition.COMMUNITY:
-                await app.register(authenticationModule)
-                await app.register(projectModule)
-                break
-        }
         await app.listen({
             host: '0.0.0.0',
             port: 3000,
@@ -39,6 +27,23 @@ const start = async (app: FastifyInstance): Promise<void> => {
 
 The application started on ${system.get(SystemProp.FRONTEND_URL)}, as specified by the AP_FRONTEND_URL variables.
     `)
+
+        const environemnt = system.get(SystemProp.ENVIRONMENT)
+        const pieces = process.env.AP_DEV_PIECES
+
+        if (environemnt === ApEnvironment.DEVELOPMENT) {
+            logger.warn(`[WARNING]: The application is running in ${environemnt} mode.`)
+            logger.warn(`[WARNING]: This is only shows pieces specified in AP_DEV_PIECES ${pieces} environment variable.`)
+        }
+
+        const edition = getEdition()
+        if (edition !== ApEdition.COMMUNITY) {
+            const verified = await licenseValidator.validate()
+            if (!verified) {
+                logger.error('[ERROR]: License key is not valid. Please contact sales@activepieces.com')
+                process.exit(1)
+            }
+        }
     }
     catch (err) {
         logger.error(err)

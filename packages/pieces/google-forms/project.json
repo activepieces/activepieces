@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/google-forms/package.json",
         "main": "packages/pieces/google-forms/src/index.ts",
         "assets": ["packages/pieces/google-forms/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

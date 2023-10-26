@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/clockodo/package.json",
         "main": "packages/pieces/clockodo/src/index.ts",
         "assets": ["packages/pieces/clockodo/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

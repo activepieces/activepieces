@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/todoist/package.json",
         "main": "packages/pieces/todoist/src/index.ts",
         "assets": ["packages/pieces/todoist/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

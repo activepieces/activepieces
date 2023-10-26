@@ -43,6 +43,14 @@ export class FlagService {
     );
   }
 
+  isChatbotEnabled(): Observable<boolean> {
+    return this.getAllFlags().pipe(
+      map((flags) => {
+        return flags['CHATBOT_ENABLED'] as boolean;
+      })
+    );
+  }
+
   isTelemetryEnabled(): Observable<boolean> {
     return this.getAllFlags().pipe(
       map((flags) => {
@@ -55,6 +63,14 @@ export class FlagService {
     return this.getAllFlags().pipe(
       map((flags) => {
         return flags[ApFlagId.WEBHOOK_URL_PREFIX] as string;
+      })
+    );
+  }
+
+  isFlagEnabled(flag: ApFlagId): Observable<boolean> {
+    return this.getAllFlags().pipe(
+      map((value) => {
+        return value[flag] === true;
       })
     );
   }
@@ -104,6 +120,41 @@ export class FlagService {
       map((flags) => {
         return flags[ApFlagId.TEMPLATES_SOURCE_URL] as string;
       })
+    );
+  }
+  getTheme() {
+    return this.getAllFlags().pipe(
+      map((flags) => {
+        return flags[ApFlagId.THEME] as Record<string, any>;
+      })
+    );
+  }
+
+  getWebsiteName() {
+    return this.getTheme().pipe(map((theme) => theme['websiteName']));
+  }
+
+  getLogos(): Observable<{
+    fullLogoUrl: string;
+    favIconUrl: string;
+    logoIconUrl: string;
+  }> {
+    return this.getTheme().pipe(map((theme) => theme['logos']));
+  }
+
+  getColors(): Observable<Record<string, string | Record<string, string>>> {
+    return this.getTheme().pipe(map((theme) => theme['colors']));
+  }
+  getWarnPalette(): Observable<
+    Record<string, string | Record<string, string>>
+  > {
+    return this.getTheme().pipe(map((theme) => theme['materialWarnPalette']));
+  }
+  getPrimaryPalette(): Observable<
+    Record<string, string | Record<string, string>>
+  > {
+    return this.getTheme().pipe(
+      map((theme) => theme['materialPrimaryPalette'])
     );
   }
 }

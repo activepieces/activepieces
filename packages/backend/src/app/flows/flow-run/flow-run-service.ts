@@ -29,6 +29,7 @@ import { flowRunSideEffects } from './flow-run-side-effects'
 import { logger } from '../../helper/logger'
 import { flowService } from '../flow/flow.service'
 import { MoreThanOrEqual } from 'typeorm'
+import { flowRunHooks } from './flow-run-hooks'
 
 export const flowRunRepo = databaseConnection.getRepository(FlowRunEntity)
 
@@ -139,6 +140,8 @@ export const flowRunService = {
             projectId,
         })
 
+        await flowRunHooks.getHooks().onPreStart({ projectId })
+
         const flowRun = await getFlowRunOrCreate({
             id: flowRunId,
             projectId: flow.projectId,
@@ -159,8 +162,7 @@ export const flowRunService = {
                 flowId: savedFlowRun.flowId,
                 environment: savedFlowRun.environment,
             },
-        })
-            .catch((e) => logger.error(e, '[FlowRunService#Start] telemetry.trackProject'))
+        }).catch((e) => logger.error(e, '[FlowRunService#Start] telemetry.trackProject'))
 
         await flowRunSideEffects.start({
             flowRun: savedFlowRun,

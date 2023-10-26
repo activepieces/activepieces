@@ -1,8 +1,13 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthenticationService } from '../../service/authentication.service';
-import { showBeamer } from '../../utils/beamer';
-import { environment } from '../../environments/environment';
+import { ProjectService } from '../../service/project.service';
+import { ApFlagId, Project } from '@activepieces/shared';
+import { Observable } from 'rxjs';
+import { FlagService } from '../../service/flag.service';
+
+import { Store } from '@ngrx/store';
+import { ProjectSelectors } from '../../store/project/project.selector';
 
 @Component({
   selector: 'ap-user-avatar',
@@ -10,13 +15,45 @@ import { environment } from '../../environments/environment';
   styleUrls: ['./user-avatar.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class UserAvatarComponent {
+export class UserAvatarComponent implements OnInit {
   showAvatarOuterCircle = false;
-
+  currentUserEmail = 'Dev@ap.com';
+  // BEGIN EE
+  projects$: Observable<Project[]>;
+  selectedProject$: Observable<Project | undefined>;
+  switchProject$: Observable<void>;
+  overflownProjectsNames: Record<string, string> = {};
+  billingEnabled$: Observable<boolean>;
+  projectEnabled$: Observable<boolean>;
+  showPlatform = false;
+  showCommunity$: Observable<boolean>;
   constructor(
     public authenticationService: AuthenticationService,
-    private router: Router
-  ) {}
+    private router: Router,
+    private flagService: FlagService,
+    private store: Store,
+    // BEGIN EE
+    private projectService: ProjectService // END EE
+  ) {
+    this.showCommunity$ = this.flagService.isFlagEnabled(
+      ApFlagId.SHOW_COMMUNITY
+    );
+    // BEGIN EE
+    this.billingEnabled$ = this.flagService.isFlagEnabled(
+      ApFlagId.SHOW_BILLING
+    );
+    this.projectEnabled$ = this.flagService.isFlagEnabled(
+      ApFlagId.PROJECT_MEMBERS_ENABLED
+    );
+    this.projects$ = this.store.select(ProjectSelectors.selectAllProjects);
+    this.selectedProject$ = this.store.select(ProjectSelectors.selectProject);
+    // END EE
+  }
+  ngOnInit(): void {
+    this.currentUserEmail = this.authenticationService.currentUser.email;
+    const decodedToken = this.authenticationService.getDecodedToken();
+    this.showPlatform = !!decodedToken && !!decodedToken['platformId'];
+  }
 
   getDropDownLeftOffset(
     toggleElement: HTMLElement,
@@ -36,6 +73,18 @@ export class UserAvatarComponent {
     this.authenticationService.logout();
   }
 
+  // BEGIN EE
+  viewPlans() {
+    this.router.navigate(['plans']);
+  }
+  switchProject(projectId: string) {
+    this.switchProject$ = this.projectService.switchProject(projectId);
+  }
+  viewPlatformSettings() {
+    this.router.navigate(['/platform']);
+  }
+  // END EE
+
   get userFirstLetter() {
     if (
       this.authenticationService.currentUser == undefined ||
@@ -50,10 +99,10 @@ export class UserAvatarComponent {
   }
 
   showWhatIsNew() {
-    showBeamer();
-  }
-
-  get environment() {
-    return environment;
+    window.open(
+      'https://community.activepieces.com/c/announcements',
+      '_blank',
+      'noopener'
+    );
   }
 }

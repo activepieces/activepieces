@@ -1,4 +1,6 @@
 import { Static, Type } from "@sinclair/typebox";
+import { ApEdition } from "../../flag/flag";
+import { PackageType, PieceType } from "../piece";
 
 export const EXACT_VERSION_PATTERN = /^[0-9]+\.[0-9]+\.[0-9]+$/;
 export const VERSION_PATTERN = /^([~^])?[0-9]+\.[0-9]+\.[0-9]+$/;
@@ -22,6 +24,7 @@ export type GetPieceRequestParams = Static<typeof GetPieceRequestParams>;
 
 export const ListPiecesRequestQuery = Type.Object({
     release: Type.Optional(ExactVersionType),
+    edition: Type.Optional(Type.Enum(ApEdition)),
 });
 
 export type ListPiecesRequestQuery = Static<typeof ListPiecesRequestQuery>;
@@ -34,8 +37,10 @@ export const GetPieceRequestQuery = Type.Object({
 export type GetPieceRequestQuery = Static<typeof GetPieceRequestQuery>;
 
 export const PieceOptionRequest = Type.Object({
-    pieceVersion: VersionType,
+    packageType: Type.Enum(PackageType),
+    pieceType: Type.Enum(PieceType),
     pieceName: Type.String({}),
+    pieceVersion: VersionType,
     stepName: Type.String({}),
     propertyName: Type.String({}),
     input: Type.Any({}),
@@ -43,9 +48,15 @@ export const PieceOptionRequest = Type.Object({
 
 export type PieceOptionRequest = Static<typeof PieceOptionRequest>;
 
-export const InstallPieceRequest = Type.Object({
+export const AddPieceRequestBody = Type.Object({
+    packageType: Type.Enum(PackageType),
     pieceName: Type.String(),
     pieceVersion: ExactVersionType,
+
+    /**
+     * buffer of the npm package tarball if any
+     */
+    pieceArchive: Type.Optional(Type.Unknown()),
 })
 
-export type InstallPieceRequest = Static<typeof InstallPieceRequest>
+export type AddPieceRequestBody = Static<typeof AddPieceRequestBody>

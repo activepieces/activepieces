@@ -55,6 +55,8 @@ import { DragDropDirective } from './directives/drag-drop.directive';
 import { ElementDirective } from './directives/element-ref.directive';
 import { CheckOverflowDirective } from './directives/check-overflow.directive';
 import { MatTabsModule } from '@angular/material/tabs';
+import { FileDroppedDirective } from './directives/file-dropped.directive';
+import { NgxColorsModule } from 'ngx-colors';
 const exportedImports = [
   CommonModule,
   MatTooltipModule,
@@ -77,6 +79,7 @@ const exportedImports = [
   MatDividerModule,
   MatIconModule,
   MatTabsModule,
+  NgxColorsModule,
 ];
 const exportedDeclarations = [
   UploadFileControlComponent,
@@ -151,7 +154,7 @@ export function markedOptionsFactory(): MarkedOptions {
   providers: [
     { provide: MAT_TOOLTIP_DEFAULT_OPTIONS, useValue: materialTooltipDefaults },
   ],
-  declarations: [...exportedDeclarations],
-  exports: [...exportedImports, ...exportedDeclarations],
+  declarations: [...exportedDeclarations, FileDroppedDirective],
+  exports: [...exportedImports, ...exportedDeclarations, MarkdownModule],
 })
 export class UiCommonModule {}

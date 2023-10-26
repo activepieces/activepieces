@@ -12,7 +12,8 @@
         "tsConfig": "packages/pieces/text-helper/tsconfig.lib.json",
         "packageJson": "packages/pieces/text-helper/package.json",
         "main": "packages/pieces/text-helper/src/index.ts",
-        "assets": ["packages/pieces/text-helper/*.md"]
+        "assets": ["packages/pieces/text-helper/*.md"],
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "publish": {

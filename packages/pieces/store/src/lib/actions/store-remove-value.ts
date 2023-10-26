@@ -29,6 +29,9 @@ export const storageRemoveValue = createAction({
         })
     },
     async run(context) {
-        return await context.store.delete(context.propsValue['key'], context.propsValue.store_scope);
+        await context.store.delete(context.propsValue['key'], context.propsValue.store_scope);
+        return {
+            succuss: true
+        }
     }
 });

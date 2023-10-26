@@ -14,7 +14,6 @@ import {
   FlowOperationType,
   FlowRun,
   FlowVersionId,
-  FlowViewMode,
   ListFlowsRequest,
   SeekPage,
   TestFlowRunRequestBody,
@@ -48,10 +47,7 @@ export class FlowService {
     );
   }
 
-  get(
-    flowId: FlowId,
-    flowVersionId: undefined | FlowVersionId
-  ): Observable<Flow> {
+  get(flowId: FlowId, flowVersionId?: FlowVersionId): Observable<Flow> {
     const params: Record<string, string> = {};
     if (flowVersionId) {
       params['versionId'] = flowVersionId;
@@ -62,34 +58,28 @@ export class FlowService {
   }
 
   duplicate(flowId: FlowId): Observable<void> {
-    return this.http
-      .get<Flow>(environment.apiUrl + '/flows/' + flowId, {
-        params: {
-          viewMode: FlowViewMode.WITH_ARTIFACTS,
-        },
+    return this.http.get<Flow>(environment.apiUrl + '/flows/' + flowId).pipe(
+      switchMap((flow) => {
+        return this.create({
+          displayName: flow.version.displayName,
+        }).pipe(
+          switchMap((clonedFlow) => {
+            return this.update(clonedFlow.id, {
+              type: FlowOperationType.IMPORT_FLOW,
+              request: {
+                displayName: flow.version.displayName,
+                trigger: flow.version.trigger,
+              },
+            }).pipe(
+              tap((clonedFlow: Flow) => {
+                window.open(`/flows/${clonedFlow.id}`, '_blank', 'noopener');
+              })
+            );
+          }),
+          map(() => void 0)
+        );
       })
-      .pipe(
-        switchMap((flow) => {
-          return this.create({
-            displayName: flow.version.displayName,
-          }).pipe(
-            switchMap((clonedFlow) => {
-              return this.update(clonedFlow.id, {
-                type: FlowOperationType.IMPORT_FLOW,
-                request: {
-                  displayName: flow.version.displayName,
-                  trigger: flow.version.trigger,
-                },
-              }).pipe(
-                tap((clonedFlow: Flow) => {
-                  window.open(`/flows/${clonedFlow.id}`, '_blank', 'noopener');
-                })
-              );
-            }),
-            map(() => void 0)
-          );
-        })
-      );
+    );
   }
 
   delete(flowId: FlowId): Observable<void> {

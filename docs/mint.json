@@ -43,7 +43,7 @@
       "url": "developers"
     },
     {
-      "name": "Pieces",
+      "name": "Pieces List",
       "icon": "plug",
       "url": "https://www.activepieces.com/pieces"
     },
@@ -81,7 +81,8 @@
             "install/options/docker",
             "install/options/docker-compose",
             "install/options/easypanel",            
-            "install/options/aws"
+            "install/options/aws",
+            "install/options/gcp"
           ]
         },
         {
@@ -89,9 +90,11 @@
           "icon": "gear",
           "pages": [
             "install/configurations/environment-variables",
-            "install/configurations/error-notifications"
+            "install/configurations/error-notifications",
+            "install/configurations/troubleshooting"
           ]
         },
+        "install/archiecture",
         "install/editions",
         "install/breaking-changes"
       ]
@@ -105,9 +108,10 @@
     {
       "group": "Tutorials",
       "pages": [
+        "developers/setup-fork",
         {
-          "group": "Development Setup",
-          "icon": "circle-1",
+          "group": "Development Environment",
+          "icon": "circle-2",
           "pages": [
             "developers/development-setup/getting-started",
             "developers/development-setup/codespaces",
@@ -118,14 +122,23 @@
         "developers/building-pieces/create-action",
         {
           "group": "Create Triggers",
-          "icon": "circle-3",
+          "icon": "circle-4",
           "pages": [
             "developers/building-pieces/triggers/overview",
             "developers/building-pieces/triggers/create-polling-trigger",
             "developers/building-pieces/triggers/create-webhook-trigger"
           ]
         },
-        "developers/building-pieces/publish-piece"
+        {
+          "group": "Sharing Pieces",
+          "icon": "circle-5",
+          "pages": [
+            "developers/sharing-pieces/overview",
+            "developers/sharing-pieces/contribute",
+            "developers/sharing-pieces/community",
+            "developers/sharing-pieces/private"
+          ]
+        }
       ]
     },
     {
@@ -136,6 +149,8 @@
         "developers/piece-reference/properties-validation",
         "developers/piece-reference/flow-control",
         "developers/piece-reference/persistent-storage",
+        "developers/piece-reference/files",
+        "developers/piece-reference/external-libraries",
         "developers/piece-reference/piece-versioning",
         "developers/piece-reference/examples"
       ]
@@ -169,7 +184,8 @@
             "enterprise/connection-cards/frontend-sdk",
             "enterprise/connection-cards/user-flows"
           ]
-        }
+        },
+        "enterprise/install"
       ]
     }
   ],

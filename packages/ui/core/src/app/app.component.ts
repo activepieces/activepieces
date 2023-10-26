@@ -1,5 +1,14 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { catchError, map, Observable, of, Subject, switchMap, tap } from 'rxjs';
+import {
+  BehaviorSubject,
+  catchError,
+  map,
+  Observable,
+  of,
+  Subject,
+  switchMap,
+  tap,
+} from 'rxjs';
 import { Store } from '@ngrx/store';
 import {
   NavigationCancel,
@@ -15,6 +24,7 @@ import {
   FlagService,
   CommonActions,
   FlowService,
+  AppearanceService,
 } from '@activepieces/ui/common';
 import { compareVersions } from 'compare-versions';
 import { ApFlagId, FlowOperationType } from '@activepieces/shared';
@@ -48,9 +58,13 @@ export class AppComponent implements OnInit {
   openCommandBar$: Observable<void>;
   loading$: Subject<boolean> = new Subject();
   importTemplate$: Observable<void>;
+  loadingTheme$: BehaviorSubject<boolean> = new BehaviorSubject(true);
+  theme$: Observable<void>;
+  setTitle$: Observable<void>;
   constructor(
     public dialog: MatDialog,
     private store: Store,
+    private apperanceService: AppearanceService,
     private authenticationService: AuthenticationService,
     private flagService: FlagService,
     private telemetryService: TelemetryService,
@@ -63,6 +77,10 @@ export class AppComponent implements OnInit {
   ) {
     this.registerSearchIconIntoMaterialIconRegistery();
     this.listenToImportFlow();
+    this.theme$ = this.apperanceService.setTheme().pipe(
+      tap(() => this.loadingTheme$.next(false)),
+      map(() => void 0)
+    );
     this.routeLoader$ = this.router.events.pipe(
       tap((event) => {
         if (
@@ -72,6 +90,14 @@ export class AppComponent implements OnInit {
           this.loading$.next(true);
         }
         if (event instanceof NavigationEnd) {
+          let route = this.router.routerState.root;
+          while (route.firstChild) {
+            route = route.firstChild;
+          }
+          const { title } = route.snapshot.data;
+          if (title) {
+            this.setTitle$ = this.apperanceService.setTitle(title);
+          }
           this.loading$.next(false);
         }
 
@@ -189,11 +215,23 @@ export class AppComponent implements OnInit {
   ngOnInit(): void {
     this.loggedInUser$ = this.authenticationService.currentUserSubject.pipe(
       tap((user) => {
-        if (user == undefined || Object.keys(user).length == 0) {
+        const decodedToken = this.authenticationService.getDecodedToken();
+
+        if (
+          user == undefined ||
+          Object.keys(user).length == 0 ||
+          !decodedToken
+        ) {
           this.store.dispatch(CommonActions.clearState());
           return;
         }
-        this.store.dispatch(CommonActions.loadInitial({ user: user }));
+
+        this.store.dispatch(
+          CommonActions.loadProjects({
+            user: user,
+            currentProjectId: decodedToken['projectId'],
+          })
+        );
         this.telemetryService.init(user);
       }),
       map(() => void 0)

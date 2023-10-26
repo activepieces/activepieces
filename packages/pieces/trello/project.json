@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/trello/package.json",
         "main": "packages/pieces/trello/src/index.ts",
         "assets": ["packages/pieces/trello/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

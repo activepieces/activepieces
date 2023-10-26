@@ -15,10 +15,14 @@ export const askOpenRouterAction = createAction({
             required: true,
             refreshers: [],
             defaultValue: 'pygmalionai/mythalion-13b',
-            options: async () => {
+            options: async ({auth}) => {
                 const request: HttpRequest = {
                     url: 'https://openrouter.ai/api/v1/models',
                     method: HttpMethod.GET,
+                    authentication: {
+                        type : AuthenticationType.BEARER_TOKEN,
+                        token: auth as string,
+                    },
                 }
                 try {
 
@@ -91,6 +95,8 @@ export const askOpenRouterAction = createAction({
             }
         };
         const response = await httpClient.sendRequest<promptResponse>(request);
-        return  response.body.choices[0].text;
+        const responseText = response.body.choices[0].text;
+        const trimmedResponse = responseText.trim();
+        return  trimmedResponse;
     }
 });

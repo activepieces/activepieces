@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/stripe/package.json",
         "main": "packages/pieces/stripe/src/index.ts",
         "assets": ["packages/pieces/stripe/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

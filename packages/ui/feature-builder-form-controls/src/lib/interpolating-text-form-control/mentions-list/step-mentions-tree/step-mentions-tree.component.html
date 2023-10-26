@@ -16,7 +16,7 @@
           <span class="ap-transition-all" [matTooltip]="node.value">{{node.value}}
           </span></span>
         <ap-button class="ap-absolute ap-right-[10px]" *ngIf="treeNodeHoverTracker.isHovered" btnColor="primary"
-          btnStyle="basic" type="button" [buttonIsInsideAutocomplete]="true" btnSize="small">Insert
+          btnStyle="basic" type="button" [buttonIsInsideAutocomplete]="true" btnSize="small" i18n>Insert
         </ap-button>
 
       </div>
@@ -35,13 +35,13 @@
       mat-menu-item>
 
 
-      <div class="ap-truncate" [matTooltip]="node.key">
-        {{node.key}}
+      <div class="ap-truncate" [innerHTML]="node.key" [matTooltip]="node.key">
+        
       </div>
       <div class=" ap-flex-grow "></div>
       <ap-button *ngIf="nestedTreeNodeHoverTracker.isHovered" class="ap-absolute ap-right-[50px]"
         [buttonIsInsideAutocomplete]="true" btnColor="primary" btnStyle="basic" type="button" btnSize="small"
-        (click)="$event.stopPropagation(); mentionTreeNodeClicked(node)">Insert
+        (click)="$event.stopPropagation(); mentionTreeNodeClicked(node)" i18n>Insert
       </ap-button>
       <mat-icon class="ap-absolute ap-right-[10px]"
         [svgIcon]="treeControl.isExpanded(node) ? 'custom_expand_less' : 'custom_expand_more'">

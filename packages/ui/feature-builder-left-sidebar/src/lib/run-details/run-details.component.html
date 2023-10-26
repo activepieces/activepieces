@@ -1,5 +1,5 @@
 <div class="p-3">
-  <ap-sidebar-header (closeClicked)="closeLeftSideBar()" [title]="'Run Details'"></ap-sidebar-header>
+  <ap-sidebar-header (closeClicked)="closeLeftSideBar()" title="Run Details" i18n-title></ap-sidebar-header>
 </div>
 
 <ng-container *ngIf="(selectedRun$ | async) as flowRun">
@@ -46,7 +46,7 @@
 
   <ng-template #noDetails>
     <div class="no-details-message">
-      <p>No details available for this run.</p>
+      <p i18n>No details available for this run.</p>
     </div>
   </ng-template>
 </ng-container>

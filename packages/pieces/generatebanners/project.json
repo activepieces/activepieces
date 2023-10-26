@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/generatebanners/package.json",
         "main": "packages/pieces/generatebanners/src/index.ts",
         "assets": ["packages/pieces/generatebanners/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

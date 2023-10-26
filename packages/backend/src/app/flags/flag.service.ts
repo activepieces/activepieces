@@ -1,4 +1,4 @@
-import { ApFlagId, Flag } from '@activepieces/shared'
+import { ApEdition, ApFlagId, Flag } from '@activepieces/shared'
 import { databaseConnection } from '../database/database-connection'
 import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
@@ -6,6 +6,7 @@ import { FlagEntity } from './flag.entity'
 import axios from 'axios'
 import { webhookService } from '../webhooks/webhook-service'
 import { getEdition } from '../helper/secret-helper'
+import { defaultTheme } from './theme'
 
 const flagRepo = databaseConnection.getRepository(FlagEntity)
 
@@ -39,6 +40,12 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.CHATBOT_ENABLED,
+                value: getEdition() === ApEdition.ENTERPRISE ? false : system.getBoolean(SystemProp.CHATBOT_ENABLED),
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.CLOUD_AUTH_ENABLED,
                 value: system.getBoolean(SystemProp.CLOUD_AUTH_ENABLED) ?? true,
                 created,
@@ -47,6 +54,48 @@ export const flagService = {
             {
                 id: ApFlagId.EDITION,
                 value: getEdition(),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.SHOW_BILLING,
+                value: getEdition() === ApEdition.CLOUD,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.SHOW_AUTH_PROVIDERS,
+                value: getEdition() === ApEdition.CLOUD,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.PROJECT_MEMBERS_ENABLED,
+                value: getEdition() !== ApEdition.COMMUNITY,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.THEME,
+                value: defaultTheme,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.SHOW_DOCS,
+                value: getEdition() !== ApEdition.ENTERPRISE,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.SHOW_COMMUNITY,
+                value: getEdition() !== ApEdition.ENTERPRISE,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.PRIVATE_PIECES_ENABLED,
+                value: getEdition() !== ApEdition.COMMUNITY,
                 created,
                 updated,
             },
@@ -75,6 +124,12 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.SHOW_BLOG_GUIDE,
+                value: true,
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.SANDBOX_RUN_TIME_SECONDS,
                 value: system.getNumber(SystemProp.SANDBOX_RUN_TIME_SECONDS),
                 created,
@@ -98,9 +153,19 @@ export const flagService = {
                 created,
                 updated,
             },
+            {
+                id: ApFlagId.TEMPLATES_PROJECT_ID,
+                value: system.get(SystemProp.TEMPLATES_PROJECT_ID),
+                created,
+                updated,
+            },
         )
 
         return flags
+    },
+    async getCurrentRelease() {
+        const currentVersion = (await import('package.json')).version
+        return currentVersion
     },
     async getLatestPackageDotJson() {
         try {

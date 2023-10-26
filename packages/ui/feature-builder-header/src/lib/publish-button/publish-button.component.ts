@@ -76,26 +76,26 @@ export class PublishButtonComponent implements OnInit {
     }).pipe(
       map((res) => {
         if (res.isShowingPublishedVersion) {
-          return 'Edit';
+          return $localize`Edit`;
         }
         if (!res.flowHasSteps) {
-          return 'Add 1 more step to publish';
+          return $localize`Add 1 more step to publish`;
         } else if (res.isCurrentFlowVersionPublished) {
-          return 'Published';
+          return $localize`Published`;
         } else if (res.buttonIsDisabled) {
-          return 'Your flow has invalid steps';
+          return $localize`Your flow has invalid steps`;
         }
-        return 'Publish Flow';
+        return $localize`Publish Flow`;
       })
     );
     this.publishBtnText$ = this.flowState$.pipe(
       map((res) => {
         if (res.isSaving) {
-          return 'Saving';
+          return $localize`Saving`;
         } else if (res.isPublishing) {
-          return 'Publishing';
+          return $localize`Publishing`;
         }
-        return 'Publish';
+        return $localize`Publish`;
       })
     );
   }

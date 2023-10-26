@@ -11,10 +11,13 @@ import { ApId } from '@activepieces/shared'
 
 let redisScheduledJobConsumer: Worker<ScheduledJobData, unknown>
 let redisOneTimeJobConsumer: Worker<OneTimeJobData, unknown>
-const flowConcurrency = system.getNumber(SystemProp.FLOW_WORKER_CONCURRENCY) ?? 10;
+const flowConcurrency = system.getNumber(SystemProp.FLOW_WORKER_CONCURRENCY) ?? 10
 
 export const redisConsumer = {
     async init(): Promise<void> {
+        if (flowConcurrency === 0) {
+            return
+        }
         redisScheduledJobConsumer = new Worker<ScheduledJobData, unknown, ApId>(
             SCHEDULED_JOB_QUEUE,
             async (job) => {
@@ -22,7 +25,7 @@ export const redisConsumer = {
             },
             {
                 connection: createRedisClient(),
-                concurrency: flowConcurrency
+                concurrency: flowConcurrency,
             },
         )
         redisOneTimeJobConsumer = new Worker<OneTimeJobData, unknown, ApId>(
@@ -35,13 +38,16 @@ export const redisConsumer = {
                 concurrency: flowConcurrency,
             },
         )
-        const startWorkers = flowConcurrency > 0 ? [
+        const startWorkers =  [
             redisOneTimeJobConsumer.waitUntilReady(),
             redisScheduledJobConsumer.waitUntilReady(),
-        ] : []
+        ]
         await Promise.all(startWorkers)
     },
     async close(): Promise<void> {
+        if (flowConcurrency === 0) {
+            return
+        }
         const startWorkers = [
             redisOneTimeJobConsumer.close(),
             redisScheduledJobConsumer.close(),

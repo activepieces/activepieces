@@ -8,7 +8,7 @@
           [class.ap-pointer-events-none]="(isSaving$ | async) || (isTriggerTested$ | async) === false"
           [class.ap-cursor-auto]="isSaving$ | async" class="ap-typography-body-2 ap-bg-primary-light ap-rounded-full
          ap-border ap-border-solid ap-border-primary-medium ap-transition-all
-          ap-py-1.5 ap-px-2.5 ap-text-primary ap-cursor-pointer hover:ap-border-primary-dark">
+          ap-py-1.5 ap-px-2.5 ap-text-primary ap-cursor-pointer hover:ap-border-primary-dark" i18n>
           {{(isSaving$ | async)? 'Saving...': 'Test flow'}}
         </div>
       </div>

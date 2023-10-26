@@ -30,7 +30,7 @@ export class EmptyFlowsTableComponent {
       localStorage.setItem('newFlow', 'true');
       this.createFlow$ = this.flowService
         .create({
-          displayName: 'Untitled',
+          displayName: $localize`Untitled`,
         })
         .pipe(
           tap((flow) => {

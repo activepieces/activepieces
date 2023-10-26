@@ -27,13 +27,12 @@ import {
 } from '@activepieces/shared'
 import { engineHelper } from '../../helper/engine-helper'
 import { flowVersionService } from '../flow-version/flow-version.service'
-import { fileService } from '../../file/file.service'
 import { isNil } from '@activepieces/shared'
 import { getServerUrl } from '../../helper/public-ip-utils'
 import { flowService } from '../flow/flow.service'
 import { stepFileService } from '../step-file/step-file.service'
 import { sandboxProvisioner } from '../../workers/sandbox/provisioner/sandbox-provisioner'
-import { SandBoxCacheType } from '../../workers/sandbox/provisioner/sandbox-cache-type'
+import { SandBoxCacheType } from '../../workers/sandbox/provisioner/sandbox-cache-key'
 
 export const stepRunService = {
     async create({ projectId, flowVersionId, stepName, userId }: CreateParams): Promise<StepRunResponse> {
@@ -72,7 +71,7 @@ export const stepRunService = {
 }
 
 async function executePiece({ step, projectId, flowVersion, userId }: ExecuteParams<PieceAction>): Promise<StepRunResponse> {
-    const { pieceName, pieceVersion, actionName, input } = step.settings
+    const { packageType, pieceType, pieceName, pieceVersion, actionName, input } = step.settings
 
     if (isNil(actionName)) {
         throw new ActivepiecesError({
@@ -91,8 +90,13 @@ async function executePiece({ step, projectId, flowVersion, userId }: ExecutePar
 
     const operation: ExecuteActionOperation = {
         serverUrl: await getServerUrl(),
-        pieceName,
-        pieceVersion,
+        piece: {
+            packageType,
+            pieceType,
+            pieceName,
+            pieceVersion,
+            projectId,
+        },
         actionName,
         input,
         flowVersion,
@@ -122,15 +126,11 @@ async function executePiece({ step, projectId, flowVersion, userId }: ExecutePar
 }
 
 async function executeCode({ step, flowVersion, projectId }: ExecuteParams<CodeAction>): Promise<StepRunResponse> {
-    const file = await fileService.getOneOrThrow({
-        projectId,
-        fileId: step.settings.artifactSourceId!,
-    })
 
     const { result, standardError, standardOutput } = await engineHelper.executeCode({
-        file,
         step,
         input: step.settings.input,
+        serverUrl: await getServerUrl(),
         flowVersion,
         projectId,
     })
@@ -182,7 +182,7 @@ const executeBranch = async ({ step, flowVersion, projectId }: ExecuteParams<Bra
         triggerPayload: {
             duration: 0,
             input: {},
-            output: flowVersion.trigger.settings.inputUiInfo.currentSelectedData,
+            output: flowVersion.trigger.settings?.inputUiInfo?.currentSelectedData,
             status: StepOutputStatus.SUCCEEDED,
         },
         sourceFlowVersion: flowVersion,
