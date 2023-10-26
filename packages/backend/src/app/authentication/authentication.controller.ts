@@ -1,6 +1,6 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { ApFlagId, SignInRequest, SignUpRequest } from '@activepieces/shared'
-import { authenticationService } from './authentication.service'
+import { authenticationService } from './authentication-service'
 import { flagService } from '../flags/flag.service'
 import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'

@@ -1,5 +1,5 @@
 import { ApEnvironment } from '@activepieces/shared'
-import { authenticationService } from '../../authentication/authentication.service'
+import { authenticationService } from '../../authentication/authentication-service'
 import { logger } from '../../helper/logger'
 import { system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'

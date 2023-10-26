@@ -1,5 +1,5 @@
 import { Platform } from '@activepieces/ee-shared'
-import { UserStatus, User, apId } from '@activepieces/shared'
+import { UserStatus, User, apId, Project, NotificationStatus, ProjectType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 
 export const createMockUser = (user?: Partial<User>): User => {
@@ -13,9 +13,22 @@ export const createMockUser = (user?: Partial<User>): User => {
         trackEvents: user?.trackEvents ?? faker.datatype.boolean(),
         newsLetter: user?.newsLetter ?? faker.datatype.boolean(),
         password: user?.password ?? faker.internet.password(),
-        status: user?.status ?? UserStatus.VERIFIED,
+        status: user?.status ?? faker.helpers.enumValue(UserStatus),
         imageUrl: user?.imageUrl ?? faker.image.urlPlaceholder(),
         title: user?.title ?? faker.lorem.sentence(),
+    }
+}
+
+export const createMockProject = (project?: Partial<Project>): Project => {
+    return {
+        id: project?.id ?? apId(),
+        created: project?.created ?? faker.date.recent().toISOString(),
+        updated: project?.updated ?? faker.date.recent().toISOString(),
+        ownerId: project?.ownerId ?? apId(),
+        displayName: project?.ownerId ?? faker.lorem.word(),
+        notifyStatus: project?.notifyStatus ?? faker.helpers.enumValue(NotificationStatus),
+        type: project?.type ?? faker.helpers.enumValue(ProjectType),
+        platformId: project?.id ?? apId(),
     }
 }
 

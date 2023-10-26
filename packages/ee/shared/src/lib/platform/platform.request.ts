@@ -1,3 +1,4 @@
+import { ApId } from '@activepieces/shared'
 import { Type, Static } from '@sinclair/typebox'
 
 export const UpdatePlatformRequestBody = Type.Object({
@@ -11,7 +12,8 @@ export const UpdatePlatformRequestBody = Type.Object({
 export type UpdatePlatformRequestBody = Static<typeof UpdatePlatformRequestBody>
 
 export const AdminAddPlatformRequestBody = Type.Object({
-    ownerId: Type.String(),
+    userId: ApId,
+    projectId: ApId,
     name: Type.String(),
     primaryColor: Type.Optional(Type.String()),
     logoIconUrl: Type.Optional(Type.String()),
