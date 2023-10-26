@@ -1,4 +1,11 @@
 .angular
-node_modules
+.dockerignore
 .env
+.git
+.gitattributes
+.github
+deploy
+Dockerfile
 dist
+docs
+node_modules
