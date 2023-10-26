@@ -60,8 +60,7 @@
     "test": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "nx test-jest backend --output-style stream-without-prefixes",
-        "dotenv": "packages/backend/.test.env"
+        "command": "export $(cat packages/backend/.env.tests | xargs) && nx test-jest backend --output-style stream-without-prefixes"
       }
     },
     "test:docker": {

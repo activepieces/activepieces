@@ -17,11 +17,15 @@ const commonActionProps = {
   displayName: Type.String({}),
 }
 
-// Code Action
+export const SourceCode = Type.Object({
+  packageJson: Type.String({}),
+  code: Type.String({}),
+});
+
+export type SourceCode = Static<typeof SourceCode>;
 
 export const CodeActionSettings = Type.Object({
-  artifactSourceId: Type.Optional(Type.String({})),
-  artifact: Type.Optional(Type.String({})),
+  sourceCode: SourceCode,
   input: Type.Record(Type.String({}), Type.Any()),
   inputUiInfo: Type.Optional(SampleDataSettingsObject)
 });

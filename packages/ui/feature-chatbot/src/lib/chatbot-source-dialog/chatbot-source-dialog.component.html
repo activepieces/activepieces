@@ -12,8 +12,10 @@
 
     <mat-form-field>
       <mat-label i18n>PDF file</mat-label>
-      <ap-file-upload [formControl]="formGroup.controls.file" label="File" placeHolder="catalog.pdf"
+      <ap-file-upload [formControl]="formGroup.controls.file" label="File" placeHolder="catalog.pdf" #pdfInput
         [extensions]="['.pdf']"></ap-file-upload>
+      <ap-icon-button [height]="25" [width]="25" iconFilename="attach.svg" matSuffix
+        (buttonClicked)="pdfInput.fileInput.nativeElement.click()"></ap-icon-button>
 
       <mat-error *ngIf="formGroup.controls.file.invalid">
         <ng-container *ngIf="formGroup.controls.file.getError('invalidExtenstion')" i18n>Invalid file
@@ -36,8 +38,8 @@
     <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic" i18n>
       Cancel
     </ap-button>
-    <ap-button btnSize="default" type="submit" btnColor="primary" (buttonClicked)="confirmClicked()"
-      [loading]="loading" i18n>
+    <ap-button btnSize="default" type="submit" btnColor="primary" (buttonClicked)="confirmClicked()" [loading]="loading"
+      i18n>
       Confirm
     </ap-button>
   </div>

@@ -5,7 +5,7 @@ import {
   FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
 import { Observable, forkJoin, map, switchMap, take, tap } from 'rxjs';
-import { FlowVersion, FlowViewMode, flowHelper } from '@activepieces/shared';
+import { FlowVersion, flowHelper } from '@activepieces/shared';
 import { Store } from '@ngrx/store';
 import { FlowService } from '@activepieces/ui/common';
 @Component({
@@ -50,8 +50,7 @@ export class DuplicateStepActionComponent {
       switchMap((res) => {
         return this.flowService.get(
           res.currentFlow.id,
-          res.currentFlowVersionId,
-          FlowViewMode.WITH_ARTIFACTS
+          res.currentFlowVersionId
         );
       }),
       map((flow) => {

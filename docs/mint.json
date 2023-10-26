@@ -90,7 +90,8 @@
           "icon": "gear",
           "pages": [
             "install/configurations/environment-variables",
-            "install/configurations/error-notifications"
+            "install/configurations/error-notifications",
+            "install/configurations/troubleshooting"
           ]
         },
         "install/archiecture",

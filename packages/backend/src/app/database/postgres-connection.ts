@@ -66,6 +66,10 @@ import { AddPinnedOrder1686154285890 } from '../ee/database/migrations/postgres/
 import { AddPinnedAndBlogUrlToTemplates1686133672743 } from '../ee/database/migrations/postgres/1686133672743-AddPinnedAndBlogUrlToTemplates'
 import { ChangeToJsonToKeepKeysOrder1685991260335 } from '../ee/database/migrations/postgres/1685991260335-ChangeToJsonToPeserveKeys'
 import { AddArchiveIdToPieceMetadata1696950789636 } from './migration/postgres/1696950789636-add-archive-id-to-piece-metadata'
+import { AddPlatform1697717995884 } from '../ee/database/migrations/postgres/1697717995884-add-platform'
+import { StoreCodeInsideFlow1697969398200 } from './migration/common/1697969398200-store-code-inside-flow'
+import { AddPlatformToProject1698065083750 } from './migration/postgres/1698065083750-add-platform-to-project'
+import { AddCustomDomain1698077078271 } from '../ee/database/migrations/postgres/1698077078271-AddCustomDomain'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
@@ -123,6 +127,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddPieceTypeAndPackageTypeToPieceMetadata1695992551156,
         AddPieceTypeAndPackageTypeToFlowVersion1696245170061,
         AddArchiveIdToPieceMetadata1696950789636,
+        StoreCodeInsideFlow1697969398200,
+        AddPlatformToProject1698065083750,
     ]
 
     const edition = getEdition()
@@ -147,12 +153,16 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 ModifyBilling1694902537045,
                 AddDatasourcesLimit1695916063833,
                 AddPieceTypeAndPackageTypeToFlowTemplate1696245170062,
+                AddPlatform1697717995884,
+                AddCustomDomain1698077078271,
             )
             break
         case ApEdition.ENTERPRISE:
             commonMigration.push(
                 AddProjectMembers1689177797092,
                 ProjectMemberRelations1694381968985,
+                AddPlatform1697717995884,
+                AddCustomDomain1698077078271,
             )
             break
         case ApEdition.COMMUNITY:

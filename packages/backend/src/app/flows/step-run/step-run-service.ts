@@ -27,7 +27,6 @@ import {
 } from '@activepieces/shared'
 import { engineHelper } from '../../helper/engine-helper'
 import { flowVersionService } from '../flow-version/flow-version.service'
-import { fileService } from '../../file/file.service'
 import { isNil } from '@activepieces/shared'
 import { getServerUrl } from '../../helper/public-ip-utils'
 import { flowService } from '../flow/flow.service'
@@ -127,13 +126,8 @@ async function executePiece({ step, projectId, flowVersion, userId }: ExecutePar
 }
 
 async function executeCode({ step, flowVersion, projectId }: ExecuteParams<CodeAction>): Promise<StepRunResponse> {
-    const file = await fileService.getOneOrThrow({
-        projectId,
-        fileId: step.settings.artifactSourceId!,
-    })
 
     const { result, standardError, standardOutput } = await engineHelper.executeCode({
-        file,
         step,
         input: step.settings.input,
         serverUrl: await getServerUrl(),

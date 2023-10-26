@@ -15,10 +15,11 @@ import { authenticationService } from '../../authentication/authentication.servi
 import { logger } from '../../helper/logger'
 import { referralService } from '../referrals/referral.service'
 import { enterpriseProjectService } from '../projects/enterprise-project-service'
+import { platformService } from '../platform/platform.service'
 
 
 const credential = system.get(SystemProp.FIREBASE_ADMIN_CREDENTIALS) ? cert(JSON.parse(system.getOrThrow(SystemProp.FIREBASE_ADMIN_CREDENTIALS))) : undefined
-const firebaseAuth =  credential ? getAuth(initializeApp({
+const firebaseAuth = credential ? getAuth(initializeApp({
     credential,
 })) : undefined
 
@@ -43,6 +44,10 @@ export const firebaseAuthenticationController = async (app: FastifyInstance) => 
                         id: user.id,
                         type: PrincipalType.USER,
                         projectId: project.id,
+                        projectType: project.type,
+                        platformId: await platformService.getPlatformIdByOwner({
+                            ownerId: user.id,
+                        }),
                     })
                     const response: AuthenticationResponse = {
                         projectId: project.id,
@@ -96,6 +101,10 @@ export const firebaseAuthenticationController = async (app: FastifyInstance) => 
                         id: user.id,
                         type: PrincipalType.USER,
                         projectId: project.id,
+                        projectType: project.type,
+                        platformId: await platformService.getPlatformIdByOwner({
+                            ownerId: user.id,
+                        }),
                     })
                     const response: AuthenticationResponse = {
                         projectId: project.id,

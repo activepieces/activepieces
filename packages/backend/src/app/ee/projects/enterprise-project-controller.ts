@@ -1,14 +1,35 @@
-import { ActivepiecesError, ErrorCode, UpdateProjectRequest } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, ProjectType, assertNotNullOrUndefined } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
 import { enterpriseProjectService } from './enterprise-project-service'
 import { projectService } from '../../project/project-service'
 import { tokenUtils } from '../../authentication/lib/token-utils'
+import { CreateProjectRequest, UpdateProjectRequest } from '@activepieces/ee-shared'
 
 export const enterpriseProjectModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(enterpriseProjectController, { prefix: '/v1/projects' })
 }
 
 const enterpriseProjectController: FastifyPluginCallbackTypebox = (fastify, _opts, done) => {
+
+    fastify.post(
+        '/',
+        {
+            schema: {
+                body: CreateProjectRequest,
+            },
+        },
+        async (request) => {
+            const platformId = request.principal.platformId
+            assertNotNullOrUndefined(platformId, 'platformId')
+            return await projectService.create({
+                ownerId: request.principal.id,
+                displayName: request.body.displayName,
+                platformId,
+                type: ProjectType.PLATFORM_MANAGED,
+            })
+        },
+    )
+
     fastify.get('/', async (request) => {
         return await enterpriseProjectService.getAll({
             ownerId: request.principal.id,
@@ -42,6 +63,8 @@ const enterpriseProjectController: FastifyPluginCallbackTypebox = (fastify, _opt
                     id: request.principal.id,
                     type: request.principal.type,
                     projectId: request.params.projectId,
+                    projectType: project.type,
+                    platformId: request.principal.platformId,
                 }),
             }
         },
@@ -60,15 +83,13 @@ const enterpriseProjectController: FastifyPluginCallbackTypebox = (fastify, _opt
             },
         },
         async (request) => {
-            if (request.params.projectId !== request.principal.projectId) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.PROJECT_NOT_FOUND,
-                    params: {
-                        id: request.params.projectId,
-                    },
-                })
-            }
-            return await projectService.update(request.principal.projectId, request.body)
+          
+            return await projectService.update({
+                platformId: request.principal.platformId,
+                projectId: request.principal.projectId,
+                request: request.body,
+            })
+            
         },
     )
 

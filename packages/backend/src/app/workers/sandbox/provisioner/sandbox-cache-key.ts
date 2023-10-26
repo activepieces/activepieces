@@ -1,4 +1,4 @@
-import { FileId, FlowVersionId, apId } from '@activepieces/shared'
+import { FlowVersionId, apId } from '@activepieces/shared'
 import { logger } from '../../../helper/logger'
 
 export enum SandBoxCacheType {
@@ -38,8 +38,8 @@ export const extractProvisionCacheKey = (params: ProvisionCacheInfo): string => 
 
 
 
-const extractCodeCacheKey = ({ artifactSourceId }: CodeProvisionCacheInfo): string => {
-    return `CODE-artifactSourceId-${artifactSourceId}`
+const extractCodeCacheKey = ({ sourceCodeHash }: CodeProvisionCacheInfo): string => {
+    return `CODE-sourceCodeHash-${sourceCodeHash}`
 }
 
 const extractFlowCacheKey = ({ flowVersionId }: FlowProvisionCacheInfo): string => {
@@ -60,7 +60,7 @@ type BaseProvisionCacheInfo<T extends SandBoxCacheType> = {
 }
 
 type CodeProvisionCacheInfo = BaseProvisionCacheInfo<SandBoxCacheType.CODE> & {
-    artifactSourceId: FileId
+    sourceCodeHash: string
 }
 
 type FlowProvisionCacheInfo = BaseProvisionCacheInfo<SandBoxCacheType.FLOW> & {
