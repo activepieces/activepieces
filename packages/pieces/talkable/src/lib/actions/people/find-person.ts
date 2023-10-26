@@ -18,34 +18,38 @@ export const findPerson = createAction({
       description: 'Select scope',
       required: true,
       options: {
-          options: [
-              {
-                  label: 'General information',
-                  value: '/'
-              },
-              {
-                  label: 'Referrals as advocate',
-                  value: '/referrals_as_advocate'
-              },
-              {
-                  label: 'Referrals as friend',
-                  value: '/referrals_as_friend'
-              },
-              {
-                  label: 'Rewards',
-                  value: '/rewards'
-              },
-              {
-                  label: 'Shares',
-                  value: '/shares_by'
-              },
-              {
-                  label: 'Personal data',
-                  value: '/personal_data'
-              }
-          ]
-      }
-  }),
+        options: [
+          {
+            label: 'General information',
+            value: '/',
+          },
+          {
+            label: 'Referrals as advocate',
+            value: '/referrals_as_advocate',
+          },
+          {
+            label: 'Referrals as friend',
+            value: '/referrals_as_friend',
+          },
+          {
+            label: 'Rewards',
+            value: '/rewards',
+          },
+          {
+            label: 'Shares',
+            value: '/shares_by',
+          },
+          {
+            label: 'Personal data',
+            value: '/personal_data',
+          },
+        ],
+      },
+    }),
+    failsafe: Property.Checkbox({
+      displayName: 'No Error On Failure',
+      required: false,
+    }),
   },
   async run(context) {
     const TALKABLE_API_URL = 'https://www.talkable.com/api/v2';
@@ -54,12 +58,17 @@ export const findPerson = createAction({
       method: HttpMethod.GET,
       url: `${TALKABLE_API_URL}/people/${context.propsValue['email']}${context.propsValue['scope']}`,
       headers: {
-        'Authorization': `Bearer ${api_key}`,
-        'Content-Type': 'application/json'
+        Authorization: `Bearer ${api_key}`,
+        'Content-Type': 'application/json',
       },
       body: {
-        site_slug: site
+        site_slug: site,
+      },
+    }).catch(error => {
+      if (context.propsValue.failsafe) {
+        return error.errorMessage();
       }
+      throw error;
     });
     return personInfoResponse.body;
   },

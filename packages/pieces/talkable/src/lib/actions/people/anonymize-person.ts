@@ -12,7 +12,11 @@ export const anonymizePerson = createAction({
       displayName: 'Person email',
       description: undefined,
       required: true,
-    })
+    }),
+    failsafe: Property.Checkbox({
+      displayName: 'No Error On Failure',
+      required: false,
+    }),
   },
   async run(context) {
     const TALKABLE_API_URL = 'https://www.talkable.com/api/v2';
@@ -27,6 +31,11 @@ export const anonymizePerson = createAction({
       body: {
         site_slug: site
       }
+    }).catch(error => {
+      if (context.propsValue.failsafe) {
+        return error.errorMessage();
+      }
+      throw error;
     });
     return personAnonymizeResponse.body;
   },

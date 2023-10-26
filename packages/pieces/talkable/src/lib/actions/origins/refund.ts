@@ -25,7 +25,11 @@ export const refund = createAction({
       displayName: 'Refunded date',
       description: undefined,
       required: false
-    })
+    }),
+    failsafe: Property.Checkbox({
+      displayName: 'No Error On Failure',
+      required: false,
+    }),
   },
   async run(context) {
     const TALKABLE_API_URL = 'https://www.talkable.com/api/v2';
@@ -45,6 +49,11 @@ export const refund = createAction({
           refund_subtotal
         },
       },
+    }).catch(error => {
+      if (context.propsValue.failsafe) {
+        return error.errorMessage();
+      }
+      throw error;
     });
     return refundResponse.body;
   },
