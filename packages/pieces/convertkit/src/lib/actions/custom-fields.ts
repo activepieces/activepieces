@@ -118,7 +118,7 @@ export const updateField = createAction({
 
         // TODO: Avoid making multiple calls to the API
         // Right before this, we are making a call to the API to get the labels, but
-        // we don't know how to pass the keys from the labels to here
+        // we don't know how to pass the values from the dropdown to here
         const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}?api_secret=${auth}`;
         const response = await fetch(url);
         const data = await response.json();
