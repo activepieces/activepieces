@@ -1,0 +1,48 @@
+---
+title: "Archiecture"
+icon: "bolt"
+---
+
+This page focus on production archiecture and tech specs, there are three main parts:
+
+## Components
+
+![Architecture](/resources/architecture.png)
+
+
+### Redis
+
+Redis is used as message queue, it used to store jobs that need to be processed, It's also used as locking machaism.
+
+### Postgres 
+
+Postgres is used as main database, it used to store all data.
+
+### Main Container
+
+Activepieces is single stateless service, it can be scaled horizontally. Workers and API server are in same service, but they can be seperated by environment variable to not process jobs.
+
+### Tech Specs
+
+Activepieces is not cpu intensive in general and small instance is enough for most cases, the requirement are different depend on the use cases.
+
+| Component           | Memory (RAM) | CPU Cores | Notes                               |
+|---------------------|--------------|-----------|-------------------------------------|
+| PostgreSQL          | [1 GB]       | [1]       |   |
+| Redis               | [1 GB]       | [1]       |      |
+| Activepieces        | [8 GB]       | [2]      | for high avaiability It better to deploy over multiple machines|
+
+
+## Scaling
+
+**Redis:** You don't need to make Redis bigger because it only stores jobs while they're being processed. Activepieces uses BullMQ, which can handle a lot of jobs each second.
+
+**Postgres:** You also don't have to increase the size of PostgreSQL. It's only used for storing data, and it doesn't need a lot of CPU power.
+
+**Activepieces:**
+
+To make Activepieces handle more work, you can add more instances. For the suggested setup, set the worker concurrency in the environment variable to 20 on each machine.
+
+With this setup, it can handle more than **20 million executions** monthly, including flow runs and background polling executions.
+
+The main thing to consider when deciding to scale is how often it checks for new items. For example, if you have a 5-minute check, it will be executed 8,640 times in a month.

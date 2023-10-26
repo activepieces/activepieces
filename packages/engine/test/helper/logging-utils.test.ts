@@ -32,6 +32,6 @@ describe('Logging Utils', () => {
         const result = await loggingUtils.trimExecution(mockExecutionOutput)
 
         // assert
-        expect(result.executionState.steps['mockStep'].input).toHaveProperty<string>('a', '(truncated)')
+        expect(result.executionState.steps.mockStep.input).toHaveProperty<string>('a', '(truncated)')
     })
 })

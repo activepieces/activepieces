@@ -412,7 +412,7 @@ export const NotionFieldMapping: Record<string, any> = {
         required: false,
       }),
     buildNotionType: (property: DynamicPropsValue) => ({
-      number: property,
+      number: Number(property),
     }),
   },
   phone_number: {

@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/google-drive/package.json",
         "main": "packages/pieces/google-drive/src/index.ts",
         "assets": ["packages/pieces/google-drive/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

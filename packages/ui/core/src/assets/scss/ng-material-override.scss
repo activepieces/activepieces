@@ -179,133 +179,72 @@ $ap-typography: mat.define-typography-config(
   @include mat.typography-level($ap-typography, "button");
 }
 $ap-primary-palette: (
-  50: #eee8fc,
-  100: #d4c6f6,
-  200: #b7a0f1,
-  300: #9a7aeb,
-  400: #845ee6,
-  500: #6e41e2,
-  600: #663bdf,
-  700: #5b32da,
-  800: #512ad6,
-  900: #3f1ccf,
-  A100: #ffffff,
-  A200: #d9d1ff,
-  A400: #ae9eff,
-  A700: #9985ff,
+  50: var(--primary-palette-50),
+  100: var(--primary-palette-100),
+  200: var(--primary-palette-200),
+  300: var(--primary-palette-300),
+  400: var(--primary-palette-400),
+  500: var(--primary-palette-500),
+  600: var(--primary-palette-600),
+  700: var(--primary-palette-700),
+  800: var(--primary-palette-800),
+  900: var(--primary-palette-900),
+  A100: var(--primary-palette-A100),
+  A200:  var(--primary-palette-A200),
+  A400:  var(--primary-palette-A400),
+  A700:  var(--primary-palette-A700),
   contrast: (
-    50: #000000,
-    100: #000000,
-    200: #000000,
-    300: #000000,
-    400: #ffffff,
-    500: #ffffff,
-    600: #ffffff,
-    700: #ffffff,
-    800: #ffffff,
-    900: #ffffff,
-    A100: #000000,
-    A200: #000000,
-    A400: #000000,
-    A700: #000000,
+    50: var(--primary-palette-contrast-50),
+    100: var(--primary-palette-contrast-100),
+    200: var(--primary-palette-contrast-200),
+    300: var(--primary-palette-contrast-300),
+    400: var(--primary-palette-contrast-400),
+    500: var(--primary-palette-contrast-500),
+    600: var(--primary-palette-contrast-600),
+    700: var(--primary-palette-contrast-700),
+    800: var(--primary-palette-contrast-800),
+    900: var(--primary-palette-contrast-900),
+    A100: var(--primary-palette-contrast-A100),
+    A200:  var(--primary-palette-contrast-A200),
+    A400: var(--primary-palette-contrast-A400),
+    A700: var(--primary-palette-contrast-A700),
   ),
 );
-$ap-danger-palette: (
-  50: #fbe7e9,
-  100: #f5c2c7,
-  200: #ee9aa2,
-  300: #e7727d,
-  400: #e15361,
-  500: #dc3545,
-  600: #d8303e,
-  700: #d32836,
-  800: #ce222e,
-  900: #c5161f,
-  A100: #fff6f7,
-  A200: #ffc3c6,
-  A400: #ff9095,
-  A700: #ff777c,
+$ap-warn-palette: (
+  50: var(--warn-palette-50),
+  100: var(--warn-palette-100),
+  200: var(--warn-palette-200),
+  300: var(--warn-palette-300),
+  400: var(--warn-palette-400),
+  500: var(--warn-palette-500),
+  600: var(--warn-palette-600),
+  700: var(--warn-palette-700),
+  800: var(--warn-palette-800),
+  900: var(--warn-palette-900),
+  A100: var(--warn-palette-A100),
+  A200: var(--warn-palette-A200),
+  A400: var(--warn-palette-A400),
+  A700: var(--warn-palette-A700),
   contrast: (
-    50: #000000,
-    100: #000000,
-    200: #000000,
-    300: #000000,
-    400: #ffffff,
-    500: #ffffff,
-    600: #ffffff,
-    700: #ffffff,
-    800: #ffffff,
-    900: #ffffff,
-    A100: #000000,
-    A200: #000000,
-    A400: #000000,
-    A700: #000000,
+    50:  var(--warn-palette-contrast-50),
+    100: var(--warn-palette-contrast-100),
+    200: var(--warn-palette-contrast-200),
+    300: var(--warn-palette-contrast-300),
+    400: var(--warn-palette-contrast-400),
+    500: var(--warn-palette-contrast-500),
+    600: var(--warn-palette-contrast-600),
+    700: var(--warn-palette-contrast-700),
+    800: var(--warn-palette-contrast-800),
+    900: var(--warn-palette-contrast-900),
+    A100: var(--warn-palette-contrast-A100),
+    A200: var(--warn-palette-contrast-A200),
+    A400: var(--warn-palette-contrast-A400),
+    A700: var(--warn-palette-contrast-A700),
   ),
 );
-$ap-light-background: (
-  50: #fefefe,
-  100: #fcfcfc,
-  200: #fafafa,
-  300: #f8f8f8,
-  400: #f7f7f7,
-  500: #f5f5f5,
-  600: #f4f4f4,
-  700: #f2f2f2,
-  800: #f0f0f0,
-  900: #eeeeee,
-  A100: #ffffff,
-  A200: #ffffff,
-  A400: #ffffff,
-  A700: #ffffff,
-  contrast: (
-    50: #000000,
-    100: #000000,
-    200: #000000,
-    300: #000000,
-    400: #000000,
-    500: #000000,
-    600: #000000,
-    700: #000000,
-    800: #000000,
-    900: #000000,
-    A100: #000000,
-    A200: #000000,
-    A400: #000000,
-    A700: #000000,
-  ),
-);
-$ap-light-foreground: (
-  50: #e6e6e6,
-  100: #c1c1c1,
-  200: #989898,
-  300: #6e6e6e,
-  400: #4f4f4f,
-  500: #303030,
-  600: #2b2b2b,
-  700: #242424,
-  800: #1e1e1e,
-  900: #131313,
-  A100: #ef6c6c,
-  A200: #ea3e3e,
-  A400: #f50000,
-  A700: #db0000,
-  contrast: (
-    50: #000000,
-    100: #000000,
-    200: #000000,
-    300: #ffffff,
-    400: #ffffff,
-    500: #ffffff,
-    600: #ffffff,
-    700: #ffffff,
-    800: #ffffff,
-    900: #ffffff,
-    A100: #000000,
-    A200: #ffffff,
-    A400: #ffffff,
-    A700: #ffffff,
-  ),
-);
+
+
+
 
 .mat-expansion-panel-body {
   padding: 0 !important;
@@ -321,7 +260,7 @@ $ap-light-foreground: (
 }
 
 $ap-primary: mat.define-palette($ap-primary-palette);
-$ap-danger: mat.define-palette($ap-danger-palette);
+$ap-danger: mat.define-palette($ap-warn-palette);
 $ap-theme-light: mat.define-light-theme(
   (
     color: (
@@ -589,7 +528,7 @@ mat-option.add-auth {
 }
 
 app-mentions-list {
-  .mdc-list-item__primary-text {
+.mat-mdc-menu-item-text{
     display: flex;
     align-items: center;
     width: 100%;
@@ -682,6 +621,53 @@ mat-icon[data-mat-icon-name="custom_expand_less"] {
   height: 10px;
 }
 
+.progress-success circle {
+  stroke: #209E34 !important;
+}
+.progress-success-bg circle {
+  stroke: #F0F0F0 !important;
+}
+
 .material-suffix-icon {
   padding-right:  max(16px, calc(var(--mdc-shape-small, 4px) + 4px));;
+}
+//Material bug https://github.com/angular/components/issues/26056
+.mat-mdc-unelevated-button.mat-primary {
+  --mdc-filled-button-label-text-color: var(--primary-palette-contrast-500) ;
+ }
+ 
+ .mat-mdc-unelevated-button.mat-warn {
+   --mdc-filled-button-label-text-color: var(--warn-palette-contrast-500) ;
+ }
+ 
+ .mat-mdc-raised-button.mat-primary {
+   --mdc-protected-button-label-text-color: var(--primary-palette-contrast-500) ;
+ }
+ 
+ .mat-mdc-raised-button.mat-warn {
+   --mdc-protected-button-label-text-color: var(--warn-palette-contrast-300) ;
+ }
+ .mat-mdc-checkbox.mat-primary {
+  --mdc-checkbox-selected-checkmark-color:  var(--primary-palette-contrast-500);
+}
+.mat-mdc-checkbox.mat-warn {
+  --mdc-checkbox-selected-checkmark-color:  var(--primary-palette-contrast-500);
+}
+
+.material-suffix-icon {
+  padding-right:  max(16px, calc(var(--mdc-shape-small, 4px) + 4px));;
+}
+
+ngx-colors-panel { 
+  .manual-input-wrapper{
+    font-family: $font-family  !important;
+    @apply ap-typography-body-2 #{!important};
+    p{
+      @apply ap-cursor-pointer;
+    }
+    input{
+      font-family: $font-family  !important;
+      @apply ap-typography-body-2 #{!important};
+    }
+  }
 }

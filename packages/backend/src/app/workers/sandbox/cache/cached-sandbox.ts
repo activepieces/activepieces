@@ -3,13 +3,14 @@ import { resolve } from 'node:path'
 import { system } from '../../../helper/system/system'
 import { SystemProp } from '../../../helper/system/system-prop'
 import { CachedSandboxState } from './cached-sandbox-state'
-import { pieceManager } from '../../../flows/common/piece-installer'
+import { pieceManager } from '../../../flows/common/piece-manager'
 import { engineInstaller } from '../../engine/engine-installer'
 import { logger } from '../../../helper/logger'
 import { Mutex } from 'async-mutex'
 import dayjs from 'dayjs'
-import { FileId } from '@activepieces/shared'
+import { PiecePackage, SourceCode } from '@activepieces/shared'
 import { codeBuilder } from '../../code-worker/code-builder'
+import { enrichErrorContext } from '../../../helper/error-handler'
 
 export class CachedSandbox {
     private static readonly CACHE_PATH = system.get(SystemProp.CACHE_PATH) ?? resolve('dist', 'cache')
@@ -52,36 +53,58 @@ export class CachedSandbox {
         })
     }
 
-    async prepare({ pieces, codeArchives = [] }: PrepareParams): Promise<void> {
+    async prepare({ pieces, codeSteps = [] }: PrepareParams): Promise<void> {
         logger.debug({ key: this.key, state: this._state, activeSandboxes: this._activeSandboxCount }, '[CachedSandbox#prepare]')
 
-        await this.lock.runExclusive(async (): Promise<void> => {
-            const notInitialized = this._state === CachedSandboxState.CREATED
-            if (notInitialized) {
-                throw new Error(`[CachedSandbox#prepare] not initialized, Key=${this.key} state=${this._state}`)
-            }
+        try {
+            await this.lock.runExclusive(async (): Promise<void> => {
+                const notInitialized = this._state === CachedSandboxState.CREATED
+                if (notInitialized) {
+                    throw new Error(`[CachedSandbox#prepare] not initialized, Key=${this.key} state=${this._state}`)
+                }
 
-            this._activeSandboxCount += 1
-            this._lastUsedAt = dayjs()
+                this._activeSandboxCount += 1
+                this._lastUsedAt = dayjs()
 
-            const alreadyPrepared = this._state !== CachedSandboxState.INITIALIZED
-            if (alreadyPrepared) {
-                return
-            }
+                const alreadyPrepared = this._state !== CachedSandboxState.INITIALIZED
+                if (alreadyPrepared) {
+                    return
+                }
 
-            await pieceManager.install({
-                projectPath: this.path(),
-                pieces,
+                await pieceManager.install({
+                    projectPath: this.path(),
+                    pieces,
+                })
+
+                await engineInstaller.install({
+                    path: this.path(),
+                })
+
+                await this.buildCodeArchives(codeSteps)
+
+                this._state = CachedSandboxState.READY
             })
-
-            await engineInstaller.install({
+        }
+        catch (error) {
+            const contextKey = '[CachedSandbox#prepare]'
+            const contextValue = {
+                args: { pieces, codeSteps },
+                state: this._state,
+                activeSandboxes: this._activeSandboxCount,
+                key: this.key,
+                lastUsedAt: this.lastUsedAt(),
+                isInUse: this.isInUse(),
                 path: this.path(),
+            }
+
+            const enrichedError = enrichErrorContext({
+                error,
+                key: contextKey,
+                value: contextValue,
             })
 
-            await this.buildCodeArchives(codeArchives)
-
-            this._state = CachedSandboxState.READY
-        })
+            throw enrichedError
+        }
     }
 
     async decrementActiveSandboxCount(): Promise<void> {
@@ -100,15 +123,14 @@ export class CachedSandbox {
         return rm(this.path(), { recursive: true, force: true })
     }
 
-    private async buildCodeArchives(codeArchives: CodeArchive[]): Promise<void> {
+    private async buildCodeArchives(codeArchives: CodeArtifact[]): Promise<void> {
         const buildJobs = codeArchives.map((archive) =>
             codeBuilder.processCodeStep({
-                sourceCodeId: archive.id,
-                codeZip: archive.content,
+                sourceCodeId: archive.name,
+                sourceCode: archive.sourceCode,
                 buildPath: this.path(),
             }),
         )
-
         await Promise.all(buildJobs)
     }
 }
@@ -117,17 +139,12 @@ type CtorParams = {
     key: string
 }
 
-type Piece = {
+type CodeArtifact = {
     name: string
-    version: string
-}
-
-type CodeArchive = {
-    id: FileId
-    content: Buffer
+    sourceCode: SourceCode
 }
 
 type PrepareParams = {
-    pieces: Piece[]
-    codeArchives?: CodeArchive[]
+    pieces: PiecePackage[]
+    codeSteps?: CodeArtifact[]
 }

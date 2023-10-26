@@ -5,6 +5,7 @@ import {
   TelemetryEventName,
 } from '@activepieces/shared';
 import {
+  FlagService,
   FlowService,
   TelemetryService,
   TemplatesService,
@@ -35,15 +36,20 @@ export class ImportFlowComponent implements OnInit {
 
   importFlow$: Observable<void>;
   hasDirectFlag$: Observable<boolean> = of(false);
-
+  fullLogoUrl$: Observable<string>;
   constructor(
     private route: ActivatedRoute,
     private templatesService: TemplatesService,
     private flowService: FlowService,
     private router: Router,
     private metaService: Meta,
-    private telemetryService: TelemetryService
-  ) {}
+    private telemetryService: TelemetryService,
+    private flagService: FlagService
+  ) {
+    this.fullLogoUrl$ = this.flagService
+      .getLogos()
+      .pipe(map((logos) => logos.fullLogoUrl));
+  }
 
   ngOnInit(): void {
     this.loadFlow$ = this.route.params.pipe(
@@ -117,10 +123,7 @@ export class ImportFlowComponent implements OnInit {
           if (error.status === StatusCodes.UNAUTHORIZED) {
             this.router.navigate(['/sign-up'], {
               queryParams: {
-                redirect_url:
-                  `${window.location.origin}${window.location.pathname}`.split(
-                    '?'
-                  )[0],
+                redirect_url: `${window.location.pathname}`.split('?')[0],
               },
             });
             return EMPTY;

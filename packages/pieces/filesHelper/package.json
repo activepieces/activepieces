@@ -1,0 +1,8 @@
+{
+  "name": "@activepieces/piece-file-helper",
+  "version": "0.0.1",
+  "dependencies": {
+    "@activepieces/pieces-framework": "*",
+    "tslib": "2.6.2"
+  }
+}

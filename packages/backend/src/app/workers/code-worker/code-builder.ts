@@ -1,9 +1,7 @@
 import fs from 'node:fs/promises'
-import decompress from 'decompress'
-import {
-    packageManager,
-    PackageManagerDependencies,
-} from '../../helper/package-manager'
+import { PackageInfo, packageManager } from '../../helper/package-manager'
+import { SourceCode } from '@activepieces/shared'
+import { logger } from '../../helper/logger'
 
 const tsConfig = `
 {
@@ -27,23 +25,31 @@ const tsConfig = `
 `
 
 async function processCodeStep({
-    codeZip,
+    sourceCode,
     sourceCodeId,
     buildPath,
 }: {
-    codeZip: Buffer
+    sourceCode: SourceCode
     sourceCodeId: string
     buildPath: string
 }): Promise<void> {
     const codePath = `${buildPath}/codes/${sourceCodeId}`
+    await fs.mkdir(codePath, { recursive: true })
     try {
-        const tsConfigPath = `${codePath}/tsconfig.json`
-        await decompress(codeZip, codePath, {})
+        const { code, packageJson } = sourceCode
+        await fs.writeFile(`${codePath}/index.ts`, code)
+        await fs.writeFile(`${codePath}/package.json`, packageJson)
         await addCodeDependencies(codePath)
+        const tsConfigPath = `${codePath}/tsconfig.json`
         await fs.writeFile(tsConfigPath, tsConfig)
-        await packageManager.runLocalDependency(codePath, 'tsc')
+
+        await packageManager.exec({
+            path: codePath,
+            command: 'tsc',
+        })
     }
     catch (error: unknown) {
+        logger.error({ codePath, error }, '[CodeBuilder#processCodeStep] error building code')
         await handleCompilationError(codePath, error as (Error & { stdout: string }))
     }
 }
@@ -57,9 +63,9 @@ async function handleCompilationError(
     )
 
     const errorMessage =
-    'Compilation Error: \n' + error.stdout ??
-    error.message ??
-    'error building code'
+        'Compilation Error: \n' + error.stdout ??
+        error.message ??
+        'error building code'
 
     const invalidArtifactFile = invalidArtifactTemplate
         .toString('utf-8')
@@ -72,18 +78,25 @@ async function handleCompilationError(
 }
 
 async function addCodeDependencies(codePath: string): Promise<void> {
-    const dependencies: PackageManagerDependencies = {
-        '@tsconfig/node18': {
-            version: '1.0.0',
+    const dependencies: PackageInfo[] = [
+        {
+            alias: '@tsconfig/node18',
+            spec: '1.0.0',
         },
-        '@types/node': {
-            version: '18.17.1',
+        {
+            alias: '@types/node',
+            spec: '18.17.1',
         },
-        typescript: {
-            version: '4.8.4',
+        {
+            alias: 'typescript',
+            spec: '4.8.4',
         },
-    }
-    await packageManager.addDependencies(codePath, dependencies)
+    ]
+
+    await packageManager.add({
+        path: codePath,
+        dependencies,
+    })
 }
 
 export const codeBuilder = {

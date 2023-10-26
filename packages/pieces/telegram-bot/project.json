@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/telegram-bot/package.json",
         "main": "packages/pieces/telegram-bot/src/index.ts",
         "assets": ["packages/pieces/telegram-bot/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

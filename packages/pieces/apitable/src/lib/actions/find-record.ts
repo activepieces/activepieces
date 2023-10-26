@@ -35,6 +35,11 @@ export const apiTableFindRecord = createAction({
             description: "Specifies the page number of the page",
             required: false
         }),
+        filter: Property.LongText({
+            displayName: 'Filter',
+            description: 'The filter to apply to the records (see https://help.aitable.ai/docs/guide/manual-formula-field-overview/)',
+            required: false,
+        }),
     },
     async run(context) {
         const auth = context.auth;
@@ -44,12 +49,14 @@ export const apiTableFindRecord = createAction({
         const maxRecords = context.propsValue.maxRecords;
         const pageSize = context.propsValue.pageSize ?? 100;
         const pageNum = context.propsValue.pageNum ?? 1;
+        const filter = context.propsValue.filter;
         const apiTableUrl = auth.apiTableUrl;
 
         let query = `?pageSize=${pageSize}&pageNum=${pageNum}`;
         if (recordIds) query += `&recordIds=${recordIds.join(',')}`;
         if (fieldNames) query += `&fieldNames=${fieldNames.join(',')}`;
         if (maxRecords) query += `&maxRecords=${maxRecords}`;
+        if (filter) query += `&filterByFormula=${filter}`;
 
         const request: HttpRequest = {
             method: HttpMethod.GET,

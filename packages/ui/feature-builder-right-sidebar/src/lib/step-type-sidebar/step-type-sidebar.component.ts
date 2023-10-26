@@ -1,10 +1,13 @@
 import { Store } from '@ngrx/store';
 import {
   combineLatest,
+  debounceTime,
+  filter,
   forkJoin,
   map,
   Observable,
   startWith,
+  switchMap,
   take,
   tap,
 } from 'rxjs';
@@ -24,7 +27,10 @@ import {
   AddActionRequest,
   FlowVersion,
   StepLocationRelativeToParent,
+  TelemetryEventName,
   flowHelper,
+  PieceType,
+  PackageType,
 } from '@activepieces/shared';
 import { FormControl } from '@angular/forms';
 import {
@@ -41,8 +47,8 @@ import {
   FlowItemDetails,
   getDefaultDisplayNameForPiece,
   getDisplayNameForTrigger,
+  TelemetryService,
 } from '@activepieces/ui/common';
-import { constructUpdateOperation } from './step-type-list/utils';
 import { Actions, ofType } from '@ngrx/effects';
 
 @Component({
@@ -55,17 +61,20 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
   _showTriggers = false;
   searchFormControl = new FormControl('');
   focusSearchInput$: Observable<void>;
+  //EE
+  searchControlTelemetry$: Observable<void>;
+  //EE end
   @Input() set showTriggers(shouldShowTriggers: boolean) {
     this._showTriggers = shouldShowTriggers;
     if (this._showTriggers) {
-      this.sideBarDisplayName = 'Select Trigger';
+      this.sideBarDisplayName = $localize`Select Trigger`;
     } else {
-      this.sideBarDisplayName = 'Select Step';
+      this.sideBarDisplayName = $localize`Select Step`;
     }
     this.populateTabsAndTheirLists();
   }
 
-  sideBarDisplayName = 'Select Step';
+  sideBarDisplayName = $localize`Select Step`;
   tabsAndTheirLists: {
     displayName: string;
     list$: Observable<FlowItemDetails[]>;
@@ -77,7 +86,8 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
   constructor(
     private store: Store,
     private codeService: CodeService,
-    private actions: Actions
+    private actions: Actions,
+    private telemetryService: TelemetryService
   ) {
     this.focusSearchInput$ = this.actions.pipe(
       ofType(CanvasActionType.SET_RIGHT_SIDEBAR),
@@ -86,6 +96,27 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
       }),
       map(() => void 0)
     );
+    //EE
+    this.searchControlTelemetry$ = this.searchFormControl.valueChanges.pipe(
+      debounceTime(1500),
+      filter((val) => !!val),
+      switchMap((val) => {
+        this.telemetryService.capture({
+          name: TelemetryEventName.PIECES_SEARCH,
+          payload: {
+            target: this._showTriggers ? 'triggers' : 'steps',
+            search: val || '',
+          },
+        });
+        return this.telemetryService.savePiecesSearch({
+          target: this._showTriggers ? 'triggers' : 'steps',
+          search: val || '',
+          insideTemplates: false,
+        });
+      }),
+      map(() => void 0)
+    );
+    //EE end
   }
 
   ngOnInit(): void {
@@ -125,21 +156,23 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
       })
     );
     this.tabsAndTheirLists.push({
-      displayName: 'All',
+      displayName: $localize`All`,
       list$: this.applySearchToObservable(allItemDetails$),
-      emptyListText: "Oops! We didn't find any results.",
+      emptyListText: $localize`Oops! We didn't find any results.`,
     });
 
     this.tabsAndTheirLists.push({
-      displayName: 'Core',
+      displayName: $localize`Core`,
       list$: this.applySearchToObservable(coreItemsDetails$),
-      emptyListText: "Oops! We didn't find any results.",
+      emptyListText: $localize`Oops! We didn't find any results.`,
     });
 
     this.tabsAndTheirLists.push({
-      displayName: this._showTriggers ? 'App Events' : 'App Actions',
+      displayName: this._showTriggers
+        ? $localize`App Events`
+        : $localize`App Actions`,
       list$: this.applySearchToObservable(customPiecesItemDetails$),
-      emptyListText: "Oops! We didn't find any results.",
+      emptyListText: $localize`Oops! We didn't find any results.`,
     });
   }
 
@@ -172,7 +205,7 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
         }
         if (this._showTriggers) {
           this.replaceTrigger(flowItemDetails);
-        } else if (results.currentStep?.type !== ActionType.MISSING) {
+        } else {
           const operation = this.constructAddOperation(
             (results.rightSideBar.props as StepTypeSideBarProps).stepName,
             results.currentFlow.version,
@@ -184,19 +217,6 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
           this.store.dispatch(
             FlowsActions.addAction({
               operation: operation,
-            })
-          );
-        } else {
-          const operation = constructUpdateOperation(
-            flowItemDetails,
-            results.currentStep.name,
-            results.currentStep.displayName,
-            this.codeService.helloWorldBase64()
-          );
-          this.store.dispatch(
-            FlowsActions.updateAction({
-              operation: operation,
-              updatingMissingStep: true,
             })
           );
         }
@@ -239,8 +259,12 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
           type: TriggerType.PIECE,
           valid: false,
           settings: {
-            pieceName: triggerDetails.extra?.appName || 'NO_APP_NAME',
-            pieceVersion: triggerDetails.extra?.appVersion || 'NO_APP_VERSION',
+            packageType:
+              triggerDetails.extra?.packageType ?? PackageType.REGISTRY,
+            pieceType: triggerDetails.extra?.pieceType ?? PieceType.OFFICIAL,
+            pieceName: triggerDetails.extra?.pieceName ?? 'NO_APP_NAME',
+            pieceVersion:
+              triggerDetails.extra?.pieceVersion ?? 'NO_APP_VERSION',
             triggerName: '',
             input: {},
             inputUiInfo: {
@@ -265,7 +289,7 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
     stepLocationRelativeToParent: StepLocationRelativeToParent
   ): AddActionRequest {
     const baseProps = {
-      name: this.findAvailableName(flowVersion, 'step'),
+      name: flowHelper.findAvailableStepName(flowVersion, 'step'),
       displayName: getDefaultDisplayNameForPiece(
         flowItemDetails.type as ActionType,
         flowItemDetails.name
@@ -282,8 +306,7 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
             ...baseProps,
             type: ActionType.CODE,
             settings: {
-              artifact: this.codeService.helloWorldBase64(),
-              artifactSourceId: '',
+              sourceCode: this.codeService.helloWorldArtifact(),
               input: {},
             },
           },
@@ -312,9 +335,12 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
             type: ActionType.PIECE,
             valid: false,
             settings: {
-              pieceName: flowItemDetails.extra?.appName || 'NO_APP_NAME',
+              packageType:
+                flowItemDetails.extra?.packageType ?? PackageType.REGISTRY,
+              pieceType: flowItemDetails.extra?.pieceType ?? PieceType.OFFICIAL,
+              pieceName: flowItemDetails.extra?.pieceName ?? 'NO_APP_NAME',
               pieceVersion:
-                flowItemDetails.extra?.appVersion || 'NO_APP_VERSION',
+                flowItemDetails.extra?.pieceVersion ?? 'NO_APP_VERSION',
               actionName: undefined,
               input: {},
               inputUiInfo: {
@@ -323,9 +349,6 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
             },
           },
         };
-      }
-      case ActionType.MISSING: {
-        throw new Error('Select missing action type should not be possible.');
       }
       case ActionType.BRANCH: {
         return {
@@ -351,21 +374,6 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
         };
       }
     }
-  }
-
-  findAvailableName(flowVersion: FlowVersion, stepPrefix: string): string {
-    const steps = flowHelper
-      .getAllSteps(flowVersion.trigger)
-      .map((f) => f.name);
-    let availableNumber = 1;
-    let availableName = `${stepPrefix}_${availableNumber}`;
-
-    while (steps.includes(availableName)) {
-      availableNumber++;
-      availableName = `${stepPrefix}_${availableNumber}`;
-    }
-
-    return availableName;
   }
 
   applySearchToObservable(

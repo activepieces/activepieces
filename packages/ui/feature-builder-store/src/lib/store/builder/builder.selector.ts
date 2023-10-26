@@ -117,7 +117,7 @@ export const selectCurrentFlowFolderName = createSelector(
   selectFlowState,
   (state) => {
     if (!state.folder) {
-      return 'Uncategorized';
+      return $localize`Uncategorized`;
     }
     return state.folder.displayName;
   }
@@ -348,7 +348,7 @@ const selectMissingStepRecommendedFlowItemsDetails = createSelector(
     const recommendations = core.filter(
       (f) =>
         (f.type === ActionType.PIECE &&
-          f.extra?.appName === '@activepieces/piece-http') ||
+          f.extra?.pieceName === '@activepieces/piece-http') ||
         f.type === ActionType.CODE
     );
     return recommendations;
@@ -383,21 +383,21 @@ export const selectFlowItemDetails = (flowItem: FlowItem) =>
         CORE_PIECES_ACTIONS_NAMES.find((n) => n === flowItem.settings.pieceName)
       ) {
         return state.coreFlowItemsDetails.find(
-          (c) => c.extra?.appName === flowItem.settings.pieceName
+          (c) => c.extra?.pieceName === flowItem.settings.pieceName
         );
       }
       return state.customPiecesActionsFlowItemDetails.find(
-        (f) => f.extra?.appName === flowItem.settings.pieceName
+        (f) => f.extra?.pieceName === flowItem.settings.pieceName
       );
     }
     if (flowItem.type === TriggerType.PIECE) {
       if (CORE_PIECES_TRIGGERS.find((n) => n === flowItem.settings.pieceName)) {
         return state.coreTriggerFlowItemsDetails.find(
-          (c) => c.extra?.appName === flowItem.settings.pieceName
+          (c) => c.extra?.pieceName === flowItem.settings.pieceName
         );
       }
       return state.customPiecesTriggersFlowItemDetails.find(
-        (f) => f.extra?.appName === flowItem.settings.pieceName
+        (f) => f.extra?.pieceName === flowItem.settings.pieceName
       );
     }
 
@@ -453,10 +453,21 @@ const selectAppConnectionsDropdownOptionsWithIds = createSelector(
   }
 );
 
-const selectAppConnectionsDropdownOptionsForApp = (appName: string) => {
-  return createSelector(selectAppConnectionsDropdownOptions, (connections) => {
-    return connections.filter((opt) => opt.label.appName === appName);
-  });
+const selectAppConnectionsDropdownOptionsForAppWithIds = (appName: string) => {
+  return createSelector(
+    selectAppConnectionsDropdownOptionsWithIds,
+    (connections) => {
+      return connections
+        .filter((opt) => opt.label.appName === appName)
+        .map((c) => {
+          const result: ConnectionDropdownItem = {
+            label: { appName: c.label.appName, name: c.label.name },
+            value: c.value,
+          };
+          return result;
+        });
+    }
+  );
 };
 const selectAppConnectionsForMentionsDropdown = createSelector(
   selectAllAppConnections,
@@ -512,14 +523,14 @@ function findStepLogoUrlForMentions(
         return corePieceIconUrl(step.settings.pieceName);
       }
       return flowItemsDetailsState.customPiecesActionsFlowItemDetails.find(
-        (i) => i.extra?.appName === step.settings.pieceName
+        (i) => i.extra?.pieceName === step.settings.pieceName
       )?.logoUrl;
     case TriggerType.PIECE:
       if (CORE_PIECES_TRIGGERS.find((n) => n === step.settings.pieceName)) {
         return corePieceIconUrl(step.settings.pieceName);
       }
       return flowItemsDetailsState.customPiecesTriggersFlowItemDetails.find(
-        (i) => i.extra?.appName === step.settings.pieceName
+        (i) => i.extra?.pieceName === step.settings.pieceName
       )?.logoUrl;
     case TriggerType.EMPTY:
       return 'assets/img/custom/piece/emptyTrigger.png';
@@ -531,9 +542,6 @@ function findStepLogoUrlForMentions(
       return 'assets/img/custom/piece/loop_mention.png';
     case ActionType.CODE:
       return 'assets/img/custom/piece/code_mention.png';
-    case ActionType.MISSING:
-      // TODO EDIT
-      return 'assets/img/custom/piece/emptyTrigger.png';
   }
 }
 
@@ -645,6 +653,6 @@ export const BuilderSelectors = {
   selectLastClickedAddBtnId,
   selectCurrentFlowFolderId,
   selectFlowTriggerIsTested,
-  selectAppConnectionsDropdownOptionsForApp,
+  selectAppConnectionsDropdownOptionsForAppWithIds,
   selectAppConnectionsDropdownOptionsWithIds,
 };

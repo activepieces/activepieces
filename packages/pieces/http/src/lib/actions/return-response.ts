@@ -22,12 +22,14 @@ export const httpReturnResponse = createAction({
   },
 
   async run(context) {
+    const response = {
+      status: context.propsValue.status ?? StatusCodes.OK,
+      body: context.propsValue.body,
+      headers: context.propsValue.headers as Record<string, string> ?? {},
+    };
     context.run.stop({
-      response: {
-        status: context.propsValue.status ?? StatusCodes.OK,
-        body: context.propsValue.body,
-        headers: context.propsValue.headers as Record<string, string> ?? {},
-      }
+      response: response,
     })
+    return response;
   },
 });

@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/spotify/package.json",
         "main": "packages/pieces/spotify/src/index.ts",
         "assets": ["packages/pieces/spotify/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

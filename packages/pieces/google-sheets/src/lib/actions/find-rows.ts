@@ -5,7 +5,7 @@ import { googleSheetsAuth } from '../..';
 export const findRowsAction = createAction({
     auth: googleSheetsAuth,
     name: 'find_rows',
-    description: 'Find rows in a Google Sheet by column name and search value',
+    description: 'Find or get rows in a Google Sheet by column name and search value',
     displayName: 'Find Rows',
     props: {
         spreadsheet_id: googleSheetsCommon.spreadsheet_id,
@@ -14,7 +14,7 @@ export const findRowsAction = createAction({
         columnName: googleSheetsCommon.columnName,
         searchValue: Property.ShortText({
             displayName: 'Search Value',
-            description: 'The value to search for',
+            description: 'The value to search for in the specified column. If left empty, all rows will be returned.',
             required: false
         }),
         matchCase: Property.Checkbox({

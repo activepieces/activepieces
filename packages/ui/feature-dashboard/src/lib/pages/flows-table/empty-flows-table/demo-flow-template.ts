@@ -1,6 +1,8 @@
 import {
   ActionType,
   FlowVersionTemplate,
+  PackageType,
+  PieceType,
   TriggerType,
 } from '@activepieces/shared';
 
@@ -48,6 +50,8 @@ export const demoTemplate: FlowVersionTemplate = {
     },
     type: TriggerType.PIECE,
     settings: {
+      packageType: PackageType.REGISTRY,
+      pieceType: PieceType.OFFICIAL,
       pieceName: '@activepieces/piece-schedule',
       pieceVersion: '0.0.4',
       triggerName: 'cron_expression',

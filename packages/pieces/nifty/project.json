@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/nifty/package.json",
         "main": "packages/pieces/nifty/src/index.ts",
         "assets": ["packages/pieces/nifty/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "publish": {

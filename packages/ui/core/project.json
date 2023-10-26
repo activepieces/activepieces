@@ -7,7 +7,9 @@
   "targets": {
     "build": {
       "executor": "@nx/angular:webpack-browser",
-      "outputs": ["{options.outputPath}"],
+      "outputs": [
+        "{options.outputPath}"
+      ],
       "options": {
         "statsJson": true,
         "outputPath": "dist/packages/ui/core",
@@ -15,18 +17,54 @@
         "main": "packages/ui/core/src/main.ts",
         "polyfills": "packages/ui/core/src/polyfills.ts",
         "tsConfig": "packages/ui/core/tsconfig.app.json",
+        "allowedCommonJsDependencies": [
+          "lodash",
+          "quill",
+          "dayjs/plugin/timezone",
+          "dayjs/plugin/utc",
+          "is-base64",
+          "dayjs",
+          "semver",
+          "cron-validator",
+          "codemirror/addon/display/autorefresh",
+          "codemirror/mode/htmlmixed/htmlmixed",
+          "codemirror/mode/shell/shell",
+          "prismjs",
+          "deep-equal",
+          "jszip",
+          "angular2-uuid",
+          "cronstrue"
+        ],
         "assets": [
           "packages/ui/core/src/favicon.ico",
           "packages/ui/core/src/assets",
-          { "glob": "**/*", "input": "node_modules/monaco-editor", "output": "/assets/monaco/" }
+          {
+            "glob": "**/*",
+            "input": "node_modules/monaco-editor",
+            "output": "/assets/monaco/"
+          }
         ],
         "styles": [
           "./node_modules/codemirror/addon/lint/lint.css",
           "./node_modules/codemirror/lib/codemirror.css",
           "./node_modules/codemirror/theme/lucario.css",
-          "packages/ui/core/src/styles.scss"
+          "packages/ui/core/src/styles.scss",
+          "packages/ui/core/src/assets/scss/prism-theme.scss",
+          "node_modules/prismjs/plugins/command-line/prism-command-line.css",
+          "node_modules/prismjs/plugins/line-highlight/prism-line-highlight.css",
+          "node_modules/prismjs/plugins/line-numbers/prism-line-numbers.css"
         ],
-        "scripts": ["node_modules/marked/marked.min.js"]
+        "scripts": [
+          "node_modules/marked/marked.min.js",
+          "node_modules/prismjs/prism.js",
+          "node_modules/prismjs/plugins/command-line/prism-command-line.js",
+          "node_modules/prismjs/plugins/highlight-keywords/prism-highlight-keywords.min.js",
+          "node_modules/prismjs/plugins/line-highlight/prism-line-highlight.js",
+          "node_modules/prismjs/plugins/line-numbers/prism-line-numbers.js",
+          "node_modules/clipboard/dist/clipboard.min.js"
+        ],
+        "i18nMissingTranslation": "warning",
+        "localize": true
       },
       "configurations": {
         "production": {
@@ -56,7 +94,11 @@
           "vendorChunk": true,
           "extractLicenses": false,
           "sourceMap": true,
-          "namedChunks": true
+          "namedChunks": true,
+          "localize": ["en"]
+        },
+        "fr": {
+          "localize": ["fr"]
         }
       },
       "defaultConfiguration": "production"
@@ -69,6 +111,9 @@
         },
         "development": {
           "browserTarget": "ui-core:build:development"
+        },
+        "fr": {
+          "browserTarget": "ui-core:build:development,fr"
         }
       },
       "defaultConfiguration": "development",
@@ -80,12 +125,15 @@
     "extract-i18n": {
       "executor": "@angular-devkit/build-angular:extract-i18n",
       "options": {
-        "browserTarget": "ui-core:build"
+        "browserTarget": "ui-core:build",
+        "outputPath": "packages/ui/core/src/locale"
       }
     },
     "lint": {
       "executor": "@nx/linter:eslint",
-      "outputs": ["{options.outputFile}"],
+      "outputs": [
+        "{options.outputFile}"
+      ],
       "options": {
         "lintFilePatterns": [
           "packages/ui/core/**/*.ts",
@@ -98,12 +146,24 @@
       "options": {
         "tsConfig": "packages/ui/core/tsconfig.spec.json",
         "karmaConfig": "packages/ui/core/karma.conf.js",
-        "polyfills": ["zone.js", "zone.js/testing"],
+        "polyfills": [
+          "zone.js",
+          "zone.js/testing"
+        ],
         "styles": [],
         "scripts": [],
         "assets": []
       }
     }
   },
-  "tags": []
+  "tags": [],
+  "i18n": {
+    "sourceLocale": {
+      "code": "en",
+      "baseHref": ""
+  },
+    "locales": {
+      "fr": "packages/ui/core/src/locale/messages.fr.xlf"
+    }
+  }
 }

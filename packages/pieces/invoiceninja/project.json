@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/invoiceninja/package.json",
         "main": "packages/pieces/invoiceninja/src/index.ts",
         "assets": ["packages/pieces/invoiceninja/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

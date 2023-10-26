@@ -12,19 +12,33 @@ import { TriggerEventEntity } from '../flows/trigger-events/trigger-event.entity
 import { WebhookSimulationEntity } from '../webhooks/webhook-simulation/webhook-simulation-entity'
 import { FlowInstanceEntity } from '../flows/flow-instance/flow-instance.entity'
 import { FolderEntity } from '../flows/folder/folder.entity'
+import { FlowTemplateEntity } from '../ee/flow-template/flow-template.entity'
 import { PieceMetadataEntity } from '../pieces/piece-metadata-entity'
+import { AppCredentialEntity } from '../ee/app-credentials/app-credentials.entity'
+import { ConnectionKeyEntity } from '../ee/connection-keys/connection-key.entity'
+import { AppSumoEntity } from '../ee/appsumo/appsumo.entity'
+import { ReferralEntity } from '../ee/referrals/referral.entity'
 import { createPostgresDataSource } from './postgres-connection'
-import { createSqlLiteDatasource } from './sqllite-connection'
+import { createSqlLiteDataSource } from './sqlite-connection'
 import { DatabaseType, system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
-import { ArrayContains, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
+import { ArrayContains, EntitySchema, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
 import { StepFileEntity } from '../flows/step-file/step-file.entity'
+import { ProjectPlanEntity } from '../ee/billing/plans/plan.entity'
+import { ProjectUsageEntity } from '../ee/billing/usage/usage-entity'
+import { ChatbotEntity } from '../chatbot/chatbot.entity'
+import { ProjectMemberEntity } from '../ee/project-members/project-member.entity'
+import { getEdition } from '../helper/secret-helper'
+import { ApEdition, ApEnvironment } from '@activepieces/shared'
+import { CustomDomainEntity } from '../ee/custom-domains/custom-domain.entity'
+import { PlatformEntity } from '../ee/platform/platform.entity'
 
 const databaseType = system.get(SystemProp.DB_TYPE)
 
-export const commonProperties = {
-    subscribers: [],
-    entities: [
+function getEntities(): EntitySchema<unknown>[] {
+    const edition = getEdition()
+
+    const entities: EntitySchema[] = [
         TriggerEventEntity,
         FlowInstanceEntity,
         AppEventRoutingEntity,
@@ -41,14 +55,61 @@ export const commonProperties = {
         FolderEntity,
         PieceMetadataEntity,
         StepFileEntity,
-    ],
-    synchronize: false,
+        ChatbotEntity,
+    ]
+
+    switch (edition) {
+        case ApEdition.CLOUD:
+            entities.push(
+                ProjectMemberEntity,
+                AppSumoEntity,
+                ReferralEntity,
+                ChatbotEntity,
+                ProjectPlanEntity,
+                ProjectUsageEntity,
+                FlowTemplateEntity,
+                ConnectionKeyEntity,
+                AppCredentialEntity,
+                PlatformEntity,
+                CustomDomainEntity,
+            )
+            break
+        case ApEdition.ENTERPRISE:
+            entities.push(
+                ProjectMemberEntity,
+                PlatformEntity,
+                CustomDomainEntity,
+            )
+            break
+        case ApEdition.COMMUNITY:
+            break
+        default:
+            throw new Error(`Unsupported edition: ${edition}`)
+    }
+
+    return entities
+}
+
+const getSynchronize = (): boolean => {
+    const env = system.getOrThrow<ApEnvironment>(SystemProp.ENVIRONMENT)
+
+    const value: Partial<Record<ApEnvironment, boolean>> = {
+        [ApEnvironment.TESTING]: true,
+    }
+
+    return value[env] ?? false
+}
+
+export const commonProperties = {
+    subscribers: [],
+    entities: getEntities(),
+    synchronize: getSynchronize(),
 }
 
 export const databaseConnection =
-  databaseType === DatabaseType.SQLITE3
-      ? createSqlLiteDatasource()
-      : createPostgresDataSource()
+    databaseType === DatabaseType.SQLITE3
+        ? createSqlLiteDataSource()
+        : createPostgresDataSource()
 
 export function APArrayContains<T extends ObjectLiteral>(columnName: string, values: string[], query: SelectQueryBuilder<T>): SelectQueryBuilder<T> {
     const databaseType = system.get(SystemProp.DB_TYPE)

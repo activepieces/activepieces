@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/sendgrid/package.json",
         "main": "packages/pieces/sendgrid/src/index.ts",
         "assets": ["packages/pieces/sendgrid/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

@@ -1,42 +1,42 @@
-import { ActionType, ExecutionOutput, LoopOnItemsStepOutput, MAX_LOG_SIZE, StepOutput, applyFunctionToValues } from "@activepieces/shared";
-import sizeof from "object-sizeof";
-import { isMemoryFilePath } from "../services/files.service";
+import { ActionType, ExecutionOutput, LoopOnItemsStepOutput, MAX_LOG_SIZE, StepOutput, applyFunctionToValues } from '@activepieces/shared'
+import sizeof from 'object-sizeof'
+import { isMemoryFilePath } from '../services/files.service'
 
 const TRUNCATION_TEXT_PLACEHOLDER = '(truncated)'
 
 export const loggingUtils = {
     async trimExecution(executionOutput: ExecutionOutput) {
-        const steps = executionOutput.executionState.steps;
+        const steps = executionOutput.executionState.steps
         for (const stepName in steps) {
-            const stepOutput = steps[stepName];
-            steps[stepName] = await trimStepOutput(stepOutput);
+            const stepOutput = steps[stepName]
+            steps[stepName] = await trimStepOutput(stepOutput)
         }
-        return executionOutput;
-    }
+        return executionOutput
+    },
 }
 
 async function trimStepOutput(stepOutput: StepOutput): Promise<StepOutput> {
-    const modified: StepOutput = JSON.parse(JSON.stringify(stepOutput));
-    modified.input = await applyFunctionToValues(modified.input, trim);
+    const modified: StepOutput = JSON.parse(JSON.stringify(stepOutput))
+    modified.input = await applyFunctionToValues(modified.input, trim)
     switch (modified.type) {
         case ActionType.BRANCH:
-            break;
+            break
         case ActionType.CODE:
         case ActionType.PIECE:
-            modified.output = await applyFunctionToValues(modified.output, trim);
-            break;
+            modified.output = await applyFunctionToValues(modified.output, trim)
+            break
         case ActionType.LOOP_ON_ITEMS: {
-            const loopItem = (modified as LoopOnItemsStepOutput).output;
+            const loopItem = (modified as LoopOnItemsStepOutput).output
             if (loopItem) {
-                loopItem.iterations = await applyFunctionToValues(loopItem.iterations, trim);
-                loopItem.item = await applyFunctionToValues(loopItem.item, trim);
+                loopItem.iterations = await applyFunctionToValues(loopItem.iterations, trim)
+                loopItem.item = await applyFunctionToValues(loopItem.item, trim)
             }
-            break;
+            break
         }
     }
-    modified.standardOutput = await applyFunctionToValues(modified.standardOutput, trim);
-    modified.errorMessage = await applyFunctionToValues(modified.errorMessage, trim);
-    return modified;
+    modified.standardOutput = await applyFunctionToValues(modified.standardOutput, trim)
+    modified.errorMessage = await applyFunctionToValues(modified.errorMessage, trim)
+    return modified
 }
 
 const trim = async (obj: unknown): Promise<unknown> => {

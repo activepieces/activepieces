@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/rss/package.json",
         "main": "packages/pieces/rss/src/index.ts",
         "assets": ["packages/pieces/rss/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

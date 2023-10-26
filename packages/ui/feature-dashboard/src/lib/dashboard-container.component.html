@@ -5,9 +5,13 @@
     <mat-sidenav-content class="thin-scrollbars">
         <div class="ap-absolute  ap-w-full">
             <div class="ap-flex ap-items-center ap-justify-end ap-m-[20px]">
-                <ap-button btnColor="white" btnStyle="basic" btnSize="medium" id="beamerButton" *ngIf="environment.activateBeamer">
+                <ap-button btnColor="white" btnStyle="basic" btnSize="medium" (buttonClicked)="showWhatIsNew()"
+                    *ngIf="showCommunity$ | async" i18n>
                     What's new</ap-button>
-                <ap-user-avatar *ngIf="environment.showUserProfile" class="ap-ml-[20px]"></ap-user-avatar>
+                <div class="ap-flex ap-mx-3">
+                    <app-tasks-progress></app-tasks-progress>
+                </div>
+                <ap-user-avatar class="ap-ml-[20px]"></ap-user-avatar>
             </div>
 
         </div>

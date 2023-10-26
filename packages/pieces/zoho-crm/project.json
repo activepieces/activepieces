@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/zoho-crm/package.json",
         "main": "packages/pieces/zoho-crm/src/index.ts",
         "assets": ["packages/pieces/zoho-crm/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

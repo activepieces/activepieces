@@ -7,7 +7,7 @@
           <ng-container *ngIf="webhookUrl$ | async as url">
             <section class="ap-typography-body-2">
               <p class="ap-mt-1 ap-flex ap-items-center">URL: <ap-icon-button [width]="15" [height]="15"
-                  [iconFilename]="'copy.svg'" [tooltipText]="'copy'" (buttonClicked)="copyUrl(url)"></ap-icon-button>
+                  iconFilename="copy.svg" tooltipText="Copy" (buttonClicked)="copyUrl(url)"></ap-icon-button>
               </p>
               <mat-form-field class="ap-w-full">
                 <input matInput [value]="url" readonly #webhookUrl (click)="webhookUrl.select()">
@@ -15,7 +15,7 @@
 
               <ap-markdown [fullWidth]="true"
                 data="If you are expecting a reply from this webhook, append <b>/sync</b> to the URL.<br> <br>
-                  In that case, you will also have to add an <b>HTTP step</b>  with return response to the end of your flow."></ap-markdown>
+                  In that case, you will also have to add an <b>HTTP step</b>  with return response to the end of your flow." i18n-data></ap-markdown>
             </section>
           </ng-container>
         </div>

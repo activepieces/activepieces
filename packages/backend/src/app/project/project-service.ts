@@ -1,23 +1,27 @@
-import { isNil } from '@activepieces/shared'
+import { isNil, ProjectType } from '@activepieces/shared'
 import { databaseConnection } from '../database/database-connection'
 import { ProjectEntity } from './project-entity'
-import { ActivepiecesError, apId, ErrorCode, NotificationStatus, Project, ProjectId, UpdateProjectRequest, UserId } from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, NotificationStatus, Project, ProjectId, UserId } from '@activepieces/shared'
+import { PlatformId, UpdateProjectRequest } from '@activepieces/ee-shared'
 
 const projectRepo = databaseConnection.getRepository<Project>(ProjectEntity)
 
 export const projectService = {
-    async create(request: { ownerId: UserId, displayName: string }): Promise<Project> {
+    async create(request: { ownerId: UserId, displayName: string, platformId: string | undefined, type: ProjectType }): Promise<Project> {
         return await projectRepo.save<Partial<Project>>({
             id: apId(),
             ...request,
             notifyStatus: NotificationStatus.ALWAYS,
+            type: request.type,
         })
     },
-    async update(projectId: ProjectId, request: UpdateProjectRequest): Promise<Project | null> {
+    async update({ projectId, request, platformId }: { projectId: ProjectId, request: UpdateProjectRequest, platformId?: PlatformId }): Promise<Project | null> {
         const project = await projectRepo.findOneBy({
             id: projectId,
         })
-        if (isNil(project)) {
+
+        //TODO: Revisit on platform authentication 
+        if (isNil(project) || project.id !== projectId && project.platformId !== platformId) {
             throw new ActivepiecesError({
                 code: ErrorCode.PROJECT_NOT_FOUND,
                 params: {
@@ -25,6 +29,7 @@ export const projectService = {
                 },
             })
         }
+
         await projectRepo.update(projectId, {
             ...project,
             ...request,

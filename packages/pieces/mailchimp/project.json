@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/mailchimp/package.json",
         "main": "packages/pieces/mailchimp/src/index.ts",
         "assets": ["packages/pieces/mailchimp/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

@@ -36,6 +36,7 @@ export const APITableAuth = PieceAuth.CustomAuth({
 export const apitable = createPiece({
   displayName: "APITable",
   auth: APITableAuth,
+  description: `Interactive spreadsheets with collaboration`,
   minimumSupportedRelease: '0.5.0',
   logoUrl: "https://cdn.activepieces.com/pieces/apitable.png",
   authors: ['abdallah-alwarawreh'],

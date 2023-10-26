@@ -13,7 +13,8 @@
         "packageJson": "packages/pieces/delay/package.json",
         "main": "packages/pieces/delay/src/index.ts",
         "assets": ["packages/pieces/delay/*.md"],
-        "buildableProjectDepsInPackageJsonType": "dependencies"
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "lint": {

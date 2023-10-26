@@ -8,7 +8,6 @@ import { CustomAuthConnectionDialogComponent } from './dialogs/custom-auth-conne
 import { OAuth2ConnectionDialogComponent } from './dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component';
 import { SecretTextConnectionDialogComponent } from './dialogs/secret-text-connection-dialog/secret-text-connection-dialog.component';
 import { AddEditConnectionButtonComponent } from './add-edit-connection-button/add-edit-connection-button.component';
-
 @NgModule({
   imports: [CommonModule, UiCommonModule],
   declarations: [

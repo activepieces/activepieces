@@ -3,15 +3,15 @@
     <div class="ap-min-h-[48px] ap-gap-2 ap-flex ap-items-center">
       <ng-container *ngIf="ActionStatusEnum.SUCCEEDED === selectedStepResult.status">
         <svg-icon src="assets/img/custom/success-step-result.svg" [svgStyle]="{ width: '21px', height: '20px' }"
-          matTooltip="Step succeeded"></svg-icon>
+          matTooltip="Step succeeded" i18n-matTooltip></svg-icon>
       </ng-container>
       <ng-container *ngIf="ActionStatusEnum.FAILED === selectedStepResult.status">
         <svg-icon src="assets/img/custom/failure-step-result.svg" [svgStyle]="{ width: '21px', height: '20px' }"
-          matTooltip="Step succeeded"></svg-icon>
+          matTooltip="Step succeeded" i18n-matTooltip></svg-icon>
       </ng-container>
       <ng-container *ngIf="ActionStatusEnum.PAUSED === selectedStepResult.status">
         <svg-icon src="assets/img/custom/status/paused.svg" [svgStyle]="{ width: '21px', height: '20px' }"
-          matTooltip="Step paused"></svg-icon>
+          matTooltip="Step paused" i18n-matTooltip></svg-icon>
       </ng-container>
       {{ selectedStepName }}
     </div>
@@ -19,12 +19,12 @@
   <div class="ap-flex ap-flex-col ap-gap-2">
     <div class="detail-item ap-flex ap-items-center">
       <svg-icon src="assets/img/custom/duration.svg" [svgStyle]="{ width: '12px', height: '20px' }"></svg-icon>
-      Duration:
+      <span i18n>Duration:</span>
       <span class="description"> {{ selectedStepResult.duration }}ms </span>
     </div>
     <ap-json-viewer class="json-viewer" title="Input" [maxHeight]="400" [content]="selectedStepResult.input"
       [isInput]="true"></ap-json-viewer>
-    <ap-json-viewer title="Output"
+    <ap-json-viewer title="Output" i18n-title
       [content]="selectedStepResult.errorMessage ?? selectedStepResult.output"></ap-json-viewer>
   </div>
 </div>

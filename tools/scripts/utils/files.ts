@@ -12,6 +12,7 @@ export type ProjectJson = {
     build?: {
       options?: {
         buildableProjectDepsInPackageJsonType?: 'peerDependencies' | 'dependencies'
+        updateBuildableProjectDepsInPackageJson: boolean
       }
     }
   }
