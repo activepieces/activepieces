@@ -179,11 +179,11 @@ export const createWebhook = createAction({
   },
 });
 
-export const destroyWebhook = createAction({
+export const deleteWebhook = createAction({
   auth: convertkitAuth,
   name: 'destroy_webhook',
-  displayName: 'Webhook: Destroy Webhook',
-  description: 'Destroy a webhook automation',
+  displayName: 'Webhook: Delete Webhook',
+  description: 'Delete a webhook automation',
   props: {
     webhookId: Property.ShortText({
       displayName: 'Webhook Id',
