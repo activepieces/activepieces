@@ -18,7 +18,6 @@ import {
     PiecePackage,
     ProjectId,
     RunEnvironment,
-    RunTerminationReason,
     SourceCode,
     StepOutputStatus,
     Trigger,
@@ -91,19 +90,11 @@ const finishExecution = async (params: FinishExecutionParams): Promise<void> => 
         await flowRunService.finish({
             flowRunId,
             status: executionOutput.status,
-            terminationReason: getTerminationReason(executionOutput),
             tasks: executionOutput.tasks,
             logsFileId: logFileId,
             tags: executionOutput.tags ?? [],
         })
     }
-}
-
-const getTerminationReason = (executionOutput: ExecutionOutput): RunTerminationReason | undefined => {
-    if (executionOutput.status === ExecutionOutputStatus.SUCCEEDED) {
-        return isNil(executionOutput.executionState) ? undefined : RunTerminationReason.STOPPED_BY_HOOK
-    }
-    return undefined
 }
 
 const loadInputAndLogFileId = async ({

@@ -39,7 +39,7 @@ export { FlowVersion, FlowVersionState, FlowVersionId } from './lib/flows/flow-v
 export { Flow, FlowId } from './lib/flows/flow';
 export * from './lib/file'
 export * from './lib/flows/flow-helper';
-export { FlowRun, FlowRunId, RunEnvironment, RunTerminationReason } from './lib/flow-run/flow-run'
+export { FlowRun, FlowRunId, RunEnvironment } from './lib/flow-run/flow-run'
 export * from './lib/flow-run/execution/execution-state';
 export { Project, ProjectId, ProjectType } from './lib/project/project';
 export * from './lib/flows/dto/create-flow-request';
