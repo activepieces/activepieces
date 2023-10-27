@@ -47,10 +47,10 @@ export const moxieCreateContactAction = createAction({
         const clients = await client.listClients();
         return {
           disabled: false,
-          options: clients.map((project) => {
+          options: clients.map((client) => {
             return {
-              label: project.name,
-              value: project.name,
+              label: client.name,
+              value: client.name,
             };
           }),
         };
