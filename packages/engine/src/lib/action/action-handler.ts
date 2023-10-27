@@ -84,13 +84,13 @@ export abstract class BaseActionHandler<CA extends Action = Action, RSM extends 
             case StepOutputStatus.PAUSED:
                 return ExecutionOutputStatus.PAUSED
             case StepOutputStatus.STOPPED:
-                return ExecutionOutputStatus.SUCCEEDED
+                return ExecutionOutputStatus.STOPPED
         }
     }
 
 
     protected convertToStopResponse(executionOutput: ExecutionOutput): StopResponse | undefined {
-        if (executionOutput.status === ExecutionOutputStatus.SUCCEEDED) {
+        if (executionOutput.status === ExecutionOutputStatus.STOPPED) {
             return executionOutput.stopResponse
         }
         return undefined
@@ -105,6 +105,10 @@ export abstract class BaseActionHandler<CA extends Action = Action, RSM extends 
 
     protected handleFlowExecutorOutput({ executionOutput, stepOutput }: HandleFlowExecutorOutput): void {
         switch (executionOutput.status) {
+            case ExecutionOutputStatus.STOPPED:
+                stepOutput.status = StepOutputStatus.STOPPED
+                break
+
             case ExecutionOutputStatus.PAUSED:
                 stepOutput.status = StepOutputStatus.PAUSED
                 break
@@ -119,7 +123,6 @@ export abstract class BaseActionHandler<CA extends Action = Action, RSM extends 
 
             case ExecutionOutputStatus.RUNNING:
             case ExecutionOutputStatus.SUCCEEDED:
-                stepOutput.status = StepOutputStatus.SUCCEEDED
                 break
         }
     }

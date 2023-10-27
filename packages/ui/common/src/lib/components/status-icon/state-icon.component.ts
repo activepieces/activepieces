@@ -39,6 +39,7 @@ export class StateIconComponent implements OnInit, OnChanges {
     status: ExecutionOutputStatus | StepOutputStatus | AppConnectionStatus
   ): string {
     switch (status) {
+      case ExecutionOutputStatus.STOPPED:
       case ExecutionOutputStatus.SUCCEEDED:
       case StepOutputStatus.SUCCEEDED:
       case StepOutputStatus.STOPPED:
@@ -63,6 +64,7 @@ export class StateIconComponent implements OnInit, OnChanges {
     status: ExecutionOutputStatus | StepOutputStatus | AppConnectionStatus
   ): string {
     switch (status) {
+      case ExecutionOutputStatus.STOPPED:
       case ExecutionOutputStatus.SUCCEEDED:
       case StepOutputStatus.SUCCEEDED:
       case StepOutputStatus.STOPPED:
