@@ -762,9 +762,9 @@ export const moxieCRMTriggers = [
     sampleData: MoxieCRMWebhookSampleData.PROJECT_TASK_EVENT_SAMPLE_DATA,
   },
   {
-    name: 'task_approval',
-    displayName: 'Task Approval',
-    description: 'Triggerd when a task is moved to.',
+    name: 'client_task_approval',
+    displayName: 'Client Task Approval',
+    description: 'Triggerd when a task is moved to client approval.',
     eventType: MoxieCRMEventType.TASK_APPROVAL,
     sampleData: MoxieCRMWebhookSampleData.PROJECT_TASK_EVENT_SAMPLE_DATA,
   },
