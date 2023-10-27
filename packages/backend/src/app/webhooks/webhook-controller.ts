@@ -1,6 +1,6 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { ActivepiecesError, ApEdition, ErrorCode, EventPayload, ExecutionOutputStatus, Flow, FlowId, FlowInstanceStatus, FlowRun, StopExecutionOutput, WebhookUrlParams } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ErrorCode, EventPayload, ExecutionOutputStatus, Flow, FlowId, FlowInstanceStatus, FlowRun, RunTerminationReason, SucceededExecutionOutput, WebhookUrlParams } from '@activepieces/shared'
 import { webhookService } from './webhook-service'
 import { captureException, logger } from '../helper/logger'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
@@ -149,7 +149,7 @@ const getResponseForStoppedRun = async (run: FlowRun, reply: FastifyReply) => {
         projectId: run.projectId,
     })
 
-    const flowLogs: StopExecutionOutput = JSON.parse(logs.data.toString())
+    const flowLogs: SucceededExecutionOutput = JSON.parse(logs.data.toString())
 
     await reply
         .status(flowLogs.stopResponse?.status ?? StatusCodes.OK)
@@ -158,7 +158,7 @@ const getResponseForStoppedRun = async (run: FlowRun, reply: FastifyReply) => {
 }
 
 const handleExecutionOutputStatus = async (run: FlowRun, reply: FastifyReply) => {
-    if (run.status === ExecutionOutputStatus.STOPPED) {
+    if (run.status === ExecutionOutputStatus.SUCCEEDED && run.terminationReason === RunTerminationReason.STOPPED_BY_HOOK) {
         await getResponseForStoppedRun(run, reply)
     }
     else {

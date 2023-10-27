@@ -1,4 +1,4 @@
-import { isNil, ProjectType } from '@activepieces/shared'
+import { ApId, isNil, ProjectType } from '@activepieces/shared'
 import { databaseConnection } from '../database/database-connection'
 import { ProjectEntity } from './project-entity'
 import { ActivepiecesError, apId, ErrorCode, NotificationStatus, Project, ProjectId, UserId } from '@activepieces/shared'
@@ -48,4 +48,16 @@ export const projectService = {
             ownerId,
         })
     },
+
+    async addProjectToPlatform({ projectId, platformId }: AddProjectToPlatformParams): Promise<void> {
+        await projectRepo.update(projectId, {
+            type: ProjectType.PLATFORM_MANAGED,
+            platformId,
+        })
+    },
+}
+
+type AddProjectToPlatformParams = {
+    projectId: ProjectId
+    platformId: ApId
 }
