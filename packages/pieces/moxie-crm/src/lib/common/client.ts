@@ -22,6 +22,25 @@ type ClientListResponse = {
   name: string;
 };
 
+type ProjectCreateRequest = {
+  name: string;
+  clientName: string;
+  startDate?: string;
+  dueDate?: string;
+  portalAccess: string;
+  showTimeWorkedInPortal?: boolean;
+  feeSchedule: {
+    feeType: string;
+    amount?: number;
+    retainerSchedule?: string;
+    estimateMax?: number;
+    estimateMin?: number;
+    retainerStart?: string;
+    retainerTiming?: string;
+    retainerOverageRate?: number;
+    taxable?: boolean;
+  };
+};
 export class MoxieCRMClient {
   constructor(private baseUrl: string, private apiKey: string) {
     // Remove trailing slash from base URL
@@ -62,7 +81,17 @@ export class MoxieCRMClient {
     return (
       await this.makeRequest<string[]>(
         HttpMethod.GET,
-        ' /action/invoiceTemplates/list'
+        '/action/invoiceTemplates/list'
+      )
+    ).body;
+  }
+
+  async createProject(request: ProjectCreateRequest) {
+    return (
+      await this.makeRequest(
+        HttpMethod.POST,
+        '/action/projects/create',
+        request
       )
     ).body;
   }
