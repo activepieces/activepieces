@@ -10,6 +10,7 @@ export const enum MoxieCRMEventType {
   TASK_UPDATED = 'DeliverableUpdate',
   TASK_DELETED = 'DeliverableDelete',
   TASK_APPROVAL = 'DeliverableApproval',
+  FORM_SUBMITTED = 'FormCompleted',
 }
 
 const MoxieCRMWebhookSampleData = {
@@ -306,6 +307,31 @@ const MoxieCRMWebhookSampleData = {
     archived: false,
     kanbanSort: 2,
   },
+  FORM_EVENT_SAMPLE_DATA: {
+    id: '64b8233d6ce6226305f24b47',
+    accountId: 10016,
+    client: null,
+    formName: 'test-new-client',
+    businessName: 'Moxie',
+    firstName: 'Geoffrey',
+    lastName: 'Mina',
+    phone: '+444445551212',
+    email: 'hello@withmoxie.com',
+    role: null,
+    address1: null,
+    address2: null,
+    city: null,
+    locality: null,
+    postal: null,
+    country: null,
+    website: null,
+    leadSource: null,
+    sourceUrl:
+      'https://hello.withmoxie.dev/00/hectic-lab/test-new-client?inPortal=true',
+    Field6: 'Answer to your first question',
+    Field7: 'Another to your other question',
+    submittedAt: '2023-07-19T17:54:05.257Z',
+  },
 };
 
 export const moxieCRMTriggers = [
@@ -378,5 +404,12 @@ export const moxieCRMTriggers = [
     description: 'Triggerd when a task is moved to.',
     eventType: MoxieCRMEventType.TASK_APPROVAL,
     sampleData: MoxieCRMWebhookSampleData.PROJECT_TASK_EVENT_SAMPLE_DATA,
+  },
+  {
+    name: 'form_submitted',
+    displayName: 'Form Submitted',
+    description: 'Triggerd when a new form is submitted.',
+    eventType: MoxieCRMEventType.FORM_SUBMITTED,
+    sampleData: MoxieCRMWebhookSampleData.FORM_EVENT_SAMPLE_DATA,
   },
 ].map((props) => moxieCRMRegisterTrigger(props));
