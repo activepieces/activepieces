@@ -38,12 +38,12 @@
   },
   "tabs": [
     {
-      "name": "Develop Pieces",
+      "name": "Developers",
       "icon": "code",
       "url": "developers"
     },
     {
-      "name": "Pieces List",
+      "name": "Pieces",
       "icon": "plug",
       "url": "https://www.activepieces.com/pieces"
     },
@@ -71,7 +71,7 @@
       ]
     },
     {
-      "group": "Self Host",
+      "group": "Deploy",
       "pages": [
         {
           "group": "Install Options",
@@ -96,7 +96,7 @@
         },
         "install/archiecture",
         "install/editions",
-        "install/breaking-changes"
+        "install/enterprise"
       ]
     },
     {
@@ -164,11 +164,12 @@
       ]
     },
     {
-      "group": "Other",
+      "group": "Platform",
       "pages": [
-        "telemetry",
-        "changelog",
-        "license"
+        "platform/overview",
+        "platform/appearance",
+        "platform/manage-projects",
+        "platform/manage-users"
       ]
     },
     {
@@ -184,11 +185,19 @@
             "enterprise/connection-cards/frontend-sdk",
             "enterprise/connection-cards/user-flows"
           ]
-        },
-        "enterprise/install"
+        }
+      ]
+    },
+    {
+      "group": "About",
+      "pages": [
+        "telemetry",
+        "changelog",
+        "license"
       ]
     }
   ],
+  
   "analytics": {
     "posthog": {
       "apiKey": "phc_TXdpocbYTeZVm5VJmMzHTMrCofBQu3e0kN7HGMNGTVW"
