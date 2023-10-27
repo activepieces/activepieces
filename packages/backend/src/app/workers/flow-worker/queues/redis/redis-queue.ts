@@ -1,5 +1,5 @@
 import { DefaultJobOptions, Queue } from 'bullmq'
-import { ApEdition, ApId } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, ApId } from '@activepieces/shared'
 import { createRedisClient } from '../../../../database/redis-connection'
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { logger } from '../../../../helper/logger'
@@ -75,7 +75,18 @@ export async function setupBullMQBoard(app: FastifyInstance): Promise<void> {
         queues: [new BullMQAdapter(oneTimeJobQueue), new BullMQAdapter(scheduledJobQueue)],
         serverAdapter,
     })
-    serverAdapter.setBasePath(QUEUE_BASE_PATH)
+    const environment = system.get(SystemProp.ENVIRONMENT) ?? ApEnvironment.DEVELOPMENT
+    switch (environment) {
+        case ApEnvironment.DEVELOPMENT:
+            serverAdapter.setBasePath(QUEUE_BASE_PATH)
+            break
+        case ApEnvironment.PRODUCTION:
+            serverAdapter.setBasePath(`/api${QUEUE_BASE_PATH}`)
+            break
+        case ApEnvironment.TESTING:
+            throw new Error('Not supported')
+    }
+
 
     app.addHook('onRequest', (req, reply, next) => {
         if (!req.routerPath.startsWith(QUEUE_BASE_PATH)) {
