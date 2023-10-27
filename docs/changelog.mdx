@@ -366,6 +366,10 @@ Full Changelog: [View on GitHub](https://github.com/activepieces/activepieces/co
 
 ### 6/27/2023
 
+**Breaking Change:**
+1. The default mode is now "UNSANDBOXED" instead of using the sandbox. To upgrade, set `AP_EXECUTION_MODE` to `UNSANDBOXED` in your `.env` file.
+2. If you want to enable sign-up, refer to the configuration. You must also manually add the Templates URL to load the templates and set `AP_TEMPLATES_SOURCE_URL` in your `.env` file to `https://cloud.activepieces.com/api/v1/flow-templates`.
+
 **Pieces:**
 - Wordpress: Support Upload Media in Create Post Action
 - Resend: Send Email Actions 
