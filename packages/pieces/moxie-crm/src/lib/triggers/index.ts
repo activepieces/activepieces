@@ -11,6 +11,9 @@ export const enum MoxieCRMEventType {
   TASK_DELETED = 'DeliverableDelete',
   TASK_APPROVAL = 'DeliverableApproval',
   FORM_SUBMITTED = 'FormCompleted',
+  TIME_ENTRY_CREATED = 'TimerCreate',
+  TIME_ENTRY_UPDATED = 'TimerUpdate',
+  TIME_ENTRY_DELETED = 'TimerDelete',
 }
 
 const MoxieCRMWebhookSampleData = {
@@ -332,6 +335,29 @@ const MoxieCRMWebhookSampleData = {
     Field7: 'Another to your other question',
     submittedAt: '2023-07-19T17:54:05.257Z',
   },
+  TIME_ENTRY_EVENT_SAMPLE_DATA: {
+    id: '64b857b0b17c7c727001331c',
+    accountId: 10016,
+    sampleData: false,
+    userId: 16,
+    timerStart: '2023-07-19T21:37:35.684Z',
+    timerEnd: '2023-07-19T21:37:52.431Z',
+    userFullName: 'Geoffrey Mina',
+    notes: 'These are some notes',
+    clientId: '6490580de30ecf51c2c22ffa',
+    projectId: '649976d658c17d4f29b068ee',
+    deliverableId: '649976e158c17d4f29b068ef',
+    clientName: 'Moxie',
+    projectName: 'Fun project for client',
+    deliverableName: 'Task 1',
+    timestamp: null,
+    timestampUpdated: null,
+    invoiceId: null,
+    invoiceNumber: null,
+    importRecordId: null,
+    feeSchedule: null,
+    duration: 16,
+  },
 };
 
 export const moxieCRMTriggers = [
@@ -411,5 +437,26 @@ export const moxieCRMTriggers = [
     description: 'Triggerd when a new form is submitted.',
     eventType: MoxieCRMEventType.FORM_SUBMITTED,
     sampleData: MoxieCRMWebhookSampleData.FORM_EVENT_SAMPLE_DATA,
+  },
+  {
+    name: 'time_entry_created',
+    displayName: 'Time Entry Created',
+    description: 'Triggerd when a new time entry is created.',
+    eventType: MoxieCRMEventType.TIME_ENTRY_CREATED,
+    sampleData: MoxieCRMWebhookSampleData.TIME_ENTRY_EVENT_SAMPLE_DATA,
+  },
+  {
+    name: 'time_entry_updated',
+    displayName: 'Time Entry Updated',
+    description: 'Triggerd when an existing time entry is updated.',
+    eventType: MoxieCRMEventType.TIME_ENTRY_UPDATED,
+    sampleData: MoxieCRMWebhookSampleData.TIME_ENTRY_EVENT_SAMPLE_DATA,
+  },
+  {
+    name: 'time_entry_deleted',
+    displayName: 'Time Entry Deleted',
+    description: 'Triggerd when an existing time entry is deleted.',
+    eventType: MoxieCRMEventType.TIME_ENTRY_DELETED,
+    sampleData: MoxieCRMWebhookSampleData.TIME_ENTRY_EVENT_SAMPLE_DATA,
   },
 ].map((props) => moxieCRMRegisterTrigger(props));
