@@ -35,6 +35,8 @@ import {
   listSupscriptionsToSequence,
 } from './lib/actions/sequences';
 
+import { listTags } from './lib/actions/tags';
+
 import { addTag } from './lib/triggers/tag-add';
 
 export const ENVIRONMENT = 'dev'
@@ -76,6 +78,7 @@ export const convertkit = createPiece({
     listSequences,
     addSubscriberToSequence,
     listSupscriptionsToSequence,
+    listTags,
   ],
   triggers: [addTag],
 });

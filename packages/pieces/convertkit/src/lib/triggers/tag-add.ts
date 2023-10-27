@@ -22,9 +22,9 @@ const log = async (message: object) => {
     });
 }
 
-const onEnable = async (auth: string, event: object) => {
+const onEnable = async (auth: string, payload: object) => {
 
-  const body = JSON.stringify({ ...event, api_secret: auth }, null, 2)
+  const body = JSON.stringify({ ...payload, api_secret: auth }, null, 2)
   console.log('body', body)
     const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}`;
     // Fetch URL using fetch api
@@ -97,7 +97,7 @@ export const addTag = createTrigger({
     // }
     const target_url = context.webhookUrl.replace('http://localhost:3000', 'https://activepieces.ngrok.dev')
 
-    const event = {
+    const payload = {
       event: {
         name: 'subscriber.tag_add',
         tag_id: context.propsValue.tag_id,
@@ -105,7 +105,7 @@ export const addTag = createTrigger({
       target_url,
     };
 
-    const ruleId = await onEnable(context.auth, event);
+    const ruleId = await onEnable(context.auth, payload);
 
     await context.store?.put<WebhookInformation>(`_new_tag_add_trigger`, {
       ruleId,
