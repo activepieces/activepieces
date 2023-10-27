@@ -7,7 +7,7 @@ const API_ENDPOINT = 'subscribers/';
 
 export const getSubscriberById = createAction({
   auth: convertkitAuth,
-  name: 'get_subscriber_by_id',
+  name: 'subscriber_get_subscriber_by_id',
   displayName: 'Subscriber: Get Subscriber By Id',
   description: 'Returns data for a single subscriber',
   props: {
@@ -30,7 +30,7 @@ export const getSubscriberById = createAction({
 
 export const listSubscribers = createAction({
   auth: convertkitAuth,
-  name: 'list_subscribers',
+  name: 'subscriber_list_subscribers',
   displayName: 'Subscriber: List Subscribers',
   description: 'Returns a list of all subscribers',
   props: {
@@ -97,7 +97,7 @@ export const listSubscribers = createAction({
 
 export const updateSubscriber = createAction({
   auth: convertkitAuth,
-  name: 'update_subscriber',
+  name: 'subscriber_update_subscriber',
   displayName: 'Subscriber: Update Subscriber',
   description: 'Update a subscriber',
   props: {
@@ -142,7 +142,7 @@ export const updateSubscriber = createAction({
 // TODO: Test Action
 export const unsubscribeSubscriber = createAction({
   auth: convertkitAuth,
-  name: 'unsubscribe_subscriber',
+  name: 'subscriber_unsubscribe_subscriber',
   displayName: 'Subscriber: Unsubscribe Subscriber',
   description: 'Unsubscribe a subscriber',
   props: {
@@ -171,7 +171,7 @@ export const unsubscribeSubscriber = createAction({
 
 export const listSubscriberTags = createAction({
   auth: convertkitAuth,
-  name: 'list_tags',
+  name: 'subscriber_list_tags',
   displayName: 'Subscriber: List Tags',
   description: 'Returns a list of all tags',
   props: { subscriberId },
