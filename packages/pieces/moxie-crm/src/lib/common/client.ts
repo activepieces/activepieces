@@ -58,4 +58,12 @@ export class MoxieCRMClient {
       )
     ).body;
   }
+  async listInvoiceTemplates(): Promise<string[]> {
+    return (
+      await this.makeRequest<string[]>(
+        HttpMethod.GET,
+        ' /action/invoiceTemplates/list'
+      )
+    ).body;
+  }
 }
