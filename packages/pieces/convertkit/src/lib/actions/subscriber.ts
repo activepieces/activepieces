@@ -1,12 +1,14 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { convertkitAuth } from '../..';
-import { subscriberId } from '../common';
-import { CONVERTKIT_API_URL } from '../common';
-import { propertyCustomFields} from './custom-fields';
+import { subscriberId, CONVERTKIT_API_URL } from '../common';
+import { propertyCustomFields } from './custom-fields';
 
 const API_ENDPOINT = 'subscribers';
 
-export const getSubscriberIdByEmail = async (auth: string, email_address: string) => {
+export const getSubscriberIdByEmail = async (
+  auth: string,
+  email_address: string
+) => {
   const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}?api_secret=${auth}&email_address=${email_address}`;
   const response = await fetch(url);
   if (!response.ok) {
@@ -14,8 +16,8 @@ export const getSubscriberIdByEmail = async (auth: string, email_address: string
   }
   const data = await response.json();
   console.log('data: ', data);
-  return data
-}
+  return data;
+};
 
 export const getSubscribedTags = async (auth: string, subscriberId: string) => {
   const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}/${subscriberId}/tags?api_secret=${auth}`;
@@ -24,8 +26,7 @@ export const getSubscribedTags = async (auth: string, subscriberId: string) => {
     return null;
   }
   return await response.json();
-}
-
+};
 
 export const getSubscriberById = createAction({
   auth: convertkitAuth,
@@ -73,7 +74,7 @@ export const getSubscriberByEmail = createAction({
     const data = await response.json();
 
     // Return response body
-    return {subscriber: data['subscribers'][0]};
+    return { subscriber: data['subscribers'][0] };
   },
 });
 
@@ -85,7 +86,8 @@ export const listSubscribers = createAction({
   props: {
     page: Property.Number({
       displayName: 'Page',
-      description: 'Page number. Each page of results will contain up to 50 subscribers.',
+      description:
+        'Page number. Each page of results will contain up to 50 subscribers.',
       required: false,
     }),
     from: Property.DateTime({
@@ -131,40 +133,36 @@ export const listSubscribers = createAction({
     }),
   },
   async run(context) {
-
-    // build a string from props
-    // const props = Object.keys(context.propsValue)
-    //   .map((key) => `${key}=${context.propsValue[key]}`)
-    //   .join('&');
-
-    let props = {}
+    let props = {};
     if (context.propsValue.page) {
-      props = { ...props, page: context.propsValue.page }
+      props = { ...props, page: context.propsValue.page };
     }
     if (context.propsValue.from) {
-      props = { ...props, from: context.propsValue.from }
+      props = { ...props, from: context.propsValue.from };
     }
     if (context.propsValue.to) {
-      props = { ...props, to: context.propsValue.to }
+      props = { ...props, to: context.propsValue.to };
     }
     if (context.propsValue.updated_from) {
-      props = { ...props, updated_from: context.propsValue.updated_from }
+      props = { ...props, updated_from: context.propsValue.updated_from };
     }
     if (context.propsValue.updated_to) {
-      props = { ...props, updated_to: context.propsValue.updated_to }
+      props = { ...props, updated_to: context.propsValue.updated_to };
     }
     if (context.propsValue.sort_order) {
-      props = { ...props, sort_order: context.propsValue.sort_order }
+      props = { ...props, sort_order: context.propsValue.sort_order };
     }
     if (context.propsValue.sort_field) {
-      props = { ...props, sort_field: context.propsValue.sort_field }
+      props = { ...props, sort_field: context.propsValue.sort_field };
     }
     if (context.propsValue.email_address) {
-      props = { ...props, email_address: context.propsValue.email_address }
+      props = { ...props, email_address: context.propsValue.email_address };
     }
 
     // build the url
-    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}?api_secret=${context.auth}&${new URLSearchParams(props).toString()}`;
+    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}?api_secret=${
+      context.auth
+    }&${new URLSearchParams(props).toString()}`;
 
     // Fetch URL using fetch api
     const response = await fetch(url);
@@ -232,7 +230,10 @@ export const unsubscribeSubscriber = createAction({
   },
   async run(context) {
     const { email_address } = context.propsValue;
-    const subscriberId = await getSubscriberIdByEmail(context.auth, email_address);
+    const subscriberId = await getSubscriberIdByEmail(
+      context.auth,
+      email_address
+    );
     const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}/${subscriberId}/unsubscribe`;
 
     // Fetch URL using fetch api
@@ -257,67 +258,19 @@ export const listSubscriberTags = createAction({
   name: 'subscribers_list_tags',
   displayName: 'Subscriber: List Tags',
   description: 'Returns a list of all subscribed tags',
-  props: { 
+  props: {
     email_address: Property.ShortText({
       displayName: 'Email Address',
       description: 'Email address',
       required: true,
     }),
-   },
+  },
   async run(context) {
     const { email_address } = context.propsValue;
-    const subscriberId = await getSubscriberIdByEmail(context.auth, email_address);
+    const subscriberId = await getSubscriberIdByEmail(
+      context.auth,
+      email_address
+    );
     return await getSubscribedTags(context.auth, subscriberId);
   },
 });
-
-// export const removeTagFromSubscriberByEmail = createAction({
-//   auth: convertkitAuth,
-//   name: 'subscribers_remove_tag_from_subscriber',
-//   displayName: 'Subscriber: Remove Tag From Subscriber',
-//   description: 'Remove a tag from a subscriber',
-//   props: {
-//     email_address: Property.ShortText({
-//       displayName: 'Email Address',
-//       description: 'Email address',
-//       required: true,
-//     }),
-//     tagId: Property.Dropdown({
-//       displayName: 'Tag',
-//       description: 'The tag to remove',
-//       required: true,
-//       refreshers: ['auth', 'email_address'],
-//       options: async ({ auth , email_address }) => {
-//         interface tag {
-//           id: number;
-//           name: string;
-//         }
-//         const subscriberId = await getSubscriberIdByEmail(auth as string, email_address as string);
-//         const tags = await getSubscribedTags(auth as string, subscriberId);
-//         return {
-//           options: tags.tags.map((tag: tag) => ({ value: tag.id, label: tag.name })),
-//         };
-//       },
-//     }),
-//   },
-//   async run(context) {
-//     const { email_address, tagId } = context.propsValue;
-//     const subscriberId = await getSubscriberIdByEmail(context.auth, email_address);
-//     const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}/${subscriberId}/tags/${tagId}?api_secret=${context.auth}`;
-
-//     // Fetch URL using fetch api  
-//     const response = await fetch(url, {
-//       method: 'DELETE',
-//       headers: {
-//         'Content-Type': 'application/json',
-//       },
-//     });
-
-//     // Get response body
-//     const data = await response.json();
-
-//     // Return response body
-//     return data;
-//   },
-// });
-

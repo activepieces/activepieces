@@ -6,7 +6,6 @@ import {
   updateSubscriber,
   unsubscribeSubscriber,
   listSubscriberTags,
-  // removeTagFromSubscriberByEmail,
 } from './lib/actions/subscriber';
 import {
   listFields,
@@ -37,11 +36,29 @@ import {
   listSupscriptionsToSequence,
 } from './lib/actions/sequences';
 
-import { listTags, createTag, tagSubscriber, removeTagFromSubscriberByEmail, removeTagFromSubscriberById, listSubscribersToTag,} from './lib/actions/tags';
+import {
+  listTags,
+  createTag,
+  tagSubscriber,
+  removeTagFromSubscriberByEmail,
+  removeTagFromSubscriberById,
+  listSubscribersToTag,
+} from './lib/actions/tags';
+
+import {
+  listPurchases,
+  getPurchaseById,
+  createSinglePurchase,
+  createPurchases,
+  // listPurchasesForSubscriber,
+  // listPurchasesForProduct,
+  // listPurchasesForForm,
+  // listPurchasesForSequence,
+} from './lib/actions/purchases';
 
 import { addTag } from './lib/triggers/tag-add';
 
-export const ENVIRONMENT = 'dev'
+export const ENVIRONMENT = 'dev';
 // export const ENVIRONMENT = 'prod'
 
 export const convertkitAuth = PieceAuth.SecretText({
@@ -88,6 +105,14 @@ export const convertkit = createPiece({
     removeTagFromSubscriberByEmail,
     removeTagFromSubscriberById,
     listSubscribersToTag,
+    listPurchases,
+    getPurchaseById,
+    createSinglePurchase,
+    createPurchases,
+    // listPurchasesForSubscriber,
+    // listPurchasesForProduct,
+    // listPurchasesForForm,
+    // listPurchasesForSequence,
   ],
   triggers: [addTag],
 });
