@@ -10,18 +10,7 @@ export const getSequences = async (auth: string) => {
   const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}?api_secret=${auth}`;
   const response = await fetch(url);
   return await response.json();
-}
-
-export const listSequences = createAction({
-  auth: convertkitAuth,
-  name: 'sequences_list_sequences',
-  displayName: 'Sequences: List Sequences',
-  description: 'Returns a list of all sequences',
-  props: {},
-  async run(context) {
-    return getSequences(context.auth);
-  },
-});
+};
 
 export const propertySequence = Property.Dropdown({
   displayName: 'Sequence',
@@ -40,7 +29,7 @@ export const propertySequence = Property.Dropdown({
 
     // loop through data and map to options
     const options = sequences.courses.map(
-      (field: { id: string; name: string; }) => {
+      (field: { id: string; name: string }) => {
         return {
           label: field.name,
           value: field.id,
@@ -51,6 +40,17 @@ export const propertySequence = Property.Dropdown({
     return {
       options,
     };
+  },
+});
+
+export const listSequences = createAction({
+  auth: convertkitAuth,
+  name: 'sequences_list_sequences',
+  displayName: 'Sequences: List Sequences',
+  description: 'Returns a list of all sequences',
+  props: {},
+  async run(context) {
+    return getSequences(context.auth);
   },
 });
 
