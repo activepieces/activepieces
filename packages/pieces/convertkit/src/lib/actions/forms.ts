@@ -1,4 +1,4 @@
-import { createAction, Property, DynamicPropsValue } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { convertkitAuth } from '../..';
 import { CONVERTKIT_API_URL } from '../common';
 import { propertyCustomFields} from './custom-fields';

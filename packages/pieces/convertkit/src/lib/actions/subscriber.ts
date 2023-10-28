@@ -9,9 +9,23 @@ const API_ENDPOINT = 'subscribers';
 export const getSubscriberIdByEmail = async (auth: string, email_address: string) => {
   const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}?api_secret=${auth}&email_address=${email_address}`;
   const response = await fetch(url);
+  if (!response.ok) {
+    return null;
+  }
   const data = await response.json();
-  return data['subscribers'][0]['id'];
+  console.log('data: ', data);
+  return data
 }
+
+export const getSubscribedTags = async (auth: string, subscriberId: string) => {
+  const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}/${subscriberId}/tags?api_secret=${auth}`;
+  const response = await fetch(url);
+  if (!response.ok) {
+    return null;
+  }
+  return await response.json();
+}
+
 
 export const getSubscriberById = createAction({
   auth: convertkitAuth,
@@ -242,7 +256,7 @@ export const listSubscriberTags = createAction({
   auth: convertkitAuth,
   name: 'subscribers_list_tags',
   displayName: 'Subscriber: List Tags',
-  description: 'Returns a list of all tags',
+  description: 'Returns a list of all subscribed tags',
   props: { 
     email_address: Property.ShortText({
       displayName: 'Email Address',
@@ -253,15 +267,57 @@ export const listSubscriberTags = createAction({
   async run(context) {
     const { email_address } = context.propsValue;
     const subscriberId = await getSubscriberIdByEmail(context.auth, email_address);
-    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}/${subscriberId}/tags?api_secret=${context.auth}`;
-
-    // Fetch URL using fetch api
-    const response = await fetch(url);
-
-    // Get response body
-    const data = await response.json();
-
-    // Return response body
-    return data;
+    return await getSubscribedTags(context.auth, subscriberId);
   },
 });
+
+// export const removeTagFromSubscriberByEmail = createAction({
+//   auth: convertkitAuth,
+//   name: 'subscribers_remove_tag_from_subscriber',
+//   displayName: 'Subscriber: Remove Tag From Subscriber',
+//   description: 'Remove a tag from a subscriber',
+//   props: {
+//     email_address: Property.ShortText({
+//       displayName: 'Email Address',
+//       description: 'Email address',
+//       required: true,
+//     }),
+//     tagId: Property.Dropdown({
+//       displayName: 'Tag',
+//       description: 'The tag to remove',
+//       required: true,
+//       refreshers: ['auth', 'email_address'],
+//       options: async ({ auth , email_address }) => {
+//         interface tag {
+//           id: number;
+//           name: string;
+//         }
+//         const subscriberId = await getSubscriberIdByEmail(auth as string, email_address as string);
+//         const tags = await getSubscribedTags(auth as string, subscriberId);
+//         return {
+//           options: tags.tags.map((tag: tag) => ({ value: tag.id, label: tag.name })),
+//         };
+//       },
+//     }),
+//   },
+//   async run(context) {
+//     const { email_address, tagId } = context.propsValue;
+//     const subscriberId = await getSubscriberIdByEmail(context.auth, email_address);
+//     const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}/${subscriberId}/tags/${tagId}?api_secret=${context.auth}`;
+
+//     // Fetch URL using fetch api  
+//     const response = await fetch(url, {
+//       method: 'DELETE',
+//       headers: {
+//         'Content-Type': 'application/json',
+//       },
+//     });
+
+//     // Get response body
+//     const data = await response.json();
+
+//     // Return response body
+//     return data;
+//   },
+// });
+

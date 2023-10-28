@@ -6,6 +6,7 @@ import {
   updateSubscriber,
   unsubscribeSubscriber,
   listSubscriberTags,
+  // removeTagFromSubscriberByEmail,
 } from './lib/actions/subscriber';
 import {
   listFields,
@@ -36,7 +37,7 @@ import {
   listSupscriptionsToSequence,
 } from './lib/actions/sequences';
 
-import { listTags, createTag, tagSubscriber } from './lib/actions/tags';
+import { listTags, createTag, tagSubscriber, removeTagFromSubscriberByEmail, removeTagFromSubscriberById, listSubscribersToTag,} from './lib/actions/tags';
 
 import { addTag } from './lib/triggers/tag-add';
 
@@ -63,6 +64,7 @@ export const convertkit = createPiece({
     updateSubscriber,
     unsubscribeSubscriber,
     listSubscriberTags,
+    // removeTagFromSubscriberByEmail,
     createWebhook,
     deleteWebhook,
     listFields,
@@ -83,6 +85,9 @@ export const convertkit = createPiece({
     listTags,
     createTag,
     tagSubscriber,
+    removeTagFromSubscriberByEmail,
+    removeTagFromSubscriberById,
+    listSubscribersToTag,
   ],
   triggers: [addTag],
 });
