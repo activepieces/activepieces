@@ -92,6 +92,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
 
     await app.register(cors, {
         origin: '*',
+        exposedHeaders: ['*'],
         methods: ['*'],
     })
 
