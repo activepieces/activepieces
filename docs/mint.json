@@ -39,17 +39,18 @@
   "tabs": [
     {
       "name": "Developers",
-      "icon": "code",
       "url": "developers"
     },
     {
       "name": "Pieces",
-      "icon": "plug",
       "url": "https://www.activepieces.com/pieces"
     },
     {
+      "name": "Deploy",
+      "url": "install"
+    },
+    {
       "name": "Discord",
-      "icon": "discord",
       "url": "https://discord.gg/2jUXBKDdP8"
     }
   ],
@@ -58,33 +59,38 @@
       "group": "Getting Started",
       "pages": [
         "getting-started/introduction",
-        "getting-started/building-flows",
-        "getting-started/passing-data",
-        "getting-started/publishing-flows",
-        "getting-started/debugging-runs"
+        "getting-started/principles"
       ]
     },
     {
-      "group": "Helper Pieces",
+      "group": "Flows",
       "pages": [
-        "helper-pieces/code"
+        "flows/building-flows",
+        "flows/passing-data",
+        "flows/publishing-flows",
+        "flows/debugging-runs"
       ]
     },
     {
-      "group": "Deploy",
+      "group": "Core Pieces",
       "pages": [
-        {
-          "group": "Install Options",
-          "icon": "server",
-          "pages": [
-            "install/options/overview",
-            "install/options/docker",
-            "install/options/docker-compose",
-            "install/options/easypanel",            
-            "install/options/aws",
-            "install/options/gcp"
-          ]
-        },
+        "core-pieces/code"
+      ]
+    },
+    {
+      "group": "Get Started",
+      "pages": [
+        "install/options/overview",
+        "install/options/docker",
+        "install/options/docker-compose",
+        "install/options/easypanel",            
+        "install/options/aws",
+        "install/options/gcp"
+      ]
+    },
+    {
+    "group": "Reference",
+      "pages": [
         {
           "group": "Configurations",
           "icon": "gear",
