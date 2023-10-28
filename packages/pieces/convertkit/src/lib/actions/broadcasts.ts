@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { convertkitAuth } from '../..';
 import { CONVERTKIT_API_URL } from '../common';
 
-const API_ENDPOINT = 'broadcasts/';
+const API_ENDPOINT = 'broadcasts';
 
 // const now = new Date();
 
@@ -71,7 +71,7 @@ const broadcastProps = {
 
 export const listBroadcasts = createAction({
   auth: convertkitAuth,
-  name: 'list_broadcasts',
+  name: 'broadcasts_list_broadcasts',
   displayName: 'Broadcast: List Broadcasts',
   description: 'List all broadcasts',
   props: {
@@ -80,11 +80,12 @@ export const listBroadcasts = createAction({
       description:
         'Page number. Each page of results will contain up to 50 broadcasts.',
       required: false,
+      defaultValue: 1,
     }),
   },
   async run(context) {
     const page = context.propsValue.page || 1;
-    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}?page=${page}?api_secret=${context.auth}`;
+    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}?page=${page}&api_secret=${context.auth}`;
 
     // Fetch URL using fetch api
     const response = await fetch(url);
@@ -92,14 +93,18 @@ export const listBroadcasts = createAction({
     // Get response body
     const data = await response.json();
 
+    // curl command
+
+
     // Return response body
     return data;
+
   },
 });
 
 export const createBroadcast = createAction({
   auth: convertkitAuth,
-  name: 'create_broadcast',
+  name: 'broadcasts_create_broadcast',
   displayName: 'Broadcast: Create Broadcast',
   description: 'Create a new broadcast',
   props: broadcastProps,
@@ -125,7 +130,7 @@ export const createBroadcast = createAction({
 
 export const getBroadcastById = createAction({
   auth: convertkitAuth,
-  name: 'get_broadcast',
+  name: 'broadcasts_get_broadcast',
   displayName: 'Broadcast: Get Broadcast',
   description: 'Get a broadcast',
   props: {
@@ -137,7 +142,7 @@ export const getBroadcastById = createAction({
   },
   async run(context) {
     const { broadcastId } = context.propsValue;
-    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}${broadcastId}?api_secret=${context.auth}`;
+    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}/${broadcastId}?api_secret=${context.auth}`;
 
     // Fetch URL using fetch api
     const response = await fetch(url);
@@ -152,7 +157,7 @@ export const getBroadcastById = createAction({
 
 export const updateBroadcast = createAction({
   auth: convertkitAuth,
-  name: 'update_broadcast',
+  name: 'broadcasts_update_broadcast',
   displayName: 'Broadcast: Update Broadcast',
   description: 'Update a broadcast',
   props: {
@@ -165,7 +170,7 @@ export const updateBroadcast = createAction({
   },
   async run(context) {
     const { broadcastId } = context.propsValue;
-    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}${broadcastId}?api_secret=${context.auth}`;
+    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}/${broadcastId}?api_secret=${context.auth}`;
 
     // TODO: How to remove the 'auth' key?
     // put all values, except broadcastId, in props
@@ -190,7 +195,7 @@ export const updateBroadcast = createAction({
 
 export const deleteBroadcast = createAction({
   auth: convertkitAuth,
-  name: 'delete_broadcast',
+  name: 'broadcasts_delete_broadcast',
   displayName: 'Broadcast: Delete Broadcast',
   description: 'Delete a broadcast',
   props: {
@@ -202,7 +207,7 @@ export const deleteBroadcast = createAction({
   },
   async run(context) {
     const { broadcastId } = context.propsValue;
-    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}${broadcastId}?api_secret=${context.auth}`;
+    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}/${broadcastId}?api_secret=${context.auth}`;
 
     // Fetch URL using fetch api
     const response = await fetch(url, {
@@ -212,11 +217,10 @@ export const deleteBroadcast = createAction({
       },
     });
 
-    // Get response body
-    const data = await response.json();
-
-    // Return response body
-    return data;
+    if (!response.ok) {
+      return { success: false, message: 'Error deleting broadcast' };
+    }
+    return { success: true, message: 'Broadcast deleted successfully' };
   },
 });
 

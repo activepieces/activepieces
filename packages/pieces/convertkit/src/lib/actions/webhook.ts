@@ -6,7 +6,7 @@ import {
 import { convertkitAuth } from '../..';
 import { CONVERTKIT_API_URL } from '../common';
 
-const API_ENDPOINT = 'automations/hooks/';
+const API_ENDPOINT = 'automations/hooks';
 
 const createWebhookParameterOptions = [
   {
@@ -193,7 +193,7 @@ export const deleteWebhook = createAction({
   },
   async run(context) {
     const { webhookId } = context.propsValue;
-    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}${webhookId}`;
+    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}/${webhookId}`;
 
     // Fetch URL using fetch api
     const response = await fetch(url, {

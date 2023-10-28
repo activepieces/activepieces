@@ -1,6 +1,7 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import {
   getSubscriberById,
+  getSubscriberByEmail,
   listSubscribers,
   updateSubscriber,
   unsubscribeSubscriber,
@@ -35,7 +36,7 @@ import {
   listSupscriptionsToSequence,
 } from './lib/actions/sequences';
 
-import { listTags } from './lib/actions/tags';
+import { listTags, createTag, tagSubscriber } from './lib/actions/tags';
 
 import { addTag } from './lib/triggers/tag-add';
 
@@ -57,6 +58,7 @@ export const convertkit = createPiece({
   authors: [],
   actions: [
     getSubscriberById,
+    getSubscriberByEmail,
     listSubscribers,
     updateSubscriber,
     unsubscribeSubscriber,
@@ -79,6 +81,8 @@ export const convertkit = createPiece({
     addSubscriberToSequence,
     listSupscriptionsToSequence,
     listTags,
+    createTag,
+    tagSubscriber,
   ],
   triggers: [addTag],
 });

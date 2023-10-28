@@ -6,38 +6,70 @@ import {
 import { convertkitAuth } from '../..';
 import { CONVERTKIT_API_URL } from '../common';
 
-const API_ENDPOINT = 'custom_fields/';
+const API_ENDPOINT = 'custom_fields';
+
+export const getCustomFields = async (auth: string) => {
+  const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}?api_secret=${auth}`;
+  const response = await fetch(url);
+  return await response.json();
+}
 
 export const listFields = createAction({
   auth: convertkitAuth,
-  name: 'list_fields',
+  name: 'custom_fields_list_fields',
   displayName: 'Custom Fields: List Fields',
   description: 'Returns a list of all custom fields',
   props: {},
   async run(context) {
-    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}?api_secret=${context.auth}`;
+    return getCustomFields(context.auth);
+  },
+});
 
-    // Fetch URL using fetch api
-    const response = await fetch(url);
 
-    // Get response body
-    const data = await response.json();
+export const propertyCustomFields =  Property.DynamicProperties({
+  displayName: 'Custom Fields',
+  description: 'The custom fields',
+  required: false,
+  refreshers: ['auth'],
+  props: async ({ auth }) => {
+    if (!auth) {
+      return {
+        disabled: true,
+        placeholder: 'Connect your account',
+        options: [],
+      };
+    }
 
-    // Return response body
-    return data;
+    const fields: DynamicPropsValue = {};
+
+    const customFields = await getCustomFields(auth.toString());
+
+    // loop through data and map to fields
+    customFields.custom_fields.forEach(
+      (field: { id: string; label: string; key: string; name: string }) => {
+        fields[field.key] = Property.ShortText({
+          displayName: field.label,
+          description: `Enter the value for custom field: ${field.label}`,
+          required: false,
+        });
+      }
+    );
+
+    console.debug('fields: ', fields);
+    return fields;
   },
 });
 
 export const createField = createAction({
   auth: convertkitAuth,
-  name: 'create_field',
+  name: 'custom_fields_create_field',
   displayName: 'Custom Fields: Create Field',
   description: 'Create a new custom field',
   props: {
     // TODO: Add validation for the fields
     fields: Property.Array({
       displayName: 'Fields',
-      description: 'The cust    om fields',
+      description: 'The custom fields',
       required: true,
     }),
   },
@@ -63,7 +95,7 @@ export const createField = createAction({
 
 export const updateField = createAction({
   auth: convertkitAuth,
-  name: 'update_field',
+  name: 'custom_fields_update_field',
   displayName: 'Custom Fields: Update Field',
   description: 'Update a custom field',
   props: {
@@ -80,12 +112,10 @@ export const updateField = createAction({
           };
         }
 
-        const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}?api_secret=${auth}`;
-        const response = await fetch(url);
-        const data = await response.json();
+        const fields = await getCustomFields(auth.toString());
 
         // loop through data and map to options
-        const options = data.custom_fields.map(
+        const options = fields.custom_fields.map(
           (field: { id: string; label: string; key: string; name: string }) => {
             return {
               label: field.label,
@@ -106,7 +136,7 @@ export const updateField = createAction({
       required: true,
       refreshers: ['label', 'auth'],
       props: async ({ auth, label }) => {
-        if (!label) {
+        if (!auth) {
           return {
             disabled: true,
             placeholder: 'Select labels first',
@@ -116,19 +146,8 @@ export const updateField = createAction({
 
         const fields: DynamicPropsValue = {};
 
-        // TODO: Avoid making multiple calls to the API
-        // Right before this, we are making a call to the API to get the labels, but
-        // we don't know how to pass the values from the dropdown to here
-        const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}?api_secret=${auth}`;
-        const response = await fetch(url);
-        const data = await response.json();
-
-        const customField = data.custom_fields.find(
-          (field: { id: string; label: string; key: string; name: string }) =>
-            field.id.toString() === label.toString()
-        );
-        fields[customField.id] = Property.ShortText({
-          displayName: `New label for: ${customField.label}`,
+        fields[label.toString()] = Property.ShortText({
+          displayName: `New label`,
           // description: `Enter the new label for ${customField.label}`,
           required: true,
         });
@@ -140,7 +159,7 @@ export const updateField = createAction({
   async run(context) {
     const { label, new_label } = context.propsValue;
 
-    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}${label}`;
+    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}/${label}`;
 
     // Fetch URL using fetch api
     const response = await fetch(url, {
@@ -163,7 +182,7 @@ export const updateField = createAction({
 
 export const deleteField = createAction({
   auth: convertkitAuth,
-  name: 'delete_field',
+  name: 'custom_fields_delete_field',
   displayName: 'Custom Fields: Delete Field',
   description: 'Delete a custom field',
   props: {
@@ -203,7 +222,7 @@ export const deleteField = createAction({
   async run(context) {
     const { label } = context.propsValue;
 
-    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}${label}`;
+    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}/${label}`;
 
     // Fetch URL using fetch api
     const response = await fetch(url, {
