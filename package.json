@@ -120,7 +120,7 @@
     "nodemailer": "6.9.4",
     "nx-cloud": "16.4.0",
     "object-sizeof": "2.6.3",
-    "openai": "4.0.0",
+    "openai": "3.3.0",
     "papaparse": "5.4.1",
     "pdf-parse": "1.1.1",
     "pg": "8.11.3",
