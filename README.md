@@ -220,6 +220,7 @@ We welcome contributions big or small and in different directions. The best way 
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/derbbre"><img src="https://avatars.githubusercontent.com/u/281843?v=4?s=100" width="100px;" alt="derbbre"/><br /><sub><b>derbbre</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=derbbre" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/maor-rozenfeld"><img src="https://avatars.githubusercontent.com/u/49363375?v=4?s=100" width="100px;" alt="Maor Rozenfeld"/><br /><sub><b>Maor Rozenfeld</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=maor-rozenfeld" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/miqh"><img src="https://avatars.githubusercontent.com/u/43751307?v=4?s=100" width="100px;" alt="Michael Huynh"/><br /><sub><b>Michael Huynh</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=miqh" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
