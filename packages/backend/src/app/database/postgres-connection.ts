@@ -71,6 +71,7 @@ import { StoreCodeInsideFlow1697969398200 } from './migration/common/16979693982
 import { AddPlatformToProject1698065083750 } from './migration/postgres/1698065083750-add-platform-to-project'
 import { AddCustomDomain1698077078271 } from '../ee/database/migrations/postgres/1698077078271-AddCustomDomain'
 import { AddTerminationReason1698323987669 } from './migration/postgres/1698323987669-AddTerminationReason'
+import { AddManagedAuthnKeyPair1698602417745 } from './migration/postgres/1698602417745-add-managed-authn-key-pair'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
@@ -157,6 +158,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddPieceTypeAndPackageTypeToFlowTemplate1696245170062,
                 AddPlatform1697717995884,
                 AddCustomDomain1698077078271,
+                AddManagedAuthnKeyPair1698602417745,
             )
             break
         case ApEdition.ENTERPRISE:
@@ -165,6 +167,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 ProjectMemberRelations1694381968985,
                 AddPlatform1697717995884,
                 AddCustomDomain1698077078271,
+                AddManagedAuthnKeyPair1698602417745,
             )
             break
         case ApEdition.COMMUNITY:
