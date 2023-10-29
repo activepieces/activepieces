@@ -1,8 +1,6 @@
 <div class="ap-w-full ap-h-full ap-px-[30px] ap-pt-[50px]">
   <div class="ap-h-full">
-    <div class="ap-py-4 ap-mb-4 ap-text-left ap-border-b-[1px] ap-font-semibold ap-typography-headline-6">
-      <div class="ap-flex" i18n>Project Members</div>
-    </div>
+    <ap-page-title title="Project Members"></ap-page-title>
 
     <div class="ap-min-h-[70%]">
       <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Project Members" i18n-aria-label>
@@ -35,8 +33,8 @@
           </th>
           <td mat-cell *matCellDef="let invitation">
             <ap-icon-button *ngIf="projectMemberRole.ADMIN !== invitation.role" class="ap-float-right"
-              tooltipText="Delete Invitation" i18n-tooltipText iconFilename="trash.svg" color="warn" [width]="20" [height]="20"
-              (buttonClicked)="deleteInvitation(invitation.id)"></ap-icon-button>
+              tooltipText="Delete Invitation" i18n-tooltipText iconFilename="trash.svg" color="warn" [width]="20"
+              [height]="20" (buttonClicked)="deleteInvitation(invitation.id)"></ap-icon-button>
           </td>
         </ng-container>
 
