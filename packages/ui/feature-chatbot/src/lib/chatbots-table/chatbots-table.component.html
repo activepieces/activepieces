@@ -1,11 +1,6 @@
 <div class="ap-w-full ap-h-full ap-px-[30px] ap-pt-[50px]">
   <div class="ap-h-full">
-    <div class="ap-py-4 ap-mb-4 ap-text-left ap-border-b-[1px]">
-      <div class="ap-flex ap-gap-2 ap-items-center">
-        <div class="ap-font-semibold ap-typography-headline-6" i18n>Chatbots</div>
-        <div class="ap-typography-caption ap-text-primary ap-mt-1" i18n>BETA</div>
-      </div>
-    </div>
+    <ap-page-title title="Chatbots" [isBeta]="true"></ap-page-title>
 
     <div class="ap-min-h-[70%]">
       <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Chatbots">
@@ -30,18 +25,17 @@
               <ng-container *ngIf="chatbot.visibilityStatus === VisiblityStatus.PUBLIC || !chatbot.connectionId">
                 <ap-icon-button
                   (click)="$event.stopPropagation(); chatbot.connectionId? copyChatbotUrl(chatbot):openSettings(chatbot.id)"
-                  [tooltipText]="shareChatbotLinkTooltipText(chatbot)"
-                  iconFilename="share.svg" color="primary" [width]="20" [height]="20"
-                  [buttonDisabled]="!chatbot.connectionId" [height]="16"></ap-icon-button>
+                  [tooltipText]="shareChatbotLinkTooltipText(chatbot)" iconFilename="share.svg" color="primary"
+                  [width]="20" [height]="20" [buttonDisabled]="!chatbot.connectionId" [height]="16"></ap-icon-button>
               </ng-container>
 
               <ap-icon-button
                 (click)="$event.stopPropagation();chatbot.connectionId? openChatbot(chatbot.id):openSettings(chatbot.id)"
-                [tooltipText]="chatWithBotTooltipText(chatbot)" iconFilename="chat-bubble.svg" color="primary" [width]="20" [height]="20"
-                [buttonDisabled]="!chatbot.connectionId" [height]="16"></ap-icon-button>
-              <ap-icon-button (click)="deleteChatbot(chatbot); $event.stopPropagation()"
-                tooltipText="Delete Bot" i18n-tooltipText
-                iconFilename="trash.svg" color="warn" [width]="20" [height]="20" [height]="16"></ap-icon-button>
+                [tooltipText]="chatWithBotTooltipText(chatbot)" iconFilename="chat-bubble.svg" color="primary"
+                [width]="20" [height]="20" [buttonDisabled]="!chatbot.connectionId" [height]="16"></ap-icon-button>
+              <ap-icon-button (click)="deleteChatbot(chatbot); $event.stopPropagation()" tooltipText="Delete Bot"
+                i18n-tooltipText iconFilename="trash.svg" color="warn" [width]="20" [height]="20"
+                [height]="16"></ap-icon-button>
             </div>
           </td>
         </ng-container>
