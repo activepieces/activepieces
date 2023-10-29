@@ -6,7 +6,7 @@ import { postInputsAction } from "./lib/actions/call-post-inputs";
 import { workflowPredictAction } from "./lib/actions/call-workflow";
 import { clarifaiAskLLM } from "./lib/actions/ask-llm";
 import { clarifaiGenerateIGM } from "./lib/actions/generate-igm";
-import { HttpMethod, HttpRequest, httpClient } from "@activepieces/pieces-common";
+import { HttpMethod, httpClient } from "@activepieces/pieces-common";
 
 const markdownDescription = `
 Follow these instructions to get your Clarifai (Personal Access Token) PAT Key:
@@ -17,33 +17,32 @@ export const clarifaiAuth = PieceAuth.SecretText({
     displayName: "PAT Key",
     description: markdownDescription,
     required: true,
-    validate: async (auth) => {
-        const request : HttpRequest = {
-            method: HttpMethod.GET,
-            url:"https://api.clarifai.com/v2/models?sort_by_star_count=true&use_cases=llm&filter_by_user_id=true&additional_fields=stars&per_page=24&page=1",
-            headers : {
-                Authorization : 'Key ' + auth as string
-            }
-        }
-        try{
-            await httpClient.sendRequest(request);
-            return{
+    validate: async ({ auth }) => {
+        try {
+            await httpClient.sendRequest( {
+                method: HttpMethod.GET,
+                url: "https://api.clarifai.com/v2/models",
+                headers: {
+                    Authorization: 'Key ' + auth
+                }
+            });
+            return {
                 valid: true,
             }
-        }catch(e){
-            return{
+        } catch (e) {
+            return {
                 valid: false,
                 error: `Invalid PAT token\nerror:\n${e}`
             }
         }
-      }
+    }
 });
 
 export const clarifai = createPiece({
     displayName: "Clarifai",
     minimumSupportedRelease: '0.5.0',
     logoUrl: 'https://cdn.activepieces.com/pieces/clarifai.png',
-    authors: ['akatechis','Salem-Alaa'],
+    authors: ['akatechis', 'Salem-Alaa'],
     auth: clarifaiAuth,
     actions: [
         clarifaiAskLLM,
