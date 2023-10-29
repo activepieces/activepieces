@@ -13,39 +13,42 @@ interface WebhookInformation {
 const API_ENDPOINT = 'automations/hooks/';
 
 const log = async (message: object) => {
-    const fs = require('fs');
-    const path = require('path');
-    const filePath = path.join(__dirname, 'log.txt');
-    fs.appendFile(filePath, JSON.stringify(message, null, 2), function (err: any) {
+  const fs = require('fs');
+  const path = require('path');
+  const filePath = path.join(__dirname, 'log.txt');
+  fs.appendFile(
+    filePath,
+    JSON.stringify(message, null, 2),
+    function (err: any) {
       if (err) throw err;
       console.log('Logging to: ', filePath);
-    });
-}
+    }
+  );
+};
 
 const onEnable = async (auth: string, payload: object) => {
+  const body = JSON.stringify({ ...payload, api_secret: auth }, null, 2);
+  console.log('body', body);
+  const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}`;
+  // Fetch URL using fetch api
+  const response = await fetch(url, {
+    method: 'POST',
+    body,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
 
-  const body = JSON.stringify({ ...payload, api_secret: auth }, null, 2)
-  console.log('body', body)
-    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}`;
-    // Fetch URL using fetch api
-    const response = await fetch(url, {
-      method: 'POST',
-      body,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+  // Throw if unsuccessful
+  if (!response.ok) {
+    throw new Error('Failed to create webhook');
+  }
 
-    // Throw if unsuccessful
-    if (!response.ok) {
-      throw new Error('Failed to create webhook');
-    }
+  // Get response body
+  const data = await response.json();
+  const ruleId = data.rule.id;
 
-    // Get response body
-    const data = await response.json();
-    const ruleId = data.rule.id
-
-    return ruleId
+  return ruleId;
 };
 
 const onDisable = async (auth: string, ruleId: number) => {
@@ -80,22 +83,22 @@ export const addTag = createTrigger({
   },
   sampleData: {
     rule: {
-      id: 43,
+      id: 1,
       account_id: 2,
       event: {
-        name: 'tag_add',
-        tag_id: 18,
+        name: 'subscriber_activate',
       },
-      target_url: 'http://example.com/',
     },
   },
   async onEnable(context) {
-
     // let target_url = context.webhookUrl
     // if (ENVIRONMENT === 'dev') {
-      // target_url = context.webhookUrl.replace('http://localhost:3000', 'https://activepieces.ngrok.dev')
+    // target_url = context.webhookUrl.replace('http://localhost:3000', 'https://activepieces.ngrok.dev')
     // }
-    const target_url = context.webhookUrl.replace('http://localhost:3000', 'https://activepieces.ngrok.dev')
+    const target_url = context.webhookUrl.replace(
+      'http://localhost:3000',
+      'https://activepieces.ngrok.dev'
+    );
 
     const payload = {
       event: {
@@ -110,10 +113,8 @@ export const addTag = createTrigger({
     await context.store?.put<WebhookInformation>(`_new_tag_add_trigger`, {
       ruleId,
     });
-
   },
   async onDisable(context) {
-
     const response = await context.store?.get<WebhookInformation>(
       '_new_tag_add_trigger'
     );
