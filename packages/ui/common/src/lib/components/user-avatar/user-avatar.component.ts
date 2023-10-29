@@ -1,62 +1,58 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthenticationService } from '../../service/authentication.service';
-import { environment } from '../../environments/environment';
 import { ProjectService } from '../../service/project.service';
 import { ApFlagId, Project } from '@activepieces/shared';
-import { Observable, map, tap } from 'rxjs';
-import { JwtHelperService } from '@auth0/angular-jwt';
-import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 import { FlagService } from '../../service/flag.service';
+
+import { Store } from '@ngrx/store';
+import { ProjectSelectors } from '../../store/project/project.selector';
+
 @Component({
   selector: 'ap-user-avatar',
   templateUrl: './user-avatar.component.html',
   styleUrls: ['./user-avatar.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class UserAvatarComponent {
+export class UserAvatarComponent implements OnInit {
   showAvatarOuterCircle = false;
+  currentUserEmail = 'Dev@ap.com';
   // BEGIN EE
-  private jwtHelper = new JwtHelperService();
   projects$: Observable<Project[]>;
   selectedProject$: Observable<Project | undefined>;
   switchProject$: Observable<void>;
   overflownProjectsNames: Record<string, string> = {};
   billingEnabled$: Observable<boolean>;
   projectEnabled$: Observable<boolean>;
-
+  showPlatform = false;
   showCommunity$: Observable<boolean>;
-
   constructor(
     public authenticationService: AuthenticationService,
     private router: Router,
     private flagService: FlagService,
+    private store: Store,
     // BEGIN EE
-    private projectService: ProjectService,
-    private http: HttpClient // END EE
+    private projectService: ProjectService // END EE
   ) {
     this.showCommunity$ = this.flagService.isFlagEnabled(
       ApFlagId.SHOW_COMMUNITY
     );
     // BEGIN EE
     this.billingEnabled$ = this.flagService.isFlagEnabled(
-      ApFlagId.BILLING_ENABLED
+      ApFlagId.SHOW_BILLING
     );
     this.projectEnabled$ = this.flagService.isFlagEnabled(
       ApFlagId.PROJECT_MEMBERS_ENABLED
     );
-    this.projects$ = this.projectService.list();
-    const currentProjectId = this.jwtHelper.decodeToken(
-      localStorage.getItem(environment.jwtTokenName) || ''
-    )?.projectId;
-    this.selectedProject$ = this.projects$.pipe(
-      map((projects) => {
-        return projects.find((f) => {
-          return f.id === currentProjectId;
-        });
-      })
-    );
+    this.projects$ = this.store.select(ProjectSelectors.selectAllProjects);
+    this.selectedProject$ = this.store.select(ProjectSelectors.selectProject);
     // END EE
+  }
+  ngOnInit(): void {
+    this.currentUserEmail = this.authenticationService.currentUser.email;
+    const decodedToken = this.authenticationService.getDecodedToken();
+    this.showPlatform = !!decodedToken && !!decodedToken['platformId'];
   }
 
   getDropDownLeftOffset(
@@ -82,19 +78,10 @@ export class UserAvatarComponent {
     this.router.navigate(['plans']);
   }
   switchProject(projectId: string) {
-    this.switchProject$ = this.http
-      .post<{
-        token: string;
-      }>(`${environment.apiUrl}/projects/${projectId}/token`, {
-        projectId,
-      })
-      .pipe(
-        tap(({ token }) => {
-          localStorage.setItem(environment.jwtTokenName, token);
-          window.location.reload();
-        }),
-        map(() => void 0)
-      );
+    this.switchProject$ = this.projectService.switchProject(projectId);
+  }
+  viewPlatformSettings() {
+    this.router.navigate(['/platform']);
   }
   // END EE
 

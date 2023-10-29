@@ -2,13 +2,14 @@ import { Component } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { catchError, from, map, Observable, of, switchMap, tap } from 'rxjs';
 import { FirebaseAuthService } from '../firebase-auth.service';
-import { fadeInUp400ms } from '@activepieces/ui/common';
-import { GoogleAuthProvider, GithubAuthProvider} from "@angular/fire/auth";
+import { FlagService, fadeInUp400ms } from '@activepieces/ui/common';
+import { GoogleAuthProvider, GithubAuthProvider } from "@angular/fire/auth";
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { FirebaseError } from '@angular/fire/app';
 import { AuthenticationService } from '@activepieces/ui/common';
 import { Meta } from '@angular/platform-browser';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { ApFlagId } from '@activepieces/shared';
 interface LoginForm {
 	email: FormControl<string>;
 	password?: FormControl<string>;
@@ -27,16 +28,20 @@ export class FirebaseSignInComponent {
 	alreadyRegisteredWithAnotherProvider = false;
 	showInvalidEmailOrPasswordMessage = false;
 	showEmailNotVerifiedMessage = false;
-	unverifiedUser:firebase.default.auth.UserCredential | undefined;
+	unverifiedUser: firebase.default.auth.UserCredential | undefined;
 	loginForm!: FormGroup<LoginForm>;
+	showAuthProvider$: Observable<boolean>;
 	saveReferreringUserId$!: Observable<void>;
-	constructor(private router: Router, private route: ActivatedRoute,private meta:Meta,
-		private snackBar:MatSnackBar,
-		 private firebaseAuthService: FirebaseAuthService, private authService: AuthenticationService) {
-			this.meta.addTag({
-				content:"Login to your account with Activepieces. Activepieces is an open source no-code business automation tool. Automate Slack, Notion, Airtable, Google Sheets and ChatGPT together.",
-				name:"description"
-			});
+	constructor(private router: Router, private route: ActivatedRoute, private meta: Meta,
+		private snackBar: MatSnackBar,
+		private flagsService: FlagService,
+		private firebaseAuthService: FirebaseAuthService,
+		private authService: AuthenticationService) {
+		this.meta.addTag({
+			content: "Login to your account with Activepieces. Activepieces is an open source no-code business automation tool. Automate Slack, Notion, Airtable, Google Sheets and ChatGPT together.",
+			name: "description"
+		});
+		this.showAuthProvider$ = this.flagsService.isFlagEnabled(ApFlagId.SHOW_AUTH_PROVIDERS);
 		this.loginForm = new FormGroup<LoginForm>({
 			email: new FormControl<string>('', { nonNullable: true, validators: [Validators.required, Validators.email] }),
 			password: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),
@@ -52,7 +57,7 @@ export class FirebaseSignInComponent {
 	}
 
 	signIn(): void {
-		this.unverifiedUser=undefined;
+		this.unverifiedUser = undefined;
 		this.showEmailNotVerifiedMessage = false;
 		this.showInvalidEmailOrPasswordMessage = false;
 		if (this.loginForm.valid && !this.loading) {
@@ -63,7 +68,7 @@ export class FirebaseSignInComponent {
 					if (!res.user?.emailVerified) {
 						this.loading = false;
 						this.showEmailNotVerifiedMessage = true;
-						this.unverifiedUser=res;
+						this.unverifiedUser = res;
 						return of(null);
 					} else {
 						return from(res.user.getIdToken()).pipe(switchMap(idToken => {
@@ -123,10 +128,10 @@ export class FirebaseSignInComponent {
 		this.router.navigate(['/forgot-password'], { queryParams: { redirect_url: this.route.snapshot.queryParamMap.get('redirect_url') } });
 	}
 
-	signUp(){
+	signUp() {
 		this.router.navigate(['/sign-up'], { queryParams: { redirect_url: this.route.snapshot.queryParamMap.get('redirect_url') } });
 	}
-	
+
 	redirectToBack() {
 		const redirectUrl = this.route.snapshot.queryParamMap.get('redirect_url');
 		if (redirectUrl) {
@@ -134,13 +139,11 @@ export class FirebaseSignInComponent {
 		} else {
 			this.router.navigate(['/flows']);
 		}
-	}	
-	resendVerificationEmail()
-	{
-		if(this.unverifiedUser)
-		{
+	}
+	resendVerificationEmail() {
+		if (this.unverifiedUser) {
 			this.unverifiedUser.user?.sendEmailVerification();
-			this.unverifiedUser=undefined;
+			this.unverifiedUser = undefined;
 			this.snackBar.open("Verfication email resent");
 		}
 	}

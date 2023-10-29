@@ -42,6 +42,9 @@ export const rbacAuthMiddleware = async (req: FastifyRequest): Promise<void> => 
     if (edition === ApEdition.COMMUNITY) {
         return
     }
+    if (req.url.startsWith('/redirect')) {
+        return
+    }
     const action = req.method
     const resource = extractResourceName(req.url)
     const projectMemberRole = await projectMemberService.getRole({

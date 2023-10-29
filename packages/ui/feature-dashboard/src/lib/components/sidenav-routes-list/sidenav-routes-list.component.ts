@@ -9,7 +9,7 @@ import { Store } from '@ngrx/store';
 import { FolderActions } from '../../store/folders/folders.actions';
 import { Observable, map, tap } from 'rxjs';
 import { ApFlagId, supportUrl } from '@activepieces/shared';
-import { FlagService } from '@activepieces/ui/common';
+import { DashboardService, FlagService } from '@activepieces/ui/common';
 
 type SideNavRoute = {
   icon: string;
@@ -30,12 +30,13 @@ export class SidenavRoutesListComponent implements OnInit {
   showSupport$: Observable<boolean>;
   showDocs$: Observable<boolean>;
   showBilling$: Observable<boolean>;
-
+  hideSideRoutes$: Observable<boolean>;
   constructor(
     public router: Router,
     private store: Store,
     private flagServices: FlagService,
-    private cd: ChangeDetectorRef
+    private cd: ChangeDetectorRef,
+    private dashboardService: DashboardService
   ) {
     this.logoUrl$ = this.flagServices
       .getLogos()
@@ -56,9 +57,8 @@ export class SidenavRoutesListComponent implements OnInit {
     this.showSupport$ = this.flagServices.isFlagEnabled(
       ApFlagId.SHOW_COMMUNITY
     );
-    this.showBilling$ = this.flagServices.isFlagEnabled(
-      ApFlagId.BILLING_ENABLED
-    );
+    this.showBilling$ = this.flagServices.isFlagEnabled(ApFlagId.SHOW_BILLING);
+    this.hideSideRoutes$ = this.dashboardService.gethideSideNaveRoutesObs();
   }
 
   sideNavRoutes: SideNavRoute[] = [

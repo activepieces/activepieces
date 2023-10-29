@@ -1,0 +1,41 @@
+<div i18n class="ap-typography-headline-5 !ap-font-semibold ap-p-7.5   ap-border-b ap-border-solid ap-border-outline">
+    Platform Settings</div>
+
+<div class="ap-px-7.5 ap-py-5">
+    <mat-tab-group #group mat-stretch-tabs="false" mat-align-tabs="start" animationDuration="0" class="ap-h-full">
+        <mat-tab>
+            <ng-template mat-tab-label>
+                <div class="ap-typegraphy-body-1 ap-font-semibold" i18n>
+                    Projects
+                </div>
+            </ng-template>
+            <div class="ap-my-5">
+                <app-projects-table></app-projects-table>
+            </div>
+        </mat-tab>
+        <mat-tab>
+
+            <ng-template mat-tab-label>
+                <div i18n class="ap-typegraphy-body-1 ap-font-semibold">
+                    Appearance
+                </div>
+            </ng-template>
+
+        </mat-tab>
+        <!-- <mat-tab>
+            <ng-template mat-tab-label>
+                <div class="ap-typegraphy-body-1 ap-font-semibold">
+                    Settings
+                </div>
+            </ng-template>
+            <div class="ap-my-5">
+                <app-platform-settings></app-platform-settings>
+            </div>
+        </mat-tab> -->
+    </mat-tab-group>
+
+</div>
+
+<div class=" ap-px-7.5 ap-h-[calc(100%-17.5rem)]" [class.ap-hidden]="group.selectedIndex !== 1">
+    <app-platform-appearance [platform]="platform"></app-platform-appearance>
+</div>

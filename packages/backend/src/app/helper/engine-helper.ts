@@ -90,7 +90,7 @@ const generateWorkerToken = (
     })
 }
 
-function tryParseJson(value: unknown) {
+function tryParseJson(value: unknown): unknown {
     try {
         return JSON.parse(value as string)
     }
@@ -127,7 +127,7 @@ const execute = async <Result extends EngineHelperResult>(
         })
     }
 
-    const result: Result = tryParseJson(sandboxResponse.output)
+    const result = tryParseJson(sandboxResponse.output) as Result
 
     const response = {
         status: sandboxResponse.verdict,

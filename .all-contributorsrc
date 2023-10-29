@@ -644,6 +644,24 @@
       "contributions": [
         "bug"
       ]
+    },
+    {
+      "login": "derbbre",
+      "name": "derbbre",
+      "avatar_url": "https://avatars.githubusercontent.com/u/281843?v=4",
+      "profile": "https://github.com/derbbre",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "maor-rozenfeld",
+      "name": "Maor Rozenfeld",
+      "avatar_url": "https://avatars.githubusercontent.com/u/49363375?v=4",
+      "profile": "https://github.com/maor-rozenfeld",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "commitType": "docs"

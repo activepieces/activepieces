@@ -1,6 +1,8 @@
 <nav class="navbar-container navbar-expand ap-relative">
-  <div class="ap-absolute ap-w-full ap-flex ap-items-center ap-justify-center ap-p-4 ap-pointer-events-none">
-    <img [src]=" (fullLogoSmall$| async) ||'assets/img/custom/logo/full-logo-small.svg'">
+  <div class="ap-absolute ap-w-full ap-flex ap-items-center ap-justify-center ap-p-3 ap-pointer-events-none">
+    <div class="ap-h-[30px]">
+      <img [src]=" (fullLogo$| async) ||'assets/img/custom/logo/full-logo.svg'" class="ap-max-w-full ap-h-full">
+    </div>
   </div>
 
   <div class="ap-text-center ap-flex ap-items-center ap-justify-center"></div>
@@ -91,3 +93,4 @@
 <ng-container *ngIf="duplicateFlow$ | async"></ng-container>
 <ng-container *ngIf="openDashboardOnFolder$ | async"></ng-container>
 <ng-container *ngIf="shareFlow$ | async"></ng-container>
+<ng-container *ngIf="setTitle$ | async"></ng-container>

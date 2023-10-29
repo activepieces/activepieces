@@ -1,16 +1,13 @@
 <div class="ap-flex ap-justify-end">
     <div class="ap-typography-body-2 !ap-font-[600] ap-text-white ap-bg-avatar ap-rounded-full ap-px-[12px] ap-py-[7px] ap-cursor-pointer ap-text-center ap-min-w-[36px] ap-min-h-[36px]"
         [matMenuTriggerFor]="menu">
-        {{ authenticationService.currentUser.email[0] | uppercase }}
+        {{ currentUserEmail[0] | uppercase }}
     </div>
 </div>
 <mat-menu #menu="matMenu">
-    <div mat-menu-item (click)="showWhatIsNew()" *ngIf="showCommunity$ | async" i18n>
-        What's new
-    </div>
     <!-- BEGIN EE -->
-    <div mat-menu-item (click)="viewPlans()" *ngIf="billingEnabled$ | async">
-        Subscription
+    <div mat-menu-item (click)="viewPlatformSettings()" *ngIf="showPlatform">
+        Platform settings
     </div>
     <ng-container *ngIf="projectEnabled$ | async">
         <ng-container *ngIf="projects$ | async as projects">
@@ -49,7 +46,15 @@
             </ng-container>
         </ng-container>
     </ng-container>
+    <div class="ap-border-b ap-border-solid  ap-border-outline ap-mx-2"
+        *ngIf="(projectEnabled$ | async) || showPlatform "></div>
     <!-- END EE -->
+    <div mat-menu-item (click)="showWhatIsNew()" *ngIf="showCommunity$ | async">
+        What's new
+    </div>
+    <div mat-menu-item (click)="viewPlans()" *ngIf="billingEnabled$ | async">
+        Subscription
+    </div>
     <div mat-menu-item (click)="goToDeveloperPage()">
         <div i18n>My Pieces</div>
     </div>

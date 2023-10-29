@@ -171,6 +171,6 @@ type Step =
 
 type FlowVersion = {
     id: string
-    flowId: string;
+    flowId: string
     trigger?: Step
 }
