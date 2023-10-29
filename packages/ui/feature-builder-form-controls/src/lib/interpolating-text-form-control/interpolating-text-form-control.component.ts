@@ -31,7 +31,6 @@ import {
   fixSelection,
   fromOpsToText,
   fromTextToOps,
-  getImageTemplateForStepLogo,
   keysWithinPath,
   MentionListItem,
   QuillEditorOperationsObject,
@@ -39,9 +38,8 @@ import {
   TextInsertOperation,
 } from './utils';
 import 'quill-mention';
-import './fixed-selection-mention';
+
 import { Store } from '@ngrx/store';
-import { DomSanitizer } from '@angular/platform-browser';
 import {
   BuilderSelectors,
   FlowItem,
@@ -94,6 +92,7 @@ export class InterpolatingTextFormControlComponent
         return;
       },
       allowedChars: /^[A-Za-z\sÅÄÖåäö]*$/,
+      blotName: 'apMention',
     },
     toolbar: false,
     keyboard: {
@@ -127,7 +126,7 @@ export class InterpolatingTextFormControlComponent
         );
         if (typeof this._value === 'string')
           this.editorFormControl.setValue(
-            fromTextToOps(this._value, stepsMetaData, this.sanitizer)
+            fromTextToOps(this._value, stepsMetaData)
           );
       }
       this.stateChanges.next();
@@ -159,7 +158,6 @@ export class InterpolatingTextFormControlComponent
     @Optional() _parentFormGroup: FormGroupDirective,
     @Optional() @Self() ngControl: NgControl,
     private store: Store,
-    private sanitizer: DomSanitizer,
     private cd: ChangeDetectorRef
   ) {
     super(_defaultErrorStateMatcher, _parentForm, _parentFormGroup, ngControl);
@@ -273,11 +271,7 @@ export class InterpolatingTextFormControlComponent
         .pipe(take(1))
     );
     if (value && typeof value === 'string') {
-      const parsedTextToOps = fromTextToOps(
-        value,
-        stepsMetaData,
-        this.sanitizer
-      );
+      const parsedTextToOps = fromTextToOps(value, stepsMetaData);
       this.editorFormControl.setValue(parsedTextToOps, { emitEvent: false });
     }
     this._value = value;
@@ -358,30 +352,31 @@ export class InterpolatingTextFormControlComponent
     setTimeout(async () => {
       const allStepsMetaData = await firstValueFrom(this.stepsMetaData$);
       const itemPathWithoutInterpolationDenotation =
-        mentionOp.insert.mention.serverValue.slice(
+        mentionOp.insert.apMention.serverValue.slice(
           2,
-          mentionOp.insert.mention.serverValue.length - 2
+          mentionOp.insert.apMention.serverValue.length - 2
         );
       const keys = keysWithinPath(itemPathWithoutInterpolationDenotation);
       const stepName = keys[0];
-      let imageTag = '';
       const stepMetaData = allStepsMetaData.find(
         (s) => s.step.name === stepName
       );
-      if (stepMetaData) {
-        imageTag =
-          getImageTemplateForStepLogo(stepMetaData.logoUrl || '') +
-          `${stepMetaData.step.indexInDfsTraversal || 0 + 1}. `;
+      if (stepMetaData?.step.indexInDfsTraversal) {
+        mentionOp.insert.apMention.value = `${
+          stepMetaData?.step.indexInDfsTraversal + 1
+        }. ${mentionOp.insert.apMention.value}`;
+      } else {
+        `${mentionOp.insert.apMention.value}`;
       }
-      mentionOp.insert.mention.value =
-        ' ' + imageTag + mentionOp.insert.mention.value + ' ';
-
+      mentionOp.insert.apMention.data = {
+        logoUrl: stepMetaData?.logoUrl,
+      };
       if (this.onlyAllowOneMentionToBeAdded) {
         this.editorFormControl.setValue({ ops: [mentionOp] });
       } else {
         this.editor.quillEditor
           .getModule('mention')
-          .insertItem(mentionOp.insert.mention, true);
+          .insertItem(mentionOp.insert.apMention, true);
       }
 
       this._readOnly = this.onlyAllowOneMentionToBeAdded;
