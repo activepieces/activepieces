@@ -95,10 +95,8 @@ export const listBroadcasts = createAction({
 
     // curl command
 
-
     // Return response body
     return data;
-
   },
 });
 
@@ -193,6 +191,33 @@ export const updateBroadcast = createAction({
   },
 });
 
+export const broadcastStats = createAction({
+  auth: convertkitAuth,
+  name: 'broadcasts_broadcast_stats',
+  displayName: 'Broadcast: Broadcast Stats',
+  description: 'Get broadcast stats',
+  props: {
+    broadcastId: Property.ShortText({
+      displayName: 'Broadcast Id',
+      description: 'The broadcast id',
+      required: true,
+    }),
+  },
+  async run(context) {
+    const { broadcastId } = context.propsValue;
+    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}/${broadcastId}/stats?api_secret=${context.auth}`;
+
+    // Fetch URL using fetch api
+    const response = await fetch(url);
+
+    // Get response body
+    const data = await response.json();
+
+    // Return response body
+    return data;
+  },
+});
+
 export const deleteBroadcast = createAction({
   auth: convertkitAuth,
   name: 'broadcasts_delete_broadcast',
@@ -223,4 +248,3 @@ export const deleteBroadcast = createAction({
     return { success: true, message: 'Broadcast deleted successfully' };
   },
 });
-
