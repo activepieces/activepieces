@@ -1,4 +1,4 @@
-import { Platform } from '@activepieces/ee-shared'
+import { KeyPairAlgorithm, ManagedAuthnKeyPair, Platform } from '@activepieces/ee-shared'
 import { UserStatus, User, apId, Project, NotificationStatus, ProjectType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 
@@ -43,5 +43,17 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         logoIconUrl: platform?.logoIconUrl ?? faker.image.urlPlaceholder(),
         fullLogoUrl: platform?.fullLogoUrl ?? faker.image.urlPlaceholder(),
         favIconUrl: platform?.favIconUrl ?? faker.image.urlPlaceholder(),
+    }
+}
+
+export const createMockManagedAuthnKeyPair = (keyPair?: Partial<ManagedAuthnKeyPair>): ManagedAuthnKeyPair => {
+    return {
+        id: keyPair?.id ?? apId(),
+        created: keyPair?.created ?? faker.date.recent().toISOString(),
+        updated: keyPair?.updated ?? faker.date.recent().toISOString(),
+        platformId: keyPair?.platformId ?? apId(),
+        publicKey: keyPair?.publicKey ?? faker.lorem.word(),
+        generatedBy: keyPair?.generatedBy ??  apId(),
+        algorithm: keyPair?.algorithm ?? faker.helpers.enumValue(KeyPairAlgorithm),
     }
 }
