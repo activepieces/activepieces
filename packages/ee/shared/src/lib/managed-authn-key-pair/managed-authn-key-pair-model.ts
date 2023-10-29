@@ -5,6 +5,8 @@ export enum KeyPairAlgorithm {
     RSA = 'RSA',
 }
 
+export type ManagedAuthnKeyPairId = ApId
+
 export const ManagedAuthnKeyPair = Type.Object({
     ...BaseModelSchema,
     platformId: ApId,
