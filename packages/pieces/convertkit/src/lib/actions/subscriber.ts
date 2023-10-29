@@ -5,7 +5,7 @@ import { propertyCustomFields } from './custom-fields';
 
 const API_ENDPOINT = 'subscribers';
 
-export const getSubscriberIdByEmail = async (
+export const fetchSubscriberByEmail = async (
   auth: string,
   email_address: string
 ) => {
@@ -15,7 +15,7 @@ export const getSubscriberIdByEmail = async (
     return null;
   }
   const data = await response.json();
-  console.log('data: ', data);
+
   return data;
 };
 
@@ -215,31 +215,30 @@ export const updateSubscriber = createAction({
   },
 });
 
-// TODO: Test Action
 export const unsubscribeSubscriber = createAction({
   auth: convertkitAuth,
   name: 'subscribers_unsubscribe_subscriber',
   displayName: 'Subscriber: Unsubscribe Subscriber',
   description: 'Unsubscribe a subscriber',
   props: {
-    email_address: Property.ShortText({
+    email: Property.ShortText({
       displayName: 'Email Address',
       description: 'Email address',
       required: true,
     }),
   },
   async run(context) {
-    const { email_address } = context.propsValue;
-    const subscriberId = await getSubscriberIdByEmail(
-      context.auth,
-      email_address
-    );
-    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}/${subscriberId}/unsubscribe`;
+    const { email } = context.propsValue;
+    const subscriberId = await fetchSubscriberByEmail(context.auth, email);
+    const url = `${CONVERTKIT_API_URL}unsubscribe`;
+
+    const body = JSON.stringify({ email, api_secret: context.auth }, null, 2);
 
     // Fetch URL using fetch api
     const response = await fetch(url, {
       method: 'PUT',
-      body: JSON.stringify({ ...context.propsValue, api_secret: context.auth }),
+      body,
+      // body: JSON.stringify({ ...context.propsValue, api_secret: context.auth }),
       headers: {
         'Content-Type': 'application/json',
       },
@@ -267,7 +266,7 @@ export const listSubscriberTags = createAction({
   },
   async run(context) {
     const { email_address } = context.propsValue;
-    const subscriberId = await getSubscriberIdByEmail(
+    const subscriberId = await fetchSubscriberByEmail(
       context.auth,
       email_address
     );
