@@ -8,16 +8,14 @@ import { ProjectsTableComponent } from './components/projects-table/projects-tab
 import { CreateProjectDialogComponent } from './components/projects-table/create-project-dialog/create-project-dialog.component';
 import { UpdateProjectDialogComponent } from './components/projects-table/update-project-dialog/update-project-dialog.component';
 import { PlatformAppearanceComponent } from './components/platform-appearance/platform-appearance.component';
-import { PortalModule } from '@angular/cdk/portal';
 import { PlatformSettingsComponent } from './components/platform-settings/platform-settings.component';
-import { SigningKeysTableComponent } from './components/signing-keys-table/signing-keys-table.component';
-import { CreateSigningKeyDialogComponent } from './components/signing-keys-table/create-signing-key-dialog/create-signing-key-dialog.component';
+import { SigningKeysTableComponent } from './components/platform-settings/signing-keys-table/signing-keys-table.component';
+import { CreateSigningKeyDialogComponent } from './components/platform-settings/signing-keys-table/create-signing-key-dialog/create-signing-key-dialog.component';
 @NgModule({
   imports: [
     UiCommonModule,
     CommonModule,
     RouterModule.forChild(uiEePlatformRoutes),
-    PortalModule,
   ],
   declarations: [
     PlatformComponent,

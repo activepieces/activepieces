@@ -5,8 +5,8 @@ import {
   tap,
   switchMap,
   of,
-  delay,
   map,
+  delay,
 } from 'rxjs';
 import { combineLatest } from 'rxjs';
 
@@ -39,21 +39,24 @@ export class SigningKeysDataSource extends DataSource<SigningKey> {
         this.isLoading$.next(true);
       }),
       switchMap(() =>
-        of(true).pipe(
-          delay(500),
-          map(() => {
-            return [];
-          })
-        )
+        {
+          return of(true).pipe(
+            map(() => {
+              debugger;
+              return  [
+                {
+                  displayName: 'Fake key',
+                  created: 'Thu Oct 26 2023 15:51:40 GMT+0300 (GMT+03:00)',
+                  id: 'string id ',
+                },
+              ];
+            })
+          )
+        }
       ),
-      tap(() => {
-        this.data = [
-          {
-            displayName: 'Fake key',
-            created: 'Thu Oct 26 2023 15:51:40 GMT+0300 (GMT+03:00)',
-            id: 'string id ',
-          },
-        ];
+      delay(500),
+      tap((res) => {
+        this.data = res;
         this.isLoading$.next(false);
       })
     );

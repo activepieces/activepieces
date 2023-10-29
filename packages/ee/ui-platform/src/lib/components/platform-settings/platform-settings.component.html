@@ -1,9 +1,54 @@
+<div class="ap-text-body-1 ap-font-semibold ap-w-[8.3125rem] ap-mb-4" i18n>
+    Custom Domain:
+</div>
 <ng-container [ngTemplateOutlet]="true? customDomainRecordsTable:customDomainForm">
 
 </ng-container>
 
+<div class="ap-text-body-1 ap-font-semibold ap-w-[8.3125rem] ap-mt-10 ap-mb-4" i18n>
+    Signing Keys:
+</div>
+
+<div class="ap-max-w-[46.25rem]">
+    <app-signing-keys-table></app-signing-keys-table>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 <ng-template #customDomainForm>
-    <div class="ap-mb-3  ap-max-w-[500px]">
+    <div class="ap-mb-3  ap-max-w-[31.25rem]">
         <ap-markdown [data]="(customDomainNote$ | async) || ''">
         </ap-markdown>
     </div>
