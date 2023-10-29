@@ -57,7 +57,11 @@ export const updatePerson = createAction({
       displayName: 'Unsubscribed date',
       description: undefined,
       required: false,
-    })
+    }),
+    failsafe: Property.Checkbox({
+      displayName: 'No Error On Failure',
+      required: false,
+    }),
   },
   async run(context) {
     const TALKABLE_API_URL = 'https://www.talkable.com/api/v2';
@@ -95,6 +99,11 @@ export const updatePerson = createAction({
           unsubscribed_at
         }
       }
+    }).catch(error => {
+      if (context.propsValue.failsafe) {
+        return error.errorMessage();
+      }
+      throw error;
     });
     return personUpdateResponse.body;
   },

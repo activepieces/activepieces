@@ -4,7 +4,6 @@ import { databaseConnection } from './app/database/database-connection'
 import { logger } from './app/helper/logger'
 import { ApEdition, ApEnvironment } from '@activepieces/shared'
 import { seedDevData } from './app/database/seeds/dev-seeds'
-import { flowQueueConsumer } from './app/workers/flow-worker/flow-queue-consumer'
 import { setupApp } from './app/app'
 import { FastifyInstance } from 'fastify'
 import { licenseValidator } from './app/ee/helper/license-validator'
@@ -67,8 +66,6 @@ const stop = async (app: FastifyInstance): Promise<void> => {
 
     try {
         await app.close()
-        await flowQueueConsumer.close()
-        logger.info('Server stopped')
         process.exit(0)
     }
     catch (err) {

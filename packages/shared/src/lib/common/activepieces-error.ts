@@ -227,7 +227,9 @@ export type TestTriggerFailedErrorParams = BaseErrorParams<
 export type EntityNotFoundErrorParams = BaseErrorParams<
   ErrorCode.ENTITY_NOT_FOUND,
   {
-    message: string
+    message?: string,
+    entityType?: string,
+    entityId?: string,
   }
 >
 

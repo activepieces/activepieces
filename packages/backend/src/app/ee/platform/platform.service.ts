@@ -1,15 +1,10 @@
-import { ActivepiecesError, ApEdition, ErrorCode, UserId, apId, isNil, spreadIfDefined } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, UserId, apId, isNil, spreadIfDefined } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { PlatformEntity } from './platform.entity'
 import { Platform, PlatformId, UpdatePlatformRequestBody } from '@activepieces/ee-shared'
-import { getEdition } from '../../helper/secret-helper'
+import { defaultTheme } from '../../flags/theme'
 
 const repo = databaseConnection.getRepository<Platform>(PlatformEntity)
-
-const PRIMARY_COLOR_DEFAULT = '#000000'
-const LOGO_ICON_URL_DEFAULT = 'https://activepieces.com/assets/images/logo-icon.png'
-const FULL_LOGO_URL_DEFAULT = 'https://activepieces.com/assets/images/logo-full.png'
-const FAV_ICON_URL_DEFAULT = 'https://activepieces.com/assets/images/favicon.png'
 
 export const platformService = {
     async add({ ownerId, name, primaryColor, logoIconUrl, fullLogoUrl, favIconUrl }: AddParams): Promise<Platform> {
@@ -17,10 +12,10 @@ export const platformService = {
             id: apId(),
             ownerId,
             name,
-            primaryColor: primaryColor ?? PRIMARY_COLOR_DEFAULT,
-            logoIconUrl: logoIconUrl ?? LOGO_ICON_URL_DEFAULT,
-            fullLogoUrl: fullLogoUrl ?? FULL_LOGO_URL_DEFAULT,
-            favIconUrl: favIconUrl ?? FAV_ICON_URL_DEFAULT,
+            primaryColor: primaryColor ?? defaultTheme.colors.primary.default,
+            logoIconUrl: logoIconUrl ?? defaultTheme.logos.logoIconUrl,
+            fullLogoUrl: fullLogoUrl ?? defaultTheme.logos.fullLogoUrl,
+            favIconUrl: favIconUrl ?? defaultTheme.logos.favIconUrl,
         }
 
         return await repo.save(newPlatform)
@@ -50,15 +45,22 @@ export const platformService = {
         assertPlatformExists(platform)
         return platform
     },
-    async getPlatformIdByOwner({ ownerId }: { ownerId: string }): Promise<string  | undefined> {
-        const edition = getEdition()
-        if (edition === ApEdition.COMMUNITY) {
-            return undefined
-        }
-        const platform = await repo.findOneBy({
+
+    async getOne(id: PlatformId): Promise<Platform | null> {
+        return repo.findOneBy({
+            id,
+        })
+    },
+
+    async getOneByOwner({ ownerId }: GetOneByOwnerParams): Promise<Platform | null> {
+        return repo.findOneBy({
             ownerId,
         })
-        return platform?.id
+    },
+
+    async checkUserIsOwner({ platformId, userId }: CheckUserIsOwnerParams): Promise<boolean> {
+        const platform = await this.getOneOrThrow(platformId)
+        return platform.ownerId === userId
     },
 }
 
@@ -95,5 +97,14 @@ type NewPlatform = Omit<Platform, 'created' | 'updated'>
 
 type UpdateParams = UpdatePlatformRequestBody & {
     id: PlatformId
+    userId: UserId
+}
+
+type GetOneByOwnerParams = {
+    ownerId: UserId
+}
+
+type CheckUserIsOwnerParams = {
+    platformId: PlatformId
     userId: UserId
 }
