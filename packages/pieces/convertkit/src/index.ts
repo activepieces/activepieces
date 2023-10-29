@@ -22,6 +22,7 @@ import {
   getBroadcastById,
   updateBroadcast,
   deleteBroadcast,
+  broadcastStats,
 } from './lib/actions/broadcasts';
 
 import {
@@ -93,6 +94,7 @@ export const convertkit = createPiece({
     getBroadcastById,
     updateBroadcast,
     deleteBroadcast,
+    broadcastStats,
     listForms,
     addSubscriberToForm,
     listFormSubscriptions,
