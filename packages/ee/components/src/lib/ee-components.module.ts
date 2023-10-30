@@ -8,7 +8,15 @@ import { EmbedRedirectComponent } from './embed-redirect/embed-redirect.componen
 
 @NgModule({
   imports: [CommonModule, UiCommonModule, UiFeatureBuilderFormControlsModule],
-  declarations: [ShareFlowTemplateDialogComponent,IframeListenerComponent,EmbedRedirectComponent],
-  exports: [ShareFlowTemplateDialogComponent,IframeListenerComponent,EmbedRedirectComponent]
+  declarations: [
+    ShareFlowTemplateDialogComponent,
+    IframeListenerComponent,
+    EmbedRedirectComponent,
+  ],
+  exports: [
+    ShareFlowTemplateDialogComponent,
+    IframeListenerComponent,
+    EmbedRedirectComponent,
+  ],
 })
 export class EeComponentsModule {}

@@ -4,7 +4,7 @@ import { BehaviorSubject } from 'rxjs';
 export type EmbeddingState = {
   isEmbedded: boolean;
   hideSideNav: boolean;
-  prefix:string
+  prefix: string;
 };
 @Injectable({
   providedIn: 'root',
@@ -15,18 +15,16 @@ export class EmbeddingService {
     this.embeddingStateSubject = new BehaviorSubject<EmbeddingState>({
       isEmbedded: false,
       hideSideNav: false,
-      prefix:''
+      prefix: '',
     });
   }
   getState() {
     return this.embeddingStateSubject.value;
   }
   setState(newState: EmbeddingState) {
-
     return this.embeddingStateSubject.next(newState);
   }
-  getState$()
-  {
+  getState$() {
     return this.embeddingStateSubject.asObservable();
   }
 }

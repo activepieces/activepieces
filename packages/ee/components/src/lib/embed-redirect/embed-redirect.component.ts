@@ -1,4 +1,9 @@
-import {  ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnDestroy,
+  OnInit,
+} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, of, tap } from 'rxjs';
 import { EmbeddingService } from '../embedding.service';
@@ -7,17 +12,14 @@ import { EmbeddingService } from '../embedding.service';
   templateUrl: './embed-redirect.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class EmbedRedirectComponent implements OnDestroy,OnInit {
+export class EmbedRedirectComponent implements OnDestroy, OnInit {
   validateJWT$?: Observable<string>;
   showError = false;
   constructor(
     private route: ActivatedRoute,
     private embeddingService: EmbeddingService,
     private router: Router
-  ) {
-
-    
-  }
+  ) {}
 
   ngOnInit(): void {
     const jwt = this.route.snapshot.queryParamMap.get('jwt');
@@ -36,14 +38,10 @@ export class EmbedRedirectComponent implements OnDestroy,OnInit {
           '*'
         );
 
-        window.addEventListener(
-          'message',
-          this.initializedVendorHandler
-        );
+        window.addEventListener('message', this.initializedVendorHandler);
       })
     );
   }
-
 
   initializedVendorHandler = (
     event: MessageEvent<{
@@ -54,7 +52,6 @@ export class EmbedRedirectComponent implements OnDestroy,OnInit {
       };
     }>
   ) => {
- 
     const hideSidebar =
       this.route.snapshot.queryParamMap
         .get('hideSidebar')
@@ -62,9 +59,13 @@ export class EmbedRedirectComponent implements OnDestroy,OnInit {
 
     if (event.source === window.parent && event.data.type === 'VENDOR_INIT') {
       this.embeddingService.setState({
-        hideSideNav:hideSidebar,isEmbedded:true,prefix:event.data.data.prefix
-      })
-      this.router.navigate([event.data.data.initialClientRoute],{skipLocationChange:true});
+        hideSideNav: hideSidebar,
+        isEmbedded: true,
+        prefix: event.data.data.prefix,
+      });
+      this.router.navigate([event.data.data.initialClientRoute], {
+        skipLocationChange: true,
+      });
     }
   };
 
