@@ -30,7 +30,7 @@ const dbInstanceClass = config.require("dbInstanceClass");
 registerAutoTags({
     "pulumi:Project": pulumi.getProject(),
     "pulumi:Stack": pulumi.getStack(),
-    "Created by": config.get("author") ?? child_process.execSync("pulumi whoami").toString().trim().replace('\\', '/')
+    "Created by": config.get("author") || child_process.execSync("pulumi whoami").toString().trim().replace('\\', '/')
 });
 
 let imageName;
@@ -80,7 +80,7 @@ if (config.getBoolean("deployLocalBuild")) {
 
     pulumi.log.info(`Finished pushing image to ECR`, image);
 } else {
-    imageName = process.env.IMAGE_NAME ?? config.get("imageName") ?? "activepieces/activepieces:latest";
+    imageName = process.env.IMAGE_NAME || config.get("imageName") || "activepieces/activepieces:latest";
 }
 
 const containerEnvironmentVars: awsx.types.input.ecs.TaskDefinitionKeyValuePairArgs[] = [];
