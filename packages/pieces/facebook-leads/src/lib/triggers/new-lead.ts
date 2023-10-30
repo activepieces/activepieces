@@ -28,7 +28,6 @@ export const newLead = createTrigger({
     //Return new lead
     async run(context) {
         let leadPings: any[] = [];
-        const leads: any[] = [];
         const form = context.propsValue.form;
 
         if (form !== undefined && form !== '' && form !== null) {
@@ -42,7 +41,7 @@ export const newLead = createTrigger({
             leadPings = context.payload.body.entry;
         }
 
-        return [leads];
+        return [leadPings];
     },
     async test(context) {
         let form = context.propsValue.form as string;
