@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, map } from 'rxjs';
 
 export type EmbeddingState = {
   isEmbedded: boolean;
@@ -26,5 +26,20 @@ export class EmbeddingService {
   }
   getState$() {
     return this.embeddingStateSubject.asObservable();
+  }
+  getIsInEmbedding$() {
+    return this.getState$().pipe(map((res) => res.isEmbedded));
+  }
+
+  activepiecesRouteChanged(route: string) {
+    window.parent.postMessage(
+      {
+        type: 'CLIENT_ROUTE_CHANGED',
+        data: {
+          route: route,
+        },
+      },
+      '*'
+    );
   }
 }

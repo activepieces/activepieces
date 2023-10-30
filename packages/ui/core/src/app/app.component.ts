@@ -36,6 +36,7 @@ import {
   FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { EmbeddingService } from '@activepieces/ee-components';
 
 interface UpgradeNotificationMetaDataInLocalStorage {
   latestVersion: string;
@@ -61,6 +62,7 @@ export class AppComponent implements OnInit {
   loadingTheme$: BehaviorSubject<boolean> = new BehaviorSubject(true);
   theme$: Observable<void>;
   setTitle$: Observable<void>;
+  embeddedRouteListener$: Observable<boolean>;
   constructor(
     public dialog: MatDialog,
     private store: Store,
@@ -73,13 +75,26 @@ export class AppComponent implements OnInit {
     private domSanitizer: DomSanitizer,
     private builderService: CollectionBuilderService,
     private flowService: FlowService,
-    private snackbar: MatSnackBar
+    private snackbar: MatSnackBar,
+    private embeddedService: EmbeddingService
   ) {
     this.registerSearchIconIntoMaterialIconRegistery();
     this.listenToImportFlow();
     this.theme$ = this.apperanceService.setTheme().pipe(
       tap(() => this.loadingTheme$.next(false)),
       map(() => void 0)
+    );
+    this.embeddedRouteListener$ = this.router.events.pipe(
+      switchMap((routingEvent) => {
+        return this.embeddedService.getIsInEmbedding$().pipe(
+          tap((embedded) => {
+            console.log(routingEvent instanceof NavigationEnd);
+            if (embedded && routingEvent instanceof NavigationEnd) {
+              this.embeddedService.activepiecesRouteChanged(this.router.url);
+            }
+          })
+        );
+      })
     );
     this.routeLoader$ = this.router.events.pipe(
       tap((event) => {
@@ -91,6 +106,7 @@ export class AppComponent implements OnInit {
         }
         if (event instanceof NavigationEnd) {
           let route = this.router.routerState.root;
+
           while (route.firstChild) {
             route = route.firstChild;
           }

@@ -32,7 +32,7 @@ export class SidenavRoutesListComponent implements OnInit {
   showSupport$: Observable<boolean>;
   showDocs$: Observable<boolean>;
   showBilling$: Observable<boolean>;
-
+  isInEmbedding$: Observable<boolean>;
   constructor(
     public router: Router,
     private store: Store,
@@ -40,9 +40,53 @@ export class SidenavRoutesListComponent implements OnInit {
     private cd: ChangeDetectorRef,
     private embeddingService: EmbeddingService
   ) {
+    this.isInEmbedding$ = this.embeddingService.getIsInEmbedding$();
     this.logoUrl$ = this.flagServices
       .getLogos()
       .pipe(map((logos) => logos.logoIconUrl));
+    this.sideNavRoutes = [
+      {
+        icon: 'assets/img/custom/dashboard/flows.svg',
+        caption: $localize`Flows`,
+        route: 'flows',
+        effect: () => {
+          this.store.dispatch(FolderActions.showAllFlows());
+        },
+        showInSideNav$: of(true),
+      },
+      {
+        icon: 'assets/img/custom/dashboard/chatbots.svg',
+        caption: 'Chatbots',
+        route: 'chatbots',
+        showInSideNav$: this.isInEmbedding$.pipe(map((res) => !res)),
+      },
+      {
+        icon: 'assets/img/custom/dashboard/runs.svg',
+        caption: $localize`Runs`,
+        route: 'runs',
+        showInSideNav$: of(true),
+      },
+      {
+        icon: 'assets/img/custom/dashboard/connections.svg',
+        caption: $localize`Connections`,
+        route: 'connections',
+        showInSideNav$: of(true),
+      },
+      {
+        icon: 'assets/img/custom/dashboard/members.svg',
+        caption: $localize`Team`,
+        route: 'team',
+        showInSideNav$: this.isInEmbedding$.pipe(
+          switchMap((st) => {
+            return this.flagServices.getEdition().pipe(
+              map((ed) => {
+                return ed !== ApEdition.COMMUNITY && !st;
+              })
+            );
+          })
+        ),
+      },
+    ];
   }
   ngOnInit(): void {
     this.removeChatbots$ = this.flagServices.isChatbotEnabled().pipe(
@@ -64,51 +108,7 @@ export class SidenavRoutesListComponent implements OnInit {
     );
   }
 
-  sideNavRoutes: SideNavRoute[] = [
-    {
-      icon: 'assets/img/custom/dashboard/flows.svg',
-      caption: $localize`Flows`,
-      route: 'flows',
-      effect: () => {
-        this.store.dispatch(FolderActions.showAllFlows());
-      },
-      showInSideNav$: of(true),
-    },
-    {
-      icon: 'assets/img/custom/dashboard/chatbots.svg',
-      caption: 'Chatbots',
-      route: 'chatbots',
-      showInSideNav$: this.embeddingService
-        .getState$()
-        .pipe(map((res) => !res.isEmbedded)),
-    },
-    {
-      icon: 'assets/img/custom/dashboard/runs.svg',
-      caption: $localize`Runs`,
-      route: 'runs',
-      showInSideNav$: of(true),
-    },
-    {
-      icon: 'assets/img/custom/dashboard/connections.svg',
-      caption: $localize`Connections`,
-      route: 'connections',
-      showInSideNav$: of(true),
-    },
-    {
-      icon: 'assets/img/custom/dashboard/members.svg',
-      caption: $localize`Team`,
-      route: 'team',
-      showInSideNav$: this.embeddingService.getState$().pipe(
-        switchMap((st) => {
-          return this.flagServices.getEdition().pipe(
-            map((ed) => {
-              return ed !== ApEdition.COMMUNITY && !st.isEmbedded;
-            })
-          );
-        })
-      ),
-    },
-  ];
+  sideNavRoutes: SideNavRoute[] = [];
 
   openDocs() {
     window.open('https://activepieces.com/docs', '_blank', 'noopener');
