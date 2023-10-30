@@ -1,7 +1,8 @@
 import { Component } from '@angular/core';
 import { FlagService, environment } from '@activepieces/ui/common';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { ApFlagId } from '@activepieces/shared';
+import { EmbeddingService } from '@activepieces/ee-components';
 
 @Component({
   templateUrl: './dashboard-container.component.html',
@@ -11,8 +12,17 @@ import { ApFlagId } from '@activepieces/shared';
 export class DashboardContainerComponent {
   environment = environment;
   showCommunity$: Observable<boolean>;
+  isEmbedded$: Observable<boolean>;
+  showSidnav$: Observable<boolean>;
+  constructor(
+    private flagService: FlagService,
+    private embeddedService: EmbeddingService
+  ) {
+    this.isEmbedded$ = this.embeddedService.getIsInEmbedding$();
+    this.showSidnav$ = this.embeddedService
+      .getState$()
+      .pipe(map((state) => !state.hideSideNav));
 
-  constructor(private flagService: FlagService) {
     this.showCommunity$ = this.flagService.isFlagEnabled(
       ApFlagId.SHOW_COMMUNITY
     );
