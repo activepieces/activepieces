@@ -174,8 +174,8 @@
       "pages": [
         "platform/overview",
         "platform/appearance",
-        "platform/manage-projects",
-        "platform/manage-users"
+        "platform/managed-projects",
+        "platform/managed-users"
       ]
     },
     {
