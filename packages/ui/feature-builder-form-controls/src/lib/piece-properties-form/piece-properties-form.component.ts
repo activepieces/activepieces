@@ -545,7 +545,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
 
   addMentionToJsonControl(mention: InsertMentionOperation) {
     this.jsonMonacoEditor.trigger('keyboard', 'type', {
-      text: mention.insert.mention.serverValue,
+      text: mention.insert.apMention.serverValue,
     });
   }
   onInit(monacoEditor: any) {

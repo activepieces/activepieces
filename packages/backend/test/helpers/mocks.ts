@@ -1,4 +1,4 @@
-import { Platform } from '@activepieces/ee-shared'
+import { KeyAlgorithm, SigningKey, Platform } from '@activepieces/ee-shared'
 import { UserStatus, User, apId, Project, NotificationStatus, ProjectType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 
@@ -43,5 +43,17 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         logoIconUrl: platform?.logoIconUrl ?? faker.image.urlPlaceholder(),
         fullLogoUrl: platform?.fullLogoUrl ?? faker.image.urlPlaceholder(),
         favIconUrl: platform?.favIconUrl ?? faker.image.urlPlaceholder(),
+    }
+}
+
+export const createMockSigningKey = (signingKey?: Partial<SigningKey>): SigningKey => {
+    return {
+        id: signingKey?.id ?? apId(),
+        created: signingKey?.created ?? faker.date.recent().toISOString(),
+        updated: signingKey?.updated ?? faker.date.recent().toISOString(),
+        platformId: signingKey?.platformId ?? apId(),
+        publicKey: signingKey?.publicKey ?? faker.lorem.word(),
+        generatedBy: signingKey?.generatedBy ??  apId(),
+        algorithm: signingKey?.algorithm ?? faker.helpers.enumValue(KeyAlgorithm),
     }
 }

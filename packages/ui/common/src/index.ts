@@ -44,5 +44,5 @@ export * from './lib/resolvers/are-there-featured-templates.resolver';
 export * from './lib/models/piece-metadata-model';
 export * from './lib/guards/show-platform-settings.guard';
 export * from './lib/service/appearance-service';
-
+export * from './lib/components/page-title/page-title.component';
 import '@angular/localize/init';

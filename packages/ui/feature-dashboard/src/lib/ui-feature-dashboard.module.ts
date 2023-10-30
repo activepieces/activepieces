@@ -6,7 +6,6 @@ import { SidenavRoutesListComponent } from './components/sidenav-routes-list/sid
 import { RunsTableComponent } from './pages/runs-table/runs-table.component';
 import { FlowsTableComponent } from './pages/flows-table/flows-table.component';
 import { EmptyFlowsTableComponent } from './pages/flows-table/empty-flows-table/empty-flows-table.component';
-import { PageTitleComponent } from './components/page-title/page-title.component';
 import { ConnectionsTableComponent } from './pages/connections-table/connections-table.component';
 import { RouterModule } from '@angular/router';
 import { DashboardLayoutRouting } from './dashboard.routing';
@@ -44,7 +43,6 @@ import { EeProjectMembersModule } from '@activepieces/ee/project-members';
     RunsTableComponent,
     FlowsTableComponent,
     EmptyFlowsTableComponent,
-    PageTitleComponent,
     ConnectionsTableComponent,
     FlowsTableTitleComponent,
     CommunityPiecesTableComponent,

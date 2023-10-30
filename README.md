@@ -42,25 +42,12 @@ src="https://github.com/activepieces/activepieces/assets/1812998/76c97441-c285-4
 <br>
 <br>
 
-# ✨ What Is Activepieces?
+# 🤯 Welcome to Activepiece
 
-Activepieces is an **automation** builder, designed to be **extensible** through a **type-safe** pieces framework written in **Typescript**.
+Your friendliest open source all-in-one automation tool, designed to be **extensible** through a **type-safe** pieces framework written in **Typescript**.
 
 <br>
 <br>
-
-
-# 🤖 LLM Chatbots + Data Sources (BETA)
-
-![chatbots](https://github.com/activepieces/activepieces/assets/1812998/7902e76a-4ba4-4130-9418-dba600fb5c15)
-
-**Features:**
-- PDF datasource
-- Sharable links
-- Native integration with flow builder using chatbot pieces
-- Prompt Customization
-
-
 
 # 🎨 Flow Builder
 <p>
@@ -95,6 +82,18 @@ Community templates provide inspiration and enable you to effortlessly build aut
 
 <br>
 <br>
+
+
+# 🤖 LLM Chatbots + Data Sources (BETA)
+
+![chatbots](https://github.com/activepieces/activepieces/assets/1812998/7902e76a-4ba4-4130-9418-dba600fb5c15)
+
+**Features:**
+- PDF datasource
+- Sharable links
+- Native integration with flow builder using chatbot pieces
+- Prompt Customization
+
 
 # ☁️ Open Source and Cloud
 

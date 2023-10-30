@@ -153,8 +153,8 @@ const getResponseForStoppedRun = async (run: FlowRun, reply: FastifyReply) => {
 
     await reply
         .status(flowLogs.stopResponse?.status ?? StatusCodes.OK)
-        .send(flowLogs.stopResponse?.body)
         .headers(flowLogs.stopResponse?.headers ?? {})
+        .send(flowLogs.stopResponse?.body)
 }
 
 const handleExecutionOutputStatus = async (run: FlowRun, reply: FastifyReply) => {
