@@ -33,12 +33,21 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
             ...ApIdSchema,
             nullable: true,
         },
+        externalId: {
+            type: String,
+            nullable: true,
+        },
     },
     indices: [
         {
             name: 'idx_project_owner_id',
             columns: ['ownerId'],
             unique: false,
+        },
+        {
+            name: 'idx_project_platform_id_external_id',
+            columns: ['platformId', 'externalId'],
+            unique: true,
         },
     ],
     relations: {
