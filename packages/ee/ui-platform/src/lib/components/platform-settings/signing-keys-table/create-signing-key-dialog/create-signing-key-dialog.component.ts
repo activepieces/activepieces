@@ -23,7 +23,7 @@ export class CreateSigningKeyDialogComponent {
   formGroup: FormGroup<CreateSigningKeyForm>;
   loading = false;
   keyCreated = false;
-  dialogTitle:string = $localize `Create Key`;
+  dialogTitle: string = $localize`Create Key`;
   confirmationControl: FormControl<boolean> = new FormControl(false, {
     nonNullable: true,
   });
@@ -57,7 +57,7 @@ export class CreateSigningKeyDialogComponent {
     //Create key logic
     if (this.formGroup.valid && !this.loading) {
       this.keyCreated = true;
-      this.dialogTitle = $localize `Key Created`;
+      this.dialogTitle = $localize`Key Created`;
     }
   }
   copyKey() {

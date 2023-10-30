@@ -1,20 +1,9 @@
 import { DataSource } from '@angular/cdk/collections';
-import {
-  Observable,
-  BehaviorSubject,
-  tap,
-  switchMap,
-  of,
-  map,
-  delay,
-} from 'rxjs';
+import { Observable, BehaviorSubject, tap, switchMap } from 'rxjs';
 import { combineLatest } from 'rxjs';
+import { SigningKey } from '@activepieces/ee-shared';
+import { SigningKeysService } from '@activepieces/ee-components';
 
-export interface SigningKey {
-  displayName: string;
-  created: string;
-  id: string;
-}
 /**
  * Data source for the LogsTable view. This class should
  * encapsulate all logic for fetching and manipulating the displayed data
@@ -23,7 +12,10 @@ export interface SigningKey {
 export class SigningKeysDataSource extends DataSource<SigningKey> {
   data: SigningKey[] = [];
   isLoading$: BehaviorSubject<boolean> = new BehaviorSubject(true);
-  constructor(private refresh$: Observable<boolean>) {
+  constructor(
+    private refresh$: Observable<boolean>,
+    private signingKeysService: SigningKeysService
+  ) {
     super();
   }
 
@@ -38,23 +30,9 @@ export class SigningKeysDataSource extends DataSource<SigningKey> {
       tap(() => {
         this.isLoading$.next(true);
       }),
-      switchMap(() =>
-        {
-          return of(true).pipe(
-            map(() => {
-              debugger;
-              return  [
-                {
-                  displayName: 'Fake key',
-                  created: 'Thu Oct 26 2023 15:51:40 GMT+0300 (GMT+03:00)',
-                  id: 'string id ',
-                },
-              ];
-            })
-          )
-        }
-      ),
-      delay(500),
+      switchMap(() => {
+        return this.signingKeysService.list();
+      }),
       tap((res) => {
         this.data = res;
         this.isLoading$.next(false);
