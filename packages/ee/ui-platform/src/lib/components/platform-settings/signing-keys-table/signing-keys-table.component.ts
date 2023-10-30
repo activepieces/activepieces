@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { SigningKeysDataSource } from './signing-keys-table.datasource';
-import { Subject, tap } from 'rxjs';
+import { Observable, Subject, tap } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { CreateSigningKeyDialogComponent } from './create-signing-key-dialog/create-signing-key-dialog.component';
 import { startWith } from 'rxjs';
@@ -20,6 +20,7 @@ export class SigningKeysTableComponent {
   displayedColumns = ['displayName', 'created', 'action'];
   dataSource: SigningKeysDataSource;
   refresh$: Subject<boolean> = new Subject();
+  dialogClosed$?: Observable<unknown>;
   constructor(
     private matDialog: MatDialog,
     private signingKeysService: SigningKeysService
@@ -30,9 +31,16 @@ export class SigningKeysTableComponent {
     );
   }
   createKey() {
-    this.matDialog.open(CreateSigningKeyDialogComponent, {
+    const dialog = this.matDialog.open(CreateSigningKeyDialogComponent, {
       disableClose: true,
     });
+    this.dialogClosed$ = dialog.beforeClosed().pipe(
+      tap((res) => {
+        if (res) {
+          this.refresh$.next(true);
+        }
+      })
+    );
   }
 
   deleteKey(key: SigningKey) {
@@ -45,8 +53,15 @@ export class SigningKeysTableComponent {
       entityName: key.displayName,
       note: $localize`This will permanently delete the key, all embedding that was using this key will break.`,
     };
-    this.matDialog.open(DeleteEntityDialogComponent, {
+    const dialog = this.matDialog.open(DeleteEntityDialogComponent, {
       data: dialogData,
     });
+    this.dialogClosed$ = dialog.beforeClosed().pipe(
+      tap((res) => {
+        if (res) {
+          this.refresh$.next(true);
+        }
+      })
+    );
   }
 }

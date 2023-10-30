@@ -5,7 +5,9 @@ import {
   SigningKey,
   SigningKeyId,
   CreateSigningKeyRequest,
+  CreateSigningKeyResponse,
 } from '@activepieces/ee-shared';
+import { SeekPage } from '@activepieces/shared';
 
 @Injectable({
   providedIn: 'root',
@@ -13,12 +15,12 @@ import {
 export class SigningKeysService {
   constructor(private http: HttpClient) {}
   list() {
-    return this.http.get<SigningKey[]>(environment.apiUrl + '/signing-keys');
+    return this.http.get<SeekPage<SigningKey>>(environment.apiUrl + '/signing-keys');
   }
   delete(keyId: SigningKeyId) {
-    return this.http.get<void>(environment.apiUrl + `/signing-keys/${keyId}`);
+    return this.http.delete<void>(environment.apiUrl + `/signing-keys/${keyId}`);
   }
   create(request: CreateSigningKeyRequest) {
-    return this.http.post<string>(environment.apiUrl + `/signing-keys/`, request);
+    return this.http.post<CreateSigningKeyResponse>(environment.apiUrl + `/signing-keys/`, request);
   }
 }

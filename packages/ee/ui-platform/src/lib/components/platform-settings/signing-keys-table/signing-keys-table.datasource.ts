@@ -1,5 +1,5 @@
 import { DataSource } from '@angular/cdk/collections';
-import { Observable, BehaviorSubject, tap, switchMap } from 'rxjs';
+import { Observable, BehaviorSubject, tap, switchMap, map } from 'rxjs';
 import { combineLatest } from 'rxjs';
 import { SigningKey } from '@activepieces/ee-shared';
 import { SigningKeysService } from '@activepieces/ee-components';
@@ -31,7 +31,7 @@ export class SigningKeysDataSource extends DataSource<SigningKey> {
         this.isLoading$.next(true);
       }),
       switchMap(() => {
-        return this.signingKeysService.list();
+        return this.signingKeysService.list().pipe(map((res) => res.data));
       }),
       tap((res) => {
         this.data = res;

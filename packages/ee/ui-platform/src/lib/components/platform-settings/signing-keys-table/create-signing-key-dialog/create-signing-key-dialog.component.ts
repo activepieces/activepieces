@@ -7,10 +7,11 @@ import {
 } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
 
-import { Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, catchError, tap } from 'rxjs';
 import { copyText } from '@activepieces/ui/common';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { SigningKeysService } from '@activepieces/ee-components';
+import { CreateSigningKeyResponse } from '@activepieces/ee-shared';
 
 interface CreateSigningKeyForm {
   displayName: FormControl<string>;
@@ -22,21 +23,17 @@ interface CreateSigningKeyForm {
 })
 export class CreateSigningKeyDialogComponent {
   formGroup: FormGroup<CreateSigningKeyForm>;
-  loading = false;
+  loading$ = new BehaviorSubject(false);
   keyCreated = false;
   dialogTitle: string = $localize`Create Key`;
   confirmationControl: FormControl<boolean> = new FormControl(false, {
     nonNullable: true,
   });
-  createProject$?: Observable<void>;
-  signingKey = ``;
-  createSigningKey$?: Observable<string>;
-  signingKeyFormControl: FormControl<string> = new FormControl(
-    this.signingKey,
-    {
-      nonNullable: true,
-    }
-  );
+  nameChanged$: Observable<string>;
+  createSigningKey$?: Observable<CreateSigningKeyResponse>;
+  signingKeyFormControl: FormControl<string> = new FormControl('', {
+    nonNullable: true,
+  });
   constructor(
     private fb: FormBuilder,
     private dialogRef: MatDialogRef<CreateSigningKeyDialogComponent>,
@@ -55,10 +52,15 @@ export class CreateSigningKeyDialogComponent {
         }
       ),
     });
+    this.nameChanged$ = this.formGroup.controls.displayName.valueChanges.pipe(
+      tap((val) => {
+        if (val !== '') this.formGroup.controls.displayName.setErrors(null);
+      })
+    );
   }
   createKey() {
-    //Create key logic
-    if (this.formGroup.valid && !this.loading) {
+    if (this.formGroup.valid && !this.loading$.value) {
+      this.loading$.next(true);
       this.createSigningKey$ = this.signingKeysService
         .create({
           displayName: this.formGroup.getRawValue().displayName,
@@ -66,18 +68,24 @@ export class CreateSigningKeyDialogComponent {
         .pipe(
           tap((res) => {
             this.keyCreated = true;
+            this.loading$.next(false);
             this.dialogTitle = $localize`Key Created`;
-            this.signingKey = res;
+            this.signingKeyFormControl.setValue(res.privateKey);
+          }),
+          catchError((err) => {
+            this.formGroup.controls.displayName.setErrors({ invalid: true });
+            this.loading$.next(false);
+            throw err;
           })
         );
     }
   }
   copyKey() {
-    copyText(this.signingKey);
+    copyText(this.signingKeyFormControl.getRawValue());
     this.matSnakcbar.open('Copied successfully');
   }
   downloadKey() {
-    const blob = new Blob([this.signingKey], {
+    const blob = new Blob([this.signingKeyFormControl.getRawValue()], {
       type: 'text/plain',
     });
     const url = URL.createObjectURL(blob);
