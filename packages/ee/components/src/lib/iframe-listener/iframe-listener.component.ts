@@ -18,7 +18,6 @@ export class IframeListenerComponent {
   ) {
     this.embeddingListener$ = this.embeddingService.getState$().pipe(
       tap((val) => {
-        console.log(val);
         if (val.isEmbedded) {
           window.addEventListener('message', this.listenToVendorRouteChanges);
         }
@@ -39,13 +38,20 @@ export class IframeListenerComponent {
       event.source === window.parent &&
       event.data.type === 'VENDOR_ROUTE_CHANGED'
     ) {
-      console.log('VENDOR_ROUTE_CHANGED');
       const targetRoute = event.data.data.vendorRoute;
       const routeToNavigateTo = targetRoute.endsWith('/')
         ? targetRoute
         : `/${targetRoute}`;
-      console.log('navigate: ' + routeToNavigateTo);
-      this.router.navigate([routeToNavigateTo], { skipLocationChange: true });
+      const [path, queryString] = routeToNavigateTo.split('?');
+      const urlSearchParams = new URLSearchParams(queryString);
+      const queryParams: Record<string, unknown> = {};
+      urlSearchParams.forEach((value, key) => {
+        queryParams[key] = value;
+      });
+      this.router.navigate([path], {
+        queryParams,
+        skipLocationChange: true,
+      });
       window.parent.postMessage(
         {
           type: 'CLIENT_ROUTE_CHANGED',
