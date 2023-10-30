@@ -19,6 +19,7 @@ import {
 } from '@activepieces/ui/feature-builder-store';
 import { Flow, FlowInstance } from '@activepieces/shared';
 import { ImportFlowDialogueComponent } from './import-flow-dialogue/import-flow-dialogue.component';
+import { EmbeddingService } from '@activepieces/ee-components';
 
 @Component({
   selector: 'app-flow-builder-header',
@@ -49,7 +50,8 @@ export class FlowBuilderHeaderComponent implements OnInit {
     public collectionBuilderService: CollectionBuilderService,
     private flowService: FlowService,
     private matDialog: MatDialog,
-    private flagService: FlagService
+    private flagService: FlagService,
+    private embeddingService: EmbeddingService
   ) {
     this.fullLogo$ = this.flagService
       .getLogos()
@@ -71,14 +73,11 @@ export class FlowBuilderHeaderComponent implements OnInit {
     this.editingFlowName = event;
   }
   redirectHome(newWindow: boolean) {
-    if (newWindow) {
+    if (newWindow && !this.embeddingService.getState().isEmbedded) {
       const url = this.router.serializeUrl(this.router.createUrlTree([``]));
       window.open(url, '_blank', 'noopener');
     } else {
-      const urlArrays = this.router.url.split('/');
-      urlArrays.splice(urlArrays.length - 1, 1);
-      const fixedUrl = urlArrays.join('/');
-      this.router.navigate([fixedUrl]);
+      this.router.navigate(['/flows']);
     }
   }
   saveFlowName(flowName: string) {
