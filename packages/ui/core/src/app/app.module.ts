@@ -42,7 +42,10 @@ import {
   UiFeatureChatBotModule,
   chatbotMetadataResolver,
 } from '@activepieces/ui/feature-chatbot';
-import { EeComponentsModule } from '@activepieces/ee-components';
+import {
+  EeComponentsModule,
+  EmbedRedirectComponent,
+} from '@activepieces/ee-components';
 
 const monacoConfig: NgxMonacoEditorConfig = {
   baseUrl: '/assets', // configure base path for monaco editor. Starting with version 8.0.0 it defaults to './assets'. Previous releases default to '/assets'
@@ -250,6 +253,10 @@ function dynamicRoutes(edition: string) {
                 import('@activepieces/ui/feature-authentication').then(
                   (m) => m.UiFeatureAuthenticationModule
                 ),
+            },
+            {
+              path: 'embed',
+              component: EmbedRedirectComponent,
             },
           ],
         },

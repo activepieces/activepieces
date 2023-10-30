@@ -1,47 +1,55 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { interval, map, Observable, of, switchMap, tap } from 'rxjs';
-const prefix = 'http://localhost:1234';
+
+import { EmbeddingService } from '../embedding.service';
+import { Observable, map,  tap } from 'rxjs';
+
 @Component({
-  selector: 'app-iframe-listener',
+  selector: 'ap-iframe-listener',
   templateUrl: './iframe-listener.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IframeListenerComponent {
-  iframeChecker$: Observable<void>;
+ embeddingListener$:Observable<void>;
 
-  constructor(private router: Router) {
-    this.iframeChecker$ = this.createIframeParentRouteChecker();
+  constructor(private router: Router,private embeddingService:EmbeddingService) {
+    this.embeddingListener$ = this.embeddingService.getState$().pipe(
+      tap(val=>{
+        console.log(val);
+      if(val.isEmbedded)
+      {
+        window.addEventListener("message",this.listenToVendorRouteChanges);
+      }
+    }),
+    map(()=>void 0))
   }
 
-  createIframeParentRouteChecker() {
-    return of(true).pipe(
-      switchMap(() => {
-        let oldHref = window.parent.location.href;
-        const ngRouteTarget = this.getTargetedRoutePath(
-          prefix,
-          window.parent.location.href
-        );
+  listenToVendorRouteChanges = (
+    event: MessageEvent<{
+      type: 'VENDOR_ROUTE_CHANGED';
+      data: {
+        vendorRoute: string;
+      };
+    }>
+  ) => {
 
-        this.router.navigate([ngRouteTarget]);
-        return interval(50).pipe(
-          tap(() => {
-            if (oldHref !== window.parent.location.href) {
-              const ngRouteTarget = this.getTargetedRoutePath(
-                prefix,
-                window.parent.location.href
-              );
-              this.router.navigate([ngRouteTarget]);
-              oldHref = window.parent.location.href;
-            }
-          })
-        );
-      }),
-      map(() => void 0)
-    );
-  }
-  getTargetedRoutePath(prefix: string, parentRoute: string) {
-    const splitRoute = parentRoute.split(prefix);
-    return splitRoute[1];
-  }
+    if (event.source === window.parent && event.data.type === 'VENDOR_ROUTE_CHANGED') {
+      console.log("VENDOR_ROUTE_CHANGED")
+      const targetRoute =  event.data.data.vendorRoute;
+      const routeToNavigateTo = targetRoute.endsWith("/")? targetRoute : `/${targetRoute}`;
+      console.log("navigate: "+routeToNavigateTo)
+      this.router.navigate([routeToNavigateTo],{ skipLocationChange: true });
+      window.parent.postMessage(
+        {
+          type: 'CLIENT_ROUTE_CHANGED',
+          data: {
+            route:routeToNavigateTo
+          }
+        },
+        '*'
+      );
+    }
+  
+  };
+
 }
