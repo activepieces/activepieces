@@ -88,7 +88,14 @@ export class AppComponent implements OnInit {
       switchMap((routingEvent) => {
         return this.embeddedService.getIsInEmbedding$().pipe(
           tap((embedded) => {
-            console.log(routingEvent instanceof NavigationEnd);
+            if (
+              routingEvent instanceof NavigationStart &&
+              routingEvent.url.startsWith('/embed') &&
+              embedded
+            ) {
+              console.error('visiting /embed after init');
+              this.router.navigate(['/'], { skipLocationChange: true });
+            }
             if (embedded && routingEvent instanceof NavigationEnd) {
               this.embeddedService.activepiecesRouteChanged(this.router.url);
             }
