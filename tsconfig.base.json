@@ -26,6 +26,9 @@
       "@activepieces/ee/project-members": [
         "packages/ee/project-members/src/index.ts"
       ],
+      "@activepieces/embedding-client": [
+        "packages/embedding-client/src/index.ts"
+      ],
       "@activepieces/engine": ["packages/engine/src/main.ts"],
       "@activepieces/piece-airtable": ["packages/pieces/airtable/src/index.ts"],
       "@activepieces/piece-amazon-s3": [
