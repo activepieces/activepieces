@@ -8,7 +8,7 @@ import { platformService } from '../platform/platform.service'
 const repo = databaseConnection.getRepository<SigningKey>(SigningKeyEntity)
 
 export const signingKeyService = {
-    async add({ userId, platformId }: AddParams): Promise<AddResponse> {
+    async add({ userId, platformId, displayName }: AddParams): Promise<AddResponse> {
         await assertUserIsPlatformOwner({
             userId,
             platformId,
@@ -22,6 +22,7 @@ export const signingKeyService = {
             generatedBy: userId,
             publicKey: generatedSigningKey.publicKey,
             algorithm: generatedSigningKey.algorithm,
+            displayName,
         }
 
         const savedKeyPair = await repo.save(newSigningKey)
@@ -49,6 +50,11 @@ export const signingKeyService = {
             id,
         })
     },
+    async delete(id: SigningKeyId): Promise<void> {
+        await repo.delete({
+            id,
+        })
+    },
 }
 
 const assertUserIsPlatformOwner = async ({ userId, platformId }: AssertUserIsPlatformOwnerParams): Promise<void> => {
@@ -73,6 +79,7 @@ type AssertUserIsPlatformOwnerParams = {
 type AddParams = {
     userId: UserId
     platformId: PlatformId
+    displayName: string
 }
 
 type NewSigningKey = Omit<SigningKey, 'created' | 'updated'>
