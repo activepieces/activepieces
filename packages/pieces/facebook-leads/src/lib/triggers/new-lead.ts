@@ -32,14 +32,19 @@ export const newLead = createTrigger({
         const form = context.propsValue.form;
 
         if (form !== undefined && form !== '' && form !== null) {
-            context.payload.body.entry.forEach((lead: any) => {
+            for (const lead of context.payload.body.entry) {
                 if (form == lead.changes[0].value.form_id) {
                     leadPings.push(lead)
                 }
-            });
+            }
         }
         else {
             leadPings = context.payload.body.entry;
+        }
+
+        for (const lead of leadPings) {
+            const leadData = await facebookLeadsCommon.getLeadDetails(lead.changes[0].value.leadgen_id, context.auth.access_token);
+            leads.push(leadData);
         }
 
         return [leads];

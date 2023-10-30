@@ -36,7 +36,6 @@
           "cronstrue"
         ],
         "assets": [
-          "packages/ui/core/src/favicon.ico",
           "packages/ui/core/src/assets",
           {
             "glob": "**/*",

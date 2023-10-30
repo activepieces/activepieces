@@ -1,5 +1,5 @@
-import { Platform } from '@activepieces/ee-shared'
-import { UserStatus, User, apId } from '@activepieces/shared'
+import { KeyAlgorithm, SigningKey, Platform } from '@activepieces/ee-shared'
+import { UserStatus, User, apId, Project, NotificationStatus, ProjectType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 
 export const createMockUser = (user?: Partial<User>): User => {
@@ -13,9 +13,22 @@ export const createMockUser = (user?: Partial<User>): User => {
         trackEvents: user?.trackEvents ?? faker.datatype.boolean(),
         newsLetter: user?.newsLetter ?? faker.datatype.boolean(),
         password: user?.password ?? faker.internet.password(),
-        status: user?.status ?? UserStatus.VERIFIED,
+        status: user?.status ?? faker.helpers.enumValue(UserStatus),
         imageUrl: user?.imageUrl ?? faker.image.urlPlaceholder(),
         title: user?.title ?? faker.lorem.sentence(),
+    }
+}
+
+export const createMockProject = (project?: Partial<Project>): Project => {
+    return {
+        id: project?.id ?? apId(),
+        created: project?.created ?? faker.date.recent().toISOString(),
+        updated: project?.updated ?? faker.date.recent().toISOString(),
+        ownerId: project?.ownerId ?? apId(),
+        displayName: project?.ownerId ?? faker.lorem.word(),
+        notifyStatus: project?.notifyStatus ?? faker.helpers.enumValue(NotificationStatus),
+        type: project?.type ?? faker.helpers.enumValue(ProjectType),
+        platformId: project?.id ?? apId(),
     }
 }
 
@@ -30,5 +43,17 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         logoIconUrl: platform?.logoIconUrl ?? faker.image.urlPlaceholder(),
         fullLogoUrl: platform?.fullLogoUrl ?? faker.image.urlPlaceholder(),
         favIconUrl: platform?.favIconUrl ?? faker.image.urlPlaceholder(),
+    }
+}
+
+export const createMockSigningKey = (signingKey?: Partial<SigningKey>): SigningKey => {
+    return {
+        id: signingKey?.id ?? apId(),
+        created: signingKey?.created ?? faker.date.recent().toISOString(),
+        updated: signingKey?.updated ?? faker.date.recent().toISOString(),
+        platformId: signingKey?.platformId ?? apId(),
+        publicKey: signingKey?.publicKey ?? faker.lorem.word(),
+        generatedBy: signingKey?.generatedBy ??  apId(),
+        algorithm: signingKey?.algorithm ?? faker.helpers.enumValue(KeyAlgorithm),
     }
 }

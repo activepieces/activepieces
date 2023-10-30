@@ -653,6 +653,24 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "maor-rozenfeld",
+      "name": "Maor Rozenfeld",
+      "avatar_url": "https://avatars.githubusercontent.com/u/49363375?v=4",
+      "profile": "https://github.com/maor-rozenfeld",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "miqh",
+      "name": "Michael Huynh",
+      "avatar_url": "https://avatars.githubusercontent.com/u/43751307?v=4",
+      "profile": "https://github.com/miqh",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "commitType": "docs"

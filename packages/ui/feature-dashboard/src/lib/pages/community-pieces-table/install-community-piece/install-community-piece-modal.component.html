@@ -41,7 +41,10 @@
 
     <mat-form-field class="ap-w-full ap-mb-2" appearance="outline" *ngIf="isPackageArchive">
       <mat-label>Package archive</mat-label>
-      <ap-file-upload formControlName="pieceArchive" placeHolder="archive.tgz" [extensions]="['.tar.gz', '.tgz']" />
+      <ap-file-upload #pkgInput formControlName="pieceArchive" placeHolder="archive.tgz"
+        [extensions]="['.tar.gz', '.tgz']" />
+      <ap-icon-button [height]="25" [width]="25" iconFilename="attach.svg" matSuffix
+        (buttonClicked)="pkgInput.fileInput.nativeElement.click()"></ap-icon-button>
     </mat-form-field>
   </form>
 

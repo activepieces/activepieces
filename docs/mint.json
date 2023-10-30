@@ -38,18 +38,19 @@
   },
   "tabs": [
     {
-      "name": "Develop Pieces",
-      "icon": "code",
+      "name": "Developers",
       "url": "developers"
     },
     {
-      "name": "Pieces List",
-      "icon": "plug",
+      "name": "Pieces",
       "url": "https://www.activepieces.com/pieces"
     },
     {
+      "name": "Deploy",
+      "url": "install"
+    },
+    {
       "name": "Discord",
-      "icon": "discord",
       "url": "https://discord.gg/2jUXBKDdP8"
     }
   ],
@@ -58,44 +59,50 @@
       "group": "Getting Started",
       "pages": [
         "getting-started/introduction",
-        "getting-started/building-flows",
-        "getting-started/passing-data",
-        "getting-started/publishing-flows",
-        "getting-started/debugging-runs"
+        "getting-started/principles"
       ]
     },
     {
-      "group": "Helper Pieces",
+      "group": "Flows",
       "pages": [
-        "helper-pieces/code"
+        "flows/building-flows",
+        "flows/passing-data",
+        "flows/publishing-flows",
+        "flows/debugging-runs"
       ]
     },
     {
-      "group": "Self Host",
+      "group": "Core Pieces",
       "pages": [
-        {
-          "group": "Install Options",
-          "icon": "server",
-          "pages": [
-            "install/options/overview",
-            "install/options/docker",
-            "install/options/docker-compose",
-            "install/options/easypanel",            
-            "install/options/aws",
-            "install/options/gcp"
-          ]
-        },
+        "core-pieces/code"
+      ]
+    },
+    {
+      "group": "Get Started",
+      "pages": [
+        "install/options/overview",
+        "install/options/docker",
+        "install/options/docker-compose",
+        "install/options/easypanel",            
+        "install/options/aws",
+        "install/options/gcp"
+      ]
+    },
+    {
+    "group": "Reference",
+      "pages": [
         {
           "group": "Configurations",
           "icon": "gear",
           "pages": [
             "install/configurations/environment-variables",
-            "install/configurations/error-notifications"
+            "install/configurations/error-notifications",
+            "install/configurations/troubleshooting"
           ]
         },
         "install/archiecture",
         "install/editions",
-        "install/breaking-changes"
+        "install/enterprise"
       ]
     },
     {
@@ -163,11 +170,12 @@
       ]
     },
     {
-      "group": "Other",
+      "group": "Platform",
       "pages": [
-        "telemetry",
-        "changelog",
-        "license"
+        "platform/overview",
+        "platform/appearance",
+        "platform/manage-projects",
+        "platform/manage-users"
       ]
     },
     {
@@ -183,11 +191,19 @@
             "enterprise/connection-cards/frontend-sdk",
             "enterprise/connection-cards/user-flows"
           ]
-        },
-        "enterprise/install"
+        }
+      ]
+    },
+    {
+      "group": "About",
+      "pages": [
+        "telemetry",
+        "changelog",
+        "license"
       ]
     }
   ],
+  
   "analytics": {
     "posthog": {
       "apiKey": "phc_TXdpocbYTeZVm5VJmMzHTMrCofBQu3e0kN7HGMNGTVW"

@@ -15,6 +15,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
     await databaseConnection.destroy()
+    await app?.close()
 })
 
 describe('update platform endpoint', () => {

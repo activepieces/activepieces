@@ -7,10 +7,10 @@ import {
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { FolderActions } from '../../store/folders/folders.actions';
+import { EmbeddingService } from '@activepieces/ee-components';
 import { Observable, map, of, switchMap, tap } from 'rxjs';
 import { ApEdition, ApFlagId, supportUrl } from '@activepieces/shared';
-import { FlagService } from '@activepieces/ui/common';
-import { EmbeddingService } from '@activepieces/ee-components';
+import { DashboardService, FlagService } from '@activepieces/ui/common';
 
 type SideNavRoute = {
   icon: string;
@@ -33,12 +33,14 @@ export class SidenavRoutesListComponent implements OnInit {
   showDocs$: Observable<boolean>;
   showBilling$: Observable<boolean>;
   isInEmbedding$: Observable<boolean>;
+  hideSideRoutes$: Observable<boolean>;
   constructor(
     public router: Router,
     private store: Store,
     private flagServices: FlagService,
     private cd: ChangeDetectorRef,
-    private embeddingService: EmbeddingService
+    private embeddingService: EmbeddingService,
+    private dashboardService: DashboardService
   ) {
     this.isInEmbedding$ = this.embeddingService.getIsInEmbedding$();
     this.logoUrl$ = this.flagServices
@@ -103,9 +105,8 @@ export class SidenavRoutesListComponent implements OnInit {
     this.showSupport$ = this.flagServices.isFlagEnabled(
       ApFlagId.SHOW_COMMUNITY
     );
-    this.showBilling$ = this.flagServices.isFlagEnabled(
-      ApFlagId.BILLING_ENABLED
-    );
+    this.showBilling$ = this.flagServices.isFlagEnabled(ApFlagId.SHOW_BILLING);
+    this.hideSideRoutes$ = this.dashboardService.getIsInPlatformRoute();
   }
 
   sideNavRoutes: SideNavRoute[] = [];

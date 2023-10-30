@@ -1,8 +1,14 @@
 import { Component } from '@angular/core';
-import { FlagService, environment } from '@activepieces/ui/common';
-import { Observable, map } from 'rxjs';
-import { ApFlagId } from '@activepieces/shared';
 import { EmbeddingService } from '@activepieces/ee-components';
+import {
+  DashboardService,
+  FlagService,
+  ProjectSelectors,
+  environment,
+} from '@activepieces/ui/common';
+import { Observable, map } from 'rxjs';
+import { ApFlagId, Project } from '@activepieces/shared';
+import { Store } from '@ngrx/store';
 
 @Component({
   templateUrl: './dashboard-container.component.html',
@@ -14,9 +20,13 @@ export class DashboardContainerComponent {
   showCommunity$: Observable<boolean>;
   isEmbedded$: Observable<boolean>;
   showSidnav$: Observable<boolean>;
+  isInPlatformRoute$: Observable<boolean>;
+  currentProject$: Observable<Project>;
   constructor(
     private flagService: FlagService,
-    private embeddedService: EmbeddingService
+    private embeddedService: EmbeddingService,
+    private dashboardService: DashboardService,
+    private store: Store
   ) {
     this.isEmbedded$ = this.embeddedService.getIsInEmbedding$();
     this.showSidnav$ = this.embeddedService
@@ -25,6 +35,10 @@ export class DashboardContainerComponent {
 
     this.showCommunity$ = this.flagService.isFlagEnabled(
       ApFlagId.SHOW_COMMUNITY
+    );
+    this.isInPlatformRoute$ = this.dashboardService.getIsInPlatformRoute();
+    this.currentProject$ = this.store.select(
+      ProjectSelectors.selectCurrentProject
     );
   }
   showWhatIsNew() {

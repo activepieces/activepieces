@@ -70,6 +70,8 @@ import { AddPlatform1697717995884 } from '../ee/database/migrations/postgres/169
 import { StoreCodeInsideFlow1697969398200 } from './migration/common/1697969398200-store-code-inside-flow'
 import { AddPlatformToProject1698065083750 } from './migration/postgres/1698065083750-add-platform-to-project'
 import { AddCustomDomain1698077078271 } from '../ee/database/migrations/postgres/1698077078271-AddCustomDomain'
+import { AddTerminationReason1698323987669 } from './migration/postgres/1698323987669-AddTerminationReason'
+import { AddSigningKey1698602417745 } from './migration/postgres/1698602417745-add-signing-key'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
@@ -129,6 +131,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddArchiveIdToPieceMetadata1696950789636,
         StoreCodeInsideFlow1697969398200,
         AddPlatformToProject1698065083750,
+        AddTerminationReason1698323987669,
     ]
 
     const edition = getEdition()
@@ -155,6 +158,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddPieceTypeAndPackageTypeToFlowTemplate1696245170062,
                 AddPlatform1697717995884,
                 AddCustomDomain1698077078271,
+                AddSigningKey1698602417745,
             )
             break
         case ApEdition.ENTERPRISE:

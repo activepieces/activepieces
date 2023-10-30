@@ -238,11 +238,23 @@ export class AppComponent implements OnInit {
   ngOnInit(): void {
     this.loggedInUser$ = this.authenticationService.currentUserSubject.pipe(
       tap((user) => {
-        if (user == undefined || Object.keys(user).length == 0) {
+        const decodedToken = this.authenticationService.getDecodedToken();
+
+        if (
+          user == undefined ||
+          Object.keys(user).length == 0 ||
+          !decodedToken
+        ) {
           this.store.dispatch(CommonActions.clearState());
           return;
         }
-        this.store.dispatch(CommonActions.loadInitial({ user: user }));
+
+        this.store.dispatch(
+          CommonActions.loadProjects({
+            user: user,
+            currentProjectId: decodedToken['projectId'],
+          })
+        );
         this.telemetryService.init(user);
       }),
       map(() => void 0)

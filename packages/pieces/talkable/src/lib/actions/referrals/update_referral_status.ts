@@ -24,6 +24,10 @@ export const updateReferralStatus = createAction({
         ],
       },
     }),
+    failsafe: Property.Checkbox({
+      displayName: 'No Error On Failure',
+      required: false,
+    }),
   },
   async run(context) {
     const TALKABLE_API_URL = 'https://www.talkable.com/api/v2';
@@ -39,6 +43,11 @@ export const updateReferralStatus = createAction({
         site_slug: site,
         status: context.propsValue['status'], // we have only one status so it's hardcoded
       },
+    }).catch(error => {
+      if (context.propsValue.failsafe) {
+        return error.errorMessage();
+      }
+      throw error;
     });
     return updateReferralStatusResponse.body;
   },

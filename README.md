@@ -42,25 +42,12 @@ src="https://github.com/activepieces/activepieces/assets/1812998/76c97441-c285-4
 <br>
 <br>
 
-# ✨ What Is Activepieces?
+# 🤯 Welcome to Activepiece
 
-Activepieces is an **automation** builder, designed to be **extensible** through a **type-safe** pieces framework written in **Typescript**.
+Your friendliest open source all-in-one automation tool, designed to be **extensible** through a **type-safe** pieces framework written in **Typescript**.
 
 <br>
 <br>
-
-
-# 🤖 LLM Chatbots + Data Sources (BETA)
-
-![chatbots](https://github.com/activepieces/activepieces/assets/1812998/7902e76a-4ba4-4130-9418-dba600fb5c15)
-
-**Features:**
-- PDF datasource
-- Sharable links
-- Native integration with flow builder using chatbot pieces
-- Prompt Customization
-
-
 
 # 🎨 Flow Builder
 <p>
@@ -95,6 +82,18 @@ Community templates provide inspiration and enable you to effortlessly build aut
 
 <br>
 <br>
+
+
+# 🤖 LLM Chatbots + Data Sources (BETA)
+
+![chatbots](https://github.com/activepieces/activepieces/assets/1812998/7902e76a-4ba4-4130-9418-dba600fb5c15)
+
+**Features:**
+- PDF datasource
+- Sharable links
+- Native integration with flow builder using chatbot pieces
+- Prompt Customization
+
 
 # ☁️ Open Source and Cloud
 
@@ -219,6 +218,7 @@ We welcome contributions big or small and in different directions. The best way 
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/derbbre"><img src="https://avatars.githubusercontent.com/u/281843?v=4?s=100" width="100px;" alt="derbbre"/><br /><sub><b>derbbre</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=derbbre" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/maor-rozenfeld"><img src="https://avatars.githubusercontent.com/u/49363375?v=4?s=100" width="100px;" alt="Maor Rozenfeld"/><br /><sub><b>Maor Rozenfeld</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=maor-rozenfeld" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
