@@ -7,9 +7,10 @@ import {
 } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
 
-import { Observable } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { copyText } from '@activepieces/ui/common';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { SigningKeysService } from '@activepieces/ee-components';
 
 interface CreateSigningKeyForm {
   displayName: FormControl<string>;
@@ -28,7 +29,8 @@ export class CreateSigningKeyDialogComponent {
     nonNullable: true,
   });
   createProject$?: Observable<void>;
-  signingKey = `4%I':'"bM8[],3YqZ}t>8-(O?Y@*9k}A34n%N1&Jq$X>b;(p.%$laHcs}euc&2L 4%I':'"bM8[],3YqZ}t>8-(O?Y@*9k}A34n%N1&Jq$X>b;(p.%$laHcs}euc&2L`;
+  signingKey = ``;
+  createSigningKey$?: Observable<string>;
   signingKeyFormControl: FormControl<string> = new FormControl(
     this.signingKey,
     {
@@ -38,7 +40,8 @@ export class CreateSigningKeyDialogComponent {
   constructor(
     private fb: FormBuilder,
     private dialogRef: MatDialogRef<CreateSigningKeyDialogComponent>,
-    private matSnakcbar: MatSnackBar
+    private matSnakcbar: MatSnackBar,
+    private signingKeysService: SigningKeysService
   ) {
     this.formGroup = this.fb.group({
       displayName: this.fb.control(
@@ -56,8 +59,17 @@ export class CreateSigningKeyDialogComponent {
   createKey() {
     //Create key logic
     if (this.formGroup.valid && !this.loading) {
-      this.keyCreated = true;
-      this.dialogTitle = $localize`Key Created`;
+      this.createSigningKey$ = this.signingKeysService
+        .create({
+          displayName: this.formGroup.getRawValue().displayName,
+        })
+        .pipe(
+          tap((res) => {
+            this.keyCreated = true;
+            this.dialogTitle = $localize`Key Created`;
+            this.signingKey = res;
+          })
+        );
     }
   }
   copyKey() {

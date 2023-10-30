@@ -19,6 +19,6 @@ export class SigningKeysService {
     return this.http.get<void>(environment.apiUrl + `/signing-keys/${keyId}`);
   }
   create(request: CreateSigningKeyRequest) {
-    return this.http.post(environment.apiUrl + `/signing-keys/`, request);
+    return this.http.post<string>(environment.apiUrl + `/signing-keys/`, request);
   }
 }
