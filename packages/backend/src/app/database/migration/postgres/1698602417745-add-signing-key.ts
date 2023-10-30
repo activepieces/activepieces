@@ -1,12 +1,12 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { logger } from '../../../helper/logger'
 
-export class AddManagedAuthnKeyPair1698602417745 implements MigrationInterface {
-    name = 'AddManagedAuthnKeyPair1698602417745'
+export class AddSigningKey1698602417745 implements MigrationInterface {
+    name = 'AddSigningKey1698602417745'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            CREATE TABLE "managed_authn_key_pair" (
+            CREATE TABLE "signing_key" (
                 "id" character varying(21) NOT NULL,
                 "created" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
                 "updated" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
@@ -18,29 +18,29 @@ export class AddManagedAuthnKeyPair1698602417745 implements MigrationInterface {
             )
         `)
         await queryRunner.query(`
-            ALTER TABLE "managed_authn_key_pair"
-            ADD CONSTRAINT "fk_managed_authn_key_pair_platform_id" FOREIGN KEY ("platformId") REFERENCES "platform"("id") ON DELETE RESTRICT ON UPDATE RESTRICT
+            ALTER TABLE "signing_key"
+            ADD CONSTRAINT "fk_signing_key_platform_id" FOREIGN KEY ("platformId") REFERENCES "platform"("id") ON DELETE RESTRICT ON UPDATE RESTRICT
         `)
         await queryRunner.query(`
-            ALTER TABLE "managed_authn_key_pair"
-            ADD CONSTRAINT "fk_managed_authn_key_pair_generated_by" FOREIGN KEY ("generatedBy") REFERENCES "user"("id") ON DELETE RESTRICT ON UPDATE RESTRICT
+            ALTER TABLE "signing_key"
+            ADD CONSTRAINT "fk_signing_key_generated_by" FOREIGN KEY ("generatedBy") REFERENCES "user"("id") ON DELETE RESTRICT ON UPDATE RESTRICT
         `)
 
-        logger.info('AddManagedAuthnKeyPair1698602417745 up')
+        logger.info('AddSigningKey1698602417745 up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            ALTER TABLE "managed_authn_key_pair" DROP CONSTRAINT "fk_managed_authn_key_pair_generated_by"
+            ALTER TABLE "signing_key" DROP CONSTRAINT "fk_signing_key_generated_by"
         `)
         await queryRunner.query(`
-            ALTER TABLE "managed_authn_key_pair" DROP CONSTRAINT "fk_managed_authn_key_pair_platform_id"
+            ALTER TABLE "signing_key" DROP CONSTRAINT "fk_signing_key_platform_id"
         `)
         await queryRunner.query(`
-            DROP TABLE "managed_authn_key_pair"
+            DROP TABLE "signing_key"
         `)
 
-        logger.info('AddManagedAuthnKeyPair1698602417745 down')
+        logger.info('AddSigningKey1698602417745 down')
     }
 
 }

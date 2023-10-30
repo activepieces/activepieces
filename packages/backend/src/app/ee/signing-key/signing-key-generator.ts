@@ -1,10 +1,10 @@
 import { promisify } from 'node:util'
 import { RSAKeyPairOptions, generateKeyPair as generateKeyPairCallback } from 'node:crypto'
-import { KeyPairAlgorithm } from '@activepieces/ee-shared'
+import { KeyAlgorithm } from '@activepieces/ee-shared'
 
 const generateKeyPair = promisify(generateKeyPairCallback)
 
-export const managedAuthnKeyPairGenerator = {
+export const signingKeyGenerator = {
     async generate(): Promise<GeneratedKeyPair> {
         const algorithm = 'rsa'
 
@@ -24,7 +24,7 @@ export const managedAuthnKeyPairGenerator = {
 
         return {
             ...keyPair,
-            algorithm: KeyPairAlgorithm.RSA,
+            algorithm: KeyAlgorithm.RSA,
         }
     },
 }
@@ -32,5 +32,5 @@ export const managedAuthnKeyPairGenerator = {
 type GeneratedKeyPair = {
     privateKey: string
     publicKey: string
-    algorithm: KeyPairAlgorithm
+    algorithm: KeyAlgorithm
 }

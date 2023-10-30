@@ -61,7 +61,7 @@ import { authenticationServiceHooks } from './authentication/authentication-serv
 import { enterpriseAuthenticationServiceHooks } from './ee/authentication/authentication-service/hooks/enterprise-authentication-service-hooks'
 import { flowQueueConsumer } from './workers/flow-worker/flow-queue-consumer'
 import { setupBullMQBoard } from './workers/flow-worker/queues/redis/redis-queue'
-import { managedAuthnKeyPairModule } from './ee/managed-authn-key-pair/managed-authn-key-pair-controller'
+import { signingKeyModule } from './ee/signing-key/signing-key-module'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -195,7 +195,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(adminPieceModule)
             await app.register(platformModule)
             await app.register(customDomainModule)
-            await app.register(managedAuthnKeyPairModule)
+            await app.register(signingKeyModule)
             chatbotHooks.setHooks(cloudChatbotHooks)
             datasourceHooks.setHooks(cloudDatasourceHooks)
             embeddings.set(qdrantEmbeddings)

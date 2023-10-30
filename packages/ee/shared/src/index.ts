@@ -13,4 +13,4 @@ export * from './lib/billing/usage'
 export * from './lib/firebase-auth';
 export * from './lib/product-embed/app-credentials/index';
 export * from './lib/product-embed/connection-keys/index';
-export * from './lib/managed-authn-key-pair'
+export * from './lib/signing-key'

@@ -1,4 +1,4 @@
-import { KeyPairAlgorithm, ManagedAuthnKeyPair, Platform } from '@activepieces/ee-shared'
+import { KeyAlgorithm, SigningKey, Platform } from '@activepieces/ee-shared'
 import { UserStatus, User, apId, Project, NotificationStatus, ProjectType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 
@@ -46,14 +46,14 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
     }
 }
 
-export const createMockManagedAuthnKeyPair = (keyPair?: Partial<ManagedAuthnKeyPair>): ManagedAuthnKeyPair => {
+export const createMockSigningKey = (signingKey?: Partial<SigningKey>): SigningKey => {
     return {
-        id: keyPair?.id ?? apId(),
-        created: keyPair?.created ?? faker.date.recent().toISOString(),
-        updated: keyPair?.updated ?? faker.date.recent().toISOString(),
-        platformId: keyPair?.platformId ?? apId(),
-        publicKey: keyPair?.publicKey ?? faker.lorem.word(),
-        generatedBy: keyPair?.generatedBy ??  apId(),
-        algorithm: keyPair?.algorithm ?? faker.helpers.enumValue(KeyPairAlgorithm),
+        id: signingKey?.id ?? apId(),
+        created: signingKey?.created ?? faker.date.recent().toISOString(),
+        updated: signingKey?.updated ?? faker.date.recent().toISOString(),
+        platformId: signingKey?.platformId ?? apId(),
+        publicKey: signingKey?.publicKey ?? faker.lorem.word(),
+        generatedBy: signingKey?.generatedBy ??  apId(),
+        algorithm: signingKey?.algorithm ?? faker.helpers.enumValue(KeyAlgorithm),
     }
 }

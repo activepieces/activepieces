@@ -1,38 +1,38 @@
-import { ManagedAuthnKeyPair, ManagedAuthnKeyPairId, PlatformId } from '@activepieces/ee-shared'
+import { SigningKey, SigningKeyId, PlatformId } from '@activepieces/ee-shared'
 import { ActivepiecesError, ErrorCode, SeekPage, UserId, apId, spreadIfDefined } from '@activepieces/shared'
-import { managedAuthnKeyPairGenerator } from './managed-authn-key-pair-generator'
+import { signingKeyGenerator } from './signing-key-generator'
 import { databaseConnection } from '../../database/database-connection'
-import { ManagedAuthnKeyPairEntity } from './managed-authn-key-pair-entity'
+import { SigningKeyEntity } from './signing-key-entity'
 import { platformService } from '../platform/platform.service'
 
-const repo = databaseConnection.getRepository<ManagedAuthnKeyPair>(ManagedAuthnKeyPairEntity)
+const repo = databaseConnection.getRepository<SigningKey>(SigningKeyEntity)
 
-export const managedAuthnKeyPairService = {
+export const signingKeyService = {
     async add({ userId, platformId }: AddParams): Promise<AddResponse> {
         await assertUserIsPlatformOwner({
             userId,
             platformId,
         })
 
-        const generatedKeyPair = await managedAuthnKeyPairGenerator.generate()
+        const generatedSigningKey = await signingKeyGenerator.generate()
 
-        const newKeyPair: NewManagedAuthnKeyPair = {
+        const newSigningKey: NewSigningKey = {
             id: apId(),
             platformId,
             generatedBy: userId,
-            publicKey: generatedKeyPair.publicKey,
-            algorithm: generatedKeyPair.algorithm,
+            publicKey: generatedSigningKey.publicKey,
+            algorithm: generatedSigningKey.algorithm,
         }
 
-        const savedKeyPair = await repo.save(newKeyPair)
+        const savedKeyPair = await repo.save(newSigningKey)
 
         return {
             ...savedKeyPair,
-            privateKey: generatedKeyPair.privateKey,
+            privateKey: generatedSigningKey.privateKey,
         }
     },
 
-    async list({ platformId }: ListParams): Promise<SeekPage<ManagedAuthnKeyPair>> {
+    async list({ platformId }: ListParams): Promise<SeekPage<SigningKey>> {
         const data = await repo.findBy({
             ...spreadIfDefined('platformId', platformId),
         })
@@ -44,7 +44,7 @@ export const managedAuthnKeyPairService = {
         }
     },
 
-    async getOne(id: ManagedAuthnKeyPairId): Promise<ManagedAuthnKeyPair | null> {
+    async getOne(id: SigningKeyId): Promise<SigningKey | null> {
         return repo.findOneBy({
             id,
         })
@@ -75,9 +75,9 @@ type AddParams = {
     platformId: PlatformId
 }
 
-type NewManagedAuthnKeyPair = Omit<ManagedAuthnKeyPair, 'created' | 'updated'>
+type NewSigningKey = Omit<SigningKey, 'created' | 'updated'>
 
-type AddResponse = ManagedAuthnKeyPair & {
+type AddResponse = SigningKey & {
     privateKey: string
 }
 

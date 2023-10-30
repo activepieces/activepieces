@@ -32,7 +32,7 @@ import { getEdition } from '../helper/secret-helper'
 import { ApEdition, ApEnvironment } from '@activepieces/shared'
 import { CustomDomainEntity } from '../ee/custom-domains/custom-domain.entity'
 import { PlatformEntity } from '../ee/platform/platform.entity'
-import { ManagedAuthnKeyPairEntity } from '../ee/managed-authn-key-pair/managed-authn-key-pair-entity'
+import { SigningKeyEntity } from '../ee/signing-key/signing-key-entity'
 
 const databaseType = system.get(SystemProp.DB_TYPE)
 
@@ -73,7 +73,7 @@ function getEntities(): EntitySchema<unknown>[] {
                 AppCredentialEntity,
                 PlatformEntity,
                 CustomDomainEntity,
-                ManagedAuthnKeyPairEntity,
+                SigningKeyEntity,
             )
             break
         case ApEdition.ENTERPRISE:

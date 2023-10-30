@@ -1,15 +1,15 @@
-import { KeyPairAlgorithm, ManagedAuthnKeyPair, Platform } from '@activepieces/ee-shared'
+import { KeyAlgorithm, SigningKey, Platform } from '@activepieces/ee-shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 import { User } from '@activepieces/shared'
 
-type ManagedAuthnKeyPairSchema = ManagedAuthnKeyPair & {
+type SigningKeySchema = SigningKey & {
     platform: Platform
     generator: User
 }
 
-export const ManagedAuthnKeyPairEntity = new EntitySchema<ManagedAuthnKeyPairSchema>({
-    name: 'managed_authn_key_pair',
+export const SigningKeyEntity = new EntitySchema<SigningKeySchema>({
+    name: 'signing_key',
     columns: {
         ...BaseColumnSchemaPart,
         platformId: {
@@ -22,7 +22,7 @@ export const ManagedAuthnKeyPairEntity = new EntitySchema<ManagedAuthnKeyPairSch
         },
         algorithm: {
             type: String,
-            enum: KeyPairAlgorithm,
+            enum: KeyAlgorithm,
             nullable: false,
         },
         generatedBy: {
@@ -41,7 +41,7 @@ export const ManagedAuthnKeyPairEntity = new EntitySchema<ManagedAuthnKeyPairSch
             joinColumn: {
                 name: 'platformId',
                 referencedColumnName: 'id',
-                foreignKeyConstraintName: 'fk_managed_authn_key_pair_platform_id',
+                foreignKeyConstraintName: 'fk_signing_key_platform_id',
             },
         },
         generator: {
@@ -52,7 +52,7 @@ export const ManagedAuthnKeyPairEntity = new EntitySchema<ManagedAuthnKeyPairSch
             joinColumn: {
                 name: 'generatedBy',
                 referencedColumnName: 'id',
-                foreignKeyConstraintName: 'fk_managed_authn_key_pair_generated_by',
+                foreignKeyConstraintName: 'fk_signing_key_generated_by',
             },
         },
     },

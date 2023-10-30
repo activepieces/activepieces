@@ -1,7 +1,7 @@
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { setupApp } from '../../../../src/app/app'
 import { generateTestToken } from '../../../helpers/auth'
-import { createMockUser, createMockPlatform, createMockManagedAuthnKeyPair } from '../../../helpers/mocks'
+import { createMockUser, createMockPlatform, createMockSigningKey } from '../../../helpers/mocks'
 import { StatusCodes } from 'http-status-codes'
 import { FastifyInstance } from 'fastify'
 import { apId } from '@activepieces/shared'
@@ -18,9 +18,9 @@ afterAll(async () => {
     await app?.close()
 })
 
-describe('managed authn key pair API', () => {
-    describe('add key pair endpoint', () => {
-        it('creates new key pair', async () => {
+describe('Signing Key API', () => {
+    describe('Add Signing Key API', () => {
+        it('Creates new Signing Key', async () => {
             // arrange
             const mockUser = createMockUser()
             await databaseConnection.getRepository('user').save(mockUser)
@@ -36,7 +36,7 @@ describe('managed authn key pair API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/managed-authn-key-pairs',
+                url: '/v1/signing-keys',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -54,7 +54,7 @@ describe('managed authn key pair API', () => {
             expect(responseBody.algorithm).toBe('RSA')
         })
 
-        it('fails if platformId is not provided in token', async () => {
+        it('Fails if platformId is not provided in token', async () => {
             // arrange
             const testToken = await generateTestToken({
                 platformId: undefined,
@@ -63,7 +63,7 @@ describe('managed authn key pair API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/managed-authn-key-pairs',
+                url: '/v1/signing-keys',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -76,7 +76,7 @@ describe('managed authn key pair API', () => {
             expect(responseBody.message).toBe('platformId is null or undefined')
         })
 
-        it('fails if platform is not found', async () => {
+        it('Fails if platform is not found', async () => {
             // arrange
             const nonExistentPlatformId = apId()
 
@@ -87,7 +87,7 @@ describe('managed authn key pair API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/managed-authn-key-pairs',
+                url: '/v1/signing-keys',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -97,7 +97,7 @@ describe('managed authn key pair API', () => {
             expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
         })
 
-        it('fails if user is not platform owner', async () => {
+        it('Fails if user is not platform owner', async () => {
             // arrange
             const mockUser = createMockUser()
             await databaseConnection.getRepository('user').save(mockUser)
@@ -114,7 +114,7 @@ describe('managed authn key pair API', () => {
             // act
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/managed-authn-key-pairs',
+                url: '/v1/signing-keys',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -125,8 +125,8 @@ describe('managed authn key pair API', () => {
         })
     })
 
-    describe('get managed authn key pair endpoint', () => {
-        it('finds a key pair by id', async () => {
+    describe('Get Signing Key endpoint', () => {
+        it('Finds a Signing Key by id', async () => {
             // arrange
             const mockUser = createMockUser()
             await databaseConnection.getRepository('user').save(mockUser)
@@ -134,18 +134,18 @@ describe('managed authn key pair API', () => {
             const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
             await databaseConnection.getRepository('platform').save(mockPlatform)
 
-            const mockKeyPair = createMockManagedAuthnKeyPair({
+            const mockSigningKey = createMockSigningKey({
                 platformId: mockPlatform.id,
                 generatedBy: mockUser.id,
             })
 
-            await databaseConnection.getRepository('managed_authn_key_pair').save(mockKeyPair)
+            await databaseConnection.getRepository('signing_key').save(mockSigningKey)
             const testToken = await generateTestToken()
 
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: `/v1/managed-authn-key-pairs/${mockKeyPair.id}`,
+                url: `/v1/signing-keys/${mockSigningKey.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -155,16 +155,16 @@ describe('managed authn key pair API', () => {
             const responseBody = response?.json()
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(responseBody.id).toBe(mockKeyPair.id)
-            expect(responseBody.platformId).toBe(mockKeyPair.platformId)
-            expect(responseBody.publicKey).toBe(mockKeyPair.publicKey)
-            expect(responseBody.generatedBy).toBe(mockKeyPair.generatedBy)
-            expect(responseBody.algorithm).toBe(mockKeyPair.algorithm)
+            expect(responseBody.id).toBe(mockSigningKey.id)
+            expect(responseBody.platformId).toBe(mockSigningKey.platformId)
+            expect(responseBody.publicKey).toBe(mockSigningKey.publicKey)
+            expect(responseBody.generatedBy).toBe(mockSigningKey.generatedBy)
+            expect(responseBody.algorithm).toBe(mockSigningKey.algorithm)
         })
     })
 
-    describe('list managed authn key pairs', () => {
-        it('filters key pairs by platform', async () => {
+    describe('List Signing Keys endpoint', () => {
+        it('Filters Signing Keys by platform', async () => {
             // arrange
             const mockUserOne = createMockUser()
             const mockUserTwo = createMockUser()
@@ -174,23 +174,23 @@ describe('managed authn key pair API', () => {
             const mockPlatformTwo = createMockPlatform({ ownerId: mockUserTwo.id })
             await databaseConnection.getRepository('platform').save([mockPlatformOne, mockPlatformTwo])
 
-            const mockKeyPairOne = createMockManagedAuthnKeyPair({
+            const mockSigningKeyOne = createMockSigningKey({
                 platformId: mockPlatformOne.id,
                 generatedBy: mockUserOne.id,
             })
 
-            const mockKeyPairTwo = createMockManagedAuthnKeyPair({
+            const mockSigningKeyTwo = createMockSigningKey({
                 platformId: mockPlatformTwo.id,
                 generatedBy: mockUserTwo.id,
             })
 
-            await databaseConnection.getRepository('managed_authn_key_pair').save([mockKeyPairOne, mockKeyPairTwo])
+            await databaseConnection.getRepository('signing_key').save([mockSigningKeyOne, mockSigningKeyTwo])
             const testToken = await generateTestToken()
 
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: `/v1/managed-authn-key-pairs?platformId=${mockPlatformOne.id}`,
+                url: `/v1/signing-keys?platformId=${mockPlatformOne.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -201,7 +201,7 @@ describe('managed authn key pair API', () => {
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
             expect(responseBody.data).toHaveLength(1)
-            expect(responseBody.data[0].id).toBe(mockKeyPairOne.id)
+            expect(responseBody.data[0].id).toBe(mockSigningKeyOne.id)
         })
     })
 })
