@@ -7,15 +7,17 @@ import {
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { FolderActions } from '../../store/folders/folders.actions';
-import { Observable, map, tap } from 'rxjs';
-import { ApFlagId, supportUrl } from '@activepieces/shared';
+import { Observable, map, of, switchMap, tap } from 'rxjs';
+import { ApEdition, ApFlagId, supportUrl } from '@activepieces/shared';
 import { FlagService } from '@activepieces/ui/common';
+import { EmbeddingService } from '@activepieces/ee-components';
 
 type SideNavRoute = {
   icon: string;
   caption: string;
   route: string;
   effect?: () => void;
+  showInSideNav$: Observable<boolean>;
 };
 
 @Component({
@@ -35,7 +37,8 @@ export class SidenavRoutesListComponent implements OnInit {
     public router: Router,
     private store: Store,
     private flagServices: FlagService,
-    private cd: ChangeDetectorRef
+    private cd: ChangeDetectorRef,
+    private embeddingService: EmbeddingService
   ) {
     this.logoUrl$ = this.flagServices
       .getLogos()
@@ -69,26 +72,41 @@ export class SidenavRoutesListComponent implements OnInit {
       effect: () => {
         this.store.dispatch(FolderActions.showAllFlows());
       },
+      showInSideNav$: of(true),
     },
     {
       icon: 'assets/img/custom/dashboard/chatbots.svg',
       caption: 'Chatbots',
       route: 'chatbots',
+      showInSideNav$: this.embeddingService
+        .getState$()
+        .pipe(map((res) => !res.isEmbedded)),
     },
     {
       icon: 'assets/img/custom/dashboard/runs.svg',
       caption: $localize`Runs`,
       route: 'runs',
+      showInSideNav$: of(true),
     },
     {
       icon: 'assets/img/custom/dashboard/connections.svg',
       caption: $localize`Connections`,
       route: 'connections',
+      showInSideNav$: of(true),
     },
     {
       icon: 'assets/img/custom/dashboard/members.svg',
       caption: $localize`Team`,
       route: 'team',
+      showInSideNav$: this.embeddingService.getState$().pipe(
+        switchMap((st) => {
+          return this.flagServices.getEdition().pipe(
+            map((ed) => {
+              return ed !== ApEdition.COMMUNITY && !st.isEmbedded;
+            })
+          );
+        })
+      ),
     },
   ];
 
