@@ -72,6 +72,7 @@ import { AddPlatformToProject1698065083750 } from './migration/postgres/16980650
 import { AddCustomDomain1698077078271 } from '../ee/database/migrations/postgres/1698077078271-AddCustomDomain'
 import { AddTerminationReason1698323987669 } from './migration/postgres/1698323987669-AddTerminationReason'
 import { AddSigningKey1698602417745 } from './migration/postgres/1698602417745-add-signing-key'
+import { AddDisplayNameToSigningKey1698698190965 } from './migration/postgres/1698698190965-AddDisplayNameToSigningKey'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
@@ -159,6 +160,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddPlatform1697717995884,
                 AddCustomDomain1698077078271,
                 AddSigningKey1698602417745,
+                AddDisplayNameToSigningKey1698698190965,
             )
             break
         case ApEdition.ENTERPRISE:
@@ -167,6 +169,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 ProjectMemberRelations1694381968985,
                 AddPlatform1697717995884,
                 AddCustomDomain1698077078271,
+                AddSigningKey1698602417745,
+                AddDisplayNameToSigningKey1698698190965,
             )
             break
         case ApEdition.COMMUNITY:
