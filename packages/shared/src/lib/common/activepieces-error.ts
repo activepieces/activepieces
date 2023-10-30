@@ -49,6 +49,7 @@ type ErrorParams =
   | TriggerEnableErrorParams
   | TriggerFailedErrorParams
   | ValidationErrorParams
+  | SigningKeyUsedNameErrorParams
 
 export interface BaseErrorParams<T, V> {
   code: T;
@@ -263,6 +264,10 @@ export type PauseMetadataMissingErrorParams = BaseErrorParams<
   ErrorCode.PAUSE_METADATA_MISSING,
   Record<string, never>
 >
+export type SigningKeyUsedNameErrorParams = BaseErrorParams<
+  ErrorCode.SIGNING_KEY_NAME_USED,
+   string
+>
 
 export type InvalidApiKeyParams = BaseErrorParams<
   ErrorCode.INVALID_API_KEY,
@@ -328,4 +333,5 @@ export enum ErrorCode {
   TRIGGER_ENABLE = "TRIGGER_ENABLE",
   TRIGGER_FAILED = "TRIGGER_FAILED",
   VALIDATION = "VALIDATION",
+  SIGNING_KEY_NAME_USED= "SIGNING_KEY_NAME_USED"
 }

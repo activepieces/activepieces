@@ -1,4 +1,4 @@
-import { SigningKey, SigningKeyId, PlatformId } from '@activepieces/ee-shared'
+import { SigningKey, SigningKeyId, PlatformId, CreateSigningKeyResponse } from '@activepieces/ee-shared'
 import { ActivepiecesError, ErrorCode, SeekPage, UserId, apId, spreadIfDefined } from '@activepieces/shared'
 import { signingKeyGenerator } from './signing-key-generator'
 import { databaseConnection } from '../../database/database-connection'
@@ -8,7 +8,7 @@ import { platformService } from '../platform/platform.service'
 const repo = databaseConnection.getRepository<SigningKey>(SigningKeyEntity)
 
 export const signingKeyService = {
-    async add({ userId, platformId, displayName }: AddParams): Promise<AddResponse> {
+    async add({ userId, platformId, displayName }: AddParams): Promise<CreateSigningKeyResponse> {
         await assertUserIsPlatformOwner({
             userId,
             platformId,
@@ -45,9 +45,15 @@ export const signingKeyService = {
         }
     },
 
-    async getOne(id: SigningKeyId): Promise<SigningKey | null> {
+    async getOne({ id, displayName }: { id: SigningKeyId, displayName?: string }): Promise<SigningKey | null> {
         return repo.findOneBy({
             id,
+            displayName,
+        })
+    },
+    async getOneByName({  displayName }: { displayName: string }): Promise<SigningKey | null> {
+        return repo.findOneBy({
+            displayName,
         })
     },
     async delete(id: SigningKeyId): Promise<void> {
@@ -84,9 +90,7 @@ type AddParams = {
 
 type NewSigningKey = Omit<SigningKey, 'created' | 'updated'>
 
-type AddResponse = SigningKey & {
-    privateKey: string
-}
+
 
 type ListParams = {
     platformId?: PlatformId
