@@ -12,6 +12,10 @@ export const SigningKeyEntity = new EntitySchema<SigningKeySchema>({
     name: 'signing_key',
     columns: {
         ...BaseColumnSchemaPart,
+        displayName: {
+            type: String,
+            nullable: false,
+        },
         platformId: {
             ...ApIdSchema,
             nullable: false,
