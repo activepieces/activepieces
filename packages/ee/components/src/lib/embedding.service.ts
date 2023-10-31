@@ -1,5 +1,9 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, map } from 'rxjs';
+import { environment } from '@activepieces/ui/common';
+import { ManagedAuthnRequestBody } from '@activepieces/ee-shared';
+import { HttpClient } from '@angular/common/http';
+import { AuthenticationResponse } from '@activepieces/shared';
 
 export type EmbeddingState = {
   isEmbedded: boolean;
@@ -11,7 +15,7 @@ export type EmbeddingState = {
 })
 export class EmbeddingService {
   embeddingStateSubject: BehaviorSubject<EmbeddingState>;
-  constructor() {
+  constructor(private http: HttpClient) {
     this.embeddingStateSubject = new BehaviorSubject<EmbeddingState>({
       isEmbedded: false,
       hideSideNav: false,
@@ -40,6 +44,13 @@ export class EmbeddingService {
         },
       },
       '*'
+    );
+  }
+
+  generateApToken(request: ManagedAuthnRequestBody) {
+    return this.http.post<AuthenticationResponse>(
+      environment.apiUrl + `/managed-authn/external-token`,
+      request
     );
   }
 }

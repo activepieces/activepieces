@@ -5,7 +5,7 @@ import {
   OnInit,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Observable, of, tap } from 'rxjs';
+import { Observable, map, tap } from 'rxjs';
 import { EmbeddingService } from '../embedding.service';
 import {
   ActivepiecesClientEventName,
@@ -13,6 +13,7 @@ import {
   ActivepiecesVendorInit,
   hideSidebarQueryParamName,
 } from '@activepieces/ee-client-embedding-shared';
+import { AuthenticationService } from '@activepieces/ui/common';
 
 @Component({
   selector: 'ap-embed-redirect',
@@ -20,34 +21,39 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EmbedRedirectComponent implements OnDestroy, OnInit {
-  validateJWT$?: Observable<string>;
+  validateJWT$?: Observable<void>;
   showError = false;
   constructor(
     private route: ActivatedRoute,
     private embeddingService: EmbeddingService,
-    private router: Router
+    private router: Router,
+    private authenticationService: AuthenticationService
   ) {}
 
   ngOnInit(): void {
-    const jwt = this.route.snapshot.queryParamMap.get('jwt');
+    const jwt = this.route.snapshot.queryParamMap.get('JWT_TOKEN');
+    debugger;
+    if (jwt === null) {
+      throw new Error('Activepieces: no provided jwt token');
+    }
 
-    // if (jwt === null) {
-    //   throw new Error('Activepieces: no provided jwt token');
-    // }
-    //TODO: handle erroring and storing new JWT token
+    this.validateJWT$ = this.embeddingService
+      .generateApToken({ externalAccessToken: jwt })
+      .pipe(
+        tap((res) => {
+          this.authenticationService.saveToken(res.token);
+          this.authenticationService.updateUser({ ...res, password: '' });
+          window.parent.postMessage(
+            {
+              type: ActivepiecesClientEventName.CLIENT_INIT,
+            },
+            '*'
+          );
 
-    this.validateJWT$ = of(jwt || '').pipe(
-      tap(() => {
-        window.parent.postMessage(
-          {
-            type: ActivepiecesClientEventName.CLIENT_INIT,
-          },
-          '*'
-        );
-
-        window.addEventListener('message', this.initializedVendorHandler);
-      })
-    );
+          window.addEventListener('message', this.initializedVendorHandler);
+        }),
+        map(() => void 0)
+      );
   }
 
   initializedVendorHandler = (event: MessageEvent<ActivepiecesVendorInit>) => {
