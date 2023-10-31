@@ -3,6 +3,12 @@ import { Router } from '@angular/router';
 
 import { EmbeddingService } from '../embedding.service';
 import { Observable, map, tap } from 'rxjs';
+import {
+  ActivepiecesClientEventName,
+  ActivepiecesClientRouteChanged,
+  ActivepiecesVendorEventName,
+  ActivepiecesVendorRouteChanged,
+} from '@activepieces/ee-client-embedding-shared';
 
 @Component({
   selector: 'ap-iframe-listener',
@@ -27,16 +33,11 @@ export class IframeListenerComponent {
   }
 
   listenToVendorRouteChanges = (
-    event: MessageEvent<{
-      type: 'VENDOR_ROUTE_CHANGED';
-      data: {
-        vendorRoute: string;
-      };
-    }>
+    event: MessageEvent<ActivepiecesVendorRouteChanged>
   ) => {
     if (
       event.source === window.parent &&
-      event.data.type === 'VENDOR_ROUTE_CHANGED'
+      event.data.type === ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED
     ) {
       const targetRoute = event.data.data.vendorRoute;
       const routeToNavigateTo = targetRoute.endsWith('/')
@@ -52,15 +53,13 @@ export class IframeListenerComponent {
         queryParams,
         skipLocationChange: true,
       });
-      window.parent.postMessage(
-        {
-          type: 'CLIENT_ROUTE_CHANGED',
-          data: {
-            route: routeToNavigateTo,
-          },
+      const clientRouteChangedEvent: ActivepiecesClientRouteChanged = {
+        data: {
+          route: routeToNavigateTo,
         },
-        '*'
-      );
+        type: ActivepiecesClientEventName.CLIENT_ROUTE_CHANGED,
+      };
+      window.parent.postMessage(clientRouteChangedEvent, '*');
     }
   };
 }

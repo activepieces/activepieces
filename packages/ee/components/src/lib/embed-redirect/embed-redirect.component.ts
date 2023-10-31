@@ -7,6 +7,12 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, of, tap } from 'rxjs';
 import { EmbeddingService } from '../embedding.service';
+import {
+  ActivepiecesClientEventName,
+  ActivepiecesVendorEventName,
+  ActivepiecesVendorInit,
+} from '@activepieces/ee-client-embedding-shared';
+
 @Component({
   selector: 'ap-embed-redirect',
   templateUrl: './embed-redirect.component.html',
@@ -33,7 +39,7 @@ export class EmbedRedirectComponent implements OnDestroy, OnInit {
       tap(() => {
         window.parent.postMessage(
           {
-            type: 'CLIENT_INIT',
+            type: ActivepiecesClientEventName.CLIENT_INIT,
           },
           '*'
         );
@@ -43,21 +49,16 @@ export class EmbedRedirectComponent implements OnDestroy, OnInit {
     );
   }
 
-  initializedVendorHandler = (
-    event: MessageEvent<{
-      type: 'VENDOR_INIT';
-      data: {
-        prefix: string;
-        initialClientRoute: string;
-      };
-    }>
-  ) => {
+  initializedVendorHandler = (event: MessageEvent<ActivepiecesVendorInit>) => {
     const hideSidebar =
       this.route.snapshot.queryParamMap
         .get('hideSidebar')
         ?.toLocaleLowerCase() === 'TRUE'.toLocaleLowerCase();
 
-    if (event.source === window.parent && event.data.type === 'VENDOR_INIT') {
+    if (
+      event.source === window.parent &&
+      event.data.type === ActivepiecesVendorEventName.VENDOR_INIT
+    ) {
       this.embeddingService.setState({
         hideSideNav: hideSidebar,
         isEmbedded: true,

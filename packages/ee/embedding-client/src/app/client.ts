@@ -6,12 +6,10 @@ class ActivepiecesEmbedded {
   handleVendorNavigation?: (data:{route:string}) =>void;
   handleClientNavigation?: (data:{route:string}) =>void;
   parentOrigin = window.location.origin;
-
   configure({ prefix,initialClientRoute }: { prefix: string,initialClientRoute?: string}) {
     this._prefix = prefix;
     this._initialClientRoute = initialClientRoute || '';
     setIframeChecker(this);
- 
   }
 }
 
@@ -48,8 +46,8 @@ const setIframeChecker = (client: ActivepiecesEmbedded) =>{
 }
 const checkForClientRouteChanges = (client:ActivepiecesEmbedded) =>{
     window.addEventListener("message", function (event:MessageEvent<ActivepiecesClientRouteChanged>) {
-        if(event.data.type === ActivepiecesClientEventName.CLIENT_ROUTE_CHANGED){
-            console.log(event.data);
+        if(event.data.type === ActivepiecesClientEventName.CLIENT_ROUTE_CHANGED)
+        {
             if(!client.handleClientNavigation)
             {                
                 this.history.replaceState({},'',event.data.data.route);
