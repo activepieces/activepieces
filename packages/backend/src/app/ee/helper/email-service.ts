@@ -1,7 +1,6 @@
-
 import sendgrid from '@sendgrid/mail'
 import { logger } from '@sentry/utils'
-import { tokenUtils } from '../../authentication/lib/token-utils'
+import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { getEdition } from '../../helper/secret-helper'
 import { ApEdition, Principal } from '@activepieces/shared'
 
@@ -12,7 +11,7 @@ export const emailService = {
             return
         }
 
-        const token = await tokenUtils.encode({
+        const token = await accessTokenManager.generateToken({
             id: invitationId,
         } as Principal)
 

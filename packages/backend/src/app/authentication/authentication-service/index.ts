@@ -7,7 +7,10 @@ import { authenticationServiceHooks as hooks } from './hooks'
 export const authenticationService = {
     signUp: async (request: SignUpRequest): Promise<AuthenticationResponse> => {
         try {
-            const user = await userService.create(request, UserStatus.VERIFIED)
+            const user = await userService.create({
+                ...request,
+                status: UserStatus.VERIFIED,
+            })
 
             const { user: updatedUser, project, token } = await hooks.get().postSignUp({
                 user,

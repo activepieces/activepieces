@@ -1,7 +1,7 @@
 import { FastifyRequest } from 'fastify'
-import { tokenUtils } from './lib/token-utils'
+import { accessTokenManager } from './lib/access-token-manager'
 import { API_KEY_PROTECTED_ROUTES } from '../ee/authentication/api-key-auth-middleware.ee'
-import { ActivepiecesError, ErrorCode, Principal, PrincipalType, ProjectType, apId } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, PrincipalType, ProjectType, apId } from '@activepieces/shared'
 
 const ignoredRoutes = new Set([
     // BEGIN EE
@@ -14,6 +14,7 @@ const ignoredRoutes = new Set([
     '/v1/appsumo/action',
     '/v1/flow-templates/:id',
     '/v1/project-members/accept',
+    '/v1/managed-authn',
     ...(API_KEY_PROTECTED_ROUTES.map(f => f.url)),
     // END EE
     '/v1/chatbots/:id/ask',
@@ -52,7 +53,7 @@ export const tokenVerifyMiddleware = async (request: FastifyRequest): Promise<vo
     else {
         try {
             const token = rawToken.substring(HEADER_PREFIX.length)
-            const principal = await tokenUtils.decode(token) as Principal
+            const principal = await accessTokenManager.extractPrincipal(token)
             request.principal = principal
         }
         catch (e) {

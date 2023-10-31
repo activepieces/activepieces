@@ -1,12 +1,7 @@
-import { Static, Type } from "@sinclair/typebox";
-import { SigningKey } from "./signing-key-model";
+import { Static, Type } from '@sinclair/typebox'
 
-export const CreateSigningKeyRequest = Type.Object({
+export const AddSigningKeyRequestBody = Type.Object({
     displayName: Type.String()
 })
 
-export type CreateSigningKeyRequest = Static<typeof CreateSigningKeyRequest>;
-
-export type CreateSigningKeyResponse = SigningKey & {
-    privateKey: string
-}
+export type AddSigningKeyRequestBody = Static<typeof AddSigningKeyRequestBody>

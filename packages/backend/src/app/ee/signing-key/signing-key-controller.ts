@@ -2,16 +2,13 @@ import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { ActivepiecesError, ApId, ErrorCode, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { signingKeyService } from './signing-key-service'
 import { StatusCodes } from 'http-status-codes'
-import { CreateSigningKeyRequest } from '@activepieces/ee-shared'
+import { AddSigningKeyRequestBody } from '@activepieces/ee-shared'
 
 export const signingKeyController: FastifyPluginAsyncTypebox = async (app) => {
-    app.post('/', {
-        schema: {
-            body: CreateSigningKeyRequest,
-        },
-    }, async (req, res) => {
+    app.post('/', AddSigningKeyRequest, async (req, res) => {
         const { id: userId, platformId } = req.principal
         assertNotNullOrUndefined(platformId, 'platformId')
+
         const newSigningKey = await signingKeyService.add({
             userId,
             platformId,
@@ -34,7 +31,7 @@ export const signingKeyController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/:id', GetSigningKeyRequest, async (req) => {
         const { platformId } = req.principal
         assertNotNullOrUndefined(platformId, 'platformId')
-        const signingKey = await signingKeyService.getOne({
+        const signingKey = await signingKeyService.get({
             id: req.params.id,
             platformId,
         })
@@ -63,7 +60,11 @@ export const signingKeyController: FastifyPluginAsyncTypebox = async (app) => {
     })
 }
 
-
+const AddSigningKeyRequest = {
+    schema: {
+        body: AddSigningKeyRequestBody,
+    },
+}
 
 const GetSigningKeyRequest = {
     schema: {
@@ -80,4 +81,3 @@ const DeleteSigningKeyRequest = {
         }),
     },
 }
-

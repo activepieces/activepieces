@@ -72,6 +72,7 @@ import { AddPlatformToProject1698065083750 } from './migration/postgres/16980650
 import { AddCustomDomain1698077078271 } from '../ee/database/migrations/postgres/1698077078271-AddCustomDomain'
 import { AddTerminationReason1698323987669 } from './migration/postgres/1698323987669-AddTerminationReason'
 import { AddSigningKey1698602417745 } from './migration/postgres/1698602417745-add-signing-key'
+import { ManagedAuthnInitial1698700720482 } from './migration/1698700720482-managed-authn-initial'
 import { AddDisplayNameToSigningKey1698698190965 } from './migration/postgres/1698698190965-AddDisplayNameToSigningKey'
 
 const getSslConfig = (): boolean | TlsOptions => {
@@ -133,6 +134,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         StoreCodeInsideFlow1697969398200,
         AddPlatformToProject1698065083750,
         AddTerminationReason1698323987669,
+        ManagedAuthnInitial1698700720482,
     ]
 
     const edition = getEdition()
