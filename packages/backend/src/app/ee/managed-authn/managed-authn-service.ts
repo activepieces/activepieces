@@ -1,25 +1,25 @@
 import { randomBytes as randomBytesCallback } from 'node:crypto'
 import { promisify } from 'node:util'
 import { AuthenticationResponse, PrincipalType, Project, ProjectId, ProjectType, User, UserStatus } from '@activepieces/shared'
-import { logger } from '../../helper/logger'
 import { userService } from '../../user/user-service'
 import { PlatformId, ProjectMemberRole, ProjectMemberStatus } from '@activepieces/ee-shared'
 import { platformService } from '../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { projectMemberService } from '../project-members/project-member.service'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
+import { externalTokenExtractor } from './lib/external-token-extractor'
 
 export const managedAuthnService = {
-    async authenticate(params: AuthenticateParams): Promise<AuthenticationResponse> {
-        logger.debug({ name: 'managedAuthnService#authenticate', ...params })
-        const user = await getOrCreateUser(params)
+    async authenticate({ externalAccessToken }: AuthenticateParams): Promise<AuthenticationResponse> {
+        const externalPrincipal = await externalTokenExtractor.extract(externalAccessToken)
+        const user = await getOrCreateUser(externalPrincipal)
 
         const token = await accessTokenManager.generateToken({
             id: user.id,
             type: PrincipalType.USER,
             projectId: user.projectId,
             projectType: ProjectType.PLATFORM_MANAGED,
-            platformId: params.platformId,
+            platformId: externalPrincipal.platformId,
         })
 
         return {
@@ -104,6 +104,10 @@ const generateExternalId = (platformId: PlatformId, externalUserId: string): str
 }
 
 type AuthenticateParams = {
+    externalAccessToken: string
+}
+
+type GetOrCreateUserParams = {
     platformId: PlatformId
     externalUserId: string
     externalProjectId: string
@@ -111,8 +115,6 @@ type AuthenticateParams = {
     externalFirstName: string
     externalLastName: string
 }
-
-type GetOrCreateUserParams = AuthenticateParams
 
 type GetOrCreateUserReturn = Omit<User, 'password'> & {
     projectId: ProjectId
@@ -122,11 +124,3 @@ type GetOrCreateProjectParams = {
     platformId: PlatformId
     externalProjectId: string
 }
-
-// type ExternalTokenPayload = {
-//     userId: string
-//     projectId: string
-//     email: string
-//     firstName: string
-//     lastName: string
-// }

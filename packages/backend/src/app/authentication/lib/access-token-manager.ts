@@ -61,7 +61,7 @@ export const accessTokenManager = {
         const secret = await getSecret()
 
         try {
-            return await jwtUtils.verify({
+            return await jwtUtils.decodeAndVerify({
                 jwt: token,
                 key: secret,
             })

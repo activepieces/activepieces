@@ -1,7 +1,7 @@
-import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/shared'
-import jwtLibrary, { SignOptions, VerifyOptions } from 'jsonwebtoken'
+import { ActivepiecesError, ErrorCode, isNil, spreadIfDefined } from '@activepieces/shared'
+import jwtLibrary, { DecodeOptions, SignOptions, VerifyOptions } from 'jsonwebtoken'
 
-enum JwtSignAlgorithm {
+export enum JwtSignAlgorithm {
     HS256 = 'HS256',
     RS256 = 'RS256',
 }
@@ -47,10 +47,10 @@ export const jwtUtils = {
         })
     },
 
-    async verify<T>({ jwt, key, algorithm = ALGORITHM, issuer = ISSUER }: VerifyParams): Promise<T> {
+    async decodeAndVerify<T>({ jwt, key, algorithm = ALGORITHM, issuer = ISSUER }: VerifyParams): Promise<T> {
         const verifyOptions: VerifyOptions = {
             algorithms: [algorithm],
-            issuer,
+            ...spreadIfDefined('issuer', issuer),
         }
 
         return new Promise((resolve, reject) => {
@@ -62,6 +62,14 @@ export const jwtUtils = {
                 return resolve(payload as T)
             })
         })
+    },
+
+    decode<T>({ jwt }: DecodeParams): DecodedJwt<T> {
+        const decodeOptions: DecodeOptions = {
+            complete: true,
+        }
+
+        return jwtLibrary.decode(jwt, decodeOptions) as DecodedJwt<T>
     },
 }
 
@@ -77,5 +85,19 @@ type VerifyParams = {
     jwt: string
     key: string
     algorithm?: JwtSignAlgorithm
-    issuer?: string
+    issuer?: string | null
+}
+
+type DecodeParams = {
+    jwt: string
+}
+
+type DecodedJwt<T> = {
+    header: {
+        alg: string
+        typ: string
+        kid: string
+    }
+    payload: T
+    signature: string
 }

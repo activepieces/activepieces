@@ -5,7 +5,11 @@ import { ManagedAuthnRequestBody } from '@activepieces/ee-shared'
 
 export const managedAuthnController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/', ManagedAuthnRequest, async (req): Promise<AuthenticationResponse> => {
-        return managedAuthnService.authenticate(req.body)
+        const { externalAccessToken } = req.body
+
+        return managedAuthnService.authenticate({
+            externalAccessToken,
+        })
     })
 }
 
