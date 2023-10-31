@@ -42,6 +42,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
   environment = environment;
   fullLogo$: Observable<string>;
   setTitle$: Observable<void>;
+  isInEmbedded$: Observable<boolean>;
   constructor(
     public dialogService: MatDialog,
     private store: Store,
@@ -53,6 +54,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
     private flagService: FlagService,
     private embeddingService: EmbeddingService
   ) {
+    this.isInEmbedded$ = this.embeddingService.getIsInEmbedding$();
     this.fullLogo$ = this.flagService
       .getLogos()
       .pipe(map((logos) => logos.fullLogoUrl));
