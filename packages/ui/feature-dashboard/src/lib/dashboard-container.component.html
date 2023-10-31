@@ -22,7 +22,8 @@
             </div>
 
         </div>
-        <div [class.ap-pt-7.5]="(isInPlatformRoute$ | async) === false || (isInPlatformRoute$ | async) === undefined"
+        <div [class.ap-pt-7.5]="((isInPlatformRoute$ | async) === false || (isInPlatformRoute$ | async) === undefined) &&
+                                ((isEmbedded$ | async) === undefined || (isEmbedded$ | async) === false)"
             class="ap-h-full">
             <router-outlet></router-outlet>
         </div>
