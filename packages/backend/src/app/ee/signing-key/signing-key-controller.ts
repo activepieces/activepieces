@@ -6,53 +6,59 @@ import { CreateSigningKeyRequest } from '@activepieces/ee-shared'
 
 export const signingKeyController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/', {
-    
         schema: {
             body: CreateSigningKeyRequest,
         },
     }, async (req, res) => {
         const { id: userId, platformId } = req.principal
         assertNotNullOrUndefined(platformId, 'platformId')
-        const displayName = req.body.displayName
-        if ( await signingKeyService.getOneByName({
-            displayName,
-        })) {
-            throw new ActivepiecesError({
-                code: ErrorCode.SIGNING_KEY_NAME_USED,
-                params: displayName,
-            })
-        }
         const newSigningKey = await signingKeyService.add({
             userId,
             platformId,
-            displayName,
+            displayName: req.body.displayName,
         })
-        
+
         return res
             .status(StatusCodes.CREATED)
             .send(newSigningKey)
     })
 
     app.get('/', {}, async (req) => {
-        return await signingKeyService.list({
+        const { platformId } = req.principal
+        assertNotNullOrUndefined(platformId, 'platformId')
+        return signingKeyService.list({
             platformId: req.principal.platformId,
         })
     })
 
-    app.get('/:id', GetSigningKeyRequest, async (req, res) => {
+    app.get('/:id', GetSigningKeyRequest, async (req) => {
+        const { platformId } = req.principal
+        assertNotNullOrUndefined(platformId, 'platformId')
         const signingKey = await signingKeyService.getOne({
             id: req.params.id,
+            platformId,
         })
 
         if (isNil(signingKey)) {
-            return res.status(StatusCodes.NOT_FOUND).send()
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    message: `SigningKey with id ${req.params.id} not found`,
+                },
+            })
         }
 
         return signingKey
     })
-    
-    app.delete('/:id', DeleteSigningKeyRequest, async (req, res) =>{
-        await signingKeyService.delete(req.params.id)
+
+    app.delete('/:id', DeleteSigningKeyRequest, async (req, res) => {
+        const { platformId } = req.principal
+        assertNotNullOrUndefined(platformId, 'platformId')
+        await signingKeyService.delete({
+            id: req.params.id,
+            platformId,
+            userId: req.principal.id,
+        })
         return res.status(StatusCodes.OK).send()
     })
 }

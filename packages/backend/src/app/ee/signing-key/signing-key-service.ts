@@ -45,19 +45,19 @@ export const signingKeyService = {
         }
     },
 
-    async getOne({ id, displayName }: { id: SigningKeyId, displayName?: string }): Promise<SigningKey | null> {
+    async getOne({ id, platformId }: { id: SigningKeyId, platformId: string }): Promise<SigningKey | null> {
         return repo.findOneBy({
             id,
-            displayName,
+            platformId,
         })
     },
-    async getOneByName({  displayName }: { displayName: string }): Promise<SigningKey | null> {
-        return repo.findOneBy({
-            displayName,
+    async delete({ userId, platformId, id }: { id: string, userId: UserId, platformId: PlatformId }): Promise<void> {
+        await assertUserIsPlatformOwner({
+            userId,
+            platformId,
         })
-    },
-    async delete(id: SigningKeyId): Promise<void> {
         await repo.delete({
+            platformId,
             id,
         })
     },
