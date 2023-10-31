@@ -69,7 +69,9 @@ export const accessTokenManager = {
         catch (e) {
             throw new ActivepiecesError({
                 code: ErrorCode.INVALID_BEARER_TOKEN,
-                params: {},
+                params: {
+                    message: 'invalid access token',
+                },
             })
         }
     },

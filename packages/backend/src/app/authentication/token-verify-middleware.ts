@@ -14,7 +14,7 @@ const ignoredRoutes = new Set([
     '/v1/appsumo/action',
     '/v1/flow-templates/:id',
     '/v1/project-members/accept',
-    '/v1/managed-authn',
+    '/v1/managed-authn/external-token',
     ...(API_KEY_PROTECTED_ROUTES.map(f => f.url)),
     // END EE
     '/v1/chatbots/:id/ask',
@@ -47,7 +47,12 @@ export const tokenVerifyMiddleware = async (request: FastifyRequest): Promise<vo
     const rawToken = request.headers.authorization
     if (!rawToken) {
         if (requiresAuthentication(request.routerPath, request.method)) {
-            throw new ActivepiecesError({ code: ErrorCode.INVALID_BEARER_TOKEN, params: {} })
+            throw new ActivepiecesError({
+                code: ErrorCode.INVALID_BEARER_TOKEN,
+                params: {
+                    message: 'access token is undefined',
+                },
+            })
         }
     }
     else {
@@ -58,7 +63,12 @@ export const tokenVerifyMiddleware = async (request: FastifyRequest): Promise<vo
         }
         catch (e) {
             if (requiresAuthentication(request.routerPath, request.method)) {
-                throw new ActivepiecesError({ code: ErrorCode.INVALID_BEARER_TOKEN, params: {} })
+                throw new ActivepiecesError({
+                    code: ErrorCode.INVALID_BEARER_TOKEN,
+                    params: {
+                        message: 'invalid access token',
+                    },
+                })
             }
         }
     }
