@@ -81,6 +81,7 @@ function getEntities(): EntitySchema<unknown>[] {
                 ProjectMemberEntity,
                 PlatformEntity,
                 CustomDomainEntity,
+                SigningKeyEntity,
             )
             break
         case ApEdition.COMMUNITY:

@@ -1,4 +1,4 @@
-import { SigningKey, SigningKeyId, PlatformId } from '@activepieces/ee-shared'
+import { SigningKey, SigningKeyId, PlatformId, CreateSigningKeyResponse } from '@activepieces/ee-shared'
 import { ActivepiecesError, ErrorCode, SeekPage, UserId, apId, spreadIfDefined } from '@activepieces/shared'
 import { signingKeyGenerator } from './signing-key-generator'
 import { databaseConnection } from '../../database/database-connection'
@@ -8,7 +8,7 @@ import { platformService } from '../platform/platform.service'
 const repo = databaseConnection.getRepository<SigningKey>(SigningKeyEntity)
 
 export const signingKeyService = {
-    async add({ userId, platformId }: AddParams): Promise<AddResponse> {
+    async add({ userId, platformId, displayName }: AddParams): Promise<CreateSigningKeyResponse> {
         await assertUserIsPlatformOwner({
             userId,
             platformId,
@@ -22,6 +22,7 @@ export const signingKeyService = {
             generatedBy: userId,
             publicKey: generatedSigningKey.publicKey,
             algorithm: generatedSigningKey.algorithm,
+            displayName,
         }
 
         const savedKeyPair = await repo.save(newSigningKey)
@@ -44,8 +45,19 @@ export const signingKeyService = {
         }
     },
 
-    async getOne(id: SigningKeyId): Promise<SigningKey | null> {
+    async getOne({ id, platformId }: { id: SigningKeyId, platformId: string }): Promise<SigningKey | null> {
         return repo.findOneBy({
+            id,
+            platformId,
+        })
+    },
+    async delete({ userId, platformId, id }: { id: string, userId: UserId, platformId: PlatformId }): Promise<void> {
+        await assertUserIsPlatformOwner({
+            userId,
+            platformId,
+        })
+        await repo.delete({
+            platformId,
             id,
         })
     },
@@ -73,13 +85,12 @@ type AssertUserIsPlatformOwnerParams = {
 type AddParams = {
     userId: UserId
     platformId: PlatformId
+    displayName: string
 }
 
 type NewSigningKey = Omit<SigningKey, 'created' | 'updated'>
 
-type AddResponse = SigningKey & {
-    privateKey: string
-}
+
 
 type ListParams = {
     platformId?: PlatformId
