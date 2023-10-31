@@ -4,11 +4,15 @@
             <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" i18n-aria-label aria-label="Chatbots">
                 <ng-container matColumnDef="displayName">
                     <th mat-header-cell *matHeaderCellDef i18n>Name</th>
-                    <td mat-cell *matCellDef="let project">{{ project.displayName }}</td>
+                    <td mat-cell *matCellDef="let key">{{ key.displayName }}</td>
+                </ng-container>
+                <ng-container matColumnDef="id">
+                    <th mat-header-cell *matHeaderCellDef i18n>ID</th>
+                    <td mat-cell *matCellDef="let key">{{ key.id }}</td>
                 </ng-container>
                 <ng-container matColumnDef="created">
                     <th mat-header-cell *matHeaderCellDef i18n>Created</th>
-                    <td mat-cell *matCellDef="let project">{{ project.created | date:"short" }}</td>
+                    <td mat-cell *matCellDef="let key">{{ key.created | date:"short" }}</td>
                 </ng-container>
 
                 <ng-container matColumnDef="action">
@@ -19,9 +23,9 @@
                             </ap-button>
                         </div>
                     </th>
-                    <td mat-cell *matCellDef="let project" class="!ap-text-center">
+                    <td mat-cell *matCellDef="let key" class="!ap-text-center">
                         <div class="ap-flex ap-gap-2 ap-items-center ap-justify-end ap-px-3">
-                            <ap-icon-button (click)="$event.stopPropagation();deleteKey(project)" i18n-tooltipText
+                            <ap-icon-button (click)="$event.stopPropagation();deleteKey(key)" i18n-tooltipText
                                 tooltipText="Delete key" iconFilename="trash.svg" [width]="20" [height]="20"
                                 color="warn" [height]="16"></ap-icon-button>
                         </div>
