@@ -38,17 +38,16 @@ async function createOrGetUser({ email }: { email: string }): Promise<User> {
     const user = await userService.getOneByEmail({
         email,
     })
-    return user ?? await userService.create(
-        {
-            email,
-            password: apId(),
-            firstName: 'Unknown',
-            lastName: 'Unknown',
-            newsLetter: false,
-            trackEvents: true,
-        },
-        UserStatus.SHADOW,
-    )
+
+    return user ?? await userService.create({
+        email,
+        password: apId(),
+        firstName: 'Unknown',
+        lastName: 'Unknown',
+        newsLetter: false,
+        trackEvents: true,
+        status: UserStatus.SHADOW,
+    })
 }
 
 export const projectMemberService = {
@@ -181,6 +180,18 @@ export const projectMemberService = {
     ): Promise<void> {
         await projectMemberRepo.delete({ projectId, id: invitationId })
     },
+
+    async add({ userId, projectId, role, status }: AddParams): Promise<ProjectMemberSchema> {
+        const newProjectMember: NewProjectMember = {
+            id: apId(),
+            userId,
+            projectId,
+            role,
+            status,
+        }
+
+        return projectMemberRepo.save(newProjectMember)
+    },
 }
 
 function getStatusFromEdition(): ProjectMemberStatus {
@@ -195,3 +206,11 @@ function getStatusFromEdition(): ProjectMemberStatus {
     }
 }
 
+type AddParams = {
+    userId: UserId
+    projectId: ProjectId
+    role: ProjectMemberRole
+    status: ProjectMemberStatus
+}
+
+type NewProjectMember = Omit<ProjectMember, 'created' | 'updated' | 'email'>

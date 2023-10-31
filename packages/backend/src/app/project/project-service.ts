@@ -20,7 +20,7 @@ export const projectService = {
             id: projectId,
         })
 
-        //TODO: Revisit on platform authentication 
+        //TODO: Revisit on platform authentication
         if (isNil(project) || project.id !== projectId && project.platformId !== platformId) {
             throw new ActivepiecesError({
                 code: ErrorCode.PROJECT_NOT_FOUND,
@@ -55,6 +55,18 @@ export const projectService = {
             platformId,
         })
     },
+
+    async getByPlatformIdAndExternalId({ platformId, externalId }: GetByPlatformIdAndExternalIdParams): Promise<Project | null> {
+        return projectRepo.findOneBy({
+            platformId,
+            externalId,
+        })
+    },
+}
+
+type GetByPlatformIdAndExternalIdParams = {
+    platformId: PlatformId
+    externalId: string
 }
 
 type AddProjectToPlatformParams = {
