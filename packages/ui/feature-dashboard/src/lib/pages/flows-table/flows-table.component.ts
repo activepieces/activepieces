@@ -30,6 +30,7 @@ import {
 } from './move-flow-to-folder-dialog/move-flow-to-folder-dialog.component';
 import { FoldersSelectors } from '../../store/folders/folders.selector';
 import cronstrue from 'cronstrue/i18n';
+import { EmbeddingService } from '@activepieces/ee-components';
 
 @Component({
   templateUrl: './flows-table.component.html',
@@ -63,6 +64,7 @@ export class FlowsTableComponent implements OnInit {
     private router: Router,
     private instanceService: FlowInstanceService,
     private store: Store,
+    private embeddingService: EmbeddingService,
     @Inject(LOCALE_ID) private locale: string
   ) {
     this.listenToShowAllFolders();
@@ -109,12 +111,14 @@ export class FlowsTableComponent implements OnInit {
 
   openBuilder(flow: Flow, event: MouseEvent) {
     const link = '/flows/' + flow.id;
-    if (event.ctrlKey || event.which == 2 || event.button == 4) {
+    if (
+      (event.ctrlKey || event.which == 2 || event.button == 4) &&
+      !this.embeddingService.getState().isEmbedded
+    ) {
       // Open in new tab
       window.open(link, '_blank', 'noopener');
     } else {
-      // Open in the same tab
-      this.router.navigateByUrl(link);
+      this.router.navigate(['/flows/' + flow.id]);
     }
   }
 
