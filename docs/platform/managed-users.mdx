@@ -20,9 +20,16 @@ This will generate a public and private key pair. The public key will be used by
 
 The signing key will be used to generate JWT tokens for the currently logged-in user on your website, which will then be sent to Activepieces Iframe as a query parameter to authenticate the user.
 
-To generate these tokens, you will need to add code in your backend to generate the token using the RS256 algorithm. 
+To generate these tokens, you will need to add code in your backend to generate the token using the RS256 algorithm, so the JWT header would look like this:
+```json
+{
+  "alg": "RS256",
+  "typ": "JWT",
+  "kid": "YF1L1YwrREyGFGIwsJmLU"
+}
+```
 
-The signed tokens must include the "sub", "exp", "firstName", "lastName" and "email" claims:
+The signed tokens must include the "sub", "exp", "firstName", "lastName" and "email" claims in their payload:
 
 ```json
 {
@@ -33,12 +40,13 @@ The signed tokens must include the "sub", "exp", "firstName", "lastName" and "em
     "lastName": "Doe",
     "email": "mo@activepieces.om",
     "platformId": "your_platform_id",
-    "kid": "your_key_id",
     "projectId": "user_project_id"
 	// Expiry timestamp for token, such as 1 day from time of generation
 	"exp": 1608603716
 }
 ````
+
+
 
 You can use any JWT library to generate the token. Here is an example using the jsonwebtoken library in NodeJs:
 
