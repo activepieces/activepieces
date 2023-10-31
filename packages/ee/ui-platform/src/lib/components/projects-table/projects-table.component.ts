@@ -20,7 +20,7 @@ import { Store } from '@ngrx/store';
 export class ProjectsTableComponent {
   displayedColumns = ['displayName', 'created', 'action'];
   refreshTable$: Subject<boolean> = new Subject();
-  dataSource!: ProjectsDataSource;
+  dataSource: ProjectsDataSource;
   loading = true;
   switchProject$: Observable<void> | undefined;
   createProject$: Observable<void> | undefined;

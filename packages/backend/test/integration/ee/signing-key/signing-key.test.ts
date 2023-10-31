@@ -5,6 +5,7 @@ import { createMockUser, createMockPlatform, createMockSigningKey } from '../../
 import { StatusCodes } from 'http-status-codes'
 import { FastifyInstance } from 'fastify'
 import { apId } from '@activepieces/shared'
+import { faker } from '@faker-js/faker'
 
 let app: FastifyInstance | null = null
 
@@ -33,10 +34,13 @@ describe('Signing Key API', () => {
                 platformId: mockPlatform.id,
             })
 
-            // act
+            const mockSigningKeyName = faker.lorem.word()
             const response = await app?.inject({
                 method: 'POST',
                 url: '/v1/signing-keys',
+                body: {
+                    displayName: mockSigningKeyName,
+                },
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -49,6 +53,7 @@ describe('Signing Key API', () => {
             expect(responseBody.id).toHaveLength(21)
             expect(responseBody.platformId).toBe(mockPlatform.id)
             expect(responseBody.publicKey).toBeDefined()
+            expect(responseBody.displayName).toBe(mockSigningKeyName)
             expect(responseBody.privateKey).toBeDefined()
             expect(responseBody.generatedBy).toBe(mockUser.id)
             expect(responseBody.algorithm).toBe('RSA')
@@ -60,10 +65,13 @@ describe('Signing Key API', () => {
                 platformId: undefined,
             })
 
-            // act
+            const mockSigningKeyName = faker.lorem.word()
             const response = await app?.inject({
                 method: 'POST',
                 url: '/v1/signing-keys',
+                body: {
+                    displayName: mockSigningKeyName,
+                },
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -84,10 +92,13 @@ describe('Signing Key API', () => {
                 platformId: nonExistentPlatformId,
             })
 
-            // act
+            const mockSigningKeyName = faker.lorem.word()
             const response = await app?.inject({
                 method: 'POST',
                 url: '/v1/signing-keys',
+                body: {
+                    displayName: mockSigningKeyName,
+                },
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -111,10 +122,13 @@ describe('Signing Key API', () => {
                 platformId: mockPlatform.id,
             })
 
-            // act
+            const mockSigningKeyName = faker.lorem.word()
             const response = await app?.inject({
                 method: 'POST',
                 url: '/v1/signing-keys',
+                body: {
+                    displayName: mockSigningKeyName,
+                },
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -140,7 +154,11 @@ describe('Signing Key API', () => {
             })
 
             await databaseConnection.getRepository('signing_key').save(mockSigningKey)
-            const testToken = await generateTestToken()
+ 
+            const testToken = await generateTestToken({
+                id: mockUser.id,
+                platformId: mockPlatform.id,
+            })
 
             // act
             const response = await app?.inject({
@@ -185,8 +203,11 @@ describe('Signing Key API', () => {
             })
 
             await databaseConnection.getRepository('signing_key').save([mockSigningKeyOne, mockSigningKeyTwo])
-            const testToken = await generateTestToken()
 
+            const testToken = await generateTestToken({
+                id: mockUserOne.id,
+                platformId: mockPlatformOne.id,
+            })
             // act
             const response = await app?.inject({
                 method: 'GET',

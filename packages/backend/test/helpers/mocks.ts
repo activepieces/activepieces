@@ -51,6 +51,7 @@ export const createMockSigningKey = (signingKey?: Partial<SigningKey>): SigningK
         id: signingKey?.id ?? apId(),
         created: signingKey?.created ?? faker.date.recent().toISOString(),
         updated: signingKey?.updated ?? faker.date.recent().toISOString(),
+        displayName: signingKey?.displayName ?? faker.lorem.word(),
         platformId: signingKey?.platformId ?? apId(),
         publicKey: signingKey?.publicKey ?? faker.lorem.word(),
         generatedBy: signingKey?.generatedBy ??  apId(),
