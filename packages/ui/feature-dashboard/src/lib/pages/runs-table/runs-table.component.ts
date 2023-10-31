@@ -23,6 +23,7 @@ import {
 } from '@activepieces/ui/common';
 import { FormControl } from '@angular/forms';
 import { Store } from '@ngrx/store';
+import { EmbeddingService } from '@activepieces/ee-components';
 
 @Component({
   templateUrl: './runs-table.component.html',
@@ -47,7 +48,8 @@ export class RunsTableComponent implements OnInit {
     private activatedRoute: ActivatedRoute,
     private flagsService: FlagService,
     private store: Store,
-    private instanceRunService: InstanceRunService
+    private instanceRunService: InstanceRunService,
+    private embeddingService: EmbeddingService
   ) {}
 
   ngOnInit(): void {
@@ -96,10 +98,14 @@ export class RunsTableComponent implements OnInit {
   }
 
   openInstanceRun(run: FlowRun) {
-    const url =
-      this.router.serializeUrl(this.router.createUrlTree(['/runs'])) +
-      '/' +
-      run.id;
-    window.open(url, '_blank', 'noopener');
+    if (!this.embeddingService.getState().isEmbedded) {
+      const url =
+        this.router.serializeUrl(this.router.createUrlTree(['/runs'])) +
+        '/' +
+        run.id;
+      window.open(url, '_blank', 'noopener');
+    } else {
+      this.router.navigate(['/runs/' + run.id]);
+    }
   }
 }
