@@ -57,7 +57,9 @@ const getSigningKey = async ({ signingKeyId, platformId }: GetSigningKeyParams):
     if (isNil(signingKey)) {
         throw new ActivepiecesError({
             code: ErrorCode.INVALID_BEARER_TOKEN,
-            params: {},
+            params: {
+                message: `signing key not found id=${signingKeyId}`,
+            },
         })
     }
 
@@ -82,7 +84,7 @@ type ExternalTokenPayload = {
     lastName: string
 }
 
-type ExternalPrincipal = {
+export type ExternalPrincipal = {
     platformId: PlatformId
     externalUserId: string
     externalProjectId: string
