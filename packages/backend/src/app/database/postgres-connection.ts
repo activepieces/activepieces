@@ -133,6 +133,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         StoreCodeInsideFlow1697969398200,
         AddPlatformToProject1698065083750,
         AddTerminationReason1698323987669,
+        ManagedAuthnInitial1698700720482,
     ]
 
     const edition = getEdition()
@@ -160,7 +161,6 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddPlatform1697717995884,
                 AddCustomDomain1698077078271,
                 AddSigningKey1698602417745,
-                ManagedAuthnInitial1698700720482,
             )
             break
         case ApEdition.ENTERPRISE:
