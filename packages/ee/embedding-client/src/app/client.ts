@@ -9,7 +9,7 @@ class ActivepiecesEmbedded {
   parentOrigin = window.location.origin;
   configure({ prefix,initialClientRoute }: { prefix: string,initialClientRoute?: string}) {
     this._prefix = prefix;
-    this._initialClientRoute = initialClientRoute || '';
+    this._initialClientRoute = initialClientRoute || '/';
     setIframeChecker(this);
   }
 }
