@@ -37,7 +37,7 @@ npm-debug.log
 yarn-error.log
 testem.log
 /typings
-
+/.nx
 # System Files
 .DS_Store
 Thumbs.db
@@ -55,3 +55,4 @@ packages/backend/.env
 
 # scratch pad
 scratch.md
+
