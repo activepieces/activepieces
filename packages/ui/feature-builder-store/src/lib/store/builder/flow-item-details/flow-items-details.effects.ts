@@ -41,18 +41,30 @@ export class FlowItemsDetailsEffects {
         });
       }),
       map((res) => {
-        res.coreFlowItemsDetails = this.moveCorePiecesToCoreFlowItemDetails(
+        let coreFlowItemsDetails = [...res.coreFlowItemsDetails];
+        let coreTriggerFlowItemsDetails = [...res.coreTriggerFlowItemsDetails];
+        const customPiecesActionsFlowItemDetails = [
+          ...res.customPiecesActionsFlowItemDetails,
+        ];
+        const customPiecesTriggersFlowItemDetails = [
+          ...res.customPiecesTriggersFlowItemDetails,
+        ];
+        coreFlowItemsDetails = this.moveCorePiecesToCoreFlowItemDetails(
           CORE_PIECES_ACTIONS_NAMES,
-          res.customPiecesActionsFlowItemDetails,
-          res.coreFlowItemsDetails
+          customPiecesActionsFlowItemDetails,
+          coreFlowItemsDetails
         );
-        res.coreTriggerFlowItemsDetails =
-          this.moveCorePiecesToCoreFlowItemDetails(
-            CORE_PIECES_TRIGGERS,
-            res.customPiecesTriggersFlowItemDetails,
-            res.coreTriggerFlowItemsDetails
-          );
-        return res;
+        coreTriggerFlowItemsDetails = this.moveCorePiecesToCoreFlowItemDetails(
+          CORE_PIECES_TRIGGERS,
+          customPiecesTriggersFlowItemDetails,
+          coreTriggerFlowItemsDetails
+        );
+        return {
+          coreFlowItemsDetails,
+          coreTriggerFlowItemsDetails,
+          customPiecesActionsFlowItemDetails,
+          customPiecesTriggersFlowItemDetails,
+        };
       }),
       switchMap((res) => {
         return of(
