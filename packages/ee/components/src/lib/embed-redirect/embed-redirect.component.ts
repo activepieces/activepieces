@@ -12,7 +12,7 @@ import {
   ActivepiecesVendorEventName,
   ActivepiecesVendorInit,
   hideSidebarQueryParamName,
-} from '@activepieces/ee-client-embedding-shared';
+} from '@activepieces/ee-embed-sdk';
 import { AuthenticationService } from '@activepieces/ui/common';
 
 @Component({
@@ -31,8 +31,7 @@ export class EmbedRedirectComponent implements OnDestroy, OnInit {
   ) {}
 
   ngOnInit(): void {
-    const jwt = this.route.snapshot.queryParamMap.get('JWT_TOKEN');
-    debugger;
+    const jwt = this.route.snapshot.queryParamMap.get('jwtToken');
     if (jwt === null) {
       throw new Error('Activepieces: no provided jwt token');
     }

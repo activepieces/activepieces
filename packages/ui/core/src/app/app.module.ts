@@ -248,6 +248,18 @@ function dynamicRoutes(edition: string) {
     case ApEdition.ENTERPRISE:
       editionRoutes = [
         {
+          path: '',
+          children: [
+            {
+              path: '',
+              loadChildren: () =>
+                import('@activepieces/ui/feature-authentication').then(
+                  (m) => m.UiFeatureAuthenticationModule
+                ),
+            },
+          ],
+        },
+        {
           path: 'embed',
           component: EmbedRedirectComponent,
         },

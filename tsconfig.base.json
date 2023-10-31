@@ -20,6 +20,7 @@
       "@activepieces/ee-auth": ["packages/ee/auth/src/index.ts"],
       "@activepieces/ee-billing-ui": ["packages/ee/billing/ui/src/index.ts"],
       "@activepieces/ee-components": ["packages/ee/components/src/index.ts"],
+      "@activepieces/ee-embed-sdk": ["packages/ee/embed-sdk/src/index.ts"],
       "@activepieces/ee-shared": ["packages/ee/shared/src/index.ts"],
       "@activepieces/ee/billing/ui": ["packages/ee/billing/ui/src/index.ts"],
       "@activepieces/ee/components": ["packages/ee/components/src/index.ts"],
@@ -288,10 +289,7 @@
       "@activepieces/ui/feature-templates": [
         "packages/ui/feature-templates/src/index.ts"
       ],
-      "@ee/*": ["packages/ee/*"],
-      "@activepieces/ee-client-embedding-shared": [
-        "packages/ee/embedding-client-shared/src/index.ts"
-      ]
+      "@ee/*": ["packages/ee/*"]
     },
     "resolveJsonModule": true
   },

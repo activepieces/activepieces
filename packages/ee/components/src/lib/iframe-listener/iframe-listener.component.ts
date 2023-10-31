@@ -1,14 +1,13 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Router } from '@angular/router';
-
-import { EmbeddingService } from '../embedding.service';
-import { Observable, map, tap } from 'rxjs';
 import {
   ActivepiecesClientEventName,
-  ActivepiecesClientRouteChanged,
   ActivepiecesVendorEventName,
+  ActivepiecesClientRouteChanged,
   ActivepiecesVendorRouteChanged,
-} from '@activepieces/ee-client-embedding-shared';
+} from '@activepieces/ee-embed-sdk';
+import { EmbeddingService } from '../embedding.service';
+import { Observable, map, tap } from 'rxjs';
 
 @Component({
   selector: 'ap-iframe-listener',
