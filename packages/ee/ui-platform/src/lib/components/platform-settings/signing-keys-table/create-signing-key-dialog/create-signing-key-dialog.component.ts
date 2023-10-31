@@ -11,7 +11,7 @@ import { BehaviorSubject, Observable, catchError, tap } from 'rxjs';
 import { copyText } from '@activepieces/ui/common';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { SigningKeysService } from '@activepieces/ee-components';
-import { CreateSigningKeyResponse } from '@activepieces/ee-shared';
+import { AddSigningKeyResponse } from '@activepieces/ee-shared';
 
 interface CreateSigningKeyForm {
   displayName: FormControl<string>;
@@ -30,7 +30,7 @@ export class CreateSigningKeyDialogComponent {
     nonNullable: true,
   });
   nameChanged$: Observable<string>;
-  createSigningKey$?: Observable<CreateSigningKeyResponse>;
+  createSigningKey$?: Observable<AddSigningKeyResponse>;
   signingKeyFormControl: FormControl<string> = new FormControl('', {
     nonNullable: true,
   });
