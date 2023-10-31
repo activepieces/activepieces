@@ -1,0 +1,31 @@
+---
+title: "Embedding"
+description: "Embedding Activepieces into iframes has two main parts"
+icon: "code"
+---
+## Adding the iframe 
+
+After adding an iframe to your document, insert ```<your_instance_url>/embed``` as its source, if you are on cloud, just use ```cloud.activepieces.com/embed```.
+
+# Query Params:
+| Param Name | Required | description |
+| --- | --- | --- |
+| JWT_TOKEN |    ✅ | To generate the jwt token read [this](/platform/managed-users)
+| hideSidebar |    ❌ | its value can either be false or true, and is used to show or hide the side bar in the dashboard.
+
+
+## Including the Activepieces client script
+
+This script has to be added to ensure the synchronization of navigation between the vendor and Activepieces.
+
+include the following script in your vendor app:
+```
+<script src="https://cdn.activepieces.com/iframe-embedding/index.js">
+```
+afterwards you will have access to the ```Actviepieces``` object on which you will need to call the ```configure``` method which has the following params:
+
+# Activepieces.configure Method:
+| Param Name | Required | description |
+| --- | --- | --- |
+| prefix |    ✅ |  Must choose an embedding path prefix for generating URLs. Embedding URL prefixes follow this pattern: ```<embedding_url_prefix>/<Activepieces_url>```, if the prefix is ```/automation``` and the Activepieces URL is ```/flows```, then the corresponding vendor URL will be ```/automations/flows```.
+| initialClientRoute |    ❌ | its value has to be one of the following: ```/flows```, ```/runs```,```/connections```, ```/flows/:id```, ```/runs/:id```, any other path will lead to the 404 page, if left undefined will redirect to ```/flows
