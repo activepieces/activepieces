@@ -3,6 +3,7 @@ import { ActivepiecesClientEvent, ActivepiecesClientEventName, ActivepiecesClien
 class ActivepiecesEmbedded {
    _prefix = "";
    _initialClientRoute = "";
+   iframeParentOrigin = window.location.origin;
   handleVendorNavigation?: (data:{route:string}) =>void;
   handleClientNavigation?: (data:{route:string}) =>void;
   parentOrigin = window.location.origin;
@@ -69,10 +70,11 @@ const checkForVendorRouteChanges = (iframeWindow: Window,client:ActivepiecesEmbe
             {
                 client.handleVendorNavigation({route:currentRoute});
             }
+            const prefixStartsWithSlash =  client._prefix.startsWith('/');
                 const apEvent: ActivepiecesVendorRouteChanged = {
                     type: ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED,
                     data:{
-                    vendorRoute: extractRouteAfterPrefix(currentRoute,client._prefix)
+                    vendorRoute: extractRouteAfterPrefix(currentRoute, prefixStartsWithSlash ? client.parentOrigin + client._prefix : `${client.parentOrigin}/${client._prefix}` )
                     }
                 }
                 iframeWindow.postMessage(apEvent,'*');
