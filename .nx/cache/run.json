@@ -1,8 +1,8 @@
 {
   "run": {
     "command": "nx build embedding-client",
-    "startTime": "2023-10-31T11:00:46.570Z",
-    "endTime": "2023-10-31T11:00:50.186Z",
+    "startTime": "2023-10-31T11:56:53.597Z",
+    "endTime": "2023-10-31T11:56:56.875Z",
     "inner": false
   },
   "tasks": [
@@ -11,8 +11,8 @@
       "target": "build",
       "projectName": "ee-embedding-client-shared",
       "hash": "15965258776910659043",
-      "startTime": "2023-10-31T11:00:46.576Z",
-      "endTime": "2023-10-31T11:00:47.760Z",
+      "startTime": "2023-10-31T11:56:53.602Z",
+      "endTime": "2023-10-31T11:56:54.889Z",
       "params": "",
       "cacheStatus": "cache-miss",
       "status": 0
@@ -21,9 +21,9 @@
       "taskId": "embedding-client:build:production",
       "target": "build",
       "projectName": "embedding-client",
-      "hash": "18266036289024253343",
-      "startTime": "2023-10-31T11:00:47.761Z",
-      "endTime": "2023-10-31T11:00:50.186Z",
+      "hash": "9537711428550635749",
+      "startTime": "2023-10-31T11:56:54.891Z",
+      "endTime": "2023-10-31T11:56:56.875Z",
       "params": "",
       "cacheStatus": "cache-miss",
       "status": 0
