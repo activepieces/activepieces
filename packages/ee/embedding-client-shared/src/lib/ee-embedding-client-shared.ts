@@ -38,3 +38,4 @@ export  type ActivepiecesClientEvent =
         initialClientRoute:string
     };
   }
+  export const hideSidebarQueryParamName = "hideSidebar"

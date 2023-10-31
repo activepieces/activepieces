@@ -11,6 +11,7 @@ import {
   ActivepiecesClientEventName,
   ActivepiecesVendorEventName,
   ActivepiecesVendorInit,
+  hideSidebarQueryParamName,
 } from '@activepieces/ee-client-embedding-shared';
 
 @Component({
@@ -52,7 +53,7 @@ export class EmbedRedirectComponent implements OnDestroy, OnInit {
   initializedVendorHandler = (event: MessageEvent<ActivepiecesVendorInit>) => {
     const hideSidebar =
       this.route.snapshot.queryParamMap
-        .get('hideSidebar')
+        .get(hideSidebarQueryParamName)
         ?.toLocaleLowerCase() === 'TRUE'.toLocaleLowerCase();
 
     if (
