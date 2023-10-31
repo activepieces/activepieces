@@ -1,7 +1,7 @@
 import { ApFlagId, PrincipalType, ProjectType, TelemetryEventName } from '@activepieces/shared'
 import { projectService } from '../../../project/project-service'
 import { AuthenticationServiceHooks } from './authentication-service-hooks'
-import { tokenUtils } from '../../lib/token-utils'
+import { accessTokenManager } from '../../lib/access-token-manager'
 import { telemetry } from '../../../helper/telemetry.utils'
 import { logger } from '../../../helper/logger'
 import { flagService } from '../../../flags/flag.service'
@@ -17,7 +17,7 @@ export const defaultAuthenticationServiceHooks: AuthenticationServiceHooks = {
             type: ProjectType.STANDALONE,
         })
 
-        const token = await tokenUtils.encode({
+        const token = await accessTokenManager.generateToken({
             id: user.id,
             type: PrincipalType.USER,
             projectId: project.id,
@@ -49,7 +49,7 @@ export const defaultAuthenticationServiceHooks: AuthenticationServiceHooks = {
     async postSignIn({ user }) {
         const project = await projectService.getUserProject(user.id)
 
-        const token = await tokenUtils.encode({
+        const token = await accessTokenManager.generateToken({
             id: user.id,
             type: PrincipalType.USER,
             projectId: project.id,

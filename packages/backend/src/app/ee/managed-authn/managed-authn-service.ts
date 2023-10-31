@@ -7,14 +7,14 @@ import { PlatformId, ProjectMemberRole, ProjectMemberStatus } from '@activepiece
 import { platformService } from '../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { projectMemberService } from '../project-members/project-member.service'
-import { tokenUtils } from '../../authentication/lib/token-utils'
+import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 
 export const managedAuthnService = {
     async authenticate(params: AuthenticateParams): Promise<AuthenticationResponse> {
         logger.debug({ name: 'managedAuthnService#authenticate', ...params })
         const user = await getOrCreateUser(params)
 
-        const token = await tokenUtils.encode({
+        const token = await accessTokenManager.generateToken({
             id: user.id,
             type: PrincipalType.USER,
             projectId: user.projectId,
@@ -122,3 +122,11 @@ type GetOrCreateProjectParams = {
     platformId: PlatformId
     externalProjectId: string
 }
+
+// type ExternalTokenPayload = {
+//     userId: string
+//     projectId: string
+//     email: string
+//     firstName: string
+//     lastName: string
+// }

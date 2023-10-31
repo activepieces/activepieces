@@ -1,9 +1,9 @@
 import { Principal, PrincipalType, apId } from '@activepieces/shared'
-import { tokenUtils } from '../../src/app/authentication/lib/token-utils'
+import { accessTokenManager } from '../../src/app/authentication/lib/access-token-manager'
 import { faker } from '@faker-js/faker'
 
 export const generateTestToken = async (principal?: Partial<Principal>): Promise<string> => {
-    return await tokenUtils.encode({
+    return await accessTokenManager.generateToken({
         id: principal?.id ?? apId(),
         type: principal?.type ?? faker.helpers.enumValue(PrincipalType),
         projectId: principal?.projectId ?? apId(),

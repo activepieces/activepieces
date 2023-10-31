@@ -24,7 +24,7 @@ import {
     EngineTestOperation,
 } from '@activepieces/shared'
 import { Sandbox } from '../workers/sandbox'
-import { tokenUtils } from '../authentication/lib/token-utils'
+import { accessTokenManager } from '../authentication/lib/access-token-manager'
 import {
     DropdownState,
     DynamicPropsValue,
@@ -80,13 +80,11 @@ export type EngineHelperResponse<Result extends EngineHelperResult> = {
     standardOutput: string
 }
 
-const generateWorkerToken = (
-    request: GenerateWorkerTokenParams,
-): Promise<string> => {
-    return tokenUtils.encode({
-        type: PrincipalType.WORKER,
+const generateWorkerToken = ({ projectId }: GenerateWorkerTokenParams): Promise<string> => {
+    return accessTokenManager.generateToken({
         id: apId(),
-        projectId: request.projectId,
+        type: PrincipalType.WORKER,
+        projectId,
     })
 }
 

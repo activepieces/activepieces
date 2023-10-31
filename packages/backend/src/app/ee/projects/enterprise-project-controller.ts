@@ -2,7 +2,7 @@ import { ActivepiecesError, ErrorCode, ProjectType, assertNotNullOrUndefined } f
 import { FastifyPluginAsyncTypebox, FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
 import { enterpriseProjectService } from './enterprise-project-service'
 import { projectService } from '../../project/project-service'
-import { tokenUtils } from '../../authentication/lib/token-utils'
+import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { CreateProjectRequest, UpdateProjectRequest } from '@activepieces/ee-shared'
 
 export const enterpriseProjectModule: FastifyPluginAsyncTypebox = async (app) => {
@@ -59,7 +59,7 @@ const enterpriseProjectController: FastifyPluginCallbackTypebox = (fastify, _opt
                 })
             }
             return {
-                token: await tokenUtils.encode({
+                token: await accessTokenManager.generateToken({
                     id: request.principal.id,
                     type: request.principal.type,
                     projectId: request.params.projectId,
@@ -83,13 +83,13 @@ const enterpriseProjectController: FastifyPluginCallbackTypebox = (fastify, _opt
             },
         },
         async (request) => {
-          
+
             return await projectService.update({
                 platformId: request.principal.platformId,
                 projectId: request.principal.projectId,
                 request: request.body,
             })
-            
+
         },
     )
 
