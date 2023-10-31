@@ -1,4 +1,4 @@
-import { SigningKey, SigningKeyId, PlatformId, CreateSigningKeyResponse } from '@activepieces/ee-shared'
+import { SigningKey, SigningKeyId, PlatformId, AddSigningKeyResponse } from '@activepieces/ee-shared'
 import { ActivepiecesError, ErrorCode, SeekPage, UserId, apId, spreadIfDefined } from '@activepieces/shared'
 import { signingKeyGenerator } from './signing-key-generator'
 import { databaseConnection } from '../../database/database-connection'
@@ -8,7 +8,7 @@ import { platformService } from '../platform/platform.service'
 const repo = databaseConnection.getRepository<SigningKey>(SigningKeyEntity)
 
 export const signingKeyService = {
-    async add({ userId, platformId, displayName }: AddParams): Promise<CreateSigningKeyResponse> {
+    async add({ userId, platformId, displayName }: AddParams): Promise<AddSigningKeyResponse> {
         await assertUserIsPlatformOwner({
             userId,
             platformId,
@@ -45,17 +45,19 @@ export const signingKeyService = {
         }
     },
 
-    async getOne({ id, platformId }: { id: SigningKeyId, platformId: string }): Promise<SigningKey | null> {
+    async get({ id, platformId }: GetParams): Promise<SigningKey | null> {
         return repo.findOneBy({
             id,
             platformId,
         })
     },
-    async delete({ userId, platformId, id }: { id: string, userId: UserId, platformId: PlatformId }): Promise<void> {
+
+    async delete({ userId, platformId, id }: DeleteParams): Promise<void> {
         await assertUserIsPlatformOwner({
             userId,
             platformId,
         })
+
         await repo.delete({
             platformId,
             id,
@@ -88,9 +90,18 @@ type AddParams = {
     displayName: string
 }
 
+type GetParams = {
+    id: SigningKeyId
+    platformId: PlatformId
+}
+
+type DeleteParams = {
+    id: SigningKeyId
+    userId: UserId
+    platformId: PlatformId
+}
+
 type NewSigningKey = Omit<SigningKey, 'created' | 'updated'>
-
-
 
 type ListParams = {
     platformId?: PlatformId

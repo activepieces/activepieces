@@ -2,7 +2,7 @@ import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/shared'
 import { JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'
 import { signingKeyService } from '../../signing-key/signing-key-service'
 import { logger } from '../../../helper/logger'
-import { PlatformId, SigningKey } from '@activepieces/ee-shared'
+import { PlatformId, SigningKey, SigningKeyId } from '@activepieces/ee-shared'
 
 const ALGORITHM = JwtSignAlgorithm.RS256
 
@@ -11,7 +11,12 @@ export const externalTokenExtractor = {
         const decoded = jwtUtils.decode<ExternalTokenPayload>({ jwt: token })
 
         const signingKeyId = decoded.header.kid
-        const signingKey = await getSigningKey(signingKeyId)
+        const platformId = decoded.payload.platformId
+
+        const signingKey = await getSigningKey({
+            signingKeyId,
+            platformId,
+        })
 
         try {
             const payload = await jwtUtils.decodeAndVerify<ExternalTokenPayload>({
@@ -43,8 +48,11 @@ export const externalTokenExtractor = {
     },
 }
 
-const getSigningKey = async (signingKeyId: string): Promise<SigningKey> => {
-    const signingKey = await signingKeyService.getOne(signingKeyId)
+const getSigningKey = async ({ signingKeyId, platformId }: GetSigningKeyParams): Promise<SigningKey> => {
+    const signingKey = await signingKeyService.get({
+        id: signingKeyId,
+        platformId,
+    })
 
     if (isNil(signingKey)) {
         throw new ActivepiecesError({
@@ -81,4 +89,9 @@ type ExternalPrincipal = {
     externalEmail: string
     externalFirstName: string
     externalLastName: string
+}
+
+type GetSigningKeyParams = {
+    signingKeyId: SigningKeyId
+    platformId: PlatformId
 }
