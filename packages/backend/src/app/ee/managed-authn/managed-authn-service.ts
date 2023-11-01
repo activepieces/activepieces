@@ -10,7 +10,7 @@ import { accessTokenManager } from '../../authentication/lib/access-token-manage
 import { externalTokenExtractor } from './lib/external-token-extractor'
 
 export const managedAuthnService = {
-    async authenticate({ externalAccessToken }: AuthenticateParams): Promise<AuthenticationResponse> {
+    async externalToken({ externalAccessToken }: AuthenticateParams): Promise<AuthenticationResponse> {
         const externalPrincipal = await externalTokenExtractor.extract(externalAccessToken)
         const user = await getOrCreateUser(externalPrincipal)
 
@@ -89,6 +89,7 @@ const getOrCreateProject = async ({ platformId, externalProjectId }: GetOrCreate
         ownerId: platform.ownerId,
         platformId,
         type: ProjectType.PLATFORM_MANAGED,
+        externalId: externalProjectId,
     })
 }
 

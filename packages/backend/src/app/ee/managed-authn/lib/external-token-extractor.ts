@@ -75,7 +75,7 @@ const assertPlatformIdsMatch = (signingKeyPlatformId: string, externalTokenPlatf
     }
 }
 
-type ExternalTokenPayload = {
+export type ExternalTokenPayload = {
     sub: string
     projectId: string
     platformId: string

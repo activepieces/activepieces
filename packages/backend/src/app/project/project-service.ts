@@ -7,14 +7,16 @@ import { PlatformId, UpdateProjectRequest } from '@activepieces/ee-shared'
 const projectRepo = databaseConnection.getRepository<Project>(ProjectEntity)
 
 export const projectService = {
-    async create(request: { ownerId: UserId, displayName: string, platformId: string | undefined, type: ProjectType }): Promise<Project> {
-        return await projectRepo.save<Partial<Project>>({
+    async create(params: CreateParams): Promise<Project> {
+        const newProject: NewProject = {
             id: apId(),
-            ...request,
+            ...params,
             notifyStatus: NotificationStatus.ALWAYS,
-            type: request.type,
-        })
+        }
+
+        return projectRepo.save(newProject)
     },
+
     async update({ projectId, request, platformId }: { projectId: ProjectId, request: UpdateProjectRequest, platformId?: PlatformId }): Promise<Project | null> {
         const project = await projectRepo.findOneBy({
             id: projectId,
@@ -64,6 +66,14 @@ export const projectService = {
     },
 }
 
+type CreateParams = {
+    ownerId: UserId
+    displayName: string
+    platformId: string | undefined
+    type: ProjectType
+    externalId?: string
+}
+
 type GetByPlatformIdAndExternalIdParams = {
     platformId: PlatformId
     externalId: string
@@ -73,3 +83,5 @@ type AddProjectToPlatformParams = {
     projectId: ProjectId
     platformId: ApId
 }
+
+type NewProject = Omit<Project, 'created' | 'updated'>
