@@ -17,7 +17,7 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SigningKeysTableComponent {
-  displayedColumns = ['displayName', 'id', 'created', 'action'];
+  displayedColumns = ['id', 'displayName', 'created', 'action'];
   dataSource: SigningKeysDataSource;
   refresh$: Subject<boolean> = new Subject();
   dialogClosed$?: Observable<unknown>;
