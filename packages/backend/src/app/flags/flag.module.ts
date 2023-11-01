@@ -30,6 +30,7 @@ export const flagController: FastifyPluginAsyncTypebox = async (app) => {
                     flagsMap[ApFlagId.SHOW_AUTH_PROVIDERS] = false
                     flagsMap[ApFlagId.SHOW_BLOG_GUIDE] = false
                     flagsMap[ApFlagId.CLOUD_AUTH_ENABLED] = false
+                    flagsMap[ApFlagId.FRONTEND_URL] = `${request.protocol}://${request.hostname}`
                 }
             }
             return flagsMap
