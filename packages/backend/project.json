@@ -3,24 +3,18 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/backend/src",
   "projectType": "application",
-  "implicitDependencies": [
-    "engine"
-  ],
+  "implicitDependencies": ["engine"],
   "targets": {
     "build": {
       "executor": "@nx/webpack:webpack",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "target": "node",
         "compiler": "tsc",
         "outputPath": "dist/packages/backend",
         "main": "packages/backend/src/main.ts",
         "tsConfig": "packages/backend/tsconfig.app.json",
-        "assets": [
-          "packages/backend/src/assets"
-        ],
+        "assets": ["packages/backend/src/assets"],
         "webpackConfig": "packages/backend/webpack.config.js",
         "isolatedConfig": true,
         "generatePackageJson": true,
@@ -47,21 +41,15 @@
       }
     },
     "lint": {
-      "executor": "@nx/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": [
-          "packages/backend/**/*.ts"
-        ]
+        "lintFilePatterns": ["packages/backend/**/*.ts"]
       }
     },
     "test-jest": {
       "executor": "@nx/jest:jest",
-      "outputs": [
-        "{workspaceRoot}/coverage/{projectRoot}"
-      ],
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
         "jestConfig": "packages/backend/jest.config.ts",
         "passWithNoTests": true,

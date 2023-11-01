@@ -134,9 +134,9 @@ type CreateMockExternalTokenParams = ExternalPrincipal & {
 
 export const generateMockExternalToken = (params?: Partial<CreateMockExternalTokenParams>): string => {
     const payload = {
-        sub: params?.externalUserId ?? apId(),
+        externalUserId: params?.externalUserId ?? apId(),
         platformId: params?.platformId ?? apId(),
-        projectId: params?.externalProjectId ?? apId(),
+        externalProjectId: params?.externalProjectId ?? apId(),
         email: params?.externalEmail ?? faker.internet.email(),
         firstName: params?.externalFirstName ?? faker.person.firstName(),
         lastName: params?.externalLastName ?? faker.person.lastName(),
