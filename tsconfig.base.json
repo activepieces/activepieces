@@ -289,7 +289,7 @@
       "@activepieces/ui/feature-templates": [
         "packages/ui/feature-templates/src/index.ts"
       ],
-      "@ee/*": ["packages/ee/*"],
+      "@ee/*": ["packages/ee/*"]
     },
     "resolveJsonModule": true
   },
