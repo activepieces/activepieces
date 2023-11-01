@@ -6,32 +6,24 @@
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/brilliant-directories",
         "tsConfig": "packages/pieces/brilliant-directories/tsconfig.lib.json",
         "packageJson": "packages/pieces/brilliant-directories/package.json",
         "main": "packages/pieces/brilliant-directories/src/index.ts",
-        "assets": [
-          "packages/pieces/brilliant-directories/*.md"
-        ],
+        "assets": ["packages/pieces/brilliant-directories/*.md"],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "publish": {
       "command": "node tools/scripts/publish.mjs pieces-brilliant-directories {args.ver} {args.tag}",
-      "dependsOn": [
-        "build"
-      ]
+      "dependsOn": ["build"]
     },
     "lint": {
-      "executor": "@nx/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
       "options": {
         "lintFilePatterns": [
           "packages/pieces/brilliant-directories/**/*.ts",

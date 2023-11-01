@@ -6,32 +6,24 @@
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/filesHelper",
         "tsConfig": "packages/pieces/filesHelper/tsconfig.lib.json",
         "packageJson": "packages/pieces/filesHelper/package.json",
         "main": "packages/pieces/filesHelper/src/index.ts",
-        "assets": [
-          "packages/pieces/filesHelper/*.md"
-        ],
+        "assets": ["packages/pieces/filesHelper/*.md"],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "publish": {
       "command": "node tools/scripts/publish.mjs pieces-filesHelper {args.ver} {args.tag}",
-      "dependsOn": [
-        "build"
-      ]
+      "dependsOn": ["build"]
     },
     "lint": {
-      "executor": "@nx/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
       "options": {
         "lintFilePatterns": [
           "packages/pieces/filesHelper/**/*.ts",

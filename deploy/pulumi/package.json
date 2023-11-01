@@ -1,13 +1,13 @@
 {
-    "name": "activepieces",
-    "main": "index.ts",
-    "devDependencies": {
-        "@types/node": "^18"
-    },
-    "dependencies": {
-        "@pulumi/pulumi": "^3.0.0",
-        "@pulumi/aws": "^6.0.0",
-        "@pulumi/awsx": "^1.0.0",
-        "@pulumi/docker": "^4.4.0"
-    }
+  "name": "activepieces",
+  "main": "index.ts",
+  "devDependencies": {
+    "@types/node": "^18"
+  },
+  "dependencies": {
+    "@pulumi/pulumi": "^3.0.0",
+    "@pulumi/aws": "^6.0.0",
+    "@pulumi/awsx": "^1.0.0",
+    "@pulumi/docker": "^4.4.0"
+  }
 }
