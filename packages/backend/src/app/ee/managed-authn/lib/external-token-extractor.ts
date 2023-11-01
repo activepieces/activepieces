@@ -2,7 +2,7 @@ import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/shared'
 import { JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'
 import { signingKeyService } from '../../signing-key/signing-key-service'
 import { logger } from '../../../helper/logger'
-import { PlatformId, SigningKey, SigningKeyId } from '@activepieces/ee-shared'
+import { SigningKey, SigningKeyId } from '@activepieces/ee-shared'
 
 const ALGORITHM = JwtSignAlgorithm.RS256
 
@@ -11,11 +11,9 @@ export const externalTokenExtractor = {
         const decoded = jwtUtils.decode<ExternalTokenPayload>({ jwt: token })
 
         const signingKeyId = decoded.header.kid
-        const platformId = decoded.payload.platformId
 
         const signingKey = await getSigningKey({
             signingKeyId,
-            platformId,
         })
 
         try {
@@ -27,7 +25,7 @@ export const externalTokenExtractor = {
             })
 
             return {
-                platformId: payload.platformId,
+                platformId: signingKey.platformId,
                 externalUserId: payload.externalUserId,
                 externalProjectId: payload.externalProjectId,
                 externalEmail: payload.email,
@@ -48,17 +46,16 @@ export const externalTokenExtractor = {
     },
 }
 
-const getSigningKey = async ({ signingKeyId, platformId }: GetSigningKeyParams): Promise<SigningKey> => {
+const getSigningKey = async ({ signingKeyId }: GetSigningKeyParams): Promise<SigningKey> => {
     const signingKey = await signingKeyService.get({
         id: signingKeyId,
-        platformId,
     })
 
     if (isNil(signingKey)) {
         throw new ActivepiecesError({
             code: ErrorCode.INVALID_BEARER_TOKEN,
             params: {
-                message: `signing key not found signingKeyId=${signingKeyId} platformId=${platformId}`,
+                message: `signing key not found signingKeyId=${signingKeyId}`,
             },
         })
     }
@@ -69,14 +66,13 @@ const getSigningKey = async ({ signingKeyId, platformId }: GetSigningKeyParams):
 export type ExternalTokenPayload = {
     externalUserId: string
     externalProjectId: string
-    platformId: string
     email: string
     firstName: string
     lastName: string
 }
 
 export type ExternalPrincipal = {
-    platformId: PlatformId
+    platformId: string
     externalUserId: string
     externalProjectId: string
     externalEmail: string
@@ -86,5 +82,4 @@ export type ExternalPrincipal = {
 
 type GetSigningKeyParams = {
     signingKeyId: SigningKeyId
-    platformId: PlatformId
 }

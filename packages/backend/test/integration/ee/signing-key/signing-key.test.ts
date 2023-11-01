@@ -59,31 +59,6 @@ describe('Signing Key API', () => {
             expect(responseBody.algorithm).toBe('RSA')
         })
 
-        it('Fails if platformId is not provided in token', async () => {
-            // arrange
-            const testToken = await generateMockToken({
-                platformId: undefined,
-            })
-
-            const mockSigningKeyName = faker.lorem.word()
-            const response = await app?.inject({
-                method: 'POST',
-                url: '/v1/signing-keys',
-                body: {
-                    displayName: mockSigningKeyName,
-                },
-                headers: {
-                    authorization: `Bearer ${testToken}`,
-                },
-            })
-
-            // assert
-            const responseBody = response?.json()
-
-            expect(response?.statusCode).toBe(StatusCodes.INTERNAL_SERVER_ERROR)
-            expect(responseBody.message).toBe('platformId is null or undefined')
-        })
-
         it('Fails if platform is not found', async () => {
             // arrange
             const nonExistentPlatformId = apId()

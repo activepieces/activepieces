@@ -25,7 +25,7 @@ To generate these tokens, you will need to add code in your backend to generate 
 {
   "alg": "RS256",
   "typ": "JWT",
-  "kid": "YF1L1YwrREyGFGIwsJmLU"
+  "kid": "SIGNING_KEY_ID"
 }
 ```
 
@@ -40,7 +40,6 @@ The signed tokens must include these claims in the payload:
     "firstName": "John",
     "lastName": "Doe",
     "email": "mo@activepieces.om",
-    "platformId": "your_platform_id",
 	// Expiry timestamp for token
 	"exp": 1856563200
 }
@@ -59,18 +58,24 @@ const jwt = require('jsonwebtoken');
 
 // JWT NumericDates specified in seconds:
 const currentTime = Math.floor(Date.now() / 1000);
-let token = jwt.sign({
+let token = jwt.sign(
+  {
     externalUserId: "user_id",
     externalProjectId: "user_project_id",
     firstName: "John",
     lastName: "Doe",
     email: "mo@activepieces.om",
-    platformId: "your_platform_id",
     exp: currentTime + (24 * 60 * 60), // 1 day from now
-},
-process.env.ACTIVEPIECES_SIGNING_KEY, {
+  },
+  process.env.ACTIVEPIECES_SIGNING_KEY,
+  {
     algorithm: "RS256",
-});
+    header: {
+      kid: signingKeyID, // Include the "kid" in the header
+    },
+  }
+);
+
 ```
 
 Once you have generated the token, Please check embedding docs to know how to embed the token in the iframe.

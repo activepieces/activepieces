@@ -20,7 +20,7 @@
       "options": {
         "target": "web",
         "compiler": "tsc",
-        "outputFileName": "index.js",
+        "outputFileName": "bundled.js",
         "outputPath": "dist/packages/ee/embed-sdk",
         "main": "packages/ee/embed-sdk/src/index.ts",
         "tsConfig": "packages/ee/embed-sdk/tsconfig.lib.json",

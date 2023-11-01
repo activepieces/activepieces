@@ -45,10 +45,9 @@ export const signingKeyService = {
         }
     },
 
-    async get({ id, platformId }: GetParams): Promise<SigningKey | null> {
+    async get({ id }: GetParams): Promise<SigningKey | null> {
         return repo.findOneBy({
             id,
-            platformId,
         })
     },
 
@@ -92,7 +91,6 @@ type AddParams = {
 
 type GetParams = {
     id: SigningKeyId
-    platformId: PlatformId
 }
 
 type DeleteParams = {
