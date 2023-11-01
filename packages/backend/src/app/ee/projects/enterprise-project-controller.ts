@@ -30,9 +30,16 @@ const enterpriseProjectController: FastifyPluginCallbackTypebox = (fastify, _opt
         },
     )
 
-    fastify.get('/', async (request) => {
+    fastify.get('/', {
+        schema: {
+            params: Type.Object({
+                platformId: Type.Optional(Type.String()),
+            }),
+        },
+    }, async (request) => {
         return await enterpriseProjectService.getAll({
             ownerId: request.principal.id,
+            platformId: request.params.platformId,
         })
     })
 
