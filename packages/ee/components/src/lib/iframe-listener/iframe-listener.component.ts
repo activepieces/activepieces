@@ -6,7 +6,7 @@ import {
   ActivepiecesClientRouteChanged,
   ActivepiecesVendorRouteChanged,
 } from '@activepieces/ee-embed-sdk';
-import { EmbeddingService } from '../embedding.service';
+import { EmbeddingService } from '@activepieces/ui/common';
 import { Observable, map, tap } from 'rxjs';
 
 @Component({

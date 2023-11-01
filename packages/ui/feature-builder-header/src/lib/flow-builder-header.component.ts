@@ -8,6 +8,7 @@ import {
   DeleteEntityDialogData,
   FlagService,
   FlowService,
+  NavigationService,
   environment,
   fadeIn400ms,
 } from '@activepieces/ui/common';
@@ -19,7 +20,7 @@ import {
 } from '@activepieces/ui/feature-builder-store';
 import { Flow, FlowInstance } from '@activepieces/shared';
 import { ImportFlowDialogueComponent } from './import-flow-dialogue/import-flow-dialogue.component';
-import { EmbeddingService } from '@activepieces/ee-components';
+import { EmbeddingService } from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-flow-builder-header',
@@ -52,7 +53,8 @@ export class FlowBuilderHeaderComponent implements OnInit {
     private flowService: FlowService,
     private matDialog: MatDialog,
     private flagService: FlagService,
-    private embeddingService: EmbeddingService
+    private embeddingService: EmbeddingService,
+    private navigationService: NavigationService
   ) {
     this.isInEmbedded$ = this.embeddingService.getIsInEmbedding$();
     this.fullLogo$ = this.flagService
@@ -75,12 +77,7 @@ export class FlowBuilderHeaderComponent implements OnInit {
     this.editingFlowName = event;
   }
   redirectHome(newWindow: boolean) {
-    if (newWindow && !this.embeddingService.getState().isEmbedded) {
-      const url = this.router.serializeUrl(this.router.createUrlTree([``]));
-      window.open(url, '_blank', 'noopener');
-    } else {
-      this.router.navigate(['/flows']);
-    }
+    this.navigationService.navigate('/flows', newWindow);
   }
   saveFlowName(flowName: string) {
     this.setTitle$ = this.appearanceService.setTitle(flowName);

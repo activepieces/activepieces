@@ -6,7 +6,6 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, map, tap } from 'rxjs';
-import { EmbeddingService } from '../embedding.service';
 import {
   ActivepiecesClientEventName,
   ActivepiecesVendorEventName,
@@ -14,6 +13,8 @@ import {
   jwtTokenQueryParamName,
 } from '@activepieces/ee-embed-sdk';
 import { AuthenticationService } from '@activepieces/ui/common';
+import { ManagedAuthService } from './managed-auth.service';
+import { EmbeddingService } from '@activepieces/ui/common';
 
 @Component({
   selector: 'ap-embed-redirect',
@@ -25,7 +26,8 @@ export class EmbedRedirectComponent implements OnDestroy, OnInit {
   showError = false;
   constructor(
     private route: ActivatedRoute,
-    private embeddingService: EmbeddingService,
+    private managedAuthService: ManagedAuthService,
+    private embedService: EmbeddingService,
     private router: Router,
     private authenticationService: AuthenticationService
   ) {}
@@ -36,7 +38,7 @@ export class EmbedRedirectComponent implements OnDestroy, OnInit {
       throw new Error('Activepieces: no provided jwt token');
     }
 
-    this.validateJWT$ = this.embeddingService
+    this.validateJWT$ = this.managedAuthService
       .generateApToken({ externalAccessToken: jwt })
       .pipe(
         tap((res) => {
@@ -60,7 +62,7 @@ export class EmbedRedirectComponent implements OnDestroy, OnInit {
       event.source === window.parent &&
       event.data.type === ActivepiecesVendorEventName.VENDOR_INIT
     ) {
-      this.embeddingService.setState({
+      this.embedService.setState({
         hideSideNav: event.data.data.hideSidebar,
         isEmbedded: true,
         prefix: event.data.data.prefix,

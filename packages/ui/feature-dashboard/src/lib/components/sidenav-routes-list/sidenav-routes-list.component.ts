@@ -7,7 +7,7 @@ import {
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { FolderActions } from '../../store/folders/folders.actions';
-import { EmbeddingService } from '@activepieces/ee-components';
+import { EmbeddingService, NavigationService } from '@activepieces/ui/common';
 import { Observable, map, of, switchMap, tap } from 'rxjs';
 import { ApEdition, ApFlagId, supportUrl } from '@activepieces/shared';
 import { DashboardService, FlagService } from '@activepieces/ui/common';
@@ -40,7 +40,8 @@ export class SidenavRoutesListComponent implements OnInit {
     private flagServices: FlagService,
     private cd: ChangeDetectorRef,
     private embeddingService: EmbeddingService,
-    private dashboardService: DashboardService
+    private dashboardService: DashboardService,
+    private navigationService: NavigationService
   ) {
     this.isInEmbedding$ = this.embeddingService.getIsInEmbedding$();
     this.logoUrl$ = this.flagServices
@@ -115,12 +116,7 @@ export class SidenavRoutesListComponent implements OnInit {
     window.open('https://activepieces.com/docs', '_blank', 'noopener');
   }
   redirectHome(newWindow: boolean) {
-    if (newWindow && !this.embeddingService.getState().isEmbedded) {
-      const url = this.router.serializeUrl(this.router.createUrlTree([``]));
-      window.open(url, '_blank', 'noopener');
-    } else {
-      this.router.navigate(['/flows'], { skipLocationChange: true });
-    }
+    this.navigationService.navigate('/flows', newWindow);
   }
 
   markChange() {

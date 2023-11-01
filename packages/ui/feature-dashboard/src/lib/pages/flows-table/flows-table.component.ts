@@ -1,5 +1,5 @@
 import { Component, Inject, LOCALE_ID, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { map, Observable, shareReplay, startWith, Subject, tap } from 'rxjs';
 import { FlowsTableDataSource } from './flows-table.datasource';
 import { MatDialog } from '@angular/material/dialog';
@@ -14,6 +14,7 @@ import {
   ApPaginatorComponent,
   FlowInstanceService,
   FoldersService,
+  NavigationService,
 } from '@activepieces/ui/common';
 import { FlowService } from '@activepieces/ui/common';
 import { ARE_THERE_FLOWS_FLAG } from '../../resolvers/are-there-flows.resolver';
@@ -30,7 +31,6 @@ import {
 } from './move-flow-to-folder-dialog/move-flow-to-folder-dialog.component';
 import { FoldersSelectors } from '../../store/folders/folders.selector';
 import cronstrue from 'cronstrue/i18n';
-import { EmbeddingService } from '@activepieces/ee-components';
 
 @Component({
   templateUrl: './flows-table.component.html',
@@ -61,10 +61,9 @@ export class FlowsTableComponent implements OnInit {
     private dialogService: MatDialog,
     private flowService: FlowService,
     private foldersService: FoldersService,
-    private router: Router,
     private instanceService: FlowInstanceService,
     private store: Store,
-    private embeddingService: EmbeddingService,
+    private navigationService: NavigationService,
     @Inject(LOCALE_ID) private locale: string
   ) {
     this.listenToShowAllFolders();
@@ -111,15 +110,8 @@ export class FlowsTableComponent implements OnInit {
 
   openBuilder(flow: Flow, event: MouseEvent) {
     const link = '/flows/' + flow.id;
-    if (
-      (event.ctrlKey || event.which == 2 || event.button == 4) &&
-      !this.embeddingService.getState().isEmbedded
-    ) {
-      // Open in new tab
-      window.open(link, '_blank', 'noopener');
-    } else {
-      this.router.navigate(['/flows/' + flow.id]);
-    }
+    const newWindow = event.ctrlKey || event.which == 2 || event.button == 4;
+    this.navigationService.navigate(link, newWindow);
   }
 
   deleteFlow(flow: Flow) {

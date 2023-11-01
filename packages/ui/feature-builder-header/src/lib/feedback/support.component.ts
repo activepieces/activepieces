@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { ApFlagId, supportUrl } from '@activepieces/shared';
 import { Observable, map, switchMap } from 'rxjs';
 import { FlagService } from '@activepieces/ui/common';
-import { EmbeddingService } from '@activepieces/ee-components';
+import { EmbeddingService } from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-support',

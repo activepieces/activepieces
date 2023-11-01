@@ -28,7 +28,7 @@ import {
 } from '@activepieces/ui/common';
 import { compareVersions } from 'compare-versions';
 import { ApFlagId, FlowOperationType } from '@activepieces/shared';
-import { TelemetryService } from '@activepieces/ui/common';
+import { TelemetryService, EmbeddingService } from '@activepieces/ui/common';
 import { AuthenticationService, fadeInUp400ms } from '@activepieces/ui/common';
 import { MatDialog } from '@angular/material/dialog';
 import {
@@ -36,7 +36,6 @@ import {
   FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { EmbeddingService } from '@activepieces/ee-components';
 
 interface UpgradeNotificationMetaDataInLocalStorage {
   latestVersion: string;

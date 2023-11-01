@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { EmbeddingService } from '@activepieces/ee-components';
+import { EmbeddingService } from '@activepieces/ui/common';
 import {
   DashboardService,
   FlagService,
