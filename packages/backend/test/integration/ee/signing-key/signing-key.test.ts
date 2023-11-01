@@ -1,6 +1,6 @@
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { setupApp } from '../../../../src/app/app'
-import { generateTestToken } from '../../../helpers/auth'
+import { generateMockToken } from '../../../helpers/auth'
 import { createMockUser, createMockPlatform, createMockSigningKey } from '../../../helpers/mocks'
 import { StatusCodes } from 'http-status-codes'
 import { FastifyInstance } from 'fastify'
@@ -29,7 +29,7 @@ describe('Signing Key API', () => {
             const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
             await databaseConnection.getRepository('platform').save(mockPlatform)
 
-            const testToken = await generateTestToken({
+            const testToken = await generateMockToken({
                 id: mockUser.id,
                 platformId: mockPlatform.id,
             })
@@ -61,7 +61,7 @@ describe('Signing Key API', () => {
 
         it('Fails if platformId is not provided in token', async () => {
             // arrange
-            const testToken = await generateTestToken({
+            const testToken = await generateMockToken({
                 platformId: undefined,
             })
 
@@ -88,7 +88,7 @@ describe('Signing Key API', () => {
             // arrange
             const nonExistentPlatformId = apId()
 
-            const testToken = await generateTestToken({
+            const testToken = await generateMockToken({
                 platformId: nonExistentPlatformId,
             })
 
@@ -117,7 +117,7 @@ describe('Signing Key API', () => {
             await databaseConnection.getRepository('platform').save(mockPlatform)
 
             const nonOwnerUserId = apId()
-            const testToken = await generateTestToken({
+            const testToken = await generateMockToken({
                 id: nonOwnerUserId,
                 platformId: mockPlatform.id,
             })
@@ -154,8 +154,8 @@ describe('Signing Key API', () => {
             })
 
             await databaseConnection.getRepository('signing_key').save(mockSigningKey)
- 
-            const testToken = await generateTestToken({
+
+            const testToken = await generateMockToken({
                 id: mockUser.id,
                 platformId: mockPlatform.id,
             })
@@ -204,7 +204,7 @@ describe('Signing Key API', () => {
 
             await databaseConnection.getRepository('signing_key').save([mockSigningKeyOne, mockSigningKeyTwo])
 
-            const testToken = await generateTestToken({
+            const testToken = await generateMockToken({
                 id: mockUserOne.id,
                 platformId: mockPlatformOne.id,
             })
