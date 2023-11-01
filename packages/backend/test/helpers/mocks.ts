@@ -16,6 +16,7 @@ export const createMockUser = (user?: Partial<User>): User => {
         status: user?.status ?? faker.helpers.enumValue(UserStatus),
         imageUrl: user?.imageUrl ?? faker.image.urlPlaceholder(),
         title: user?.title ?? faker.lorem.sentence(),
+        externalId: user?.externalId ?? apId(),
     }
 }
 
@@ -25,10 +26,11 @@ export const createMockProject = (project?: Partial<Project>): Project => {
         created: project?.created ?? faker.date.recent().toISOString(),
         updated: project?.updated ?? faker.date.recent().toISOString(),
         ownerId: project?.ownerId ?? apId(),
-        displayName: project?.ownerId ?? faker.lorem.word(),
+        displayName: project?.displayName ?? faker.lorem.word(),
         notifyStatus: project?.notifyStatus ?? faker.helpers.enumValue(NotificationStatus),
         type: project?.type ?? faker.helpers.enumValue(ProjectType),
-        platformId: project?.id ?? apId(),
+        platformId: project?.platformId ?? apId(),
+        externalId: project?.externalId ?? apId(),
     }
 }
 
