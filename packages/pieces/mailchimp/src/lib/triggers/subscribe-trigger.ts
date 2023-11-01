@@ -44,8 +44,6 @@ export const mailChimpSubscribeTrigger = createTrigger({
 
     const server = await mailchimpCommon.getMailChimpServerPrefix(accessToken);
 
-    console.log(context.webhookUrl);
-
     const enabledWebhookId = await mailchimpCommon.enableWebhookRequest({
       server,
       listId: context.propsValue.list_id!,
