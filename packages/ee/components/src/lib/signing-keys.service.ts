@@ -15,12 +15,19 @@ import { SeekPage } from '@activepieces/shared';
 export class SigningKeysService {
   constructor(private http: HttpClient) {}
   list() {
-    return this.http.get<SeekPage<SigningKey>>(environment.apiUrl + '/signing-keys');
+    return this.http.get<SeekPage<SigningKey>>(
+      environment.apiUrl + '/signing-keys'
+    );
   }
   delete(keyId: SigningKeyId) {
-    return this.http.delete<void>(environment.apiUrl + `/signing-keys/${keyId}`);
+    return this.http.delete<void>(
+      environment.apiUrl + `/signing-keys/${keyId}`
+    );
   }
   create(request: AddSigningKeyRequestBody) {
-    return this.http.post<AddSigningKeyResponse>(environment.apiUrl + `/signing-keys/`, request);
+    return this.http.post<AddSigningKeyResponse>(
+      environment.apiUrl + `/signing-keys/`,
+      request
+    );
   }
 }

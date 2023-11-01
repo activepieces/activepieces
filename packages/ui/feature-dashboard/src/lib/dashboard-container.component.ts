@@ -1,11 +1,12 @@
 import { Component } from '@angular/core';
+import { EmbeddingService } from '@activepieces/ui/common';
 import {
   DashboardService,
   FlagService,
   ProjectSelectors,
   environment,
 } from '@activepieces/ui/common';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { ApFlagId, Project } from '@activepieces/shared';
 import { Store } from '@ngrx/store';
 
@@ -17,13 +18,21 @@ import { Store } from '@ngrx/store';
 export class DashboardContainerComponent {
   environment = environment;
   showCommunity$: Observable<boolean>;
+  isEmbedded$: Observable<boolean>;
+  showSidnav$: Observable<boolean>;
   isInPlatformRoute$: Observable<boolean>;
   currentProject$: Observable<Project>;
   constructor(
     private flagService: FlagService,
+    private embeddedService: EmbeddingService,
     private dashboardService: DashboardService,
     private store: Store
   ) {
+    this.isEmbedded$ = this.embeddedService.getIsInEmbedding$();
+    this.showSidnav$ = this.embeddedService
+      .getState$()
+      .pipe(map((state) => !state.hideSideNav));
+
     this.showCommunity$ = this.flagService.isFlagEnabled(
       ApFlagId.SHOW_COMMUNITY
     );

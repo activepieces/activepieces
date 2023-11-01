@@ -213,7 +213,8 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(enterpriseProjectModule)
             await app.register(projectMemberModule)
             await app.register(platformModule)
-            await app.register(customDomainModule)
+            await app.register(signingKeyModule)
+            await app.register(managedAuthnModule)
             pieceServiceHooks.set(cloudPieceServiceHooks)
             authenticationServiceHooks.set(enterpriseAuthenticationServiceHooks)
             break

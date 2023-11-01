@@ -89,6 +89,7 @@ const getOrCreateProject = async ({ platformId, externalProjectId }: GetOrCreate
         ownerId: platform.ownerId,
         platformId,
         type: ProjectType.PLATFORM_MANAGED,
+        externalId: externalProjectId,
     })
 }
 
