@@ -26,8 +26,6 @@ export const externalTokenExtractor = {
                 issuer: null,
             })
 
-            assertPlatformIdsMatch(signingKey.platformId, payload.platformId)
-
             return {
                 platformId: payload.platformId,
                 externalUserId: payload.externalUserId,
@@ -42,7 +40,9 @@ export const externalTokenExtractor = {
 
             throw new ActivepiecesError({
                 code: ErrorCode.INVALID_BEARER_TOKEN,
-                params: {},
+                params: {
+                    message: error instanceof Error ? error.message : 'error decoding token',
+                },
             })
         }
     },
@@ -58,7 +58,7 @@ const getSigningKey = async ({ signingKeyId, platformId }: GetSigningKeyParams):
         throw new ActivepiecesError({
             code: ErrorCode.INVALID_BEARER_TOKEN,
             params: {
-                message: `signing key not found id=${signingKeyId}`,
+                message: `signing key not found signingKeyId=${signingKeyId} platformId=${platformId}`,
             },
         })
     }
@@ -66,16 +66,7 @@ const getSigningKey = async ({ signingKeyId, platformId }: GetSigningKeyParams):
     return signingKey
 }
 
-const assertPlatformIdsMatch = (signingKeyPlatformId: string, externalTokenPlatformId: string): void => {
-    if (signingKeyPlatformId !== externalTokenPlatformId) {
-        throw new ActivepiecesError({
-            code: ErrorCode.INVALID_BEARER_TOKEN,
-            params: {},
-        })
-    }
-}
-
-type ExternalTokenPayload = {
+export type ExternalTokenPayload = {
     externalUserId: string
     externalProjectId: string
     platformId: string

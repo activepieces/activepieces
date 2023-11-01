@@ -7,7 +7,7 @@ export const managedAuthnController: FastifyPluginAsyncTypebox = async (app) => 
     app.post('/external-token', ManagedAuthnRequest, async (req): Promise<AuthenticationResponse> => {
         const { externalAccessToken } = req.body
 
-        return managedAuthnService.authenticate({
+        return managedAuthnService.externalToken({
             externalAccessToken,
         })
     })
