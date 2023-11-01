@@ -7,7 +7,7 @@
   "projectType": "library",
   "targets": {
     "build": {
-      "executor": "@nrwl/angular:ng-packagr-lite",
+      "executor": "@nx/angular:ng-packagr-lite",
       "outputs": ["{workspaceRoot}/dist/{projectRoot}"],
       "options": {
         "project": "packages/ee/auth/ng-package.json"
@@ -23,7 +23,7 @@
       "defaultConfiguration": "production"
     },
     "lint": {
-      "executor": "@nx/linter:eslint",
+      "executor": "@nx/eslint:lint",
       "outputs": ["{options.outputFile}"],
       "options": {
         "lintFilePatterns": [
