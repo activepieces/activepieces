@@ -11,17 +11,17 @@ type WebhookData = {
   listId: string;
 };
 
-export const mailChimpSubscribeTrigger = createTrigger({
+export const mailChimpUnsubscriberTrigger = createTrigger({
   auth: mailchimpAuth,
-  name: 'subscribe',
-  displayName: 'Member Subscribed to Audience',
-  description: 'Runs when an Audience subscriber is added.',
+  name: 'unsubscribe',
+  displayName: 'Member Unsubscribed to Audience',
+  description: 'Runs when a member unsubscribes.',
   type: TriggerStrategy.WEBHOOK,
   props: {
     list_id: mailchimpCommon.mailChimpListIdDropdown,
   },
   sampleData: {
-    type: 'subscribe',
+    type: 'unsubscribe',
     fired_at: '2009-03-26 21:35:57',
     data: {
       id: '8a25ff1d98',
