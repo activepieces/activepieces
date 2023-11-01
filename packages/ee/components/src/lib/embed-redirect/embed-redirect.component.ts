@@ -61,7 +61,7 @@ export class EmbedRedirectComponent implements OnDestroy, OnInit {
       event.data.type === ActivepiecesVendorEventName.VENDOR_INIT
     ) {
       this.embeddingService.setState({
-        hideSideNav: event.data.data.hideSideBar,
+        hideSideNav: event.data.data.hideSidebar,
         isEmbedded: true,
         prefix: event.data.data.prefix,
       });
