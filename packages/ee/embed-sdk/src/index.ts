@@ -59,7 +59,7 @@ class ActivepiecesEmbedded {
     hideSidebar?:boolean
   }) {
     this._prefix = prefix || '/';
-    this._initialRoute = _initialRoute || '/';
+    this._initialRoute = initialRoute || '/';
     this._hideSidebar= hideSidebar || false;
     setIframeChecker(this);
   }
@@ -81,7 +81,7 @@ const setIframeChecker = (client: ActivepiecesEmbedded) => {
                 type: ActivepiecesVendorEventName.VENDOR_INIT,
                 data: {
                   prefix: client._prefix,
-                  _initialRoute: client._initialRoute,
+                  initialRoute: client._initialRoute,
                   hideSidebar : client._hideSidebar
                 },
               };
