@@ -7,8 +7,9 @@ import {
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { FolderActions } from '../../store/folders/folders.actions';
-import { Observable, map, tap } from 'rxjs';
-import { ApFlagId, supportUrl } from '@activepieces/shared';
+import { EmbeddingService, NavigationService } from '@activepieces/ui/common';
+import { Observable, map, of, switchMap, tap } from 'rxjs';
+import { ApEdition, ApFlagId, supportUrl } from '@activepieces/shared';
 import { DashboardService, FlagService } from '@activepieces/ui/common';
 
 type SideNavRoute = {
@@ -16,6 +17,7 @@ type SideNavRoute = {
   caption: string;
   route: string;
   effect?: () => void;
+  showInSideNav$: Observable<boolean>;
 };
 
 @Component({
@@ -30,17 +32,64 @@ export class SidenavRoutesListComponent implements OnInit {
   showSupport$: Observable<boolean>;
   showDocs$: Observable<boolean>;
   showBilling$: Observable<boolean>;
+  isInEmbedding$: Observable<boolean>;
   hideSideRoutes$: Observable<boolean>;
   constructor(
     public router: Router,
     private store: Store,
     private flagServices: FlagService,
     private cd: ChangeDetectorRef,
-    private dashboardService: DashboardService
+    private embeddingService: EmbeddingService,
+    private dashboardService: DashboardService,
+    private navigationService: NavigationService
   ) {
+    this.isInEmbedding$ = this.embeddingService.getIsInEmbedding$();
     this.logoUrl$ = this.flagServices
       .getLogos()
       .pipe(map((logos) => logos.logoIconUrl));
+    this.sideNavRoutes = [
+      {
+        icon: 'assets/img/custom/dashboard/flows.svg',
+        caption: $localize`Flows`,
+        route: 'flows',
+        effect: () => {
+          this.store.dispatch(FolderActions.showAllFlows());
+        },
+        showInSideNav$: of(true),
+      },
+      {
+        icon: 'assets/img/custom/dashboard/chatbots.svg',
+        caption: 'Chatbots',
+        route: 'chatbots',
+        showInSideNav$: this.isInEmbedding$.pipe(map((res) => !res)),
+      },
+      {
+        icon: 'assets/img/custom/dashboard/runs.svg',
+        caption: $localize`Runs`,
+        route: 'runs',
+        showInSideNav$: of(true),
+      },
+      {
+        icon: 'assets/img/custom/dashboard/connections.svg',
+        caption: $localize`Connections`,
+        route: 'connections',
+        showInSideNav$: of(true),
+      },
+      {
+        icon: 'assets/img/custom/dashboard/members.svg',
+        caption: $localize`Team`,
+        route: 'team',
+        showInSideNav$: this.isInEmbedding$.pipe(
+          switchMap((st) => {
+            return this.flagServices.getEdition().pipe(
+              map((ed) => {
+                return ed !== ApEdition.COMMUNITY && !st;
+              })
+            );
+          })
+        ),
+      },
+    ];
   }
   ngOnInit(): void {
     this.removeChatbots$ = this.flagServices.isChatbotEnabled().pipe(
@@ -61,50 +110,13 @@ export class SidenavRoutesListComponent implements OnInit {
     this.hideSideRoutes$ = this.dashboardService.getIsInPlatformRoute();
   }
 
-  sideNavRoutes: SideNavRoute[] = [
-    {
-      icon: 'assets/img/custom/dashboard/flows.svg',
-      caption: $localize`Flows`,
-      route: 'flows',
-      effect: () => {
-        this.store.dispatch(FolderActions.showAllFlows());
-      },
-    },
-    {
-      icon: 'assets/img/custom/dashboard/chatbots.svg',
-      caption: 'Chatbots',
-      route: 'chatbots',
-    },
-    {
-      icon: 'assets/img/custom/dashboard/runs.svg',
-      caption: $localize`Runs`,
-      route: 'runs',
-    },
-    {
-      icon: 'assets/img/custom/dashboard/connections.svg',
-      caption: $localize`Connections`,
-      route: 'connections',
-    },
-    {
-      icon: 'assets/img/custom/dashboard/members.svg',
-      caption: $localize`Team`,
-      route: 'team',
-    },
-  ];
+  sideNavRoutes: SideNavRoute[] = [];
 
   openDocs() {
     window.open('https://activepieces.com/docs', '_blank', 'noopener');
   }
   redirectHome(newWindow: boolean) {
-    if (newWindow) {
-      const url = this.router.serializeUrl(this.router.createUrlTree([``]));
-      window.open(url, '_blank', 'noopener');
-    } else {
-      const urlArrays = this.router.url.split('/');
-      urlArrays.splice(urlArrays.length - 1, 1);
-      const fixedUrl = urlArrays.join('/');
-      this.router.navigate([fixedUrl]);
-    }
+    this.navigationService.navigate('/flows', newWindow);
   }
 
   markChange() {

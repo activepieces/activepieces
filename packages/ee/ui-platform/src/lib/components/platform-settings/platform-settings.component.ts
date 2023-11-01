@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
 import { Observable, map, startWith } from 'rxjs';
-import { copyText } from '@activepieces/ui/common';
+import { AuthenticationService, copyText } from '@activepieces/ui/common';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 interface PlatformSettingsForm {
@@ -36,9 +36,16 @@ export class PlatformSettingsComponent {
       name: '_cf-customdomain.hostname.axzxcasd',
     },
   ];
+  platformId = '';
   customDomainNote$: Observable<string>;
   message = $localize`Please set the following TXT and CNAME records in your DNS provider, then click verify to confirm your control over the domain.`;
-  constructor(private fb: FormBuilder, private matSnakcbar: MatSnackBar) {
+  constructor(
+    private fb: FormBuilder,
+    private matSnakcbar: MatSnackBar,
+    private authenticationService: AuthenticationService
+  ) {
+    const token = this.authenticationService.getDecodedToken();
+    this.platformId = token ? token['platformId'] : '';
     this.formGroup = this.fb.group({
       customDomain: this.fb.control({
         disabled: false,

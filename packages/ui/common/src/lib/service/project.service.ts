@@ -27,8 +27,11 @@ export class ProjectService {
     );
   }
 
-  list(): Observable<Project[]> {
-    return this.http.get<Project[]>(environment.apiUrl + '/projects');
+  list(platformId?: string): Observable<Project[]> {
+    const params: Record<string, string> = platformId ? { platformId } : {};
+    return this.http.get<Project[]>(environment.apiUrl + `/projects`, {
+      params,
+    });
   }
   switchProject(projectId: string): Observable<void> {
     return this.http

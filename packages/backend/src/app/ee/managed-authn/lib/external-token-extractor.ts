@@ -28,8 +28,8 @@ export const externalTokenExtractor = {
 
             return {
                 platformId: payload.platformId,
-                externalUserId: payload.sub,
-                externalProjectId: payload.projectId,
+                externalUserId: payload.externalUserId,
+                externalProjectId: payload.externalProjectId,
                 externalEmail: payload.email,
                 externalFirstName: payload.firstName,
                 externalLastName: payload.lastName,
@@ -67,8 +67,8 @@ const getSigningKey = async ({ signingKeyId, platformId }: GetSigningKeyParams):
 }
 
 export type ExternalTokenPayload = {
-    sub: string
-    projectId: string
+    externalUserId: string
+    externalProjectId: string
     platformId: string
     email: string
     firstName: string

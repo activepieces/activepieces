@@ -6,32 +6,24 @@
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/saastic",
         "tsConfig": "packages/pieces/saastic/tsconfig.lib.json",
         "packageJson": "packages/pieces/saastic/package.json",
         "main": "packages/pieces/saastic/src/index.ts",
-        "assets": [
-          "packages/pieces/saastic/*.md"
-        ],
+        "assets": ["packages/pieces/saastic/*.md"],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "publish": {
       "command": "node tools/scripts/publish.mjs pieces-saastic {args.ver} {args.tag}",
-      "dependsOn": [
-        "build"
-      ]
+      "dependsOn": ["build"]
     },
     "lint": {
-      "executor": "@nx/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
       "options": {
         "lintFilePatterns": [
           "packages/pieces/saastic/**/*.ts",

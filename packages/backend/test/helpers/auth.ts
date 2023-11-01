@@ -94,9 +94,9 @@ CEri0OurQ6fh4y87TK4JFbSTPEDkrPh4STPH7TtroBM/rn7Zj4+1Ur1RlgI=
 
 export const generateMockExternalToken = (params?: Partial<GenerateMockExternalTokenParams>): GenerateMockExternalTokenReturn => {
     const mockExternalTokenPayload: ExternalTokenPayload = {
-        sub: params?.externalUserId ?? apId(),
+        externalUserId: params?.externalUserId ?? apId(),
         platformId: params?.platformId ?? apId(),
-        projectId: params?.externalProjectId ?? apId(),
+        externalProjectId: params?.externalProjectId ?? apId(),
         email: params?.externalEmail ?? faker.internet.email(),
         firstName: params?.externalFirstName ?? faker.person.firstName(),
         lastName: params?.externalLastName ?? faker.person.lastName(),

@@ -60,7 +60,7 @@ describe('Managed Authentication API', () => {
             expect(responseBody?.newsLetter).toBe(true)
             expect(responseBody?.password).toBeUndefined()
             expect(responseBody?.status).toBe('EXTERNAL')
-            expect(responseBody?.externalId).toBe(`${mockPlatform.id}_${mockExternalTokenPayload.sub}`)
+            expect(responseBody?.externalId).toBe(`${mockPlatform.id}_${mockExternalTokenPayload.externalUserId}`)
             expect(responseBody?.projectId).toHaveLength(21)
             expect(responseBody?.token).toBeDefined()
         })
@@ -102,11 +102,11 @@ describe('Managed Authentication API', () => {
                 id: responseBody?.projectId,
             })
 
-            expect(generatedProject?.displayName).toBe(mockExternalTokenPayload.projectId)
+            expect(generatedProject?.displayName).toBe(mockExternalTokenPayload.externalProjectId)
             expect(generatedProject?.ownerId).toBe(mockPlatform.ownerId)
             expect(generatedProject?.type).toBe('PLATFORM_MANAGED')
             expect(generatedProject?.platformId).toBe(mockPlatform.id)
-            expect(generatedProject?.externalId).toBe(mockExternalTokenPayload.projectId)
+            expect(generatedProject?.externalId).toBe(mockExternalTokenPayload.externalProjectId)
         })
 
         it('Adds new user as a member in new project', async () => {

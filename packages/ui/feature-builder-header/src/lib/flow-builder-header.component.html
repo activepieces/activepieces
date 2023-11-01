@@ -74,7 +74,7 @@
 
     <div class="ap-flex-grow"></div>
     <div class="ap-flex ap-items-center ap-gap-2">
-      <app-feedback class="ap-z-50 ap-flex ap-items-center"></app-feedback>
+      <app-support class="ap-z-50 ap-flex ap-items-center"></app-support>
       <ng-container *ngIf="(isInDebugMode$ | async) === false">
         <div class="ap-flex ap-items-center ap-gap-1">
           <app-draft-status></app-draft-status>
@@ -83,7 +83,8 @@
           </ng-container>
         </div>
         <app-publish-button></app-publish-button>
-        <ap-user-avatar class="ap-ml-[16px]"></ap-user-avatar>
+        <ap-user-avatar *ngIf="(isInEmbedded$ | async) === undefined || (isInEmbedded$ | async) === false "
+          class="ap-ml-[16px]"></ap-user-avatar>
       </ng-container>
     </div>
   </div>

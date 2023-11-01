@@ -7,9 +7,7 @@
   "targets": {
     "build": {
       "executor": "@nx/angular:webpack-browser",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "statsJson": true,
         "outputPath": "dist/packages/ui/core",
@@ -129,10 +127,8 @@
       }
     },
     "lint": {
-      "executor": "@nx/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
       "options": {
         "lintFilePatterns": [
           "packages/ui/core/**/*.ts",
@@ -145,10 +141,7 @@
       "options": {
         "tsConfig": "packages/ui/core/tsconfig.spec.json",
         "karmaConfig": "packages/ui/core/karma.conf.js",
-        "polyfills": [
-          "zone.js",
-          "zone.js/testing"
-        ],
+        "polyfills": ["zone.js", "zone.js/testing"],
         "styles": [],
         "scripts": [],
         "assets": []
@@ -160,7 +153,7 @@
     "sourceLocale": {
       "code": "en",
       "baseHref": ""
-  },
+    },
     "locales": {
       "fr": "packages/ui/core/src/locale/messages.fr.xlf"
     }
