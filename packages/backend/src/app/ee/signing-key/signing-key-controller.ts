@@ -43,7 +43,7 @@ export const signingKeyController: FastifyPluginAsyncTypebox = async (app) => {
                 },
             })
         }
-        assertUserOwnPlatformId({ userId: req.id, platformId: signingKey.platformId })
+        await assertUserOwnPlatformId({ userId: req.principal.id, platformId: signingKey.platformId })
         return signingKey
     })
 
