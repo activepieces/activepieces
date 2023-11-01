@@ -290,7 +290,6 @@
         "packages/ui/feature-templates/src/index.ts"
       ],
       "@ee/*": ["packages/ee/*"],
-      "@activepieces/ee-embed-sdk-shared": ["packages/ee/embed-sdk-shared/src/index.ts"]
     },
     "resolveJsonModule": true
   },

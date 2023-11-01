@@ -12,7 +12,7 @@ import {
   ActivepiecesVendorEventName,
   ActivepiecesVendorInit,
   jwtTokenQueryParamName,
-} from '@activepieces/ee-embed-sdk-shared';
+} from '@activepieces/ee-embed-sdk';
 import { AuthenticationService } from '@activepieces/ui/common';
 
 @Component({

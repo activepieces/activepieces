@@ -1,8 +1,50 @@
-import { ActivepiecesClientEvent, ActivepiecesClientEventName, ActivepiecesClientRouteChanged, ActivepiecesVendorEventName, ActivepiecesVendorInit, ActivepiecesVendorRouteChanged } from "@activepieces/ee-embed-sdk-shared";
+export enum ActivepiecesClientEventName {
+  CLIENT_INIT = 'CLIENT_INIT',
+  CLIENT_ROUTE_CHANGED = 'CLIENT_ROUTE_CHANGED',
+}
+
+export interface ActivepiecesClientInit {
+  type: ActivepiecesClientEventName.CLIENT_INIT;
+}
+
+export interface ActivepiecesClientRouteChanged {
+  type: ActivepiecesClientEventName.CLIENT_ROUTE_CHANGED;
+  data: {
+    route: string;
+  };
+}
+
+export type ActivepiecesClientEvent =
+  | ActivepiecesClientInit
+  | ActivepiecesClientRouteChanged;
+
+export enum ActivepiecesVendorEventName {
+  VENDOR_INIT = 'VENDOR_INIT',
+  VENDOR_ROUTE_CHANGED = 'VENDOR_ROUTE_CHANGED',
+}
+
+export interface ActivepiecesVendorRouteChanged {
+  type: ActivepiecesVendorEventName.VENDOR_ROUTE_CHANGED;
+  data: {
+    vendorRoute: string;
+  };
+}
+
+export interface ActivepiecesVendorInit {
+  type: ActivepiecesVendorEventName.VENDOR_INIT;
+  data: {
+    prefix: string;
+    initialClientRoute: string;
+    hideSidebar:boolean
+  };
+}
+export const jwtTokenQueryParamName = "jwtToken"
+
 
 class ActivepiecesEmbedded {
   _prefix = '';
   _initialClientRoute = '';
+  _hideSidebar=false;
   iframeParentOrigin = window.location.origin;
   handleVendorNavigation?: (data: { route: string }) => void;
   handleClientNavigation?: (data: { route: string }) => void;
@@ -10,12 +52,15 @@ class ActivepiecesEmbedded {
   configure({
     prefix,
     initialClientRoute,
+    hideSidebar
   }: {
-    prefix: string;
+    prefix?: string;
     initialClientRoute?: string;
+    hideSidebar?:boolean
   }) {
-    this._prefix = prefix;
+    this._prefix = prefix || '/';
     this._initialClientRoute = initialClientRoute || '/';
+    this._hideSidebar= hideSidebar || false;
     setIframeChecker(this);
   }
 }
@@ -37,6 +82,7 @@ const setIframeChecker = (client: ActivepiecesEmbedded) => {
                 data: {
                   prefix: client._prefix,
                   initialClientRoute: client._initialClientRoute,
+                  hideSidebar : client._hideSidebar
                 },
               };
               iframeWindow.postMessage(apEvent, '*');
