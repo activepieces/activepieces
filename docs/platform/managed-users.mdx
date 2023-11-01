@@ -29,18 +29,18 @@ To generate these tokens, you will need to add code in your backend to generate 
 }
 ```
 
-The signed tokens must include the "sub", "exp", "firstName", "lastName" and "email" claims in their payload:
+The signed tokens must include these claims in the payload:
 
 ```json
 {
 	// Unique identification of your connection name.
 
-	"sub": "user_id",
+	"externalUserId": "user_id",
+    "externalProjectId": "user_project_id"
     "firstName": "John",
     "lastName": "Doe",
     "email": "mo@activepieces.om",
     "platformId": "your_platform_id",
-    "projectId": "user_project_id"
 	// Expiry timestamp for token
 	"exp": 1856563200
 }
@@ -60,13 +60,17 @@ const jwt = require('jsonwebtoken');
 // JWT NumericDates specified in seconds:
 const currentTime = Math.floor(Date.now() / 1000);
 let token = jwt.sign({
-        sub: "user-123",
-        exp: currentTime + (24 * 60 * 60), // 1 day from now
-    },
-    process.env.ACTIVEPIECES_SIGNING_KEY, {
-        algorithm: "RS256",
-    }
-);
+    externalUserId: "user_id",
+    externalProjectId: "user_project_id",
+    firstName: "John",
+    lastName: "Doe",
+    email: "mo@activepieces.om",
+    platformId: "your_platform_id",
+    exp: currentTime + (24 * 60 * 60), // 1 day from now
+},
+process.env.ACTIVEPIECES_SIGNING_KEY, {
+    algorithm: "RS256",
+});
 ```
 
 Once you have generated the token, Please check embedding docs to know how to embed the token in the iframe.

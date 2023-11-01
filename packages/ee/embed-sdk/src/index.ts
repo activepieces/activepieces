@@ -34,7 +34,7 @@ export interface ActivepiecesVendorInit {
   type: ActivepiecesVendorEventName.VENDOR_INIT;
   data: {
     prefix: string;
-    initialClientRoute: string;
+    initialRoute: string;
     hideSidebar:boolean
   };
 }
@@ -43,7 +43,7 @@ export const jwtTokenQueryParamName = "jwtToken"
 
 class ActivepiecesEmbedded {
   _prefix = '';
-  _initialClientRoute = '';
+  _initialRoute = '';
   _hideSidebar=false;
   iframeParentOrigin = window.location.origin;
   handleVendorNavigation?: (data: { route: string }) => void;
@@ -51,15 +51,15 @@ class ActivepiecesEmbedded {
   parentOrigin = window.location.origin;
   configure({
     prefix,
-    initialClientRoute,
+    initialRoute,
     hideSidebar
   }: {
     prefix?: string;
-    initialClientRoute?: string;
+    initialRoute?: string;
     hideSidebar?:boolean
   }) {
     this._prefix = prefix || '/';
-    this._initialClientRoute = initialClientRoute || '/';
+    this._initialRoute = _initialRoute || '/';
     this._hideSidebar= hideSidebar || false;
     setIframeChecker(this);
   }
@@ -81,7 +81,7 @@ const setIframeChecker = (client: ActivepiecesEmbedded) => {
                 type: ActivepiecesVendorEventName.VENDOR_INIT,
                 data: {
                   prefix: client._prefix,
-                  initialClientRoute: client._initialClientRoute,
+                  _initialRoute: client._initialRoute,
                   hideSidebar : client._hideSidebar
                 },
               };

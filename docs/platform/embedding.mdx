@@ -1,54 +1,51 @@
 ---
 title: "Embedding"
-description: "Embedding Activepieces into iframes has two main parts"
+description: ""
 icon: "code"
 ---
 
+To embed Activepieces into iframe, follow these steps:
 
-## Step 1: Add the Activepieces script
+## Step 1: Embed SDK
 
-To ensure navigation synchronization between the vendor and Activepieces, add the following script to your vendor app:
-```
+Add the embed SDK script. This script helps synchronize the iframe and host routes, which initialize `activepieces` object and call configure method.
+
+
+<Tip>
+The script shouldn't contain async or defer attributes as it must load before the iframe.
+</Tip>
+```html
 <script src="https://cdn.activepieces.com/sdk/embed-sdk.js">
-```
-After adding the script, you will gain access to the `activepieces` object, on which you need to call the `configure` method with the following parameters:
 
-# activepieces.configure Method:
+activepieces.configure({
+    prefix:"/automation",
+    initialRoute: "/flows",
+    hideSidebar:true
+})
+```
+
+**Configure Parameters:**
+
 | Parameter Name | Required | Description |
 | --- | --- | --- |
 | prefix | ❌ | You can choose a URL prefix for generating URLs. URL prefixes for embedding follow this pattern: `<embedding_url_prefix>/<Activepieces_url>`. For example, if the prefix is `/automation` and the Activepieces URL is `/flows`, the corresponding vendor URL will be `/automations/flows`.
-| initialClientRoute | ❌ | Its value must be one of the following: `/flows`, `/runs`, `/connections`, `/flows/:id`, `/runs/:id`. Any other path will result in a 404 page. If left undefined, it will redirect to `/flows`.
+| initialRoute | ❌ | Its value must be one of the following: `/flows`, `/runs`, `/connections`, `/flows/:id`, `/runs/:id`. Any other path will result in a 404 page. If left undefined, it will redirect to `/flows`.
 | hideSidebar | ❌ | Its value can be either false or true, and it controls the visibility of the sidebar in the dashboard, by default it is false.
 
 
-```
-activepieces.configure({
-    prefix:"/automation",
-    initialClientRoute: "/flows",
-    hideSidebar:false
-})
-
-```
-
 ## Step 2: Add an iframe
 
-After finishing step 1, add an iframe into your document, set its source to `<your_instance_url>/embed`. If you are using the cloud, just use `cloud.activepieces.com/embed`.
+Add an iframe into your html, set its source to `<your_instance_url>/embed`. If you are using the cloud, just use `https://cloud.activepieces.com/embed`.
 
+<Tip>
+Insert the script before the embedding iframe.
+</Tip>
 ```
 <iframe src="<your_instance_url>/embed?jwtToken=YOUR_GENERATED_TOKEN" >
 ```
-
 
 **Query Parameters:**
 | Parameter Name | Required | Description |
 | --- | --- | --- |
 | jwtToken | ✅ | To create the JWT token, refer to [this guide](/platform/managed-users).
 
-
-
-
-<Note>
-**Important**: 
- 1. Insert the script before the embedding iframe.
- 2. The script shouldn't contain async or defer attributes as it must load before the iframe.
-</Note>
