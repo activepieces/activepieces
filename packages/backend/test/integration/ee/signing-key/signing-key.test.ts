@@ -91,6 +91,13 @@ describe('Signing Key API', () => {
             const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
             await databaseConnection.getRepository('platform').save(mockPlatform)
 
+            const mockSigningKey = createMockSigningKey({
+                platformId: mockPlatform.id,
+                generatedBy: mockUser.id,
+            })
+
+            await databaseConnection.getRepository('signing_key').save(mockSigningKey)
+
             const nonOwnerUserId = apId()
             const testToken = await generateMockToken({
                 id: nonOwnerUserId,
