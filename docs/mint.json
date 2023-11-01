@@ -5,7 +5,7 @@
     "dark": "./resources/logo/dark.svg",
     "href": "https://www.activepieces.com"
   },
-  "favicon": "/favicon.png",
+  "favicon": "/favicon.svg",
   "colors": {
     "primary": "#5155D7",
     "dark": "#3033A6",
@@ -34,7 +34,7 @@
     }
   ],
   "primaryTab": {
-      "name": "Learn"
+    "name": "Learn"
   },
   "tabs": [
     {
@@ -83,13 +83,13 @@
         "install/options/overview",
         "install/options/docker",
         "install/options/docker-compose",
-        "install/options/easypanel",            
+        "install/options/easypanel",
         "install/options/aws",
         "install/options/gcp"
       ]
     },
     {
-    "group": "Reference",
+      "group": "Reference",
       "pages": [
         {
           "group": "Configurations",
@@ -175,7 +175,8 @@
         "platform/overview",
         "platform/appearance",
         "platform/managed-projects",
-        "platform/managed-users"
+        "platform/managed-users",
+        "platform/embedding"
       ]
     },
     {
@@ -203,7 +204,6 @@
       ]
     }
   ],
-  
   "analytics": {
     "posthog": {
       "apiKey": "phc_TXdpocbYTeZVm5VJmMzHTMrCofBQu3e0kN7HGMNGTVW"
