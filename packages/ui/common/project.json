@@ -10,7 +10,6 @@
       "outputs": ["{workspaceRoot}/dist/{projectRoot}"],
       "options": {
         "project": "packages/ui/common/ng-package.json",
-        "updateBuildableProjectDepsInPackageJson": true
       },
       "configurations": {
         "production": {
