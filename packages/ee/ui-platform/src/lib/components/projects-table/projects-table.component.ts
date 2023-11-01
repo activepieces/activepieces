@@ -31,11 +31,10 @@ export class ProjectsTableComponent {
     private authenticationService: AuthenticationService,
     private store: Store
   ) {
-    const decodedToken = this.authenticationService.getDecodedToken();
     this.dataSource = new ProjectsDataSource(
       this.projectsService,
       this.refreshTable$.asObservable().pipe(startWith(true)),
-      decodedToken!['platformId']
+      this.authenticationService.getPlatformId()
     );
   }
 
