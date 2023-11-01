@@ -33,7 +33,8 @@ export class ProjectsTableComponent {
   ) {
     this.dataSource = new ProjectsDataSource(
       this.projectsService,
-      this.refreshTable$.asObservable().pipe(startWith(true))
+      this.refreshTable$.asObservable().pipe(startWith(true)),
+      this.authenticationService.getPlatformId()
     );
   }
 
