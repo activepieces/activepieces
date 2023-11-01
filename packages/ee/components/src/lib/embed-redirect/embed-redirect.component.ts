@@ -11,8 +11,8 @@ import {
   ActivepiecesClientEventName,
   ActivepiecesVendorEventName,
   ActivepiecesVendorInit,
-  hideSidebarQueryParamName,
-} from '@activepieces/ee-embed-sdk';
+  jwtTokenQueryParamName,
+} from '@activepieces/ee-embed-sdk-shared';
 import { AuthenticationService } from '@activepieces/ui/common';
 
 @Component({
@@ -31,7 +31,7 @@ export class EmbedRedirectComponent implements OnDestroy, OnInit {
   ) {}
 
   ngOnInit(): void {
-    const jwt = this.route.snapshot.queryParamMap.get('jwtToken');
+    const jwt = this.route.snapshot.queryParamMap.get(jwtTokenQueryParamName);
     if (jwt === null) {
       throw new Error('Activepieces: no provided jwt token');
     }
@@ -56,17 +56,12 @@ export class EmbedRedirectComponent implements OnDestroy, OnInit {
   }
 
   initializedVendorHandler = (event: MessageEvent<ActivepiecesVendorInit>) => {
-    const hideSidebar =
-      this.route.snapshot.queryParamMap
-        .get(hideSidebarQueryParamName)
-        ?.toLocaleLowerCase() === 'TRUE'.toLocaleLowerCase();
-
     if (
       event.source === window.parent &&
       event.data.type === ActivepiecesVendorEventName.VENDOR_INIT
     ) {
       this.embeddingService.setState({
-        hideSideNav: hideSidebar,
+        hideSideNav: event.data.data.hideSideBar,
         isEmbedded: true,
         prefix: event.data.data.prefix,
       });
