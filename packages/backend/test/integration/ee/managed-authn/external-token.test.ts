@@ -259,7 +259,6 @@ describe('Managed Authentication API', () => {
             const nonExistentSigningKeyId = apId()
 
             const { mockExternalToken } = generateMockExternalToken({
-                platformId: mockPlatform.id,
                 signingKeyId: nonExistentSigningKeyId,
             })
 
@@ -276,44 +275,9 @@ describe('Managed Authentication API', () => {
             const responseBody = response?.json()
 
             expect(response?.statusCode).toBe(StatusCodes.UNAUTHORIZED)
-            expect(responseBody?.params?.message).toBe(`signing key not found signingKeyId=${nonExistentSigningKeyId} platformId=${mockPlatform.id}`)
+            expect(responseBody?.params?.message).toBe(`signing key not found signingKeyId=${nonExistentSigningKeyId}`)
         })
 
-        it('Fails if signing key\'s platformId doesn\'t match platformId in external token payload', async () => {
-            // arrange
-            const mockUserOne = createMockUser()
-            const mockUserTwo = createMockUser()
-            await databaseConnection.getRepository('user').save([mockUserOne, mockUserTwo])
-
-            const mockPlatformOne = createMockPlatform({ ownerId: mockUserOne.id })
-            const mockPlatformTwo = createMockPlatform({ ownerId: mockUserTwo.id })
-            await databaseConnection.getRepository('platform').save([mockPlatformOne, mockPlatformTwo])
-
-            const mockSigningKey = createMockSigningKey({
-                platformId: mockPlatformOne.id,
-                generatedBy: mockUserOne.id,
-            })
-            await databaseConnection.getRepository('signing_key').save(mockSigningKey)
-
-            const { mockExternalToken } = generateMockExternalToken({
-                platformId: mockPlatformTwo.id,
-                signingKeyId: mockSigningKey.id,
-            })
-
-            // act
-            const response = await app?.inject({
-                method: 'POST',
-                url: '/v1/managed-authn/external-token',
-                body: {
-                    externalAccessToken: mockExternalToken,
-                },
-            })
-
-            // assert
-            const responseBody = response?.json()
-
-            expect(response?.statusCode).toBe(StatusCodes.UNAUTHORIZED)
-            expect(responseBody?.params?.message).toBe(`signing key not found signingKeyId=${mockSigningKey.id} platformId=${mockPlatformTwo.id}`)
-        })
     })
+
 })

@@ -3,6 +3,7 @@ import { ActivepiecesError, ApId, ErrorCode, assertNotNullOrUndefined, isNil } f
 import { signingKeyService } from './signing-key-service'
 import { StatusCodes } from 'http-status-codes'
 import { AddSigningKeyRequestBody } from '@activepieces/ee-shared'
+import { platformService } from '../platform/platform.service'
 
 export const signingKeyController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/', AddSigningKeyRequest, async (req, res) => {
@@ -33,9 +34,7 @@ export const signingKeyController: FastifyPluginAsyncTypebox = async (app) => {
         assertNotNullOrUndefined(platformId, 'platformId')
         const signingKey = await signingKeyService.get({
             id: req.params.id,
-            platformId,
         })
-
         if (isNil(signingKey)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
@@ -44,7 +43,7 @@ export const signingKeyController: FastifyPluginAsyncTypebox = async (app) => {
                 },
             })
         }
-
+        assertUserOwnPlatformId({ userId: req.id, platformId: signingKey.platformId })
         return signingKey
     })
 
@@ -60,6 +59,20 @@ export const signingKeyController: FastifyPluginAsyncTypebox = async (app) => {
     })
 }
 
+
+const assertUserOwnPlatformId = async ({ userId, platformId }: { userId: string, platformId: string }): Promise<void> => {
+    const userIsOwner = await platformService.checkUserIsOwner({
+        userId,
+        platformId,
+    })
+
+    if (!userIsOwner) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: {},
+        })
+    }
+}
 const AddSigningKeyRequest = {
     schema: {
         body: AddSigningKeyRequestBody,
