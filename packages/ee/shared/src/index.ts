@@ -1,3 +1,6 @@
+export * from './lib/project/project-requests';
+export * from './lib/custom-domains';
+export * from './lib/platform';
 export * from './lib/project-members/project-member-role';
 export * from './lib/chatbot';
 export * from './lib/referral/referral';
@@ -10,3 +13,5 @@ export * from './lib/billing/usage'
 export * from './lib/firebase-auth';
 export * from './lib/product-embed/app-credentials/index';
 export * from './lib/product-embed/connection-keys/index';
+export * from './lib/signing-key'
+export * from './lib/managed-authn'

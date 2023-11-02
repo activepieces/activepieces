@@ -1,23 +1,29 @@
-import { isNil } from '@activepieces/shared'
+import { ApId, isNil, ProjectType } from '@activepieces/shared'
 import { databaseConnection } from '../database/database-connection'
 import { ProjectEntity } from './project-entity'
-import { ActivepiecesError, apId, ErrorCode, NotificationStatus, Project, ProjectId, UpdateProjectRequest, UserId } from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, NotificationStatus, Project, ProjectId, UserId } from '@activepieces/shared'
+import { PlatformId, UpdateProjectRequest } from '@activepieces/ee-shared'
 
 const projectRepo = databaseConnection.getRepository<Project>(ProjectEntity)
 
 export const projectService = {
-    async create(request: { ownerId: UserId, displayName: string }): Promise<Project> {
-        return await projectRepo.save<Partial<Project>>({
+    async create(params: CreateParams): Promise<Project> {
+        const newProject: NewProject = {
             id: apId(),
-            ...request,
+            ...params,
             notifyStatus: NotificationStatus.ALWAYS,
-        })
+        }
+
+        return projectRepo.save(newProject)
     },
-    async update(projectId: ProjectId, request: UpdateProjectRequest): Promise<Project | null> {
+
+    async update({ projectId, request, platformId }: { projectId: ProjectId, request: UpdateProjectRequest, platformId?: PlatformId }): Promise<Project | null> {
         const project = await projectRepo.findOneBy({
             id: projectId,
         })
-        if (isNil(project)) {
+
+        //TODO: Revisit on platform authentication
+        if (isNil(project) || project.id !== projectId && project.platformId !== platformId) {
             throw new ActivepiecesError({
                 code: ErrorCode.PROJECT_NOT_FOUND,
                 params: {
@@ -25,6 +31,7 @@ export const projectService = {
                 },
             })
         }
+
         await projectRepo.update(projectId, {
             ...project,
             ...request,
@@ -43,4 +50,38 @@ export const projectService = {
             ownerId,
         })
     },
+
+    async addProjectToPlatform({ projectId, platformId }: AddProjectToPlatformParams): Promise<void> {
+        await projectRepo.update(projectId, {
+            type: ProjectType.PLATFORM_MANAGED,
+            platformId,
+        })
+    },
+
+    async getByPlatformIdAndExternalId({ platformId, externalId }: GetByPlatformIdAndExternalIdParams): Promise<Project | null> {
+        return projectRepo.findOneBy({
+            platformId,
+            externalId,
+        })
+    },
 }
+
+type CreateParams = {
+    ownerId: UserId
+    displayName: string
+    platformId: string | undefined
+    type: ProjectType
+    externalId?: string
+}
+
+type GetByPlatformIdAndExternalIdParams = {
+    platformId: PlatformId
+    externalId: string
+}
+
+type AddProjectToPlatformParams = {
+    projectId: ProjectId
+    platformId: ApId
+}
+
+type NewProject = Omit<Project, 'created' | 'updated'>

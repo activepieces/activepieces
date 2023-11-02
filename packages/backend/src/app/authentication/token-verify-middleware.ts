@@ -1,7 +1,7 @@
 import { FastifyRequest } from 'fastify'
-import { tokenUtils } from './lib/token-utils'
+import { accessTokenManager } from './lib/access-token-manager'
 import { API_KEY_PROTECTED_ROUTES } from '../ee/authentication/api-key-auth-middleware.ee'
-import { ActivepiecesError, ErrorCode, Principal, PrincipalType, apId } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, PrincipalType, ProjectType, apId } from '@activepieces/shared'
 
 const ignoredRoutes = new Set([
     // BEGIN EE
@@ -14,6 +14,7 @@ const ignoredRoutes = new Set([
     '/v1/appsumo/action',
     '/v1/flow-templates/:id',
     '/v1/project-members/accept',
+    '/v1/managed-authn/external-token',
     ...(API_KEY_PROTECTED_ROUTES.map(f => f.url)),
     // END EE
     '/v1/chatbots/:id/ask',
@@ -41,29 +42,43 @@ export const tokenVerifyMiddleware = async (request: FastifyRequest): Promise<vo
         id: `ANONYMOUS_${apId()}`,
         type: PrincipalType.UNKNOWN,
         projectId: `ANONYMOUS_${apId()}`,
+        projectType: ProjectType.STANDALONE,
     }
     const rawToken = request.headers.authorization
     if (!rawToken) {
         if (requiresAuthentication(request.routerPath, request.method)) {
-            throw new ActivepiecesError({ code: ErrorCode.INVALID_BEARER_TOKEN, params: {} })
+            throw new ActivepiecesError({
+                code: ErrorCode.INVALID_BEARER_TOKEN,
+                params: {
+                    message: 'access token is undefined',
+                },
+            })
         }
     }
     else {
         try {
             const token = rawToken.substring(HEADER_PREFIX.length)
-            const principal = await tokenUtils.decode(token) as Principal
+            const principal = await accessTokenManager.extractPrincipal(token)
             request.principal = principal
         }
         catch (e) {
             if (requiresAuthentication(request.routerPath, request.method)) {
-                throw new ActivepiecesError({ code: ErrorCode.INVALID_BEARER_TOKEN, params: {} })
+                throw new ActivepiecesError({
+                    code: ErrorCode.INVALID_BEARER_TOKEN,
+                    params: {
+                        message: 'invalid access token',
+                    },
+                })
             }
         }
     }
 }
 
-function requiresAuthentication(routerPath: string, method: string) {
+function requiresAuthentication(routerPath: string, method: string): boolean {
     if (ignoredRoutes.has(routerPath)) {
+        return false
+    }
+    if (routerPath.startsWith('/ui')) {
         return false
     }
     if (routerPath == '/v1/app-credentials' && method == 'GET') {

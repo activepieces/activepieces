@@ -2,7 +2,7 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
-  TemplateRef
+  TemplateRef,
 } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -10,7 +10,7 @@ import {
   FlagService,
   ProjectSelectors,
   TelemetryService,
-  TemplatesService
+  TemplatesService,
 } from '@activepieces/ui/common';
 import { MatDialog } from '@angular/material/dialog';
 import {
@@ -21,17 +21,21 @@ import {
   of,
   switchMap,
   take,
-  tap
+  tap,
 } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { BuilderSelectors } from '@activepieces/ui/feature-builder-store';
 import { ShareFlowRequest } from '@activepieces/ee-shared';
-import { ApFlagId, FlowTemplate, TelemetryEventName } from '@activepieces/shared';
+import {
+  ApFlagId,
+  FlowTemplate,
+  TelemetryEventName,
+} from '@activepieces/shared';
 
 @Component({
   selector: 'ap-share-flow-template-dialog',
   templateUrl: './share-flow-template-dialog.component.html',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ShareFlowTemplateDialogComponent {
   form: FormGroup<{
@@ -70,7 +74,7 @@ export class ShareFlowTemplateDialogComponent {
           return flags[ApFlagId.TEMPLATES_PROJECT_ID] as string;
         })
       ),
-      project: this.store.select(ProjectSelectors.selectProject)
+      project: this.store.select(ProjectSelectors.selectProject),
     }).pipe(
       map(({ templateProjectId, project }) => {
         return templateProjectId === project.id;
@@ -79,7 +83,7 @@ export class ShareFlowTemplateDialogComponent {
     this.form = this.fb.group({
       blogUrl: new FormControl('', { nonNullable: true }),
       description: new FormControl('', { nonNullable: true }),
-      imageUrl: new FormControl<string>('',{nonNullable:true}),
+      imageUrl: new FormControl<string>('', { nonNullable: true }),
       tags: new FormControl<string[]>([''], { nonNullable: true }),
       isFeatured: new FormControl(false, { nonNullable: true }),
       featuredDescription: new FormControl('', { nonNullable: true }),
@@ -100,16 +104,16 @@ export class ShareFlowTemplateDialogComponent {
               blogUrl: this.form.value.blogUrl,
               imageUrl: this.form.value.imageUrl,
               tags: this.form.value.tags,
-              featuredDescription:this.form.value.featuredDescription,
-              isFeatured: this.form.value.isFeatured
+              featuredDescription: this.form.value.featuredDescription,
+              isFeatured: this.form.value.isFeatured,
             };
             this.telemetryService.capture({
               name: TelemetryEventName.FLOW_SHARED,
               payload: {
                 flowId: flow.id,
-                projectId: flow.projectId
-              }
-            })
+                projectId: flow.projectId,
+              },
+            });
             return this.templatesService.shareTemplate(request).pipe(
               switchMap((flowTemplate) => {
                 return this.flagsService
@@ -149,10 +153,10 @@ export class ShareFlowTemplateDialogComponent {
             this.form.patchValue({
               description: template.description,
               blogUrl: template.blogUrl,
-              imageUrl:template.imageUrl || '',
+              imageUrl: template.imageUrl || '',
               tags: template.tags,
-              featuredDescription:template.featuredDescription,
-              isFeatured:template.isFeatured
+              featuredDescription: template.featuredDescription,
+              isFeatured: template.isFeatured,
             });
           }
         })

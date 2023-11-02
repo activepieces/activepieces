@@ -6,7 +6,7 @@ import { FlagEntity } from './flag.entity'
 import axios from 'axios'
 import { webhookService } from '../webhooks/webhook-service'
 import { getEdition } from '../helper/secret-helper'
-import { theme } from './theme'
+import { defaultTheme } from './theme'
 
 const flagRepo = databaseConnection.getRepository(FlagEntity)
 
@@ -22,16 +22,13 @@ export const flagService = {
             id: flagId,
         })
     },
-    async getCurrentVersion(): Promise<string> {
-        return (await import('package.json')).version
-    },
     async getAll(): Promise<Flag[]> {
         const flags = await flagRepo.find({})
         const now = new Date().toISOString()
         const created = now
         const updated = now
-        const currentVersion = (await this.getCurrentVersion())
-        const latestVersion = (await this.getLatestPackageDotJson()).version
+        const currentVersion = await this.getCurrentRelease()
+        const latestVersion = await this.getLatestRelease()
         flags.push(
             {
                 id: ApFlagId.ENVIRONMENT,
@@ -58,7 +55,13 @@ export const flagService = {
                 updated,
             },
             {
-                id: ApFlagId.BILLING_ENABLED,
+                id: ApFlagId.SHOW_BILLING,
+                value: getEdition() === ApEdition.CLOUD,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.SHOW_AUTH_PROVIDERS,
                 value: getEdition() === ApEdition.CLOUD,
                 created,
                 updated,
@@ -71,7 +74,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.THEME,
-                value: theme,
+                value: defaultTheme,
                 created,
                 updated,
             },
@@ -118,6 +121,12 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.SHOW_BLOG_GUIDE,
+                value: true,
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.SANDBOX_RUN_TIME_SECONDS,
                 value: system.getNumber(SystemProp.SANDBOX_RUN_TIME_SECONDS),
                 created,
@@ -151,28 +160,35 @@ export const flagService = {
 
         return flags
     },
-    async getCurrentRelease() {
-        const currentVersion = (await import('package.json')).version
-        return currentVersion
+
+    async getCurrentRelease(): Promise<string> {
+        const packageJson = await import('package.json')
+        return packageJson.version
     },
-    async getLatestPackageDotJson() {
+
+    async getLatestRelease(): Promise<string> {
         try {
-            const pkgJson = (await axios.get('https://raw.githubusercontent.com/activepieces/activepieces/main/package.json')).data
-            return pkgJson
+            const response = await axios.get<PackageJson>('https://raw.githubusercontent.com/activepieces/activepieces/main/package.json')
+            return response.data.version
         }
         catch (ex) {
-            return { version: '0.0.0' }
+            return '0.0.0'
         }
     },
 }
 
 export type FlagType =
     | BaseFlagStructure<ApFlagId.FRONTEND_URL, string>
-    | BaseFlagStructure<ApFlagId.WEBHOOK_URL_PREFIX, string>
-    | BaseFlagStructure<ApFlagId.USER_CREATED, boolean>
+    | BaseFlagStructure<ApFlagId.PLATFORM_CREATED, boolean>
     | BaseFlagStructure<ApFlagId.TELEMETRY_ENABLED, boolean>
+    | BaseFlagStructure<ApFlagId.USER_CREATED, boolean>
+    | BaseFlagStructure<ApFlagId.WEBHOOK_URL_PREFIX, string>
 
 type BaseFlagStructure<K extends ApFlagId, V> = {
     id: K
     value: V
+}
+
+type PackageJson = {
+    version: string
 }

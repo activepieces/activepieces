@@ -167,7 +167,7 @@ export const airtableCommon = {
     if( !base ) return fields;
     if( !tableId ) return fields;
 
-    const oldFieldNames = Object.keys(fields);
+ 
     const newFields : Record<string,unknown> = {};
 
     try{
@@ -177,18 +177,22 @@ export const airtableCommon = {
         tableId: tableId
       });
 
-      let count = 0;
       airtable.fields.forEach((field) => {
         if ( !AirtableEnterpriseFields.includes(field.type) ){
-          const key = field.name;
-          if( field.type === "multipleAttachments" ){
+          const key = field.id;
+          if( field.type === "multipleAttachments" )
+          {
             newFields[key] = [
               {
-                url: fields[oldFieldNames[count]] as string,
+                url: fields[key] as string,
               }
             ];
-          }else newFields[key] = fields[oldFieldNames[count]];
-          count++;
+          }
+          else
+          {
+             newFields[key] = fields[key];
+          }
+       
         }
       });
     }catch(e){

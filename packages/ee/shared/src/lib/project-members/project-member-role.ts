@@ -1,7 +1,7 @@
 
 export enum ProjectMemberRole {
     ADMIN = "ADMIN",
-    EDITIOR = "EDITIOR",
+    EDITOR = "EDITOR",
     VIEWER = "VIEWER"
 }
 
@@ -23,7 +23,7 @@ export const ProjectMemberRoleToPermissions = {
         ProjectMemberPermission.READ_PROJECT_MEMBER,
         ProjectMemberPermission.WRITE_PROJECT_MEMBER,
     ],
-    [ProjectMemberRole.EDITIOR]: [
+    [ProjectMemberRole.EDITOR]: [
         ProjectMemberPermission.READ_FLOW,
         ProjectMemberPermission.WRITE_FLOW,
         ProjectMemberPermission.READ_CONNECTION,

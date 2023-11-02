@@ -1,13 +1,13 @@
-<div class="ap-typography-subtitle-1 ap-text-title ap-mb-2.5">
+<div class="ap-typography-subtitle-1 ap-text-title ap-mb-2.5" i18n>
     Apps
 </div>
 <mat-form-field class="ap-w-[11.875rem]" subscriptSizing="dynamic">
     <div class="ap-p-2" matPrefix></div>
-    <mat-select [formControl]="dropdownControl" placeholder="Select" (closed)="searchControl.setValue('')">
+    <mat-select [formControl]="dropdownControl" placeholder="Select" i18n-placeholder (closed)="searchControl.setValue('')">
         <mat-form-field subscriptSizing="dynamic" appearance="fill" (click)="$event.stopPropagation();"
             #searchField="elementDirective" class="ap-w-full ap-mb-2" apElementDirective>
             <mat-icon matPrefix color="placeholder-icon" svgIcon="search"></mat-icon>
-            <input #searchInput [formControl]="searchControl" matInput placeholder="Search" autocomplete="off"
+            <input #searchInput [formControl]="searchControl" matInput placeholder="Search" i18n-placeholder autocomplete="off"
                 (keydown.Space)="$event.stopPropagation()">
         </mat-form-field>
         <div class="ap-overflow-y-scroll"

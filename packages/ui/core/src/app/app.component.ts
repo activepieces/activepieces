@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import {
   BehaviorSubject,
   catchError,
-  forkJoin,
   map,
   Observable,
   of,
@@ -25,10 +24,11 @@ import {
   FlagService,
   CommonActions,
   FlowService,
+  AppearanceService,
 } from '@activepieces/ui/common';
 import { compareVersions } from 'compare-versions';
 import { ApFlagId, FlowOperationType } from '@activepieces/shared';
-import { TelemetryService } from '@activepieces/ui/common';
+import { TelemetryService, EmbeddingService } from '@activepieces/ui/common';
 import { AuthenticationService, fadeInUp400ms } from '@activepieces/ui/common';
 import { MatDialog } from '@angular/material/dialog';
 import {
@@ -60,9 +60,12 @@ export class AppComponent implements OnInit {
   importTemplate$: Observable<void>;
   loadingTheme$: BehaviorSubject<boolean> = new BehaviorSubject(true);
   theme$: Observable<void>;
+  setTitle$: Observable<void>;
+  embeddedRouteListener$: Observable<boolean>;
   constructor(
     public dialog: MatDialog,
     private store: Store,
+    private apperanceService: AppearanceService,
     private authenticationService: AuthenticationService,
     private flagService: FlagService,
     private telemetryService: TelemetryService,
@@ -71,11 +74,34 @@ export class AppComponent implements OnInit {
     private domSanitizer: DomSanitizer,
     private builderService: CollectionBuilderService,
     private flowService: FlowService,
-    private snackbar: MatSnackBar
+    private snackbar: MatSnackBar,
+    private embeddedService: EmbeddingService
   ) {
     this.registerSearchIconIntoMaterialIconRegistery();
     this.listenToImportFlow();
-    this.theme$ = this.setTheme();
+    this.theme$ = this.apperanceService.setTheme().pipe(
+      tap(() => this.loadingTheme$.next(false)),
+      map(() => void 0)
+    );
+    this.embeddedRouteListener$ = this.router.events.pipe(
+      switchMap((routingEvent) => {
+        return this.embeddedService.getIsInEmbedding$().pipe(
+          tap((embedded) => {
+            if (
+              routingEvent instanceof NavigationStart &&
+              routingEvent.url.startsWith('/embed') &&
+              embedded
+            ) {
+              console.error('visiting /embed after init');
+              this.router.navigate(['/'], { skipLocationChange: true });
+            }
+            if (embedded && routingEvent instanceof NavigationEnd) {
+              this.embeddedService.activepiecesRouteChanged(this.router.url);
+            }
+          })
+        );
+      })
+    );
     this.routeLoader$ = this.router.events.pipe(
       tap((event) => {
         if (
@@ -85,6 +111,15 @@ export class AppComponent implements OnInit {
           this.loading$.next(true);
         }
         if (event instanceof NavigationEnd) {
+          let route = this.router.routerState.root;
+
+          while (route.firstChild) {
+            route = route.firstChild;
+          }
+          const { title } = route.snapshot.data;
+          if (title) {
+            this.setTitle$ = this.apperanceService.setTitle(title);
+          }
           this.loading$.next(false);
         }
 
@@ -202,11 +237,23 @@ export class AppComponent implements OnInit {
   ngOnInit(): void {
     this.loggedInUser$ = this.authenticationService.currentUserSubject.pipe(
       tap((user) => {
-        if (user == undefined || Object.keys(user).length == 0) {
+        const decodedToken = this.authenticationService.getDecodedToken();
+
+        if (
+          user == undefined ||
+          Object.keys(user).length == 0 ||
+          !decodedToken
+        ) {
           this.store.dispatch(CommonActions.clearState());
           return;
         }
-        this.store.dispatch(CommonActions.loadInitial({ user: user }));
+
+        this.store.dispatch(
+          CommonActions.loadProjects({
+            user: user,
+            currentProjectId: decodedToken['projectId'],
+          })
+        );
         this.telemetryService.init(user);
       }),
       map(() => void 0)
@@ -244,50 +291,5 @@ export class AppComponent implements OnInit {
       '_blank',
       'noopener noreferrer'
     );
-  }
-
-  setTheme() {
-    const colors$ = this.flagService.getColors().pipe(
-      tap((colors) => {
-        this.setColorsVariables(colors, '');
-      })
-    );
-    const primaryPalette$ = this.flagService.getPrimaryPalette().pipe(
-      tap((palette) => {
-        this.setColorsVariables(palette, 'primary-palette-');
-      })
-    );
-    const warnPalette$ = this.flagService.getWarnPalette().pipe(
-      tap((palette) => {
-        this.setColorsVariables(palette, 'warn-palette-');
-      })
-    );
-    const palettes$ = forkJoin([colors$, primaryPalette$, warnPalette$]).pipe(
-      tap(() => this.loadingTheme$.next(false)),
-      map(() => void 0)
-    );
-    return palettes$;
-  }
-
-  setColorsVariables(
-    colors: Record<string, string | object>,
-    paletteName: string
-  ) {
-    Object.entries(colors).forEach(([colorName, value]) => {
-      if (typeof value == 'string') {
-        document.documentElement.style.setProperty(
-          `--${paletteName}${colorName}`,
-          value
-        );
-      }
-      if (typeof value === 'object') {
-        Object.entries(value).forEach(([shade, shadeValue]) => {
-          document.documentElement.style.setProperty(
-            `--${paletteName}${colorName}-${shade}`,
-            shadeValue
-          );
-        });
-      }
-    });
   }
 }

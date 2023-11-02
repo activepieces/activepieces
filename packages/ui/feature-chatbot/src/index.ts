@@ -7,3 +7,5 @@ export * from './lib/feature-chatbot.module';
 export * from './lib/chat/chat.component';
 export * from './lib/chatbot-settings.resolver';
 export * from './lib/chat/chat.component';
+
+import '@angular/localize/init';

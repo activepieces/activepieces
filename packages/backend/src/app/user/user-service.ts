@@ -11,28 +11,28 @@ type GetOneQuery = {
 }
 
 export const userService = {
-    async create(request: SignUpRequest, status: UserStatus): Promise<User> {
-        const hashedPassword = await passwordHasher.hash(request.password)
-        const user = {
+    async create(params: CreateParams): Promise<User> {
+        const { email, password } = params
+        const hashedPassword = await passwordHasher.hash(password)
+
+        const user: NewUser = {
             id: apId(),
-            email: request.email,
+            ...params,
             password: hashedPassword,
-            firstName: request.firstName,
-            lastName: request.lastName,
-            trackEvents: request.trackEvents,
-            newsLetter: request.newsLetter,
-            status,
         }
+
         const existingUser = await userRepo.findOneBy({
-            email: request.email,
+            email,
         })
+
         if (!isNil(existingUser) && existingUser.status === UserStatus.SHADOW) {
             user.id = existingUser.id
             await userRepo.update(user.id, user)
             return userRepo.findOneByOrFail({
-                email: request.email,
+                email,
             })
         }
+
         return userRepo.save(user)
     },
     async getMetaInfo({ id }: { id: UserId }): Promise<UserMeta | null> {
@@ -49,9 +49,23 @@ export const userService = {
             title: user.title,
         }
     },
+
     async getOneByEmail(query: GetOneQuery): Promise<User | null> {
         const { email } = query
         const user = await userRepo.createQueryBuilder().where('LOWER(email) LIKE LOWER(:email)', { email: `${email}` }).getOne()
         return user || null
     },
+
+    async getByExternalId(externalId: string): Promise<User | null> {
+        return userRepo.findOneBy({
+            externalId,
+        })
+    },
 }
+
+type CreateParams = SignUpRequest & {
+    status: UserStatus
+    externalId?: string
+}
+
+type NewUser = Omit<User, 'created' | 'updated'>

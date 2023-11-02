@@ -22,16 +22,21 @@ export abstract class BaseHttpClient implements HttpClient {
 
   protected getUrl<RequestBody extends HttpMessageBody>(
     request: HttpRequest<RequestBody>
-  ): string {
+  ): {
+    urlWithoutQueryParams: string,
+    queryParams: Record<string, string>
+  } {
     const url = new URL(`${this.baseUrl}${request.url}`);
-
-    if (request.queryParams) {
-      for (const [name, value] of Object.entries(request.queryParams)) {
-        url.searchParams.append(name, value);
-      }
+    const urlWithoutQueryParams = `${url.origin}${url.pathname}`;
+    const queryParams: Record<string, string> = {}
+    // Extract query parameters
+    url.searchParams.forEach((value, key) => {
+        queryParams[key] = value
+    });
+    return {
+      urlWithoutQueryParams,
+      queryParams,
     }
-
-    return url.toString();
   }
 
   protected getHeaders<RequestBody extends HttpMessageBody>(

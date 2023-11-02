@@ -26,6 +26,10 @@ export const API_KEY_PROTECTED_ROUTES = [
         method: 'POST',
         url: '/v1/admin/users',
     },
+    {
+        method: 'POST',
+        url: '/v1/admin/platforms',
+    },
 ]
 
 export const apiKeyAuthMiddleware = async (req: FastifyRequest): Promise<void> => {

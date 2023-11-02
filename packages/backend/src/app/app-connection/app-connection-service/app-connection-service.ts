@@ -310,7 +310,7 @@ async function lockAndRefreshConnection({
         const refreshedAppConnection = await refresh(appConnection)
 
         await repo.update(refreshedAppConnection.id, {
-            status: refreshedAppConnection.status,
+            status: AppConnectionStatus.ACTIVE,
             value: encryptObject(refreshedAppConnection.value),
         })
         return refreshedAppConnection
@@ -398,7 +398,6 @@ async function refreshWithCredentials(
         return appConnection
     }
     const body: Record<string, string> = {
-        redirect_uri: appConnection.redirect_url,
         grant_type: 'refresh_token',
         refresh_token: appConnection.refresh_token,
     }

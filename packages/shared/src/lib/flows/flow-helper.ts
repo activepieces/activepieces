@@ -660,10 +660,7 @@ function keepBaseAction(action: Action): Action {
     case ActionType.CODE:
       return {
         type: action.type,
-        settings: {
-          ...action.settings,
-          artifactSourceId: undefined
-        },
+        settings: action.settings,
         ...commonProps
       };
     case ActionType.PIECE:
@@ -744,9 +741,6 @@ function duplicateStep(stepName: string, flowVersionWithArtifacts: FlowVersion):
     if (step.settings.inputUiInfo) {
       step.settings.inputUiInfo.currentSelectedData = undefined;
       step.settings.inputUiInfo.lastTestDate = undefined;
-    }
-    if (step.type === ActionType.CODE) {
-      step.settings.artifactSourceId = undefined;
     }
     oldStepsNameToReplace.forEach((oldName) => {
       step.settings.input = applyFunctionToValuesSync(step.settings.input, (value: unknown) => {

@@ -6,7 +6,7 @@
 }
 ::selection {
   color: $white;
-  background: $selection-color;
+  background: var(--selection);
 }
 /* Remove default margin */
 body,
@@ -84,7 +84,7 @@ markdown{
 }
 ::selection {
   color: $white;
-  background: $selection-color;
+  background: var(--selection);
 }
 /* Remove default margin */
 body,

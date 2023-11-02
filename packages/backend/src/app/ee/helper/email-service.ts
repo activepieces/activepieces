@@ -1,9 +1,8 @@
-
 import sendgrid from '@sendgrid/mail'
 import { logger } from '@sentry/utils'
-import { tokenUtils } from '../../authentication/lib/token-utils'
+import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { getEdition } from '../../helper/secret-helper'
-import { ApEdition } from '@activepieces/shared'
+import { ApEdition, Principal } from '@activepieces/shared'
 
 export const emailService = {
     async sendInvitationEmail({ email, invitationId }: { email: string, invitationId: string }): Promise<void> {
@@ -11,9 +10,11 @@ export const emailService = {
         if (edition !== ApEdition.CLOUD) {
             return
         }
-        const token = await tokenUtils.encode({
+
+        const token = await accessTokenManager.generateToken({
             id: invitationId,
-        })
+        } as Principal)
+
         sendgrid.send({
             to: email,
             from: {

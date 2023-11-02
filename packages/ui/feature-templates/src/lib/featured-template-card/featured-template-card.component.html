@@ -12,7 +12,7 @@
             <div class="ap-flex  ap-items-center ap-gap-2 ap-typography-body-1 !ap-font-semibold">
                 {{template.user?.firstName}} {{template.user?.lastName}}
                 <img *ngIf="activepiecesTeam" src="assets/img/custom/verified.png" class="ap-w-[25px] ap-h-[25px]"
-                    matTooltip="Activepieces Team">
+                    matTooltip="Activepieces Team" i18n-matTooltip>
             </div>
             <div class="ap-typography-caption ap-text-description">
                 {{template.user?.title || 'Contributor'}} • {{template.created | timeago:false }}
@@ -23,9 +23,7 @@
     <div>
         <div class="ap-typography-body-1 ap-whitespace-pre-line" *ngIf="template.featuredDescription">
             <ng-container *ngIf="template.featuredDescription.length <= SEE_MORE_LIMIT ">
-                {{
-                template.featuredDescription
-                }}
+                {{template.featuredDescription}}
             </ng-container>
             <ng-container *ngIf="template.featuredDescription.length > SEE_MORE_LIMIT ">
                 {{
@@ -34,7 +32,13 @@
                 &nbsp; <div class="ap-text-primary ap-cursor-pointer ap-inline"
                     (click)="showFullDescription = !showFullDescription"
                     *ngIf="template.featuredDescription.length > 225">
-                    {{showFullDescription? 'See less' : 'See more'}} </div>
+                    <ng-template *ngIf="showFullDescription; else seeMore">
+                        <span i18n>See less</span>
+                    </ng-template>
+                    <ng-template #seeMore>
+                        <span i18n>See more</span>
+                    </ng-template>
+                </div>
             </ng-container>
         </div>
 
@@ -50,14 +54,14 @@
                 {{template.name}}
             </div>
             <ap-button btnColor="primary" btnStyle="flat" btnSize="small" (buttonClicked)="useTemplate()"
-                [loading]="!!useTemplate$">Use Template </ap-button>
+                [loading]="!!useTemplate$" i18n>Use Template </ap-button>
         </div>
         <img [src]="template.imageUrl || 'https://www.activepieces.com/pricing/feat_2.svg'"
             class="ap-object-contain ap-rounded-md ap-w-[280px] ap-h-[153px]">
     </div>
 </div>
 
-<a class="ap-hidden" href="https://www.flaticon.com/free-icons/verified" title="verified icons">Verified icons created
+<a class="ap-hidden" href="https://www.flaticon.com/free-icons/verified" title="verified icons" i18n>Verified icons created
     by lakonicon - Flaticon</a>
 
 <ng-container *ngIf="useTemplate$ | async"></ng-container>

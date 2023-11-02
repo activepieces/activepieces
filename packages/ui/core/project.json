@@ -7,9 +7,7 @@
   "targets": {
     "build": {
       "executor": "@nx/angular:webpack-browser",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "statsJson": true,
         "outputPath": "dist/packages/ui/core",
@@ -36,7 +34,6 @@
           "cronstrue"
         ],
         "assets": [
-          "packages/ui/core/src/favicon.ico",
           "packages/ui/core/src/assets",
           {
             "glob": "**/*",
@@ -62,7 +59,9 @@
           "node_modules/prismjs/plugins/line-highlight/prism-line-highlight.js",
           "node_modules/prismjs/plugins/line-numbers/prism-line-numbers.js",
           "node_modules/clipboard/dist/clipboard.min.js"
-        ]
+        ],
+        "i18nMissingTranslation": "warning",
+        "localize": true
       },
       "configurations": {
         "production": {
@@ -92,7 +91,11 @@
           "vendorChunk": true,
           "extractLicenses": false,
           "sourceMap": true,
-          "namedChunks": true
+          "namedChunks": true,
+          "localize": ["en"]
+        },
+        "fr": {
+          "localize": ["fr"]
         }
       },
       "defaultConfiguration": "production"
@@ -105,6 +108,9 @@
         },
         "development": {
           "browserTarget": "ui-core:build:development"
+        },
+        "fr": {
+          "browserTarget": "ui-core:build:development,fr"
         }
       },
       "defaultConfiguration": "development",
@@ -116,14 +122,13 @@
     "extract-i18n": {
       "executor": "@angular-devkit/build-angular:extract-i18n",
       "options": {
-        "browserTarget": "ui-core:build"
+        "browserTarget": "ui-core:build",
+        "outputPath": "packages/ui/core/src/locale"
       }
     },
     "lint": {
-      "executor": "@nx/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
       "options": {
         "lintFilePatterns": [
           "packages/ui/core/**/*.ts",
@@ -136,15 +141,21 @@
       "options": {
         "tsConfig": "packages/ui/core/tsconfig.spec.json",
         "karmaConfig": "packages/ui/core/karma.conf.js",
-        "polyfills": [
-          "zone.js",
-          "zone.js/testing"
-        ],
+        "polyfills": ["zone.js", "zone.js/testing"],
         "styles": [],
         "scripts": [],
         "assets": []
       }
     }
   },
-  "tags": []
+  "tags": [],
+  "i18n": {
+    "sourceLocale": {
+      "code": "en",
+      "baseHref": ""
+    },
+    "locales": {
+      "fr": "packages/ui/core/src/locale/messages.fr.xlf"
+    }
+  }
 }

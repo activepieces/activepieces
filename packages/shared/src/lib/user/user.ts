@@ -6,7 +6,16 @@ export type UserId = ApId;
 
 export enum UserStatus {
   VERIFIED = "VERIFIED",
-  SHADOW = "SHADOW"
+
+  /**
+   * A user that was invited to a project but has not yet accepted the invitation.
+   */
+  SHADOW = "SHADOW",
+
+  /**
+   * A user using managed authentication.
+   */
+  EXTERNAL = "EXTERNAL",
 }
 
 export const User = Type.Object({
@@ -19,7 +28,8 @@ export const User = Type.Object({
   password: Type.String(),
   status: Type.Enum(UserStatus),
   imageUrl: Type.Optional(Type.String()),
-  title: Type.Optional(Type.String())
+  title: Type.Optional(Type.String()),
+  externalId: Type.Optional(Type.String()),
 })
 
 export type User = Static<typeof User>;

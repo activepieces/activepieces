@@ -117,7 +117,7 @@ export const selectCurrentFlowFolderName = createSelector(
   selectFlowState,
   (state) => {
     if (!state.folder) {
-      return 'Uncategorized';
+      return $localize`Uncategorized`;
     }
     return state.folder.displayName;
   }

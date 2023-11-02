@@ -20,6 +20,7 @@
       "@activepieces/ee-auth": ["packages/ee/auth/src/index.ts"],
       "@activepieces/ee-billing-ui": ["packages/ee/billing/ui/src/index.ts"],
       "@activepieces/ee-components": ["packages/ee/components/src/index.ts"],
+      "@activepieces/ee-embed-sdk": ["packages/ee/embed-sdk/src/index.ts"],
       "@activepieces/ee-shared": ["packages/ee/shared/src/index.ts"],
       "@activepieces/ee/billing/ui": ["packages/ee/billing/ui/src/index.ts"],
       "@activepieces/ee/components": ["packages/ee/components/src/index.ts"],
@@ -145,6 +146,9 @@
         "packages/pieces/mattermost/src/index.ts"
       ],
       "@activepieces/piece-mautic": ["packages/pieces/mautic/src/index.ts"],
+      "@activepieces/piece-microsoft-excel-365": [
+        "packages/pieces/microsoft-excel-365/src/index.ts"
+      ],
       "@activepieces/piece-microsoft-onedrive": [
         "packages/pieces/microsoft-onedrive/src/index.ts"
       ],
@@ -241,10 +245,14 @@
       "@activepieces/pieces/google-my-business": [
         "packages/pieces/google-my-business/src/index.ts"
       ],
+      "@activepieces/pieces/math-helper": [
+        "packages/pieces/math-helper/src/index.ts"
+      ],
       "@activepieces/pieces/text-helper": [
         "packages/pieces/text-helper/src/index.ts"
       ],
       "@activepieces/shared": ["packages/shared/src/index.ts"],
+      "@activepieces/ui-ee-platform": ["packages/ee/ui-platform/src/index.ts"],
       "@activepieces/ui/common": ["packages/ui/common/src/index.ts"],
       "@activepieces/ui/feature-authentication": [
         "packages/ui/feature-authentication/src/index.ts"

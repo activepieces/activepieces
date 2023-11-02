@@ -17,6 +17,7 @@ import {
     ErrorCode,
     ExecutionType,
     isNil,
+    RunTerminationReason,
 } from '@activepieces/shared'
 import { APArrayContains, databaseConnection } from '../../database/database-connection'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
@@ -110,10 +111,11 @@ export const flowRunService = {
         })
     },
     async finish(
-        { flowRunId, status, tasks, logsFileId, tags }: {
+        { flowRunId, status, tasks, logsFileId, tags, terminationReason }: {
             flowRunId: FlowRunId
             status: ExecutionOutputStatus
             tasks: number
+            terminationReason?: RunTerminationReason
             tags: string[]
             logsFileId: FileId | null
         },
@@ -122,6 +124,7 @@ export const flowRunService = {
             ...spreadIfDefined('logsFileId', logsFileId),
             status,
             tasks,
+            terminationReason,
             tags,
             finishTime: new Date().toISOString(),
         })
