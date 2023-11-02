@@ -6,6 +6,12 @@ import { order } from "./lib/triggers/order";
 import { product } from "./lib/triggers/product";
 import { lineItemInOrder } from "./lib/triggers/line-item-in-order";
 
+import { wooCreateCustomer } from './lib/actions/create-customer';
+import { wooCreateCoupon } from './lib/actions/create-coupon';
+import { wooCreateProduct } from './lib/actions/create-product';
+import { wooFindCustomer } from './lib/actions/find-customer';
+import { wooFindProduct } from './lib/actions/find-product';
+
 const authDescription = `
 To generate your API credentials, follow the steps below:
 1. Go to WooCommerce -> Settings -> Advanced tab -> REST API.
@@ -48,11 +54,17 @@ export const wooAuth = PieceAuth.CustomAuth({
 })
 
 export const woocommerce = createPiece({
-    displayName: "WooCommerce",
-    logoUrl: "https://cdn.activepieces.com/pieces/woocommerce.png",
-    auth: wooAuth,
-    minimumSupportedRelease: '0.7.1',
-    authors: ['MoShizzle'],
-    actions: [],
-    triggers: [customer, coupon, order, product, lineItemInOrder],
+  displayName: 'WooCommerce',
+  logoUrl: 'https://cdn.activepieces.com/pieces/woocommerce.png',
+  auth: wooAuth,
+  minimumSupportedRelease: '0.7.1',
+  authors: ['MoShizzle', 'TaskMagicKyle'],
+  actions: [
+    wooCreateCustomer,
+    wooCreateCoupon,
+    wooCreateProduct,
+    wooFindCustomer,
+    wooFindProduct,
+  ],
+  triggers: [customer, coupon, order, product, lineItemInOrder],
 });
