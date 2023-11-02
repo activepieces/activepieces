@@ -2,9 +2,9 @@ import {
     Action,
     ActionType,
     ActivepiecesError,
+    BeginExecuteFlowOperation,
     CodeAction,
     ErrorCode,
-    ExecuteFlowOperation,
     ExecutionOutput,
     ExecutionOutputStatus,
     ExecutionType,
@@ -17,6 +17,7 @@ import {
     FlowVersion,
     PiecePackage,
     ProjectId,
+    ResumeExecuteFlowOperation,
     RunEnvironment,
     RunTerminationReason,
     SourceCode,
@@ -32,7 +33,6 @@ import { OneTimeJobData } from './job-data'
 import { engineHelper } from '../../helper/engine-helper'
 import { captureException, logger } from '../../helper/logger'
 import { isNil } from '@activepieces/shared'
-import { getServerUrl } from '../../helper/public-ip-utils'
 import { MAX_LOG_SIZE } from '@activepieces/shared'
 import { sandboxProvisioner } from '../sandbox/provisioner/sandbox-provisioner'
 import { SandBoxCacheType } from '../sandbox/provisioner/sandbox-cache-key'
@@ -51,7 +51,7 @@ type LoadInputAndLogFileIdParams = {
 }
 
 type LoadInputAndLogFileIdResponse = {
-    input: ExecuteFlowOperation
+    input: Omit<BeginExecuteFlowOperation, 'serverUrl' | 'workerToken'> | Omit<ResumeExecuteFlowOperation, 'serverUrl' | 'workerToken'>
     logFileId?: FileId | undefined
 }
 
@@ -100,7 +100,7 @@ const finishExecution = async (params: FinishExecutionParams): Promise<void> => 
 }
 
 const getTerminalStatus = (executionOutputStatus: ExecutionOutputStatus): ExecutionOutputStatus => {
-    return executionOutputStatus == ExecutionOutputStatus.STOPPED ?  ExecutionOutputStatus.SUCCEEDED : executionOutputStatus
+    return executionOutputStatus == ExecutionOutputStatus.STOPPED ? ExecutionOutputStatus.SUCCEEDED : executionOutputStatus
 }
 
 
@@ -130,7 +130,6 @@ const loadInputAndLogFileId = async ({
     if (jobData.executionType === ExecutionType.BEGIN) {
         return {
             input: {
-                serverUrl: await getServerUrl(),
                 executionType: ExecutionType.BEGIN,
                 ...baseInput,
             },
@@ -157,18 +156,17 @@ const loadInputAndLogFileId = async ({
     })
 
     const serializedExecutionOutput = logFile.data.toString('utf-8')
-    const executionOutput = JSON.parse(
+    const executionOutput: ExecutionOutput = JSON.parse(
         serializedExecutionOutput,
-    ) as ExecutionOutput
+    )
+
 
     return {
         input: {
-            serverUrl: await getServerUrl(),
+            ...baseInput,
             executionType: ExecutionType.RESUME,
             executionState: executionOutput.executionState,
-            resumeStepMetadata: flowRun.pauseMetadata.resumeStepMetadata,
             resumePayload: jobData.payload,
-            ...baseInput,
         },
         logFileId: logFile.id,
     }

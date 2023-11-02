@@ -1,0 +1,43 @@
+{
+  "run": {
+    "command": "nx build engine",
+    "startTime": "2023-11-02T15:16:22.568Z",
+    "endTime": "2023-11-02T15:16:30.280Z",
+    "inner": false
+  },
+  "tasks": [
+    {
+      "taskId": "shared:build",
+      "target": "build",
+      "projectName": "shared",
+      "hash": "10984660508824000679",
+      "startTime": "2023-11-02T15:16:22.576Z",
+      "endTime": "2023-11-02T15:16:25.163Z",
+      "params": "",
+      "cacheStatus": "cache-miss",
+      "status": 0
+    },
+    {
+      "taskId": "pieces-framework:build",
+      "target": "build",
+      "projectName": "pieces-framework",
+      "hash": "15953119472805987467",
+      "startTime": "2023-11-02T15:16:25.165Z",
+      "endTime": "2023-11-02T15:16:26.937Z",
+      "params": "",
+      "cacheStatus": "cache-miss",
+      "status": 0
+    },
+    {
+      "taskId": "engine:build",
+      "target": "build",
+      "projectName": "engine",
+      "hash": "18163822564403620160",
+      "startTime": "2023-11-02T15:16:26.939Z",
+      "endTime": "2023-11-02T15:16:30.280Z",
+      "params": "",
+      "cacheStatus": "cache-miss",
+      "status": 1
+    }
+  ]
+}

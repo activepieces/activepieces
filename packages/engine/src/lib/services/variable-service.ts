@@ -5,7 +5,6 @@ import {
     isNil,
     isString,
 } from '@activepieces/shared'
-import { connectionService } from './connections.service'
 import {
     PropertyType,
     formatErrorMessage,
@@ -14,6 +13,8 @@ import {
     NonAuthPiecePropertyMap,
 } from '@activepieces/pieces-framework'
 import { handleAPFile, isApFilePath } from './files.service'
+import { FlowExecutorContext } from '../handler/context/flow-execution-context'
+import { createConnectionService } from './connections.service'
 
 export class VariableService {
     private VARIABLE_TOKEN = RegExp('\\{\\{(.*?)\\}\\}', 'g')
@@ -24,12 +25,12 @@ export class VariableService {
         valuesMap: Record<string, unknown>,
         logs: boolean,
     ): Promise<any> {
-    // If input contains only a variable token, return the value of the variable while maintaining the variable type.
+        // If input contains only a variable token, return the value of the variable while maintaining the variable type.
         const matchedTokens = input.match(this.VARIABLE_TOKEN)
         if (
             matchedTokens !== null &&
-      matchedTokens.length === 1 &&
-      matchedTokens[0] === input
+            matchedTokens.length === 1 &&
+            matchedTokens[0] === input
         ) {
             const variableName = input.substring(2, input.length - 2)
             if (variableName.startsWith(VariableService.CONNECTIONS)) {
@@ -50,7 +51,7 @@ export class VariableService {
         path: string,
         censorConnections: boolean,
     ): Promise<any> {
-    // Need to be resolved dynamically
+        // Need to be resolved dynamically
         const connectionName = this.findConnectionName(path)
         if (isNil(connectionName)) {
             return ''
@@ -61,7 +62,9 @@ export class VariableService {
         // Need to be resolved dynamically
         // Replace connection name with something that doesn't contain - or _, otherwise evalInScope would break
         const newPath = this.cleanPath(path, connectionName)
-        const connection = await connectionService.obtain(connectionName)
+
+        // TODO PASS PROJECT ID
+        const connection = await createConnectionService({ workerToken: 'WORKER', projectId: 'WORKER' }).obtain(connectionName)
         if (newPath.length === 0) {
             return connection
         }
@@ -146,32 +149,37 @@ export class VariableService {
 
         return unresolvedInput
     }
-
-    private getExecutionStateObject(
-        executionState: ExecutionState | null,
-    ): Record<string, unknown> {
-        if (isNil(executionState)) {
-            return {}
-        }
-        const valuesMap: Record<string, unknown> = {}
-        Object.entries(executionState.lastStepState).forEach(([key, value]) => {
-            valuesMap[key] = value
-        })
-        return valuesMap
-    }
-
-    resolve<T = unknown>(params: ResolveParams): Promise<T> {
-        const { unresolvedInput, executionState, logs } = params
+    async resolve<T = unknown>(params: {
+        unresolvedInput: unknown
+        executionState: FlowExecutorContext
+    }): Promise<{
+            resolvedInput: T
+            censoredInput: unknown
+        }> {
+        const { unresolvedInput, executionState } = params
 
         if (isNil(unresolvedInput)) {
-            return Promise.resolve(unresolvedInput) as Promise<T>
+            return {
+                resolvedInput: unresolvedInput as unknown as T,
+                censoredInput: unresolvedInput as unknown,
+            }
         }
 
-        return this.resolveInternally(
+        // TODO FIX 
+        const resolvedInput = await this.resolveInternally(
             JSON.parse(JSON.stringify(unresolvedInput)),
-            this.getExecutionStateObject(executionState),
-            logs,
-        ) as Promise<T>
+            executionState.currentState,
+            true,
+        )
+        const censoredInput = await this.resolveInternally(
+            JSON.parse(JSON.stringify(unresolvedInput)),
+            executionState.currentState,
+            false,
+        )
+        return {
+            resolvedInput,
+            censoredInput,
+        }
     }
 
     async applyProcessorsAndValidators(
@@ -184,11 +192,11 @@ export class VariableService {
 
         if (auth && auth.type === PropertyType.CUSTOM_AUTH) {
             const { processedInput: authProcessedInput, errors: authErrors } =
-        await this.applyProcessorsAndValidators(
-            resolvedInput[AUTHENTICATION_PROPERTY_NAME],
-            auth.props,
-            undefined,
-        )
+                await this.applyProcessorsAndValidators(
+                    resolvedInput[AUTHENTICATION_PROPERTY_NAME],
+                    auth.props,
+                    undefined,
+                )
             processedInput.auth = authProcessedInput
             if (Object.keys(authErrors).length > 0) {
                 errors.auth = authErrors
@@ -212,7 +220,11 @@ export class VariableService {
             ]
             // TODO remove the hard coding part
             if (property.type === PropertyType.FILE && isApFilePath(value)) {
-                processedInput[key] = await handleAPFile(value.trim())
+                processedInput[key] = await handleAPFile({
+                    path: value.trim(),
+                    // TODO FIX
+                    workerToken: 'WORKER',
+                })
             }
             else {
                 for (const processor of processors) {
@@ -249,8 +261,8 @@ export class VariableService {
                 const matchedTokens = value.match(this.VARIABLE_TOKEN)
                 if (
                     matchedTokens !== null &&
-          matchedTokens.length === 1 &&
-          matchedTokens[0] === value
+                    matchedTokens.length === 1 &&
+                    matchedTokens[0] === value
                 ) {
                     const variableName = value.substring(2, value.length - 2)
                     if (variableName.startsWith(VariableService.CONNECTIONS)) {
@@ -276,8 +288,4 @@ export class VariableService {
     }
 }
 
-type ResolveParams = {
-    unresolvedInput: unknown
-    executionState: ExecutionState | null
-    logs: boolean
-}
+export const variableService = new VariableService()

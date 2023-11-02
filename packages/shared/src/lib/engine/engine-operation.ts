@@ -1,5 +1,4 @@
 import { AppConnectionValue } from "../app-connection/app-connection";
-import { ResumeStepMetadata } from "../flow-run/execution/execution-output";
 import { ExecutionState } from "../flow-run/execution/execution-state";
 import { ExecutionType } from "../flow-run/execution/execution-type";
 import { FlowRunId } from "../flow-run/flow-run";
@@ -12,11 +11,11 @@ export enum EngineOperationType {
     EXTRACT_PIECE_METADATA = "EXTRACT_PIECE_METADATA",
     EXECUTE_ACTION = "EXECUTE_ACTION",
     EXECUTE_CODE = "EXECUTE_CODE",
+    EXECUTE_TEST_FLOW = "EXECUTE_TEST_FLOW",
     EXECUTE_FLOW = "EXECUTE_FLOW",
     EXECUTE_PROPERTY = "EXECUTE_PROPERTY",
     EXECUTE_TRIGGER_HOOK = "EXECUTE_TRIGGER_HOOK",
     EXECUTE_VALIDATE_AUTH = "EXECUTE_VALIDATE_AUTH",
-    EXECUTE_TEST = "EXECUTE_TEST",
 }
 
 export enum TriggerHookType {
@@ -36,9 +35,9 @@ export type EngineOperation =
     | ExecuteExtractPieceMetadata
     | ExecuteValidateAuthOperation
 
-type BaseEngineOperation = {
+export type BaseEngineOperation = {
     projectId: ProjectId
-    workerToken?: string
+    workerToken: string
     serverUrl: string,
 }
 
@@ -57,12 +56,10 @@ export type ExecuteValidateAuthOperation = BaseEngineOperation & {
 
 export type ExecuteExtractPieceMetadata = PiecePackage
 
-export type ExecuteCodeOperation = {
+export type ExecuteCodeOperation = BaseEngineOperation &  {
     step: CodeAction
-    serverUrl: string
     flowVersion: FlowVersion,
     input: Record<string, unknown>
-    projectId: ProjectId
 }
 
 export type ExecutePropsOptions = BaseEngineOperation & {
@@ -76,7 +73,6 @@ type BaseExecuteFlowOperation<T extends ExecutionType> = BaseEngineOperation & {
     flowVersion: FlowVersion;
     flowRunId: FlowRunId;
     triggerPayload: unknown;
-    serverUrl: string;
     executionType: T;
 }
 
@@ -86,7 +82,6 @@ export type BeginExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.B
 
 export type ResumeExecuteFlowOperation = BaseExecuteFlowOperation<ExecutionType.RESUME> & {
     executionState: ExecutionState,
-    resumeStepMetadata: ResumeStepMetadata,
     resumePayload: unknown,
 }
 

@@ -3,6 +3,7 @@
 # compiled output
 dist
 tmp
+.nx/
 /out-tsc
 firebase-admin-sdk.json
 

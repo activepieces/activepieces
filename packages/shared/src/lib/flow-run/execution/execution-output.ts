@@ -27,32 +27,6 @@ type BaseExecutionOutput<T extends ExecutionOutputStatus> = {
   errorMessage?: ExecutionError;
 }
 
-type BaseResumeStepMetadata<T extends ActionType> = {
-  type: T
-  name: string
-}
-
-export type LoopResumeStepMetadata = BaseResumeStepMetadata<ActionType.LOOP_ON_ITEMS> & {
-  iteration: number
-  childResumeStepMetadata: ResumeStepMetadata
-}
-
-export type BranchResumeStepMetadata = BaseResumeStepMetadata<ActionType.BRANCH> & {
-  conditionEvaluation: boolean
-  childResumeStepMetadata: ResumeStepMetadata
-}
-
-type NormalResumeStepMetadata = BaseResumeStepMetadata<Exclude<
-  ActionType,
-  ActionType.BRANCH | ActionType.LOOP_ON_ITEMS
->>
-
-export type ResumeStepMetadata =
-  | NormalResumeStepMetadata
-  | BranchResumeStepMetadata
-  | LoopResumeStepMetadata
-
-
 export enum PauseType {
   DELAY = 'DELAY',
   WEBHOOK = "WEBHOOK"
@@ -60,7 +34,6 @@ export enum PauseType {
 
 type BasePauseMetadata<T extends PauseType> = {
   type: T;
-  resumeStepMetadata: ResumeStepMetadata;
 }
 
 export type DelayPauseMetadata = BasePauseMetadata<PauseType.DELAY> & {

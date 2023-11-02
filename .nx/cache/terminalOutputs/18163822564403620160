@@ -1,0 +1,28 @@
+(node:2629) [DEP_WEBPACK_COMPILATION_ASSETS] DeprecationWarning: Compilation.assets will be frozen in future, all modifications are deprecated.
+BREAKING CHANGE: No more changes should happen to Compilation.assets after sealing the Compilation.
+	Do changes to assets earlier, e. g. in Compilation.hooks.processAssets.
+	Make sure to select an appropriate stage from Compilation.PROCESS_ASSETS_STAGE_*.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+chunk (runtime: main) main.js (main) 1.31 MiB (javascript) 793 bytes (runtime) [entry] [rendered]
+
+ERROR in ./packages/engine/src/lib/helper/piece-helper.ts:[32m[1m133:57[22m[39m
+[90mTS2551: [39mProperty 'resolveOld' does not exist on type 'VariableService'. Did you mean 'resolve'?
+  [0m [90m 131 |[39m[0m
+  [0m [90m 132 |[39m         [36mtry[39m {[0m
+  [0m[31m[1m>[22m[39m[90m 133 |[39m             [36mconst[39m resolvedProps [33m=[39m [36mawait[39m variableService[33m.[39mresolveOld[33m<[39m[0m
+  [0m [90m     |[39m                                                         [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[0m
+  [0m [90m 134 |[39m             [33mStaticPropsValue[39m[33m<[39m[33mPiecePropertyMap[39m[33m>[39m[0m
+  [0m [90m 135 |[39m             [33m>[39m({[0m
+  [0m [90m 136 |[39m                 unresolvedInput[33m:[39m params[33m.[39minput[33m,[39m[0m
+
+ERROR in ./packages/engine/src/lib/helper/trigger-helper.ts:[32m[1m29:53[22m[39m
+[90mTS2551: [39mProperty 'resolveOld' does not exist on type 'VariableService'. Did you mean 'resolve'?
+  [0m [90m 27 |[39m         [36mconst[39m executionState [33m=[39m [36mnew[39m [33mExecutionState[39m()[0m
+  [0m [90m 28 |[39m[0m
+  [0m[31m[1m>[22m[39m[90m 29 |[39m         [36mconst[39m resolvedProps [33m=[39m [36mawait[39m variableService[33m.[39mresolveOld[33m<[39m[33mStaticPropsValue[39m[33m<[39m[33mPiecePropertyMap[39m[33m>>[39m({[0m
+  [0m [90m    |[39m                                                     [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[0m
+  [0m [90m 30 |[39m             unresolvedInput[33m:[39m input[33m,[39m[0m
+  [0m [90m 31 |[39m             executionState[33m,[39m[0m
+  [0m [90m 32 |[39m             logs[33m:[39m [36mfalse[39m[33m,[39m[0m
+
+webpack compiled with 2 errors (316a2313a1d67d34)

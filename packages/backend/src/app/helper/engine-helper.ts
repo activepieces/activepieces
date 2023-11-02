@@ -4,7 +4,6 @@ import {
     EngineOperation,
     EngineOperationType,
     ExecuteActionOperation,
-    ExecuteFlowOperation,
     ExecutePropsOptions,
     ExecuteTriggerOperation,
     ExecutionOutput,
@@ -22,6 +21,8 @@ import {
     ExecuteValidateAuthOperation,
     ExecuteValidateAuthResponse,
     EngineTestOperation,
+    BeginExecuteFlowOperation,
+    ResumeExecuteFlowOperation,
 } from '@activepieces/shared'
 import { Sandbox } from '../workers/sandbox'
 import { tokenUtils } from '../authentication/lib/token-utils'
@@ -39,6 +40,7 @@ import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { sandboxProvisioner } from '../workers/sandbox/provisioner/sandbox-provisioner'
 import { SandBoxCacheType } from '../workers/sandbox/provisioner/sandbox-cache-key'
 import { hashObject } from './encryption'
+import { getServerUrl } from './public-ip-utils'
 
 type GenerateWorkerTokenParams = {
     projectId: ProjectId
@@ -144,7 +146,7 @@ const execute = async <Result extends EngineHelperResult>(
 export const engineHelper = {
     async executeFlow(
         sandbox: Sandbox,
-        operation: ExecuteFlowOperation,
+        operation: Omit<BeginExecuteFlowOperation, EngineConstants> | Omit<ResumeExecuteFlowOperation, EngineConstants>,
     ): Promise<EngineHelperResponse<EngineHelperFlowResult>> {
         logger.debug({
             executionType: operation.executionType,
@@ -156,13 +158,13 @@ export const engineHelper = {
         const input = {
             ...operation,
             workerToken: await generateWorkerToken({ projectId: operation.projectId }),
+            serverUrl: await getServerUrl(),
         }
-
-        return await execute(EngineOperationType.EXECUTE_FLOW, sandbox, input)
+        return execute(EngineOperationType.EXECUTE_FLOW, sandbox, input)
     },
 
     async executeTrigger<T extends TriggerHookType>(
-        operation: ExecuteTriggerOperation<T>,
+        operation: Omit<ExecuteTriggerOperation<T>, EngineConstants>,
     ): Promise<EngineHelperResponse<EngineHelperTriggerResult<T>>> {
         logger.debug({ hookType: operation.hookType, projectId: operation.projectId }, '[EngineHelper#executeTrigger]')
 
@@ -196,22 +198,23 @@ export const engineHelper = {
         })
 
         try {
-            const input = {
-                ...operation,
-                pieceVersion: exactPieceVersion,
-                flowVersion: lockedFlowVersion,
-                edition: getEdition(),
-                appWebhookUrl: await appEventRoutingService.getAppWebhookUrl({
-                    appName: pieceName,
-                }),
-                webhookSecret: await getWebhookSecret(operation.flowVersion),
-                workerToken: await generateWorkerToken({ projectId: operation.projectId }),
-            }
+
 
             return await execute(
                 EngineOperationType.EXECUTE_TRIGGER_HOOK,
                 sandbox,
-                input,
+                {
+                    ...operation,
+                    pieceVersion: exactPieceVersion,
+                    flowVersion: lockedFlowVersion,
+                    edition: getEdition(),
+                    appWebhookUrl: await appEventRoutingService.getAppWebhookUrl({
+                        appName: pieceName,
+                    }),
+                    webhookSecret: await getWebhookSecret(operation.flowVersion),
+                    serverUrl: await getServerUrl(),
+                    workerToken: await generateWorkerToken({ projectId: operation.projectId }),
+                },
             )
         }
         finally {
@@ -220,7 +223,7 @@ export const engineHelper = {
     },
 
     async executeProp(
-        operation: ExecutePropsOptions,
+        operation: Omit<ExecutePropsOptions, EngineConstants>,
     ): Promise<EngineHelperResponse<EngineHelperPropResult>> {
         logger.debug({
             piece: operation.piece,
@@ -244,15 +247,14 @@ export const engineHelper = {
         })
 
         try {
-            const input = {
-                ...operation,
-                workerToken: await generateWorkerToken({ projectId: operation.projectId }),
-            }
-
             return await execute(
                 EngineOperationType.EXECUTE_PROPERTY,
                 sandbox,
-                input,
+                {
+                    ...operation,
+                    workerToken: await generateWorkerToken({ projectId: operation.projectId }),
+                    serverUrl: await getServerUrl(),
+                },
             )
         }
         finally {
@@ -261,7 +263,7 @@ export const engineHelper = {
     },
 
     async executeCode(
-        operation: ExecuteCodeOperation,
+        operation: Omit<ExecuteCodeOperation, EngineConstants>,
     ): Promise<EngineHelperResponse<EngineHelperCodeResult>> {
         logger.debug({
             flowVersionId: operation.flowVersion.id,
@@ -280,11 +282,11 @@ export const engineHelper = {
         })
 
         try {
-            const input = {
+            return execute(EngineOperationType.EXECUTE_CODE, sandbox, {
                 ...operation,
+                serverUrl: await getServerUrl(),
                 workerToken: await generateWorkerToken({ projectId: operation.projectId }),
-            }
-            return execute(EngineOperationType.EXECUTE_CODE, sandbox, input)
+            })
         }
         finally {
             await sandboxProvisioner.release({ sandbox })
@@ -318,7 +320,7 @@ export const engineHelper = {
         }
     },
 
-    async executeAction(operation: ExecuteActionOperation): Promise<EngineHelperResponse<EngineHelperActionResult>> {
+    async executeAction(operation: Omit<ExecuteActionOperation, EngineConstants>): Promise<EngineHelperResponse<EngineHelperActionResult>> {
         logger.debug({
             flowVersionId: operation.flowVersion.id,
             piece: operation.piece,
@@ -341,12 +343,11 @@ export const engineHelper = {
         })
 
         try {
-            const input = {
+            return await execute(EngineOperationType.EXECUTE_ACTION, sandbox, {
                 ...operation,
                 workerToken: await generateWorkerToken({ projectId: operation.projectId }),
-            }
-
-            return await execute(EngineOperationType.EXECUTE_ACTION, sandbox, input)
+                serverUrl: await getServerUrl(),
+            })
         }
         finally {
             await sandboxProvisioner.release({
@@ -356,7 +357,7 @@ export const engineHelper = {
     },
 
     async executeValidateAuth(
-        operation: ExecuteValidateAuthOperation,
+        operation: Omit<ExecuteValidateAuthOperation, EngineConstants>,
     ): Promise<EngineHelperResponse<EngineHelperValidateAuthResult>> {
         logger.debug({ piece: operation.piece }, '[EngineHelper#executeValidateAuth]')
 
@@ -376,15 +377,14 @@ export const engineHelper = {
         })
 
         try {
-            const input = {
-                ...operation,
-                workerToken: await generateWorkerToken({ projectId: operation.projectId }),
-            }
-
             return await execute(
                 EngineOperationType.EXECUTE_VALIDATE_AUTH,
                 sandbox,
-                input,
+                {
+                    ...operation,
+                    workerToken: await generateWorkerToken({ projectId: operation.projectId }),
+                    serverUrl: await getServerUrl(),
+                },
             )
         }
         finally {
@@ -392,7 +392,7 @@ export const engineHelper = {
         }
     },
 
-    async executeTest(sandbox: Sandbox, operation: EngineTestOperation): Promise<EngineHelperResponse<EngineHelperFlowResult>> {
+    async executeTest(sandbox: Sandbox, operation: Omit<EngineTestOperation, EngineConstants>): Promise<EngineHelperResponse<EngineHelperFlowResult>> {
         logger.debug({
             flowVersionId: operation.sourceFlowVersion.id,
             projectId: operation.projectId,
@@ -400,11 +400,12 @@ export const engineHelper = {
             executionType: operation.executionType,
         }, '[EngineHelper#executeTest]')
 
-        const input = {
+        return await execute(EngineOperationType.EXECUTE_TEST_FLOW, sandbox, {
             ...operation,
+            serverUrl: await getServerUrl(),
             workerToken: await generateWorkerToken({ projectId: operation.projectId }),
-        }
-
-        return await execute(EngineOperationType.EXECUTE_TEST, sandbox, input)
+        })
     },
 }
+
+type EngineConstants = 'serverUrl' | 'workerToken'

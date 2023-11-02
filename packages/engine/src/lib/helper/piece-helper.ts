@@ -1,6 +1,5 @@
 import {
     Action,
-    ActionContext,
     DropdownProperty,
     DropdownState,
     DynamicProperties,
@@ -16,12 +15,9 @@ import {
     ErrorCode,
     ExecuteActionOperation,
     ExecuteActionResponse,
-    ExecuteCodeOperation,
     ExecutePropsOptions,
     ExecutionState,
-    ExecutionType,
     extractPieceFromModule,
-    AUTHENTICATION_PROPERTY_NAME,
     ExecuteValidateAuthOperation,
     ExecuteValidateAuthResponse,
     BasicAuthConnectionValue,
@@ -32,14 +28,8 @@ import {
 } from '@activepieces/shared'
 import { VariableService } from '../services/variable-service'
 import { isNil } from '@activepieces/shared'
-import { createContextStore } from '../services/storage.service'
-import { globals } from '../globals'
-import { connectionService } from '../services/connections.service'
-import { utils } from '../utils'
-import { codeExecutor } from '../executors/code-executer'
-import { createTagsManager } from '../services/tags.service'
-import { testExecution } from './test-execution-context'
-import { createFilesService } from '../services/files.service'
+import { API_URL } from '../constants'
+import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 
 const variableService = new VariableService()
 const env = process.env.AP_ENVIRONMENT
@@ -130,154 +120,35 @@ const getPropOrThrow = async (params: ExecutePropsOptions) => {
 }
 
 export const pieceHelper = {
-    async executeCode(params: ExecuteCodeOperation): Promise<ExecuteActionResponse> {
-        const { step, input, flowVersion } = params
 
-        const executionState = await testExecution.stateFromFlowVersion({
-            flowVersion,
-        })
 
-        const resolvedInput = await variableService.resolve({
-            unresolvedInput: input,
-            executionState,
-            logs: false,
-        })
-
-        try {
-
-            const result = await codeExecutor.executeCode({
-                params: resolvedInput,
-                stepName: step.name,
-            })
-            return {
-                success: true,
-                output: result,
-            }
-        }
-        catch (e) {
-            // Don't remove this console.error, it's used in the UI to display the error
-            console.error(e)
-            return {
-                success: false,
-                output: undefined,
-            }
-        }
-    },
-
-    async executeAction(params: ExecuteActionOperation): Promise<ExecuteActionResponse> {
-        const { piece: piecePackage, actionName, input, flowVersion } = params
-
-        const action = await getActionOrThrow({
-            pieceName: piecePackage.pieceName,
-            pieceVersion: piecePackage.pieceVersion,
-            actionName,
-        })
-
-        const piece = await pieceHelper.loadPieceOrThrow(piecePackage.pieceName, piecePackage.pieceVersion)
-
-        const executionState = await testExecution.stateFromFlowVersion({
-            flowVersion,
-        })
-
-        const resolvedProps = await variableService.resolve<
-        StaticPropsValue<PiecePropertyMap>
-        >({
-            unresolvedInput: input,
-            executionState,
-            logs: false,
-        })
-
-        try {
-            const { processedInput, errors } =
-                await variableService.applyProcessorsAndValidators(
-                    resolvedProps,
-                    action.props,
-                    piece.auth,
-                )
-            if (Object.keys(errors).length > 0) {
-                throw new Error(JSON.stringify(errors))
-            }
-
-            const context: ActionContext = {
-                executionType: ExecutionType.BEGIN,
-                auth: processedInput[AUTHENTICATION_PROPERTY_NAME],
-                propsValue: processedInput,
-                server: {
-                    token: globals.workerToken!,
-                    apiUrl: globals.apiUrl!,
-                    publicUrl: globals.serverUrl!,
-                },
-                files: createFilesService({
-                    stepName: actionName,
-                    flowId: flowVersion.flowId,
-                    type: 'db',
-                }),
-                tags: createTagsManager(executionState),
-                store: createContextStore('', flowVersion.flowId),
-                connections: {
-                    get: async (key: string) => {
-                        try {
-                            const connection = await connectionService.obtain(key)
-                            if (!connection) {
-                                return null
-                            }
-                            return connection
-                        }
-                        catch (e) {
-                            return null
-                        }
-                    },
-                },
-                serverUrl: globals.serverUrl!,
-                run: {
-                    id: 'test-flow-run-id',
-                    stop: () => console.info('stopHook called!'),
-                    pause: () => console.info('pauseHook called!'),
-                },
-            }
-
-            // Legacy Code doesn't have test function
-            if (!isNil(action.test)) {
-                return {
-                    output: await action.test(context),
-                    success: true,
-                }
-            }
-            return {
-                output: await action.run(context),
-                success: true,
-            }
-        }
-        catch (e) {
-            return {
-                output: e instanceof Error ? await utils.tryParseJson(e.message) : e,
-                success: false,
-            }
-        }
+    // TODO REIMPLMENT or use executor
+    async executeAction(_params: ExecuteActionOperation): Promise<ExecuteActionResponse> {
+        return {} as unknown as ExecuteActionResponse
     },
 
     async executeProps(params: ExecutePropsOptions) {
         const property = await getPropOrThrow(params)
 
         try {
-            const resolvedProps = await variableService.resolve<
+            const { resolvedInput } = await variableService.resolve<
             StaticPropsValue<PiecePropertyMap>
             >({
                 unresolvedInput: params.input,
-                executionState: new ExecutionState(),
-                logs: false,
+                // TODO FIX
+                executionState: FlowExecutorContext.empty(),
             })
             const ctx = {
                 server: {
-                    token: globals.workerToken!,
-                    apiUrl: globals.apiUrl!,
-                    publicUrl: globals.serverUrl!,
+                    token: params.workerToken,
+                    apiUrl: API_URL,
+                    publicUrl: params.serverUrl,
                 },
             }
 
             if (property.type === PropertyType.DYNAMIC) {
                 const dynamicProperty = property as DynamicProperties<boolean>
-                return dynamicProperty.props(resolvedProps, ctx)
+                return dynamicProperty.props(resolvedInput, ctx)
             }
 
             if (property.type === PropertyType.MULTI_SELECT_DROPDOWN) {
@@ -285,11 +156,11 @@ export const pieceHelper = {
                 unknown,
                 boolean
                 >
-                return multiSelectProperty.options(resolvedProps, ctx)
+                return multiSelectProperty.options(resolvedInput, ctx)
             }
 
             const dropdownProperty = property as DropdownProperty<unknown, boolean>
-            return dropdownProperty.options(resolvedProps, ctx)
+            return dropdownProperty.options(resolvedInput, ctx)
         }
         catch (e) {
             console.error(e)
@@ -353,6 +224,7 @@ export const pieceHelper = {
     },
 
     loadPieceOrThrow,
+    getActionOrThrow,
 }
 
 const getPackageAlias = ({ pieceName, pieceVersion }: GetPackageAliasParams) => {

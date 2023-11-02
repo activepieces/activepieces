@@ -8,10 +8,7 @@ type GetStepOutputParams = {
   ancestors: [string, number][]
 }
 
-type AdjustTaskCountParams = {
-  stepOutput: StepOutput
-}
-
+// TODO CLEAN AND TURN ITNO TYPE 
 export class ExecutionState {
   private _taskCount = 0
   private _tags: string[] = [];
@@ -34,44 +31,12 @@ export class ExecutionState {
     return this._taskCount
   }
 
-  public addTags(tags: string[]) {
-    this._tags.push(...tags);
-  }
-
-  public addConnectionTags(tags: string[]) {
-    this._tags.push(...tags.map(tag => `connection:${tag}`));
-    // Sorting the array
-    this._tags.sort();
-
-    // Removing duplicates
-    this._tags = this._tags.filter((value, index, self) => {
-      return self.indexOf(value) === index;
-    });
-  }
-
-  private adjustTaskCount({ stepOutput }: AdjustTaskCountParams) {
-    const nonCountableSteps = [
-      ActionType.BRANCH,
-      ActionType.LOOP_ON_ITEMS,
-    ]
-
-    const stepIsCountable = !nonCountableSteps.includes(stepOutput.type)
-
-    if (stepIsCountable) {
-      this._taskCount += 1
-    }
-  }
-
   insertStep(
     stepOutput: StepOutput,
     stepName: string,
     ancestors: [string, number][]
   ) {
     const targetMap: Record<string, StepOutput> = this.getTargetMap(ancestors);
-
-    this.adjustTaskCount({
-      stepOutput,
-    })
 
     targetMap[stepName] = stepOutput;
     this.updateLastStep(stepOutput.output, stepName);

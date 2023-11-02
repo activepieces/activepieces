@@ -11,7 +11,6 @@ import {
     Cursor,
     EngineResponseStatus,
     ErrorCode,
-    ExecuteValidateAuthOperation,
     OAuth2ConnectionValueWithApp,
     ProjectId,
     SeekPage,
@@ -33,7 +32,6 @@ import { isNil } from '@activepieces/shared'
 import { engineHelper } from '../../helper/engine-helper'
 import { acquireLock } from '../../helper/lock'
 import { pieceMetadataService } from '../../pieces/piece-metadata-service'
-import { getServerUrl } from '../../helper/public-ip-utils'
 import { appConnectionsHooks } from './app-connection-hooks'
 
 const repo = databaseConnection.getRepository(AppConnectionEntity)
@@ -237,8 +235,7 @@ const engineValidateAuth = async (
         version: undefined,
     })
 
-    const engineInput: ExecuteValidateAuthOperation = {
-        serverUrl: await getServerUrl(),
+    const engineResponse = await engineHelper.executeValidateAuth( {
         piece: {
             packageType: pieceMetadata.packageType,
             pieceType: pieceMetadata.pieceType,
@@ -248,9 +245,7 @@ const engineValidateAuth = async (
         },
         auth,
         projectId,
-    }
-
-    const engineResponse = await engineHelper.executeValidateAuth(engineInput)
+    })
 
     if (engineResponse.status !== EngineResponseStatus.OK) {
         logger.error(

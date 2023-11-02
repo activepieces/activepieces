@@ -1,23 +1,27 @@
-import { ActionType, ExecutionState, FlowVersion, TriggerType, flowHelper } from '@activepieces/shared'
-import { VariableService } from '../services/variable-service'
-
-const variableService = new VariableService()
+import { ActionType, FlowVersion, StepOutput, StepOutputStatus, TriggerType, flowHelper } from '@activepieces/shared'
+import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 
 export const testExecution = {
-    async stateFromFlowVersion({ flowVersion }: FromFlowVersionParams): Promise<ExecutionState> {
+    async stateFromFlowVersion({ flowVersion }: {
+        flowVersion: FlowVersion
+    }): Promise<FlowExecutorContext> {
         const testContext = await contextFromFlowVersion({
             flowVersion,
         })
 
-        return stateFromContext({
-            context: testContext,
-        })
+        let flowExecutionContext = FlowExecutorContext.empty()
+        for (const [key, value] of Object.entries(testContext)) {
+            flowExecutionContext = flowExecutionContext.upsertStep(key, value)
+        }
+        return flowExecutionContext
     },
 }
 
-const contextFromFlowVersion = async ({ flowVersion }: FromFlowVersionParams): Promise<TestExecutionContext> => {
+const contextFromFlowVersion = async ({ flowVersion }: {
+    flowVersion: FlowVersion
+}): Promise<Record<string, StepOutput>> => {
     const flowSteps = flowHelper.getAllSteps(flowVersion.trigger)
-    const testContext: TestExecutionContext = {}
+    const testContext: Record<string, StepOutput> = {}
 
     for (const step of flowSteps) {
         const stepsWithSampleData = [
@@ -29,46 +33,37 @@ const contextFromFlowVersion = async ({ flowVersion }: FromFlowVersionParams): P
 
         if (stepsWithSampleData.includes(step.type)) {
             const { name, settings: { inputUiInfo } } = step
-            testContext[name] = inputUiInfo?.currentSelectedData
+            testContext[name] = {
+                type: step.type,
+                input: {},
+                status: StepOutputStatus.SUCCEEDED,
+                output: inputUiInfo?.currentSelectedData,
+            }
         }
 
         if (step.type === ActionType.LOOP_ON_ITEMS) {
-            const executionState = stateFromContext({
+            // TODO FIX
+            /*const executionState = stateFromContext({
                 context: testContext,
             })
 
-            const resolvedLoopOutput: { items: unknown[] } = await variableService.resolve({
+            const resolvedLoopOutput: { items: unknown[] } = await variableService.resolveOld({
                 unresolvedInput: step.settings,
                 executionState,
                 logs: false,
             })
 
             testContext[step.name] = {
-                index: 1,
-                item: resolvedLoopOutput.items[0],
-            }
+                type: ActionType.LOOP_ON_ITEMS,
+                input: {},
+                status: StepOutputStatus.SUCCEEDED,
+                output: {
+                    index: 1,
+                    item: resolvedLoopOutput.items[0],
+                },
+            }*/
         }
     }
 
     return testContext
-}
-
-const stateFromContext = ({ context }: StateFromContextParams): ExecutionState => {
-    const state = new ExecutionState()
-
-    for (const [stepName, stepOutput] of Object.entries(context)) {
-        state.updateLastStep(stepOutput, stepName)
-    }
-
-    return state
-}
-
-type TestExecutionContext = Record<string, unknown>
-
-type StateFromContextParams = {
-    context: TestExecutionContext
-}
-
-type FromFlowVersionParams = {
-    flowVersion: FlowVersion
 }
