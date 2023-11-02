@@ -19,12 +19,15 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
         executionState: FlowExecutorContext
         constants: EngineConstantData
     }) {
-        const { resolvedInput, censoredInput } = await variableService.resolve<LoopOnActionResolvedSettings>({
+        const { resolvedInput, censoredInput } = await variableService({
+            projectId: constants.projectId,
+            workerToken: constants.workerToken,
+        }).resolve<LoopOnActionResolvedSettings>({
             unresolvedInput: action.settings,
             executionState,
         })
 
-        let stepOutput: LoopOnItemsStepOutput = StepOutput.loop({
+        let stepOutput: LoopOnItemsStepOutput = StepOutput.createLoopOutput({
             input: censoredInput,
         })
 

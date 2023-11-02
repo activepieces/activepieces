@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
     AUTHENTICATION_PROPERTY_NAME,
-    ExecutionState,
     isNil,
     isString,
 } from '@activepieces/shared'
@@ -18,7 +17,15 @@ import { createConnectionService } from './connections.service'
 
 export class VariableService {
     private VARIABLE_TOKEN = RegExp('\\{\\{(.*?)\\}\\}', 'g')
+    private workerToken: string
+    private projectId: string
     private static CONNECTIONS = 'connections'
+
+
+    constructor(data: { workerToken: string, projectId: string }) {
+        this.workerToken = data.workerToken
+        this.projectId = data.projectId
+    }
 
     private async resolveInput(
         input: string,
@@ -63,8 +70,7 @@ export class VariableService {
         // Replace connection name with something that doesn't contain - or _, otherwise evalInScope would break
         const newPath = this.cleanPath(path, connectionName)
 
-        // TODO PASS PROJECT ID
-        const connection = await createConnectionService({ workerToken: 'WORKER', projectId: 'WORKER' }).obtain(connectionName)
+        const connection = await createConnectionService({ workerToken: this.workerToken, projectId: this.projectId }).obtain(connectionName)
         if (newPath.length === 0) {
             return connection
         }
@@ -153,9 +159,9 @@ export class VariableService {
         unresolvedInput: unknown
         executionState: FlowExecutorContext
     }): Promise<{
-            resolvedInput: T
-            censoredInput: unknown
-        }> {
+        resolvedInput: T
+        censoredInput: unknown
+    }> {
         const { unresolvedInput, executionState } = params
 
         if (isNil(unresolvedInput)) {
@@ -165,7 +171,6 @@ export class VariableService {
             }
         }
 
-        // TODO FIX 
         const resolvedInput = await this.resolveInternally(
             JSON.parse(JSON.stringify(unresolvedInput)),
             executionState.currentState,
@@ -222,8 +227,7 @@ export class VariableService {
             if (property.type === PropertyType.FILE && isApFilePath(value)) {
                 processedInput[key] = await handleAPFile({
                     path: value.trim(),
-                    // TODO FIX
-                    workerToken: 'WORKER',
+                    workerToken: this.workerToken,
                 })
             }
             else {
@@ -288,4 +292,4 @@ export class VariableService {
     }
 }
 
-export const variableService = new VariableService()
+export const variableService = ({ projectId, workerToken }: { projectId: string, workerToken: string }) => new VariableService({ projectId, workerToken })

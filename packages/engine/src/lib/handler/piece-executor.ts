@@ -25,7 +25,10 @@ export const pieceExecutor: BaseExecutor<PieceAction> = {
         const {
             censoredInput,
             resolvedInput,
-        } = await variableService.resolve<StaticPropsValue<PiecePropertyMap>>({
+        } = await variableService({
+            projectId: constants.projectId,
+            workerToken: constants.workerToken,
+        }).resolve<StaticPropsValue<PiecePropertyMap>>({
             unresolvedInput: action.settings.input,
             executionState,
         })
@@ -38,7 +41,10 @@ export const pieceExecutor: BaseExecutor<PieceAction> = {
         })
 
         const piece = await pieceHelper.loadPieceOrThrow(action.settings.pieceName, action.settings.pieceVersion)
-        const { processedInput, errors } = await variableService.applyProcessorsAndValidators(resolvedInput, pieceAction.props, piece.auth)
+        const { processedInput, errors } = await variableService({
+            projectId: constants.projectId,
+            workerToken: constants.workerToken,
+        }).applyProcessorsAndValidators(resolvedInput, pieceAction.props, piece.auth)
         if (Object.keys(errors).length > 0) {
             throw new Error(JSON.stringify(errors))
         }

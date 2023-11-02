@@ -42,7 +42,7 @@ export const StepOutput = {
       status: StepOutputStatus.SUCCEEDED,
     }
   },
-  loop({ input }: { input: unknown }): LoopOnItemsStepOutput {
+  createLoopOutput({ input }: { input: unknown }): LoopOnItemsStepOutput {
     return {
       ...LoopOnItemsStepOutput,
       type: ActionType.LOOP_ON_ITEMS,

@@ -20,7 +20,10 @@ export const codeExecutor: BaseExecutor<CodeAction> = {
         if (executionState.isCompleted({ stepName: action.name })) {
             return executionState
         }
-        const { censoredInput, resolvedInput } = await variableService.resolve({
+        const { censoredInput, resolvedInput } = await variableService({
+            projectId: constants.projectId,
+            workerToken: constants.workerToken,
+        }).resolve({
             unresolvedInput: action.settings.input,
             executionState,
         })

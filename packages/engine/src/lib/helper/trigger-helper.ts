@@ -24,12 +24,18 @@ export const triggerHelper = {
             throw new Error(`trigger not found, pieceName=${pieceName}, triggerName=${triggerName}`)
         }
 
-        const { resolvedInput } = await variableService.resolve<StaticPropsValue<PiecePropertyMap>>({
+        const { resolvedInput } = await variableService({
+            projectId: params.projectId,
+            workerToken: params.workerToken,
+        }).resolve<StaticPropsValue<PiecePropertyMap>>({
             unresolvedInput: input,
             executionState: FlowExecutorContext.empty(),
         })
 
-        const { processedInput, errors } = await variableService.applyProcessorsAndValidators(resolvedInput, trigger.props, piece.auth)
+        const { processedInput, errors } = await variableService({
+            projectId: params.projectId,
+            workerToken: params.workerToken,
+        }).applyProcessorsAndValidators(resolvedInput, trigger.props, piece.auth)
 
         if (Object.keys(errors).length > 0) {
             throw new Error(JSON.stringify(errors))

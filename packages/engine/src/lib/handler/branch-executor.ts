@@ -15,7 +15,10 @@ export const branchExecutor: BaseExecutor<BranchAction> = {
         executionState: FlowExecutorContext
         constants: EngineConstantData
     }) {
-        const { censoredInput, resolvedInput } = await variableService.resolve<BranchActionSettings>({
+        const { censoredInput, resolvedInput } = await variableService({
+            projectId: constants.projectId,
+            workerToken: constants.workerToken,
+        }).resolve<BranchActionSettings>({
             unresolvedInput: action.settings,
             executionState,
         })

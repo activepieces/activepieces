@@ -15,8 +15,6 @@ import {
     ErrorCode,
     ExecuteActionOperation,
     ExecuteActionResponse,
-    ExecutePropsOptions,
-    ExecutionState,
     extractPieceFromModule,
     ExecuteValidateAuthOperation,
     ExecuteValidateAuthResponse,
@@ -25,13 +23,13 @@ import {
     CustomAuthConnectionValue,
     ExecuteExtractPieceMetadata,
     getPackageAliasForPiece,
+    ExecutePropsOptions,
 } from '@activepieces/shared'
-import { VariableService } from '../services/variable-service'
 import { isNil } from '@activepieces/shared'
 import { API_URL } from '../constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
+import { variableService } from '../services/variable-service'
 
-const variableService = new VariableService()
 const env = process.env.AP_ENVIRONMENT
 
 const loadPieceOrThrow = async (
@@ -131,7 +129,10 @@ export const pieceHelper = {
         const property = await getPropOrThrow(params)
 
         try {
-            const { resolvedInput } = await variableService.resolve<
+            const { resolvedInput } = await variableService({
+                projectId: params.projectId,
+                workerToken: params.workerToken,
+            }).resolve<
             StaticPropsValue<PiecePropertyMap>
             >({
                 unresolvedInput: params.input,

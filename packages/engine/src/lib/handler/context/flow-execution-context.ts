@@ -45,7 +45,7 @@ export const StepExecutionPath = {
 export type FlowExecutorContext = {
     tasks: number
     tags: readonly string[]
-    steps: Readonly<Record<string, StepOutput>>
+    steps: Readonly<Record<string, StepOutput<ActionType>>>
     currentState: Record<string, unknown>
     verdict: ExecutionVerdict
     currentPath: StepExecutionPath
@@ -125,16 +125,14 @@ export const FlowExecutorContext = {
 
 
 
-function getStateAtPath({ currentPath, steps }: { currentPath: StepExecutionPath, steps: Record<string, StepOutput> }): Record<string, StepOutput> {
+function getStateAtPath({ currentPath, steps }: { currentPath: StepExecutionPath, steps: Record<string, StepOutput<ActionType>> }): Record<string, StepOutput> {
     let targetMap = steps
     currentPath.path.forEach(([stepName, iteration]) => {
         const stepOutput = targetMap[stepName]
         if (stepOutput.type !== ActionType.LOOP_ON_ITEMS) {
             throw new Error('[ExecutionState#getTargetMap] Not instance of Loop On Items step output')
         }
-        // TODO CASTING SHOULDN"T BE NEEDED
-        const loopOutput = stepOutput as LoopOnItemsStepOutput
-        targetMap = loopOutput.output!.iterations[iteration]
+        targetMap = stepOutput.output.iterations[iteration]
     })
     return targetMap
 }
