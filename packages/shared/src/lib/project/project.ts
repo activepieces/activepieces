@@ -21,6 +21,7 @@ export const Project = Type.Object({
   notifyStatus: Type.Enum(NotificationStatus),
   type: Type.Enum(ProjectType),
   platformId: Type.Optional(ApId),
+  externalId: Type.Optional(Type.String()),
 });
 
 export type Project = Static<typeof Project>;

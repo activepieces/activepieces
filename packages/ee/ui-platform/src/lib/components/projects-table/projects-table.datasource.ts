@@ -14,7 +14,8 @@ export class ProjectsDataSource extends DataSource<Project> {
   isLoading$: BehaviorSubject<boolean> = new BehaviorSubject(true);
   constructor(
     private projectService: ProjectService,
-    private refresh$: Observable<boolean>
+    private refresh$: Observable<boolean>,
+    private platformId: string
   ) {
     super();
   }
@@ -30,7 +31,7 @@ export class ProjectsDataSource extends DataSource<Project> {
       tap(() => {
         this.isLoading$.next(true);
       }),
-      switchMap(() => this.projectService.list()),
+      switchMap(() => this.projectService.list(this.platformId)),
       tap((projects) => {
         this.data = projects;
         this.isLoading$.next(false);

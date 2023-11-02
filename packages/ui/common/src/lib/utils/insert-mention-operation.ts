@@ -1,9 +1,13 @@
+export interface ApMention {
+  value: string;
+  serverValue: string;
+  data: {
+    logoUrl?: string;
+  };
+}
+
 export interface InsertMentionOperation {
   insert: {
-    mention: {
-      value: string;
-      serverValue: string;
-      denotationChar: string;
-    };
+    apMention: ApMention;
   };
 }

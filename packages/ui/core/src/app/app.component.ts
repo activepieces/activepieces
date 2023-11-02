@@ -28,7 +28,7 @@ import {
 } from '@activepieces/ui/common';
 import { compareVersions } from 'compare-versions';
 import { ApFlagId, FlowOperationType } from '@activepieces/shared';
-import { TelemetryService } from '@activepieces/ui/common';
+import { TelemetryService, EmbeddingService } from '@activepieces/ui/common';
 import { AuthenticationService, fadeInUp400ms } from '@activepieces/ui/common';
 import { MatDialog } from '@angular/material/dialog';
 import {
@@ -61,6 +61,7 @@ export class AppComponent implements OnInit {
   loadingTheme$: BehaviorSubject<boolean> = new BehaviorSubject(true);
   theme$: Observable<void>;
   setTitle$: Observable<void>;
+  embeddedRouteListener$: Observable<boolean>;
   constructor(
     public dialog: MatDialog,
     private store: Store,
@@ -73,13 +74,33 @@ export class AppComponent implements OnInit {
     private domSanitizer: DomSanitizer,
     private builderService: CollectionBuilderService,
     private flowService: FlowService,
-    private snackbar: MatSnackBar
+    private snackbar: MatSnackBar,
+    private embeddedService: EmbeddingService
   ) {
     this.registerSearchIconIntoMaterialIconRegistery();
     this.listenToImportFlow();
     this.theme$ = this.apperanceService.setTheme().pipe(
       tap(() => this.loadingTheme$.next(false)),
       map(() => void 0)
+    );
+    this.embeddedRouteListener$ = this.router.events.pipe(
+      switchMap((routingEvent) => {
+        return this.embeddedService.getIsInEmbedding$().pipe(
+          tap((embedded) => {
+            if (
+              routingEvent instanceof NavigationStart &&
+              routingEvent.url.startsWith('/embed') &&
+              embedded
+            ) {
+              console.error('visiting /embed after init');
+              this.router.navigate(['/'], { skipLocationChange: true });
+            }
+            if (embedded && routingEvent instanceof NavigationEnd) {
+              this.embeddedService.activepiecesRouteChanged(this.router.url);
+            }
+          })
+        );
+      })
     );
     this.routeLoader$ = this.router.events.pipe(
       tap((event) => {
@@ -91,6 +112,7 @@ export class AppComponent implements OnInit {
         }
         if (event instanceof NavigationEnd) {
           let route = this.router.routerState.root;
+
           while (route.firstChild) {
             route = route.firstChild;
           }

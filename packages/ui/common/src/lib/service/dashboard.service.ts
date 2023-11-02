@@ -5,17 +5,17 @@ import { BehaviorSubject } from 'rxjs';
   providedIn: 'root',
 })
 export class DashboardService {
-  private hideSideNavRoutes$: BehaviorSubject<boolean> = new BehaviorSubject(
+  private isInPlatformRoute$: BehaviorSubject<boolean> = new BehaviorSubject(
     false
   );
 
-  hideSideNavRoutes() {
-    this.hideSideNavRoutes$.next(true);
+  enteredPlatformModule() {
+    this.isInPlatformRoute$.next(true);
   }
-  showSideNavRoutes() {
-    this.hideSideNavRoutes$.next(false);
+  leftPlatformModule() {
+    this.isInPlatformRoute$.next(false);
   }
-  gethideSideNaveRoutesObs() {
-    return this.hideSideNavRoutes$.asObservable();
+  getIsInPlatformRoute() {
+    return this.isInPlatformRoute$.asObservable();
   }
 }

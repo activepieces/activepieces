@@ -22,7 +22,7 @@
       "dependsOn": ["build"]
     },
     "lint": {
-      "executor": "@nx/linter:eslint",
+      "executor": "@nx/eslint:lint",
       "outputs": ["{options.outputFile}"],
       "options": {
         "lintFilePatterns": ["packages/pieces/qdrant/**/*.ts"]

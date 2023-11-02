@@ -9,7 +9,7 @@ import { AuthenticationResponse } from '@activepieces/shared'
 import { system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
 import { userService } from '../../user/user-service'
-import { tokenUtils } from '../../authentication/lib/token-utils'
+import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { authenticationService } from '../../authentication/authentication-service'
 import { logger } from '../../helper/logger'
 import { referralService } from '../referrals/referral.service'
@@ -40,7 +40,7 @@ export const firebaseAuthenticationController: FastifyPluginAsyncTypebox = async
                     const project = await getProjectByUser(user.id)
                     const platform = await getPlatform(project.platformId)
 
-                    const token = await tokenUtils.encode({
+                    const token = await accessTokenManager.generateToken({
                         id: user.id,
                         type: PrincipalType.USER,
                         projectId: project.id,
@@ -96,7 +96,7 @@ export const firebaseAuthenticationController: FastifyPluginAsyncTypebox = async
                     const project = await getProjectByUser(user.id)
                     const platform = await getPlatform(project.platformId)
 
-                    const token = await tokenUtils.encode({
+                    const token = await accessTokenManager.generateToken({
                         id: user.id,
                         type: PrincipalType.USER,
                         projectId: project.id,

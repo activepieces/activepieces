@@ -7,8 +7,7 @@
 </div>
 
 <div class="step-type-item-container">
-  <app-step-type-item [clickable]="false" [flowItemDetails$]="selectedFlowItemDetails$"
-    [showDocsLink]="true"></app-step-type-item>
+  <app-step-type-item [clickable]="false" [flowItemDetails$]="selectedFlowItemDetails$"></app-step-type-item>
 </div>
 <ng-container *ngIf="selectedStepAndFlowId$ | async as selectedStepAndFlowId; else loading">
   <ng-container *ngIf="selectedFlowItemDetails$  | async; else loading">

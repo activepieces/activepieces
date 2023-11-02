@@ -2,9 +2,9 @@ import { EntitySchema } from 'typeorm'
 import { Project, User } from '@activepieces/shared'
 import { BaseColumnSchemaPart } from '../database/database-common'
 
-export type UserSchema = {
+export type UserSchema = User & {
     projects: Project[]
-} & User
+}
 
 export const UserEntity = new EntitySchema<UserSchema>({
     name: 'user',
@@ -42,7 +42,18 @@ export const UserEntity = new EntitySchema<UserSchema>({
             type: String,
             nullable: true,
         },
+        externalId: {
+            type: String,
+            nullable: true,
+        },
     },
+    indices: [
+        {
+            name: 'idx_user_external_id',
+            columns: ['externalId'],
+            unique: true,
+        },
+    ],
     relations: {
         projects: {
             type: 'one-to-many',

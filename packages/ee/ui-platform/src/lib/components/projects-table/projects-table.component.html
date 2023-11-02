@@ -4,6 +4,10 @@
 
         <div class="ap-min-h-[70%]">
             <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Chatbots">
+                <ng-container matColumnDef="id">
+                    <th mat-header-cell *matHeaderCellDef>ID</th>
+                    <td mat-cell *matCellDef="let project">{{ project.id }}</td>
+                </ng-container>
                 <ng-container matColumnDef="displayName">
                     <th mat-header-cell *matHeaderCellDef>Name</th>
                     <td mat-cell *matCellDef="let project">{{ project.displayName }}</td>
