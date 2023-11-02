@@ -1,9 +1,15 @@
-import axios from 'axios';
 import {
   createAction,
   Property,
   Validators,
 } from '@activepieces/pieces-framework';
+import {
+  HttpRequest,
+  HttpMethod,
+  httpClient,
+  AuthenticationType,
+} from '@activepieces/pieces-common';
+
 import { mailchimpAuth } from '../..';
 import { mailchimpCommon } from '../common';
 
@@ -34,20 +40,17 @@ export const addNoteToSubscriber = createAction({
     const serverPrefix = mailchimpCommon.getMailChimpServerPrefix(access_token);
     const url = `https://${serverPrefix}.api.mailchimp.com/3.0/lists/${list_id}/members/${subscriberHash}/notes`;
 
-    try {
-      const response = await axios.post(
-        url,
-        { note },
-        {
-          headers: {
-            Authorization: `Bearer ${access_token}`,
-          },
-        }
-      );
+    const request: HttpRequest = {
+      method: HttpMethod.POST,
+      url,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: access_token,
+      },
+      body: { note },
+    };
+    const response = await httpClient.sendRequest(request);
 
-      return response.data;
-    } catch (error) {
-      return error;
-    }
+    return response.body;
   },
 });

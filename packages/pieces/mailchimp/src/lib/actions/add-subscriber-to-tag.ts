@@ -1,7 +1,12 @@
 import { mailchimpCommon } from '../common';
-import axios from 'axios';
 import crypto from 'crypto';
 import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  HttpRequest,
+  HttpMethod,
+  httpClient,
+  AuthenticationType,
+} from '@activepieces/pieces-common';
 import { mailchimpAuth } from '../..';
 
 export const addSubscriberToTag = createAction({
@@ -39,20 +44,18 @@ export const addSubscriberToTag = createAction({
       status: 'active',
     }));
 
-    try {
-      const response = await axios.post(
-        url,
-        { tags },
-        {
-          headers: {
-            Authorization: `Bearer ${access_token}`,
-          },
-        }
-      );
+    const request: HttpRequest = {
+      method: HttpMethod.POST,
+      url,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: access_token,
+      },
+      body: { tags },
+    };
 
-      return  response.data,
-    } catch (error) {
-      return error;
-    }
+    const response = await httpClient.sendRequest(request);
+
+    return response.body;
   },
 });
