@@ -99,7 +99,7 @@ export const githubNewRepoEvent = createTrigger({
       }
     },
     async run(context) {
-      if (isVerficationCall(context.payload.body)) {
+      if (isVerficationCall(context.payload.body as Record<string, unknown>)) {
         return [];
       }
       return [context.payload.body];

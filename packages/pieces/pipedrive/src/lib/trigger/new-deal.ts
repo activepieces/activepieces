@@ -24,7 +24,8 @@ export const newDeal = createTrigger({
       }
     },
     async run(context) {
-      return [context.payload.body.current];
+      const payloadBody = context.payload.body as PayloadBody;
+      return [payloadBody.current];
     },
     sampleData:
     {
@@ -169,4 +170,8 @@ export const newDeal = createTrigger({
 
 interface WebhookInformation {
   webhookId: string;
+}
+
+type PayloadBody = {
+  current: unknown
 }
