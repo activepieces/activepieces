@@ -91,9 +91,7 @@ export const wooCreateCustomer = createAction({
       phone: configValue.propsValue['phone'],
     };
 
-    const shipping = {
-      ...billing,
-    };
+
 
     const request: HttpRequest = {
       url: `${trimmedBaseUrl}//wp-json/wc/v3/customers`,
@@ -110,7 +108,7 @@ export const wooCreateCustomer = createAction({
         username,
         password,
         billing,
-        shipping,
+        shipping: billing,
       },
     };
 
