@@ -11,7 +11,7 @@ import { bubbleCommon } from '../common';
 export const bubbleCreateThingAction = createAction({
   auth: bubbleAuth,
   name: 'bubble_create_thing',
-  displayName: 'Create a Thing',
+  displayName: 'Create Thing',
   description: 'Create a thing',
   props: {
     typename: bubbleCommon.typename,

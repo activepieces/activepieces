@@ -10,7 +10,7 @@ import { bubbleCommon } from '../common';
 
 export const bubbleGetThingAction = createAction({
   auth: bubbleAuth,
-  name: 'bubble_gete_thing',
+  name: 'bubble_get_thing',
   displayName: 'Get Thing',
   description: 'Get a thing by id',
   props: {
