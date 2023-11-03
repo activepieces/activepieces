@@ -1,4 +1,4 @@
-import { ActionType, BranchAction, BranchActionSettings, BranchCondition, BranchOperator, StepOutputStatus } from '@activepieces/shared'
+import { BranchAction, BranchActionSettings, BranchCondition, BranchOperator, BranchStepOutput, StepOutputStatus } from '@activepieces/shared'
 import { BaseExecutor } from './base-executor'
 import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
 import { flowExecutor } from './flow-executor'
@@ -19,16 +19,15 @@ export const branchExecutor: BaseExecutor<BranchAction> = {
             executionState,
         })
 
+        const evaluatedCondition = evaluateConditions(resolvedInput.conditions)
+        const stepOutput = BranchStepOutput.init({
+            input: censoredInput,
+        }).setOutput({
+            condition: evaluatedCondition,
+        })
+
         try {
-            const evaluatedCondition = evaluateConditions(resolvedInput.conditions)
-            let branchExecutionContext = executionState.upsertStep(action.name, {
-                type: ActionType.BRANCH,
-                status: StepOutputStatus.SUCCEEDED,
-                input: censoredInput,
-                output: {
-                    condition: evaluatedCondition,
-                },
-            })
+            let branchExecutionContext = executionState.upsertStep(action.name, stepOutput)
 
             if (!evaluatedCondition && action.onFailureAction) {
                 branchExecutionContext = await flowExecutor.execute({
@@ -49,13 +48,8 @@ export const branchExecutor: BaseExecutor<BranchAction> = {
         }
         catch (e) {
             console.error(e)
-            const stepOutput = {
-                type: ActionType.BRANCH,
-                status: StepOutputStatus.FAILED,
-                input: censoredInput,
-                errorMessage: (e as Error).message,
-            }
-            return executionState.upsertStep(action.name, stepOutput).setVerdict(ExecutionVerdict.FAILED, undefined)
+            const failedStepOutput = stepOutput.setErrorMessage((e as Error).message).setStatus(StepOutputStatus.FAILED)
+            return executionState.upsertStep(action.name, failedStepOutput).setVerdict(ExecutionVerdict.FAILED, undefined)
         }
     },
 }

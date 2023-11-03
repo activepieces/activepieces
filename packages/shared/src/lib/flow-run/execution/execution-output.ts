@@ -1,5 +1,6 @@
-import {ExecutionState} from './execution-state';
-import { StopResponse } from './step-output';
+import { StepOutput } from './step-output';
+
+export const MAX_LOG_SIZE = 2048 * 1024;
 
 export enum ExecutionOutputStatus {
   FAILED = 'FAILED',
@@ -12,9 +13,19 @@ export enum ExecutionOutputStatus {
   TIMEOUT = 'TIMEOUT',
 }
 
+export enum ExecutionType {
+  BEGIN = 'BEGIN',
+  RESUME = 'RESUME',
+}
+
 export type ExecutionError = {
   stepName: string;
   errorMessage: string;
+}
+
+
+export type ExecutionState = {
+  steps: Record<string, StepOutput>;
 }
 
 type BaseExecutionOutput<T extends ExecutionOutputStatus> = {
@@ -48,6 +59,12 @@ export type PauseMetadata = DelayPauseMetadata | WebhookPauseMetadata
 
 export type PauseExecutionOutput = BaseExecutionOutput<ExecutionOutputStatus.PAUSED> & {
   pauseMetadata: PauseMetadata
+}
+
+export type StopResponse = {
+  status?: number
+  body?: unknown
+  headers?: Record<string, string>
 }
 
 export type FinishExecutionOutput = BaseExecutionOutput<

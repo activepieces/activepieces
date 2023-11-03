@@ -6,6 +6,7 @@ import { isValidCron } from 'cron-validator'
 import { PiecePropertyMap, StaticPropsValue, TriggerStrategy } from '@activepieces/pieces-framework'
 import { createFilesService } from '../services/files.service'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
+import { pieceLoader } from './piece-loader'
 
 type Listener = {
     events: string[]
@@ -14,10 +15,10 @@ type Listener = {
 }
 
 export const triggerHelper = {
-    async executeTrigger(params: ExecuteTriggerOperation<TriggerHookType>): Promise<ExecuteTriggerResponse<TriggerHookType>> {
+    async executeTrigger({ params, environment }: { environment: string, params: ExecuteTriggerOperation<TriggerHookType> }): Promise<ExecuteTriggerResponse<TriggerHookType>> {
         const { pieceName, pieceVersion, triggerName, input } = (params.flowVersion.trigger as PieceTrigger).settings
 
-        const piece = await pieceHelper.loadPieceOrThrow(pieceName, pieceVersion)
+        const piece = await pieceLoader.loadPieceOrThrow({ pieceName, pieceVersion, environment })
         const trigger = piece.getTrigger(triggerName)
 
         if (trigger === undefined) {
@@ -48,7 +49,7 @@ export const triggerHelper = {
             store: createContextStore({
                 prefix,
                 flowId: params.flowVersion.flowId,
-                workerToken: params.workerToken!,
+                workerToken: params.workerToken,
             }),
             app: {
                 createListeners({ events, identifierKey, identifierValue }: Listener): void {

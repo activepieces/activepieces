@@ -1,17 +1,17 @@
-import { ActionType, ExecutionOutput, LoopOnItemsStepOutput, MAX_LOG_SIZE, StepOutput, TriggerType, applyFunctionToValues } from '@activepieces/shared'
+import { ActionType, MAX_LOG_SIZE, StepOutput, TriggerType, applyFunctionToValues } from '@activepieces/shared'
 import sizeof from 'object-sizeof'
 import { isMemoryFilePath } from '../services/files.service'
 
 const TRUNCATION_TEXT_PLACEHOLDER = '(truncated)'
 
 export const loggingUtils = {
-    async trimExecution(executionOutput: ExecutionOutput) {
-        const steps = executionOutput.executionState.steps
+    async trimExecution(steps: Record<string, StepOutput>): Promise<Record<string, StepOutput>> {
+        const clonedSteps = { ...steps }
         for (const stepName in steps) {
             const stepOutput = steps[stepName]
-            steps[stepName] = await trimStepOutput(stepOutput)
+            clonedSteps[stepName] = await trimStepOutput(stepOutput)
         }
-        return executionOutput
+        return clonedSteps
     },
 }
 
@@ -29,7 +29,7 @@ async function trimStepOutput(stepOutput: StepOutput): Promise<StepOutput> {
             modified.output = await applyFunctionToValues(modified.output, trim)
             break
         case ActionType.LOOP_ON_ITEMS: {
-            const loopItem = (modified as LoopOnItemsStepOutput).output
+            const loopItem = modified.output
             if (loopItem) {
                 loopItem.iterations = await applyFunctionToValues(loopItem.iterations, trim)
                 loopItem.item = await applyFunctionToValues(loopItem.item, trim)

@@ -1,11 +1,10 @@
 import { AppConnectionValue } from "../app-connection/app-connection";
-import { ExecutionState } from "../flow-run/execution/execution-state";
-import { ExecutionType } from "../flow-run/execution/execution-type";
 import { FlowRunId } from "../flow-run/flow-run";
 import { CodeAction, PieceAction } from "../flows/actions/action";
 import { FlowVersion } from "../flows/flow-version";
 import { ProjectId } from "../project/project";
 import { PiecePackage } from "../pieces";
+import { ExecutionState, ExecutionType } from "../flow-run/execution/execution-output";
 
 export enum EngineOperationType {
     EXTRACT_PIECE_METADATA = "EXTRACT_PIECE_METADATA",

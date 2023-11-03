@@ -1,4 +1,4 @@
-import { AUTHENTICATION_PROPERTY_NAME, ActionType, ExecutionOutputStatus, PieceAction, StepOutputStatus, assertNotNullOrUndefined } from '@activepieces/shared'
+import { AUTHENTICATION_PROPERTY_NAME, GenricStepOutput, ActionType, ExecutionOutputStatus, PieceAction, StepOutputStatus, assertNotNullOrUndefined } from '@activepieces/shared'
 import { BaseExecutor } from './base-executor'
 import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
 import { variableService } from '../services/variable-service'
@@ -8,6 +8,7 @@ import { createContextStore } from '../services/storage.service'
 import { createFilesService } from '../services/files.service'
 import { createConnectionService } from '../services/connections.service'
 import { EngineConstantData } from './context/engine-constants-data'
+import { pieceLoader } from '../helper/piece-loader'
 
 type HookResponse = { stopResponse: StopHookParams | undefined, pauseResponse: PauseHookParams | undefined, tags: string[], stopped: boolean, paused: boolean }
 
@@ -35,14 +36,19 @@ export const pieceExecutor: BaseExecutor<PieceAction> = {
             executionState,
         })
 
+        const stepOutput = GenricStepOutput.create({
+            input: censoredInput,
+            type: ActionType.PIECE,
+            status: StepOutputStatus.SUCCEEDED,
+        })
         assertNotNullOrUndefined(action.settings.actionName, 'actionName')
-        const pieceAction = await pieceHelper.getActionOrThrow({
+        const { pieceAction, piece } = await pieceLoader.getPieceAndActionOrThrow({
             pieceName: action.settings.pieceName,
             pieceVersion: action.settings.pieceVersion,
             actionName: action.settings.actionName,
+            environment: constants.pieceEnvironment,
         })
 
-        const piece = await pieceHelper.loadPieceOrThrow(action.settings.pieceName, action.settings.pieceVersion)
         const { processedInput, errors } = await constants.variableService.applyProcessorsAndValidators(resolvedInput, pieceAction.props, piece.auth)
         if (Object.keys(errors).length > 0) {
             throw new Error(JSON.stringify(errors))
@@ -94,34 +100,23 @@ export const pieceExecutor: BaseExecutor<PieceAction> = {
         const newExecutionContext = executionState.addTags(hookResponse.tags)
 
         if (hookResponse.stopped) {
-            return newExecutionContext.upsertStep(action.name, {
-                type: ActionType.PIECE,
-                status: StepOutputStatus.SUCCEEDED,
-                input: censoredInput,
-                output,
-            }).setVerdict(ExecutionVerdict.SUCCEEDED, {
+            assertNotNullOrUndefined(hookResponse.stopResponse, 'stopResponse')
+            return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output)).setVerdict(ExecutionVerdict.SUCCEEDED, {
                 reason: ExecutionOutputStatus.STOPPED,
-                stopResponse: hookResponse.stopResponse?.response,
+                stopResponse: hookResponse.stopResponse.response,
             })
         }
         if (hookResponse.paused) {
-            return newExecutionContext.upsertStep(action.name, {
-                type: ActionType.PIECE,
-                status: StepOutputStatus.PAUSED,
-                input: censoredInput,
-                output,
-            }).setVerdict(ExecutionVerdict.PAUSED, {
-                reason: ExecutionOutputStatus.PAUSED,
-                pauseMetadata: hookResponse.pauseResponse?.pauseMetadata
-            })
+            assertNotNullOrUndefined(hookResponse.pauseResponse, 'pauseResponse')
+            return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output)
+                .setStatus(StepOutputStatus.PAUSED))
+                .setVerdict(ExecutionVerdict.PAUSED, {
+                    reason: ExecutionOutputStatus.PAUSED,
+                    pauseMetadata: hookResponse.pauseResponse.pauseMetadata,
+                })
         }
 
-        return newExecutionContext.upsertStep(action.name, {
-            type: ActionType.PIECE,
-            status: StepOutputStatus.SUCCEEDED,
-            input: censoredInput,
-            output,
-        }).setVerdict(ExecutionVerdict.RUNNING, undefined)
+        return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output)).setVerdict(ExecutionVerdict.RUNNING, undefined)
     },
 }
 

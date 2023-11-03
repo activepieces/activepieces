@@ -1,5 +1,6 @@
-import { ActionType, ExecutionOutputStatus, PauseMetadata, StepOutput, StepOutputStatus, StopResponse, isNil } from '@activepieces/shared'
-import { StepExecutionPath } from './step-executiion-path'
+import { ActionType, ExecutionOutput, ExecutionOutputStatus, PauseMetadata, StepOutput, StepOutputStatus, StopResponse, isNil } from '@activepieces/shared'
+import { StepExecutionPath } from './step-execution-path'
+import { loggingUtils } from '../../helper/logging-utils'
 
 export enum ExecutionVerdict {
     RUNNING = 'RUNNING',
@@ -10,17 +11,18 @@ export enum ExecutionVerdict {
 
 type VerdictResponse = {
     reason: ExecutionOutputStatus.PAUSED
-    pauseMetadata: PauseMetadata | undefined
+    pauseMetadata: PauseMetadata
 } | {
     reason: ExecutionOutputStatus.STOPPED
-    stopResponse: StopResponse | undefined
+    stopResponse: StopResponse
 }
 
 export class FlowExecutorContext {
     tasks: number
     tags: readonly string[]
-    steps: Readonly<Record<string, StepOutput<ActionType>>>
+    steps: Readonly<Record<string, StepOutput>>
     currentState: Record<string, unknown>
+    duration: number
     verdict: ExecutionVerdict
     verdictResponse: VerdictResponse | undefined
     currentPath: StepExecutionPath
@@ -29,12 +31,13 @@ export class FlowExecutorContext {
         this.tasks = copyFrom?.tasks ?? 0
         this.tags = copyFrom?.tags ?? []
         this.steps = copyFrom?.steps ?? {}
+        this.duration = copyFrom?.duration ?? -1
         this.currentState = copyFrom?.currentState ?? {}
         this.verdict = copyFrom?.verdict ?? ExecutionVerdict.RUNNING
         this.verdictResponse = copyFrom?.verdictResponse ?? undefined
         this.currentPath = copyFrom?.currentPath ?? StepExecutionPath.empty()
     }
-    
+
 
     static empty(): FlowExecutorContext {
         return new FlowExecutorContext()
@@ -47,6 +50,13 @@ export class FlowExecutorContext {
             return false
         }
         return stepOutput.status !== StepOutputStatus.PAUSED
+    }
+
+    public setDuration(duration: number): FlowExecutorContext {
+        return new FlowExecutorContext({
+            ...this,
+            duration,
+        })
     }
 
     public addTags(tags: string[]): FlowExecutorContext {
@@ -90,14 +100,58 @@ export class FlowExecutorContext {
             verdictResponse: response,
         })
     }
+
+    public async toExecutionOutput(): Promise<ExecutionOutput> {
+        const baseExecutionOutput = {
+            duration: this.duration,
+            tasks: this.tasks,
+            tags: [...this.tags],
+            executionState: {
+                steps: await loggingUtils.trimExecution(this.steps),
+            },
+        }
+        switch (this.verdict) {
+            case ExecutionVerdict.FAILED:
+                return {
+                    ...baseExecutionOutput,
+                    status: ExecutionOutputStatus.FAILED,
+                }
+            case ExecutionVerdict.PAUSED: {
+                const verdictResponse = this.verdictResponse
+                if (verdictResponse?.reason !== ExecutionOutputStatus.PAUSED) {
+                    throw new Error('Veridct Response should have pause metadata response')
+                }
+                return {
+                    ...baseExecutionOutput,
+                    status: ExecutionOutputStatus.PAUSED,
+                    pauseMetadata: verdictResponse.pauseMetadata,
+                }
+            }
+            case ExecutionVerdict.RUNNING:
+            case ExecutionVerdict.SUCCEEDED: {
+                const verdictResponse = this.verdictResponse
+                if (verdictResponse?.reason === ExecutionOutputStatus.STOPPED) {
+                    return {
+                        ...baseExecutionOutput,
+                        status: ExecutionOutputStatus.STOPPED,
+                        stopResponse: verdictResponse.stopResponse,
+                    }
+                }
+                return {
+                    ...baseExecutionOutput,
+                    status: ExecutionOutputStatus.SUCCEEDED,
+                }
+            }
+        }
+    }
 }
 
 
-function getStateAtPath({ currentPath, steps }: { currentPath: StepExecutionPath, steps: Record<string, StepOutput<ActionType>> }): Record<string, StepOutput> {
+function getStateAtPath({ currentPath, steps }: { currentPath: StepExecutionPath, steps: Record<string, StepOutput> }): Record<string, StepOutput> {
     let targetMap = steps
     currentPath.path.forEach(([stepName, iteration]) => {
         const stepOutput = targetMap[stepName]
-        if (stepOutput.type !== ActionType.LOOP_ON_ITEMS) {
+        if (!stepOutput.output || stepOutput.type !== ActionType.LOOP_ON_ITEMS) {
             throw new Error('[ExecutionState#getTargetMap] Not instance of Loop On Items step output')
         }
         targetMap = stepOutput.output.iterations[iteration]

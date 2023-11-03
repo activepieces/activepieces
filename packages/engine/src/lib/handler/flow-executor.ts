@@ -20,6 +20,7 @@ export const flowExecutor = {
         executionState: FlowExecutorContext
         constants: EngineConstantData
     }): Promise<FlowExecutorContext> {
+        const startTime = new Date().getMilliseconds()
         let flowExecutionContext = executionState
         let currentAction: Action | undefined = action
         while (!isNil(currentAction)) {
@@ -37,6 +38,6 @@ export const flowExecutor = {
             }
             currentAction = currentAction.nextAction
         }
-        return flowExecutionContext
+        return flowExecutionContext.setDuration(new Date().getMilliseconds() - startTime)
     },
 }

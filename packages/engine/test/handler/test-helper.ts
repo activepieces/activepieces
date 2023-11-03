@@ -16,6 +16,7 @@ export const EXECUTE_CONSTANTS = {
     }),
     baseCodeDirectory: path.resolve(cwd(), 'packages', 'engine', 'test', 'resources', 'codes'),
     executionType: ExecutionType.BEGIN,
+    pieceEnvironment: 'dev',
 }
 
 export function buildSimpleLoopAction({

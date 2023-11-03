@@ -257,39 +257,6 @@ export class VariableService {
         return { processedInput, errors }
     }
 
-    extractConnectionNames(input: any): string[] {
-        const connectionNames: string[] = []
-
-        const extractFromValue = (value: any): void => {
-            if (typeof value === 'string') {
-                const matchedTokens = value.match(this.VARIABLE_TOKEN)
-                if (
-                    matchedTokens !== null &&
-                    matchedTokens.length === 1 &&
-                    matchedTokens[0] === value
-                ) {
-                    const variableName = value.substring(2, value.length - 2)
-                    if (variableName.startsWith(VariableService.CONNECTIONS)) {
-                        const connectionName = this.findConnectionName(variableName)
-                        if (connectionName) {
-                            connectionNames.push(connectionName)
-                        }
-                    }
-                }
-            }
-            else if (Array.isArray(value)) {
-                value.forEach(extractFromValue)
-            }
-            else if (typeof value === 'object' && value !== null) {
-                for (const key in value) {
-                    extractFromValue(value[key])
-                }
-            }
-        }
-
-        extractFromValue(input)
-        return connectionNames
-    }
 }
 
 export const variableService = ({ projectId, workerToken }: { projectId: string, workerToken: string }) => new VariableService({ projectId, workerToken })

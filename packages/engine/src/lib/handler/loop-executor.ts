@@ -1,4 +1,4 @@
-import { LoopOnItemsAction, LoopOnItemsStepOutput, StepOutput, isNil } from '@activepieces/shared'
+import { LoopOnItemsAction, LoopStepOutput, isNil } from '@activepieces/shared'
 import { BaseExecutor } from './base-executor'
 import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
 import { flowExecutor } from './flow-executor'
@@ -23,7 +23,7 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
             executionState,
         })
 
-        let stepOutput: LoopOnItemsStepOutput = StepOutput.createLoopOutput({
+        let stepOutput = LoopStepOutput.init({
             input: censoredInput,
         })
 

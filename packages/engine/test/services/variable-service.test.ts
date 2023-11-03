@@ -1,4 +1,4 @@
-import { ActionType, StepOutputStatus, TriggerType } from '@activepieces/shared'
+import { ActionType, GenricStepOutput, StepOutputStatus, TriggerType } from '@activepieces/shared'
 import { VariableService } from '../../src/lib/services/variable-service'
 import { PieceAuth, Validators, Property, ApFile } from '@activepieces/pieces-framework'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
@@ -11,7 +11,7 @@ const variableService = new VariableService({
 const executionState = FlowExecutorContext.empty()
     .upsertStep(
         'trigger',
-        {
+        GenricStepOutput.create({
             type: TriggerType.PIECE,
             status: StepOutputStatus.SUCCEEDED,
             input: {},
@@ -20,22 +20,24 @@ const executionState = FlowExecutorContext.empty()
                 name: 'John',
                 price: 6.4,
             },
-        },
+        }),
     )
-    .upsertStep('step_1', {
-        type: ActionType.PIECE,
-        status: StepOutputStatus.SUCCEEDED,
-        input: {},
-        output: {
-            success: true,
-        },
-    })
-    .upsertStep('step_2', {
+    .upsertStep('step_1',
+        GenricStepOutput.create({
+
+            type: ActionType.PIECE,
+            status: StepOutputStatus.SUCCEEDED,
+            input: {},
+            output: {
+                success: true,
+            },
+        }))
+    .upsertStep('step_2', GenricStepOutput.create({
         type: ActionType.PIECE,
         status: StepOutputStatus.SUCCEEDED,
         input: {},
         output: 'memory://{"fileName":"hello.png","data":"iVBORw0KGgoAAAANSUhEUgAAAiAAAAC4CAYAAADaI1cbAAA0h0lEQVR4AezdA5AlPx7A8Zxt27Z9r5PB2SidWTqbr26S9Hr/tm3btu3723eDJD3r15ec17vzXr+Z"}',
-    })
+    }))
 
 
 

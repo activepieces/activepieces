@@ -1,4 +1,4 @@
-import { ActionType, CodeAction, StepOutputStatus } from '@activepieces/shared'
+import { ActionType, CodeAction, GenricStepOutput, StepOutputStatus } from '@activepieces/shared'
 import { BaseExecutor } from './base-executor'
 import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
 import { EngineConstantData } from './context/engine-constants-data'
@@ -24,28 +24,22 @@ export const codeExecutor: BaseExecutor<CodeAction> = {
             unresolvedInput: action.settings.input,
             executionState,
         })
-
+        const stepOutput = GenricStepOutput.create({
+            input: censoredInput,
+            type: ActionType.CODE,
+            status: StepOutputStatus.SUCCEEDED,
+        })
         try {
             const artifactPath = `${constants.baseCodeDirectory}/${action.name}/index.js`
             const codePieceModule: CodePieceModule = await import(artifactPath)
             const output = await codePieceModule.code(resolvedInput)
-            const stepOutput = {
-                type: ActionType.CODE,
-                status: StepOutputStatus.SUCCEEDED,
-                input: censoredInput,
-                output,
-            }
-            return executionState.upsertStep(action.name, stepOutput)
+            return executionState.upsertStep(action.name, stepOutput.setOutput(output))
         }
         catch (e) {
             console.error(e)
-            const stepOutput = {
-                type: ActionType.CODE,
-                status: StepOutputStatus.FAILED,
-                input: censoredInput,
-                errorMessage: (e as Error).message,
-            }
-            return executionState.upsertStep(action.name, stepOutput).setVerdict(ExecutionVerdict.FAILED, undefined)
+            return executionState
+                .upsertStep(action.name, stepOutput.setErrorMessage((e as Error).message))
+                .setVerdict(ExecutionVerdict.FAILED, undefined)
         }
     },
 }

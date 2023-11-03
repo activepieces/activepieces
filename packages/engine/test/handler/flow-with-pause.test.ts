@@ -1,8 +1,8 @@
-import { BranchOperator, ExecutionType } from '@activepieces/shared'
+import { BranchOperator, ExecutionOutputStatus, ExecutionType } from '@activepieces/shared'
 import { ExecutionVerdict, FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
 import { EXECUTE_CONSTANTS, buildActionWithOneCondition, buildCodeAction, buildPieceAction, buildSimpleLoopAction } from './test-helper'
-import { StepExecutionPath } from '../../src/lib/handler/context/step-executiion-path'
+import { StepExecutionPath } from '../../src/lib/handler/context/step-execution-path'
 
 
 const simplePauseFlow = buildPieceAction({
@@ -38,6 +38,13 @@ describe('flow with pause', () => {
             constants: EXECUTE_CONSTANTS,
         })
         expect(pauseResult.verdict).toBe(ExecutionVerdict.PAUSED)
+        expect(pauseResult.verdictResponse).toEqual({
+            'pauseMetadata': {
+                'actions': ['approve', 'disapprove'],
+                'type': 'WEBHOOK',
+            },
+            'reason': ExecutionOutputStatus.PAUSED,
+        })
         expect(Object.keys(pauseResult.steps)).toEqual(['loop'])
 
         const resumeResult = await flowExecutor.execute({
@@ -63,6 +70,13 @@ describe('flow with pause', () => {
             constants: EXECUTE_CONSTANTS,
         })
         expect(pauseResult.verdict).toBe(ExecutionVerdict.PAUSED)
+        expect(pauseResult.verdictResponse).toEqual({
+            'pauseMetadata': {
+                'actions': ['approve', 'disapprove'],
+                'type': 'WEBHOOK',
+            },
+            'reason': ExecutionOutputStatus.PAUSED,
+        })
         expect(Object.keys(pauseResult.currentState).length).toBe(1)
 
         const resumeResult = await flowExecutor.execute({
