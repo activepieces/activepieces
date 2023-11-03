@@ -1,7 +1,7 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { convertkitAuth, ENVIRONMENT } from '../..';
-import { tagId } from '../common/tags';
-import { CONVERTKIT_API_URL } from '../common/constants';
+import { convertkitAuth } from '../..';
+import { tag } from '../common/tags';
+import { prepareWebhooURL, onDisable, onEnable } from '../common/webhooks';
 
 interface WebhookInformation {
   ruleId: number;
@@ -9,70 +9,28 @@ interface WebhookInformation {
 
 const API_ENDPOINT = 'automations/hooks';
 
-const log = async (message: object) => {
-  const fs = require('fs');
-  const path = require('path');
-  const filePath = path.join(__dirname, 'log.txt');
-  fs.appendFile(
-    filePath,
-    JSON.stringify(message, null, 2),
-    function (err: any) {
-      if (err) throw err;
-      console.log('Logging to: ', filePath);
-    }
-  );
-};
-
-const onEnable = async (auth: string, payload: object) => {
-  const body = JSON.stringify({ ...payload, api_secret: auth }, null, 2);
-
-  const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}`;
-  // Fetch URL using fetch api
-  const response = await fetch(url, {
-    method: 'POST',
-    body,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-
-  // Throw if unsuccessful
-  if (!response.ok) {
-    throw new Error('Failed to create webhook');
-  }
-
-  // Get response body
-  const data = await response.json();
-  const ruleId = data.rule.id;
-
-  return ruleId;
-};
-
-const onDisable = async (auth: string, ruleId: number) => {
-  const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}${ruleId}`;
-  // Fetch URL using fetch api
-  const response = await fetch(url, {
-    method: 'DELETE',
-    body: JSON.stringify({ api_secret: auth }),
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-
-  // Throw if unsuccessful
-  if (!response.ok) {
-    throw new Error('Failed to remove webhook');
-  }
-};
+// const log = async (message: object) => {
+//   const fs = require('fs');
+//   const path = require('path');
+//   const filePath = path.join(__dirname, 'log.txt');
+//   fs.appendFile(
+//     filePath,
+//     JSON.stringify(message, null, 2),
+//     function (err: any) {
+//       if (err) throw err;
+//       console.log('Logging to: ', filePath);
+//     }
+//   );
+// };
 
 export const addTag = createTrigger({
   auth: convertkitAuth,
-  name: 'subscriber.tag_add', // Unique name across the piece.
+  name: 'webhook_subscriber_tag_add', // Unique name across the piece.
   displayName: 'Tag added to subscriber', // Display name on the interface.
   description: 'Trigger when a tag is added to a subscriber',
   type: TriggerStrategy.WEBHOOK,
   props: {
-    tagId,
+    tagId: tag,
   },
   sampleData: {
     rule: {
@@ -85,23 +43,15 @@ export const addTag = createTrigger({
   },
   async onEnable(context) {
     const { tagId } = context.propsValue;
-    // let target_url = context.webhookUrl
-    // if (ENVIRONMENT === 'dev') {
-    // target_url = context.webhookUrl.replace('http://localhost:3000', 'https://activepieces.ngrok.dev')
-    // }
-    const target_url = context.webhookUrl.replace(
-      'http://localhost:3000',
-      'https://activepieces.ngrok.dev'
-    );
 
-    // const target_url = context.webhookUrl
+    const targetUrl = prepareWebhooURL(context.webhookUrl);
 
     const payload = {
       event: {
         name: 'subscriber.tag_add',
         tag_id: tagId,
       },
-      target_url,
+      target_url: targetUrl,
     };
 
     const ruleId = await onEnable(context.auth, payload);
