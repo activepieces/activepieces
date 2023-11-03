@@ -1,74 +1,21 @@
-import {
-  createAction,
-  Validators,
-  Property,
-} from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { convertkitAuth } from '../..';
-import { CONVERTKIT_API_URL, subscriberId } from '../common';
-import { propertyCustomFields } from './custom-fields';
-import { getSubscribedTags, fetchSubscriberByEmail } from './subscriber';
-
-const API_ENDPOINT = 'tags';
-
-export const getTags = async (auth: string) => {
-  const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}/?api_secret=${auth}`;
-  const response = await fetch(url);
-  return await response.json();
-};
-
-export const propertyTags = Property.MultiSelectDropdown({
-  displayName: 'Tags',
-  description: 'Tags to add to subscriber',
-  required: false,
-  refreshers: ['auth'],
-  options: async ({ auth }) => {
-    if (!auth) {
-      return {
-        disabled: true,
-        placeholder: 'Connect your account',
-        options: [],
-      };
-    }
-    const tags = await getTags(auth.toString());
-    const options = tags.tags.map((tag: { id: string; name: string }) => {
-      return {
-        label: tag.name,
-        value: tag.id,
-      };
-    });
-
-    return {
-      options,
-    };
-  },
-});
-
-export const propertyTag = Property.Dropdown({
-  displayName: 'Tag',
-  required: true,
-  refreshers: ['auth'],
-  options: async ({ auth }) => {
-    if (!auth) {
-      return {
-        disabled: true,
-        placeholder: 'Connect your account',
-        options: [],
-      };
-    }
-    const tags = await getTags(auth.toString());
-    // loop through data and map to options
-    const options = tags.tags.map((tag: { id: string; name: string }) => {
-      return {
-        label: tag.name,
-        value: tag.id,
-      };
-    });
-
-    return {
-      options,
-    };
-  },
-});
+import {
+  API_ENDPOINT,
+  tag,
+  tags,
+  name,
+  email,
+  firstName,
+  tagIdByEmail,
+  tagIdBySubscriberId,
+  page,
+  sortOrder,
+  subscriberState,
+} from '../common/tags';
+import { subscriberId } from '../common/subscribers';
+import { allFields } from '../common/custom-fields';
+import { CONVERTKIT_API_URL } from '../common/constants';
 
 export const listTags = createAction({
   auth: convertkitAuth,
@@ -77,13 +24,22 @@ export const listTags = createAction({
   description: 'Returns a list of all tags',
   props: {},
   async run(context) {
-    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}/?api_secret=${context.auth}`;
+    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/?api_secret=${context.auth}`;
 
     // Fetch URL using fetch api
     const response = await fetch(url);
 
+    if (!response.ok) {
+      return { success: false, message: 'Error fetching tags' };
+    }
+
     // Get response body
     const data = await response.json();
+
+    // If tags exist, return tags
+    if (data.tags) {
+      return data.tags;
+    }
 
     // Return response body
     return data;
@@ -96,14 +52,10 @@ export const createTag = createAction({
   displayName: 'Tags: Create Tag',
   description: 'Create a tag',
   props: {
-    name: Property.ShortText({
-      displayName: 'Name',
-      description: 'The name of the tag',
-      required: true,
-    }),
+    name,
   },
   async run(context) {
-    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}/?api_secret=${context.auth}`;
+    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/?api_secret=${context.auth}`;
 
     // Fetch URL using fetch api
     const response = await fetch(url, {
@@ -113,6 +65,10 @@ export const createTag = createAction({
         'Content-Type': 'application/json',
       },
     });
+
+    if (!response.ok) {
+      return { success: false, message: 'Error creating tag' };
+    }
 
     // Get response body
     const data = await response.json();
@@ -128,32 +84,25 @@ export const tagSubscriber = createAction({
   displayName: 'Tags: Tag Subscriber',
   description: 'Tag a subscriber',
   props: {
-    email: Property.ShortText({
-      displayName: 'Email Address',
-      description: 'Email address',
-      required: true,
-    }),
-    tagId: propertyTag,
-    first_name: Property.ShortText({
-      displayName: 'First Name',
-      description: 'The first name of the subscriber',
-      required: false,
-    }),
-    tags: propertyTags,
-    fields: propertyCustomFields,
+    email,
+    tagId: tag,
+    firstName,
+    tags,
+    fields: allFields,
   },
   async run(context) {
-    const tagId = context.propsValue.tagId;
-    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}/${tagId}/subscribe`;
+    const { email, tagId, firstName, tags, fields } = context.propsValue;
+    // const tagId = context.propsValue.tagId;
+    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${tagId}/subscribe`;
 
     // Fetch URL using fetch api
     const response = await fetch(url, {
       method: 'POST',
       body: JSON.stringify({
-        email: context.propsValue.email,
-        first_name: context.propsValue.first_name,
-        fields: context.propsValue.fields,
-        tags: context.propsValue.tags,
+        email: email,
+        first_name: firstName,
+        fields: fields,
+        tags,
         api_secret: context.auth,
       }),
       headers: {
@@ -161,99 +110,22 @@ export const tagSubscriber = createAction({
       },
     });
 
+    if (!response.ok) {
+      return { success: false, message: 'Error tagging subscriber' };
+    }
+
     // Get response body
     const data = await response.json();
+
+    // If subscription is not empty, return the subscription
+    if (data.subscription) {
+      return data.subscription;
+    }
 
     // Return response body
     return data;
   },
 });
-
-// interface for auth and email
-interface AuthEmail {
-  auth: string;
-  email: string;
-}
-
-const optiosnFn = async ({ auth, email }: AuthEmail) => {
-  if (!auth) {
-    return {
-      disabled: true,
-      placeholder: 'Connect your account.',
-      options: [],
-    };
-  }
-  if (!email) {
-    return {
-      disabled: true,
-      placeholder: 'Provide a subscriber email address.',
-      options: [],
-    };
-  }
-  const data = await fetchSubscriberByEmail(auth.toString(), email.toString());
-
-  if (!data) {
-    return {
-      disabled: true,
-      placeholder: 'Something went wrong.',
-      options: [],
-    };
-  }
-  if (data['subscribers'].length === 0) {
-    return {
-      disabled: true,
-      placeholder: 'No subscribers found for this email address.',
-      options: [],
-    };
-  }
-  const subscriberId = data['subscribers'][0]['id'];
-  const tags = await getSubscribedTags(
-    auth.toString(),
-    subscriberId.toString()
-  );
-
-  // loop through data and map to options
-  const options = tags.tags.map((tag: { id: string; name: string }) => {
-    return {
-      label: tag.name,
-      value: tag.id,
-    };
-  });
-
-  return {
-    options,
-  };
-};
-
-// // // https://github.com/lodash/lodash/issues/4700#issuecomment-805439202
-// export const asyncT = function asyncThrottle<
-//   F extends (...args: any[]) => Promise<any>
-// >(func: F, wait?: number) {
-//   const throttled = _.throttle((resolve, reject, args: Parameters<F>) => {
-//     func(...args)
-//       .then(resolve)
-//       .catch(reject);
-//   }, wait);
-//   return (...args: Parameters<F>): ReturnType<F> =>
-//     new Promise((resolve, reject) => {
-//       throttled(resolve, reject, args);
-//     }) as ReturnType<F>;
-// };
-
-// let optionsFnRef: any;
-
-// function debouncedOptions() {
-
-//   // cancel any old refs
-//   if (optionsFnRef && optionsFnRef.cancel) optionsFnRef.cancel();
-
-//   // create new instance and save for later
-//   optionsFnRef = loadash.debounce(optiosnFn, 3000);
-
-//   // execute will start after 1000 unless cancelled because the function is re-invoked again
-
-//   return optionsFnRef;
-// }
 
 export const removeTagFromSubscriberByEmail = createAction({
   auth: convertkitAuth,
@@ -261,35 +133,28 @@ export const removeTagFromSubscriberByEmail = createAction({
   displayName: 'Tags: Remove Tag From Subscriber By Email',
   description: 'Remove a tag from a subscriber by email',
   props: {
-    email: Property.ShortText({
-      displayName: 'Email Address',
-      description: 'Email address',
-      required: true,
-      validators: [Validators.email],
-    }),
-    tagId: Property.Dropdown({
-      displayName: 'Tag',
-      description: 'The tag to remove',
-      required: true,
-      refreshers: ['auth', 'email'],
-      options: optiosnFn as any,
-    }),
+    email,
+    tagId: tagIdByEmail,
   },
   async run(context) {
-    const tagId = context.propsValue.tagId;
-    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}/${tagId}/unsubscribe`;
+    const { email, tagId } = context.propsValue;
+    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${tagId}/unsubscribe`;
 
     // Fetch URL using fetch api
     const response = await fetch(url, {
       method: 'POST',
       body: JSON.stringify({
-        email: context.propsValue.email,
+        email,
         api_secret: context.auth,
       }),
       headers: {
         'Content-Type': 'application/json',
       },
     });
+
+    if (!response.ok) {
+      return { success: false, message: 'Error removing tag from subscriber' };
+    }
 
     // Get response body
     const data = await response.json();
@@ -306,70 +171,27 @@ export const removeTagFromSubscriberById = createAction({
   description: 'Remove a tag from a subscriber by id',
   props: {
     subscriberId,
-    tagId: Property.Dropdown({
-      displayName: 'Tag',
-      description: 'The tag to remove',
-      required: true,
-      refreshers: ['auth', 'subscriberId'],
-      options: async ({ auth, subscriberId }) => {
-        if (!auth) {
-          return {
-            disabled: true,
-            placeholder: 'Connect your account and',
-            options: [],
-          };
-        }
-
-        if (!subscriberId) {
-          return {
-            disabled: true,
-            placeholder: 'Provide a subscriber id.',
-            options: [],
-          };
-        }
-
-        {
-          const data = await getSubscribedTags(
-            auth.toString(),
-            subscriberId.toString()
-          );
-          if (!data) {
-            return {
-              disabled: true,
-              placeholder: 'Something went wrong.',
-              options: [],
-            };
-          }
-          // loop through data and map to options
-          const options = data.tags.map((tag: { id: string; name: string }) => {
-            return {
-              label: tag.name,
-              value: tag.id,
-            };
-          });
-
-          return {
-            options,
-          };
-        }
-      },
-    }),
+    tagId: tagIdBySubscriberId,
   },
   async run(context) {
-    const tagId = context.propsValue.tagId;
-    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}/${tagId}/unsubscribe`;
+    const { subscriberId, tagId } = context.propsValue;
+    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${tagId}/unsubscribe`;
 
     // Fetch URL using fetch api
     const response = await fetch(url, {
       method: 'POST',
       body: JSON.stringify({
-        id: context.propsValue.subscriberId,
+        id: subscriberId,
         api_secret: context.auth,
       }),
       headers: {
         'Content-Type': 'application/json',
       },
     });
+
+    if (!response.ok) {
+      return { success: false, message: 'Error removing tag from subscriber' };
+    }
 
     // Get response body
     const data = await response.json();
@@ -379,51 +201,49 @@ export const removeTagFromSubscriberById = createAction({
   },
 });
 
-export const listSubscribersToTag = createAction({
+export const listSubscriptionsToATag = createAction({
   auth: convertkitAuth,
-  name: 'tags_list_subscribers_to_tag',
-  displayName: 'Tags: List Subscribers To Tag',
-  description: 'List all subscribers to a tag',
+  name: 'tags_list_subscriptions_to_tag',
+  displayName: 'Tags: List Subscriptions To Tag',
+  description: 'List all subscriptions to a tag',
   props: {
-    tagId: propertyTag,
-    page: Property.Number({
-      displayName: 'Page',
-      description: 'Page',
-      required: false,
-      defaultValue: 1,
-    }),
-    sort_order: Property.StaticDropdown({
-      displayName: 'Sort Order',
-      description: 'Sort order',
-      required: false,
-      options: {
-        options: [
-          { label: 'Ascending', value: 'asc' },
-          { label: 'Descending', value: 'desc' },
-        ],
-      },
-    }),
-    subscriber_state: Property.StaticDropdown({
-      displayName: 'Subscriber State',
-      description: 'Subscriber state',
-      required: false,
-      options: {
-        options: [
-          { label: 'Active', value: 'active' },
-          { label: 'canceled', value: 'canceled' },
-        ],
-      },
-    }),
+    tagId: tag,
+    page,
+    sortOrder,
+    subscriberState,
   },
   async run(context) {
-    const tagId = context.propsValue.tagId;
-    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}/${tagId}/subscriptions?api_secret=${context.auth}`;
+    const { tagId, page, sortOrder, subscriberState } = context.propsValue;
+    // create a url parameter string
+    let urlParams = `api_secret=${context.auth}`;
+    if (page) {
+      urlParams += `&page=${page}`;
+    }
+    if (sortOrder) {
+      urlParams += `&sort_order=${sortOrder}`;
+    }
+    if (subscriberState) {
+      urlParams += `&subscriber_state=${subscriberState}`;
+    }
+    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${tagId}/subscriptions?${urlParams}`;
 
     // Fetch URL using fetch api
     const response = await fetch(url);
 
+    if (!response.ok) {
+      return {
+        success: false,
+        message: 'Error listing subscribers to tag',
+      };
+    }
+
     // Get response body
     const data = await response.json();
+
+    // if subscriptions is not empty, return the subscriptions
+    if (data.subscriptions) {
+      return data.subscriptions;
+    }
 
     // Return response body
     return data;

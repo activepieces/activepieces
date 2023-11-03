@@ -1,18 +1,28 @@
-import {
-  createAction,
-  Property,
-  DynamicPropsValue,
-} from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { convertkitAuth } from '../..';
-import { CONVERTKIT_API_URL, subscriberId } from '../common';
-
-const API_ENDPOINT = 'purchases';
-
-export const getPurchases = async (auth: string) => {
-  const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}?api_secret=${auth}`;
-  const response = await fetch(url);
-  return await response.json();
-};
+import {
+  API_ENDPOINT,
+  purchaseId,
+  page,
+  transactionId,
+  productId,
+  transactionTime,
+  emailAddress,
+  firstName,
+  status,
+  currency,
+  subtotal,
+  shipping,
+  discount,
+  tax,
+  total,
+  products,
+  multipleProducts,
+} from '../common/purchases';
+import { subscriberId } from '../common/subscribers';
+import { formId } from '../common/forms';
+import { sequenceId } from '../common/sequences';
+import { CONVERTKIT_API_URL } from '../common/constants';
 
 export const listPurchases = createAction({
   auth: convertkitAuth,
@@ -20,23 +30,26 @@ export const listPurchases = createAction({
   displayName: 'Purchases: List Purchases',
   description: 'Returns a list of all purchases',
   props: {
-    page: Property.Number({
-      displayName: 'Page',
-      description:
-        'Page number. Each page of results will contain up to 50 purchases.',
-      required: false,
-      defaultValue: 1,
-    }),
+    page,
   },
   async run(context) {
     const page = context.propsValue.page || 1;
-    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}?page=${page}&api_secret=${context.auth}`;
+    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}?page=${page}&api_secret=${context.auth}`;
 
     // Fetch URL using fetch api
     const response = await fetch(url);
 
+    if (!response.ok) {
+      return { success: false, message: 'Error fetching purchases' };
+    }
+
     // Get response body
     const data = await response.json();
+
+    // If purchases exists, return purchases
+    if (data.purchases) {
+      return data.purchases;
+    }
 
     // Return response body
     return data;
@@ -44,12 +57,6 @@ export const listPurchases = createAction({
 });
 
 // Show a single purchase
-
-const purchaseId = Property.Number({
-  displayName: 'Purchase ID',
-  description: 'The purchase ID',
-  required: true,
-});
 
 export const getPurchaseById = createAction({
   auth: convertkitAuth,
@@ -61,167 +68,20 @@ export const getPurchaseById = createAction({
   },
   async run(context) {
     const { purchaseId } = context.propsValue;
-    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}/${purchaseId}?api_secret=${context.auth}`;
+    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${purchaseId}?api_secret=${context.auth}`;
 
     // Fetch URL using fetch api
     const response = await fetch(url);
+
+    if (!response.ok) {
+      return { success: false, message: 'Error fetching purchase' };
+    }
 
     // Get response body
     const data = await response.json();
 
     // Return response body
     return data;
-  },
-});
-
-// Create purchase
-
-const transactionId = Property.ShortText({
-  displayName: 'Transaction ID',
-  description: 'The transaction ID',
-  required: true,
-});
-
-const status = Property.StaticDropdown({
-  displayName: 'Status',
-  description: 'The status of the purchase',
-  required: true,
-  options: {
-    options: [
-      { label: 'paid', value: 'paid' },
-      { label: 'pending', value: 'pending' },
-      { label: 'failed', value: 'failed' },
-    ],
-  },
-});
-
-const emailAddress = Property.ShortText({
-  displayName: 'Email Address',
-  description: 'The email address of the subscriber',
-  required: true,
-});
-
-const currency = Property.StaticDropdown({
-  displayName: 'Currency',
-  description: 'The currency of the purchase',
-  required: true,
-  options: {
-    options: [
-      { label: 'USD', value: 'USD' },
-      { label: 'JPY', value: 'JPY' },
-      { label: 'GBP', value: 'GBP' },
-      { label: 'EUR', value: 'EUR' },
-      { label: 'CAD', value: 'CAD' },
-      { label: 'AUD', value: 'AUD' },
-      { label: 'NZD', value: 'NZD' },
-      { label: 'CHF', value: 'CHF' },
-      { label: 'HKD', value: 'HKD' },
-      { label: 'SGD', value: 'SGD' },
-      { label: 'SEK', value: 'SEK' },
-      { label: 'DKK', value: 'DKK' },
-      { label: 'PLN', value: 'PLN' },
-      { label: 'NOK', value: 'NOK' },
-      { label: 'HUF', value: 'HUF' },
-      { label: 'CZK', value: 'CZK' },
-      { label: 'ILS', value: 'ILS' },
-      { label: 'MXN', value: 'MXN' },
-      { label: 'MYR', value: 'MYR' },
-      { label: 'BRL', value: 'BRL' },
-      { label: 'PHP', value: 'PHP' },
-      { label: 'TWD', value: 'TWD' },
-      { label: 'THB', value: 'THB' },
-      { label: 'TRY', value: 'TRY' },
-      { label: 'RUB', value: 'RUB' },
-      { label: 'INR', value: 'INR' },
-      { label: 'KRW', value: 'KRW' },
-      { label: 'AED', value: 'AED' },
-      { label: 'SAR', value: 'SAR' },
-      { label: 'ZAR', value: 'ZAR' },
-    ],
-  },
-});
-
-const transactionTime = Property.DateTime({
-  displayName: 'Transaction Time',
-  description: 'The transaction time',
-  required: true,
-});
-
-const subtotal = Property.Number({
-  displayName: 'Subtotal',
-  description: 'The subtotal',
-  required: true,
-});
-
-const shipping = Property.Number({
-  displayName: 'Shipping',
-  description: 'The shipping',
-  required: true,
-});
-
-const discount = Property.Number({
-  displayName: 'Discount',
-  description: 'The discount',
-  required: true,
-});
-
-const tax = Property.Number({
-  displayName: 'Tax',
-  description: 'The tax',
-  required: true,
-});
-
-const total = Property.Number({
-  displayName: 'Total',
-  description: 'The total',
-  required: true,
-});
-
-const first_name = Property.ShortText({
-  displayName: 'First Name',
-  description: 'The first name of the subscriber',
-  required: false,
-});
-
-const products = Property.DynamicProperties({
-  displayName: 'Products',
-  description: 'The products',
-  required: true,
-  refreshers: ['auth'],
-  props: async (auth) => {
-    const fields: DynamicPropsValue = {
-      pid: Property.Number({
-        displayName: 'Product ID',
-        description: 'The product ID',
-        required: true,
-      }),
-      lid: Property.Number({
-        displayName: 'Line Item ID',
-        description: 'The line item ID',
-        required: true,
-      }),
-      name: Property.ShortText({
-        displayName: 'Name',
-        description: 'The name of the product',
-        required: true,
-      }),
-      sku: Property.ShortText({
-        displayName: 'SKU',
-        description: 'The SKU of the product',
-        required: true,
-      }),
-      unit_price: Property.Number({
-        displayName: 'Unit Price',
-        description: 'The unit price of the product',
-        required: true,
-      }),
-      quantity: Property.Number({
-        displayName: 'Quantity',
-        description: 'The quantity of the product',
-        required: true,
-      }),
-    };
-    return fields;
   },
 });
 
@@ -234,7 +94,7 @@ export const createSinglePurchase = createAction({
     transactionId,
     transactionTime,
     emailAddress,
-    first_name,
+    firstName,
     status,
     currency,
     subtotal,
@@ -242,14 +102,14 @@ export const createSinglePurchase = createAction({
     discount,
     tax,
     total,
-    products,
+    ...products,
   },
   async run(context) {
     const {
       transactionId,
       transactionTime,
       emailAddress,
-      first_name,
+      firstName,
       status,
       currency,
       subtotal,
@@ -257,9 +117,9 @@ export const createSinglePurchase = createAction({
       discount,
       tax,
       total,
-      products,
+      ...products
     } = context.propsValue;
-    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}`;
+    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}`;
 
     const body = JSON.stringify(
       {
@@ -267,6 +127,7 @@ export const createSinglePurchase = createAction({
         purchase: {
           transaction_id: transactionId,
           status,
+          first_name: firstName,
           email_address: emailAddress,
           currency,
           transaction_time: transactionTime,
@@ -275,7 +136,6 @@ export const createSinglePurchase = createAction({
           discount,
           tax,
           total,
-          first_name,
           products: [products],
         },
       },
@@ -292,36 +152,16 @@ export const createSinglePurchase = createAction({
       },
     });
 
+    if (!response.ok) {
+      return { success: false, message: 'Error creating purchase' };
+    }
+
     // Get response body
     const data = await response.json();
 
     // Return response body
     return data;
   },
-});
-
-const multipleProducts = Property.Json({
-  displayName: 'Products',
-  description: 'The products',
-  required: true,
-  defaultValue: [
-    {
-      pid: 9999,
-      lid: 7777,
-      name: 'Floppy Disk (512k)',
-      sku: '7890-ijkl',
-      unit_price: 5.0,
-      quantity: 2,
-    },
-    {
-      pid: 5555,
-      lid: 7778,
-      name: 'Telephone Cord (data)',
-      sku: 'mnop-1234',
-      unit_price: 10.0,
-      quantity: 1,
-    },
-  ],
 });
 
 export const createPurchases = createAction({
@@ -333,7 +173,7 @@ export const createPurchases = createAction({
     transactionId,
     transactionTime,
     emailAddress,
-    first_name,
+    firstName,
     status,
     currency,
     subtotal,
@@ -348,7 +188,7 @@ export const createPurchases = createAction({
       transactionId,
       transactionTime,
       emailAddress,
-      first_name,
+      firstName,
       status,
       currency,
       subtotal,
@@ -358,7 +198,7 @@ export const createPurchases = createAction({
       total,
       multipleProducts,
     } = context.propsValue;
-    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}`;
+    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}`;
 
     const body = JSON.stringify(
       {
@@ -367,7 +207,7 @@ export const createPurchases = createAction({
           transaction_id: transactionId,
           status,
           email_address: emailAddress,
-          first_name,
+          first_name: firstName,
           currency,
           transaction_time: transactionTime,
           subtotal,
@@ -391,6 +231,10 @@ export const createPurchases = createAction({
       },
     });
 
+    if (!response.ok) {
+      return { success: false, message: 'Error creating purchase' };
+    }
+
     // Get response body
     const data = await response.json();
 
@@ -412,10 +256,14 @@ export const listPurchasesForSubscriber = createAction({
   },
   async run(context) {
     const { subscriberId } = context.propsValue;
-    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}?api_secret=${context.auth}&subscriber_id=${subscriberId}`;
+    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}?api_secret=${context.auth}&subscriber_id=${subscriberId}`;
 
     // Fetch URL using fetch api
     const response = await fetch(url);
+
+    if (!response.ok) {
+      return { success: false, message: 'Error fetching purchases' };
+    }
 
     // Get response body
     const data = await response.json();
@@ -427,12 +275,6 @@ export const listPurchasesForSubscriber = createAction({
 
 // Show all purchases for a product
 
-const productId = Property.Number({
-  displayName: 'Product ID',
-  description: 'The product ID',
-  required: true,
-});
-
 export const listPurchasesForProduct = createAction({
   auth: convertkitAuth,
   name: 'purchases_list_purchases_for_product',
@@ -443,10 +285,14 @@ export const listPurchasesForProduct = createAction({
   },
   async run(context) {
     const { productId } = context.propsValue;
-    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}?api_secret=${context.auth}&product_id=${productId}`;
+    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}?api_secret=${context.auth}&product_id=${productId}`;
 
     // Fetch URL using fetch api
     const response = await fetch(url);
+
+    if (!response.ok) {
+      return { success: false, message: 'Error fetching purchases' };
+    }
 
     // Get response body
     const data = await response.json();
@@ -458,12 +304,6 @@ export const listPurchasesForProduct = createAction({
 
 // Show all purchases for a form
 
-const formId = Property.Number({
-  displayName: 'Form ID',
-  description: 'The form ID',
-  required: true,
-});
-
 export const listPurchasesForForm = createAction({
   auth: convertkitAuth,
   name: 'purchases_list_purchases_for_form',
@@ -474,10 +314,14 @@ export const listPurchasesForForm = createAction({
   },
   async run(context) {
     const { formId } = context.propsValue;
-    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}?api_secret=${context.auth}&form_id=${formId}`;
+    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}?api_secret=${context.auth}&form_id=${formId}`;
 
     // Fetch URL using fetch api
     const response = await fetch(url);
+
+    if (!response.ok) {
+      return { success: false, message: 'Error fetching purchases' };
+    }
 
     // Get response body
     const data = await response.json();
@@ -489,12 +333,6 @@ export const listPurchasesForForm = createAction({
 
 // Show all purchases for a sequence
 
-const sequenceId = Property.Number({
-  displayName: 'Sequence ID',
-  description: 'The sequence ID',
-  required: true,
-});
-
 export const listPurchasesForSequence = createAction({
   auth: convertkitAuth,
   name: 'purchases_list_purchases_for_sequence',
@@ -505,10 +343,14 @@ export const listPurchasesForSequence = createAction({
   },
   async run(context) {
     const { sequenceId } = context.propsValue;
-    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}?api_secret=${context.auth}&sequence_id=${sequenceId}`;
+    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}?api_secret=${context.auth}&sequence_id=${sequenceId}`;
 
     // Fetch URL using fetch api
     const response = await fetch(url);
+
+    if (!response.ok) {
+      return { success: false, message: 'Error fetching purchases' };
+    }
 
     // Get response body
     const data = await response.json();

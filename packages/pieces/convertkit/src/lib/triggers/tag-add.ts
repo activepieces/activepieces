@@ -1,16 +1,13 @@
-import {
-  createTrigger,
-  TriggerStrategy,
-  Property,
-} from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { convertkitAuth, ENVIRONMENT } from '../..';
-import { CONVERTKIT_API_URL } from '../common';
+import { tagId } from '../common/tags';
+import { CONVERTKIT_API_URL } from '../common/constants';
 
 interface WebhookInformation {
   ruleId: number;
 }
 
-const API_ENDPOINT = 'automations/hooks/';
+const API_ENDPOINT = 'automations/hooks';
 
 const log = async (message: object) => {
   const fs = require('fs');
@@ -28,8 +25,8 @@ const log = async (message: object) => {
 
 const onEnable = async (auth: string, payload: object) => {
   const body = JSON.stringify({ ...payload, api_secret: auth }, null, 2);
-  console.log('body', body);
-  const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}`;
+
+  const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}`;
   // Fetch URL using fetch api
   const response = await fetch(url, {
     method: 'POST',
@@ -52,7 +49,7 @@ const onEnable = async (auth: string, payload: object) => {
 };
 
 const onDisable = async (auth: string, ruleId: number) => {
-  const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}${ruleId}`;
+  const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}${ruleId}`;
   // Fetch URL using fetch api
   const response = await fetch(url, {
     method: 'DELETE',
@@ -75,11 +72,7 @@ export const addTag = createTrigger({
   description: 'Trigger when a tag is added to a subscriber',
   type: TriggerStrategy.WEBHOOK,
   props: {
-    tag_id: Property.Number({
-      displayName: 'Tag Id',
-      description: 'The tag id',
-      required: true,
-    }),
+    tagId,
   },
   sampleData: {
     rule: {
@@ -91,6 +84,7 @@ export const addTag = createTrigger({
     },
   },
   async onEnable(context) {
+    const { tagId } = context.propsValue;
     // let target_url = context.webhookUrl
     // if (ENVIRONMENT === 'dev') {
     // target_url = context.webhookUrl.replace('http://localhost:3000', 'https://activepieces.ngrok.dev')
@@ -100,10 +94,12 @@ export const addTag = createTrigger({
       'https://activepieces.ngrok.dev'
     );
 
+    // const target_url = context.webhookUrl
+
     const payload = {
       event: {
         name: 'subscriber.tag_add',
-        tag_id: context.propsValue.tag_id,
+        tag_id: tagId,
       },
       target_url,
     };

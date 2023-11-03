@@ -1,48 +1,15 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { convertkitAuth } from '../..';
-import { CONVERTKIT_API_URL } from '../common';
-import { propertyCustomFields} from './custom-fields';
-import { propertyTags } from './tags';
-
-const API_ENDPOINT = 'forms';
-
-export const getForms = async (auth: string) => {
-  const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}?api_secret=${auth}`;
-  const response = await fetch(url);
-  return await response.json();
-}
-
-
-const formId = Property.Dropdown({
-  displayName: 'Form',
-  required: true,
-  refreshers: ['auth'],
-  options: async ({ auth }) => {
-    if (!auth) {
-      return {
-        disabled: true,
-        placeholder: 'Connect your account',
-        options: [],
-      };
-    }
-
-    const forms = await getForms(auth.toString());
-
-    // loop through data and map to options
-    const options = forms.forms.map(
-      (field: { id: string; name: string; }) => {
-        return {
-          label: field.name,
-          value: field.id,
-        };
-      }
-    );
-
-    return {
-      options,
-    };
-  },
-});
+import {
+  API_ENDPOINT,
+  formId,
+  fetchForms,
+  email,
+  firstName,
+} from '../common/forms';
+import { allFields } from '../common/custom-fields';
+import { CONVERTKIT_API_URL } from '../common/constants';
+import { tags } from '../common/tags';
 
 export const listForms = createAction({
   auth: convertkitAuth,
@@ -51,9 +18,19 @@ export const listForms = createAction({
   description: 'Returns a list of all forms',
   props: {},
   async run(context) {
-    return getForms(context.auth);
+    const data = await fetchForms(context.auth);
+    // if forms exist, return forms
+    if (data.forms) {
+      return data.forms;
+    }
+    return data;
   },
 });
+
+// clone allfields
+const allFieldsForaddSubscriberToForm = { ...allFields };
+allFieldsForaddSubscriberToForm.refreshers = ['auth, formId'];
+allFieldsForaddSubscriberToForm.required = false;
 
 export const addSubscriberToForm = createAction({
   auth: convertkitAuth,
@@ -62,38 +39,40 @@ export const addSubscriberToForm = createAction({
   description: 'Add a subscriber to a form',
   props: {
     formId,
-    email: Property.ShortText({
-      displayName: 'Email',
-      description: 'The email of the subscriber',
-      required: true,
-    }),
-    first_name: Property.ShortText({
-      displayName: 'First Name',
-      description: 'The first name of the subscriber',
-      required: false,
-    }),
-    tags: propertyTags,
-    fields: propertyCustomFields,
+    email,
+    firstName,
+    tags,
+    fields: allFieldsForaddSubscriberToForm,
   },
   async run(context) {
-    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}/${context.propsValue.formId}/subscribe?api_secret=${context.auth}`;
+    const { formId, email, firstName, tags, fields } = context.propsValue;
 
-    console.debug('context.propsValue: ', context.propsValue);
+    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${formId}/subscribe?api_secret=${context.auth}`;
+
+    const body = JSON.stringify({ email, first_name: firstName, tags, fields });
 
     // Fetch URL using fetch api
     const response = await fetch(url, {
       method: 'POST',
-      body: JSON.stringify({ ...context.propsValue }),
+      body,
       headers: {
         'Content-Type': 'application/json',
       },
     });
 
+    if (!response.ok) {
+      return { success: false, message: 'Error adding subscriber to form' };
+    }
+
     // Get response body
     const data = await response.json();
 
-    // Return response body
-    return data;
+    // If subscription is not empty, return the subscription
+    if (data.subscription) {
+      return data.subscription;
+    } else {
+      return data;
+    }
   },
 });
 
@@ -106,13 +85,22 @@ export const listFormSubscriptions = createAction({
     formId,
   },
   async run(context) {
-    const url = `${CONVERTKIT_API_URL}${API_ENDPOINT}/${context.propsValue.formId}/subscriptions?api_secret=${context.auth}`;
+    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${context.propsValue.formId}/subscriptions?api_secret=${context.auth}`;
 
     // Fetch URL using fetch api
     const response = await fetch(url);
 
+    if (!response.ok) {
+      return { success: false, message: 'Error listing form subscriptions' };
+    }
+
     // Get response body
     const data = await response.json();
+
+    // if subscriptions is not empty, return the subscriptions
+    if (data.subscriptions) {
+      return data.subscriptions;
+    }
 
     // Return response body
     return data;
