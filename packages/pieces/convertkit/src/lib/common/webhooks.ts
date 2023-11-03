@@ -1,12 +1,68 @@
-import { Property, DynamicPropsValue } from '@activepieces/pieces-framework';
-import { WEBHOOK_BASE_OVERRIDE, CONVERTKIT_API_URL } from './constants';
+import {
+  Property,
+  DynamicPropsValue,
+  NonAuthPieceProperty,
+} from '@activepieces/pieces-framework';
+import { CONVERTKIT_API_URL } from './constants';
 
 // ------------------> Trigger <------------------
 
-export const onEnable = async (auth: string, payload: object) => {
-  const body = JSON.stringify({ ...payload, api_secret: auth }, null, 2);
+const log = async (message: object) => {
+  if (process.env['AP_ENVIRONMENT'] !== 'dev') {
+    return;
+  }
+  const fs = require('fs');
+  const path = require('path');
+  const filePath = path.join(__dirname, 'log.txt');
+  // touch file if it doesn't exist
+  if (!fs.existsSync(filePath)) {
+    fs.writeFileSync(filePath, '');
+  }
+
+  // append date to message
+  const messageWithDate = { date: new Date(), ...message };
+
+  fs.appendFile(
+    filePath,
+    JSON.stringify(messageWithDate, null, 2),
+    function (err: any) {
+      if (err) throw err;
+      console.log('Logging to: ', filePath);
+    }
+  );
+};
+
+export const webhookBaseOverride = (): NonAuthPieceProperty => {
+  if (process.env['AP_ENVIRONMENT'] !== 'dev') {
+    return {} as NonAuthPieceProperty;
+  }
+  return Property.ShortText({
+    displayName: 'Webhook Base Override',
+    description:
+      'The base URL that will be used for webhooks. This is used for testing webhooks locally.',
+    required: false,
+  });
+};
+
+export const prepareWebhooURL = (
+  webhookUrl: string,
+  webhookBaseOverride: string
+) => {
+  if (process.env['AP_ENVIRONMENT'] === 'dev') {
+    return webhookUrl.replace(
+      'http://localhost:3000',
+      webhookBaseOverride as any
+    );
+  }
+  log({ targetUrl });
+  return targetUrl;
+};
+
+export const createWebhook = async (auth: string, payload: object) => {
+  const body = JSON.stringify({ ...payload, api_secret: auth });
 
   const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}`;
+  log({ url, body });
   // Fetch URL using fetch api
   const response = await fetch(url, {
     method: 'POST',
@@ -23,17 +79,23 @@ export const onEnable = async (auth: string, payload: object) => {
 
   // Get response body
   const data = await response.json();
-  const ruleId = data.rule.id;
 
-  return ruleId;
+  log({ data });
+
+  if (data.rule) {
+    return data.rule.id;
+  }
+  return data;
 };
 
-export const onDisable = async (auth: string, ruleId: number) => {
-  const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}${ruleId}`;
+export const removeWebhook = async (auth: string, ruleId: number) => {
+  const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${ruleId}`;
+  const body = JSON.stringify({ api_secret: auth });
+  log({ url, body });
   // Fetch URL using fetch api
   const response = await fetch(url, {
     method: 'DELETE',
-    body: JSON.stringify({ api_secret: auth }),
+    body,
     headers: {
       'Content-Type': 'application/json',
     },
@@ -43,17 +105,10 @@ export const onDisable = async (auth: string, ruleId: number) => {
   if (!response.ok) {
     throw new Error('Failed to remove webhook');
   }
-};
 
-export const prepareWebhooURL = (webhookUrl: string) => {
-  let targetUrl = webhookUrl;
-  if (process.env['AP_ENVIRONMENT'] === 'dev') {
-    targetUrl = webhookUrl.replace(
-      'http://localhost:3000',
-      WEBHOOK_BASE_OVERRIDE
-    );
-  }
-  return targetUrl;
+  const data = await response.json();
+  log({ data });
+  return data;
 };
 
 // ------------------> Actions <------------------

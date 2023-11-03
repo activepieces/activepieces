@@ -69,9 +69,6 @@ import {
   purchaseCreated,
 } from './lib/triggers/triggers';
 
-export const ENVIRONMENT = 'dev';
-// export const ENVIRONMENT = 'prod'
-
 export const convertkitAuth = PieceAuth.SecretText({
   displayName: 'API Secret',
   description: 'Enter your API Secret key',
