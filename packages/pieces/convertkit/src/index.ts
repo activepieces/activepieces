@@ -5,8 +5,9 @@ import {
   listSubscribers,
   updateSubscriber,
   unsubscribeSubscriber,
-  listSubscriberTags,
-} from './lib/actions/subscriber';
+  listSubscriberTagsByEmail,
+  listTagsBySubscriberId,
+} from './lib/actions/subscribers';
 import {
   listFields,
   createField,
@@ -14,7 +15,7 @@ import {
   deleteField,
 } from './lib/actions/custom-fields';
 
-import { createWebhook, deleteWebhook } from './lib/actions/webhook';
+import { createWebhook, deleteWebhook } from './lib/actions/webhooks';
 
 import {
   listBroadcasts,
@@ -43,7 +44,7 @@ import {
   tagSubscriber,
   removeTagFromSubscriberByEmail,
   removeTagFromSubscriberById,
-  listSubscribersToTag,
+  listSubscriptionsToATag,
 } from './lib/actions/tags';
 
 import {
@@ -51,10 +52,6 @@ import {
   getPurchaseById,
   createSinglePurchase,
   createPurchases,
-  // listPurchasesForSubscriber,
-  // listPurchasesForProduct,
-  // listPurchasesForForm,
-  // listPurchasesForSequence,
 } from './lib/actions/purchases';
 
 import { addTag } from './lib/triggers/tag-add';
@@ -81,8 +78,8 @@ export const convertkit = createPiece({
     listSubscribers,
     updateSubscriber,
     unsubscribeSubscriber,
-    listSubscriberTags,
-    // removeTagFromSubscriberByEmail,
+    listSubscriberTagsByEmail,
+    listTagsBySubscriberId,
     createWebhook,
     deleteWebhook,
     listFields,
@@ -106,15 +103,11 @@ export const convertkit = createPiece({
     tagSubscriber,
     removeTagFromSubscriberByEmail,
     removeTagFromSubscriberById,
-    listSubscribersToTag,
+    listSubscriptionsToATag,
     listPurchases,
     getPurchaseById,
     createSinglePurchase,
     createPurchases,
-    // listPurchasesForSubscriber,
-    // listPurchasesForProduct,
-    // listPurchasesForForm,
-    // listPurchasesForSequence,
   ],
   triggers: [addTag],
 });
