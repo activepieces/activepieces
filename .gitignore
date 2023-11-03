@@ -3,7 +3,6 @@
 # compiled output
 dist
 tmp
-.nx/
 /out-tsc
 firebase-admin-sdk.json
 
@@ -38,7 +37,7 @@ npm-debug.log
 yarn-error.log
 testem.log
 /typings
-.nx/
+/.nx
 # System Files
 .DS_Store
 Thumbs.db

@@ -22,6 +22,7 @@ import { webhookService } from '../../webhooks/webhook-service'
 import { flowService } from '../flow/flow.service'
 import { TriggerEventEntity } from './trigger-event.entity'
 import { stepFileService } from '../step-file/step-file.service'
+import { getServerUrl } from '../../helper/public-ip-utils'
 
 const triggerEventRepo = databaseConnection.getRepository(TriggerEventEntity)
 
@@ -53,6 +54,7 @@ export const triggerEventService = {
                 const { result: testResult } = await engineHelper.executeTrigger({
                     hookType: TriggerHookType.TEST,
                     flowVersion: flow.version,
+                    serverUrl: await getServerUrl(),
                     webhookUrl: await webhookService.getWebhookUrl({
                         flowId: flow.id,
                         simulate: true,

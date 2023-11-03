@@ -4,6 +4,7 @@ import {
     CodeAction,
     StepRunResponse,
     ErrorCode,
+    ExecuteActionOperation,
     flowHelper,
     FlowVersion,
     FlowVersionId,
@@ -21,11 +22,13 @@ import {
     ExecutionOutputStatus,
     UserId,
     FlowOperationType,
+    EngineTestOperation,
     StepOutputStatus,
 } from '@activepieces/shared'
 import { engineHelper } from '../../helper/engine-helper'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { isNil } from '@activepieces/shared'
+import { getServerUrl } from '../../helper/public-ip-utils'
 import { flowService } from '../flow/flow.service'
 import { stepFileService } from '../step-file/step-file.service'
 import { sandboxProvisioner } from '../../workers/sandbox/provisioner/sandbox-provisioner'
@@ -68,7 +71,7 @@ export const stepRunService = {
 }
 
 async function executePiece({ step, projectId, flowVersion, userId }: ExecuteParams<PieceAction>): Promise<StepRunResponse> {
-    const { actionName, input } = step.settings
+    const { packageType, pieceType, pieceName, pieceVersion, actionName, input } = step.settings
 
     if (isNil(actionName)) {
         throw new ActivepiecesError({
@@ -85,12 +88,22 @@ async function executePiece({ step, projectId, flowVersion, userId }: ExecutePar
         stepName: step.name,
     })
 
-    const { result, standardError, standardOutput } = await engineHelper.executeAction( {
-        action: step,
+    const operation: ExecuteActionOperation = {
+        serverUrl: await getServerUrl(),
+        piece: {
+            packageType,
+            pieceType,
+            pieceName,
+            pieceVersion,
+            projectId,
+        },
+        actionName,
         input,
         flowVersion,
         projectId,
-    })
+    }
+
+    const { result, standardError, standardOutput } = await engineHelper.executeAction(operation)
 
     if (result.success) {
         step.settings.inputUiInfo.currentSelectedData = result.output
@@ -117,6 +130,7 @@ async function executeCode({ step, flowVersion, projectId }: ExecuteParams<CodeA
     const { result, standardError, standardOutput } = await engineHelper.executeCode({
         step,
         input: step.settings.input,
+        serverUrl: await getServerUrl(),
         flowVersion,
         projectId,
     })
@@ -158,24 +172,28 @@ const executeBranch = async ({ step, flowVersion, projectId }: ExecuteParams<Bra
         ...flowVersion,
         trigger: testTrigger,
     }
+
+    const testInput: EngineTestOperation = {
+        executionType: ExecutionType.BEGIN,
+        flowRunId: apId(),
+        flowVersion: testFlowVersion,
+        projectId,
+        serverUrl: await getServerUrl(),
+        triggerPayload: {
+            duration: 0,
+            input: {},
+            output: flowVersion.trigger.settings?.inputUiInfo?.currentSelectedData,
+            status: StepOutputStatus.SUCCEEDED,
+        },
+        sourceFlowVersion: flowVersion,
+    }
+
     const sandbox = await sandboxProvisioner.provision({
         type: SandBoxCacheType.NONE,
     })
 
     try {
-        const { status, result, standardError, standardOutput } = await engineHelper.executeTest(sandbox, {
-            executionType: ExecutionType.BEGIN,
-            flowRunId: apId(),
-            flowVersion: testFlowVersion,
-            projectId,
-            triggerPayload: {
-                duration: 0,
-                input: {},
-                output: flowVersion.trigger.settings?.inputUiInfo?.currentSelectedData,
-                status: StepOutputStatus.SUCCEEDED,
-            },
-            sourceFlowVersion: flowVersion,
-        })
+        const { status, result, standardError, standardOutput } = await engineHelper.executeTest(sandbox, testInput)
 
         if (status !== EngineResponseStatus.OK || result.status !== ExecutionOutputStatus.SUCCEEDED) {
             return {

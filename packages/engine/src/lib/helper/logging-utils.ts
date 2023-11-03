@@ -1,4 +1,4 @@
-import { ActionType, ExecutionOutput, LoopOnItemsStepOutput, MAX_LOG_SIZE, StepOutput, TriggerType, applyFunctionToValues } from '@activepieces/shared'
+import { ActionType, ExecutionOutput, LoopOnItemsStepOutput, MAX_LOG_SIZE, StepOutput, applyFunctionToValues } from '@activepieces/shared'
 import sizeof from 'object-sizeof'
 import { isMemoryFilePath } from '../services/files.service'
 
@@ -20,9 +20,6 @@ async function trimStepOutput(stepOutput: StepOutput): Promise<StepOutput> {
     modified.input = await applyFunctionToValues(modified.input, trim)
     switch (modified.type) {
         case ActionType.BRANCH:
-        case TriggerType.WEBHOOK:
-        case TriggerType.EMPTY:
-        case TriggerType.PIECE:
             break
         case ActionType.CODE:
         case ActionType.PIECE:
