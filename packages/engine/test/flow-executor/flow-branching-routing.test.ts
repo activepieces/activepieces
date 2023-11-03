@@ -38,7 +38,7 @@ describe('flow with branching', () => {
             constants: EXECUTE_CONSTANTS,
         })
 
-        expect(result.verdict).toBe(ExecutionVerdict.SUCCEEDED)
+        expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
         expect(result.steps.echo_step.output).toEqual({
             'success': 'true',
         })
@@ -58,7 +58,7 @@ describe('flow with branching', () => {
             constants: EXECUTE_CONSTANTS,
         })
 
-        expect(result.verdict).toBe(ExecutionVerdict.SUCCEEDED)
+        expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
         expect(result.steps.echo_step).toBeUndefined()
         expect(result.steps.echo_step_1.output).toEqual({
             'failure': 'true',

@@ -48,7 +48,7 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
                 executionState: newExecutionContext,
                 constants,
             })
-            if (newExecutionContext.verdict === ExecutionVerdict.FAILED) {
+            if (newExecutionContext.verdict !== ExecutionVerdict.RUNNING) {
                 return newExecutionContext
             }
 

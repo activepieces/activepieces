@@ -1,4 +1,4 @@
-import { Action, ActionType, BranchAction, BranchCondition, CodeAction, ExecutionType, LoopOnItemsAction } from '@activepieces/shared'
+import { Action, ActionType, BranchAction, BranchCondition, CodeAction, ExecutionType, LoopOnItemsAction, PackageType, PieceAction, PieceType } from '@activepieces/shared'
 import path from 'path'
 import { cwd } from 'process'
 
@@ -62,6 +62,27 @@ export function buildCodeAction({ name, input, nextAction }: { name: 'echo_step'
             sourceCode: {
                 packageJson: '',
                 code: '',
+            },
+        },
+        nextAction,
+        valid: true,
+    }
+}
+
+export function buildPieceAction({ name, input, pieceName, actionName, nextAction }: { name: string, input: Record<string, unknown>, nextAction?: Action, pieceName: string, actionName: string }): PieceAction {
+    return {
+        name,
+        displayName: 'Your Action Name',
+        type: ActionType.PIECE,
+        settings: {
+            input,
+            pieceName,
+            packageType: PackageType.REGISTRY,
+            pieceVersion: '1.0.0', // Not required since it's running in development mode
+            pieceType: PieceType.OFFICIAL,
+            actionName,
+            inputUiInfo: {
+                currentSelectedData: {},
             },
         },
         nextAction,

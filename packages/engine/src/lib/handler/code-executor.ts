@@ -38,7 +38,7 @@ export const codeExecutor: BaseExecutor<CodeAction> = {
                 input: censoredInput,
                 output,
             }
-            return executionState.upsertStep(action.name, stepOutput).setVerdict(ExecutionVerdict.SUCCEEDED)
+            return executionState.upsertStep(action.name, stepOutput)
         }
         catch (e) {
             console.error(e)

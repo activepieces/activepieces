@@ -13,8 +13,6 @@ import {
 import {
     ActivepiecesError,
     ErrorCode,
-    ExecuteActionOperation,
-    ExecuteActionResponse,
     extractPieceFromModule,
     ExecuteValidateAuthOperation,
     ExecuteValidateAuthResponse,
@@ -30,7 +28,8 @@ import { API_URL } from '../constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { variableService } from '../services/variable-service'
 
-const env = process.env.AP_ENVIRONMENT
+// TODO REMOVE FROM HERE
+const env = process.env.AP_ENVIRONMENT ?? 'dev'
 
 const loadPieceOrThrow = async (
     pieceName: string,
@@ -65,7 +64,6 @@ const getActionOrThrow = async (params: GetActionParams): Promise<Action> => {
     const { pieceName, pieceVersion, actionName } = params
 
     const piece = await loadPieceOrThrow(pieceName, pieceVersion)
-
     const action = piece.getAction(actionName)
 
     if (isNil(action)) {
@@ -118,13 +116,6 @@ const getPropOrThrow = async (params: ExecutePropsOptions) => {
 }
 
 export const pieceHelper = {
-
-
-    // TODO REIMPLMENT or use executor
-    async executeAction(_params: ExecuteActionOperation): Promise<ExecuteActionResponse> {
-        return {} as unknown as ExecuteActionResponse
-    },
-
     async executeProps(params: ExecutePropsOptions) {
         const property = await getPropOrThrow(params)
 
@@ -136,7 +127,6 @@ export const pieceHelper = {
             StaticPropsValue<PiecePropertyMap>
             >({
                 unresolvedInput: params.input,
-                // TODO FIX
                 executionState: FlowExecutorContext.empty(),
             })
             const ctx = {

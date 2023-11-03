@@ -159,9 +159,9 @@ export class VariableService {
         unresolvedInput: unknown
         executionState: FlowExecutorContext
     }): Promise<{
-        resolvedInput: T
-        censoredInput: unknown
-    }> {
+            resolvedInput: T
+            censoredInput: unknown
+        }> {
         const { unresolvedInput, executionState } = params
 
         if (isNil(unresolvedInput)) {
@@ -174,12 +174,12 @@ export class VariableService {
         const resolvedInput = await this.resolveInternally(
             JSON.parse(JSON.stringify(unresolvedInput)),
             executionState.currentState,
-            true,
+            false,
         )
         const censoredInput = await this.resolveInternally(
             JSON.parse(JSON.stringify(unresolvedInput)),
             executionState.currentState,
-            false,
+            true,
         )
         return {
             resolvedInput,

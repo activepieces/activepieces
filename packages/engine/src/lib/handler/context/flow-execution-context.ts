@@ -1,4 +1,4 @@
-import { ActionType, ExecutionType, LoopOnItemsStepOutput, ProjectId, StepOutput, StepOutputStatus, isNil } from '@activepieces/shared'
+import { ActionType, ExecutionType, ProjectId, StepOutput, StepOutputStatus, isNil } from '@activepieces/shared'
 
 export enum ExecutionVerdict {
     RUNNING = 'RUNNING',
@@ -63,7 +63,7 @@ export const FlowExecutorContext = {
     tags: [],
     steps: {},
     currentState: {},
-    verdict: ExecutionVerdict.SUCCEEDED,
+    verdict: ExecutionVerdict.RUNNING,
     empty(): FlowExecutorContext {
         return {
             ...this,
@@ -72,7 +72,7 @@ export const FlowExecutorContext = {
             tags: [],
             steps: {},
             currentState: {},
-            verdict: ExecutionVerdict.SUCCEEDED,
+            verdict: ExecutionVerdict.RUNNING,
         }
     },
     isCompleted({ stepName }: { stepName: string }): boolean {

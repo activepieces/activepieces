@@ -21,7 +21,7 @@ describe('flow with branching different conditions', () => {
                 caseSensitive: false,
             },
         )
-        expect(result.verdict).toBe(ExecutionVerdict.SUCCEEDED)
+        expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
         expect(result.steps.branch.output).toEqual({
             condition: true,
         })
@@ -36,7 +36,7 @@ describe('flow with branching different conditions', () => {
                 caseSensitive: false,
             },
         )
-        expect(result.verdict).toBe(ExecutionVerdict.SUCCEEDED)
+        expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
         expect(result.steps.branch.output).toEqual({
             condition: true,
         })
@@ -51,7 +51,7 @@ describe('flow with branching different conditions', () => {
                 caseSensitive: false,
             },
         )
-        expect(result.verdict).toBe(ExecutionVerdict.SUCCEEDED)
+        expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
         expect(result.steps.branch.output).toEqual({
             condition: true,
         })
@@ -66,7 +66,7 @@ describe('flow with branching different conditions', () => {
                 caseSensitive: false,
             },
         )
-        expect(result.verdict).toBe(ExecutionVerdict.SUCCEEDED)
+        expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
         expect(result.steps.branch.output).toEqual({
             condition: true,
         })
@@ -81,7 +81,7 @@ describe('flow with branching different conditions', () => {
                 caseSensitive: false,
             },
         )
-        expect(result.verdict).toBe(ExecutionVerdict.SUCCEEDED)
+        expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
         expect(result.steps.branch.output).toEqual({
             condition: true,
         })
@@ -96,7 +96,7 @@ describe('flow with branching different conditions', () => {
                 caseSensitive: false,
             },
         )
-        expect(result.verdict).toBe(ExecutionVerdict.SUCCEEDED)
+        expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
         expect(result.steps.branch.output).toEqual({
             condition: true,
         })
@@ -111,7 +111,7 @@ describe('flow with branching different conditions', () => {
                 caseSensitive: false,
             },
         )
-        expect(result.verdict).toBe(ExecutionVerdict.SUCCEEDED)
+        expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
         expect(result.steps.branch.output).toEqual({
             condition: true,
         })
@@ -126,7 +126,7 @@ describe('flow with branching different conditions', () => {
                 caseSensitive: false,
             },
         )
-        expect(result.verdict).toBe(ExecutionVerdict.SUCCEEDED)
+        expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
         expect(result.steps.branch.output).toEqual({
             condition: true,
         })
@@ -141,7 +141,7 @@ describe('flow with branching different conditions', () => {
                 caseSensitive: true,
             },
         )
-        expect(result.verdict).toBe(ExecutionVerdict.SUCCEEDED)
+        expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
         expect(result.steps.branch.output).toEqual({
             condition: true,
         })
@@ -156,7 +156,7 @@ describe('flow with branching different conditions', () => {
                 caseSensitive: true,
             },
         )
-        expect(result.verdict).toBe(ExecutionVerdict.SUCCEEDED)
+        expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
         expect(result.steps.branch.output).toEqual({
             condition: true,
         })
@@ -171,7 +171,7 @@ describe('flow with branching different conditions', () => {
                 caseSensitive: true,
             },
         )
-        expect(result.verdict).toBe(ExecutionVerdict.SUCCEEDED)
+        expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
         expect(result.steps.branch.output).toEqual({
             condition: true,
         })
@@ -186,7 +186,7 @@ describe('flow with branching different conditions', () => {
                 caseSensitive: true,
             },
         )
-        expect(result.verdict).toBe(ExecutionVerdict.SUCCEEDED)
+        expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
         expect(result.steps.branch.output).toEqual({
             condition: true,
         })
@@ -201,7 +201,7 @@ describe('flow with branching different conditions', () => {
                 caseSensitive: true,
             },
         )
-        expect(result.verdict).toBe(ExecutionVerdict.SUCCEEDED)
+        expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
         expect(result.steps.branch.output).toEqual({
             condition: true,
         })
@@ -216,7 +216,7 @@ describe('flow with branching different conditions', () => {
                 caseSensitive: true,
             },
         )
-        expect(result.verdict).toBe(ExecutionVerdict.SUCCEEDED)
+        expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
         expect(result.steps.branch.output).toEqual({
             condition: true,
         })
@@ -231,7 +231,7 @@ describe('flow with branching different conditions', () => {
                 caseSensitive: true,
             },
         )
-        expect(result.verdict).toBe(ExecutionVerdict.SUCCEEDED)
+        expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
         expect(result.steps.branch.output).toEqual({
             condition: true,
         })
@@ -246,7 +246,7 @@ describe('flow with branching different conditions', () => {
                 caseSensitive: true,
             },
         )
-        expect(result.verdict).toBe(ExecutionVerdict.SUCCEEDED)
+        expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
         expect(result.steps.branch.output).toEqual({
             condition: true,
         })
@@ -259,7 +259,7 @@ describe('flow with branching different conditions', () => {
                 firstValue: 'test',
             },
         )
-        expect(result.verdict).toBe(ExecutionVerdict.SUCCEEDED)
+        expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
         expect(result.steps.branch.output).toEqual({
             condition: true,
         })
@@ -272,7 +272,7 @@ describe('flow with branching different conditions', () => {
                 firstValue: '',
             },
         )
-        expect(result.verdict).toBe(ExecutionVerdict.SUCCEEDED)
+        expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
         expect(result.steps.branch.output).toEqual({
             condition: true,
         })
@@ -285,7 +285,7 @@ describe('flow with branching different conditions', () => {
                 firstValue: 'true',
             },
         )
-        expect(result.verdict).toBe(ExecutionVerdict.SUCCEEDED)
+        expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
         expect(result.steps.branch.output).toEqual({
             condition: true,
         })
@@ -298,7 +298,7 @@ describe('flow with branching different conditions', () => {
                 firstValue: '{{false}}',
             },
         )
-        expect(result.verdict).toBe(ExecutionVerdict.SUCCEEDED)
+        expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
         expect(result.steps.branch.output).toEqual({
             condition: true,
         })

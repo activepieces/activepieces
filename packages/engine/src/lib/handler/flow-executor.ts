@@ -31,11 +31,11 @@ export const flowExecutorNew = {
                 executionState: flowExecutionContext,
                 constants,
             })
-            if (flowExecutionContext.verdict === ExecutionVerdict.FAILED) {
+            if (flowExecutionContext.verdict !== ExecutionVerdict.RUNNING) {
                 return flowExecutionContext
             }
             currentAction = currentAction.nextAction
         }
-        return flowExecutionContext.setVerdict(ExecutionVerdict.SUCCEEDED)
+        return flowExecutionContext
     },
 }

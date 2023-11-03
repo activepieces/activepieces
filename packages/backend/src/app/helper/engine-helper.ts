@@ -321,17 +321,23 @@ export const engineHelper = {
     async executeAction(operation: Omit<ExecuteActionOperation, EngineConstants>): Promise<EngineHelperResponse<EngineHelperActionResult>> {
         logger.debug({
             flowVersionId: operation.flowVersion.id,
-            piece: operation.piece,
-            actionName: operation.actionName,
+            stepName: operation.action,
         }, '[EngineHelper#executeAction]')
 
-        const { piece } = operation
-
+        const { packageType, pieceType, pieceName, pieceVersion } = operation.action.settings
+        const piece = {
+            packageType,
+            pieceType,
+            pieceName,
+            pieceVersion,
+            projectId: operation.projectId,
+        }
         piece.pieceVersion = await pieceMetadataService.getExactPieceVersion({
             name: piece.pieceName,
             version: piece.pieceVersion,
             projectId: piece.projectId,
         })
+        operation.action.settings.pieceVersion = piece.pieceVersion
 
         const sandbox = await sandboxProvisioner.provision({
             type: SandBoxCacheType.PIECE,

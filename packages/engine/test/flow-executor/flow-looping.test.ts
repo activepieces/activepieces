@@ -22,7 +22,7 @@ describe('flow with looping', () => {
             constants: EXECUTE_CONSTANTS,
         })
 
-        expect(result.verdict).toBe(ExecutionVerdict.SUCCEEDED)
+        expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
         expect(result.steps.loop.output.iterations.length).toBe(3)
         expect(result.steps.loop.output.index).toBe(3)
         expect(result.steps.loop.output.item).toBe(6)

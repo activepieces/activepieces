@@ -68,7 +68,7 @@ export const stepRunService = {
 }
 
 async function executePiece({ step, projectId, flowVersion, userId }: ExecuteParams<PieceAction>): Promise<StepRunResponse> {
-    const { packageType, pieceType, pieceName, pieceVersion, actionName, input } = step.settings
+    const { actionName, input } = step.settings
 
     if (isNil(actionName)) {
         throw new ActivepiecesError({
@@ -86,14 +86,7 @@ async function executePiece({ step, projectId, flowVersion, userId }: ExecutePar
     })
 
     const { result, standardError, standardOutput } = await engineHelper.executeAction( {
-        piece: {
-            packageType,
-            pieceType,
-            pieceName,
-            pieceVersion,
-            projectId,
-        },
-        actionName,
+        action: step,
         input,
         flowVersion,
         projectId,

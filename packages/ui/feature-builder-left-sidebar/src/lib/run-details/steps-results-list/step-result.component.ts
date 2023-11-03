@@ -21,6 +21,7 @@ import {
   LoopOnItemsStepOutput,
   StepOutput,
   StepOutputStatus,
+  TriggerType,
 } from '@activepieces/shared';
 import { fadeInAnimation } from '@activepieces/ui/common';
 
@@ -183,7 +184,7 @@ export class StepResultComponent implements OnInit, AfterViewInit {
   }
 
   createStepResultsForDetailsAccordion(
-    iteration: Record<string, StepOutput<ActionType, any>>
+    iteration: Record<string, StepOutput<ActionType | TriggerType, any>>
   ): Pick<StepRunResult, 'stepName' | 'output'>[] {
     const iterationStepsNames = Object.keys(iteration);
     return iterationStepsNames.map((stepName) => {

@@ -1,6 +1,6 @@
 import { AUTHENTICATION_PROPERTY_NAME, ActionType, PieceAction, StepOutputStatus, assertNotNullOrUndefined } from '@activepieces/shared'
 import { BaseExecutor } from './base-executor'
-import { EngineConstantData, FlowExecutorContext } from './context/flow-execution-context'
+import { EngineConstantData, ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
 import { variableService } from '../services/variable-service'
 import { ActionContext, ConnectionsManager, PauseHook, PauseHookParams, PiecePropertyMap, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
 import { pieceHelper } from '../helper/piece-helper'
@@ -9,6 +9,7 @@ import { createFilesService } from '../services/files.service'
 import { createConnectionService } from '../services/connections.service'
 
 type HookResponse = { stopResponse: StopHookParams | undefined, pauseResponse: PauseHookParams | undefined, tags: string[] }
+
 export const pieceExecutor: BaseExecutor<PieceAction> = {
     async handle({
         action,
@@ -98,7 +99,7 @@ export const pieceExecutor: BaseExecutor<PieceAction> = {
                 status: StepOutputStatus.SUCCEEDED,
                 input: censoredInput,
                 output,
-            })
+            }).setVerdict(ExecutionVerdict.SUCCEEDED)
         }
         if (hookResponse.pauseResponse) {
             return newExecutionContext.upsertStep(action.name, {

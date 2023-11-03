@@ -1,4 +1,3 @@
-import { ActionType } from '../../flows/actions/action';
 import {ExecutionState} from './execution-state';
 import { StopResponse } from './step-output';
 

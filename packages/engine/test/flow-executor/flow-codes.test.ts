@@ -13,7 +13,7 @@ describe('codeExecutor', () => {
                 },
             }), executionState: FlowExecutorContext.empty(), constants: EXECUTE_CONSTANTS,
         })
-        expect(result.verdict).toBe(ExecutionVerdict.SUCCEEDED)
+        expect(result.verdict).toBe(ExecutionVerdict.RUNNING)
         expect(result.steps.echo_step.output).toEqual({ 'key': 3 })
     })
 
