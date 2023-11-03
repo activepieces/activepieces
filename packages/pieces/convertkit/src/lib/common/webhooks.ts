@@ -1,4 +1,61 @@
 import { Property, DynamicPropsValue } from '@activepieces/pieces-framework';
+import { WEBHOOK_BASE_OVERRIDE, CONVERTKIT_API_URL } from './constants';
+
+// ------------------> Trigger <------------------
+export const onEnable = async (auth: string, payload: object) => {
+  const body = JSON.stringify({ ...payload, api_secret: auth }, null, 2);
+
+  const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}`;
+  // Fetch URL using fetch api
+  const response = await fetch(url, {
+    method: 'POST',
+    body,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  // Throw if unsuccessful
+  if (!response.ok) {
+    throw new Error('Failed to create webhook');
+  }
+
+  // Get response body
+  const data = await response.json();
+  const ruleId = data.rule.id;
+
+  return ruleId;
+};
+
+export const onDisable = async (auth: string, ruleId: number) => {
+  const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}${ruleId}`;
+  // Fetch URL using fetch api
+  const response = await fetch(url, {
+    method: 'DELETE',
+    body: JSON.stringify({ api_secret: auth }),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  // Throw if unsuccessful
+  if (!response.ok) {
+    throw new Error('Failed to remove webhook');
+  }
+};
+
+export const prepareWebhooURL = (webhookUrl: string) => {
+  let targetUrl = webhookUrl;
+  if (process.env['AP_ENVIRONMENT'] === 'dev') {
+    targetUrl = webhookUrl.replace(
+      'http://localhost:3000',
+      WEBHOOK_BASE_OVERRIDE
+    );
+  }
+  return targetUrl;
+};
+
+// ------------------> Actions <------------------
 
 export const API_ENDPOINT = 'automations/hooks';
 
