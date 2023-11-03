@@ -1,64 +1,134 @@
-import { Property, OAuth2PropertyValue } from "@activepieces/pieces-framework";
-import { HttpRequest, HttpMethod, httpClient } from "@activepieces/pieces-common";
-import mailchimp from "@mailchimp/mailchimp_marketing";
+import { Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import {
+  HttpRequest,
+  HttpMethod,
+  httpClient,
+} from '@activepieces/pieces-common';
+import mailchimp from '@mailchimp/mailchimp_marketing';
+import { AuthenticationType } from '@activepieces/pieces-common';
+import crypto from 'crypto';
 
-export const mailChimpListIdDropdown = Property.Dropdown<string>({
-  displayName: "Audience",
-  refreshers: [],
-  description: "Audience you want to add the contact to",
-  required: true,
-  options: async ({ auth }) => {
-    if (!auth) {
-      return {
-        disabled: true,
-        options: [],
-        placeholder: "Please select an authentication"
+export const mailchimpCommon = {
+  mailChimpListIdDropdown: Property.Dropdown<string>({
+    displayName: 'Audience',
+    refreshers: [],
+    description: 'Audience you want to add the contact to',
+    required: true,
+    options: async ({ auth }) => {
+      if (!auth) {
+        return {
+          disabled: true,
+          options: [],
+          placeholder: 'Please select a connection',
+        };
       }
-    }
 
-    const authProp = auth as OAuth2PropertyValue;
-    const listResponse = await getUserLists(authProp);
-    const options = listResponse.lists.map(list => ({
-      label: list.name,
-      value: list.id,
-    }));
+      const authProp = auth as OAuth2PropertyValue;
+      const listResponse = (await mailchimpCommon.getUserLists(
+        authProp
+      )) as any;
 
-    return {
-      disabled: false,
-      options,
+      const options = listResponse.lists.map((list: any) => ({
+        label: list.name,
+        value: list.id,
+      }));
+
+      return {
+        disabled: false,
+        options,
+      };
+    },
+  }),
+  getUserLists: async (authProp: OAuth2PropertyValue) => {
+    const access_token = authProp.access_token;
+    const mailChimpServerPrefix =
+      await mailchimpCommon.getMailChimpServerPrefix(access_token!);
+    mailchimp.setConfig({
+      accessToken: access_token,
+      server: mailChimpServerPrefix,
+    });
+
+    // mailchimp types are not complete this is from the docs.
+    return await(mailchimp as any).lists.getAllLists({
+      fields: ['lists.id', 'lists.name', 'total_items'],
+      count: 1000,
+    });
+  },
+  getMailChimpServerPrefix: async (access_token: string) => {
+    const mailChimpMetaDataRequest: HttpRequest<{ dc: string }> = {
+      method: HttpMethod.GET,
+      url: 'https://login.mailchimp.com/oauth2/metadata',
+      headers: {
+        Authorization: `OAuth ${access_token}`,
+      },
     };
-  }
-});
+    return (await httpClient.sendRequest(mailChimpMetaDataRequest)).body['dc'];
+  },
+  enableWebhookRequest: async ({
+    server,
+    token,
+    listId,
+    webhookUrl,
+    events,
+  }: EnableTriggerRequestParams): Promise<string> => {
+    const response = await httpClient.sendRequest<EnableTriggerResponse>({
+      method: HttpMethod.POST,
+      url: `https://${server}.api.mailchimp.com/3.0/lists/${listId}/webhooks`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token,
+      },
+      body: {
+        url: webhookUrl,
+        events,
+        sources: {
+          user: true,
+          admin: true,
+          api: true,
+        },
+      },
+    });
 
-async function getUserLists(authProp: OAuth2PropertyValue): Promise<{ lists: MailChimpList[] }> {
-  const access_token = authProp.access_token;
-  const mailChimpServerPrefix = await getMailChimpServerPrefix(access_token!);
-  mailchimp.setConfig({
-    accessToken: access_token,
-    server: mailChimpServerPrefix
-  });
+    const { id: webhookId } = response.body;
+    return webhookId;
+  },
+  disableWebhookRequest: async ({
+    server,
+    token,
+    listId,
+    webhookId,
+  }: DisableTriggerRequestParams): Promise<void> => {
+    await httpClient.sendRequest<EnableTriggerResponse>({
+      method: HttpMethod.DELETE,
+      url: `https://${server}.api.mailchimp.com/3.0/lists/${listId}/webhooks/${webhookId}`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token,
+      },
+    });
+  },
+  getMD5EmailHash: (email: string) => {
+    return crypto.createHash('md5').update(email.toLowerCase()).digest('hex');
+  },
+};
 
-  console.log(`server ${mailChimpServerPrefix}`);
+type TriggerRequestParams = {
+  server: string;
+  token: string;
+  listId: string;
+};
 
-  // mailchimp types are not complete this is from the docs.
-  return await (mailchimp as any).lists.getAllLists({
-    fields: ["lists.id", "lists.name", "total_items"],
-    count: 1000
-  });
-}
+type EnableTriggerRequestParams = TriggerRequestParams & {
+  webhookUrl: string;
+  events: object;
+};
 
-export async function getMailChimpServerPrefix(access_token: string) {
-  const mailChimpMetaDataRequest: HttpRequest<{ dc: string }> = {
-    method: HttpMethod.GET,
-    url: 'https://login.mailchimp.com/oauth2/metadata',
-    headers: {
-      Authorization: `OAuth ${access_token}`
-    }
-  };
-  return (await httpClient.sendRequest(mailChimpMetaDataRequest)).body["dc"];
-}
+type DisableTriggerRequestParams = TriggerRequestParams & {
+  webhookId: string;
+};
 
-interface MailChimpList {
+type EnableTriggerResponse = {
   id: string;
-  name: string;
-}
+  url: string;
+  list_id: string;
+};
