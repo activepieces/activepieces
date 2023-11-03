@@ -36,7 +36,6 @@ export const createField = createAction({
   async run(context) {
     const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}?api_secret=${context.auth}`;
 
-    // Fetch URL using fetch api
     const response = await fetch(url, {
       method: 'POST',
       body: JSON.stringify({ label: context.propsValue.fields }),
@@ -49,10 +48,8 @@ export const createField = createAction({
       return { success: false, message: 'Error creating field' };
     }
 
-    // Get response body
     const data = await response.json();
 
-    // Return response body
     return data;
   },
 });
@@ -71,7 +68,6 @@ export const updateField = createAction({
 
     const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${label}`;
 
-    // Fetch URL using fetch api
     const response = await fetch(url, {
       method: 'PUT',
       body: JSON.stringify({
@@ -103,7 +99,6 @@ export const deleteField = createAction({
 
     const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${label}`;
 
-    // Fetch URL using fetch api
     const response = await fetch(url, {
       method: 'DELETE',
       body: JSON.stringify({ api_secret: context.auth }),

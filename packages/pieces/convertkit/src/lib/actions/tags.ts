@@ -26,14 +26,12 @@ export const listTags = createAction({
   async run(context) {
     const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/?api_secret=${context.auth}`;
 
-    // Fetch URL using fetch api
     const response = await fetch(url);
 
     if (!response.ok) {
       return { success: false, message: 'Error fetching tags' };
     }
 
-    // Get response body
     const data = await response.json();
 
     // If tags exist, return tags
@@ -41,7 +39,6 @@ export const listTags = createAction({
       return data.tags;
     }
 
-    // Return response body
     return data;
   },
 });
@@ -57,7 +54,6 @@ export const createTag = createAction({
   async run(context) {
     const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/?api_secret=${context.auth}`;
 
-    // Fetch URL using fetch api
     const response = await fetch(url, {
       method: 'POST',
       body: JSON.stringify({ tag: context.propsValue }),
@@ -70,10 +66,8 @@ export const createTag = createAction({
       return { success: false, message: 'Error creating tag' };
     }
 
-    // Get response body
     const data = await response.json();
 
-    // Return response body
     return data;
   },
 });
@@ -92,10 +86,9 @@ export const tagSubscriber = createAction({
   },
   async run(context) {
     const { email, tagId, firstName, tags, fields } = context.propsValue;
-    // const tagId = context.propsValue.tagId;
+
     const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${tagId}/subscribe`;
 
-    // Fetch URL using fetch api
     const response = await fetch(url, {
       method: 'POST',
       body: JSON.stringify({
@@ -114,7 +107,6 @@ export const tagSubscriber = createAction({
       return { success: false, message: 'Error tagging subscriber' };
     }
 
-    // Get response body
     const data = await response.json();
 
     // If subscription is not empty, return the subscription
@@ -122,7 +114,6 @@ export const tagSubscriber = createAction({
       return data.subscription;
     }
 
-    // Return response body
     return data;
   },
 });
@@ -140,7 +131,6 @@ export const removeTagFromSubscriberByEmail = createAction({
     const { email, tagId } = context.propsValue;
     const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${tagId}/unsubscribe`;
 
-    // Fetch URL using fetch api
     const response = await fetch(url, {
       method: 'POST',
       body: JSON.stringify({
@@ -156,10 +146,8 @@ export const removeTagFromSubscriberByEmail = createAction({
       return { success: false, message: 'Error removing tag from subscriber' };
     }
 
-    // Get response body
     const data = await response.json();
 
-    // Return response body
     return data;
   },
 });
@@ -177,7 +165,6 @@ export const removeTagFromSubscriberById = createAction({
     const { subscriberId, tagId } = context.propsValue;
     const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${tagId}/unsubscribe`;
 
-    // Fetch URL using fetch api
     const response = await fetch(url, {
       method: 'POST',
       body: JSON.stringify({
@@ -193,10 +180,8 @@ export const removeTagFromSubscriberById = createAction({
       return { success: false, message: 'Error removing tag from subscriber' };
     }
 
-    // Get response body
     const data = await response.json();
 
-    // Return response body
     return data;
   },
 });
@@ -227,7 +212,6 @@ export const listSubscriptionsToATag = createAction({
     }
     const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${tagId}/subscriptions?${urlParams}`;
 
-    // Fetch URL using fetch api
     const response = await fetch(url);
 
     if (!response.ok) {
@@ -237,7 +221,6 @@ export const listSubscriptionsToATag = createAction({
       };
     }
 
-    // Get response body
     const data = await response.json();
 
     // if subscriptions is not empty, return the subscriptions
@@ -245,7 +228,6 @@ export const listSubscriptionsToATag = createAction({
       return data.subscriptions;
     }
 
-    // Return response body
     return data;
   },
 });

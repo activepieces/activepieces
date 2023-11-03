@@ -9,12 +9,6 @@ export const fetchForms = async (auth: string) => {
   return await response.json();
 };
 
-// export const formId = Property.Number({
-//   displayName: 'Form ID',
-//   description: 'The form ID',
-//   required: true,
-// });
-
 export const formId = Property.Dropdown({
   displayName: 'Form',
   required: true,

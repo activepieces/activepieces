@@ -45,7 +45,6 @@ export const addSubscriberToSequence = createAction({
 
     const body = JSON.stringify({ email, first_name: firstName, tags, fields });
 
-    // Fetch URL using fetch api
     const response = await fetch(url, {
       method: 'POST',
       body,
@@ -58,10 +57,8 @@ export const addSubscriberToSequence = createAction({
       return { success: false, message: 'Error adding subscriber to sequence' };
     }
 
-    // Get response body
     const data = await response.json();
 
-    // Return response body
     return data;
   },
 });
@@ -77,7 +74,6 @@ export const listSupscriptionsToSequence = createAction({
   async run(context) {
     const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${context.propsValue.sequenceId}/subscriptions?api_secret=${context.auth}`;
 
-    // Fetch URL using fetch api
     const response = await fetch(url);
 
     if (!response.ok) {
@@ -87,10 +83,8 @@ export const listSupscriptionsToSequence = createAction({
       };
     }
 
-    // Get response body
     const data = await response.json();
 
-    // Return response body
     return data;
   },
 });

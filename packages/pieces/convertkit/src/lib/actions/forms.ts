@@ -27,7 +27,7 @@ export const listForms = createAction({
   },
 });
 
-// clone allfields
+// Clone and set required to false for custom fields property
 const allFieldsForaddSubscriberToForm = { ...allFields };
 allFieldsForaddSubscriberToForm.refreshers = ['auth, formId'];
 allFieldsForaddSubscriberToForm.required = false;
@@ -51,7 +51,6 @@ export const addSubscriberToForm = createAction({
 
     const body = JSON.stringify({ email, first_name: firstName, tags, fields });
 
-    // Fetch URL using fetch api
     const response = await fetch(url, {
       method: 'POST',
       body,
@@ -64,7 +63,6 @@ export const addSubscriberToForm = createAction({
       return { success: false, message: 'Error adding subscriber to form' };
     }
 
-    // Get response body
     const data = await response.json();
 
     // If subscription is not empty, return the subscription
@@ -87,14 +85,12 @@ export const listFormSubscriptions = createAction({
   async run(context) {
     const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${context.propsValue.formId}/subscriptions?api_secret=${context.auth}`;
 
-    // Fetch URL using fetch api
     const response = await fetch(url);
 
     if (!response.ok) {
       return { success: false, message: 'Error listing form subscriptions' };
     }
 
-    // Get response body
     const data = await response.json();
 
     // if subscriptions is not empty, return the subscriptions
@@ -102,7 +98,6 @@ export const listFormSubscriptions = createAction({
       return data.subscriptions;
     }
 
-    // Return response body
     return data;
   },
 });

@@ -31,14 +31,12 @@ export const getSubscriberById = createAction({
     const { subscriberId } = context.propsValue;
     const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${subscriberId}?api_secret=${context.auth}`;
 
-    // Fetch URL using fetch api
     const response = await fetch(url);
 
     if (!response.ok) {
       return { success: false, message: 'Error fetching subscriber' };
     }
 
-    // Get response body
     const data = await response.json();
 
     // return data.subscriber if it exists
@@ -62,14 +60,12 @@ export const getSubscriberByEmail = createAction({
     const { email_address } = context.propsValue;
     const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}?api_secret=${context.auth}&email_address=${email_address}`;
 
-    // Fetch URL using fetch api
     const response = await fetch(url);
 
     if (!response.ok) {
       return { success: false, message: 'Error fetching subscriber' };
     }
 
-    // Get response body
     const data = await response.json();
 
     if (!data.subscribers) {
@@ -146,17 +142,14 @@ export const listSubscribers = createAction({
       context.auth
     }&${new URLSearchParams(props).toString()}`;
 
-    // Fetch URL using fetch api
     const response = await fetch(url);
 
     if (!response.ok) {
       return { success: false, message: 'Error fetching subscribers' };
     }
 
-    // Get response body
     const data = await response.json();
 
-    // Return response body
     return data;
   },
 });
@@ -176,7 +169,6 @@ export const updateSubscriber = createAction({
     const { subscriberId, emailAddress, firstName, fields } =
       context.propsValue;
 
-    // const { subscriberId } = context.propsValue;
     const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${subscriberId}`;
     const body = JSON.stringify({
       api_secret: context.auth,
@@ -185,7 +177,6 @@ export const updateSubscriber = createAction({
       fields,
     });
 
-    // Fetch URL using fetch api
     const response = await fetch(url, {
       method: 'PUT',
       body,
@@ -197,15 +188,10 @@ export const updateSubscriber = createAction({
     if (!response.ok) {
       return { success: false, message: 'Error updating subscriber' };
     }
-
-    // Get response body x
     const data = await response.json();
-
     if (data.subscriber) {
       return data.subscriber;
     }
-
-    // Return response body
     return data;
   },
 });
@@ -224,7 +210,6 @@ export const unsubscribeSubscriber = createAction({
 
     const body = JSON.stringify({ email, api_secret: context.auth });
 
-    // Fetch URL using fetch api
     const response = await fetch(url, {
       method: 'PUT',
       body,
@@ -237,10 +222,8 @@ export const unsubscribeSubscriber = createAction({
       return { success: false, message: 'Error unsubscribing subscriber' };
     }
 
-    // Get response body
     const data = await response.json();
 
-    // Return response body
     return data;
   },
 });
@@ -260,7 +243,7 @@ export const listTagsBySubscriberId = createAction({
     if (data.tags) {
       return data.tags;
     }
-    // Return response body
+
     return data;
   },
 });
@@ -284,7 +267,7 @@ export const listSubscriberTagsByEmail = createAction({
     if (data.tags) {
       return data.tags;
     }
-    // Return response body
+
     return data;
   },
 });
