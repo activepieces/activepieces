@@ -54,7 +54,20 @@ import {
   createPurchases,
 } from './lib/actions/purchases';
 
-import { addTag } from './lib/triggers/tag-add';
+import {
+  addTag,
+  removeTag,
+  subscriberActivated,
+  subscriberUnsubscribed,
+  subscriberBounced,
+  subscriberComplained,
+  formSubscribed,
+  courseSubscribed,
+  courseCompleted,
+  linkClicked,
+  productPurchased,
+  purchaseCreated,
+} from './lib/triggers/triggers';
 
 export const ENVIRONMENT = 'dev';
 // export const ENVIRONMENT = 'prod'
@@ -109,5 +122,18 @@ export const convertkit = createPiece({
     createSinglePurchase,
     createPurchases,
   ],
-  triggers: [addTag],
+  triggers: [
+    addTag,
+    removeTag,
+    subscriberActivated,
+    subscriberUnsubscribed,
+    subscriberBounced,
+    subscriberComplained,
+    formSubscribed,
+    courseSubscribed,
+    courseCompleted,
+    linkClicked,
+    productPurchased,
+    purchaseCreated,
+  ],
 });

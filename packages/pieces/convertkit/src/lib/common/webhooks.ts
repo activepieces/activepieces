@@ -2,6 +2,7 @@ import { Property, DynamicPropsValue } from '@activepieces/pieces-framework';
 import { WEBHOOK_BASE_OVERRIDE, CONVERTKIT_API_URL } from './constants';
 
 // ------------------> Trigger <------------------
+
 export const onEnable = async (auth: string, payload: object) => {
   const body = JSON.stringify({ ...payload, api_secret: auth }, null, 2);
 
@@ -192,6 +193,13 @@ export const createWebhookParameterOptions = [
     required_parameter: 'tag_id',
     param_label: 'Tag Id',
     type: 'number',
+  },
+  {
+    label: 'Purchase created',
+    value: 'purchase.purchase_create',
+    required_parameter: null,
+    param_label: null,
+    type: null,
   },
 ];
 
