@@ -37,7 +37,6 @@ async function trimStepOutput(stepOutput: StepOutput): Promise<StepOutput> {
             break
         }
     }
-    modified.standardOutput = await applyFunctionToValues(modified.standardOutput, trim)
     modified.errorMessage = await applyFunctionToValues(modified.errorMessage, trim)
     return modified
 }

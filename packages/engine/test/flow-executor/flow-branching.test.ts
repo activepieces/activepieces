@@ -1,11 +1,13 @@
 import { BranchCondition, BranchOperator } from '@activepieces/shared'
 import { ExecutionVerdict, FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { EXECUTE_CONSTANTS, buildActionWithOneCondition } from './test-helper'
-import { flowExecutorNew } from '../../src/lib/handler/flow-executor'
+import { flowExecutor } from '../../src/lib/handler/flow-executor'
 
 function executeBranchActionWithOneCondition(condition: BranchCondition): Promise<FlowExecutorContext> {
-    return flowExecutorNew.execute({
-        action: buildActionWithOneCondition(condition),
+    return flowExecutor.execute({
+        action: buildActionWithOneCondition({
+            condition,
+        }),
         executionState: FlowExecutorContext.empty(),
         constants: EXECUTE_CONSTANTS,
     })

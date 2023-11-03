@@ -23,16 +23,17 @@ import {
 import { pieceHelper } from './lib/helper/piece-helper'
 import { triggerHelper } from './lib/helper/trigger-helper'
 import { utils } from './lib/utils'
-import { flowExecutorNew } from './lib/handler/flow-executor'
+import { flowExecutor } from './lib/handler/flow-executor'
 import { ExecutionVerdict, FlowExecutorContext } from './lib/handler/context/flow-execution-context'
 import { codeExecutor } from './lib/handler/code-executor'
 import { BASE_CODE_DIRECTORY, INPUT_FILE, OUTPUT_FILE } from './lib/constants'
 import { testExecution } from './lib/helper/test-execution-context'
 import { pieceExecutor } from './lib/handler/piece-executor'
+import { VariableService } from './lib/services/variable-service'
 
 
 const executeFlow = async (input: ExecuteFlowOperation, context: FlowExecutorContext): Promise<EngineResponse<ExecutionOutput>> => {
-    const output = await flowExecutorNew.execute({
+    const output = await flowExecutor.execute({
         action: input.flowVersion.trigger.nextAction,
         executionState: context,
         constants: {
@@ -43,19 +44,22 @@ const executeFlow = async (input: ExecuteFlowOperation, context: FlowExecutorCon
             apiUrl: input.serverUrl,
             projectId: input.projectId,
             workerToken: input.workerToken,
+            variableService: new VariableService({
+                projectId: input.projectId,
+                workerToken: input.workerToken,
+            }),
             resumePayload: input.executionType === ExecutionType.RESUME ? input.resumePayload : undefined,
             baseCodeDirectory: BASE_CODE_DIRECTORY,
         },
     })
-    const state = new ExecutionState(undefined)
-    for (const [name, step] of Object.entries(output.steps)) {
-        state.insertStep(step, name, [])
-    }
     const executionOut: FinishExecutionOutput = {
         tags: [],
+        // TODO FIX
         status: ExecutionOutputStatus.SUCCEEDED,
         tasks: 0,
-        executionState: state,
+        executionState: {
+            steps: output.steps,
+        },
         duration: 1000,
     }
     return {
@@ -80,6 +84,10 @@ async function executeCode(input: ExecuteCodeOperation): Promise<ExecuteActionRe
             projectId: input.projectId,
             executionType: ExecutionType.BEGIN,
             serverUrl: input.serverUrl,
+            variableService: new VariableService({
+                projectId: input.projectId,
+                workerToken: input.workerToken,
+            }),
             apiUrl: input.serverUrl,
             workerToken: input.workerToken,
             baseCodeDirectory: BASE_CODE_DIRECTORY,
@@ -106,6 +114,10 @@ async function executeAction(input: ExecuteActionOperation): Promise<ExecuteActi
             projectId: input.projectId,
             executionType: ExecutionType.BEGIN,
             serverUrl: input.serverUrl,
+            variableService: new VariableService({
+                projectId: input.projectId,
+                workerToken: input.workerToken,
+            }),
             apiUrl: input.serverUrl,
             workerToken: input.workerToken,
             baseCodeDirectory: BASE_CODE_DIRECTORY,
@@ -133,7 +145,7 @@ const execute = async (): Promise<void> => {
             }
             case EngineOperationType.EXECUTE_FLOW: {
                 const input: ExecuteFlowOperation = await utils.parseJsonFile(INPUT_FILE)
-                const flowExecutorContext = FlowExecutorContext.upsertStep(input.flowVersion.trigger.name, {
+                const flowExecutorContext = FlowExecutorContext.empty().upsertStep(input.flowVersion.trigger.name, {
                     output: input.triggerPayload,
                     type: input.flowVersion.trigger.type,
                     status: StepOutputStatus.SUCCEEDED,

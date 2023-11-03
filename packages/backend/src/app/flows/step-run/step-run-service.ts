@@ -16,8 +16,6 @@ import {
     apId,
     ExecutionType,
     EngineResponseStatus,
-    ExecutionState,
-    BranchStepOutput,
     ExecutionOutputStatus,
     UserId,
     FlowOperationType,
@@ -185,11 +183,9 @@ const executeBranch = async ({ step, flowVersion, projectId }: ExecuteParams<Bra
                 standardOutput,
             }
         }
-
-        const branchStepOutput = new ExecutionState(result.executionState).getStepOutput<BranchStepOutput>({
-            stepName: branchStep.name,
-            ancestors: [],
-        })
+        
+        // TODO FIX
+        const branchStepOutput = result.executionState.steps[branchStep.name]
 
         if (isNil(branchStepOutput)) {
             return {

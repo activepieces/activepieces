@@ -1,5 +1,6 @@
 import { Action } from '@activepieces/shared'
-import { EngineConstantData, FlowExecutorContext } from './context/flow-execution-context'
+import { FlowExecutorContext } from './context/flow-execution-context'
+import { EngineConstantData } from './context/engine-constants-data'
 
 export type BaseExecutor<T extends Action> = {
     handle(request: {

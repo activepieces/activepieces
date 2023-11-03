@@ -1,7 +1,7 @@
 import { ActionType, CodeAction, StepOutputStatus } from '@activepieces/shared'
 import { BaseExecutor } from './base-executor'
-import { EngineConstantData, ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
-import { variableService } from '../services/variable-service'
+import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
+import { EngineConstantData } from './context/engine-constants-data'
 
 type CodePieceModule = {
     code(params: unknown): Promise<unknown>
@@ -20,10 +20,7 @@ export const codeExecutor: BaseExecutor<CodeAction> = {
         if (executionState.isCompleted({ stepName: action.name })) {
             return executionState
         }
-        const { censoredInput, resolvedInput } = await variableService({
-            projectId: constants.projectId,
-            workerToken: constants.workerToken,
-        }).resolve({
+        const { censoredInput, resolvedInput } = await constants.variableService.resolve({
             unresolvedInput: action.settings.input,
             executionState,
         })
@@ -48,7 +45,7 @@ export const codeExecutor: BaseExecutor<CodeAction> = {
                 input: censoredInput,
                 errorMessage: (e as Error).message,
             }
-            return executionState.upsertStep(action.name, stepOutput).setVerdict(ExecutionVerdict.FAILED)
+            return executionState.upsertStep(action.name, stepOutput).setVerdict(ExecutionVerdict.FAILED, undefined)
         }
     },
 }

@@ -1,14 +1,15 @@
-import { AUTHENTICATION_PROPERTY_NAME, ActionType, PieceAction, StepOutputStatus, assertNotNullOrUndefined } from '@activepieces/shared'
+import { AUTHENTICATION_PROPERTY_NAME, ActionType, ExecutionOutputStatus, PieceAction, StepOutputStatus, assertNotNullOrUndefined } from '@activepieces/shared'
 import { BaseExecutor } from './base-executor'
-import { EngineConstantData, ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
+import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
 import { variableService } from '../services/variable-service'
 import { ActionContext, ConnectionsManager, PauseHook, PauseHookParams, PiecePropertyMap, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
 import { pieceHelper } from '../helper/piece-helper'
 import { createContextStore } from '../services/storage.service'
 import { createFilesService } from '../services/files.service'
 import { createConnectionService } from '../services/connections.service'
+import { EngineConstantData } from './context/engine-constants-data'
 
-type HookResponse = { stopResponse: StopHookParams | undefined, pauseResponse: PauseHookParams | undefined, tags: string[] }
+type HookResponse = { stopResponse: StopHookParams | undefined, pauseResponse: PauseHookParams | undefined, tags: string[], stopped: boolean, paused: boolean }
 
 export const pieceExecutor: BaseExecutor<PieceAction> = {
     async handle({
@@ -42,17 +43,16 @@ export const pieceExecutor: BaseExecutor<PieceAction> = {
         })
 
         const piece = await pieceHelper.loadPieceOrThrow(action.settings.pieceName, action.settings.pieceVersion)
-        const { processedInput, errors } = await variableService({
-            projectId: constants.projectId,
-            workerToken: constants.workerToken,
-        }).applyProcessorsAndValidators(resolvedInput, pieceAction.props, piece.auth)
+        const { processedInput, errors } = await constants.variableService.applyProcessorsAndValidators(resolvedInput, pieceAction.props, piece.auth)
         if (Object.keys(errors).length > 0) {
             throw new Error(JSON.stringify(errors))
         }
 
         const hookResponse: HookResponse = {
             stopResponse: undefined,
+            stopped: false,
             pauseResponse: undefined,
+            paused: false,
             tags: [],
         }
 
@@ -93,20 +93,26 @@ export const pieceExecutor: BaseExecutor<PieceAction> = {
         const output = await pieceAction.run(context)
         const newExecutionContext = executionState.addTags(hookResponse.tags)
 
-        if (hookResponse.stopResponse) {
+        if (hookResponse.stopped) {
             return newExecutionContext.upsertStep(action.name, {
                 type: ActionType.PIECE,
                 status: StepOutputStatus.SUCCEEDED,
                 input: censoredInput,
                 output,
-            }).setVerdict(ExecutionVerdict.SUCCEEDED)
+            }).setVerdict(ExecutionVerdict.SUCCEEDED, {
+                reason: ExecutionOutputStatus.STOPPED,
+                stopResponse: hookResponse.stopResponse?.response,
+            })
         }
-        if (hookResponse.pauseResponse) {
+        if (hookResponse.paused) {
             return newExecutionContext.upsertStep(action.name, {
                 type: ActionType.PIECE,
                 status: StepOutputStatus.PAUSED,
                 input: censoredInput,
                 output,
+            }).setVerdict(ExecutionVerdict.PAUSED, {
+                reason: ExecutionOutputStatus.PAUSED,
+                pauseMetadata: hookResponse.pauseResponse?.pauseMetadata
             })
         }
 
@@ -115,7 +121,7 @@ export const pieceExecutor: BaseExecutor<PieceAction> = {
             status: StepOutputStatus.SUCCEEDED,
             input: censoredInput,
             output,
-        })
+        }).setVerdict(ExecutionVerdict.RUNNING, undefined)
     },
 }
 
@@ -147,12 +153,14 @@ const createConnectionManager = ({ workerToken, projectId, hookResponse }: { pro
 
 function createStopHook(hookResponse: HookResponse): StopHook {
     return (req: StopHookParams) => {
+        hookResponse.stopped = true
         hookResponse.stopResponse = req
     }
 }
 
 function createPauseHook(hookResponse: HookResponse): PauseHook {
     return (req: PauseHookParams) => {
+        hookResponse.paused = true
         hookResponse.pauseResponse = req
     }
 }

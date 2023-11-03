@@ -1,6 +1,6 @@
 import { ExecutionVerdict, FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { EXECUTE_CONSTANTS, buildCodeAction, buildSimpleLoopAction } from './test-helper'
-import { flowExecutorNew } from '../../src/lib/handler/flow-executor'
+import { flowExecutor } from '../../src/lib/handler/flow-executor'
 
 
 describe('flow with looping', () => {
@@ -12,7 +12,7 @@ describe('flow with looping', () => {
                 'index': '{{loop.index}}',
             },
         })
-        const result = await flowExecutorNew.execute({
+        const result = await flowExecutor.execute({
             action: buildSimpleLoopAction({
                 name: 'loop',
                 loopItems: '{{ [4,5,6] }}',
@@ -43,7 +43,7 @@ describe('flow with looping', () => {
                 }),
             }),
         })
-        const result = await flowExecutorNew.execute({
+        const result = await flowExecutor.execute({
             action: generateArray,
             executionState: FlowExecutorContext.empty(),
             constants: EXECUTE_CONSTANTS,

@@ -1,6 +1,7 @@
 import { Action, ActionType, BranchAction, BranchCondition, CodeAction, ExecutionType, LoopOnItemsAction, PackageType, PieceAction, PieceType } from '@activepieces/shared'
 import path from 'path'
 import { cwd } from 'process'
+import { VariableService } from '../../src/lib/services/variable-service'
 
 export const EXECUTE_CONSTANTS = {
     flowId: 'flowId',
@@ -9,6 +10,10 @@ export const EXECUTE_CONSTANTS = {
     apiUrl: 'http://localhost:3000',
     projectId: 'projectId',
     workerToken: 'workerToken',
+    variableService: new VariableService({
+        projectId: 'projectId',
+        workerToken: 'workerToken',
+    }),
     baseCodeDirectory: path.resolve(cwd(), 'packages', 'engine', 'test', 'resources', 'codes'),
     executionType: ExecutionType.BEGIN,
 }
@@ -36,7 +41,7 @@ export function buildSimpleLoopAction({
 
 
 
-export function buildActionWithOneCondition(condition: BranchCondition): BranchAction {
+export function buildActionWithOneCondition({ condition, onSuccessAction, onFailureAction }: { condition: BranchCondition, onSuccessAction?: Action, onFailureAction?: Action }): BranchAction {
     return {
         name: 'branch',
         displayName: 'Your Branch Name',
@@ -47,6 +52,8 @@ export function buildActionWithOneCondition(condition: BranchCondition): BranchA
                 [condition],
             ],
         },
+        onFailureAction,
+        onSuccessAction,
         valid: true,
     }
 }

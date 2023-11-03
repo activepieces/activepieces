@@ -1,9 +1,8 @@
 import { ActionType, BranchAction, BranchActionSettings, BranchCondition, BranchOperator, StepOutputStatus } from '@activepieces/shared'
 import { BaseExecutor } from './base-executor'
-import { EngineConstantData, ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
-import { flowExecutorNew } from './flow-executor'
-import { variableService } from '../services/variable-service'
-
+import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
+import { flowExecutor } from './flow-executor'
+import { EngineConstantData } from './context/engine-constants-data'
 
 export const branchExecutor: BaseExecutor<BranchAction> = {
     async handle({
@@ -15,10 +14,7 @@ export const branchExecutor: BaseExecutor<BranchAction> = {
         executionState: FlowExecutorContext
         constants: EngineConstantData
     }) {
-        const { censoredInput, resolvedInput } = await variableService({
-            projectId: constants.projectId,
-            workerToken: constants.workerToken,
-        }).resolve<BranchActionSettings>({
+        const { censoredInput, resolvedInput } = await constants.variableService.resolve<BranchActionSettings>({
             unresolvedInput: action.settings,
             executionState,
         })
@@ -35,14 +31,14 @@ export const branchExecutor: BaseExecutor<BranchAction> = {
             })
 
             if (!evaluatedCondition && action.onFailureAction) {
-                branchExecutionContext = await flowExecutorNew.execute({
+                branchExecutionContext = await flowExecutor.execute({
                     action: action.onFailureAction,
                     executionState: branchExecutionContext,
                     constants,
                 })
             }
             if (evaluatedCondition && action.onSuccessAction) {
-                branchExecutionContext = (await flowExecutorNew.execute({
+                branchExecutionContext = (await flowExecutor.execute({
                     action: action.onSuccessAction,
                     executionState: branchExecutionContext,
                     constants,
@@ -59,7 +55,7 @@ export const branchExecutor: BaseExecutor<BranchAction> = {
                 input: censoredInput,
                 errorMessage: (e as Error).message,
             }
-            return executionState.upsertStep(action.name, stepOutput).setVerdict(ExecutionVerdict.FAILED)
+            return executionState.upsertStep(action.name, stepOutput).setVerdict(ExecutionVerdict.FAILED, undefined)
         }
     },
 }

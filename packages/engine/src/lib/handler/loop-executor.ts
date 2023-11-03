@@ -1,9 +1,8 @@
 import { LoopOnItemsAction, LoopOnItemsStepOutput, StepOutput, isNil } from '@activepieces/shared'
 import { BaseExecutor } from './base-executor'
-import { EngineConstantData, ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
-import { flowExecutorNew } from './flow-executor'
-import { variableService } from '../services/variable-service'
-
+import { ExecutionVerdict, FlowExecutorContext } from './context/flow-execution-context'
+import { flowExecutor } from './flow-executor'
+import { EngineConstantData } from './context/engine-constants-data'
 
 type LoopOnActionResolvedSettings = {
     items: readonly unknown[]
@@ -19,10 +18,7 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
         executionState: FlowExecutorContext
         constants: EngineConstantData
     }) {
-        const { resolvedInput, censoredInput } = await variableService({
-            projectId: constants.projectId,
-            workerToken: constants.workerToken,
-        }).resolve<LoopOnActionResolvedSettings>({
+        const { resolvedInput, censoredInput } = await constants.variableService.resolve<LoopOnActionResolvedSettings>({
             unresolvedInput: action.settings,
             executionState,
         })
@@ -43,7 +39,7 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
 
             newExecutionContext = newExecutionContext.upsertStep(action.name, stepOutput).setCurrentPath(newCurrentPath)
 
-            newExecutionContext = await flowExecutorNew.execute({
+            newExecutionContext = await flowExecutor.execute({
                 action: firstLoopAction,
                 executionState: newExecutionContext,
                 constants,

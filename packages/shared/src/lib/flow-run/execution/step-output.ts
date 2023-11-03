@@ -21,8 +21,7 @@ export type StepOutput<T extends ActionType | TriggerType = ActionType | Trigger
   input: unknown
   output?: O
   duration?: number
-  errorMessage?: unknown;
-  standardOutput?: unknown;
+  errorMessage?: unknown
 }
 
 export type LoopOnItemsStepOutput = StepOutput<ActionType.LOOP_ON_ITEMS, {
@@ -35,11 +34,21 @@ export type LoopOnItemsStepOutput = StepOutput<ActionType.LOOP_ON_ITEMS, {
 }
 
 export const StepOutput = {
+  type: ActionType.CODE,
+  input: {},
+  status: StepOutputStatus,
   create({ type, input }: { type: ActionType, input: unknown }): StepOutput {
     return {
       type,
       input,
       status: StepOutputStatus.SUCCEEDED,
+    }
+  },
+  output(output: unknown): StepOutput {
+    return {
+      ...this,
+      status: StepOutputStatus.SUCCEEDED,
+      output
     }
   },
   createLoopOutput({ input }: { input: unknown }): LoopOnItemsStepOutput {

@@ -1,4 +1,5 @@
-import { ActionType, ExecutionType, ProjectId, StepOutput, StepOutputStatus, isNil } from '@activepieces/shared'
+import { ActionType, ExecutionOutputStatus, PauseMetadata, StepOutput, StepOutputStatus, StopResponse, isNil } from '@activepieces/shared'
+import { StepExecutionPath } from './step-executiion-path'
 
 export enum ExecutionVerdict {
     RUNNING = 'RUNNING',
@@ -7,99 +8,64 @@ export enum ExecutionVerdict {
     FAILED = 'FAILED',
 }
 
-export type EngineConstantData = {
-    flowRunId: string
-    serverUrl: string
-    apiUrl: string
-    executionType: ExecutionType
-    workerToken: string
-    projectId: ProjectId
-    flowId: string
-    resumePayload?: unknown
-    baseCodeDirectory: string
+type VerdictResponse = {
+    reason: ExecutionOutputStatus.PAUSED
+    pauseMetadata: PauseMetadata | undefined
+} | {
+    reason: ExecutionOutputStatus.STOPPED
+    stopResponse: StopResponse | undefined
 }
 
-
-type StepExecutionPath = {
-    path: readonly [string, number][]
-    loopIteration: (args: { loopName: string, iteration: number }) => StepExecutionPath
-    removeLast: () => StepExecutionPath
-}
-
-export const StepExecutionPath = {
-    path: [],
-    loopIteration({ loopName, iteration }: { loopName: string, iteration: number }): StepExecutionPath {
-        return {
-            ...this,
-            path: [...this.path, [loopName, iteration]],
-        }
-    },
-    removeLast(): StepExecutionPath {
-        return {
-            ...this,
-            path: this.path.slice(0, -1),
-        }
-    },
-}
-
-export type FlowExecutorContext = {
+export class FlowExecutorContext {
     tasks: number
     tags: readonly string[]
     steps: Readonly<Record<string, StepOutput<ActionType>>>
     currentState: Record<string, unknown>
     verdict: ExecutionVerdict
+    verdictResponse: VerdictResponse | undefined
     currentPath: StepExecutionPath
-    empty: () => FlowExecutorContext
-    isCompleted: (args: { stepName: string }) => boolean
-    addTags: (tags: string[]) => FlowExecutorContext
-    upsertStep: (stepName: string, stepOutput: StepOutput) => FlowExecutorContext
-    setCurrentPath: (currentStatePath: StepExecutionPath) => FlowExecutorContext
-    setVerdict: (verdict: ExecutionVerdict) => FlowExecutorContext
-}
 
-export const FlowExecutorContext = {
-    tasks: 0,
-    currentPath: StepExecutionPath,
-    tags: [],
-    steps: {},
-    currentState: {},
-    verdict: ExecutionVerdict.RUNNING,
-    empty(): FlowExecutorContext {
-        return {
-            ...this,
-            tasks: 0,
-            currentPath: StepExecutionPath,
-            tags: [],
-            steps: {},
-            currentState: {},
-            verdict: ExecutionVerdict.RUNNING,
-        }
-    },
-    isCompleted({ stepName }: { stepName: string }): boolean {
+    constructor(copyFrom?: FlowExecutorContext) {
+        this.tasks = copyFrom?.tasks ?? 0
+        this.tags = copyFrom?.tags ?? []
+        this.steps = copyFrom?.steps ?? {}
+        this.currentState = copyFrom?.currentState ?? {}
+        this.verdict = copyFrom?.verdict ?? ExecutionVerdict.RUNNING
+        this.verdictResponse = copyFrom?.verdictResponse ?? undefined
+        this.currentPath = copyFrom?.currentPath ?? StepExecutionPath.empty()
+    }
+    
+
+    static empty(): FlowExecutorContext {
+        return new FlowExecutorContext()
+    }
+
+    public isCompleted({ stepName }: { stepName: string }): boolean {
         const stateAtPath = getStateAtPath({ currentPath: this.currentPath, steps: this.steps })
         const stepOutput = stateAtPath[stepName]
         if (isNil(stepOutput)) {
             return false
         }
         return stepOutput.status !== StepOutputStatus.PAUSED
-    },
-    addTags(tags: string[]): FlowExecutorContext {
-        return {
+    }
+
+    public addTags(tags: string[]): FlowExecutorContext {
+        return new FlowExecutorContext({
             ...this,
             tags: [...this.tags, ...tags].filter((value, index, self) => {
                 return self.indexOf(value) === index
             }),
-        }
-    },
-    upsertStep(stepName: string, stepOutput: StepOutput): FlowExecutorContext {
+        })
+    }
+
+    public upsertStep(stepName: string, stepOutput: StepOutput): FlowExecutorContext {
         const steps = {
             ...this.steps,
         }
-        // TODO REWRITE IT IN MORE DECLARATIVE WAY
         const targetMap = getStateAtPath({ currentPath: this.currentPath, steps })
         targetMap[stepName] = stepOutput
 
-        return {
+        return new FlowExecutorContext({
             ...this,
             tasks: this.tasks + 1,
             currentState: {
@@ -107,22 +73,24 @@ export const FlowExecutorContext = {
                 [stepName]: stepOutput.output,
             },
             steps,
-        }
-    },
-    setCurrentPath(currentStatePath: StepExecutionPath): FlowExecutorContext {
-        return {
+        })
+    }
+
+    public setCurrentPath(currentStatePath: StepExecutionPath): FlowExecutorContext {
+        return new FlowExecutorContext({
             ...this,
             currentPath: currentStatePath,
-        }
-    },
-    setVerdict(verdict: ExecutionVerdict): FlowExecutorContext {
-        return {
+        })
+    }
+
+    public setVerdict(verdict: ExecutionVerdict, response: VerdictResponse | undefined): FlowExecutorContext {
+        return new FlowExecutorContext({
             ...this,
             verdict,
-        }
-    },
+            verdictResponse: response,
+        })
+    }
 }
-
 
 
 function getStateAtPath({ currentPath, steps }: { currentPath: StepExecutionPath, steps: Record<string, StepOutput<ActionType>> }): Record<string, StepOutput> {

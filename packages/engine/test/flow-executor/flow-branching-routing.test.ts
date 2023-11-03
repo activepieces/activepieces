@@ -1,24 +1,26 @@
 import { ExecutionVerdict, FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { EXECUTE_CONSTANTS, buildActionWithOneCondition, buildCodeAction } from './test-helper'
-import { flowExecutorNew } from '../../src/lib/handler/flow-executor'
+import { flowExecutor } from '../../src/lib/handler/flow-executor'
 import { BranchAction, BranchCondition, BranchOperator } from '@activepieces/shared'
 
 
 
 function buildSimpleBranchingWithOneCondition(condition: BranchCondition): BranchAction {
     return {
-        ...buildActionWithOneCondition(condition),
-        onSuccessAction: buildCodeAction({
-            name: 'echo_step',
-            input: {
-                'success': 'true',
-            },
-        }),
-        onFailureAction: buildCodeAction({
-            name: 'echo_step_1',
-            input: {
-                'failure': 'true',
-            },
+        ...buildActionWithOneCondition({
+            condition,
+            onSuccessAction: buildCodeAction({
+                name: 'echo_step',
+                input: {
+                    'success': 'true',
+                },
+            }),
+            onFailureAction: buildCodeAction({
+                name: 'echo_step_1',
+                input: {
+                    'failure': 'true',
+                },
+            }),
         }),
     }
 }
@@ -26,7 +28,7 @@ function buildSimpleBranchingWithOneCondition(condition: BranchCondition): Branc
 describe('flow with branching', () => {
 
     it('should execute on success branch', async () => {
-        const result = await flowExecutorNew.execute({
+        const result = await flowExecutor.execute({
             action: buildSimpleBranchingWithOneCondition({
                 operator: BranchOperator.TEXT_EXACTLY_MATCHES,
                 firstValue: 'test',
@@ -46,7 +48,7 @@ describe('flow with branching', () => {
     })
 
     it('should execute on failure branch', async () => {
-        const result = await flowExecutorNew.execute({
+        const result = await flowExecutor.execute({
             action: buildSimpleBranchingWithOneCondition({
                 operator: BranchOperator.TEXT_EXACTLY_MATCHES,
                 firstValue: 'test',
