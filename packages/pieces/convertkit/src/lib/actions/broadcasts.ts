@@ -29,14 +29,12 @@ export const listBroadcasts = createAction({
     const page = context.propsValue.page || 1;
     const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}?page=${page}&api_secret=${context.auth}`;
 
-    // Fetch URL using fetch api
     const response = await fetch(url);
 
     if (!response.ok) {
       return { success: false, message: 'Error fetching broadcasts' };
     }
 
-    // Get response body
     const data = await response.json();
 
     // return broadcasts if exists
@@ -44,7 +42,6 @@ export const listBroadcasts = createAction({
       return data.broadcasts;
     }
 
-    // Return response body
     return data;
   },
 });
@@ -94,7 +91,6 @@ export const createBroadcast = createAction({
       thumbnail_url: thumbnailUrl,
     });
 
-    // Fetch URL using fetch api
     const response = await fetch(url, {
       method: 'POST',
       body,
@@ -107,7 +103,6 @@ export const createBroadcast = createAction({
       return { success: false, message: 'Error creating broadcast' };
     }
 
-    // Get response body
     const data = await response.json();
 
     // if broadcast exists, return it
@@ -115,7 +110,6 @@ export const createBroadcast = createAction({
       return data.broadcast;
     }
 
-    // Return response body
     return data;
   },
 });
@@ -132,14 +126,12 @@ export const getBroadcastById = createAction({
     const { broadcastId } = context.propsValue;
     const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${broadcastId}?api_secret=${context.auth}`;
 
-    // Fetch URL using fetch api
     const response = await fetch(url);
 
     if (!response.ok) {
       return { success: false, message: 'Error fetching broadcast' };
     }
 
-    // Get response body
     const data = await response.json();
 
     // if broadcast exists, return it
@@ -147,7 +139,6 @@ export const getBroadcastById = createAction({
       return data.broadcast;
     }
 
-    // Return response body
     return data;
   },
 });
@@ -201,7 +192,6 @@ export const updateBroadcast = createAction({
       thumbnail_url: thumbnailUrl,
     });
 
-    // Fetch URL using fetch api
     const response = await fetch(url, {
       method: 'PUT',
       body,
@@ -214,7 +204,6 @@ export const updateBroadcast = createAction({
       return { success: false, message: 'Error updating broadcast' };
     }
 
-    // Get response body
     const data = await response.json();
 
     // if broadcast exists, return it
@@ -222,7 +211,6 @@ export const updateBroadcast = createAction({
       return data.broadcast;
     }
 
-    // Return response body
     return data;
   },
 });
@@ -239,14 +227,12 @@ export const broadcastStats = createAction({
     const { broadcastId } = context.propsValue;
     const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${broadcastId}/stats?api_secret=${context.auth}`;
 
-    // Fetch URL using fetch api
     const response = await fetch(url);
 
     if (!response.ok) {
       return { success: false, message: 'Error fetching broadcast stats' };
     }
 
-    // Get response body
     const data = await response.json();
 
     // if broadcast exists, return it
@@ -254,7 +240,6 @@ export const broadcastStats = createAction({
       return data.broadcast;
     }
 
-    // Return response body
     return data;
   },
 });
@@ -271,7 +256,6 @@ export const deleteBroadcast = createAction({
     const { broadcastId } = context.propsValue;
     const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${broadcastId}?api_secret=${context.auth}`;
 
-    // Fetch URL using fetch api
     const response = await fetch(url, {
       method: 'DELETE',
       headers: {

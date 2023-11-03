@@ -2,38 +2,16 @@ import {
   Property,
   DynamicPropsValue,
   NonAuthPieceProperty,
+  Validators,
 } from '@activepieces/pieces-framework';
 import { CONVERTKIT_API_URL } from './constants';
+import { log } from '../common';
 
 // ------------------> Trigger <------------------
 
-const log = async (message: object) => {
-  if (process.env['AP_ENVIRONMENT'] !== 'dev') {
-    return;
-  }
-  const fs = require('fs');
-  const path = require('path');
-  const filePath = path.join(__dirname, 'log.txt');
-  // touch file if it doesn't exist
-  if (!fs.existsSync(filePath)) {
-    fs.writeFileSync(filePath, '');
-  }
-
-  // append date to message
-  const messageWithDate = { date: new Date(), ...message };
-
-  fs.appendFile(
-    filePath,
-    JSON.stringify(messageWithDate, null, 2),
-    function (err: any) {
-      if (err) throw err;
-      console.log('Logging to: ', filePath);
-    }
-  );
-};
-
 export const webhookBaseOverride = (): NonAuthPieceProperty => {
   if (process.env['AP_ENVIRONMENT'] !== 'dev') {
+    // Returns empty property if not in dev environment
     return {} as NonAuthPieceProperty;
   }
   return Property.ShortText({
@@ -41,18 +19,22 @@ export const webhookBaseOverride = (): NonAuthPieceProperty => {
     description:
       'The base URL that will be used for webhooks. This is used for testing webhooks locally.',
     required: false,
+    validators: [Validators.url],
   });
 };
 
-export const prepareWebhooURL = (
+export const initiatorValue = Property.ShortText({
+  displayName: 'Initiator Value URL',
+  description: 'The initiator value URL that will trigger the webhook',
+  required: true,
+});
+
+export const prepareWebhookURL = (
   webhookUrl: string,
   webhookBaseOverride: string
 ) => {
   if (process.env['AP_ENVIRONMENT'] === 'dev') {
-    return webhookUrl.replace(
-      'http://localhost:3000',
-      webhookBaseOverride as any
-    );
+    return webhookUrl.replace('http://localhost:3000', webhookBaseOverride);
   }
   log({ targetUrl });
   return targetUrl;
@@ -63,7 +45,7 @@ export const createWebhook = async (auth: string, payload: object) => {
 
   const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}`;
   log({ url, body });
-  // Fetch URL using fetch api
+
   const response = await fetch(url, {
     method: 'POST',
     body,
@@ -72,12 +54,10 @@ export const createWebhook = async (auth: string, payload: object) => {
     },
   });
 
-  // Throw if unsuccessful
   if (!response.ok) {
     throw new Error('Failed to create webhook');
   }
 
-  // Get response body
   const data = await response.json();
 
   log({ data });
@@ -92,7 +72,7 @@ export const removeWebhook = async (auth: string, ruleId: number) => {
   const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${ruleId}`;
   const body = JSON.stringify({ api_secret: auth });
   log({ url, body });
-  // Fetch URL using fetch api
+
   const response = await fetch(url, {
     method: 'DELETE',
     body,
@@ -101,7 +81,6 @@ export const removeWebhook = async (auth: string, ruleId: number) => {
     },
   });
 
-  // Throw if unsuccessful
   if (!response.ok) {
     throw new Error('Failed to remove webhook');
   }

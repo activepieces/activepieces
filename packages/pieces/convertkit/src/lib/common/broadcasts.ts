@@ -53,7 +53,6 @@ export const publishedAt = Property.DateTime({
     'Specifies the time that this post was published (applicable only to public posts)',
   required: false,
   validators: [Validators.datetimeIso],
-  // defaultValue: now.toDateString(),
 });
 export const sendAt = Property.DateTime({
   displayName: 'Send At',
@@ -61,7 +60,6 @@ export const sendAt = Property.DateTime({
     'Time that this broadcast should be sent; leave blank to create a draft broadcast. If set to a future time, this is the time that the broadcast will be scheduled to send.',
   required: false,
   validators: [Validators.datetimeIso],
-  // defaultValue: now.toDateString(),
 });
 export const subject = Property.ShortText({
   displayName: 'Subject',

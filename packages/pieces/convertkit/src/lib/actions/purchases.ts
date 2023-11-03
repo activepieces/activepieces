@@ -36,14 +36,12 @@ export const listPurchases = createAction({
     const page = context.propsValue.page || 1;
     const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}?page=${page}&api_secret=${context.auth}`;
 
-    // Fetch URL using fetch api
     const response = await fetch(url);
 
     if (!response.ok) {
       return { success: false, message: 'Error fetching purchases' };
     }
 
-    // Get response body
     const data = await response.json();
 
     // If purchases exists, return purchases
@@ -51,7 +49,6 @@ export const listPurchases = createAction({
       return data.purchases;
     }
 
-    // Return response body
     return data;
   },
 });
@@ -70,17 +67,14 @@ export const getPurchaseById = createAction({
     const { purchaseId } = context.propsValue;
     const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${purchaseId}?api_secret=${context.auth}`;
 
-    // Fetch URL using fetch api
     const response = await fetch(url);
 
     if (!response.ok) {
       return { success: false, message: 'Error fetching purchase' };
     }
 
-    // Get response body
     const data = await response.json();
 
-    // Return response body
     return data;
   },
 });
@@ -143,7 +137,6 @@ export const createSinglePurchase = createAction({
       2
     );
 
-    // Fetch URL using fetch api
     const response = await fetch(url, {
       method: 'POST',
       body,
@@ -156,10 +149,8 @@ export const createSinglePurchase = createAction({
       return { success: false, message: 'Error creating purchase' };
     }
 
-    // Get response body
     const data = await response.json();
 
-    // Return response body
     return data;
   },
 });
@@ -222,7 +213,6 @@ export const createPurchases = createAction({
       2
     );
 
-    // Fetch URL using fetch api
     const response = await fetch(url, {
       method: 'POST',
       body,
@@ -235,10 +225,8 @@ export const createPurchases = createAction({
       return { success: false, message: 'Error creating purchase' };
     }
 
-    // Get response body
     const data = await response.json();
 
-    // Return response body
     return data;
   },
 });
@@ -258,17 +246,14 @@ export const listPurchasesForSubscriber = createAction({
     const { subscriberId } = context.propsValue;
     const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}?api_secret=${context.auth}&subscriber_id=${subscriberId}`;
 
-    // Fetch URL using fetch api
     const response = await fetch(url);
 
     if (!response.ok) {
       return { success: false, message: 'Error fetching purchases' };
     }
 
-    // Get response body
     const data = await response.json();
 
-    // Return response body
     return data;
   },
 });
@@ -287,17 +272,14 @@ export const listPurchasesForProduct = createAction({
     const { productId } = context.propsValue;
     const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}?api_secret=${context.auth}&product_id=${productId}`;
 
-    // Fetch URL using fetch api
     const response = await fetch(url);
 
     if (!response.ok) {
       return { success: false, message: 'Error fetching purchases' };
     }
 
-    // Get response body
     const data = await response.json();
 
-    // Return response body
     return data;
   },
 });
@@ -316,17 +298,14 @@ export const listPurchasesForForm = createAction({
     const { formId } = context.propsValue;
     const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}?api_secret=${context.auth}&form_id=${formId}`;
 
-    // Fetch URL using fetch api
     const response = await fetch(url);
 
     if (!response.ok) {
       return { success: false, message: 'Error fetching purchases' };
     }
 
-    // Get response body
     const data = await response.json();
 
-    // Return response body
     return data;
   },
 });
@@ -345,17 +324,14 @@ export const listPurchasesForSequence = createAction({
     const { sequenceId } = context.propsValue;
     const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}?api_secret=${context.auth}&sequence_id=${sequenceId}`;
 
-    // Fetch URL using fetch api
     const response = await fetch(url);
 
     if (!response.ok) {
       return { success: false, message: 'Error fetching purchases' };
     }
 
-    // Get response body
     const data = await response.json();
 
-    // Return response body
     return data;
   },
 });

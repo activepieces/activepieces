@@ -31,7 +31,6 @@ export const createWebhook = createAction({
       target_url: targetUrl,
     };
 
-    // Fetch URL using fetch api
     const response = await fetch(url, {
       method: 'POST',
       body: JSON.stringify({ ...eventProp, api_secret: context.auth }),
@@ -44,7 +43,6 @@ export const createWebhook = createAction({
       return { success: false, message: 'Error creating webhook' };
     }
 
-    // Get response body
     const data = await response.json();
 
     // If rule exists, return rule
@@ -52,7 +50,6 @@ export const createWebhook = createAction({
       return data.rule;
     }
 
-    // Return response body
     return data;
   },
 });
@@ -69,7 +66,6 @@ export const deleteWebhook = createAction({
     const { webhookId } = context.propsValue;
     const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${webhookId}`;
 
-    // Fetch URL using fetch api
     const response = await fetch(url, {
       method: 'DELETE',
       body: JSON.stringify({ api_secret: context.auth }),
@@ -82,10 +78,8 @@ export const deleteWebhook = createAction({
       return { success: false, message: 'Error deleting webhook' };
     }
 
-    // Get response body
     const data = await response.json();
 
-    // Return response body
     return data;
   },
 });
