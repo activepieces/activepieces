@@ -28,6 +28,16 @@ export enum MailChimpWebhookType {
    * triggers when a campaign is sent or cancelled.
    */
   CAMPAIGN = 'campaign',
+
+  /**
+   * triggers when a subscriber's email address is changed.
+   */
+  PENDING = 'pending',
+
+  /**
+   * transactional
+   */
+  TRANSACTIONAL = 'transactional',
 }
 
 export enum MailChimpEmailType {
