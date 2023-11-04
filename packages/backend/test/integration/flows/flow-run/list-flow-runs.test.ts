@@ -1,6 +1,6 @@
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { setupApp } from '../../../../src/app/app'
-import { generateTestToken } from '../../../helpers/auth'
+import { generateMockToken } from '../../../helpers/auth'
 import { FastifyInstance } from 'fastify'
 
 let app: FastifyInstance | null = null
@@ -18,7 +18,7 @@ afterAll(async () => {
 describe('List flow runs endpoint', () => {
     it('should return 200', async () => {
         // arrange
-        const testToken = await generateTestToken()
+        const testToken = await generateMockToken()
 
         // act
         const response = await app?.inject({

@@ -111,18 +111,20 @@ const appsumoController: FastifyPluginAsyncTypebox = async (fastify: FastifyInst
                         })
                     }
                 }
-                else {
-                    if (action === 'refund') {
-                        await appsumoService.delete(uuid)
-                    }
-                    else {
-                        await appsumoService.upsert({
-                            uuid,
-                            plan_id,
-                            activation_email,
-                        })
-                    }
+
+                if (action === 'refund') {
+                    await appsumoService.delete({
+                        email: activation_email,
+                    })
                 }
+                else {
+                    await appsumoService.upsert({
+                        uuid,
+                        plan_id,
+                        activation_email,
+                    })
+                }
+
                 switch (action) {
                     case 'activate':
                         return reply.status(StatusCodes.CREATED).send({

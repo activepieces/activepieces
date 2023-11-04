@@ -22,20 +22,23 @@ export class AxiosHttpClient extends BaseHttpClient {
 	): Promise<HttpResponse<ResponseBody>> {
 		try {
 			process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
-			const url = this.getUrl(request);
+			const { urlWithoutQueryParams, queryParams } = this.getUrl(request);
 			const headers = this.getHeaders(request);
 			const axiosRequestMethod = this.getAxiosRequestMethod(request.method);
-            const timeout = request.timeout ? request.timeout : 0;
-            const config:AxiosRequestConfig = {
-                method: axiosRequestMethod,
-                url,
-                params: request.queryParams,
-                headers,
-                data: request.body,
-                timeout
-            };
+			const timeout = request.timeout ? request.timeout : 0;
+			const config: AxiosRequestConfig = {
+				method: axiosRequestMethod,
+				url: urlWithoutQueryParams,
+				params: {
+					...queryParams,
+					...request.queryParams
+				},
+				headers,
+				data: request.body,
+				timeout
+			};
 
-            const response = await axios.request(config)
+			const response = await axios.request(config)
 
 			return {
 				status: response.status,
@@ -45,8 +48,8 @@ export class AxiosHttpClient extends BaseHttpClient {
 		} catch (e) {
 			console.error('[HttpClient#sendRequest] error:', e);
 			if (axios.isAxiosError(e)) {
-                console.error('[HttpClient#sendRequest] error, responseStatus:', e.response?.status);
-                console.error('[HttpClient#sendRequest] error, responseBody:', e.response?.data);
+				console.error('[HttpClient#sendRequest] error, responseStatus:', e.response?.status);
+				console.error('[HttpClient#sendRequest] error, responseBody:', e.response?.data);
 
 				throw new HttpError(request.body, e);
 			}

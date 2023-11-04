@@ -1,13 +1,20 @@
 <mat-sidenav-container class="ap-h-full">
-    <mat-sidenav mode="side" opened>
+    <mat-sidenav mode="side" [opened]="showSidnav$ | async">
         <app-sidenav-routes-list></app-sidenav-routes-list>
     </mat-sidenav>
     <mat-sidenav-content class="thin-scrollbars">
-        <div class="ap-absolute  ap-w-full">
-            <div class="ap-flex ap-items-center ap-justify-end ap-m-[20px]">
+        <div *ngIf="(isEmbedded$ | async) === undefined || (isEmbedded$ | async) === false"
+            class="ap-absolute  ap-w-full ap-border-b " [class.!ap-border-none]="isInPlatformRoute$ | async">
+            <div class="ap-flex ap-items-center  ap-my-5 ap-mx-[1.875rem]">
+                <div class="ap-font-semibold ap-border-solid  ap-typography-headline-5 !ap-font-semibold"
+                    *ngIf="(isInPlatformRoute$ | async) === undefined || (isInPlatformRoute$ | async) === false ">
+                    {{(currentProject$ | async)?.displayName}}
+                </div>
+                <div class="ap-flex-grow"></div>
                 <ap-button btnColor="white" btnStyle="basic" btnSize="medium" (buttonClicked)="showWhatIsNew()"
                     *ngIf="showCommunity$ | async" i18n>
-                    What's new</ap-button>
+                    What's new
+                </ap-button>
                 <div class="ap-flex ap-mx-3">
                     <app-tasks-progress></app-tasks-progress>
                 </div>
@@ -15,6 +22,11 @@
             </div>
 
         </div>
-        <router-outlet></router-outlet>
+        <div [class.ap-pt-7.5]="((isInPlatformRoute$ | async) === false || (isInPlatformRoute$ | async) === undefined) &&
+                                ((isEmbedded$ | async) === undefined || (isEmbedded$ | async) === false)"
+            class="ap-h-full">
+            <router-outlet></router-outlet>
+        </div>
+
     </mat-sidenav-content>
 </mat-sidenav-container>

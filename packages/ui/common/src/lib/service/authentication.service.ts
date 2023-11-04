@@ -104,4 +104,9 @@ export class AuthenticationService {
     const token = localStorage.getItem(environment.jwtTokenName);
     return this.jwtHelper.decodeToken(token || '');
   }
+
+  getPlatformId(): string {
+    const decodedToken = this.getDecodedToken();
+    return decodedToken!['platformId'];
+  }
 }

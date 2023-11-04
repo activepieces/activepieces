@@ -29,8 +29,16 @@ const selectIsNotificationsEnabled = createSelector(
   }
 );
 
+const selectCurrentProject = createSelector(
+  selectProjectState,
+  (state: ProjectsState) => {
+    return state.projects[state.selectedIndex];
+  }
+);
+
 export const ProjectSelectors = {
   selectProject,
   selectIsNotificationsEnabled,
   selectAllProjects,
+  selectCurrentProject,
 };

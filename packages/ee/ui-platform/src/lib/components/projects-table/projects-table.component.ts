@@ -18,9 +18,9 @@ import { Store } from '@ngrx/store';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProjectsTableComponent {
-  displayedColumns = ['displayName', 'created', 'action'];
+  displayedColumns = ['id', 'displayName', 'created', 'action'];
   refreshTable$: Subject<boolean> = new Subject();
-  dataSource!: ProjectsDataSource;
+  dataSource: ProjectsDataSource;
   loading = true;
   switchProject$: Observable<void> | undefined;
   createProject$: Observable<void> | undefined;
@@ -33,7 +33,8 @@ export class ProjectsTableComponent {
   ) {
     this.dataSource = new ProjectsDataSource(
       this.projectsService,
-      this.refreshTable$.asObservable().pipe(startWith(true))
+      this.refreshTable$.asObservable().pipe(startWith(true)),
+      this.authenticationService.getPlatformId()
     );
   }
 

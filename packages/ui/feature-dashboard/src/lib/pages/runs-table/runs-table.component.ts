@@ -20,6 +20,7 @@ import {
   FlagService,
   ProjectSelectors,
   ProjectActions,
+  NavigationService,
 } from '@activepieces/ui/common';
 import { FormControl } from '@angular/forms';
 import { Store } from '@ngrx/store';
@@ -47,7 +48,8 @@ export class RunsTableComponent implements OnInit {
     private activatedRoute: ActivatedRoute,
     private flagsService: FlagService,
     private store: Store,
-    private instanceRunService: InstanceRunService
+    private instanceRunService: InstanceRunService,
+    private navigationService: NavigationService
   ) {}
 
   ngOnInit(): void {
@@ -95,11 +97,9 @@ export class RunsTableComponent implements OnInit {
     );
   }
 
-  openInstanceRun(run: FlowRun) {
-    const url =
-      this.router.serializeUrl(this.router.createUrlTree(['/runs'])) +
-      '/' +
-      run.id;
-    window.open(url, '_blank', 'noopener');
+  openInstanceRun(run: FlowRun, event: MouseEvent) {
+    const route = '/runs/' + run.id;
+    const newWindow = event.ctrlKey || event.which == 2 || event.button == 4;
+    this.navigationService.navigate(route, newWindow);
   }
 }

@@ -36,6 +36,26 @@ const appSumoPlans: Record<string, FlowPlanLimits> = {
         teamMembers: 5,
         activeFlows: 100,
     },
+    'activepieces_tier4': {
+        nickname: 'appsumo_activepieces_tier4',
+        type: PlanType.FLOWS,
+        tasks: 500000,
+        minimumPollingInterval: 1,
+        connections: 100,
+        tasksPerDay: null,
+        teamMembers: 5,
+        activeFlows: 100,
+    },
+    'activepieces_tier5': {
+        nickname: 'appsumo_activepieces_tier5',
+        type: PlanType.FLOWS,
+        tasks: 1000000,
+        minimumPollingInterval: 1,
+        connections: 100,
+        tasksPerDay: null,
+        teamMembers: 5,
+        activeFlows: 100,
+    },
 }
 
 export const appsumoService = {
@@ -47,9 +67,9 @@ export const appsumoService = {
             activation_email: email,
         })
     },
-    delete(uuid: string) {
+    delete({ email }: { email: string }) {
         return appsumoRepo.delete({
-            uuid,
+            activation_email: email,
         })
     },
     upsert(plan: AppSumoPlan) {

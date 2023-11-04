@@ -21,9 +21,9 @@ export class PlatformComponent implements OnInit, OnDestroy {
   platform!: Platform;
   ngOnInit() {
     this.platform = this.route.snapshot.data['platform'];
-    this.dashboardService.hideSideNavRoutes();
+    this.dashboardService.enteredPlatformModule();
   }
   ngOnDestroy() {
-    this.dashboardService.showSideNavRoutes();
+    this.dashboardService.leftPlatformModule();
   }
 }
