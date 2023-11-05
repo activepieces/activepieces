@@ -4,7 +4,6 @@ export default {
   preset: '../../jest.preset.js',
   globals: {},
   testEnvironment: 'node',
-  testTimeout: 60000,
   transform: {
     '^.+\\.[tj]s$': [
       'ts-jest',
