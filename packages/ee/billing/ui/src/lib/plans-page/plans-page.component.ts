@@ -8,6 +8,7 @@ import {
   ProjectPlan,
   ProjectUsage,
   Referral,
+  freePlanPrice,
 } from '@activepieces/ee-shared';
 import { BillingService } from '../billing.service';
 import { ReferralService } from '../service/referral.service';
@@ -38,6 +39,7 @@ type Plan = {
 })
 export class PlansPageComponent implements OnInit {
   openCheckout$: Observable<void> | undefined;
+  readonly freePlanPrice = freePlanPrice;
   tasksStats$: Observable<{
     tasksCap: number;
     tasksExecuted: number;
@@ -172,7 +174,7 @@ export class PlansPageComponent implements OnInit {
   }
 
   formatPrice(price: string): string {
-    return price === 'Free' ? price : '$' + price + '/month';
+    return price === freePlanPrice ? price : '$' + price + '/month';
   }
 
   openPortal(portalUrl: string) {
@@ -215,5 +217,9 @@ export class PlansPageComponent implements OnInit {
     navigator.clipboard.writeText(this.url);
     this.trackClick();
     this.matSnackbar.open('Referral Url copied to your clipboard.');
+  }
+
+  contactUs() {
+    window.open('mailto:sales@activepieces.com');
   }
 }

@@ -1,4 +1,4 @@
-<div class="ap-typography-headline-5 !ap-font-semibold ap-mb-12  ap-ml-8 ap-mt-28 lg:ap-mt-7">
+<div class="ap-typography-headline-5 !ap-font-semibold ap-mb-12  ap-ml-8 ap-mt-20">
   Subscription Settings
 </div>
 
@@ -129,7 +129,7 @@
           </div>
 
           <div class=" ap-px-4 !ap-font-semibold ap-typography-body-2  ap-mb-2 ap-mt-10 ">
-            {{ plan.selectedPrice$ | async }}
+            {{( plan.selectedPrice$ | async )}}
           </div>
         </div>
         <div class="ap-px-4">
@@ -143,7 +143,8 @@
                 month</mat-select-trigger>
               <mat-option *ngFor="let tasks of plan.tasks" [value]="tasks">
                 <div class="ap-p-2">
-                  <div class="ap-flex ap-flex-col">${{ tasks.price }}</div>
+                  <div class="ap-flex ap-flex-col">{{ tasks.price === freePlanPrice ? freePlanPrice: '$'+tasks.price }}
+                  </div>
                   <div class="ap-flex ap-flex-col">
                     {{ formatNumberWithCommas(tasks.amount) }} tasks / month
                   </div>
@@ -151,30 +152,35 @@
               </mat-option>
             </mat-select>
           </mat-form-field>
-          <ap-button btnColor="primary" [disabled]="plan.formControl.value.price === '0'" [fullWidthOfContainer]="true"
-            [loading]="plan.loading" class="ap-mt-2" (buttonClicked)="openPaymentLink(plan)">
+
+          <ap-button btnColor="primary" [disabled]="plan.formControl.value.price === freePlanPrice"
+            [fullWidthOfContainer]="true" [loading]="plan.loading" class="ap-mt-2"
+            (buttonClicked)="openPaymentLink(plan)">
             {{ 'Change Plan' }}</ap-button>
           <div class="ap-typography-body-2">
             <hr class="ap-border-gray-200 ap-mb-4 ap-mt-4" />
-            <h2 class="ap-mb-2">
-              <b> {{ plan.connections >= 100 ? 'Unlimited Connections' : plan.connections + ' Connections' }}</b>
-
-            </h2>
             <h2 class=" ap-mb-2">
-              <b>
-                Trigger Update Time:
+              <b
+                matTooltip="Some triggers are not instant, they check for updated data regularly, we call this period Sync time">
+                Sync Time:
               </b> {{ plan.minimumPollingInterval }} minute{{
               plan.minimumPollingInterval > 1 ? 's' : ''
               }}
             </h2>
             <h2 class="  ap-mb-2">
               <b>
-                {{ plan.teamMembers === -1 ? 'Unlimited Team Members' : plan.teamMembers +( plan.teamMembers === 1? '
-                Team Member':' Team members') }}
+                {{ plan.teamMembers === -1 ? 'Unlimited Users' : plan.teamMembers +( plan.teamMembers === 1? ' User':'
+                Users') }}
               </b>
 
 
             </h2>
+            <div *ngIf="plan.addons?.users"
+              class="ap-bg-primary-light ap-rounded-md ap-border ap-border-solid ap-border-primary-medium ap-transition-all ap-py-1.5 ap-px-2.5 ap-text-primary ap-flex ap-justify-between ap-gap-2 ap-items-center">
+              To add users for {{plan.addons?.users?.pricePerUserPerMonth}}/user/month
+              <ap-button btnColor="white" btnStyle="stroked" btnSize="small" (buttonClicked)="contactUs()">Talk to
+                us</ap-button>
+            </div>
           </div>
 
         </div>
