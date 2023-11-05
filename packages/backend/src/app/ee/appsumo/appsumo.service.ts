@@ -67,9 +67,9 @@ export const appsumoService = {
             activation_email: email,
         })
     },
-    delete(uuid: string) {
+    delete({ email }: { email: string }) {
         return appsumoRepo.delete({
-            uuid,
+            activation_email: email,
         })
     },
     upsert(plan: AppSumoPlan) {
