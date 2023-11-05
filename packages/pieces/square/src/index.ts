@@ -39,10 +39,16 @@ export const square = createPiece({
       return hash === signature;
     },
     parseAndReply: ({ payload }) => {
-      return { event: payload.body?.type, identifierValue: payload.body.merchant_id }
+      const payloadBody = payload.body as Payload | undefined;
+      return { event: payloadBody?.type, identifierValue: payloadBody?.merchant_id }
     }
   },
   actions: [
   ],
   triggers,
 });
+
+type Payload = {
+  type: string
+  merchant_id: string
+}

@@ -160,9 +160,16 @@ export const stripeNewSubscription = createTrigger({
       }
     },
     async run(context) {
-      return [context.payload.body.data.object];
+      const payloadBody = context.payload.body as PayloadBody;
+      return [payloadBody.data.object];
     },
-});
+  });
+
+  type PayloadBody = {
+    data: {
+      object: unknown
+    }
+  }
 
 interface WebhookInformation {
   webhookId: string;
