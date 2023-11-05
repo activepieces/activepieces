@@ -75,7 +75,8 @@ export const newMessageInTopic = createTrigger({
   },
   async run(context) {
     console.debug("payload received", context.payload.body);
-    const { data } = context.payload.body.message;
+    const payloadBody = context.payload.body as PayloadBody
+    const { data } = payloadBody.message;
     const object = data ? JSON.parse(Buffer.from(data, 'base64').toString()) : {};
 
     return [object];
@@ -90,4 +91,10 @@ export const newMessageInTopic = createTrigger({
 interface ISubscriptionInfo {
   project: string;
   subscription: string;
+}
+
+type PayloadBody = {
+  message: {
+    data: string;
+  }
 }

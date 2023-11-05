@@ -36,9 +36,13 @@ export const newResponse = createTrigger({
     },
     //Return new response
     async run(context) {
-        const response = context.payload.body;
-        const responseData = await smCommon.getResponseDetails(context.auth['access_token'], context.propsValue['survey'] as number, response.object_id);
+        const payloadBody = context.payload.body as PayloadBody;
+        const responseData = await smCommon.getResponseDetails(context.auth['access_token'], context.propsValue['survey'] as number, payloadBody.object_id);
 
         return [responseData];
     }
 })
+
+type PayloadBody = {
+    object_id: string | number
+}

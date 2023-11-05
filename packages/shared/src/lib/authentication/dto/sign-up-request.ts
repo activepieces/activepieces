@@ -1,4 +1,4 @@
-import { Static, Type } from "@sinclair/typebox";
+import { Static, Type } from '@sinclair/typebox'
 
 export const SignUpRequest = Type.Object({
     email: Type.String({
@@ -12,6 +12,6 @@ export const SignUpRequest = Type.Object({
     lastName: Type.String(),
     trackEvents: Type.Boolean(),
     newsLetter: Type.Boolean(),
-});
+})
 
-export type SignUpRequest = Static<typeof SignUpRequest>;
+export type SignUpRequest = Static<typeof SignUpRequest>

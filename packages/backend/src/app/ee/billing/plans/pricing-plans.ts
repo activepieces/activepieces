@@ -1,4 +1,4 @@
-import { BotPricingPlan, FlowPricingPlan } from '@activepieces/ee-shared'
+import { BotPricingPlan, FlowPricingPlan, freePlanPrice } from '@activepieces/ee-shared'
 import { Static, Type } from '@sinclair/typebox'
 import { system } from '../../../helper/system/system'
 import { SystemProp } from '../../../helper/system/system-prop'
@@ -44,52 +44,21 @@ export const defaultPlanInformation: ProjectLimitsMap = JSON.parse(
     system.get(SystemProp.BILLING_SETTINGS) ?? '{}',
 )
 
-/*
-export const pricingPlans: PricingPlan[] = [
-    {
-        name: 'Test',
-        description: 'Test plan',
-        connections: 3,
-        minimumPollingInterval: 15,
-        teamMembers: -1,
-        tasks: [
-            {
-                pricePlanId: 'price_1NBo8tKZ0dZRqLEKXLd8AQOW',
-                amount: 10000,
-                price: '10',
-            },
-            {
-                pricePlanId: 'price_1NrMNeKZ0dZRqLEKZbAk8xG9',
-                amount: 20000,
-                price: '30',
-            },
-        ],
-    },
-]*/
 
 export const testBotsPricingPlan: BotPricingPlan[] = []
+
 export const pricingPlans: FlowPricingPlan[] = [
-    {
-        name: 'Hobbyist',
-        description: 'Free plan',
-        connections: 3,
-        minimumPollingInterval: 15,
-        teamMembers: -1,
-        tasks: [
-            {
-                pricePlanId: '',
-                amount: 100,
-                price: '0',
-            },
-        ],
-    },
     {
         name: 'Pro',
         description: 'Best for small businesses & power users',
-        connections: 10,
         minimumPollingInterval: 5,
         teamMembers: 1,
         tasks: [
+            {
+                pricePlanId: '',
+                amount: 1000,
+                price: freePlanPrice,
+            },
             {
                 pricePlanId: 'price_1NBoi8KZ0dZRqLEKMd2iq8Jh',
                 amount: 5000,
@@ -126,49 +95,11 @@ export const pricingPlans: FlowPricingPlan[] = [
                 price: '500',
             },
         ],
-    },
-    {
-        name: 'Business',
-        description: 'Best for businesses',
-        connections: 100,
-        minimumPollingInterval: 1,
-        teamMembers: 5,
-        tasks: [
+        addons: {
+            users:
             {
-                pricePlanId: 'price_1NViZBKZ0dZRqLEKNqNwKL0E',
-                amount: 5000,
-                price: '115',
+                pricePerUserPerMonth: '5$',
             },
-            {
-                pricePlanId: 'price_1NViXhKZ0dZRqLEKz7cmzW1g',
-                amount: 10000,
-                price: '125',
-            },
-            {
-                pricePlanId: 'price_1NVia0KZ0dZRqLEKQRiTAAWi',
-                amount: 25000,
-                price: '155',
-            },
-            {
-                pricePlanId: 'price_1NVibGKZ0dZRqLEKzRLNS2oV',
-                amount: 50000,
-                price: '200',
-            },
-            {
-                pricePlanId: 'price_1NVibvKZ0dZRqLEKcuD9vN3n',
-                amount: 100000,
-                price: '275',
-            },
-            {
-                pricePlanId: 'price_1NVicmKZ0dZRqLEKM6N9ynPb',
-                amount: 200000,
-                price: '400',
-            },
-            {
-                pricePlanId: 'price_1NVidOKZ0dZRqLEK1nqewmgU',
-                amount: 500000,
-                price: '600',
-            },
-        ],
+        },
     },
 ]

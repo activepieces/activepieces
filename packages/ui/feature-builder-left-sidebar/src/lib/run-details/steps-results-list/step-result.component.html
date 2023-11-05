@@ -38,9 +38,7 @@
                           !iterationInputFocusDirective.isFocused
                         ">
                         <span (click)="iterationInput.focus()">
-                          /{{
-                          stepResult.output?.output.iterations?.length
-                          }}
+                          /{{iterationLength}}
                         </span>
 
                         <button class="btn btn-text ap-text-center ap-text-primary"
@@ -56,9 +54,7 @@
                               doneButtonSection.clientWidth +
                               'px)'
                             : ''
-                        " [attr.min]="1" [attr.max]="
-                          stepResult.output?.output.iterations?.length
-                        " #iterationInputFocusDirective="focusTrackerDirective" #iterationInput apTrackFocus
+                        " [attr.min]="1" [attr.max]="iterationLength" #iterationInputFocusDirective="focusTrackerDirective" #iterationInput apTrackFocus
                         type="number" (keydown.enter)="iterationInput.blur()" (keydown)="$event.stopPropagation()"
                         class="form-control iteration-index-control ap-text-center"
                         [formControl]="iterationIndexControl" (click)="indexSearchClicked($event)"

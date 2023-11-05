@@ -25,7 +25,8 @@ export const updatedPerson = createTrigger({
     },
     async run(context) {
       // Pipedrive will always return a list of Persons even if we are looking up a specific person
-      return [context.payload.body.current];
+      const payloadBody = context.payload.body as PayloadBody;
+      return [payloadBody.current];
     },
     sampleData:
     {
@@ -119,4 +120,8 @@ export const updatedPerson = createTrigger({
 
 interface WebhookInformation {
   webhookId: string;
+}
+
+type PayloadBody = {
+  current: unknown
 }

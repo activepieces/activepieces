@@ -1,13 +1,13 @@
-import { Static, Type } from "@sinclair/typebox";
-import { BaseModel, BaseModelSchema } from "../common/base-model";
-import { OAuth2AuthorizationMethod } from "./oauth2-authorization-method";
-import { ApId } from "../common/id-generator";
+import { Static, Type } from '@sinclair/typebox'
+import { BaseModel, BaseModelSchema } from '../common/base-model'
+import { OAuth2AuthorizationMethod } from './oauth2-authorization-method'
+import { ApId } from '../common/id-generator'
 
-export type AppConnectionId = string;
+export type AppConnectionId = string
 
 export enum AppConnectionStatus {
-  ACTIVE = "ACTIVE",
-  ERROR = "ERROR"
+    ACTIVE = 'ACTIVE',
+    ERROR = 'ERROR',
 }
 
 export enum AppConnectionType {
@@ -19,14 +19,14 @@ export enum AppConnectionType {
   CUSTOM_AUTH ="CUSTOM_AUTH"
 }
 
-export interface SecretTextConnectionValue {
-  type: AppConnectionType.SECRET_TEXT,
-  secret_text: string;
+export type SecretTextConnectionValue = {
+    type: AppConnectionType.SECRET_TEXT
+    secret_text: string
 }
-export interface BasicAuthConnectionValue {
-  username: string;
-  password: string;
-  type: AppConnectionType.BASIC_AUTH
+export type BasicAuthConnectionValue = {
+    username: string
+    password: string
+    type: AppConnectionType.BASIC_AUTH
 }
 
 export interface BaseOAuth2ConnectionValue {
@@ -44,10 +44,9 @@ export interface BaseOAuth2ConnectionValue {
 
 }
 
-export interface CustomAuthConnectionValue
-{
-  type: AppConnectionType.CUSTOM_AUTH;
-  props: Record<string, unknown>;
+export type CustomAuthConnectionValue = {
+    type: AppConnectionType.CUSTOM_AUTH
+    props: Record<string, unknown>
 }
 
 export interface CloudOAuth2ConnectionValue extends BaseOAuth2ConnectionValue {
@@ -75,12 +74,12 @@ export type AppConnectionValue<T extends AppConnectionType = AppConnectionType> 
   never;
 
 export type AppConnection<Type extends AppConnectionType = AppConnectionType> = BaseModel<AppConnectionId> & {
-  name: string;
-  type: Type;
-  appName: string;
-  projectId: string;
-  status: AppConnectionStatus;
-  value: AppConnectionValue<Type>
+    name: string
+    type: Type
+    appName: string
+    projectId: string
+    status: AppConnectionStatus
+    value: AppConnectionValue<Type>
 }
 
 export type OAuth2AppConnection = AppConnection<AppConnectionType.OAUTH2>;
@@ -91,12 +90,12 @@ export type BasicAuthConnection = AppConnection<AppConnectionType.BASIC_AUTH>;
 export type CustomAuthConnection = AppConnection<AppConnectionType.CUSTOM_AUTH>;
 
 export const AppConnectionWithoutSensitiveData = Type.Object({
-  ...BaseModelSchema,
-  name: Type.String(),
-  type: Type.Enum(AppConnectionType),
-  appName: Type.String(),
-  projectId: ApId,
-  status: Type.Enum(AppConnectionStatus),
+    ...BaseModelSchema,
+    name: Type.String(),
+    type: Type.Enum(AppConnectionType),
+    appName: Type.String(),
+    projectId: ApId,
+    status: Type.Enum(AppConnectionStatus),
 })
 
 export type AppConnectionWithoutSensitiveData = Static<typeof AppConnectionWithoutSensitiveData> & { __brand: 'AppConnectionWithoutSensitiveData' }
