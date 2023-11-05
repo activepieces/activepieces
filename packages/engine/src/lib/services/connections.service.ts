@@ -1,4 +1,4 @@
-import { AppConnection, AppConnectionType, CloudOAuth2ConnectionValue, BasicAuthConnectionValue, OAuth2ConnectionValueWithApp, ExecutionState, PlatformOAuth2Connection, PlatformOAuth2ConnectionValue } from '@activepieces/shared'
+import { AppConnection, AppConnectionType, CloudOAuth2ConnectionValue, BasicAuthConnectionValue, OAuth2ConnectionValueWithApp, ExecutionState, PlatformOAuth2ConnectionValue } from '@activepieces/shared'
 import { globals } from '../globals'
 
 export const createConnectionManager = (state: ExecutionState) => {

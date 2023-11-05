@@ -1,5 +1,5 @@
 import { OAuth2AuthorizationMethod } from '@activepieces/pieces-framework'
-import { ActivepiecesError, AppConnectionType, BaseOAuth2ConnectionValue, ErrorCode, OAuth2ConnectionValueWithApp } from '@activepieces/shared'
+import { ActivepiecesError, AppConnectionType, BaseOAuth2ConnectionValue, ErrorCode, OAuth2ConnectionValueWithApp, isNil } from '@activepieces/shared'
 import axios from 'axios'
 import { oauth2Util } from '../oauth2-util'
 import { logger } from '../../../../helper/logger'
@@ -122,13 +122,10 @@ function mergeNonNull(
     appConnection: OAuth2ConnectionValueWithApp,
     oAuth2Response: BaseOAuth2ConnectionValue,
 ): OAuth2ConnectionValueWithApp {
-    const formattedOAuth2Response: Partial<BaseOAuth2ConnectionValue> =
+    const formattedOAuth2Response: Partial<BaseOAuth2ConnectionValue> = Object.fromEntries(
         Object.entries(oAuth2Response)
-            .filter(([, value]) => value !== null && value !== undefined)
-            .reduce<Partial<BaseOAuth2ConnectionValue>>((obj, [key, value]) => {
-            obj[key as keyof BaseOAuth2ConnectionValue] = value
-            return obj
-        }, {})
+            .filter(([, value]) => !isNil(value)),
+    )
 
     return {
         ...appConnection,

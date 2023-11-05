@@ -206,7 +206,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(managedAuthnModule)
             await app.register(oauthAppModule)
             setPlatformOAuthService({
-                service: platformOAuth2Service
+                service: platformOAuth2Service,
             })
             chatbotHooks.setHooks(cloudChatbotHooks)
             datasourceHooks.setHooks(cloudDatasourceHooks)
@@ -226,7 +226,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(managedAuthnModule)
             await app.register(oauthAppModule)
             setPlatformOAuthService({
-                service: platformOAuth2Service
+                service: platformOAuth2Service,
             })
             pieceServiceHooks.set(cloudPieceServiceHooks)
             authenticationServiceHooks.set(enterpriseAuthenticationServiceHooks)

@@ -57,8 +57,8 @@ export function encryptString(inputString: string): EncryptedObject {
 }
 
 export function encryptObject(object: unknown): EncryptedObject {
-    const objectString = JSON.stringify(object); // Convert the object to a JSON string
-    return encryptString(objectString);
+    const objectString = JSON.stringify(object) // Convert the object to a JSON string
+    return encryptString(objectString)
 }
 
 

@@ -28,8 +28,8 @@ export const UpsertPlatformOAuth2Request = Type.Object({
         scope: Type.String(),
         type: Type.Literal(AppConnectionType.PLATFORM_OAUTH2),
         token_url: Type.Optional(Type.String({})),
-    })
-});
+    }),
+})
 
 
 export const UpsertCloudOAuth2Request = Type.Object({
@@ -92,10 +92,10 @@ export const UpsertAppConnectionRequestBody = Type.Union([
     UpsertCustomAuthRequest,
 ])
 
-export type UpsertCloudOAuth2Request = Static<typeof UpsertCloudOAuth2Request>;
-export type UpsertPlatformOAuth2Request = Static<typeof UpsertPlatformOAuth2Request>;
-export type UpsertOAuth2Request = Static<typeof UpsertOAuth2Request>;
-export type UpsertSecretTextRequest = Static<typeof UpsertSecretTextRequest>;
-export type UpsertBasicAuthRequest = Static<typeof UpsertBasicAuthRequest>;
-export type UpsertCustomAuthRequest = Static<typeof UpsertCustomAuthRequest>;
-export type UpsertAppConnectionRequestBody = Static<typeof UpsertAppConnectionRequestBody>;
+export type UpsertCloudOAuth2Request = Static<typeof UpsertCloudOAuth2Request>
+export type UpsertPlatformOAuth2Request = Static<typeof UpsertPlatformOAuth2Request>
+export type UpsertOAuth2Request = Static<typeof UpsertOAuth2Request>
+export type UpsertSecretTextRequest = Static<typeof UpsertSecretTextRequest>
+export type UpsertBasicAuthRequest = Static<typeof UpsertBasicAuthRequest>
+export type UpsertCustomAuthRequest = Static<typeof UpsertCustomAuthRequest>
+export type UpsertAppConnectionRequestBody = Static<typeof UpsertAppConnectionRequestBody>

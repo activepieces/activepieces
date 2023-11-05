@@ -19,7 +19,7 @@ export const oauthAppService = {
         const oauthApp = await oauthRepo.findOneByOrFail({ platformId, pieceName, clientId })
         return {
             ...oauthApp,
-            clientSecret: decryptObject<string>(oauthApp.clientSecret)
+            clientSecret: decryptObject<string>(oauthApp.clientSecret),
         }
     },
     async list({ request, platformId }: { platformId: string, request: ListOAuth2AppRequest }): Promise<SeekPage<OAuthApp>> {

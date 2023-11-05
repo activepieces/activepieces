@@ -4,13 +4,13 @@ import { credentialsOauth2Service } from './services/credentials-oauth2-service'
 import { ClaimOAuth2Request, OAuth2Service, RefreshOAuth2Request } from './oauth2-service'
 
 const unimplementedService: OAuth2Service<PlatformOAuth2ConnectionValue> = {
-    claim: async ({ }: ClaimOAuth2Request): Promise<PlatformOAuth2ConnectionValue> => {
-        throw new Error('Unimplemented platform oauth');
+    claim: async (_req: ClaimOAuth2Request): Promise<PlatformOAuth2ConnectionValue> => {
+        throw new Error('Unimplemented platform oauth')
     },
-    refresh: async ({ }: RefreshOAuth2Request<PlatformOAuth2ConnectionValue>): Promise<PlatformOAuth2ConnectionValue> => {
-        throw new Error('Unimplemented platform oauth');
-    }
-};
+    refresh: async (_req: RefreshOAuth2Request<PlatformOAuth2ConnectionValue>): Promise<PlatformOAuth2ConnectionValue> => {
+        throw new Error('Unimplemented platform oauth')
+    },
+}
 
 export const oauth2Handler = {
     [AppConnectionType.CLOUD_OAUTH2]: cloudOAuth2Service,
@@ -20,5 +20,5 @@ export const oauth2Handler = {
 
 
 export function setPlatformOAuthService({ service }: { service: OAuth2Service<PlatformOAuth2ConnectionValue> }) {
-    oauth2Handler[AppConnectionType.PLATFORM_OAUTH2] = service;
+    oauth2Handler[AppConnectionType.PLATFORM_OAUTH2] = service
 }

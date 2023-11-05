@@ -202,7 +202,7 @@ describe('OAuth App API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: `/v1/oauth-apps`,
+                url: '/v1/oauth-apps',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },

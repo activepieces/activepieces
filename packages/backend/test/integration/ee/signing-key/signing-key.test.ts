@@ -229,7 +229,7 @@ describe('Signing Key API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: `/v1/signing-keys`,
+                url: '/v1/signing-keys',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },

@@ -1,4 +1,4 @@
-import { system, validateEnvPropsOnStartup } from './app/helper/system/system'
+import { system } from './app/helper/system/system'
 import { SystemProp } from './app/helper/system/system-prop'
 import { databaseConnection } from './app/database/database-connection'
 import { logger } from './app/helper/logger'

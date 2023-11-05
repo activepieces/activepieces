@@ -164,7 +164,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddCustomDomain1698077078271,
                 AddSigningKey1698602417745,
                 AddDisplayNameToSigningKey1698698190965,
-                AddOAuth2AppEntiity1699221414907
+                AddOAuth2AppEntiity1699221414907,
             )
             break
         case ApEdition.ENTERPRISE:
@@ -175,7 +175,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddCustomDomain1698077078271,
                 AddSigningKey1698602417745,
                 AddDisplayNameToSigningKey1698698190965,
-                AddOAuth2AppEntiity1699221414907
+                AddOAuth2AppEntiity1699221414907,
             )
             break
         case ApEdition.COMMUNITY:
