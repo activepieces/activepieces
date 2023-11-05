@@ -30,9 +30,9 @@ export const flagController: FastifyPluginAsyncTypebox = async (app) => {
                     flagsMap[ApFlagId.SHOW_AUTH_PROVIDERS] = false
                     flagsMap[ApFlagId.SHOW_BLOG_GUIDE] = false
                     flagsMap[ApFlagId.CLOUD_AUTH_ENABLED] = false
-                    flagsMap[ApFlagId.FRONTEND_URL] = `${request.protocol}://${request.hostname}`
+                    flagsMap[ApFlagId.FRONTEND_URL] = `https://${request.hostname}`
                     // TODO USE EXISTING METHODS
-                    flagsMap[ApFlagId.WEBHOOK_URL_PREFIX] = `${request.protocol}://${request.hostname}/api/v1/webhooks`
+                    flagsMap[ApFlagId.WEBHOOK_URL_PREFIX] = `https://${request.hostname}/api/v1/webhooks`
                 }
             }
             return flagsMap
