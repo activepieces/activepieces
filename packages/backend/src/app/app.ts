@@ -63,6 +63,10 @@ import { flowQueueConsumer } from './workers/flow-worker/flow-queue-consumer'
 import { setupBullMQBoard } from './workers/flow-worker/queues/redis/redis-queue'
 import { signingKeyModule } from './ee/signing-key/signing-key-module'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
+import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
+import { validateEnvPropsOnStartup } from './helper/system/system'
+import { platformOAuth2Service } from './ee/app-connections/platform-oauth2-service'
+import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -180,6 +184,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
 
     // SurveyMonkey
     app.addContentTypeParser('application/vnd.surveymonkey.response.v1+json', { parseAs: 'string' }, app.getDefaultJsonParser('ignore', 'ignore'))
+    await validateEnvPropsOnStartup()
 
     const edition = getEdition()
     logger.info(`Activepieces ${edition} Edition`)
@@ -199,6 +204,10 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(customDomainModule)
             await app.register(signingKeyModule)
             await app.register(managedAuthnModule)
+            await app.register(oauthAppModule)
+            setPlatformOAuthService({
+                service: platformOAuth2Service
+            })
             chatbotHooks.setHooks(cloudChatbotHooks)
             datasourceHooks.setHooks(cloudDatasourceHooks)
             embeddings.set(qdrantEmbeddings)
@@ -215,6 +224,10 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(platformModule)
             await app.register(signingKeyModule)
             await app.register(managedAuthnModule)
+            await app.register(oauthAppModule)
+            setPlatformOAuthService({
+                service: platformOAuth2Service
+            })
             pieceServiceHooks.set(cloudPieceServiceHooks)
             authenticationServiceHooks.set(enterpriseAuthenticationServiceHooks)
             break

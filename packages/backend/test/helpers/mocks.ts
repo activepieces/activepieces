@@ -1,6 +1,8 @@
-import { KeyAlgorithm, SigningKey, Platform } from '@activepieces/ee-shared'
+import { KeyAlgorithm, SigningKey, Platform, OAuthApp } from '@activepieces/ee-shared'
 import { UserStatus, User, apId, Project, NotificationStatus, ProjectType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
+import { OAuthAppWithEncryptedSecret, OAuthAppWithSecret } from '../../src/app/ee/oauth-apps/oauth-app.entity'
+import { encryptString } from '../../src/app/helper/encryption'
 
 export const createMockUser = (user?: Partial<User>): User => {
     return {
@@ -17,6 +19,18 @@ export const createMockUser = (user?: Partial<User>): User => {
         imageUrl: user?.imageUrl ?? faker.image.urlPlaceholder(),
         title: user?.title ?? faker.lorem.sentence(),
         externalId: user?.externalId ?? apId(),
+    }
+}
+
+export const createMockOAuthApp = (oAuthApp?: Partial<OAuthApp>): OAuthAppWithEncryptedSecret => {
+    return {
+        id: oAuthApp?.id ?? apId(),
+        created: oAuthApp?.created ?? faker.date.recent().toISOString(),
+        updated: oAuthApp?.updated ?? faker.date.recent().toISOString(),
+        platformId: oAuthApp?.platformId ?? apId(),
+        pieceName: oAuthApp?.pieceName ?? faker.lorem.word(),
+        clientId: oAuthApp?.clientId ?? apId(),
+        clientSecret: encryptString(faker.lorem.word())
     }
 }
 

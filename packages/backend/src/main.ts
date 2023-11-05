@@ -78,7 +78,6 @@ const stop = async (app: FastifyInstance): Promise<void> => {
 const main = async (): Promise<void> => {
 
     setupTimeZone()
-    await validateEnvPropsOnStartup()
     await databaseConnection.initialize()
     await databaseConnection.runMigrations()
     await seedDevData()

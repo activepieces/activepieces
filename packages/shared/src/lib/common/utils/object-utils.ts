@@ -10,6 +10,18 @@ export const spreadIfDefined = <T>(key: string, value: T | undefined | null) => 
     }
 }
 
+export function deleteProps<T extends Record<string, unknown>, K extends keyof T>(
+    obj: T,
+    prop: K[],
+): Omit<T, K> {
+    const newObj = { ...obj }
+    for (const p of prop) {
+        delete newObj[p]
+    }
+    return newObj
+}
+
+
 export function applyFunctionToValuesSync(obj: any, apply: (str: any) => any) {
     if (isNil(obj)) {
         return obj;

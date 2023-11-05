@@ -12,6 +12,7 @@ export enum AppConnectionStatus {
 
 export enum AppConnectionType {
   OAUTH2 = "OAUTH2",
+  PLATFORM_OAUTH2 = "PLATFORM_OAUTH2",
   CLOUD_OAUTH2 = "CLOUD_OAUTH2",
   SECRET_TEXT = "SECRET_TEXT",
   BASIC_AUTH = "BASIC_AUTH",
@@ -30,13 +31,17 @@ export interface BasicAuthConnectionValue {
 
 export interface BaseOAuth2ConnectionValue {
   expires_in?: number;
+  client_id: string;
   token_type: string;
   access_token: string;
   claimed_at: number;
   refresh_token: string;
   scope: string;
+  token_url: string;
   authorization_method?: OAuth2AuthorizationMethod,
   data: Record<string, any>
+  props?: Record<string, any>;
+
 }
 
 export interface CustomAuthConnectionValue
@@ -47,31 +52,24 @@ export interface CustomAuthConnectionValue
 
 export interface CloudOAuth2ConnectionValue extends BaseOAuth2ConnectionValue {
   type: AppConnectionType.CLOUD_OAUTH2;
-  client_id: string;
-  expires_in: number;
-  token_type: string;
-  access_token: string;
-  claimed_at: number;
-  refresh_token: string;
-  scope: string;
-  data: Record<string, any>
-  props?: Record<string, any>;
-  token_url: string;
+}
+
+export interface PlatformOAuth2ConnectionValue extends BaseOAuth2ConnectionValue {
+  type: AppConnectionType.PLATFORM_OAUTH2;
+  redirect_url: string;
 }
 
 export interface OAuth2ConnectionValueWithApp extends BaseOAuth2ConnectionValue {
   type: AppConnectionType.OAUTH2;
-  client_id: string;
   client_secret: string;
-  token_url: string;
   redirect_url: string;
-  props?: Record<string, any>;
 }
 
 export type AppConnectionValue<T extends AppConnectionType = AppConnectionType> =
   T extends AppConnectionType.SECRET_TEXT ? SecretTextConnectionValue :
   T extends AppConnectionType.BASIC_AUTH ? BasicAuthConnectionValue :
   T extends AppConnectionType.CLOUD_OAUTH2 ? CloudOAuth2ConnectionValue :
+  T extends AppConnectionType.PLATFORM_OAUTH2 ? PlatformOAuth2ConnectionValue :
   T extends AppConnectionType.OAUTH2 ? OAuth2ConnectionValueWithApp :
   T extends AppConnectionType.CUSTOM_AUTH ? CustomAuthConnectionValue :
   never;
@@ -88,6 +86,7 @@ export type AppConnection<Type extends AppConnectionType = AppConnectionType> = 
 export type OAuth2AppConnection = AppConnection<AppConnectionType.OAUTH2>;
 export type SecretKeyAppConnection = AppConnection<AppConnectionType.SECRET_TEXT>;
 export type CloudAuth2Connection = AppConnection<AppConnectionType.CLOUD_OAUTH2>;
+export type PlatformOAuth2Connection = AppConnection<AppConnectionType.PLATFORM_OAUTH2>;
 export type BasicAuthConnection = AppConnection<AppConnectionType.BASIC_AUTH>;
 export type CustomAuthConnection = AppConnection<AppConnectionType.CUSTOM_AUTH>;
 
