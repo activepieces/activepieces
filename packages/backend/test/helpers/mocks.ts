@@ -1,6 +1,7 @@
 import { KeyAlgorithm, SigningKey, Platform, FilteredPieceBehavior } from '@activepieces/ee-shared'
-import { UserStatus, User, apId, Project, NotificationStatus, ProjectType } from '@activepieces/shared'
+import { UserStatus, User, apId, Project, NotificationStatus, ProjectType, PieceType, PackageType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
+import { PieceMetadataSchema } from '../../src/app/pieces/piece-metadata-entity'
 
 export const createMockUser = (user?: Partial<User>): User => {
     return {
@@ -74,5 +75,28 @@ export const createMockSigningKey = (signingKey?: Partial<SigningKey>): SigningK
         publicKey: signingKey?.publicKey ?? MOCK_SIGNING_KEY_PUBLIC_KEY,
         generatedBy: signingKey?.generatedBy ??  apId(),
         algorithm: signingKey?.algorithm ?? KeyAlgorithm.RSA,
+    }
+}
+
+export const createMockPieceMetadata = (pieceMetadata?: Partial<Omit<PieceMetadataSchema, 'project'>>): Omit<PieceMetadataSchema, 'project'> => {
+    return {
+        id: pieceMetadata?.id ?? apId(),
+        created: pieceMetadata?.created ?? faker.date.recent().toISOString(),
+        updated: pieceMetadata?.updated ?? faker.date.recent().toISOString(),
+        name: pieceMetadata?.name ?? faker.lorem.word(),
+        displayName: pieceMetadata?.displayName ?? faker.lorem.word(),
+        logoUrl: pieceMetadata?.logoUrl ?? faker.image.urlPlaceholder(),
+        description: pieceMetadata?.description ?? faker.lorem.sentence(),
+        projectId: pieceMetadata?.projectId,
+        directoryName: pieceMetadata?.directoryName,
+        auth: pieceMetadata?.auth,
+        version: pieceMetadata?.version ?? faker.system.semver(),
+        minimumSupportedRelease: pieceMetadata?.minimumSupportedRelease ?? '0.0.0',
+        maximumSupportedRelease: pieceMetadata?.maximumSupportedRelease ?? '9.9.9',
+        actions: pieceMetadata?.actions ?? {},
+        triggers: pieceMetadata?.triggers ?? {},
+        pieceType: pieceMetadata?.pieceType ?? faker.helpers.enumValue(PieceType),
+        packageType: pieceMetadata?.packageType ?? faker.helpers.enumValue(PackageType),
+        archiveId: pieceMetadata?.archiveId,
     }
 }
