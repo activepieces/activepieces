@@ -17,7 +17,7 @@
                 data="If you are expecting a reply from this webhook, append <b>/sync</b> to the URL.<br> <br>
                   In that case, you will also have to add an <b>HTTP step</b>  with return response to the end of your flow.<br> <br>
                   **If the flow takes more than 30 seconds, it will give a 204 no-content response.**<br>
-                  To change this time, set the **AP_WEBHOOK_TIMEOUT** to desired number.
+                  {{ (edition$ | async) === ApEdition.CLOUD ? '' : 'To change this, set the **AP_WEBHOOK_TIMEOUT** to desired number.' }}
                   " i18n-data></ap-markdown>
             </section>
           </ng-container>
