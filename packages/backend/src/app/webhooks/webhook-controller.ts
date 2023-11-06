@@ -115,7 +115,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
 
 const POLLING_INTERVAL_MS = 300
 const MAX_POLLING_INTERVAL_MS = 2000
-const POLLING_TIMEOUT_MS = (system.getNumber(SystemProp.WEBHOOK_TIMEOUT) ?? 30) * 1000
+const POLLING_TIMEOUT_MS = (system.getNumber(SystemProp.WEBHOOK_TIMEOUT_SECONDS) ?? 30) * 1000
 
 const waitForRunToComplete = async (run: FlowRun) => {
     const startTime = Date.now()
