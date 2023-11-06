@@ -38,7 +38,13 @@ describe('Platform API', () => {
                     authorization: `Bearer ${testToken}`,
                 },
                 body: {
-                    primaryColor: '#000000',
+                    name: 'updated name',
+                    primaryColor: 'updated primary color',
+                    logoIconUrl: 'updated logo icon url',
+                    fullLogoUrl: 'updated full logo url',
+                    favIconUrl: 'updated fav icon url',
+                    filteredPieceNames: ['updated filtered piece names'],
+                    filteredPieceBehavior: 'ALLOWED',
                 },
             })
 
@@ -46,13 +52,18 @@ describe('Platform API', () => {
             const responseBody = response?.json()
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(Object.keys(responseBody)).toHaveLength(11)
             expect(responseBody.id).toBe(mockPlatform.id)
+            expect(responseBody.created).toBeDefined()
+            expect(responseBody.updated).toBeDefined()
             expect(responseBody.ownerId).toBe(mockUser.id)
-            expect(responseBody.name).toBe(mockPlatform.name)
-            expect(responseBody.primaryColor).toBe('#000000')
-            expect(responseBody.logoIconUrl).toBe(mockPlatform.logoIconUrl)
-            expect(responseBody.fullLogoUrl).toBe(mockPlatform.fullLogoUrl)
-            expect(responseBody.favIconUrl).toBe(mockPlatform.favIconUrl)
+            expect(responseBody.name).toBe('updated name')
+            expect(responseBody.primaryColor).toBe('updated primary color')
+            expect(responseBody.logoIconUrl).toBe('updated logo icon url')
+            expect(responseBody.fullLogoUrl).toBe('updated full logo url')
+            expect(responseBody.favIconUrl).toBe('updated fav icon url')
+            expect(responseBody.filteredPieceNames).toStrictEqual(['updated filtered piece names'])
+            expect(responseBody.filteredPieceBehavior).toBe('ALLOWED')
         })
 
         it('fails if user is not owner', async () => {
