@@ -1,7 +1,8 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
-import { campaignChatCompletedAction } from './lib/actions/campaign-chat-completed';
 import { campaignChatCompletedTrigger } from './lib/triggers/campaign-chat-completed';
+import { campaignChatEmailCompletedTrigger } from './lib/triggers/campaign-chat-email-completed';
 import { chatsCompletedTrigger } from './lib/triggers/chats-completed';
+import { chatsEmailCompletedTrigger } from './lib/triggers/chats-email-completed';
 
 export const humanbot = createPiece({
     displayName: 'Humanbot',
@@ -9,7 +10,12 @@ export const humanbot = createPiece({
     auth: PieceAuth.None(),
     minimumSupportedRelease: '0.9.0',
     logoUrl: 'https://app.humanbot.io/img/icon.png',
-    authors: [],
+    authors: ['Humanbot'],
     actions: [],
-    triggers: [campaignChatCompletedTrigger, chatsCompletedTrigger],
+    triggers: [
+        campaignChatCompletedTrigger,
+        campaignChatEmailCompletedTrigger,
+        chatsCompletedTrigger,
+        chatsEmailCompletedTrigger
+    ],
 });
