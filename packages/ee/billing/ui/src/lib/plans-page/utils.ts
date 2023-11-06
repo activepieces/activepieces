@@ -3,13 +3,16 @@ import {
   FlowPricingSubPlan,
   ProjectPlan,
   ProjectUsage,
+  customPlanPrice,
   freePlanPrice,
 } from '@activepieces/ee-shared';
 import { FormControl } from '@angular/forms';
 import { Observable } from 'rxjs';
 
 export function formatPrice(price: string): string {
-  return price === freePlanPrice ? price : '$' + price + '/month';
+  return price === freePlanPrice || price === customPlanPrice
+    ? price
+    : '$' + price + '/month';
 }
 
 export function openPortal(portalUrl: string) {

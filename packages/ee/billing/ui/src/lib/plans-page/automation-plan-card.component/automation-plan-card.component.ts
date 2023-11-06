@@ -3,6 +3,7 @@ import {
   FlowPricingPlan,
   FlowPricingSubPlan,
   freePlanPrice,
+  PlanSupportType,
 } from '@activepieces/ee-shared';
 import { Observable, map, switchMap, tap } from 'rxjs';
 import { FormControl } from '@angular/forms';
@@ -26,6 +27,8 @@ type Plan = {
 })
 export class AutomationPlanCardComponent {
   readonly freePlanPrice = freePlanPrice;
+  readonly PlanSupportType = PlanSupportType;
+
   _plan!: Plan;
   openCheckout$?: Observable<void>;
   @Input({ required: true }) loadPlans$!: loadPlansObs;

@@ -1,11 +1,12 @@
-<div class="ap-py-4 ap-bg-white ap-rounded-lg ap-border-[1px] ap-border-outline ap-min-w-[350px] ">
+<div
+    class="ap-py-4 ap-bg-white ap-rounded-lg ap-border-[1px] ap-border-outline ap-min-w-[370px] ap-max-w-[370px] ap-min-h-[35.8125rem] ">
 
 
     <div class="ap-mb-2 ap-w-full">
         <div class="ap-border-b ap-border-solid ap-border-outline ap-w-full">
             <div class="ap-px-4 ap-pb-5">
                 <div class="!ap-font-semibold ap-typography-body-1  ap-mb-1">{{ _plan.name }}</div>
-                <div class="ap-text-description ap-typography-body-2">{{ _plan.description }}</div>
+                <div class="ap-text-description ap-typography-body-2 ap-min-h-[2.5rem]">{{ _plan.description }}</div>
             </div>
         </div>
 
@@ -17,7 +18,7 @@
         <mat-form-field appearance="outline" class="ap-w-full">
             <mat-label>Tasks</mat-label>
             <div class="ap-w-full" *ngIf="_plan.tasks.length === 1">
-                <input matInput [readonly]="true" value="{{ _plan.tasks[0].amount }} tasks / day" />
+                <input matInput [readonly]="true" value="{{ _plan.tasks[0].amount }} tasks / month" />
             </div>
             <mat-select [formControl]="_plan.formControl" *ngIf="_plan.tasks.length > 1">
                 <mat-select-trigger>{{ _plan.selectedTasks$ | async }} tasks /
@@ -37,11 +38,11 @@
 
         <ap-button btnColor="primary" [disabled]="_plan.formControl.value.price === freePlanPrice"
             [fullWidthOfContainer]="true" [loading]="_plan.loading" class="ap-mt-2"
-            (buttonClicked)="openPaymentLink(_plan)">
-            {{ 'Change Plan' }}</ap-button>
+            (buttonClicked)="_plan.talkToUs?contactUs(): openPaymentLink(_plan)">
+            {{ _plan.talkToUs? 'Talk to us': 'Change plan' }}</ap-button>
         <div class="ap-typography-body-2">
             <hr class="ap-border-gray-200 ap-mb-4 ap-mt-4" />
-            <h2 class=" ap-mb-2">
+            <h2 class=" ap-mb-2 ap-cursor-default">
                 <b
                     matTooltip="Some triggers are not instant, they check for updated data regularly, we call this period Sync time">
                     Sync Time:
@@ -49,7 +50,7 @@
                 _plan.minimumPollingInterval > 1 ? 's' : ''
                 }}
             </h2>
-            <h2 class="  ap-mb-2">
+            <h2 class="ap-mb-2">
                 <b>
                     {{ _plan.teamMembers === -1 ? 'Unlimited Users' : _plan.teamMembers +( _plan.teamMembers === 1? '
                     User':'
@@ -58,6 +59,74 @@
 
 
             </h2>
+            <h2 *ngIf="_plan.manageProjects" class=" ap-mb-2 ap-cursor-default">
+                <b matTooltip="Multiple projects for your customers under your platform">
+                    Manage projects
+                </b>
+            </h2>
+            <h2 *ngIf="_plan.privatePieces" class=" ap-mb-2 ap-cursor-default">
+                <b matTooltip="Add your own custom pieces without contributing them to open source">
+                    Private pieces:
+                </b>
+                {{_plan.privatePieces}}
+            </h2>
+            <h2 *ngIf="_plan.customTemplates" class=" ap-mb-2 ap-cursor-default">
+                <b matTooltip="Allow users to build flows using your predefined templates">
+                    Custom templates
+                </b>
+
+            </h2>
+            <h2 *ngIf="_plan.customColorsAndLogos" class=" ap-mb-2 ap-cursor-default">
+                <b matTooltip="Match your brand identity across all projects under your platform">
+                    Custom colors and logo
+                </b>
+
+            </h2>
+
+            <h2 *ngIf="_plan.embedding " class=" ap-mb-2 ap-cursor-default">
+                <b matTooltip="Use our Javascript SDK to embed our automation builder in your app">
+                    Embed in your Saas
+                </b>
+
+            </h2>
+            <h2 *ngIf="_plan.embedding " class=" ap-mb-2 ap-cursor-default">
+                <b matTooltip="Allow users to sign in using your existing provider">
+                    Single Sign On (SSO)
+                </b>
+
+            </h2>
+            <h2 *ngIf="_plan.userPermissions " class=" ap-mb-2 ap-cursor-default">
+                <b matTooltip="Give your users custom permissions and roles">
+                    User permissions
+                </b>
+
+            </h2>
+            <h2 *ngIf="_plan.customReports " class=" ap-mb-2 ap-cursor-default">
+                <b matTooltip="Request custom dashboards with the metrics you care about the most">
+                    Custom reports
+                </b>
+
+            </h2>
+
+            <h2 *ngIf="_plan.supportType === PlanSupportType.EMAIL " class=" ap-mb-2 ap-cursor-default">
+                <b matTooltip="Get support from our active community support forum or from our support team via email">
+                    Email and community support
+                </b>
+
+            </h2>
+            <h2 *ngIf="_plan.supportType === PlanSupportType.COMMUNITY " class=" ap-mb-2 ap-cursor-default">
+                <b matTooltip="Get support from our active community support forum">
+                    Community support
+                </b>
+
+            </h2>
+            <h2 *ngIf="_plan.supportType === PlanSupportType.DEDICATED " class=" ap-mb-2 ap-cursor-default">
+                <b matTooltip="Get direct support via private Slack channel">
+                    Dedicated support
+                </b>
+
+            </h2>
+
             <div *ngIf="_plan.addons?.users"
                 class="ap-bg-primary-light ap-rounded-md ap-border ap-border-solid ap-border-primary-medium ap-transition-all ap-py-1.5 ap-px-2.5 ap-text-primary ap-flex ap-justify-between ap-gap-2 ap-items-center">
                 To add users for {{_plan.addons?.users?.pricePerUserPerMonth}}/user/month
