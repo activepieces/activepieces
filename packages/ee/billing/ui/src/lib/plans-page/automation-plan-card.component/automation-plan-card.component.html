@@ -35,11 +35,16 @@
                 </mat-option>
             </mat-select>
         </mat-form-field>
+        <ap-button *ngIf="_plan.talkToUs" btnColor="primary"
+            [disabled]="_plan.formControl.value.price === freePlanPrice" [fullWidthOfContainer]="true"
+            [loading]="_plan.loading" class="ap-mt-2" data-tally-open="nrO9gL" data-tally-layout="modal"
+            data-tally-width="700" data-tally-auto-close="3000" [attr.data-plan]="_plan.name">
+            Talk to us</ap-button>
 
-        <ap-button btnColor="primary" [disabled]="_plan.formControl.value.price === freePlanPrice"
-            [fullWidthOfContainer]="true" [loading]="_plan.loading" class="ap-mt-2"
-            (buttonClicked)="_plan.talkToUs?contactUs(): openPaymentLink(_plan)">
-            {{ _plan.talkToUs? 'Talk to us': 'Change plan' }}</ap-button>
+        <ap-button *ngIf="!_plan.talkToUs" btnColor="primary"
+            [disabled]="_plan.formControl.value.price === freePlanPrice" [fullWidthOfContainer]="true"
+            [loading]="_plan.loading" class="ap-mt-2" (buttonClicked)="openPaymentLink(_plan)">
+            Change plan</ap-button>
         <div class="ap-typography-body-2">
             <hr class="ap-border-gray-200 ap-mb-4 ap-mt-4" />
             <h2 class=" ap-mb-2 ap-cursor-default">

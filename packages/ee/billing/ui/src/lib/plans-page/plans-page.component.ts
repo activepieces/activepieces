@@ -139,6 +139,14 @@ export class PlansPageComponent implements OnInit {
     this.referrals$ = this.referralService
       .list({ limit: 100 })
       .pipe(map((page) => page.data));
+    this.addTallyScript();
+  }
+
+  private addTallyScript() {
+    const script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.src = 'https://tally.so/widgets/embed.js';
+    document.head.appendChild(script);
   }
 
   trackClick() {
