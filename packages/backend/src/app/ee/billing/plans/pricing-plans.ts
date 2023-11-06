@@ -1,4 +1,4 @@
-import { BotPricingPlan, FlowPricingPlan, freePlanPrice } from '@activepieces/ee-shared'
+import { BotPricingPlan, FlowPricingPlan, PlanSupportType, customPlanPrice, freePlanPrice } from '@activepieces/ee-shared'
 import { Static, Type } from '@sinclair/typebox'
 import { system } from '../../../helper/system/system'
 import { SystemProp } from '../../../helper/system/system-prop'
@@ -98,8 +98,52 @@ export const pricingPlans: FlowPricingPlan[] = [
         addons: {
             users:
             {
-                pricePerUserPerMonth: '5$',
+                pricePerUserPerMonth: '$5',
             },
         },
+    },
+    {
+        description: 'Best for agencies who manage automations for multiple clients',
+        name: 'Platform',
+        minimumPollingInterval: 5,
+        teamMembers: 25,
+        customTemplates: true,
+        customColorsAndLogos: true,
+        supportType: PlanSupportType.EMAIL,
+        addons: {
+            users: {
+                pricePerUserPerMonth: '$10',
+            },
+        },
+        tasks: [
+            {
+                amount: 50000,
+                price: '249',
+                pricePlanId: '',
+            },
+        ],
+        talkToUs: true,
+
+    },
+    {
+        description: 'Advanced security, reporting and embedded automations',
+        name: 'Enterprise',
+        minimumPollingInterval: 1,
+        teamMembers: 150,
+        supportType: PlanSupportType.DEDICATED,
+        tasks: [
+            {
+                amount: 1000000,
+                price: customPlanPrice,
+                pricePlanId: '',
+            },
+        ],
+        auditLog: true,
+        SSO: true,
+        privatePieces: 'Unlimited',
+        customReports: true,
+        embedding: true,
+        userPermissions: true,
+        talkToUs: true,
     },
 ]
