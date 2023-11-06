@@ -11,6 +11,8 @@ import { flowInstanceService } from '../flows/flow-instance/flow-instance.servic
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { tasksLimit } from '../ee/billing/usage/limits/tasks-limit'
 import { getEdition } from '../helper/secret-helper'
+import { SystemProp } from '../helper/system/system-prop'
+import { system } from '../helper/system/system'
 
 export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
 
@@ -113,7 +115,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
 
 const POLLING_INTERVAL_MS = 300
 const MAX_POLLING_INTERVAL_MS = 2000
-const POLLING_TIMEOUT_MS = 1000 * 30
+const POLLING_TIMEOUT_MS = (system.getNumber(SystemProp.WEBHOOK_TIMEOUT_SECONDS) ?? 30) * 1000
 
 const waitForRunToComplete = async (run: FlowRun) => {
     const startTime = Date.now()
