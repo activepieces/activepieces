@@ -35,14 +35,15 @@ When you execute the deploy.sh script in the Docker installation tutorial, it wi
 | `AP_REDIS_HOST`              | ❗️ The hostname or IP address of the Redis server                                                            | `None`                  |
 | `AP_REDIS_PORT`              | ❗️ The port number for the Redis server                                                                      | `None`                  |
 | `AP_REDIS_USE_SSL`           | Connect to Redis with SSL                                                                                   | `false`                 |
-| `AP_NOTIFICATION_URL`        | The notification URL is triggered whenever a run fails.                                                     | `false`                 | https://cloud.activepieces.com/flows/WEBHOOK_TRIGGER_FLOW_ID 
+| `AP_NOTIFICATION_URL`        | The notification URL is triggered whenever a run fails.                                                     | `false`                 | https://cloud.activepieces.com/flows/WEBHOOK_TRIGGER_FLOW_ID
 | `AP_TELEMETRY_ENABLED`       | Collect telemetry information                                                                               | `false`                 |
-| `AP_TEMPLATES_SOURCE_URL`    | This is the endpoint we query for templates, remove it and templates will be removed from UI                | `https://cloud.activepieces.com/api/v1/flow-templates` | 
+| `AP_TEMPLATES_SOURCE_URL`    | This is the endpoint we query for templates, remove it and templates will be removed from UI                | `https://cloud.activepieces.com/api/v1/flow-templates` |
+| `AP_WEBHOOK_TIMEOUT_SECONDS` | The default timeout for webhooks. This option is not available on cloud because of cloudflare               | `30`                    |
 
 
 <Warning>
-The frontend URL is essential for webhooks and app triggers to work. 
-It must be accessible to third parties to send data. 
+The frontend URL is essential for webhooks and app triggers to work.
+It must be accessible to third parties to send data.
 </Warning>
 
 ### Setting Webhook (Frontend URL):

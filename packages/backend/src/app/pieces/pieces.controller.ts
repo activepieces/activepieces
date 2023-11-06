@@ -39,6 +39,7 @@ export const piecesController: FastifyPluginAsyncTypebox = async (app) => {
         const pieceMetadataSummary = await pieceMetadataService.list({
             release,
             projectId: req.principal.projectId,
+            platformId: req.principal.platformId,
             edition,
         })
         return pieceMetadataSummary
