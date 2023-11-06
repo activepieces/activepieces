@@ -34,8 +34,7 @@
       ],
       "options": {
         "lintFilePatterns": [
-          "packages/pieces/bubble/**/*.ts",
-          "packages/pieces/bubble/package.json"
+          "packages/pieces/bubble/**/*.ts"
         ]
       }
     }
