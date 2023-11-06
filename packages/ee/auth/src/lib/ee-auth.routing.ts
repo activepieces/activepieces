@@ -7,30 +7,38 @@ import { FirebaseAuthActionComponent } from './auth-action/firebase-auth-action.
 
 export const FirebaseAuthLayoutRoutes: Routes = [
 	{
-		path:'',
-		component:FirebaseAuthContainerComponent,
-		children:[
+		path: '',
+		component: FirebaseAuthContainerComponent,
+		children: [
 			{
-				title: 'Login - Activepieces',
+				data: {
+					title: 'Login'
+				},
 				path: 'sign-in',
 				component: FirebaseSignInComponent,
 			},
 			{
-				title: 'Verify Email - Activepieces',
+				data: {
+					title: 'Verify Email'
+				},
 				path: 'auth-action',
 				component: FirebaseAuthActionComponent,
 			},
 			{
-				title: 'Sign Up - Activepieces',
+				data: {
+					title: 'Sign Up'
+				},
 				path: 'sign-up',
 				component: FirebaseSignUpComponent,
 			},
 			{
-				title: 'Forgot Password - Activepieces',
+				data: {
+					title: 'Forgot Password'
+				},
 				path: 'forgot-password',
 				component: FirebaseForgotPasswordComponent,
 			}
 		]
 	}
-	
+
 ];

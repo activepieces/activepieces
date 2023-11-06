@@ -1,9 +1,10 @@
 import { StatusCodes } from 'http-status-codes'
 import { ListProjectMembersRequest, SendInvitationRequest } from '@activepieces/ee-shared'
 import { projectMemberService } from './project-member.service'
-import { tokenUtils } from '../../authentication/lib/token-utils'
+import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { logger } from '../../helper/logger'
+import { Principal } from '@activepieces/shared'
 
 export const projectMemberModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(projectMemberController, { prefix: '/v1/project-members' })
@@ -39,7 +40,7 @@ const projectMemberController: FastifyPluginAsyncTypebox = async (fastify) => {
             reply,
         ) => {
             try {
-                const principal = await tokenUtils.decode(request.body.token) as ProjectMemberToken
+                const principal = await accessTokenManager.extractPrincipal(request.body.token) as ProjectMemberToken
                 await reply.status(StatusCodes.OK).send(await projectMemberService.accept(principal.id))
             }
             catch (e) {
@@ -61,9 +62,9 @@ const projectMemberController: FastifyPluginAsyncTypebox = async (fastify) => {
         ) => {
             const invitation = await projectMemberService.send(request.principal.projectId, request.body)
             return {
-                token: await tokenUtils.encode({
+                token: await accessTokenManager.generateToken({
                     id: invitation.id,
-                }),
+                } as Principal),
             }
         },
     )

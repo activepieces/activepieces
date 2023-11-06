@@ -130,9 +130,12 @@ export class FlagService {
     );
   }
 
+  getWebsiteName() {
+    return this.getTheme().pipe(map((theme) => theme['websiteName']));
+  }
+
   getLogos(): Observable<{
     fullLogoUrl: string;
-    smallFullLogoUrl: string;
     favIconUrl: string;
     logoIconUrl: string;
   }> {

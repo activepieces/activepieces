@@ -22,10 +22,9 @@ import {
     ExecuteValidateAuthOperation,
     ExecuteValidateAuthResponse,
     EngineTestOperation,
-    CodeActionSettings,
 } from '@activepieces/shared'
 import { Sandbox } from '../workers/sandbox'
-import { tokenUtils } from '../authentication/lib/token-utils'
+import { accessTokenManager } from '../authentication/lib/access-token-manager'
 import {
     DropdownState,
     DynamicPropsValue,
@@ -37,9 +36,9 @@ import { getEdition, getWebhookSecret } from './secret-helper'
 import { appEventRoutingService } from '../app-event-routing/app-event-routing.service'
 import { pieceMetadataService } from '../pieces/piece-metadata-service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
-import { fileService } from '../file/file.service'
 import { sandboxProvisioner } from '../workers/sandbox/provisioner/sandbox-provisioner'
 import { SandBoxCacheType } from '../workers/sandbox/provisioner/sandbox-cache-key'
+import { hashObject } from './encryption'
 
 type GenerateWorkerTokenParams = {
     projectId: ProjectId
@@ -81,17 +80,15 @@ export type EngineHelperResponse<Result extends EngineHelperResult> = {
     standardOutput: string
 }
 
-const generateWorkerToken = (
-    request: GenerateWorkerTokenParams,
-): Promise<string> => {
-    return tokenUtils.encode({
-        type: PrincipalType.WORKER,
+const generateWorkerToken = ({ projectId }: GenerateWorkerTokenParams): Promise<string> => {
+    return accessTokenManager.generateToken({
         id: apId(),
-        projectId: request.projectId,
+        type: PrincipalType.WORKER,
+        projectId,
     })
 }
 
-function tryParseJson(value: unknown) {
+function tryParseJson(value: unknown): unknown {
     try {
         return JSON.parse(value as string)
     }
@@ -128,7 +125,7 @@ const execute = async <Result extends EngineHelperResult>(
         })
     }
 
-    const result: Result = tryParseJson(sandboxResponse.output)
+    const result = tryParseJson(sandboxResponse.output) as Result
 
     const response = {
         status: sandboxResponse.verdict,
@@ -269,20 +266,13 @@ export const engineHelper = {
             stepName: operation.step.name,
         }, '[EngineHelper#executeCode]')
 
-        const sourceId = (operation.step.settings as CodeActionSettings).artifactSourceId!
-
-        const fileEntity = await fileService.getOneOrThrow({
-            projectId: operation.projectId,
-            fileId: sourceId,
-        })
-
         const sandbox = await sandboxProvisioner.provision({
             type: SandBoxCacheType.CODE,
-            artifactSourceId: sourceId,
-            codeArchives: [
+            sourceCodeHash: hashObject(operation.step.settings.sourceCode),
+            codeSteps: [
                 {
-                    id: sourceId,
-                    content: fileEntity.data,
+                    name: operation.step.name,
+                    sourceCode: operation.step.settings.sourceCode,
                 },
             ],
         })

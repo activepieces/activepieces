@@ -5,7 +5,6 @@ import {
     FlowOperationRequest,
     FlowTemplate,
     FlowVersionId,
-    FlowViewMode,
     GetFlowRequest,
     ListFlowsRequest,
 } from '@activepieces/shared'
@@ -50,7 +49,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (fastify) => {
             }>,
             reply,
         ) => {
-            const flow = await flowService.getOne({ id: request.params.flowId, versionId: undefined, projectId: request.principal.projectId, viewMode: FlowViewMode.NO_ARTIFACTS })
+            const flow = await flowService.getOne({ id: request.params.flowId, versionId: undefined, projectId: request.principal.projectId })
             if (flow === null) {
                 throw new ActivepiecesError({ code: ErrorCode.FLOW_NOT_FOUND, params: { id: request.params.flowId } })
             }
@@ -140,8 +139,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (fastify) => {
             }>,
         ) => {
             const versionId: FlowVersionId | undefined = request.query.versionId
-            const viewMode = request.query.viewMode ?? FlowViewMode.NO_ARTIFACTS
-            const flow = await flowService.getOne({ id: request.params.flowId, versionId, projectId: request.principal.projectId, viewMode })
+            const flow = await flowService.getOne({ id: request.params.flowId, versionId, projectId: request.principal.projectId })
             if (!flow) {
                 throw new ActivepiecesError({ code: ErrorCode.FLOW_NOT_FOUND, params: { id: request.params.flowId } })
             }

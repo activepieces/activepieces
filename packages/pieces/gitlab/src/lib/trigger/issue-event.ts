@@ -146,7 +146,7 @@ export const issuesEventTrigger = createTrigger({
 
   async run(context) {
     const { actiontype } = context.propsValue;
-    if (isVerficationCall(context.payload.body, actiontype as string)) {
+    if (isVerficationCall(context.payload.body as Record<string, unknown>, actiontype as string)) {
       return [context.payload.body];
     }
     return [];

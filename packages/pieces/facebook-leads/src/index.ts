@@ -2,7 +2,7 @@ import { PieceAuth, createPiece } from "@activepieces/pieces-framework";
 import { newLead } from "./lib/triggers/new-lead";
 
 export const facebookLeadsAuth = PieceAuth.OAuth2({
-    
+
     description: '',
     authUrl: "https://graph.facebook.com/oauth/authorize",
     tokenUrl: "https://graph.facebook.com/oauth/access_token",
@@ -21,6 +21,7 @@ export const facebookLeads = createPiece({
     events: {
         parseAndReply: (context) => {
             const payload = context.payload;
+            const payloadBody = payload.body as PayloadBody;
             if (payload.queryParams['hub.verify_token'] == 'activepieces') {
                 return {
                     reply: {
@@ -29,7 +30,7 @@ export const facebookLeads = createPiece({
                     }
                 };
             }
-            return { event: 'lead', identifierValue: payload.body.entry[0].changes[0].value.page_id }
+            return { event: 'lead', identifierValue: payloadBody.entry[0].changes[0].value.page_id }
         },
         verify: () => {
             // TODO IMPLEMENT VALIDATION AFTER APP VERIFICATION
@@ -37,3 +38,13 @@ export const facebookLeads = createPiece({
         }
     }
 });
+
+type PayloadBody = {
+    entry: {
+        changes: {
+            value: {
+                page_id: string
+            }
+        }[]
+    }[]
+}

@@ -26,13 +26,18 @@ export interface FlowPricingSubPlan {
     amount: number;
     price: string;
 }
+
 export interface FlowPricingPlan {
     name: string;
     description: string;
-    connections: number,
     minimumPollingInterval: number,
     teamMembers: number,
     tasks: FlowPricingSubPlan[];
+    addons?: {
+        users?:{
+            pricePerUserPerMonth:`${number}$`
+        }
+    }
 }
 
 export interface BotPricingPlan {
@@ -43,3 +48,4 @@ export interface BotPricingPlan {
     pricePlanId: string;
     price: string
 }
+export const freePlanPrice = 'Free'

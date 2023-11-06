@@ -72,7 +72,8 @@ export class StepResultComponent implements OnInit, AfterViewInit {
     this.stepLogoUrl$ = this.store.select(
       BuilderSelectors.selectStepLogoUrl(this.stepResult.stepName)
     );
-    if (this.stepResult.output?.output?.iterations !== undefined) {
+    const stepOutput = this.stepResult.output?.output as any;
+    if (stepOutput.iterations !== undefined) {
       this.isLoopStep = true;
       const loopOutput = this.stepResult.output as LoopOnItemsStepOutput;
       loopOutput.output?.iterations.forEach((iteration) => {
@@ -134,13 +135,14 @@ export class StepResultComponent implements OnInit, AfterViewInit {
     });
   }
   private minMaxIterationIndex(newIndex: number | null) {
+    const stepOutput = this.stepResult.output?.output as any;
     if (newIndex === null || newIndex < 1) {
       return 1;
     } else if (
-      this.stepResult.output?.output.iterations &&
-      newIndex > this.stepResult.output.output.iterations.length
+      stepOutput.iterations &&
+      newIndex > stepOutput.iterations.length
     ) {
-      return this.stepResult.output?.output.iterations!.length;
+      return stepOutput.iterations!.length;
     }
     return newIndex;
   }
@@ -211,10 +213,11 @@ export class StepResultComponent implements OnInit, AfterViewInit {
     ) {
       this.runDetailsService.currentStepResult$.next(undefined);
     }
-    if (stepWithinLoop.output?.output?.iterations) {
-      if (stepWithinLoop.output.output.iterations[0]) {
+    const stepWithinLoopOutput = stepWithinLoop.output?.output as any;
+    if (stepWithinLoopOutput?.iterations) {
+      if (stepWithinLoopOutput.iterations[0]) {
         const firstIterationResult = this.createStepResultsForDetailsAccordion(
-          stepWithinLoop.output.output.iterations[0]
+          stepWithinLoopOutput.iterations[0]
         );
         firstIterationResult.forEach((st) => {
           this.clearStepsThatWereNotReached(st);
@@ -229,5 +232,10 @@ export class StepResultComponent implements OnInit, AfterViewInit {
   doneClicked($event: MouseEvent, iterationInput: HTMLElement) {
     $event.stopPropagation();
     iterationInput.blur();
+  }
+
+  get iterationLength(): number {
+    const stepOutput = this.stepResult.output?.output as any;
+    return stepOutput.iterations ? stepOutput.iterations.length : 0;
   }
 }

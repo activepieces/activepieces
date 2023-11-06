@@ -29,7 +29,7 @@
         ]
       },
       "extends": [
-        "plugin:@nrwl/nx/angular",
+        "plugin:@nx/angular",
         "plugin:@angular-eslint/template/process-inline-templates",
         "plugin:@ngrx/strict-requiring-type-checking"
       ],

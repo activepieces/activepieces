@@ -3,10 +3,12 @@ import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { map, Observable, switchMap, take, tap } from 'rxjs';
 import {
+  AppearanceService,
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
   FlagService,
   FlowService,
+  NavigationService,
   environment,
   fadeIn400ms,
 } from '@activepieces/ui/common';
@@ -18,7 +20,7 @@ import {
 } from '@activepieces/ui/feature-builder-store';
 import { Flow, FlowInstance } from '@activepieces/shared';
 import { ImportFlowDialogueComponent } from './import-flow-dialogue/import-flow-dialogue.component';
-import { Title } from '@angular/platform-browser';
+import { EmbeddingService } from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-flow-builder-header',
@@ -39,20 +41,25 @@ export class FlowBuilderHeaderComponent implements OnInit {
   duplicateFlow$: Observable<void>;
   openDashboardOnFolder$: Observable<string>;
   environment = environment;
-  fullLogoSmall$: Observable<string>;
+  fullLogo$: Observable<string>;
+  setTitle$: Observable<void>;
+  isInEmbedded$: Observable<boolean>;
   constructor(
     public dialogService: MatDialog,
     private store: Store,
     private router: Router,
-    private title: Title,
+    private appearanceService: AppearanceService,
     public collectionBuilderService: CollectionBuilderService,
     private flowService: FlowService,
     private matDialog: MatDialog,
-    private flagService: FlagService
+    private flagService: FlagService,
+    private embeddingService: EmbeddingService,
+    private navigationService: NavigationService
   ) {
-    this.fullLogoSmall$ = this.flagService
+    this.isInEmbedded$ = this.embeddingService.getIsInEmbedding$();
+    this.fullLogo$ = this.flagService
       .getLogos()
-      .pipe(map((logos) => logos.smallFullLogoUrl));
+      .pipe(map((logos) => logos.fullLogoUrl));
   }
 
   ngOnInit(): void {
@@ -70,18 +77,10 @@ export class FlowBuilderHeaderComponent implements OnInit {
     this.editingFlowName = event;
   }
   redirectHome(newWindow: boolean) {
-    if (newWindow) {
-      const url = this.router.serializeUrl(this.router.createUrlTree([``]));
-      window.open(url, '_blank', 'noopener');
-    } else {
-      const urlArrays = this.router.url.split('/');
-      urlArrays.splice(urlArrays.length - 1, 1);
-      const fixedUrl = urlArrays.join('/');
-      this.router.navigate([fixedUrl]);
-    }
+    this.navigationService.navigate('/flows', newWindow);
   }
   saveFlowName(flowName: string) {
-    this.title.setTitle(`${flowName} - ${environment.websiteTitle}`);
+    this.setTitle$ = this.appearanceService.setTitle(flowName);
     this.store.dispatch(FlowsActions.changeName({ displayName: flowName }));
   }
 

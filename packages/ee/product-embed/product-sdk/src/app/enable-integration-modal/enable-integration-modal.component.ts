@@ -1,5 +1,5 @@
 import { Component, Inject, Optional } from '@angular/core';
-import { catchError, mapTo, Observable, switchMap, tap } from 'rxjs';
+import { catchError, map, mapTo, Observable, switchMap, tap } from 'rxjs';
 import {
   AppCredential,
   AppCredentialType,
@@ -12,6 +12,7 @@ import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { ModalCommunicationService } from '../service/modal-communication.service';
 import { AuthService } from '../service/auth.service';
 import { FormControl } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-enable-integration-modal',
@@ -24,7 +25,8 @@ export class EnableIntegrationModalComponent {
   popUpOpen$: Observable<void> | undefined;
   secretControlForm: FormControl<string> = new FormControl();
   propsForm: FormControl<boolean> = new FormControl();
-  
+  errorMessage: string | undefined;
+
   constructor(
     private dialogRef: DialogRef,
     private authenticationService: AuthService,
@@ -33,10 +35,10 @@ export class EnableIntegrationModalComponent {
     @Optional()
     @Inject(MAT_DIALOG_DATA)
     public data: { credential: AppCredential }
-  ) {}
+  ) { }
 
   connect() {
-    switch(this.data.credential.settings.type){
+    switch (this.data.credential.settings.type) {
       case AppCredentialType.OAUTH2:
         this.connectOAuth2();
         break;
@@ -49,6 +51,7 @@ export class EnableIntegrationModalComponent {
   connectApiKey() {
     if (!this.loading) {
       this.loading = true;
+      this.errorMessage = undefined;
       this.popUpOpen$ = this.connectionService.create({
         apiKey: this.secretControlForm.value,
         appCredentialId: this.data.credential.id,
@@ -56,11 +59,15 @@ export class EnableIntegrationModalComponent {
       }).pipe(
         tap((connection) => {
           this.modalCommunicationService.connectionSubject.next(connection);
+          this.secretControlForm.setErrors(null);
           this.loading = false;
           this.connected = true;
         }),
-        mapTo(void 0),
-        catchError((err) => {
+        map(() => void 0),
+        catchError((err: HttpErrorResponse) => {
+          const error = err.error;
+          this.errorMessage = error?.params?.error;
+          this.secretControlForm.setErrors({ invalid: true });
           this.loading = false;
           throw err;
         })
@@ -73,8 +80,8 @@ export class EnableIntegrationModalComponent {
     if (!this.loading) {
       this.loading = true;
       const OAuth2Settings: AppOAuth2Settings = JSON.parse(JSON.stringify(this.data.credential.settings));
-      if(this.data.credential.appName === 'salesforce'){
-        if(this.propsForm.value){
+      if (this.data.credential.appName === 'salesforce') {
+        if (this.propsForm.value) {
           OAuth2Settings.authUrl = OAuth2Settings.authUrl.replace('login.', 'test.');
           OAuth2Settings.tokenUrl = OAuth2Settings.tokenUrl.replace('login.', 'test.');
         }
@@ -105,7 +112,7 @@ export class EnableIntegrationModalComponent {
     }
   }
 
-  get AppCredentialType(){
+  get AppCredentialType() {
     return AppCredentialType;
   }
   close() {

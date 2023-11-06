@@ -30,16 +30,22 @@ export const newLead = createTrigger({
         let leadPings: any[] = [];
         const leads: any[] = [];
         const form = context.propsValue.form;
+        const payloadBody = context.payload.body as PayloadBody;
 
         if (form !== undefined && form !== '' && form !== null) {
-            context.payload.body.entry.forEach((lead: any) => {
+            for (const lead of payloadBody.entry) {
                 if (form == lead.changes[0].value.form_id) {
                     leadPings.push(lead)
                 }
-            });
+            }
         }
         else {
-            leadPings = context.payload.body.entry;
+            leadPings = payloadBody.entry;
+        }
+
+        for (const lead of leadPings) {
+            const leadData = await facebookLeadsCommon.getLeadDetails(lead.changes[0].value.leadgen_id, context.auth.access_token);
+            leads.push(leadData);
         }
 
         return [leads];
@@ -57,3 +63,14 @@ export const newLead = createTrigger({
         return [data.data]
     }
 })
+
+type PayloadBody = {
+    entry: {
+        changes: {
+            value: {
+                form_id: string,
+                leadgen_id: string,
+            }
+        }[]
+    }[]
+}

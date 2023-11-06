@@ -9,7 +9,6 @@ import {
 } from '@activepieces/shared'
 import { BaseActionHandler, ExecuteActionOutput, ExecuteContext, InitStepOutputParams } from './action-handler'
 import { codeExecutor } from '../executors/code-executer'
-import { isNil } from '@activepieces/shared'
 
 type CtorParams = {
     currentAction: CodeAction
@@ -45,7 +44,7 @@ export class CodeActionHandler extends BaseActionHandler<CodeAction> {
         }
     }
 
-    override async execute(context: ExecuteContext, executionState: ExecutionState, ancestors: [string, number][]): Promise<ExecuteActionOutput> {
+    override async execute(_context: ExecuteContext, executionState: ExecutionState, ancestors: [string, number][]): Promise<ExecuteActionOutput> {
         const stepOutput = await this.loadStepOutput({
             executionState,
             ancestors,
@@ -57,17 +56,12 @@ export class CodeActionHandler extends BaseActionHandler<CodeAction> {
             logs: false,
         })
 
-        const artifactSourceId = this.currentAction.settings.artifactSourceId
-
-        if (isNil(artifactSourceId)) {
-            throw new Error('Artifact packaged id is not defined')
-        }
-
         try {
             stepOutput.output = await codeExecutor.executeCode(
-                artifactSourceId,
-                resolvedInput,
-            )
+                {
+                    stepName: this.currentAction.name,
+                    params: resolvedInput,
+                })
 
             stepOutput.status = StepOutputStatus.SUCCEEDED
             return {

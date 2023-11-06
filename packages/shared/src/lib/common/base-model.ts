@@ -1,13 +1,13 @@
-import { Type } from "@sinclair/typebox";
+import { Type } from '@sinclair/typebox'
 
-export interface BaseModel<T> {
-  id: T;
-  created: string;
-  updated: string;
+export type BaseModel<T> = {
+    id: T
+    created: string
+    updated: string
 }
 
 export const BaseModelSchema = {
-  id: Type.String(),
-  created: Type.String(),
-  updated: Type.String(),
+    id: Type.String(),
+    created: Type.String(),
+    updated: Type.String(),
 }

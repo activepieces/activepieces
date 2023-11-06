@@ -310,7 +310,7 @@ async function lockAndRefreshConnection({
         const refreshedAppConnection = await refresh(appConnection)
 
         await repo.update(refreshedAppConnection.id, {
-            status: refreshedAppConnection.status,
+            status: AppConnectionStatus.ACTIVE,
             value: encryptObject(refreshedAppConnection.value),
         })
         return refreshedAppConnection
@@ -442,13 +442,10 @@ function mergeNonNull(
     appConnection: OAuth2ConnectionValueWithApp,
     oAuth2Response: BaseOAuth2ConnectionValue,
 ): OAuth2ConnectionValueWithApp {
-    const formattedOAuth2Response: Partial<BaseOAuth2ConnectionValue> =
+    const formattedOAuth2Response: Partial<BaseOAuth2ConnectionValue> = Object.fromEntries(
         Object.entries(oAuth2Response)
-            .filter(([, value]) => value !== null && value !== undefined)
-            .reduce<Partial<BaseOAuth2ConnectionValue>>((obj, [key, value]) => {
-            obj[key as keyof BaseOAuth2ConnectionValue] = value
-            return obj
-        }, {})
+            .filter(([, value]) => !isNil(value)),
+    )
 
     return {
         ...appConnection,

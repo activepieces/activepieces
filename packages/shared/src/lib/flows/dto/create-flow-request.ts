@@ -1,8 +1,8 @@
-import { Static, Type } from "@sinclair/typebox";
+import { Static, Type } from '@sinclair/typebox'
 
 export const CreateFlowRequest = Type.Object({
     displayName: Type.String({}),
-    folderId: Type.Optional(Type.String({}))
-});
+    folderId: Type.Optional(Type.String({})),
+})
 
-export type CreateFlowRequest = Static<typeof CreateFlowRequest>;
+export type CreateFlowRequest = Static<typeof CreateFlowRequest>
