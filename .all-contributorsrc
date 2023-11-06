@@ -672,6 +672,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "fdundjer",
+      "name": "Filip Dunđer",
+      "avatar_url": "https://avatars.githubusercontent.com/u/17405319?v=4",
+      "profile": "https://github.com/fdundjer",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "commitType": "docs"
