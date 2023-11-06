@@ -9,8 +9,12 @@ import * as child_process from "child_process";
 const stack = pulumi.getStack();
 const config = new pulumi.Config();
 
-const apEncryptionKey = config.getSecret("apEncryptionKey") || child_process.execSync("openssl rand -hex 16").toString().trim();
-const apJwtSecret = config.getSecret("apJwtSecret") || child_process.execSync("openssl rand -hex 32").toString().trim();
+const apEncryptionKey = config.getSecret("apEncryptionKey")?.apply(secretValue => {
+    return secretValue || child_process.execSync("openssl rand -hex 16").toString().trim();
+});
+const apJwtSecret = config.getSecret("apJwtSecret")?.apply(secretValue => {
+    return secretValue || child_process.execSync("openssl rand -hex 32").toString().trim();
+});
 const containerCpu = config.requireNumber("containerCpu");
 const containerMemory = config.requireNumber("containerMemory");
 const containerInstances = config.requireNumber("containerInstances");
@@ -108,13 +112,13 @@ const albSecGroup = new aws.ec2.SecurityGroup(`${stack}-alb-sg`, {
         fromPort: 443,
         toPort: 443,
         cidrBlocks: ["0.0.0.0/0"]
--     },
--     {
--       protocol: "tcp",
--       fromPort: 80,
--       toPort: 80,
--       cidrBlocks: ["0.0.0.0/0"]
--   }],
+    },
+    {
+        protocol: "tcp",
+        fromPort: 80,
+        toPort: 80,
+        cidrBlocks: ["0.0.0.0/0"]
+    }],
     egress: [{
         protocol: "-1",
         fromPort: 0,
@@ -149,11 +153,11 @@ if (usePostgres) {
         name: `${stack}-db-sg`,
         vpcId: vpc.vpcId,
         ingress: [{
-                protocol: "tcp",
-                fromPort: 5432,
-                toPort: 5432,
-                securityGroups: [fargateSecGroup.id]  // The id of the Fargate security group
-            }],
+            protocol: "tcp",
+            fromPort: 5432,
+            toPort: 5432,
+            securityGroups: [fargateSecGroup.id]  // The id of the Fargate security group
+        }],
         egress: [ // allow all outbound traffic
             {
                 protocol: "-1",
@@ -363,7 +367,7 @@ if (subDomain && domain) {
 
     // Creates an ALB associated with our custom VPC.
     alb = new awsx.lb.ApplicationLoadBalancer(`${stack}-alb`, {
-        securityGroups: [ albSecGroup.id ],
+        securityGroups: [albSecGroup.id],
         name: `${stack}-alb`,
         subnetIds: vpc.publicSubnetIds,
         listeners: [{
