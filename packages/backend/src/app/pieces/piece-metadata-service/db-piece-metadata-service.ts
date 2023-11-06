@@ -6,7 +6,7 @@ import { EXACT_VERSION_PATTERN, isNil } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode, apId } from '@activepieces/shared'
 import { AllPiecesStats, pieceStatsService } from './piece-stats-service'
 import * as semver from 'semver'
-import { filterPieces } from './lib/filter-pieces'
+import { pieceMetadataServiceHooks as hooks } from './hooks'
 
 const repo = databaseConnection.getRepository(PieceMetadataEntity)
 
@@ -36,7 +36,8 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
                 .getMany()
 
             const pieces = toPieceMetadataModelSummary(pieceMetadataEntityList)
-            return filterPieces({
+
+            return hooks.get().filterPieces({
                 pieces,
                 platformId,
             })
