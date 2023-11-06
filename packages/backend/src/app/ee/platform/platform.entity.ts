@@ -1,6 +1,6 @@
 import { EntitySchema } from 'typeorm'
-import { Platform } from '@activepieces/ee-shared'
-import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
+import { FilteredPieceBehavior, Platform } from '@activepieces/ee-shared'
+import { ARRAY_COLUMN_TYPE, ApIdSchema, BaseColumnSchemaPart, isPostgres } from '../../database/database-common'
 import { User } from '@activepieces/shared'
 
 type PlatformSchema = Platform & {
@@ -33,6 +33,16 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
         },
         favIconUrl: {
             type: String,
+            nullable: false,
+        },
+        filteredPieceNames: {
+            type: ARRAY_COLUMN_TYPE,
+            array: isPostgres(),
+            nullable: false,
+        },
+        filteredPieceBehavior: {
+            type: String,
+            enum: FilteredPieceBehavior,
             nullable: false,
         },
     },
