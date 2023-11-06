@@ -1,6 +1,8 @@
 <nav class="navbar-container navbar-expand ap-relative">
-  <div class="ap-absolute ap-w-full ap-flex ap-items-center ap-justify-center ap-p-4 ap-pointer-events-none">
-    <img [src]=" (fullLogoSmall$| async) ||'assets/img/custom/logo/full-logo-small.svg'">
+  <div class="ap-absolute ap-w-full ap-flex ap-items-center ap-justify-center ap-p-3 ap-pointer-events-none">
+    <div class="ap-h-[30px]">
+      <img [src]=" (fullLogo$| async) ||'assets/img/custom/logo/full-logo.svg'" class="ap-max-w-full ap-h-full">
+    </div>
   </div>
 
   <div class="ap-text-center ap-flex ap-items-center ap-justify-center"></div>
@@ -72,7 +74,7 @@
 
     <div class="ap-flex-grow"></div>
     <div class="ap-flex ap-items-center ap-gap-2">
-      <app-feedback class="ap-z-50 ap-flex ap-items-center"></app-feedback>
+      <app-support class="ap-z-50 ap-flex ap-items-center"></app-support>
       <ng-container *ngIf="(isInDebugMode$ | async) === false">
         <div class="ap-flex ap-items-center ap-gap-1">
           <app-draft-status></app-draft-status>
@@ -81,7 +83,8 @@
           </ng-container>
         </div>
         <app-publish-button></app-publish-button>
-        <ap-user-avatar class="ap-ml-[16px]"></ap-user-avatar>
+        <ap-user-avatar *ngIf="(isInEmbedded$ | async) === undefined || (isInEmbedded$ | async) === false "
+          class="ap-ml-[16px]"></ap-user-avatar>
       </ng-container>
     </div>
   </div>
@@ -91,3 +94,4 @@
 <ng-container *ngIf="duplicateFlow$ | async"></ng-container>
 <ng-container *ngIf="openDashboardOnFolder$ | async"></ng-container>
 <ng-container *ngIf="shareFlow$ | async"></ng-container>
+<ng-container *ngIf="setTitle$ | async"></ng-container>

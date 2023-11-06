@@ -10,7 +10,9 @@
         </div>
         <mat-form-field class="ap-w-full">
             <mat-label i18n>File</mat-label>
-            <ap-file-upload [formControl]="fileControl"></ap-file-upload>
+            <ap-file-upload #flowInput [formControl]="fileControl"></ap-file-upload>
+            <ap-icon-button [height]="25" [width]="25" iconFilename="attach.svg" matSuffix
+                (buttonClicked)="flowInput.fileInput.nativeElement.click()"></ap-icon-button>
         </mat-form-field>
     </div>
 

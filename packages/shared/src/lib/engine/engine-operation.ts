@@ -1,4 +1,3 @@
-import { File } from "../file/file";
 import { AppConnectionValue } from "../app-connection/app-connection";
 import { ResumeStepMetadata } from "../flow-run/execution/execution-output";
 import { ExecutionState } from "../flow-run/execution/execution-state";
@@ -59,7 +58,6 @@ export type ExecuteValidateAuthOperation = BaseEngineOperation & {
 export type ExecuteExtractPieceMetadata = PiecePackage
 
 export type ExecuteCodeOperation = {
-    file: File
     step: CodeAction
     serverUrl: string
     flowVersion: FlowVersion,

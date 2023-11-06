@@ -62,6 +62,7 @@ module.exports = {
           light:'var(--success-light)'
         },
        'bleached-gray':'var(--bleached-gray)',
+       'selection': 'var(--selection)'
       },
     },
     container: {

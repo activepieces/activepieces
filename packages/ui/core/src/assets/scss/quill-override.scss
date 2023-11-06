@@ -2,7 +2,7 @@
 
 .ql-container {
   border: 0px solid transparent !important;
-  .mention {
+  .mention-content {
     vertical-align: middle;
     background-color: $gray-card;
     border: 1px solid #9e9e9e;
@@ -11,6 +11,18 @@
     border-radius: 3px;
     margin-right: 1.5px;
     margin-left: 1.5px;
+   span[contenteditable="false"] {
+      margin-left: 0.5rem;
+      margin-right: 0.5rem;
+    }
+    .mention-logo {
+      object-fit:contain; 
+      width:16px;
+      height:16px;
+      margin-right:5px;
+     margin-bottom:2px; 
+       display:inline;
+    }
   }
   p {
     margin-bottom: 5px;

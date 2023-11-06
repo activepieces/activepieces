@@ -33,7 +33,7 @@ export const piecesController: FastifyPluginAsyncTypebox = async (app) => {
             querystring: ListPiecesRequestQuery,
         },
     }, async (req): Promise<PieceMetadataModelSummary[]> => {
-        const latestRelease = await flagService.getCurrentVersion()
+        const latestRelease = await flagService.getCurrentRelease()
         const release = req.query.release ?? latestRelease
         const edition = req.query.edition ?? ApEdition.COMMUNITY
         const pieceMetadataSummary = await pieceMetadataService.list({

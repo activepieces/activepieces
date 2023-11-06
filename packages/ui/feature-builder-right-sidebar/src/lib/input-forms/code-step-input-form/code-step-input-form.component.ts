@@ -6,11 +6,9 @@ import {
   FormBuilder,
   FormControl,
 } from '@angular/forms';
-import { from, Observable, switchMap, tap } from 'rxjs';
-import { ActionType } from '@activepieces/shared';
+import { Observable, tap } from 'rxjs';
+import { ActionType, SourceCode } from '@activepieces/shared';
 import { CodeStepInputFormSchema } from '../input-forms-schema';
-import { Artifact } from '@activepieces/ui/common';
-import { CodeService } from '@activepieces/ui/feature-builder-store';
 
 @Component({
   selector: 'app-code-step-input-form',
@@ -26,9 +24,8 @@ import { CodeService } from '@activepieces/ui/feature-builder-store';
 export class CodeStepInputFormComponent implements ControlValueAccessor {
   codeStepForm: FormGroup<{
     input: FormControl<Record<string, unknown>>;
-    artifact: FormControl<Artifact>;
+    sourceCode: FormControl<SourceCode>;
   }>;
-  _stepArtifact$: Observable<Artifact>;
   formValueChanged$: Observable<unknown>;
 
   markdown = `
@@ -50,31 +47,19 @@ export class CodeStepInputFormComponent implements ControlValueAccessor {
     //ignore
   };
 
-  constructor(
-    private formBuilder: FormBuilder,
-    private codeService: CodeService
-  ) {
+  constructor(private formBuilder: FormBuilder) {
     this.codeStepForm = this.formBuilder.group({
       input: new FormControl({}, { nonNullable: true }),
-      artifact: new FormControl(
-        { content: '', package: '' },
+      sourceCode: new FormControl(
+        { code: '', packageJson: '' },
         { nonNullable: true }
       ),
     });
     this.formValueChanged$ = this.codeStepForm.valueChanges.pipe(
-      switchMap((formValue) => {
-        if (formValue.artifact) {
-          return CodeService.zipFile(formValue.artifact);
-        }
-        throw new Error(`Artifact is undefined`);
-      }),
-      tap((zippedArtifact) => {
-        const zippedArtifactEncodedB64 = btoa(zippedArtifact);
+      tap((formValue) => {
         this.onChange({
           input: this.codeStepForm.value.input || {},
-          artifactPackagedId: '',
-          artifactSourceId: '',
-          artifact: zippedArtifactEncodedB64,
+          sourceCode: formValue.sourceCode!,
           type: ActionType.CODE,
         });
       })
@@ -83,30 +68,9 @@ export class CodeStepInputFormComponent implements ControlValueAccessor {
 
   writeValue(obj: CodeStepInputFormSchema): void {
     if (obj.type === ActionType.CODE) {
-      if (obj.artifactSourceId) {
-        this._stepArtifact$ = this.codeService
-          .downloadAndReadFile(
-            CodeService.constructFileUrl(obj.artifactSourceId)
-          )
-          .pipe(
-            tap((res) => {
-              this.codeStepForm.controls.artifact.setValue(res, {
-                emitEvent: false,
-              });
-            })
-          );
-      } else if (obj.artifact) {
-        this._stepArtifact$ = from(
-          this.codeService.readFile(atob(obj.artifact))
-        ).pipe(
-          tap((res) => {
-            this.codeStepForm.controls.artifact.setValue(res, {
-              emitEvent: false,
-            });
-          })
-        );
-      }
-
+      this.codeStepForm.controls.sourceCode.setValue(obj.sourceCode, {
+        emitEvent: false,
+      });
       this.codeStepForm.controls.input.setValue(obj.input, {
         emitEvent: false,
       });

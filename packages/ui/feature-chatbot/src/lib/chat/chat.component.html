@@ -2,11 +2,11 @@
   class="ap-flex ap-items-center ap-gap-3 ap-absolute ap-top-0 ap-w-full ap-py-1 ap-border-b ap-border-solid ap-border-dividers ap-bg-white ap-h-[56px]"
   [class.ap-px-3]="!isLoggedIn">
   <ap-icon-button [useSvgDefault]="true" [width]="7" [height]="14" iconFilename="back.svg" *ngIf="isLoggedIn"
-    tooltipText="Home" i18n-tooltipText (buttonClicked)="redirectHome(false)" (auxclick)="redirectHome(true)"></ap-icon-button>
-  <div
-    class="ap-absolute ap-w-full ap-flex ap-items-center ap-justify-center ap-top-0 ap-p-[1.125rem] ap-pointer-events-none">
-
-    <img [src]=" (fullLogoSmall$| async) ||'assets/img/custom/logo/full-logo-small.svg'">
+    [tooltipText]="'Home'" (buttonClicked)="redirectHome(false)" (auxclick)="redirectHome(true)"></ap-icon-button>
+  <div class="ap-absolute ap-w-full ap-flex ap-items-center ap-justify-center ap-top-0 ap-p-4 ap-pointer-events-none">
+    <div class="ap-h-[30px]">
+      <img [src]=" (fullLogo$| async) ||'assets/img/custom/logo/full-logo.svg'" class="ap-max-w-full ap-h-full">
+    </div>
   </div>
   <div class="ap-typography-body-1 !ap-font-semibold">
     {{ chatbotDisplayName }}

@@ -124,6 +124,10 @@ export const createEvent = createAction({
         { price:20, quantity:1, product_id:'SKU2', }
       ],
     }),
+    failsafe: Property.Checkbox({
+      displayName: 'No Error On Failure',
+      required: false,
+    }),
   },
   async run(context) {
     const TALKABLE_API_URL = 'https://www.talkable.com/api/v2';
@@ -139,6 +143,11 @@ export const createEvent = createAction({
         site_slug: site,
         data: context.propsValue,
       },
+    }).catch(error => {
+      if (context.propsValue.failsafe) {
+        return error.errorMessage();
+      }
+      throw error;
     });
     return createEventResponse.body;
   },

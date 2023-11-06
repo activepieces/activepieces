@@ -29,26 +29,25 @@ export { PrincipalType } from "./lib/authentication/model/principal-type";
 export { Principal } from "./lib/authentication/model/principal";
 export {
     CodeAction, PieceAction, LoopOnItemsAction,
-    PieceActionSettings, LoopOnItemsActionSettings, Action, ActionType, CodeActionSettings,StepSettings
+    PieceActionSettings, LoopOnItemsActionSettings, Action, ActionType, CodeActionSettings, StepSettings
 } from './lib/flows/actions/action'
 export { StoreEntry, StoreEntryId } from './lib/store-entry/store-entry';
 export * from './lib/user/user';
 export { TestFlowRunRequestBody } from "./lib/flow-run/test-flow-run-request";
-export { Trigger, EmptyTrigger, PieceTriggerSettings, PieceTrigger, WebhookTrigger, TriggerType, AUTHENTICATION_PROPERTY_NAME} from './lib/flows/triggers/trigger';
+export { Trigger, EmptyTrigger, PieceTriggerSettings, PieceTrigger, WebhookTrigger, TriggerType, AUTHENTICATION_PROPERTY_NAME } from './lib/flows/triggers/trigger';
 export { FlowVersion, FlowVersionState, FlowVersionId } from './lib/flows/flow-version';
 export { Flow, FlowId } from './lib/flows/flow';
 export * from './lib/file'
 export * from './lib/flows/flow-helper';
-export { FlowRun, FlowRunId, RunEnvironment } from './lib/flow-run/flow-run'
+export { FlowRun, FlowRunId, RunEnvironment, RunTerminationReason } from './lib/flow-run/flow-run'
 export * from './lib/flow-run/execution/execution-state';
-export { Project, ProjectId } from './lib/project/project';
+export { Project, ProjectId, ProjectType } from './lib/project/project';
 export * from './lib/flows/dto/create-flow-request';
 export { SeekPage, Cursor } from './lib/common/seek-page';
 export { apId, ApId } from './lib/common/id-generator'
 export * from "./lib/flows/trigger-events/trigger-events-dto";
 export * from "./lib/flows/trigger-events/trigger-event";
 export * from './lib/flows/sample-data'
-export * from "./lib/project/update-project-request";
 export * from './lib/common/base-model';
 export * from './lib/flows/flow-instances';
 export * from "./lib/flows/folders/folder";
@@ -57,6 +56,7 @@ export * from "./lib/flows/dto/flow-template-request";
 export * from "./lib/flows";
 export * from "./lib/flows/dto/list-flows-request";
 export * from './lib/chatbot'
+export * from "./lib/project/project";
 
 import { TypeSystem } from '@sinclair/typebox/system'
 // Look at https://github.com/sinclairzx81/typebox/issues/350
