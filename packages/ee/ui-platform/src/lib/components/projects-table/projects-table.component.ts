@@ -18,7 +18,7 @@ import { Store } from '@ngrx/store';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProjectsTableComponent {
-  displayedColumns = ['id', 'displayName', 'created', 'action'];
+  displayedColumns = ['displayName', 'created', 'action'];
   refreshTable$: Subject<boolean> = new Subject();
   dataSource: ProjectsDataSource;
   loading = true;
@@ -53,7 +53,7 @@ export class ProjectsTableComponent {
       );
   }
   openProject(project: Project) {
-    this.switchProject$ = this.projectsService.switchProject(project.id);
+    this.switchProject$ = this.projectsService.switchProject(project.id, true);
   }
 
   updateProject(project: Project) {
