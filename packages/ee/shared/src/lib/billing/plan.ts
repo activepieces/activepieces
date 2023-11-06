@@ -23,7 +23,7 @@ export interface ProjectPlan extends BaseModel<ProjectPlanId> {
 
 export interface FlowPricingSubPlan {
     pricePlanId: string;
-    amount: number;
+    amount: number | string;
     price: string;
 }
 
@@ -35,7 +35,7 @@ export interface FlowPricingPlan {
     tasks: FlowPricingSubPlan[];
     addons?: {
         users?:{
-            pricePerUserPerMonth:`${number}$`
+            pricePerUserPerMonth:`$${number}`
         }
     }
 }

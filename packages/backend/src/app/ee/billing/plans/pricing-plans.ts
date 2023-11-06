@@ -98,7 +98,7 @@ export const pricingPlans: FlowPricingPlan[] = [
         addons: {
             users:
             {
-                pricePerUserPerMonth: '5$',
+                pricePerUserPerMonth: '$5',
             },
         },
     },
