@@ -12,7 +12,7 @@ export const testExecution = {
         return stateFromContext({
             context: testContext,
         })
-    }
+    },
 }
 
 const contextFromFlowVersion = async ({ flowVersion }: FromFlowVersionParams): Promise<TestExecutionContext> => {
@@ -45,7 +45,7 @@ const contextFromFlowVersion = async ({ flowVersion }: FromFlowVersionParams): P
 
             testContext[step.name] = {
                 index: 1,
-                item: resolvedLoopOutput.items?.[0]
+                item: resolvedLoopOutput.items[0],
             }
         }
     }

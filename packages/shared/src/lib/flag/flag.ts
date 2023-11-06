@@ -9,7 +9,8 @@ export interface Flag extends BaseModel<FlagId> {
 
 export enum ApEnvironment {
     PRODUCTION = "prod",
-    DEVELOPMENT = "dev"
+    DEVELOPMENT = "dev",
+    TESTING = "test",
 }
 
 export enum ApEdition {

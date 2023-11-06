@@ -46,7 +46,7 @@ import { AddPieceTypeAndPackageTypeToPieceMetadata1695992551156 } from './migrat
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
 import { AddPieceTypeAndPackageTypeToFlowTemplate1696245170062 } from './migration/common/1696245170062-add-piece-type-and-package-type-to-flow-template'
 import { AddVisibilityStatusToChatbot1695719749099 } from './migration/postgres/1695719749099-AddVisibilityStatusToChatbot'
-import { ApEdition } from '@activepieces/shared'
+import { ApEdition, ApEnvironment } from '@activepieces/shared'
 import { getEdition } from '../helper/secret-helper'
 import { AddDatasourcesLimit1695916063833 } from '../ee/database/migrations/postgres/1695916063833-AddDatasourcesLimit'
 import { MakeStripeSubscriptionNullable1685053959806 } from '../ee/database/migrations/postgres/1685053959806-MakeStripeSubscriptionNullable'
@@ -162,6 +162,20 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
     return commonMigration
 }
 
+const getMigrationConfig = (): MigrationConfig => {
+    const env = system.getOrThrow<ApEnvironment>(SystemProp.ENVIRONMENT)
+
+    if (env === ApEnvironment.TESTING) {
+        return {}
+    }
+
+    return {
+        migrationsRun: true,
+        migrationsTransactionMode: 'each',
+        migrations: getMigrations(),
+    }
+}
+
 export const createPostgresDataSource = (): DataSource => {
 
     const database = system.getOrThrow(SystemProp.POSTGRES_DATABASE)
@@ -170,6 +184,7 @@ export const createPostgresDataSource = (): DataSource => {
     const serializedPort = system.getOrThrow(SystemProp.POSTGRES_PORT)
     const port = Number.parseInt(serializedPort, 10)
     const username = system.getOrThrow(SystemProp.POSTGRES_USERNAME)
+    const migrationConfig = getMigrationConfig()
 
     return new DataSource({
         type: 'postgres',
@@ -178,10 +193,14 @@ export const createPostgresDataSource = (): DataSource => {
         username,
         password,
         database,
-        migrationsRun: true,
-        migrationsTransactionMode: 'each',
         ssl: getSslConfig(),
-        migrations: getMigrations(),
+        ...migrationConfig,
         ...commonProperties,
     })
+}
+
+type MigrationConfig = {
+    migrationsRun?: boolean
+    migrationsTransactionMode?: 'all' | 'none' | 'each'
+    migrations?: (new () => MigrationInterface)[]
 }

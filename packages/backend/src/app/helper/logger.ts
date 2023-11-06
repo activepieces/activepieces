@@ -18,18 +18,26 @@ const initLogger = (): Logger => {
     const level = system.get<Level>(SystemProp.LOG_LEVEL) ?? 'info'
     const pretty = system.getBoolean(SystemProp.LOG_PRETTY) ?? false
 
-    const targets = []
     if (pretty) {
-        targets.push({
+        return pino({
             level,
-            target: 'pino-pretty',
-            options: {
-                translateTime: 'HH:MM:ss Z',
-                colorize: true,
-                ignore: 'pid,hostname',
+            transport: {
+                target: 'pino-pretty',
+                options: {
+                    translateTime: 'HH:MM:ss Z',
+                    colorize: true,
+                    ignore: 'pid,hostname',
+                },
             },
         })
     }
+
+    const targets = [{
+        target: 'pino/file',
+        level,
+        options: {},
+    }]
+
     if (lokiUrl) {
         targets.push({
             target: 'pino-loki',
@@ -44,12 +52,8 @@ const initLogger = (): Logger => {
                 } : undefined,
             },
         })
-        targets.push({
-            target: 'pino/file',
-            level,
-            options: {},
-        })
     }
+
     return pino(pino.transport({
         targets,
     }))

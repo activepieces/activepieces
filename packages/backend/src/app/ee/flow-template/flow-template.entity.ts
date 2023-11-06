@@ -1,19 +1,16 @@
 import { EntitySchema } from 'typeorm'
 import {  BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../../database/database-common'
-import { FlowTemplate, Project, ProjectId, User } from '@activepieces/shared'
+import { ApId, BaseModel, FlowTemplate, Project, ProjectId, User } from '@activepieces/shared'
 
-export type FlowTemplateEntity = FlowTemplate & {
-    id: string
+export type FlowTemplateSchema = FlowTemplate & BaseModel<ApId> & {
     project: Project
     projectId: ProjectId
     user: User | null
-    created: string
-    updated: string
     isFeatured: boolean
     featuredDescription: string
 }
 
-export const FlowTemplateEntity = new EntitySchema<FlowTemplateEntity>({
+export const FlowTemplateEntity = new EntitySchema<FlowTemplateSchema>({
     name: 'flow_template',
     columns: {
         ...BaseColumnSchemaPart,
