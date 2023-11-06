@@ -7,12 +7,13 @@ import {
   CreateProjectRequest,
   UpdateProjectRequest,
 } from '@activepieces/ee-shared';
+import { Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ProjectService {
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private router: Router) {}
 
   create(req: CreateProjectRequest) {
     return this.http.post<void>(environment.apiUrl + '/projects/', req);
@@ -33,7 +34,7 @@ export class ProjectService {
       params,
     });
   }
-  switchProject(projectId: string): Observable<void> {
+  switchProject(projectId: string, redirectHome?: boolean): Observable<void> {
     return this.http
       .post<{
         token: string;
@@ -43,7 +44,12 @@ export class ProjectService {
       .pipe(
         tap(({ token }) => {
           localStorage.setItem(environment.jwtTokenName, token);
-          window.location.reload();
+          if (redirectHome) {
+            this.router.navigate(['/flows']);
+          }
+          setTimeout(() => {
+            window.location.reload();
+          }, 10);
         }),
         map(() => void 0)
       );
