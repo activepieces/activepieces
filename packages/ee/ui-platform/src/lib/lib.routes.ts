@@ -9,8 +9,12 @@ export const uiEePlatformRoutes: Route[] = [
   {
     path: '',
     component: PlatformComponent,
-
     children: [
+      {
+        path: '',
+        pathMatch: 'prefix',
+        redirectTo: 'projects',
+      },
       {
         path: 'projects',
         component: ProjectsTableComponent,
