@@ -54,8 +54,7 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
   settingsForm: FormGroup<AuthConfigSettings>;
   loading = false;
   upsert$: Observable<AppConnectionWithoutSensitiveData | null>;
-  keyTooltip =
-    'The ID of this connection definition. You will need to select this key whenever you want to reuse this connection.';
+  keyTooltip = $localize`The ID of this connection definition. You will need to select this key whenever you want to reuse this connection.`;
   isTriggerAppWebhook = false;
   constructor(
     private fb: FormBuilder,

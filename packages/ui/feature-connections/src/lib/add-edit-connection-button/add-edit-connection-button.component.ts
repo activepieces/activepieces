@@ -23,17 +23,7 @@ import {
 } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
-import {
-  BehaviorSubject,
-  catchError,
-  map,
-  Observable,
-  of,
-  switchMap,
-  take,
-  tap,
-} from 'rxjs';
-
+import { BehaviorSubject, map, Observable, switchMap, take, tap } from 'rxjs';
 import { PieceMetadataService, FlagService } from '@activepieces/ui/common';
 import { CloudAuthConfigsService } from '../services/cloud-auth-configs.service';
 import {
@@ -62,6 +52,11 @@ import {
   BillingService,
   UpgradeDialogComponent,
 } from '@activepieces/ee-billing-ui';
+import {
+  checkIfPieceHasAppWebhook,
+  getConnectionNameFromInterpolatedString,
+  returnEmptyRecordInCaseErrorOccurs,
+} from './utils';
 
 @Component({
   selector: 'app-add-edit-connection-button',
@@ -131,7 +126,6 @@ export class AddEditConnectionButtonComponent {
     this.cd.markForCheck();
   }
 
-  // BEGIN EE
   private checkThenOpenConnection() {
     this.checkConnectionLimit$ = this.billingService
       .checkConnectionLimit()
@@ -157,8 +151,6 @@ export class AddEditConnectionButtonComponent {
         })
       );
   }
-
-  // END EE
 
   private openNewCustomAuthConnection() {
     const dialogData: CustomAuthDialogData = {
@@ -232,10 +224,7 @@ export class AddEditConnectionButtonComponent {
       this.cloudAuthCheck$ = this.cloudAuthConfigsService
         .getAppsAndTheirClientIds()
         .pipe(
-          catchError((err) => {
-            console.error(err);
-            return of({} as Record<string, { clientId: string }>);
-          }),
+          returnEmptyRecordInCaseErrorOccurs,
           tap(() => {
             this.checkingOAuth2CloudManager$.next(false);
           }),
@@ -247,13 +236,10 @@ export class AddEditConnectionButtonComponent {
               .getPieceMetadata(this.pieceName, this.pieceVersion)
               .pipe(
                 map((p) => {
-                  let isTriggerAppWebhook = false;
-                  Object.keys(p.triggers).forEach((k) => {
-                    isTriggerAppWebhook =
-                      isTriggerAppWebhook ||
-                      (this.triggerName === k &&
-                        p.triggers[k].type === 'APP_WEBHOOK');
-                  });
+                  const isTriggerAppWebhook = checkIfPieceHasAppWebhook(
+                    p,
+                    this.triggerName
+                  );
                   return {
                     cloudAuth2Config: res,
                     isTriggerAppWebhook: isTriggerAppWebhook,
@@ -308,10 +294,7 @@ export class AddEditConnectionButtonComponent {
                   this.cloudAuthCheck$ = this.cloudAuthConfigsService
                     .getAppsAndTheirClientIds()
                     .pipe(
-                      catchError((err) => {
-                        console.error(err);
-                        return of({} as Record<string, { clientId: string }>);
-                      }),
+                      returnEmptyRecordInCaseErrorOccurs,
                       tap(() => {
                         this.checkingOAuth2CloudManager$.next(false);
                       }),
@@ -373,7 +356,7 @@ export class AddEditConnectionButtonComponent {
         const connection = connections.find(
           (c) =>
             c.name ===
-            this.getConnectionNameFromInterpolatedString(
+            getConnectionNameFromInterpolatedString(
               this.selectedConnectionInterpolatedString
             )
         );
@@ -513,15 +496,5 @@ export class AddEditConnectionButtonComponent {
         }
       })
     );
-  }
-
-  getConnectionNameFromInterpolatedString(interpolatedString: string) {
-    //eg. {{connections.google}}
-    if (interpolatedString.includes('[')) {
-      const result = interpolatedString.substring(`{{connections['`.length);
-      return result.slice(0, result.length - 4);
-    }
-    const result = interpolatedString.substring(`{{connections.`.length);
-    return result.slice(0, result.length - 4);
   }
 }
