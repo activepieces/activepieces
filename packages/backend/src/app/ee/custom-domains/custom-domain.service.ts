@@ -4,7 +4,7 @@ import { CustomDomainEntity } from './custom-domain.entity'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import * as dns from 'dns'
-import { ActivepiecesError, ErrorCode, apId, isNil } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, SeekPage, apId, isNil } from '@activepieces/shared'
 import { logger } from '../../helper/logger'
 
 const customDomainRepo = databaseConnection.getRepository<CustomDomain>(CustomDomainEntity)
@@ -21,7 +21,12 @@ export const customDomainService = {
             domain: request.domain,
         })
     },
-    async create(request: { domain: string, platformId: string }) {
+    async getOneByPlatform(request: { platformId: string }): Promise<CustomDomain | null> {
+        return customDomainRepo.findOneBy({
+            platformId: request.platformId,
+        })
+    },
+    async create(request: { domain: string, platformId: string }): Promise<CustomDomain> {
         const customDomain = customDomainRepo.create({
             id: apId(),
             domain: request.domain,
@@ -30,7 +35,7 @@ export const customDomainService = {
         })
         return customDomainRepo.save(customDomain)
     },
-    async list({ request, platformId }: { platformId: string, request: ListCustomDomainsRequest }) {
+    async list({ request, platformId }: { platformId: string, request: ListCustomDomainsRequest }): Promise<SeekPage<CustomDomain>> {
         const decodedCursor = paginationHelper.decodeCursor(request.cursor ?? null)
         const paginator = buildPaginator({
             entity: CustomDomainEntity,
