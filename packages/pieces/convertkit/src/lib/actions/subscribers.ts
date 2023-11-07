@@ -1,8 +1,15 @@
 import { createAction } from '@activepieces/pieces-framework';
+import {
+  httpClient,
+  HttpMethod,
+  HttpRequest,
+} from '@activepieces/pieces-common';
+import { Subscriber } from '../common/models';
 import { convertkitAuth } from '../..';
 import {
   subscriberId,
   API_ENDPOINT,
+  fetchSubscriperById,
   fetchSubscriberByEmail,
   fetchSubscribedTags,
   emailAddress,
@@ -29,22 +36,7 @@ export const getSubscriberById = createAction({
   },
   async run(context) {
     const { subscriberId } = context.propsValue;
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${subscriberId}?api_secret=${context.auth}`;
-
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      return { success: false, message: 'Error fetching subscriber' };
-    }
-
-    const data = await response.json();
-
-    // return data.subscriber if it exists
-    if (data.subscriber) {
-      return data.subscriber;
-    }
-
-    return data;
+    return await fetchSubscriperById(context.auth, subscriberId);
   },
 });
 
@@ -58,29 +50,7 @@ export const getSubscriberByEmail = createAction({
   },
   async run(context) {
     const { email_address } = context.propsValue;
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}?api_secret=${context.auth}&email_address=${email_address}`;
-
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      return { success: false, message: 'Error fetching subscriber' };
-    }
-
-    const data = await response.json();
-
-    if (!data.subscribers) {
-      return data;
-    }
-
-    if (data.subscribers.length === 0) {
-      return data;
-    }
-
-    if (data.subscribers[0]) {
-      return data.subscribers[0];
-    }
-
-    return data;
+    return await fetchSubscriberByEmail(context.auth, email_address);
   },
 });
 
@@ -111,46 +81,36 @@ export const listSubscribers = createAction({
       sortField,
     } = context.propsValue;
 
-    let props = {};
-    if (page) {
-      props = { ...props, page };
-    }
-    if (from) {
-      props = { ...props, from };
-    }
-    if (to) {
-      props = { ...props, to };
-    }
-    if (updatedFrom) {
-      props = { ...props, updated_from: updatedFrom };
-    }
-    if (updatedTo) {
-      props = { ...props, updated_to: updatedTo };
-    }
-    if (sortOrder) {
-      props = { ...props, sort_order: sortOrder };
-    }
-    if (sortField) {
-      props = { ...props, sort_field: sortField };
-    }
-    if (emailAddress) {
-      props = { ...props, email_address: emailAddress };
-    }
-
     // build the url
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}?api_secret=${
-      context.auth
-    }&${new URLSearchParams(props).toString()}`;
+    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}`;
 
-    const response = await fetch(url);
+    const body = {
+      api_secret: context.auth,
+      page,
+      from,
+      to,
+      updated_from: updatedFrom,
+      updated_to: updatedTo,
+      email_address: emailAddress,
+      sort_order: sortOrder,
+      sort_field: sortField,
+    };
 
-    if (!response.ok) {
-      return { success: false, message: 'Error fetching subscribers' };
+    const request: HttpRequest = {
+      url,
+      method: HttpMethod.GET,
+      body,
+    };
+
+    const response = await httpClient.sendRequest<{
+      subscribers: Subscriber[];
+    }>(request);
+
+    if (response.status !== 200) {
+      throw new Error(`Error fetching subscribers: ${response.status}`);
     }
 
-    const data = await response.json();
-
-    return data;
+    return response.body.subscribers;
   },
 });
 
@@ -170,29 +130,28 @@ export const updateSubscriber = createAction({
       context.propsValue;
 
     const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${subscriberId}`;
-    const body = JSON.stringify({
+    const body = {
       api_secret: context.auth,
       email_address: emailAddress,
       first_name: firstName,
       fields,
-    });
+    };
 
-    const response = await fetch(url, {
-      method: 'PUT',
+    const request: HttpRequest = {
+      url,
+      method: HttpMethod.PUT,
       body,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    };
 
-    if (!response.ok) {
-      return { success: false, message: 'Error updating subscriber' };
+    const response = await httpClient.sendRequest<{ subscriber: Subscriber }>(
+      request
+    );
+
+    if (response.status !== 200) {
+      throw new Error(`Error updating subscriber: ${response.status}`);
     }
-    const data = await response.json();
-    if (data.subscriber) {
-      return data.subscriber;
-    }
-    return data;
+
+    return response.body.subscriber;
   },
 });
 
@@ -208,23 +167,23 @@ export const unsubscribeSubscriber = createAction({
     const { email } = context.propsValue;
     const url = `${CONVERTKIT_API_URL}/unsubscribe`;
 
-    const body = JSON.stringify({ email, api_secret: context.auth });
+    const body = { email, api_secret: context.auth };
 
-    const response = await fetch(url, {
-      method: 'PUT',
+    const request: HttpRequest = {
+      url,
+      method: HttpMethod.PUT,
       body,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    };
 
-    if (!response.ok) {
-      return { success: false, message: 'Error unsubscribing subscriber' };
+    const response = await httpClient.sendRequest<{
+      subscriber: Subscriber;
+    }>(request);
+
+    if (response.status !== 200) {
+      throw new Error(`Error unsubscribing subscriber: ${response.status}`);
     }
 
-    const data = await response.json();
-
-    return data;
+    return response.body.subscriber;
   },
 });
 
@@ -238,13 +197,7 @@ export const listTagsBySubscriberId = createAction({
   },
   async run(context) {
     const { subscriberId } = context.propsValue;
-    const data = await fetchSubscribedTags(context.auth, subscriberId);
-    // if tags is not empty, return the tags
-    if (data.tags) {
-      return data.tags;
-    }
-
-    return data;
+    return await fetchSubscribedTags(context.auth, subscriberId);
   },
 });
 
@@ -262,12 +215,6 @@ export const listSubscriberTagsByEmail = createAction({
       context.auth,
       email_address
     );
-    const data = await fetchSubscribedTags(context.auth, subscriberId);
-    // if tags is not empty, return the tags
-    if (data.tags) {
-      return data.tags;
-    }
-
-    return data;
+    return await fetchSubscribedTags(context.auth, subscriberId.id);
   },
 });

@@ -1,4 +1,10 @@
 import { Property, Validators } from '@activepieces/pieces-framework';
+import {
+  httpClient,
+  HttpMethod,
+  HttpRequest,
+} from '@activepieces/pieces-common';
+import { Subscriber, Tag } from './models';
 import { CONVERTKIT_API_URL } from '../common/constants';
 
 export const API_ENDPOINT = 'subscribers';
@@ -9,32 +15,90 @@ export const subscriberId = Property.ShortText({
   required: true,
 });
 
+export const fetchSubscriperById = async (
+  auth: string,
+  subscriberId: string
+) => {
+  const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${subscriberId}`;
+
+  const body = {
+    api_secret: auth,
+  };
+
+  const request: HttpRequest = {
+    url,
+    body,
+    method: HttpMethod.GET,
+  };
+
+  const response = await httpClient.sendRequest<{ subscriber: Subscriber }>(
+    request
+  );
+
+  if (response.status !== 200) {
+    throw new Error(
+      `Failed to fetch subscribers: ${response.status} ${response.body}`
+    );
+  }
+
+  return response.body.subscriber;
+};
+
 export const fetchSubscriberByEmail = async (
   auth: string,
   email_address: string
 ) => {
-  const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}?api_secret=${auth}&email_address=${email_address}`;
+  const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}`;
 
-  const response = await fetch(url);
-  if (!response.ok) {
-    return null;
+  const body = {
+    api_secret: auth,
+    email_address,
+  };
+
+  const request: HttpRequest = {
+    url,
+    body,
+    method: HttpMethod.GET,
+  };
+
+  const response = await httpClient.sendRequest<{ subscribers: Subscriber[] }>(
+    request
+  );
+
+  if (response.status !== 200) {
+    throw new Error(
+      `Failed to fetch subscribers: ${response.status} ${response.body}`
+    );
   }
 
-  const data = await response.json();
-
-  return data;
+  return response.body.subscribers[0];
 };
 
 export const fetchSubscribedTags = async (
   auth: string,
   subscriberId: string
 ) => {
-  const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${subscriberId}/tags?api_secret=${auth}`;
-  const response = await fetch(url);
-  if (!response.ok) {
-    return null;
+  const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${subscriberId}/tags`;
+
+  const body = {
+    api_secret: auth,
+  };
+
+  const request: HttpRequest = {
+    url,
+    body,
+    method: HttpMethod.GET,
+  };
+
+  const response = await httpClient.sendRequest<{ tags: Tag[] }>(request);
+
+  if (response.status !== 200) {
+    throw new Error(
+      `Failed to fetch tags: ${response.status} ${response.body}`
+    );
   }
-  return await response.json();
+
+  return response.body.tags;
 };
 
 export const emailAddress = Property.ShortText({

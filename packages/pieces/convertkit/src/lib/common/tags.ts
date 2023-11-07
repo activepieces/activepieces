@@ -1,13 +1,35 @@
 import { Property, Validators } from '@activepieces/pieces-framework';
+import {
+  httpClient,
+  HttpMethod,
+  HttpRequest,
+} from '@activepieces/pieces-common';
 import { CONVERTKIT_API_URL } from './constants';
 import { fetchSubscriberByEmail, fetchSubscribedTags } from './subscribers';
+import { Tag } from './models';
 
 export const API_ENDPOINT = 'tags';
 
 export const fetchTags = async (auth: string) => {
-  const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/?api_secret=${auth}`;
-  const response = await fetch(url);
-  return await response.json();
+  const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}`;
+  const body = {
+    api_secret: auth,
+  };
+  const request: HttpRequest = {
+    url,
+    body,
+    method: HttpMethod.GET,
+  };
+
+  const response = await httpClient.sendRequest<{ tags: Tag[] }>(request);
+
+  if (response.status !== 200) {
+    throw new Error(
+      `Failed to fetch tags: ${response.status} ${response.body}`
+    );
+  }
+
+  return response.body.tags;
 };
 
 export const tagId = Property.ShortText({
@@ -48,7 +70,7 @@ export const tags = Property.MultiSelectDropdown({
       };
     }
     const tags = await fetchTags(auth.toString());
-    const options = tags.tags.map((tag: { id: string; name: string }) => {
+    const options = tags.map((tag: Tag) => {
       return {
         label: tag.name,
         value: tag.id,
@@ -74,9 +96,11 @@ export const tag = Property.Dropdown({
         options: [],
       };
     }
+
     const tags = await fetchTags(auth.toString());
+
     // loop through data and map to options
-    const options = tags.tags.map((tag: { id: string; name: string }) => {
+    const options = tags.map((tag: Tag) => {
       return {
         label: tag.name,
         value: tag.id,
@@ -141,30 +165,27 @@ export const tagIdByEmailOptionsFn = async ({ auth, email }: AuthEmail) => {
       options: [],
     };
   }
-  const data = await fetchSubscriberByEmail(auth.toString(), email.toString());
+  const subscriber = await fetchSubscriberByEmail(
+    auth.toString(),
+    email.toString()
+  );
 
-  if (!data) {
-    return {
-      disabled: true,
-      placeholder: 'Something went wrong.',
-      options: [],
-    };
-  }
-  if (data['subscribers'].length === 0) {
+  if (!subscriber) {
     return {
       disabled: true,
       placeholder: 'No subscribers found for this email address.',
       options: [],
     };
   }
-  const subscriberId = data['subscribers'][0]['id'];
+
+  const subscriberId = subscriber.id;
   const tags = await fetchSubscribedTags(
     auth.toString(),
     subscriberId.toString()
   );
 
   // loop through data and map to options
-  const options = tags.tags.map((tag: { id: string; name: string }) => {
+  const options = tags.map((tag: Tag) => {
     return {
       label: tag.name,
       value: tag.id,
@@ -239,11 +260,11 @@ export const tagIdBySubscriberId = Property.Dropdown({
     }
 
     {
-      const data = await fetchSubscribedTags(
+      const tags = await fetchSubscribedTags(
         auth.toString(),
         subscriberId.toString()
       );
-      if (!data) {
+      if (!tags) {
         return {
           disabled: true,
           placeholder: 'Something went wrong.',
@@ -251,7 +272,7 @@ export const tagIdBySubscriberId = Property.Dropdown({
         };
       }
       // loop through data and map to options
-      const options = data.tags.map((tag: { id: string; name: string }) => {
+      const options = tags.map((tag: Tag) => {
         return {
           label: tag.name,
           value: tag.id,

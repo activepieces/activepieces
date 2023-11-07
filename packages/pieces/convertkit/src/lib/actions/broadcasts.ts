@@ -1,7 +1,13 @@
 import { createAction } from '@activepieces/pieces-framework';
+import {
+  httpClient,
+  HttpMethod,
+  HttpRequest,
+} from '@activepieces/pieces-common';
 import { convertkitAuth } from '../..';
 import {
   API_ENDPOINT,
+  fetchBroadcasts,
   broadcastId,
   page,
   content,
@@ -15,6 +21,7 @@ import {
   thumbnailAlt,
   thumbnailUrl,
 } from '../common/broadcasts';
+import { Broadcast } from '../common/models';
 import { CONVERTKIT_API_URL } from '../common/constants';
 
 export const listBroadcasts = createAction({
@@ -27,22 +34,7 @@ export const listBroadcasts = createAction({
   },
   async run(context) {
     const page = context.propsValue.page || 1;
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}?page=${page}&api_secret=${context.auth}`;
-
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      return { success: false, message: 'Error fetching broadcasts' };
-    }
-
-    const data = await response.json();
-
-    // return broadcasts if exists
-    if (data.broadcasts) {
-      return data.broadcasts;
-    }
-
-    return data;
+    return await fetchBroadcasts(context.auth, page);
   },
 });
 
@@ -76,9 +68,10 @@ export const createBroadcast = createAction({
       thumbnailAlt,
       thumbnailUrl,
     } = context.propsValue;
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}?api_secret=${context.auth}`;
+    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}`;
 
-    const body = JSON.stringify({
+    const body = {
+      api_secret: context.auth,
       content,
       description,
       email_address: emailAddress,
@@ -89,28 +82,23 @@ export const createBroadcast = createAction({
       subject,
       thumbnail_alt: thumbnailAlt,
       thumbnail_url: thumbnailUrl,
-    });
+    };
 
-    const response = await fetch(url, {
-      method: 'POST',
+    const request: HttpRequest = {
+      url,
+      method: HttpMethod.POST,
       body,
       headers: {
         'Content-Type': 'application/json',
       },
-    });
-
-    if (!response.ok) {
-      return { success: false, message: 'Error creating broadcast' };
+    };
+    const response = await httpClient.sendRequest<{ broadcast: Broadcast }>(
+      request
+    );
+    if (response.status !== 201) {
+      throw new Error(`Error creating broadcast: ${response.status}`);
     }
-
-    const data = await response.json();
-
-    // if broadcast exists, return it
-    if (data.broadcast) {
-      return data.broadcast;
-    }
-
-    return data;
+    return response.body.broadcast;
   },
 });
 
@@ -124,22 +112,24 @@ export const getBroadcastById = createAction({
   },
   async run(context) {
     const { broadcastId } = context.propsValue;
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${broadcastId}?api_secret=${context.auth}`;
+    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${broadcastId}`;
 
-    const response = await fetch(url);
+    const body = {
+      api_secret: context.auth,
+    };
 
-    if (!response.ok) {
-      return { success: false, message: 'Error fetching broadcast' };
+    const request: HttpRequest = {
+      url,
+      body,
+      method: HttpMethod.GET,
+    };
+    const response = await httpClient.sendRequest<{ broadcast: Broadcast }>(
+      request
+    );
+    if (response.status !== 200) {
+      throw new Error(`Error fetching broadcast: ${response.status}`);
     }
-
-    const data = await response.json();
-
-    // if broadcast exists, return it
-    if (data.broadcast) {
-      return data.broadcast;
-    }
-
-    return data;
+    return response.body.broadcast;
   },
 });
 
@@ -177,9 +167,10 @@ export const updateBroadcast = createAction({
       thumbnailUrl,
     } = context.propsValue;
 
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${broadcastId}?api_secret=${context.auth}`;
+    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${broadcastId}`;
 
-    const body = JSON.stringify({
+    const body = {
+      api_secret: context.auth,
       content,
       description,
       email_address: emailAddress,
@@ -190,28 +181,23 @@ export const updateBroadcast = createAction({
       subject,
       thumbnail_alt: thumbnailAlt,
       thumbnail_url: thumbnailUrl,
-    });
+    };
 
-    const response = await fetch(url, {
-      method: 'PUT',
+    const request: HttpRequest = {
+      url,
+      method: HttpMethod.PUT,
       body,
       headers: {
         'Content-Type': 'application/json',
       },
-    });
-
-    if (!response.ok) {
-      return { success: false, message: 'Error updating broadcast' };
+    };
+    const response = await httpClient.sendRequest<{ broadcast: Broadcast }>(
+      request
+    );
+    if (response.status !== 200) {
+      throw new Error(`Error updating broadcast: ${response.status}`);
     }
-
-    const data = await response.json();
-
-    // if broadcast exists, return it
-    if (data.broadcast) {
-      return data.broadcast;
-    }
-
-    return data;
+    return response.body.broadcast;
   },
 });
 
@@ -225,22 +211,24 @@ export const broadcastStats = createAction({
   },
   async run(context) {
     const { broadcastId } = context.propsValue;
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${broadcastId}/stats?api_secret=${context.auth}`;
+    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${broadcastId}/stats`;
 
-    const response = await fetch(url);
+    const body = {
+      api_secret: context.auth,
+    };
 
-    if (!response.ok) {
-      return { success: false, message: 'Error fetching broadcast stats' };
+    const request: HttpRequest = {
+      url,
+      body,
+      method: HttpMethod.GET,
+    };
+    const response = await httpClient.sendRequest<{ broadcast: Broadcast }>(
+      request
+    );
+    if (response.status !== 200) {
+      throw new Error(`Error fetching broadcast stats: ${response.status}`);
     }
-
-    const data = await response.json();
-
-    // if broadcast exists, return it
-    if (data.broadcast) {
-      return data.broadcast;
-    }
-
-    return data;
+    return response.body.broadcast;
   },
 });
 
@@ -254,18 +242,27 @@ export const deleteBroadcast = createAction({
   },
   async run(context) {
     const { broadcastId } = context.propsValue;
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${broadcastId}?api_secret=${context.auth}`;
+    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${broadcastId}`;
 
-    const response = await fetch(url, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    const body = {
+      api_secret: context.auth,
+    };
 
-    if (!response.ok) {
-      return { success: false, message: 'Error deleting broadcast' };
+    const request: HttpRequest = {
+      url,
+      body,
+      method: HttpMethod.DELETE,
+    };
+    const response = await httpClient.sendRequest<{ broadcast: Broadcast }>(
+      request
+    );
+    if (response.status !== 204) {
+      throw new Error(`Error deleting broadcast: ${response.status}`);
     }
-    return { success: true, message: 'Broadcast deleted successfully' };
+    return {
+      message: `Broadcast ${broadcastId} deleted successfully`,
+      status: response.status,
+      success: true,
+    };
   },
 });

@@ -1,7 +1,13 @@
 import { createAction } from '@activepieces/pieces-framework';
+import {
+  httpClient,
+  HttpMethod,
+  HttpRequest,
+} from '@activepieces/pieces-common';
 import { convertkitAuth } from '../..';
 import {
   API_ENDPOINT,
+  fetchTags,
   tag,
   tags,
   name,
@@ -13,6 +19,7 @@ import {
   sortOrder,
   subscriberState,
 } from '../common/tags';
+import { Tag } from '../common/models';
 import { subscriberId } from '../common/subscribers';
 import { allFields } from '../common/custom-fields';
 import { CONVERTKIT_API_URL } from '../common/constants';
@@ -24,22 +31,7 @@ export const listTags = createAction({
   description: 'Returns a list of all tags',
   props: {},
   async run(context) {
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/?api_secret=${context.auth}`;
-
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      return { success: false, message: 'Error fetching tags' };
-    }
-
-    const data = await response.json();
-
-    // If tags exist, return tags
-    if (data.tags) {
-      return data.tags;
-    }
-
-    return data;
+    return await fetchTags(context.auth);
   },
 });
 
@@ -52,26 +44,34 @@ export const createTag = createAction({
     name,
   },
   async run(context) {
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/?api_secret=${context.auth}`;
+    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/`;
 
-    const response = await fetch(url, {
-      method: 'POST',
-      body: JSON.stringify({ tag: context.propsValue }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    const body = {
+      api_secret: context.auth,
+      tag: { name: context.propsValue.name },
+    };
 
-    if (!response.ok) {
-      return { success: false, message: 'Error creating tag' };
+    const request: HttpRequest = {
+      url,
+      method: HttpMethod.POST,
+      body,
+    };
+
+    const response = await httpClient.sendRequest<{ tag: Tag }>(request);
+
+    if (response.status !== 201) {
+      throw new Error(`Error creating tag: ${response.status}`);
     }
 
-    const data = await response.json();
-
-    return data;
+    return response.body;
   },
 });
 
+const tagsRequired = { ...tags, required: true };
+
+// TODO:
+// fields do not show up in the UI
+// Sometimes the Tags dropdown will show an error instead of a tag list. Clicking to another piece (Cradete Tag) and then back to this one will fix it.
 export const tagSubscriber = createAction({
   auth: convertkitAuth,
   name: 'tags_tag_subscriber',
@@ -79,42 +79,40 @@ export const tagSubscriber = createAction({
   description: 'Tag a subscriber',
   props: {
     email,
-    tagId: tag,
+    // tagId: tag,
     firstName,
-    tags,
+    tags: tagsRequired,
     fields: allFields,
   },
   async run(context) {
-    const { email, tagId, firstName, tags, fields } = context.propsValue;
+    const { email, firstName, tags, fields } = context.propsValue;
+    const tagId = tags![0];
 
     const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${tagId}/subscribe`;
 
-    const response = await fetch(url, {
-      method: 'POST',
-      body: JSON.stringify({
-        email: email,
-        first_name: firstName,
-        fields: fields,
-        tags,
-        api_secret: context.auth,
-      }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    const body = {
+      email,
+      first_name: firstName,
+      tags,
+      fields,
+      api_secret: context.auth,
+    };
 
-    if (!response.ok) {
-      return { success: false, message: 'Error tagging subscriber' };
+    const request: HttpRequest = {
+      url,
+      method: HttpMethod.POST,
+      body,
+    };
+
+    const response = await httpClient.sendRequest<{
+      subscription: Tag;
+    }>(request);
+
+    if (response.status !== 200) {
+      throw new Error(`Error tagging subscriber: ${response.status}`);
     }
 
-    const data = await response.json();
-
-    // If subscription is not empty, return the subscription
-    if (data.subscription) {
-      return data.subscription;
-    }
-
-    return data;
+    return response.body.subscription;
   },
 });
 
@@ -131,24 +129,24 @@ export const removeTagFromSubscriberByEmail = createAction({
     const { email, tagId } = context.propsValue;
     const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${tagId}/unsubscribe`;
 
-    const response = await fetch(url, {
-      method: 'POST',
-      body: JSON.stringify({
-        email,
-        api_secret: context.auth,
-      }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    const body = {
+      email,
+      api_secret: context.auth,
+    };
 
-    if (!response.ok) {
-      return { success: false, message: 'Error removing tag from subscriber' };
+    const request: HttpRequest = {
+      url,
+      method: HttpMethod.POST,
+      body,
+    };
+
+    const response = await httpClient.sendRequest<{ subscriber: Tag }>(request);
+
+    if (response.status !== 200) {
+      throw new Error(`Error removing tag from subscriber: ${response.status}`);
     }
 
-    const data = await response.json();
-
-    return data;
+    return response.body;
   },
 });
 
@@ -165,24 +163,24 @@ export const removeTagFromSubscriberById = createAction({
     const { subscriberId, tagId } = context.propsValue;
     const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${tagId}/unsubscribe`;
 
-    const response = await fetch(url, {
-      method: 'POST',
-      body: JSON.stringify({
-        id: subscriberId,
-        api_secret: context.auth,
-      }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    const body = {
+      id: subscriberId,
+      api_secret: context.auth,
+    };
 
-    if (!response.ok) {
-      return { success: false, message: 'Error removing tag from subscriber' };
+    const request: HttpRequest = {
+      url,
+      method: HttpMethod.POST,
+      body,
+    };
+
+    const response = await httpClient.sendRequest<{ subscriber: Tag }>(request);
+
+    if (response.status !== 200) {
+      throw new Error(`Error removing tag from subscriber: ${response.status}`);
     }
 
-    const data = await response.json();
-
-    return data;
+    return response.body;
   },
 });
 
@@ -199,35 +197,29 @@ export const listSubscriptionsToATag = createAction({
   },
   async run(context) {
     const { tagId, page, sortOrder, subscriberState } = context.propsValue;
-    // create a url parameter string
-    let urlParams = `api_secret=${context.auth}`;
-    if (page) {
-      urlParams += `&page=${page}`;
-    }
-    if (sortOrder) {
-      urlParams += `&sort_order=${sortOrder}`;
-    }
-    if (subscriberState) {
-      urlParams += `&subscriber_state=${subscriberState}`;
-    }
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${tagId}/subscriptions?${urlParams}`;
+    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${tagId}/subscriptions?`;
 
-    const response = await fetch(url);
+    const body = {
+      api_secret: context.auth,
+      page,
+      sort_order: sortOrder,
+      subscriber_state: subscriberState,
+    };
 
-    if (!response.ok) {
-      return {
-        success: false,
-        message: 'Error listing subscribers to tag',
-      };
-    }
+    const request: HttpRequest = {
+      url,
+      method: HttpMethod.GET,
+      body,
+    };
 
-    const data = await response.json();
+    const response = await httpClient.sendRequest<{
+      subscriptions: Tag[];
+    }>(request);
 
-    // if subscriptions is not empty, return the subscriptions
-    if (data.subscriptions) {
-      return data.subscriptions;
+    if (response.status !== 200) {
+      throw new Error(`Error listing subscriptions to tag: ${response.status}`);
     }
 
-    return data;
+    return response.body.subscriptions;
   },
 });

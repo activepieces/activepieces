@@ -56,7 +56,8 @@ export const addTag = createTrigger({
       target_url: targetUrl,
     };
 
-    const ruleId = await createWebhook(context.auth, payload);
+    const webhook = await createWebhook(context.auth, payload);
+    const ruleId = webhook.id;
 
     await context.store?.put<WebhookInformation>(
       `_webhook_subscriber_tag_add`,
@@ -121,7 +122,8 @@ export const removeTag = createTrigger({
       target_url: targetUrl,
     };
 
-    const ruleId = await createWebhook(context.auth, payload);
+    const webhook = await createWebhook(context.auth, payload);
+    const ruleId = webhook.id;
 
     await context.store?.put<WebhookInformation>(
       `_webhook_subscriber_tag_remove`,
@@ -181,7 +183,8 @@ export const subscriberActivated = createTrigger({
       target_url: targetUrl,
     };
 
-    const ruleId = await createWebhook(context.auth, payload);
+    const webhook = await createWebhook(context.auth, payload);
+    const ruleId = webhook.id;
 
     await context.store?.put<WebhookInformation>(
       `_webhook_subscriber_activated`,
@@ -241,7 +244,8 @@ export const subscriberUnsubscribed = createTrigger({
       target_url: targetUrl,
     };
 
-    const ruleId = await createWebhook(context.auth, payload);
+    const webhook = await createWebhook(context.auth, payload);
+    const ruleId = webhook.id;
 
     await context.store?.put<WebhookInformation>(
       `_webhook_subscriber_unsubscribed`,
@@ -301,7 +305,8 @@ export const subscriberBounced = createTrigger({
       target_url: targetUrl,
     };
 
-    const ruleId = await createWebhook(context.auth, payload);
+    const webhook = await createWebhook(context.auth, payload);
+    const ruleId = webhook.id;
 
     await context.store?.put<WebhookInformation>(
       `_webhook_subscriber_bounced`,
@@ -359,7 +364,8 @@ export const subscriberComplained = createTrigger({
       target_url: targetUrl,
     };
 
-    const ruleId = await createWebhook(context.auth, payload);
+    const webhook = await createWebhook(context.auth, payload);
+    const ruleId = webhook.id;
 
     await context.store?.put<WebhookInformation>(
       `_webhook_subscriber_complained`,
@@ -420,7 +426,8 @@ export const formSubscribed = createTrigger({
       target_url: targetUrl,
     };
 
-    const ruleId = await createWebhook(context.auth, payload);
+    const webhook = await createWebhook(context.auth, payload);
+    const ruleId = webhook.id;
 
     await context.store?.put<WebhookInformation>(`_webhook_form_subscribed`, {
       ruleId,
@@ -478,7 +485,8 @@ export const courseSubscribed = createTrigger({
       target_url: targetUrl,
     };
 
-    const ruleId = await createWebhook(context.auth, payload);
+    const webhook = await createWebhook(context.auth, payload);
+    const ruleId = webhook.id;
 
     await context.store?.put<WebhookInformation>(`_webhook_course_subscribed`, {
       ruleId,
@@ -536,7 +544,8 @@ export const courseCompleted = createTrigger({
       target_url: targetUrl,
     };
 
-    const ruleId = await createWebhook(context.auth, payload);
+    const webhook = await createWebhook(context.auth, payload);
+    const ruleId = webhook.id;
 
     await context.store?.put<WebhookInformation>(`_webhook_course_completed`, {
       ruleId,
@@ -594,7 +603,8 @@ export const linkClicked = createTrigger({
       target_url: targetUrl,
     };
 
-    const ruleId = await createWebhook(context.auth, payload);
+    const webhook = await createWebhook(context.auth, payload);
+    const ruleId = webhook.id;
 
     await context.store?.put<WebhookInformation>(`_webhook_link_clicked`, {
       ruleId,
@@ -652,7 +662,8 @@ export const productPurchased = createTrigger({
       target_url: targetUrl,
     };
 
-    const ruleId = await createWebhook(context.auth, payload);
+    const webhook = await createWebhook(context.auth, payload);
+    const ruleId = webhook.id;
 
     await context.store?.put<WebhookInformation>(`_webhook_product_purchased`, {
       ruleId,
@@ -703,7 +714,8 @@ export const purchaseCreated = createTrigger({
       target_url: targetUrl,
     };
 
-    const ruleId = await createWebhook(context.auth, payload);
+    const webhook = await createWebhook(context.auth, payload);
+    const ruleId = webhook.id;
 
     await context.store?.put<WebhookInformation>(`_webhook_purchase_created`, {
       ruleId,

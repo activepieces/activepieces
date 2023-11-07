@@ -1,4 +1,10 @@
 import { createAction } from '@activepieces/pieces-framework';
+import {
+  httpClient,
+  HttpMethod,
+  HttpRequest,
+} from '@activepieces/pieces-common';
+import { Subscription } from '../common/models';
 import { convertkitAuth } from '../..';
 import {
   API_ENDPOINT,
@@ -18,19 +24,16 @@ export const listForms = createAction({
   description: 'Returns a list of all forms',
   props: {},
   async run(context) {
-    const data = await fetchForms(context.auth);
-    // if forms exist, return forms
-    if (data.forms) {
-      return data.forms;
-    }
-    return data;
+    return await fetchForms(context.auth);
   },
 });
 
 // Clone and set required to false for custom fields property
-const allFieldsForaddSubscriberToForm = { ...allFields };
-allFieldsForaddSubscriberToForm.refreshers = ['auth, formId'];
-allFieldsForaddSubscriberToForm.required = false;
+const allFieldsRequiredRefreshers = {
+  ...allFields,
+  required: false,
+  refreshers: ['auth, formId'],
+};
 
 export const addSubscriberToForm = createAction({
   auth: convertkitAuth,
@@ -42,35 +45,35 @@ export const addSubscriberToForm = createAction({
     email,
     firstName,
     tags,
-    fields: allFieldsForaddSubscriberToForm,
+    fields: allFieldsRequiredRefreshers,
   },
   async run(context) {
     const { formId, email, firstName, tags, fields } = context.propsValue;
 
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${formId}/subscribe?api_secret=${context.auth}`;
+    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${formId}/subscribe`;
 
-    const body = JSON.stringify({ email, first_name: firstName, tags, fields });
+    const body = {
+      api_secret: context.auth,
+      email,
+      first_name: firstName,
+      tags,
+      fields,
+    };
 
-    const response = await fetch(url, {
-      method: 'POST',
+    const request: HttpRequest = {
+      url,
+      method: HttpMethod.POST,
       body,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    };
 
-    if (!response.ok) {
-      return { success: false, message: 'Error adding subscriber to form' };
+    const response = await httpClient.sendRequest<{
+      subscription: Subscription;
+    }>(request);
+
+    if (response.status !== 200) {
+      throw new Error(`Error adding subscriber to form: ${response.status}`);
     }
-
-    const data = await response.json();
-
-    // If subscription is not empty, return the subscription
-    if (data.subscription) {
-      return data.subscription;
-    } else {
-      return data;
-    }
+    return response.body.subscription;
   },
 });
 
@@ -83,21 +86,26 @@ export const listFormSubscriptions = createAction({
     formId,
   },
   async run(context) {
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${context.propsValue.formId}/subscriptions?api_secret=${context.auth}`;
+    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${context.propsValue.formId}/subscriptions`;
 
-    const response = await fetch(url);
+    const body = {
+      api_secret: context.auth,
+    };
 
-    if (!response.ok) {
-      return { success: false, message: 'Error listing form subscriptions' };
+    const request: HttpRequest = {
+      url,
+      body,
+      method: HttpMethod.GET,
+    };
+
+    const response = await httpClient.sendRequest<{
+      subscriptions: Subscription[];
+    }>(request);
+
+    if (response.status !== 200) {
+      throw new Error(`Error listing form subscriptions: ${response.status}`);
     }
 
-    const data = await response.json();
-
-    // if subscriptions is not empty, return the subscriptions
-    if (data.subscriptions) {
-      return data.subscriptions;
-    }
-
-    return data;
+    return response.body.subscriptions;
   },
 });
