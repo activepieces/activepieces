@@ -141,7 +141,7 @@
     "soap": "1.0.0",
     "sqlite3": "5.1.6",
     "ssh2-sftp-client": "9.1.0",
-    "stripe": "11.18.0",
+    "stripe": "14.3.0",
     "subsink": "1.0.2",
     "tinycolor2": "1.6.0",
     "tsconfig-paths": "4.2.0",
@@ -168,6 +168,7 @@
     "@ngrx/eslint-plugin": "16.0.1",
     "@nx/angular": "17.0.2",
     "@nx/esbuild": "17.0.2",
+    "@nx/eslint": "17.0.2",
     "@nx/eslint-plugin": "17.0.2",
     "@nx/jest": "17.0.2",
     "@nx/js": "17.0.2",
@@ -241,11 +242,9 @@
     "typescript": "5.1.6",
     "verdaccio": "5.26.1",
     "wait-on": "7.0.1",
-    "webpack-ignore-dynamic-require": "1.0.0",
-    "@nx/eslint": "17.0.2"
+    "webpack-ignore-dynamic-require": "1.0.0"
   },
   "nx": {
     "includedScripts": []
   }
 }
-

@@ -1,18 +1,20 @@
 import {
   FlowPricingPlan,
-  FlowPricingSubPlan,
+  MeteredSubPlan,
   ProjectPlan,
   ProjectUsage,
-  customPlanPrice,
-  freePlanPrice,
 } from '@activepieces/ee-shared';
 import { FormControl } from '@angular/forms';
 import { Observable } from 'rxjs';
 
-export function formatPrice(price: string): string {
-  return price === freePlanPrice || price === customPlanPrice
-    ? price
-    : '$' + price + '/month';
+export function formatPrice(price: number): string {
+  if (price === 0) {
+    return 'Free';
+  }
+  if (price === -1) {
+    return 'Custom';
+  }
+  return '$' + price + '/month';
 }
 
 export function openPortal(portalUrl: string) {
@@ -34,7 +36,7 @@ export function formatNumberWithCommas(number: number): string {
 }
 
 export type Plan = {
-  formControl: FormControl<FlowPricingSubPlan>;
+  formControl: FormControl<MeteredSubPlan>;
   selectedPrice$: Observable<string> | undefined;
   selectedTasks$: Observable<string> | undefined;
   loading: boolean;

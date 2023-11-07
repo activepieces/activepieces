@@ -57,6 +57,7 @@ import { CheckOverflowDirective } from './directives/check-overflow.directive';
 import { MatTabsModule } from '@angular/material/tabs';
 import { FileDroppedDirective } from './directives/file-dropped.directive';
 import { NgxColorsModule } from 'ngx-colors';
+import { MatSliderModule } from '@angular/material/slider';
 import { PageTitleComponent } from './components/page-title/page-title.component';
 const exportedImports = [
   CommonModule,
@@ -81,6 +82,7 @@ const exportedImports = [
   MatIconModule,
   MatTabsModule,
   NgxColorsModule,
+  MatSliderModule,
 ];
 const exportedDeclarations = [
   UploadFileControlComponent,

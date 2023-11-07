@@ -1,20 +1,15 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
-import {
-  FlowPricingPlan,
-  FlowPricingSubPlan,
-  freePlanPrice,
-  PlanSupportType,
-} from '@activepieces/ee-shared';
+import { FlowPricingPlan, MeteredSubPlan } from '@activepieces/ee-shared';
 import { Observable, map, switchMap, tap } from 'rxjs';
 import { FormControl } from '@angular/forms';
 import { isNil } from '@activepieces/shared';
 import { UpgradePlanConfirmationDialogComponent } from '../../upgrade-dialog-confirmation/upgrade-plan-dialog-confirmration.component';
 import { formatNumberWithCommas, loadPlansObs } from '../utils';
 import { MatDialog } from '@angular/material/dialog';
-import { BillingService } from '../../billing.service';
+import { BillingService } from '../../service/billing.service';
 
 type Plan = {
-  formControl: FormControl<FlowPricingSubPlan>;
+  formControl: FormControl<MeteredSubPlan>;
   selectedPrice$: Observable<string> | undefined;
   selectedTasks$: Observable<string> | undefined;
   loading: boolean;
@@ -26,8 +21,7 @@ type Plan = {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AutomationPlanCardComponent {
-  readonly freePlanPrice = freePlanPrice;
-  readonly PlanSupportType = PlanSupportType;
+  readonly freePlanPrice = 'Free';
 
   _plan!: Plan;
   openCheckout$?: Observable<void>;
@@ -37,8 +31,8 @@ export class AutomationPlanCardComponent {
     this._plan = {
       ...value,
       tasks: value.tasks.map((t) => {
-        if (typeof t.amount === 'number') {
-          return { ...t, amount: formatNumberWithCommas(t.amount) };
+        if (typeof t.unitAmount === 'number') {
+          return { ...t, amount: formatNumberWithCommas(t.unitAmount) };
         } else {
           return { ...t };
         }
@@ -87,5 +81,8 @@ export class AutomationPlanCardComponent {
         }
       })
     );
+  }
+  openURL(url: string) {
+    window.open(url, '_blank');
   }
 }

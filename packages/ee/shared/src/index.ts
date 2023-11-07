@@ -1,3 +1,4 @@
+export * from './lib/billing/billing';
 export * from './lib/project/project-requests';
 export * from './lib/custom-domains';
 export * from './lib/platform';
@@ -7,7 +8,6 @@ export * from './lib/referral/referral';
 export * from './lib/project-members/project-member-request';
 export * from './lib/project-members/project-member';
 export * from './lib/flow-templates/flow-templates-requests.ee';
-export * from './lib/billing/billing-response'
 export * from './lib/billing/plan'
 export * from './lib/billing/usage'
 export * from './lib/firebase-auth';

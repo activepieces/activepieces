@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
 import { Observable, map, tap } from 'rxjs';
 import { isNil } from '@activepieces/shared';
-import { BillingService } from '../billing.service';
+import { BillingService } from '../service/billing.service';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 
 @Component({

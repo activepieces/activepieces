@@ -4,11 +4,11 @@ import { Observable, map, shareReplay, startWith } from 'rxjs';
 import {
   BillingResponse,
   FlowPricingPlan,
-  FlowPricingSubPlan,
+  MeteredSubPlan,
   Referral,
-  freePlanPrice,
+  pricingPlans,
 } from '@activepieces/ee-shared';
-import { BillingService } from '../billing.service';
+import { BillingService } from '../service/billing.service';
 import { ReferralService } from '../service/referral.service';
 import {
   AuthenticationService,
@@ -29,7 +29,7 @@ import {
 dayjs.extend(utc);
 
 type Plan = {
-  formControl: FormControl<FlowPricingSubPlan>;
+  formControl: FormControl<MeteredSubPlan>;
   selectedPrice$: Observable<string> | undefined;
   selectedTasks$: Observable<string> | undefined;
   loading: boolean;
@@ -41,7 +41,7 @@ type Plan = {
   styleUrls: [],
 })
 export class PlansPageComponent implements OnInit {
-  readonly freePlanPrice = freePlanPrice;
+  readonly freePlanPrice = 0;
   readonly openPortal = openPortal;
   tasksStats$: Observable<{
     tasksCap: number;
@@ -67,7 +67,7 @@ export class PlansPageComponent implements OnInit {
     this.loadPlans$ = this.billingService.getUsage().pipe(
       map((response: BillingResponse) => {
         const newPlans: Plan[] = [];
-        response.plans.forEach((plan) => {
+        pricingPlans.forEach((plan) => {
           const formControl = new FormControl();
           const initialTask = plan.tasks[0];
           newPlans.push({
@@ -75,19 +75,19 @@ export class PlansPageComponent implements OnInit {
             ...plan,
             formControl,
             selectedPrice$: formControl.valueChanges.pipe(
-              map((task: { price: string; amount: number }) =>
+              map((task: { price: number; amount: number }) =>
                 formatPrice(task.price)
               ),
-              startWith(formatPrice(initialTask.price))
+              startWith(formatPrice(initialTask.unitPrice))
             ),
             selectedTasks$: formControl.valueChanges.pipe(
               map((task: { price: string; amount: number }) =>
                 formatNumberWithCommas(task.amount)
               ),
               startWith(
-                typeof initialTask.amount === 'string'
-                  ? initialTask.amount
-                  : formatNumberWithCommas(initialTask.amount)
+                initialTask.unitPrice === 0
+                  ? 'Free'
+                  : formatNumberWithCommas(initialTask.unitAmount)
               )
             ),
           });

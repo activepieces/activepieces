@@ -4,7 +4,7 @@ import { databaseConnection } from '../../../database/database-connection'
 import { projectService } from '../../../project/project-service'
 import { userService } from '../../../user/user-service'
 import { acquireLock } from '../../../helper/lock'
-import { BotPlanLimits, FlowPlanLimits, PlanLimits, PlanType, defaultPlanInformation } from './pricing-plans'
+import { FlowPlanLimits, defaultPlanInformation } from './pricing-plans'
 import { stripeHelper } from '../stripe/stripe-helper'
 import { ProjectPlanEntity } from './plan.entity'
 import Stripe from 'stripe'
@@ -33,17 +33,21 @@ export const plansService = {
     },
 
     async update({ planLimits, subscription, projectPlanId }: {
-        planLimits: PlanLimits
+        planLimits: FlowPlanLimits
         subscription: null | Stripe.Subscription
         projectPlanId: string
     }): Promise<void> {
         const stripeSubscriptionId = subscription?.id ?? null
-        switch (planLimits.type) {
-            case PlanType.BOTS:
-                return updatePlanWithBotsInformation({ projectPlanId, planLimits, stripeSubscriptionId })
-            case PlanType.FLOWS:
-                return updatePlanWithFlowsInformation({ projectPlanId, planLimits, stripeSubscriptionId })
-        }
+        const { nickname, activeFlows, connections, tasks, minimumPollingInterval, teamMembers } = planLimits
+        await projectPlanRepo.update(projectPlanId, {
+            flowPlanName: nickname,
+            activeFlows,
+            connections,
+            tasks,
+            minimumPollingInterval,
+            teamMembers,
+            stripeSubscriptionId,
+        })
     },
 }
 
@@ -58,7 +62,6 @@ async function createInitialPlan({ projectId }: { projectId: ProjectId }): Promi
         const user = (await userService.getMetaInfo({ id: project.ownerId }))!
         const stripeCustomerId = await stripeHelper.createCustomer(user, project.id)
         const defaultPlanFlow = await getDefaultFlowPlan({ email: user.email })
-        const defaultBotsPlan = defaultPlanInformation[PlanType.BOTS]
         await projectPlanRepo.upsert({
             id: apId(),
             projectId,
@@ -66,14 +69,13 @@ async function createInitialPlan({ projectId }: { projectId: ProjectId }): Promi
             tasks: defaultPlanFlow.tasks,
             activeFlows: defaultPlanFlow.activeFlows,
             connections: defaultPlanFlow.connections,
-            tasksPerDay: defaultPlanFlow.tasksPerDay,
             minimumPollingInterval: defaultPlanFlow.minimumPollingInterval,
             teamMembers: defaultPlanFlow.teamMembers,
             stripeCustomerId,
             stripeSubscriptionId: null,
-            botPlanName: defaultBotsPlan.nickname,
-            bots: defaultBotsPlan.bots,
-            datasourcesSize: defaultBotsPlan.datasourcesSize,
+            botPlanName: 'bot-1',
+            bots: 1,
+            datasourcesSize: 104857600,
             subscriptionStartDatetime: project.created,
         }, ['projectId'])
         return projectPlanRepo.findOneByOrFail({ projectId })
@@ -88,38 +90,5 @@ async function getDefaultFlowPlan({ email }: { email: string }): Promise<FlowPla
     if (!isNil(appsumoPlan)) {
         return appsumoService.getPlanInformation(appsumoPlan.plan_id)
     }
-    return defaultPlanInformation[PlanType.FLOWS]
+    return defaultPlanInformation
 }
-async function updatePlanWithBotsInformation({ projectPlanId, planLimits, stripeSubscriptionId }: {
-    projectPlanId: string
-    planLimits: BotPlanLimits
-    stripeSubscriptionId: null | string
-}): Promise<void> {
-    const { nickname, bots, datasourcesSize, datasources } = planLimits
-    await projectPlanRepo.update(projectPlanId, {
-        botPlanName: nickname,
-        datasourcesSize,
-        datasources,
-        bots,
-        stripeSubscriptionId,
-    })
-}
-
-async function updatePlanWithFlowsInformation({ projectPlanId, planLimits, stripeSubscriptionId }: {
-    projectPlanId: string
-    planLimits: FlowPlanLimits
-    stripeSubscriptionId: null | string
-}): Promise<void> {
-    const { nickname, activeFlows, connections, tasks, tasksPerDay, minimumPollingInterval, teamMembers } = planLimits
-    await projectPlanRepo.update(projectPlanId, {
-        flowPlanName: nickname,
-        activeFlows,
-        connections,
-        tasks,
-        tasksPerDay: isNil(tasksPerDay) || isNaN(tasksPerDay) ? null : tasksPerDay,
-        minimumPollingInterval,
-        teamMembers,
-        stripeSubscriptionId,
-    })
-}
-

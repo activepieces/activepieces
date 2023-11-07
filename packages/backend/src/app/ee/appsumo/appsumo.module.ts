@@ -9,7 +9,7 @@ import { appsumoService } from './appsumo.service'
 import { system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { PlanType, defaultPlanInformation } from '../billing/plans/pricing-plans'
+import { defaultPlanInformation } from '../billing/plans/pricing-plans'
 
 export const appSumoModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(appsumoController, { prefix: '/v1/appsumo' })
@@ -100,7 +100,7 @@ const appsumoController: FastifyPluginAsyncTypebox = async (fastify: FastifyInst
                         await plansService.update({
                             projectPlanId: plan.id,
                             subscription: null,
-                            planLimits: defaultPlanInformation[PlanType.FLOWS],
+                            planLimits: defaultPlanInformation,
                         })
                     }
                     else {
