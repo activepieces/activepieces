@@ -16,50 +16,20 @@ import { fetchTags } from './tags';
 import { fetchForms } from './forms';
 import { fetchSequences } from './sequences';
 
-// ------------------> Trigger <------------------
-
-export const webhookBaseOverride = (): NonAuthPieceProperty => {
-  if (process.env['AP_ENVIRONMENT'] !== 'dev') {
-    // Returns empty property if not in dev environment
-    return {} as NonAuthPieceProperty;
-  }
-  return Property.ShortText({
-    displayName: 'Webhook Base Override',
-    description:
-      'The base URL that will be used for webhooks. This is used for testing webhooks locally.',
-    required: false,
-    validators: [Validators.url],
-  });
-};
-
-export const initiatorValue = Property.ShortText({
-  displayName: 'Initiator Value URL',
-  description: 'The initiator value URL that will trigger the webhook',
-  required: true,
-});
-
-export const prepareWebhookURL = (
-  webhookUrl: string,
-  webhookBaseOverride: string
-) => {
-  if (process.env['AP_ENVIRONMENT'] === 'dev') {
-    return webhookUrl.replace('http://localhost:3000', webhookBaseOverride);
-  }
-  log({ targetUrl });
-  return targetUrl;
-};
+export const API_ENDPOINT = 'automations/hooks';
 
 export const createWebhook = async (auth: string, payload: object) => {
   const body = { ...payload, api_secret: auth };
 
   const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}`;
-  log({ url, body });
 
   const request: HttpRequest = {
     url,
     body,
     method: HttpMethod.POST,
   };
+
+  log({ request });
 
   const response = await httpClient.sendRequest<{ rule: Webhook }>(request);
 
@@ -75,7 +45,6 @@ export const createWebhook = async (auth: string, payload: object) => {
 export const removeWebhook = async (auth: string, ruleId: number) => {
   const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${ruleId}`;
   const body = { api_secret: auth };
-  log({ url, body });
 
   const request: HttpRequest = {
     url,
@@ -94,9 +63,36 @@ export const removeWebhook = async (auth: string, ruleId: number) => {
   return response.body.success;
 };
 
-// ------------------> Actions <------------------
+export const webhookBaseOverride = (): NonAuthPieceProperty => {
+  if (process.env['AP_ENVIRONMENT'] !== 'dev') {
+    // Returns empty property if not in dev environment
+    return {} as NonAuthPieceProperty;
+  }
+  return Property.ShortText({
+    displayName: 'Webhook Base Override (Dev mode)',
+    description:
+      'The base URL that will be used for webhooks. This is used for testing webhooks locally.',
+    required: false,
+    // defaultValue: 'https://3ee7307b6dd0.ngrok.app',
+    validators: [Validators.url],
+  });
+};
 
-export const API_ENDPOINT = 'automations/hooks';
+export const initiatorValue = Property.ShortText({
+  displayName: 'Initiator Value URL',
+  description: 'The initiator value URL that will trigger the webhook',
+  required: true,
+});
+
+export const prepareWebhookURL = (
+  webhookUrl: string,
+  webhookBaseOverride: string
+) => {
+  if (process.env['AP_ENVIRONMENT'] === 'dev') {
+    return webhookUrl.replace('http://localhost:3000', webhookBaseOverride);
+  }
+  return targetUrl;
+};
 
 export const webhookId = Property.Number({
   displayName: 'Webhook Id',
