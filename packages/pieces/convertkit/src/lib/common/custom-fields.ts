@@ -1,12 +1,35 @@
 import { Property, DynamicPropsValue } from '@activepieces/pieces-framework';
+import {
+  httpClient,
+  HttpMethod,
+  HttpRequest,
+} from '@activepieces/pieces-common';
+import { CustomField } from './models';
 import { CONVERTKIT_API_URL } from './constants';
 
 export const API_ENDPOINT = 'custom_fields';
 
-export const fetchCustomFields = async (auth: string) => {
-  const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}?api_secret=${auth}`;
-  const response = await fetch(url);
-  return await response.json();
+export const fetchCustomFields = async (auth: string): Promise<any> => {
+  const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}`;
+
+  const body = {
+    api_secret: auth,
+  };
+
+  const request: HttpRequest = {
+    url,
+    body,
+    method: HttpMethod.GET,
+  };
+  const response = await httpClient.sendRequest<{
+    custom_fields: CustomField[];
+  }>(request);
+  if (response.status !== 200) {
+    throw new Error(
+      `Failed to fetch custom fields: ${response.status} ${response.body}`
+    );
+  }
+  return response.body.custom_fields;
 };
 
 export const fieldsArray = Property.Array({
@@ -18,7 +41,7 @@ export const fieldsArray = Property.Array({
 export const label = Property.Dropdown({
   displayName: 'Custom Label',
   required: true,
-  refreshers: ['auth', 'new_label'],
+  refreshers: ['auth'],
   options: async ({ auth }) => {
     if (!auth) {
       return {
@@ -28,10 +51,10 @@ export const label = Property.Dropdown({
       };
     }
 
-    const fields = await fetchCustomFields(auth.toString());
+    const fields: CustomField[] = await fetchCustomFields(auth.toString());
 
     // loop through data and map to options
-    const options = fields.custom_fields.map(
+    const options = fields.map(
       (field: { id: string; label: string; key: string; name: string }) => {
         return {
           label: field.label,
@@ -43,33 +66,6 @@ export const label = Property.Dropdown({
     return {
       options,
     };
-  },
-}) as any;
-
-export const newLabel = Property.DynamicProperties({
-  // TODO: refresh after lables are updated. is it possible/useful?
-  displayName: 'Event Parameter',
-  description: 'The required parameter for the event',
-  required: true,
-  refreshers: ['label', 'auth'],
-  props: async ({ auth, label }) => {
-    if (!auth) {
-      return {
-        disabled: true,
-        placeholder: 'Select labels first',
-        options: [],
-      };
-    }
-
-    const fields: DynamicPropsValue = {};
-
-    fields[label.toString()] = Property.ShortText({
-      displayName: `New label`,
-      // description: `Enter the new label for ${customField.label}`,
-      required: true,
-    });
-
-    return fields;
   },
 });
 

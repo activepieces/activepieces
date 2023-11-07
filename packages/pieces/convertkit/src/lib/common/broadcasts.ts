@@ -1,6 +1,34 @@
 import { Property, Validators } from '@activepieces/pieces-framework';
+import {
+  httpClient,
+  HttpMethod,
+  HttpRequest,
+} from '@activepieces/pieces-common';
+import { Broadcast } from './models';
+import { CONVERTKIT_API_URL } from '../common/constants';
 
 export const API_ENDPOINT = 'broadcasts';
+
+export const fetchBroadcasts = async (auth: string, page: number) => {
+  const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}?page=${page}`;
+  const body = {
+    api_secret: auth,
+  };
+  const request: HttpRequest = {
+    url,
+    body,
+    method: HttpMethod.GET,
+  };
+  const response = await httpClient.sendRequest<{ broadcasts: Broadcast[] }>(
+    request
+  );
+  if (response.status !== 200) {
+    throw new Error(
+      `Failed to fetch broadcasts: ${response.status} ${response.body}`
+    );
+  }
+  return response.body.broadcasts;
+};
 
 export const broadcastId = Property.ShortText({
   displayName: 'Broadcast Id',

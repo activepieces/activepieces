@@ -1,16 +1,36 @@
+import { Property, Validators } from '@activepieces/pieces-framework';
 import {
-  Property,
-  Validators,
-  DynamicPropsValue,
-} from '@activepieces/pieces-framework';
+  httpClient,
+  HttpMethod,
+  HttpRequest,
+} from '@activepieces/pieces-common';
+import { Purchase } from './models';
 import { CONVERTKIT_API_URL } from './constants';
 
 export const API_ENDPOINT = 'purchases';
 
-export const fetchPurchases = async (auth: string) => {
-  const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}?api_secret=${auth}`;
-  const response = await fetch(url);
-  return await response.json();
+export const fetchPurchases = async (auth: string, page: number) => {
+  const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}`;
+
+  const body = {
+    api_secret: auth,
+    page,
+  };
+
+  const request: HttpRequest = {
+    url,
+    body,
+    method: HttpMethod.GET,
+  };
+  const response = await httpClient.sendRequest<{ purchases: Purchase[] }>(
+    request
+  );
+  if (response.status !== 200) {
+    throw new Error(
+      `Failed to fetch purchases: ${response.status} ${response.body}`
+    );
+  }
+  return response.body.purchases;
 };
 
 export const purchaseId = Property.ShortText({
@@ -30,7 +50,7 @@ export const page = Property.Number({
   displayName: 'Page',
   description:
     'Page number. Each page of results will contain up to 50 purchases.',
-  required: false,
+  required: true,
   defaultValue: 1,
   validators: [Validators.number, Validators.nonZero],
 });
@@ -54,7 +74,7 @@ export const productId = Property.Number({
 export const status = Property.StaticDropdown({
   displayName: 'Status',
   description: 'The status of the purchase',
-  required: true,
+  required: false,
   options: {
     options: [
       { label: 'paid', value: 'paid' },
@@ -107,42 +127,42 @@ export const currency = Property.StaticDropdown({
 export const transactionTime = Property.DateTime({
   displayName: 'Transaction Time',
   description: 'The transaction time',
-  required: true,
+  required: false,
   validators: [Validators.datetimeIso],
 });
 
 export const subtotal = Property.Number({
   displayName: 'Subtotal',
   description: 'The subtotal',
-  required: true,
+  required: false,
   validators: [Validators.number],
 });
 
 export const shipping = Property.Number({
   displayName: 'Shipping',
   description: 'The shipping',
-  required: true,
+  required: false,
   validators: [Validators.number],
 });
 
 export const discount = Property.Number({
   displayName: 'Discount',
   description: 'The discount',
-  required: true,
+  required: false,
   validators: [Validators.number],
 });
 
 export const tax = Property.Number({
   displayName: 'Tax',
   description: 'The tax',
-  required: true,
+  required: false,
   validators: [Validators.number],
 });
 
 export const total = Property.Number({
   displayName: 'Total',
   description: 'The total',
-  required: true,
+  required: false,
   validators: [Validators.number],
 });
 
@@ -171,7 +191,7 @@ export const products = {
   sku: Property.ShortText({
     displayName: 'SKU',
     description: 'The SKU of the product',
-    required: true,
+    required: false,
   }),
   unit_price: Property.Number({
     displayName: 'Unit Price',

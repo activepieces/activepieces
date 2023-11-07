@@ -1,7 +1,13 @@
 import { createAction } from '@activepieces/pieces-framework';
+import {
+  httpClient,
+  HttpMethod,
+  HttpRequest,
+} from '@activepieces/pieces-common';
 import { convertkitAuth } from '../..';
 import {
   API_ENDPOINT,
+  fetchPurchases,
   purchaseId,
   page,
   transactionId,
@@ -19,6 +25,7 @@ import {
   products,
   multipleProducts,
 } from '../common/purchases';
+import { Purchase } from '../common/models';
 import { subscriberId } from '../common/subscribers';
 import { formId } from '../common/forms';
 import { sequenceId } from '../common/sequences';
@@ -34,22 +41,7 @@ export const listPurchases = createAction({
   },
   async run(context) {
     const page = context.propsValue.page || 1;
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}?page=${page}&api_secret=${context.auth}`;
-
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      return { success: false, message: 'Error fetching purchases' };
-    }
-
-    const data = await response.json();
-
-    // If purchases exists, return purchases
-    if (data.purchases) {
-      return data.purchases;
-    }
-
-    return data;
+    return await fetchPurchases(context.auth, page);
   },
 });
 
@@ -67,17 +59,29 @@ export const getPurchaseById = createAction({
     const { purchaseId } = context.propsValue;
     const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${purchaseId}?api_secret=${context.auth}`;
 
-    const response = await fetch(url);
+    const request: HttpRequest = {
+      url,
+      method: HttpMethod.GET,
+    };
 
-    if (!response.ok) {
-      return { success: false, message: 'Error fetching purchase' };
+    const response = await httpClient.sendRequest<{
+      purchase: Purchase;
+    }>(request);
+
+    if (response.status !== 200) {
+      throw new Error(`Error fetching purchase: ${response.status}`);
     }
 
-    const data = await response.json();
-
-    return data;
+    return response.body;
   },
 });
+
+//TODO:
+// Required for third party integrations
+// Are you building an integration? Please fill out this form and we will help you get set up.
+
+// purchase.integration - The name of your integration (i.e. eBay)
+// integration_key - A token for tracking integrations (i.e. eBay order number)
 
 export const createSinglePurchase = createAction({
   auth: convertkitAuth,
@@ -115,43 +119,39 @@ export const createSinglePurchase = createAction({
     } = context.propsValue;
     const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}`;
 
-    const body = JSON.stringify(
-      {
-        api_secret: context.auth,
-        purchase: {
-          transaction_id: transactionId,
-          status,
-          first_name: firstName,
-          email_address: emailAddress,
-          currency,
-          transaction_time: transactionTime,
-          subtotal,
-          shipping,
-          discount,
-          tax,
-          total,
-          products: [products],
-        },
+    const body = {
+      api_secret: context.auth,
+      purchase: {
+        transaction_id: transactionId,
+        status,
+        first_name: firstName,
+        email_address: emailAddress,
+        currency,
+        transaction_time: transactionTime,
+        subtotal,
+        shipping,
+        discount,
+        tax,
+        total,
+        products: [products],
       },
-      null,
-      2
-    );
+    };
 
-    const response = await fetch(url, {
-      method: 'POST',
+    const request: HttpRequest = {
+      url,
+      method: HttpMethod.POST,
       body,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    };
 
-    if (!response.ok) {
-      return { success: false, message: 'Error creating purchase' };
+    const response = await httpClient.sendRequest<{
+      purchase: Purchase;
+    }>(request);
+
+    if (response.status !== 201) {
+      throw new Error(`Error creating purchase: ${response.status}`);
     }
 
-    const data = await response.json();
-
-    return data;
+    return response.body;
   },
 });
 
@@ -191,43 +191,39 @@ export const createPurchases = createAction({
     } = context.propsValue;
     const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}`;
 
-    const body = JSON.stringify(
-      {
-        api_secret: context.auth,
-        purchase: {
-          transaction_id: transactionId,
-          status,
-          email_address: emailAddress,
-          first_name: firstName,
-          currency,
-          transaction_time: transactionTime,
-          subtotal,
-          shipping,
-          discount,
-          tax,
-          total,
-          products: multipleProducts,
-        },
+    const body = {
+      api_secret: context.auth,
+      purchase: {
+        transaction_id: transactionId,
+        status,
+        email_address: emailAddress,
+        first_name: firstName,
+        currency,
+        transaction_time: transactionTime,
+        subtotal,
+        shipping,
+        discount,
+        tax,
+        total,
+        products: multipleProducts,
       },
-      null,
-      2
-    );
+    };
 
-    const response = await fetch(url, {
-      method: 'POST',
+    const request: HttpRequest = {
+      url,
+      method: HttpMethod.POST,
       body,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    };
 
-    if (!response.ok) {
-      return { success: false, message: 'Error creating purchase' };
+    const response = await httpClient.sendRequest<{
+      purchase: Purchase;
+    }>(request);
+
+    if (response.status !== 201) {
+      throw new Error(`Error creating purchase: ${response.status}`);
     }
 
-    const data = await response.json();
-
-    return data;
+    return response.body;
   },
 });
 

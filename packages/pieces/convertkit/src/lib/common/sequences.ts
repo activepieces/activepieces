@@ -1,4 +1,10 @@
 import { Property, Validators } from '@activepieces/pieces-framework';
+import {
+  httpClient,
+  HttpMethod,
+  HttpRequest,
+} from '@activepieces/pieces-common';
+import { Sequence } from './models';
 import { CONVERTKIT_API_URL } from '../common/constants';
 
 export const API_ENDPOINT = 'sequences';
@@ -10,9 +16,24 @@ export const sequenceId = Property.ShortText({
 });
 
 export const fetchSequences = async (auth: string) => {
-  const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}?api_secret=${auth}`;
-  const response = await fetch(url);
-  return await response.json();
+  const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}`;
+  const body = {
+    api_secret: auth,
+  };
+  const request: HttpRequest = {
+    url,
+    body,
+    method: HttpMethod.GET,
+  };
+  const response = await httpClient.sendRequest<{ courses: Sequence[] }>(
+    request
+  );
+  if (response.status !== 200) {
+    throw new Error(
+      `Failed to fetch sequences: ${response.status} ${response.body}`
+    );
+  }
+  return response.body.courses;
 };
 
 export const email = Property.ShortText({
@@ -44,14 +65,12 @@ export const sequenceIdChoice = Property.Dropdown({
     const sequences = await fetchSequences(auth.toString());
 
     // loop through data and map to options
-    const options = sequences.courses.map(
-      (field: { id: string; name: string }) => {
-        return {
-          label: field.name,
-          value: field.id,
-        };
-      }
-    );
+    const options = sequences.map((field: { id: string; name: string }) => {
+      return {
+        label: field.name,
+        value: field.id,
+      };
+    });
 
     return {
       options,

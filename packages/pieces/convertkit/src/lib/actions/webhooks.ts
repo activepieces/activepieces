@@ -1,13 +1,13 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { convertkitAuth } from '../..';
 import {
-  API_ENDPOINT,
+  createWebhook as createWebhookAction,
+  removeWebhook as removeWebhookAction,
   targetUrl,
   event,
   eventParameter,
   webhookId,
 } from '../common/webhooks';
-import { CONVERTKIT_API_URL } from '../common/constants';
 
 export const createWebhook = createAction({
   auth: convertkitAuth,
@@ -21,36 +21,16 @@ export const createWebhook = createAction({
   },
   async run(context) {
     const { targetUrl, event, eventParameter } = context.propsValue;
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}`;
 
-    const eventProp = {
+    const payload = {
       event: {
-        name: context.propsValue.event,
-        event_parameter: eventParameter,
+        name: event,
+        ...eventParameter,
       },
       target_url: targetUrl,
     };
 
-    const response = await fetch(url, {
-      method: 'POST',
-      body: JSON.stringify({ ...eventProp, api_secret: context.auth }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      return { success: false, message: 'Error creating webhook' };
-    }
-
-    const data = await response.json();
-
-    // If rule exists, return rule
-    if (data.rule) {
-      return data.rule;
-    }
-
-    return data;
+    return await createWebhookAction(context.auth, payload);
   },
 });
 
@@ -64,22 +44,6 @@ export const deleteWebhook = createAction({
   },
   async run(context) {
     const { webhookId } = context.propsValue;
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${webhookId}`;
-
-    const response = await fetch(url, {
-      method: 'DELETE',
-      body: JSON.stringify({ api_secret: context.auth }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      return { success: false, message: 'Error deleting webhook' };
-    }
-
-    const data = await response.json();
-
-    return data;
+    return await removeWebhookAction(context.auth, webhookId);
   },
 });

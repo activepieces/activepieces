@@ -1,4 +1,10 @@
 import { createAction } from '@activepieces/pieces-framework';
+import {
+  httpClient,
+  HttpMethod,
+  HttpRequest,
+} from '@activepieces/pieces-common';
+import { Sequence } from '../common/models';
 import { convertkitAuth } from '../..';
 import {
   API_ENDPOINT,
@@ -18,12 +24,7 @@ export const listSequences = createAction({
   description: 'Returns a list of all sequences',
   props: {},
   async run(context) {
-    const data = await fetchSequences(context.auth);
-    // if courses exist, return courses
-    if (data.courses) {
-      return data.courses;
-    }
-    return data;
+    return await fetchSequences(context.auth);
   },
 });
 
@@ -41,25 +42,32 @@ export const addSubscriberToSequence = createAction({
   },
   async run(context) {
     const { sequenceId, email, firstName, tags, fields } = context.propsValue;
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${context.propsValue.sequenceId}/subscribe?api_secret=${context.auth}`;
+    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${sequenceId}/subscribe`;
 
-    const body = JSON.stringify({ email, first_name: firstName, tags, fields });
+    const body = {
+      api_secret: context.auth,
+      email,
+      first_name: firstName,
+      tags,
+      fields,
+    };
 
-    const response = await fetch(url, {
-      method: 'POST',
+    const request: HttpRequest = {
+      url,
+      method: HttpMethod.POST,
       body,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    };
 
-    if (!response.ok) {
-      return { success: false, message: 'Error adding subscriber to sequence' };
+    const response = await httpClient.sendRequest<{
+      subscription: Sequence;
+    }>(request);
+
+    if (response.status !== 200) {
+      throw new Error(
+        `Error adding subscriber to sequence: ${response.status}`
+      );
     }
-
-    const data = await response.json();
-
-    return data;
+    return response.body.subscription;
   },
 });
 
@@ -72,19 +80,27 @@ export const listSupscriptionsToSequence = createAction({
     sequenceId: sequenceIdChoice,
   },
   async run(context) {
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${context.propsValue.sequenceId}/subscriptions?api_secret=${context.auth}`;
+    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${context.propsValue.sequenceId}/subscriptions`;
 
-    const response = await fetch(url);
+    const body = {
+      api_secret: context.auth,
+    };
 
-    if (!response.ok) {
-      return {
-        success: false,
-        message: 'Error listing subscriptions to sequence',
-      };
+    const request: HttpRequest = {
+      url,
+      method: HttpMethod.GET,
+      body,
+    };
+
+    const response = await httpClient.sendRequest<{
+      subscriptions: Sequence[];
+    }>(request);
+
+    if (response.status !== 200) {
+      throw new Error(
+        `Error listing subscriptions to sequence: ${response.status}`
+      );
     }
-
-    const data = await response.json();
-
-    return data;
+    return response.body.subscriptions;
   },
 });
