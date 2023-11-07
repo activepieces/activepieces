@@ -3,6 +3,7 @@ import { oauthAppService } from './oauth-app.service'
 import { ListOAuth2AppRequest, UpsertOAuth2AppRequest } from '@activepieces/ee-shared'
 import { ActivepiecesError, ErrorCode, assertNotNullOrUndefined } from '@activepieces/shared'
 import { platformService } from '../platform/platform.service'
+import { projectService } from '../../project/project-service'
 
 
 export const oauthAppModule: FastifyPluginAsyncTypebox = async (app) => {
@@ -36,12 +37,11 @@ const oauthAppController: FastifyPluginAsyncTypebox = async (app) => {
         },
     },
     async (request) => {
-        const platformId = request.principal.platformId
+        const projectId = request.principal.projectId
+        assertNotNullOrUndefined(projectId, 'projectId')
+        const project = await projectService.getOne(projectId);
+        const platformId = project?.platformId;
         assertNotNullOrUndefined(platformId, 'platformId')
-        await assertUserIsPlatformOwner({
-            platformId,
-            userId: request.principal.id,
-        })
         return oauthAppService.list({
             platformId,
             request: request.query,
