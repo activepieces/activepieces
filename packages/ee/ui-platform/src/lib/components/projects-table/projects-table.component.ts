@@ -25,6 +25,7 @@ export class ProjectsTableComponent {
   switchProject$: Observable<void> | undefined;
   createProject$: Observable<void> | undefined;
   updateProject$: Observable<void> | undefined;
+  title = $localize`Projects`;
   constructor(
     private projectsService: ProjectService,
     private matDialog: MatDialog,
