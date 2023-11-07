@@ -19,12 +19,11 @@ export const log = async (message: object) => {
     fs.writeFileSync(filePath, '');
   }
 
-  // append date to message
-  const messageWithDate = { date: new Date(), ...message };
+  let messageWithDate = { date: new Date(), ...message };
 
   fs.appendFile(
     filePath,
-    JSON.stringify(messageWithDate, null, 2),
+    JSON.stringify(messageWithDate, null, 2) + '\n\n',
     function (err: any) {
       if (err) throw err;
       console.log('Logging to: ', filePath);

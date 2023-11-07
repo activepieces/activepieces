@@ -35,6 +35,7 @@ const allFieldsRequiredRefreshers = {
   refreshers: ['auth, formId'],
 };
 
+// TODO: fields do not show up. Why?
 export const addSubscriberToForm = createAction({
   auth: convertkitAuth,
   name: 'forms_add_subscriber_to_form',

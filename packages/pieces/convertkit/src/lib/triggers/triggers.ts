@@ -1,4 +1,8 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import {
+  createTrigger,
+  TriggerStrategy,
+  Property,
+} from '@activepieces/pieces-framework';
 import { convertkitAuth } from '../..';
 import { tag } from '../common/tags';
 import { formId } from '../common/forms';
@@ -10,6 +14,7 @@ import {
   webhookBaseOverride,
   initiatorValue,
 } from '../common/webhooks';
+import { log } from '../common';
 
 interface WebhookInformation {
   ruleId: number;
@@ -148,12 +153,13 @@ export const removeTag = createTrigger({
   },
 });
 
-// UNTESTED
+// Tested
 export const subscriberActivated = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_subscriber_activated',
   displayName: 'Subscriber activated',
-  description: 'Trigger when a subscriber is activated',
+  description:
+    'Trigger when a subscriber is activated. This happens when a subscriber confirms their subscription.',
   type: TriggerStrategy.WEBHOOK,
   props: {
     webhookBaseOverride: webhookBaseOverride(),
@@ -270,12 +276,13 @@ export const subscriberUnsubscribed = createTrigger({
   },
 });
 
-// UNTESTED
+// Tested
 export const subscriberBounced = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_subscriber_bounced',
   displayName: 'Subscriber bounced',
-  description: 'Trigger when a subscriber bounced',
+  description:
+    'Trigger when a subscriber bounced. This happens when an email is sent to a subscriber and the email bounces.',
   type: TriggerStrategy.WEBHOOK,
   props: {
     webhookBaseOverride: webhookBaseOverride(),
@@ -332,11 +339,15 @@ export const subscriberBounced = createTrigger({
 });
 
 // UNTESTED
+// TODO: Test this
+// Cannot get the state to set to "Complained" in order to test this. Have tried marking as spam in Thunderbird and Outlook Online
+// https://help.convertkit.com/en/articles/2502638-why-is-my-subscriber-showing-as-complained
 export const subscriberComplained = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_subscriber_complained',
   displayName: 'Subscriber complained',
-  description: 'Trigger when a subscriber complained',
+  description:
+    'Trigger when a subscriber complained. This happens when a subscriber marks an email as spam.',
   type: TriggerStrategy.WEBHOOK,
   props: {
     webhookBaseOverride: webhookBaseOverride(),
@@ -390,6 +401,7 @@ export const subscriberComplained = createTrigger({
   },
 });
 
+// Tested
 export const formSubscribed = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_form_subscribed',
@@ -449,11 +461,12 @@ export const formSubscribed = createTrigger({
   },
 });
 
-export const courseSubscribed = createTrigger({
+// Tested
+export const sequenceSubscribed = createTrigger({
   auth: convertkitAuth,
-  name: 'webhook_course_subscribed',
-  displayName: 'Course subscribed',
-  description: 'Trigger when a course is subscribed',
+  name: 'webhook_sequence_subscribed',
+  displayName: 'Sequence subscribed',
+  description: 'Trigger when a sequence is subscribed',
   type: TriggerStrategy.WEBHOOK,
   props: {
     webhookBaseOverride: webhookBaseOverride(),
@@ -480,21 +493,25 @@ export const courseSubscribed = createTrigger({
     const payload = {
       event: {
         name: 'subscriber.course_subscribe',
-        course_id: sequenceIdChoice,
+        sequence_id: sequenceIdChoice,
       },
       target_url: targetUrl,
     };
 
     const webhook = await createWebhook(context.auth, payload);
+    log({ message: 'webhook', webhook });
     const ruleId = webhook.id;
 
-    await context.store?.put<WebhookInformation>(`_webhook_course_subscribed`, {
-      ruleId,
-    });
+    await context.store?.put<WebhookInformation>(
+      `_webhook_sequence_subscribed`,
+      {
+        ruleId,
+      }
+    );
   },
   async onDisable(context) {
     const response = await context.store?.get<WebhookInformation>(
-      '_webhook_course_subscribed'
+      '_webhook_sequence_subscribed'
     );
     if (response !== null && response !== undefined) {
       await removeWebhook(context.auth, response.ruleId);
@@ -508,11 +525,12 @@ export const courseSubscribed = createTrigger({
   },
 });
 
-export const courseCompleted = createTrigger({
+// Tested
+export const sequenceCompleted = createTrigger({
   auth: convertkitAuth,
-  name: 'webhook_course_completed',
-  displayName: 'Course completed',
-  description: 'Trigger when a course is completed',
+  name: 'webhook_sequence_completed',
+  displayName: 'Sequence completed',
+  description: 'Trigger when a sequence is completed',
   type: TriggerStrategy.WEBHOOK,
   props: {
     webhookBaseOverride: webhookBaseOverride(),
@@ -539,7 +557,7 @@ export const courseCompleted = createTrigger({
     const payload = {
       event: {
         name: 'subscriber.course_complete',
-        course_id: sequenceIdChoice,
+        sequence_id: sequenceIdChoice,
       },
       target_url: targetUrl,
     };
@@ -547,13 +565,16 @@ export const courseCompleted = createTrigger({
     const webhook = await createWebhook(context.auth, payload);
     const ruleId = webhook.id;
 
-    await context.store?.put<WebhookInformation>(`_webhook_course_completed`, {
-      ruleId,
-    });
+    await context.store?.put<WebhookInformation>(
+      `_webhook_sequence_completed`,
+      {
+        ruleId,
+      }
+    );
   },
   async onDisable(context) {
     const response = await context.store?.get<WebhookInformation>(
-      '_webhook_course_completed'
+      '_webhook_sequence_completed'
     );
     if (response !== null && response !== undefined) {
       await removeWebhook(context.auth, response.ruleId);
@@ -567,6 +588,7 @@ export const courseCompleted = createTrigger({
   },
 });
 
+// Tested
 export const linkClicked = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_link_clicked',
@@ -626,6 +648,8 @@ export const linkClicked = createTrigger({
   },
 });
 
+// UNTESTED
+// Broken UI at convertkit, reported to support
 export const productPurchased = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_product_purchased',
@@ -634,7 +658,11 @@ export const productPurchased = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   props: {
     webhookBaseOverride: webhookBaseOverride(),
-    sequenceIdChoice,
+    productId: Property.Number({
+      displayName: 'Product Id',
+      description: 'The product id',
+      required: true,
+    }),
   },
   sampleData: {
     rule: {
@@ -647,7 +675,7 @@ export const productPurchased = createTrigger({
     },
   },
   async onEnable(context) {
-    const { sequenceIdChoice, webhookBaseOverride } = context.propsValue;
+    const { productId, webhookBaseOverride } = context.propsValue;
 
     const targetUrl = prepareWebhookURL(
       context.webhookUrl,
@@ -657,13 +685,13 @@ export const productPurchased = createTrigger({
     const payload = {
       event: {
         name: 'subscriber.product_purchase',
-        product_id: sequenceIdChoice,
+        product_id: productId,
       },
       target_url: targetUrl,
     };
-
-    const webhook = await createWebhook(context.auth, payload);
-    const ruleId = webhook.id;
+    const response = await createWebhook(context.auth, payload);
+    log({ response, payload, context });
+    const ruleId = response.id;
 
     await context.store?.put<WebhookInformation>(`_webhook_product_purchased`, {
       ruleId,
@@ -682,6 +710,7 @@ export const productPurchased = createTrigger({
   },
 });
 
+// Untested. Webhook is created, but I have not tested if the trigger is firing.
 export const purchaseCreated = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_purchase_created',
