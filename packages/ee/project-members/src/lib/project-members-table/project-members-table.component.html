@@ -1,7 +1,6 @@
 <div class="ap-w-full ap-h-full ap-px-[1.875rem] ap-pt-[3.125rem]">
   <div class="ap-h-full">
-    <ap-page-title title="Project Members"></ap-page-title>
-
+    <ap-page-title [title]="title"></ap-page-title>
     <div class="ap-min-h-[70%]">
       <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Project Members" i18n-aria-label>
         <ng-container matColumnDef="email">
