@@ -15,6 +15,7 @@ import { Platform, UpdatePlatformRequestBody } from '@activepieces/ee-shared';
 import { Observable, map, tap } from 'rxjs';
 import { PlatformService } from '../../platform.service';
 import { AuthenticationService } from '@activepieces/ui/common';
+import { ActivatedRoute } from '@angular/router';
 
 interface AppearanceForm {
   name: FormControl<string>;
@@ -34,11 +35,13 @@ export class PlatformAppearanceComponent implements OnInit {
   formGroup: FormGroup<AppearanceForm>;
   loading = false;
   updatePlatform$?: Observable<void>;
+  title = $localize`Appearance`;
   @Input({ required: true }) platform!: Platform;
   constructor(
     private fb: FormBuilder,
     private platformService: PlatformService,
-    private authenticationService: AuthenticationService
+    private authenticationService: AuthenticationService,
+    private route: ActivatedRoute
   ) {
     this.formGroup = this.fb.group({
       name: this.fb.control(
@@ -95,6 +98,7 @@ export class PlatformAppearanceComponent implements OnInit {
     });
   }
   ngOnInit(): void {
+    this.platform = this.route.snapshot.data['platform'];
     this.formGroup.patchValue({
       ...this.platform,
       pickerCtrl: this.platform.primaryColor,

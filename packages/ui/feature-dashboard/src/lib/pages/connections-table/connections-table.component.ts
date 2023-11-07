@@ -31,6 +31,7 @@ export class ConnectionsTableComponent implements OnInit {
   paginator!: ApPaginatorComponent;
   connectionPage$: Observable<SeekPage<AppConnection>>;
   dataSource!: ConnectionsTableDataSource;
+  title = $localize`Connections`;
   displayedColumns = ['app', 'name', 'status', 'created', 'updated', 'action'];
   connectionDeleted$: Subject<boolean> = new Subject();
   deleteConnectionDialogClosed$: Observable<void>;
