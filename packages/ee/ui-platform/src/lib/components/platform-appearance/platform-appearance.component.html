@@ -1,4 +1,4 @@
-<form class="ap-flex ap-flex-col ap-gap-5 ap-h-full" [formGroup]="formGroup" (ngSubmit)="save()">
+<form class="ap-flex ap-flex-col ap-gap-5" [formGroup]="formGroup" (ngSubmit)="save()">
     <mat-form-field class=" ap-max-w-[327px] ap-w-full">
         <mat-label i18n>Name</mat-label>
         <input matInput placeholder="Awesome platform" [formControl]="formGroup.controls.name" />
@@ -47,10 +47,13 @@
     </mat-form-field>
 
 </form>
-<div
-    class="ap-p-4 ap-flex ap-justify-end ap-items-center ap-gap-4 ap-w-full ap-border-t ap-border-solid ap-border-outline">
-    <ap-button btnStyle="flat" btnColor="primary" i18n (buttonClicked)="save()" [loading]="loading">Save</ap-button>
+<div>
+    <div
+        class="ap-p-4 ap-flex ap-justify-end ap-items-center ap-gap-4 ap-w-full ap-border-t ap-border-solid ap-border-outline">
+        <ap-button btnStyle="flat" btnColor="primary" i18n (buttonClicked)="save()" [loading]="loading">Save</ap-button>
 
+    </div>
 </div>
+
 
 <ng-container *ngIf="updatePlatform$ | async"></ng-container>
