@@ -17,19 +17,21 @@
                 </ng-container>
 
                 <ng-container matColumnDef="action">
-                    <th mat-header-cell *matHeaderCellDef class="!ap-text-center">
-                        <div class="ap-flex ap-justify-end">
-                            <ap-button btnColor="primary" btnSize="small" (buttonClicked)="createKey()" i18n>
-                                Create key
-                            </ap-button>
-                        </div>
+                    <th mat-header-cell *matHeaderCellDef class="!ap-text-right">
+
+                        <ap-button btnColor="primary" btnSize="medium" (buttonClicked)="createKey()" i18n>
+                            + New key
+                        </ap-button>
+
                     </th>
-                    <td mat-cell *matCellDef="let key" class="!ap-text-center">
-                        <div class="ap-flex ap-gap-2 ap-items-center ap-justify-end ap-px-3">
+                    <td mat-cell *matCellDef="let key">
+                        <div class="ap-w-[5.6875rem] ap-float-right ap-text-center">
                             <ap-icon-button (click)="$event.stopPropagation();deleteKey(key)" i18n-tooltipText
                                 tooltipText="Delete key" iconFilename="trash.svg" [width]="20" [height]="20"
                                 color="warn" [height]="16"></ap-icon-button>
+
                         </div>
+
                     </td>
                 </ng-container>
 
