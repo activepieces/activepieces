@@ -40,19 +40,19 @@ export class SidenavRoutesListComponent implements OnInit {
     {
       icon: 'assets/img/custom/dashboard/projects.svg',
       caption: $localize`Projects`,
-      route: 'projects',
+      route: 'platform/projects',
       showInSideNav$: of(true),
     },
     {
       icon: 'assets/img/custom/dashboard/appearance.svg',
       caption: $localize`Appearance`,
-      route: 'appearance',
+      route: 'platform/appearance',
       showInSideNav$: of(true),
     },
     {
       icon: 'assets/img/custom/dashboard/settings.svg',
       caption: $localize`Settings`,
-      route: 'settings',
+      route: 'platform/settings',
       showInSideNav$: of(true),
     },
   ];
@@ -81,7 +81,7 @@ export class SidenavRoutesListComponent implements OnInit {
       },
       {
         icon: 'assets/img/custom/dashboard/chatbots.svg',
-        caption: 'Chatbots',
+        caption: $localize`Chatbots`,
         route: 'chatbots',
         showInSideNav$: this.isInEmbedding$.pipe(
           switchMap((isInEmbedding) =>
@@ -110,10 +110,10 @@ export class SidenavRoutesListComponent implements OnInit {
         caption: $localize`Team`,
         route: 'team',
         showInSideNav$: this.isInEmbedding$.pipe(
-          switchMap((st) => {
+          switchMap((embedded) => {
             return this.flagServices.getEdition().pipe(
               map((ed) => {
-                return ed !== ApEdition.COMMUNITY && !st;
+                return ed !== ApEdition.COMMUNITY && !embedded;
               })
             );
           })
