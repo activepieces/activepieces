@@ -106,10 +106,13 @@ export class FirebaseAuthService {
       tap((u) => {
         if (u && u.emailVerified === false) {
           console.log("sending verfication email...");
+          const baseUrl = window.location.origin;
+          const absoluteUrl = new URL('/flows', baseUrl).href;
+
           u.sendEmailVerification(
             redirectUrl
               ? {
-                  url: redirectUrl
+                  url: absoluteUrl
                 }
               : undefined
           );
