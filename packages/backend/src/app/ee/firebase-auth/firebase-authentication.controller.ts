@@ -127,8 +127,11 @@ export const firebaseAuthenticationController: FastifyPluginAsyncTypebox = async
                 }
                 else {
                     const response = await authenticationService.signUp({
-                        ...request.body,
                         email: verifiedToken.email!,
+                        trackEvents: true,
+                        firstName: request.body.firstName,
+                        lastName: request.body.lastName,
+                        newsLetter: true,
                         password: crypto.randomBytes(32).toString('hex'),
                     })
                     if (!isNil(referringUserId)) {
