@@ -511,32 +511,28 @@ export class AddEditConnectionButtonComponent {
                     this.checkingOAuth2ManagedConnections$.next(false);
                   }),
                   switchMap((res) => {
-                    return this.flagService.getFrontendUrl().pipe(
-                      switchMap((frontendUrl) => {
-                        if (this.authProperty.type === PropertyType.OAUTH2) {
-                          const pieceOAuth2Details = res[this.pieceName];
-                          const data: ManagedOAuth2ConnectionDialogData = {
-                            connectionToUpdate: connection,
-                            pieceAuthProperty: this.authProperty,
-                            pieceName: this.pieceName,
-                            clientId: pieceOAuth2Details.clientId,
-                            isTriggerAppWebhook: false,
-                            connectionType: pieceOAuth2Details.connectionType,
-                            frontendUrl,
-                          };
-                          return this.dialogService
-                            .open(ManagedOAuth2ConnectionDialogComponent, {
-                              data,
-                            })
-                            .afterClosed()
-                            .pipe(
-                              this.updateConnectionTap,
-                              map(() => void 0)
-                            );
-                        }
-                        return of(void 0);
-                      })
-                    );
+                    if (this.authProperty.type === PropertyType.OAUTH2) {
+                      const pieceOAuth2Details = res[this.pieceName];
+                      const data: ManagedOAuth2ConnectionDialogData = {
+                        connectionToUpdate: connection,
+                        pieceAuthProperty: this.authProperty,
+                        pieceName: this.pieceName,
+                        clientId: pieceOAuth2Details.clientId,
+                        isTriggerAppWebhook: false,
+                        connectionType: pieceOAuth2Details.connectionType,
+                        frontendUrl,
+                      };
+                      return this.dialogService
+                        .open(ManagedOAuth2ConnectionDialogComponent, {
+                          data,
+                        })
+                        .afterClosed()
+                        .pipe(
+                          this.updateConnectionTap,
+                          map(() => void 0)
+                        );
+                    }
+                    return of(void 0);
                   })
                 );
             }
