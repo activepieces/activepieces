@@ -3,7 +3,7 @@ import { askBot } from './lib/ask-bot';
 
 export const activebots = createPiece({
   displayName: 'Activebots',
-  description: 'Use chatbots created in your Activepieces project',
+  description: 'Use chatbots created in your project',
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.9.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/activebots.svg',
