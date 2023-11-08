@@ -30,6 +30,7 @@
     "@angular/platform-browser-dynamic": "16.2.6",
     "@angular/router": "16.2.6",
     "@auth0/angular-jwt": "5.1.2",
+    "@authenio/samlify-node-xmllint": "2.0.0",
     "@aws-sdk/client-s3": "3.398.0",
     "@babel/runtime": "7.22.11",
     "@bull-board/api": "5.9.1",
@@ -137,6 +138,7 @@
     "redlock": "5.0.0-beta.2",
     "rss-parser": "3.13.0",
     "rxjs": "7.8.1",
+    "samlify": "2.8.10",
     "shade-generator": "1.2.7",
     "soap": "1.0.0",
     "sqlite3": "5.1.6",
@@ -168,6 +170,7 @@
     "@ngrx/eslint-plugin": "16.0.1",
     "@nx/angular": "17.0.2",
     "@nx/esbuild": "17.0.2",
+    "@nx/eslint": "17.0.2",
     "@nx/eslint-plugin": "17.0.2",
     "@nx/jest": "17.0.2",
     "@nx/js": "17.0.2",
@@ -241,11 +244,9 @@
     "typescript": "5.1.6",
     "verdaccio": "5.26.1",
     "wait-on": "7.0.1",
-    "webpack-ignore-dynamic-require": "1.0.0",
-    "@nx/eslint": "17.0.2"
+    "webpack-ignore-dynamic-require": "1.0.0"
   },
   "nx": {
     "includedScripts": []
   }
 }
-

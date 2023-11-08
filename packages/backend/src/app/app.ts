@@ -65,6 +65,7 @@ import { signingKeyModule } from './ee/signing-key/signing-key-module'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
 import { pieceMetadataServiceHooks } from './pieces/piece-metadata-service/hooks'
 import { enterprisePieceMetadataServiceHooks } from './ee/pieces/enterprise-piece-metadata-service-hooks'
+import { authnSsoSamlModule } from './ee/authentication/sso/saml/authn-sso-saml-module'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -201,6 +202,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(customDomainModule)
             await app.register(signingKeyModule)
             await app.register(managedAuthnModule)
+            await app.register(authnSsoSamlModule)
             chatbotHooks.setHooks(cloudChatbotHooks)
             datasourceHooks.setHooks(cloudDatasourceHooks)
             embeddings.set(qdrantEmbeddings)
@@ -218,6 +220,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(platformModule)
             await app.register(signingKeyModule)
             await app.register(managedAuthnModule)
+            await app.register(authnSsoSamlModule)
             pieceServiceHooks.set(cloudPieceServiceHooks)
             authenticationServiceHooks.set(enterpriseAuthenticationServiceHooks)
             pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
