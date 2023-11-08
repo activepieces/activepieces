@@ -5,7 +5,7 @@ import { nanoid } from 'nanoid'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { SeekPage, deleteProps } from '@activepieces/shared'
-import { decryptObject, encryptString } from '../../helper/encryption'
+import {  decryptString, encryptString } from '../../helper/encryption'
 
 const oauthRepo = databaseConnection.getRepository(OAuthAppEntity)
 
@@ -19,7 +19,7 @@ export const oauthAppService = {
         const oauthApp = await oauthRepo.findOneByOrFail({ platformId, pieceName, clientId })
         return {
             ...oauthApp,
-            clientSecret: decryptObject<string>(oauthApp.clientSecret),
+            clientSecret: decryptString(oauthApp.clientSecret),
         }
     },
     async list({ request, platformId }: { platformId: string, request: ListOAuth2AppRequest }): Promise<SeekPage<OAuthApp>> {

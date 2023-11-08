@@ -70,6 +70,15 @@ export function decryptObject<T>(encryptedObject: EncryptedObject): T {
     decrypted += decipher.final('utf8')
     return JSON.parse(decrypted)
 }
+export function decryptString(encryptedObject: EncryptedObject): string {
+    const iv = Buffer.from(encryptedObject.iv, 'hex')
+    const key = Buffer.from(secret!, 'binary')
+    const decipher = crypto.createDecipheriv(algorithm, key, iv)
+    let decrypted = decipher.update(encryptedObject.data, 'hex', 'utf8')
+    decrypted += decipher.final('utf8')
+    return decrypted
+}
+
 
 export function hashObject(object: Record<string, unknown>) {
     const algorithm = 'sha256'
