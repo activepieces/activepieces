@@ -24,23 +24,30 @@ export const sendyAuth = PieceAuth.CustomAuth({
 			required    : true,
         }),
     },
-    // validate: async ({ auth }) => {
-	// 	try {
-	// 		const response = await getBrands(auth);
-    //         return {
-    //             valid : response.success,
-    //         }
-    //     } catch (e) {
-    //         return {
-    //             valid: false,
-    //             error: (e as Error)?.message
-    //         }
-    //     }
-    // },
+    validate: async ({ auth }) => {
+		try {
+			await validateAuth(auth);
+			return {
+				valid : true,
+			};
+		} catch (e) {
+			return {
+				valid : false,
+				error : (e as Error)?.message
+			};
+		}
+    },
     required : true
 });
 
-export async function sendyPostAPI(api: string, auth: StaticPropsValue<{ domain: ShortTextProperty<true>; apiKey: SecretTextProperty<true>; }>) {
+const validateAuth = async (auth: StaticPropsValue<{ domain: ShortTextProperty<true>; apiKey: SecretTextProperty<true>; }>) => {
+	const response = await getBrands(auth);
+	if (response.success !== true) {
+		throw new Error('Authentication failed. Please check your domain and API key and try again.');
+	}
+}
+
+const sendyPostAPI = async (api: string, auth: StaticPropsValue<{ domain: ShortTextProperty<true>; apiKey: SecretTextProperty<true>; }>) => {
 	const {apiKey, domain} = auth;
 	const request: HttpRequest = {
 		method : HttpMethod.POST,
@@ -52,17 +59,25 @@ export async function sendyPostAPI(api: string, auth: StaticPropsValue<{ domain:
 			api_key : apiKey,
 		},
 	};
-	return await httpClient.sendRequest(request);
+	const response = await httpClient.sendRequest(request);
+
+	let data = response.body;
+	let success = false;
+
+	// If the response is a JSON object, then we know that the request was successful
+	if (typeof data === 'object') {
+		data = Object.keys(data).map(key => data[key]);
+		success = true;
+	}
+
+	return {
+		success : success,
+		status  : response.status,
+		data    : data,
+	};
 }
 
 export async function getBrands(auth: StaticPropsValue<{ domain: ShortTextProperty<true>; apiKey: SecretTextProperty<true>; }>) {
-	const api      = '/api/brands/get-brands.php';
-	const response = await sendyPostAPI(api, auth);
-	const brands   = Object.keys(response.body).map(key => response.body[key]);
-
-	return {
-		success : response.status === 200,
-		status  : response.status,
-		data    : brands,
-	};
+	const api = '/api/brands/get-brands.php';
+	return sendyPostAPI(api, auth);
 }

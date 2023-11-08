@@ -1,5 +1,4 @@
-import { httpClient, HttpMethod, HttpRequest } from "@activepieces/pieces-common";
-import { createAction, Property } from "@activepieces/pieces-framework";
+import { createAction } from "@activepieces/pieces-framework";
 import { sendyAuth, getBrands } from "../common";
 
 export const getBrandsAction = createAction({
