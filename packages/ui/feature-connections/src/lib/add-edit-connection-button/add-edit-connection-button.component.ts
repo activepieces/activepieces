@@ -132,22 +132,27 @@ export class AddEditConnectionButtonComponent {
       .pipe(
         tap((limitExceeded) => {
           if (limitExceeded.exceeded) {
-            return this.dialogService.open(UpgradeDialogComponent, {
+            this.dialogService.open(UpgradeDialogComponent, {
               data: {
                 limitType: 'connections',
                 limit: limitExceeded.limit,
               },
             });
           }
-          const authDialogMap: Partial<Record<PropertyType, () => void>> = {
+          const authDialogMap: Record<
+            | PropertyType.OAUTH2
+            | PropertyType.SECRET_TEXT
+            | PropertyType.CUSTOM_AUTH
+            | PropertyType.BASIC_AUTH,
+            () => void
+          > = {
             [PropertyType.OAUTH2]: this.newOAuth2AuthenticationDialogProcess,
             [PropertyType.SECRET_TEXT]: this.openNewSecretKeyConnection,
             [PropertyType.CUSTOM_AUTH]: this.openNewCustomAuthConnection,
             [PropertyType.BASIC_AUTH]: this.openNewBasicAuthConnection,
           };
-
           const authDialog = authDialogMap[this.authProperty.type];
-          return authDialog?.call(this);
+          authDialog.call(this);
         })
       );
   }
@@ -170,6 +175,7 @@ export class AddEditConnectionButtonComponent {
         this.updateConnectionTap,
         map(() => void 0)
       );
+    this.cd.detectChanges();
   }
 
   private emitNewConnection(result: AppConnection) {
@@ -209,13 +215,14 @@ export class AddEditConnectionButtonComponent {
       .open(SecretTextConnectionDialogComponent, {
         data: dialogData,
       })
-      .afterClosed()
+      .beforeClosed()
       .pipe(
         this.updateConnectionTap,
         map(() => {
           return void 0;
         })
       );
+    this.cd.detectChanges();
   }
 
   private newOAuth2AuthenticationDialogProcess() {
@@ -264,6 +271,7 @@ export class AddEditConnectionButtonComponent {
           ),
           map(() => void 0)
         );
+      this.cd.detectChanges();
     }
   }
   private openNewOAuth2ConnectionDialog() {
