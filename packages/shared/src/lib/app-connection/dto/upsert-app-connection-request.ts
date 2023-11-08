@@ -28,6 +28,7 @@ export const UpsertPlatformOAuth2Request = Type.Object({
         scope: Type.String(),
         type: Type.Literal(AppConnectionType.PLATFORM_OAUTH2),
         token_url: Type.Optional(Type.String({})),
+        redirect_url: Type.String({}),
     }),
 })
 

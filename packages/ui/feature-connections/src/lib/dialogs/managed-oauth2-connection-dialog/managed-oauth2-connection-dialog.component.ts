@@ -14,6 +14,7 @@ import {
   UpsertCloudOAuth2Request,
   AppConnectionType,
   AppConnectionWithoutSensitiveData,
+  UpsertPlatformOAuth2Request,
 } from '@activepieces/shared';
 import deepEqual from 'deep-equal';
 import { AppConnectionsService, fadeInUp400ms } from '@activepieces/ui/common';
@@ -49,6 +50,7 @@ export type ManagedOAuth2ConnectionDialogData = {
   connectionType:
     | AppConnectionType.CLOUD_OAUTH2
     | AppConnectionType.PLATFORM_OAUTH2;
+  frontendUrl: string;
 };
 
 @Component({
@@ -77,7 +79,11 @@ export class ManagedOAuth2ConnectionDialogComponent implements OnInit {
   ) {
     this._managedOAuth2ConnectionPopupSettings = {
       auth_url: this.dialogData.pieceAuthProperty.authUrl,
-      redirect_url: 'https://secrets.activepieces.com/redirect',
+      redirect_url:
+        //TODO: decide whether redirect URL should be decided like this or some other way
+        this.dialogData.connectionType === AppConnectionType.PLATFORM_OAUTH2
+          ? this.dialogData.frontendUrl + '/redirect'
+          : 'https://secrets.activepieces.com/redirect',
       scope: this.dialogData.pieceAuthProperty.scope.join(' '),
       pkce: this.dialogData.pieceAuthProperty.pkce,
       extraParams: this.dialogData.pieceAuthProperty.extra || {},
@@ -135,31 +141,56 @@ export class ManagedOAuth2ConnectionDialogComponent implements OnInit {
       this.saveConnection(config);
     }
   }
-  constructConnection() {
+  constructConnection():
+    | UpsertCloudOAuth2Request
+    | UpsertPlatformOAuth2Request {
     const connectionName = this.dialogData.connectionToUpdate
       ? this.dialogData.connectionToUpdate.name
       : this.settingsForm.controls.name.value;
     const popupResponse = this.settingsForm.value.value!;
     const { tokenUrl } = this.getTokenAndUrl();
-    const newConnection: UpsertCloudOAuth2Request = {
-      appName: this.dialogData.pieceName,
-      type: AppConnectionType.CLOUD_OAUTH2,
-      value: {
-        token_url: tokenUrl,
-        code: popupResponse.code,
-        authorization_method:
-          this.dialogData.pieceAuthProperty.authorizationMethod,
-        code_challenge: popupResponse.code_challenge,
-        client_id: this._managedOAuth2ConnectionPopupSettings.client_id,
-        scope: this._managedOAuth2ConnectionPopupSettings.scope,
+    if (this.dialogData.connectionType === AppConnectionType.CLOUD_OAUTH2) {
+      const newConnection: UpsertCloudOAuth2Request = {
+        appName: this.dialogData.pieceName,
         type: AppConnectionType.CLOUD_OAUTH2,
-        props: this.dialogData.pieceAuthProperty.props
-          ? this.settingsForm.controls.props.value
-          : undefined,
-      },
-      name: connectionName,
-    };
-    return newConnection;
+        value: {
+          token_url: tokenUrl,
+          code: popupResponse.code,
+          authorization_method:
+            this.dialogData.pieceAuthProperty.authorizationMethod,
+          code_challenge: popupResponse.code_challenge,
+          client_id: this._managedOAuth2ConnectionPopupSettings.client_id,
+          scope: this._managedOAuth2ConnectionPopupSettings.scope,
+          type: AppConnectionType.CLOUD_OAUTH2,
+          props: this.dialogData.pieceAuthProperty.props
+            ? this.settingsForm.controls.props.value
+            : undefined,
+        },
+        name: connectionName,
+      };
+      return newConnection;
+    } else {
+      const newConnection: UpsertPlatformOAuth2Request = {
+        appName: this.dialogData.pieceName,
+        type: AppConnectionType.PLATFORM_OAUTH2,
+        value: {
+          token_url: tokenUrl,
+          code: popupResponse.code,
+          authorization_method:
+            this.dialogData.pieceAuthProperty.authorizationMethod,
+          code_challenge: popupResponse.code_challenge,
+          client_id: this._managedOAuth2ConnectionPopupSettings.client_id,
+          scope: this._managedOAuth2ConnectionPopupSettings.scope,
+          type: AppConnectionType.PLATFORM_OAUTH2,
+          props: this.dialogData.pieceAuthProperty.props
+            ? this.settingsForm.controls.props.value
+            : undefined,
+          redirect_url: this.dialogData.frontendUrl + '/redirect',
+        },
+        name: connectionName,
+      };
+      return newConnection;
+    }
   }
   createPropsFormGroup() {
     const controls: Record<string, FormControl> = {};
@@ -172,7 +203,9 @@ export class ManagedOAuth2ConnectionDialogComponent implements OnInit {
     }
     return controls;
   }
-  saveConnection(connection: UpsertCloudOAuth2Request): void {
+  saveConnection(
+    connection: UpsertCloudOAuth2Request | UpsertPlatformOAuth2Request
+  ): void {
     if (connection.value.code === this.FAKE_CODE) {
       this.dialogRef.close(connection);
       return;
@@ -188,9 +221,7 @@ export class ManagedOAuth2ConnectionDialogComponent implements OnInit {
       }),
       tap((connection) => {
         if (connection) {
-          this.store.dispatch(
-            appConnectionsActions.upsert({ connection: connection })
-          );
+          this.store.dispatch(appConnectionsActions.upsert({ connection }));
           this.dialogRef.close(connection);
         }
         this.loading = false;
@@ -220,7 +251,7 @@ export class ManagedOAuth2ConnectionDialogComponent implements OnInit {
   get cloudConnectionPopupSettings(): OAuth2PopupParams {
     const { authUrl } = this.getTokenAndUrl();
     return {
-      auth_url: authUrl!,
+      auth_url: authUrl,
       client_id: this._managedOAuth2ConnectionPopupSettings.client_id,
       extraParams: this.dialogData.pieceAuthProperty.extra || {},
       redirect_url: this._managedOAuth2ConnectionPopupSettings.redirect_url,
@@ -230,8 +261,8 @@ export class ManagedOAuth2ConnectionDialogComponent implements OnInit {
   }
 
   getTokenAndUrl() {
-    let authUrl = this.dialogData.pieceAuthProperty.authUrl!;
-    let tokenUrl = this.dialogData.pieceAuthProperty.tokenUrl!;
+    let authUrl = this.dialogData.pieceAuthProperty.authUrl;
+    let tokenUrl = this.dialogData.pieceAuthProperty.tokenUrl;
     if (this.dialogData.pieceAuthProperty.props) {
       Object.keys(this.dialogData.pieceAuthProperty.props).forEach((key) => {
         authUrl = authUrl.replaceAll(

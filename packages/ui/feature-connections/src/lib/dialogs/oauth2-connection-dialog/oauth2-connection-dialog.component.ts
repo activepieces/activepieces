@@ -48,7 +48,7 @@ export interface OAuth2ConnectionDialogData {
   pieceAuthProperty: OAuth2Property<boolean, OAuth2Props>;
   pieceName: string;
   connectionToUpdate?: AppConnectionWithoutSensitiveData;
-  serverUrl?: string;
+  redirectUrl: string;
 }
 
 @Component({
@@ -96,15 +96,10 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
       );
     const propsControls = this.createPropsFormGroup();
     this.settingsForm = this.fb.group({
-      redirect_url: new FormControl(
-        this.dialogData.serverUrl
-          ? `${this.dialogData.serverUrl}/redirect`
-          : '',
-        {
-          nonNullable: true,
-          validators: [Validators.required],
-        }
-      ),
+      redirect_url: new FormControl(this.dialogData.redirectUrl, {
+        nonNullable: true,
+        validators: [Validators.required],
+      }),
       client_secret: new FormControl('', {
         nonNullable: true,
         validators: [Validators.required],
@@ -151,10 +146,6 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
         this.dialogData.connectionToUpdate.name
       );
       this.settingsForm.controls.name.disable();
-      this.settingsForm.controls.redirect_url.disable();
-      this.settingsForm.controls.client_id.disable();
-      this.settingsForm.controls.client_secret.disable();
-      this.settingsForm.controls.props.disable();
       this.settingsForm.controls.value.setValue({ code: this.FAKE_CODE });
     }
   }

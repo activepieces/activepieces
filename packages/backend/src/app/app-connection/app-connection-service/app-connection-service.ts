@@ -186,6 +186,7 @@ const validateConnectionValue = async (
                     tokenUrl: connection.value.token_url!,
                     authorizationMethod: connection.value.authorization_method,
                     codeVerifier: connection.value.code_challenge,
+                    redirectUrl: connection.value.redirect_url,
                 },
             })
         case AppConnectionType.CLOUD_OAUTH2:
