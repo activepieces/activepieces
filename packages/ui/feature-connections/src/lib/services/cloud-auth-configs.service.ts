@@ -2,40 +2,62 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, forkJoin, map, of, switchMap } from 'rxjs';
 import { FlagService, environment } from '@activepieces/ui/common';
-import { ApEdition, ApFlagId, SeekPage } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  AppConnectionType,
+  SeekPage,
+} from '@activepieces/shared';
 import { OAuthApp } from '@activepieces/ee-shared';
-import { returnEmptyRecordInCaseErrorOccurs } from '../add-edit-connection-button/utils';
+import {
+  PieceOAuth2DetailsMap,
+  handleErrorForGettingPiecesOAuth2Details,
+} from '../add-edit-connection-button/utils';
 
-type AppsClientIdMap = { [appName: string]: { clientId: string } };
 @Injectable({
   providedIn: 'root',
 })
 export class CloudAuthConfigsService {
   constructor(private http: HttpClient, private flagsService: FlagService) {}
-  getAppsAndTheirClientIds(): Observable<AppsClientIdMap> {
+  getAppsAndTheirClientIds(): Observable<PieceOAuth2DetailsMap> {
     return this.flagsService.getAllFlags().pipe(
       switchMap((flags) => {
         const edition = flags[ApFlagId.EDITION] as ApEdition;
         const CLOUD_AUTH_ENABLED = flags[ApFlagId.CLOUD_AUTH_ENABLED];
-        const platformAuth$: Observable<AppsClientIdMap> = this.http
+        const platformAuth$: Observable<PieceOAuth2DetailsMap> = this.http
           .get<SeekPage<OAuthApp>>(environment.apiUrl + '/oauth-apps')
           .pipe(
             map((res) => {
-              const platformAppsClientIdMap: AppsClientIdMap = {};
+              const platformAppsClientIdMap: PieceOAuth2DetailsMap = {};
               res.data.forEach((app) => {
                 platformAppsClientIdMap[app.pieceName] = {
                   clientId: app.clientId,
+                  connectionType: AppConnectionType.PLATFORM_OAUTH2,
                 };
               });
               return platformAppsClientIdMap;
             }),
-            returnEmptyRecordInCaseErrorOccurs
+            handleErrorForGettingPiecesOAuth2Details
           );
 
-        const cloudAuth$ = this.http.get<AppsClientIdMap>(
-          'https://secrets.activepieces.com/apps?edition=' + edition
-        );
-        const both$: Observable<AppsClientIdMap> = forkJoin({
+        const cloudAuth$ = this.http
+          .get<{ [pieceName: string]: { clientId: string } }>(
+            'https://secrets.activepieces.com/apps?edition=' + edition
+          )
+          .pipe(
+            map((res) => {
+              const cloudManagedOAuth2Apps: PieceOAuth2DetailsMap = {};
+              Object.entries(res).forEach(([pieceName, value]) => {
+                cloudManagedOAuth2Apps[pieceName] = {
+                  clientId: value.clientId,
+                  connectionType: AppConnectionType.CLOUD_OAUTH2,
+                };
+              });
+              return cloudManagedOAuth2Apps;
+            }),
+            handleErrorForGettingPiecesOAuth2Details
+          );
+        const both$: Observable<PieceOAuth2DetailsMap> = forkJoin({
           cloudAuth: cloudAuth$,
           platformAuth: platformAuth$,
         }).pipe(
