@@ -43,20 +43,20 @@ import {
   OAuth2ConnectionDialogData,
   USE_CLOUD_CREDENTIALS,
 } from '../dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component';
-import {
-  CloudOAuth2ConnectionDialogComponent,
-  USE_MY_OWN_CREDENTIALS,
-} from '../dialogs/cloud-oauth2-connection-dialog/cloud-oauth2-connection-dialog.component';
+
 import { BuilderSelectors } from '@activepieces/ui/feature-builder-store';
 import {
   BillingService,
   UpgradeDialogComponent,
 } from '@activepieces/ee-billing-ui';
 import {
-  checkIfPieceHasAppWebhook,
+  checkIfTriggerIsAppWebhook,
   getConnectionNameFromInterpolatedString,
-  returnEmptyRecordInCaseErrorOccurs,
 } from './utils';
+import {
+  ManagedOAuth2ConnectionDialogComponent,
+  USE_MY_OWN_CREDENTIALS,
+} from '../dialogs/managed-oauth2-connection-dialog/managed-oauth2-connection-dialog.component';
 
 @Component({
   selector: 'app-add-edit-connection-button',
@@ -67,9 +67,8 @@ import {
 export class AddEditConnectionButtonComponent {
   @Input()
   btnSize: 'extraSmall' | 'small' | 'medium' | 'large' | 'default';
-  checkingOAuth2CloudManager$: BehaviorSubject<boolean> = new BehaviorSubject(
-    false
-  );
+  checkingOAuth2ManagedConnections$: BehaviorSubject<boolean> =
+    new BehaviorSubject(false);
   @Input()
   authProperty:
     | OAuth2Property<boolean, OAuth2Props>
@@ -101,7 +100,7 @@ export class AddEditConnectionButtonComponent {
   }> = new EventEmitter();
   updateOrAddConnectionDialogClosed$: Observable<void>;
   checkConnectionLimit$: Observable<{ limit: number; exceeded: boolean }>;
-  cloudAuthCheck$: Observable<void>;
+  managedOAuth2Check$: Observable<void>;
   updateConnectionTap = tap((connection: AppConnection | null) => {
     if (connection) {
       this.emitNewConnection(connection);
@@ -226,14 +225,13 @@ export class AddEditConnectionButtonComponent {
   }
 
   private newOAuth2AuthenticationDialogProcess() {
-    if (!this.checkingOAuth2CloudManager$.value) {
-      this.checkingOAuth2CloudManager$.next(true);
-      this.cloudAuthCheck$ = this.cloudAuthConfigsService
+    if (!this.checkingOAuth2ManagedConnections$.value) {
+      this.checkingOAuth2ManagedConnections$.next(true);
+      this.managedOAuth2Check$ = this.cloudAuthConfigsService
         .getAppsAndTheirClientIds()
         .pipe(
-          returnEmptyRecordInCaseErrorOccurs,
           tap(() => {
-            this.checkingOAuth2CloudManager$.next(false);
+            this.checkingOAuth2ManagedConnections$.next(false);
           }),
           map((res) => {
             return res[this.pieceName];
@@ -243,7 +241,7 @@ export class AddEditConnectionButtonComponent {
               .getPieceMetadata(this.pieceName, this.pieceVersion)
               .pipe(
                 map((p) => {
-                  const isTriggerAppWebhook = checkIfPieceHasAppWebhook(
+                  const isTriggerAppWebhook = checkIfTriggerIsAppWebhook(
                     p,
                     this.triggerName
                   );
@@ -298,13 +296,12 @@ export class AddEditConnectionButtonComponent {
                   typeof result === 'string' &&
                   result === USE_CLOUD_CREDENTIALS
                 ) {
-                  this.checkingOAuth2CloudManager$.next(true);
-                  this.cloudAuthCheck$ = this.cloudAuthConfigsService
+                  this.checkingOAuth2ManagedConnections$.next(true);
+                  this.managedOAuth2Check$ = this.cloudAuthConfigsService
                     .getAppsAndTheirClientIds()
                     .pipe(
-                      returnEmptyRecordInCaseErrorOccurs,
                       tap(() => {
-                        this.checkingOAuth2CloudManager$.next(false);
+                        this.checkingOAuth2ManagedConnections$.next(false);
                       }),
                       map((res) => {
                         return res[this.pieceName];
@@ -333,7 +330,7 @@ export class AddEditConnectionButtonComponent {
     isTriggerAppWebhook: boolean
   ) {
     this.updateOrAddConnectionDialogClosed$ = this.dialogService
-      .open(CloudOAuth2ConnectionDialogComponent, {
+      .open(ManagedOAuth2ConnectionDialogComponent, {
         data: {
           pieceAuthProperty: this.authProperty,
           pieceName: this.pieceName,
@@ -476,17 +473,17 @@ export class AddEditConnectionButtonComponent {
               map(() => void 0)
             );
         } else {
-          if (!this.checkingOAuth2CloudManager$.value) {
-            this.checkingOAuth2CloudManager$.next(true);
+          if (!this.checkingOAuth2ManagedConnections$.value) {
+            this.checkingOAuth2ManagedConnections$.next(true);
           }
           return this.cloudAuthConfigsService.getAppsAndTheirClientIds().pipe(
             tap(() => {
-              this.checkingOAuth2CloudManager$.next(false);
+              this.checkingOAuth2ManagedConnections$.next(false);
             }),
             switchMap((res) => {
               const clientId = res[this.pieceName].clientId;
               return this.dialogService
-                .open(CloudOAuth2ConnectionDialogComponent, {
+                .open(ManagedOAuth2ConnectionDialogComponent, {
                   data: {
                     connectionToUpdate: connection,
                     pieceAuthProperty: this.authProperty,

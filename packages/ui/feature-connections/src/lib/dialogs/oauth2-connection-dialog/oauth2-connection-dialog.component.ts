@@ -13,7 +13,6 @@ import { catchError, map, Observable, of, take, tap } from 'rxjs';
 import {
   AppConnectionType,
   AppConnectionWithoutSensitiveData,
-  OAuth2AppConnection,
   UpsertOAuth2Request,
 } from '@activepieces/shared';
 import {
@@ -48,8 +47,8 @@ export const USE_CLOUD_CREDENTIALS = 'USE_CLOUD_CREDENTIALS';
 export interface OAuth2ConnectionDialogData {
   pieceAuthProperty: OAuth2Property<boolean, OAuth2Props>;
   pieceName: string;
-  connectionToUpdate?: OAuth2AppConnection;
-  serverUrl: string;
+  connectionToUpdate?: AppConnectionWithoutSensitiveData;
+  serverUrl?: string;
 }
 
 @Component({
@@ -151,24 +150,10 @@ export class OAuth2ConnectionDialogComponent implements OnInit {
       this.settingsForm.controls.name.setValue(
         this.dialogData.connectionToUpdate.name
       );
-      this.settingsForm.controls.client_id.setValue(
-        this.dialogData.connectionToUpdate.value.client_id
-      );
-      this.settingsForm.controls.client_secret.setValue(
-        this.dialogData.connectionToUpdate.value.client_secret
-      );
-      this.settingsForm.controls.redirect_url.setValue(
-        this.dialogData.connectionToUpdate.value.redirect_url
-      );
       this.settingsForm.controls.name.disable();
       this.settingsForm.controls.redirect_url.disable();
       this.settingsForm.controls.client_id.disable();
       this.settingsForm.controls.client_secret.disable();
-      this.dialogData.connectionToUpdate.value.props
-        ? this.settingsForm.controls.props.setValue(
-            this.dialogData.connectionToUpdate.value.props
-          )
-        : null;
       this.settingsForm.controls.props.disable();
       this.settingsForm.controls.value.setValue({ code: this.FAKE_CODE });
     }

@@ -12,7 +12,6 @@ import { Store } from '@ngrx/store';
 import { catchError, Observable, of, take, tap } from 'rxjs';
 import {
   UpsertCloudOAuth2Request,
-  CloudAuth2Connection,
   AppConnectionType,
   AppConnectionWithoutSensitiveData,
 } from '@activepieces/shared';
@@ -41,15 +40,26 @@ interface AuthConfigSettings {
 }
 
 export const USE_MY_OWN_CREDENTIALS = 'USE_MY_OWN_CREDENTIALS';
+export type ManagedOAuth2ConnectionDialogData = {
+  pieceAuthProperty: OAuth2Property<boolean, OAuth2Props>;
+  pieceName: string;
+  connectionToUpdate?: AppConnectionWithoutSensitiveData;
+  clientId: string;
+  isTriggerAppWebhook: boolean;
+  connectionType:
+    | AppConnectionType.CLOUD_OAUTH2
+    | AppConnectionType.PLATFORM_OAUTH2;
+};
+
 @Component({
-  selector: 'app-cloud-authentication-modal',
-  templateUrl: './cloud-oauth2-connection-dialog.component.html',
-  styleUrls: ['./cloud-oauth2-connection-dialog.component.scss'],
+  selector: 'app-managed-oauth2-modal',
+  templateUrl: './managed-oauth2-connection-dialog.component.html',
+  styleUrls: ['./managed-oauth2-connection-dialog.component.scss'],
   animations: [fadeInUp400ms],
 })
-export class CloudOAuth2ConnectionDialogComponent implements OnInit {
+export class ManagedOAuth2ConnectionDialogComponent implements OnInit {
   readonly FAKE_CODE = 'FAKE_CODE';
-  _cloudConnectionPopupSettings: OAuth2PopupParams;
+  _managedOAuth2ConnectionPopupSettings: OAuth2PopupParams;
   PropertyType = PropertyType;
   settingsForm: FormGroup<AuthConfigSettings>;
   loading = false;
@@ -59,19 +69,13 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private store: Store,
-    public dialogRef: MatDialogRef<CloudOAuth2ConnectionDialogComponent>,
+    public dialogRef: MatDialogRef<ManagedOAuth2ConnectionDialogComponent>,
     private appConnectionsService: AppConnectionsService,
     private snackbar: MatSnackBar,
     @Inject(MAT_DIALOG_DATA)
-    public dialogData: {
-      pieceAuthProperty: OAuth2Property<true, OAuth2Props>;
-      pieceName: string;
-      connectionToUpdate: CloudAuth2Connection | undefined;
-      clientId: string;
-      isTriggerAppWebhook: boolean;
-    }
+    public dialogData: ManagedOAuth2ConnectionDialogData
   ) {
-    this._cloudConnectionPopupSettings = {
+    this._managedOAuth2ConnectionPopupSettings = {
       auth_url: this.dialogData.pieceAuthProperty.authUrl,
       redirect_url: 'https://secrets.activepieces.com/redirect',
       scope: this.dialogData.pieceAuthProperty.scope.join(' '),
@@ -119,12 +123,6 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
         this.dialogData.connectionToUpdate.name
       );
       this.settingsForm.controls.name.disable();
-      if (this.dialogData.connectionToUpdate.value.props) {
-        this.settingsForm.controls.props.setValue(
-          this.dialogData.connectionToUpdate.value.props
-        );
-        this.settingsForm.controls.props.disable();
-      }
       this.settingsForm.controls.value.setValue({ code: this.FAKE_CODE });
     }
     this.settingsForm.controls.name.markAllAsTouched();
@@ -152,8 +150,8 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
         authorization_method:
           this.dialogData.pieceAuthProperty.authorizationMethod,
         code_challenge: popupResponse.code_challenge,
-        client_id: this._cloudConnectionPopupSettings.client_id,
-        scope: this._cloudConnectionPopupSettings.scope,
+        client_id: this._managedOAuth2ConnectionPopupSettings.client_id,
+        scope: this._managedOAuth2ConnectionPopupSettings.scope,
         type: AppConnectionType.CLOUD_OAUTH2,
         props: this.dialogData.pieceAuthProperty.props
           ? this.settingsForm.controls.props.value
@@ -223,9 +221,9 @@ export class CloudOAuth2ConnectionDialogComponent implements OnInit {
     const { authUrl } = this.getTokenAndUrl();
     return {
       auth_url: authUrl!,
-      client_id: this._cloudConnectionPopupSettings.client_id,
+      client_id: this._managedOAuth2ConnectionPopupSettings.client_id,
       extraParams: this.dialogData.pieceAuthProperty.extra || {},
-      redirect_url: this._cloudConnectionPopupSettings.redirect_url,
+      redirect_url: this._managedOAuth2ConnectionPopupSettings.redirect_url,
       pkce: this.dialogData.pieceAuthProperty.pkce,
       scope: this.dialogData.pieceAuthProperty.scope!.join(' '),
     };
