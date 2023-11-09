@@ -24,7 +24,7 @@ export const listSequences = createAction({
   description: 'Returns a list of all sequences',
   props: {},
   async run(context) {
-    return await fetchSequences(context.auth);
+    return fetchSequences(context.auth);
   },
 });
 

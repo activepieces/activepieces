@@ -24,7 +24,7 @@ export const listForms = createAction({
   description: 'Returns a list of all forms',
   props: {},
   async run(context) {
-    return await fetchForms(context.auth);
+    return fetchForms(context.auth);
   },
 });
 

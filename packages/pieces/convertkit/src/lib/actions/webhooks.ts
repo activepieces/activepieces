@@ -30,7 +30,7 @@ export const createWebhook = createAction({
       target_url: targetUrl,
     };
 
-    return await createWebhookAction(context.auth, payload);
+    return createWebhookAction(context.auth, payload);
   },
 });
 
@@ -44,6 +44,6 @@ export const deleteWebhook = createAction({
   },
   async run(context) {
     const { webhookId } = context.propsValue;
-    return await removeWebhookAction(context.auth, webhookId);
+    return removeWebhookAction(context.auth, webhookId);
   },
 });

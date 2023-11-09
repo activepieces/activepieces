@@ -36,7 +36,7 @@ export const getSubscriberById = createAction({
   },
   async run(context) {
     const { subscriberId } = context.propsValue;
-    return await fetchSubscriperById(context.auth, subscriberId);
+    return fetchSubscriperById(context.auth, subscriberId);
   },
 });
 
@@ -50,7 +50,7 @@ export const getSubscriberByEmail = createAction({
   },
   async run(context) {
     const { email_address } = context.propsValue;
-    return await fetchSubscriberByEmail(context.auth, email_address);
+    return fetchSubscriberByEmail(context.auth, email_address);
   },
 });
 
@@ -197,7 +197,7 @@ export const listTagsBySubscriberId = createAction({
   },
   async run(context) {
     const { subscriberId } = context.propsValue;
-    return await fetchSubscribedTags(context.auth, subscriberId);
+    return fetchSubscribedTags(context.auth, subscriberId);
   },
 });
 
@@ -215,6 +215,6 @@ export const listSubscriberTagsByEmail = createAction({
       context.auth,
       email_address
     );
-    return await fetchSubscribedTags(context.auth, subscriberId.id);
+    return fetchSubscribedTags(context.auth, subscriberId.id);
   },
 });

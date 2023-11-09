@@ -41,7 +41,7 @@ export const listPurchases = createAction({
   },
   async run(context) {
     const page = context.propsValue.page || 1;
-    return await fetchPurchases(context.auth, page);
+    return fetchPurchases(context.auth, page);
   },
 });
 

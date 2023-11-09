@@ -31,7 +31,7 @@ export const listTags = createAction({
   description: 'Returns a list of all tags',
   props: {},
   async run(context) {
-    return await fetchTags(context.auth);
+    return fetchTags(context.auth);
   },
 });
 
