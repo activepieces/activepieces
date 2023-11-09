@@ -66,8 +66,8 @@ export class PieceMetadataService {
   private clearCache$ = new Subject<void>();
   private edition$ = this.flagsService.getEdition();
   private piecesManifest$ = this.getPiecesMetadataIncludeHidden({
-    includeHidden: false
-  })
+    includeHidden: false,
+  });
   private piecesCache = new Map<string, Observable<PieceMetadataModel>>();
 
   public coreFlowItemsDetails: FlowItemDetails[] = [
@@ -106,7 +106,7 @@ export class PieceMetadataService {
     },
   ];
 
-  constructor(private http: HttpClient, private flagsService: FlagService) { }
+  constructor(private http: HttpClient, private flagsService: FlagService) {}
 
   private getCacheKey(pieceName: string, pieceVersion: string): string {
     return `${pieceName}-${pieceVersion}`;
@@ -269,7 +269,11 @@ export class PieceMetadataService {
     throw new Error("Step type isn't accounted for");
   }
 
-  getPiecesMetadataIncludeHidden({ includeHidden }: { includeHidden: boolean }) {
+  getPiecesMetadataIncludeHidden({
+    includeHidden,
+  }: {
+    includeHidden: boolean;
+  }) {
     return combineLatest([
       this.edition$,
       this.release$,
