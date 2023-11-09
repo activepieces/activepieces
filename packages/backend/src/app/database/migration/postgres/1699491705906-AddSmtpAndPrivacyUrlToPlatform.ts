@@ -36,10 +36,36 @@ export class AddSmtpAndPrivacyUrlToPlatform1699491705906 implements MigrationInt
             ALTER TABLE "platform"
             ADD "termsOfServiceUrl" character varying
         `)
-      
+
+        await queryRunner.query(`
+            ALTER TABLE "platform"
+            ALTER COLUMN "showPoweredBy" boolean NULL
+        `)
+        
+        await queryRunner.query(`
+            UPDATE "platform"
+            SET "showPoweredBy" = false
+        `)
+        
+        await queryRunner.query(`
+            ALTER TABLE "platform"
+            ALTER COLUMN "showPoweredBy" boolean NOT NULL
+        `)
+
+        await queryRunner.query(`
+            ALTER TABLE "platform"
+            ADD "cloudAuthEnabled" boolean NOT NULL DEFAULT true
+        `)
+
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`
+        ALTER TABLE "platform" DROP COLUMN "cloudAuthEnabled"
+    `)
+        await queryRunner.query(`
+        ALTER TABLE "platform" DROP COLUMN "showPoweredBy"
+    `)
         await queryRunner.query(`
             ALTER TABLE "platform" DROP COLUMN "termsOfServiceUrl"
         `)

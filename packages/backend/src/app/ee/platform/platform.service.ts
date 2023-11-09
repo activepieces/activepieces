@@ -18,6 +18,8 @@ export const platformService = {
             favIconUrl: favIconUrl ?? defaultTheme.logos.favIconUrl,
             filteredPieceNames: [],
             filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
+            showPoweredBy: false,
+            cloudAuthEnabled: true,
         }
 
         return await repo.save(newPlatform)
@@ -44,6 +46,7 @@ export const platformService = {
             ...spreadIfDefined('smtpUseSSL', params.smtpUseSSL),
             ...spreadIfDefined('privacyPolicyUrl', params.privacyPolicyUrl),
             ...spreadIfDefined('termsOfServiceUrl', params.termsOfServiceUrl),
+            ...spreadIfDefined('cloudAuthEnabled', params.cloudAuthEnabled),
         }
 
         return await repo.save(updatedPlatform)

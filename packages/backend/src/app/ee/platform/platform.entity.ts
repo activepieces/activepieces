@@ -67,6 +67,15 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             type: String,
             nullable: true,
         },
+        showPoweredBy: {
+            type: Boolean,
+            nullable: false,
+        },
+        cloudAuthEnabled: {
+            type: Boolean,
+            nullable: false,
+            default: true,
+        },
         filteredPieceNames: {
             type: ARRAY_COLUMN_TYPE,
             array: isPostgres(),

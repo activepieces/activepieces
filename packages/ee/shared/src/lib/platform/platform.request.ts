@@ -17,7 +17,8 @@ export const UpdatePlatformRequestBody = Type.Object({
     smtpSenderEmail: Type.Optional(Type.String()),
     smtpUseSSL: Type.Optional(Type.Boolean()),
     privacyPolicyUrl: Type.Optional(Type.String()),
-    termsOfServiceUrl: Type.Optional(Type.String())
+    termsOfServiceUrl: Type.Optional(Type.String()),
+    cloudAuthEnabled: Type.Optional(Type.Boolean()),
 })
 
 export type UpdatePlatformRequestBody = Static<typeof UpdatePlatformRequestBody>

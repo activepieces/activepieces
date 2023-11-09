@@ -25,7 +25,9 @@ export const Platform = Type.Object({
     smtpSenderEmail: Type.Optional(Type.String()),
     smtpUseSSL: Type.Optional(Type.Boolean()),
     privacyPolicyUrl: Type.Optional(Type.String()),
-    termsOfServiceUrl: Type.Optional(Type.String())
+    termsOfServiceUrl: Type.Optional(Type.String()),
+    cloudAuthEnabled: Type.Boolean(),
+    showPoweredBy: Type.Boolean(),
 })
 
 export type Platform = Static<typeof Platform>

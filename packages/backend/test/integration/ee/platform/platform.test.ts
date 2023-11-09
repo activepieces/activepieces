@@ -53,6 +53,7 @@ describe('Platform API', () => {
                     smtpUseSSL: true,
                     privacyPolicyUrl: 'updated privacy policy url',
                     termsOfServiceUrl: 'updated terms of service url',
+                    cloudAuthEnabled: false,
                 },
             })
 
@@ -80,6 +81,7 @@ describe('Platform API', () => {
             expect(responseBody.smtpUseSSL).toBe(true)
             expect(responseBody.privacyPolicyUrl).toBe('updated privacy policy url')
             expect(responseBody.termsOfServiceUrl).toBe('updated terms of service url')
+            expect(responseBody.cloudAuthEnabled).toBe(false)
         })
 
         it('fails if user is not owner', async () => {
