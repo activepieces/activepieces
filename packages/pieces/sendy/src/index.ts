@@ -5,6 +5,7 @@ import { getBrandsAction } from "./lib/actions/get-brands";
 import { getListsAction } from "./lib/actions/get-lists";
 import { subscribeAction } from "./lib/actions/subscribe";
 import { unsubscribeAction } from "./lib/actions/unsubscribe";
+import { deleteAction } from "./lib/actions/delete";
 
 export const sendy = createPiece({
 	displayName             : "Sendy",
@@ -17,6 +18,7 @@ export const sendy = createPiece({
 		getListsAction,
 		subscribeAction,
 		unsubscribeAction,
+		deleteAction,
 	],
 	triggers: [],
 });

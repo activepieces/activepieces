@@ -1,17 +1,17 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
-import { unsubscribe } from "../api";
+import { deleteSubscriber } from "../api";
 import { buildListDropdown } from "../props";
 import { sendyAuth, SendyAuthType } from "../auth";
 
-export const unsubscribeAction = createAction({
-	name        : 'unsubscribe',
+export const deleteAction = createAction({
+	name        : 'deleteSubscriber',
 	auth        : sendyAuth,
-	displayName : 'Unsubscribe',
-	description : 'Unsubscribe a subscriber from a list',
+	displayName : 'Delete Subscriber',
+	description : 'Delete a subscriber from a list',
 	props       : {
 		list: Property.Dropdown({
 			displayName : 'List',
-			description : 'Select the list to unsubscribe from',
+			description : 'Select the list to delete from',
 			required    : true,
 			refreshers  : ['auth'],
 			options     : async ({auth}) => await buildListDropdown(auth as SendyAuthType),
@@ -23,9 +23,9 @@ export const unsubscribeAction = createAction({
 		}),
 	},
 	async run(context) {
-		return await unsubscribe(context.auth, {
-			list  : context.propsValue.list,
-			email : context.propsValue.email,
+		return await deleteSubscriber(context.auth, {
+			list_id : context.propsValue.list,
+			email   : context.propsValue.email,
 		});
 	},
 });

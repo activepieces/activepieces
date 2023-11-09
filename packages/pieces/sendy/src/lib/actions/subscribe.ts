@@ -1,5 +1,6 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
-import { subscribe, buildListDropdown } from "../common";
+import { subscribe } from "../api";
+import { buildListDropdown } from "../props";
 import { sendyAuth, SendyAuthType } from "../auth";
 
 export const subscribeAction = createAction({

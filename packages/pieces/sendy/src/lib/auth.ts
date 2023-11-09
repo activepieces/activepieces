@@ -1,5 +1,5 @@
 import { PieceAuth, Property } from "@activepieces/pieces-framework";
-import { getLists } from "./common";
+import { getLists } from "./api";
 
 export type SendyAuthType = {apiKey: string, domain: string, brandId: string}
 

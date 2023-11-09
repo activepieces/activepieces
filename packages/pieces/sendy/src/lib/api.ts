@@ -1,7 +1,7 @@
 import { httpClient, HttpMethod, HttpRequest } from "@activepieces/pieces-common";
 import { SendyAuthType } from "./auth";
 
-export type KeyValuePair = {[key: string]: string|boolean|undefined }
+type KeyValuePair = {[key: string]: string|boolean|undefined }
 
 const isSuccess = (text: string) => {
 	// The following terms are found in success messages from the Sendy API
@@ -57,40 +57,6 @@ const sendyPostAPI = async (
 	};
 }
 
-export async function buildBrandDropdown(auth: SendyAuthType) {
-	if (!auth) {
-		return {
-			options     : [],
-			disabled    : true,
-			placeholder : 'Please authenticate first',
-		};
-	}
-	const response = await getBrands(auth as SendyAuthType);
-	const options = response.data.map(brand => {
-		return { label: brand.name, value: brand.id }
-	});
-	return {
-		options: options,
-	};
-}
-
-export async function buildListDropdown(auth: SendyAuthType) {
-	if (!auth) {
-		return {
-			options     : [],
-			disabled    : true,
-			placeholder : 'Please authenticate first',
-		};
-	}
-	const response = await getLists(auth as SendyAuthType);
-	const options = response.data.map(list => {
-		return { label: list.name, value: list.id }
-	});
-	return {
-		options: options,
-	};
-}
-
 export async function getBrands(auth: SendyAuthType) {
 	const api = '/api/brands/get-brands.php';
 	return sendyPostAPI(api, auth);
@@ -110,5 +76,10 @@ export async function subscribe(auth : SendyAuthType, data: KeyValuePair ) {
 export async function unsubscribe(auth : SendyAuthType, data: KeyValuePair ) {
 	const api = '/unsubscribe';
 	data['boolean'] = "true"; // plain text response
+	return sendyPostAPI(api, auth, data);
+}
+
+export async function deleteSubscriber(auth : SendyAuthType, data: KeyValuePair ) {
+	const api = '/api/subscribers/delete.php';
 	return sendyPostAPI(api, auth, data);
 }
