@@ -46,6 +46,9 @@ export const uiEePlatformRoutes: Route[] = [
         data: {
           title: $localize`pieces`,
         },
+        resolve: {
+          platform: platformResolver,
+        },
       },
     ],
   },

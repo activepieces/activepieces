@@ -1,8 +1,9 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import {
+  BehaviorSubject,
   MonoTypeOperatorFunction,
   Observable,
-  Subject,
+  startWith,
   switchMap,
   tap,
 } from 'rxjs';
@@ -14,6 +15,9 @@ import {
 import { Platform } from '@activepieces/ee-shared';
 import { ActivatedRoute } from '@angular/router';
 import { PlatformService } from '../../platform.service';
+import { PiecesTableDataSource } from './pieces-table.datasource';
+import { FormControl } from '@angular/forms';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-pieces-table',
@@ -21,52 +25,62 @@ import { PlatformService } from '../../platform.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PiecesTableComponent implements OnInit {
+  displayedColumns=['displayName','action']
   title = $localize`Pieces`;
   saving$?: Observable<void>;
-  platform!: Platform;
-  status$: Subject<'Saved' | 'Saving'> = new Subject();
-  pieces$: Observable<PieceMetadataModelSummary[]>;
+  platform$!: BehaviorSubject<Platform>;
+  readonly pieceShownText = $localize `is now available to users`;
+  readonly pieceHiddenText = $localize `is now hidden from users`;
+  readonly showPieceTooltip = $localize`Show this piece to users`;
+  readonly hidePieceTooltip = $localize `Hide this piece from users`;
+  searchFormControl = new FormControl('',{nonNullable:true});
+  dataSource!:PiecesTableDataSource
   constructor(
     private authenticationService: AuthenticationService,
     private piecesService: PieceMetadataService,
     private route: ActivatedRoute,
-    private platformService: PlatformService
+    private platformService: PlatformService,
+    private matSnackbar:MatSnackBar
   ) {
+
     this.authenticationService.getPlatformId();
-    this.pieces$ = this.piecesService.getAllPiecesMetadata();
   }
   ngOnInit(): void {
-    this.platform = this.route.snapshot.data['platform'];
+    debugger;
+    this.platform$ = new BehaviorSubject(this.route.snapshot.data['platform'])
+    this.dataSource= new PiecesTableDataSource(this.piecesService,
+      this.searchFormControl.valueChanges.pipe(startWith('')),
+    );
   }
 
   togglePiece(piece: PieceMetadataModelSummary) {
-    const pieceIncluded = !!this.platform.filteredPieceNames.find(
+    const pieceIncluded = !!this.platform$.value.filteredPieceNames.find(
       (pn) => pn === piece.name
     );
     if (pieceIncluded) {
-      const newPiecesList = this.platform.filteredPieceNames.filter(
+      const newPiecesList = this.platform$.value.filteredPieceNames.filter(
         (pn) => pn !== piece.name
       );
-      this.platform = { ...this.platform, filteredPieceNames: newPiecesList };
+      this.platform$.next({ ...this.platform$.value, filteredPieceNames: newPiecesList });
     } else {
-      this.platform = {
-        ...this.platform,
-        filteredPieceNames: [...this.platform.filteredPieceNames, piece.name],
-      };
+      this.platform$.next({ ...this.platform$.value, filteredPieceNames: [...this.platform$.value.filteredPieceNames, piece.name] });
     }
-    this.status$.next('Saving');
-    const finishedSavingPipe: MonoTypeOperatorFunction<void> = tap(() =>
-      this.status$.next('Saved')
+
+    const finishedSavingPipe: MonoTypeOperatorFunction<void> = 
+    tap(() =>
+    {
+      this.matSnackbar.open(`${piece.displayName} ${pieceIncluded? this.pieceShownText:this.pieceHiddenText}`)
+    }
     );
     if (this.saving$) {
       this.saving$ = this.saving$.pipe(
         switchMap(() => {
-          return this.savePlatform(this.platform);
+          return this.savePlatform(this.platform$.value);
         }),
         finishedSavingPipe
       );
     } else {
-      this.saving$ = this.savePlatform(this.platform).pipe(finishedSavingPipe);
+      this.saving$ = this.savePlatform(this.platform$.value).pipe(finishedSavingPipe);
     }
   }
   savePlatform(platform: Platform) {
