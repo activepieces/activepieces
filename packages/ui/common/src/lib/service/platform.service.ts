@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Platform, UpdatePlatformRequestBody } from '@activepieces/ee-shared';
-import { environment } from '@activepieces/ui/common';
+import { environment } from '../environments/environment';
 
 @Injectable({
   providedIn: 'root',

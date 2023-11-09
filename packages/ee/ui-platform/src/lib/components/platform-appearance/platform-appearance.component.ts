@@ -13,8 +13,10 @@ import {
 import { validColorValidator } from 'ngx-colors';
 import { Platform, UpdatePlatformRequestBody } from '@activepieces/ee-shared';
 import { Observable, map, tap } from 'rxjs';
-import { PlatformService } from '../../platform.service';
-import { AuthenticationService } from '@activepieces/ui/common';
+import {
+  AuthenticationService,
+  PlatformService,
+} from '@activepieces/ui/common';
 import { ActivatedRoute } from '@angular/router';
 
 interface AppearanceForm {
