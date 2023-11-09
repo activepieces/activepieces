@@ -25,14 +25,15 @@
         <div [class.ap-pt-7.5]="((isInPlatformRoute$ | async) === false || (isInPlatformRoute$ | async) === undefined) &&
                                 ((isEmbedded$ | async) === undefined || (isEmbedded$ | async) === false)">
             <router-outlet></router-outlet>
-            <div class="ap-h-[70px] ap-w-full" #paddingForStickyNote>
+            <div *ngIf="showPoweredByAp$ | async" class="ap-h-[70px] ap-w-full" #paddingForStickyNote>
             </div>
         </div>
     </mat-sidenav-content>
 
 </mat-sidenav-container>
 
-<div class="ap-sticky  ap-bg-transparent  ap-bottom-0 ap-pb-5 ap-z-50 ap-mr-5 ap-ml-28">
+<div *ngIf="showPoweredByAp$ | async"
+    class="ap-sticky  ap-bg-transparent  ap-bottom-0 ap-pb-5 ap-z-50 ap-mr-5 ap-ml-28">
     <div class="ap-flex ap-justify-end  ap-bg-transparent">
         <ap-powered-by-activepieces></ap-powered-by-activepieces>
     </div>

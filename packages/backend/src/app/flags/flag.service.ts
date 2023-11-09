@@ -156,6 +156,12 @@ export const flagService = {
                 created,
                 updated,
             },
+            {
+                id: ApFlagId.SHOW_POWERED_BY_AP,
+                value: true,
+                created,
+                updated,
+            },
         )
 
         return flags
