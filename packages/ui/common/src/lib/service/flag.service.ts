@@ -23,6 +23,14 @@ export class FlagService {
     return this.flags$;
   }
 
+  getStringFlag(flag: ApFlagId): Observable<string> {
+    return this.getAllFlags().pipe(
+      map((value) => {
+        return value[flag] as string;
+      })
+    );
+  }
+
   isFirstSignIn() {
     return this.getAllFlags().pipe(
       map((value) => {

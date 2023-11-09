@@ -24,7 +24,7 @@ import { SystemProp } from '../helper/system/system-prop'
 import { StoreCodeInsideFlow1697969398200 } from './migration/common/1697969398200-store-code-inside-flow'
 import { AddPlatformToProject1698078715730 } from './migration/sqlite/1698078715730-add-platform-to-project'
 import { AddTerminationReasonSqlite31698323327318 } from './migration/sqlite/1698323327318-AddTerminationReason'
-import { AddExternalIdSqlite31698857968495 } from './migration/1698857968495-AddExternalIdSqlite3'
+import { AddExternalIdSqlite31698857968495 } from './migration/sqlite/1698857968495-AddExternalIdSqlite3'
 
 const getSqliteDatabaseFilePath = (): string => {
     const homeDirectoryPath = os.homedir()

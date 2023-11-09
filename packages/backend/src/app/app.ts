@@ -65,6 +65,8 @@ import { signingKeyModule } from './ee/signing-key/signing-key-module'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
 import { pieceMetadataServiceHooks } from './pieces/piece-metadata-service/hooks'
 import { enterprisePieceMetadataServiceHooks } from './ee/pieces/enterprise-piece-metadata-service-hooks'
+import { flagHooks } from './flags/flags.hooks'
+import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -209,6 +211,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             flowRunHooks.setHooks(cloudRunHooks)
             pieceServiceHooks.set(cloudPieceServiceHooks)
             pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
+            flagHooks.set(enterpriseFlagsHooks)
             initilizeSentry()
             break
         case ApEdition.ENTERPRISE:
@@ -221,6 +224,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             pieceServiceHooks.set(cloudPieceServiceHooks)
             authenticationServiceHooks.set(enterpriseAuthenticationServiceHooks)
             pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
+            flagHooks.set(enterpriseFlagsHooks)
             break
         case ApEdition.COMMUNITY:
             await app.register(authenticationModule)

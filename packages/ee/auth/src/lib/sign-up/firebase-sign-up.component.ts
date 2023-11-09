@@ -7,13 +7,14 @@ import {
 	containsNumber,
 	containsSpecialCharacter,
 	fadeInUp400ms,
+	FlagService,
 } from '@activepieces/ui/common';
 import { GoogleAuthProvider, GithubAuthProvider } from "@angular/fire/auth";
 import { FirebaseAuthService } from '../firebase-auth.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthenticationService } from '@activepieces/ui/common';
 import { Meta } from '@angular/platform-browser';
-import { ErrorCode, UserStatus } from '@activepieces/shared';
+import { ApFlagId, ErrorCode, UserStatus } from '@activepieces/shared';
 
 
 export interface UserInfo {
@@ -37,9 +38,12 @@ export class FirebaseSignUpComponent {
 	emailChanges$: Observable<void>;
 	isEmailDefined$: Observable<boolean>;
 	signInProvider$!: Observable<void>;
+	showAuthProviders$: Observable<boolean>;
+	privacyPolicyUrl$: Observable<string>;
+	termsOfServiceUrl$: Observable<string>;
 	saveReferreringUserId$!: Observable<void>;
 	alreadyRegisteredWithAnotherProvider = false;
-	constructor(private firebaseAuthService: FirebaseAuthService, private router: Router, private authService: AuthenticationService, private activatedRoute: ActivatedRoute, private meta: Meta) {
+	constructor(private firebaseAuthService: FirebaseAuthService, private router: Router, private authService: AuthenticationService, private activatedRoute: ActivatedRoute, private meta: Meta, private flagService: FlagService) {
 		this.meta.addTag({
 			name: "description",
 			content: "Create a free Activepieces account to automate your business. Activepieces is the best no-code business automation tool, a great alternative to Zapier or Workato."
@@ -52,6 +56,9 @@ export class FirebaseSignUpComponent {
 			}),
 			map(() => void 0)
 		);
+		this.showAuthProviders$ = this.flagService.isFlagEnabled(ApFlagId.SHOW_AUTH_PROVIDERS)
+		this.privacyPolicyUrl$ = this.flagService.getStringFlag(ApFlagId.PRIVACY_POLICY_URL)
+		this.termsOfServiceUrl$ = this.flagService.getStringFlag(ApFlagId.TERMS_OF_SERVICE_URL)
 
 		this.registrationForm = new FormGroup<UserInfo>({
 			firstName: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),

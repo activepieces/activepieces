@@ -11,45 +11,42 @@ import timezone from 'dayjs/plugin/timezone'
 import { projectService } from '../../../project/project-service'
 import { userService } from '../../../user/user-service'
 import { logger } from '../../../helper/logger'
-import { system } from '../../../helper/system/system'
-import { SystemProp } from '../../../helper/system/system-prop'
-import sendgrid from '@sendgrid/mail'
+import { emailService } from '../../helper/email/email-service'
 
 dayjs.extend(utc)
 dayjs.extend(timezone)
 
-const alertingEmails = [
+const alertingEmails: {
+    threshold: number
+    templateId: 'quota-50' | 'quota-90' | 'quota-100'
+    sendForDailyLimit: boolean
+}[] = [
     {
-        templateId: 'd-ff370bf352d940308714afdb37ea4b38',
+        templateId: 'quota-50',
         threshold: 50,
         sendForDailyLimit: false,
     },
     {
         threshold: 90,
-        templateId: 'd-2159eff164df4f7fac246f04420858a2',
+        templateId: 'quota-90',
         sendForDailyLimit: true,
     },
     {
         threshold: 100,
-        templateId: 'd-17ad40ee5ae34fc0914b8ce2648a393e',
+        templateId: 'quota-100',
         sendForDailyLimit: false,
     },
 ]
 
-const sendgridKey = system.get(SystemProp.SENDGRID_KEY)
-if (sendgridKey) {
-    sendgrid.setApiKey(sendgridKey)
-}
-
-function calculateThreshold(consumedTask: number, planTasks: number) {
+function calculateThreshold(consumedTask: number, planTasks: number): number {
     return Math.floor((consumedTask / planTasks) * 100)
 }
 
 async function sendEmail(user: UserMeta, thresholdEmail: {
     threshold: number
-    templateId: string
+    templateId: 'quota-50' | 'quota-90' | 'quota-100'
     sendForDailyLimit: boolean
-}, projectUsage: ProjectUsage) {
+}, projectUsage: ProjectUsage): Promise<void> {
     const project = await projectService.getOne(projectUsage.projectId)
     if (!project) {
         throw new Error(`Project with ID ${projectUsage.projectId} not found`)
@@ -65,19 +62,13 @@ async function sendEmail(user: UserMeta, thresholdEmail: {
         },
     }).catch((e) => logger.error(e, '[usageService#handleAlerts] telemetry.trackProject'))
 
-    sendgrid.send({
-        to: user.email,
-        from: {
-            email: 'notifications@activepieces.com',
-            name: 'Activepieces',
-        },
+    emailService.sendQuotaAlert({
         templateId: thresholdEmail.templateId,
-        dynamicTemplateData: {
-            plans_link: 'https://cloud.activepieces.com/plans',
-            first_name: user.firstName,
-            reset_date: formattedDate,
-        },
-    }).catch((e) => logger.error(e, '[usageService#handleAlerts] sendgrid.send'))
+        email: user.email,
+        projectId: project.id,
+        firstName: user.firstName,
+        resetDate: formattedDate,
+    }).catch((e) => logger.error(e, '[usageService#handleAlerts] emailService.send'))
 }
 
 // Function to handle alerts
@@ -89,14 +80,12 @@ async function handleAlerts({
     projectUsage: ProjectUsage
     projectPlan: ProjectPlan
     numberOfTasks: number
-}) {
+}): Promise<void> {
     const consumedTask = !isNil(projectPlan.tasksPerDay) ?
         projectUsage.consumedTasksToday :
         projectUsage.consumedTasks
 
-    const planTasks = !isNil(projectPlan.tasksPerDay) ?
-        projectPlan.tasksPerDay :
-        projectPlan.tasks
+    const planTasks = projectPlan.tasksPerDay ? projectPlan.tasksPerDay : projectPlan.tasks
 
     for (const emailTemplate of alertingEmails) {
         const threshold = calculateThreshold(consumedTask, planTasks)

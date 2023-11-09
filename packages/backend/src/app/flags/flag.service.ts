@@ -97,6 +97,18 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.PRIVACY_POLICY_URL,
+                value: 'https://www.activepieces.com/privacy',
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.TERMS_OF_SERVICE_URL,
+                value: 'https://www.activepieces.com/terms',
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.SIGN_UP_ENABLED,
                 value: system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false,
                 created,
