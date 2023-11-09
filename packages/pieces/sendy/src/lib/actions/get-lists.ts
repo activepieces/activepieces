@@ -23,8 +23,9 @@ export const getListsAction = createAction({
 		}),
 	},
 	async run(context) {
-		const hiddenTextValue = context.propsValue.includeHidden ? 'yes' : 'no';
-		return await getLists(context.auth, hiddenTextValue);
+		return await getLists(context.auth, {
+			include_hidden : context.propsValue.includeHidden ? 'yes' : 'no',
+		});
 	},
 });
 

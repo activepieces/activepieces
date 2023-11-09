@@ -19,11 +19,7 @@ const isSuccess = (text: string) => {
 	return terms.some(term => lowercase.includes(term.toLowerCase()));
 }
 
-const sendyPostAPI = async (
-		api  : string,
-		auth : SendyAuthType,
-		body : KeyValuePair = {},
-	) => {
+const sendyPostAPI = async (api: string, auth: SendyAuthType, body: KeyValuePair = {}) => {
 	const {apiKey, domain, brandId} = auth;
 
 	body["api_key"]  = apiKey;
@@ -62,9 +58,9 @@ export async function getBrands(auth: SendyAuthType) {
 	return sendyPostAPI(api, auth);
 }
 
-export async function getLists(auth : SendyAuthType, includeHidden = 'no' ) {
+export async function getLists(auth : SendyAuthType, data: KeyValuePair = {}) {
 	const api = '/api/lists/get-lists.php';
-	return sendyPostAPI(api, auth, { include_hidden : includeHidden });
+	return sendyPostAPI(api, auth, data);
 }
 
 export async function subscribe(auth : SendyAuthType, data: KeyValuePair ) {
@@ -92,5 +88,10 @@ export async function status(auth : SendyAuthType, data: KeyValuePair ) {
 
 export async function count(auth : SendyAuthType, data: KeyValuePair ) {
 	const api = '/api/subscribers/active-subscriber-count.php';
+	return sendyPostAPI(api, auth, data);
+}
+
+export async function createCampaign(auth : SendyAuthType, data: KeyValuePair ) {
+	const api = '/api/campaigns/create.php';
 	return sendyPostAPI(api, auth, data);
 }
