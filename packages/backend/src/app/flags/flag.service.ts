@@ -158,7 +158,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.SHOW_POWERED_BY_AP,
-                value: true,
+                value: false,
                 created,
                 updated,
             },
