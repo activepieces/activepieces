@@ -18,7 +18,7 @@ export const platformService = {
             favIconUrl: favIconUrl ?? defaultTheme.logos.favIconUrl,
             filteredPieceNames: [],
             filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
-            showPoweredBy: false,
+            showPoweredBy: true,
             cloudAuthEnabled: true,
         }
 

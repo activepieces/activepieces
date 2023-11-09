@@ -48,6 +48,16 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         favIconUrl: platform?.favIconUrl ?? faker.image.urlPlaceholder(),
         filteredPieceNames: platform?.filteredPieceNames ?? [],
         filteredPieceBehavior: platform?.filteredPieceBehavior ?? faker.helpers.enumValue(FilteredPieceBehavior),
+        smtpHost: platform?.smtpHost ?? faker.internet.domainName(),
+        smtpPort: platform?.smtpPort ?? faker.datatype.number(),
+        smtpUser: platform?.smtpUser ?? faker.internet.userName(),
+        smtpPassword: platform?.smtpPassword ?? faker.internet.password(),
+        smtpUseSSL: platform?.smtpUseSSL ?? faker.datatype.boolean(),
+        smtpSenderEmail: platform?.smtpSenderEmail ?? faker.internet.email(),
+        privacyPolicyUrl: platform?.privacyPolicyUrl ?? faker.internet.url(),
+        termsOfServiceUrl: platform?.termsOfServiceUrl ?? faker.internet.url(),
+        cloudAuthEnabled: platform?.cloudAuthEnabled ?? faker.datatype.boolean(),
+        showPoweredBy: platform?.showPoweredBy ?? faker.datatype.boolean(),
     }
 }
 

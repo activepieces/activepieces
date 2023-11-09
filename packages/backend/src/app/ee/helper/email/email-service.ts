@@ -46,7 +46,7 @@ export const emailService = {
         const project = await projectService.getOne(projectId)
         assertNotNullOrUndefined(project, 'project')
         if (!isNil(project.platformId)) {
-            // Don't Inform Project Owners, as it breaks white labeling
+            // Don't Inform the project users, as there should be a feature to manage billing by platform owners, If we send an emails to the project users It will confuse them since the email is not white labled.
             return
         }
         await sendEmail({
