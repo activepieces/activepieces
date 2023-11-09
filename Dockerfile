@@ -12,11 +12,10 @@ COPY .npmrc package.json package-lock.json ./
 RUN npm ci
 
 COPY . .
-RUN npx nx run-many --target=build --projects=backend,ui-core --skip-nx-cache
+RUN npx nx run-many --target=build --skip-nx-cache
 
 # Install backend production dependencies
-RUN cd dist/packages/backend && \
-    npm install --production --force
+RUN cd dist/packages/backend && npm install --production --force
 
 ### STAGE 2: Run ###
 FROM activepieces/ap-base:7 AS run
@@ -37,14 +36,16 @@ RUN apt-get update && \
 # Copy Nginx configuration template
 COPY packages/ui/core/nginx.${ENVIRONMENT}.conf /etc/nginx/nginx.conf
 
-COPY --from=build /usr/src/app/LICENSE /usr/src/app/LICENSE
+COPY --from=build /usr/src/app/LICENSE .
 
 # Copy Output files to appropriate directory from build stage
-COPY --from=build /usr/src/app/dist/ /usr/src/app/dist/
+COPY --from=build /usr/src/app/dist dist
 
 # Copy Output files to appropriate directory from build stage
-COPY --from=build /usr/src/app/packages/ /usr/src/app/packages/
+COPY --from=build /usr/src/app/packages packages
 
+# Install pieces dependencies for FILE source mode
+RUN for dir in dist/packages/pieces/*; do (cd "$dir" && npm i); done
 
 # Copy frontend files to Nginx document root directory from build stage
 COPY --from=build /usr/src/app/dist/packages/ui/core/ /usr/share/nginx/html/
@@ -52,8 +53,8 @@ COPY --from=build /usr/src/app/dist/packages/ui/core/ /usr/share/nginx/html/
 VOLUME [${AP_CACHE_PATH}, ${AP_PACKAGE_ARCHIVE_PATH}]
 
 # Set up entrypoint script
-COPY docker-entrypoint.sh /
-RUN chmod +x /docker-entrypoint.sh
-ENTRYPOINT ["/docker-entrypoint.sh"]
+COPY docker-entrypoint.sh .
+RUN chmod +x docker-entrypoint.sh
+ENTRYPOINT ["./docker-entrypoint.sh"]
 
 EXPOSE 80

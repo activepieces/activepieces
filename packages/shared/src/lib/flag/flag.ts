@@ -45,3 +45,11 @@ export enum ApFlagId {
     USER_CREATED = 'USER_CREATED',
     WEBHOOK_URL_PREFIX = 'WEBHOOK_URL_PREFIX',
 }
+
+export enum PiecesSource {
+    Aggregated = 'AGGREGATED',
+    Cloud = 'CLOUD',
+    Db = 'DB',
+    Default = Aggregated,
+    File = 'FILE'
+}

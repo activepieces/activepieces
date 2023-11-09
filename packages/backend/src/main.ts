@@ -2,7 +2,7 @@ import { system, validateEnvPropsOnStartup } from './app/helper/system/system'
 import { SystemProp } from './app/helper/system/system-prop'
 import { databaseConnection } from './app/database/database-connection'
 import { logger } from './app/helper/logger'
-import { ApEdition, ApEnvironment } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, PiecesSource } from '@activepieces/shared'
 import { seedDevData } from './app/database/seeds/dev-seeds'
 import { setupApp } from './app/app'
 import { FastifyInstance } from 'fastify'
@@ -28,11 +28,15 @@ The application started on ${system.get(SystemProp.FRONTEND_URL)}, as specified 
     `)
 
         const environemnt = system.get(SystemProp.ENVIRONMENT)
+        const piecesSource = system.get(SystemProp.PIECES_SOURCE) || PiecesSource.Default
         const pieces = process.env.AP_DEV_PIECES
 
         if (environemnt === ApEnvironment.DEVELOPMENT) {
             logger.warn(`[WARNING]: The application is running in ${environemnt} mode.`)
             logger.warn(`[WARNING]: This is only shows pieces specified in AP_DEV_PIECES ${pieces} environment variable.`)
+        }
+        else if (piecesSource !== PiecesSource.Default) {
+            logger.warn(`[WARNING]: Pieces will be loaded from source type ${piecesSource}`)
         }
 
         const edition = getEdition()
