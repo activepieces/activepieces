@@ -14,7 +14,7 @@ The following webhook trigger event types (https://developers.convertkit.com/#we
 
 ## No debounce in form fields
 
-I have not implmented a debounce in any form fields. This means that that calls to the ConvertKit API will be triggered on every keystroke for certain fields. This is not ideal, but I have not found a way to implement this in a way that works with the current implementation of the form fields in Activepieces. Keep in mind that the current rate limiting for ConvetrKit is 120 requests per minute.
+I have not implmented a debounce in any form fields. This means that calls to the ConvertKit API will be triggered on every keystroke for certain fields.
 
 I have raised an issue here: https://github.com/activepieces/activepieces/issues/3142
 
