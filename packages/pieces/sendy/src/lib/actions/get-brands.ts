@@ -1,5 +1,6 @@
 import { createAction } from "@activepieces/pieces-framework";
-import { sendyAuth, getBrands } from "../common";
+import { getBrands } from "../common";
+import { sendyAuth } from "../auth";
 
 export const getBrandsAction = createAction({
 	name        : 'get-brands',

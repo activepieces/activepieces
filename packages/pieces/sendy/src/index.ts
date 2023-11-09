@@ -1,8 +1,9 @@
 
 import { createPiece } from "@activepieces/pieces-framework";
-import { sendyAuth } from "./lib/common";
+import { sendyAuth } from "./lib/auth";
 import { getBrandsAction } from "./lib/actions/get-brands";
 import { getListsAction } from "./lib/actions/get-lists";
+import { subscribeAction } from "./lib/actions/subscribe";
 
 export const sendy = createPiece({
 	displayName             : "Sendy",
@@ -13,6 +14,7 @@ export const sendy = createPiece({
 	actions                 : [
 		getBrandsAction,
 		getListsAction,
+		subscribeAction,
 	],
 	triggers: [],
 });

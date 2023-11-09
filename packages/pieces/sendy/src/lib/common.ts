@@ -1,61 +1,30 @@
 import { httpClient, HttpMethod, HttpRequest } from "@activepieces/pieces-common";
-import { PieceAuth, Property, SecretTextProperty, ShortTextProperty, StaticPropsValue } from "@activepieces/pieces-framework";
+import { SendyAuthType } from "./auth";
 
-export type SendyAuthType = {apiKey: string, domain: string}
-
-const markdownDescription = `
-Your sendy domain should be the base URL of your Sendy installation. Example: https://sendy.example.com
-
-Follow these instructions to get your Sendy API Key:
-
-1. Visit the Settings page of your Sendy domain: _https://sendy-domain.com_/settings
-2. Once on the website, locate and click on the API Key and copy it.
-`;
-
-export const sendyAuth = PieceAuth.CustomAuth({
-    description: markdownDescription,
-    props: {
-        domain: Property.ShortText({
-			displayName : 'Sendy Domain',
-			description : 'The domain of your Sendy account',
-			required    : true,
-        }),
-        apiKey: PieceAuth.SecretText({
-			displayName : 'API Key',
-			description : 'The API key for your Sendy account',
-			required    : true,
-        }),
-    },
-    validate: async ({ auth }) => {
-		try {
-			await validateAuth(auth);
-			return {
-				valid : true,
-			};
-		} catch (e) {
-			return {
-				valid : false,
-				error : (e as Error)?.message
-			};
-		}
-    },
-    required : true
-});
-
-const validateAuth = async (auth: SendyAuthType) => {
-	const response = await getBrands(auth);
-	if (response.success !== true) {
-		throw new Error('Authentication failed. Please check your domain and API key and try again.');
-	}
+const isSuccess = (text: string) => {
+	// The following terms are found in success messages from the Sendy API
+	const terms = [
+		'created',
+		'scheduled',
+		'subscribed',
+		'unconfirmed',
+		'bounced',
+		'complained',
+		'true',
+	];
+	const lowercase = text.toLowerCase();
+	return terms.some(term => lowercase.includes(term.toLowerCase()));
 }
 
 const sendyPostAPI = async (
 		api  : string,
-		auth : StaticPropsValue<{ domain: ShortTextProperty<true>; apiKey: SecretTextProperty<true>; }>,
+		auth : SendyAuthType,
 		body : {[key: string]: string} = {},
 	) => {
-	const {apiKey, domain} = auth;
-	body["api_key"] = apiKey;
+	const {apiKey, domain, brandId} = auth;
+
+	body["api_key"]  = apiKey;
+	body["brand_id"] = brandId;
 
 	const request: HttpRequest = {
 		method  : HttpMethod.POST,
@@ -67,18 +36,21 @@ const sendyPostAPI = async (
 
 	let data    = [];
 	let success = false;
+	let text    = "Success";
 
 	// If the response is a JSON object, then we know that the request was successful
 	if (typeof response.body === 'object') {
 		data = Object.keys(response.body).map(key => response.body[key]);
 		success = true;
+	} else {
+		text = response.body as string;
+		if (isSuccess(text)) success = true;
 	}
 
 	return {
 		success : success,
-		status  : response.status,
+		text    : text,
 		data    : data,
-		error   : typeof response.body === 'object' ? "" : response.body as string,
 	};
 }
 
@@ -99,12 +71,29 @@ export async function buildBrandDropdown(auth: SendyAuthType) {
 	};
 }
 
+export async function buildListDropdown(auth: SendyAuthType) {
+	if (!auth) {
+		return {
+			options     : [],
+			disabled    : true,
+			placeholder : 'Please authenticate first',
+		};
+	}
+	const response = await getLists(auth as SendyAuthType);
+	const options = response.data.map(list => {
+		return { label: list.name, value: list.id }
+	});
+	return {
+		options: options,
+	};
+}
+
 export async function getBrands(auth: SendyAuthType) {
 	const api = '/api/brands/get-brands.php';
 	return sendyPostAPI(api, auth);
 }
 
-export async function getLists(auth : SendyAuthType, brandId = '1', includeHidden = 'no' ) {
+export async function getLists(auth : SendyAuthType, includeHidden = 'no' ) {
 	const api = '/api/lists/get-lists.php';
-	return sendyPostAPI(api, auth, { brand_id : brandId, include_hidden : includeHidden });
+	return sendyPostAPI(api, auth, { include_hidden : includeHidden });
 }
