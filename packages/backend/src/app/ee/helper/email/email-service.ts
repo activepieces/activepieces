@@ -97,7 +97,7 @@ async function sendEmail({ platformId, email, template }: { template: EmailTempl
     }
 
     await transporter.sendMail({
-        from: `${platform?.name} <${platform?.smtpSenderEmail ?? 'notifications@activepieces.com'}>`,
+        from: `${platform?.name ?? 'Activepieces'} <${platform?.smtpSenderEmail ?? 'notifications@activepieces.com'}>`,
         to: email,
         subject: templateToSubject[template.templateName],
         html: await renderTemplate({ platform, request: template }),

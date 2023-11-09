@@ -36,21 +36,20 @@ export class AddSmtpAndPrivacyUrlToPlatform1699491705906 implements MigrationInt
             ALTER TABLE "platform"
             ADD "termsOfServiceUrl" character varying
         `)
-
         await queryRunner.query(`
             ALTER TABLE "platform"
-            ALTER COLUMN "showPoweredBy" boolean NULL
+            ADD "showPoweredBy" boolean
         `)
-        
+
         await queryRunner.query(`
             UPDATE "platform"
             SET "showPoweredBy" = false
         `)
         
         await queryRunner.query(`
-            ALTER TABLE "platform"
-            ALTER COLUMN "showPoweredBy" boolean NOT NULL
-        `)
+        ALTER TABLE "platform"
+        ALTER COLUMN "showPoweredBy" SET NOT NULL
+    `)
 
         await queryRunner.query(`
             ALTER TABLE "platform"
