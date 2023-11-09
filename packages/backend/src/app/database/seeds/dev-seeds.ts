@@ -1,4 +1,4 @@
-import { ApEnvironment } from '@activepieces/shared'
+import { ApEnvironment, UserStatus } from '@activepieces/shared'
 import { authenticationService } from '../../authentication/authentication-service'
 import { logger } from '../../helper/logger'
 import { system } from '../../helper/system/system'
@@ -18,6 +18,7 @@ const seedDevUser = async (): Promise<void> => {
             lastName: 'lastName',
             trackEvents: false,
             newsLetter: false,
+            status: UserStatus.VERIFIED,
         })
     }
 
