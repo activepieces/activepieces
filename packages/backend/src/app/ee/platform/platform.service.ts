@@ -36,6 +36,14 @@ export const platformService = {
             ...spreadIfDefined('favIconUrl', params.favIconUrl),
             ...spreadIfDefined('filteredPieceNames', params.filteredPieceNames),
             ...spreadIfDefined('filteredPieceBehavior', params.filteredPieceBehavior),
+            ...spreadIfDefined('smtpHost', params.smtpHost),
+            ...spreadIfDefined('smtpPort', params.smtpPort),
+            ...spreadIfDefined('smtpUser', params.smtpUser),
+            ...spreadIfDefined('smtpPassword', params.smtpPassword),
+            ...spreadIfDefined('smtpSenderEmail', params.smtpSenderEmail),
+            ...spreadIfDefined('smtpUseSSL', params.smtpUseSSL),
+            ...spreadIfDefined('privacyPolicyUrl', params.privacyPolicyUrl),
+            ...spreadIfDefined('termsOfServiceUrl', params.termsOfServiceUrl),
         }
 
         return await repo.save(updatedPlatform)

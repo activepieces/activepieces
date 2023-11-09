@@ -35,6 +35,38 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             type: String,
             nullable: false,
         },
+        smtpHost: {
+            type: String,
+            nullable: true,
+        },
+        smtpPort: {
+            type: Number,
+            nullable: true,
+        },
+        smtpUser: {
+            type: String,
+            nullable: true,
+        },
+        smtpPassword: {
+            type: String,
+            nullable: true,
+        },
+        smtpSenderEmail: {
+            type: String,
+            nullable: true,
+        },
+        smtpUseSSL: {
+            type: Boolean,
+            nullable: true,
+        },
+        privacyPolicyUrl: {
+            type: String,
+            nullable: true,
+        },
+        termsOfServiceUrl: {
+            type: String,
+            nullable: true,
+        },
         filteredPieceNames: {
             type: ARRAY_COLUMN_TYPE,
             array: isPostgres(),

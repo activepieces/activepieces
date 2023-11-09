@@ -38,6 +38,29 @@ export const emailService = {
             },
         })
     },
+    async sendQuotaAlert({ email, projectId, resetDate, firstName, templateId }: { email: string, projectId: string, resetDate: string, firstName: string, templateId: 'quota-50' | 'quota-90' | 'quota-100' }): Promise<void> {
+        const edition = getEdition()
+        if (![ApEdition.CLOUD].includes(edition)) {
+            return
+        }
+        const project = await projectService.getOne(projectId)
+        assertNotNullOrUndefined(project, 'project')
+        if (!isNil(project.platformId)) {
+            // Don't Inform Project Owners, as it breaks white labeling
+            return
+        }
+        await sendEmail({
+            email,
+            platformId: project.platformId,
+            template: {
+                templateName: templateId,
+                data: {
+                    resetDate,
+                    firstName,
+                },
+            },
+        })
+    },
 }
 
 
@@ -68,6 +91,9 @@ async function sendEmail({ platformId, email, template }: { template: EmailTempl
     })
     const templateToSubject = {
         'invitation-email': 'You have been invited to a team',
+        'quota-50': '[ACTION REQUIRED] 50% of your Activepieces tasks are consumed',
+        'quota-90': '[URGENT] 90% of your Activepieces tasks are consumed',
+        'quota-100': '[URGENT] 100% of your Activepieces tasks are consumed',
     }
 
     await transporter.sendMail({
@@ -100,5 +126,11 @@ type EmailTemplate = {
     data: {
         projectName: string
         setupLink: string
+    }
+} | {
+    templateName: 'quota-50' | 'quota-90' | 'quota-100'
+    data: {
+        resetDate: string
+        firstName: string
     }
 }
