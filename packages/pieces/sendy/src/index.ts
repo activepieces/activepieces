@@ -16,3 +16,5 @@ export const sendy = createPiece({
 	],
 	triggers: [],
 });
+
+// Sendy APi docs: https://sendy.co/api
