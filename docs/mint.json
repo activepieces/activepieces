@@ -68,13 +68,15 @@
         "flows/building-flows",
         "flows/passing-data",
         "flows/publishing-flows",
-        "flows/debugging-runs"
+        "flows/debugging-runs",
+        "flows/code"
       ]
     },
     {
-      "group": "Core Pieces",
+      "group": "Security",
       "pages": [
-        "core-pieces/code"
+        "security/permissions",
+        "security/sso"
       ]
     },
     {
@@ -101,7 +103,6 @@
           ]
         },
         "install/architecture",
-        "install/editions",
         "install/enterprise"
       ]
     },
@@ -198,9 +199,10 @@
     {
       "group": "About",
       "pages": [
-        "telemetry",
-        "changelog",
-        "license"
+        "about/editions",
+        "about/changelog",
+        "about/telemetry",
+        "about/license"
       ]
     }
   ],

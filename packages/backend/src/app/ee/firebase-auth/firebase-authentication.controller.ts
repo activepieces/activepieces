@@ -1,10 +1,10 @@
 import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { cert, initializeApp } from 'firebase-admin/app'
-import { getAuth } from 'firebase-admin/auth'
+import { DecodedIdToken, getAuth } from 'firebase-admin/auth'
 import * as crypto from 'crypto'
 import { FirebaseSignInRequest, FirebaseSignUpRequest, Platform, PlatformId } from '@activepieces/ee-shared'
-import { PrincipalType, ActivepiecesError, ErrorCode, UserStatus, isNil, UserId, Project } from '@activepieces/shared'
+import { PrincipalType, ActivepiecesError, ErrorCode, UserStatus, isNil, UserId, Project, User } from '@activepieces/shared'
 import { AuthenticationResponse } from '@activepieces/shared'
 import { system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
@@ -35,7 +35,8 @@ export const firebaseAuthenticationController: FastifyPluginAsyncTypebox = async
         async (request: FastifyRequest<{ Body: FirebaseSignInRequest }>) => {
             try {
                 const verifiedToken = await firebaseAuth!.verifyIdToken(request.body.token)
-                const user = await userService.getOneByEmail({ email: verifiedToken.email! })
+                const user = await getUser({ email: verifiedToken.email!, decodedToken: verifiedToken })
+                await assertEmailIsVerifed({ user })
                 if (!isNil(user) && user.status !== UserStatus.SHADOW) {
                     const project = await getProjectByUser(user.id)
                     const platform = await getPlatform(project.platformId)
@@ -90,7 +91,7 @@ export const firebaseAuthenticationController: FastifyPluginAsyncTypebox = async
         async (request: FastifyRequest<{ Body: FirebaseSignUpRequest }>) => {
             try {
                 const verifiedToken = await firebaseAuth!.verifyIdToken(request.body.token)
-                const user = await userService.getOneByEmail({ email: verifiedToken.email! })
+                const user = await getUser({ email: verifiedToken.email!, decodedToken: verifiedToken })
                 const referringUserId = request.body.referringUserId
                 if (!isNil(user) && user.status !== UserStatus.SHADOW) {
                     const project = await getProjectByUser(user.id)
@@ -127,9 +128,13 @@ export const firebaseAuthenticationController: FastifyPluginAsyncTypebox = async
                 }
                 else {
                     const response = await authenticationService.signUp({
-                        ...request.body,
                         email: verifiedToken.email!,
+                        trackEvents: true,
+                        firstName: request.body.firstName,
+                        lastName: request.body.lastName,
+                        newsLetter: true,
                         password: crypto.randomBytes(32).toString('hex'),
+                        status: UserStatus.SHADOW,
                     })
                     if (!isNil(referringUserId)) {
                         await referralService.upsert({
@@ -137,7 +142,10 @@ export const firebaseAuthenticationController: FastifyPluginAsyncTypebox = async
                             referredUserId: response.id,
                         })
                     }
-                    return response
+                    return {
+                        ...response,
+                        token: undefined,
+                    }
                 }
             }
             catch (e) {
@@ -152,6 +160,29 @@ export const firebaseAuthenticationController: FastifyPluginAsyncTypebox = async
 
 }
 
+async function getUser({ decodedToken, email }: { decodedToken: DecodedIdToken, email: string }): Promise<User | null> {
+    const user = await userService.getOneByEmail({ email })
+    if (decodedToken.email_verified && !isNil(user) && user.status === UserStatus.SHADOW) {
+        return userService.verify({ userId: user.id })
+    }
+    if (!decodedToken.email_verified && user?.status === UserStatus.VERIFIED) {
+        await firebaseAuth?.updateUser(decodedToken.uid, { emailVerified: true })
+    }
+    return user
+}
+
+
+async function assertEmailIsVerifed({
+    user,
+}: { user: User | null }): Promise<void> {
+    if (user?.status === UserStatus.SHADOW) {
+        throw new ActivepiecesError({
+            code: ErrorCode.EMAIL_IS_NOT_VERFIED,
+            params: { email: user.email },
+        })
+    }
+
+}
 
 const getProjectByUser = async (userId: UserId): Promise<Project> => {
     const userProjects = await enterpriseProjectService.getAll({

@@ -19,6 +19,7 @@ interface DnsRecord {
 })
 export class PlatformSettingsComponent {
   formGroup: FormGroup<PlatformSettingsForm>;
+  title = $localize`Settings`;
   records: DnsRecord[] = [
     {
       type: 'TXT',

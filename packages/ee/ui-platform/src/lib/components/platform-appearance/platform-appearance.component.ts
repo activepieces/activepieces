@@ -12,9 +12,13 @@ import {
 } from '@angular/forms';
 import { validColorValidator } from 'ngx-colors';
 import { Platform, UpdatePlatformRequestBody } from '@activepieces/ee-shared';
-import { Observable, map, tap } from 'rxjs';
-import { PlatformService } from '../../platform.service';
-import { AuthenticationService } from '@activepieces/ui/common';
+import { Observable, map, of, tap } from 'rxjs';
+import {
+  AuthenticationService,
+  FlagService,
+  PlatformService,
+} from '@activepieces/ui/common';
+import { ActivatedRoute } from '@angular/router';
 
 interface AppearanceForm {
   name: FormControl<string>;
@@ -34,12 +38,17 @@ export class PlatformAppearanceComponent implements OnInit {
   formGroup: FormGroup<AppearanceForm>;
   loading = false;
   updatePlatform$?: Observable<void>;
+  showPoweredByAp$: Observable<boolean> = of(false);
+  title = $localize`Appearance`;
   @Input({ required: true }) platform!: Platform;
   constructor(
     private fb: FormBuilder,
     private platformService: PlatformService,
-    private authenticationService: AuthenticationService
+    private authenticationService: AuthenticationService,
+    private route: ActivatedRoute,
+    private flagService: FlagService
   ) {
+    this.showPoweredByAp$ = this.flagService.getShowPoweredByAp();
     this.formGroup = this.fb.group({
       name: this.fb.control(
         {
@@ -95,6 +104,7 @@ export class PlatformAppearanceComponent implements OnInit {
     });
   }
   ngOnInit(): void {
+    this.platform = this.route.snapshot.data['platform'];
     this.formGroup.patchValue({
       ...this.platform,
       pickerCtrl: this.platform.primaryColor,

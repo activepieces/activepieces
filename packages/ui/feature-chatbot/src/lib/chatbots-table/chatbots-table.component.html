@@ -1,6 +1,6 @@
 <div class="ap-w-full ap-h-full ap-px-[30px] ap-pt-[50px]">
   <div class="ap-h-full">
-    <ap-page-title title="Chatbots" [isBeta]="true"></ap-page-title>
+    <ap-page-title [title]="title" [isBeta]="true"></ap-page-title>
 
     <div class="ap-min-h-[70%]">
       <table mat-table [dataSource]="dataSource" class="ap-w-[100%]" aria-label="Chatbots">
@@ -12,8 +12,8 @@
         <ng-container matColumnDef="action">
           <th mat-header-cell *matHeaderCellDef class="!ap-text-center">
             <div class="ap-flex ap-justify-end">
-              <ap-button btnColor="primary" btnSize="small" (buttonClicked)="createChatbot()" i18n>
-                Create Chatbot
+              <ap-button btnColor="primary" btnSize="medium" (buttonClicked)="createChatbot()" i18n>
+                + New Chatbot
               </ap-button>
             </div>
           </th>

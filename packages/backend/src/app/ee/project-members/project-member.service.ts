@@ -107,6 +107,9 @@ export const projectMemberService = {
         await projectMemberRepo.update(projectMember.id, {
             status: ProjectMemberStatus.ACTIVE,
         })
+        await userService.verify({
+            userId: projectMember.userId,
+        })
         return {
             ...projectMember,
             status: ProjectMemberStatus.ACTIVE,
