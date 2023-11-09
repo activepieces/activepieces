@@ -79,7 +79,13 @@ export async function unsubscribe(auth : SendyAuthType, data: KeyValuePair ) {
 	return sendyPostAPI(api, auth, data);
 }
 
+// delete is a reserved word
 export async function deleteSubscriber(auth : SendyAuthType, data: KeyValuePair ) {
 	const api = '/api/subscribers/delete.php';
+	return sendyPostAPI(api, auth, data);
+}
+
+export async function status(auth : SendyAuthType, data: KeyValuePair ) {
+	const api = '/api/subscribers/subscription-status.php';
 	return sendyPostAPI(api, auth, data);
 }
