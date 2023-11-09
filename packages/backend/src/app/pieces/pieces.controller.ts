@@ -38,6 +38,7 @@ export const piecesController: FastifyPluginAsyncTypebox = async (app) => {
         const edition = req.query.edition ?? ApEdition.COMMUNITY
         const pieceMetadataSummary = await pieceMetadataService.list({
             release,
+            includeHidden: req.query.includeHidden ?? false,
             projectId: req.principal.projectId,
             platformId: req.principal.platformId,
             edition,

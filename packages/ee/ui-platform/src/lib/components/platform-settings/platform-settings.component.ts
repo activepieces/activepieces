@@ -45,8 +45,7 @@ export class PlatformSettingsComponent {
     private matSnakcbar: MatSnackBar,
     private authenticationService: AuthenticationService
   ) {
-    const token = this.authenticationService.getDecodedToken();
-    this.platformId = token ? token['platformId'] : '';
+    this.platformId = this.authenticationService.getPlatformId();
     this.formGroup = this.fb.group({
       customDomain: this.fb.control({
         disabled: false,

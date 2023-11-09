@@ -11,6 +11,7 @@ import { PlatformAppearanceComponent } from './components/platform-appearance/pl
 import { PlatformSettingsComponent } from './components/platform-settings/platform-settings.component';
 import { SigningKeysTableComponent } from './components/platform-settings/signing-keys-table/signing-keys-table.component';
 import { CreateSigningKeyDialogComponent } from './components/platform-settings/signing-keys-table/create-signing-key-dialog/create-signing-key-dialog.component';
+import { PiecesTableComponent } from './components/pieces-table/pieces-table.component';
 @NgModule({
   imports: [
     UiCommonModule,
@@ -26,6 +27,7 @@ import { CreateSigningKeyDialogComponent } from './components/platform-settings/
     PlatformSettingsComponent,
     SigningKeysTableComponent,
     CreateSigningKeyDialogComponent,
+    PiecesTableComponent,
   ],
 })
 export class UiEePlatformModule {}

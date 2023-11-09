@@ -22,7 +22,7 @@
             </div>
 
         </div>
-        <div [class.ap-pt-7.5]="((isInPlatformRoute$ | async) === false || (isInPlatformRoute$ | async) === undefined) &&
+        <div class="ap-h-full" [class.ap-pt-7.5]="((isInPlatformRoute$ | async) === false || (isInPlatformRoute$ | async) === undefined) &&
                                 ((isEmbedded$ | async) === undefined || (isEmbedded$ | async) === false)">
             <router-outlet></router-outlet>
             <div *ngIf="showPoweredByAp$ | async" class="ap-h-[70px] ap-w-full" #paddingForStickyNote>

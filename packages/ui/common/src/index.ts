@@ -48,4 +48,5 @@ export * from './lib/components/page-title/page-title.component';
 export * from './lib/service/navigation.service';
 export * from './lib/service/embedding.service';
 export * from './lib/service/platform.service';
+export * from './lib/components/powered-by-activepieces/powered-by-activepieces.component';
 import '@angular/localize/init';
