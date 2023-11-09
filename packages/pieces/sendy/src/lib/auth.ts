@@ -1,4 +1,4 @@
-import { PieceAuth, Property } from "@activepieces/pieces-framework";
+import { PieceAuth, Property, Validators } from "@activepieces/pieces-framework";
 import { getLists } from "./api";
 
 export type SendyAuthType = {apiKey: string, domain: string, brandId: string}
@@ -21,16 +21,19 @@ export const sendyAuth = PieceAuth.CustomAuth({
 			displayName : 'Sendy Domain',
 			description : 'The domain of your Sendy account',
 			required    : true,
+			validators: [Validators.url],
         }),
         apiKey: PieceAuth.SecretText({
 			displayName : 'API Key',
 			description : 'The API key for your Sendy account',
 			required    : true,
+			validators: [Validators.pattern(/^[a-zA-Z0-9]+$/)],
         }),
         brandId: Property.ShortText({
 			displayName : 'Brand ID',
 			description : 'The brand ID that will be associated to this connection. Brand IDs can be found on the main Brands page.',
 			required    : true,
+			validators: [Validators.pattern(/^[0-9]+$/)],
         }),
     },
     validate: async ({ auth }) => {

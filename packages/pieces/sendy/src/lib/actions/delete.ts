@@ -1,4 +1,4 @@
-import { createAction, Property } from "@activepieces/pieces-framework";
+import { createAction, Property, Validators } from "@activepieces/pieces-framework";
 import { deleteSubscriber } from "../api";
 import { buildListDropdown } from "../props";
 import { sendyAuth, SendyAuthType } from "../auth";
@@ -20,6 +20,7 @@ export const deleteAction = createAction({
 			displayName : 'Email',
 			description : "The user's email",
 			required    : true,
+			validators: [Validators.email],
 		}),
 	},
 	async run(context) {

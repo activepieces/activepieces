@@ -3,7 +3,7 @@ import { getLists } from "../api";
 import { sendyAuth } from "../auth";
 
 export const getListsAction = createAction({
-	name        : 'get-lists',
+	name        : 'getLists',
 	auth        : sendyAuth,
 	displayName : 'Get Lists',
 	description : 'Get the Lists for a Brand',
