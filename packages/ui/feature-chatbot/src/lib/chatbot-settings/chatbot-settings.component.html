@@ -1,14 +1,12 @@
-<div class="ap-typography-headline-5 !ap-font-semibold ap-m-7.5 ap-flex ap-gap-3 ap-items-center">
-  <ap-icon-button [useSvgDefault]="true" [width]="7" [height]="14" iconFilename="back.svg"
-    tooltipText="Chatbots" i18n-tooltipText
-    (buttonClicked)="redirectHome(false)" (auxclick)="redirectHome(true)">
+<div class="ap-typography-headline-5 !ap-font-semibold ap-m-7.5 ap-flex ap-gap-3 ap-items-center ap-mt-14">
+  <ap-icon-button [useSvgDefault]="true" [width]="7" [height]="14" iconFilename="back.svg" tooltipText="Chatbots"
+    i18n-tooltipText (buttonClicked)="redirectHome(false)" (auxclick)="redirectHome(true)">
   </ap-icon-button>
-  <ng-container i18n>Build Your Chatbot</ng-container>
+  <div i18n>Build Your Chatbot</div>
   <div [class.ap-select-none]="saving" [class.ap-pointer-events-none]="saving">
     <ap-button btnColor="primary" btnSize="medium" btnStyle="stroked" [darkLoadingSpinner]="true"
-               [tooltipText]="chatWIthBotTooltipText()" [disabled]="!formGroup.controls.connectionId.value"
-               (buttonClicked)="openChatbot()"
-    >
+      [tooltipText]="chatWIthBotTooltipText()" [disabled]="!formGroup.controls.connectionId.value"
+      (buttonClicked)="openChatbot()">
       <ng-container *ngIf="saving">
         <div class="ap-flex ap-items-center ap-gap-2 ap-text-body">
           <svg-icon src="assets/img/custom/loading.svg" class="outline-loader loading-spin-animation"
@@ -24,8 +22,7 @@
 </div>
 
 <div class="ap-flex ap-divide-x ap-divide-dividers ap-h-[calc(100%-7rem)] ap-flex-wrap">
-  <div
-    class="ap-px-15 ap-pt-15 ap-flex ap-flex-col ap-gap-20 ap-divide-y ap-divide-dividers ap-grow ap-overflow-scroll thin-scrollbars">
+  <div class="ap-px-15 ap-pt-15 ap-flex ap-flex-col ap-gap-20 ap-divide-y ap-divide-dividers ap-grow ">
     <div class="ap-flex ap-gap-36">
       <div class="ap-text-body-1 ap-font-semibold ap-w-[8.3125rem]" i18n>
         Brand your bot
@@ -109,8 +106,8 @@
           </mat-form-field>
           <app-add-edit-connection-button class="ap-hidden" btnSize="medium" [isEditConnectionButton]="false"
             #addConnectionBtn [isEditConnectionButton]="false" [authProperty]="(openAiPiece$ | async)?.auth!"
-            [pieceName]="pieceName" [pieceVersion]="pieceVersion"
-            (connectionIdChanged)="connectionValueChanged($event)" i18n>
+            [pieceName]="pieceName" [pieceVersion]="pieceVersion" (connectionIdChanged)="connectionValueChanged($event)"
+            i18n>
             + New Connection
           </app-add-edit-connection-button>
         </div>
