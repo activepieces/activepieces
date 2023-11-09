@@ -89,3 +89,8 @@ export async function status(auth : SendyAuthType, data: KeyValuePair ) {
 	const api = '/api/subscribers/subscription-status.php';
 	return sendyPostAPI(api, auth, data);
 }
+
+export async function count(auth : SendyAuthType, data: KeyValuePair ) {
+	const api = '/api/subscribers/active-subscriber-count.php';
+	return sendyPostAPI(api, auth, data);
+}
