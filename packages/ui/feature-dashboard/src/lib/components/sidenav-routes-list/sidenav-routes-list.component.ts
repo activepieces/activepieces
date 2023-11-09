@@ -55,6 +55,12 @@ export class SidenavRoutesListComponent implements OnInit {
       route: 'platform/settings',
       showInSideNav$: of(true),
     },
+    {
+      icon: 'assets/img/custom/dashboard/pieces.svg',
+      caption: $localize`Pieces`,
+      route: 'platform/pieces',
+      showInSideNav$: of(true),
+    },
   ];
   constructor(
     public router: Router,

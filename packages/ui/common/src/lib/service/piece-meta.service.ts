@@ -284,6 +284,13 @@ export class PieceMetadataService {
 
     throw new Error("Step type isn't accounted for");
   }
+
+  //TODO Remove this
+  getAllPiecesMetadata() {
+    return this.http.get<PieceMetadataModelSummary[]>(
+      'https://cloud.activepieces.com/api/v1/pieces'
+    );
+  }
 }
 
 type AddPieceParams = Omit<AddPieceRequestBody, 'pieceArchive'> & {
