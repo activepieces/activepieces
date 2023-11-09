@@ -11,10 +11,10 @@ import {
   AuthenticationService,
   PieceMetadataModelSummary,
   PieceMetadataService,
+  PlatformService,
 } from '@activepieces/ui/common';
 import { Platform } from '@activepieces/ee-shared';
 import { ActivatedRoute } from '@angular/router';
-import { PlatformService } from '../../platform.service';
 import { PiecesTableDataSource } from './pieces-table.datasource';
 import { FormControl } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -25,31 +25,30 @@ import { MatSnackBar } from '@angular/material/snack-bar';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PiecesTableComponent implements OnInit {
-  displayedColumns=['displayName','action']
+  displayedColumns = ['displayName', 'action'];
   title = $localize`Pieces`;
   saving$?: Observable<void>;
   platform$!: BehaviorSubject<Platform>;
-  readonly pieceShownText = $localize `is now available to users`;
-  readonly pieceHiddenText = $localize `is now hidden from users`;
+  readonly pieceShownText = $localize`is now available to users`;
+  readonly pieceHiddenText = $localize`is now hidden from users`;
   readonly showPieceTooltip = $localize`Show this piece to users`;
-  readonly hidePieceTooltip = $localize `Hide this piece from users`;
-  searchFormControl = new FormControl('',{nonNullable:true});
-  dataSource!:PiecesTableDataSource
+  readonly hidePieceTooltip = $localize`Hide this piece from users`;
+  searchFormControl = new FormControl('', { nonNullable: true });
+  dataSource!: PiecesTableDataSource;
   constructor(
     private authenticationService: AuthenticationService,
     private piecesService: PieceMetadataService,
     private route: ActivatedRoute,
     private platformService: PlatformService,
-    private matSnackbar:MatSnackBar
+    private matSnackbar: MatSnackBar
   ) {
-
     this.authenticationService.getPlatformId();
   }
   ngOnInit(): void {
-    debugger;
-    this.platform$ = new BehaviorSubject(this.route.snapshot.data['platform'])
-    this.dataSource= new PiecesTableDataSource(this.piecesService,
-      this.searchFormControl.valueChanges.pipe(startWith('')),
+    this.platform$ = new BehaviorSubject(this.route.snapshot.data['platform']);
+    this.dataSource = new PiecesTableDataSource(
+      this.piecesService,
+      this.searchFormControl.valueChanges.pipe(startWith(''))
     );
   }
 
@@ -61,17 +60,27 @@ export class PiecesTableComponent implements OnInit {
       const newPiecesList = this.platform$.value.filteredPieceNames.filter(
         (pn) => pn !== piece.name
       );
-      this.platform$.next({ ...this.platform$.value, filteredPieceNames: newPiecesList });
+      this.platform$.next({
+        ...this.platform$.value,
+        filteredPieceNames: newPiecesList,
+      });
     } else {
-      this.platform$.next({ ...this.platform$.value, filteredPieceNames: [...this.platform$.value.filteredPieceNames, piece.name] });
+      this.platform$.next({
+        ...this.platform$.value,
+        filteredPieceNames: [
+          ...this.platform$.value.filteredPieceNames,
+          piece.name,
+        ],
+      });
     }
 
-    const finishedSavingPipe: MonoTypeOperatorFunction<void> = 
-    tap(() =>
-    {
-      this.matSnackbar.open(`${piece.displayName} ${pieceIncluded? this.pieceShownText:this.pieceHiddenText}`)
-    }
-    );
+    const finishedSavingPipe: MonoTypeOperatorFunction<void> = tap(() => {
+      this.matSnackbar.open(
+        `${piece.displayName} ${
+          pieceIncluded ? this.pieceShownText : this.pieceHiddenText
+        }`
+      );
+    });
     if (this.saving$) {
       this.saving$ = this.saving$.pipe(
         switchMap(() => {
@@ -80,7 +89,9 @@ export class PiecesTableComponent implements OnInit {
         finishedSavingPipe
       );
     } else {
-      this.saving$ = this.savePlatform(this.platform$.value).pipe(finishedSavingPipe);
+      this.saving$ = this.savePlatform(this.platform$.value).pipe(
+        finishedSavingPipe
+      );
     }
   }
   savePlatform(platform: Platform) {

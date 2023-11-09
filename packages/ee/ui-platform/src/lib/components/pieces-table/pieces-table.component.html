@@ -34,7 +34,7 @@
             <td mat-cell *matCellDef="let piece">
                 <div class="ap-w-[5.6875rem] ap-float-right ap-text-center" *ngIf="platform$ | async as plat">
                     <ap-icon-button *ngIf="plat.filteredPieceNames.includes(piece.name) "
-                        [tooltipText]="showPieceTooltip" i18n-tooltipText iconFilename="eye.svg" [width]="20"
+                        [tooltipText]="showPieceTooltip" i18n-tooltipText iconFilename="eye-off.svg" [width]="20"
                         [height]="20" class="ap-fill-description" (buttonClicked)="togglePiece(piece)"></ap-icon-button>
                     <ap-icon-button *ngIf="!plat.filteredPieceNames.includes(piece.name)"
                         [tooltipText]="hidePieceTooltip" i18n-tooltipText iconFilename="eye.svg" [width]="20"

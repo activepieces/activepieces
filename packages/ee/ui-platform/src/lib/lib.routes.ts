@@ -34,13 +34,6 @@ export const uiEePlatformRoutes: Route[] = [
         },
       },
       {
-        path: 'settings',
-        component: PlatformSettingsComponent,
-        data: {
-          title: $localize`Settings`,
-        },
-      },
-      {
         path: 'pieces',
         component: PiecesTableComponent,
         data: {
@@ -48,6 +41,13 @@ export const uiEePlatformRoutes: Route[] = [
         },
         resolve: {
           platform: platformResolver,
+        },
+      },
+      {
+        path: 'settings',
+        component: PlatformSettingsComponent,
+        data: {
+          title: $localize`Settings`,
         },
       },
     ],

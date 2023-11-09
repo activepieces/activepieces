@@ -1,6 +1,16 @@
 import { DataSource } from '@angular/cdk/collections';
-import { Observable, BehaviorSubject, tap, shareReplay, switchMap, map } from 'rxjs';
-import { PieceMetadataModelSummary, PieceMetadataService } from '@activepieces/ui/common';
+import {
+  Observable,
+  BehaviorSubject,
+  tap,
+  shareReplay,
+  switchMap,
+  map,
+} from 'rxjs';
+import {
+  PieceMetadataModelSummary,
+  PieceMetadataService,
+} from '@activepieces/ui/common';
 
 /**
  * Data source for the LogsTable view. This class should
@@ -10,13 +20,17 @@ import { PieceMetadataModelSummary, PieceMetadataService } from '@activepieces/u
 export class PiecesTableDataSource extends DataSource<PieceMetadataModelSummary> {
   data: PieceMetadataModelSummary[] = [];
   isLoading$: BehaviorSubject<boolean> = new BehaviorSubject(true);
-  pieces$:Observable<PieceMetadataModelSummary[]>;
+  pieces$: Observable<PieceMetadataModelSummary[]>;
   constructor(
-    private piecesService:PieceMetadataService,
-    private searchControlValueChanged$:Observable<string>
+    private piecesService: PieceMetadataService,
+    private searchControlValueChanged$: Observable<string>
   ) {
     super();
-    this.pieces$ = this.piecesService.getAllPiecesMetadata().pipe(shareReplay(1));
+    this.pieces$ = this.piecesService
+      .getPiecesMetadataIncludeHidden({
+        includeHidden: true,
+      })
+      .pipe(shareReplay(1));
   }
 
   /**
@@ -27,21 +41,27 @@ export class PiecesTableDataSource extends DataSource<PieceMetadataModelSummary>
 
   connect(): Observable<PieceMetadataModelSummary[]> {
     this.isLoading$.next(true);
-    return this.searchControlValueChanged$.pipe(tap(()=>{
-      this.isLoading$.next(true)
-    }),switchMap(search=>{
-        return this.pieces$.pipe(map(ps=> {
-          if(search)
-          {
-            return ps.filter(p=> p.displayName.toLowerCase().startsWith(search.toLowerCase()))
-          }
-          return ps;
-        }))
-    }),
-    tap((res)=>{
-      this.data=res;
-      this.isLoading$.next(false)
-    }))
+    return this.searchControlValueChanged$.pipe(
+      tap(() => {
+        this.isLoading$.next(true);
+      }),
+      switchMap((search) => {
+        return this.pieces$.pipe(
+          map((ps) => {
+            if (search) {
+              return ps.filter((p) =>
+                p.displayName.toLowerCase().startsWith(search.toLowerCase())
+              );
+            }
+            return ps;
+          })
+        );
+      }),
+      tap((res) => {
+        this.data = res;
+        this.isLoading$.next(false);
+      })
+    );
   }
 
   /**
