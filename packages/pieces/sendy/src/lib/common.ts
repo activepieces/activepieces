@@ -83,11 +83,13 @@ const sendyPostAPI = async (
 }
 
 export async function buildBrandDropdown(auth: SendyAuthType) {
-	// if (!auth) {
-	// 	return {
-	// 		disabled: true
-	// 	};
-	// }
+	if (!auth) {
+		return {
+			options     : [],
+			disabled    : true,
+			placeholder : 'Please authenticate first',
+		};
+	}
 	const response = await getBrands(auth as SendyAuthType);
 	const options = response.data.map(brand => {
 		return { label: brand.name, value: brand.id }
