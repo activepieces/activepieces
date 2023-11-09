@@ -9,7 +9,9 @@ import { CONVERTKIT_API_URL } from './constants';
 
 export const API_ENDPOINT = 'custom_fields';
 
-export const fetchCustomFields = async (auth: string): Promise<any> => {
+export const fetchCustomFields = async (
+  auth: string
+): Promise<CustomField[]> => {
   const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}`;
 
   const body = {
@@ -29,6 +31,7 @@ export const fetchCustomFields = async (auth: string): Promise<any> => {
       `Failed to fetch custom fields: ${response.status} ${response.body}`
     );
   }
+
   return response.body.custom_fields;
 };
 
@@ -85,10 +88,12 @@ export const allFields = Property.DynamicProperties({
 
     const fields: DynamicPropsValue = {};
 
-    const customFields = await fetchCustomFields(auth.toString());
+    const customFields: CustomField[] = await fetchCustomFields(
+      auth.toString()
+    );
 
     // loop through data and map to fields
-    customFields.custom_fields.forEach(
+    customFields.forEach(
       (field: { id: string; label: string; key: string; name: string }) => {
         fields[field.key] = Property.ShortText({
           displayName: field.label,
