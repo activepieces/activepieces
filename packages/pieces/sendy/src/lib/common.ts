@@ -1,6 +1,8 @@
 import { httpClient, HttpMethod, HttpRequest } from "@activepieces/pieces-common";
 import { SendyAuthType } from "./auth";
 
+export type KeyValuePair = {[key: string]: string|boolean|undefined }
+
 const isSuccess = (text: string) => {
 	// The following terms are found in success messages from the Sendy API
 	const terms = [
@@ -11,6 +13,7 @@ const isSuccess = (text: string) => {
 		'bounced',
 		'complained',
 		'true',
+		'1',
 	];
 	const lowercase = text.toLowerCase();
 	return terms.some(term => lowercase.includes(term.toLowerCase()));
@@ -19,7 +22,7 @@ const isSuccess = (text: string) => {
 const sendyPostAPI = async (
 		api  : string,
 		auth : SendyAuthType,
-		body : {[key: string]: string} = {},
+		body : KeyValuePair = {},
 	) => {
 	const {apiKey, domain, brandId} = auth;
 
@@ -44,7 +47,7 @@ const sendyPostAPI = async (
 		success = true;
 	} else {
 		text = response.body as string;
-		if (isSuccess(text)) success = true;
+		if (isSuccess(text.toString())) success = true;
 	}
 
 	return {
@@ -96,4 +99,16 @@ export async function getBrands(auth: SendyAuthType) {
 export async function getLists(auth : SendyAuthType, includeHidden = 'no' ) {
 	const api = '/api/lists/get-lists.php';
 	return sendyPostAPI(api, auth, { include_hidden : includeHidden });
+}
+
+export async function subscribe(auth : SendyAuthType, data: KeyValuePair ) {
+	const api = '/subscribe';
+	data['boolean'] = "true"; // plain text response
+	return sendyPostAPI(api, auth, data);
+}
+
+export async function unsubscribe(auth : SendyAuthType, data: KeyValuePair ) {
+	const api = '/unsubscribe';
+	data['boolean'] = "true"; // plain text response
+	return sendyPostAPI(api, auth, data);
 }
