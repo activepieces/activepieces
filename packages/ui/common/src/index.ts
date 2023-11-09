@@ -47,4 +47,5 @@ export * from './lib/service/appearance.service';
 export * from './lib/components/page-title/page-title.component';
 export * from './lib/service/navigation.service';
 export * from './lib/service/embedding.service';
+export * from './lib/service/platform.service';
 import '@angular/localize/init';

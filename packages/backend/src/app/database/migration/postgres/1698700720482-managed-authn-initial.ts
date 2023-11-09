@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { logger } from '../../helper/logger'
+import { logger } from '../../../helper/logger'
 
 export class ManagedAuthnInitial1698700720482 implements MigrationInterface {
     name = 'ManagedAuthnInitial1698700720482'
