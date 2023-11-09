@@ -39,9 +39,9 @@ export const listPurchases = createAction({
   props: {
     page,
   },
-  async run(context) {
+  run(context) {
     const page = context.propsValue.page || 1;
-    return await fetchPurchases(context.auth, page);
+    return fetchPurchases(context.auth, page);
   },
 });
 
@@ -242,15 +242,20 @@ export const listPurchasesForSubscriber = createAction({
     const { subscriberId } = context.propsValue;
     const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}?api_secret=${context.auth}&subscriber_id=${subscriberId}`;
 
-    const response = await fetch(url);
+    const request: HttpRequest = {
+      url,
+      method: HttpMethod.GET,
+    };
 
-    if (!response.ok) {
-      return { success: false, message: 'Error fetching purchases' };
+    const response = await httpClient.sendRequest<{
+      purchases: Purchase[];
+    }>(request);
+
+    if (response.status !== 200) {
+      throw new Error(`Error fetching purchases: ${response.status}`);
     }
 
-    const data = await response.json();
-
-    return data;
+    return response.body.purchases;
   },
 });
 

@@ -23,8 +23,8 @@ export const listSequences = createAction({
   displayName: 'Sequences: List Sequences',
   description: 'Returns a list of all sequences',
   props: {},
-  async run(context) {
-    return await fetchSequences(context.auth);
+  run(context) {
+    return fetchSequences(context.auth);
   },
 });
 

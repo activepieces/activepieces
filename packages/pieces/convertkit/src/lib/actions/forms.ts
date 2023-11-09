@@ -23,8 +23,8 @@ export const listForms = createAction({
   displayName: 'Forms: List Forms',
   description: 'Returns a list of all forms',
   props: {},
-  async run(context) {
-    return await fetchForms(context.auth);
+  run(context) {
+    return fetchForms(context.auth);
   },
 });
 

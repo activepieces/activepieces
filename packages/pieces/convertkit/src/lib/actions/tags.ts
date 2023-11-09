@@ -30,8 +30,8 @@ export const listTags = createAction({
   displayName: 'Tags: List Tags',
   description: 'Returns a list of all tags',
   props: {},
-  async run(context) {
-    return await fetchTags(context.auth);
+  run(context) {
+    return fetchTags(context.auth);
   },
 });
 

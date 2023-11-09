@@ -32,9 +32,9 @@ export const listBroadcasts = createAction({
   props: {
     page,
   },
-  async run(context) {
+  run(context) {
     const page = context.propsValue.page || 1;
-    return await fetchBroadcasts(context.auth, page);
+    return fetchBroadcasts(context.auth, page);
   },
 });
 
