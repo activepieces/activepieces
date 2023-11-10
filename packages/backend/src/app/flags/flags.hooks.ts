@@ -1,7 +1,7 @@
 
 let hooks: FlagsServiceHooks = {
     async modify(params) {
-        return params
+        return params.flags
     },
 }
 

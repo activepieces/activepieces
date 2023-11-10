@@ -16,7 +16,7 @@ export const AggregatedPieceMetadataService = (): PieceMetadataService => {
                 projectId,
                 platformId,
                 edition,
-                includeHidden
+                includeHidden,
             })
 
             const dbMetadata = await dbPieceProvider.list({
