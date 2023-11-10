@@ -1,5 +1,14 @@
 import { isNil, isString } from './utils'
 
+export function deleteProperties(obj: Record<string, unknown>, props: string[]) {
+    const copy = { ...obj }
+    for (const prop of props) {
+        delete copy[prop]
+    }
+    return copy
+}
+
+
 export const spreadIfDefined = <T>(key: string, value: T | undefined | null): Record<string, T> => {
     if (isNil(value)) {
         return {}
