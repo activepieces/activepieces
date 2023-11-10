@@ -6,7 +6,7 @@ import { customDomainService } from '../custom-domains/custom-domain.service'
 import { platformService } from '../platform/platform.service'
 
 export const enterpriseFlagsHooks: FlagsServiceHooks = {
-    async modify( { flags, hostname, projectId } ) {
+    async modify({ flags, hostname, projectId }) {
         const modifiedFlags = { ...flags }
         const platformId = await getPlatformId({ projectId, hostname })
         const platformEnabled = !isNil(platformId)
@@ -22,6 +22,8 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             modifiedFlags[ApFlagId.CLOUD_AUTH_ENABLED] = platform.cloudAuthEnabled
             modifiedFlags[ApFlagId.FRONTEND_URL] = `https://${hostname}`
             modifiedFlags[ApFlagId.WEBHOOK_URL_PREFIX] = `https://${hostname}/api/v1/webhooks`
+            modifiedFlags[ApFlagId.PRIVACY_POLICY_URL] = platform.privacyPolicyUrl
+            modifiedFlags[ApFlagId.TERMS_OF_SERVICE_URL] = platform.termsOfServiceUrl
         }
         return modifiedFlags
     },
