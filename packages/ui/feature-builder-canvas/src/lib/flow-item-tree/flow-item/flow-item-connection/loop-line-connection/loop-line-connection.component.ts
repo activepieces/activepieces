@@ -8,19 +8,6 @@ import {
   ViewChild,
 } from '@angular/core';
 import { Store } from '@ngrx/store';
-import {
-  ADD_BUTTON_SIZE,
-  ARC_LENGTH,
-  ARROW_HEAD_SIZE,
-  Drawer,
-  EMPTY_LOOP_ADD_BUTTON_HEIGHT,
-  FLOW_ITEM_HEIGHT,
-  FLOW_ITEM_WIDTH,
-  HORZIONTAL_LINE_LENGTH,
-  SPACE_BETWEEN_ITEM_CONTENT_AND_LINE,
-  VERTICAL_LINE_LENGTH,
-  AFTER_NESTED_LOOP_LINE_LENGTH,
-} from '../draw-utils';
 import { Observable } from 'rxjs';
 import {
   ActionType,
@@ -37,6 +24,17 @@ import {
   FlowsActions,
   RightSideBarType,
   canvasActions,
+  ADD_BUTTON_SIZE,
+  ARC_LENGTH,
+  ARROW_HEAD_SIZE,
+  Drawer,
+  EMPTY_LOOP_ADD_BUTTON_HEIGHT,
+  FLOW_ITEM_HEIGHT,
+  FLOW_ITEM_WIDTH,
+  HORZIONTAL_LINE_LENGTH,
+  SPACE_BETWEEN_ITEM_CONTENT_AND_LINE,
+  VERTICAL_LINE_LENGTH,
+  AFTER_NESTED_LOOP_LINE_LENGTH,
 } from '@activepieces/ui/feature-builder-store';
 import { DropEvent } from 'angular-draggable-droppable';
 import { MatSnackBar } from '@angular/material/snack-bar';
