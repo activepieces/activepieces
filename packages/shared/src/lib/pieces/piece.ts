@@ -1,5 +1,5 @@
-import { FileId } from "../file"
-import { ProjectId } from "../project/project"
+import { FileId } from '../file'
+import { ProjectId } from '../project/project'
 
 export enum PackageType {
     ARCHIVE = 'ARCHIVE',
@@ -20,7 +20,6 @@ export type PiecePackage = {
     archiveId?: FileId
 }
 
-export enum PieceCategory
-{
-    CORE= "CORE"
+export enum PieceCategory {
+    CORE = 'CORE',
 }

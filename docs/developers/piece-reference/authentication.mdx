@@ -88,7 +88,7 @@ PieceAuth.CustomAuth({
             description: 'Enter the base URL',
             required: true,
         }),
-        access_token: Property.SecretText({
+        access_token: PieceAuth.SecretText({
             displayName: 'Access Token',
             description: 'Enter the access token',
             required: true

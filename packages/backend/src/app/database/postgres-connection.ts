@@ -72,8 +72,10 @@ import { AddPlatformToProject1698065083750 } from './migration/postgres/16980650
 import { AddCustomDomain1698077078271 } from '../ee/database/migrations/postgres/1698077078271-AddCustomDomain'
 import { AddTerminationReason1698323987669 } from './migration/postgres/1698323987669-AddTerminationReason'
 import { AddSigningKey1698602417745 } from './migration/postgres/1698602417745-add-signing-key'
-import { ManagedAuthnInitial1698700720482 } from './migration/1698700720482-managed-authn-initial'
+import { ManagedAuthnInitial1698700720482 } from './migration/postgres/1698700720482-managed-authn-initial'
 import { AddDisplayNameToSigningKey1698698190965 } from './migration/postgres/1698698190965-AddDisplayNameToSigningKey'
+import { AddFilteredPiecesToPlatform1699281870038 } from './migration/postgres/1699281870038-add-filtered-pieces-to-platform'
+import { AddSmtpAndPrivacyUrlToPlatform1699491705906 } from './migration/postgres/1699491705906-AddSmtpAndPrivacyUrlToPlatform'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
@@ -163,6 +165,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddCustomDomain1698077078271,
                 AddSigningKey1698602417745,
                 AddDisplayNameToSigningKey1698698190965,
+                AddFilteredPiecesToPlatform1699281870038,
+                AddSmtpAndPrivacyUrlToPlatform1699491705906,
             )
             break
         case ApEdition.ENTERPRISE:
@@ -173,6 +177,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddCustomDomain1698077078271,
                 AddSigningKey1698602417745,
                 AddDisplayNameToSigningKey1698698190965,
+                AddFilteredPiecesToPlatform1699281870038,
+                AddSmtpAndPrivacyUrlToPlatform1699491705906,
             )
             break
         case ApEdition.COMMUNITY:

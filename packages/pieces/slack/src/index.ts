@@ -10,7 +10,7 @@ import { requestActionDirectMessageAction } from './lib/actions/request-action-d
 import { requestActionMessageAction } from './lib/actions/request-action-message';
 
 export const slackAuth = PieceAuth.OAuth2({
-  
+
   description: '',
   authUrl: 'https://slack.com/oauth/authorize',
   tokenUrl: 'https://slack.com/api/oauth.access',
@@ -34,15 +34,16 @@ export const slack = createPiece({
   auth: slackAuth,
   events: {
     parseAndReply: ({ payload }) => {
-      if (payload.body['challenge']) {
+      const payloadBody = payload.body as PayloadBody;
+      if (payloadBody.challenge) {
         return {
           reply: {
-            body: payload.body['challenge'],
+            body: payloadBody['challenge'],
             headers: {}
           }
         };
       }
-      return { event: payload.body?.event?.type, identifierValue: payload.body.team_id }
+      return { event: payloadBody?.event?.type, identifierValue: payloadBody.team_id }
     },
     verify: ({ webhookSecret, payload }) => {
       // Construct the signature base string
@@ -68,3 +69,11 @@ export const slack = createPiece({
     newReactionAdded,
   ]
 })
+
+type PayloadBody = {
+  challenge: string
+  event: {
+    type: string
+  }
+  team_id: string
+}

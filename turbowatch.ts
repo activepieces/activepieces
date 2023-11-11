@@ -1,45 +1,49 @@
-import { defineConfig, type ChangeEvent } from 'turbowatch';
-import chalk from 'chalk'; // Import chalk for styling console messages
-import { config } from 'dotenv'; // Import the dotenv library
+import chalk from 'chalk'; // Import the chalk library
+import { config } from 'dotenv';
+import { watch } from 'turbowatch';
 
 config({ path: 'packages/backend/.env' });
 
-export default defineConfig({
-    project: `${__dirname}/packages/pieces`,
+const packages = process.env.AP_DEV_PIECES?.split(',') || [];
+
+packages.forEach((packageName) => {
+  console.log(chalk.blue(`Starting Turbowatch for package: ${packageName}`));
+
+  // Define the inline configuration
+  const piecePackageName = `pieces-${packageName}`;
+  void watch({
+    project: `${__dirname}/packages/pieces/${packageName}`,
     triggers: [
-        {
-            expression: ['match', '*.ts', 'basename'],
-            name: 'build-pieces',
-            initialRun: true,
-            interruptible: false,
-            persistent: false,
-            onChange: async ({ spawn, first, files }: ChangeEvent) => {
-                const pieces = process.env.AP_DEV_PIECES?.split(',').map(p => `pieces-${p}`).join(',');
+      {
+        expression: ['match', '**/*.ts', 'basename'],
+        name: `build-pieces-${packageName}`,
+        initialRun: true,
+        interruptible: false,
+        persistent: false,
+        onChange: async ({ spawn, first, files }) => {
+          console.log(
+            chalk.yellow.bold(
+              '👀 Detected changes in pieces. Building... 👀 ' +
+                piecePackageName
+            )
+          );
+          if (first) {
+            await spawn`nx run-many -t build --projects=${piecePackageName} --skip-nx-cache`;
+            return;
+          }
+          await spawn`nx run-many -t build --projects=${piecePackageName} --skip-nx-cache`;
 
-                console.log(chalk.yellow.bold('👀 Detected changes in pieces. Building... 👀 ' + pieces))
-                if (first) {
-                    await spawn`nx run-many -t build --projects=${pieces} --skip-cache`;
-                    return;
-                }
-
-                const projects = files
-                    .map(file => {
-                        const fileNameRegex = /^.+pieces\/(?<pieceName>.+)\/src.+$/
-                        const matchResult = file.name.match(fileNameRegex)
-                        const pieceName = matchResult?.groups?.pieceName
-                        return `pieces-${pieceName}`;
-                    })
-                    .filter(Boolean)
-                    .join(',');
-
-                await spawn`nx run-many -t build --projects=${projects} --skip-cache`;
-
-                // Print a fancy message to the console using chalk
-                console.log(chalk.green.bold('✨ Changes are ready! Please refresh the frontend to see the new updates. ✨'));
-            },
+          // Print a fancy message to the console using chalk
+          console.log(
+            chalk.green.bold(
+              '✨ Changes are ready! Please refresh the frontend to see the new updates. ✨'
+            )
+          );
         },
+      },
     ],
     debounce: {
-        wait: 1000,
+      wait: 1000,
     },
+  });
 });

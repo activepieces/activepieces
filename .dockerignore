@@ -4,6 +4,12 @@
 .git
 .gitattributes
 .github
+.history
+.idea
+*.log
+*.md
+.vscode
+builds
 deploy
 Dockerfile
 dist

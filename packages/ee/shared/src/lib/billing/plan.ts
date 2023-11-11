@@ -20,19 +20,40 @@ export interface ProjectPlan extends BaseModel<ProjectPlanId> {
     bots: number;
     tasksPerDay?: number | null;
 }
-
+export enum PlanSupportType {
+    COMMUNITY="COMMUNITY",
+    EMAIL="EMAIL",
+    DEDICATED="DEDICATED"
+}
 export interface FlowPricingSubPlan {
     pricePlanId: string;
-    amount: number;
+    amount: number | string;
     price: string;
 }
+
 export interface FlowPricingPlan {
     name: string;
     description: string;
-    connections: number,
     minimumPollingInterval: number,
     teamMembers: number,
     tasks: FlowPricingSubPlan[];
+    addons?: {
+        users?:{
+            pricePerUserPerMonth:`$${number}`,
+           
+        }
+    }
+    manageProjects?:boolean,
+    privatePieces?:  string,
+    customTemplates?:boolean,
+    customColorsAndLogos?:boolean,
+    supportType?:PlanSupportType,
+    embedding?:boolean,
+    SSO?:boolean,
+    auditLog?:boolean,
+    customReports?:boolean,
+    userPermissions?:boolean,
+    talkToUs?:boolean
 }
 
 export interface BotPricingPlan {
@@ -43,3 +64,5 @@ export interface BotPricingPlan {
     pricePlanId: string;
     price: string
 }
+export const freePlanPrice = 'Free'
+export const customPlanPrice = "Custom Pricing"

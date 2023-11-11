@@ -633,7 +633,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/24081860?v=4",
       "profile": "http://www.zidoary.com",
       "contributions": [
-        "bug"
+        "bug",
+        "code"
       ]
     },
     {
@@ -668,6 +669,24 @@
       "name": "Michael Huynh",
       "avatar_url": "https://avatars.githubusercontent.com/u/43751307?v=4",
       "profile": "https://github.com/miqh",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "fdundjer",
+      "name": "Filip Dunđer",
+      "avatar_url": "https://avatars.githubusercontent.com/u/17405319?v=4",
+      "profile": "https://github.com/fdundjer",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "donthorp",
+      "name": "Don Thorp",
+      "avatar_url": "https://avatars.githubusercontent.com/u/8629?v=4",
+      "profile": "http://donthorp.net",
       "contributions": [
         "doc"
       ]

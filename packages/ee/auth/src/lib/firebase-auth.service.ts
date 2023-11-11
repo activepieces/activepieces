@@ -1,6 +1,7 @@
 import {
   HttpClient,
   HttpErrorResponse,
+  HttpResponse,
   HttpStatusCode
 } from '@angular/common/http';
 import { Injectable } from '@angular/core';
@@ -20,7 +21,7 @@ import {
   FirebaseSignUpRequest,
   FirebaseSignInRequest
 } from '@activepieces/ee-shared';
-import { User } from '@activepieces/shared';
+import { AuthenticationResponse, User } from '@activepieces/shared';
 import { AuthenticationService } from '@activepieces/ui/common';
 import { environment } from '@activepieces/ui/common';
 import { GithubAuthProvider, GoogleAuthProvider } from '@angular/fire/auth';
@@ -52,9 +53,8 @@ export class FirebaseAuthService {
   }
 
   signUp(
-    registrationFormValue: RegistrationFormValue,
-    redirectUrl: string
-  ): Observable<any> {
+    registrationFormValue: RegistrationFormValue
+  ): Observable<HttpResponse<AuthenticationResponse>> {
     return from(
       this.afAuth.createUserWithEmailAndPassword(
         registrationFormValue.email!,
@@ -76,9 +76,6 @@ export class FirebaseAuthService {
           newsLetter: true,
           token: token!
         });
-      }),
-      switchMap(() => {
-        return this.sendVerificationMail(redirectUrl);
       })
     );
   }
@@ -106,10 +103,13 @@ export class FirebaseAuthService {
       tap((u) => {
         if (u && u.emailVerified === false) {
           console.log("sending verfication email...");
+          const baseUrl = window.location.origin;
+          const absoluteUrl = new URL('/flows', baseUrl).href;
+
           u.sendEmailVerification(
             redirectUrl
               ? {
-                  url: redirectUrl
+                  url: absoluteUrl
                 }
               : undefined
           );
@@ -135,7 +135,7 @@ export class FirebaseAuthService {
 
   createUser(request: FirebaseSignUpRequest) {
     return this.http
-      .post(
+      .post<AuthenticationResponse>(
         environment.apiUrl + '/firebase/users',
         {
           ...request,

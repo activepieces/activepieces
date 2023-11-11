@@ -6,12 +6,13 @@ import { EXACT_VERSION_PATTERN, isNil } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode, apId } from '@activepieces/shared'
 import { AllPiecesStats, pieceStatsService } from './piece-stats-service'
 import * as semver from 'semver'
+import { pieceMetadataServiceHooks as hooks } from './hooks'
 
 const repo = databaseConnection.getRepository(PieceMetadataEntity)
 
 export const DbPieceMetadataService = (): PieceMetadataService => {
     return {
-        async list({ release, projectId }): Promise<PieceMetadataModelSummary[]> {
+        async list({ release, projectId, platformId, includeHidden }): Promise<PieceMetadataModelSummary[]> {
             const order = {
                 name: 'ASC',
                 version: 'DESC',
@@ -34,7 +35,13 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
                 .orderBy(order)
                 .getMany()
 
-            return toPieceMetadataModelSummary(pieceMetadataEntityList)
+            const pieces = toPieceMetadataModelSummary(pieceMetadataEntityList)
+
+            return hooks.get().filterPieces({
+                includeHidden,
+                pieces,
+                platformId,
+            })
         },
 
         async getOrThrow({ name, version, projectId }): Promise<PieceMetadataModel> {

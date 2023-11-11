@@ -22,6 +22,7 @@ import { Store } from '@ngrx/store';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import {
   ActionType,
+  ApEdition,
   CodeActionSettings,
   PieceActionSettings,
   PieceTriggerSettings,
@@ -52,6 +53,8 @@ export class EditStepFormContainerComponent {
   webhookUrl$: Observable<string>;
   ActionType = ActionType;
   TriggerType = TriggerType;
+  ApEdition = ApEdition;
+  edition$: Observable<ApEdition>;
   @Input() set selectedStep(step: FlowItem) {
     this._selectedStep = step;
     this.cancelAutoSaveListener$.next(true);
@@ -88,6 +91,7 @@ export class EditStepFormContainerComponent {
     this.stepForm = this.formBuilder.group({
       settings: new UntypedFormControl({}),
     });
+    this.edition$ = this.flagService.getEdition();
   }
 
   updateFormValue(stepSelected: FlowItem) {

@@ -97,6 +97,7 @@ export const triggerUtils = {
                     if (
                         handshakeConfig.paramName &&
             typeof payload.body === 'object' &&
+            payload.body !== null &&
             handshakeConfig.paramName in payload.body
                     ) {
                         return await executeHandshake({

@@ -1,85 +1,85 @@
-import { StepOutput } from './step-output';
+import { StepOutput } from './step-output'
 
-export const MAX_LOG_SIZE = 2048 * 1024;
+export const MAX_LOG_SIZE = 2048 * 1024
 
 export enum ExecutionOutputStatus {
-  FAILED = 'FAILED',
-  QUOTA_EXCEEDED = 'QUOTA_EXCEEDED',
-  INTERNAL_ERROR = 'INTERNAL_ERROR',
-  PAUSED = 'PAUSED',
-  RUNNING = "RUNNING",
-  STOPPED = 'STOPPED',
-  SUCCEEDED = 'SUCCEEDED',
-  TIMEOUT = 'TIMEOUT',
+    FAILED = 'FAILED',
+    QUOTA_EXCEEDED = 'QUOTA_EXCEEDED',
+    INTERNAL_ERROR = 'INTERNAL_ERROR',
+    PAUSED = 'PAUSED',
+    RUNNING = 'RUNNING',
+    STOPPED = 'STOPPED',
+    SUCCEEDED = 'SUCCEEDED',
+    TIMEOUT = 'TIMEOUT',
 }
 
 export enum ExecutionType {
-  BEGIN = 'BEGIN',
-  RESUME = 'RESUME',
+    BEGIN = 'BEGIN',
+    RESUME = 'RESUME',
 }
 
 export type ExecutionError = {
-  stepName: string;
-  errorMessage: string;
+    stepName: string
+    errorMessage: string
 }
 
 
 export type ExecutionState = {
-  steps: Record<string, StepOutput>;
+    steps: Record<string, StepOutput>
 }
 
 type BaseExecutionOutput<T extends ExecutionOutputStatus> = {
-  status: T;
-  executionState: ExecutionState;
-  duration: number;
-  tasks: number;
-  tags?: string[];
-  errorMessage?: ExecutionError;
+    status: T
+    executionState: ExecutionState
+    duration: number
+    tasks: number
+    tags?: string[]
+    errorMessage?: ExecutionError
 }
 
 export enum PauseType {
-  DELAY = 'DELAY',
-  WEBHOOK = "WEBHOOK"
+    DELAY = 'DELAY',
+    WEBHOOK = 'WEBHOOK',
 }
 
 type BasePauseMetadata<T extends PauseType> = {
-  type: T;
+    type: T
 }
 
 export type DelayPauseMetadata = BasePauseMetadata<PauseType.DELAY> & {
-  resumeDateTime: string;
+    resumeDateTime: string
 }
 
-export type WebhookPauseMetadata =  BasePauseMetadata<PauseType.WEBHOOK> & {
-  actions: string[];
+export type WebhookPauseMetadata = BasePauseMetadata<PauseType.WEBHOOK> & {
+    actions: string[]
 }
 
 export type PauseMetadata = DelayPauseMetadata | WebhookPauseMetadata
 
 
 export type PauseExecutionOutput = BaseExecutionOutput<ExecutionOutputStatus.PAUSED> & {
-  pauseMetadata: PauseMetadata
+    pauseMetadata: PauseMetadata
 }
 
 export type StopResponse = {
-  status?: number
-  body?: unknown
-  headers?: Record<string, string>
+    status?: number
+    body?: unknown
+    headers?: Record<string, string>
 }
 
 export type FinishExecutionOutput = BaseExecutionOutput<
-  Exclude<
-    ExecutionOutputStatus,
-      | ExecutionOutputStatus.PAUSED
-      | ExecutionOutputStatus.STOPPED
-  >
+Exclude<
+ExecutionOutputStatus,
+| ExecutionOutputStatus.PAUSED
+| ExecutionOutputStatus.STOPPED
+>
 >
 
 export type StopExecutionOutput = BaseExecutionOutput<ExecutionOutputStatus.STOPPED> & {
-  stopResponse?: StopResponse
+    stopResponse?: StopResponse
 }
 
 export type ExecutionOutput =
-  | FinishExecutionOutput
-  | PauseExecutionOutput
-  | StopExecutionOutput
+    | FinishExecutionOutput
+    | PauseExecutionOutput
+    | StopExecutionOutput

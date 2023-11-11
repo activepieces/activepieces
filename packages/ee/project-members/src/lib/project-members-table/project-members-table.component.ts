@@ -24,7 +24,7 @@ export class ProjectMembersTableComponent {
   inviteLoading = false;
   refreshTableAtCurrentCursor$: Subject<boolean> = new Subject();
   displayedColumns = ['email', 'role', 'status', 'created', 'action'];
-
+  title = $localize`Project Members`;
   constructor(
     private dialogRef: MatDialog,
     private billingService: BillingService,

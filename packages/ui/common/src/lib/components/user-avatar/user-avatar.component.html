@@ -6,8 +6,8 @@
 </div>
 <mat-menu #menu="matMenu">
     <!-- BEGIN EE -->
-    <div mat-menu-item (click)="viewPlatformSettings()" *ngIf="showPlatform">
-        Platform settings
+    <div mat-menu-item (click)="viewPlatformSettings()" *ngIf="showPlatform$ | async">
+        Platform dashboard
     </div>
     <ng-container *ngIf="projectEnabled$ | async">
         <ng-container *ngIf="projects$ | async as projects">
@@ -47,7 +47,7 @@
         </ng-container>
     </ng-container>
     <div class="ap-border-b ap-border-solid  ap-border-outline ap-mx-2"
-        *ngIf="(projectEnabled$ | async) || showPlatform "></div>
+        *ngIf="(projectEnabled$ | async) || (showPlatform$ | async) "></div>
     <!-- END EE -->
     <div mat-menu-item (click)="showWhatIsNew()" *ngIf="showCommunity$ | async">
         What's new

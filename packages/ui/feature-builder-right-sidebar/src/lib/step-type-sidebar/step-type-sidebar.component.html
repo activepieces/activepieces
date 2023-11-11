@@ -15,7 +15,8 @@
         </ng-template>
         <ng-template matTabContent>
           <ng-container *ngIf="tab.list$ | async as list; else loading">
-            <app-step-type-list [typesList]="list" (typeSelected)="onTypeSelected($event)"
+            <app-step-type-list [typesList]="list" (typeSelected)="onTypeSelected($event)" 
+              [showRequestPieceButton]="showCommunity$ | async"
               [emptyListText]="tab.emptyListText">
             </app-step-type-list>
           </ng-container>

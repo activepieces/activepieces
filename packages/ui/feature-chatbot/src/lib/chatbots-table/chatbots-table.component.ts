@@ -34,6 +34,7 @@ export class ChatbotsTableComponent {
   refreshTable$: Subject<boolean> = new Subject();
   dataSource!: ChatBotsDataSource;
   loading = true;
+  title = $localize `Chatbots`
   createBot$: Observable<void> | undefined;
   deleteBot$: Observable<void> | undefined;
   updateBot$: Observable<void> | undefined;
