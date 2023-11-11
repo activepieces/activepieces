@@ -34,8 +34,7 @@
       ],
       "options": {
         "lintFilePatterns": [
-          "packages/pieces/sendy/**/*.ts",
-          "packages/pieces/sendy/package.json"
+          "packages/pieces/sendy/**/*.ts"
         ]
       }
     }
