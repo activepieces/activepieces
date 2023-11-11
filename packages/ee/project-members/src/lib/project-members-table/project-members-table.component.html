@@ -32,7 +32,7 @@
           </th>
           <td mat-cell *matCellDef="let invitation">
             <div class="ap-float-right ap-text-center ap-w-[4.4375rem]">
-              <ap-icon-button *ngIf="projectMemberRole.ADMIN !== invitation.role" tooltipText="Delete Invitation"
+              <ap-icon-button *ngIf="(projectOwnerId$ | async) !== invitation.userId && (isCurrentUserAdmin$ | async)" tooltipText="Delete Invitation"
                 i18n-tooltipText iconFilename="trash.svg" color="warn" [width]="20" [height]="20"
                 (buttonClicked)="deleteInvitation(invitation.id)"></ap-icon-button>
             </div>

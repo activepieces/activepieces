@@ -32,7 +32,7 @@ export const emailService = {
             template: {
                 templateName: 'invitation-email',
                 data: {
-                    setupLink: `${domain}invitation?token=${token}`,
+                    setupLink: `${domain}invitation?token=${token}&email=${encodeURIComponent(email)}`,
                     projectName: project.displayName,
                 },
             },

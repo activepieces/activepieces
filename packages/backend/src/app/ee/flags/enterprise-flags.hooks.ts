@@ -24,6 +24,7 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             modifiedFlags[ApFlagId.WEBHOOK_URL_PREFIX] = `https://${hostname}/api/v1/webhooks`
             modifiedFlags[ApFlagId.PRIVACY_POLICY_URL] = platform.privacyPolicyUrl
             modifiedFlags[ApFlagId.TERMS_OF_SERVICE_URL] = platform.termsOfServiceUrl
+            modifiedFlags[ApFlagId.TEMPLATES_SOURCE_URL] = null
         }
         return modifiedFlags
     },
