@@ -58,6 +58,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { FileDroppedDirective } from './directives/file-dropped.directive';
 import { NgxColorsModule } from 'ngx-colors';
 import { PageTitleComponent } from './components/page-title/page-title.component';
+import { PoweredByActivepiecesComponent } from './components/powered-by-activepieces/powered-by-activepieces.component';
 const exportedImports = [
   CommonModule,
   MatTooltipModule,
@@ -115,6 +116,7 @@ const exportedDeclarations = [
   DragDropDirective,
   CheckOverflowDirective,
   PageTitleComponent,
+  PoweredByActivepiecesComponent,
 ];
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 0,

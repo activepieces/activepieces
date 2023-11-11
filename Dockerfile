@@ -30,8 +30,7 @@ ARG ENVIRONMENT=standard
 WORKDIR /usr/src/app
 
 # Install Nginx and gettext for envsubst
-RUN apt-get update && \
-    apt-get install -y nginx gettext
+RUN apt-get update && apt-get install -y nginx gettext
 
 # Copy Nginx configuration template
 COPY packages/ui/core/nginx.${ENVIRONMENT}.conf /etc/nginx/nginx.conf
@@ -50,7 +49,9 @@ RUN for dir in dist/packages/pieces/*; do (cd "$dir" && npm i); done
 # Copy frontend files to Nginx document root directory from build stage
 COPY --from=build /usr/src/app/dist/packages/ui/core/ /usr/share/nginx/html/
 
-VOLUME [${AP_CACHE_PATH}, ${AP_PACKAGE_ARCHIVE_PATH}]
+VOLUME ${AP_CACHE_PATH}
+VOLUME ${AP_PACKAGE_ARCHIVE_PATH}
+
 
 # Set up entrypoint script
 COPY docker-entrypoint.sh .

@@ -1,5 +1,5 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { ApFlagId, SignInRequest, SignUpRequest } from '@activepieces/shared'
+import { ApFlagId, SignInRequest, SignUpRequest, UserStatus } from '@activepieces/shared'
 import { authenticationService } from './authentication-service'
 import { flagService } from '../flags/flag.service'
 import { system } from '../helper/system/system'
@@ -24,7 +24,10 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (app) =
                 })
             }
 
-            return authenticationService.signUp(request.body)
+            return authenticationService.signUp({
+                ...request.body,
+                status: UserStatus.VERIFIED,
+            })
         },
     )
 

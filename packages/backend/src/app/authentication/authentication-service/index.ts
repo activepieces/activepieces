@@ -1,15 +1,14 @@
 import { QueryFailedError } from 'typeorm'
-import { SignUpRequest, AuthenticationResponse, SignInRequest, UserStatus, ActivepiecesError, ErrorCode } from '@activepieces/shared'
+import { AuthenticationResponse, SignInRequest, UserStatus, ActivepiecesError, ErrorCode } from '@activepieces/shared'
 import { userService } from '../../user/user-service'
 import { passwordHasher } from '../lib/password-hasher'
 import { authenticationServiceHooks as hooks } from './hooks'
 
 export const authenticationService = {
-    signUp: async (request: SignUpRequest): Promise<AuthenticationResponse> => {
+    signUp: async (request: { email: string, password: string, firstName: string, lastName: string, trackEvents: boolean, newsLetter: boolean, status: UserStatus }): Promise<AuthenticationResponse> => {
         try {
             const user = await userService.create({
                 ...request,
-                status: UserStatus.VERIFIED,
             })
 
             const { user: updatedUser, project, token } = await hooks.get().postSignUp({

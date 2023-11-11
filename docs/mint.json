@@ -175,6 +175,7 @@
       "pages": [
         "platform/overview",
         "platform/appearance",
+        "platform/manage-pieces",
         "platform/managed-projects",
         "platform/managed-users",
         "platform/embedding"
