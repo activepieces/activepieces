@@ -142,6 +142,20 @@ export function initializeAppCustomLogic(
     });
 }
 
+const projectMemberRoute = {
+  path: '',
+  canActivate: [],
+  children: [
+    {
+      path: '',
+      loadChildren: () =>
+        import('@activepieces/ee/project-members').then(
+          (m) => m.EeProjectMembersModule
+        ),
+    },
+  ],
+};
+
 function dynamicRoutes(edition: string) {
   const coreRoutes: Route[] = [
     {
@@ -227,6 +241,7 @@ function dynamicRoutes(edition: string) {
   switch (edition) {
     case ApEdition.CLOUD:
       editionRoutes = [
+        projectMemberRoute,
         {
           path: '',
           children: [
@@ -247,6 +262,7 @@ function dynamicRoutes(edition: string) {
       break;
     case ApEdition.ENTERPRISE:
       editionRoutes = [
+        projectMemberRoute,
         {
           path: '',
           children: [

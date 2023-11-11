@@ -48,7 +48,9 @@ export class UserAvatarComponent implements OnInit {
       ApFlagId.PROJECT_MEMBERS_ENABLED
     );
     this.projects$ = this.store.select(ProjectSelectors.selectAllProjects);
-    this.selectedProject$ = this.store.select(ProjectSelectors.selectProject);
+    this.selectedProject$ = this.store.select(
+      ProjectSelectors.selectCurrentProject
+    );
     // END EE
   }
   ngOnInit(): void {

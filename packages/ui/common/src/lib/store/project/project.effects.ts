@@ -52,7 +52,7 @@ export class ProjectEffects {
       return this.actions$.pipe(
         ofType(ProjectActions.updateProject),
         concatLatestFrom(() =>
-          this.store.select(ProjectSelectors.selectProject)
+          this.store.select(ProjectSelectors.selectCurrentProject)
         ),
         switchMap(([{ notifyStatus }, project]) => {
           return this.projectService

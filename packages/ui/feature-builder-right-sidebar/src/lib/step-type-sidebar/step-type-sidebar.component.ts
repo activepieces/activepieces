@@ -100,7 +100,9 @@ export class StepTypeSidebarComponent implements OnInit, AfterViewInit {
       }),
       map(() => void 0)
     );
-    this.showCommunity$ = this.flagsService.isFlagEnabled(ApFlagId.SHOW_COMMUNITY)
+    this.showCommunity$ = this.flagsService.isFlagEnabled(
+      ApFlagId.SHOW_COMMUNITY
+    );
     //EE
     this.searchControlTelemetry$ = this.searchFormControl.valueChanges.pipe(
       debounceTime(1500),
