@@ -690,6 +690,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "joeworkman",
+      "name": "Joe Workman",
+      "avatar_url": "https://avatars.githubusercontent.com/u/225628?v=4",
+      "profile": "https://joeworkman.net",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"
