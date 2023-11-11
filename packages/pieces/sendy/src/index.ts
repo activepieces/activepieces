@@ -14,7 +14,7 @@ export const sendy = createPiece({
 	displayName             : "Sendy",
 	auth                    : sendyAuth,
 	minimumSupportedRelease : '0.9.0',
-	logoUrl                 : "https://zapier-images.imgix.net/storage/developer/242e928e4b24ea7d0823b105c3e2bcb0_3.png",
+	logoUrl                 : "https://cdn.activepieces.com/pieces/sendy.png",
 	authors                 : ["joeworkman"],
 	actions                 : [
 		countAction,

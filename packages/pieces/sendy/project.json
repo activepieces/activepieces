@@ -31,13 +31,7 @@
       "executor": "@nx/eslint:lint",
       "outputs": [
         "{options.outputFile}"
-      ],
-      "options": {
-        "lintFilePatterns": [
-          "packages/pieces/sendy/**/*.ts",
-          "packages/pieces/sendy/package.json"
-        ]
-      }
+      ]
     }
   },
   "tags": []

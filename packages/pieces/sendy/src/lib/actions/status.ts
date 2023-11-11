@@ -4,7 +4,7 @@ import { buildListDropdown } from "../props";
 import { sendyAuth, SendyAuthType } from "../auth";
 
 export const statusAction = createAction({
-	name        : 'status',
+	name        : 'subscriptionStatus',
 	auth        : sendyAuth,
 	displayName : 'Subscription Status',
 	description : 'Get the subscription status of a user',
