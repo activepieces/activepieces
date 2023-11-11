@@ -88,7 +88,9 @@ export async function status(auth : SendyAuthType, data: KeyValuePair ) {
 
 export async function count(auth : SendyAuthType, data: KeyValuePair ) {
 	const api = '/api/subscribers/active-subscriber-count.php';
-	return sendyPostAPI(api, auth, data);
+	const response = await sendyPostAPI(api, auth, data);
+	if (typeof response.text === "number") response.success = true;
+	return response
 }
 
 export async function createCampaign(auth : SendyAuthType, data: KeyValuePair ) {
