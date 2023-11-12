@@ -7,19 +7,6 @@ import {
   SimpleChanges,
 } from '@angular/core';
 import { Store } from '@ngrx/store';
-import {
-  ADD_BUTTON_SIZE,
-  ARC_LENGTH,
-  ARROW_HEAD_SIZE,
-  Drawer,
-  EMPTY_LOOP_ADD_BUTTON_HEIGHT,
-  FLOW_ITEM_HEIGHT,
-  FLOW_ITEM_WIDTH,
-  HORZIONTAL_LINE_LENGTH,
-  SPACE_BETWEEN_ITEM_CONTENT_AND_LINE,
-  VERTICAL_LINE_LENGTH,
-  EMPTY_LOOP_ADD_BUTTON_WIDTH,
-} from '../draw-utils';
 import { Observable } from 'rxjs';
 import {
   ActionType,
@@ -38,7 +25,20 @@ import {
 import { FlowRenderUtil } from '@activepieces/ui/feature-builder-store';
 import { DropEvent } from 'angular-draggable-droppable';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { canvasActions } from '@activepieces/ui/feature-builder-store';
+import {
+  canvasActions,
+  ADD_BUTTON_SIZE,
+  ARC_LENGTH,
+  ARROW_HEAD_SIZE,
+  Drawer,
+  EMPTY_LOOP_ADD_BUTTON_HEIGHT,
+  FLOW_ITEM_HEIGHT,
+  FLOW_ITEM_WIDTH,
+  HORZIONTAL_LINE_LENGTH,
+  SPACE_BETWEEN_ITEM_CONTENT_AND_LINE,
+  VERTICAL_LINE_LENGTH,
+  EMPTY_LOOP_ADD_BUTTON_WIDTH,
+} from '@activepieces/ui/feature-builder-store';
 @Component({
   selector: 'app-branch-line-connection',
   templateUrl: './branch-line-connection.component.html',
