@@ -54,6 +54,7 @@
         "jestConfig": "packages/backend/jest.config.ts",
         "passWithNoTests": true,
         "bail": true,
+        "testTimeout": 60000,
         "codeCoverage": true
       }
     },

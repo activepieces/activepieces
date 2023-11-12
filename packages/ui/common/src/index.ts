@@ -23,7 +23,6 @@ export * from './lib/store/project/project.action';
 export * from './lib/store/project/project.reducer';
 export * from './lib/store/project/project.selector';
 export * from './lib/models/flow-item-details';
-export * from './lib/models/chevron-dropdown-option';
 export * from './lib/models/flow-run.interface';
 export * from './lib/environments/environment';
 export * from './lib/service/test-step.service';

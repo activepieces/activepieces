@@ -1,4 +1,4 @@
-import { AppConnection, AppConnectionType, CloudOAuth2ConnectionValue, BasicAuthConnectionValue, OAuth2ConnectionValueWithApp, ExecutionState } from '@activepieces/shared'
+import { AppConnection, AppConnectionType, CloudOAuth2ConnectionValue, BasicAuthConnectionValue, OAuth2ConnectionValueWithApp, ExecutionState, PlatformOAuth2ConnectionValue } from '@activepieces/shared'
 import { globals } from '../globals'
 
 export const createConnectionManager = (state: ExecutionState) => {
@@ -20,7 +20,7 @@ export const createConnectionManager = (state: ExecutionState) => {
 }
 
 export const connectionService = {
-    async obtain(connectionName: string): Promise<null | OAuth2ConnectionValueWithApp | CloudOAuth2ConnectionValue | BasicAuthConnectionValue | string | Record<string, unknown>> {
+    async obtain(connectionName: string): Promise<null | OAuth2ConnectionValueWithApp | CloudOAuth2ConnectionValue | PlatformOAuth2ConnectionValue | BasicAuthConnectionValue | string | Record<string, unknown>> {
         const url = globals.apiUrl + `v1/worker/app-connections/${encodeURIComponent(connectionName)}?projectId=${globals.projectId}`
         try {
             const response = await fetch(url, {
