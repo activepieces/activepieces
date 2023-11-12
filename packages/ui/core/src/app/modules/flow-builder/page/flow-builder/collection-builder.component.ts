@@ -103,6 +103,7 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
     automaticLayout: true,
   };
   setTitle$: Observable<void>;
+  showPoweredByAp$: Observable<boolean>;
   constructor(
     private store: Store,
     private actRoute: ActivatedRoute,
@@ -119,6 +120,7 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
     private telemetryService: TelemetryService,
     public builderAutocompleteService: BuilderAutocompleteMentionsDropdownService
   ) {
+    this.showPoweredByAp$ = this.flagService.getShowPoweredByAp();
     this.listenToGraphChanges();
     this.dataInsertionPopupHidden$ =
       this.builderAutocompleteService.currentAutocompleteInputId$.pipe(

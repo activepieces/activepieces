@@ -25,21 +25,23 @@ export class AcceptInvitationComponent implements OnInit {
           token: query['token'],
         });
       }),
+      tap(() => {
+        if (!this.invalidToken) {
+          this.redirectToSignUp(
+            this.activatedRoute.snapshot.queryParams['email']
+          );
+        }
+      }),
       catchError((e) => {
         console.error(e);
         this.invalidToken = true;
         return of(undefined);
-      }),
-      tap(() => {
-        if (!this.invalidToken) {
-          this.redirectToSignUp();
-        }
       })
     );
   }
 
-  redirectToSignUp() {
+  redirectToSignUp(email: string) {
     // Add any necessary logic before redirecting, if needed
-    this.router.navigate(['/sign-up']); // Replace '/signup' with the actual route to your sign-up page
+    this.router.navigate(['/sign-up'], { queryParams: { email: email } });
   }
 }

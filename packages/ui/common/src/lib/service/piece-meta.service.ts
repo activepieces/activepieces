@@ -65,25 +65,9 @@ export class PieceMetadataService {
   private release$ = this.flagsService.getRelease().pipe(shareReplay(1));
   private clearCache$ = new Subject<void>();
   private edition$ = this.flagsService.getEdition();
-  private piecesManifest$ = combineLatest([
-    this.edition$,
-    this.release$,
-    this.clearCache$.asObservable().pipe(startWith(void 0)),
-  ]).pipe(
-    switchMap(([edition, release]) => {
-      return this.http.get<PieceMetadataModelSummary[]>(
-        `${environment.apiUrl}/pieces`,
-        {
-          params: {
-            release,
-            edition,
-          },
-        }
-      );
-    }),
-    shareReplay(1)
-  );
-
+  private piecesManifest$ = this.getPiecesMetadataIncludeHidden({
+    includeHidden: false,
+  });
   private piecesCache = new Map<string, Observable<PieceMetadataModel>>();
 
   public coreFlowItemsDetails: FlowItemDetails[] = [
@@ -283,6 +267,32 @@ export class PieceMetadataService {
     }
 
     throw new Error("Step type isn't accounted for");
+  }
+
+  getPiecesMetadataIncludeHidden({
+    includeHidden,
+  }: {
+    includeHidden: boolean;
+  }) {
+    return combineLatest([
+      this.edition$,
+      this.release$,
+      this.clearCache$.asObservable().pipe(startWith(void 0)),
+    ]).pipe(
+      switchMap(([edition, release]) => {
+        return this.http.get<PieceMetadataModelSummary[]>(
+          `${environment.apiUrl}/pieces`,
+          {
+            params: {
+              includeHidden,
+              release,
+              edition,
+            },
+          }
+        );
+      }),
+      shareReplay(1)
+    );
   }
 }
 

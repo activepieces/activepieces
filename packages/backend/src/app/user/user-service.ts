@@ -35,6 +35,18 @@ export const userService = {
 
         return userRepo.save(user)
     },
+    async verify({ userId }: { userId: string }): Promise<User> {
+        const user = await userRepo.findOneByOrFail({ id: userId })
+    
+        if (user.status === UserStatus.SHADOW) {
+            await userRepo.update(userId, { status: UserStatus.VERIFIED })
+        }
+    
+        return {
+            ...user,
+            status: UserStatus.VERIFIED,
+        }  
+    },    
     async getMetaInfo({ id }: { id: UserId }): Promise<UserMeta | null> {
         const user = await userRepo.findOneBy({ id })
         if (!user) {

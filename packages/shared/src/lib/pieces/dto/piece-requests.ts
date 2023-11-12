@@ -24,6 +24,7 @@ export type GetPieceRequestParams = Static<typeof GetPieceRequestParams>
 
 export const ListPiecesRequestQuery = Type.Object({
     release: Type.Optional(ExactVersionType),
+    includeHidden: Type.Optional(Type.Boolean()),
     edition: Type.Optional(Type.Enum(ApEdition)),
 })
 

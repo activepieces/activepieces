@@ -1,4 +1,4 @@
-import { webflowCommon, sitesDropdown } from '../common/common';
+import { webflowCommon } from '../common/common';
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
 import { getAccessTokenOrThrow } from "@activepieces/pieces-common";
 import { webflowAuth } from '../..';
@@ -12,7 +12,7 @@ export const webflowNewSubmission = createTrigger({
         displayName: 'New Submission',
         description: 'Triggers when Webflow Site receives a new submission',
         props: {
-            site_id: sitesDropdown,
+            site_id: webflowCommon.sitesDropdown,
             formName: Property.ShortText({
                 displayName: 'Form Name',
                 required: false,

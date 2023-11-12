@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { ResolveFn } from '@angular/router';
-import { PlatformService } from './platform.service';
+import { PlatformService } from '@activepieces/ui/common';
 import { AuthenticationService } from '@activepieces/ui/common';
 import { Platform } from '@activepieces/ee-shared';
 
@@ -14,5 +14,5 @@ export const platformResolver: ResolveFn<Platform | null> = () => {
     console.error('Token is invalid or not available');
     return null;
   }
-  return platformService.getPlatform(decodedToken['platformId']);
+  return platformService.getPlatform(authenticationService.getPlatformId());
 };

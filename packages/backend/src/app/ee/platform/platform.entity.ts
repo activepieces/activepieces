@@ -1,6 +1,6 @@
 import { EntitySchema } from 'typeorm'
-import { Platform } from '@activepieces/ee-shared'
-import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
+import { FilteredPieceBehavior, Platform } from '@activepieces/ee-shared'
+import { ARRAY_COLUMN_TYPE, ApIdSchema, BaseColumnSchemaPart, isPostgres } from '../../database/database-common'
 import { User } from '@activepieces/shared'
 
 type PlatformSchema = Platform & {
@@ -33,6 +33,57 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
         },
         favIconUrl: {
             type: String,
+            nullable: false,
+        },
+        smtpHost: {
+            type: String,
+            nullable: true,
+        },
+        smtpPort: {
+            type: Number,
+            nullable: true,
+        },
+        smtpUser: {
+            type: String,
+            nullable: true,
+        },
+        smtpPassword: {
+            type: String,
+            nullable: true,
+        },
+        smtpSenderEmail: {
+            type: String,
+            nullable: true,
+        },
+        smtpUseSSL: {
+            type: Boolean,
+            nullable: true,
+        },
+        privacyPolicyUrl: {
+            type: String,
+            nullable: true,
+        },
+        termsOfServiceUrl: {
+            type: String,
+            nullable: true,
+        },
+        showPoweredBy: {
+            type: Boolean,
+            nullable: false,
+        },
+        cloudAuthEnabled: {
+            type: Boolean,
+            nullable: false,
+            default: true,
+        },
+        filteredPieceNames: {
+            type: ARRAY_COLUMN_TYPE,
+            array: isPostgres(),
+            nullable: false,
+        },
+        filteredPieceBehavior: {
+            type: String,
+            enum: FilteredPieceBehavior,
             nullable: false,
         },
     },
