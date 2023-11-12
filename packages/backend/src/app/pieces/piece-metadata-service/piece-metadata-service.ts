@@ -7,6 +7,7 @@ type ListParams = {
     release: string
     projectId?: string
     platformId?: string
+    includeHidden: boolean
     edition: ApEdition
 }
 

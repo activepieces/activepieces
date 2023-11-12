@@ -1,6 +1,6 @@
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { UpdatePlatformRequestBody } from '@activepieces/ee-shared'
-import { ApId } from '@activepieces/shared'
+import { ApId, deleteProperties } from '@activepieces/shared'
 import { platformService } from './platform.service'
 
 export const platformController: FastifyPluginAsyncTypebox = async (app) => {
@@ -13,7 +13,7 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.get('/:id', GetPlatformRequest, async (req) => {
-        return platformService.getOneOrThrow(req.params.id)
+        return deleteProperties(await platformService.getOneOrThrow(req.params.id), ['smtpPassword'])
     })
 }
 

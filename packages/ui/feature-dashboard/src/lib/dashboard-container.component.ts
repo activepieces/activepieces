@@ -22,12 +22,14 @@ export class DashboardContainerComponent {
   showSidnav$: Observable<boolean>;
   isInPlatformRoute$: Observable<boolean>;
   currentProject$: Observable<Project>;
+  showPoweredByAp$: Observable<boolean>;
   constructor(
     private flagService: FlagService,
     private embeddedService: EmbeddingService,
     private dashboardService: DashboardService,
     private store: Store
   ) {
+    this.showPoweredByAp$ = this.flagService.getShowPoweredByAp();
     this.isEmbedded$ = this.embeddedService.getIsInEmbedding$();
     this.showSidnav$ = this.embeddedService
       .getState$()

@@ -109,6 +109,7 @@
     "marked": "4.3.0",
     "mime-types": "2.1.35",
     "monaco-editor": "0.34.1",
+    "mustache": "4.2.0",
     "nanoid": "3.3.6",
     "ngx-autosize": "2.0.4",
     "ngx-colors": "3.5.2",
@@ -168,6 +169,7 @@
     "@ngrx/eslint-plugin": "16.0.1",
     "@nx/angular": "17.0.2",
     "@nx/esbuild": "17.0.2",
+    "@nx/eslint": "17.0.2",
     "@nx/eslint-plugin": "17.0.2",
     "@nx/jest": "17.0.2",
     "@nx/js": "17.0.2",
@@ -190,6 +192,7 @@
     "@types/mailparser": "3.4.0",
     "@types/marked": "4.3.2",
     "@types/mime-types": "2.1.1",
+    "@types/mustache": "4.2.4",
     "@types/node": "18.7.23",
     "@types/nodemailer": "6.4.9",
     "@types/onfleet__node-onfleet": "1.3.7",
@@ -241,11 +244,9 @@
     "typescript": "5.1.6",
     "verdaccio": "5.26.1",
     "wait-on": "7.0.1",
-    "webpack-ignore-dynamic-require": "1.0.0",
-    "@nx/eslint": "17.0.2"
+    "webpack-ignore-dynamic-require": "1.0.0"
   },
   "nx": {
     "includedScripts": []
   }
 }
-

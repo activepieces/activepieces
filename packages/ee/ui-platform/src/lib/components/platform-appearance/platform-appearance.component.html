@@ -53,8 +53,8 @@
 
     </form>
     <div>
-        <div
-            class="ap-p-4 ap-flex ap-justify-end ap-items-center ap-gap-4 ap-w-full ap-border-t ap-border-solid ap-border-outline">
+        <div [class.ap-pb-[60px]]="showPoweredByAp$ | async"
+            class="ap-p-4  ap-flex ap-justify-end ap-items-center ap-gap-4 ap-w-full ap-border-t ap-border-solid ap-border-outline">
             <ap-button btnStyle="flat" btnColor="primary" i18n (buttonClicked)="save()"
                 [loading]="loading">Save</ap-button>
 

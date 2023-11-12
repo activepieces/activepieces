@@ -10,6 +10,11 @@ import {
 } from '@activepieces/ee-shared';
 import { BillingService } from '@activepieces/ee-billing-ui';
 import { UpgradeDialogComponent } from '@activepieces/ee-billing-ui';
+import { Store } from '@ngrx/store';
+import {
+  AuthenticationService,
+  ProjectSelectors,
+} from '@activepieces/ui/common';
 
 @Component({
   selector: 'app-project-members-table',
@@ -21,6 +26,8 @@ export class ProjectMembersTableComponent {
   dataSource!: ProjectMembersTableDataSource;
   dialogClosed$: Observable<void> | undefined;
   deleteInvitation$: Observable<void> | undefined;
+  projectOwnerId$: Observable<string> | undefined;
+  isCurrentUserAdmin$: Observable<boolean> | undefined;
   inviteLoading = false;
   refreshTableAtCurrentCursor$: Subject<boolean> = new Subject();
   displayedColumns = ['email', 'role', 'status', 'created', 'action'];
@@ -28,7 +35,9 @@ export class ProjectMembersTableComponent {
   constructor(
     private dialogRef: MatDialog,
     private billingService: BillingService,
-    private projectMemberService: ProjectMemberService
+    private store: Store,
+    private projectMemberService: ProjectMemberService,
+    private authenticationService: AuthenticationService
   ) {
     this.dataSource = new ProjectMembersTableDataSource(
       this.projectMemberService,
@@ -41,6 +50,23 @@ export class ProjectMembersTableComponent {
       return;
     }
     this.inviteLoading = true;
+    this.projectOwnerId$ = this.store.select(
+      ProjectSelectors.selectCurrentProjectOwnerId
+    );
+    // TODO OPTMIZE THIS
+    this.isCurrentUserAdmin$ = this.projectMemberService
+      .list({
+        limit: 100,
+      })
+      .pipe(
+        map((members) => {
+          return (
+            members.data.find(
+              (f) => this.authenticationService.currentUser.id === f.id
+            )?.role === ProjectMemberRole.ADMIN
+          );
+        })
+      );
     this.dialogClosed$ = this.billingService.checkTeamMembers().pipe(
       switchMap((billing) => {
         this.inviteLoading = false;

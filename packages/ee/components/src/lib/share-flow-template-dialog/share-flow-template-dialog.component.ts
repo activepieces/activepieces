@@ -74,7 +74,7 @@ export class ShareFlowTemplateDialogComponent {
           return flags[ApFlagId.TEMPLATES_PROJECT_ID] as string;
         })
       ),
-      project: this.store.select(ProjectSelectors.selectProject),
+      project: this.store.select(ProjectSelectors.selectCurrentProject),
     }).pipe(
       map(({ templateProjectId, project }) => {
         return templateProjectId === project.id;
