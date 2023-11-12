@@ -25,7 +25,9 @@ import {
 import { FlowRenderUtil } from '@activepieces/ui/feature-builder-store';
 import { DropEvent } from 'angular-draggable-droppable';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { canvasActions,   ADD_BUTTON_SIZE,
+import {
+  canvasActions,
+  ADD_BUTTON_SIZE,
   ARC_LENGTH,
   ARROW_HEAD_SIZE,
   Drawer,
@@ -35,7 +37,8 @@ import { canvasActions,   ADD_BUTTON_SIZE,
   HORZIONTAL_LINE_LENGTH,
   SPACE_BETWEEN_ITEM_CONTENT_AND_LINE,
   VERTICAL_LINE_LENGTH,
-  EMPTY_LOOP_ADD_BUTTON_WIDTH, } from '@activepieces/ui/feature-builder-store';
+  EMPTY_LOOP_ADD_BUTTON_WIDTH,
+} from '@activepieces/ui/feature-builder-store';
 @Component({
   selector: 'app-branch-line-connection',
   templateUrl: './branch-line-connection.component.html',
