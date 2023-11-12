@@ -1,26 +1,20 @@
-import {
-  createTrigger,
-  TriggerStrategy,
-  Property,
-} from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { convertkitAuth } from '../..';
 import { tag } from '../common/tags';
 import { formId } from '../common/forms';
 import { sequenceIdChoice } from '../common/sequences';
+import { productId } from '../common/purchases';
 import {
   prepareWebhookURL,
-  removeWebhook,
-  createWebhook,
   webhookBaseOverride,
   initiatorValue,
 } from '../common/webhooks';
-import { log } from '../common';
+import { createWebhook, removeWebhook } from '../common/service';
+// import { log } from '../common';
 
 interface WebhookInformation {
   ruleId: number;
 }
-
-const API_ENDPOINT = 'automations/hooks';
 
 const sampleData = {
   rule: {
@@ -553,11 +547,7 @@ export const productPurchased = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   props: {
     webhookBaseOverride: webhookBaseOverride(),
-    productId: Property.Number({
-      displayName: 'Product Id',
-      description: 'The product id',
-      required: true,
-    }),
+    productId,
   },
   sampleData,
   async onEnable(context) {

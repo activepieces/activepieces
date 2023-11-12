@@ -1,18 +1,14 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import {
   httpClient,
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common';
 import { convertkitAuth } from '../..';
-import {
-  API_ENDPOINT,
-  fetchCustomFields,
-  fieldsArray,
-  label,
-} from '../common/custom-fields';
-import { CustomField } from '../common/models';
-import { CONVERTKIT_API_URL } from '../common/constants';
+import { fieldsArray, label, new_label } from '../common/custom-fields';
+import { CustomField } from '../common/types';
+import { CUSTOM_FIELDS_API_ENDPOINT } from '../common/constants';
+import { fetchCustomFields } from '../common/service';
 
 export const listFields = createAction({
   auth: convertkitAuth,
@@ -34,7 +30,7 @@ export const createField = createAction({
     fields: fieldsArray,
   },
   async run(context) {
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}`;
+    const url = CUSTOM_FIELDS_API_ENDPOINT;
 
     const body = {
       api_secret: context.auth,
@@ -65,16 +61,12 @@ export const updateField = createAction({
   description: 'Update a custom field',
   props: {
     label,
-    new_label: Property.ShortText({
-      displayName: 'New Label',
-      description: 'The new label for the custom field',
-      required: true,
-    }),
+    new_label,
   },
   async run(context) {
     const { label, new_label } = context.propsValue;
 
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${label}`;
+    const url = `${CUSTOM_FIELDS_API_ENDPOINT}/${label}`;
 
     const body = {
       api_secret: context.auth,
@@ -109,7 +101,7 @@ export const deleteField = createAction({
   async run(context) {
     const { label } = context.propsValue;
 
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${label}`;
+    const url = `${CUSTOM_FIELDS_API_ENDPOINT}/${label}`;
 
     const body = {
       api_secret: context.auth,

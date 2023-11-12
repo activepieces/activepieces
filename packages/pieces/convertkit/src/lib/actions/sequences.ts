@@ -4,18 +4,14 @@ import {
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common';
-import { Sequence } from '../common/models';
+import { Sequence } from '../common/types';
 import { convertkitAuth } from '../..';
-import {
-  API_ENDPOINT,
-  fetchSequences,
-  sequenceIdChoice,
-  firstName,
-  email,
-} from '../common/sequences';
+import { sequenceIdChoice } from '../common/sequences';
+import { subscriberEmail, subscriberFirstName } from '../common/subscribers';
 import { allFields } from '../common/custom-fields';
-import { tags } from '../common//tags';
-import { CONVERTKIT_API_URL } from '../common/constants';
+import { tags } from '../common/tags';
+import { SEQUENCES_API_ENDPOINT } from '../common/constants';
+import { fetchSequences } from '../common/service';
 
 export const listSequences = createAction({
   auth: convertkitAuth,
@@ -35,14 +31,14 @@ export const addSubscriberToSequence = createAction({
   description: 'Add a subscriber to a sequence',
   props: {
     sequenceId: sequenceIdChoice,
-    email,
-    firstName,
+    email: subscriberEmail,
+    firstName: subscriberFirstName,
     tags,
     fields: allFields,
   },
   async run(context) {
     const { sequenceId, email, firstName, tags, fields } = context.propsValue;
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${sequenceId}/subscribe`;
+    const url = `${SEQUENCES_API_ENDPOINT}/${sequenceId}/subscribe`;
 
     const body = {
       api_secret: context.auth,
@@ -80,7 +76,7 @@ export const listSupscriptionsToSequence = createAction({
     sequenceId: sequenceIdChoice,
   },
   async run(context) {
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${context.propsValue.sequenceId}/subscriptions`;
+    const url = `${SEQUENCES_API_ENDPOINT}/${context.propsValue.sequenceId}/subscriptions`;
 
     const body = {
       api_secret: context.auth,

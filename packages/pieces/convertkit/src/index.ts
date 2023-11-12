@@ -67,7 +67,7 @@ import {
   linkClicked,
   productPurchased,
   purchaseCreated,
-} from './lib/triggers/triggers';
+} from './lib/triggers';
 
 export const convertkitAuth = PieceAuth.SecretText({
   displayName: 'API Secret',

@@ -4,18 +4,14 @@ import {
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common';
-import { Subscriber } from '../common/models';
+import { Subscriber } from '../common/types';
 import { convertkitAuth } from '../..';
 import {
   subscriberId,
-  API_ENDPOINT,
-  fetchSubscriperById,
-  fetchSubscriberByEmail,
-  fetchSubscribedTags,
-  emailAddress,
-  emailAddressRequired,
-  page,
-  firstName,
+  subscriberEmail,
+  subscriberEmailOptional,
+  subscribersPageNumber,
+  subscriberFirstName,
   from,
   to,
   updatedFrom,
@@ -24,7 +20,15 @@ import {
   sortField,
 } from '../common/subscribers';
 import { allFields } from '../common/custom-fields';
-import { CONVERTKIT_API_URL } from '../common/constants';
+import {
+  SUBSCRIBERS_API_ENDPOINT,
+  CONVERTKIT_API_URL,
+} from '../common/constants';
+import {
+  fetchSubscriperById,
+  fetchSubscriberByEmail,
+  fetchSubscribedTags,
+} from '../common/service';
 
 export const getSubscriberById = createAction({
   auth: convertkitAuth,
@@ -46,7 +50,7 @@ export const getSubscriberByEmail = createAction({
   displayName: 'Subscriber: Get Subscriber By Email',
   description: 'Returns data for a single subscriber',
   props: {
-    email_address: emailAddressRequired,
+    email_address: subscriberEmail,
   },
   async run(context) {
     const { email_address } = context.propsValue;
@@ -60,14 +64,14 @@ export const listSubscribers = createAction({
   displayName: 'Subscriber: List Subscribers',
   description: 'Returns a list of all subscribers',
   props: {
-    page,
+    page: subscribersPageNumber,
     sortOrder,
     sortField,
     from,
     to,
     updatedFrom,
     updatedTo,
-    emailAddress,
+    emailAddress: subscriberEmail,
   },
   async run(context) {
     const {
@@ -81,8 +85,7 @@ export const listSubscribers = createAction({
       sortField,
     } = context.propsValue;
 
-    // build the url
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}`;
+    const url = SUBSCRIBERS_API_ENDPOINT;
 
     const body = {
       api_secret: context.auth,
@@ -121,15 +124,15 @@ export const updateSubscriber = createAction({
   description: 'Update a subscriber',
   props: {
     subscriberId,
-    emailAddress,
-    firstName,
+    emailAddress: subscriberEmailOptional,
+    firstName: subscriberFirstName,
     fields: allFields,
   },
   async run(context) {
     const { subscriberId, emailAddress, firstName, fields } =
       context.propsValue;
 
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${subscriberId}`;
+    const url = `${SUBSCRIBERS_API_ENDPOINT}/${subscriberId}`;
     const body = {
       api_secret: context.auth,
       email_address: emailAddress,
@@ -161,7 +164,7 @@ export const unsubscribeSubscriber = createAction({
   displayName: 'Subscriber: Unsubscribe Subscriber',
   description: 'Unsubscribe a subscriber',
   props: {
-    email: emailAddressRequired,
+    email: subscriberEmail,
   },
   async run(context) {
     const { email } = context.propsValue;
@@ -207,7 +210,7 @@ export const listSubscriberTagsByEmail = createAction({
   displayName: 'Subscriber: List Tags By Email',
   description: 'Returns a list of all subscribed tags',
   props: {
-    email_address: emailAddressRequired,
+    email_address: subscriberEmail,
   },
   async run(context) {
     const { email_address } = context.propsValue;

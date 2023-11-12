@@ -6,23 +6,24 @@ import {
 } from '@activepieces/pieces-common';
 import { convertkitAuth } from '../..';
 import {
-  API_ENDPOINT,
-  fetchTags,
   tag,
-  tags,
+  tagsRequired,
   name,
-  email,
-  firstName,
   tagIdByEmail,
   tagIdBySubscriberId,
-  page,
+  tagsPageNumber,
   sortOrder,
   subscriberState,
 } from '../common/tags';
-import { Tag } from '../common/models';
-import { subscriberId } from '../common/subscribers';
+import {
+  subscriberId,
+  subscriberEmail,
+  subscriberFirstName,
+} from '../common/subscribers';
+import { Tag } from '../common/types';
 import { allFields } from '../common/custom-fields';
-import { CONVERTKIT_API_URL } from '../common/constants';
+import { TAGS_API_ENDPOINT } from '../common/constants';
+import { fetchTags } from '../common/service';
 
 export const listTags = createAction({
   auth: convertkitAuth,
@@ -44,7 +45,7 @@ export const createTag = createAction({
     name,
   },
   async run(context) {
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/`;
+    const url = TAGS_API_ENDPOINT;
 
     const body = {
       api_secret: context.auth,
@@ -67,8 +68,6 @@ export const createTag = createAction({
   },
 });
 
-const tagsRequired = { ...tags, required: true };
-
 // TODO:
 // fields do not show up in the UI
 // Sometimes the Tags dropdown will show an error instead of a tag list. Clicking to another piece (Cradete Tag) and then back to this one will fix it.
@@ -78,17 +77,20 @@ export const tagSubscriber = createAction({
   displayName: 'Tags: Tag Subscriber',
   description: 'Tag a subscriber',
   props: {
-    email,
+    email: subscriberEmail,
     // tagId: tag,
-    firstName,
+    firstName: subscriberFirstName,
     tags: tagsRequired,
     fields: allFields,
   },
   async run(context) {
     const { email, firstName, tags, fields } = context.propsValue;
-    const tagId = tags![0];
+    if (!tags || tags.length === 0) {
+      throw new Error('At least one tag is required');
+    }
+    const tagId = tags[0];
 
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${tagId}/subscribe`;
+    const url = `${TAGS_API_ENDPOINT}/${tagId}/subscribe`;
 
     const body = {
       email,
@@ -122,12 +124,12 @@ export const removeTagFromSubscriberByEmail = createAction({
   displayName: 'Tags: Remove Tag From Subscriber By Email',
   description: 'Remove a tag from a subscriber by email',
   props: {
-    email,
+    email: subscriberEmail,
     tagId: tagIdByEmail,
   },
   async run(context) {
     const { email, tagId } = context.propsValue;
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${tagId}/unsubscribe`;
+    const url = `${TAGS_API_ENDPOINT}/${tagId}/unsubscribe`;
 
     const body = {
       email,
@@ -161,7 +163,7 @@ export const removeTagFromSubscriberById = createAction({
   },
   async run(context) {
     const { subscriberId, tagId } = context.propsValue;
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${tagId}/unsubscribe`;
+    const url = `${TAGS_API_ENDPOINT}/${tagId}/unsubscribe`;
 
     const body = {
       id: subscriberId,
@@ -191,13 +193,13 @@ export const listSubscriptionsToATag = createAction({
   description: 'List all subscriptions to a tag',
   props: {
     tagId: tag,
-    page,
+    page: tagsPageNumber,
     sortOrder,
     subscriberState,
   },
   async run(context) {
     const { tagId, page, sortOrder, subscriberState } = context.propsValue;
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${tagId}/subscriptions?`;
+    const url = `${TAGS_API_ENDPOINT}/${tagId}/subscriptions?`;
 
     const body = {
       api_secret: context.auth,

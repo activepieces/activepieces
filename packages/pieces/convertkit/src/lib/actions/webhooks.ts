@@ -1,13 +1,15 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { convertkitAuth } from '../..';
 import {
-  createWebhook as createWebhookAction,
-  removeWebhook as removeWebhookAction,
   targetUrl,
   event,
   eventParameter,
   webhookId,
 } from '../common/webhooks';
+import {
+  createWebhook as createWebhookAction,
+  removeWebhook as removeWebhookAction,
+} from '../common/service';
 
 export const createWebhook = createAction({
   auth: convertkitAuth,

@@ -4,64 +4,8 @@ import {
   NonAuthPieceProperty,
   Validators,
 } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { Webhook, EventType, EventOption } from './models';
-import { CONVERTKIT_API_URL } from './constants';
-import { log } from '../common';
-import { fetchTags } from './tags';
-import { fetchForms } from './forms';
-import { fetchSequences } from './sequences';
-
-export const API_ENDPOINT = 'automations/hooks';
-
-export const createWebhook = async (auth: string, payload: object) => {
-  const body = { ...payload, api_secret: auth };
-
-  const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}`;
-
-  const request: HttpRequest = {
-    url,
-    body,
-    method: HttpMethod.POST,
-  };
-
-  log({ request });
-
-  const response = await httpClient.sendRequest<{ rule: Webhook }>(request);
-
-  if (response.status !== 200) {
-    throw new Error(
-      `Failed to create webhook: ${response.status} ${response.body}`
-    );
-  }
-
-  return response.body.rule;
-};
-
-export const removeWebhook = async (auth: string, ruleId: number) => {
-  const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${ruleId}`;
-  const body = { api_secret: auth };
-
-  const request: HttpRequest = {
-    url,
-    body,
-    method: HttpMethod.DELETE,
-  };
-
-  const response = await httpClient.sendRequest<{ success: boolean }>(request);
-
-  if (response.status !== 200) {
-    throw new Error(
-      `Failed to remove webhook: ${response.status} ${response.body}`
-    );
-  }
-
-  return response.body.success;
-};
+import { EventType, EventOption } from '../types';
+import { fetchTags, fetchForms, fetchSequences } from '../service';
 
 export const webhookBaseOverride = (): NonAuthPieceProperty => {
   if (process.env['AP_ENVIRONMENT'] !== 'dev') {

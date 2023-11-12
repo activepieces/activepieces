@@ -1,39 +1,6 @@
 import { Property, DynamicPropsValue } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { CustomField } from './models';
-import { CONVERTKIT_API_URL } from './constants';
-
-export const API_ENDPOINT = 'custom_fields';
-
-export const fetchCustomFields = async (
-  auth: string
-): Promise<CustomField[]> => {
-  const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}`;
-
-  const body = {
-    api_secret: auth,
-  };
-
-  const request: HttpRequest = {
-    url,
-    body,
-    method: HttpMethod.GET,
-  };
-  const response = await httpClient.sendRequest<{
-    custom_fields: CustomField[];
-  }>(request);
-  if (response.status !== 200) {
-    throw new Error(
-      `Failed to fetch custom fields: ${response.status} ${response.body}`
-    );
-  }
-
-  return response.body.custom_fields;
-};
+import { CustomField } from '../types';
+import { fetchCustomFields } from '../service';
 
 export const fieldsArray = Property.Array({
   displayName: 'Fields',
@@ -70,6 +37,12 @@ export const label = Property.Dropdown({
       options,
     };
   },
+});
+
+export const new_label = Property.ShortText({
+  displayName: 'New Label',
+  description: 'The new label for the custom field',
+  required: true,
 });
 
 export const allFields = Property.DynamicProperties({

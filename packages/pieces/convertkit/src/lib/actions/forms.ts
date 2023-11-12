@@ -4,17 +4,13 @@ import {
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common';
-import { Subscription } from '../common/models';
+import { Subscription } from '../common/types';
 import { convertkitAuth } from '../..';
-import {
-  API_ENDPOINT,
-  formId,
-  fetchForms,
-  email,
-  firstName,
-} from '../common/forms';
+import { formId } from '../common/forms';
+import { subscriberEmail, subscriberFirstName } from '../common/subscribers';
 import { allFields } from '../common/custom-fields';
-import { CONVERTKIT_API_URL } from '../common/constants';
+import { FORMS_API_ENDPOINT } from '../common/constants';
+import { fetchForms } from '../common/service';
 import { tags } from '../common/tags';
 
 export const listForms = createAction({
@@ -43,15 +39,15 @@ export const addSubscriberToForm = createAction({
   description: 'Add a subscriber to a form',
   props: {
     formId,
-    email,
-    firstName,
+    email: subscriberEmail,
+    firstName: subscriberFirstName,
     tags,
     fields: allFieldsRequiredRefreshers,
   },
   async run(context) {
     const { formId, email, firstName, tags, fields } = context.propsValue;
 
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${formId}/subscribe`;
+    const url = `${FORMS_API_ENDPOINT}/${formId}/subscribe`;
 
     const body = {
       api_secret: context.auth,
@@ -87,7 +83,7 @@ export const listFormSubscriptions = createAction({
     formId,
   },
   async run(context) {
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${context.propsValue.formId}/subscriptions`;
+    const url = `${FORMS_API_ENDPOINT}/${context.propsValue.formId}/subscriptions`;
 
     const body = {
       api_secret: context.auth,

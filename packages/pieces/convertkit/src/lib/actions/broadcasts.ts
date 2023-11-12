@@ -6,13 +6,11 @@ import {
 } from '@activepieces/pieces-common';
 import { convertkitAuth } from '../..';
 import {
-  API_ENDPOINT,
-  fetchBroadcasts,
-  broadcastId,
-  page,
-  content,
+  broadcatId,
+  broadcastPageNumber,
+  broadcastContent,
   description,
-  emailAddress,
+  broadcastEmailAddress,
   emailLayoutTemplate,
   isPublic,
   publishedAt,
@@ -21,8 +19,9 @@ import {
   thumbnailAlt,
   thumbnailUrl,
 } from '../common/broadcasts';
-import { Broadcast } from '../common/models';
-import { CONVERTKIT_API_URL } from '../common/constants';
+import { Broadcast } from '../common/types';
+import { BROADCASTS_API_ENDPOINT } from '../common/constants';
+import { fetchBroadcasts } from '../common/service';
 
 export const listBroadcasts = createAction({
   auth: convertkitAuth,
@@ -30,7 +29,7 @@ export const listBroadcasts = createAction({
   displayName: 'Broadcast: List Broadcasts',
   description: 'List all broadcasts',
   props: {
-    page,
+    page: broadcastPageNumber,
   },
   run(context) {
     const page = context.propsValue.page || 1;
@@ -44,9 +43,9 @@ export const createBroadcast = createAction({
   displayName: 'Broadcast: Create Broadcast',
   description: 'Create a new broadcast',
   props: {
-    content,
+    content: broadcastContent,
     description,
-    emailAddress,
+    emailAddress: broadcastEmailAddress,
     emailLayoutTemplate,
     isPublic,
     publishedAt,
@@ -68,7 +67,7 @@ export const createBroadcast = createAction({
       thumbnailAlt,
       thumbnailUrl,
     } = context.propsValue;
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}`;
+    const url = BROADCASTS_API_ENDPOINT;
 
     const body = {
       api_secret: context.auth,
@@ -108,11 +107,11 @@ export const getBroadcastById = createAction({
   displayName: 'Broadcast: Get Broadcast',
   description: 'Get a broadcast',
   props: {
-    broadcastId,
+    broadcastId: broadcatId,
   },
   async run(context) {
     const { broadcastId } = context.propsValue;
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${broadcastId}`;
+    const url = `${BROADCASTS_API_ENDPOINT}/${broadcastId}`;
 
     const body = {
       api_secret: context.auth,
@@ -139,10 +138,10 @@ export const updateBroadcast = createAction({
   displayName: 'Broadcast: Update Broadcast',
   description: 'Update a broadcast',
   props: {
-    broadcastId,
-    content,
+    broadcastId: broadcatId,
+    content: broadcastContent,
     description,
-    emailAddress,
+    emailAddress: broadcastEmailAddress,
     emailLayoutTemplate,
     isPublic,
     publishedAt,
@@ -167,7 +166,7 @@ export const updateBroadcast = createAction({
       thumbnailUrl,
     } = context.propsValue;
 
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${broadcastId}`;
+    const url = `${BROADCASTS_API_ENDPOINT}/${broadcastId}`;
 
     const body = {
       api_secret: context.auth,
@@ -207,11 +206,11 @@ export const broadcastStats = createAction({
   displayName: 'Broadcast: Broadcast Stats',
   description: 'Get broadcast stats',
   props: {
-    broadcastId,
+    broadcastId: broadcatId,
   },
   async run(context) {
     const { broadcastId } = context.propsValue;
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${broadcastId}/stats`;
+    const url = `${BROADCASTS_API_ENDPOINT}/${broadcastId}/stats`;
 
     const body = {
       api_secret: context.auth,
@@ -238,11 +237,11 @@ export const deleteBroadcast = createAction({
   displayName: 'Broadcast: Delete Broadcast',
   description: 'Delete a broadcast',
   props: {
-    broadcastId,
+    broadcastId: broadcatId,
   },
   async run(context) {
     const { broadcastId } = context.propsValue;
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${broadcastId}`;
+    const url = `${BROADCASTS_API_ENDPOINT}/${broadcastId}`;
 
     const body = {
       api_secret: context.auth,

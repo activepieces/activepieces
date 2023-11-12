@@ -1,37 +1,4 @@
 import { Property, Validators } from '@activepieces/pieces-framework';
-import {
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { Purchase } from './models';
-import { CONVERTKIT_API_URL } from './constants';
-
-export const API_ENDPOINT = 'purchases';
-
-export const fetchPurchases = async (auth: string, page: number) => {
-  const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}`;
-
-  const body = {
-    api_secret: auth,
-    page,
-  };
-
-  const request: HttpRequest = {
-    url,
-    body,
-    method: HttpMethod.GET,
-  };
-  const response = await httpClient.sendRequest<{ purchases: Purchase[] }>(
-    request
-  );
-  if (response.status !== 200) {
-    throw new Error(
-      `Failed to fetch purchases: ${response.status} ${response.body}`
-    );
-  }
-  return response.body.purchases;
-};
 
 export const purchaseId = Property.ShortText({
   displayName: 'Purchase ID',
@@ -39,14 +6,14 @@ export const purchaseId = Property.ShortText({
   required: true,
 });
 
-export const emailAddress = Property.ShortText({
+export const purchaserEmailAddress = Property.ShortText({
   displayName: 'Email Address',
   description: 'The email address of the subscriber',
   required: true,
   validators: [Validators.email],
 });
 
-export const page = Property.Number({
+export const purchasesPageNumber = Property.Number({
   displayName: 'Page',
   description:
     'Page number. Each page of results will contain up to 50 purchases.',
@@ -164,12 +131,6 @@ export const total = Property.Number({
   description: 'The total',
   required: false,
   validators: [Validators.number],
-});
-
-export const firstName = Property.ShortText({
-  displayName: 'First Name',
-  description: 'The first name of the subscriber',
-  required: false,
 });
 
 export const products = {

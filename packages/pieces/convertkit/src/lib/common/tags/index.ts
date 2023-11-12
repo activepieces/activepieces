@@ -1,36 +1,14 @@
-import { Property, Validators } from '@activepieces/pieces-framework';
 import {
-  httpClient,
-  HttpMethod,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { CONVERTKIT_API_URL } from './constants';
-import { fetchSubscriberByEmail, fetchSubscribedTags } from './subscribers';
-import { Tag } from './models';
-
-export const API_ENDPOINT = 'tags';
-
-export const fetchTags = async (auth: string) => {
-  const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}`;
-  const body = {
-    api_secret: auth,
-  };
-  const request: HttpRequest = {
-    url,
-    body,
-    method: HttpMethod.GET,
-  };
-
-  const response = await httpClient.sendRequest<{ tags: Tag[] }>(request);
-
-  if (response.status !== 200) {
-    throw new Error(
-      `Failed to fetch tags: ${response.status} ${response.body}`
-    );
-  }
-
-  return response.body.tags;
-};
+  Property,
+  Validators,
+  DynamicDropdownOptions,
+} from '@activepieces/pieces-framework';
+import {
+  fetchSubscriberByEmail,
+  fetchSubscribedTags,
+  fetchTags,
+} from '../service';
+import { Tag, AuthEmail } from '../types';
 
 export const tagId = Property.ShortText({
   displayName: 'Tag Id',
@@ -42,18 +20,6 @@ export const name = Property.ShortText({
   displayName: 'Name',
   description: 'The name of the tag',
   required: true,
-});
-
-export const email = Property.ShortText({
-  displayName: 'Email Address',
-  description: 'Email address',
-  required: true,
-});
-
-export const firstName = Property.ShortText({
-  displayName: 'First Name',
-  description: 'The first name of the subscriber',
-  required: false,
 });
 
 export const tags = Property.MultiSelectDropdown({
@@ -82,6 +48,8 @@ export const tags = Property.MultiSelectDropdown({
     };
   },
 });
+
+export const tagsRequired = { ...tags, required: true };
 
 export const tag = Property.Dropdown({
   displayName: 'Tag',
@@ -113,9 +81,9 @@ export const tag = Property.Dropdown({
   },
 });
 
-export const page = Property.Number({
+export const tagsPageNumber = Property.Number({
   displayName: 'Page',
-  description: 'Page',
+  description: 'Each page of results will contain up to 50 tags.',
   required: false,
   defaultValue: 1,
   validators: [Validators.number, Validators.nonZero],
@@ -144,11 +112,6 @@ export const subscriberState = Property.StaticDropdown({
 });
 
 // Generate options for tags based on email address
-
-interface AuthEmail {
-  auth: string;
-  email: string;
-}
 
 export const tagIdByEmailOptionsFn = async ({ auth, email }: AuthEmail) => {
   if (!auth) {
@@ -193,48 +156,17 @@ export const tagIdByEmailOptionsFn = async ({ auth, email }: AuthEmail) => {
   });
 
   return {
+    disabled: false,
     options,
   };
 };
-
-// WIP debounce
-
-// // // https://github.com/lodash/lodash/issues/4700#issuecomment-805439202
-// export const asyncT = function asyncThrottle<
-//   F extends (...args: any[]) => Promise<any>
-// >(func: F, wait?: number) {
-//   const throttled = _.throttle((resolve, reject, args: Parameters<F>) => {
-//     func(...args)
-//       .then(resolve)
-//       .catch(reject);
-//   }, wait);
-//   return (...args: Parameters<F>): ReturnType<F> =>
-//     new Promise((resolve, reject) => {
-//       throttled(resolve, reject, args);
-//     }) as ReturnType<F>;
-// };
-
-// let optionsFnRef: any;
-
-// function debouncedOptions() {
-
-//   // cancel any old refs
-//   if (optionsFnRef && optionsFnRef.cancel) optionsFnRef.cancel();
-
-//   // create new instance and save for later
-//   optionsFnRef = loadash.debounce(optiosnFn, 3000);
-
-//   // execute will start after 1000 unless cancelled because the function is re-invoked again
-
-//   return optionsFnRef;
-// }
 
 export const tagIdByEmail = Property.Dropdown({
   displayName: 'Tag',
   description: 'The tag to remove',
   required: true,
   refreshers: ['auth', 'email'],
-  options: tagIdByEmailOptionsFn as any,
+  options: tagIdByEmailOptionsFn as unknown as DynamicDropdownOptions<unknown>,
 });
 
 export const tagIdBySubscriberId = Property.Dropdown({
@@ -285,3 +217,37 @@ export const tagIdBySubscriberId = Property.Dropdown({
     }
   },
 });
+
+// WIP debounce
+
+// // // https://github.com/lodash/lodash/issues/4700#issuecomment-805439202
+// export const asyncT = function asyncThrottle<
+//   F extends (...args: any[]) => Promise<any>
+// >(func: F, wait?: number) {
+//   const throttled = _.throttle((resolve, reject, args: Parameters<F>) => {
+//     func(...args)
+//       .then(resolve)
+//       .catch(reject);
+//   }, wait);
+//   return (...args: Parameters<F>): ReturnType<F> =>
+//     new Promise((resolve, reject) => {
+//       throttled(resolve, reject, args);
+//     }) as ReturnType<F>;
+// };
+
+// let optionsFnRef: any;
+
+// function debouncedOptions() {
+
+//   // cancel any old refs
+//   if (optionsFnRef && optionsFnRef.cancel) optionsFnRef.cancel();
+
+//   // create new instance and save for later
+//   optionsFnRef = loadash.debounce(optiosnFn, 3000);
+
+//   // execute will start after 1000 unless cancelled because the function is re-invoked again
+
+//   return optionsFnRef;
+// }
+
+// import Options type

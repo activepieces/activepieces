@@ -128,3 +128,8 @@ export interface EventOption {
   param_label: string | null;
   type: string | null;
 }
+
+export interface AuthEmail {
+  auth: string;
+  email: string;
+}

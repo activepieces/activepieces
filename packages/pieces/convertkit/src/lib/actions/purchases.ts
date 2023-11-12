@@ -6,15 +6,12 @@ import {
 } from '@activepieces/pieces-common';
 import { convertkitAuth } from '../..';
 import {
-  API_ENDPOINT,
-  fetchPurchases,
   purchaseId,
-  page,
+  purchasesPageNumber,
   transactionId,
   productId,
   transactionTime,
-  emailAddress,
-  firstName,
+  purchaserEmailAddress,
   status,
   currency,
   subtotal,
@@ -25,11 +22,13 @@ import {
   products,
   multipleProducts,
 } from '../common/purchases';
-import { Purchase } from '../common/models';
+import { subscriberFirstName } from '../common/subscribers';
+import { Purchase } from '../common/types';
 import { subscriberId } from '../common/subscribers';
 import { formId } from '../common/forms';
 import { sequenceId } from '../common/sequences';
-import { CONVERTKIT_API_URL } from '../common/constants';
+import { PURCHASES_API_ENDPOINT } from '../common/constants';
+import { fetchPurchases } from '../common/service';
 
 export const listPurchases = createAction({
   auth: convertkitAuth,
@@ -37,15 +36,13 @@ export const listPurchases = createAction({
   displayName: 'Purchases: List Purchases',
   description: 'Returns a list of all purchases',
   props: {
-    page,
+    page: purchasesPageNumber,
   },
   run(context) {
     const page = context.propsValue.page || 1;
     return fetchPurchases(context.auth, page);
   },
 });
-
-// Show a single purchase
 
 export const getPurchaseById = createAction({
   auth: convertkitAuth,
@@ -57,11 +54,16 @@ export const getPurchaseById = createAction({
   },
   async run(context) {
     const { purchaseId } = context.propsValue;
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}/${purchaseId}?api_secret=${context.auth}`;
+    const url = `${PURCHASES_API_ENDPOINT}/${purchaseId}`;
+
+    const body = {
+      api_secret: context.auth,
+    };
 
     const request: HttpRequest = {
       url,
       method: HttpMethod.GET,
+      body,
     };
 
     const response = await httpClient.sendRequest<{
@@ -91,8 +93,8 @@ export const createSinglePurchase = createAction({
   props: {
     transactionId,
     transactionTime,
-    emailAddress,
-    firstName,
+    emailAddress: purchaserEmailAddress,
+    firstName: subscriberFirstName,
     status,
     currency,
     subtotal,
@@ -117,7 +119,7 @@ export const createSinglePurchase = createAction({
       total,
       ...products
     } = context.propsValue;
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}`;
+    const url = PURCHASES_API_ENDPOINT;
 
     const body = {
       api_secret: context.auth,
@@ -163,8 +165,8 @@ export const createPurchases = createAction({
   props: {
     transactionId,
     transactionTime,
-    emailAddress,
-    firstName,
+    emailAddress: purchaserEmailAddress,
+    firstName: subscriberFirstName,
     status,
     currency,
     subtotal,
@@ -189,7 +191,7 @@ export const createPurchases = createAction({
       total,
       multipleProducts,
     } = context.propsValue;
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}`;
+    const url = PURCHASES_API_ENDPOINT;
 
     const body = {
       api_secret: context.auth,
@@ -240,11 +242,17 @@ export const listPurchasesForSubscriber = createAction({
   },
   async run(context) {
     const { subscriberId } = context.propsValue;
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}?api_secret=${context.auth}&subscriber_id=${subscriberId}`;
+    const url = PURCHASES_API_ENDPOINT;
+
+    const body = {
+      api_secret: context.auth,
+      subscriber_id: subscriberId,
+    };
 
     const request: HttpRequest = {
       url,
       method: HttpMethod.GET,
+      body,
     };
 
     const response = await httpClient.sendRequest<{
@@ -271,7 +279,7 @@ export const listPurchasesForProduct = createAction({
   },
   async run(context) {
     const { productId } = context.propsValue;
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}?api_secret=${context.auth}&product_id=${productId}`;
+    const url = `${PURCHASES_API_ENDPOINT}?api_secret=${context.auth}&product_id=${productId}`;
 
     const response = await fetch(url);
 
@@ -297,7 +305,7 @@ export const listPurchasesForForm = createAction({
   },
   async run(context) {
     const { formId } = context.propsValue;
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}?api_secret=${context.auth}&form_id=${formId}`;
+    const url = `${PURCHASES_API_ENDPOINT}?api_secret=${context.auth}&form_id=${formId}`;
 
     const response = await fetch(url);
 
@@ -323,7 +331,7 @@ export const listPurchasesForSequence = createAction({
   },
   async run(context) {
     const { sequenceId } = context.propsValue;
-    const url = `${CONVERTKIT_API_URL}/${API_ENDPOINT}?api_secret=${context.auth}&sequence_id=${sequenceId}`;
+    const url = `${PURCHASES_API_ENDPOINT}?api_secret=${context.auth}&sequence_id=${sequenceId}`;
 
     const response = await fetch(url);
 
