@@ -3,6 +3,7 @@ import {
   BehaviorSubject,
   MonoTypeOperatorFunction,
   Observable,
+  Subject,
   startWith,
   switchMap,
   tap,
@@ -18,6 +19,7 @@ import { ActivatedRoute } from '@angular/router';
 import { PiecesTableDataSource } from './pieces-table.datasource';
 import { FormControl } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { PropertyType } from '@activepieces/pieces-framework';
 
 @Component({
   selector: 'app-pieces-table',
@@ -33,8 +35,14 @@ export class PiecesTableComponent implements OnInit {
   readonly pieceHiddenText = $localize`is now hidden from users`;
   readonly showPieceTooltip = $localize`Show this piece to users`;
   readonly hidePieceTooltip = $localize`Hide this piece from users`;
+  readonly addPieceCredentialsTooltip = $localize`Add your own OAuth2 app`;
+  readonly updatePieceCredentialsTooltip = $localize`Update your own OAuth2 app`;
+  readonly deletePieceCredentialsTooltip = $localize`Delete your own OAuth2 app`;
+  readonly OAUTH2 = PropertyType.OAUTH2;
   searchFormControl = new FormControl('', { nonNullable: true });
   dataSource!: PiecesTableDataSource;
+  refresh$: Subject<true> = new Subject();
+
   constructor(
     private authenticationService: AuthenticationService,
     private piecesService: PieceMetadataService,
@@ -48,7 +56,9 @@ export class PiecesTableComponent implements OnInit {
     this.platform$ = new BehaviorSubject(this.route.snapshot.data['platform']);
     this.dataSource = new PiecesTableDataSource(
       this.piecesService,
-      this.searchFormControl.valueChanges.pipe(startWith(''))
+      this.searchFormControl.valueChanges.pipe(startWith('')),
+      this.platformService,
+      this.refresh$.asObservable().pipe(startWith(true as const))
     );
   }
 
@@ -81,6 +91,7 @@ export class PiecesTableComponent implements OnInit {
         }`
       );
     });
+
     if (this.saving$) {
       this.saving$ = this.saving$.pipe(
         switchMap(() => {
@@ -94,6 +105,7 @@ export class PiecesTableComponent implements OnInit {
       );
     }
   }
+
   savePlatform(platform: Platform) {
     return this.platformService.updatePlatform(platform, platform.id);
   }
