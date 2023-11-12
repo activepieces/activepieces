@@ -4,9 +4,9 @@ import { buildListDropdown } from "../props";
 import { sendyAuth, SendyAuthType } from "../auth";
 
 export const countAction = createAction({
-	name        : 'count',
+	name        : 'count_subscribers',
 	auth        : sendyAuth,
-	displayName : 'Active Subscriber Count',
+	displayName : 'Count Active Subscribers',
 	description : 'Get the active subscriber count for a list',
 	props       : {
 		list: Property.Dropdown({

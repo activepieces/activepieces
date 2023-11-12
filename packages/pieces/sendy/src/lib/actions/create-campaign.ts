@@ -4,7 +4,7 @@ import { buildListDropdown } from "../props";
 import { sendyAuth, SendyAuthType } from "../auth";
 
 export const createCampaignAction = createAction({
-	name        : 'createCampaign',
+	name        : 'create_campaign',
 	auth        : sendyAuth,
 	displayName : 'Create Campaign',
 	description : 'Create a new campaign',

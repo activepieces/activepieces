@@ -1,14 +1,14 @@
 
 import { createPiece } from "@activepieces/pieces-framework";
 import { sendyAuth } from "./lib/auth";
-import { getBrandsAction } from "./lib/actions/getBrands";
-import { getListsAction } from "./lib/actions/getLists";
+import { getBrandsAction } from "./lib/actions/get-brands";
+import { getListsAction } from "./lib/actions/get-brand-lists";
 import { subscribeAction } from "./lib/actions/subscribe";
 import { unsubscribeAction } from "./lib/actions/unsubscribe";
-import { deleteAction } from "./lib/actions/delete";
-import { statusAction } from "./lib/actions/status";
-import { countAction } from "./lib/actions/count";
-import { createCampaignAction } from "./lib/actions/createCampaign";
+import { deleteAction } from "./lib/actions/delete-subscriber";
+import { statusAction } from "./lib/actions/get-subscription-status";
+import { countAction } from "./lib/actions/count-subscriber";
+import { createCampaignAction } from "./lib/actions/create-campaign";
 
 export const sendy = createPiece({
 	displayName             : "Sendy",
