@@ -1,17 +1,16 @@
 import { ListOAuth2AppRequest, OAuthApp, UpsertOAuth2AppRequest } from '@activepieces/ee-shared'
 import { OAuthAppEntity, OAuthAppWithSecret } from './oauth-app.entity'
 import { databaseConnection } from '../../database/database-connection'
-import { nanoid } from 'nanoid'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
-import { SeekPage, deleteProps } from '@activepieces/shared'
+import { SeekPage, apId, deleteProps } from '@activepieces/shared'
 import {  decryptString, encryptString } from '../../helper/encryption'
 
 const oauthRepo = databaseConnection.getRepository(OAuthAppEntity)
 
 export const oauthAppService = {
     async upsert({ platformId, request }: { platformId: string, request: UpsertOAuth2AppRequest }): Promise<OAuthApp> {
-        await oauthRepo.upsert({ platformId, ...request, clientSecret: encryptString(request.clientSecret), id: nanoid() }, ['platformId', 'pieceName'])
+        await oauthRepo.upsert({ platformId, ...request, clientSecret: encryptString(request.clientSecret), id: apId() }, ['platformId', 'pieceName'])
         const connection = await oauthRepo.findOneByOrFail({ platformId, pieceName: request.pieceName })
         return deleteProps(connection, ['clientSecret'])
     },

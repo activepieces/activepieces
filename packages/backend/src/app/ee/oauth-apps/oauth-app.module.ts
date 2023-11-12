@@ -39,8 +39,8 @@ const oauthAppController: FastifyPluginAsyncTypebox = async (app) => {
     async (request) => {
         const projectId = request.principal.projectId
         assertNotNullOrUndefined(projectId, 'projectId')
-        const project = await projectService.getOne(projectId);
-        const platformId = project?.platformId;
+        const project = await projectService.getOne(projectId)
+        const platformId = project?.platformId
         assertNotNullOrUndefined(platformId, 'platformId')
         return oauthAppService.list({
             platformId,
