@@ -46,15 +46,31 @@ describe('admin add platform endpoint', () => {
 
         // assert
         const responseBody = response?.json()
-
         expect(response?.statusCode).toBe(StatusCodes.CREATED)
+        expect(Object.keys(responseBody)).toHaveLength(21)
         expect(responseBody.id).toHaveLength(21)
+        expect(responseBody.created).toBeDefined()
+        expect(responseBody.updated).toBeDefined()
         expect(responseBody.ownerId).toBe(mockUser.id)
         expect(responseBody.name).toBe(mockPlatformName)
         expect(responseBody.primaryColor).toBe('#6e41e2')
         expect(responseBody.logoIconUrl).toBe('https://cdn.activepieces.com/brand/logo.svg')
-        expect(responseBody.fullLogoUrl).toBe('https://cdn.activepieces.com/brand/full-logo.svg')
+        expect(responseBody.fullLogoUrl).toBe('https://cdn.activepieces.com/brand/full-logo.png')
         expect(responseBody.favIconUrl).toBe('https://cdn.activepieces.com/brand/favicon.ico')
+        expect(responseBody.filteredPieceNames).toStrictEqual([])
+        expect(responseBody.filteredPieceBehavior).toBe('BLOCKED')
+        expect(responseBody.smtpHost).toBeNull()
+        expect(responseBody.smtpPort).toBeNull()
+        expect(responseBody.smtpUser).toBeNull()
+        expect(responseBody.smtpPassword).toBeNull()
+        expect(responseBody.smtpSenderEmail).toBeNull()
+        expect(responseBody.smtpUseSSL).toBeNull()
+        expect(responseBody.privacyPolicyUrl).toBeNull()
+        expect(responseBody.termsOfServiceUrl).toBeNull()
+        expect(responseBody.cloudAuthEnabled).toBe(true)
+        expect(responseBody.showPoweredBy).toBe(true)
+        expect(responseBody.privacyPolicyUrl).toBeNull()
+        expect(responseBody.termsOfServiceUrl).toBeNull()
     })
 
     it('updates project to be platform-managed', async () => {

@@ -3,11 +3,12 @@ import { Router } from '@angular/router';
 import { AuthenticationService } from '../../service/authentication.service';
 import { ProjectService } from '../../service/project.service';
 import { ApFlagId, Project } from '@activepieces/shared';
-import { Observable } from 'rxjs';
+import { Observable, catchError, map, of } from 'rxjs';
 import { FlagService } from '../../service/flag.service';
 
 import { Store } from '@ngrx/store';
 import { ProjectSelectors } from '../../store/project/project.selector';
+import { PlatformService } from '../../service/platform.service';
 
 @Component({
   selector: 'ap-user-avatar',
@@ -25,7 +26,7 @@ export class UserAvatarComponent implements OnInit {
   overflownProjectsNames: Record<string, string> = {};
   billingEnabled$: Observable<boolean>;
   projectEnabled$: Observable<boolean>;
-  showPlatform = false;
+  showPlatform$ = of(false);
   showCommunity$: Observable<boolean>;
   constructor(
     public authenticationService: AuthenticationService,
@@ -33,7 +34,8 @@ export class UserAvatarComponent implements OnInit {
     private flagService: FlagService,
     private store: Store,
     // BEGIN EE
-    private projectService: ProjectService // END EE
+    private projectService: ProjectService,
+    private platformService: PlatformService // END EE
   ) {
     this.showCommunity$ = this.flagService.isFlagEnabled(
       ApFlagId.SHOW_COMMUNITY
@@ -46,13 +48,20 @@ export class UserAvatarComponent implements OnInit {
       ApFlagId.PROJECT_MEMBERS_ENABLED
     );
     this.projects$ = this.store.select(ProjectSelectors.selectAllProjects);
-    this.selectedProject$ = this.store.select(ProjectSelectors.selectProject);
+    this.selectedProject$ = this.store.select(
+      ProjectSelectors.selectCurrentProject
+    );
     // END EE
   }
   ngOnInit(): void {
     this.currentUserEmail = this.authenticationService.currentUser.email;
-    const decodedToken = this.authenticationService.getDecodedToken();
-    this.showPlatform = !!decodedToken && !!decodedToken['platformId'];
+    const platformId = this.authenticationService.getPlatformId();
+    if (platformId) {
+      this.showPlatform$ = this.platformService.getPlatform(platformId).pipe(
+        map(() => true),
+        catchError(() => of(false))
+      );
+    }
   }
 
   getDropDownLeftOffset(

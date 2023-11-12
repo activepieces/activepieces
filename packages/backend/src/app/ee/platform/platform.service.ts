@@ -1,7 +1,7 @@
 import { ActivepiecesError, ErrorCode, UserId, apId, isNil, spreadIfDefined } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { PlatformEntity } from './platform.entity'
-import { Platform, PlatformId, UpdatePlatformRequestBody } from '@activepieces/ee-shared'
+import { FilteredPieceBehavior, Platform, PlatformId, UpdatePlatformRequestBody } from '@activepieces/ee-shared'
 import { defaultTheme } from '../../flags/theme'
 
 const repo = databaseConnection.getRepository<Platform>(PlatformEntity)
@@ -16,22 +16,37 @@ export const platformService = {
             logoIconUrl: logoIconUrl ?? defaultTheme.logos.logoIconUrl,
             fullLogoUrl: fullLogoUrl ?? defaultTheme.logos.fullLogoUrl,
             favIconUrl: favIconUrl ?? defaultTheme.logos.favIconUrl,
+            filteredPieceNames: [],
+            filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
+            showPoweredBy: true,
+            cloudAuthEnabled: true,
         }
 
         return await repo.save(newPlatform)
     },
 
-    async update({ id, userId, name, primaryColor, logoIconUrl, fullLogoUrl, favIconUrl }: UpdateParams): Promise<Platform> {
-        const platform = await this.getOneOrThrow(id)
-        assertPlatformOwnedByUser(platform, userId)
+    async update(params: UpdateParams): Promise<Platform> {
+        const platform = await this.getOneOrThrow(params.id)
+        assertPlatformOwnedByUser(platform, params.userId)
 
         const updatedPlatform: Platform = {
             ...platform,
-            ...spreadIfDefined('name', name),
-            ...spreadIfDefined('primaryColor', primaryColor),
-            ...spreadIfDefined('logoIconUrl', logoIconUrl),
-            ...spreadIfDefined('fullLogoUrl', fullLogoUrl),
-            ...spreadIfDefined('favIconUrl', favIconUrl),
+            ...spreadIfDefined('name', params.name),
+            ...spreadIfDefined('primaryColor', params.primaryColor),
+            ...spreadIfDefined('logoIconUrl', params.logoIconUrl),
+            ...spreadIfDefined('fullLogoUrl', params.fullLogoUrl),
+            ...spreadIfDefined('favIconUrl', params.favIconUrl),
+            ...spreadIfDefined('filteredPieceNames', params.filteredPieceNames),
+            ...spreadIfDefined('filteredPieceBehavior', params.filteredPieceBehavior),
+            ...spreadIfDefined('smtpHost', params.smtpHost),
+            ...spreadIfDefined('smtpPort', params.smtpPort),
+            ...spreadIfDefined('smtpUser', params.smtpUser),
+            ...spreadIfDefined('smtpPassword', params.smtpPassword),
+            ...spreadIfDefined('smtpSenderEmail', params.smtpSenderEmail),
+            ...spreadIfDefined('smtpUseSSL', params.smtpUseSSL),
+            ...spreadIfDefined('privacyPolicyUrl', params.privacyPolicyUrl),
+            ...spreadIfDefined('termsOfServiceUrl', params.termsOfServiceUrl),
+            ...spreadIfDefined('cloudAuthEnabled', params.cloudAuthEnabled),
         }
 
         return await repo.save(updatedPlatform)

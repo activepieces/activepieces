@@ -18,13 +18,14 @@ import { Store } from '@ngrx/store';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProjectsTableComponent {
-  displayedColumns = ['id', 'displayName', 'created', 'action'];
+  displayedColumns = ['displayName', 'created', 'externalId', 'action'];
   refreshTable$: Subject<boolean> = new Subject();
   dataSource: ProjectsDataSource;
   loading = true;
   switchProject$: Observable<void> | undefined;
   createProject$: Observable<void> | undefined;
   updateProject$: Observable<void> | undefined;
+  title = $localize`Projects`;
   constructor(
     private projectsService: ProjectService,
     private matDialog: MatDialog,
@@ -53,7 +54,7 @@ export class ProjectsTableComponent {
       );
   }
   openProject(project: Project) {
-    this.switchProject$ = this.projectsService.switchProject(project.id);
+    this.switchProject$ = this.projectsService.switchProject(project.id, true);
   }
 
   updateProject(project: Project) {

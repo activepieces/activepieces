@@ -124,7 +124,7 @@ export const DashboardLayoutRouting: Routes = [
           title: $localize`Platform`,
         },
         path: 'platform',
-        pathMatch: 'full',
+        pathMatch: 'prefix',
         loadChildren: () =>
           import('@activepieces/ui-ee-platform').then(
             (res) => res.UiEePlatformModule

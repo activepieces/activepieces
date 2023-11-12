@@ -672,6 +672,33 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "fdundjer",
+      "name": "Filip Dunđer",
+      "avatar_url": "https://avatars.githubusercontent.com/u/17405319?v=4",
+      "profile": "https://github.com/fdundjer",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "donthorp",
+      "name": "Don Thorp",
+      "avatar_url": "https://avatars.githubusercontent.com/u/8629?v=4",
+      "profile": "http://donthorp.net",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "joeworkman",
+      "name": "Joe Workman",
+      "avatar_url": "https://avatars.githubusercontent.com/u/225628?v=4",
+      "profile": "https://joeworkman.net",
+      "contributions": [
+        "plugin"
+      ]
     }
   ],
   "commitType": "docs"

@@ -1,6 +1,9 @@
 import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { airtableCreateRecordAction } from './lib/actions/create-record';
 import { airtableNewRecordTrigger } from './lib/trigger/new-record.trigger';
+import { airtableFindRecordAction } from './lib/actions/find-record';
+import { airtableUpdateRecordAction } from './lib/actions/update-record';
+import { airtableDeleteRecordAction } from './lib/actions/delete-record';
 import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common';
 
 export const airtableAuth = PieceAuth.SecretText({
@@ -38,15 +41,16 @@ export const airtableAuth = PieceAuth.SecretText({
 })
 
 export const airtable = createPiece({
-    displayName: 'Airtable',
-        minimumSupportedRelease: '0.5.0',
-    logoUrl: 'https://cdn.activepieces.com/pieces/airtable.png',
-    authors: ['AbdulTheActivePiecer', 'kanarelo'],
-    auth: airtableAuth,
-    actions: [
-        airtableCreateRecordAction,
-    ],
-    triggers: [
-        airtableNewRecordTrigger,
-    ],
-})
+  displayName: 'Airtable',
+  minimumSupportedRelease: '0.5.0',
+  logoUrl: 'https://cdn.activepieces.com/pieces/airtable.png',
+  authors: ['AbdulTheActivePiecer', 'kanarelo', 'TaskMagicKyle'],
+  auth: airtableAuth,
+  actions: [
+    airtableCreateRecordAction,
+    airtableFindRecordAction,
+    airtableUpdateRecordAction,
+    airtableDeleteRecordAction,
+  ],
+  triggers: [airtableNewRecordTrigger],
+});
