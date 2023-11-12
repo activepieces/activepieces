@@ -49,7 +49,7 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         filteredPieceNames: platform?.filteredPieceNames ?? [],
         filteredPieceBehavior: platform?.filteredPieceBehavior ?? faker.helpers.enumValue(FilteredPieceBehavior),
         smtpHost: platform?.smtpHost ?? faker.internet.domainName(),
-        smtpPort: platform?.smtpPort ?? faker.datatype.number(),
+        smtpPort: platform?.smtpPort ?? faker.internet.port(),
         smtpUser: platform?.smtpUser ?? faker.internet.userName(),
         smtpPassword: platform?.smtpPassword ?? faker.internet.password(),
         smtpUseSSL: platform?.smtpUseSSL ?? faker.datatype.boolean(),

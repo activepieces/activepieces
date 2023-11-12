@@ -25,7 +25,7 @@ export const userService = {
             email,
         })
 
-        if (!isNil(existingUser) && existingUser.status === UserStatus.SHADOW) {
+        if (!isNil(existingUser) && existingUser.status === UserStatus.INVITED) {
             user.id = existingUser.id
             await userRepo.update(user.id, user)
             return userRepo.findOneByOrFail({
@@ -37,16 +37,16 @@ export const userService = {
     },
     async verify({ userId }: { userId: string }): Promise<User> {
         const user = await userRepo.findOneByOrFail({ id: userId })
-    
-        if (user.status === UserStatus.SHADOW) {
+
+        if (user.status === UserStatus.INVITED) {
             await userRepo.update(userId, { status: UserStatus.VERIFIED })
         }
-    
+
         return {
             ...user,
             status: UserStatus.VERIFIED,
-        }  
-    },    
+        }
+    },
     async getMetaInfo({ id }: { id: UserId }): Promise<UserMeta | null> {
         const user = await userRepo.findOneBy({ id })
         if (!user) {

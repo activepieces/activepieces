@@ -59,7 +59,7 @@ describe('Managed Authentication API', () => {
             expect(responseBody?.trackEvents).toBe(true)
             expect(responseBody?.newsLetter).toBe(true)
             expect(responseBody?.password).toBeUndefined()
-            expect(responseBody?.status).toBe('EXTERNAL')
+            expect(responseBody?.status).toBe('CREATED')
             expect(responseBody?.externalId).toBe(`${mockPlatform.id}_${mockExternalTokenPayload.externalUserId}`)
             expect(responseBody?.projectId).toHaveLength(21)
             expect(responseBody?.token).toBeDefined()

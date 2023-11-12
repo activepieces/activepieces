@@ -46,7 +46,7 @@ async function createOrGetUser({ email }: { email: string }): Promise<User> {
         lastName: 'Unknown',
         newsLetter: false,
         trackEvents: true,
-        status: UserStatus.SHADOW,
+        status: UserStatus.INVITED,
     })
 }
 

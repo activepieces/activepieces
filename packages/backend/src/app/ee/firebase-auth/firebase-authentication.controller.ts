@@ -37,7 +37,7 @@ export const firebaseAuthenticationController: FastifyPluginAsyncTypebox = async
                 const verifiedToken = await firebaseAuth!.verifyIdToken(request.body.token)
                 const user = await getUser({ email: verifiedToken.email!, decodedToken: verifiedToken })
                 await assertEmailIsVerifed({ user })
-                if (!isNil(user) && user.status !== UserStatus.SHADOW) {
+                if (!isNil(user) && user.status !== UserStatus.INVITED) {
                     const project = await getProjectByUser(user.id)
                     const platform = await getPlatform(project.platformId)
 
@@ -93,7 +93,7 @@ export const firebaseAuthenticationController: FastifyPluginAsyncTypebox = async
                 const verifiedToken = await firebaseAuth!.verifyIdToken(request.body.token)
                 const user = await getUser({ email: verifiedToken.email!, decodedToken: verifiedToken })
                 const referringUserId = request.body.referringUserId
-                if (!isNil(user) && user.status !== UserStatus.SHADOW) {
+                if (!isNil(user) && user.status !== UserStatus.INVITED) {
                     const project = await getProjectByUser(user.id)
                     const platform = await getPlatform(project.platformId)
 
@@ -134,7 +134,7 @@ export const firebaseAuthenticationController: FastifyPluginAsyncTypebox = async
                         lastName: request.body.lastName,
                         newsLetter: true,
                         password: crypto.randomBytes(32).toString('hex'),
-                        status: UserStatus.SHADOW,
+                        status: UserStatus.INVITED,
                     })
                     if (!isNil(referringUserId)) {
                         await referralService.upsert({
@@ -162,7 +162,7 @@ export const firebaseAuthenticationController: FastifyPluginAsyncTypebox = async
 
 async function getUser({ decodedToken, email }: { decodedToken: DecodedIdToken, email: string }): Promise<User | null> {
     const user = await userService.getOneByEmail({ email })
-    if (decodedToken.email_verified && !isNil(user) && user.status === UserStatus.SHADOW) {
+    if (decodedToken.email_verified && !isNil(user) && user.status === UserStatus.INVITED) {
         return userService.verify({ userId: user.id })
     }
     if (!decodedToken.email_verified && user?.status === UserStatus.VERIFIED) {
@@ -175,7 +175,7 @@ async function getUser({ decodedToken, email }: { decodedToken: DecodedIdToken, 
 async function assertEmailIsVerifed({
     user,
 }: { user: User | null }): Promise<void> {
-    if (user?.status === UserStatus.SHADOW) {
+    if (user?.status === UserStatus.INVITED) {
         throw new ActivepiecesError({
             code: ErrorCode.EMAIL_IS_NOT_VERFIED,
             params: { email: user.email },
