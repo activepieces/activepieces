@@ -3,8 +3,6 @@ import { oauthAppService } from './oauth-app.service'
 import { ListOAuth2AppRequest, UpsertOAuth2AppRequest } from '@activepieces/ee-shared'
 import { ActivepiecesError, ErrorCode, assertNotNullOrUndefined } from '@activepieces/shared'
 import { platformService } from '../platform/platform.service'
-import { projectService } from '../../project/project-service'
-
 
 export const oauthAppModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(oauthAppController, { prefix: '/v1/oauth-apps' })
@@ -37,10 +35,7 @@ const oauthAppController: FastifyPluginAsyncTypebox = async (app) => {
         },
     },
     async (request) => {
-        const projectId = request.principal.projectId
-        assertNotNullOrUndefined(projectId, 'projectId')
-        const project = await projectService.getOne(projectId)
-        const platformId = project?.platformId
+        const platformId = request.principal.platformId
         assertNotNullOrUndefined(platformId, 'platformId')
         return oauthAppService.list({
             platformId,
