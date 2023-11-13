@@ -77,6 +77,7 @@ import { AddDisplayNameToSigningKey1698698190965 } from './migration/postgres/16
 import { AddFilteredPiecesToPlatform1699281870038 } from './migration/postgres/1699281870038-add-filtered-pieces-to-platform'
 import { AddSmtpAndPrivacyUrlToPlatform1699491705906 } from './migration/postgres/1699491705906-AddSmtpAndPrivacyUrlToPlatform'
 import { UpdateUserStatusRenameShadowToInvited1699818680567 } from './migration/common/1699818680567-update-user-status-rename-shadow-to-invited'
+import { AddPlatformIdToUser1699901161457 } from './migration/common/1699901161457-add-platform-id-to-user'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
@@ -139,6 +140,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddTerminationReason1698323987669,
         ManagedAuthnInitial1698700720482,
         UpdateUserStatusRenameShadowToInvited1699818680567,
+        AddPlatformIdToUser1699901161457,
     ]
 
     const edition = getEdition()

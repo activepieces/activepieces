@@ -25,6 +25,7 @@ export const User = Type.Object({
     imageUrl: Type.Optional(Type.String()),
     title: Type.Optional(Type.String()),
     externalId: Type.Optional(Type.String()),
+    platformId: Type.Union([ApId, Type.Null()]),
 })
 
 export type User = Static<typeof User>
