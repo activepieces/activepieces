@@ -32,14 +32,37 @@
 
             </th>
             <td mat-cell *matCellDef="let piece">
-                <div class="ap-w-[5.6875rem] ap-float-right ap-text-center" *ngIf="platform$ | async as plat">
-                    <ap-icon-button *ngIf="plat.filteredPieceNames.includes(piece.name) "
-                        [tooltipText]="showPieceTooltip" i18n-tooltipText iconFilename="eye-off.svg" [width]="20"
-                        [height]="20" class="ap-fill-description" (buttonClicked)="togglePiece(piece)"></ap-icon-button>
+                <div class="ap-float-right ap-text-center ap-flex ap-items-center ap-justify-center"
+                    *ngIf="platform$ | async as plat">
+
+
+                    <ap-icon-button *ngIf="piece.oauth2AppCredentialsId  && piece.auth?.type === OAUTH2 "
+                        [matMenuTriggerFor]="menu" [tooltipText]="updatePieceCredentialsTooltip"
+                        iconFilename="piece_credentials.svg" [width]="20" [height]="20" extraClasses="ap-fill-primary">
+                    </ap-icon-button>
+
+                    <ap-icon-button *ngIf="piece.auth?.type === OAUTH2 && !piece.oauth2AppCredentialsId "
+                        [tooltipText]="addPieceCredentialsTooltip"
+                        (buttonClicked)="openPieceOAuth2CredentialsDialog(false,piece)"
+                        iconFilename="piece_credentials.svg" [width]="20" [height]="20">
+                    </ap-icon-button>
+
+                    <ap-icon-button *ngIf="plat.filteredPieceNames.includes(piece.name)"
+                        [tooltipText]="showPieceTooltip" iconFilename="eye-off.svg" [width]="20" [height]="20"
+                        class="ap-fill-description" (buttonClicked)="togglePiece(piece)"></ap-icon-button>
+
                     <ap-icon-button *ngIf="!plat.filteredPieceNames.includes(piece.name)"
-                        [tooltipText]="hidePieceTooltip" i18n-tooltipText iconFilename="eye.svg" [width]="20"
-                        [height]="20" extraClasses="ap-fill-primary"
-                        (buttonClicked)="togglePiece(piece)"></ap-icon-button>
+                        [tooltipText]="hidePieceTooltip" iconFilename="eye.svg" [width]="20" [height]="20"
+                        extraClasses="ap-fill-primary" (buttonClicked)="togglePiece(piece)"></ap-icon-button>
+
+                    <mat-menu #menu="matMenu">
+                        <div mat-menu-item (click)="openPieceOAuth2CredentialsDialog(true,piece)"
+                            class="!ap-typography-caption">Edit OAuth2 settings
+                        </div>
+                        <div mat-menu-item class="!ap-text-danger !ap-typography-caption"
+                            (click)="deletePieceOAuth2Creds(piece)">Delete OAuth2 settings
+                        </div>
+                    </mat-menu>
 
                 </div>
 
@@ -67,3 +90,4 @@
 </div>
 
 <ng-container *ngIf="saving$ | async"></ng-container>
+<ng-container *ngIf="dialogClosed$ | async"></ng-container>

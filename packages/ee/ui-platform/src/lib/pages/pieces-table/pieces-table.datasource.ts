@@ -6,8 +6,10 @@ import {
   shareReplay,
   switchMap,
   map,
+  combineLatest,
 } from 'rxjs';
 import {
+  OAuth2AppsService,
   PieceMetadataModelSummary,
   PieceMetadataService,
 } from '@activepieces/ui/common';
@@ -17,13 +19,18 @@ import {
  * encapsulate all logic for fetching and manipulating the displayed data
  * (including sorting, pagination, and filtering).
  */
-export class PiecesTableDataSource extends DataSource<PieceMetadataModelSummary> {
-  data: PieceMetadataModelSummary[] = [];
+export type ManagedPieceMetadataModelSummary = PieceMetadataModelSummary & {
+  oauth2AppCredentialsId?: string;
+};
+export class PiecesTableDataSource extends DataSource<ManagedPieceMetadataModelSummary> {
+  data: ManagedPieceMetadataModelSummary[] = [];
   isLoading$: BehaviorSubject<boolean> = new BehaviorSubject(true);
   pieces$: Observable<PieceMetadataModelSummary[]>;
   constructor(
     private piecesService: PieceMetadataService,
-    private searchControlValueChanged$: Observable<string>
+    private searchControlValueChanged$: Observable<string>,
+    private oAuth2AppsService: OAuth2AppsService,
+    private refresh$: Observable<true>
   ) {
     super();
     this.pieces$ = this.piecesService
@@ -39,13 +46,16 @@ export class PiecesTableDataSource extends DataSource<PieceMetadataModelSummary>
    * @returns A stream of the items to be rendered.
    */
 
-  connect(): Observable<PieceMetadataModelSummary[]> {
+  connect(): Observable<ManagedPieceMetadataModelSummary[]> {
     this.isLoading$.next(true);
-    return this.searchControlValueChanged$.pipe(
+    return combineLatest({
+      refresh: this.refresh$,
+      search: this.searchControlValueChanged$,
+    }).pipe(
       tap(() => {
         this.isLoading$.next(true);
       }),
-      switchMap((search) => {
+      switchMap(({ search }) => {
         return this.pieces$.pipe(
           map((ps) => {
             if (search) {
@@ -54,6 +64,21 @@ export class PiecesTableDataSource extends DataSource<PieceMetadataModelSummary>
               );
             }
             return ps;
+          })
+        );
+      }),
+      switchMap((pieces) => {
+        return this.oAuth2AppsService.listOAuth2AppsCredentials().pipe(
+          map((apps) => {
+            return pieces.map((p) => {
+              const appCredentials = apps.data.find(
+                (a) => a.pieceName === p.name
+              );
+              return {
+                ...p,
+                oauth2AppCredentialsId: appCredentials?.id,
+              };
+            });
           })
         );
       }),

@@ -1,8 +1,8 @@
 import { KeyAlgorithm, SigningKey, Platform, OAuthApp, FilteredPieceBehavior } from '@activepieces/ee-shared'
 import { UserStatus, User, apId, Project, NotificationStatus, ProjectType, PieceType, PackageType } from '@activepieces/shared'
+import { faker } from '@faker-js/faker'
 import { OAuthAppWithEncryptedSecret } from '../../src/app/ee/oauth-apps/oauth-app.entity'
 import { encryptString } from '../../src/app/helper/encryption'
-import { faker } from '@faker-js/faker'
 import { PieceMetadataSchema } from '../../src/app/pieces/piece-metadata-entity'
 
 export const createMockUser = (user?: Partial<User>): User => {
