@@ -27,7 +27,7 @@ import { PropertyType } from '@activepieces/pieces-framework';
 import {
   EditAddPieceOAuth2CredentialsDialogComponent,
   PieceOAuth2CredentialsDialogData,
-} from '../edit-add-piece-oauth-2-credentials-dialog/edit-add-piece-oauth-2-credentials-dialog.component';
+} from '../../components/dialogs/edit-add-piece-oauth-2-credentials-dialog/edit-add-piece-oauth-2-credentials-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 
 @Component({
