@@ -52,6 +52,7 @@ describe('Managed Authentication API', () => {
             const responseBody = response?.json()
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(Object.keys(responseBody)).toHaveLength(15)
             expect(responseBody?.id).toHaveLength(21)
             expect(responseBody?.email).toBe(mockExternalTokenPayload.email)
             expect(responseBody?.firstName).toBe(mockExternalTokenPayload.firstName)
@@ -60,7 +61,8 @@ describe('Managed Authentication API', () => {
             expect(responseBody?.newsLetter).toBe(true)
             expect(responseBody?.password).toBeUndefined()
             expect(responseBody?.status).toBe('CREATED')
-            expect(responseBody?.externalId).toBe(`${mockPlatform.id}_${mockExternalTokenPayload.externalUserId}`)
+            expect(responseBody?.externalId).toBe(mockExternalTokenPayload.externalUserId)
+            expect(responseBody?.platformId).toBe(mockPlatform.id)
             expect(responseBody?.projectId).toHaveLength(21)
             expect(responseBody?.token).toBeDefined()
         })
@@ -219,7 +221,8 @@ describe('Managed Authentication API', () => {
             })
 
             const mockUser = createMockUser({
-                externalId: `${mockPlatform.id}_${mockExternalTokenPayload.externalUserId}`,
+                externalId: mockExternalTokenPayload.externalUserId,
+                platformId: mockPlatform.id,
             })
             await databaseConnection.getRepository('user').save(mockUser)
 

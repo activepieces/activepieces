@@ -18,6 +18,7 @@ export const createMockUser = (user?: Partial<User>): User => {
         imageUrl: user?.imageUrl ?? faker.image.urlPlaceholder(),
         title: user?.title ?? faker.lorem.sentence(),
         externalId: user?.externalId ?? apId(),
+        platformId: user?.platformId ?? null,
     }
 }
 
