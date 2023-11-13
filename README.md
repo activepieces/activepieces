@@ -116,12 +116,7 @@ Activepieces is open source under the [MIT license](https://github.com/activepie
 
 We welcome contributions big or small and in different directions. The best way to do this is to check this [document](https://www.activepieces.com/docs/contributing/building-pieces/create-action) and we are always up to talk on [our Discord Server](https://discord.gg/2jUXBKDdP8).
 
-<br>
-<br>
-
-<!-- TRANSLATIONS -->
-
-### Translations
+## 📚 Translations
 
 Not into coding but still interested in contributing? Come join our [Discord](https://discord.gg/2jUXBKDdP8) and visit https://www.activepieces.com/docs/about/i18n for more information.
 
