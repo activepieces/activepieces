@@ -12,6 +12,7 @@ import {
   AuthenticationService,
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
+  OAuth2AppsService,
   PieceMetadataService,
   PlatformService,
 } from '@activepieces/ui/common';
@@ -58,7 +59,8 @@ export class PiecesTableComponent implements OnInit {
     private route: ActivatedRoute,
     private platformService: PlatformService,
     private matSnackbar: MatSnackBar,
-    private matDialog: MatDialog
+    private matDialog: MatDialog,
+    private oauth2AppsService: OAuth2AppsService
   ) {
     this.authenticationService.getPlatformId();
   }
@@ -67,7 +69,7 @@ export class PiecesTableComponent implements OnInit {
     this.dataSource = new PiecesTableDataSource(
       this.piecesService,
       this.searchFormControl.valueChanges.pipe(startWith('')),
-      this.platformService,
+      this.oauth2AppsService,
       this.refresh$.asObservable().pipe(startWith(true as const))
     );
   }
@@ -149,7 +151,7 @@ export class PiecesTableComponent implements OnInit {
       const data: DeleteEntityDialogData = {
         entityName: `${piece.displayName}` + $localize` OAuth2 app credentials`,
         note: $localize`all connections depending on these credentials will fail after deleting`,
-        deleteEntity$: this.platformService
+        deleteEntity$: this.oauth2AppsService
           .deleteOAuth2AppCredentials(piece.oauth2AppCredentialsId)
           .pipe(tap(() => this.refresh$.next(true))),
       };

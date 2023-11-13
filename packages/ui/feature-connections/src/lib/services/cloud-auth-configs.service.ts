@@ -1,14 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, forkJoin, map, of, switchMap } from 'rxjs';
-import { FlagService, environment } from '@activepieces/ui/common';
-import {
-  ApEdition,
-  ApFlagId,
-  AppConnectionType,
-  SeekPage,
-} from '@activepieces/shared';
-import { OAuthApp } from '@activepieces/ee-shared';
+import { FlagService, OAuth2AppsService } from '@activepieces/ui/common';
+import { ApEdition, ApFlagId, AppConnectionType } from '@activepieces/shared';
 import {
   PieceOAuth2DetailsMap,
   handleErrorForGettingPiecesOAuth2Details,
@@ -18,7 +12,11 @@ import {
   providedIn: 'root',
 })
 export class CloudAuthConfigsService {
-  constructor(private http: HttpClient, private flagsService: FlagService) {}
+  constructor(
+    private http: HttpClient,
+    private flagsService: FlagService,
+    private oAuth2AppsService: OAuth2AppsService
+  ) {}
 
   private getPlatformAuth(
     edition: ApEdition
@@ -26,21 +24,19 @@ export class CloudAuthConfigsService {
     if (edition === ApEdition.COMMUNITY) {
       return of({});
     }
-    return this.http
-      .get<SeekPage<OAuthApp>>(environment.apiUrl + '/oauth-apps')
-      .pipe(
-        map((res) => {
-          const platformAppsClientIdMap: PieceOAuth2DetailsMap = {};
-          res.data.forEach((app) => {
-            platformAppsClientIdMap[app.pieceName] = {
-              clientId: app.clientId,
-              connectionType: AppConnectionType.PLATFORM_OAUTH2,
-            };
-          });
-          return platformAppsClientIdMap;
-        }),
-        handleErrorForGettingPiecesOAuth2Details
-      );
+    return this.oAuth2AppsService.listOAuth2AppsCredentials().pipe(
+      map((res) => {
+        const platformAppsClientIdMap: PieceOAuth2DetailsMap = {};
+        res.data.forEach((app) => {
+          platformAppsClientIdMap[app.pieceName] = {
+            clientId: app.clientId,
+            connectionType: AppConnectionType.PLATFORM_OAUTH2,
+          };
+        });
+        return platformAppsClientIdMap;
+      }),
+      handleErrorForGettingPiecesOAuth2Details
+    );
   }
 
   private getCloudAuth(

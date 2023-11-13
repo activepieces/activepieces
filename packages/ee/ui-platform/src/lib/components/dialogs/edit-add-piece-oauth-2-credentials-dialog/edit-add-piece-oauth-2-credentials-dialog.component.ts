@@ -7,7 +7,7 @@ import {
 } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { BehaviorSubject, Observable, catchError, map, tap } from 'rxjs';
-import { FlagService, PlatformService } from '@activepieces/ui/common';
+import { FlagService, OAuth2AppsService } from '@activepieces/ui/common';
 
 export type PieceOAuth2CredentialsDialogData = {
   isEditing: boolean;
@@ -35,7 +35,7 @@ export class EditAddPieceOAuth2CredentialsDialogComponent {
     private fb: FormBuilder,
     @Inject(MAT_DIALOG_DATA)
     public data: PieceOAuth2CredentialsDialogData,
-    private platformService: PlatformService,
+    private oauth2AppsService: OAuth2AppsService,
     private dialogRef: MatDialogRef<EditAddPieceOAuth2CredentialsDialogComponent>,
     private flagsService: FlagService
   ) {
@@ -68,7 +68,7 @@ export class EditAddPieceOAuth2CredentialsDialogComponent {
     if (!this.loading$.value && this.formGroup.valid) {
       this.loading$.next(true);
       const rawData = this.formGroup.getRawValue();
-      this.upsertOAuth2App$ = this.platformService
+      this.upsertOAuth2App$ = this.oauth2AppsService
         .uspertOAuth2AppCredentials({
           pieceName: this.data.pieceName,
           clientId: rawData.clientId,

@@ -9,9 +9,9 @@ import {
   combineLatest,
 } from 'rxjs';
 import {
+  OAuth2AppsService,
   PieceMetadataModelSummary,
   PieceMetadataService,
-  PlatformService,
 } from '@activepieces/ui/common';
 
 /**
@@ -29,7 +29,7 @@ export class PiecesTableDataSource extends DataSource<ManagedPieceMetadataModelS
   constructor(
     private piecesService: PieceMetadataService,
     private searchControlValueChanged$: Observable<string>,
-    private platformService: PlatformService,
+    private oAuth2AppsService: OAuth2AppsService,
     private refresh$: Observable<true>
   ) {
     super();
@@ -68,7 +68,7 @@ export class PiecesTableDataSource extends DataSource<ManagedPieceMetadataModelS
         );
       }),
       switchMap((pieces) => {
-        return this.platformService.listOAuth2AppsCredentials().pipe(
+        return this.oAuth2AppsService.listOAuth2AppsCredentials().pipe(
           map((apps) => {
             return pieces.map((p) => {
               const appCredentials = apps.data.find(
