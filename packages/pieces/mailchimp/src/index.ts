@@ -6,6 +6,7 @@ import { updateSubscriberInList } from './lib/actions/update-subscriber-status';
 
 import { mailChimpSubscribeTrigger } from './lib/triggers/subscribe-trigger';
 import { mailChimpUnsubscriberTrigger } from './lib/triggers/unsubscribe-trigger';
+import { addSubscriberToTag } from './lib/actions/add-subscriber-to-tag';
 
 export const mailchimpAuth = PieceAuth.OAuth2({
   description: '',
@@ -24,6 +25,7 @@ export const mailchimp = createPiece({
   actions: [
     addMemberToList,
     addNoteToSubscriber,
+    addSubscriberToTag,
     removeSubscriberFromTag,
     updateSubscriberInList,
   ],

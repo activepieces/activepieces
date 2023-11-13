@@ -1,7 +1,17 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ProjectMembersTableDataSource } from './project-members.datasource';
 import { ProjectMemberService } from '../service/project-members.service';
-import { Observable, Subject, map, startWith, tap, switchMap } from 'rxjs';
+import {
+  Observable,
+  Subject,
+  map,
+  startWith,
+  tap,
+  switchMap,
+  shareReplay,
+  forkJoin,
+  take,
+} from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { InviteProjectMemberDialogComponent } from '../invite-project-member-dialog/invite-project-member.component';
 import {
@@ -22,7 +32,7 @@ import {
   styleUrls: [],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ProjectMembersTableComponent {
+export class ProjectMembersTableComponent implements OnInit {
   dataSource!: ProjectMembersTableDataSource;
   dialogClosed$: Observable<void> | undefined;
   deleteInvitation$: Observable<void> | undefined;
@@ -44,29 +54,38 @@ export class ProjectMembersTableComponent {
       this.refreshTableAtCurrentCursor$.asObservable().pipe(startWith(true))
     );
   }
+  ngOnInit(): void {
+    this.projectOwnerId$ = this.store
+      .select(ProjectSelectors.selectCurrentProjectOwnerId)
+      .pipe(take(1));
+    // TODO OPTMIZE THIS and use role from centerlized place
+    this.isCurrentUserAdmin$ = forkJoin([
+      this.projectMemberService.list({ limit: 100 }),
+      this.projectOwnerId$,
+    ]).pipe(
+      map(([members, ownerId]) => {
+        const currentUser = this.authenticationService.currentUser;
+
+        // Check if the current user is an admin
+        const isAdmin =
+          members.data.find((member) => currentUser.id === member.userId)
+            ?.role === ProjectMemberRole.ADMIN;
+
+        // Check if the current user is the project owner
+        const isOwner = currentUser.id === ownerId;
+
+        // Return true if the user is either an admin or the owner
+        return isAdmin || isOwner;
+      }),
+      shareReplay(1)
+    );
+  }
 
   openInviteMember() {
     if (this.inviteLoading) {
       return;
     }
     this.inviteLoading = true;
-    this.projectOwnerId$ = this.store.select(
-      ProjectSelectors.selectCurrentProjectOwnerId
-    );
-    // TODO OPTMIZE THIS
-    this.isCurrentUserAdmin$ = this.projectMemberService
-      .list({
-        limit: 100,
-      })
-      .pipe(
-        map((members) => {
-          return (
-            members.data.find(
-              (f) => this.authenticationService.currentUser.id === f.id
-            )?.role === ProjectMemberRole.ADMIN
-          );
-        })
-      );
     this.dialogClosed$ = this.billingService.checkTeamMembers().pipe(
       switchMap((billing) => {
         this.inviteLoading = false;
