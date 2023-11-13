@@ -87,16 +87,16 @@
           <context context-type="linenumber">56,58</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/cloud-oauth2-connection-dialog/cloud-oauth2-connection-dialog.component.html</context>
-          <context context-type="linenumber">72,74</context>
-        </context-group>
-        <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/custom-auth-connection-dialog/custom-auth-connection-dialog.component.html</context>
           <context context-type="linenumber">72,74</context>
         </context-group>
         <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/managed-oauth2-connection-dialog/managed-oauth2-connection-dialog.component.html</context>
+          <context context-type="linenumber">72,74</context>
+        </context-group>
+        <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
-          <context context-type="linenumber">96,98</context>
+          <context context-type="linenumber">97,99</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/secret-text-connection-dialog/secret-text-connection-dialog.component.html</context>
@@ -253,7 +253,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/project-members/src/lib/project-members-table/project-members-table.component.ts</context>
-          <context context-type="linenumber">27</context>
+          <context context-type="linenumber">34</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4768749765465246664" datatype="html">
@@ -319,7 +319,7 @@
         <source>Active</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/project-members/src/lib/project-members-table/project-members-table.component.ts</context>
-          <context context-type="linenumber">80</context>
+          <context context-type="linenumber">106</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/common/src/lib/components/status-icon/state-icon.component.ts</context>
@@ -330,7 +330,64 @@
         <source>Pending</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/project-members/src/lib/project-members-table/project-members-table.component.ts</context>
-          <context context-type="linenumber">82</context>
+          <context context-type="linenumber">108</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3372037160964274985" datatype="html">
+        <source>Pieces</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ee/ui-platform/src/lib/components/pieces-table/pieces-table.component.html</context>
+          <context context-type="linenumber">15</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ee/ui-platform/src/lib/components/pieces-table/pieces-table.component.ts</context>
+          <context context-type="linenumber">29</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts</context>
+          <context context-type="linenumber">55</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2296247521191141043" datatype="html">
+        <source>Piece</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ee/ui-platform/src/lib/components/pieces-table/pieces-table.component.html</context>
+          <context context-type="linenumber">17</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7352774008093737704" datatype="html">
+        <source> No pieces added yet. </source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ee/ui-platform/src/lib/components/pieces-table/pieces-table.component.html</context>
+          <context context-type="linenumber">63,65</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6920749967557081024" datatype="html">
+        <source>is now available to users</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ee/ui-platform/src/lib/components/pieces-table/pieces-table.component.ts</context>
+          <context context-type="linenumber">32</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6238330532589307935" datatype="html">
+        <source>is now hidden from users</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ee/ui-platform/src/lib/components/pieces-table/pieces-table.component.ts</context>
+          <context context-type="linenumber">33</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="5824892941228684657" datatype="html">
+        <source>Show this piece to users</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ee/ui-platform/src/lib/components/pieces-table/pieces-table.component.ts</context>
+          <context context-type="linenumber">34</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3373255706066742214" datatype="html">
+        <source>Hide this piece from users</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ee/ui-platform/src/lib/components/pieces-table/pieces-table.component.ts</context>
+          <context context-type="linenumber">35</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8953033926734869941" datatype="html">
@@ -349,7 +406,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html</context>
-          <context context-type="linenumber">35</context>
+          <context context-type="linenumber">32</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-chatbot/src/lib/chatbot-source-dialog/chatbot-source-dialog.component.html</context>
@@ -364,12 +421,12 @@
           <context context-type="linenumber">16</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/cloud-oauth2-connection-dialog/cloud-oauth2-connection-dialog.component.html</context>
-          <context context-type="linenumber">15</context>
-        </context-group>
-        <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/custom-auth-connection-dialog/custom-auth-connection-dialog.component.html</context>
           <context context-type="linenumber">12</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/managed-oauth2-connection-dialog/managed-oauth2-connection-dialog.component.html</context>
+          <context context-type="linenumber">15</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
@@ -435,11 +492,11 @@
         <source>Appearance</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/ui-platform/src/lib/components/platform-appearance/platform-appearance.component.ts</context>
-          <context context-type="linenumber">38</context>
+          <context context-type="linenumber">42</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/ui-platform/src/lib/lib.routes.ts</context>
-          <context context-type="linenumber">29</context>
+          <context context-type="linenumber">30</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts</context>
@@ -494,11 +551,11 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/ui-platform/src/lib/lib.routes.ts</context>
-          <context context-type="linenumber">39</context>
+          <context context-type="linenumber">50</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts</context>
-          <context context-type="linenumber">54</context>
+          <context context-type="linenumber">61</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2903418726569442973" datatype="html">
@@ -576,7 +633,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html</context>
-          <context context-type="linenumber">3</context>
+          <context context-type="linenumber">2</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-chatbot/src/lib/chatbots-table/chatbots-table.component.ts</context>
@@ -584,7 +641,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts</context>
-          <context context-type="linenumber">84</context>
+          <context context-type="linenumber">91</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts</context>
@@ -660,11 +717,18 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/ui-platform/src/lib/lib.routes.ts</context>
-          <context context-type="linenumber">22</context>
+          <context context-type="linenumber">23</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts</context>
           <context context-type="linenumber">42</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4775096366968709258" datatype="html">
+        <source>pieces</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ee/ui-platform/src/lib/lib.routes.ts</context>
+          <context context-type="linenumber">40</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3720371318294752429" datatype="html">
@@ -865,14 +929,14 @@
         <source>Import Flow</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/core/src/app/app.module.ts</context>
-          <context context-type="linenumber">199</context>
+          <context context-type="linenumber">213</context>
         </context-group>
       </trans-unit>
       <trans-unit id="833959964659558357" datatype="html">
         <source>Chatbot</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/core/src/app/app.module.ts</context>
-          <context context-type="linenumber">206</context>
+          <context context-type="linenumber">220</context>
         </context-group>
       </trans-unit>
       <trans-unit id="9202148072595155250" datatype="html">
@@ -1683,7 +1747,7 @@
           <context context-type="linenumber">6</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/cloud-oauth2-connection-dialog/cloud-oauth2-connection-dialog.component.html</context>
+          <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/managed-oauth2-connection-dialog/managed-oauth2-connection-dialog.component.html</context>
           <context context-type="linenumber">6</context>
         </context-group>
         <context-group purpose="location">
@@ -1937,25 +2001,25 @@
         <source>Select Trigger</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/step-type-sidebar/step-type-sidebar.component.ts</context>
-          <context context-type="linenumber">70</context>
+          <context context-type="linenumber">73</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4973271808417683361" datatype="html">
         <source>Select Step</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/step-type-sidebar/step-type-sidebar.component.ts</context>
-          <context context-type="linenumber">72</context>
+          <context context-type="linenumber">75</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/step-type-sidebar/step-type-sidebar.component.ts</context>
-          <context context-type="linenumber">77</context>
+          <context context-type="linenumber">80</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1616102757855967475" datatype="html">
         <source>All</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/step-type-sidebar/step-type-sidebar.component.ts</context>
-          <context context-type="linenumber">159</context>
+          <context context-type="linenumber">166</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html</context>
@@ -1966,36 +2030,36 @@
         <source>Oops! We didn&apos;t find any results.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/step-type-sidebar/step-type-sidebar.component.ts</context>
-          <context context-type="linenumber">161</context>
+          <context context-type="linenumber">168</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/step-type-sidebar/step-type-sidebar.component.ts</context>
-          <context context-type="linenumber">167</context>
+          <context context-type="linenumber">174</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/step-type-sidebar/step-type-sidebar.component.ts</context>
-          <context context-type="linenumber">175</context>
+          <context context-type="linenumber">182</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7027401708987643293" datatype="html">
         <source>Core</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/step-type-sidebar/step-type-sidebar.component.ts</context>
-          <context context-type="linenumber">165</context>
+          <context context-type="linenumber">172</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3392444403919167176" datatype="html">
         <source>App Events</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/step-type-sidebar/step-type-sidebar.component.ts</context>
-          <context context-type="linenumber">172</context>
+          <context context-type="linenumber">179</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5431974576991822715" datatype="html">
         <source>App Actions</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/step-type-sidebar/step-type-sidebar.component.ts</context>
-          <context context-type="linenumber">173</context>
+          <context context-type="linenumber">180</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4890031060409002646" datatype="html">
@@ -2351,21 +2415,21 @@
         <source>Build Your Chatbot</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html</context>
-          <context context-type="linenumber">6</context>
+          <context context-type="linenumber">5</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3407061818321766940" datatype="html">
         <source>Saving...</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html</context>
-          <context context-type="linenumber">17</context>
+          <context context-type="linenumber">15</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4527876130724554959" datatype="html">
         <source>Chat with bot</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html</context>
-          <context context-type="linenumber">21</context>
+          <context context-type="linenumber">19</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-chatbot/src/lib/chatbots-table/chatbots-table.component.ts</context>
@@ -2376,14 +2440,14 @@
         <source> Brand your bot </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html</context>
-          <context context-type="linenumber">30,32</context>
+          <context context-type="linenumber">27,29</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4042902315677630519" datatype="html">
         <source> Name is required </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html</context>
-          <context context-type="linenumber">37,39</context>
+          <context context-type="linenumber">34,36</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-chatbot/src/lib/chatbot-source-dialog/chatbot-source-dialog.component.html</context>
@@ -2394,12 +2458,12 @@
           <context context-type="linenumber">20,22</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/cloud-oauth2-connection-dialog/cloud-oauth2-connection-dialog.component.html</context>
-          <context context-type="linenumber">18,20</context>
-        </context-group>
-        <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/custom-auth-connection-dialog/custom-auth-connection-dialog.component.html</context>
           <context context-type="linenumber">15,17</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/managed-oauth2-connection-dialog/managed-oauth2-connection-dialog.component.html</context>
+          <context context-type="linenumber">18,20</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
@@ -2422,21 +2486,21 @@
         <source> Public Access </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html</context>
-          <context context-type="linenumber">41,43</context>
+          <context context-type="linenumber">38,40</context>
         </context-group>
       </trans-unit>
       <trans-unit id="20069700830458864" datatype="html">
         <source> Train your bot </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html</context>
-          <context context-type="linenumber">47,49</context>
+          <context context-type="linenumber">44,46</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6070859199120014907" datatype="html">
         <source>Reconnect</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html</context>
-          <context context-type="linenumber">62</context>
+          <context context-type="linenumber">59</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/custom-auth-connection-dialog/custom-auth-connection-dialog.component.html</context>
@@ -2447,26 +2511,26 @@
         <source> OpenAI Connection </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html</context>
-          <context context-type="linenumber">68</context>
+          <context context-type="linenumber">65</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8096108831936282703" datatype="html">
         <source>New Connection</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html</context>
-          <context context-type="linenumber">82</context>
+          <context context-type="linenumber">79</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/basic-auth-connection-dialog/basic-auth-connection-dialog.component.html</context>
           <context context-type="linenumber">3</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/cloud-oauth2-connection-dialog/cloud-oauth2-connection-dialog.component.html</context>
-          <context context-type="linenumber">3</context>
-        </context-group>
-        <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/custom-auth-connection-dialog/custom-auth-connection-dialog.component.html</context>
           <context context-type="linenumber">2</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/managed-oauth2-connection-dialog/managed-oauth2-connection-dialog.component.html</context>
+          <context context-type="linenumber">3</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
@@ -2477,56 +2541,56 @@
         <source>No connections</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html</context>
-          <context context-type="linenumber">96</context>
+          <context context-type="linenumber">93</context>
         </context-group>
       </trans-unit>
       <trans-unit id="467321397227119929" datatype="html">
         <source> + Add </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html</context>
-          <context context-type="linenumber">100,102</context>
+          <context context-type="linenumber">97,99</context>
         </context-group>
       </trans-unit>
       <trans-unit id="9003579679055018178" datatype="html">
         <source> Connection is required </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html</context>
-          <context context-type="linenumber">106,108</context>
+          <context context-type="linenumber">103,105</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7520676103251775009" datatype="html">
         <source> + New Connection </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html</context>
-          <context context-type="linenumber">113,115</context>
+          <context context-type="linenumber">110,112</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6528092440862696599" datatype="html">
         <source>Bot Attitude</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html</context>
-          <context context-type="linenumber">119</context>
+          <context context-type="linenumber">116</context>
         </context-group>
       </trans-unit>
       <trans-unit id="730525045088357363" datatype="html">
         <source>i.e. Act like Ironman&apos;s assistant, Jarvis.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html</context>
-          <context context-type="linenumber">121</context>
+          <context context-type="linenumber">118</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5117293842173012454" datatype="html">
         <source> Prompt is required </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html</context>
-          <context context-type="linenumber">123,125</context>
+          <context context-type="linenumber">120,122</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6571227198408989826" datatype="html">
         <source> Training Data Sources </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-chatbot/src/lib/chatbot-settings/chatbot-settings.component.html</context>
-          <context context-type="linenumber">128,130</context>
+          <context context-type="linenumber">125,127</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2884916036139572652" datatype="html">
@@ -2677,12 +2741,12 @@
           <context context-type="linenumber">24,26</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/cloud-oauth2-connection-dialog/cloud-oauth2-connection-dialog.component.html</context>
-          <context context-type="linenumber">22,24</context>
-        </context-group>
-        <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/custom-auth-connection-dialog/custom-auth-connection-dialog.component.html</context>
           <context context-type="linenumber">19,21</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/managed-oauth2-connection-dialog/managed-oauth2-connection-dialog.component.html</context>
+          <context context-type="linenumber">22,24</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
@@ -2700,12 +2764,12 @@
           <context context-type="linenumber">27,29</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/cloud-oauth2-connection-dialog/cloud-oauth2-connection-dialog.component.html</context>
-          <context context-type="linenumber">25,27</context>
-        </context-group>
-        <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/custom-auth-connection-dialog/custom-auth-connection-dialog.component.html</context>
           <context context-type="linenumber">22,24</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/managed-oauth2-connection-dialog/managed-oauth2-connection-dialog.component.html</context>
+          <context context-type="linenumber">25,27</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
@@ -2727,14 +2791,6 @@
           <context context-type="linenumber">47</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/cloud-oauth2-connection-dialog/cloud-oauth2-connection-dialog.component.html</context>
-          <context context-type="linenumber">36</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/cloud-oauth2-connection-dialog/cloud-oauth2-connection-dialog.component.html</context>
-          <context context-type="linenumber">48</context>
-        </context-group>
-        <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/custom-auth-connection-dialog/custom-auth-connection-dialog.component.html</context>
           <context context-type="linenumber">35</context>
         </context-group>
@@ -2747,12 +2803,20 @@
           <context context-type="linenumber">56</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
-          <context context-type="linenumber">58</context>
+          <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/managed-oauth2-connection-dialog/managed-oauth2-connection-dialog.component.html</context>
+          <context context-type="linenumber">36</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/managed-oauth2-connection-dialog/managed-oauth2-connection-dialog.component.html</context>
+          <context context-type="linenumber">48</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
-          <context context-type="linenumber">71</context>
+          <context context-type="linenumber">59</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
+          <context context-type="linenumber">72</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/secret-text-connection-dialog/secret-text-connection-dialog.component.html</context>
@@ -2766,16 +2830,16 @@
           <context context-type="linenumber">59,61</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/cloud-oauth2-connection-dialog/cloud-oauth2-connection-dialog.component.html</context>
-          <context context-type="linenumber">75,77</context>
-        </context-group>
-        <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/custom-auth-connection-dialog/custom-auth-connection-dialog.component.html</context>
           <context context-type="linenumber">76,78</context>
         </context-group>
         <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/managed-oauth2-connection-dialog/managed-oauth2-connection-dialog.component.html</context>
+          <context context-type="linenumber">75,77</context>
+        </context-group>
+        <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
-          <context context-type="linenumber">99,101</context>
+          <context context-type="linenumber">100,102</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/secret-text-connection-dialog/secret-text-connection-dialog.component.html</context>
@@ -2785,61 +2849,68 @@
       <trans-unit id="2504830835198730128" datatype="html">
         <source> You have to connect an account to continue </source>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/cloud-oauth2-connection-dialog/cloud-oauth2-connection-dialog.component.html</context>
+          <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/managed-oauth2-connection-dialog/managed-oauth2-connection-dialog.component.html</context>
           <context context-type="linenumber">58,60</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
-          <context context-type="linenumber">84,86</context>
+          <context context-type="linenumber">85,87</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3543628236093406924" datatype="html">
         <source>I would like to use my own app credentials </source>
         <context-group purpose="location">
-          <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/cloud-oauth2-connection-dialog/cloud-oauth2-connection-dialog.component.html</context>
+          <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/managed-oauth2-connection-dialog/managed-oauth2-connection-dialog.component.html</context>
           <context context-type="linenumber">64,67</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3591602381641269137" datatype="html">
+        <source>The ID of this connection definition. You will need to select this key whenever you want to reuse this connection.</source>
+        <context-group purpose="location">
+          <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/managed-oauth2-connection-dialog/managed-oauth2-connection-dialog.component.ts</context>
+          <context context-type="linenumber">69</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7022562336989577788" datatype="html">
         <source> Redirect URL is required</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
-          <context context-type="linenumber">35,36</context>
+          <context context-type="linenumber">36,37</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5273501066845923426" datatype="html">
         <source>Client ID</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
-          <context context-type="linenumber">40</context>
+          <context context-type="linenumber">41</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6157299238892357663" datatype="html">
         <source> Client ID is required</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
-          <context context-type="linenumber">42,43</context>
+          <context context-type="linenumber">43,44</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3858350041926042177" datatype="html">
         <source>Client Secret</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
-          <context context-type="linenumber">46</context>
+          <context context-type="linenumber">47</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1073544708188299870" datatype="html">
         <source> Client Secret is required</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
-          <context context-type="linenumber">49,50</context>
+          <context context-type="linenumber">50,51</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2342935516799349752" datatype="html">
         <source>I would like to use activepieces app credentials </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
-          <context context-type="linenumber">90,91</context>
+          <context context-type="linenumber">91,92</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2903873185531053389" datatype="html">
@@ -2896,7 +2967,7 @@
         <source>Flows</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts</context>
-          <context context-type="linenumber">75</context>
+          <context context-type="linenumber">82</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts</context>
@@ -2907,7 +2978,7 @@
         <source>Runs</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts</context>
-          <context context-type="linenumber">98</context>
+          <context context-type="linenumber">105</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts</context>
@@ -2930,7 +3001,7 @@
         <source>Connections</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts</context>
-          <context context-type="linenumber">104</context>
+          <context context-type="linenumber">111</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts</context>
@@ -2945,7 +3016,7 @@
         <source>Team</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/components/sidenav-routes-list/sidenav-routes-list.component.ts</context>
-          <context context-type="linenumber">110</context>
+          <context context-type="linenumber">117</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts</context>
