@@ -53,14 +53,15 @@ async function claim(
         name: pieceName,
         projectId,
     })
+    if (isNil(auth) || auth.type !== PropertyType.OAUTH2) {
+        throw new Error('Cannot claim auth for non oauth2 property ' + auth?.type + ' ' + pieceName)
+    }
     const oauth2App = await getApp({
         pieceName,
         clientId: request.clientId,
         projectId,
     })
-    if (isNil(auth) || auth.type !== PropertyType.OAUTH2) {
-        throw new Error('Cannot claim auth for non oauth2 property ' + auth?.type + ' ' + pieceName)
-    }
+
     const claimedValue = await credentialsOauth2Service.claim({
         request: {
             ...request,

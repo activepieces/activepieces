@@ -19,45 +19,70 @@ import {
 })
 export class CloudAuthConfigsService {
   constructor(private http: HttpClient, private flagsService: FlagService) {}
-  getAppsAndTheirClientIds(): Observable<PieceOAuth2DetailsMap> {
-    return this.flagsService.getAllFlags().pipe(
-      switchMap((flags) => {
-        const edition = flags[ApFlagId.EDITION] as ApEdition;
-        const CLOUD_AUTH_ENABLED = flags[ApFlagId.CLOUD_AUTH_ENABLED];
-        const platformAuth$: Observable<PieceOAuth2DetailsMap> = this.http
-          .get<SeekPage<OAuthApp>>(environment.apiUrl + '/oauth-apps')
-          .pipe(
-            map((res) => {
-              const platformAppsClientIdMap: PieceOAuth2DetailsMap = {};
-              res.data.forEach((app) => {
-                platformAppsClientIdMap[app.pieceName] = {
-                  clientId: app.clientId,
-                  connectionType: AppConnectionType.PLATFORM_OAUTH2,
-                };
-              });
-              return platformAppsClientIdMap;
-            }),
-            handleErrorForGettingPiecesOAuth2Details
-          );
 
-        const cloudAuth$ = this.http
-          .get<{ [pieceName: string]: { clientId: string } }>(
-            'https://secrets.activepieces.com/apps?edition=' + edition
-          )
-          .pipe(
-            map((res) => {
-              const cloudManagedOAuth2Apps: PieceOAuth2DetailsMap = {};
-              Object.entries(res).forEach(([pieceName, value]) => {
-                cloudManagedOAuth2Apps[pieceName] = {
-                  clientId: value.clientId,
-                  connectionType: AppConnectionType.CLOUD_OAUTH2,
-                };
-              });
-              return cloudManagedOAuth2Apps;
-            }),
-            handleErrorForGettingPiecesOAuth2Details
-          );
-        const both$: Observable<PieceOAuth2DetailsMap> = forkJoin({
+  private getPlatformAuth(
+    edition: ApEdition
+  ): Observable<PieceOAuth2DetailsMap> {
+    if (edition === ApEdition.COMMUNITY) {
+      return of({});
+    }
+    return this.http
+      .get<SeekPage<OAuthApp>>(environment.apiUrl + '/oauth-apps')
+      .pipe(
+        map((res) => {
+          const platformAppsClientIdMap: PieceOAuth2DetailsMap = {};
+          res.data.forEach((app) => {
+            platformAppsClientIdMap[app.pieceName] = {
+              clientId: app.clientId,
+              connectionType: AppConnectionType.PLATFORM_OAUTH2,
+            };
+          });
+          return platformAppsClientIdMap;
+        }),
+        handleErrorForGettingPiecesOAuth2Details
+      );
+  }
+
+  private getCloudAuth(
+    cloudAuthEnabled: boolean,
+    edition: ApEdition
+  ): Observable<PieceOAuth2DetailsMap> {
+    if (!cloudAuthEnabled) {
+      return of({});
+    }
+    return this.http
+      .get<{ [pieceName: string]: { clientId: string } }>(
+        'https://secrets.activepieces.com/apps?edition=' + edition
+      )
+      .pipe(
+        map((res) => {
+          const cloudManagedOAuth2Apps: PieceOAuth2DetailsMap = {};
+          Object.entries(res).forEach(([pieceName, value]) => {
+            cloudManagedOAuth2Apps[pieceName] = {
+              clientId: value.clientId,
+              connectionType: AppConnectionType.CLOUD_OAUTH2,
+            };
+          });
+          return cloudManagedOAuth2Apps;
+        }),
+        handleErrorForGettingPiecesOAuth2Details
+      );
+  }
+
+  getAppsAndTheirClientIds(): Observable<PieceOAuth2DetailsMap> {
+    return forkJoin({
+      edition: this.flagsService.getEdition(),
+      cloudAuthEnabled: this.flagsService.isFlagEnabled(
+        ApFlagId.CLOUD_AUTH_ENABLED
+      ),
+    }).pipe(
+      switchMap((flags) => {
+        const platformAuth$ = this.getPlatformAuth(flags.edition);
+        const cloudAuth$ = this.getCloudAuth(
+          flags.cloudAuthEnabled,
+          flags.edition
+        );
+        return forkJoin({
           cloudAuth: cloudAuth$,
           platformAuth: platformAuth$,
         }).pipe(
@@ -68,20 +93,6 @@ export class CloudAuthConfigsService {
             };
           })
         );
-
-        switch (edition) {
-          case ApEdition.COMMUNITY: {
-            if (CLOUD_AUTH_ENABLED) return cloudAuth$;
-            return of({});
-          }
-          case ApEdition.CLOUD: {
-            return both$;
-          }
-          case ApEdition.ENTERPRISE: {
-            if (CLOUD_AUTH_ENABLED) return both$;
-            return platformAuth$;
-          }
-        }
       })
     );
   }

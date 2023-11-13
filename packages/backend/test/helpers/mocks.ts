@@ -56,7 +56,7 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         updated: platform?.updated ?? faker.date.recent().toISOString(),
         ownerId: platform?.ownerId ?? apId(),
         name: platform?.name ?? faker.lorem.word(),
-        primaryColor: platform?.primaryColor ??  faker.color.rgb(),
+        primaryColor: platform?.primaryColor ?? faker.color.rgb(),
         logoIconUrl: platform?.logoIconUrl ?? faker.image.urlPlaceholder(),
         fullLogoUrl: platform?.fullLogoUrl ?? faker.image.urlPlaceholder(),
         favIconUrl: platform?.favIconUrl ?? faker.image.urlPlaceholder(),
@@ -97,7 +97,7 @@ export const createMockSigningKey = (signingKey?: Partial<SigningKey>): SigningK
         displayName: signingKey?.displayName ?? faker.lorem.word(),
         platformId: signingKey?.platformId ?? apId(),
         publicKey: signingKey?.publicKey ?? MOCK_SIGNING_KEY_PUBLIC_KEY,
-        generatedBy: signingKey?.generatedBy ??  apId(),
+        generatedBy: signingKey?.generatedBy ?? apId(),
         algorithm: signingKey?.algorithm ?? KeyAlgorithm.RSA,
     }
 }
