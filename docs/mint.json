@@ -200,6 +200,7 @@
     {
       "group": "About",
       "pages": [
+        "about/i18n",
         "about/editions",
         "about/changelog",
         "about/telemetry",
