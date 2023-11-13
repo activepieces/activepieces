@@ -20,7 +20,7 @@ import {
  * (including sorting, pagination, and filtering).
  */
 export type ManagedPieceMetadataModelSummary = PieceMetadataModelSummary & {
-  hasManagedAuthDetails?: boolean;
+  oauth2AppCredentialsId?: string;
 };
 export class PiecesTableDataSource extends DataSource<ManagedPieceMetadataModelSummary> {
   data: ManagedPieceMetadataModelSummary[] = [];
@@ -68,14 +68,15 @@ export class PiecesTableDataSource extends DataSource<ManagedPieceMetadataModelS
         );
       }),
       switchMap((pieces) => {
-        return this.platformService.listOAuth2Apps().pipe(
+        return this.platformService.listOAuth2AppsCredentials().pipe(
           map((apps) => {
             return pieces.map((p) => {
+              const appCredentials = apps.data.find(
+                (a) => a.pieceName === p.name
+              );
               return {
                 ...p,
-                hasManagedAuthDetails: !!apps.data.find(
-                  (a) => a.pieceName === p.name
-                ),
+                oauth2AppCredentialsId: appCredentials?.id,
               };
             });
           })

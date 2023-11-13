@@ -41,19 +41,26 @@
                         [tooltipText]="hidePieceTooltip" iconFilename="eye.svg" [width]="20" [height]="20"
                         extraClasses="ap-fill-primary" (buttonClicked)="togglePiece(piece)"></ap-icon-button>
 
-                    <ap-icon-button *ngIf="piece.hasManagedAuthDetails  && piece.auth?.type === OAUTH2 "
-                        [tooltipText]="updatePieceCredentialsTooltip" iconFilename="piece_credentials.svg" [width]="20"
-                        [height]="20" extraClasses="ap-fill-primary">
-
+                    <ap-icon-button *ngIf="piece.oauth2AppCredentialsId  && piece.auth?.type === OAUTH2 "
+                        [matMenuTriggerFor]="menu" [tooltipText]="updatePieceCredentialsTooltip"
+                        iconFilename="piece_credentials.svg" [width]="20" [height]="20" extraClasses="ap-fill-primary">
                     </ap-icon-button>
-                    <ap-icon-button *ngIf="piece.auth?.type === OAUTH2" [tooltipText]="addPieceCredentialsTooltip"
+
+
+                    <ap-icon-button *ngIf="piece.auth?.type === OAUTH2 && !piece.oauth2AppCredentialsId "
+                        [tooltipText]="addPieceCredentialsTooltip"
+                        (buttonClicked)="openPieceOAuth2CredentialsDialog(false,piece)"
                         iconFilename="piece_credentials.svg" [width]="20" [height]="20">
                     </ap-icon-button>
-                    
-                    <ap-icon-button *ngIf="piece.hasManagedAuthDetails  && piece.auth?.type === OAUTH2 "
-                        [tooltipText]="deletePieceCredentialsTooltip" iconFilename="delete_credentials.svg" [width]="20"
-                        [height]="20">
-                    </ap-icon-button>
+
+                    <mat-menu #menu="matMenu">
+                        <div mat-menu-item (click)="openPieceOAuth2CredentialsDialog(true,piece)"
+                            class="!ap-typography-caption">Edit OAuth2 settings
+                        </div>
+                        <div mat-menu-item class="!ap-text-danger !ap-typography-caption"
+                            (click)="deletePieceOAuth2Creds(piece)">Delete OAuth2 settings
+                        </div>
+                    </mat-menu>
 
                 </div>
 
@@ -81,3 +88,4 @@
 </div>
 
 <ng-container *ngIf="saving$ | async"></ng-container>
+<ng-container *ngIf="dialogClosed$ | async"></ng-container>

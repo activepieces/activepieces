@@ -10,16 +10,25 @@ import {
 } from 'rxjs';
 import {
   AuthenticationService,
-  PieceMetadataModelSummary,
+  DeleteEntityDialogComponent,
+  DeleteEntityDialogData,
   PieceMetadataService,
   PlatformService,
 } from '@activepieces/ui/common';
 import { Platform } from '@activepieces/ee-shared';
 import { ActivatedRoute } from '@angular/router';
-import { PiecesTableDataSource } from './pieces-table.datasource';
+import {
+  ManagedPieceMetadataModelSummary,
+  PiecesTableDataSource,
+} from './pieces-table.datasource';
 import { FormControl } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { PropertyType } from '@activepieces/pieces-framework';
+import {
+  EditAddPieceOAuth2CredentialsDialogComponent,
+  PieceOAuth2CredentialsDialogData,
+} from '../edit-add-piece-oauth-2-credentials-dialog/edit-add-piece-oauth-2-credentials-dialog.component';
+import { MatDialog } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-pieces-table',
@@ -42,13 +51,14 @@ export class PiecesTableComponent implements OnInit {
   searchFormControl = new FormControl('', { nonNullable: true });
   dataSource!: PiecesTableDataSource;
   refresh$: Subject<true> = new Subject();
-
+  dialogClosed$?: Observable<boolean>;
   constructor(
     private authenticationService: AuthenticationService,
     private piecesService: PieceMetadataService,
     private route: ActivatedRoute,
     private platformService: PlatformService,
-    private matSnackbar: MatSnackBar
+    private matSnackbar: MatSnackBar,
+    private matDialog: MatDialog
   ) {
     this.authenticationService.getPlatformId();
   }
@@ -62,7 +72,7 @@ export class PiecesTableComponent implements OnInit {
     );
   }
 
-  togglePiece(piece: PieceMetadataModelSummary) {
+  togglePiece(piece: ManagedPieceMetadataModelSummary) {
     const pieceIncluded = !!this.platform$.value.filteredPieceNames.find(
       (pn) => pn === piece.name
     );
@@ -108,5 +118,42 @@ export class PiecesTableComponent implements OnInit {
 
   savePlatform(platform: Platform) {
     return this.platformService.updatePlatform(platform, platform.id);
+  }
+
+  openPieceOAuth2CredentialsDialog(
+    isEditing: boolean,
+    piece: ManagedPieceMetadataModelSummary
+  ) {
+    const data: PieceOAuth2CredentialsDialogData = {
+      isEditing,
+      pieceDisplayName: piece.displayName,
+      pieceName: piece.name,
+    };
+    const dialog = this.matDialog.open(
+      EditAddPieceOAuth2CredentialsDialogComponent,
+      {
+        data,
+      }
+    );
+    this.dialogClosed$ = dialog.beforeClosed().pipe(
+      tap((res) => {
+        if (res) {
+          this.refresh$.next(true);
+        }
+      })
+    );
+  }
+
+  deletePieceOAuth2Creds(piece: ManagedPieceMetadataModelSummary) {
+    if (piece.oauth2AppCredentialsId) {
+      const data: DeleteEntityDialogData = {
+        entityName: `${piece.displayName}` + $localize` OAuth2 app credentials`,
+        note: $localize`all connections depending on these credentials will fail after deleting`,
+        deleteEntity$: this.platformService
+          .deleteOAuth2AppCredentials(piece.oauth2AppCredentialsId)
+          .pipe(tap(() => this.refresh$.next(true))),
+      };
+      this.matDialog.open(DeleteEntityDialogComponent, { data });
+    }
   }
 }

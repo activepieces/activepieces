@@ -37,7 +37,7 @@ export const uiEePlatformRoutes: Route[] = [
         path: 'pieces',
         component: PiecesTableComponent,
         data: {
-          title: $localize`pieces`,
+          title: $localize`Pieces`,
         },
         resolve: {
           platform: platformResolver,

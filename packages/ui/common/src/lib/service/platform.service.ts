@@ -4,9 +4,10 @@ import {
   OAuthApp,
   Platform,
   UpdatePlatformRequestBody,
+  UpsertOAuth2AppRequest,
 } from '@activepieces/ee-shared';
 import { environment } from '../environments/environment';
-import { SeekPage, UpsertAppConnectionRequestBody } from '@activepieces/shared';
+import { SeekPage } from '@activepieces/shared';
 
 @Injectable({
   providedIn: 'root',
@@ -25,12 +26,17 @@ export class PlatformService {
       `${environment.apiUrl}/platforms/${platformId}`
     );
   }
-  uspertOAuth2App(req: UpsertAppConnectionRequestBody) {
-    return this.http.post<void>(`${environment.apiUrl}/app-connections`, req);
+  uspertOAuth2AppCredentials(req: UpsertOAuth2AppRequest) {
+    return this.http.post<void>(`${environment.apiUrl}/oauth-apps`, req);
   }
-  listOAuth2Apps() {
+  listOAuth2AppsCredentials() {
     return this.http.get<SeekPage<OAuthApp>>(
-      `${environment.apiUrl}/app-connections`
+      `${environment.apiUrl}/oauth-apps`
+    );
+  }
+  deleteOAuth2AppCredentials(credentialId: string) {
+    return this.http.delete<void>(
+      `${environment.apiUrl}/oauth-apps/${credentialId}`
     );
   }
 }
