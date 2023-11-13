@@ -155,7 +155,9 @@
       "baseHref": ""
     },
     "locales": {
-      "fr": "packages/ui/core/src/locale/messages.fr.xlf"
+      "fr": "packages/ui/core/src/locale/messages.fr.xlf",
+      "jp": "packages/ui/core/src/locale/messages.jp.xlf",
+      "de": "packages/ui/core/src/locale/messages.de.xlf"
     }
   }
 }
