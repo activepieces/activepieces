@@ -39,7 +39,9 @@ export class PlatformSettingsComponent {
   ];
   platformId = '';
   customDomainNote$: Observable<string>;
-  message = $localize`Please set the following TXT and CNAME records in your DNS provider, then click verify to confirm your control over the domain.`;
+  readonly signingKeys = $localize`Signing Keys`;
+  readonly termsAndPrivacy = $localize`Privacy & Terms`;
+  readonly message = $localize`Please set the following TXT and CNAME records in your DNS provider, then click verify to confirm your control over the domain.`;
   constructor(
     private fb: FormBuilder,
     private matSnakcbar: MatSnackBar,

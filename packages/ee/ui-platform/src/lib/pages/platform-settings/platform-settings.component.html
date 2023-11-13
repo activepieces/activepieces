@@ -1,17 +1,12 @@
-<!-- <div class="ap-text-body-1 ap-font-semibold ap-w-[8.3125rem] ap-mb-4" i18n>
-    Custom Domain:
-</div>
-<ng-container [ngTemplateOutlet]="true? customDomainRecordsTable:customDomainForm">
-
-</ng-container> -->
-
 <ap-page-title [title]="title"></ap-page-title>
-<div class="ap-text-body-1 ap-font-semibold ap-mb-4" i18n>
-    Signing Keys:
-</div>
+<mat-tab-group class="ap-gap-4" mat-stretch-tabs="false" mat-align-tabs="start" animationDuration="0">
+    <mat-tab [label]="signingKeys"><app-signing-keys-table></app-signing-keys-table>
+    </mat-tab>
+    <mat-tab label="SMTP"> Content 2 </mat-tab>
+    <mat-tab [label]="termsAndPrivacy"> Content 3 </mat-tab>
+</mat-tab-group>
 
 
-<app-signing-keys-table></app-signing-keys-table>
 
 
 
