@@ -6,7 +6,11 @@ import {
   FlowOperationType,
   TelemetryEventName,
 } from '@activepieces/shared';
-import { FlowService, TelemetryService } from '@activepieces/ui/common';
+import {
+  FlagService,
+  FlowService,
+  TelemetryService,
+} from '@activepieces/ui/common';
 import { demoTemplate } from './demo-flow-template';
 
 @Component({
@@ -18,11 +22,15 @@ import { demoTemplate } from './demo-flow-template';
 export class EmptyFlowsTableComponent {
   creatingFlow = false;
   createFlow$: Observable<Flow>;
+  showPoweredByAp$: Observable<boolean>;
   constructor(
     private router: Router,
     private flowService: FlowService,
-    private telemetryService: TelemetryService
-  ) {}
+    private telemetryService: TelemetryService,
+    private flagService: FlagService
+  ) {
+    this.showPoweredByAp$ = this.flagService.getShowPoweredByAp();
+  }
 
   createFlow() {
     if (!this.creatingFlow) {

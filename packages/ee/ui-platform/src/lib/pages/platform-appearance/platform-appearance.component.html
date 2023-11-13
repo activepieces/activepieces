@@ -1,5 +1,6 @@
 <ap-page-title [title]="title"></ap-page-title>
-<div class="ap-flex ap-flex-col ap-justify-between ap-h-full">
+<div class="ap-flex ap-flex-col ap-justify-between"
+    [style.height]="(showPoweredByAp$ | async) === true ? 'calc(100vh - 279px)' : 'calc(100vh - 209px)'">
     <form class="ap-flex ap-flex-col ap-gap-5" [formGroup]="formGroup" (ngSubmit)="save()">
         <mat-form-field class=" ap-max-w-[327px] ap-w-full">
             <mat-label i18n>Name</mat-label>

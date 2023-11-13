@@ -1,4 +1,5 @@
-<div class="ap-flex ap-flex-col ap-gap-4 ap-h-full ap-text-center ap-items-center ap-justify-center ">
+<div class="ap-flex ap-flex-col ap-gap-4 ap-h-full ap-text-center ap-items-center ap-justify-center"
+  [style.height]="(showPoweredByAp$ | async) === true? 'calc(100% - 4.375rem)':'100%'">
   <svg-icon src="/assets/img/custom/empty-collections.svg" [style]="{width: '360px', height:'162px' }"></svg-icon>
   <div class="text-container">
     <div class="ap-typography-headline-6 ap-font-medium " i18n>Create Your First Flow</div>
