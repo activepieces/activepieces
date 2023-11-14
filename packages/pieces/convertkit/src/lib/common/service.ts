@@ -38,12 +38,20 @@ export const fetchBroadcasts = async (auth: string, page: number) => {
   const response = await httpClient.sendRequest<{ broadcasts: Broadcast[] }>(
     request
   );
+
+  const errorMessage = `Failed to fetch broadcasts. Response code: ${
+    response.status
+  } Response body: ${JSON.stringify(response.body)}`;
+
   if (response.status !== 200) {
-    throw new Error(
-      `Failed to fetch broadcasts: ${response.status} ${response.body}`
-    );
+    throw new Error(errorMessage);
   }
-  return response.body.broadcasts;
+
+  if (response.body.broadcasts) {
+    return response.body.broadcasts;
+  }
+
+  throw new Error(errorMessage);
 };
 
 export const fetchCustomFields = async (
@@ -63,13 +71,20 @@ export const fetchCustomFields = async (
   const response = await httpClient.sendRequest<{
     custom_fields: CustomField[];
   }>(request);
+
+  const errorMessage = `Failed to fetch custom fields. Response code: ${
+    response.status
+  } Response body: ${JSON.stringify(response.body)}`;
+
   if (response.status !== 200) {
-    throw new Error(
-      `Failed to fetch custom fields: ${response.status} ${response.body}`
-    );
+    throw new Error(errorMessage);
   }
 
-  return response.body.custom_fields;
+  if (response.body.custom_fields) {
+    return response.body.custom_fields;
+  }
+
+  throw new Error(errorMessage);
 };
 
 export const fetchForms = async (auth: string) => {
@@ -85,12 +100,20 @@ export const fetchForms = async (auth: string) => {
     method: HttpMethod.GET,
   };
   const response = await httpClient.sendRequest<{ forms: Form[] }>(request);
+
+  const errorMessage = `Failed to fetch forms. Response code: ${
+    response.status
+  } Response body: ${JSON.stringify(response.body)}`;
+
   if (response.status !== 200) {
-    throw new Error(
-      `Failed to fetch forms: ${response.status} ${response.body}`
-    );
+    throw new Error(errorMessage);
   }
-  return response.body.forms;
+
+  if (response.body.forms) {
+    return response.body.forms;
+  }
+
+  throw new Error(errorMessage);
 };
 
 export const fetchPurchases = async (auth: string, page: number) => {
@@ -109,12 +132,20 @@ export const fetchPurchases = async (auth: string, page: number) => {
   const response = await httpClient.sendRequest<{ purchases: Purchase[] }>(
     request
   );
+
+  const errorMessage = `Failed to fetch purchases. Response code: ${
+    response.status
+  } Response body: ${JSON.stringify(response.body)}`;
+
   if (response.status !== 200) {
-    throw new Error(
-      `Failed to fetch purchases: ${response.status} ${response.body}`
-    );
+    throw new Error(errorMessage);
   }
-  return response.body.purchases;
+
+  if (response.body.purchases) {
+    return response.body.purchases;
+  }
+
+  throw new Error(errorMessage);
 };
 
 export const fetchSequences = async (auth: string) => {
@@ -130,12 +161,19 @@ export const fetchSequences = async (auth: string) => {
   const response = await httpClient.sendRequest<{ courses: Sequence[] }>(
     request
   );
+
+  const errorMessage = `Failed to fetch sequences. Response code: ${
+    response.status
+  } Response body: ${JSON.stringify(response.body)}`;
+
   if (response.status !== 200) {
-    throw new Error(
-      `Failed to fetch sequences: ${response.status} ${response.body}`
-    );
+    throw new Error(errorMessage);
   }
-  return response.body.courses;
+  if (response.body.courses) {
+    return response.body.courses;
+  }
+
+  throw new Error(errorMessage);
 };
 
 export const fetchSubscriperById = async (
@@ -158,13 +196,18 @@ export const fetchSubscriperById = async (
     request
   );
 
+  const errorMessage = `Failed to fetch subscriber. Response code: ${
+    response.status
+  } Response body: ${JSON.stringify(response.body)}`;
+
   if (response.status !== 200) {
-    throw new Error(
-      `Failed to fetch subscribers: ${response.status} ${response.body}`
-    );
+    throw new Error(errorMessage);
+  }
+  if (response.body.subscriber) {
+    return response.body.subscriber;
   }
 
-  return response.body.subscriber;
+  throw new Error(errorMessage);
 };
 
 export const fetchSubscriberByEmail = async (
@@ -188,13 +231,20 @@ export const fetchSubscriberByEmail = async (
     request
   );
 
+  const errorMessage = `Failed to fetch subscriber that match the provided email. Response code: ${
+    response.status
+  } Response body: ${JSON.stringify(response.body)}`;
+
   if (response.status !== 200) {
-    throw new Error(
-      `Failed to fetch subscribers: ${response.status} ${response.body}`
-    );
+    throw new Error(errorMessage);
   }
 
-  return response.body.subscribers[0];
+  const subscriber = response.body.subscribers[0];
+  if (subscriber) {
+    return subscriber;
+  }
+
+  throw new Error(errorMessage);
 };
 
 export const fetchSubscribedTags = async (
@@ -215,13 +265,18 @@ export const fetchSubscribedTags = async (
 
   const response = await httpClient.sendRequest<{ tags: Tag[] }>(request);
 
+  const errorMessage = `Failed to fetch tags. Response code: ${
+    response.status
+  } Response body: ${JSON.stringify(response.body)}`;
+
   if (response.status !== 200) {
-    throw new Error(
-      `Failed to fetch tags: ${response.status} ${response.body}`
-    );
+    throw new Error(errorMessage);
+  }
+  if (response.body.tags) {
+    return response.body.tags;
   }
 
-  return response.body.tags;
+  throw new Error(errorMessage);
 };
 
 export const fetchTags = async (auth: string) => {
@@ -237,13 +292,18 @@ export const fetchTags = async (auth: string) => {
 
   const response = await httpClient.sendRequest<{ tags: Tag[] }>(request);
 
+  const errorMessage = `Failed to fetch tags. Response code: ${
+    response.status
+  } Response body: ${JSON.stringify(response.body)}`;
+
   if (response.status !== 200) {
-    throw new Error(
-      `Failed to fetch tags: ${response.status} ${response.body}`
-    );
+    throw new Error(errorMessage);
+  }
+  if (response.body.tags) {
+    return response.body.tags;
   }
 
-  return response.body.tags;
+  throw new Error(errorMessage);
 };
 
 export const createWebhook = async (auth: string, payload: object) => {
@@ -259,13 +319,19 @@ export const createWebhook = async (auth: string, payload: object) => {
 
   const response = await httpClient.sendRequest<{ rule: Webhook }>(request);
 
+  const errorMessage = `Failed to create webhook. Response code: ${
+    response.status
+  } Response body: ${JSON.stringify(response.body)}`;
+
   if (response.status !== 200) {
-    throw new Error(
-      `Failed to create webhook: ${response.status} ${response.body}`
-    );
+    throw new Error(errorMessage);
   }
 
-  return response.body.rule;
+  if (response.body.rule) {
+    return response.body.rule;
+  }
+
+  throw new Error(errorMessage);
 };
 
 export const removeWebhook = async (auth: string, ruleId: number) => {
@@ -280,11 +346,16 @@ export const removeWebhook = async (auth: string, ruleId: number) => {
 
   const response = await httpClient.sendRequest<{ success: boolean }>(request);
 
+  const errorMessage = `Failed to remove webhook. Response code: ${
+    response.status
+  } Response body: ${JSON.stringify(response.body)}`;
+
   if (response.status !== 200) {
-    throw new Error(
-      `Failed to remove webhook: ${response.status} ${response.body}`
-    );
+    throw new Error(errorMessage);
+  }
+  if (response.body.success) {
+    return response.body.success;
   }
 
-  return response.body.success;
+  throw new Error(errorMessage);
 };
