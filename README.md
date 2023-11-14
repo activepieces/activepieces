@@ -95,10 +95,12 @@ Community templates provide inspiration and enable you to effortlessly build aut
 - Prompt Customization
 
 
-# ☁️ Open Source and Cloud
+# License
 
-Activepieces is open source under the [MIT license](https://github.com/activepieces/activepieces/blob/main/LICENSE). You might notice some differences on the cloud version as it's a special version developed privately on top of the open source software.
+Activepieces' Community Edition is released as open source under the [MIT license](https://github.com/activepieces/activepieces/blob/main/LICENSE) and enterprise features are released under [Commerical License](https://github.com/activepieces/activepieces/blob/main/packages/ee/LICENSE)
 
+
+Read more about the feature comparsion here https://www.activepieces.com/docs/about/editions
 <br>
 <br>
 
