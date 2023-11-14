@@ -1,17 +1,19 @@
-<div class="ap-h-full ap-pt-2 ap-flex ap-flex-col ap-justify-between ap-gap-10">
-    <form [formGroup]="smtpSettingsForm" class="ap-flex  ap-max-w-[327px] ap-w-full ap-flex-col  ap-gap-4">
-        
-        <ap-markdown [fullWidth]="true" [data]="'Configure your email server and sender details for sending messages to your users.'" class="ap-mb-2"></ap-markdown>
+<div class="ap-h-full ap-pt-2 ap-flex ap-flex-col">
+    <div class="ap-mb-4 ap-max-w-[44.6875rem]">
+        <ap-markdown [fullWidth]="true"
+            [data]="'Configure your email server and sender details for sending messages to your users.'"></ap-markdown>
+    </div>
 
-        <h1 class="ap-text-l ap-font-bold ap-mb-2">Sender Details</h1>
+    <form [formGroup]="smtpSettingsForm" class="ap-flex  ap-max-w-[327px] ap-w-full ap-flex-col  ap-gap-4 ap-mb-10">
 
         <mat-form-field>
             <mat-label>SMTP Sender Email</mat-label>
             <input matInput [formControl]="smtpSettingsForm.controls.smtpSenderEmail" placeholder="Sender@email.com">
-            <mat-error *ngIf="smtpSettingsForm.controls.smtpSenderEmail.invalid">Sender email is required</mat-error>
+            <mat-error *ngIf="smtpSettingsForm.controls.smtpSenderEmail.invalid">Sender email is
+                required</mat-error>
         </mat-form-field>
 
-        <h1 class="ap-text-l ap-font-bold ap-mb-2">SMTP Provider Settings</h1>
+
 
         <mat-form-field>
             <mat-label>SMTP Host</mat-label>
@@ -40,8 +42,12 @@
     <div>
         <div
             class="ap-px-4 ap-pt-4  ap-flex ap-justify-end ap-items-center ap-gap-4 ap-w-full ap-border-t ap-border-solid ap-border-outline">
-            <ap-button btnStyle="flat" btnColor="primary" i18n (buttonClicked)="save()"
-                [loading]="(loading$ | async) || false">Save</ap-button>
+            <ap-button btnStyle="flat" btnColor="primary" (buttonClicked)="save()"
+                [loading]="(loading$ | async) || false">
+                <div i18n>
+                    Save
+                </div>
+            </ap-button>
         </div>
     </div>
 </div>
