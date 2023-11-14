@@ -46,7 +46,10 @@ export const firebaseAuthenticationController: FastifyPluginAsyncTypebox = async
                         type: PrincipalType.USER,
                         projectId: project.id,
                         projectType: project.type,
-                        platformId: platform?.id,
+                        platform: isNil(platform) ? undefined : {
+                            id: platform.id,
+                            role: platform.ownerId === user.id ? 'OWNER' : 'MEMBER',
+                        },
                     })
 
                     const response: AuthenticationResponse = {
@@ -101,8 +104,11 @@ export const firebaseAuthenticationController: FastifyPluginAsyncTypebox = async
                         id: user.id,
                         type: PrincipalType.USER,
                         projectId: project.id,
+                        platform: isNil(platform) ? undefined : {
+                            id: platform.id,
+                            role: platform.ownerId === user.id ? 'OWNER' : 'MEMBER',
+                        },
                         projectType: project.type,
-                        platformId: platform?.id,
                     })
 
                     const response: AuthenticationResponse = {

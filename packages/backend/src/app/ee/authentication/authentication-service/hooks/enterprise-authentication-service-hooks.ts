@@ -49,7 +49,10 @@ export const enterpriseAuthenticationServiceHooks: AuthenticationServiceHooks = 
             type: PrincipalType.USER,
             projectId: project.id,
             projectType: ProjectType.PLATFORM_MANAGED,
-            platformId: platform.id,
+            platform: {
+                id: platform.id,
+                role: platform.ownerId === user.id ? 'OWNER' : 'MEMBER',
+            },
         })
 
         return {
@@ -79,7 +82,10 @@ export const enterpriseAuthenticationServiceHooks: AuthenticationServiceHooks = 
             type: PrincipalType.USER,
             projectId: project.id,
             projectType: project.type,
-            platformId: platform.id,
+            platform: {
+                id: platform.id,
+                role: platform.ownerId === user.id ? 'OWNER' : 'MEMBER',
+            },
         })
 
         return {

@@ -67,7 +67,10 @@ describe('Piece Metadata API', () => {
             const mockPieceMetadataB = createMockPieceMetadata({ name: 'b' })
             await databaseConnection.getRepository('piece_metadata').save([mockPieceMetadataA, mockPieceMetadataB])
 
-            const testToken = await generateMockToken({ platformId: mockPlatform.id })
+            const testToken = await generateMockToken({ platform: {
+                id: mockPlatform.id,
+                role: 'OWNER',
+            } })
 
             // act
             const response = await app?.inject({
@@ -103,7 +106,10 @@ describe('Piece Metadata API', () => {
             const mockPieceMetadataB = createMockPieceMetadata({ name: 'b' })
             await databaseConnection.getRepository('piece_metadata').save([mockPieceMetadataA, mockPieceMetadataB])
 
-            const testToken = await generateMockToken({ platformId: mockPlatform.id })
+            const testToken = await generateMockToken({ platform: {
+                id: mockPlatform.id,
+                role: 'OWNER',
+            } })
 
             // act
             const response = await app?.inject({
