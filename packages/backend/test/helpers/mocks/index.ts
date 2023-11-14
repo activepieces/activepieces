@@ -1,7 +1,8 @@
 import { KeyAlgorithm, SigningKey, Platform, FilteredPieceBehavior } from '@activepieces/ee-shared'
 import { UserStatus, User, apId, Project, NotificationStatus, ProjectType, PieceType, PackageType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
-import { PieceMetadataSchema } from '../../src/app/pieces/piece-metadata-entity'
+import { PieceMetadataSchema } from '../../../src/app/pieces/piece-metadata-entity'
+import bcrypt from 'bcrypt'
 
 export const createMockUser = (user?: Partial<User>): User => {
     return {
@@ -13,11 +14,11 @@ export const createMockUser = (user?: Partial<User>): User => {
         lastName: user?.lastName ?? faker.person.lastName(),
         trackEvents: user?.trackEvents ?? faker.datatype.boolean(),
         newsLetter: user?.newsLetter ?? faker.datatype.boolean(),
-        password: user?.password ?? faker.internet.password(),
+        password: user?.password ? bcrypt.hashSync(user.password, 10) : faker.internet.password(),
         status: user?.status ?? faker.helpers.enumValue(UserStatus),
-        imageUrl: user?.imageUrl ?? faker.image.urlPlaceholder(),
-        title: user?.title ?? faker.lorem.sentence(),
-        externalId: user?.externalId ?? apId(),
+        imageUrl: user?.imageUrl,
+        title: user?.title,
+        externalId: user?.externalId,
         platformId: user?.platformId ?? null,
     }
 }
