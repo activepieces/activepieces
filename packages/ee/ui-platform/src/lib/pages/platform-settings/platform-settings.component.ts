@@ -10,5 +10,6 @@ export class PlatformSettingsComponent {
   platformId = '';
   readonly signingKeys = $localize`Signing Keys`;
   readonly termsAndPrivacy = $localize`Privacy & Terms`;
+  readonly accountManagementEmail = $localize`Account Management Emails`;
   readonly message = $localize`Please set the following TXT and CNAME records in your DNS provider, then click verify to confirm your control over the domain.`;
 }

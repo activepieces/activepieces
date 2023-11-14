@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { SigningKeysDataSource } from './signing-keys-table.datasource';
 import { Observable, Subject, tap } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
-import { CreateSigningKeyDialogComponent } from './create-signing-key-dialog/create-signing-key-dialog.component';
+import { CreateSigningKeyDialogComponent } from '../dialogs/create-signing-key-dialog/create-signing-key-dialog.component';
 import { startWith } from 'rxjs';
 import { SigningKeysService } from '@activepieces/ee-components';
 import { SigningKey } from '@activepieces/ee-shared';
