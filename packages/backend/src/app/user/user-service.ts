@@ -3,7 +3,6 @@ import { passwordHasher } from '../authentication/lib/password-hasher'
 import { databaseConnection } from '../database/database-connection'
 import { UserEntity } from './user-entity'
 import { PlatformId } from '@activepieces/ee-shared'
-import { IsNull } from 'typeorm'
 
 const userRepo = databaseConnection.getRepository(UserEntity)
 
@@ -62,7 +61,7 @@ export const userService = {
 
     async getByPlatformAndExternalId({ platformId, externalId }: GetByPlatformAndExternalIdParams): Promise<User | null> {
         return userRepo.findOneBy({
-            platformId: platformId ?? IsNull(),
+            platformId,
             externalId,
         })
     },
@@ -93,7 +92,7 @@ type GetByPlatformAndEmailParams = {
 }
 
 type GetByPlatformAndExternalIdParams = {
-    platformId: PlatformId | null
+    platformId: PlatformId
     externalId: string
 }
 
