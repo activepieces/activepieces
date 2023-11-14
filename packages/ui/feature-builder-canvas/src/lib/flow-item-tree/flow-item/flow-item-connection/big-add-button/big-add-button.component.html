@@ -3,6 +3,6 @@
     [class.big-add-button-drop-indicator]="showDropZoneIndicator || (selectedAddBtnId$ | async) === addButtonId"
     (focus)="showBoxShadow = true" (blur)="showBoxShadow = false" [class.box-shadow]="showBoxShadow" [style.top]="top"
     [style.left]="left">
-    <svg-icon *ngIf="!showDropZoneIndicator" src="./assets/img/custom/plus.svg" class="add-icon"
-        [applyClass]="true"></svg-icon>
+    <svg-icon *ngIf="!showDropZoneIndicator && (selectedAddBtnId$ | async) !== addButtonId"
+        src="./assets/img/custom/plus.svg" class="add-icon" [applyClass]="true"></svg-icon>
 </div>

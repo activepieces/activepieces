@@ -34,24 +34,26 @@
             <td mat-cell *matCellDef="let piece">
                 <div class="ap-float-right ap-text-center ap-flex ap-items-center ap-justify-center"
                     *ngIf="platform$ | async as plat">
-                    <ap-icon-button *ngIf="plat.filteredPieceNames.includes(piece.name)"
-                        [tooltipText]="showPieceTooltip" iconFilename="eye-off.svg" [width]="20" [height]="20"
-                        class="ap-fill-description" (buttonClicked)="togglePiece(piece)"></ap-icon-button>
-                    <ap-icon-button *ngIf="!plat.filteredPieceNames.includes(piece.name)"
-                        [tooltipText]="hidePieceTooltip" iconFilename="eye.svg" [width]="20" [height]="20"
-                        extraClasses="ap-fill-primary" (buttonClicked)="togglePiece(piece)"></ap-icon-button>
+
 
                     <ap-icon-button *ngIf="piece.oauth2AppCredentialsId  && piece.auth?.type === OAUTH2 "
                         [matMenuTriggerFor]="menu" [tooltipText]="updatePieceCredentialsTooltip"
                         iconFilename="piece_credentials.svg" [width]="20" [height]="20" extraClasses="ap-fill-primary">
                     </ap-icon-button>
 
-
                     <ap-icon-button *ngIf="piece.auth?.type === OAUTH2 && !piece.oauth2AppCredentialsId "
                         [tooltipText]="addPieceCredentialsTooltip"
                         (buttonClicked)="openPieceOAuth2CredentialsDialog(false,piece)"
                         iconFilename="piece_credentials.svg" [width]="20" [height]="20">
                     </ap-icon-button>
+
+                    <ap-icon-button *ngIf="plat.filteredPieceNames.includes(piece.name)"
+                        [tooltipText]="showPieceTooltip" iconFilename="eye-off.svg" [width]="20" [height]="20"
+                        class="ap-fill-description" (buttonClicked)="togglePiece(piece)"></ap-icon-button>
+
+                    <ap-icon-button *ngIf="!plat.filteredPieceNames.includes(piece.name)"
+                        [tooltipText]="hidePieceTooltip" iconFilename="eye.svg" [width]="20" [height]="20"
+                        extraClasses="ap-fill-primary" (buttonClicked)="togglePiece(piece)"></ap-icon-button>
 
                     <mat-menu #menu="matMenu">
                         <div mat-menu-item (click)="openPieceOAuth2CredentialsDialog(true,piece)"

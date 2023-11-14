@@ -9,15 +9,6 @@ import {
   ViewChild,
 } from '@angular/core';
 import { Store } from '@ngrx/store';
-
-import {
-  ADD_BUTTON_SIZE,
-  ARROW_HEAD_SIZE,
-  Drawer,
-  FLOW_ITEM_WIDTH,
-  SPACE_BETWEEN_ITEM_CONTENT_AND_LINE,
-  VERTICAL_LINE_LENGTH,
-} from '../draw-utils';
 import { Observable } from 'rxjs';
 import {
   AddButtonAndFlowItemNameContainer,
@@ -26,6 +17,12 @@ import {
   FlowsActions,
   RightSideBarType,
   canvasActions,
+  ADD_BUTTON_SIZE,
+  ARROW_HEAD_SIZE,
+  Drawer,
+  FLOW_ITEM_WIDTH,
+  SPACE_BETWEEN_ITEM_CONTENT_AND_LINE,
+  VERTICAL_LINE_LENGTH,
 } from '@activepieces/ui/feature-builder-store';
 import {
   ActionType,

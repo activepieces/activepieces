@@ -10,7 +10,6 @@ import {
 import { BuilderSavingStatusEnum, ViewModeEnum } from '../../model';
 import { FlowState } from '../../model/flow-state';
 import { FlowInstanceActions } from '../builder/flow-instance/flow-instance.action';
-import { canvasActions } from '../builder/canvas/canvas.action';
 import { ViewModeActions } from '../builder/viewmode/view-mode.action';
 
 const initialState: FlowState = {
@@ -167,13 +166,6 @@ const _flowsReducer = createReducer(
     clonedState.savingStatus =
       BuilderSavingStatusEnum.FAILED_SAVING_OR_PUBLISHING;
     return clonedState;
-  }),
-  on(canvasActions.generateFlowSuccessful, (state, action): FlowState => {
-    const clonedState: FlowState = JSON.parse(JSON.stringify(state));
-    return {
-      ...clonedState,
-      flow: action.flow,
-    };
   }),
   on(FlowsActions.importFlow, (state, { flow }) => {
     const clonedState: FlowState = JSON.parse(JSON.stringify(state));

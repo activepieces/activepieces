@@ -116,8 +116,21 @@ Activepieces is open source under the [MIT license](https://github.com/activepie
 
 We welcome contributions big or small and in different directions. The best way to do this is to check this [document](https://www.activepieces.com/docs/contributing/building-pieces/create-action) and we are always up to talk on [our Discord Server](https://discord.gg/2jUXBKDdP8).
 
-<br>
-<br>
+## 📚 Translations
+
+Not into coding but still interested in contributing? Come join our [Discord](https://discord.gg/2jUXBKDdP8) and visit https://www.activepieces.com/docs/about/i18n for more information.
+
+![de translation](https://img.shields.io/badge/dynamic/json?color=blue&label=de&style=for-the-badge&logo=crowdin&query=%24.progress[?(@.data.languageId==%27de%27)].data.translationProgress&url=https%3A%2F%2Fbadges.awesome-crowdin.com%2Fstats-16093902-626364-update.json)
+
+![fr translation](https://img.shields.io/badge/dynamic/json?color=blue&label=fr&style=for-the-badge&logo=crowdin&query=%24.progress[?(@.data.languageId==%27fr%27)].data.translationProgress&url=https%3A%2F%2Fbadges.awesome-crowdin.com%2Fstats-16093902-626364-update.json)
+
+![it translation](https://img.shields.io/badge/dynamic/json?color=blue&label=it&style=for-the-badge&logo=crowdin&query=%24.progress[?(@.data.languageId==%27it%27)].data.translationProgress&url=https%3A%2F%2Fbadges.awesome-crowdin.com%2Fstats-16093902-626364-update.json)
+
+![ja translation](https://img.shields.io/badge/dynamic/json?color=blue&label=ja&style=for-the-badge&logo=crowdin&query=%24.progress[?(@.data.languageId==%27ja%27)].data.translationProgress&url=https%3A%2F%2Fbadges.awesome-crowdin.com%2Fstats-16093902-626364-update.json)
+
+
+![pt-BR translation](https://img.shields.io/badge/dynamic/json?color=blue&label=pt-BR&style=for-the-badge&logo=crowdin&query=%24.progress[?(@.data.languageId==%27pt-BR%27)].data.translationProgress&url=https%3A%2F%2Fbadges.awesome-crowdin.com%2Fstats-16093902-626364-update.json)
+
 
 ## 🦫 Contributors
 
