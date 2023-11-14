@@ -5,7 +5,7 @@ import {
   FormGroup,
   Validators,
 } from '@angular/forms';
-import { FlagService, PlatformService } from '@activepieces/ui/common';
+import { PlatformService } from '@activepieces/ui/common';
 import { ActivatedRoute } from '@angular/router';
 import { Platform } from '@activepieces/ee-shared';
 import { BehaviorSubject, Observable, catchError, tap } from 'rxjs';
@@ -26,14 +26,12 @@ interface SmtpForm {
 })
 export class SmtpSettingsComponent implements OnInit {
   smtpSettingsForm: FormGroup<SmtpForm>;
-  showPoweredByAp$: Observable<boolean>;
   loading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   saving$?: Observable<void>;
   constructor(
     private fb: FormBuilder,
     private platformService: PlatformService,
     private route: ActivatedRoute,
-    private flagService: FlagService,
     private matSnackbar: MatSnackBar
   ) {
     this.smtpSettingsForm = this.fb.group({
@@ -62,7 +60,6 @@ export class SmtpSettingsComponent implements OnInit {
         validators: [Validators.required],
       }),
     });
-    this.showPoweredByAp$ = this.flagService.getShowPoweredByAp();
   }
   ngOnInit(): void {
     const platform: Platform = this.route.snapshot.data['platform'];
