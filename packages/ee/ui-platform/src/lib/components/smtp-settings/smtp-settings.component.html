@@ -1,5 +1,18 @@
 <div class="ap-h-full ap-pt-2 ap-flex ap-flex-col ap-justify-between ap-gap-10">
     <form [formGroup]="smtpSettingsForm" class="ap-flex  ap-max-w-[327px] ap-w-full ap-flex-col  ap-gap-4">
+        
+        <ap-markdown [fullWidth]="true" [data]="'Configure your email server and sender details for sending messages to your users.'" class="ap-mb-2"></ap-markdown>
+
+        <h1 class="ap-text-l ap-font-bold ap-mb-2">Sender Details</h1>
+
+        <mat-form-field>
+            <mat-label>SMTP Sender Email</mat-label>
+            <input matInput [formControl]="smtpSettingsForm.controls.smtpSenderEmail" placeholder="Sender@email.com">
+            <mat-error *ngIf="smtpSettingsForm.controls.smtpSenderEmail.invalid">Sender email is required</mat-error>
+        </mat-form-field>
+
+        <h1 class="ap-text-l ap-font-bold ap-mb-2">SMTP Provider Settings</h1>
+
         <mat-form-field>
             <mat-label>SMTP Host</mat-label>
             <input matInput [formControl]="smtpSettingsForm.controls.smtpHost" placeholder="Server">
@@ -14,11 +27,6 @@
             <mat-label>SMTP Username</mat-label>
             <input matInput [formControl]="smtpSettingsForm.controls.smtpUser" placeholder="Username">
             <mat-error *ngIf="smtpSettingsForm.controls.smtpUser.invalid">Username is required</mat-error>
-        </mat-form-field>
-        <mat-form-field>
-            <mat-label>SMTP Sender Email</mat-label>
-            <input matInput [formControl]="smtpSettingsForm.controls.smtpSenderEmail" placeholder="Sender@email.com">
-            <mat-error *ngIf="smtpSettingsForm.controls.smtpSenderEmail.invalid">Sender email is required</mat-error>
         </mat-form-field>
         <mat-form-field>
             <mat-label>SMTP Password</mat-label>
