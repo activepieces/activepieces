@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
 import {
   AuthenticationResponse,
+  Principal,
   SignInRequest,
   SignUpRequest,
   User,
@@ -100,13 +101,23 @@ export class AuthenticationService {
       { email: email }
     );
   }
-  getDecodedToken(): Record<string, string> | null {
+  getDecodedToken(): Principal | null {
     const token = localStorage.getItem(environment.jwtTokenName);
-    return this.jwtHelper.decodeToken(token || '');
+    const decodedToken = this.jwtHelper.decodeToken(token || '');
+    // TODO REMOVE in next release
+    if (decodedToken['platformId']) {
+      this.logout();
+    }
+    return decodedToken;
   }
 
-  getPlatformId(): string {
+  getPlatformId(): string | undefined {
     const decodedToken = this.getDecodedToken();
-    return decodedToken!['platformId'];
+    return decodedToken?.platform?.id;
+  }
+
+  isPlatformOwner(): boolean {
+    const decodedToken = this.getDecodedToken();
+    return decodedToken?.platform?.role === 'OWNER';
   }
 }

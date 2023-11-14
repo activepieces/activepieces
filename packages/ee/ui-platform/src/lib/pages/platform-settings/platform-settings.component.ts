@@ -37,7 +37,7 @@ export class PlatformSettingsComponent {
       name: '_cf-customdomain.hostname.axzxcasd',
     },
   ];
-  platformId = '';
+  platformId;
   customDomainNote$: Observable<string>;
   message = $localize`Please set the following TXT and CNAME records in your DNS provider, then click verify to confirm your control over the domain.`;
   constructor(

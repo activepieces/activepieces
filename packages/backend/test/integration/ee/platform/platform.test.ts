@@ -28,7 +28,7 @@ describe('Platform API', () => {
             const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
             await databaseConnection.getRepository('platform').save(mockPlatform)
 
-            const testToken = await generateMockToken({ id: mockUser.id })
+            const testToken = await generateMockToken({ id: mockUser.id, platform: { id: mockPlatform.id, role: 'OWNER' } })
 
             // act
             const response = await app?.inject({
@@ -128,12 +128,12 @@ describe('Platform API', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
     })
 
     describe('get platform endpoint', () => {
-        it('finds a platform by id', async () => {
+        it('finds a platform by id without being owner', async () => {
             // arrange
             const mockUser = createMockUser()
             await databaseConnection.getRepository('user').save(mockUser)
@@ -142,6 +142,28 @@ describe('Platform API', () => {
             await databaseConnection.getRepository('platform').save(mockPlatform)
 
             const testToken = await generateMockToken({ id: mockUser.id })
+
+            // act
+            const response = await app?.inject({
+                method: 'GET',
+                url: `/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+
+        it('finds a platform by id', async () => {
+            // arrange
+            const mockUser = createMockUser()
+            await databaseConnection.getRepository('user').save(mockUser)
+
+            const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
+
+            const testToken = await generateMockToken({ id: mockUser.id, platform: { id: mockPlatform.id, role: 'OWNER' }  })
 
             // act
             const response = await app?.inject({
@@ -180,7 +202,7 @@ describe('Platform API', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
     })
 })

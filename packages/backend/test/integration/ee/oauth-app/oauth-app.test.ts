@@ -37,7 +37,7 @@ describe('OAuth App API', () => {
 
             const testToken = await generateMockToken({
                 id: mockUser.id,
-                platformId: mockPlatform.id,
+                platform: { id: mockPlatform.id, role: 'OWNER' },
             })
 
             const response = await app?.inject({
@@ -64,7 +64,10 @@ describe('OAuth App API', () => {
             const nonExistentPlatformId = apId()
 
             const testToken = await generateMockToken({
-                platformId: nonExistentPlatformId,
+                platform: {
+                    id: nonExistentPlatformId,
+                    role: 'OWNER',
+                },
             })
             const response = await app?.inject({
                 method: 'POST',
@@ -90,7 +93,7 @@ describe('OAuth App API', () => {
             const nonOwnerUserId = apId()
             const testToken = await generateMockToken({
                 id: nonOwnerUserId,
-                platformId: mockPlatform.id,
+                platform: { id: mockPlatform.id, role: 'OWNER' },
             })
 
             const response = await app?.inject({
@@ -125,7 +128,7 @@ describe('OAuth App API', () => {
 
             const testToken = await generateMockToken({
                 id: mockUserTwo.id,
-                platformId: mockPlatform.id,
+                platform: { id: mockPlatform.id, role: 'OWNER' },
             })
 
             // act
@@ -157,7 +160,7 @@ describe('OAuth App API', () => {
 
             const testToken = await generateMockToken({
                 id: mockUser.id,
-                platformId: mockPlatform.id,
+                platform: { id: mockPlatform.id, role: 'OWNER' },
             })
 
             // act
@@ -197,7 +200,7 @@ describe('OAuth App API', () => {
 
             const testToken = await generateMockToken({
                 id: mockUserOne.id,
-                platformId: mockPlatformOne.id,
+                platform: { id: mockPlatformOne.id, role: 'OWNER' },
             })
             // act
             const response = await app?.inject({
