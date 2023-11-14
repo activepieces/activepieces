@@ -6,10 +6,9 @@ import {
   ProjectSelectors,
   environment,
 } from '@activepieces/ui/common';
-import { Observable, combineLatest, map, filter } from 'rxjs';
+import { Observable, combineLatest, map } from 'rxjs';
 import { ApFlagId, Project } from '@activepieces/shared';
 import { Store } from '@ngrx/store';
-import { NavigationEnd, Router } from '@angular/router';
 
 @Component({
   templateUrl: './dashboard-container.component.html',
@@ -28,20 +27,16 @@ export class DashboardContainerComponent {
     private flagService: FlagService,
     private embeddedService: EmbeddingService,
     private dashboardService: DashboardService,
-    private router: Router,
     private store: Store
   ) {
     this.showPoweredByAp$ = combineLatest({
       showPoweredByAp: this.flagService.isFlagEnabled(
         ApFlagId.SHOW_POWERED_BY_AP
       ),
-      routePath: this.router.events.pipe(
-        filter((e) => e instanceof NavigationEnd)
-      ),
+      isInPlatformRoute: this.dashboardService.getIsInPlatformRoute(),
     }).pipe(
-      map((data) => {
-        const isPlatformRoute = data.routePath['url']?.startsWith('/platform');
-        return data.showPoweredByAp && !isPlatformRoute;
+      map((res) => {
+        return !res.isInPlatformRoute && res.showPoweredByAp;
       })
     );
 
