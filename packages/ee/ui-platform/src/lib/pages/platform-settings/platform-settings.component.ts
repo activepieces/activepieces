@@ -21,9 +21,9 @@ export class PlatformSettingsComponent implements AfterViewInit {
   readonly privacyAndTermsTabTitle = $localize`Privacy & Terms`;
   readonly accountManagementEmailTabTitle = $localize`Account Management Emails`;
   readonly tabIndexFragmentMap: { [index: number]: string } = {
-    0: 'signingKeys',
-    1: 'SMTP',
-    2: 'privacyAndTerms',
+    0: 'SigningKeys',
+    1: 'AccountManagementEmails',
+    2: 'TermsAndServices',
   };
   constructor(private router: Router, private route: ActivatedRoute) {
     this.fragmentChanged$ = this.route.fragment.pipe(
@@ -62,7 +62,10 @@ export class PlatformSettingsComponent implements AfterViewInit {
     });
   }
   tabChanged(event: MatTabChangeEvent) {
-    if (event.index < 0 || event.index > 2) return;
+    const checkIfTabIndexIsInTabsMap = (index: number) => {
+      return Object.keys(this.tabIndexFragmentMap).includes(index.toString());
+    };
+    if (!checkIfTabIndexIsInTabsMap(event.index)) return;
     this.updateFragment(this.tabIndexFragmentMap[event.index]);
   }
 }
