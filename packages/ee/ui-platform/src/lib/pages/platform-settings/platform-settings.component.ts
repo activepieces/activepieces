@@ -63,7 +63,7 @@ export class PlatformSettingsComponent implements AfterViewInit {
   }
   tabChanged(event: MatTabChangeEvent) {
     const checkIfTabIndexIsInTabsMap = (index: number) => {
-      return index >= 0 && index <= 2;
+      return Object.keys(this.tabIndexFragmentMap).includes(index.toString());
     };
     if (!checkIfTabIndexIsInTabsMap(event.index)) return;
     this.updateFragment(this.tabIndexFragmentMap[event.index]);
