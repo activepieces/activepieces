@@ -71,7 +71,7 @@ import { pieceMetadataServiceHooks } from './pieces/piece-metadata-service/hooks
 import { enterprisePieceMetadataServiceHooks } from './ee/pieces/enterprise-piece-metadata-service-hooks';
 import { flagHooks } from './flags/flags.hooks';
 import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks';
-import { xgModule } from './xg/xg.module';
+import { xgModule } from './xg/xg-module';
 
 export const setupApp = async (): Promise<FastifyInstance> => {
   const app = fastify({
