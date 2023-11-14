@@ -31,7 +31,7 @@ describe('Signing Key API', () => {
 
             const testToken = await generateMockToken({
                 id: mockUser.id,
-                platformId: mockPlatform.id,
+                platform: { id: mockPlatform.id, role: 'OWNER' },
             })
 
             const mockSigningKeyName = faker.lorem.word()
@@ -64,7 +64,10 @@ describe('Signing Key API', () => {
             const nonExistentPlatformId = apId()
 
             const testToken = await generateMockToken({
-                platformId: nonExistentPlatformId,
+                platform: {
+                    id: nonExistentPlatformId,
+                    role: 'OWNER',
+                },
             })
 
             const mockSigningKeyName = faker.lorem.word()
@@ -101,7 +104,7 @@ describe('Signing Key API', () => {
             const nonOwnerUserId = apId()
             const testToken = await generateMockToken({
                 id: nonOwnerUserId,
-                platformId: mockPlatform.id,
+                platform: { id: mockPlatform.id, role: 'OWNER' },
             })
 
             const mockSigningKeyName = faker.lorem.word()
@@ -139,7 +142,7 @@ describe('Signing Key API', () => {
 
             const testToken = await generateMockToken({
                 id: mockUser.id,
-                platformId: mockPlatform.id,
+                platform: { id: mockPlatform.id, role: 'OWNER' },
             })
 
             // act
@@ -182,7 +185,7 @@ describe('Signing Key API', () => {
 
             const testToken = await generateMockToken({
                 id: mockUserTwo.id,
-                platformId: mockPlatform.id,
+                platform: { id: mockPlatform.id, role: 'OWNER' },
             })
 
             // act
@@ -224,7 +227,7 @@ describe('Signing Key API', () => {
 
             const testToken = await generateMockToken({
                 id: mockUserOne.id,
-                platformId: mockPlatformOne.id,
+                platform: { id: mockPlatformOne.id, role: 'OWNER' },
             })
             // act
             const response = await app?.inject({

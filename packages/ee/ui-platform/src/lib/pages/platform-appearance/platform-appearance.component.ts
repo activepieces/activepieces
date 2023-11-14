@@ -123,12 +123,11 @@ export class PlatformAppearanceComponent implements OnInit {
       };
       request;
       this.platformService;
-      const decodedToken = this.authenticationService.getDecodedToken();
-      if (!decodedToken) {
-        console.error('no jwt token in localstorage or it is invalid');
+      const platformId = this.authenticationService.getPlatformId();
+      if (!platformId) {
+        console.error('no platform in localstorage or it is invalid');
         return;
       }
-      const platformId = decodedToken['platformId'];
       this.updatePlatform$ = this.platformService
         .updatePlatform(request, platformId)
         .pipe(

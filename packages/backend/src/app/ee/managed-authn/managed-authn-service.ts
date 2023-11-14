@@ -19,7 +19,10 @@ export const managedAuthnService = {
             type: PrincipalType.USER,
             projectId: user.projectId,
             projectType: ProjectType.PLATFORM_MANAGED,
-            platformId: externalPrincipal.platformId,
+            platform: {
+                id: externalPrincipal.platformId,
+                role: 'MEMBER',
+            },
         })
 
         return {
