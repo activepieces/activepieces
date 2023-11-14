@@ -14,6 +14,7 @@ import { EditAddPieceOAuth2CredentialsDialogComponent } from './components/dialo
 import { SmtpSettingsComponent } from './components/smtp-settings/smtp-settings.component';
 import { SigningKeysTableComponent } from './components/signing-keys-table/signing-keys-table.component';
 import { CreateSigningKeyDialogComponent } from './components/dialogs/create-signing-key-dialog/create-signing-key-dialog.component';
+import { TermsAndServicesSettingsComponent } from './components/terms-and-services-settings/terms-and-services-settings.component';
 
 @NgModule({
   imports: [
@@ -34,6 +35,7 @@ import { CreateSigningKeyDialogComponent } from './components/dialogs/create-sig
     EditAddPieceOAuth2CredentialsDialogComponent,
     SmtpSettingsComponent,
     SmtpSettingsComponent,
+    TermsAndServicesSettingsComponent,
   ],
 })
 export class UiEePlatformModule {}

@@ -1,8 +1,10 @@
 <ap-page-title [title]="title"></ap-page-title>
 <mat-tab-group #tabs class="ap-gap-4 " dynamicHeight mat-stretch-tabs="false" mat-align-tabs="start"
     animationDuration="0" (selectedTabChange)="tabChanged($event)">
-    <mat-tab [label]="signingKeys"><app-signing-keys-table></app-signing-keys-table>
+    <mat-tab [label]="signingKeysTabTitle"><app-signing-keys-table></app-signing-keys-table>
     </mat-tab>
-    <mat-tab [label]="accountManagementEmail"> <app-smtp-settings></app-smtp-settings></mat-tab>
+    <mat-tab [label]="accountManagementEmailTabTitle"> <app-smtp-settings></app-smtp-settings></mat-tab>
+    <mat-tab [label]="privacyAndTermsTabTitle">
+        <app-terms-and-services-settings></app-terms-and-services-settings></mat-tab>
 </mat-tab-group>
 <ng-container *ngIf="fragmentChanged$ | async"></ng-container>

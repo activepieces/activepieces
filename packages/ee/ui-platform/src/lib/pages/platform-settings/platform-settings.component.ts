@@ -17,13 +17,13 @@ export class PlatformSettingsComponent implements AfterViewInit {
   @ViewChild('tabs') tabGroup?: MatTabGroup;
   title = $localize`Settings`;
   fragmentChanged$: Observable<string | null>;
-  readonly signingKeys = $localize`Signing Keys`;
-  readonly termsAndPrivacy = $localize`Privacy & Terms`;
-  readonly accountManagementEmail = $localize`Account Management Emails`;
+  readonly signingKeysTabTitle = $localize`Signing Keys`;
+  readonly privacyAndTermsTabTitle = $localize`Privacy & Terms`;
+  readonly accountManagementEmailTabTitle = $localize`Account Management Emails`;
   readonly tabIndexFragmentMap: { [index: number]: string } = {
     0: 'signingKeys',
     1: 'SMTP',
-    2: 'TermsAndServices',
+    2: 'privacyAndTerms',
   };
   constructor(private router: Router, private route: ActivatedRoute) {
     this.fragmentChanged$ = this.route.fragment.pipe(
