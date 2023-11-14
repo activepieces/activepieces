@@ -176,7 +176,7 @@
         "platform/overview",
         "platform/appearance",
         "platform/manage-pieces",
-        "platform/manage-smtp",
+        "platform/mail-server",
         "platform/managed-projects",
         "platform/managed-users",
         "platform/embedding"
