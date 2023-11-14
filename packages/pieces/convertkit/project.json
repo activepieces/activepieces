@@ -6,32 +6,24 @@
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/packages/pieces/convertkit",
         "tsConfig": "packages/pieces/convertkit/tsconfig.lib.json",
         "packageJson": "packages/pieces/convertkit/package.json",
         "main": "packages/pieces/convertkit/src/index.ts",
-        "assets": [
-          "packages/pieces/convertkit/*.md"
-        ],
+        "assets": ["packages/pieces/convertkit/*.md"],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
       }
     },
     "publish": {
       "command": "node tools/scripts/publish.mjs pieces-convertkit {args.ver} {args.tag}",
-      "dependsOn": [
-        "build"
-      ]
+      "dependsOn": ["build"]
     },
     "lint": {
       "executor": "@nx/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "outputs": ["{options.outputFile}"],
       "options": {
         "lintFilePatterns": [
           "packages/pieces/convertkit/**/*.ts",
