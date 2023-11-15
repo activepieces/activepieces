@@ -60,7 +60,7 @@
           "node_modules/prismjs/plugins/line-numbers/prism-line-numbers.js",
           "node_modules/clipboard/dist/clipboard.min.js"
         ],
-        "i18nMissingTranslation": "warning",
+        "i18nMissingTranslation": "ignore",
         "localize": true
       },
       "configurations": {
@@ -155,7 +155,11 @@
       "baseHref": ""
     },
     "locales": {
-      "fr": "packages/ui/core/src/locale/messages.fr.xlf"
+      "fr": "packages/ui/core/src/locale/messages.fr.xlf",
+      "ja": "packages/ui/core/src/locale/messages.ja.xlf",
+      "it": "packages/ui/core/src/locale/messages.it.xlf",
+      "pt": "packages/ui/core/src/locale/messages.pt.xlf",
+      "de": "packages/ui/core/src/locale/messages.de.xlf"
     }
   }
 }

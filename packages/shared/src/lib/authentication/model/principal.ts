@@ -7,5 +7,8 @@ export type Principal = {
     type: PrincipalType
     projectId: ProjectId
     projectType?: ProjectType
-    platformId?: ApId
+    platform?: {
+        id: ApId
+        role: 'OWNER' | 'MEMBER'
+    }
 }

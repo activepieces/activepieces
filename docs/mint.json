@@ -176,6 +176,7 @@
         "platform/overview",
         "platform/appearance",
         "platform/manage-pieces",
+        "platform/customize-emails",
         "platform/managed-projects",
         "platform/managed-users",
         "platform/embedding"
@@ -200,6 +201,7 @@
     {
       "group": "About",
       "pages": [
+        "about/i18n",
         "about/editions",
         "about/changelog",
         "about/telemetry",

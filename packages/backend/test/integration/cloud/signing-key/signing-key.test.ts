@@ -31,7 +31,7 @@ describe('Signing Key API', () => {
 
             const testToken = await generateMockToken({
                 id: mockUser.id,
-                platformId: mockPlatform.id,
+                platform: { id: mockPlatform.id, role: 'OWNER' },
             })
 
             const mockSigningKeyName = faker.lorem.word()
@@ -64,7 +64,10 @@ describe('Signing Key API', () => {
             const nonExistentPlatformId = apId()
 
             const testToken = await generateMockToken({
-                platformId: nonExistentPlatformId,
+                platform: {
+                    id: nonExistentPlatformId,
+                    role: 'OWNER',
+                },
             })
 
             const mockSigningKeyName = faker.lorem.word()
@@ -101,7 +104,7 @@ describe('Signing Key API', () => {
             const nonOwnerUserId = apId()
             const testToken = await generateMockToken({
                 id: nonOwnerUserId,
-                platformId: mockPlatform.id,
+                platform: { id: mockPlatform.id, role: 'OWNER' },
             })
 
             const mockSigningKeyName = faker.lorem.word()
@@ -139,7 +142,7 @@ describe('Signing Key API', () => {
 
             const testToken = await generateMockToken({
                 id: mockUser.id,
-                platformId: mockPlatform.id,
+                platform: { id: mockPlatform.id, role: 'OWNER' },
             })
 
             // act
@@ -160,6 +163,42 @@ describe('Signing Key API', () => {
             expect(responseBody.publicKey).toBe(mockSigningKey.publicKey)
             expect(responseBody.generatedBy).toBe(mockSigningKey.generatedBy)
             expect(responseBody.algorithm).toBe(mockSigningKey.algorithm)
+        })
+    })
+
+    describe('Delete Signing Key endpoint', () => {
+        it('Fail if non owner', async () => {
+            // arrange
+            const mockUser = createMockUser()
+            const mockUserTwo = createMockUser()
+            await databaseConnection.getRepository('user').save([mockUser, mockUserTwo])
+
+            const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
+            await databaseConnection.getRepository('platform').save([mockPlatform])
+
+            const mockSigningKey = createMockSigningKey({
+                platformId: mockPlatform.id,
+                generatedBy: mockUser.id,
+            })
+
+            await databaseConnection.getRepository('signing_key').save(mockSigningKey)
+
+            const testToken = await generateMockToken({
+                id: mockUserTwo.id,
+                platform: { id: mockPlatform.id, role: 'OWNER' },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'DELETE',
+                url: `/v1/signing-keys/${mockSigningKey.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
     })
 
@@ -188,12 +227,12 @@ describe('Signing Key API', () => {
 
             const testToken = await generateMockToken({
                 id: mockUserOne.id,
-                platformId: mockPlatformOne.id,
+                platform: { id: mockPlatformOne.id, role: 'OWNER' },
             })
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: `/v1/signing-keys?platformId=${mockPlatformOne.id}`,
+                url: '/v1/signing-keys',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
