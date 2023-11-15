@@ -52,7 +52,7 @@
     <div mat-menu-item [matMenuTriggerFor]="languagesList" class="ap-flex ap-items-center">
 
         <div class="ap-flex ap-gap-2 ap-items-center">
-            {{selectedLanguage.name}}
+            {{selectedLanguage.languageName}}
 
             <svg-icon [src]="'assets/img/custom/flags/'+selectedLanguage.locale+'.svg'"
                 class="ap-w-[16px] ap-h-[12px]  ap-border-outline" [applyClass]="true">
@@ -85,7 +85,7 @@
 <!-- END EE -->
 
 <mat-menu #languagesList="matMenu">
-    <div mat-menu-item *ngFor="let pair of locales|objectToArray">
+    <div mat-menu-item *ngFor="let pair of locales|objectToArray" (click)="redirectToLocale(pair.key)">
         <div class="ap-flex ap-gap-2 ap-items-center ap-min-w-[120px]">
             {{pair.value}} <svg-icon [src]="'assets/img/custom/flags/'+pair.key+'.svg'" class="ap-w-[16px] ap-h-[12px]"
                 [applyClass]="true">
@@ -93,3 +93,5 @@
         </div>
     </div>
 </mat-menu>
+
+<ng-container *ngIf="redirectToLocale$ | async"></ng-container>

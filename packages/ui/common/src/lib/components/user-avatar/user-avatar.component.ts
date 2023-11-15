@@ -3,12 +3,12 @@ import { Router } from '@angular/router';
 import { AuthenticationService } from '../../service/authentication.service';
 import { ProjectService } from '../../service/project.service';
 import { ApFlagId, Project } from '@activepieces/shared';
-import { Observable } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { FlagService } from '../../service/flag.service';
-
 import { Store } from '@ngrx/store';
 import { ProjectSelectors } from '../../store/project/project.selector';
 import { environment } from '../../environments/environment';
+import { LocaleKey, LocalesService } from '../../service/locales.service';
 
 @Component({
   selector: 'ap-user-avatar',
@@ -27,9 +27,10 @@ export class UserAvatarComponent implements OnInit {
   projectEnabled$: Observable<boolean>;
   showPlatform = false;
   showCommunity$: Observable<boolean>;
-  locales = environment.localesNames;
+  redirectToLocale$: Observable<string>;
+  locales = environment.localesMap;
   selectedLanguage = {
-    name: 'English',
+    languageName: 'English',
     locale: 'en',
   };
   constructor(
@@ -37,7 +38,8 @@ export class UserAvatarComponent implements OnInit {
     private router: Router,
     private flagService: FlagService,
     private store: Store,
-    private projectService: ProjectService
+    private projectService: ProjectService,
+    private localesService: LocalesService
   ) {
     this.showCommunity$ = this.flagService.isFlagEnabled(
       ApFlagId.SHOW_COMMUNITY
@@ -54,6 +56,7 @@ export class UserAvatarComponent implements OnInit {
       ProjectSelectors.selectCurrentProject
     );
     // END EE
+    this.selectedLanguage = this.localesService.getCurrentLanguage();
   }
   ngOnInit(): void {
     this.currentUserEmail = this.authenticationService.currentUser.email;
@@ -108,6 +111,14 @@ export class UserAvatarComponent implements OnInit {
       'https://community.activepieces.com/c/announcements',
       '_blank',
       'noopener'
+    );
+  }
+  redirectToLocale(locale: LocaleKey) {
+    this.redirectToLocale$ = this.flagService.getFrontendUrl().pipe(
+      tap((url) => {
+        this.localesService.setCurrentLanguage(locale);
+        window.open(url + `/${locale}`, '_self');
+      })
     );
   }
 }
