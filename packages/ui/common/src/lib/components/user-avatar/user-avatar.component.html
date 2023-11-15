@@ -51,13 +51,10 @@
     <!-- END EE -->
     <div mat-menu-item [matMenuTriggerFor]="languagesList" class="ap-flex ap-items-center">
 
-        <div class="ap-flex ap-gap-2 ap-items-center">
-            {{selectedLanguage.languageName}}
-
-            <svg-icon [src]="'assets/img/custom/flags/'+selectedLanguage.locale+'.svg'"
-                class="ap-w-[16px] ap-h-[12px]  ap-border-outline" [applyClass]="true">
-            </svg-icon>
-
+        <div class="ap-flex ap-items-center ap-gap-2">
+            <svg-icon src='assets/img/custom/language.svg' class="ap-w-[20px] ap-h-[20px] ap-fill-disable"
+                [applyClass]="true">
+            </svg-icon> {{selectedLanguage.languageName}}
         </div>
 
     </div>
@@ -87,9 +84,8 @@
 <mat-menu #languagesList="matMenu">
     <div mat-menu-item *ngFor="let pair of locales|objectToArray" (click)="redirectToLocale(pair.key)">
         <div class="ap-flex ap-gap-2 ap-items-center ap-min-w-[120px]">
-            {{pair.value}} <svg-icon [src]="'assets/img/custom/flags/'+pair.key+'.svg'" class="ap-w-[16px] ap-h-[12px]"
-                [applyClass]="true">
-            </svg-icon>
+            {{pair.value}} <svg-icon *ngIf="pair.key === selectedLanguage.locale" src="assets/img/custom/check.svg"
+                [applyClass]="true" class="ap-h-[20px] ap-w-[20px] ap-fill-primary"></svg-icon>
         </div>
     </div>
 </mat-menu>
