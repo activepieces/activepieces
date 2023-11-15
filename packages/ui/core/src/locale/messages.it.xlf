@@ -432,7 +432,7 @@
         </context-group>
         <target state="final">Nome utilizzato </target>
       </trans-unit>
-      <trans-unit id="5737488158922048412" datatype="html">
+      <trans-unit id="5737488158922048412" datatype="html" approved="yes">
         <source>
           Your signing key (keep it with you):
           <x id="START_BOLD_TEXT" ctype="x-b" equiv-text="&lt;b&gt;"/>
@@ -442,8 +442,8 @@
           <context context-type="sourcefile">packages/ee/ui-platform/src/lib/components/dialogs/create-signing-key-dialog/create-signing-key-dialog.component.html</context>
           <context context-type="linenumber">21</context>
         </context-group>
-        <target state="needs-translation">
-          Your signing key (keep it with you):
+        <target state="final">
+          La tua chiave di firma (tienila con te):
           <x id="START_BOLD_TEXT" ctype="x-b" equiv-text="&lt;b&gt;"/>
           <x id="CLOSE_BOLD_TEXT" ctype="x-b" equiv-text="&lt;/b&gt;"/>
         </target>
@@ -904,7 +904,7 @@
         </context-group>
         <target state="final">Server di posta</target>
       </trans-unit>
-      <trans-unit id="3720371318294752429" datatype="html">
+      <trans-unit id="3720371318294752429" datatype="html" approved="yes">
         <source>
           Delete 
 
@@ -914,13 +914,13 @@
           <context context-type="sourcefile">packages/ui/common/src/lib/components/delete-enity-dialog/delete-entity-dialog.component.html</context>
           <context context-type="linenumber">1,2</context>
         </context-group>
-        <target state="needs-translation">
-          Delete 
+        <target state="final">
+          Elimina 
 
           <x id="INTERPOLATION" equiv-text="{{data.entityName}}"/>
         </target>
       </trans-unit>
-      <trans-unit id="6560405483623875453" datatype="html">
+      <trans-unit id="6560405483623875453" datatype="html" approved="yes">
         <source>
            Type DELETE and press confirm to continue. 
           <x id="START_BOLD_TEXT" ctype="x-b" equiv-text="&lt;b&gt;"/>
@@ -930,8 +930,8 @@
           <context context-type="sourcefile">packages/ui/common/src/lib/components/delete-enity-dialog/delete-entity-dialog.component.html</context>
           <context context-type="linenumber">7,9</context>
         </context-group>
-        <target state="needs-translation">
-           Type DELETE and press confirm to continue. 
+        <target state="final">
+           Scrivi ELIMINA e premi conferma per continuare. 
           <x id="START_BOLD_TEXT" ctype="x-b" equiv-text="&lt;b&gt;"/>
           <x id="CLOSE_BOLD_TEXT" ctype="x-b" equiv-text="&lt;/b&gt;"/>
         </target>
@@ -1532,7 +1532,7 @@
         </context-group>
         <target state="final">Attivazione Webhook</target>
       </trans-unit>
-      <trans-unit id="3805341172871384186" datatype="html">
+      <trans-unit id="3805341172871384186" datatype="html" approved="yes">
         <source>
            Complete  step 
           <x id="INTERPOLATION" equiv-text="{{numOfInvalidSteps}}"/>
@@ -1542,13 +1542,10 @@
           <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/incomplete-steps-widget/incomplete-steps-widget.component.html</context>
           <context context-type="linenumber">5,7</context>
         </context-group>
-        <target state="needs-translation">
-           Complete  step 
-          <x id="INTERPOLATION" equiv-text="{{numOfInvalidSteps}}"/>
-          <x id="INTERPOLATION_1" equiv-text="{{numOfInvalidSteps &gt; 1 ? 's' : ''}}"/>
-        </target>
+        <target state="final">
+Completa <x id="INTERPOLATION" equiv-text="{{numOfInvalidSteps}}"/> passaggio<x id="INTERPOLATION_1" equiv-text="{{numOfInvalidSteps &gt; 1 ? 's' : ''}}"/>        </target>
       </trans-unit>
-      <trans-unit id="7708270344948043036" datatype="html">
+      <trans-unit id="7708270344948043036" datatype="html" approved="yes">
         <source>
           <x id="INTERPOLATION" equiv-text="{{(isSaving$ | async)? 'Saving...': 'Test flow'}}"/>
         </source>
@@ -1556,9 +1553,8 @@
           <context context-type="sourcefile">packages/ui/feature-builder-canvas/src/lib/test-flow-widget/test-flow-widget.component.html</context>
           <context context-type="linenumber">11,13</context>
         </context-group>
-        <target state="needs-translation">
-          <x id="INTERPOLATION" equiv-text="{{(isSaving$ | async)? 'Saving...': 'Test flow'}}"/>
-        </target>
+        <target state="final">
+<x id="INTERPOLATION" equiv-text="{{(isSaving$ | async)? 'Saving...': 'Test flow'}}"/>        </target>
       </trans-unit>
       <trans-unit id="6212705197426717225" datatype="html" approved="yes">
         <source> View Only
@@ -1582,7 +1578,7 @@
         </context-group>
         <target state="final"> + Aggiungi Elemento </target>
       </trans-unit>
-      <trans-unit id="4163163170493567215" datatype="html">
+      <trans-unit id="4163163170493567215" datatype="html" approved="yes">
         <source>
            Value
           <x id="INTERPOLATION" equiv-text="showSecondValue)? 'First':''}}"/>
@@ -1591,8 +1587,8 @@
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/branch-condition-form-control/branch-condition-form-control.component.html</context>
           <context context-type="linenumber">5</context>
         </context-group>
-        <target state="needs-translation">
-           Value
+        <target state="final">
+           Valore
           <x id="INTERPOLATION" equiv-text="showSecondValue)? 'First':''}}"/>
         </target>
       </trans-unit>
@@ -1676,7 +1672,7 @@
         </context-group>
         <target state="final">Aggiungi Pacchetto NPM</target>
       </trans-unit>
-      <trans-unit id="8916992158425367122" datatype="html">
+      <trans-unit id="8916992158425367122" datatype="html" approved="yes">
         <source>
            Please type the name of an NPM package.
           <x id="LINE_BREAK" ctype="lb" equiv-text="&lt;br&gt;"/>
@@ -1685,10 +1681,8 @@
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/code-artifact-form-control/code-artifact-control-fullscreen/add-npm-package-modal/add-npm-package-modal.component.html</context>
           <context context-type="linenumber">3,6</context>
         </context-group>
-        <target state="needs-translation">
-           Please type the name of an NPM package.
-          <x id="LINE_BREAK" ctype="lb" equiv-text="&lt;br&gt;"/>
-        </target>
+        <target state="final">
+Digitare il nome di un pacchetto NPM.<x id="LINE_BREAK" ctype="lb" equiv-text="&lt;br&gt;"/>        </target>
       </trans-unit>
       <trans-unit id="4429446519625428933" datatype="html" approved="yes">
         <source> Package name is required </source>
@@ -1770,7 +1764,7 @@
         </context-group>
         <target state="final"> Vai al passo </target>
       </trans-unit>
-      <trans-unit id="4578163876314196724" datatype="html">
+      <trans-unit id="4578163876314196724" datatype="html" approved="yes">
         <source>
            Describe the path to the property using JSON format 
           <x id="START_PARAGRAPH" ctype="x-p" equiv-text="&lt;p&gt;"/>
@@ -1781,12 +1775,8 @@
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/custom-path-mention-dialog/custom-path-mention-dialog.component.html</context>
           <context context-type="linenumber">4,6</context>
         </context-group>
-        <target state="needs-translation">
-           Describe the path to the property using JSON format 
-          <x id="START_PARAGRAPH" ctype="x-p" equiv-text="&lt;p&gt;"/>
-          <x id="INTERPOLATION" equiv-text="{{data.placeHolder}}"/>
-          <x id="CLOSE_PARAGRAPH" ctype="x-p" equiv-text="&lt;/p&gt;"/>
-        </target>
+        <target state="final">
+Descrivere il percorso della proprietà utilizzando il formato JSON <x id="START_PARAGRAPH" ctype="x-p" equiv-text="&lt;p&gt;"/><x id="INTERPOLATION" equiv-text="{{data.placeHolder}}"/><x id="CLOSE_PARAGRAPH" ctype="x-p" equiv-text="&lt;/p&gt;"/>        </target>
       </trans-unit>
       <trans-unit id="1303595947745715638" datatype="html" approved="yes">
         <source> Path is invalid </source>
@@ -1796,7 +1786,7 @@
         </context-group>
         <target state="final"> Percorso non valido </target>
       </trans-unit>
-      <trans-unit id="4407837587845744851" datatype="html">
+      <trans-unit id="4407837587845744851" datatype="html" approved="yes">
         <source>
            Path must begin with  
           <x id="INTERPOLATION" equiv-text="{{data.stepName}}"/>
@@ -1805,10 +1795,8 @@
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/custom-path-mention-dialog/custom-path-mention-dialog.component.html</context>
           <context context-type="linenumber">16,18</context>
         </context-group>
-        <target state="needs-translation">
-           Path must begin with  
-          <x id="INTERPOLATION" equiv-text="{{data.stepName}}"/>
-        </target>
+        <target state="final">
+Il percorso deve iniziare con <x id="INTERPOLATION" equiv-text="{{data.stepName}}"/>        </target>
       </trans-unit>
       <trans-unit id="4745987606023884549" datatype="html" approved="yes">
         <source>Select </source>
@@ -1842,7 +1830,7 @@
         </context-group>
         <target state="final">Inserisci </target>
       </trans-unit>
-      <trans-unit id="2382599479144636387" datatype="html">
+      <trans-unit id="2382599479144636387" datatype="html" approved="yes">
         <source>
           result:  
           <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;ap-transition-all ap-text-primary&quot; [matTooltip]=&quot;'' + result.value || ''&quot;&gt;"/>
@@ -1857,12 +1845,8 @@
           <context context-type="sourcefile">packages/ui/feature-builder-form-controls/src/lib/interpolating-text-form-control/mentions-list/piece-trigger-mention-item/piece-trigger-mention-item.component.html</context>
           <context context-type="linenumber">37,40</context>
         </context-group>
-        <target state="needs-translation">
-          result:  
-          <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;ap-transition-all ap-text-primary&quot; [matTooltip]=&quot;'' + result.value || ''&quot;&gt;"/>
-          <x id="INTERPOLATION"/>
-          <x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/>
-        </target>
+        <target state="final">
+risultato: <x id="START_TAG_SPAN" ctype="x-span" equiv-text="&lt;span class=&quot;ap-transition-all ap-text-primary&quot; [matTooltip]=&quot;'' + result.value || ''&quot;&gt;"/><x id="INTERPOLATION"/> <x id="CLOSE_TAG_SPAN" ctype="x-span" equiv-text="&lt;/span&gt;"/>        </target>
       </trans-unit>
       <trans-unit id="995418901058119655" datatype="html" approved="yes">
         <source> Test step </source>
@@ -2072,7 +2056,7 @@
         <target state="final"> Importa flusso
 </target>
       </trans-unit>
-      <trans-unit id="7723572148434820610" datatype="html">
+      <trans-unit id="7723572148434820610" datatype="html" approved="yes">
         <source>
           Important: Importing a flow will overwrite your current flow.
           <x id="START_BOLD_TEXT" ctype="x-b"/>
@@ -2082,8 +2066,8 @@
           <context context-type="sourcefile">packages/ui/feature-builder-header/src/lib/import-flow-dialogue/import-flow-dialogue.component.html</context>
           <context context-type="linenumber">9</context>
         </context-group>
-        <target state="needs-translation">
-          Important: Importing a flow will overwrite your current flow.
+        <target state="final">
+          Importante: L'importazione di un flusso sovrascriverà il flusso corrente.
           <x id="START_BOLD_TEXT" ctype="x-b"/>
           <x id="CLOSE_BOLD_TEXT" ctype="x-b" equiv-text="&lt;/b&gt;"/>
         </target>
@@ -2236,7 +2220,7 @@
         </context-group>
         <target state="final"> Tutte Le Iterazioni </target>
       </trans-unit>
-      <trans-unit id="4296705024052936390" datatype="html">
+      <trans-unit id="4296705024052936390" datatype="html" approved="yes">
         <source>
           If you are expecting a reply from this webhook, append &lt;b&gt;/sync&lt;/b&gt; to the URL.&lt;br&gt; &lt;br&gt;
                   In that case, you will also have to add an &lt;b&gt;HTTP step&lt;/b&gt;  with return response to the end of your flow.&lt;br&gt; &lt;br&gt;
@@ -2249,13 +2233,11 @@
           <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/edit-step-sidebar/edit-step-form-container/edit-step-form-container.component.html</context>
           <context context-type="linenumber">17,21</context>
         </context-group>
-        <target state="needs-translation">
-          If you are expecting a reply from this webhook, append &lt;b&gt;/sync&lt;/b&gt; to the URL.&lt;br&gt; &lt;br&gt;
-                  In that case, you will also have to add an &lt;b&gt;HTTP step&lt;/b&gt;  with return response to the end of your flow.&lt;br&gt; &lt;br&gt;
-                  **If the flow takes more than 30 seconds, it will give a 204 no-content response.**&lt;br&gt;
-                  
-                  
-          <x id="INTERPOLATION" equiv-text="{{ (edition$ | async) === ApEdition.CLOUD ? '' : 'To change this, set the **AP_WEBHOOK_TIMEOUT_SECONDS** to desired number.' }}"/>
+        <target state="final">
+Se ti aspetti una risposta da questo webhook, aggiungi &lt;b&gt;/sync&lt;/b&gt; all'URL.&lt;br&gt; &lt;br&gt;
+                  In questo caso, dovrai anche aggiungere un passaggio &lt;b&gt;HTTP&lt;/b&gt;  con la risposta di ritorno alla fine del flusso.&lt;br&gt; &lt;br&gt;
+                  **Se il flusso dura più di 30 secondi, darà una risposta senza contenuto di 204. *&lt;br&gt;
+                  <x id="INTERPOLATION" equiv-text="{{ (edition$ | async) === ApEdition.CLOUD ? '' : 'To change this, set the **AP_WEBHOOK_TIMEOUT_SECONDS** to desired number.' }}"/>
         </target>
       </trans-unit>
       <trans-unit id="1164244071316602737" datatype="html" approved="yes">
@@ -2490,7 +2472,7 @@
         </context-group>
         <target state="final">Senza categoria</target>
       </trans-unit>
-      <trans-unit id="7453039164124655632" datatype="html">
+      <trans-unit id="7453039164124655632" datatype="html" approved="yes">
         <source>
           Run succeeded ()
           <x id="INTERPOLATION" equiv-text="{{ selectedRun.id }}"/>
@@ -2503,12 +2485,10 @@
           <context context-type="sourcefile">packages/ui/feature-builder-store/src/lib/test-run-bar/test-run-bar.component.html</context>
           <context context-type="linenumber">11</context>
         </context-group>
-        <target state="needs-translation">
-          Run succeeded ()
-          <x id="INTERPOLATION" equiv-text="{{ selectedRun.id }}"/>
-        </target>
+        <target state="final">
+Esecuzione riuscita (<x id="INTERPOLATION" equiv-text="{{ selectedRun.id }}"/>        </target>
       </trans-unit>
-      <trans-unit id="4934929429922486658" datatype="html">
+      <trans-unit id="4934929429922486658" datatype="html" approved="yes">
         <source>
           Run failed ()
           <x id="INTERPOLATION" equiv-text="{{ selectedRun.id }}"/>
@@ -2517,10 +2497,8 @@
           <context context-type="sourcefile">packages/ui/feature-builder-store/src/lib/test-run-bar/test-run-bar.component.html</context>
           <context context-type="linenumber">15</context>
         </context-group>
-        <target state="needs-translation">
-          Run failed ()
-          <x id="INTERPOLATION" equiv-text="{{ selectedRun.id }}"/>
-        </target>
+        <target state="final">
+Esecuzione fallita ()<x id="INTERPOLATION" equiv-text="{{ selectedRun.id }}"/>        </target>
       </trans-unit>
       <trans-unit id="691056332862512203" datatype="html" approved="yes">
         <source>Flow is running</source>
@@ -2538,7 +2516,7 @@
         </context-group>
         <target state="final">Il flusso è in pausa...</target>
       </trans-unit>
-      <trans-unit id="7038602814235796780" datatype="html">
+      <trans-unit id="7038602814235796780" datatype="html" approved="yes">
         <source>
           Run exceeded  seconds, try to optimize your steps.
           <x id="INTERPOLATION" equiv-text="{{sandboxTimeoutSeconds$ | async}}"/>
@@ -2547,8 +2525,8 @@
           <context context-type="sourcefile">packages/ui/feature-builder-store/src/lib/test-run-bar/test-run-bar.component.html</context>
           <context context-type="linenumber">27,28</context>
         </context-group>
-        <target state="needs-translation">
-          Run exceeded  seconds, try to optimize your steps.
+        <target state="final">
+          Esegui i secondi superati, prova ad ottimizzare i tuoi passaggi.
           <x id="INTERPOLATION" equiv-text="{{sandboxTimeoutSeconds$ | async}}"/>
         </target>
       </trans-unit>
@@ -2700,7 +2678,7 @@
         </context-group>
         <target state="final"> Dati </target>
       </trans-unit>
-      <trans-unit id="1443544130994970867" datatype="html">
+      <trans-unit id="1443544130994970867" datatype="html" approved="yes">
         <source>
            (Result )
           <x id="INTERPOLATION" equiv-text="{{currentResults.length-idx}}"/>
@@ -2717,10 +2695,8 @@
           <context context-type="sourcefile">packages/ui/feature-builder-test-steps/src/lib/test-webhook-trigger/test-webhook-trigger.component.html</context>
           <context context-type="linenumber">39</context>
         </context-group>
-        <target state="needs-translation">
-           (Result )
-          <x id="INTERPOLATION" equiv-text="{{currentResults.length-idx}}"/>
-        </target>
+        <target state="final">
+(Risultato )<x id="INTERPOLATION" equiv-text="{{currentResults.length-idx}}"/>        </target>
       </trans-unit>
       <trans-unit id="8101735558462006931" datatype="html" approved="yes">
         <source>Testing trigger</source>
@@ -3308,7 +3284,7 @@
         </context-group>
         <target state="final"> Installa </target>
       </trans-unit>
-      <trans-unit id="2206632393383450361" datatype="html">
+      <trans-unit id="2206632393383450361" datatype="html" approved="yes">
         <source>
   Use this to install a &lt;a href="https://www.activepieces.com/docs/developers/building-pieces/create-action" target="_blank" rel="noopener"&gt;custom piece&lt;/a&gt; that you (or someone else) created.
   Once the piece is installed, you can use it in the flow builder.
@@ -3319,78 +3295,78 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/community-pieces-table/install-community-piece/install-community-piece-modal.component.ts</context>
           <context context-type="linenumber">35,40</context>
         </context-group>
-        <target state="needs-translation">
-  Use this to install a &lt;a href="https://www.activepieces.com/docs/developers/building-pieces/create-action" target="_blank" rel="noopener"&gt;custom piece&lt;/a&gt; that you (or someone else) created.
-  Once the piece is installed, you can use it in the flow builder.
- &lt;br&gt;&lt;br&gt;**Warning:**
- Make sure you trust the author as the piece will have access to your flow data and it might not be compatible with the current version of Activepieces.
+        <target state="final">
+  Usa questo per installare un pezzo &lt;a href="https://www.activepieces.com/docs/developers/building-pieces/create-action" target="_blank" rel="noopener"&gt;personalizzato&lt;/a&gt; che hai creato (o qualcun altro).
+  Una volta che il pezzo è installato, è possibile utilizzarlo nel generatore di flusso.
+ &lt;br&gt;&lt;br&gt;**Attenzione:**
+ Assicurati di avere fiducia nell'autore in quanto il pezzo avrà accesso ai tuoi dati di flusso e potrebbe non essere compatibile con l'attuale versione di Activepieces.
   </target>
       </trans-unit>
-      <trans-unit id="7239750919884229270" datatype="html">
+      <trans-unit id="7239750919884229270" datatype="html" approved="yes">
         <source>Updated</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/connections-table/connections-table.component.html</context>
           <context context-type="linenumber">33</context>
         </context-group>
-        <target state="needs-translation">Updated</target>
+        <target state="final">Aggiornato</target>
       </trans-unit>
-      <trans-unit id="3928717218923468734" datatype="html">
+      <trans-unit id="3928717218923468734" datatype="html" approved="yes">
         <source>Delete Connection</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/connections-table/connections-table.component.html</context>
           <context context-type="linenumber">43</context>
         </context-group>
-        <target state="needs-translation">Delete Connection</target>
+        <target state="final">Elimina connessione</target>
       </trans-unit>
-      <trans-unit id="4018267042970589486" datatype="html">
+      <trans-unit id="4018267042970589486" datatype="html" approved="yes">
         <source> No connections created yet </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/connections-table/connections-table.component.html</context>
           <context context-type="linenumber">58,60</context>
         </context-group>
-        <target state="needs-translation"> No connections created yet </target>
+        <target state="final"> Nessuna connessione ancora creata </target>
       </trans-unit>
-      <trans-unit id="4578383372914193173" datatype="html">
+      <trans-unit id="4578383372914193173" datatype="html" approved="yes">
         <source>Create Your First Flow</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/empty-flows-table/empty-flows-table.component.html</context>
           <context context-type="linenumber">5</context>
         </context-group>
-        <target state="needs-translation">Create Your First Flow</target>
+        <target state="final">Crea Il Tuo Primo Flusso</target>
       </trans-unit>
-      <trans-unit id="3077777282169383075" datatype="html">
+      <trans-unit id="3077777282169383075" datatype="html" approved="yes">
         <source>Demo flow</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/empty-flows-table/empty-flows-table.component.html</context>
           <context context-type="linenumber">15</context>
         </context-group>
-        <target state="needs-translation">Demo flow</target>
+        <target state="final">Flusso demo</target>
       </trans-unit>
-      <trans-unit id="8549223348777613655" datatype="html">
+      <trans-unit id="8549223348777613655" datatype="html" approved="yes">
         <source> Learn from our Gelato maker demo flow </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/empty-flows-table/empty-flows-table.component.html</context>
           <context context-type="linenumber">16,18</context>
         </context-group>
-        <target state="needs-translation"> Learn from our Gelato maker demo flow </target>
+        <target state="final"> Imparare dal nostro flusso demo produttore Gelato </target>
       </trans-unit>
-      <trans-unit id="3292499463822135407" datatype="html">
+      <trans-unit id="3292499463822135407" datatype="html" approved="yes">
         <source>Build flow </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/empty-flows-table/empty-flows-table.component.html</context>
           <context context-type="linenumber">37</context>
         </context-group>
-        <target state="needs-translation">Build flow </target>
+        <target state="final">Crea flusso </target>
       </trans-unit>
-      <trans-unit id="913302789306531927" datatype="html">
+      <trans-unit id="913302789306531927" datatype="html" approved="yes">
         <source> Start building your first flow from scratch </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/empty-flows-table/empty-flows-table.component.html</context>
           <context context-type="linenumber">38,40</context>
         </context-group>
-        <target state="needs-translation"> Start building your first flow from scratch </target>
+        <target state="final"> Inizia a costruire il tuo primo flusso da zero </target>
       </trans-unit>
-      <trans-unit id="7869199587095613616" datatype="html">
+      <trans-unit id="7869199587095613616" datatype="html" approved="yes">
         <source>Untitled</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/empty-flows-table/empty-flows-table.component.ts</context>
@@ -3400,9 +3376,9 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table-title/flows-table-title.component.ts</context>
           <context context-type="linenumber">38</context>
         </context-group>
-        <target state="needs-translation">Untitled</target>
+        <target state="final">Senza titolo</target>
       </trans-unit>
-      <trans-unit id="6010972448112025437" datatype="html">
+      <trans-unit id="6010972448112025437" datatype="html" approved="yes">
         <source>All flows</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table-title/flows-table-title.component.html</context>
@@ -3412,65 +3388,65 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/folders-list/folders-list.component.html</context>
           <context context-type="linenumber">15</context>
         </context-group>
-        <target state="needs-translation">All flows</target>
+        <target state="final">Tutti i flussi</target>
       </trans-unit>
-      <trans-unit id="2428227617692008299" datatype="html">
+      <trans-unit id="2428227617692008299" datatype="html" approved="yes">
         <source>+ New Flow</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table-title/flows-table-title.component.html</context>
           <context context-type="linenumber">26</context>
         </context-group>
-        <target state="needs-translation">+ New Flow</target>
+        <target state="final">+ Nuovo Flusso</target>
       </trans-unit>
-      <trans-unit id="5417428761029126177" datatype="html">
+      <trans-unit id="5417428761029126177" datatype="html" approved="yes">
         <source>My Flows</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html</context>
           <context context-type="linenumber">4</context>
         </context-group>
-        <target state="needs-translation">My Flows</target>
+        <target state="final">I Miei Flussi</target>
       </trans-unit>
-      <trans-unit id="1534367694207535197" datatype="html">
+      <trans-unit id="1534367694207535197" datatype="html" approved="yes">
         <source>Steps</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html</context>
           <context context-type="linenumber">21</context>
         </context-group>
-        <target state="needs-translation">Steps</target>
+        <target state="final">Passi</target>
       </trans-unit>
-      <trans-unit id="7046259383943324039" datatype="html">
+      <trans-unit id="7046259383943324039" datatype="html" approved="yes">
         <source>Folder</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html</context>
           <context context-type="linenumber">54</context>
         </context-group>
-        <target state="needs-translation">Folder</target>
+        <target state="final">Cartella</target>
       </trans-unit>
-      <trans-unit id="2792560466819244367" datatype="html">
+      <trans-unit id="2792560466819244367" datatype="html" approved="yes">
         <source>Move to...</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html</context>
           <context context-type="linenumber">70</context>
         </context-group>
-        <target state="needs-translation">Move to...</target>
+        <target state="final">Sposta in...</target>
       </trans-unit>
-      <trans-unit id="1068067937132498347" datatype="html">
+      <trans-unit id="1068067937132498347" datatype="html" approved="yes">
         <source>You don't have any flows yet</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html</context>
           <context context-type="linenumber">101</context>
         </context-group>
-        <target state="needs-translation">You don't have any flows yet</target>
+        <target state="final">Non hai ancora nessun flusso</target>
       </trans-unit>
-      <trans-unit id="2994670610835703888" datatype="html">
+      <trans-unit id="2994670610835703888" datatype="html" approved="yes">
         <source>This folder doesn't have any flows yet</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.html</context>
           <context context-type="linenumber">104</context>
         </context-group>
-        <target state="needs-translation">This folder doesn't have any flows yet</target>
+        <target state="final">Questa cartella non ha ancora flussi</target>
       </trans-unit>
-      <trans-unit id="4156762084256299285" datatype="html">
+      <trans-unit id="4156762084256299285" datatype="html" approved="yes">
         <source>Real time flow</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts</context>
@@ -3480,9 +3456,9 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts</context>
           <context context-type="linenumber">202</context>
         </context-group>
-        <target state="needs-translation">Real time flow</target>
+        <target state="final">Flusso in tempo reale</target>
       </trans-unit>
-      <trans-unit id="2999814213294266636" datatype="html">
+      <trans-unit id="2999814213294266636" datatype="html" approved="yes">
         <source>
           Runs 
           <x id="PH" equiv-text="cronstrue&#10;              .toString(cronExpression, { locale: this.locale })&#10;              .toLocaleLowerCase()"/>
@@ -3491,76 +3467,76 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts</context>
           <context context-type="linenumber">199,201</context>
         </context-group>
-        <target state="needs-translation">
-          Runs 
+        <target state="final">
+          Esegue 
           <x id="PH" equiv-text="cronstrue&amp;#10;              .toString(cronExpression, { locale: this.locale })&amp;#10;              .toLocaleLowerCase()"/>
         </target>
       </trans-unit>
-      <trans-unit id="2715156558483046254" datatype="html">
+      <trans-unit id="2715156558483046254" datatype="html" approved="yes">
         <source>Please contact support as your published flow has a problem</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts</context>
           <context context-type="linenumber">209</context>
         </context-group>
-        <target state="needs-translation">Please contact support as your published flow has a problem</target>
+        <target state="final">Si prega di contattare il supporto perché il flusso pubblicato ha un problema</target>
       </trans-unit>
-      <trans-unit id="8669717871933589565" datatype="html">
+      <trans-unit id="8669717871933589565" datatype="html" approved="yes">
         <source>Please publish the flow</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts</context>
           <context context-type="linenumber">234</context>
         </context-group>
-        <target state="needs-translation">Please publish the flow</target>
+        <target state="final">Si prega di pubblicare il flusso</target>
       </trans-unit>
-      <trans-unit id="6655540167436629912" datatype="html">
+      <trans-unit id="6655540167436629912" datatype="html" approved="yes">
         <source>Flow is on</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts</context>
           <context context-type="linenumber">238</context>
         </context-group>
-        <target state="needs-translation">Flow is on</target>
+        <target state="final">Flusso attivo</target>
       </trans-unit>
-      <trans-unit id="2532250142169750361" datatype="html">
+      <trans-unit id="2532250142169750361" datatype="html" approved="yes">
         <source>Flow is off</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/flows-table.component.ts</context>
           <context context-type="linenumber">239</context>
         </context-group>
-        <target state="needs-translation">Flow is off</target>
+        <target state="final">Flusso spento</target>
       </trans-unit>
-      <trans-unit id="1205037876874222931" datatype="html">
+      <trans-unit id="1205037876874222931" datatype="html" approved="yes">
         <source>Folders</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/folders-list/folders-list.component.html</context>
           <context context-type="linenumber">2</context>
         </context-group>
-        <target state="needs-translation">Folders</target>
+        <target state="final">Cartelle</target>
       </trans-unit>
-      <trans-unit id="6272889378364553386" datatype="html">
+      <trans-unit id="6272889378364553386" datatype="html" approved="yes">
         <source>New Folder</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/folders-list/folders-list.component.html</context>
           <context context-type="linenumber">7</context>
         </context-group>
-        <target state="needs-translation">New Folder</target>
+        <target state="final">Nuova cartella</target>
       </trans-unit>
-      <trans-unit id="6093210751404423786" datatype="html">
+      <trans-unit id="6093210751404423786" datatype="html" approved="yes">
         <source>Ascending</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/folders-list/folders-list.component.ts</context>
           <context context-type="linenumber">140</context>
         </context-group>
-        <target state="needs-translation">Ascending</target>
+        <target state="final">Ascendente</target>
       </trans-unit>
-      <trans-unit id="2382330284069784226" datatype="html">
+      <trans-unit id="2382330284069784226" datatype="html" approved="yes">
         <source>Descending</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/folders-list/folders-list.component.ts</context>
           <context context-type="linenumber">143</context>
         </context-group>
-        <target state="needs-translation">Descending</target>
+        <target state="final">Discendente</target>
       </trans-unit>
-      <trans-unit id="9077429056049361829" datatype="html">
+      <trans-unit id="9077429056049361829" datatype="html" approved="yes">
         <source>New Folder
 </source>
         <context-group purpose="location">
@@ -3571,10 +3547,10 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/new-folder-dialog/new-folder-dialog.component.html</context>
           <context context-type="linenumber">1,2</context>
         </context-group>
-        <target state="needs-translation">New Folder
+        <target state="final">Nuova cartella
 </target>
       </trans-unit>
-      <trans-unit id="6845813511844074904" datatype="html">
+      <trans-unit id="6845813511844074904" datatype="html" approved="yes">
         <source> Name your new folder </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/move-flow-to-folder-dialog/move-flow-to-folder-dialog.component.html</context>
@@ -3584,41 +3560,41 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/new-folder-dialog/new-folder-dialog.component.html</context>
           <context context-type="linenumber">4,6</context>
         </context-group>
-        <target state="needs-translation"> Name your new folder </target>
+        <target state="final"> Nome la tua nuova cartella </target>
       </trans-unit>
-      <trans-unit id="7407917947213467151" datatype="html">
+      <trans-unit id="7407917947213467151" datatype="html" approved="yes">
         <source>Select Folder</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/move-flow-to-folder-dialog/move-flow-to-folder-dialog.component.html</context>
           <context context-type="linenumber">9</context>
         </context-group>
-        <target state="needs-translation">Select Folder</target>
+        <target state="final">Seleziona cartella</target>
       </trans-unit>
-      <trans-unit id="1245322889153100633" datatype="html">
+      <trans-unit id="1245322889153100633" datatype="html" approved="yes">
         <source>No folders to move to</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/move-flow-to-folder-dialog/move-flow-to-folder-dialog.component.html</context>
           <context context-type="linenumber">17</context>
         </context-group>
-        <target state="needs-translation">No folders to move to</target>
+        <target state="final">Nessuna cartella in cui spostare</target>
       </trans-unit>
-      <trans-unit id="2494941239288147237" datatype="html">
+      <trans-unit id="2494941239288147237" datatype="html" approved="yes">
         <source>Must select a folder</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/move-flow-to-folder-dialog/move-flow-to-folder-dialog.component.html</context>
           <context context-type="linenumber">19</context>
         </context-group>
-        <target state="needs-translation">Must select a folder</target>
+        <target state="final">È necessario selezionare una cartella</target>
       </trans-unit>
-      <trans-unit id="8389636361036124153" datatype="html">
+      <trans-unit id="8389636361036124153" datatype="html" approved="yes">
         <source> Move </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/move-flow-to-folder-dialog/move-flow-to-folder-dialog.component.html</context>
           <context context-type="linenumber">29,31</context>
         </context-group>
-        <target state="needs-translation"> Move </target>
+        <target state="final"> Sposta </target>
       </trans-unit>
-      <trans-unit id="7697803500143402577" datatype="html">
+      <trans-unit id="7697803500143402577" datatype="html" approved="yes">
         <source>Name is already used</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/new-folder-dialog/new-folder-dialog.component.html</context>
@@ -3628,9 +3604,9 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/rename-folder-dialog/rename-folder-dialog.component.html</context>
           <context context-type="linenumber">17</context>
         </context-group>
-        <target state="needs-translation">Name is already used</target>
+        <target state="final">Nome già in uso</target>
       </trans-unit>
-      <trans-unit id="7466074960429522816" datatype="html">
+      <trans-unit id="7466074960429522816" datatype="html" approved="yes">
         <source>
           Rename Folder ()
 
@@ -3640,115 +3616,115 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/rename-folder-dialog/rename-folder-dialog.component.html</context>
           <context context-type="linenumber">1,2</context>
         </context-group>
-        <target state="needs-translation">
-          Rename Folder ()
+        <target state="final">
+          Rinomina Cartella ()
 
           <x id="INTERPOLATION" equiv-text="{{data.folderDisplayName}}"/>
         </target>
       </trans-unit>
-      <trans-unit id="4995711714357004792" datatype="html">
+      <trans-unit id="4995711714357004792" datatype="html" approved="yes">
         <source> Change the name of your folder </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/rename-folder-dialog/rename-folder-dialog.component.html</context>
           <context context-type="linenumber">4,6</context>
         </context-group>
-        <target state="needs-translation"> Change the name of your folder </target>
+        <target state="final"> Cambia il nome della tua cartella </target>
       </trans-unit>
-      <trans-unit id="987902700013871247" datatype="html">
+      <trans-unit id="987902700013871247" datatype="html" approved="yes">
         <source>Filter by status</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html</context>
           <context context-type="linenumber">5</context>
         </context-group>
-        <target state="needs-translation">Filter by status</target>
+        <target state="final">Filtra per stato</target>
       </trans-unit>
-      <trans-unit id="8803075308102273847" datatype="html">
+      <trans-unit id="8803075308102273847" datatype="html" approved="yes">
         <source> Send email notifications about failed runs </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html</context>
           <context context-type="linenumber">14,16</context>
         </context-group>
-        <target state="needs-translation"> Send email notifications about failed runs </target>
+        <target state="final"> Invia notifiche email sulle esecuzioni non riuscite </target>
       </trans-unit>
-      <trans-unit id="8888491308706722034" datatype="html">
+      <trans-unit id="8888491308706722034" datatype="html" approved="yes">
         <source>Flow</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html</context>
           <context context-type="linenumber">20</context>
         </context-group>
-        <target state="needs-translation">Flow</target>
+        <target state="final">Flusso</target>
       </trans-unit>
-      <trans-unit id="3326877877555410533" datatype="html">
+      <trans-unit id="3326877877555410533" datatype="html" approved="yes">
         <source>Started</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html</context>
           <context context-type="linenumber">25</context>
         </context-group>
-        <target state="needs-translation">Started</target>
+        <target state="final">Iniziato</target>
       </trans-unit>
-      <trans-unit id="340430316261570792" datatype="html">
+      <trans-unit id="340430316261570792" datatype="html" approved="yes">
         <source>Finished</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html</context>
           <context context-type="linenumber">30</context>
         </context-group>
-        <target state="needs-translation">Finished</target>
+        <target state="final">Finito</target>
       </trans-unit>
-      <trans-unit id="2388673916006005004" datatype="html">
+      <trans-unit id="2388673916006005004" datatype="html" approved="yes">
         <source> No runs instantiated yet </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/runs-table/runs-table.component.html</context>
           <context context-type="linenumber">49,51</context>
         </context-group>
-        <target state="needs-translation"> No runs instantiated yet </target>
+        <target state="final"> Ancora nessuna esecuzione istantanea </target>
       </trans-unit>
-      <trans-unit id="2930524874557603286" datatype="html">
+      <trans-unit id="2930524874557603286" datatype="html" approved="yes">
         <source>Activepieces Team</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/featured-template-card/featured-template-card.component.html</context>
           <context context-type="linenumber">15</context>
         </context-group>
-        <target state="needs-translation">Activepieces Team</target>
+        <target state="final">Team Activepieces</target>
       </trans-unit>
-      <trans-unit id="954840788512180203" datatype="html">
+      <trans-unit id="954840788512180203" datatype="html" approved="yes">
         <source>See less</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/featured-template-card/featured-template-card.component.html</context>
           <context context-type="linenumber">36</context>
         </context-group>
-        <target state="needs-translation">See less</target>
+        <target state="final">Mostra meno</target>
       </trans-unit>
-      <trans-unit id="4462165726005928867" datatype="html">
+      <trans-unit id="4462165726005928867" datatype="html" approved="yes">
         <source>See more</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/featured-template-card/featured-template-card.component.html</context>
           <context context-type="linenumber">39</context>
         </context-group>
-        <target state="needs-translation">See more</target>
+        <target state="final">Mostra altro</target>
       </trans-unit>
-      <trans-unit id="29870732231596621" datatype="html">
+      <trans-unit id="29870732231596621" datatype="html" approved="yes">
         <source>Use Template </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/featured-template-card/featured-template-card.component.html</context>
           <context context-type="linenumber">57</context>
         </context-group>
-        <target state="needs-translation">Use Template </target>
+        <target state="final">Usa modello </target>
       </trans-unit>
-      <trans-unit id="2047936376758344367" datatype="html">
+      <trans-unit id="2047936376758344367" datatype="html" approved="yes">
         <source>Verified icons created by lakonicon - Flaticon</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/featured-template-card/featured-template-card.component.html</context>
           <context context-type="linenumber">64,65</context>
         </context-group>
-        <target state="needs-translation">Verified icons created by lakonicon - Flaticon</target>
+        <target state="final">Icone verificate create da lakonicon - Flaticon</target>
       </trans-unit>
-      <trans-unit id="5949896491927456436" datatype="html">
+      <trans-unit id="5949896491927456436" datatype="html" approved="yes">
         <source> Learn about this flow </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-templates/src/lib/template-blog-notification/template-blog-notification.component.html</context>
           <context context-type="linenumber">3,5</context>
         </context-group>
-        <target state="needs-translation"> Learn about this flow </target>
+        <target state="final"> Scopri di più su questo flusso </target>
       </trans-unit>
       <trans-unit id="3490041488928665412" datatype="html" approved="yes">
         <source> You used a template for this flow and you can read our guide on how to set it up. </source>
