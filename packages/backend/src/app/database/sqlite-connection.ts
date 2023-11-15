@@ -1,4 +1,3 @@
-import os from 'node:os'
 import path from 'node:path'
 import { mkdirSync } from 'node:fs'
 import { DataSource, MigrationInterface } from 'typeorm'
@@ -27,9 +26,7 @@ import { AddTerminationReasonSqlite31698323327318 } from './migration/sqlite/169
 import { AddExternalIdSqlite31698857968495 } from './migration/sqlite/1698857968495-AddExternalIdSqlite3'
 
 const getSqliteDatabaseFilePath = (): string => {
-    const homeDirectoryPath = os.homedir()
-    const apConfigDirectoryName = '.activepieces'
-    const apConfigDirectoryPath = path.join(homeDirectoryPath, apConfigDirectoryName)
+    const apConfigDirectoryPath = system.getOrThrow(SystemProp.CONFIG_PATH)
     mkdirSync(apConfigDirectoryPath, { recursive: true })
     return path.join(apConfigDirectoryPath, 'database.sqlite')
 }
