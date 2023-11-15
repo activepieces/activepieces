@@ -14,4 +14,12 @@ export const environment = {
     appId: '1:89039225374:web:7e9279293327e02123640f',
   },
   // END EE
+  localesNames: {
+    en: 'English',
+    jp: '日本語',
+    it: 'Italiano',
+    de: 'Deutsch',
+    fr: 'Français',
+    pt: 'Português',
+  },
 };
