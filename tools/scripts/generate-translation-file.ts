@@ -19,6 +19,8 @@ async function generateTranslationFile(pieceName: string) {
     }
 
     fs.writeFileSync(path.join(translationsDir, 'en.json'), jsonToWrite, 'utf8');
+
+    addFilePathToCrowdin(pieceName);
 }
 
 async function processPackage(packageName: string) {
@@ -70,6 +72,23 @@ function processProps(props: Record<string, any>) {
     return result;
 }
 
+function addFilePathToCrowdin(pieceName: string) {
+    const crowdinFilePath = 'crowdin.yml';
+
+    const newFileEntry = `  {
+    "source": "packages/pieces/${pieceName}/translations/en.json",
+    "translation": "packages/pieces/${pieceName}/translations/%two_letters_code%.json"
+  },\n`;
+
+    try {
+        let yamlContent = fs.readFileSync(crowdinFilePath, 'utf8');
+        const insertPoint = yamlContent.lastIndexOf(']');
+        yamlContent = yamlContent.slice(0, insertPoint) + newFileEntry + yamlContent.slice(insertPoint);
+        fs.writeFileSync(crowdinFilePath, yamlContent, 'utf8');
+    } catch (error) {
+        console.error('Error while updating crowdin.yml:', error);
+    }
+}
 
 const main = async () => {
     const [, , pieceName] = argv

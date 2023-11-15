@@ -1,0 +1,48 @@
+{
+  "@activepieces/piece-gmail": {
+    "auth": {
+      "displayName": "Connection",
+      "description": ""
+    },
+    "actions": {
+      "send_email": {
+        "displayName": "Send Email",
+        "description": "Send an email through a Gmail account",
+        "props": {
+          "receiver": {
+            "displayName": "Receiver Email (To)"
+          },
+          "cc": {
+            "displayName": "CC Email"
+          },
+          "bcc": {
+            "displayName": "BCC Email"
+          },
+          "subject": {
+            "displayName": "Subject"
+          },
+          "body_text": {
+            "displayName": "Body (Text)",
+            "description": "Text version of the body for the email you want to send"
+          },
+          "reply_to": {
+            "displayName": "Reply-To Email",
+            "description": "Email address to set as the \"Reply-To\" header"
+          },
+          "body_html": {
+            "displayName": "Body (HTML)",
+            "description": "HTML version of the body for the email you want to send"
+          },
+          "sender_name": {
+            "displayName": "Sender Name"
+          },
+          "attachment": {
+            "displayName": "Attachment",
+            "description": "File to attach to the email you want to send"
+          }
+        }
+      }
+    },
+    "triggers": {}
+  }
+}
