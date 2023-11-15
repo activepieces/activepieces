@@ -11,7 +11,12 @@ export const environment = {
     projectId: 'activepieces-b3803',
     storageBucket: 'activepieces-b3803.appspot.com',
     messagingSenderId: '89039225374',
-    appId: '1:89039225374:web:7e9279293327e02123640f',
+    appId: '1:89039225374:web:7e9279293327e021236 40f',
   },
   // END EE
+  localesMap: {
+    en: 'English',
+    it: 'Italiano',
+    fr: 'Français',
+  },
 };
