@@ -3,13 +3,22 @@ import chalk from 'chalk';
 import { readPackageJson } from './utils/files'
 import { extractPieceFromModule } from './update-pieces-metadata/generate-metadata';
 import * as fs from 'fs';
+import * as path from 'path';
 
 async function generateTranslationFile(pieceName: string) {
     const piecesJson: Record<string, any> = {};
     const pieceData = await processPackage(pieceName);
     piecesJson[pieceData.name] = { auth: pieceData.auth, actions: pieceData.actions, triggers: pieceData.triggers };
     const jsonToWrite = JSON.stringify(piecesJson, null, 2);
-    fs.writeFileSync(`packages/pieces/${pieceName}/translations/en.json`, jsonToWrite, 'utf8');
+
+    const translationsDir = `packages/pieces/${pieceName}/translations`;
+
+    // Create translations folder if it doesn't exists
+    if (!fs.existsSync(translationsDir)) {
+        fs.mkdirSync(translationsDir, { recursive: true });
+    }
+
+    fs.writeFileSync(path.join(translationsDir, 'en.json'), jsonToWrite, 'utf8');
 }
 
 async function processPackage(packageName: string) {
