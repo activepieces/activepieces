@@ -3,12 +3,13 @@ import { Router } from '@angular/router';
 import { AuthenticationService } from '../../service/authentication.service';
 import { ProjectService } from '../../service/project.service';
 import { ApFlagId, Project } from '@activepieces/shared';
-import { Observable, tap } from 'rxjs';
+import { Observable } from 'rxjs';
 import { FlagService } from '../../service/flag.service';
 import { Store } from '@ngrx/store';
 import { ProjectSelectors } from '../../store/project/project.selector';
 import { environment } from '../../environments/environment';
 import { LocaleKey, LocalesService } from '../../service/locales.service';
+import { Location } from '@angular/common';
 
 @Component({
   selector: 'ap-user-avatar',
@@ -39,7 +40,8 @@ export class UserAvatarComponent implements OnInit {
     private flagService: FlagService,
     private store: Store,
     private projectService: ProjectService,
-    private localesService: LocalesService
+    private localesService: LocalesService,
+    private location: Location
   ) {
     this.showCommunity$ = this.flagService.isFlagEnabled(
       ApFlagId.SHOW_COMMUNITY
@@ -114,11 +116,9 @@ export class UserAvatarComponent implements OnInit {
     );
   }
   redirectToLocale(locale: LocaleKey) {
-    this.redirectToLocale$ = this.flagService.getFrontendUrl().pipe(
-      tap((url) => {
-        this.localesService.setCurrentLanguage(locale);
-        window.open(url + `/${locale}`, '_self');
-      })
-    );
+    const currentUrl = this.location.path();
+    const newUrl = `/${locale}${currentUrl}`;
+    console.log(newUrl);
+    window.location.href = newUrl;
   }
 }
