@@ -69,7 +69,8 @@
     </div>
     <div mat-menu-item (click)="goToCommunity()" *ngIf="showCommunity$ | async">
         <div class="ap-flex ap-items-center ap-min-w-[214px]">Community <div class="ap-flex-grow"></div><svg-icon
-                src="assets/img/custom/external-link.svg" class="ap-h-[16px] ap-w-[16px] ap-fill-[#989898]"></svg-icon>
+                [applyClass]="true" src="assets/img/custom/external-link.svg"
+                class="ap-h-[16px] ap-w-[16px] ap-fill-[#989898]"></svg-icon>
         </div>
     </div>
     <div mat-menu-item (click)="logout()">
@@ -88,6 +89,16 @@
                 [applyClass]="true" class="ap-h-[20px] ap-w-[20px] ap-fill-primary"></svg-icon>
         </div>
     </div>
+    <a href="https://www.activepieces.com/docs/about/i18n" target="_blank" rel="noopener noreferrer" mat-menu-item
+        *ngIf="showCommunity$ | async">
+
+        <div class="ap-flex ap-items-center ap-gap-2 ap-min-w-[140px]">
+            Help us translate
+            <svg-icon src="assets/img/custom/external-link.svg" [applyClass]="true"
+                class="ap-h-[16px] ap-w-[16px] ap-fill-[#989898]"></svg-icon>
+        </div>
+    </a>
+
 </mat-menu>
 
 <ng-container *ngIf="redirectToLocale$ | async"></ng-container>
