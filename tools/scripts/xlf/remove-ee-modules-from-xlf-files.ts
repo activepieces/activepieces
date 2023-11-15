@@ -34,6 +34,7 @@ async function findXlfFiles(directory: string): Promise<string[]> {
 
 // Example usage
 const directoryPath = 'packages/ui/core/src/locale';
+const modulesToRemoveFromXlf = ['packages/ee/ui-platform','packages/ui/feature-chatbot'];
 findXlfFiles(directoryPath)
   .then((xlfFiles) => {
    xlfFiles.forEach(filePath=>{
@@ -42,16 +43,20 @@ findXlfFiles(directoryPath)
             console.error(err);
         } else {
             // Now you can work with the parsed result
-            const fixedFile =  removeContextsWithPrefix(result, 'packages/ee/ui-platform');
-            var builder = new xml2js.Builder();
-            var xml = builder.buildObject(fixedFile);
-            fs.writeFile(filePath, xml, (err:any) => {
-            if (err) {
-                console.error('Error writing to file:', err);
-            } else {
-                console.log('File written successfully');
-            }
+            modulesToRemoveFromXlf.forEach(modulePath=>{
+              const fixedFile =  removeContextsWithPrefix(result, modulePath);
+              var builder = new xml2js.Builder();
+              var xml = builder.buildObject(fixedFile);
+              fs.writeFile(filePath, xml, (err:any) => {
+              if (err) {
+                  console.error('Error writing to file:', err);
+              } else {
+                  console.log('File written successfully');
+              }
+              });
             });
+
+           
         }
         });
    })
