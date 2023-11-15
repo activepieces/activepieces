@@ -242,6 +242,7 @@ Not into coding but still interested in contributing? Come join our [Discord](ht
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/fdundjer"><img src="https://avatars.githubusercontent.com/u/17405319?v=4?s=100" width="100px;" alt="Filip Dunđer"/><br /><sub><b>Filip Dunđer</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=fdundjer" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://donthorp.net"><img src="https://avatars.githubusercontent.com/u/8629?v=4?s=100" width="100px;" alt="Don Thorp"/><br /><sub><b>Don Thorp</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=donthorp" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://joeworkman.net"><img src="https://avatars.githubusercontent.com/u/225628?v=4?s=100" width="100px;" alt="Joe Workman"/><br /><sub><b>Joe Workman</b></sub></a><br /><a href="#plugin-joeworkman" title="Plugin/utility libraries">🔌</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Autumnlight02"><img src="https://avatars.githubusercontent.com/u/68244453?v=4?s=100" width="100px;" alt="Aykut Akgün"/><br /><sub><b>Aykut Akgün</b></sub></a><br /><a href="https://github.com/activepieces/activepieces/commits?author=Autumnlight02" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
