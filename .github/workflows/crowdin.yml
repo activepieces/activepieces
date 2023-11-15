@@ -25,6 +25,9 @@ jobs:
       - name: build packages
         run: npx nx run-many --target=extract-i18n --projects=ui-core
 
+     - name: remove ee modules from xlf files
+        run: npx ts-node tools/scripts/xlf/remove-ee-modules-from-xlf-files.ts
+
       - name: crowdin action
         uses: crowdin/github-action@v1
         with:
