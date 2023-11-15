@@ -49,14 +49,26 @@
     <div class="ap-border-b ap-border-solid  ap-border-outline ap-mx-2"
         *ngIf="(projectEnabled$ | async) || (showPlatform) "></div>
     <!-- END EE -->
-    <div mat-menu-item (click)="showWhatIsNew()" *ngIf="showCommunity$ | async">
-        What's new
+    <div mat-menu-item [matMenuTriggerFor]="languagesList" class="ap-flex ap-items-center">
+
+        <div class="ap-flex ap-gap-2 ap-items-center">
+            {{selectedLanguage.name}}
+
+            <svg-icon [src]="'assets/img/custom/flags/'+selectedLanguage.locale+'.svg'"
+                class="ap-w-[16px] ap-h-[12px]  ap-border-outline" [applyClass]="true">
+            </svg-icon>
+
+        </div>
+
+    </div>
+    <div mat-menu-item (click)="goToDeveloperPage()">
+        <div i18n>My Pieces</div>
     </div>
     <div mat-menu-item (click)="viewPlans()" *ngIf="billingEnabled$ | async">
         Subscription
     </div>
-    <div mat-menu-item (click)="goToDeveloperPage()">
-        <div i18n>My Pieces</div>
+    <div mat-menu-item (click)="showWhatIsNew()" *ngIf="showCommunity$ | async">
+        What's new
     </div>
     <div mat-menu-item (click)="goToCommunity()" *ngIf="showCommunity$ | async">
         <div class="ap-flex ap-items-center ap-min-w-[214px]">Community <div class="ap-flex-grow"></div><svg-icon
@@ -71,3 +83,13 @@
 <!-- BEGIN EE -->
 <ng-container *ngIf="switchProject$ | async"></ng-container>
 <!-- END EE -->
+
+<mat-menu #languagesList="matMenu">
+    <div mat-menu-item *ngFor="let pair of locales|objectToArray">
+        <div class="ap-flex ap-gap-2 ap-items-center ap-min-w-[120px]">
+            {{pair.value}} <svg-icon [src]="'assets/img/custom/flags/'+pair.key+'.svg'" class="ap-w-[16px] ap-h-[12px]"
+                [applyClass]="true">
+            </svg-icon>
+        </div>
+    </div>
+</mat-menu>

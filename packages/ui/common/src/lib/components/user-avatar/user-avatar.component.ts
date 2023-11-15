@@ -8,6 +8,7 @@ import { FlagService } from '../../service/flag.service';
 
 import { Store } from '@ngrx/store';
 import { ProjectSelectors } from '../../store/project/project.selector';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'ap-user-avatar',
@@ -26,6 +27,11 @@ export class UserAvatarComponent implements OnInit {
   projectEnabled$: Observable<boolean>;
   showPlatform = false;
   showCommunity$: Observable<boolean>;
+  locales = environment.localesNames;
+  selectedLanguage = {
+    name: 'English',
+    locale: 'en',
+  };
   constructor(
     public authenticationService: AuthenticationService,
     private router: Router,
