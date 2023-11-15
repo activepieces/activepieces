@@ -1,115 +1,73 @@
 import { argv } from 'node:process'
 import chalk from 'chalk';
-import { generateMetadata } from './update-pieces-metadata/generate-metadata'
-
-import { getAvailablePieceNames } from './utils/get-available-piece-names'
-import { readPackageJson, readProjectJson } from './utils/files'
-import { PieceMetadata } from '../../packages/pieces/framework/src';
+import { readPackageJson } from './utils/files'
 import { extractPieceFromModule } from './update-pieces-metadata/generate-metadata';
-import { validateMetadata } from './update-pieces-metadata/validate-metadata';
 import * as fs from 'fs';
 
-async function getPiecesData() {
-  const pieces: PieceMetadata[] = [];
+async function generateTranslationFile(pieceName: string) {
+    const piecesJson: Record<string, any> = {};
+    const pieceData = await processPackage(pieceName);
+    piecesJson[pieceData.name] = { auth: pieceData.auth, actions: pieceData.actions, triggers: pieceData.triggers };
+    const jsonToWrite = JSON.stringify(piecesJson, null, 2);
+    fs.writeFileSync(`packages/pieces/${pieceName}/translations/en.json`, jsonToWrite, 'utf8');
+}
 
-  const piecePackageNames = await getAvailablePieceNames();
+async function processPackage(packageName: string) {
+    const packagePath = `packages/pieces/${packageName}`;
+    const packageJson = await readPackageJson(packagePath);
 
-//   for (const packageName of piecePackageNames) {
-    //   if (packageName != 'google-calendar' && packageName != 'google-drive') {
-        //   const packagePath = `packages/pieces/${packageName}`;
-          const packagePath = `packages/pieces/kizeo-forms`;
+    const module = await import(`../../${packagePath}/src/index.ts`);
+    const { name: pieceName } = packageJson;
+    const piece = extractPieceFromModule({ module, pieceName, pieceVersion: packageJson.version });
+    const metadata = { ...piece.metadata(), name: piece.name, version: piece.version };
 
-          const packageJson = await readPackageJson(packagePath);
-          console.log(packageJson)
-          const module = await import(`../../${packagePath}/src/index.ts`);
-          const { name: pieceName, version: pieceVersion } = packageJson;
+    return {
+        name: pieceName,
+        auth: processAuth(metadata),
+        actions: processActionsOrTriggers(metadata.actions),
+        triggers: processActionsOrTriggers(metadata.triggers)
+    };
+}
 
-          const piece = extractPieceFromModule({
-              module,
-              pieceName,
-              pieceVersion
-          });
-          const metadata = {
-              ...piece.metadata(),
-              name: piece.name,
-              version: piece.version
-          };
-          const actions: Record<string, any> = {};
-          for (const action of Object.values(metadata.actions)) {
-              const props: Record<string, any> = {};
-              console.log(action.props)
-              for (const [key, prop] of Object.entries(action.props)) {
+function processAuth(items: Record<string, any>) {
+    const result: Record<string, any> = {};
+    result['displayName'] = items.auth.displayName;
+    result['description'] = items.auth.description;
 
-                let propData: Record<string, any> = {
-                    "displayName": prop.displayName
-                };
-                if (prop.description) {
-                    propData["description"] = prop.description;
-                }
-                props[key] = propData;
+    return result;
+}
 
-              }
-              actions[action.name] = {
-                  "displayName": action.displayName,
-                  "description": action.description,
-                  "props": props
-              }
-          }
-          const triggers: Record<string, any> = {};
-          for (const trigger of Object.values(metadata.triggers)) {
-              const props: Record<string, any> = {};
-              for (const [key, prop] of Object.entries(trigger.props)) {
+function processActionsOrTriggers(items: Record<string, any>) {
+    const result: Record<string, any> = {};
+    for (const [key, item] of Object.entries(items)) {
+        result[key] = {
+            displayName: item.displayName,
+            description: item.description,
+            props: processProps(item.props)
+        };
+    }
+    return result;
+}
 
-                let propData: Record<string, any> = {
-                    "displayName": prop.displayName
-                };
-                if (prop.description) {
-                    propData["description"] = prop.description;
-                }
-                props[key] = propData;
-
-              }
-              triggers[trigger.name] = {
-                  "displayName": trigger.displayName,
-                  "description": trigger.description,
-                  "props": props
-              }
-          }
-
-          const data = {
-              [pieceName]: {
-                  "actions": actions,
-                  "triggers": triggers
-              }
-          };
-    console.log(JSON.stringify(data))
-    const jsonStr = JSON.stringify(data, null, 2);
-    fs.writeFileSync('data.json', jsonStr, 'utf8');
-
-        //   validateMetadata(metadata);
-        //   console.log(metadata.actions['get_all_list_items'].props)
-        //   console.log(metadata)
-        //   pieces.push(metadata);
-    //   }
-//   }
+function processProps(props: Record<string, any>) {
+    const result: Record<string, any> = {};
+    for (const [key, prop] of Object.entries(props)) {
+        let propData: Record<string, any> = { displayName: prop.displayName };
+        if (prop.description) {
+            propData.description = prop.description;
+        }
+        result[key] = propData;
+    }
+    return result;
 }
 
 
 const main = async () => {
-  const [, , langage] = argv
+    const [, , pieceName] = argv
 
-getPiecesData()
-//   const piecesMetadata = await generateMetadata()
+    await generateTranslationFile(pieceName)
 
-
-
-
-
-//   const pieces = await getAvailablePieceNames()
-
-//   console.log()
-  console.log(chalk.green('✨  Done!', langage));
-  console.log(chalk.yellow(`ca march bien bravo`));
+    console.log(chalk.green(`✨  Created source translation file for ${pieceName}!`));
 }
 
 main()
