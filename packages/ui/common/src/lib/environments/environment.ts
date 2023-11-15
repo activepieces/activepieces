@@ -16,5 +16,7 @@ export const environment = {
   // END EE
   localesMap: {
     en: 'English',
+    it: 'Italiano',
+    fr: 'Français',
   },
 };
