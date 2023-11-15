@@ -1,6 +1,5 @@
 import { createAction, props } from '@ngrx/store';
 import {
-  Flow,
   FlowRun,
   FlowVersion,
   StepLocationRelativeToParent,

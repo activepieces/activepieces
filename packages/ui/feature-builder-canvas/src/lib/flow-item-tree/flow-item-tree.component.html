@@ -1,5 +1,12 @@
-<app-flow-item
-  *ngIf="activePiece$ | async as activePiece"
-  [trigger]="true"
-  [flowItemData]="activePiece"
-></app-flow-item>
+<svg style="position: absolute;top: 0px; left: 0px; width:100%; height:100%;">
+  <g>
+    <path [attr.d]="flowDrawer.svg.toSvg().content" stroke="black" fill="transparent" stroke-width="2"/>
+  </g>
+</svg>
+
+<ng-container *ngFor="let step of flowDrawer.steps">
+  <div style="position: absolute; width: 300px; height: 92px; background-color: red; top: {{step.y}}px; left: {{step.x}}px;">
+    {{step.content.name}}
+  </div>
+</ng-container>
+
