@@ -27,15 +27,20 @@ describe('Project Member API', () => {
             const mockUser = createMockUser()
             await databaseConnection.getRepository('user').save(mockUser)
 
+            const mockPlatformId = faker.string.nanoid(21)
             const mockProject = createMockProject({
                 ownerId: mockUser.id,
+                platformId: mockPlatformId,
             })
             await databaseConnection.getRepository('project').save(mockProject)
 
             const mockToken = await generateMockToken({
                 id: mockUser.id,
                 projectId: mockProject.id,
-                platformId: mockProject.platformId,
+                platform: {
+                    id: mockPlatformId,
+                    role: 'OWNER',
+                },
             })
 
             const mockInviteProjectMemberRequest = {
@@ -78,15 +83,20 @@ describe('Project Member API', () => {
             })
             await databaseConnection.getRepository('user').save([mockProjectOwner, mockInvitedUser])
 
+            const mockPlatformId = faker.string.nanoid(21)
             const mockProject = createMockProject({
                 ownerId: mockProjectOwner.id,
+                platformId: mockPlatformId,
             })
             await databaseConnection.getRepository('project').save(mockProject)
 
             const mockToken = await generateMockToken({
                 id: mockProjectOwner.id,
                 projectId: mockProject.id,
-                platformId: mockProject.platformId,
+                platform: {
+                    id: mockPlatformId,
+                    role: 'OWNER',
+                },
             })
 
             const mockInviteProjectMemberRequest = {
