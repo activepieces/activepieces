@@ -8,6 +8,8 @@ import { stripeHelper } from '../../../../src/app/ee/billing/stripe/stripe-helpe
 import { emailService } from '../../../../src/app/ee/helper/email/email-service'
 import { UserStatus } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
+import { createMockProjectMember } from '../../../helpers/mocks/project-member-mocks'
+import { ProjectMemberStatus } from '@activepieces/ee-shared'
 
 let app: FastifyInstance | null = null
 
@@ -129,6 +131,53 @@ describe('Project Member API', () => {
             })
 
             expect(invitedUser?.id).toBe(mockInvitedUser.id)
+        })
+    })
+
+    describe('Accept Invitation Endpoint', () => {
+        it('Verifies invited user', async () => {
+            const mockProjectOwner = createMockUser()
+            const mockInvitedUser = createMockUser({ status: UserStatus.INVITED })
+            await databaseConnection.getRepository('user').save([mockProjectOwner, mockInvitedUser])
+
+            const mockProject = createMockProject({ ownerId: mockProjectOwner.id })
+            await databaseConnection.getRepository('project').save(mockProject)
+
+            const mockProjectMember = createMockProjectMember({
+                userId: mockInvitedUser.id,
+                projectId: mockProject.id,
+                status: ProjectMemberStatus.PENDING,
+            })
+            await databaseConnection.getRepository('project_member').save(mockProjectMember)
+
+            const mockInvitationToken = await generateMockToken({
+                id: mockProjectMember.id,
+            })
+
+            const mockAcceptProjectMemberInvitationRequest = {
+                token: mockInvitationToken,
+            }
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/v1/project-members/accept',
+                body: mockAcceptProjectMemberInvitationRequest,
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const responseBody = response?.json()
+
+            expect(Object.keys(responseBody)).toHaveLength(7)
+            expect(responseBody?.id).toBe(mockProjectMember.id)
+            expect(responseBody?.userId).toBe(mockInvitedUser.id)
+            expect(responseBody?.projectId).toBe(mockProject.id)
+            expect(responseBody?.role).toBe(mockProjectMember.role)
+            expect(responseBody?.status).toBe(ProjectMemberStatus.ACTIVE)
+
+            const invitedUser = await databaseConnection.getRepository('user').findOneBy({ id: mockInvitedUser.id })
+            expect(invitedUser?.status).toBe('VERIFIED')
         })
     })
 })
