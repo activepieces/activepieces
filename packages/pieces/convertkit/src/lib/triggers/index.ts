@@ -2,7 +2,7 @@ import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { convertkitAuth } from '../..';
 import { tag } from '../common/tags';
 import { formId } from '../common/forms';
-import { sequenceIdChoice } from '../common/sequences';
+import { sequenceIdDropdown } from '../common/sequences';
 import { productId } from '../common/purchases';
 import {
   prepareWebhookURL,
@@ -392,7 +392,7 @@ export const sequenceSubscribed = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   props: {
     webhookBaseOverride: webhookBaseOverride(),
-    sequenceIdChoice,
+    sequenceIdChoice: sequenceIdDropdown,
   },
   sampleData,
   async onEnable(context) {
@@ -444,7 +444,7 @@ export const sequenceCompleted = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   props: {
     webhookBaseOverride: webhookBaseOverride(),
-    sequenceIdChoice,
+    sequenceIdChoice: sequenceIdDropdown,
   },
   sampleData,
   async onEnable(context) {
@@ -538,7 +538,7 @@ export const linkClicked = createTrigger({
 });
 
 // UNTESTED
-// Broken UI at convertkit, reported to support
+// Broken UI at convertkit, reported to support. The Rukes page is not loading. It will load again, when the webhook is canceled.
 export const productPurchased = createTrigger({
   auth: convertkitAuth,
   name: 'webhook_product_purchased',

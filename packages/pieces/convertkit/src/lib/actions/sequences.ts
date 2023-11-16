@@ -6,7 +6,7 @@ import {
 } from '@activepieces/pieces-common';
 import { Sequence } from '../common/types';
 import { convertkitAuth } from '../..';
-import { sequenceIdChoice } from '../common/sequences';
+import { sequenceIdDropdown } from '../common/sequences';
 import { subscriberEmail, subscriberFirstName } from '../common/subscribers';
 import { allFields } from '../common/custom-fields';
 import { tags } from '../common/tags';
@@ -30,7 +30,7 @@ export const addSubscriberToSequence = createAction({
   displayName: 'Sequences: Add Subscriber To Sequence',
   description: 'Add a subscriber to a sequence',
   props: {
-    sequenceId: sequenceIdChoice,
+    sequenceId: sequenceIdDropdown,
     email: subscriberEmail,
     firstName: subscriberFirstName,
     tags,
@@ -73,7 +73,7 @@ export const listSupscriptionsToSequence = createAction({
   displayName: 'Sequences: List Subscriptions To Sequence',
   description: 'List all subscriptions to a sequence',
   props: {
-    sequenceId: sequenceIdChoice,
+    sequenceId: sequenceIdDropdown,
   },
   async run(context) {
     const url = `${SEQUENCES_API_ENDPOINT}/${context.propsValue.sequenceId}/subscriptions`;

@@ -6,7 +6,7 @@ import {
 } from '@activepieces/pieces-common';
 import { convertkitAuth } from '../..';
 import {
-  broadcatId,
+  broadcastId,
   broadcastPageNumber,
   broadcastContent,
   description,
@@ -107,7 +107,7 @@ export const getBroadcastById = createAction({
   displayName: 'Broadcast: Get Broadcast',
   description: 'Get a broadcast',
   props: {
-    broadcastId: broadcatId,
+    broadcastId: broadcastId,
   },
   async run(context) {
     const { broadcastId } = context.propsValue;
@@ -138,7 +138,7 @@ export const updateBroadcast = createAction({
   displayName: 'Broadcast: Update Broadcast',
   description: 'Update a broadcast',
   props: {
-    broadcastId: broadcatId,
+    broadcastId: broadcastId,
     content: broadcastContent,
     description,
     emailAddress: broadcastEmailAddress,
@@ -206,7 +206,7 @@ export const broadcastStats = createAction({
   displayName: 'Broadcast: Broadcast Stats',
   description: 'Get broadcast stats',
   props: {
-    broadcastId: broadcatId,
+    broadcastId: broadcastId,
   },
   async run(context) {
     const { broadcastId } = context.propsValue;
@@ -237,7 +237,7 @@ export const deleteBroadcast = createAction({
   displayName: 'Broadcast: Delete Broadcast',
   description: 'Delete a broadcast',
   props: {
-    broadcastId: broadcatId,
+    broadcastId: broadcastId,
   },
   async run(context) {
     const { broadcastId } = context.propsValue;

@@ -1,6 +1,6 @@
 import { Property, Validators } from '@activepieces/pieces-framework';
 
-export const broadcatId = Property.ShortText({
+export const broadcastId = Property.ShortText({
   displayName: 'Broadcast Id',
   description: 'The broadcast id',
   required: true,

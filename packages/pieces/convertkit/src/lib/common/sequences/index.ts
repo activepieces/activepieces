@@ -7,7 +7,7 @@ export const sequenceId = Property.ShortText({
   required: true,
 });
 
-export const sequenceIdChoice = Property.Dropdown({
+export const sequenceIdDropdown = Property.Dropdown({
   displayName: 'Sequence',
   required: true,
   refreshers: ['auth'],
