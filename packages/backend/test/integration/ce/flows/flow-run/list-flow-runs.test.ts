@@ -1,6 +1,6 @@
-import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { setupApp } from '../../../../src/app/app'
-import { generateMockToken } from '../../../helpers/auth'
+import { databaseConnection } from '../../../../../src/app/database/database-connection'
+import { setupApp } from '../../../../../src/app/app'
+import { generateMockToken } from '../../../../helpers/auth'
 import { FastifyInstance } from 'fastify'
 
 let app: FastifyInstance | null = null

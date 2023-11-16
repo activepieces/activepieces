@@ -60,7 +60,11 @@ const projectMemberController: FastifyPluginAsyncTypebox = async (fastify) => {
         async (
             request,
         ) => {
-            const invitation = await projectMemberService.send(request.principal.projectId, request.body)
+            const invitation = await projectMemberService.send({
+                ...request.body,
+                projectId: request.principal.projectId,
+                platformId: request.principal.platform?.id ?? null,
+            })
             return {
                 token: await accessTokenManager.generateToken({
                     id: invitation.id,

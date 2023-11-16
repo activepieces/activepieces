@@ -74,6 +74,7 @@ async function createInitialPlan({ projectId }: { projectId: ProjectId }): Promi
             botPlanName: defaultBotsPlan.nickname,
             bots: defaultBotsPlan.bots,
             datasourcesSize: defaultBotsPlan.datasourcesSize,
+            datasources: defaultBotsPlan.datasources,
             subscriptionStartDatetime: project.created,
         }, ['projectId'])
         return projectPlanRepo.findOneByOrFail({ projectId })
