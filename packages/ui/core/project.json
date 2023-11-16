@@ -7,7 +7,9 @@
   "targets": {
     "build": {
       "executor": "@nx/angular:webpack-browser",
-      "outputs": ["{options.outputPath}"],
+      "outputs": [
+        "{options.outputPath}"
+      ],
       "options": {
         "statsJson": true,
         "outputPath": "dist/packages/ui/core",
@@ -92,10 +94,14 @@
           "extractLicenses": false,
           "sourceMap": true,
           "namedChunks": true,
-          "localize": ["en"]
+          "localize": [
+            "en"
+          ]
         },
         "fr": {
-          "localize": ["fr"]
+          "localize": [
+            "fr"
+          ]
         }
       },
       "defaultConfiguration": "production"
@@ -128,7 +134,9 @@
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"],
+      "outputs": [
+        "{options.outputFile}"
+      ],
       "options": {
         "lintFilePatterns": [
           "packages/ui/core/**/*.ts",
@@ -141,7 +149,10 @@
       "options": {
         "tsConfig": "packages/ui/core/tsconfig.spec.json",
         "karmaConfig": "packages/ui/core/karma.conf.js",
-        "polyfills": ["zone.js", "zone.js/testing"],
+        "polyfills": [
+          "zone.js",
+          "zone.js/testing"
+        ],
         "styles": [],
         "scripts": [],
         "assets": []
@@ -151,15 +162,12 @@
   "tags": [],
   "i18n": {
     "sourceLocale": {
-      "code": "en",
-      "baseHref": ""
+      "code": "en"
     },
     "locales": {
       "fr": "packages/ui/core/src/locale/messages.fr.xlf",
-      "ja": "packages/ui/core/src/locale/messages.ja.xlf",
       "it": "packages/ui/core/src/locale/messages.it.xlf",
-      "pt": "packages/ui/core/src/locale/messages.pt.xlf",
-      "de": "packages/ui/core/src/locale/messages.de.xlf"
+      "pt": "packages/ui/core/src/locale/messages.pt.xlf"
     }
   }
 }
