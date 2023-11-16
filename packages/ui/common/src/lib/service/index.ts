@@ -18,3 +18,4 @@ export * from './flow-instance.service';
 export * from './folders.service';
 export * from './authentication.service';
 export * from './oauth-2-apps.service';
+export * from './locales.service';
