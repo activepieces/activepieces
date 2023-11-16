@@ -5,6 +5,7 @@ export class AddPlatformIdToUser1699901161457 implements MigrationInterface {
     name = 'AddPlatformIdToUser1699901161457'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        logger.info('AddPlatformIdToUser1699901161457 up')
         await queryRunner.query(`
             DROP INDEX "public"."idx_user_external_id"
         `)
