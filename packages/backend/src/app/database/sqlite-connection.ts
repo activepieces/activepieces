@@ -26,6 +26,7 @@ import { AddTerminationReasonSqlite31698323327318 } from './migration/sqlite/169
 import { AddExternalIdSqlite31698857968495 } from './migration/sqlite/1698857968495-AddExternalIdSqlite3'
 import { UpdateUserStatusRenameShadowToInvited1699818680567 } from './migration/common/1699818680567-update-user-status-rename-shadow-to-invited'
 import { AddPlatformIdToUser1699901161457 } from './migration/common/1699901161457-add-platform-id-to-user'
+import { AddUserMigrationSqlite31700140010475 } from './migration/sqlite/1700140010475-AddUserMigrationSqlite3'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(SystemProp.CONFIG_PATH)
@@ -66,6 +67,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddExternalIdSqlite31698857968495,
         UpdateUserStatusRenameShadowToInvited1699818680567,
         AddPlatformIdToUser1699901161457,
+        AddUserMigrationSqlite31700140010475,
     ]
     const edition = getEdition()
     switch (edition) {
