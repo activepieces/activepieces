@@ -18,7 +18,7 @@ export class ConnectionsResolver {
     private store: Store
   ) {}
   resolve(): Observable<AppConnectionWithoutSensitiveData[]> {
-    return this.store.select(ProjectSelectors.selectProject).pipe(
+    return this.store.select(ProjectSelectors.selectCurrentProject).pipe(
       take(1),
       switchMap(() => {
         return this.appConnectionsService.list({ limit: 999999 });

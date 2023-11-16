@@ -28,7 +28,7 @@ import {
 } from '@activepieces/ee-shared'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { projectService } from '../../project/project-service'
-import { emailService } from '../helper/email-service'
+import { emailService } from '../helper/email/email-service'
 import { projectMembersLimit } from '../../ee/billing/usage/limits/members-limit'
 import { getEdition } from '../../helper/secret-helper'
 
@@ -81,10 +81,11 @@ export const projectMemberService = {
         const member = await projectMemberRepo.findOneByOrFail({
             id: invitationId,
         })
-        emailService.sendInvitationEmail({
+        await emailService.sendInvitation({
             invitationId,
+            projectId,
             email,
-        }).catch((e) => logger.error(e, '[ProjectMemberService#send] sendemail'))
+        })
 
         return {
             ...member,
@@ -105,6 +106,9 @@ export const projectMemberService = {
         }
         await projectMemberRepo.update(projectMember.id, {
             status: ProjectMemberStatus.ACTIVE,
+        })
+        await userService.verify({
+            userId: projectMember.userId,
         })
         return {
             ...projectMember,

@@ -51,7 +51,9 @@ export class ConnectionsTableDataSource extends DataSource<any> {
   connect(): Observable<any[]> {
     return combineLatest({
       queryParams: this.queryParams$,
-      project: this.store.select(ProjectSelectors.selectProject).pipe(take(1)),
+      project: this.store
+        .select(ProjectSelectors.selectCurrentProject)
+        .pipe(take(1)),
       refresh: this.refresh$,
     }).pipe(
       tap(() => {

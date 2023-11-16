@@ -28,7 +28,7 @@ describe('Platform API', () => {
             const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
             await databaseConnection.getRepository('platform').save(mockPlatform)
 
-            const testToken = await generateMockToken({ id: mockUser.id })
+            const testToken = await generateMockToken({ id: mockUser.id, platform: { id: mockPlatform.id, role: 'OWNER' } })
 
             // act
             const response = await app?.inject({
@@ -45,6 +45,15 @@ describe('Platform API', () => {
                     favIconUrl: 'updated fav icon url',
                     filteredPieceNames: ['updated filtered piece names'],
                     filteredPieceBehavior: 'ALLOWED',
+                    smtpHost: 'updated smtp host',
+                    smtpPort: 123,
+                    smtpUser: 'updated smtp user',
+                    smtpPassword: 'updated smtp password',
+                    smtpSenderEmail: 'updated smtp sender email',
+                    smtpUseSSL: true,
+                    privacyPolicyUrl: 'updated privacy policy url',
+                    termsOfServiceUrl: 'updated terms of service url',
+                    cloudAuthEnabled: false,
                 },
             })
 
@@ -52,7 +61,7 @@ describe('Platform API', () => {
             const responseBody = response?.json()
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(Object.keys(responseBody)).toHaveLength(11)
+            expect(Object.keys(responseBody)).toHaveLength(21)
             expect(responseBody.id).toBe(mockPlatform.id)
             expect(responseBody.created).toBeDefined()
             expect(responseBody.updated).toBeDefined()
@@ -64,6 +73,15 @@ describe('Platform API', () => {
             expect(responseBody.favIconUrl).toBe('updated fav icon url')
             expect(responseBody.filteredPieceNames).toStrictEqual(['updated filtered piece names'])
             expect(responseBody.filteredPieceBehavior).toBe('ALLOWED')
+            expect(responseBody.smtpHost).toBe('updated smtp host')
+            expect(responseBody.smtpPort).toBe(123)
+            expect(responseBody.smtpUser).toBe('updated smtp user')
+            expect(responseBody.smtpPassword).toBe('updated smtp password')
+            expect(responseBody.smtpSenderEmail).toBe('updated smtp sender email')
+            expect(responseBody.smtpUseSSL).toBe(true)
+            expect(responseBody.privacyPolicyUrl).toBe('updated privacy policy url')
+            expect(responseBody.termsOfServiceUrl).toBe('updated terms of service url')
+            expect(responseBody.cloudAuthEnabled).toBe(false)
         })
 
         it('fails if user is not owner', async () => {
@@ -110,12 +128,12 @@ describe('Platform API', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
     })
 
     describe('get platform endpoint', () => {
-        it('finds a platform by id', async () => {
+        it('finds a platform by id without being owner', async () => {
             // arrange
             const mockUser = createMockUser()
             await databaseConnection.getRepository('user').save(mockUser)
@@ -124,6 +142,28 @@ describe('Platform API', () => {
             await databaseConnection.getRepository('platform').save(mockPlatform)
 
             const testToken = await generateMockToken({ id: mockUser.id })
+
+            // act
+            const response = await app?.inject({
+                method: 'GET',
+                url: `/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+
+        it('finds a platform by id', async () => {
+            // arrange
+            const mockUser = createMockUser()
+            await databaseConnection.getRepository('user').save(mockUser)
+
+            const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
+
+            const testToken = await generateMockToken({ id: mockUser.id, platform: { id: mockPlatform.id, role: 'OWNER' }  })
 
             // act
             const response = await app?.inject({
@@ -162,7 +202,7 @@ describe('Platform API', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
     })
 })

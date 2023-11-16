@@ -18,6 +18,16 @@ export const Platform = Type.Object({
     favIconUrl: Type.String(),
     filteredPieceNames: Type.Array(Type.String()),
     filteredPieceBehavior: Type.Enum(FilteredPieceBehavior),
+    smtpHost: Type.Optional(Type.String()),
+    smtpPort: Type.Optional(Type.Number()),
+    smtpUser: Type.Optional(Type.String()),
+    smtpPassword: Type.Optional(Type.String()),
+    smtpSenderEmail: Type.Optional(Type.String()),
+    smtpUseSSL: Type.Optional(Type.Boolean()),
+    privacyPolicyUrl: Type.Optional(Type.String()),
+    termsOfServiceUrl: Type.Optional(Type.String()),
+    cloudAuthEnabled: Type.Boolean(),
+    showPoweredBy: Type.Boolean(),
 })
 
 export type Platform = Static<typeof Platform>

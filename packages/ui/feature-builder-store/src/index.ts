@@ -16,5 +16,6 @@ export * from './lib/store/builder/canvas/canvas.action';
 export * from './lib/utils/stepRunResult';
 export * from './lib/store/app-connections/app-connections.reducer';
 export * from './lib/store/app-connections/app-connections.action';
+export * from './lib/utils/draw-utils';
 
 import '@angular/localize/init';

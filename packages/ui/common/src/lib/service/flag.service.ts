@@ -23,6 +23,14 @@ export class FlagService {
     return this.flags$;
   }
 
+  getStringFlag(flag: ApFlagId): Observable<string> {
+    return this.getAllFlags().pipe(
+      map((value) => {
+        return value[flag] as string;
+      })
+    );
+  }
+
   isFirstSignIn() {
     return this.getAllFlags().pipe(
       map((value) => {
@@ -155,6 +163,11 @@ export class FlagService {
   > {
     return this.getTheme().pipe(
       map((theme) => theme['materialPrimaryPalette'])
+    );
+  }
+  getShowPoweredByAp(): Observable<boolean> {
+    return this.getAllFlags().pipe(
+      map((flags) => flags[ApFlagId.SHOW_POWERED_BY_AP] as boolean)
     );
   }
 }

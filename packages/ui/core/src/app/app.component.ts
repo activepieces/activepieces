@@ -106,7 +106,7 @@ export class AppComponent implements OnInit {
       tap((event) => {
         if (
           event instanceof NavigationStart &&
-          (event.url.startsWith('/flows/') || event.url.endsWith('/settings'))
+          event.url.startsWith('/flows/')
         ) {
           this.loading$.next(true);
         }

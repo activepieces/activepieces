@@ -49,6 +49,7 @@ type ErrorParams =
   | TriggerEnableErrorParams
   | TriggerFailedErrorParams
   | ValidationErrorParams
+  | EmailIsNotVerfiedErrorParams
 
 export type BaseErrorParams<T, V> = {
     code: T
@@ -129,6 +130,13 @@ ErrorCode.FLOW_VERSION_NOT_FOUND,
 
 export type InvalidCredentialsErrorParams = BaseErrorParams<
 ErrorCode.INVALID_CREDENTIALS,
+{
+    email: string
+}
+>
+
+export type EmailIsNotVerfiedErrorParams = BaseErrorParams<
+ErrorCode.EMAIL_IS_NOT_VERFIED,
 {
     email: string
 }
@@ -315,6 +323,7 @@ export enum ErrorCode {
     INVALID_CLAIM = 'INVALID_CLAIM',
     INVALID_CLOUD_CLAIM = 'INVALID_CLOUD_CLAIM',
     INVALID_CREDENTIALS = 'INVALID_CREDENTIALS',
+    EMAIL_IS_NOT_VERFIED = 'EMAIL_IS_NOT_VERFIED',
     INVALID_OR_EXPIRED_JWT_TOKEN = 'INVALID_OR_EXPIRED_JWT_TOKEN',
     JOB_REMOVAL_FAILURE = 'JOB_REMOVAL_FAILURE',
     OPEN_AI_FAILED = 'OPEN_AI_FAILED',
