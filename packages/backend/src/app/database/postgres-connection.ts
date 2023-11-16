@@ -78,7 +78,7 @@ import { AddOAuth2AppEntiity1699221414907 } from './migration/postgres/169922141
 import { AddFilteredPiecesToPlatform1699281870038 } from './migration/postgres/1699281870038-add-filtered-pieces-to-platform'
 import { AddSmtpAndPrivacyUrlToPlatform1699491705906 } from './migration/postgres/1699491705906-AddSmtpAndPrivacyUrlToPlatform'
 import { UpdateUserStatusRenameShadowToInvited1699818680567 } from './migration/common/1699818680567-update-user-status-rename-shadow-to-invited'
-import { AddPlatformIdToUser1699901161457 } from './migration/common/1699901161457-add-platform-id-to-user'
+import { AddPlatformIdToUser1699901161457 } from './migration/postgres/1699901161457-add-platform-id-to-user'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
