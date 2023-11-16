@@ -66,6 +66,7 @@ export const proTasksPlan = [
         quantity: 1,
     },
 ]
+export const trailPeriodDays = 14;
 // PRODUCTION VALUES
 /*
 export const proTasksPlan = [

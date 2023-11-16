@@ -12,7 +12,6 @@ const appSumoPlans: Record<string, FlowPlanLimits> = {
         minimumPollingInterval: 10,
         connections: 20,
         teamMembers: 1,
-        activeFlows: 100,
     },
     'activepieces_tier2': {
         nickname: 'appsumo_activepieces_tier2',
@@ -20,7 +19,6 @@ const appSumoPlans: Record<string, FlowPlanLimits> = {
         minimumPollingInterval: 5,
         connections: 100,
         teamMembers: 1,
-        activeFlows: 100,
     },
     'activepieces_tier3': {
         nickname: 'appsumo_activepieces_tier3',
@@ -28,7 +26,6 @@ const appSumoPlans: Record<string, FlowPlanLimits> = {
         minimumPollingInterval: 1,
         connections: 100,
         teamMembers: 5,
-        activeFlows: 100,
     },
     'activepieces_tier4': {
         nickname: 'appsumo_activepieces_tier4',
@@ -36,7 +33,6 @@ const appSumoPlans: Record<string, FlowPlanLimits> = {
         minimumPollingInterval: 1,
         connections: 100,
         teamMembers: 5,
-        activeFlows: 100,
     },
     'activepieces_tier5': {
         nickname: 'appsumo_activepieces_tier5',
@@ -44,7 +40,6 @@ const appSumoPlans: Record<string, FlowPlanLimits> = {
         minimumPollingInterval: 1,
         connections: 100,
         teamMembers: 5,
-        activeFlows: 100,
     },
 }
 

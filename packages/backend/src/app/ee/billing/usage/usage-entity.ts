@@ -15,14 +15,6 @@ export const ProjectUsageEntity = new EntitySchema<ProjectUsageSchema>({
         consumedTasks: {
             type: Number,
         },
-        datasourcesSize: {
-            type: Number,
-            default: 0,
-        },
-        bots: {
-            type: Number,
-            default: 0,
-        },
         nextResetDatetime: {
             type: TIMESTAMP_COLUMN_TYPE,
         },

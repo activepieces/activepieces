@@ -5,7 +5,6 @@ import { SystemProp } from '../../../helper/system/system-prop'
 export const FlowPlanLimits = Type.Object({
     nickname: Type.String(),
     tasks: Type.Number(),
-    activeFlows: Type.Number(),
     connections: Type.Number(),
     minimumPollingInterval: Type.Number(),
     teamMembers: Type.Number(),

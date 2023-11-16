@@ -25,25 +25,10 @@ export const ProjectPlanEntity = new EntitySchema<ProjectPlanSchema>({
         minimumPollingInterval: {
             type: Number,
         },
-        activeFlows: {
-            type: Number,
-        },
         connections: {
             type: Number,
         },
         teamMembers: {
-            type: Number,
-        },
-        botPlanName: {
-            type: String,
-        },
-        bots: {
-            type: Number,
-        },
-        datasourcesSize: {
-            type: Number,
-        },
-        datasources: {
             type: Number,
         },
         tasks: {

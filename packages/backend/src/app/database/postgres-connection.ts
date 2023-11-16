@@ -33,7 +33,6 @@ import { AddAuthToPiecesMetadata1688922241747 } from './migration/postgres//1688
 import { AddUpdatedByInFlowVersion1689292797727 } from './migration/postgres/1689292797727-AddUpdatedByInFlowVersion'
 import { AddTasksToRun1689351564290 } from './migration/postgres/1689351564290-AddTasksToRun'
 import { commonProperties } from './database-connection'
-
 import { AddAppConnectionTypeToTopLevel1691703023866 } from './migration/postgres/1691703023866-add-app-connection-type-to-top-level'
 import { AddTagsToRun1692106375081 } from './migration/postgres/1692106375081-AddTagsToRun'
 import { AddFileToPostgres1693004806926 } from './migration/postgres/1693004806926-AddFileToPostgres'
@@ -77,6 +76,7 @@ import { AddDisplayNameToSigningKey1698698190965 } from './migration/postgres/16
 import { AddOAuth2AppEntiity1699221414907 } from './migration/postgres/1699221414907-AddOAuth2AppEntiity'
 import { AddFilteredPiecesToPlatform1699281870038 } from './migration/postgres/1699281870038-add-filtered-pieces-to-platform'
 import { AddSmtpAndPrivacyUrlToPlatform1699491705906 } from './migration/postgres/1699491705906-AddSmtpAndPrivacyUrlToPlatform'
+import { RemoveUnusedFieldsinBilling1700132368636 } from './migration/postgres/1700132368636-RemoveUnusedFieldsinBilling'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
@@ -169,6 +169,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddOAuth2AppEntiity1699221414907,
                 AddFilteredPiecesToPlatform1699281870038,
                 AddSmtpAndPrivacyUrlToPlatform1699491705906,
+                RemoveUnusedFieldsinBilling1700132368636,
             )
             break
         case ApEdition.ENTERPRISE:

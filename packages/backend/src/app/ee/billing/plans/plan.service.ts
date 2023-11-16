@@ -38,10 +38,9 @@ export const plansService = {
         projectPlanId: string
     }): Promise<void> {
         const stripeSubscriptionId = subscription?.id ?? null
-        const { nickname, activeFlows, connections, tasks, minimumPollingInterval, teamMembers } = planLimits
+        const { nickname, connections, tasks, minimumPollingInterval, teamMembers } = planLimits
         await projectPlanRepo.update(projectPlanId, {
             flowPlanName: nickname,
-            activeFlows,
             connections,
             tasks,
             minimumPollingInterval,
@@ -60,22 +59,18 @@ async function createInitialPlan({ projectId }: { projectId: ProjectId }): Promi
         }
         const project = (await projectService.getOne(projectId))!
         const user = (await userService.getMetaInfo({ id: project.ownerId }))!
-        const stripeCustomerId = await stripeHelper.createCustomer(user, project.id)
+        const stripeCustomerId = await stripeHelper.getOrCreateCustomer(user, project.id)
         const defaultPlanFlow = await getDefaultFlowPlan({ email: user.email })
         await projectPlanRepo.upsert({
             id: apId(),
             projectId,
             flowPlanName: defaultPlanFlow.nickname,
             tasks: defaultPlanFlow.tasks,
-            activeFlows: defaultPlanFlow.activeFlows,
             connections: defaultPlanFlow.connections,
             minimumPollingInterval: defaultPlanFlow.minimumPollingInterval,
             teamMembers: defaultPlanFlow.teamMembers,
             stripeCustomerId,
             stripeSubscriptionId: null,
-            botPlanName: 'bot-1',
-            bots: 1,
-            datasourcesSize: 104857600,
             subscriptionStartDatetime: project.created,
         }, ['projectId'])
         return projectPlanRepo.findOneByOrFail({ projectId })

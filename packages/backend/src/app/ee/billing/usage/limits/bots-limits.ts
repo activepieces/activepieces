@@ -21,7 +21,8 @@ async function limitBots({ projectId }: { projectId: ProjectId }): Promise<void>
 }
 
 async function limitDatasourcesSize({ projectId }: { projectId: ProjectId }): Promise<void> {
-    const { datasourcesSize: datasourcesSize, datasources: datasourcesNumber } = await plansService.getOrCreateDefaultPlan({ projectId })
+    const datasourcesNumber = 10
+    const datasourcesSize = 4 * 1024 * 1024
     const chatbots = await chatbotRepo.findBy({
         projectId,
     })

@@ -49,7 +49,14 @@ export const usageService = {
     }: {
         projectId: ProjectId
     }): Promise<ProjectUsage> {
-        let projectUsage = await findLatestProjectUsage(projectId)
+        let projectUsage = await projectUsageRepo.findOne({
+            where: {
+                projectId,
+            },
+            order: {
+                nextResetDatetime: 'DESC',
+            },
+        })
         const plan = await plansService.getOrCreateDefaultPlan({ projectId })
         const nextReset = nextResetDatetime(plan.subscriptionStartDatetime)
         if (
@@ -76,17 +83,6 @@ export const usageService = {
             ...projectUsage,
         }
     },
-}
-
-async function findLatestProjectUsage(projectId: ProjectId) {
-    return projectUsageRepo.findOne({
-        where: {
-            projectId,
-        },
-        order: {
-            nextResetDatetime: 'DESC',
-        },
-    })
 }
 
 function isNotSame(firstDate: string, secondDate: string) {

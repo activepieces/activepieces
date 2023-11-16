@@ -32,7 +32,7 @@ export const billingService = {
 
 function findPlanOrReturnFree({ subscription }: { subscription: Stripe.Subscription | null }): FlowPlanLimits {
     if (subscription?.status === 'active') {
-        return stripeHelper.parseDetailsFromStripePlan(subscription)
+        return stripeHelper.parseStripeSubscription(subscription)
     }
     return defaultPlanInformation
 }

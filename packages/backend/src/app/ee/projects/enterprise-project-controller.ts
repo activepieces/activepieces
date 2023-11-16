@@ -6,7 +6,6 @@ import { accessTokenManager } from '../../authentication/lib/access-token-manage
 import { CreateProjectRequest, UpdateProjectRequest } from '@activepieces/ee-shared'
 import { platformService } from '../platform/platform.service'
 import { plansService } from '../billing/plans/plan.service'
-import { PlanType } from '../billing/plans/pricing-plans'
 
 export const enterpriseProjectModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(enterpriseProjectController, { prefix: '/v1/projects' })
@@ -38,12 +37,9 @@ const enterpriseProjectController: FastifyPluginCallbackTypebox = (fastify, _opt
                 projectPlanId: plan.id,
                 subscription: null,
                 planLimits: {
-                    type: PlanType.FLOWS,
                     tasks: 50000,
-                    tasksPerDay: null,
                     connections: 100,
                     nickname: 'platform',
-                    activeFlows: 100,
                     minimumPollingInterval: 5,
                     teamMembers: 100,
                 },

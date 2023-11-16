@@ -4,56 +4,74 @@ import { SystemProp } from '../../../helper/system/system-prop'
 import { plansService } from '../plans/plan.service'
 import { ProjectId, UserMeta } from '@activepieces/shared'
 import { captureException } from '../../../helper/logger'
-import { billingService } from '../billing.service'
-import { PlanName, UpgradeRequest, platformTasksPriceId, platformUserPriceId, proUserPriceId } from '@activepieces/ee-shared'
+import { PlanName, UpgradeRequest, platformTasksPriceId, platformUserPriceId, proUserPriceId, trailPeriodDays } from '@activepieces/ee-shared'
 import { FlowPlanLimits } from '../plans/pricing-plans'
 
-const stripeSecret = system.get(SystemProp.STRIPE_SECRET_KEY)!
-const stripeWebhookSecret = system.get(SystemProp.STRIPE_WEBHOOK_SECRET)!
-const stripe = new Stripe(stripeSecret, {
+export const stripeSecret = system.get(SystemProp.STRIPE_SECRET_KEY)!
+export const stripeWebhookSecret = system.get(SystemProp.STRIPE_WEBHOOK_SECRET)!
+export const stripe = new Stripe(stripeSecret, {
     apiVersion: '2023-10-16',
 })
-
-async function createCustomer(user: UserMeta, projectId: ProjectId): Promise<string> {
-    const customer = await stripe.customers.create({
-        email: user.email,
-        name: user.firstName + ' ' + user.lastName,
-        description: 'User Id: ' + user.id + ' Project Id: ' + projectId,
-    })
-    return customer.id
-}
 
 enum StripeProductType {
     PRO = 'PRO',
     PRO_USER = 'PRO_USER',
+    PLATFORM = 'PLATFORM',
+    PLATFORM_USER = 'PLATFORM_USER'
 }
 
-function parseDetailsFromStripePlan(sub: Stripe.Subscription): FlowPlanLimits {
+async function getOrCreateCustomer(user: UserMeta, projectId: ProjectId): Promise<string> {
+    try {
+        // Retrieve the customer by their email
+        const existingCustomers = await stripe.customers.list({
+            email: user.email,
+            limit: 1,
+        });
+
+        // If a customer with the email exists, update their details
+        if (existingCustomers.data.length > 0) {
+            const existingCustomer = existingCustomers.data[0];
+            return existingCustomer.id;
+        }
+
+        // If no customer with the email exists, create a new customer
+        const newCustomer = await stripe.customers.create({
+            email: user.email,
+            name: user.firstName + ' ' + user.lastName,
+            description: 'User Id: ' + user.id + ' Project Id: ' + projectId,
+        });
+        return newCustomer.id;
+    } catch (error) {
+        captureException(error)
+        throw error
+    }
+}
+
+function parseStripeSubscription(sub: Stripe.Subscription): FlowPlanLimits {
     const flowPlanLimits = {
         nickname: 'empty',
         tasks: 0,
         minimumPollingInterval: 5,
         connections: 0,
-        teamMembers: 0,
-        activeFlows: 0,
+        teamMembers: 0
     }
     for (const plan of sub.items.data) {
         const productType = plan.price.metadata.type ?? StripeProductType.PRO
         switch (productType) {
             case StripeProductType.PRO: {
-                const { tasks, activeFlows, minimumPollingInterval, connections, teamMembers } = plan.price.metadata
+                const { tasks, minimumPollingInterval, connections, teamMembers } = plan.price.metadata
                 flowPlanLimits.nickname = plan.plan.nickname!
-                flowPlanLimits.activeFlows += Number(activeFlows)
-                flowPlanLimits.tasks += Number(tasks)
+                flowPlanLimits.tasks += Number(tasks) ?? 0
                 flowPlanLimits.minimumPollingInterval = Number(minimumPollingInterval)
-                flowPlanLimits.connections += Number(connections)
-                flowPlanLimits.teamMembers += Number(teamMembers)
+                flowPlanLimits.connections += Number(connections) ?? 0
+                flowPlanLimits.teamMembers += Number(teamMembers) ?? 0
                 break
             }
             case StripeProductType.PRO_USER: {
                 flowPlanLimits.teamMembers += plan.quantity ?? 0
                 break
             }
+
             default:
                 throw new Error(`Unknown product type ${productType}`)
         }
@@ -68,7 +86,6 @@ async function upgrade({
     request,
     subscriptionId,
 }: { request: UpgradeRequest, subscriptionId: string }): Promise<{ paymentLink: null }> {
-    // TODO bot is not yet supported
     await stripe.subscriptions.update(subscriptionId, {
         items: getPlanProducts(request),
     })
@@ -99,7 +116,6 @@ async function createPaymentLink({
 }): Promise<{ paymentLink: string }> {
     try {
         const plan = await plansService.getOrCreateDefaultPlan({ projectId })
-
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             line_items: getPlanProducts(request),
@@ -113,7 +129,7 @@ async function createPaymentLink({
                         missing_payment_method: 'cancel',
                     },
                 },
-                trial_period_days: 14,
+                trial_period_days: trailPeriodDays,
             },
         })
         return {
@@ -163,30 +179,10 @@ function getPlanProducts(request: UpgradeRequest) {
     return lineItems
 }
 
-async function handleWebhook({ payload, signature }: { payload: string, signature: string }): Promise<void> {
-    const webhook = stripe.webhooks.constructEvent(payload, signature, stripeWebhookSecret)
-    const subscription = webhook.data.object as Stripe.Subscription
-    const stripeCustomerId = subscription.customer as string
-    const projectPlan = await plansService.getByStripeCustomerId({
-        stripeCustomerId,
-    })
-    switch (webhook.type) {
-        case 'customer.subscription.deleted':
-        case 'customer.subscription.updated':
-        case 'customer.subscription.created': {
-            await billingService.update({ subscription, projectPlanId: projectPlan.id })
-            break
-        }
-        default:
-            throw new Error('Unkown type ' + webhook.type)
-    }
-}
-
 export const stripeHelper = {
-    parseDetailsFromStripePlan,
+    parseStripeSubscription,
     createPortalSessionUrl,
-    handleWebhook,
     createPaymentLink,
     upgrade,
-    createCustomer,
+    getOrCreateCustomer,
 }
