@@ -463,7 +463,10 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
           if (prop.required) {
             validators.push(Validators.required);
           }
-          controls[pk] = new UntypedFormControl(propValue || prop.defaultValue, validators);
+          controls[pk] = new UntypedFormControl(
+            propValue || prop.defaultValue,
+            validators
+          );
           break;
         }
         case PropertyType.DROPDOWN:
@@ -471,7 +474,10 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
           if (prop.required) {
             validators.push(Validators.required);
           }
-          controls[pk] = new UntypedFormControl(propValue || prop.defaultValue, validators);
+          controls[pk] = new UntypedFormControl(
+            propValue || prop.defaultValue,
+            validators
+          );
           break;
         }
         case PropertyType.DYNAMIC: {

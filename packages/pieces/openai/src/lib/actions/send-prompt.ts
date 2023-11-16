@@ -159,7 +159,7 @@ export const askOpenAI = createAction({
 
 		// Check message history token size
 		// System limit is 32K tokens, we can probably make it bigger but this is a safe spot
-		let tokenLength = await calculateMessagesTokenSize(messageHistory, model);
+		const tokenLength = await calculateMessagesTokenSize(messageHistory, model);
 		if (memoryKey) {
 			// If tokens exceed 90% system limit or 90% of model limit - maxTokens, reduce history token size
 			if (exceedsHistoryLimit(tokenLength, model, maxTokens)) {
