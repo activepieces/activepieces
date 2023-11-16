@@ -117,8 +117,6 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
   customizedInputs: Record<string, boolean> | undefined;
   checkingOAuth2CloudManager = false;
   properties: PiecePropertyMap = {};
-  requiredProperties: PiecePropertyMap = {};
-  optionalProperties: PiecePropertyMap = {};
   optionalConfigsMenuOpened = false;
   @Input() actionOrTriggerName: string;
   @Input() packageType: PackageType;
@@ -136,6 +134,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
   OnChange: (value: unknown) => void;
   OnTouched: () => void;
   jsonMonacoEditor: any;
+
   constructor(
     private fb: UntypedFormBuilder,
     private actionMetaDataService: PieceMetadataService,
@@ -148,12 +147,15 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
       BuilderSelectors.selectAppConnectionsDropdownOptions
     );
   }
+
   writeValue(obj: PiecePropertiesFormValue): void {
     this.properties = obj.properties;
     this.customizedInputs = obj.customizedInputs;
     this.descriptionExpandedMap = {};
     this.descriptionOverflownMap = {};
+
     this.createForm(obj.propertiesValues);
+
     if (obj.setDefaultValues) {
       this.setDefaultValue$ = of(null).pipe(
         tap(() => {
@@ -163,6 +165,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
     }
     this.cd.markForCheck();
   }
+
   registerOnChange(fn: (value: unknown) => void): void {
     this.OnChange = fn;
   }
@@ -183,27 +186,12 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
     return null;
   }
   createForm(propertiesValues: Record<string, unknown>) {
-    this.requiredProperties = {};
-    this.optionalProperties = {};
-    Object.entries(this.properties).forEach(([pk]) => {
-      this.properties[pk].required
-        ? (this.requiredProperties[pk] = this.properties[pk])
-        : (this.optionalProperties[pk] = this.properties[pk]);
-    });
-
-    const requiredConfigsControls = this.createConfigsFormControls(
-      this.requiredProperties,
-      propertiesValues
-    );
-    const optionalConfigsControls = this.createConfigsFormControls(
-      this.optionalProperties,
+    const configsControls = this.createConfigsFormControls(
+      this.properties,
       propertiesValues
     );
 
-    this.form = this.fb.group({
-      ...requiredConfigsControls,
-      ...optionalConfigsControls,
-    });
+    this.form = this.fb.group(configsControls);
 
     this.createDropdownConfigsObservables();
     this.createDynamicConfigsObservables();
@@ -388,12 +376,14 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
     properties: PiecePropertyMap,
     propertiesValues: Record<string, unknown>
   ) {
-    const controls: { [key: string]: UntypedFormControl | UntypedFormGroup } =
-      {};
+    const controls: { [key: string]: UntypedFormControl | UntypedFormGroup }
+      = {};
+
     Object.keys(properties).forEach((pk) => {
       const validators: ValidatorFn[] = [];
       const prop = properties[pk];
       const propValue = propertiesValues[pk];
+
       switch (prop.type) {
         case PropertyType.ARRAY: {
           const controlValue = propValue
@@ -519,6 +509,15 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
               validators
             );
           }
+          break;
+        }
+        case PropertyType.GROUP:
+          Object.keys(prop.props).forEach((gpk) => {
+            controls[`${pk}.${gpk}`] = new UntypedFormControl(propValue);
+          })
+          break;
+        case PropertyType.SEPARATOR:
+        case PropertyType.TITLE: {
           break;
         }
         default: {

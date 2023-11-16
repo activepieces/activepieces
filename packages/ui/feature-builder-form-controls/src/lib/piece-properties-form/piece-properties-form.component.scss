@@ -49,3 +49,82 @@
 .authentication-section {
   margin-top: 0.9375rem;
 }
+
+div.separator {
+  position: relative;
+  margin-bottom: 2rem;
+  margin-top: 2rem;
+
+  &:empty {
+    margin-bottom: 5rem;
+    height: 2px;
+    background: $border;
+  }
+
+  &:before {
+    width: 100%;
+  }
+
+  &:not(:empty) {
+    background: inherit;
+    height: inherit;
+
+    &:before, &:after {
+      content: '';
+      position: absolute;
+      left: 0;
+      bottom: -5px;
+      height: 2px;
+      background: $border;
+    }
+  }
+}
+
+.collapsable {
+  margin-bottom: 1.5rem;
+  border: 1px solid $border;
+  border-radius: 4px;
+  padding: 1rem;
+
+  .collapsable-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+
+    .collapsable-title {
+      font-weight: 500;
+      font-size: 1rem;
+      line-height: 1.5rem;
+      color: $form-label;
+    }
+
+    .collapsable-icon {
+      transform: scale(1.5) translateY(3px);
+      height: 1rem;
+      width: 1rem;
+      fill: $form-label;
+    }
+  }
+
+  .collapsable-content {
+    display: none;
+    margin-bottom: 1.5rem;
+  }
+
+  &.expanded {
+    .collapsable-header {
+      border-bottom: 1px solid $border;
+      margin-bottom: 25px;
+      padding-bottom: 14px;
+
+      .collapsable-icon {
+        transform: scale(1.5) translate(-8px, 1px) rotate(90deg);
+      }
+    }
+
+    .collapsable-content {
+      display: block;
+    }
+  }
+}

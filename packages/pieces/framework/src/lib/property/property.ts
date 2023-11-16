@@ -1,16 +1,16 @@
 import {
-    ArrayProperty,
-    CheckboxProperty,
-    DateTimeProperty,
-    FileProperty,
-    JsonProperty,
-    LongTextProperty,
-    MarkDownProperty,
-    MarkDownPropertySchema,
-    NumberProperty,
-    ObjectProperty,
-    SecretTextProperty,
-    ShortTextProperty
+  ArrayProperty,
+  CheckboxProperty,
+  DateTimeProperty,
+  FileProperty, GroupProperty,
+  JsonProperty,
+  LongTextProperty,
+  MarkDownProperty,
+  MarkDownPropertySchema,
+  NumberProperty,
+  ObjectProperty,
+  SecretTextProperty, SeparatorProperty,
+  ShortTextProperty, TitleProperty
 } from "./base-prop";
 import { BasicAuthProperty } from "./basic-auth-prop";
 import { CustomAuthProperty, CustomAuthProps } from "./custom-auth-prop";
@@ -39,7 +39,11 @@ export enum PropertyType {
 	DYNAMIC = "DYNAMIC",
 	CUSTOM_AUTH = "CUSTOM_AUTH",
 	DATE_TIME = "DATE_TIME",
-	FILE = "FILE"
+	FILE = "FILE",
+
+  SEPARATOR = 'SEPARATOR',
+  TITLE = 'TITLE',
+  GROUP = 'GROUP',
 }
 
 export type PieceAuthProperty =
@@ -63,7 +67,11 @@ export type NonAuthPieceProperty = ShortTextProperty<boolean>
 | StaticMultiSelectDropdownProperty<unknown, boolean>
 | DynamicProperties<boolean>
 | DateTimeProperty<boolean>
-| FileProperty<boolean>;
+| FileProperty<boolean>
+| SeparatorProperty<boolean>
+| TitleProperty<boolean>
+| GroupProperty<boolean>
+;
 
 export type PieceProperty = NonAuthPieceProperty | PieceAuthProperty
 
@@ -100,12 +108,12 @@ export const Property = {
 		return {displayName: 'Markdown', required: true, description: request.value, type: PropertyType.MARKDOWN, valueSchema: undefined as never}
 	},
 	Number<R extends boolean>(request: Properties<NumberProperty<R>>): R extends true ? NumberProperty<true> : NumberProperty<false> {
-		return { 
+		return {
 			...request,
 			defaultProcessors: [Processors.number],
 			defaultValidators: [Validators.number],
-			valueSchema: undefined, 
-			type: PropertyType.NUMBER, 
+			valueSchema: undefined,
+			type: PropertyType.NUMBER,
 		} as unknown as R extends true ? NumberProperty<true> : NumberProperty<false>;
 	},
 
@@ -134,21 +142,33 @@ export const Property = {
 		return { ...request, valueSchema: undefined, type: PropertyType.STATIC_MULTI_SELECT_DROPDOWN } as unknown as R extends true ? StaticMultiSelectDropdownProperty<T, true> : StaticMultiSelectDropdownProperty<T, false>;
 	},
 	DateTime<R extends boolean>(request: Properties<DateTimeProperty<R>>): R extends true ? DateTimeProperty<true> : DateTimeProperty<false> {
-		return { 
-			...request, 
+		return {
+			...request,
 			defaultProcessors: [Processors.datetime],
 			defaultValidators: [Validators.datetimeIso],
-			valueSchema: undefined, 
-			type: PropertyType.DATE_TIME, 
+			valueSchema: undefined,
+			type: PropertyType.DATE_TIME,
 		} as unknown as R extends true ? DateTimeProperty<true> : DateTimeProperty<false>;
 	},
 	File<R extends boolean>(request: Properties<FileProperty<R>>): R extends true ? FileProperty<true> : FileProperty<false> {
-		return { ...request, 
+		return { ...request,
 			defaultProcessors: [Processors.file],
 			defaultValidators: [Validators.file],
 			valueSchema: undefined, type: PropertyType.FILE } as unknown as R extends true ? FileProperty<true> : FileProperty<false>
 	},
 };
+
+export const PropertyStyle = {
+  Separator<R extends boolean>(): R extends true ? SeparatorProperty<true> : SeparatorProperty<false> {
+    return { type: PropertyType.SEPARATOR } as unknown as R extends true ? SeparatorProperty<true> : SeparatorProperty<false>;
+  },
+  Title<R extends boolean>(request: { displayName: string }): R extends true ? TitleProperty<true> : TitleProperty<false> {
+    return { ...request, type: PropertyType.TITLE } as unknown as R extends true ? TitleProperty<true> : TitleProperty<false>;
+  },
+  Group<R extends boolean>(request: { displayName: string, isCollapsed?: boolean, props: NonAuthPiecePropertyMap }): R extends true ? GroupProperty<true> : GroupProperty<false> {
+    return { ...request, isCollapsed: request.isCollapsed ?? true, type: PropertyType.GROUP } as unknown as R extends true ? GroupProperty<true> : GroupProperty<false>;
+  }
+}
 
 export const PieceAuth = {
 	SecretText<R extends boolean>(request: Properties<SecretTextProperty<R>>): R extends true ? SecretTextProperty<true> : SecretTextProperty<false> {

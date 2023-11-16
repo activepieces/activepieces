@@ -27,7 +27,7 @@ export type TPropertyValue<T, U extends PropertyType, VALIDATION_INPUT extends V
     valueSchema: T;
     type: U;
     required: REQUIRED;
-    defaultProcessors?: ProcessorFn[]; 
+    defaultProcessors?: ProcessorFn[];
 	processors?: ProcessorFn[];
 	validators?: TypedValidatorFn<VALIDATION_INPUT>[];
 	defaultValidators?: TypedValidatorFn<VALIDATION_INPUT>[];
@@ -65,6 +65,12 @@ export type ObjectProperty<R extends boolean> = BasePropertySchema & TPropertyVa
 export type JsonProperty<R extends boolean> = BasePropertySchema & TPropertyValue<Record<string, unknown>, PropertyType.JSON, ValidationInputType.JSON, R>;
 
 export type DateTimeProperty<R extends boolean> = BasePropertySchema & TPropertyValue<string, PropertyType.DATE_TIME, ValidationInputType.DATE_TIME, R>;
+
+export type SeparatorProperty<R extends boolean> = BasePropertySchema & TPropertyValue<never, PropertyType.SEPARATOR, ValidationInputType.ANY, R>;
+
+export type TitleProperty<R extends boolean> = BasePropertySchema & TPropertyValue<never, PropertyType.TITLE, ValidationInputType.ANY, R>;
+
+export type GroupProperty<R extends boolean> = BasePropertySchema & TPropertyValue<never, PropertyType.GROUP, ValidationInputType.ANY, R> & {props: Record<string, BasePropertySchema>};
 
 export class ApFile {
     constructor(public filename: string, public data: Buffer, public extension?: string) {}
