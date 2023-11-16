@@ -5,17 +5,12 @@ import { ApId } from '../common/id-generator'
 export type UserId = ApId
 
 export enum UserStatus {
+    /* user registered but didn't verify their email */
+    CREATED = 'CREATED',
+    /* user invited but didn't accept the invitation */
+    INVITED = 'INVITED',
+    /* user registered and verified their email or accepted the invitation */
     VERIFIED = 'VERIFIED',
-
-    /**
-   * A user that was invited to a project but has not yet accepted the invitation.
-   */
-    SHADOW = 'SHADOW',
-
-    /**
-   * A user using managed authentication.
-   */
-    EXTERNAL = 'EXTERNAL',
 }
 
 export const User = Type.Object({
@@ -30,6 +25,7 @@ export const User = Type.Object({
     imageUrl: Type.Optional(Type.String()),
     title: Type.Optional(Type.String()),
     externalId: Type.Optional(Type.String()),
+    platformId: Type.Union([ApId, Type.Null()]),
 })
 
 export type User = Static<typeof User>

@@ -9,6 +9,7 @@ export const authenticationService = {
         try {
             const user = await userService.create({
                 ...request,
+                platformId: null,
             })
 
             const { user: updatedUser, project, token } = await hooks.get().postSignUp({
@@ -38,7 +39,8 @@ export const authenticationService = {
     },
 
     signIn: async (request: SignInRequest): Promise<AuthenticationResponse> => {
-        const user = await userService.getOneByEmail({
+        const user = await userService.getByPlatformAndEmail({
+            platformId: null,
             email: request.email,
         })
 

@@ -3,12 +3,13 @@ import { Router } from '@angular/router';
 import { AuthenticationService } from '../../service/authentication.service';
 import { ProjectService } from '../../service/project.service';
 import { ApFlagId, Project } from '@activepieces/shared';
-import { Observable, catchError, map, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import { FlagService } from '../../service/flag.service';
-
 import { Store } from '@ngrx/store';
 import { ProjectSelectors } from '../../store/project/project.selector';
-import { PlatformService } from '../../service/platform.service';
+import { environment } from '../../environments/environment';
+import { LocaleKey, LocalesService } from '../../service/locales.service';
+import { Location } from '@angular/common';
 
 @Component({
   selector: 'ap-user-avatar',
@@ -19,23 +20,28 @@ import { PlatformService } from '../../service/platform.service';
 export class UserAvatarComponent implements OnInit {
   showAvatarOuterCircle = false;
   currentUserEmail = 'Dev@ap.com';
-  // BEGIN EE
   projects$: Observable<Project[]>;
   selectedProject$: Observable<Project | undefined>;
   switchProject$: Observable<void>;
   overflownProjectsNames: Record<string, string> = {};
   billingEnabled$: Observable<boolean>;
   projectEnabled$: Observable<boolean>;
-  showPlatform$ = of(false);
+  showPlatform = false;
   showCommunity$: Observable<boolean>;
+  redirectToLocale$: Observable<string>;
+  locales = environment.localesMap;
+  selectedLanguage = {
+    languageName: 'English',
+    locale: 'en',
+  };
   constructor(
     public authenticationService: AuthenticationService,
     private router: Router,
     private flagService: FlagService,
     private store: Store,
-    // BEGIN EE
     private projectService: ProjectService,
-    private platformService: PlatformService // END EE
+    private localesService: LocalesService,
+    private location: Location
   ) {
     this.showCommunity$ = this.flagService.isFlagEnabled(
       ApFlagId.SHOW_COMMUNITY
@@ -52,16 +58,11 @@ export class UserAvatarComponent implements OnInit {
       ProjectSelectors.selectCurrentProject
     );
     // END EE
+    this.selectedLanguage = this.localesService.getCurrentLanguage();
   }
   ngOnInit(): void {
     this.currentUserEmail = this.authenticationService.currentUser.email;
-    const platformId = this.authenticationService.getPlatformId();
-    if (platformId) {
-      this.showPlatform$ = this.platformService.getPlatform(platformId).pipe(
-        map(() => true),
-        catchError(() => of(false))
-      );
-    }
+    this.showPlatform = this.authenticationService.isPlatformOwner();
   }
 
   getDropDownLeftOffset(
@@ -113,5 +114,11 @@ export class UserAvatarComponent implements OnInit {
       '_blank',
       'noopener'
     );
+  }
+  redirectToLocale(locale: LocaleKey) {
+    const currentUrl = this.location.path();
+    const newUrl = `/${locale}${currentUrl}`;
+    console.log(newUrl);
+    window.location.href = newUrl;
   }
 }

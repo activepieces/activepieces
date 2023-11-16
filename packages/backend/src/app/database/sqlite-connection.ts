@@ -1,4 +1,3 @@
-import os from 'node:os'
 import path from 'node:path'
 import { mkdirSync } from 'node:fs'
 import { DataSource, MigrationInterface } from 'typeorm'
@@ -25,11 +24,11 @@ import { StoreCodeInsideFlow1697969398200 } from './migration/common/16979693982
 import { AddPlatformToProject1698078715730 } from './migration/sqlite/1698078715730-add-platform-to-project'
 import { AddTerminationReasonSqlite31698323327318 } from './migration/sqlite/1698323327318-AddTerminationReason'
 import { AddExternalIdSqlite31698857968495 } from './migration/sqlite/1698857968495-AddExternalIdSqlite3'
+import { UpdateUserStatusRenameShadowToInvited1699818680567 } from './migration/common/1699818680567-update-user-status-rename-shadow-to-invited'
+import { AddPlatformIdToUser1699901161457 } from './migration/common/1699901161457-add-platform-id-to-user'
 
 const getSqliteDatabaseFilePath = (): string => {
-    const homeDirectoryPath = os.homedir()
-    const apConfigDirectoryName = '.activepieces'
-    const apConfigDirectoryPath = path.join(homeDirectoryPath, apConfigDirectoryName)
+    const apConfigDirectoryPath = system.getOrThrow(SystemProp.CONFIG_PATH)
     mkdirSync(apConfigDirectoryPath, { recursive: true })
     return path.join(apConfigDirectoryPath, 'database.sqlite')
 }
@@ -65,6 +64,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddPlatformToProject1698078715730,
         AddTerminationReasonSqlite31698323327318,
         AddExternalIdSqlite31698857968495,
+        UpdateUserStatusRenameShadowToInvited1699818680567,
+        AddPlatformIdToUser1699901161457,
     ]
     const edition = getEdition()
     switch (edition) {
