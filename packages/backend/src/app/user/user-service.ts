@@ -52,7 +52,7 @@ export const userService = {
     },
 
     async getByPlatformAndEmail({ platformId, email }: GetByPlatformAndEmailParams): Promise<User | null> {
-        const platformWhereQuery = platformId ? { platformId, } : { platformId: IsNull() }
+        const platformWhereQuery = platformId ? { platformId } : { platformId: IsNull() }
 
         return userRepo.createQueryBuilder()
             .where(platformWhereQuery)
