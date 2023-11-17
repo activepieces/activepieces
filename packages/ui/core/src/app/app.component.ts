@@ -314,12 +314,13 @@ export class AppComponent implements OnInit {
     );
   }
   private rediectToCorrectLocale() {
+    //TODO: once we start having /en routes this logic should be altered to checking (if the localeFromBrowserUrl is undefined, switch to what is in localstorage)
     const currentLocaleFromUrl =
       this.localesService.getCurrentLocaleFromBrowserUrlOrDefault();
     const currentLanguageFromStorage =
       this.localesService.getCurrentLanguageFromLocalStorageOrDefault();
     if (currentLanguageFromStorage.locale !== currentLocaleFromUrl) {
-      this.localesService.setCurrentLocale(currentLocaleFromUrl);
+      this.localesService.redirectToLocale(currentLanguageFromStorage.locale);
       return;
     }
   }
