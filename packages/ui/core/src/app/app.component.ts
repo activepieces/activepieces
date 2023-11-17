@@ -320,7 +320,6 @@ export class AppComponent implements OnInit {
       this.localesService.getCurrentLanguageFromLocalStorageOrDefault();
     if (currentLanguageFromStorage.locale !== currentLocaleFromUrl) {
       this.localesService.setCurrentLocale(currentLocaleFromUrl);
-      this.localesService.redirectToLocale(currentLocaleFromUrl);
       return;
     }
   }
