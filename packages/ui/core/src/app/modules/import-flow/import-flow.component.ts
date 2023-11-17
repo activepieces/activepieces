@@ -10,6 +10,7 @@ import {
   TelemetryService,
   TemplatesService,
 } from '@activepieces/ui/common';
+import { Location } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { Meta } from '@angular/platform-browser';
@@ -44,7 +45,8 @@ export class ImportFlowComponent implements OnInit {
     private router: Router,
     private metaService: Meta,
     private telemetryService: TelemetryService,
-    private flagService: FlagService
+    private flagService: FlagService,
+    private location: Location
   ) {
     this.fullLogoUrl$ = this.flagService
       .getLogos()
@@ -123,7 +125,7 @@ export class ImportFlowComponent implements OnInit {
           if (error.status === StatusCodes.UNAUTHORIZED) {
             this.router.navigate(['/sign-up'], {
               queryParams: {
-                redirect_url: `${window.location.pathname}`.split('?')[0],
+                redirect_url: `${this.location.path()}`.split('?')[0],
               },
             });
             return EMPTY;

@@ -57,7 +57,7 @@ export class UserAvatarComponent implements OnInit {
     );
     // END EE
     this.selectedLanguage =
-      this.localesService.getCurrentLanguageFromLocalStorage();
+      this.localesService.getCurrentLanguageOrReturnDefault();
   }
   ngOnInit(): void {
     this.currentUserEmail = this.authenticationService.currentUser.email;
@@ -115,6 +115,7 @@ export class UserAvatarComponent implements OnInit {
     );
   }
   redirectToLocale(locale: LocaleKey) {
+    this.localesService.setCurrentLanguage(locale);
     this.localesService.redirectToLocale(locale);
   }
 }

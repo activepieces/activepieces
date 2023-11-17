@@ -316,17 +316,11 @@ export class AppComponent implements OnInit {
   private rediectToCorrectLocale() {
     const currentLocaleFromUrl =
       this.localesService.getCurrentLocaleFromBrowserUrl();
-    if (this.localesService.localeGuard(currentLocaleFromUrl)) {
-      if (
-        currentLocaleFromUrl !==
-        this.localesService.getCurrentLanguageFromLocalStorage().locale
-      ) {
-        this.localesService.setCurrentLanguage(currentLocaleFromUrl);
-      }
-    } else {
-      this.localesService.redirectToLocale(
-        this.localesService.getCurrentLanguageFromLocalStorage().locale
-      );
+    const currentLanguageFromStorage =
+      this.localesService.getCurrentLanguageOrReturnDefault();
+    if (currentLanguageFromStorage.locale !== currentLocaleFromUrl) {
+      this.localesService.redirectToLocale(currentLanguageFromStorage.locale);
+      return;
     }
   }
 }
