@@ -315,7 +315,7 @@ export class AppComponent implements OnInit {
   }
   private rediectToCorrectLocale() {
     const currentLocaleFromUrl =
-      this.localesService.getCurrentLocaleFromBrowserUrl();
+      this.localesService.getCurrentLocaleFromBrowserUrlOrDefault();
     const currentLanguageFromStorage =
       this.localesService.getCurrentLanguageFromLocalStorageOrDefault();
     if (currentLanguageFromStorage.locale !== currentLocaleFromUrl) {

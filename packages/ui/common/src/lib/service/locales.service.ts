@@ -12,7 +12,7 @@ export class LocalesService {
   setCurrentLocale(locale: LocaleKey) {
     localStorage.setItem(this.currentLanguageKeyInLocalStorage, locale);
   }
-  getCurrentLocaleFromBrowserUrl(): LocaleKey {
+  getCurrentLocaleFromBrowserUrlOrDefault(): LocaleKey {
     const href = window.location.href;
     const locale = href.split(window.location.origin + '/')[1]?.split('/')[0];
     return this.localeGuard(locale) ? locale : this.defaultLocale;
