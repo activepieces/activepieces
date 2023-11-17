@@ -9,10 +9,10 @@ export class LocalesService {
   constructor(private location: Location) {}
   readonly currentLanguageKeyInLocalStorage = 'currentLanguage';
   private readonly defaultLocale = 'en';
-  setCurrentLanguage(locale: LocaleKey) {
+  setCurrentLocale(locale: LocaleKey) {
     localStorage.setItem(this.currentLanguageKeyInLocalStorage, locale);
   }
-  getCurrentLocaleFromBrowserUrl(): LocaleKey {
+  getCurrentLocaleFromBrowserUrlOrDefault(): LocaleKey {
     const href = window.location.href;
     const locale = href.split(window.location.origin + '/')[1]?.split('/')[0];
     return this.localeGuard(locale) ? locale : this.defaultLocale;
@@ -22,7 +22,7 @@ export class LocalesService {
     return !isNil(locale) && this.localeGuard(locale) ? locale : undefined;
   }
 
-  getCurrentLanguageOrReturnDefault(): {
+  getCurrentLanguageFromLocalStorageOrDefault(): {
     locale: LocaleKey;
     languageName: string;
   } {
@@ -42,11 +42,9 @@ export class LocalesService {
     const currentUrl =
       this.location.path().length === 0 ? '/' : this.location.path();
 
-    if (locale === this.defaultLocale) {
-      console.log('default locale ' + currentUrl);
+    if (locale === 'en') {
       window.location.href = `${currentUrl}`;
     } else {
-      console.log('not default locale ' + `${locale}${currentUrl}`);
       window.location.href = `/${locale}${currentUrl}`;
     }
   }
