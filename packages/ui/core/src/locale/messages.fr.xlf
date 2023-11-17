@@ -10,13 +10,13 @@
         </context-group>
         <target state="final">Partager le modèle</target>
       </trans-unit>
-      <trans-unit id="4902817035128594900" datatype="html">
+      <trans-unit id="4902817035128594900" datatype="html" approved="yes">
         <source>Description</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/components/src/lib/share-flow-template-dialog/share-flow-template-dialog.component.html</context>
           <context context-type="linenumber">18</context>
         </context-group>
-        <target state="needs-translation">Description</target>
+        <target state="final">Description</target>
       </trans-unit>
       <trans-unit id="8289400513068937763" datatype="html" approved="yes">
         <source>Blog Url </source>
@@ -456,15 +456,15 @@
         </context-group>
         <target state="needs-translation"> Read our docs to see how you will use this key to sign requests sent from your app to Activepieces (You will no longer find the key on Activepeices). </target>
       </trans-unit>
-      <trans-unit id="3898924154259681557" datatype="html">
+      <trans-unit id="3898924154259681557" datatype="html" approved="yes">
         <source>I understand I will no longer be able to access this key here. </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/ui-platform/src/lib/components/dialogs/create-signing-key-dialog/create-signing-key-dialog.component.html</context>
           <context context-type="linenumber">36,39</context>
         </context-group>
-        <target state="needs-translation">I understand I will no longer be able to access this key here. </target>
+        <target state="final">Je comprends que je ne pourrai plus accéder à cette clé. </target>
       </trans-unit>
-      <trans-unit id="7941428823403788384" datatype="html">
+      <trans-unit id="7941428823403788384" datatype="html" approved="yes">
         <source> Create </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/ui-platform/src/lib/components/dialogs/create-signing-key-dialog/create-signing-key-dialog.component.html</context>
@@ -474,31 +474,31 @@
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/pages/flows-table/new-folder-dialog/new-folder-dialog.component.html</context>
           <context context-type="linenumber">27,29</context>
         </context-group>
-        <target state="needs-translation"> Create </target>
+        <target state="final"> Créer </target>
       </trans-unit>
-      <trans-unit id="3243919419794524214" datatype="html">
+      <trans-unit id="3243919419794524214" datatype="html" approved="yes">
         <source>Create Key</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/ui-platform/src/lib/components/dialogs/create-signing-key-dialog/create-signing-key-dialog.component.ts</context>
           <context context-type="linenumber">28</context>
         </context-group>
-        <target state="needs-translation">Create Key</target>
+        <target state="final">Créer une clé</target>
       </trans-unit>
-      <trans-unit id="1953868661427257650" datatype="html">
+      <trans-unit id="1953868661427257650" datatype="html" approved="yes">
         <source>Key Created</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/ui-platform/src/lib/components/dialogs/create-signing-key-dialog/create-signing-key-dialog.component.ts</context>
           <context context-type="linenumber">72</context>
         </context-group>
-        <target state="needs-translation">Key Created</target>
+        <target state="final">Clé créée</target>
       </trans-unit>
-      <trans-unit id="5295998403339413845" datatype="html">
+      <trans-unit id="5295998403339413845" datatype="html" approved="yes">
         <source> Client ID is required </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/ui-platform/src/lib/components/dialogs/edit-add-piece-oauth-2-credentials-dialog/edit-add-piece-oauth-2-credentials-dialog.component.html</context>
           <context context-type="linenumber">18,20</context>
         </context-group>
-        <target state="needs-translation"> Client ID is required </target>
+        <target state="final"> ID du client est requis </target>
       </trans-unit>
       <trans-unit id="4499071995661261604" datatype="html">
         <source> Client secret is required </source>
@@ -536,13 +536,13 @@
         </context-group>
         <target state="final">Modifier</target>
       </trans-unit>
-      <trans-unit id="3249513483374643425" datatype="html">
+      <trans-unit id="3249513483374643425" datatype="html" approved="yes">
         <source>Add</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/ui-platform/src/lib/components/dialogs/edit-add-piece-oauth-2-credentials-dialog/edit-add-piece-oauth-2-credentials-dialog.component.ts</context>
           <context context-type="linenumber">25</context>
         </context-group>
-        <target state="needs-translation">Add</target>
+        <target state="final">Ajouter</target>
       </trans-unit>
       <trans-unit id="859739984484773252" datatype="html">
         <source>OAuth2 app</source>
@@ -768,45 +768,45 @@
         </context-group>
         <target state="needs-translation"> No pieces added yet. </target>
       </trans-unit>
-      <trans-unit id="6920749967557081024" datatype="html">
+      <trans-unit id="6920749967557081024" datatype="html" approved="yes">
         <source>is now available to users</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/ui-platform/src/lib/pages/pieces-table/pieces-table.component.ts</context>
           <context context-type="linenumber">44</context>
         </context-group>
-        <target state="needs-translation">is now available to users</target>
+        <target state="final">est maintenant disponible pour les utilisateurs</target>
       </trans-unit>
-      <trans-unit id="6238330532589307935" datatype="html">
+      <trans-unit id="6238330532589307935" datatype="html" approved="yes">
         <source>is now hidden from users</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/ui-platform/src/lib/pages/pieces-table/pieces-table.component.ts</context>
           <context context-type="linenumber">45</context>
         </context-group>
-        <target state="needs-translation">is now hidden from users</target>
+        <target state="final">est maintenant caché aux utilisateurs</target>
       </trans-unit>
-      <trans-unit id="5824892941228684657" datatype="html">
+      <trans-unit id="5824892941228684657" datatype="html" approved="yes">
         <source>Show this piece to users</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/ui-platform/src/lib/pages/pieces-table/pieces-table.component.ts</context>
           <context context-type="linenumber">46</context>
         </context-group>
-        <target state="needs-translation">Show this piece to users</target>
+        <target state="final">Afficher cette recette aux utilisateurs</target>
       </trans-unit>
-      <trans-unit id="3373255706066742214" datatype="html">
+      <trans-unit id="3373255706066742214" datatype="html" approved="yes">
         <source>Hide this piece from users</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/ui-platform/src/lib/pages/pieces-table/pieces-table.component.ts</context>
           <context context-type="linenumber">47</context>
         </context-group>
-        <target state="needs-translation">Hide this piece from users</target>
+        <target state="final">Cacher cette recette aux utilisateurs</target>
       </trans-unit>
-      <trans-unit id="9175375064726786258" datatype="html">
+      <trans-unit id="9175375064726786258" datatype="html" approved="yes">
         <source>Add your own OAuth2 app</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/ui-platform/src/lib/pages/pieces-table/pieces-table.component.ts</context>
           <context context-type="linenumber">48</context>
         </context-group>
-        <target state="needs-translation">Add your own OAuth2 app</target>
+        <target state="final">Ajoutez votre propre application OAuth2</target>
       </trans-unit>
       <trans-unit id="546461454584785041" datatype="html">
         <source>Update your own OAuth2 app</source>
@@ -832,45 +832,45 @@
         </context-group>
         <target state="needs-translation"> OAuth2 app credentials</target>
       </trans-unit>
-      <trans-unit id="3570674251186879209" datatype="html">
+      <trans-unit id="3570674251186879209" datatype="html" approved="yes">
         <source>all connections depending on these credentials will fail after deleting</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/ui-platform/src/lib/pages/pieces-table/pieces-table.component.ts</context>
           <context context-type="linenumber">153</context>
         </context-group>
-        <target state="needs-translation">all connections depending on these credentials will fail after deleting</target>
+        <target state="final">toutes les connexions dépendant de ces identifiants échoueront après suppression</target>
       </trans-unit>
-      <trans-unit id="2198590276913934346" datatype="html">
+      <trans-unit id="2198590276913934346" datatype="html" approved="yes">
         <source>Logo URL</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/ui-platform/src/lib/pages/platform-appearance/platform-appearance.component.html</context>
           <context context-type="linenumber">12</context>
         </context-group>
-        <target state="needs-translation">Logo URL</target>
+        <target state="final">URL du logo</target>
       </trans-unit>
-      <trans-unit id="6914082229088295352" datatype="html">
+      <trans-unit id="6914082229088295352" datatype="html" approved="yes">
         <source>Icon URL</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/ui-platform/src/lib/pages/platform-appearance/platform-appearance.component.html</context>
           <context context-type="linenumber">23</context>
         </context-group>
-        <target state="needs-translation">Icon URL</target>
+        <target state="final">URL de l'icone</target>
       </trans-unit>
-      <trans-unit id="3123343057184436732" datatype="html">
+      <trans-unit id="3123343057184436732" datatype="html" approved="yes">
         <source>Favicon URL</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/ui-platform/src/lib/pages/platform-appearance/platform-appearance.component.html</context>
           <context context-type="linenumber">36</context>
         </context-group>
-        <target state="needs-translation">Favicon URL</target>
+        <target state="final">URL du favicon</target>
       </trans-unit>
-      <trans-unit id="7216867591624517466" datatype="html">
+      <trans-unit id="7216867591624517466" datatype="html" approved="yes">
         <source>Primary Color</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/ui-platform/src/lib/pages/platform-appearance/platform-appearance.component.html</context>
           <context context-type="linenumber">48</context>
         </context-group>
-        <target state="needs-translation">Primary Color</target>
+        <target state="final">Couleur principale</target>
       </trans-unit>
       <trans-unit id="213979411616421023" datatype="html">
         <source> Platform Dashboard</source>
@@ -880,29 +880,29 @@
         </context-group>
         <target state="needs-translation"> Platform Dashboard</target>
       </trans-unit>
-      <trans-unit id="4458211933749414330" datatype="html">
+      <trans-unit id="4458211933749414330" datatype="html" approved="yes">
         <source>Signing Keys</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/ui-platform/src/lib/pages/platform-settings/platform-settings.component.ts</context>
           <context context-type="linenumber">20</context>
         </context-group>
-        <target state="needs-translation">Signing Keys</target>
+        <target state="final">Clé de signature</target>
       </trans-unit>
-      <trans-unit id="7273059190710837822" datatype="html">
+      <trans-unit id="7273059190710837822" datatype="html" approved="yes">
         <source>Privacy &amp; Terms</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/ui-platform/src/lib/pages/platform-settings/platform-settings.component.ts</context>
           <context context-type="linenumber">21</context>
         </context-group>
-        <target state="needs-translation">Privacy &amp; Terms</target>
+        <target state="final">Conditions de confidentialité &amp;</target>
       </trans-unit>
-      <trans-unit id="7509352216681644547" datatype="html">
+      <trans-unit id="7509352216681644547" datatype="html" approved="yes">
         <source>Mail Server</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/ui-platform/src/lib/pages/platform-settings/platform-settings.component.ts</context>
           <context context-type="linenumber">22</context>
         </context-group>
-        <target state="needs-translation">Mail Server</target>
+        <target state="final">Serveur mail</target>
       </trans-unit>
       <trans-unit id="3720371318294752429" datatype="html">
         <source>
@@ -936,29 +936,29 @@
           <x id="CLOSE_BOLD_TEXT" ctype="x-b" equiv-text="&lt;/b&gt;"/>
         </target>
       </trans-unit>
-      <trans-unit id="2394434532665685744" datatype="html">
+      <trans-unit id="2394434532665685744" datatype="html" approved="yes">
         <source> Please write the confirmation message correctly </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/common/src/lib/components/delete-enity-dialog/delete-entity-dialog.component.html</context>
           <context context-type="linenumber">14,16</context>
         </context-group>
-        <target state="needs-translation"> Please write the confirmation message correctly </target>
+        <target state="final"> Veuillez écrire le message de confirmation correctement </target>
       </trans-unit>
-      <trans-unit id="5547981558491672240" datatype="html">
+      <trans-unit id="5547981558491672240" datatype="html" approved="yes">
         <source> Close </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/common/src/lib/components/json-view/json-view-dialog/json-view-dialog.component.html</context>
           <context context-type="linenumber">13,15</context>
         </context-group>
-        <target state="needs-translation"> Close </target>
+        <target state="final"> Fermer </target>
       </trans-unit>
-      <trans-unit id="7952700156372001331" datatype="html">
+      <trans-unit id="7952700156372001331" datatype="html" approved="yes">
         <source>BETA</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/common/src/lib/components/page-title/page-title.component.html</context>
           <context context-type="linenumber">6</context>
         </context-group>
-        <target state="needs-translation">BETA</target>
+        <target state="final">BÊTA</target>
       </trans-unit>
       <trans-unit id="20703455734868720" datatype="html" approved="yes">
         <source>Page Size:</source>
@@ -1040,7 +1040,7 @@
         <source>My Pieces</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/common/src/lib/components/user-avatar/user-avatar.component.html</context>
-          <context context-type="linenumber">59</context>
+          <context context-type="linenumber">62</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-dashboard/src/lib/dashboard.routing.ts</context>
@@ -1056,7 +1056,7 @@
         <source>Logout</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/common/src/lib/components/user-avatar/user-avatar.component.html</context>
-          <context context-type="linenumber">67</context>
+          <context context-type="linenumber">74</context>
         </context-group>
         <target state="final">Déconnexion</target>
       </trans-unit>
@@ -1084,7 +1084,7 @@
         </context-group>
         <target state="final">Déclencher</target>
       </trans-unit>
-      <trans-unit id="8186013988289067040" datatype="html">
+      <trans-unit id="8186013988289067040" datatype="html" approved="yes">
         <source>Code</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/common/src/lib/utils/utils.ts</context>
@@ -1098,7 +1098,7 @@
           <context context-type="sourcefile">packages/ui/feature-builder-right-sidebar/src/lib/input-forms/code-step-input-form/code-step-input-form.component.html</context>
           <context context-type="linenumber">12</context>
         </context-group>
-        <target state="needs-translation">Code</target>
+        <target state="final">Code</target>
       </trans-unit>
       <trans-unit id="1437638433150622409" datatype="html" approved="yes">
         <source>Loop on Items</source>
@@ -1128,13 +1128,13 @@
         </context-group>
         <target state="needs-translation"> Upgrade</target>
       </trans-unit>
-      <trans-unit id="1234782976282586575" datatype="html">
+      <trans-unit id="1234782976282586575" datatype="html" approved="yes">
         <source> Ignore</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/core/src/app/app.component.html</context>
           <context context-type="linenumber">8,9</context>
         </context-group>
-        <target state="needs-translation"> Ignore</target>
+        <target state="final"> Ignorer</target>
       </trans-unit>
       <trans-unit id="491159195078241064" datatype="html">
         <source>Import Flow</source>
@@ -1144,13 +1144,13 @@
         </context-group>
         <target state="needs-translation">Import Flow</target>
       </trans-unit>
-      <trans-unit id="833959964659558357" datatype="html">
+      <trans-unit id="833959964659558357" datatype="html" approved="yes">
         <source>Chatbot</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/core/src/app/app.module.ts</context>
           <context context-type="linenumber">220</context>
         </context-group>
-        <target state="needs-translation">Chatbot</target>
+        <target state="final">Chatbot</target>
       </trans-unit>
       <trans-unit id="9202148072595155250" datatype="html" approved="yes">
         <source>Steps in this flow</source>
@@ -1216,7 +1216,7 @@
         </context-group>
         <target state="final">Content de te revoir</target>
       </trans-unit>
-      <trans-unit id="8232890416577573080" datatype="html">
+      <trans-unit id="8232890416577573080" datatype="html" approved="yes">
         <source> Email is invalid </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-in/sign-in.component.html</context>
@@ -1226,7 +1226,7 @@
           <context context-type="sourcefile">packages/ui/feature-authentication/src/lib/pages/sign-up/sign-up.component.html</context>
           <context context-type="linenumber">32,34</context>
         </context-group>
-        <target state="needs-translation"> Email is invalid </target>
+        <target state="final"> L'adresse e-mail n'est pas valide </target>
       </trans-unit>
       <trans-unit id="8552587679160911578" datatype="html" approved="yes">
         <source>Email is required</source>

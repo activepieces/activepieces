@@ -17,6 +17,7 @@ export const environment = {
   localesMap: {
     en: 'English',
     it: 'Italiano',
+    de: 'Deutsch',
     fr: 'Français',
   },
 };
