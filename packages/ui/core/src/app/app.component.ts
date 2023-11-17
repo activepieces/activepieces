@@ -28,8 +28,14 @@ import {
 } from '@activepieces/ui/common';
 import { compareVersions } from 'compare-versions';
 import { ApFlagId, FlowOperationType } from '@activepieces/shared';
-import { TelemetryService, EmbeddingService } from '@activepieces/ui/common';
-import { AuthenticationService, fadeInUp400ms } from '@activepieces/ui/common';
+import {
+  TelemetryService,
+  EmbeddingService,
+  AuthenticationService,
+  fadeInUp400ms,
+  LocalesService,
+} from '@activepieces/ui/common';
+
 import { MatDialog } from '@angular/material/dialog';
 import {
   CollectionBuilderService,
@@ -75,7 +81,8 @@ export class AppComponent implements OnInit {
     private builderService: CollectionBuilderService,
     private flowService: FlowService,
     private snackbar: MatSnackBar,
-    private embeddedService: EmbeddingService
+    private embeddedService: EmbeddingService,
+    private localesService: LocalesService
   ) {
     this.registerSearchIconIntoMaterialIconRegistery();
     this.listenToImportFlow();
@@ -83,92 +90,11 @@ export class AppComponent implements OnInit {
       tap(() => this.loadingTheme$.next(false)),
       map(() => void 0)
     );
-    this.embeddedRouteListener$ = this.router.events.pipe(
-      switchMap((routingEvent) => {
-        return this.embeddedService.getIsInEmbedding$().pipe(
-          tap((embedded) => {
-            if (
-              routingEvent instanceof NavigationStart &&
-              routingEvent.url.startsWith('/embed') &&
-              embedded
-            ) {
-              console.error('visiting /embed after init');
-              this.router.navigate(['/'], { skipLocationChange: true });
-            }
-            if (embedded && routingEvent instanceof NavigationEnd) {
-              this.embeddedService.activepiecesRouteChanged(this.router.url);
-            }
-          })
-        );
-      })
-    );
-    this.routeLoader$ = this.router.events.pipe(
-      tap((event) => {
-        if (
-          event instanceof NavigationStart &&
-          event.url.startsWith('/flows/')
-        ) {
-          this.loading$.next(true);
-        }
-        if (event instanceof NavigationEnd) {
-          let route = this.router.routerState.root;
-
-          while (route.firstChild) {
-            route = route.firstChild;
-          }
-          const { title } = route.snapshot.data;
-          if (title) {
-            this.setTitle$ = this.apperanceService.setTitle(title);
-          }
-          this.loading$.next(false);
-        }
-
-        if (event instanceof NavigationCancel) {
-          this.loading$.next(false);
-        }
-        if (event instanceof NavigationError) {
-          this.loading$.next(false);
-        }
-      })
-    );
-    this.showUpgradeNotification$ = this.flagService.getAllFlags().pipe(
-      map((res) => {
-        const currentVersion =
-          (res[ApFlagId.CURRENT_VERSION] as string) || '0.0.0';
-        const latestVersion =
-          (res[ApFlagId.LATEST_VERSION] as string) || '0.0.0';
-        const upgradeNotificationMetadataInLocalStorage =
-          this.getUpgradeNotificationMetadataInLocalStorage();
-        if (!upgradeNotificationMetadataInLocalStorage) {
-          localStorage.setItem(
-            upgradeNotificationMetadataKeyInLocalStorage,
-            JSON.stringify({
-              latestVersion: latestVersion,
-              ignoreNotification: false,
-            })
-          );
-          return compareVersions(latestVersion, currentVersion) === 1;
-        } else {
-          localStorage.setItem(
-            upgradeNotificationMetadataKeyInLocalStorage,
-            JSON.stringify({
-              latestVersion: latestVersion,
-              ignoreNotification:
-                upgradeNotificationMetadataInLocalStorage.ignoreNotification,
-            })
-          );
-          return (
-            (!upgradeNotificationMetadataInLocalStorage.ignoreNotification &&
-              compareVersions(latestVersion, currentVersion) === 1) ||
-            (compareVersions(
-              latestVersion,
-              upgradeNotificationMetadataInLocalStorage.latestVersion
-            ) === 1 &&
-              compareVersions(latestVersion, currentVersion) === 1)
-          );
-        }
-      })
-    );
+    this.embeddedRouteListener$ = this.createEmbeddingRoutesListener();
+    this.routeLoader$ = this.createRouteListenerToToggleLoadingAndSetTitle();
+    this.showUpgradeNotification$ =
+      this.createListenerToToggleUpgradeNotification();
+    this.rediectToCorrectLocale();
   }
 
   private listenToImportFlow() {
@@ -291,5 +217,110 @@ export class AppComponent implements OnInit {
       '_blank',
       'noopener noreferrer'
     );
+  }
+
+  private createRouteListenerToToggleLoadingAndSetTitle() {
+    return this.router.events.pipe(
+      tap((event) => {
+        if (
+          event instanceof NavigationStart &&
+          event.url.startsWith('/flows/')
+        ) {
+          this.loading$.next(true);
+        }
+        if (event instanceof NavigationEnd) {
+          let route = this.router.routerState.root;
+
+          while (route.firstChild) {
+            route = route.firstChild;
+          }
+          const { title } = route.snapshot.data;
+          if (title) {
+            this.setTitle$ = this.apperanceService.setTitle(title);
+          }
+          this.loading$.next(false);
+        }
+
+        if (event instanceof NavigationCancel) {
+          this.loading$.next(false);
+        }
+        if (event instanceof NavigationError) {
+          this.loading$.next(false);
+        }
+      })
+    );
+  }
+
+  private createListenerToToggleUpgradeNotification() {
+    return this.flagService.getAllFlags().pipe(
+      map((res) => {
+        const currentVersion =
+          (res[ApFlagId.CURRENT_VERSION] as string) || '0.0.0';
+        const latestVersion =
+          (res[ApFlagId.LATEST_VERSION] as string) || '0.0.0';
+        const upgradeNotificationMetadataInLocalStorage =
+          this.getUpgradeNotificationMetadataInLocalStorage();
+        if (!upgradeNotificationMetadataInLocalStorage) {
+          localStorage.setItem(
+            upgradeNotificationMetadataKeyInLocalStorage,
+            JSON.stringify({
+              latestVersion: latestVersion,
+              ignoreNotification: false,
+            })
+          );
+          return compareVersions(latestVersion, currentVersion) === 1;
+        } else {
+          localStorage.setItem(
+            upgradeNotificationMetadataKeyInLocalStorage,
+            JSON.stringify({
+              latestVersion: latestVersion,
+              ignoreNotification:
+                upgradeNotificationMetadataInLocalStorage.ignoreNotification,
+            })
+          );
+          return (
+            (!upgradeNotificationMetadataInLocalStorage.ignoreNotification &&
+              compareVersions(latestVersion, currentVersion) === 1) ||
+            (compareVersions(
+              latestVersion,
+              upgradeNotificationMetadataInLocalStorage.latestVersion
+            ) === 1 &&
+              compareVersions(latestVersion, currentVersion) === 1)
+          );
+        }
+      })
+    );
+  }
+
+  private createEmbeddingRoutesListener() {
+    return this.router.events.pipe(
+      switchMap((routingEvent) => {
+        return this.embeddedService.getIsInEmbedding$().pipe(
+          tap((embedded) => {
+            if (
+              routingEvent instanceof NavigationStart &&
+              routingEvent.url.startsWith('/embed') &&
+              embedded
+            ) {
+              console.error('visiting /embed after init');
+              this.router.navigate(['/'], { skipLocationChange: true });
+            }
+            if (embedded && routingEvent instanceof NavigationEnd) {
+              this.embeddedService.activepiecesRouteChanged(this.router.url);
+            }
+          })
+        );
+      })
+    );
+  }
+  private rediectToCorrectLocale() {
+    const currentLocaleFromUrl =
+      this.localesService.getCurrentLocaleFromBrowserUrl();
+    const currentLanguageFromStorage =
+      this.localesService.getCurrentLanguageOrReturnDefault();
+    if (currentLanguageFromStorage.locale !== currentLocaleFromUrl) {
+      this.localesService.redirectToLocale(currentLanguageFromStorage.locale);
+      return;
+    }
   }
 }

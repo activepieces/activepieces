@@ -64,9 +64,6 @@
     <div mat-menu-item (click)="viewPlans()" *ngIf="billingEnabled$ | async">
         Subscription
     </div>
-    <div mat-menu-item (click)="showWhatIsNew()" *ngIf="showCommunity$ | async">
-        What's new
-    </div>
     <div mat-menu-item (click)="goToCommunity()" *ngIf="showCommunity$ | async">
         <div class="ap-flex ap-items-center ap-min-w-[214px]">Community <div class="ap-flex-grow"></div><svg-icon
                 [applyClass]="true" src="assets/img/custom/external-link.svg"
@@ -100,5 +97,3 @@
     </a>
 
 </mat-menu>
-
-<ng-container *ngIf="redirectToLocale$ | async"></ng-container>
