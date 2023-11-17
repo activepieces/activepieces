@@ -9,7 +9,6 @@ import { Store } from '@ngrx/store';
 import { ProjectSelectors } from '../../store/project/project.selector';
 import { environment } from '../../environments/environment';
 import { LocaleKey, LocalesService } from '../../service/locales.service';
-import { Location } from '@angular/common';
 
 @Component({
   selector: 'ap-user-avatar',
@@ -28,20 +27,19 @@ export class UserAvatarComponent implements OnInit {
   projectEnabled$: Observable<boolean>;
   showPlatform = false;
   showCommunity$: Observable<boolean>;
-  redirectToLocale$: Observable<string>;
   locales = environment.localesMap;
   selectedLanguage = {
     languageName: 'English',
     locale: 'en',
   };
+
   constructor(
     public authenticationService: AuthenticationService,
     private router: Router,
     private flagService: FlagService,
     private store: Store,
     private projectService: ProjectService,
-    private localesService: LocalesService,
-    private location: Location
+    private localesService: LocalesService
   ) {
     this.showCommunity$ = this.flagService.isFlagEnabled(
       ApFlagId.SHOW_COMMUNITY
@@ -58,7 +56,8 @@ export class UserAvatarComponent implements OnInit {
       ProjectSelectors.selectCurrentProject
     );
     // END EE
-    this.selectedLanguage = this.localesService.getCurrentLanguage();
+    this.selectedLanguage =
+      this.localesService.getCurrentLanguageFromLocalStorageOrDefault();
   }
   ngOnInit(): void {
     this.currentUserEmail = this.authenticationService.currentUser.email;
@@ -116,9 +115,7 @@ export class UserAvatarComponent implements OnInit {
     );
   }
   redirectToLocale(locale: LocaleKey) {
-    const currentUrl = this.location.path();
-    const newUrl = `/${locale}${currentUrl}`;
-    console.log(newUrl);
-    window.location.href = newUrl;
+    this.localesService.setCurrentLocale(locale);
+    this.localesService.redirectToLocale(locale);
   }
 }

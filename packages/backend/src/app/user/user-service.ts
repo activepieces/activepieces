@@ -3,6 +3,7 @@ import { passwordHasher } from '../authentication/lib/password-hasher'
 import { databaseConnection } from '../database/database-connection'
 import { UserEntity } from './user-entity'
 import { PlatformId } from '@activepieces/ee-shared'
+import { IsNull } from 'typeorm'
 
 const userRepo = databaseConnection.getRepository(UserEntity)
 
@@ -51,10 +52,10 @@ export const userService = {
     },
 
     async getByPlatformAndEmail({ platformId, email }: GetByPlatformAndEmailParams): Promise<User | null> {
-        const platformWhereQuery = platformId ? 'platformId = :platformId' : 'platformId IS NULL'
+        const platformWhereQuery = platformId ? { platformId } : { platformId: IsNull() }
 
         return userRepo.createQueryBuilder()
-            .where(platformWhereQuery, { platformId })
+            .where(platformWhereQuery)
             .andWhere('LOWER(email) = LOWER(:email)', { email })
             .getOne()
     },
