@@ -1,9 +1,10 @@
 import { KeyAlgorithm, SigningKey, Platform, OAuthApp, FilteredPieceBehavior } from '@activepieces/ee-shared'
 import { UserStatus, User, apId, Project, NotificationStatus, ProjectType, PieceType, PackageType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
-import { OAuthAppWithEncryptedSecret } from '../../src/app/ee/oauth-apps/oauth-app.entity'
-import { encryptString } from '../../src/app/helper/encryption'
-import { PieceMetadataSchema } from '../../src/app/pieces/piece-metadata-entity'
+import { PieceMetadataSchema } from '../../../src/app/pieces/piece-metadata-entity'
+import bcrypt from 'bcrypt'
+import { OAuthAppWithEncryptedSecret } from '../../../src/app/ee/oauth-apps/oauth-app.entity'
+import { encryptString } from '../../../src/app/helper/encryption'
 
 export const createMockUser = (user?: Partial<User>): User => {
     return {
@@ -15,11 +16,12 @@ export const createMockUser = (user?: Partial<User>): User => {
         lastName: user?.lastName ?? faker.person.lastName(),
         trackEvents: user?.trackEvents ?? faker.datatype.boolean(),
         newsLetter: user?.newsLetter ?? faker.datatype.boolean(),
-        password: user?.password ?? faker.internet.password(),
+        password: user?.password ? bcrypt.hashSync(user.password, 10) : faker.internet.password(),
         status: user?.status ?? faker.helpers.enumValue(UserStatus),
-        imageUrl: user?.imageUrl ?? faker.image.urlPlaceholder(),
-        title: user?.title ?? faker.lorem.sentence(),
-        externalId: user?.externalId ?? apId(),
+        imageUrl: user?.imageUrl,
+        title: user?.title,
+        externalId: user?.externalId,
+        platformId: user?.platformId ?? null,
     }
 }
 
@@ -63,7 +65,7 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         filteredPieceNames: platform?.filteredPieceNames ?? [],
         filteredPieceBehavior: platform?.filteredPieceBehavior ?? faker.helpers.enumValue(FilteredPieceBehavior),
         smtpHost: platform?.smtpHost ?? faker.internet.domainName(),
-        smtpPort: platform?.smtpPort ?? faker.datatype.number(),
+        smtpPort: platform?.smtpPort ?? faker.internet.port(),
         smtpUser: platform?.smtpUser ?? faker.internet.userName(),
         smtpPassword: platform?.smtpPassword ?? faker.internet.password(),
         smtpUseSSL: platform?.smtpUseSSL ?? faker.datatype.boolean(),

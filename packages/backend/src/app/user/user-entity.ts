@@ -12,7 +12,6 @@ export const UserEntity = new EntitySchema<UserSchema>({
         ...BaseColumnSchemaPart,
         email: {
             type: String,
-            unique: true,
         },
         firstName: {
             type: String,
@@ -46,11 +45,21 @@ export const UserEntity = new EntitySchema<UserSchema>({
             type: String,
             nullable: true,
         },
+        platformId: {
+            type: String,
+            nullable: true,
+            update: false,
+        },
     },
     indices: [
         {
-            name: 'idx_user_external_id',
-            columns: ['externalId'],
+            name: 'idx_user_platform_id_email',
+            columns: ['platformId', 'email'],
+            unique: true,
+        },
+        {
+            name: 'idx_user_platform_id_external_id',
+            columns: ['platformId', 'externalId'],
             unique: true,
         },
     ],

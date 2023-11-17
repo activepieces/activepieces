@@ -34,8 +34,10 @@ export const managedAuthnService = {
 
 const getOrCreateUser = async (params: GetOrCreateUserParams): Promise<GetOrCreateUserReturn> => {
     const { platformId, externalUserId, externalProjectId, externalEmail, externalFirstName, externalLastName } = params
-    const externalId = generateExternalId(platformId, externalUserId)
-    const existingUser = await userService.getByExternalId(externalId)
+    const existingUser = await userService.getByPlatformAndExternalId({
+        platformId,
+        externalId: externalUserId,
+    })
 
     const project = await getOrCreateProject({
         platformId,
@@ -58,8 +60,9 @@ const getOrCreateUser = async (params: GetOrCreateUserParams): Promise<GetOrCrea
         lastName: externalLastName,
         trackEvents: true,
         newsLetter: true,
-        status: UserStatus.EXTERNAL,
-        externalId,
+        status: UserStatus.CREATED,
+        externalId: externalUserId,
+        platformId,
     })
 
     await projectMemberService.add({
@@ -101,10 +104,6 @@ const randomBytes = promisify(randomBytesCallback)
 const generateRandomPassword = async (): Promise<string> => {
     const passwordBytes = await randomBytes(32)
     return passwordBytes.toString('hex')
-}
-
-const generateExternalId = (platformId: PlatformId, externalUserId: string): string => {
-    return `${platformId}_${externalUserId}`
 }
 
 type AuthenticateParams = {
