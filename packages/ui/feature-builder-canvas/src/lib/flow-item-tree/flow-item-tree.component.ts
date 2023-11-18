@@ -6,11 +6,12 @@ import {
 } from '@activepieces/ui/feature-builder-store';
 import {
   ActionType,
-  FlowDrawer,
   TriggerType,
   Action,
   Trigger,
+  LoopOnItemsAction,
 } from '@activepieces/shared';
+import { FlowDrawer } from '../canvas-utils/drawing/flow-drawer';
 
 @Component({
   selector: 'app-flow-item-tree',
@@ -20,7 +21,7 @@ export class FlowItemTreeComponent implements OnInit {
   activePiece$: Observable<FlowItem | undefined>;
   navbarOpen = false;
   flowDrawer: FlowDrawer = FlowDrawer.construct(nestedBranching).offset(
-    800,
+    700,
     40
   );
 
@@ -46,19 +47,38 @@ const codeStep: Action = {
   valid: true,
 };
 
+const loop: LoopOnItemsAction = {
+  type: ActionType.LOOP_ON_ITEMS,
+  displayName: 'loop',
+  name: 'loop',
+  firstLoopAction: codeStep,
+  settings: {
+    items: 'asd',
+  },
+  nextAction: {
+    type: ActionType.BRANCH,
+    displayName: 'branch',
+    name: 'branch',
+    onSuccessAction: codeStep,
+    onFailureAction: codeStep,
+    settings: {
+      conditions: [],
+      inputUiInfo: {
+        currentSelectedData: 'data',
+      },
+    },
+    valid: true,
+  },
+  valid: true,
+};
+
 const nestedBranching: Trigger = {
   type: TriggerType.EMPTY,
   displayName: 'http',
   name: 'http',
   settings: {},
   valid: false,
-  nextAction: {
-    type: ActionType.BRANCH,
-    displayName: 'branch',
-    name: 'branch',
-    onFailureAction: codeStep,
-    onSuccessAction: codeStep,
-  },
+  nextAction: loop,
 };
 /*nextAction: {
       type: ActionType.BRANCH,

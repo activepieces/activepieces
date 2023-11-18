@@ -1,5 +1,5 @@
-import { Action } from '../actions/action'
-import { Trigger } from '../triggers/trigger'
+import { Action } from '../../../../../../shared/src/lib/flows/actions/action'
+import { Trigger } from '../../../../../../shared/src/lib/flows/triggers/trigger'
 import { FLOW_ITEM_HEIGHT, FLOW_ITEM_WIDTH } from './draw-common'
 
 export type Position = {
@@ -10,7 +10,7 @@ export type Position = {
 export class PositionedStep {
     x: number
     y: number
-    content: Action | Trigger
+    content: Action | Trigger | null
 
     constructor({
         x,
@@ -19,7 +19,7 @@ export class PositionedStep {
     }: {
         x: number
         y: number
-        content: Action | Trigger
+        content: Action | Trigger | null
     }) {
         this.x = x
         this.y = y

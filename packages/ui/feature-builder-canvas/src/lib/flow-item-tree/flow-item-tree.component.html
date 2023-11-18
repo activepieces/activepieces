@@ -5,8 +5,13 @@
 </svg>
 
 <ng-container *ngFor="let step of flowDrawer.steps">
-  <div style="position: absolute; width: 300px; height: 92px; background-color: red; top: {{step.y}}px; left: {{step.x}}px;">
-    {{step.content.name}}
+  <div style="position: absolute; width: 300px; height: 92px; margin:8px; background-color: red; top: {{step.y}}px; left: {{step.x}}px;">
+    {{step.content?.name ?? 'EMPTY'}}
+  </div>
+</ng-container>
+
+<ng-container *ngFor="let button of flowDrawer.buttons">
+  <div style="position: absolute; width: 18px; height: 18px; background-color: blue; top: {{button.y}}px; left: {{button.x}}px;">
   </div>
 </ng-container>
 
