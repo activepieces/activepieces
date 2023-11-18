@@ -27,7 +27,7 @@ import {
   AppearanceService,
 } from '@activepieces/ui/common';
 import { compareVersions } from 'compare-versions';
-import { ApFlagId, FlowOperationType } from '@activepieces/shared';
+import { ApEdition, ApFlagId, FlowOperationType } from '@activepieces/shared';
 import {
   TelemetryService,
   EmbeddingService,
@@ -67,6 +67,7 @@ export class AppComponent implements OnInit {
   loadingTheme$: BehaviorSubject<boolean> = new BehaviorSubject(true);
   theme$: Observable<void>;
   setTitle$: Observable<void>;
+  isCommunityEdition$: Observable<boolean>;
   embeddedRouteListener$: Observable<boolean>;
   constructor(
     public dialog: MatDialog,
@@ -254,6 +255,9 @@ export class AppComponent implements OnInit {
   private createListenerToToggleUpgradeNotification() {
     return this.flagService.getAllFlags().pipe(
       map((res) => {
+        if (res[ApFlagId.EDITION] !== ApEdition.COMMUNITY) {
+          return false;
+        }
         const currentVersion =
           (res[ApFlagId.CURRENT_VERSION] as string) || '0.0.0';
         const latestVersion =
