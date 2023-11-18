@@ -3,13 +3,14 @@ import { OpenAIEmbeddings } from 'langchain/embeddings/openai'
 import { Document } from 'langchain/document'
 import path from 'path'
 import fs from 'fs/promises'
-import { localFileStore } from '../../helper/store'
 import { EMBEDINGS_SEARCH_RESULT } from './embedings-settings'
+import { system } from '../../helper/system/system'
+import { SystemProp } from '../../helper/system/system-prop'
 
 const storeCache: Record<string, FaissStore> = {}
 
 function getStorePath(botId: string) {
-    return path.join(localFileStore.getStorePath(), botId)
+    return path.join(system.getOrThrow(SystemProp.CONFIG_PATH), botId)
 }
 
 function getEmbedding(openAIApiKey: string) {
@@ -18,7 +19,13 @@ function getEmbedding(openAIApiKey: string) {
     })
 }
 
-async function getStore({ botId, openAIApiKey }: { botId: string, openAIApiKey: string }) {
+async function getStore({
+    botId,
+    openAIApiKey,
+}: {
+    botId: string
+    openAIApiKey: string
+}) {
     if (storeCache[botId]) {
         return storeCache[botId]
     }
@@ -30,19 +37,32 @@ async function getStore({ botId, openAIApiKey }: { botId: string, openAIApiKey: 
         return store
     }
     catch (error) {
-        const store = await FaissStore.fromDocuments([], getEmbedding(openAIApiKey))
+        const store = await FaissStore.fromDocuments(
+            [],
+            getEmbedding(openAIApiKey),
+        )
         storeCache[botId] = store
         return store
     }
 }
 
-export const faissEmbedding = ({ openAIApiKey, botId }: { botId: string, openAIApiKey: string }) => ({
+export const faissEmbedding = ({
+    openAIApiKey,
+    botId,
+}: {
+    botId: string
+    openAIApiKey: string
+}) => ({
     async query({ input }: { input: string }) {
         const store = await getStore({ botId, openAIApiKey })
         if (store.docstore._docs.size === 0) {
             return []
         }
-        const similarDocuments = await store.similaritySearch(input, EMBEDINGS_SEARCH_RESULT, botId)
+        const similarDocuments = await store.similaritySearch(
+            input,
+            EMBEDINGS_SEARCH_RESULT,
+            botId,
+        )
         return similarDocuments.map((doc) => doc.pageContent)
     },
     async addDocuments({

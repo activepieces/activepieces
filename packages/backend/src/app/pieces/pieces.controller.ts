@@ -40,7 +40,7 @@ export const piecesController: FastifyPluginAsyncTypebox = async (app) => {
             release,
             includeHidden: req.query.includeHidden ?? false,
             projectId: req.principal.projectId,
-            platformId: req.principal.platformId,
+            platformId: req.principal.platform?.id,
             edition,
         })
         return pieceMetadataSummary

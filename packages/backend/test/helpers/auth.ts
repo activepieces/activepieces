@@ -31,7 +31,7 @@ export const generateMockToken = async (principal?: Partial<Principal>): Promise
         type: principal?.type ?? faker.helpers.enumValue(PrincipalType),
         projectId: principal?.projectId ?? apId(),
         projectType: principal?.projectType,
-        platformId: principal?.platformId,
+        platform: principal?.platform,
     }
 
     return generateToken({

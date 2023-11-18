@@ -236,7 +236,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
               options: [],
               disabled: true,
               placeholder:
-                'An unxpected error occured please contact our support',
+                'An unexpected error occured please contact our support',
             }
           ).pipe(
             map((res) => {
@@ -474,7 +474,10 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
           if (prop.required) {
             validators.push(Validators.required);
           }
-          controls[pk] = new UntypedFormControl(propValue, validators);
+          controls[pk] = new UntypedFormControl(
+            propValue || prop.defaultValue,
+            validators
+          );
           break;
         }
         case PropertyType.DYNAMIC: {

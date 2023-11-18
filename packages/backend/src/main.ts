@@ -1,4 +1,4 @@
-import { system, validateEnvPropsOnStartup } from './app/helper/system/system'
+import { system } from './app/helper/system/system'
 import { SystemProp } from './app/helper/system/system-prop'
 import { databaseConnection } from './app/database/database-connection'
 import { logger } from './app/helper/logger'
@@ -78,7 +78,6 @@ const stop = async (app: FastifyInstance): Promise<void> => {
 const main = async (): Promise<void> => {
 
     setupTimeZone()
-    await validateEnvPropsOnStartup()
     await databaseConnection.initialize()
     await databaseConnection.runMigrations()
     await seedDevData()
