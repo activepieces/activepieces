@@ -13,7 +13,6 @@ import {
   BuilderActions,
   BuilderSelectors,
   CollectionBuilderService,
-  FlowFactoryUtil,
   FlowItemDetailsActions,
   FlowRendererService,
   ViewModeEnum,
@@ -331,9 +330,8 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
         distinctUntilChanged(),
         tap((version) => {
           if (version) {
-            const rootStep = FlowFactoryUtil.createRootStep(version);
             this.flowRendererService.refreshCoordinatesAndSetActivePiece(
-              rootStep
+              version.trigger
             );
           } else {
             this.flowRendererService.refreshCoordinatesAndSetActivePiece(

@@ -21,8 +21,8 @@ export class FlowItemTreeComponent implements OnInit {
   activePiece$: Observable<FlowItem | undefined>;
   navbarOpen = false;
   flowDrawer: FlowDrawer = FlowDrawer.construct(nestedBranching).offset(
-    700,
-    40
+    575,
+    110
   );
 
   constructor(private flowService: FlowRendererService) {}
@@ -47,27 +47,13 @@ const codeStep: Action = {
   valid: true,
 };
 
-const loop: LoopOnItemsAction = {
+export const loop: LoopOnItemsAction = {
   type: ActionType.LOOP_ON_ITEMS,
   displayName: 'loop',
   name: 'loop',
   firstLoopAction: codeStep,
   settings: {
     items: 'asd',
-  },
-  nextAction: {
-    type: ActionType.BRANCH,
-    displayName: 'branch',
-    name: 'branch',
-    onSuccessAction: codeStep,
-    onFailureAction: codeStep,
-    settings: {
-      conditions: [],
-      inputUiInfo: {
-        currentSelectedData: 'data',
-      },
-    },
-    valid: true,
   },
   valid: true,
 };
@@ -78,33 +64,19 @@ const nestedBranching: Trigger = {
   name: 'http',
   settings: {},
   valid: false,
-  nextAction: loop,
+  nextAction: {
+    type: ActionType.BRANCH,
+    displayName: 'branch',
+    name: 'branch',
+    //onSuccessAction: codeStep,
+    onSuccessAction: codeStep,
+    onFailureAction: codeStep,
+    settings: {
+      conditions: [],
+      inputUiInfo: {
+        currentSelectedData: 'data',
+      },
+    },
+    valid: true,
+  },
 };
-/*nextAction: {
-      type: ActionType.BRANCH,
-      displayName: 'branch',
-      name: 'branch',
-      //onSuccessAction: codeStep,
-      onSuccessAction: {
-        type: ActionType.BRANCH,
-        displayName: 'branch',
-        name: 'branch',
-        onSuccessAction: codeStep,
-        onFailureAction: codeStep,
-        settings: {
-          conditions: [],
-          inputUiInfo: {
-            currentSelectedData: 'data',
-          },
-        },
-        valid: true,
-      },
-      onFailureAction: codeStep,
-      settings: {
-        conditions: [],
-        inputUiInfo: {
-          currentSelectedData: 'data',
-        },
-      },
-      valid: true,
-    },*/

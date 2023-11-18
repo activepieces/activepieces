@@ -1,17 +1,26 @@
+<div class="ap-flex ap-justify-center ap-mb-9 ap-w-full ap-items-center ap-z-40 ap-relative ap-mt-[50px]">
+  <div class="ap-absolute">
+    <app-test-flow-widget></app-test-flow-widget>
+
+  </div>
+  <div class="ap-absolute">
+    <app-view-only-mode></app-view-only-mode>
+  </div>
+  <app-incomplete-steps-widget></app-incomplete-steps-widget>
+
+</div>
 <svg style="position: absolute;top: 0px; left: 0px; width:100%; height:100%;">
   <g>
-    <path [attr.d]="flowDrawer.svg.toSvg().content" stroke="black" fill="transparent" stroke-width="2"/>
+    <path [attr.d]="flowDrawer.svg.toSvg().content" stroke="black" fill="transparent" stroke-width="2" />
   </g>
 </svg>
 
 <ng-container *ngFor="let step of flowDrawer.steps">
-  <div style="position: absolute; width: 300px; height: 92px; margin:8px; background-color: red; top: {{step.y}}px; left: {{step.x}}px;">
-    {{step.content?.name ?? 'EMPTY'}}
-  </div>
+  <ng-container *ngIf="step.content">
+    <app-flow-item [flowItemData]="step"></app-flow-item>
+  </ng-container>
 </ng-container>
 
 <ng-container *ngFor="let button of flowDrawer.buttons">
-  <div style="position: absolute; width: 18px; height: 18px; background-color: blue; top: {{button.y}}px; left: {{button.x}}px;">
-  </div>
+  <app-small-add-button [left]="button.x + 'px'" [top]="button.y + 'px'"></app-small-add-button>
 </ng-container>
-

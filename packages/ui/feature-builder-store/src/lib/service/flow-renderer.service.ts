@@ -3,7 +3,6 @@ import { BehaviorSubject, Subject } from 'rxjs';
 
 import { AddButtonAndFlowItemNameContainer } from '../model/flow-add-button';
 import { FlowItem } from '../model/flow-item';
-import { FlowRenderUtil } from '../utils/flowRenderUtil';
 
 @Injectable({
   providedIn: 'root',
@@ -24,7 +23,6 @@ export class FlowRendererService {
     clonedActivePiece: FlowItem | undefined
   ): void {
     if (clonedActivePiece) {
-      clonedActivePiece = FlowRenderUtil.buildBoxes(clonedActivePiece)!;
       this.rootPiece = clonedActivePiece;
     }
 

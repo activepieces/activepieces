@@ -25,7 +25,8 @@
           <div
             class="ap-typography-subtitle-1 ap-pointer-events-none  ap-select-none  flow-title ap-flex-grow ap-max-w-[193px] ap-text-body"
             #stepTitle [matTooltip]="isOverflown(stepTitle)?_flowItem.displayName:''">
-            {{_flowItem.indexInDfsTraversal}}. {{ _flowItem.displayName }}
+            <!-- TODO FIX THIS-->
+            X. {{ _flowItem.displayName }}
           </div>
           <div class="ap-select-none ap-typography-caption ap-flex ap-text-description ap-items-center">
             <div>{{ stepAppName$ | async}}</div>

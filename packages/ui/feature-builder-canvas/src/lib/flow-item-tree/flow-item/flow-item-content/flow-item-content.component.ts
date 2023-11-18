@@ -22,11 +22,13 @@ import {
 import { Store } from '@ngrx/store';
 import { RunDetailsService } from '@activepieces/ui/feature-builder-left-sidebar';
 import {
+  Action,
   ActionType,
   ExecutionOutputStatus,
   FlowRun,
   StepOutput,
   StepOutputStatus,
+  Trigger,
   TriggerType,
   flowHelper,
 } from '@activepieces/shared';
@@ -61,7 +63,7 @@ export class FlowItemContentComponent implements OnInit {
   hover = false;
   flowItemChanged$: Subject<boolean> = new Subject();
   stepIconUrl: string;
-  _flowItem: FlowItem;
+  _flowItem: Action | Trigger;
   selectedRun$: Observable<FlowRun | undefined>;
 
   stepAppName$: Observable<string>;
@@ -72,7 +74,6 @@ export class FlowItemContentComponent implements OnInit {
   TriggerType = TriggerType;
   ActionType = ActionType;
   @Input() selected: boolean;
-  @Input() trigger = false;
   @Input() readOnly: boolean;
   @Input() set flowItem(newFlowItem: FlowItem) {
     this._flowItem = newFlowItem;

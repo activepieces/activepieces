@@ -114,8 +114,10 @@ export function fromTextToOps(
             replaceStepNameWithDisplayName(stepName, allStepsMetaData),
             ...keys.slice(1),
           ].join(' ');
-          const prefix = stepMetaData?.step.indexInDfsTraversal
-            ? `${stepMetaData?.step.indexInDfsTraversal + 1}. `
+          // TODO FIX stepMetaData?.step.
+          const indexInDfsTraversal = -1;
+          const prefix = indexInDfsTraversal
+            ? `${indexInDfsTraversal + 1}. `
             : '';
           const insertMention: InsertMentionOperation = {
             insert: {

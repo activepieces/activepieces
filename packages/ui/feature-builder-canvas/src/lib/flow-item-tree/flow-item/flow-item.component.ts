@@ -7,18 +7,19 @@ import {
 } from '@angular/core';
 import { combineLatest, map, Observable, of, startWith, Subject } from 'rxjs';
 import { Store } from '@ngrx/store';
-import {
-  BuilderSelectors,
-  FlowItem,
-  FlowRendererService,
-  FLOW_ITEM_HEIGHT,
-  FLOW_ITEM_WIDTH,
-  SPACE_BETWEEN_ITEM_CONTENT_AND_LINE,
-  VERTICAL_LINE_LENGTH,
-} from '@activepieces/ui/feature-builder-store';
+
 import { PannerService } from '../../canvas-utils/panning/panner.service';
 import { ZoomingService } from '../../canvas-utils/zooming/zooming.service';
 import { flowHelper } from '@activepieces/shared';
+import { PositionedStep } from '../../canvas-utils/drawing/step-card';
+import {
+  FLOW_ITEM_HEIGHT,
+  FLOW_ITEM_WIDTH,
+} from '../../canvas-utils/drawing/draw-common';
+import {
+  BuilderSelectors,
+  FlowRendererService,
+} from '@activepieces/ui/feature-builder-store';
 
 @Component({
   selector: 'app-flow-item',
@@ -30,18 +31,15 @@ export class FlowItemComponent implements OnInit {
   flowGraphContainer = {};
   transformObs$: Observable<string>;
   draggingContainer: HTMLElement;
-  @Input() insideLoopOrBranch = false;
-  @Input() hoverState = false;
   @Input() trigger = false;
-  _flowItemData: FlowItem;
+  _flowItemData: PositionedStep;
   delayTimer: ReturnType<typeof setTimeout>;
   delayTimerSet = false;
   touchStartLongPress = { delay: 750, delta: 10 };
 
   snappedDraggedShadowToCursor = false;
   hideDraggableSource$: Subject<boolean> = new Subject();
-  c = 0;
-  @Input() set flowItemData(value: FlowItem) {
+  @Input() set flowItemData(value: PositionedStep) {
     this._flowItemData = value;
     this.selected$ = this.store
       .select(BuilderSelectors.selectCurrentStepName)
@@ -50,22 +48,17 @@ export class FlowItemComponent implements OnInit {
           if (this._flowItemData == undefined) {
             return false;
           }
-          return this._flowItemData.name == stepName;
+          return this._flowItemData.content?.name == stepName;
         })
       );
-    this.flowGraphContainer = this.flowGraphContainerCalculator();
+    this.flowGraphContainer = this.flowGraphContainerCalculator(value);
   }
   selected$: Observable<boolean> = of(false);
   readOnly$: Observable<boolean> = of(false);
   scale$: Observable<string>;
   isDragging = false;
   anyStepIsDragged$: Observable<boolean>;
-  readonly flowItemContentContainer = {
-    left: `calc(50% - ${FLOW_ITEM_WIDTH / 2}px )`,
-    position: 'relative',
-    width: FLOW_ITEM_WIDTH + 'px',
-    'user-select': 'none',
-  };
+
   readonly draggedContainer = {
     left: `calc(50% - ${(FLOW_ITEM_WIDTH - 1) / 2}px )`,
     width: FLOW_ITEM_WIDTH - 1 + 'px',
@@ -91,7 +84,7 @@ export class FlowItemComponent implements OnInit {
       })
     );
     this.readOnly$ = this.store.select(BuilderSelectors.selectReadOnly);
-    if (flowHelper.isTrigger(this._flowItemData.type)) {
+    if (flowHelper.isTrigger(this._flowItemData.content?.type)) {
       const translate$ = this.pannerService.panningOffset$.asObservable().pipe(
         startWith({ x: 0, y: 0 }),
         map((val) => {
@@ -117,29 +110,17 @@ export class FlowItemComponent implements OnInit {
     }
   }
 
-  flowGraphContainerCalculator() {
+  flowGraphContainerCalculator(flowItemData: PositionedStep) {
     return {
-      top: flowHelper.isTrigger(this._flowItemData.type) ? '50px' : '0px',
-      width: this._flowItemData.boundingBox!.width + 'px',
-      height: this._flowItemData.boundingBox!.height + 'px',
-      left: `calc(50% - ${this._flowItemData.boundingBox!.width / 2}px )`,
-      position: 'relative',
-    };
-  }
-
-  nextActionItem() {
-    return {
+      top: flowItemData.y + 'px',
       width: FLOW_ITEM_WIDTH + 'px',
-      height: FLOW_ITEM_HEIGHT + 'px',
-      top:
-        SPACE_BETWEEN_ITEM_CONTENT_AND_LINE +
-        VERTICAL_LINE_LENGTH +
-        SPACE_BETWEEN_ITEM_CONTENT_AND_LINE +
-        'px',
-      left: '0px',
+      height: FLOW_ITEM_HEIGHT - 8 * 2 + 'px',
+      left: flowItemData.x + 'px',
+      margin: '8px',
       position: 'absolute',
     };
   }
+
   draggingStarted() {
     this.flowRendererService.draggingSubject.next(true);
     this.isDragging = true;

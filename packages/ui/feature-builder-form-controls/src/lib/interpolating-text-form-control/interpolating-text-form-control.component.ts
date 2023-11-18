@@ -361,10 +361,12 @@ export class InterpolatingTextFormControlComponent
       const stepMetaData = allStepsMetaData.find(
         (s) => s.step.name === stepName
       );
-      if (stepMetaData?.step.indexInDfsTraversal) {
-        mentionOp.insert.apMention.value = `${
-          stepMetaData?.step.indexInDfsTraversal + 1
-        }. ${mentionOp.insert.apMention.value}`;
+      // TODO FIX stepMetaData?.step.
+      const indexInDfsTraversal = -1;
+      if (indexInDfsTraversal) {
+        mentionOp.insert.apMention.value = `${indexInDfsTraversal + 1}. ${
+          mentionOp.insert.apMention.value
+        }`;
       } else {
         `${mentionOp.insert.apMention.value}`;
       }
