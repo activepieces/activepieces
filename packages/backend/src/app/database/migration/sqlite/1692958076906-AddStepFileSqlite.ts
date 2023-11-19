@@ -1,9 +1,12 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class AddStepFileSqlite31692958076906 implements MigrationInterface {
-    name = 'AddStepFileSqlite31692958076906'
+export class AddStepFileSqlite1692958076906 implements MigrationInterface {
+    name = 'AddStepFileSqlite1692958076906'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        if (await migrationRan('AddStepFileSqlite31692958076906', queryRunner)) {
+            return
+        }
         await queryRunner.query('CREATE TABLE "step_file" ("id" varchar(21) PRIMARY KEY NOT NULL, "created" datetime NOT NULL DEFAULT (datetime(\'now\')), "updated" datetime NOT NULL DEFAULT (datetime(\'now\')), "flowId" varchar(21) NOT NULL, "projectId" varchar(21) NOT NULL, "name" varchar NOT NULL, "size" integer NOT NULL, "stepName" varchar NOT NULL, "data" blob NOT NULL)')
         await queryRunner.query('CREATE UNIQUE INDEX "step_file_project_id_flow_id_step_name_name" ON "step_file" ("projectId", "flowId", "stepName", "name") ')
         await queryRunner.query('DROP INDEX "step_file_project_id_flow_id_step_name_name"')
@@ -25,4 +28,9 @@ export class AddStepFileSqlite31692958076906 implements MigrationInterface {
         await queryRunner.query('DROP TABLE "step_file"')
     }
 
+}
+
+async function migrationRan(migration: string, queryRunner: QueryRunner): Promise<boolean> {
+    const result = await queryRunner.query('SELECT * from migrations where name = ?', [migration])
+    return result.length > 0
 }

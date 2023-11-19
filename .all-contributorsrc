@@ -699,6 +699,15 @@
       "contributions": [
         "plugin"
       ]
+    },
+    {
+      "login": "Autumnlight02",
+      "name": "Aykut Akgün",
+      "avatar_url": "https://avatars.githubusercontent.com/u/68244453?v=4",
+      "profile": "https://github.com/Autumnlight02",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "commitType": "docs"

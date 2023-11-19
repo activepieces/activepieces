@@ -1,9 +1,15 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { logger } from '../../../helper/logger'
 
-export class AddExternalIdSqlite31698857968495 implements MigrationInterface {
-    name = 'AddExternalIdSqlite31698857968495'
+export class AddExternalIdSqlite1698857968495 implements MigrationInterface {
+    name = 'AddExternalIdSqlite1698857968495'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        logger.info('AddExternalIdSqlite1698857968495 up')
+        if (await migrationRan('AddExternalIdSqlite31698857968495', queryRunner)) {
+            logger.info('AddExternalIdSqlite1698857968495 already ran')
+            return
+        }
         await queryRunner.query(`
             DROP INDEX "idx_project_owner_id"
         `)
@@ -223,4 +229,9 @@ export class AddExternalIdSqlite31698857968495 implements MigrationInterface {
         `)
     }
 
+}
+
+async function migrationRan(migration: string, queryRunner: QueryRunner): Promise<boolean> {
+    const result = await queryRunner.query('SELECT * from migrations where name = ?', [migration])
+    return result.length > 0
 }
