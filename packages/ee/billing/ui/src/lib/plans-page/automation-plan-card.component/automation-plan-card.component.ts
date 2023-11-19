@@ -1,24 +1,26 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import {
+  customPlanPrice,
   FlowPricingPlan,
-  FlowPricingSubPlan,
   freePlanPrice,
   PlanSupportType,
+  PlanTasksPrice,
 } from '@activepieces/ee-shared';
-import { Observable, map, switchMap, tap } from 'rxjs';
+import {
+  BehaviorSubject,
+  Observable,
+  map,
+  shareReplay,
+  startWith,
+  switchMap,
+  tap,
+} from 'rxjs';
 import { FormControl } from '@angular/forms';
 import { isNil } from '@activepieces/shared';
 import { UpgradePlanConfirmationDialogComponent } from '../../upgrade-dialog-confirmation/upgrade-plan-dialog-confirmration.component';
-import { formatNumberWithCommas, loadPlansObs } from '../utils';
+import { formatNumberWithCommas, formatPrice, loadPlansObs } from '../utils';
 import { MatDialog } from '@angular/material/dialog';
 import { BillingService } from '../../billing.service';
-
-type Plan = {
-  formControl: FormControl<FlowPricingSubPlan>;
-  selectedPrice$: Observable<string> | undefined;
-  selectedTasks$: Observable<string> | undefined;
-  loading: boolean;
-} & FlowPricingPlan;
 
 @Component({
   selector: 'app-automation-plan-card',
@@ -27,31 +29,33 @@ type Plan = {
 })
 export class AutomationPlanCardComponent {
   readonly freePlanPrice = freePlanPrice;
+  readonly customPlanPrice = customPlanPrice;
   readonly PlanSupportType = PlanSupportType;
-
   readonly extraUsersMax = 100;
+  loading$: BehaviorSubject<boolean> = new BehaviorSubject(false);
+  price$?: Observable<PlanTasksPrice>;
+  formattedPrice$?: Observable<string>;
+  tasksSliderControl: FormControl<number> = new FormControl(0, {
+    nonNullable: true,
+  });
   usersFormControl: FormControl<number> = new FormControl(0, {
     nonNullable: true,
   });
   extraUsersValueChanged$: Observable<number>;
-  _plan!: Plan;
+  _plan!: FlowPricingPlan;
+  planId$!: Observable<string>;
+  tasks$!: Observable<string>;
   openCheckout$?: Observable<void>;
   @Input({ required: true }) loadPlans$!: loadPlansObs;
   @Input({ required: true })
-  set plan(value: Plan) {
-    this._plan = {
-      ...value,
-      tasks: value.tasks.map((t) => {
-        if (typeof t.amount === 'number') {
-          return { ...t, amount: formatNumberWithCommas(t.amount) };
-        } else {
-          return { ...t };
-        }
-      }),
-    };
-
-    this._plan.formControl.setValue(this._plan.tasks[0]);
+  set plan(value: FlowPricingPlan) {
+    this._plan = value;
     this.usersFormControl.setValue(this._plan.teamMembers);
+    this.price$ = this.getPrice$();
+    this.formattedPrice$ = this.price$.pipe(map((res) => formatPrice(res)));
+    this.planId$ = this.getPlanId$();
+    this.tasks$ = this.getTasks$();
+    this.tasksSliderControl.setValue(0);
   }
   constructor(
     private matDialog: MatDialog,
@@ -70,16 +74,16 @@ export class AutomationPlanCardComponent {
   contactUs() {
     window.open('mailto:sales@activepieces.com');
   }
-  openPaymentLink(plan: Plan) {
+  openPaymentLink(newPlanId: string) {
     const upgradeFromStripeWindow$ = this.billingService
-      .upgrade(plan.formControl.value.pricePlanId)
+      .upgrade(newPlanId)
       .pipe(
         tap((response: { paymentLink: string | null }) => {
           const paymentLink = response.paymentLink;
           if (!isNil(paymentLink)) {
             window.open(paymentLink, '_blank', 'noopener noreferer');
           }
-          plan.loading = false;
+          this.loading$.next(false);
         }),
         map(() => void 0)
       );
@@ -87,12 +91,12 @@ export class AutomationPlanCardComponent {
       switchMap((plans) => {
         const hasPlan = !isNil(plans.currentPlan.stripeSubscriptionId);
         if (!hasPlan) {
-          plan.loading = true;
+          this.loading$.next(true);
           return upgradeFromStripeWindow$;
         } else {
           return this.matDialog
             .open(UpgradePlanConfirmationDialogComponent, {
-              data: { planId: plan.formControl.value.pricePlanId },
+              data: { planId: newPlanId },
             })
             .afterClosed()
             .pipe(
@@ -119,5 +123,73 @@ export class AutomationPlanCardComponent {
     if (newValue >= this._plan.teamMembers) {
       this.usersFormControl.setValue(newValue);
     }
+  }
+  getPrice$() {
+    return this.tasksSliderControl.valueChanges.pipe(
+      startWith(0),
+      map((val) => {
+        if (val < this._plan.tasks.length) {
+          console.log(this._plan.tasks[val].price);
+          return this._plan.tasks[val].price;
+        } else {
+          const lastTasksPackagePrice = this._plan.tasks.at(-1)?.price;
+          if (
+            typeof lastTasksPackagePrice === 'number' &&
+            this._plan.addons &&
+            this._plan.addons.tasks
+          ) {
+            return (
+              lastTasksPackagePrice +
+              this._plan.addons.tasks.pricePer1kTasks *
+                (val - this._plan.tasks.length + 1)
+            );
+          }
+          if (lastTasksPackagePrice) {
+            return lastTasksPackagePrice;
+          }
+          throw Error('lastTasksPackagePrice is undefined');
+        }
+      }),
+      shareReplay(1)
+    );
+  }
+  getPlanId$() {
+    return this.tasksSliderControl.valueChanges.pipe(
+      startWith(0),
+      map((sliderValue) => {
+        const newPlanId =
+          sliderValue >= this._plan.tasks.length
+            ? this._plan.tasks.at(-1)?.pricePlanId
+            : this._plan.tasks[sliderValue].pricePlanId;
+        if (newPlanId === undefined) {
+          throw Error('new plan Id is undefined');
+        }
+        return newPlanId;
+      }),
+      shareReplay(1)
+    );
+  }
+
+  getTasks$() {
+    return this.tasksSliderControl.valueChanges.pipe(
+      startWith(0),
+      map((sliderValue) => {
+        if (sliderValue < this._plan.tasks.length) {
+          return `${formatNumberWithCommas(
+            this._plan.tasks[sliderValue].amount
+          )} tasks / month`;
+        }
+        const lastSubPlan = this._plan.tasks.at(-1);
+        if (!lastSubPlan) {
+          throw Error('last plan is undefined');
+        }
+        const extraTasks = (sliderValue - this._plan.tasks.length + 1) * 1000;
+
+        return `${formatNumberWithCommas(
+          lastSubPlan.amount + extraTasks
+        )} tasks / month`;
+      }),
+      shareReplay(1)
+    );
   }
 }

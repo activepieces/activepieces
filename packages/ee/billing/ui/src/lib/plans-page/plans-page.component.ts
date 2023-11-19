@@ -1,10 +1,8 @@
 import { Component, OnInit } from '@angular/core';
-import { FormControl } from '@angular/forms';
-import { Observable, map, shareReplay, startWith } from 'rxjs';
+
+import { Observable, map, shareReplay } from 'rxjs';
 import {
   BillingResponse,
-  FlowPricingPlan,
-  FlowPricingSubPlan,
   Referral,
   freePlanPrice,
 } from '@activepieces/ee-shared';
@@ -19,21 +17,9 @@ import utc from 'dayjs/plugin/utc';
 import dayjs from 'dayjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
-import {
-  formatNumberWithCommas,
-  formatPrice,
-  loadPlansObs,
-  openPortal,
-} from './utils';
+import { loadPlansObs, openPortal } from './utils';
 
 dayjs.extend(utc);
-
-type Plan = {
-  formControl: FormControl<FlowPricingSubPlan>;
-  selectedPrice$: Observable<string> | undefined;
-  selectedTasks$: Observable<string> | undefined;
-  loading: boolean;
-} & FlowPricingPlan;
 
 @Component({
   selector: 'app-plans-page',
@@ -66,33 +52,7 @@ export class PlansPageComponent implements OnInit {
     this.chatbotsEnabled$ = this.telemetryService.isFeatureEnabled('chatbots');
     this.loadPlans$ = this.billingService.getUsage().pipe(
       map((response: BillingResponse) => {
-        const newPlans: Plan[] = [];
-        response.plans.forEach((plan) => {
-          const formControl = new FormControl();
-          const initialTask = plan.tasks[0];
-          newPlans.push({
-            loading: false,
-            ...plan,
-            formControl,
-            selectedPrice$: formControl.valueChanges.pipe(
-              map((task: { price: string; amount: number }) =>
-                formatPrice(task.price)
-              ),
-              startWith(formatPrice(initialTask.price))
-            ),
-            selectedTasks$: formControl.valueChanges.pipe(
-              map((task: { price: string; amount: number }) =>
-                formatNumberWithCommas(task.amount)
-              ),
-              startWith(
-                typeof initialTask.amount === 'string'
-                  ? initialTask.amount
-                  : formatNumberWithCommas(initialTask.amount)
-              )
-            ),
-          });
-          formControl.setValue(plan.tasks[0]);
-        });
+        const plans = [...response.plans];
         const nextResetDatetime = response.plan.tasksPerDay
           ? dayjs().utc().endOf('day')
           : dayjs(response.usage.nextResetDatetime);
@@ -104,7 +64,7 @@ export class PlansPageComponent implements OnInit {
           nextResetDatetime.diff(dayjs(), 'hour', true)
         );
         return {
-          plans: newPlans,
+          plans,
           defaultPlan: response.defaultPlan,
           currentPlan: response.plan,
           currentUsage: {

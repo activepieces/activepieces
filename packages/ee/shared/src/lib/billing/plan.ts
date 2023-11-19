@@ -1,7 +1,9 @@
 import { ProjectId , BaseModel} from "@activepieces/shared";
 
 export type ProjectPlanId = string;
-
+export const freePlanPrice = 'Free'
+export const customPlanPrice = "Custom Pricing"
+export type PlanTasksPrice = number | typeof freePlanPrice | typeof customPlanPrice;
 export interface ProjectPlan extends BaseModel<ProjectPlanId> {
     id: ProjectPlanId;
     projectId: ProjectId;
@@ -27,8 +29,8 @@ export enum PlanSupportType {
 }
 export interface FlowPricingSubPlan {
     pricePlanId: string;
-    amount: number | string;
-    price: string;
+    amount: number;
+    price: PlanTasksPrice;
 }
 
 export interface FlowPricingPlan {
@@ -40,7 +42,9 @@ export interface FlowPricingPlan {
     addons?: {
         users?:{
             pricePerUserPerMonth:`$${number}`,
-           
+        }
+        tasks?: {
+            pricePer1kTasks: number
         }
     }
     manageProjects?:boolean,
@@ -53,7 +57,6 @@ export interface FlowPricingPlan {
     auditLog?:boolean,
     customReports?:boolean,
     userPermissions?:boolean,
-    talkToUs?:boolean
 }
 
 export interface BotPricingPlan {
@@ -64,5 +67,4 @@ export interface BotPricingPlan {
     pricePlanId: string;
     price: string
 }
-export const freePlanPrice = 'Free'
-export const customPlanPrice = "Custom Pricing"
+

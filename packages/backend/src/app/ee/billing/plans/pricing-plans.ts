@@ -62,37 +62,42 @@ export const pricingPlans: FlowPricingPlan[] = [
             {
                 pricePlanId: 'price_1NBoi8KZ0dZRqLEKMd2iq8Jh',
                 amount: 5000,
-                price: '15',
+                price: 15,
             },
             {
                 pricePlanId: 'price_1NBojJKZ0dZRqLEKZnub4P3o',
                 amount: 10000,
-                price: '25',
+                price: 25,
             },
             {
                 pricePlanId: 'price_1NVimPKZ0dZRqLEK2yhv4TW2',
                 amount: 25000,
-                price: '55',
+                price: 55,
             },
             {
                 pricePlanId: 'price_1NVinlKZ0dZRqLEKhW4ADCJ6',
                 amount: 50000,
-                price: '100',
+                price: 100,
             },
             {
                 pricePlanId: 'price_1NBoklKZ0dZRqLEKMRehQVdn',
                 amount: 100000,
-                price: '175',
+                price: 175,
             },
             {
                 pricePlanId: 'price_1NBoldKZ0dZRqLEK2vQi1jzE',
                 amount: 200000,
-                price: '300',
+                price: 300,
             },
             {
                 pricePlanId: 'price_1NBomXKZ0dZRqLEKjZxjEfCB',
                 amount: 500000,
-                price: '500',
+                price: 500,
+            },
+            {
+                amount: 1000000,
+                price: customPlanPrice,
+                pricePlanId: '',
             },
         ],
         addons: {
@@ -114,16 +119,18 @@ export const pricingPlans: FlowPricingPlan[] = [
             users: {
                 pricePerUserPerMonth: '$10',
             },
+            tasks: {
+                pricePer1kTasks: 1.5,
+            },
+
         },
         tasks: [
             {
                 amount: 50000,
-                price: '249',
+                price: 249,
                 pricePlanId: '',
             },
         ],
-        talkToUs: true,
-
     },
     {
         description: 'Advanced security, reporting and embedded automations',
@@ -144,6 +151,5 @@ export const pricingPlans: FlowPricingPlan[] = [
         customReports: true,
         embedding: true,
         userPermissions: true,
-        talkToUs: true,
     },
 ]

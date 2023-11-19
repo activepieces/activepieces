@@ -1,5 +1,5 @@
 <div
-    class="ap-py-4 ap-bg-white ap-rounded-lg ap-border-[1px] ap-border-outline ap-min-w-[370px] ap-max-w-[370px] ap-min-h-[35.8125rem] ">
+    class="ap-py-4 ap-bg-white ap-rounded-lg ap-border-[1px] ap-border-outline ap-min-w-[370px] ap-max-w-[370px] ap-min-h-[39.0625rem] ">
 
 
     <div class="ap-mb-2 ap-w-full">
@@ -11,30 +11,32 @@
         </div>
 
         <div class=" ap-px-4 !ap-font-semibold ap-typography-body-2  ap-mb-2 ap-mt-10 ">
-            {{( _plan.selectedPrice$ | async )}}
+            {{( formattedPrice$ | async )}}
         </div>
     </div>
+
     <div class="ap-px-4 ap-flex ap-flex-col ap-gap-5">
-        <mat-form-field class="ap-w-full">
-            <mat-label>Tasks</mat-label>
-            <div class="ap-w-full" *ngIf="_plan.tasks.length === 1">
-                <input matInput [readonly]="true" value="{{ _plan.tasks[0].amount }} tasks / month" />
+
+        <ng-container *ngIf="!(_plan.tasks.length === 1 && _plan.tasks[0].price === customPlanPrice)">
+            <div class="ap-flex ap-flex-col ap-gap-2">
+                <div class="ap-typography-body-2   ">
+                    {{( tasks$ | async )}}
+                </div>
+                <mat-slider [min]="0" [max]="_plan.addons?.tasks? 100: _plan.tasks.length - 1 " step="1" value="0">
+                    <input matSliderThumb [formControl]="tasksSliderControl" />
+                </mat-slider>
             </div>
-            <mat-select [formControl]="_plan.formControl" *ngIf="_plan.tasks.length > 1">
-                <mat-select-trigger>{{ _plan.selectedTasks$ | async }} tasks /
-                    month</mat-select-trigger>
-                <mat-option *ngFor="let tasks of _plan.tasks" [value]="tasks">
-                    <div class="ap-p-2">
-                        <div class="ap-flex ap-flex-col">{{ tasks.price === freePlanPrice ? freePlanPrice:
-                            '$'+tasks.price }}
-                        </div>
-                        <div class="ap-flex ap-flex-col">
-                            {{ tasks.amount }} tasks / month
-                        </div>
-                    </div>
-                </mat-option>
-            </mat-select>
-        </mat-form-field>
+
+
+        </ng-container>
+
+        <div *ngIf="(_plan.tasks.length === 1 && _plan.tasks[0].price === customPlanPrice)"
+            class="ap-typography-body-2">
+            {{( tasks$ | async )}}
+        </div>
+
+
+
 
         <ng-container *ngIf="_plan.addons?.users">
 
@@ -60,16 +62,21 @@
         </ng-container>
 
 
-        <ap-button *ngIf="_plan.talkToUs" btnColor="primary"
-            [disabled]="_plan.formControl.value.price === freePlanPrice" [fullWidthOfContainer]="true"
-            [loading]="_plan.loading" class="ap-mt-2" data-tally-open="nrO9gL" data-tally-layout="modal"
+        <ap-button *ngIf="(planId$ | async) === '' || (planId$ | async) === undefined" btnColor="primary"
+            [disabled]="(price$ | async) === freePlanPrice" [fullWidthOfContainer]="true"
+            [loading]="(loading$ | async) || false" class="ap-mt-2" data-tally-open="nrO9gL" data-tally-layout="modal"
             data-tally-width="700" data-tally-auto-close="3000" [attr.data-plan]="_plan.name">
-            Talk to us</ap-button>
+            {{
+            (price$ | async) === freePlanPrice? 'Change plan': 'Talk to us'
+            }} </ap-button>
 
-        <ap-button *ngIf="!_plan.talkToUs" btnColor="primary"
-            [disabled]="_plan.formControl.value.price === freePlanPrice" [fullWidthOfContainer]="true"
-            [loading]="_plan.loading" class="ap-mt-2" (buttonClicked)="openPaymentLink(_plan)">
-            Change plan</ap-button>
+        <ng-container *ngIf="(planId$ | async) as currentPlanId">
+            <ap-button btnColor="primary" [disabled]="(price$ | async) === freePlanPrice" [fullWidthOfContainer]="true"
+                [loading]="(loading$ | async) || false" class="ap-mt-2"
+                (buttonClicked)="openPaymentLink(currentPlanId)">
+                Change plan</ap-button>
+        </ng-container>
+
         <div class="ap-typography-body-2">
             <hr class="ap-border-gray-200 ap-mb-4 ap-mt-4" />
             <h2 class=" ap-mb-2 ap-cursor-default">

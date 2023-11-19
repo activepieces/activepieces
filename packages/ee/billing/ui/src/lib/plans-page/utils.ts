@@ -1,15 +1,14 @@
 import {
   FlowPricingPlan,
-  FlowPricingSubPlan,
+  PlanTasksPrice,
   ProjectPlan,
   ProjectUsage,
   customPlanPrice,
   freePlanPrice,
 } from '@activepieces/ee-shared';
-import { FormControl } from '@angular/forms';
 import { Observable } from 'rxjs';
 
-export function formatPrice(price: string): string {
+export function formatPrice(price: PlanTasksPrice): string {
   return price === freePlanPrice || price === customPlanPrice
     ? price
     : '$' + price + '/month';
@@ -33,15 +32,8 @@ export function formatNumberWithCommas(number: number): string {
   return parts.join('.');
 }
 
-export type Plan = {
-  formControl: FormControl<FlowPricingSubPlan>;
-  selectedPrice$: Observable<string> | undefined;
-  selectedTasks$: Observable<string> | undefined;
-  loading: boolean;
-} & FlowPricingPlan;
-
 export type loadPlansObs = Observable<{
-  plans: Plan[];
+  plans: FlowPricingPlan[];
   defaultPlan: { nickname: string };
   currentPlan: ProjectPlan;
   currentUsage: ProjectUsage & {
