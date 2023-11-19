@@ -3,6 +3,7 @@ import { passwordHasher } from '../authentication/lib/password-hasher'
 import { databaseConnection } from '../database/database-connection'
 import { UserEntity } from './user-entity'
 import { PlatformId } from '@activepieces/ee-shared'
+import dayjs from 'dayjs'
 
 const userRepo = databaseConnection.getRepository(UserEntity)
 
@@ -65,6 +66,15 @@ export const userService = {
             externalId,
         })
     },
+
+    async updatePassword({ id, newPassword }: UpdatePasswordParams): Promise<void> {
+        const hashedPassword = await passwordHasher.hash(newPassword)
+
+        await userRepo.update(id, {
+            updated: dayjs().toISOString(),
+            password: hashedPassword,
+        })
+    },
 }
 
 const continueSignUpIfInvited = async (newUser: NewUser): Promise<void> => {
@@ -75,6 +85,7 @@ const continueSignUpIfInvited = async (newUser: NewUser): Promise<void> => {
 
     if (existingUser && existingUser.status === UserStatus.INVITED) {
         newUser.id = existingUser.id
+        newUser.platformId = existingUser.platformId
     }
 }
 
@@ -98,4 +109,9 @@ type GetByPlatformAndExternalIdParams = {
 
 type IdParams = {
     id: UserId
+}
+
+type UpdatePasswordParams = {
+    id: UserId
+    newPassword: string
 }

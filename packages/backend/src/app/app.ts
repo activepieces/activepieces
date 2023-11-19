@@ -72,6 +72,7 @@ import { enterprisePieceMetadataServiceHooks } from './ee/pieces/enterprise-piec
 import { flagHooks } from './flags/flags.hooks'
 import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
 import { otpModule } from './ee/otp/otp-module'
+import { enterpriseLocalAuthnModule } from './ee/authentication/enterprise-local-authn/enterprise-local-authn-module'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -211,6 +212,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(managedAuthnModule)
             await app.register(oauthAppModule)
             await app.register(otpModule)
+            await app.register(enterpriseLocalAuthnModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
@@ -234,6 +236,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(managedAuthnModule)
             await app.register(oauthAppModule)
             await app.register(otpModule)
+            await app.register(enterpriseLocalAuthnModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })

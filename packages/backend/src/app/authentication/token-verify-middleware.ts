@@ -16,6 +16,7 @@ const ignoredRoutes = new Set([
     '/v1/project-members/accept',
     '/v1/managed-authn/external-token',
     '/v1/otp',
+    '/v1/authn/local/reset-password',
     ...(API_KEY_PROTECTED_ROUTES.map(f => f.url)),
     // END EE
     '/v1/chatbots/:id/ask',
