@@ -25,6 +25,7 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             modifiedFlags[ApFlagId.PRIVACY_POLICY_URL] = platform.privacyPolicyUrl
             modifiedFlags[ApFlagId.TERMS_OF_SERVICE_URL] = platform.termsOfServiceUrl
             modifiedFlags[ApFlagId.TEMPLATES_SOURCE_URL] = null
+            modifiedFlags[ApFlagId.CHATBOT_ENABLED] = false
         }
         return modifiedFlags
     },

@@ -1,10 +1,4 @@
-import {
-  FlowPricingPlan,
-  MeteredSubPlan,
-  ProjectPlan,
-  ProjectUsage,
-} from '@activepieces/ee-shared';
-import { FormControl } from '@angular/forms';
+import { ProjectPlan, ProjectUsage } from '@activepieces/ee-shared';
 import { Observable } from 'rxjs';
 
 export function formatPrice(price: number): string {
@@ -35,15 +29,7 @@ export function formatNumberWithCommas(number: number): string {
   return parts.join('.');
 }
 
-export type Plan = {
-  formControl: FormControl<MeteredSubPlan>;
-  selectedPrice$: Observable<string> | undefined;
-  selectedTasks$: Observable<string> | undefined;
-  loading: boolean;
-} & FlowPricingPlan;
-
 export type loadPlansObs = Observable<{
-  plans: Plan[];
   defaultPlan: { nickname: string };
   currentPlan: ProjectPlan;
   currentUsage: ProjectUsage & {

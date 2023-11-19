@@ -3,6 +3,7 @@ import { ProjectUsage } from "./usage";
 
 export type ProjectPlanId = string;
 
+export type PlanTasksPrice = number | typeof freePlanPrice | typeof customPlanPrice;
 export interface ProjectPlan extends BaseModel<ProjectPlanId> {
     id: ProjectPlanId;
     projectId: ProjectId;
@@ -41,13 +42,17 @@ export type BillingResponse = {
 export interface FlowPricingPlan {
     name: string;
     description: string;
-    users: MeteredSubPlan[],
+    includedTasks: number;
+    includedUsers: number;
+    pricePerUser: number;
     tasks: MeteredSubPlan[];
     basePlanId?: string;
     contactUs: boolean;
     trail: boolean;
 }
 
+export const freePlanPrice = 0
+export const customPlanPrice =  -1
 export const proUserPriceId = 'price_1O9o2PKZ0dZRqLEKtEV6Ae6Q'
 export const platformUserPriceId = 'price_1O9uHWKZ0dZRqLEKAzuIB0Nc'
 export const platformTasksPriceId = 'price_1O9uBMKZ0dZRqLEKp0YIeU2Z'
@@ -125,7 +130,9 @@ export const pricingPlans: FlowPricingPlan[] = [
     {
         name: 'Pro',
         description: 'Best for small businesses & power users',
-        users: [...Array(50).keys()].map(value => ({ pricePlanId: proUserPriceId, quantity: value, unitAmount: value + 1, unitPrice: 5 })),
+        pricePerUser: 5,
+        includedTasks: 0,
+        includedUsers: 1,
         tasks: proTasksPlan,
         contactUs: false,
         trail: false,
@@ -134,24 +141,11 @@ export const pricingPlans: FlowPricingPlan[] = [
         description: 'Best for agencies who manage automations for multiple clients',
         name: 'Platform',
         basePlanId: platformBasePriceId,
-        users: [...Array(250).keys()].map(value => ({ pricePlanId: platformUserPriceId, quantity: value, unitAmount: value + 25, unitPrice: 10 })),
+        includedUsers: 25,
+        includedTasks: 50000,
+        pricePerUser: 10,
         tasks: [...Array(1000).keys()].map(value => ({ pricePlanId: platformTasksPriceId, quantity: value, unitAmount: (value + 50) * 1000, unitPrice: 1.5 })),
         contactUs: true,
         trail: true,
-    },
-    {
-        description: 'Advanced security, reporting and embedded automations',
-        name: 'Enterprise',
-        users: [],
-        tasks: [
-            {
-                unitAmount: 1000000,
-                unitPrice: -1,
-                quantity: 1,
-                pricePlanId: '',
-            },
-        ],
-        trail: true,
-        contactUs: true,
-    },
+    }
 ]

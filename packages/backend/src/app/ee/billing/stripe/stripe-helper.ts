@@ -17,7 +17,7 @@ enum StripeProductType {
     PRO = 'PRO',
     PRO_USER = 'PRO_USER',
     PLATFORM = 'PLATFORM',
-    PLATFORM_USER = 'PLATFORM_USER'
+    PLATFORM_USER = 'PLATFORM_USER',
 }
 
 async function getOrCreateCustomer(user: UserMeta, projectId: ProjectId): Promise<string> {
@@ -26,12 +26,12 @@ async function getOrCreateCustomer(user: UserMeta, projectId: ProjectId): Promis
         const existingCustomers = await stripe.customers.list({
             email: user.email,
             limit: 1,
-        });
+        })
 
         // If a customer with the email exists, update their details
         if (existingCustomers.data.length > 0) {
-            const existingCustomer = existingCustomers.data[0];
-            return existingCustomer.id;
+            const existingCustomer = existingCustomers.data[0]
+            return existingCustomer.id
         }
 
         // If no customer with the email exists, create a new customer
@@ -39,9 +39,10 @@ async function getOrCreateCustomer(user: UserMeta, projectId: ProjectId): Promis
             email: user.email,
             name: user.firstName + ' ' + user.lastName,
             description: 'User Id: ' + user.id + ' Project Id: ' + projectId,
-        });
-        return newCustomer.id;
-    } catch (error) {
+        })
+        return newCustomer.id
+    }
+    catch (error) {
         captureException(error)
         throw error
     }
@@ -53,7 +54,7 @@ function parseStripeSubscription(sub: Stripe.Subscription): FlowPlanLimits {
         tasks: 0,
         minimumPollingInterval: 5,
         connections: 0,
-        teamMembers: 0
+        teamMembers: 0,
     }
     for (const plan of sub.items.data) {
         const productType = plan.price.metadata.type ?? StripeProductType.PRO

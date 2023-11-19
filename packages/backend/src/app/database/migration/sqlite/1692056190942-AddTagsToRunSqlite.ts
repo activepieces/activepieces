@@ -1,9 +1,12 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class AddTagsToRunSqlite31692056190942 implements MigrationInterface {
-    name = 'AddTagsToRunSqlite31692056190942'
+export class AddTagsToRunSqlite1692056190942 implements MigrationInterface {
+    name = 'AddTagsToRunSqlite1692056190942'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        if (await migrationRan('AddTagsToRunSqlite31692056190942', queryRunner)) {
+            return
+        }
         await queryRunner.query('DROP INDEX "idx_run_project_id_flow_id_environment_status_created_desc"')
         await queryRunner.query('DROP INDEX "idx_run_project_id_flow_id_environment_created_desc"')
         await queryRunner.query('DROP INDEX "idx_run_project_id_environment_status_created_desc"')
@@ -33,4 +36,9 @@ export class AddTagsToRunSqlite31692056190942 implements MigrationInterface {
         await queryRunner.query('CREATE INDEX "idx_run_project_id_flow_id_environment_status_created_desc" ON "flow_run" ("projectId", "flowId", "environment", "status", "created") ')
     }
 
+}
+
+async function migrationRan(migration: string, queryRunner: QueryRunner): Promise<boolean> {
+    const result = await queryRunner.query('SELECT * from migrations where name = ?', [migration])
+    return result.length > 0
 }

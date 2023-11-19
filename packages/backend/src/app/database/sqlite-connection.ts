@@ -4,26 +4,25 @@ import { DataSource, MigrationInterface } from 'typeorm'
 import { InitialSql3Migration1690195839899 } from './migration/sqlite/1690195839899-InitialSql3Migration'
 import { commonProperties } from './database-connection'
 import { AddAppConnectionTypeToTopLevel1691706020626 } from './migration/sqlite/1691706020626-add-app-connection-type-to-top-level'
-import { AddTagsToRunSqlite31692056190942 } from './migration/sqlite/1692056190942-AddTagsToRunSqlite3'
-import { AddStepFileSqlite31692958076906 } from './migration/sqlite/1692958076906-AddStepFileSqlite3'
-import { AddStatusToConnectionsSqlite31693402376520 } from './migration/sqlite/1693402376520-AddStatusToConnectionsSqlite3'
 import { AddImageUrlAndTitleToUser1693774053027 } from './migration/sqlite/1693774053027-AddImageUrlAndTitleToUser'
 import { FileTypeCompression1694695212159 } from './migration/sqlite/1694695212159-file-type-compression'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
-import { AddChatBotSqlite31696029443045 } from './migration/sqlite/1696029443045-AddChatBotSqlite3'
 import { ApEdition, ApEnvironment } from '@activepieces/shared'
 import { getEdition } from '../helper/secret-helper'
 import { AddPieceTypeAndPackageTypeToPieceMetadata1696016228398 } from './migration/sqlite/1696016228398-add-piece-type-and-package-type-to-piece-metadata'
-import { Sql3MigrationCloud1690478550304 } from '../ee/database/migrations/sqlite3/1690478550304-Sql3MigrationCloud'
-import { AddReferralsSqlLite31690547637542 } from '../ee/database/migrations/sqlite3/1690547637542-AddReferralsSqlLite3'
-import { FlowTemplateAddUserIdAndImageUrl1694380048802 } from '../ee/database/migrations/sqlite3/1694380048802-flow-template-add-user-id-and-image-url'
 import { AddArchiveIdToPieceMetadata1696956123632 } from './migration/sqlite/1696956123632-add-archive-id-to-piece-metadata'
 import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
 import { StoreCodeInsideFlow1697969398200 } from './migration/common/1697969398200-store-code-inside-flow'
 import { AddPlatformToProject1698078715730 } from './migration/sqlite/1698078715730-add-platform-to-project'
-import { AddTerminationReasonSqlite31698323327318 } from './migration/sqlite/1698323327318-AddTerminationReason'
-import { AddExternalIdSqlite31698857968495 } from './migration/sqlite/1698857968495-AddExternalIdSqlite3'
+import { AddExternalIdSqlite1698857968495 } from './migration/sqlite/1698857968495-AddExternalIdSqlite'
+import { UpdateUserStatusRenameShadowToInvited1699818680567 } from './migration/common/1699818680567-update-user-status-rename-shadow-to-invited'
+import { AddChatBotSqlite1696029443045 } from './migration/sqlite/1696029443045-AddChatBotSqlite'
+import { AddStepFileSqlite1692958076906 } from './migration/sqlite/1692958076906-AddStepFileSqlite'
+import { AddTagsToRunSqlite1692056190942 } from './migration/sqlite/1692056190942-AddTagsToRunSqlite'
+import { AddStatusToConnectionsSqlite1693402376520 } from './migration/sqlite/1693402376520-AddStatusToConnectionsSqlite'
+import { AddPlatformIdToUserSqlite1700147448410 } from './migration/sqlite/1700147448410-AddPlatformIdToUserSqlite'
+import { AddTerminationReasonSqlite1698323327318 } from './migration/sqlite/1698323327318-AddTerminationReason'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(SystemProp.CONFIG_PATH)
@@ -46,38 +45,30 @@ const getSqliteDatabase = (): string => {
 }
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
-    const commonMigration = [
+    const communityMigrations = [
         InitialSql3Migration1690195839899,
         AddAppConnectionTypeToTopLevel1691706020626,
-        AddTagsToRunSqlite31692056190942,
-        AddStepFileSqlite31692958076906,
-        AddStatusToConnectionsSqlite31693402376520,
+        AddTagsToRunSqlite1692056190942,
+        AddStepFileSqlite1692958076906,
+        AddStatusToConnectionsSqlite1693402376520,
         AddImageUrlAndTitleToUser1693774053027,
-        AddChatBotSqlite31696029443045,
+        AddChatBotSqlite1696029443045,
         FileTypeCompression1694695212159,
         AddPieceTypeAndPackageTypeToPieceMetadata1696016228398,
         AddPieceTypeAndPackageTypeToFlowVersion1696245170061,
         AddArchiveIdToPieceMetadata1696956123632,
         StoreCodeInsideFlow1697969398200,
         AddPlatformToProject1698078715730,
-        AddTerminationReasonSqlite31698323327318,
-        AddExternalIdSqlite31698857968495,
+        AddTerminationReasonSqlite1698323327318,
+        AddExternalIdSqlite1698857968495,
+        UpdateUserStatusRenameShadowToInvited1699818680567,
+        AddPlatformIdToUserSqlite1700147448410,
     ]
     const edition = getEdition()
-    switch (edition) {
-        case ApEdition.CLOUD:
-            commonMigration.push(
-                Sql3MigrationCloud1690478550304,
-                AddReferralsSqlLite31690547637542,
-                FlowTemplateAddUserIdAndImageUrl1694380048802,
-            )
-            break
-        case ApEdition.ENTERPRISE:
-            break
-        case ApEdition.COMMUNITY:
-            break
+    if (edition !== ApEdition.COMMUNITY) {
+        throw new Error(`Edition ${edition} not supported in sqlite3 mode`)
     }
-    return commonMigration
+    return communityMigrations
 }
 
 const getMigrationConfig = (): MigrationConfig => {

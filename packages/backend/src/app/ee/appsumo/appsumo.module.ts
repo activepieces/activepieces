@@ -88,7 +88,8 @@ const appsumoController: FastifyPluginAsyncTypebox = async (fastify: FastifyInst
             else {
                 const { plan_id, activation_email, action, uuid } = request.body
                 const appSumoPlan = appsumoService.getPlanInformation(plan_id)
-                const user = await userService.getOneByEmail({
+                const user = await userService.getByPlatformAndEmail({
+                    platformId: null,
                     email: activation_email,
                 })
                 if (!isNil(user)) {

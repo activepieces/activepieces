@@ -14,6 +14,52 @@ Semantic versioning is a standardized way of versioning software projects. It us
 
 Here's the revised text with improved grammar and spelling:
 
+### 17/11/2023
+
+**Features**:
+- Language Switcher is now available with French and Italian language contributions from the community.
+- Streamlined language contribution is now available through Crowdin (Help Us Translate): [https://www.activepieces.com/docs/about/i18n](https://www.activepieces.com/docs/about/i18n).
+
+**Pieces**:
+- OpenAI: Ask Assistant / Image Generation / Computer Vision / Text-To-Speech Actions by @MoShizzle.
+- Mailchimp: Add note to subscriber / add member to list / add tag to subscriber / update subscriber status / remove tag from subscriber actions and new subscriber trigger by @TaskMagicKyle.
+- WooCommerce: Create Coupon / Find Coupon / Create Customer / Find Customer / Create Product / Find Product Actions by @TaskMagicKyle.
+- AirTable: Find record / delete record / update record actions by @TaskMagicKyle.
+- Bubble: create thing / delete thing / get thing / search thing actions by @TaskMagicKyle.
+- WebFlow: create collection item / delete collection item / find collection item / find order / fulfill order / get collection item / publish collection item / refund order / unfulfill order / update collection item actions by @TaskMagicKyle.
+- Sendy: Count Subscribers / Create Campaign / Delete Subscriber / Get Brand Lists / Get Brands / Get Subscription Status / Subscribe / Unsubscribe Actions by @joeworkman.
+
+**Improvements & Fixes**:
+- Dashboard Header now displays the current Project Name.
+- Webhook Response now returns the headers correctly.
+- Docker Invalid Mounts issue is now fixed.
+- Demo Flow is now fixed.
+- Webhook Sync timeout is now configurable for self-hosters via environment variables.
+- Email Verification is no longer required after the user accepts the project member invite.
+- Docker volume binding issue is now fixed.
+- Delete Project Member button now shows up correctly.
+
+**Platform Features**:
+- Embed Builder SDK through Iframe for Platform Plan (Commercial Edition).
+- Automatically authenticate your users using Signing Keys in Platform (Commercial Edition).
+- Ability to Customize SMTP to whitelabel emails.
+- Ability to Whitelabel terms of service and privacy URL.
+- Ability to Whitelabel OAuth2 apps across the instance.
+- Ability to Show / Hide Pieces for your managed users.
+
+**Tech Debt & Developer Experience**:
+- Upgrade Quill to prepare for inline JS functions.
+- Upgraded to NX 17.
+- Turbowatch only watches given files and skips NX cache by @awais000.
+- Pulumi deployment issue fixed by @awais000 in [https://github.com/activepieces/activepieces/pull/3127](https://github.com/activepieces/activepieces/pull/3127).
+- Activepieces Local Config File is now configurable via environment variables by @Autumnlight02.
+- Doubling down on integration tests, Add Integration tests for signing keys / authentication endpoint / platform / managed users / piece management / customize OAuth2 apps.
+
+**Contributors**:
+Big shoutout to @fdundjer, @donthorp, @joeworkman, @Autumnlight02, @pankaj9296, @TaskMagicKyle, @maor-rozenfeld, @awais000.
+
+**Full Changelog**: [https://github.com/activepieces/activepieces/compare/0.12.0...0.13.0](https://github.com/activepieces/activepieces/compare/0.12.0...0.13.0).
+
 ### 27/10/2023
 
 **Features**:
