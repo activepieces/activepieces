@@ -3,7 +3,6 @@ import { projectService } from '../../../project/project-service'
 import { AuthenticationServiceHooks } from './authentication-service-hooks'
 import { accessTokenManager } from '../../lib/access-token-manager'
 import { telemetry } from '../../../helper/telemetry.utils'
-import { logger } from '../../../helper/logger'
 import { flagService } from '../../../flags/flag.service'
 
 export const defaultAuthenticationServiceHooks: AuthenticationServiceHooks = {
@@ -24,10 +23,9 @@ export const defaultAuthenticationServiceHooks: AuthenticationServiceHooks = {
             projectType: project.type,
         })
 
-        telemetry.identify(user, project.id)
-            .catch((e) => logger.error(e, '[AuthenticationService#signUp] telemetry.identify'))
+        await telemetry.identify(user, project.id)
 
-        telemetry.trackProject(project.id, {
+        await telemetry.trackProject(project.id, {
             name: TelemetryEventName.SIGNED_UP,
             payload: {
                 userId: user.id,
@@ -37,7 +35,6 @@ export const defaultAuthenticationServiceHooks: AuthenticationServiceHooks = {
                 projectId: project.id,
             },
         })
-            .catch((e) => logger.error(e, '[AuthenticationService#signUp] telemetry.trackProject'))
 
         return {
             user,
