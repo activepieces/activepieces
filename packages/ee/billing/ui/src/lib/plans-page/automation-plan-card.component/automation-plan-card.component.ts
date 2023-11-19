@@ -29,6 +29,11 @@ export class AutomationPlanCardComponent {
   readonly freePlanPrice = freePlanPrice;
   readonly PlanSupportType = PlanSupportType;
 
+  readonly extraUsersMax = 100;
+  usersFormControl: FormControl<number> = new FormControl(0, {
+    nonNullable: true,
+  });
+  extraUsersValueChanged$: Observable<number>;
   _plan!: Plan;
   openCheckout$?: Observable<void>;
   @Input({ required: true }) loadPlans$!: loadPlansObs;
@@ -44,12 +49,24 @@ export class AutomationPlanCardComponent {
         }
       }),
     };
+
     this._plan.formControl.setValue(this._plan.tasks[0]);
+    this.usersFormControl.setValue(this._plan.teamMembers);
   }
   constructor(
     private matDialog: MatDialog,
     private billingService: BillingService
-  ) {}
+  ) {
+    this.extraUsersValueChanged$ = this.usersFormControl.valueChanges.pipe(
+      tap((val) => {
+        if (val > this.extraUsersMax) {
+          this.usersFormControl.setValue(this.extraUsersMax);
+        } else if (val < this._plan.teamMembers) {
+          this.usersFormControl.setValue(this._plan.teamMembers);
+        }
+      })
+    );
+  }
   contactUs() {
     window.open('mailto:sales@activepieces.com');
   }
@@ -87,5 +104,20 @@ export class AutomationPlanCardComponent {
         }
       })
     );
+  }
+
+  incrementExtraUsers() {
+    if (this.usersFormControl) {
+      const newValue = this.usersFormControl.value + 1;
+      if (newValue <= this.extraUsersMax) {
+        this.usersFormControl.setValue(newValue);
+      }
+    }
+  }
+  decrementExtraUsers() {
+    const newValue = this.usersFormControl.value - 1;
+    if (newValue >= this._plan.teamMembers) {
+      this.usersFormControl.setValue(newValue);
+    }
   }
 }

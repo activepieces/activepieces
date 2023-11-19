@@ -5,7 +5,7 @@
     <div class="ap-mb-2 ap-w-full">
         <div class="ap-border-b ap-border-solid ap-border-outline ap-w-full">
             <div class="ap-px-4 ap-pb-5">
-                <div class="!ap-font-semibold ap-typography-body-1  ap-mb-1">{{ _plan.name }}</div>
+                <div class="!ap-font-semibold ap-typography-headline-6  ap-mb-1">{{ _plan.name }}</div>
                 <div class="ap-text-description ap-typography-body-2 ap-min-h-[2.5rem]">{{ _plan.description }}</div>
             </div>
         </div>
@@ -14,8 +14,8 @@
             {{( _plan.selectedPrice$ | async )}}
         </div>
     </div>
-    <div class="ap-px-4">
-        <mat-form-field appearance="outline" class="ap-w-full">
+    <div class="ap-px-4 ap-flex ap-flex-col ap-gap-5">
+        <mat-form-field class="ap-w-full">
             <mat-label>Tasks</mat-label>
             <div class="ap-w-full" *ngIf="_plan.tasks.length === 1">
                 <input matInput [readonly]="true" value="{{ _plan.tasks[0].amount }} tasks / month" />
@@ -35,6 +35,31 @@
                 </mat-option>
             </mat-select>
         </mat-form-field>
+
+        <ng-container *ngIf="_plan.addons?.users">
+
+            <div class="ap-flex ap-gap-3 ap-items-center">
+                <mat-form-field class="ap-w-[6.5rem]" subscriptSizing="dynamic">
+                    <mat-label>Users</mat-label>
+                    <input matInput type="number" max="100" min="0" #usersInput class="ap-appearance-none"
+                        [formControl]="usersFormControl">
+                    <div matSuffix class="ap-flex ap-flex-col ap-mx-5" (click)="$event.stopPropagation()">
+                        <svg-icon [svgStyle]="{ width: '16px', height: '16px' }" src="assets/img/custom/chevron-up.svg"
+                            (click)="incrementExtraUsers()" class="ap-cursor-pointer">
+                        </svg-icon>
+                        <svg-icon [svgStyle]="{ width: '16px', height: '16px' }" src="assets/img/custom/chevron.svg"
+                            (click)="decrementExtraUsers()" class="ap-cursor-pointer" matSuffix>
+                        </svg-icon>
+                    </div>
+                </mat-form-field>
+                <div class=" !ap-font-semibold ap-typography-body-2  ap-mb-2 ap-select-none">
+                    {{_plan.addons?.users?.pricePerUserPerMonth}}/user/month
+                </div>
+            </div>
+
+        </ng-container>
+
+
         <ap-button *ngIf="_plan.talkToUs" btnColor="primary"
             [disabled]="_plan.formControl.value.price === freePlanPrice" [fullWidthOfContainer]="true"
             [loading]="_plan.loading" class="ap-mt-2" data-tally-open="nrO9gL" data-tally-layout="modal"
@@ -56,13 +81,13 @@
                 }}
             </h2>
             <h2 class="ap-mb-2">
-                <b>
-                    {{ _plan.teamMembers === -1 ? 'Unlimited Users' : _plan.teamMembers +( _plan.teamMembers === 1? '
-                    User':'
-                    Users') }}
+                <b *ngIf=" _plan.teamMembers === -1" i18n>Unlimited Users</b>
+                <b *ngIf="_plan.teamMembers === 1" i18n>
+                    First user is free
                 </b>
-
-
+                <b *ngIf="_plan.teamMembers > 1" i18n>
+                    First {{_plan.teamMembers}} users are free
+                </b>
             </h2>
             <h2 *ngIf="_plan.manageProjects" class=" ap-mb-2 ap-cursor-default">
                 <b matTooltip="Multiple projects for your customers under your platform">
@@ -125,22 +150,16 @@
                 </b>
 
             </h2>
-            <h2 *ngIf="_plan.supportType === PlanSupportType.DEDICATED " class=" ap-mb-2 ap-cursor-default">
+            <h2 *ngIf="_plan.supportType === PlanSupportType.DEDICATED " class="ap-mb-2 ap-cursor-default">
                 <b matTooltip="Get direct support via private Slack channel">
                     Dedicated support
                 </b>
 
             </h2>
-
-            <div *ngIf="_plan.addons?.users"
-                class="ap-bg-primary-light ap-rounded-md ap-border ap-border-solid ap-border-primary-medium ap-transition-all ap-py-1.5 ap-px-2.5 ap-text-primary ap-flex ap-justify-between ap-gap-2 ap-items-center">
-                To add users for {{_plan.addons?.users?.pricePerUserPerMonth}}/user/month
-                <ap-button btnColor="white" btnStyle="stroked" btnSize="small" (buttonClicked)="contactUs()">Talk to
-                    us</ap-button>
-            </div>
         </div>
 
     </div>
 
 </div>
 <ng-container *ngIf="openCheckout$ | async"></ng-container>
+<ng-container *ngIf="extraUsersValueChanged$ | async"></ng-container>
