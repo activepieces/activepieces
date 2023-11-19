@@ -25,6 +25,7 @@ import {
   CommonActions,
   FlowService,
   AppearanceService,
+  environment,
 } from '@activepieces/ui/common';
 import { compareVersions } from 'compare-versions';
 import { ApEdition, ApFlagId, FlowOperationType } from '@activepieces/shared';
@@ -318,14 +319,16 @@ export class AppComponent implements OnInit {
     );
   }
   private rediectToCorrectLocale() {
-    //TODO: once we start having /en routes this logic should be altered to checking (if the localeFromBrowserUrl is undefined, switch to what is in localstorage)
-    const currentLocaleFromUrl =
-      this.localesService.getCurrentLocaleFromBrowserUrlOrDefault();
-    const currentLanguageFromStorage =
-      this.localesService.getCurrentLanguageFromLocalStorageOrDefault();
-    if (currentLanguageFromStorage.locale !== currentLocaleFromUrl) {
-      this.localesService.redirectToLocale(currentLanguageFromStorage.locale);
-      return;
+    if (environment.production) {
+      //TODO: once we start having /en routes this logic should be altered to checking (if the localeFromBrowserUrl is undefined, switch to what is in localstorage)
+      const currentLocaleFromUrl =
+        this.localesService.getCurrentLocaleFromBrowserUrlOrDefault();
+      const currentLanguageFromStorage =
+        this.localesService.getCurrentLanguageFromLocalStorageOrDefault();
+      if (currentLanguageFromStorage.locale !== currentLocaleFromUrl) {
+        this.localesService.redirectToLocale(currentLanguageFromStorage.locale);
+        return;
+      }
     }
   }
 }

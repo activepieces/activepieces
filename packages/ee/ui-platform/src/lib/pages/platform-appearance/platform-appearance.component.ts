@@ -11,11 +11,16 @@ import {
   Validators,
 } from '@angular/forms';
 import { validColorValidator } from 'ngx-colors';
-import { Platform, UpdatePlatformRequestBody } from '@activepieces/ee-shared';
+import {
+  LocalesEnum,
+  Platform,
+  UpdatePlatformRequestBody,
+} from '@activepieces/ee-shared';
 import { Observable, map, tap } from 'rxjs';
 import {
   AuthenticationService,
   PlatformService,
+  environment,
 } from '@activepieces/ui/common';
 import { ActivatedRoute } from '@angular/router';
 
@@ -26,6 +31,7 @@ interface AppearanceForm {
   favIconUrl: FormControl<string>;
   primaryColor: FormControl<string>;
   pickerCtrl: FormControl<string>;
+  defaultLocale: FormControl<LocalesEnum>;
 }
 @Component({
   selector: 'app-platform-appearance',
@@ -37,6 +43,7 @@ export class PlatformAppearanceComponent implements OnInit {
   formGroup: FormGroup<AppearanceForm>;
   loading = false;
   updatePlatform$?: Observable<void>;
+  locales = environment.localesMap;
   title = $localize`Appearance`;
   @Input({ required: true }) platform!: Platform;
   constructor(
@@ -97,6 +104,9 @@ export class PlatformAppearanceComponent implements OnInit {
         },
         { nonNullable: true }
       ),
+      defaultLocale: this.fb.control<LocalesEnum>(LocalesEnum.ENGLISH, {
+        nonNullable: true,
+      }),
     });
   }
   ngOnInit(): void {
@@ -110,15 +120,7 @@ export class PlatformAppearanceComponent implements OnInit {
     this.formGroup.markAllAsTouched();
     if (this.formGroup.valid && !this.loading) {
       this.loading = true;
-      const request: UpdatePlatformRequestBody = {
-        favIconUrl: this.formGroup.value.favIconUrl,
-        fullLogoUrl: this.formGroup.value.fullLogoUrl,
-        logoIconUrl: this.formGroup.value.logoIconUrl,
-        name: this.formGroup.value.name,
-        primaryColor: this.formGroup.value.primaryColor,
-      };
-      request;
-      this.platformService;
+      const request: UpdatePlatformRequestBody = this.formGroup.value;
       const platformId = this.authenticationService.getPlatformId();
       if (!platformId) {
         console.error('no platform in localstorage or it is invalid');
