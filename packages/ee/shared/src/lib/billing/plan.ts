@@ -4,6 +4,7 @@ import { ProjectUsage } from "./usage";
 export type ProjectPlanId = string;
 
 export type PlanTasksPrice = number | typeof freePlanPrice | typeof customPlanPrice;
+
 export interface ProjectPlan extends BaseModel<ProjectPlanId> {
     id: ProjectPlanId;
     projectId: ProjectId;
@@ -11,24 +12,12 @@ export interface ProjectPlan extends BaseModel<ProjectPlanId> {
     stripeSubscriptionId: string | null;
     subscriptionStartDatetime: string;
     flowPlanName: string;
-    botPlanName: string;
     minimumPollingInterval: number;
     connections: number;
     teamMembers: number;
-    datasources: number;
     activeFlows: number;
     tasks: number;
-    datasourcesSize: number,
-    bots: number;
     tasksPerDay?: number | null;
-}
-
-
-export interface MeteredSubPlan {
-    pricePlanId: string;
-    quantity: number;
-    unitPrice: number;
-    unitAmount: number;
 }
 
 
@@ -39,13 +28,23 @@ export type BillingResponse = {
     customerPortalUrl: string
 }
 
-export interface FlowPricingPlan {
+export type FlowPricingPlan = {
     name: string;
     description: string;
     includedTasks: number;
     includedUsers: number;
     pricePerUser: number;
-    tasks: MeteredSubPlan[];
+    tasks: {
+        pricePlanId: string;
+        quantity: number;
+        unitPrice: number;
+        unitAmount: number;
+    }[];
+    features: {
+        tooltip: string;
+        description: string;
+    }[],
+    custom: boolean;
     basePlanId?: string;
     contactUs: boolean;
     trail: boolean;
@@ -53,6 +52,8 @@ export interface FlowPricingPlan {
 
 export const freePlanPrice = 0
 export const customPlanPrice =  -1
+
+// TEST ENVIRONMENT
 export const proUserPriceId = 'price_1O9o2PKZ0dZRqLEKtEV6Ae6Q'
 export const platformUserPriceId = 'price_1O9uHWKZ0dZRqLEKAzuIB0Nc'
 export const platformTasksPriceId = 'price_1O9uBMKZ0dZRqLEKp0YIeU2Z'
@@ -72,9 +73,15 @@ export const proTasksPlan = [
     },
 ]
 export const trailPeriodDays = 14;
+
+
+
 // PRODUCTION VALUES
-/*
-export const proTasksPlan = [
+/*export const proUserPriceId = 'price_1OCTD6KZ0dZRqLEKjmvmTgq6'
+export const platformUserPriceId = ''
+export const platformTasksPriceId = ''
+export const platformBasePriceId = ''
+export const proTasksPlanProd = [
     {
         pricePlanId: '',
         unitAmount: 1000,
@@ -123,8 +130,7 @@ export const proTasksPlan = [
         unitPrice: 500,
         quantity: 1
     }
-]
-*/
+]*/
 
 export const pricingPlans: FlowPricingPlan[] = [
     {
@@ -136,6 +142,17 @@ export const pricingPlans: FlowPricingPlan[] = [
         tasks: proTasksPlan,
         contactUs: false,
         trail: false,
+        custom: false,
+        features: [
+            {
+                tooltip: "Some triggers are not instant, they check for updated data regularly, we call this period Sync time",
+                description: "Sync Time: 5 minutes"
+              },
+              {
+                tooltip: "Get support from our active community support forum",
+                description: "Community support"
+              },
+        ]
     },
     {
         description: 'Best for agencies who manage automations for multiple clients',
@@ -146,6 +163,62 @@ export const pricingPlans: FlowPricingPlan[] = [
         pricePerUser: 10,
         tasks: [...Array(1000).keys()].map(value => ({ pricePlanId: platformTasksPriceId, quantity: value, unitAmount: (value + 50) * 1000, unitPrice: 1.5 })),
         contactUs: true,
+        custom: false,
         trail: true,
+        features: [
+            {
+                tooltip: "Multiple projects for your customers under your platform",
+                description: "Manage projects"
+              },
+              {
+                tooltip: "Add your own custom pieces without contributing them to open source",
+                description: "Private pieces: 2"
+              },
+              {
+                tooltip: "Allow users to build flows using your predefined templates",
+                description: "Custom templates"
+              },
+              {
+                tooltip: "Match your brand identity across all projects under your platform",
+                description: "Custom colors and logo"
+              },
+              {
+                tooltip: "Get support from our active community support forum or from our support team via email",
+                description: "Email and community support"
+              },
+        ]
+    },
+    {
+        name: 'Enterprise',
+        description: 'Advanced security, reporting and embedded automations',
+        includedTasks: 1000000,
+        includedUsers: 0,
+        pricePerUser: 0,
+        tasks: [],
+        contactUs: true,
+        trail: false,
+        custom: true,
+        features: [
+            {
+                tooltip: "Use our Javascript SDK to embed our automation builder in your app",
+                description: "Embed in your Saas"
+              },
+              {
+                tooltip: "Allow users to sign in using your existing provider",
+                description: "Single Sign On (SSO)"
+              },
+              {
+                tooltip: "Give your users custom permissions and roles",
+                description: "User permissions"
+              },
+              {
+                tooltip: "Request custom dashboards with the metrics you care about the most",
+                description: "Custom reports"
+              },
+              {
+                tooltip: "Get direct support via private Slack channel",
+                description: "Dedicated support"
+              }
+        ],
     }
 ]

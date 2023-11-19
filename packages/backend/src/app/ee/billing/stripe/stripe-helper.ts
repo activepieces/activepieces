@@ -57,7 +57,7 @@ function parseStripeSubscription(sub: Stripe.Subscription): FlowPlanLimits {
         teamMembers: 0,
     }
     for (const plan of sub.items.data) {
-        const productType = plan.price.metadata.type ?? StripeProductType.PRO
+        const productType = plan.price.metadata.productType ?? StripeProductType.PRO
         switch (productType) {
             case StripeProductType.PRO: {
                 const { tasks, minimumPollingInterval, connections, teamMembers } = plan.price.metadata
@@ -124,14 +124,6 @@ async function createPaymentLink({
             success_url: 'https://cloud.activepieces.com',
             cancel_url: 'https://cloud.activepieces.com',
             customer: plan.stripeCustomerId,
-            subscription_data: {
-                trial_settings: {
-                    end_behavior: {
-                        missing_payment_method: 'cancel',
-                    },
-                },
-                trial_period_days: trailPeriodDays,
-            },
         })
         return {
             paymentLink: session.url!,

@@ -1,12 +1,12 @@
 import { ActivepiecesError, DataSource, ErrorCode, ProjectId } from '@activepieces/shared'
-import { plansService } from '../../plans/plan.service'
 import { databaseConnection } from '../../../../database/database-connection'
 import { ChatbotEntity } from '../../../../chatbot/chatbot.entity'
 
 const chatbotRepo = databaseConnection.getRepository(ChatbotEntity)
 
+// TODO REMOVE WITH BOTS
 async function limitBots({ projectId }: { projectId: ProjectId }): Promise<void> {
-    const { bots: botsQuota } = await plansService.getOrCreateDefaultPlan({ projectId })
+    const botsQuota = 10
     const botsCount = await chatbotRepo.countBy({ projectId })
 
     if (botsCount >= botsQuota) {
