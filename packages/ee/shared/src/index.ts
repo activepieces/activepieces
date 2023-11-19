@@ -16,3 +16,4 @@ export * from './lib/product-embed/connection-keys/index';
 export * from './lib/signing-key'
 export * from './lib/managed-authn'
 export * from './lib/oauth-apps'
+export * from './lib/otp'

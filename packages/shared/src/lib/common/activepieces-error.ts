@@ -13,43 +13,44 @@ export class ActivepiecesError extends Error {
 }
 
 type ErrorParams =
-  | AppConnectionNotFoundErrorParams
-  | AuthorizationErrorParams
-  | PermissionDeniedErrorParams
-  | ConfigNotFoundErrorParams
-  | EngineOperationFailureParams
-  | EntityNotFoundErrorParams
-  | ExecutionTimeoutErrorParams
-  | ExistingUserErrorParams
-  | FileNotFoundErrorParams
-  | FlowInstanceNotFoundErrorParams
-  | FlowNotFoundErrorParams
-  | FlowOperationErrorParams
-  | FlowRunNotFoundErrorParams
-  | FlowVersionNotFoundErrorParams
-  | InvalidApiKeyParams
-  | InvalidAppConnectionParams
-  | InvalidBearerTokenParams
-  | InvalidClaimParams
-  | InvalidCloudClaimParams
-  | InvalidCredentialsErrorParams
-  | InvalidJwtTokenErrorParams
-  | JobRemovalFailureErrorParams
-  | OpenAiFailedErrorParams
-  | PauseMetadataMissingErrorParams
-  | PieceNotFoundErrorParams
-  | PieceTriggerNotFoundErrorParams
-  | ProjectNotFoundErrorParams
-  | StepNotFoundErrorParams
-  | SystemInvalidErrorParams
-  | SystemPropNotDefinedErrorParams
-  | QuotaExceededParams
-  | TestTriggerFailedErrorParams
-  | TriggerDisableErrorParams
-  | TriggerEnableErrorParams
-  | TriggerFailedErrorParams
-  | ValidationErrorParams
-  | EmailIsNotVerfiedErrorParams
+    | AppConnectionNotFoundErrorParams
+    | AuthorizationErrorParams
+    | ConfigNotFoundErrorParams
+    | EmailIsNotVerfiedErrorParams
+    | EngineOperationFailureParams
+    | EntityNotFoundErrorParams
+    | ExecutionTimeoutErrorParams
+    | ExistingUserErrorParams
+    | FileNotFoundErrorParams
+    | FlowInstanceNotFoundErrorParams
+    | FlowNotFoundErrorParams
+    | FlowOperationErrorParams
+    | FlowRunNotFoundErrorParams
+    | FlowVersionNotFoundErrorParams
+    | InvalidApiKeyParams
+    | InvalidAppConnectionParams
+    | InvalidBearerTokenParams
+    | InvalidClaimParams
+    | InvalidCloudClaimParams
+    | InvalidCredentialsErrorParams
+    | InvalidJwtTokenErrorParams
+    | InvalidOtpParams
+    | JobRemovalFailureErrorParams
+    | OpenAiFailedErrorParams
+    | PauseMetadataMissingErrorParams
+    | PermissionDeniedErrorParams
+    | PieceNotFoundErrorParams
+    | PieceTriggerNotFoundErrorParams
+    | ProjectNotFoundErrorParams
+    | QuotaExceededParams
+    | StepNotFoundErrorParams
+    | SystemInvalidErrorParams
+    | SystemPropNotDefinedErrorParams
+    | TestTriggerFailedErrorParams
+    | TriggerDisableErrorParams
+    | TriggerEnableErrorParams
+    | TriggerFailedErrorParams
+    | ValidationErrorParams
 
 export type BaseErrorParams<T, V> = {
     code: T
@@ -301,12 +302,13 @@ ErrorCode.QUOTA_EXCEEDED,
 }
 >
 
+export type InvalidOtpParams = BaseErrorParams<ErrorCode.INVALID_OTP, Record<string, never>>
+
 export enum ErrorCode {
     APP_CONNECTION_NOT_FOUND = 'APP_CONNECTION_NOT_FOUND',
-    QUOTA_EXCEEDED = 'QUOTA_EXCEEDED',
     AUTHORIZATION = 'AUTHORIZATION',
-    PERMISSION_DENIED = 'PERMISSION_DENIED',
     CONFIG_NOT_FOUND = 'CONFIG_NOT_FOUND',
+    EMAIL_IS_NOT_VERFIED = 'EMAIL_IS_NOT_VERFIED',
     ENGINE_OPERATION_FAILURE = 'ENGINE_OPERATION_FAILURE',
     ENTITY_NOT_FOUND = 'ENTITY_NOT_FOUND',
     EXECUTION_TIMEOUT = 'EXECUTION_TIMEOUT',
@@ -323,14 +325,16 @@ export enum ErrorCode {
     INVALID_CLAIM = 'INVALID_CLAIM',
     INVALID_CLOUD_CLAIM = 'INVALID_CLOUD_CLAIM',
     INVALID_CREDENTIALS = 'INVALID_CREDENTIALS',
-    EMAIL_IS_NOT_VERFIED = 'EMAIL_IS_NOT_VERFIED',
     INVALID_OR_EXPIRED_JWT_TOKEN = 'INVALID_OR_EXPIRED_JWT_TOKEN',
+    INVALID_OTP = 'INVALID_OTP',
     JOB_REMOVAL_FAILURE = 'JOB_REMOVAL_FAILURE',
     OPEN_AI_FAILED = 'OPEN_AI_FAILED',
     PAUSE_METADATA_MISSING = 'PAUSE_METADATA_MISSING',
+    PERMISSION_DENIED = 'PERMISSION_DENIED',
     PIECE_NOT_FOUND = 'PIECE_NOT_FOUND',
     PIECE_TRIGGER_NOT_FOUND = 'PIECE_TRIGGER_NOT_FOUND',
     PROJECT_NOT_FOUND = 'PROJECT_NOT_FOUND',
+    QUOTA_EXCEEDED = 'QUOTA_EXCEEDED',
     STEP_NOT_FOUND = 'STEP_NOT_FOUND',
     SYSTEM_PROP_INVALID = 'SYSTEM_PROP_INVALID',
     SYSTEM_PROP_NOT_DEFINED = 'SYSTEM_PROP_NOT_DEFINED',

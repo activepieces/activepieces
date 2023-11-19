@@ -15,6 +15,7 @@ const ignoredRoutes = new Set([
     '/v1/flow-templates/:id',
     '/v1/project-members/accept',
     '/v1/managed-authn/external-token',
+    '/v1/otp',
     ...(API_KEY_PROTECTED_ROUTES.map(f => f.url)),
     // END EE
     '/v1/chatbots/:id/ask',
