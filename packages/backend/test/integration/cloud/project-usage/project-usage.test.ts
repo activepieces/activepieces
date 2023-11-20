@@ -6,10 +6,13 @@ import { StatusCodes } from 'http-status-codes'
 import { FastifyInstance } from 'fastify'
 import { createMockProjectMember } from '../../../helpers/mocks/project-member-mocks'
 import { ProjectMemberStatus } from '@activepieces/ee-shared'
+import { stripeHelper } from '../../../../src/app/ee/billing/stripe/stripe-helper'
+import { faker } from '@faker-js/faker'
 
 let app: FastifyInstance | null = null
 
 beforeAll(async () => {
+    stripeHelper.getOrCreateCustomer = jest.fn().mockResolvedValue(faker.string.uuid())
     await databaseConnection.initialize()
     app = await setupApp()
 })

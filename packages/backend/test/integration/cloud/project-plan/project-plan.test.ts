@@ -6,6 +6,7 @@ import { StatusCodes } from 'http-status-codes'
 import { FastifyInstance } from 'fastify'
 import { faker } from '@faker-js/faker'
 import { apId } from '@activepieces/shared'
+import { stripeHelper } from '../../../../src/app/ee/billing/stripe/stripe-helper'
 
 let app: FastifyInstance | null = null
 
@@ -36,12 +37,14 @@ describe('Project Plan API', () => {
                 id: mockUser.id,
                 platform: { id: mockPlatform.id, role: 'OWNER' },
             })
+            stripeHelper.getOrCreateCustomer = jest.fn().mockResolvedValue(faker.string.uuid())
+
 
             const tasks = faker.number.int({ min: 1, max: 100000 })
             const teamMembers = faker.number.int({ min: 1, max: 100 })
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/project-plans/' + mockProject.id,
+                url: '/v1/projects/' + mockProject.id + '/plan',
                 body: {
                     tasks,
                     teamMembers,
@@ -82,7 +85,7 @@ describe('Project Plan API', () => {
             const teamMembers = faker.number.int({ min: 1, max: 100 })
             const response = await app?.inject({
                 method: 'POST',
-                url: '/v1/project-plans/' + mockProject.id,
+                url: '/v1/projects/' + mockProject.id + '/plan',
                 body: {
                     tasks,
                     teamMembers,

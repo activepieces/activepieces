@@ -7,12 +7,12 @@ import { projectService } from '../../../project/project-service'
 
 export const projectPlanModule: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('onRequest', platformMustBeOwnedByCurrentUser)
-    await app.register(projectPlanController, { prefix: '/v1/project-plans' })
+    await app.register(projectPlanController, { prefix: '/v1/projects/:projectId' })
 }
 
 const projectPlanController: FastifyPluginAsyncTypebox = async (app) => {
 
-    app.post('/:projectId', {
+    app.post('/plan', {
         schema: {
             params: Type.Object({
                 projectId: Type.String(),
@@ -21,7 +21,7 @@ const projectPlanController: FastifyPluginAsyncTypebox = async (app) => {
         },
     }, async (request) => {
         const paltformId = request.principal.platform?.id
-        assertNotNullOrUndefined(paltformId, 'Platform Id    is required')
+        assertNotNullOrUndefined(paltformId, 'Platform Id is required')
         const project = await projectService.getOneOrthrow(request.params.projectId)
         if (project.platformId !== paltformId) {
             throw new ActivepiecesError({
