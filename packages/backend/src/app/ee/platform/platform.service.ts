@@ -47,6 +47,7 @@ export const platformService = {
             ...spreadIfDefined('privacyPolicyUrl', params.privacyPolicyUrl),
             ...spreadIfDefined('termsOfServiceUrl', params.termsOfServiceUrl),
             ...spreadIfDefined('cloudAuthEnabled', params.cloudAuthEnabled),
+            ...spreadIfDefined('defaultLocale', params.defaultLocale),
         }
 
         return await repo.save(updatedPlatform)
