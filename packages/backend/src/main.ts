@@ -8,6 +8,7 @@ import { setupApp } from './app/app'
 import { FastifyInstance } from 'fastify'
 import { licenseValidator } from './app/ee/helper/license-validator'
 import { getEdition } from './app/helper/secret-helper'
+import i18next from './i18n'
 
 const start = async (app: FastifyInstance): Promise<void> => {
     try {
@@ -81,6 +82,8 @@ const main = async (): Promise<void> => {
     await databaseConnection.initialize()
     await databaseConnection.runMigrations()
     await seedDevData()
+    await i18next.init()
+
     const app = await setupApp()
 
     process.on('SIGINT', () => {
