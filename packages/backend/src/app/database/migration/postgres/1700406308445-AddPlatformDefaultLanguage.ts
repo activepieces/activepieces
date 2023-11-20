@@ -12,9 +12,7 @@ export class AddPlatformDefaultLanguage1700406308445 implements MigrationInterfa
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            ALTER TABLE "chatbot"
-            ALTER COLUMN "visibilityStatus"
-            SET DEFAULT 'PRIVATE'
+            ALTER TABLE "platform" DROP COLUMN "defaultLocale"
         `)
     }
 
