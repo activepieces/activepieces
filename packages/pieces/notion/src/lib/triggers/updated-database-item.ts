@@ -5,11 +5,11 @@ import { notionCommon } from '../common';
 import { Client } from "@notionhq/client";
 import { notionAuth } from '../..';
 
-export const newDatabaseItem = createTrigger({
+export const updatedDatabaseItem = createTrigger({
     auth: notionAuth,
-    name: 'new_database_item',
-    displayName: 'New Database Item',
-    description: 'Triggers when an item is added to a database.',
+    name: 'updated_database_item',
+    displayName: 'Updated Database Item',
+    description: 'Triggers when an item is updated in a database.',
     props: {
         database_id: notionCommon.database_id
     },
@@ -131,17 +131,16 @@ const getResponse = async (authentication: OAuth2PropertyValue, database_id: str
     return notion.databases.query({
         database_id,
         filter: startDate == null ? undefined : {
-            timestamp: "created_time",
-            created_time: {
+            timestamp: "last_edited_time",
+            last_edited_time: {
                 after: startDate
             }
         },
         sorts: [
             {
-                timestamp: "created_time",
+                timestamp: "last_edited_time",
                 direction: startDate == null ? "descending" : "ascending"
             }
         ]
     })
 }
-
