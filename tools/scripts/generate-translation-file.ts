@@ -8,7 +8,7 @@ import * as path from 'path';
 async function generateTranslationFile(pieceName: string) {
     const piecesJson: Record<string, any> = {};
     const pieceData = await processPackage(pieceName);
-    piecesJson[pieceData.name] = { auth: pieceData.auth, actions: pieceData.actions, triggers: pieceData.triggers };
+    piecesJson[pieceData.name] = { description: pieceData.description, auth: pieceData.auth, actions: pieceData.actions, triggers: pieceData.triggers };
     const jsonToWrite = JSON.stringify(piecesJson, null, 2);
 
     const translationsDir = `packages/pieces/${pieceName}/translations`;
@@ -31,10 +31,11 @@ async function processPackage(packageName: string) {
     const { name: pieceName } = packageJson;
     const piece = extractPieceFromModule({ module, pieceName, pieceVersion: packageJson.version });
     const metadata = { ...piece.metadata(), name: piece.name, version: piece.version };
-
+    console.log(metadata)
     return {
         name: pieceName,
         auth: processAuth(metadata),
+        description: metadata.description,
         actions: processActionsOrTriggers(metadata.actions),
         triggers: processActionsOrTriggers(metadata.triggers)
     };
@@ -44,7 +45,7 @@ function processAuth(items: Record<string, any>) {
     const result: Record<string, any> = {};
     result['displayName'] = items.auth.displayName;
     result['description'] = items.auth.description;
-
+    result['props'] = processProps(items.auth.props)
     return result;
 }
 
