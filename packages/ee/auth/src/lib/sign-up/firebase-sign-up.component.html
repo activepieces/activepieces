@@ -145,11 +145,11 @@
 			<p>
 				By creating an account, you agree to our
 				<ng-container *ngIf="termsOfServiceUrl$ | async as termServiceUrl">
-					<a [href]="termServiceUrl" target="_blank">Terms of Service</a>
+					<a [href]="termServiceUrl" target="_blank" rel="noopener noreferrer">Terms of Service</a>
 				</ng-container>
 				and
 				<ng-container *ngIf="privacyPolicyUrl$ | async as privacyPolicyUrl">
-					<a [href]="privacyPolicyUrl" target="_blank">Privacy Policy</a>.
+					<a [href]="privacyPolicyUrl" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.
 				</ng-container>
 			</p>
 			<a class="ap-text-blueLink ap-cursor-pointer" (click)="goBackToSign()">Already have an account?</a>

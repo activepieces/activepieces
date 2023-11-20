@@ -177,6 +177,8 @@
         "platform/overview",
         "platform/appearance",
         "platform/manage-pieces",
+        "platform/manage-oauth2",
+        "platform/customize-emails",
         "platform/managed-projects",
         "platform/managed-users",
         "platform/embedding"
