@@ -5,6 +5,7 @@ import { databaseConnection } from '../../../../src/app/database/database-connec
 import { createMockSignInRequest, createMockSignUpRequest } from '../../../helpers/mocks/authn'
 import { createMockProject, createMockUser } from '../../../helpers/mocks'
 import { UserStatus } from '@activepieces/shared'
+import { faker } from '@faker-js/faker'
 
 let app: FastifyInstance | null = null
 
@@ -56,12 +57,13 @@ describe('Authentication API', () => {
     describe('Sign in Endpoint', () => {
         it('Logs in existing users', async () => {
             // arrange
-            const mockEmail = 'test@ap.com'
+            const mockEmail = faker.internet.email()
             const mockPassword = 'password'
 
             const mockUser = createMockUser({
                 email: mockEmail,
                 password: mockPassword,
+                status: UserStatus.VERIFIED,
             })
             await databaseConnection.getRepository('user').save(mockUser)
 
@@ -103,12 +105,13 @@ describe('Authentication API', () => {
 
         it('Fails if password doesn\'t match', async () => {
             // arrange
-            const mockEmail = 'test@ap.com'
+            const mockEmail = faker.internet.email()
             const mockPassword = 'password'
 
             const mockUser = createMockUser({
                 email: mockEmail,
                 password: mockPassword,
+                status: UserStatus.VERIFIED,
             })
             await databaseConnection.getRepository('user').save(mockUser)
 
@@ -137,7 +140,7 @@ describe('Authentication API', () => {
 
         it('Disallows invited users to login', async () => {
             // arrange
-            const mockEmail = 'test@ap.com'
+            const mockEmail = faker.internet.email()
             const mockPassword = 'password'
 
             const mockUser = createMockUser({
