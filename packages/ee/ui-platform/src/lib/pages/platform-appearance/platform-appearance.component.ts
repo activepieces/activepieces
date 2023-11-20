@@ -20,9 +20,9 @@ import { Observable, map, tap } from 'rxjs';
 import {
   AuthenticationService,
   PlatformService,
-  environment,
 } from '@activepieces/ui/common';
 import { ActivatedRoute } from '@angular/router';
+import { localesMap } from '@activepieces/ui/common';
 
 interface AppearanceForm {
   name: FormControl<string>;
@@ -43,7 +43,7 @@ export class PlatformAppearanceComponent implements OnInit {
   formGroup: FormGroup<AppearanceForm>;
   loading = false;
   updatePlatform$?: Observable<void>;
-  locales = environment.localesMap;
+  locales = localesMap;
   title = $localize`Appearance`;
   @Input({ required: true }) platform!: Platform;
   constructor(

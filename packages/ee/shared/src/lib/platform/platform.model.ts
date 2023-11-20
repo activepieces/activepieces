@@ -10,7 +10,6 @@ export enum FilteredPieceBehavior {
 export enum LocalesEnum {
     ENGLISH='en',
     GERMAN='de',
-    PORTUGUESE='pr',
     ITALIAN ='it',
     FRENCH ='fr'
 }
