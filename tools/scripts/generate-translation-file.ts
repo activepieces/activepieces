@@ -86,6 +86,9 @@ function addFilePathToCrowdin(pieceName: string) {
 
     try {
         let yamlContent = fs.readFileSync(crowdinFilePath, 'utf8');
+        if (yamlContent.includes(`packages/pieces/${pieceName}/translations/en.json`)) {
+            return
+        }
         const insertPoint = yamlContent.lastIndexOf(']');
         yamlContent = yamlContent.slice(0, insertPoint) + newFileEntry + yamlContent.slice(insertPoint);
         fs.writeFileSync(crowdinFilePath, yamlContent, 'utf8');
