@@ -9,7 +9,7 @@ async function initializeI18next(): Promise<void> {
     try {
         await i18next.use(Backend).use(LanguageDetector).init({
             fallbackLng: 'en',
-            preload: ['en', 'fr'],
+            preload: ['en', 'fr', 'it', 'de'],
             ns: getPiecesNames(),
             backend: {
                 loadPath(lng: string, ns: string) {
@@ -26,11 +26,9 @@ async function initializeI18next(): Promise<void> {
                 },
             },
             detection: {
-                order: ['path', 'querystring', 'cookie', 'localStorage', 'navigator', 'htmlTag'],
-                lookupQuerystring: 'lng',
-                lookupCookie: 'i18next',
-                lookupLocalStorage: 'i18nextLng',
-                caches: ['localStorage', 'cookie'],
+                order: ['localStorage'],
+                lookupLocalStorage: 'currentLanguage',
+                caches: ['localStorage'],
                 excludeCacheFor: ['cimode'],
             },
             debug: true,
