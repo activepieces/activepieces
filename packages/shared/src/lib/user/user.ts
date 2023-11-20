@@ -13,6 +13,15 @@ export enum UserStatus {
     VERIFIED = 'VERIFIED',
 }
 
+export const EmailType = Type.String({
+    format: 'email',
+})
+
+export const PasswordType = Type.String({
+    minLength: 8,
+    maxLength: 64,
+})
+
 export const User = Type.Object({
     ...BaseModelSchema,
     email: Type.String(),
