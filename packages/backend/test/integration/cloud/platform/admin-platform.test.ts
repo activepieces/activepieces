@@ -47,7 +47,7 @@ describe('admin add platform endpoint', () => {
         // assert
         const responseBody = response?.json()
         expect(response?.statusCode).toBe(StatusCodes.CREATED)
-        expect(Object.keys(responseBody)).toHaveLength(21)
+        expect(Object.keys(responseBody)).toHaveLength(22)
         expect(responseBody.id).toHaveLength(21)
         expect(responseBody.created).toBeDefined()
         expect(responseBody.updated).toBeDefined()
@@ -71,6 +71,7 @@ describe('admin add platform endpoint', () => {
         expect(responseBody.showPoweredBy).toBe(true)
         expect(responseBody.privacyPolicyUrl).toBeNull()
         expect(responseBody.termsOfServiceUrl).toBeNull()
+        expect(responseBody.defaultLocale).toBeNull()
     })
 
     it('updates project to be platform-managed', async () => {
