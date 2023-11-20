@@ -9,10 +9,12 @@ import { CreateProjectDialogComponent } from './pages/projects-table/create-proj
 import { UpdateProjectDialogComponent } from './pages/projects-table/update-project-dialog/update-project-dialog.component';
 import { PlatformAppearanceComponent } from './pages/platform-appearance/platform-appearance.component';
 import { PlatformSettingsComponent } from './pages/platform-settings/platform-settings.component';
-import { SigningKeysTableComponent } from './pages/platform-settings/signing-keys-table/signing-keys-table.component';
-import { CreateSigningKeyDialogComponent } from './pages/platform-settings/signing-keys-table/create-signing-key-dialog/create-signing-key-dialog.component';
 import { PiecesTableComponent } from './pages/pieces-table/pieces-table.component';
 import { EditAddPieceOAuth2CredentialsDialogComponent } from './components/dialogs/edit-add-piece-oauth-2-credentials-dialog/edit-add-piece-oauth-2-credentials-dialog.component';
+import { SmtpSettingsComponent } from './components/smtp-settings/smtp-settings.component';
+import { SigningKeysTableComponent } from './components/signing-keys-table/signing-keys-table.component';
+import { CreateSigningKeyDialogComponent } from './components/dialogs/create-signing-key-dialog/create-signing-key-dialog.component';
+import { TermsAndServicesSettingsComponent } from './components/terms-and-services-settings/terms-and-services-settings.component';
 
 @NgModule({
   imports: [
@@ -31,6 +33,9 @@ import { EditAddPieceOAuth2CredentialsDialogComponent } from './components/dialo
     CreateSigningKeyDialogComponent,
     PiecesTableComponent,
     EditAddPieceOAuth2CredentialsDialogComponent,
+    SmtpSettingsComponent,
+    SmtpSettingsComponent,
+    TermsAndServicesSettingsComponent,
   ],
 })
 export class UiEePlatformModule {}

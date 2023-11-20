@@ -1,6 +1,6 @@
 {
   "name": "activepieces",
-  "version": "0.12.2",
+  "version": "0.13.0",
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve ui-core",
@@ -125,7 +125,7 @@
     "ngx-timeago": "3.0.0",
     "nodemailer": "6.9.4",
     "object-sizeof": "2.6.3",
-    "openai": "3.3.0",
+    "openai": "4.17.5",
     "papaparse": "5.4.1",
     "pdf-parse": "1.1.1",
     "pg": "8.11.3",
@@ -148,11 +148,13 @@
     "ssh2-sftp-client": "9.1.0",
     "stripe": "11.18.0",
     "subsink": "1.0.2",
+    "tiktoken": "1.0.11",
     "tinycolor2": "1.6.0",
     "tsconfig-paths": "4.2.0",
     "tslib": "2.6.2",
     "twitter-api-v2": "1.15.1",
     "typeorm": "0.3.17",
+    "xml2js": "0.6.2",
     "zone.js": "0.13.1"
   },
   "devDependencies": {
@@ -207,6 +209,7 @@
     "@types/quill": "2.0.10",
     "@types/ssh2-sftp-client": "9.0.0",
     "@types/tinycolor2": "1.4.5",
+    "@types/xml2js": "0.4.14",
     "@typescript-eslint/eslint-plugin": "5.62.0",
     "@typescript-eslint/parser": "5.62.0",
     "autoprefixer": "10.4.15",

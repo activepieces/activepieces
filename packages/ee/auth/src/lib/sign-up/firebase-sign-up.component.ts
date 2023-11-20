@@ -108,7 +108,7 @@ export class FirebaseSignUpComponent {
 			this.signUp$ = this.firebaseAuthService.signUp(this.registrationForm.getRawValue()).pipe(
 				switchMap(res => {
 					this.loading = false;
-					if (res.body?.status === UserStatus.SHADOW) {
+					if (res.body?.status === UserStatus.INVITED) {
 						this.showVerificationNote = true;
 						return this.firebaseAuthService.sendVerificationMail(redirectUrl);
 					}

@@ -36,9 +36,10 @@ export const addSubscriberToTag = createAction({
       .createHash('md5')
       .update(email.toLowerCase())
       .digest('hex');
-    const serverPrefix = mailchimpCommon.getMailChimpServerPrefix(access_token);
+    const serverPrefix = await mailchimpCommon.getMailChimpServerPrefix(access_token);
     const url = `https://${serverPrefix}.api.mailchimp.com/3.0/lists/${list_id}/members/${subscriberHash}/tags`;
 
+    console.log("HELLO " + url)
     const tags = tag_names.map((tag_name) => ({
       name: tag_name,
       status: 'active',
@@ -54,8 +55,10 @@ export const addSubscriberToTag = createAction({
       body: { tags },
     };
 
-    const response = await httpClient.sendRequest(request);
+    await httpClient.sendRequest(request);
 
-    return response.body;
+    return {
+      success: true,
+    };
   },
 });
