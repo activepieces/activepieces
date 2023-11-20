@@ -34,7 +34,7 @@ async function processPackage(packageName: string) {
     const metadata = { ...piece.metadata(), name: piece.name, version: piece.version };
 
     return {
-        name: pieceName,
+        name: packageName,
         auth: processAuth(metadata),
         description: metadata.description,
         actions: processActionsOrTriggers(metadata.actions),
@@ -46,7 +46,9 @@ function processAuth(items: Record<string, any>) {
     const result: Record<string, any> = {};
     result['displayName'] = items.auth.displayName;
     result['description'] = items.auth.description;
-    result['props'] = processProps(items.auth.props)
+    if (items.auth.props) {
+        result['props'] = processProps(items.auth.props)
+    }
     return result;
 }
 

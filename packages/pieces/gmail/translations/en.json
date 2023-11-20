@@ -1,5 +1,6 @@
 {
-  "@activepieces/piece-gmail": {
+  "gmail": {
+    "description": "",
     "auth": {
       "displayName": "Connection",
       "description": ""
