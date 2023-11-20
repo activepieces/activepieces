@@ -11,8 +11,8 @@ import {
 import {
   OAuth2AppsService,
   PieceMetadataModelSummary,
-  PieceMetadataService,
 } from '@activepieces/ui/common';
+import { PieceMetadataService } from 'ui-feature-pieces';
 
 /**
  * Data source for the LogsTable view. This class should

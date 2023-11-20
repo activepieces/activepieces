@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { InstallCommunityPieceModalComponent } from './install-community-piece/install-community-piece-modal.component';
 import { MatDialog } from '@angular/material/dialog';
 import {
   BehaviorSubject,
@@ -13,20 +12,21 @@ import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
   GenericSnackbarTemplateComponent,
-  PieceMetadataService,
 } from '@activepieces/ui/common';
 import { PieceMetadataSummary } from '@activepieces/pieces-framework';
 import { CommunityPiecesDataSource } from './community-pieces-table.datasource';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { InstallCommunityPieceModalComponent } from '../install-community-piece/install-community-piece-modal.component';
+import { PieceMetadataService } from '../services/piece-meta.service';
 
 @Component({
   templateUrl: './community-pieces-table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CommunityPiecesTableComponent {
-  addPackageDialogClosed$: Observable<Record<string, string> | null>;
+  addPackageDialogClosed$!: Observable<Record<string, string> | null>;
   displayedColumns = ['app', 'name', 'version', 'action'];
-  deleteDialogClosed$: Observable<void>;
+  deleteDialogClosed$!: Observable<void>;
   isLoading$: BehaviorSubject<boolean> = new BehaviorSubject(true);
   refreshTable$: Subject<boolean> = new Subject();
   dataSource!: CommunityPiecesDataSource;

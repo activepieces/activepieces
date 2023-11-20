@@ -19,7 +19,7 @@ import {
 } from '@activepieces/ui/feature-chatbot';
 import { PlansPageComponent } from '@activepieces/ee-billing-ui';
 import { ProjectMembersTableComponent } from '@activepieces/ee/project-members';
-import { CommunityPiecesTableComponent } from './pages/community-pieces-table/community-pieces-table.component';
+import { CommunityPiecesTableComponent } from 'ui-feature-pieces';
 
 export const DashboardLayoutRouting: Routes = [
   {

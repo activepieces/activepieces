@@ -31,7 +31,7 @@ import {
   UpdateActionRequest,
   UpdateTriggerRequest,
 } from '@activepieces/shared';
-import { PieceMetadataService, FlagService } from '@activepieces/ui/common';
+import { FlagService } from '@activepieces/ui/common';
 import {
   BuilderSelectors,
   CollectionBuilderService,
@@ -39,6 +39,7 @@ import {
   FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
 import { TriggerBase, TriggerStrategy } from '@activepieces/pieces-framework';
+import { PieceMetadataService } from 'ui-feature-pieces';
 
 @Component({
   selector: 'app-edit-step-form-container',

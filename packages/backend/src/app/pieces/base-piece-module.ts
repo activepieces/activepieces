@@ -1,32 +1,21 @@
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
-import { ActivepiecesError, AddPieceRequestBody, ApEdition, ErrorCode, GetPieceRequestParams, GetPieceRequestQuery, GetPieceRequestWithScopeParams, ListPiecesRequestQuery, PieceOptionRequest } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ErrorCode, GetPieceRequestParams, GetPieceRequestQuery, GetPieceRequestWithScopeParams, ListPiecesRequestQuery, PieceOptionRequest } from '@activepieces/shared'
 import { engineHelper } from '../helper/engine-helper'
 import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
 import { pieceMetadataService } from './piece-metadata-service'
 import { PieceMetadata } from '@activepieces/pieces-framework'
 import { flagService } from '../flags/flag.service'
-import { pieceService } from './piece-service'
 import { PieceMetadataModel, PieceMetadataModelSummary } from './piece-metadata-entity'
 import { getServerUrl } from '../helper/public-ip-utils'
 
+export const pieceModule: FastifyPluginAsyncTypebox = async (app) => {
+    await app.register(basePiecesController, { prefix: '/v1/pieces' })
+}
+
 const statsEnabled = system.getBoolean(SystemProp.STATS_ENABLED)
 
-export const piecesController: FastifyPluginAsyncTypebox = async (app) => {
-    app.post('/', AddPieceRequest, async (req, res): Promise<PieceMetadataModel> => {
-        const { packageType, pieceName, pieceVersion, pieceArchive } = req.body
-        const { projectId } = req.principal
-
-        const pieceMetadata = await pieceService.add({
-            packageType,
-            pieceName,
-            pieceVersion,
-            archive: pieceArchive as Buffer,
-            projectId,
-        })
-
-        return res.code(201).send(pieceMetadata)
-    })
+const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.get('/', {
         schema: {
@@ -132,10 +121,4 @@ export const piecesController: FastifyPluginAsyncTypebox = async (app) => {
             id: req.params.id,
         })
     })
-}
-
-const AddPieceRequest = {
-    schema: {
-        body: AddPieceRequestBody,
-    },
 }

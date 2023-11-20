@@ -13,12 +13,14 @@ import { MatRadioModule } from '@angular/material/radio';
 import { DatasourcesTableComponent } from './datasources-table/datasources-table.component';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { GetInterpolatedConnectionNameFromConnectionIdPipe } from './interpolate-connection-name-from-connection-id.pipe';
+import { UiFeaturePiecesModule } from 'ui-feature-pieces';
 @NgModule({
   imports: [
     CommonModule,
     UiCommonModule,
     AutosizeModule,
     UiFeatureConnectionsModule,
+    UiFeaturePiecesModule,
     StoreModule.forFeature('builderState', {
       appConnectionsState: appConnectionsReducer,
     }),

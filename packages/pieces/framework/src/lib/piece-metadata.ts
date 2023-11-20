@@ -1,6 +1,7 @@
 import { ProjectId } from "@activepieces/shared";
 import { PieceAuthProperty, PiecePropertyMap } from "./property";
 import { TriggerStrategy, WebhookHandshakeConfiguration } from "./trigger/trigger";
+import { PlatformId } from "@activepieces/ee-shared";
 
 export type PieceBase = {
   id?: string;
@@ -9,6 +10,7 @@ export type PieceBase = {
   logoUrl: string;
   description: string;
   projectId?: ProjectId;
+  platformId?: PlatformId;
   directoryName?: string;
   auth?: PieceAuthProperty;
   version: string;

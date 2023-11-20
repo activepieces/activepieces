@@ -2,7 +2,7 @@ import { Equal, FindOperator, IsNull, LessThan, LessThanOrEqual, MoreThanOrEqual
 import { databaseConnection } from '../../database/database-connection'
 import { PieceMetadataEntity, PieceMetadataModel, PieceMetadataModelSummary, PieceMetadataSchema } from '../piece-metadata-entity'
 import { PieceMetadataService } from './piece-metadata-service'
-import { EXACT_VERSION_PATTERN, isNil } from '@activepieces/shared'
+import { EXACT_VERSION_PATTERN, PieceType, isNil } from '@activepieces/shared'
 import { ActivepiecesError, ErrorCode, apId } from '@activepieces/shared'
 import { AllPiecesStats, pieceStatsService } from './piece-stats-service'
 import * as semver from 'semver'
@@ -24,11 +24,20 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
                         minimumSupportedRelease: LessThanOrEqual(release),
                         maximumSupportedRelease: MoreThanOrEqual(release),
                         projectId: Equal(projectId),
+                        pieceType: Equal(PieceType.CUSTOM),
+                    },
+                    {
+                        minimumSupportedRelease: LessThanOrEqual(release),
+                        maximumSupportedRelease: MoreThanOrEqual(release),
+                        platformId: Equal(platformId),
+                        pieceType: Equal(PieceType.CUSTOM),
                     },
                     {
                         minimumSupportedRelease: LessThanOrEqual(release),
                         maximumSupportedRelease: MoreThanOrEqual(release),
                         projectId: IsNull(),
+                        platformId: IsNull(),
+                        pieceType: Equal(PieceType.OFFICIAL),
                     },
                 ])
                 .distinctOn(['name'])
@@ -81,7 +90,7 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
             return toPieceMetadataModel(pieceMetadataEntity)
         },
 
-        async create({ pieceMetadata, projectId, packageType, pieceType, archiveId  }): Promise<PieceMetadataSchema> {
+        async create({ pieceMetadata, projectId, platformId, packageType, pieceType, archiveId }): Promise<PieceMetadataSchema> {
             const existingMetadata = await repo.findOneBy({
                 name: pieceMetadata.name,
                 version: pieceMetadata.version,
@@ -103,6 +112,7 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
                 packageType,
                 pieceType,
                 archiveId,
+                platformId,
                 ...pieceMetadata,
             })
         },

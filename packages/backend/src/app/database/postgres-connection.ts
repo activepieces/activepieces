@@ -80,6 +80,7 @@ import { AddSmtpAndPrivacyUrlToPlatform1699491705906 } from './migration/postgre
 import { UpdateUserStatusRenameShadowToInvited1699818680567 } from './migration/common/1699818680567-update-user-status-rename-shadow-to-invited'
 import { AddPlatformIdToUser1699901161457 } from './migration/postgres/1699901161457-add-platform-id-to-user'
 import { AddPlatformDefaultLanguage1700406308445 } from './migration/postgres/1700406308445-AddPlatformDefaultLanguage'
+import { AddPlatformIdToPieceMetadata1700522340280 } from './migration/postgres/1700522340280-AddPlatformIdToPieceMetadata'
 
 
 const getSslConfig = (): boolean | TlsOptions => {
@@ -144,6 +145,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         ManagedAuthnInitial1698700720482,
         UpdateUserStatusRenameShadowToInvited1699818680567,
         AddPlatformIdToUser1699901161457,
+        AddPlatformIdToPieceMetadata1700522340280,
     ]
 
     const edition = getEdition()

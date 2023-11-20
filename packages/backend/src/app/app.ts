@@ -6,7 +6,7 @@ import fastifyMultipart from '@fastify/multipart'
 import { openapiModule } from './helper/openapi/openapi.module'
 import { flowModule } from './flows/flow.module'
 import { fileModule } from './file/file.module'
-import { pieceModule } from './pieces/piece-module'
+import { pieceModule } from './pieces/base-piece-module'
 import { tokenVerifyMiddleware } from './authentication/token-verify-middleware'
 import { storeEntryModule } from './store-entry/store-entry.module'
 import { flowRunModule } from './flows/flow-run/flow-run-module'
@@ -71,6 +71,8 @@ import { pieceMetadataServiceHooks } from './pieces/piece-metadata-service/hooks
 import { enterprisePieceMetadataServiceHooks } from './ee/pieces/enterprise-piece-metadata-service-hooks'
 import { flagHooks } from './flags/flags.hooks'
 import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
+import { communityPiecesModule } from './pieces/community-piece-module'
+import { platformPieceModule } from './ee/pieces/platform-piece-module'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -209,6 +211,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(signingKeyModule)
             await app.register(managedAuthnModule)
             await app.register(oauthAppModule)
+            await app.register(platformPieceModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
@@ -231,6 +234,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(signingKeyModule)
             await app.register(managedAuthnModule)
             await app.register(oauthAppModule)
+            await app.register(platformPieceModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
@@ -242,6 +246,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
         case ApEdition.COMMUNITY:
             await app.register(authenticationModule)
             await app.register(projectModule)
+            await app.register(communityPiecesModule)
             break
     }
 
