@@ -219,7 +219,7 @@ export async function getPages(auth: OAuth2PropertyValue, search?: {
     ]
   };
 
-  let sortObj: any = {
+  const sortObj: any = {
     direction: sort?.direction ?? 'descending',
     timestamp: sort?.property ?? 'last_edited_time'
   };
