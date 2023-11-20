@@ -1,5 +1,5 @@
 import { databaseConnection } from '../../database/database-connection'
-import { FlowPlanLimits } from '../billing/plans/pricing-plans'
+import { FlowPlanLimits } from '../billing/project-plan/pricing-plans'
 import { AppSumoEntity, AppSumoPlan } from './appsumo.entity'
 
 

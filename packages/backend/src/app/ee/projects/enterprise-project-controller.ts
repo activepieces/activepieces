@@ -3,9 +3,9 @@ import { FastifyPluginAsyncTypebox, FastifyPluginCallbackTypebox, Type } from '@
 import { enterpriseProjectService } from './enterprise-project-service'
 import { projectService } from '../../project/project-service'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
-import { CreateProjectRequest, UpdateProjectRequest } from '@activepieces/ee-shared'
+import { CreateProjectRequest, DEFAULT_PLATFORM_PLAN, UpdateProjectRequest } from '@activepieces/ee-shared'
 import { platformService } from '../platform/platform.service'
-import { plansService } from '../billing/plans/plan.service'
+import { plansService } from '../billing/project-plan//project-plan.service'
 
 export const enterpriseProjectModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(enterpriseProjectController, { prefix: '/v1/projects' })
@@ -23,26 +23,16 @@ const enterpriseProjectController: FastifyPluginCallbackTypebox = (fastify, _opt
         async (request) => {
             const platformId = request.principal.platform?.id
             assertNotNullOrUndefined(platformId, 'platformId')
-            // TODO revisit with billing
             const project = await projectService.create({
                 ownerId: request.principal.id,
                 displayName: request.body.displayName,
                 platformId,
                 type: ProjectType.PLATFORM_MANAGED,
             })
-            const plan = await plansService.getOrCreateDefaultPlan({
-                projectId: project.id,
-            })
             await plansService.update({
-                projectPlanId: plan.id,
+                projectId: project.id,
                 subscription: null,
-                planLimits: {
-                    tasks: 50000,
-                    connections: 100,
-                    nickname: 'platform',
-                    minimumPollingInterval: 5,
-                    teamMembers: 100,
-                },
+                planLimits: DEFAULT_PLATFORM_PLAN,
             })
             return project
         },

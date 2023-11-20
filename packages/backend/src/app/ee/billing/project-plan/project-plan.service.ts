@@ -1,4 +1,4 @@
-import { ProjectId, apId, isNil } from '@activepieces/shared'
+import { ProjectId, apId, isNil, spreadIfDefined } from '@activepieces/shared'
 import { ProjectPlan } from '@activepieces/ee-shared'
 import { databaseConnection } from '../../../database/database-connection'
 import { projectService } from '../../../project/project-service'
@@ -6,17 +6,19 @@ import { userService } from '../../../user/user-service'
 import { acquireLock } from '../../../helper/lock'
 import { FlowPlanLimits, defaultPlanInformation } from './pricing-plans'
 import { stripeHelper } from '../stripe/stripe-helper'
-import { ProjectPlanEntity } from './plan.entity'
+import { ProjectPlanEntity } from './project-plan.entity'
 import Stripe from 'stripe'
 import { appsumoService } from '../../appsumo/appsumo.service'
 
 const projectPlanRepo = databaseConnection.getRepository<ProjectPlan>(ProjectPlanEntity)
 
 export const plansService = {
-    async getByStripeCustomerId({ stripeCustomerId }: { stripeCustomerId: string }): Promise<ProjectPlan> {
-        return projectPlanRepo.findOneByOrFail({ stripeCustomerId })
+    async getBySubscriptionId({ stripeSubscriptionId }: { stripeSubscriptionId: string }): Promise<ProjectPlan> {
+        return projectPlanRepo.findOneByOrFail({ stripeSubscriptionId })
     },
-
+    async getByProjectId({ projectId }: { projectId: ProjectId }): Promise<ProjectPlan> {
+        return projectPlanRepo.findOneByOrFail({ projectId })
+    },
     async removeDailyTasksAndUpdateTasks({ projectId, tasks }: { projectId: ProjectId, tasks: number }): Promise<void> {
         await projectPlanRepo.update(projectId, {
             tasks,
@@ -32,21 +34,25 @@ export const plansService = {
         return plan
     },
 
-    async update({ planLimits, subscription, projectPlanId }: {
-        planLimits: FlowPlanLimits
+    async update({ planLimits, subscription, projectId }: {
+        planLimits: Partial<FlowPlanLimits>
         subscription: null | Stripe.Subscription
-        projectPlanId: string
-    }): Promise<void> {
+        projectId: string
+    }): Promise<ProjectPlan> {
+        const projectPlan = await plansService.getOrCreateDefaultPlan({
+            projectId,
+        })
         const stripeSubscriptionId = subscription?.id ?? null
         const { nickname, connections, tasks, minimumPollingInterval, teamMembers } = planLimits
-        await projectPlanRepo.update(projectPlanId, {
-            flowPlanName: nickname,
-            connections,
-            tasks,
-            minimumPollingInterval,
-            teamMembers,
+        await projectPlanRepo.update(projectPlan.id, {
+            ...spreadIfDefined('flowPlanName', nickname),
+            ...spreadIfDefined('connections', connections),
+            ...spreadIfDefined('tasks', tasks),
+            ...spreadIfDefined('minimumPollingInterval', minimumPollingInterval),
+            ...spreadIfDefined('teamMembers', teamMembers),
             stripeSubscriptionId,
         })
+        return projectPlanRepo.findOneByOrFail({ projectId })
     },
 }
 

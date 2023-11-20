@@ -1,6 +1,5 @@
 import { FastifyInstance, FastifyRequest } from 'fastify'
 import { Static, Type } from '@sinclair/typebox'
-import { plansService } from '../billing/plans/plan.service'
 import { userService } from '../../user/user-service'
 import { projectService } from '../../project/project-service'
 import { StatusCodes } from 'http-status-codes'
@@ -9,7 +8,8 @@ import { appsumoService } from './appsumo.service'
 import { system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { defaultPlanInformation } from '../billing/plans/pricing-plans'
+import { plansService } from '../billing/project-plan/project-plan.service'
+import { defaultPlanInformation } from '../billing/project-plan/pricing-plans'
 
 export const appSumoModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(appsumoController, { prefix: '/v1/appsumo' })
@@ -94,19 +94,16 @@ const appsumoController: FastifyPluginAsyncTypebox = async (fastify: FastifyInst
                 })
                 if (!isNil(user)) {
                     const project = (await projectService.getUserProject(user.id))
-                    const plan = await plansService.getOrCreateDefaultPlan({
-                        projectId: project.id,
-                    })
                     if (action === 'refund') {
                         await plansService.update({
-                            projectPlanId: plan.id,
+                            projectId: project.id,
                             subscription: null,
                             planLimits: defaultPlanInformation,
                         })
                     }
                     else {
                         await plansService.update({
-                            projectPlanId: plan.id,
+                            projectId: project.id,
                             subscription: null,
                             planLimits: appSumoPlan,
                         })

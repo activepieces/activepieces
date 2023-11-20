@@ -1,4 +1,4 @@
-import { Project, UserId } from '@activepieces/shared'
+import { Project, ProjectId, UserId } from '@activepieces/shared'
 import { Equal, In } from 'typeorm'
 import { PlatformId, ProjectMemberStatus } from '@activepieces/ee-shared'
 import { ProjectMemberEntity } from '../project-members/project-member.entity'
@@ -30,5 +30,13 @@ export const enterpriseProjectService = {
             ...projects,
             ...ownedProject,
         ]
+    },
+    async getProjectIdsByPlatform({ platformId }: { platformId: PlatformId }): Promise<ProjectId[]> {
+        const projects = await projectRepo.find({
+            where: {
+                platformId,
+            },
+        })
+        return projects.map(project => project.id)
     },
 }

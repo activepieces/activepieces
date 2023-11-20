@@ -1,11 +1,11 @@
 import Stripe from 'stripe'
 import { system } from '../../../helper/system/system'
 import { SystemProp } from '../../../helper/system/system-prop'
-import { plansService } from '../plans/plan.service'
 import { ProjectId, UserMeta } from '@activepieces/shared'
 import { captureException } from '../../../helper/logger'
-import { PlanName, UpgradeRequest, platformTasksPriceId, platformUserPriceId, proUserPriceId, trailPeriodDays } from '@activepieces/ee-shared'
-import { FlowPlanLimits } from '../plans/pricing-plans'
+import { PlanName, UpgradeRequest, platformTasksPriceId, platformUserPriceId, proUserPriceId } from '@activepieces/ee-shared'
+import { FlowPlanLimits } from '../project-plan/pricing-plans'
+import { plansService } from '../project-plan/project-plan.service'
 
 export const stripeSecret = system.get(SystemProp.STRIPE_SECRET_KEY)!
 export const stripeWebhookSecret = system.get(SystemProp.STRIPE_WEBHOOK_SECRET)!

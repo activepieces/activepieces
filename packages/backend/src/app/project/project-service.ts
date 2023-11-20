@@ -45,6 +45,11 @@ export const projectService = {
             id: projectId,
         })
     },
+    async getOneOrthrow(projectId: ProjectId): Promise<Project> {
+        return await projectRepo.findOneByOrFail({
+            id: projectId,
+        })
+    },
     async getUserProject(ownerId: UserId): Promise<Project> {
         return await projectRepo.findOneByOrFail({
             ownerId,

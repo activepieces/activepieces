@@ -1,16 +1,13 @@
 import { ActivepiecesError, ApEdition, ErrorCode, ProjectId, isNil } from '@activepieces/shared'
-import dayjs from 'dayjs'
-import utc from 'dayjs/plugin/utc'
-import timezone from 'dayjs/plugin/timezone'
-import { ProjectPlan, ProjectUsage } from '@activepieces/ee-shared'
-import { plansService } from '../../plans/plan.service'
-import { usageService } from '../usage-service'
-import { getEdition } from '../../../../helper/secret-helper'
-import { flowRunService } from '../../../../flows/flow-run/flow-run-service'
-import { captureException } from '../../../../helper/logger'
 
-dayjs.extend(utc)
-dayjs.extend(timezone)
+import { ProjectPlan, ProjectUsage } from '@activepieces/ee-shared'
+import { apDayjs } from '../../../helper/dayjs-helper'
+import { flowRunService } from '../../../flows/flow-run/flow-run-service'
+import { getEdition } from '../../../helper/secret-helper'
+import { plansService } from '../project-plan/project-plan.service'
+import { projectUsageService } from '../project-usage/project-usage-service'
+import { captureException } from '../../../helper/logger'
+
 
 async function limitTasksPerDay({
     projectId,
@@ -51,7 +48,7 @@ async function getTaskUserInUTCDay({
 }: {
     projectId: ProjectId
 }): Promise<number> {
-    const now = dayjs()
+    const now = apDayjs()
     const startOfDay = now.startOf('day').utc()
 
     const flowRunsInLastTwentyFourHours = await flowRunService.getAllProdRuns({
@@ -83,7 +80,7 @@ async function limit({ projectId }: { projectId: ProjectId }): Promise<void> {
                 tasksPerDay: projectPlan.tasksPerDay,
             })
         }
-        const projectUsage = await usageService.getUsage({ projectId })
+        const projectUsage = await projectUsageService.getUsageByProjectId(projectId)
         await limitTasksPerMonth({
             projectUsage,
             projectPlan,

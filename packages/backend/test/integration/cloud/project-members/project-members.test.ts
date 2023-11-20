@@ -50,7 +50,7 @@ describe('Project Member API', () => {
                 role: 'VIEWER',
             }
 
-            stripeHelper.createCustomer = jest.fn().mockResolvedValue(faker.string.uuid())
+            stripeHelper.getOrCreateCustomer = jest.fn().mockResolvedValue(faker.string.uuid())
             emailService.sendInvitation = jest.fn()
 
             // act
@@ -106,7 +106,7 @@ describe('Project Member API', () => {
                 role: 'VIEWER',
             }
 
-            stripeHelper.createCustomer = jest.fn().mockResolvedValue(faker.string.uuid())
+            stripeHelper.getOrCreateCustomer = jest.fn().mockResolvedValue(faker.string.uuid())
             emailService.sendInvitation = jest.fn()
 
             // act

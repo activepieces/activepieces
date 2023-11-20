@@ -1,14 +1,14 @@
 import { FastifyRequest } from 'fastify'
-import { plansService } from './plans/plan.service'
 import { StatusCodes } from 'http-status-codes'
 import { captureException, logger } from '../../helper/logger'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { stripe, stripeHelper, stripeWebhookSecret } from './stripe/stripe-helper'
-import { usageService } from './usage/usage-service'
-import { defaultPlanInformation } from './plans/pricing-plans'
 import { billingService } from './billing.service'
 import { UpgradeRequest } from '@activepieces/ee-shared'
 import Stripe from 'stripe'
+import { defaultPlanInformation } from './project-plan/pricing-plans'
+import { projectUsageService } from './project-usage/project-usage-service'
+import { plansService } from './project-plan/project-plan.service'
 
 export const billingModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(billingController, { prefix: '/v1/billing' })
@@ -22,7 +22,7 @@ const billingController: FastifyPluginAsyncTypebox = async (fastify) => {
         ) => {
             return {
                 defaultPlan: defaultPlanInformation,
-                usage: await usageService.getUsage({ projectId: request.principal.projectId }),
+                usage: await projectUsageService.getUsageByProjectId(request.principal.projectId),
                 plan: await plansService.getOrCreateDefaultPlan({ projectId: request.principal.projectId }),
                 customerPortalUrl: await stripeHelper.createPortalSessionUrl({ projectId: request.principal.projectId }),
             }
@@ -75,15 +75,14 @@ const billingController: FastifyPluginAsyncTypebox = async (fastify) => {
 async function handleWebhook({ payload, signature }: { payload: string, signature: string }): Promise<void> {
     const webhook = stripe.webhooks.constructEvent(payload, signature, stripeWebhookSecret)
     const subscription = webhook.data.object as Stripe.Subscription
-    const stripeCustomerId = subscription.customer as string
-    const projectPlan = await plansService.getByStripeCustomerId({
-        stripeCustomerId,
+    const projectPlan = await plansService.getBySubscriptionId({
+        stripeSubscriptionId: subscription.id,
     })
     switch (webhook.type) {
         case 'customer.subscription.deleted':
         case 'customer.subscription.updated':
         case 'customer.subscription.created': {
-            await billingService.update({ subscription, projectPlanId: projectPlan.id })
+            await billingService.update({ subscription, projectId: projectPlan.projectId })
             break
         }
         default:

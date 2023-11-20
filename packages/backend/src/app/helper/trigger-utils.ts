@@ -31,10 +31,10 @@ import { pieceMetadataService } from '../pieces/piece-metadata-service'
 import { logger } from './logger'
 import { system } from './system/system'
 import { SystemProp } from './system/system-prop'
-import { plansService } from '../ee/billing/plans/plan.service'
 import { JobType } from '../workers/flow-worker/queues/queue'
 import { getServerUrl } from './public-ip-utils'
 import { getEdition } from './secret-helper'
+import { plansService } from '../ee/billing/project-plan/project-plan.service'
 
 function constructEveryXMinuteCron(minute: number) {
     const edition = getEdition()

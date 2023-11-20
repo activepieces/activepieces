@@ -27,9 +27,23 @@ export class RemoveUnusedFieldsinBilling1700132368636 implements MigrationInterf
             ALTER TABLE "chatbot"
             ALTER COLUMN "visibilityStatus" DROP DEFAULT
         `)
+        await queryRunner.query(`
+        ALTER TABLE "project_usage" DROP COLUMN "datasourcesSize"
+    `)
+        await queryRunner.query(`
+        ALTER TABLE "project_usage" DROP COLUMN "bots"
+    `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`
+        ALTER TABLE "project_usage"
+        ADD "bots" integer NOT NULL DEFAULT '0'
+    `)
+        await queryRunner.query(`
+        ALTER TABLE "project_usage"
+        ADD "datasourcesSize" integer NOT NULL DEFAULT '0'
+    `)
         await queryRunner.query(`
             ALTER TABLE "chatbot"
             ALTER COLUMN "visibilityStatus"

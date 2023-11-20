@@ -1,20 +1,16 @@
 import {
-    ProjectPlan,
     ProjectUsage,
 } from '@activepieces/ee-shared'
 import { isNil } from 'lodash'
 import { telemetry } from '../../../helper/telemetry.utils'
 import { TelemetryEventName, UserMeta } from '@activepieces/shared'
-import dayjs from 'dayjs'
-import utc from 'dayjs/plugin/utc'
-import timezone from 'dayjs/plugin/timezone'
 import { projectService } from '../../../project/project-service'
 import { userService } from '../../../user/user-service'
 import { logger } from '../../../helper/logger'
+import { apDayjs } from '../../../helper/dayjs-helper'
+import { plansService } from '../project-plan/project-plan.service'
 import { emailService } from '../../helper/email/email-service'
 
-dayjs.extend(utc)
-dayjs.extend(timezone)
 
 const alertingEmails: {
     threshold: number
@@ -52,7 +48,7 @@ async function sendEmail(user: UserMeta, thresholdEmail: {
         throw new Error(`Project with ID ${projectUsage.projectId} not found`)
     }
 
-    const resetDate = dayjs.utc(projectUsage.nextResetDatetime)
+    const resetDate = apDayjs(projectUsage.nextResetDatetime)
     const formattedDate = resetDate.utc().format('MM/DD/YYYY hh:mm:ss A')
 
     telemetry.trackProject(project.id, {
@@ -74,13 +70,14 @@ async function sendEmail(user: UserMeta, thresholdEmail: {
 // Function to handle alerts
 async function handleAlerts({
     projectUsage,
-    projectPlan,
     numberOfTasks,
 }: {
     projectUsage: ProjectUsage
-    projectPlan: ProjectPlan
     numberOfTasks: number
 }): Promise<void> {
+    const projectPlan = await plansService.getOrCreateDefaultPlan({
+        projectId: projectUsage.projectId,
+    })
     const consumedTask = !isNil(projectPlan.tasksPerDay) ?
         projectUsage.consumedTasksToday :
         projectUsage.consumedTasks
@@ -96,10 +93,7 @@ async function handleAlerts({
                 continue
             }
 
-            const project = await projectService.getOne(projectUsage.projectId)
-            if (!project) {
-                throw new Error(`Project with ID ${projectUsage.projectId} not found`)
-            }
+            const project = await projectService.getOneOrthrow(projectUsage.projectId)
             const user = (await userService.getMetaInfo({ id: project.ownerId }))!
             logger.info({
                 email: user.email,

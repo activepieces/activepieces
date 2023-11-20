@@ -1,6 +1,7 @@
 import { ActivepiecesError, DataSource, ErrorCode, ProjectId } from '@activepieces/shared'
-import { databaseConnection } from '../../../../database/database-connection'
-import { ChatbotEntity } from '../../../../chatbot/chatbot.entity'
+import { ChatbotEntity } from '../../../chatbot/chatbot.entity'
+import { databaseConnection } from '../../../database/database-connection'
+
 
 const chatbotRepo = databaseConnection.getRepository(ChatbotEntity)
 

@@ -24,8 +24,7 @@ import { DatabaseType, system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
 import { ArrayContains, EntitySchema, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
 import { StepFileEntity } from '../flows/step-file/step-file.entity'
-import { ProjectPlanEntity } from '../ee/billing/plans/plan.entity'
-import { ProjectUsageEntity } from '../ee/billing/usage/usage-entity'
+import { ProjectUsageEntity } from '../ee/billing/project-usage/project-usage.entity'
 import { ChatbotEntity } from '../chatbot/chatbot.entity'
 import { ProjectMemberEntity } from '../ee/project-members/project-member.entity'
 import { getEdition } from '../helper/secret-helper'
@@ -34,6 +33,7 @@ import { CustomDomainEntity } from '../ee/custom-domains/custom-domain.entity'
 import { PlatformEntity } from '../ee/platform/platform.entity'
 import { SigningKeyEntity } from '../ee/signing-key/signing-key-entity'
 import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
+import { ProjectPlanEntity } from '../ee/billing/project-plan/project-plan.entity'
 
 const databaseType = system.get(SystemProp.DB_TYPE)
 
