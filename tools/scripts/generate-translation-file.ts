@@ -21,6 +21,7 @@ async function generateTranslationFile(pieceName: string) {
     fs.writeFileSync(path.join(translationsDir, 'en.json'), jsonToWrite, 'utf8');
 
     addFilePathToCrowdin(pieceName);
+    updateProjectJson(pieceName);
 }
 
 async function processPackage(packageName: string) {
@@ -31,7 +32,7 @@ async function processPackage(packageName: string) {
     const { name: pieceName } = packageJson;
     const piece = extractPieceFromModule({ module, pieceName, pieceVersion: packageJson.version });
     const metadata = { ...piece.metadata(), name: piece.name, version: piece.version };
-    console.log(metadata)
+
     return {
         name: pieceName,
         auth: processAuth(metadata),
@@ -89,6 +90,23 @@ function addFilePathToCrowdin(pieceName: string) {
     } catch (error) {
         console.error('Error while updating crowdin.yml:', error);
     }
+}
+
+function updateProjectJson(pieceName: string) {
+    const projectJsonPath = `packages/pieces/${pieceName}/project.json`;
+    const translationFilesPath = `packages/pieces/${pieceName}/translations/*.json`
+
+    const fileContent = fs.readFileSync(projectJsonPath, 'utf8');
+    const projectJson = JSON.parse(fileContent);
+
+    if (projectJson.targets.build.options.assets.includes(translationFilesPath)) {
+        return
+    }
+
+    projectJson.targets.build.options.assets.push(translationFilesPath);
+
+    fs.writeFileSync(projectJsonPath, JSON.stringify(projectJson, null, 2));
+
 }
 
 const main = async () => {
