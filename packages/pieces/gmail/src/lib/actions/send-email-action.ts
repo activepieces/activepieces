@@ -4,55 +4,56 @@ import { gmailAuth } from "../../";
 import MailComposer from 'nodemailer/lib/mail-composer';
 import mime from 'mime-types';
 import Mail, { Attachment } from "nodemailer/lib/mailer";
+import i18next from 'i18next';
 
 export const gmailSendEmailAction = createAction({
 	auth: gmailAuth,
 	name: 'send_email',
-	description: 'Send an email through a Gmail account',
-	displayName: 'Send Email',
+	description: i18next.t('gmail:gmail.actions.send_email.description'),
+	displayName: i18next.t('gmail:gmail.actions.send_email.displayName'),
 	props: {
 		receiver: Property.Array({
-			displayName: 'Receiver Email (To)',
+			displayName: i18next.t('gmail:gmail.actions.send_email.props.receiver.displayName'),
 			description: undefined,
 			required: true,
 		}),
 		cc: Property.Array({
-			displayName: 'CC Email',
+			displayName: i18next.t('gmail:gmail.actions.send_email.props.cc.displayName'),
 			description: undefined,
 			required: false,
 		}),
 		bcc: Property.Array({
-			displayName: 'BCC Email',
+			displayName: i18next.t('gmail:gmail.actions.send_email.props.bcc.displayName'),
 			description: undefined,
 			required: false,
 		}),
 		subject: Property.ShortText({
-			displayName: 'Subject',
+			displayName: i18next.t('gmail:gmail.actions.send_email.props.subject.displayName'),
 			description: undefined,
 			required: true,
 		}),
 		body_text: Property.ShortText({
 			displayName: 'Body (Text)',
-			description: 'Text version of the body for the email you want to send',
+			description: i18next.t('gmail:gmail.actions.send_email.props.body_text.displayName'),
 			required: true,
 		}),
 		reply_to: Property.Array({
 			displayName: 'Reply-To Email',
-			description: 'Email address to set as the "Reply-To" header',
+			description: i18next.t('gmail:gmail.actions.send_email.props.reply_to.displayName'),
 			required: false,
 		}),
 		body_html: Property.ShortText({
-			displayName: 'Body (HTML)',
-			description: 'HTML version of the body for the email you want to send',
+			displayName: i18next.t('gmail:gmail.actions.send_email.props.body_html.displayName'),
+			description: i18next.t('gmail:gmail.actions.send_email.props.body_html.description'),
 			required: false,
 		}),
 		sender_name: Property.ShortText({
-			displayName: 'Sender Name',
+			displayName: i18next.t('gmail:gmail.actions.send_email.props.sender_name.displayName'),
 			required: false,
 		}),
 		attachment: Property.File({
-			displayName: 'Attachment',
-			description: 'File to attach to the email you want to send',
+			displayName: i18next.t('gmail:gmail.actions.send_email.props.attachment.displayName'),
+			description: i18next.t('gmail:gmail.actions.send_email.props.attachment.description'),
 			required: false,
 		}),
 	},
