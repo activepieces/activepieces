@@ -1,6 +1,6 @@
 import { ProcessorFn } from "../processors/types";
 import { TypedValidatorFn, ValidationInputType } from "../validators/types";
-import { PropertyType } from "./property";
+import {PiecePropertyMap, PropertyType} from "./property";
 
 export type BasePropertySchema = {
     displayName: string;
@@ -70,7 +70,7 @@ export type SeparatorProperty<R extends boolean> = BasePropertySchema & TPropert
 
 export type TitleProperty<R extends boolean> = BasePropertySchema & TPropertyValue<never, PropertyType.TITLE, ValidationInputType.ANY, R>;
 
-export type GroupProperty<R extends boolean> = BasePropertySchema & TPropertyValue<never, PropertyType.GROUP, ValidationInputType.ANY, R> & {props: Record<string, BasePropertySchema>};
+export type GroupProperty<R extends boolean> = BasePropertySchema & TPropertyValue<never, PropertyType.GROUP, ValidationInputType.ANY, R> & {props: PiecePropertyMap};
 
 export class ApFile {
     constructor(public filename: string, public data: Buffer, public extension?: string) {}

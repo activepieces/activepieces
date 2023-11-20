@@ -408,6 +408,7 @@ function buildSchema(props: PiecePropertyMap): TSchema {
                 propsSchema[name] = Type.Union([Type.Array(Type.Any()), Type.String()])
                 break
             case PropertyType.DYNAMIC:
+            case PropertyType.GROUP: // Todo: Add support for groups
                 propsSchema[name] = Type.Record(Type.String(), Type.Any())
                 break
         }

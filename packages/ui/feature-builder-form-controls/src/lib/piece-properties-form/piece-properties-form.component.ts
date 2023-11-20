@@ -515,9 +515,8 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
           break;
         }
         case PropertyType.GROUP:
-          Object.keys(prop.props).forEach((gpk) => {
-            controls[`${pk}.${gpk}`] = new UntypedFormControl(propValue);
-          })
+          // @ts-ignore TODO: fix this
+          controls[pk] = this.fb.group(this.createConfigsFormControls(prop.props, propValue ? propValue[pk] ?? {} : {}));
           break;
         case PropertyType.SEPARATOR:
         case PropertyType.TITLE: {
@@ -529,6 +528,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
         }
       }
     });
+
     return controls;
   }
   getControl(configKey: string) {
