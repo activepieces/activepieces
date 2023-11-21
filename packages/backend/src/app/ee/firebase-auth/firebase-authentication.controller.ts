@@ -171,8 +171,8 @@ export const firebaseAuthenticationController: FastifyPluginAsyncTypebox = async
 }
 
 async function getUser({ decodedToken, email }: { decodedToken: DecodedIdToken, email: string }): Promise<User | null> {
-    const user = await userService.getByPlatformAndEmail({
-        platformId: null,
+    // TODO SEND PLATFORM ID AFTER FIREBASE MIGRATIION
+    const user = await userService.getbyEmail({
         email,
     })
 
