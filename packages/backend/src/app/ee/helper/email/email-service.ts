@@ -61,8 +61,20 @@ export const emailService = {
             },
         })
     },
-}
 
+    async sendVerifyEmail({ platformId, email, otp }: SendVerifyEmailParams): Promise<void> {
+        await sendEmail({
+            email,
+            platformId: platformId ?? undefined,
+            template: {
+                templateName: 'verify-email',
+                data: {
+                    otp,
+                },
+            },
+        })
+    },
+}
 
 async function getFrontendDomain(edition: ApEdition, platformId: string | undefined): Promise<string> {
     let domain = system.get(SystemProp.FRONTEND_URL)
@@ -94,6 +106,7 @@ async function sendEmail({ platformId, email, template }: { template: EmailTempl
         'quota-50': '[ACTION REQUIRED] 50% of your Activepieces tasks are consumed',
         'quota-90': '[URGENT] 90% of your Activepieces tasks are consumed',
         'quota-100': '[URGENT] 100% of your Activepieces tasks are consumed',
+        'verify-email': 'Verify your email address',
     }
 
     await transporter.sendMail({
@@ -121,16 +134,35 @@ async function readTemplateFile(templateName: string): Promise<string> {
     return await fs.readFile(`./packages/backend/src/assets/emails/${templateName}.html`, 'utf-8')
 }
 
-type EmailTemplate = {
+type InvitationEmailTemplate = {
     templateName: 'invitation-email'
     data: {
         projectName: string
         setupLink: string
     }
-} | {
+}
+
+type QuotaEmailTemplate = {
     templateName: 'quota-50' | 'quota-90' | 'quota-100'
     data: {
         resetDate: string
         firstName: string
     }
+}
+
+type VerifyEmailTemplate = {
+    templateName: 'verify-email'
+    data: {
+        otp: string
+    }
+}
+type EmailTemplate =
+    | InvitationEmailTemplate
+    | QuotaEmailTemplate
+    | VerifyEmailTemplate
+
+type SendVerifyEmailParams = {
+    platformId: string | null
+    email: string
+    otp: string
 }

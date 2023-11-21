@@ -1,5 +1,5 @@
 import { QueryFailedError } from 'typeorm'
-import { AuthenticationResponse, SignInRequest, UserStatus, ActivepiecesError, ErrorCode } from '@activepieces/shared'
+import { AuthenticationResponse, SignInRequest, UserStatus, ActivepiecesError, ErrorCode, isNil, User } from '@activepieces/shared'
 import { userService } from '../../user/user-service'
 import { passwordHasher } from '../lib/password-hasher'
 import { authenticationServiceHooks as hooks } from './hooks'
@@ -16,10 +16,10 @@ export const authenticationService = {
                 user,
             })
 
-            const { password: _, ...filteredUser } = updatedUser
+            const userWithoutPassword = removePasswordPropFromUser(updatedUser)
 
             return {
-                ...filteredUser,
+                ...userWithoutPassword,
                 token,
                 projectId: project.id,
             }
@@ -44,36 +44,55 @@ export const authenticationService = {
             email: request.email,
         })
 
-        if (user === null) {
-            throw new ActivepiecesError({
-                code: ErrorCode.INVALID_CREDENTIALS,
-                params: {
-                    email: request.email,
-                },
-            })
-        }
+        assertUserIsAllowedToSignIn(user)
 
-        const passwordMatches = await passwordHasher.compare(request.password, user.password)
-
-        if (!passwordMatches) {
-            throw new ActivepiecesError({
-                code: ErrorCode.INVALID_CREDENTIALS,
-                params: {
-                    email: request.email,
-                },
-            })
-        }
+        await assertPasswordMatches({
+            requestPassword: request.password,
+            userPassword: user.password,
+        })
 
         const { user: updatedUser, project, token } = await hooks.get().postSignIn({
             user,
         })
 
-        const { password: _, ...filteredUser } = updatedUser
+        const userWithoutPassword = removePasswordPropFromUser(updatedUser)
 
         return {
-            ...filteredUser,
+            ...userWithoutPassword,
             token,
             projectId: project.id,
         }
     },
+}
+
+const assertUserIsAllowedToSignIn: (user: User | null) => asserts user is User = (user) => {
+    if (isNil(user) || user.status === UserStatus.INVITED) {
+        throw new ActivepiecesError({
+            code: ErrorCode.INVALID_CREDENTIALS,
+            params: {
+                email: user?.email,
+            },
+        })
+    }
+}
+
+const assertPasswordMatches = async ({ requestPassword, userPassword }: AssertPasswordsMatchParams): Promise<void> => {
+    const passwordMatches = await passwordHasher.compare(requestPassword, userPassword)
+
+    if (!passwordMatches) {
+        throw new ActivepiecesError({
+            code: ErrorCode.INVALID_CREDENTIALS,
+            params: {},
+        })
+    }
+}
+
+const removePasswordPropFromUser = (user: User): Omit<User, 'password'> => {
+    const { password: _, ...filteredUser } = user
+    return filteredUser
+}
+
+type AssertPasswordsMatchParams = {
+    requestPassword: string
+    userPassword: string
 }
