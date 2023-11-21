@@ -34,8 +34,7 @@
       ],
       "options": {
         "lintFilePatterns": [
-          "packages/pieces/retune/**/*.ts",
-          "packages/pieces/retune/package.json"
+          "packages/pieces/retune/**/*.ts"
         ]
       }
     }
