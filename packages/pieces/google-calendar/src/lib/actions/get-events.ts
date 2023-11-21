@@ -68,7 +68,6 @@ export const getEvents = createAction({
             if (event_types.length > 0) {
                 url += `?${event_types.map(type => `eventTypes=${type}`).join("&")}`;
             }
-
             const request: HttpRequest<Record<string, unknown>> = {
                 method: HttpMethod.GET,
                 url,
