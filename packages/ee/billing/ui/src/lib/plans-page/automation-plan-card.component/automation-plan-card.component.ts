@@ -1,14 +1,8 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
-import {
-  customPlanPrice,
-  freePlanPrice,
-  FlowPricingPlan,
-  PlanName,
-} from '@activepieces/ee-shared';
+import { FlowPricingPlan, PlanName } from '@activepieces/ee-shared';
 import {
   BehaviorSubject,
   Observable,
-  combineLatest,
   map,
   shareReplay,
   startWith,
@@ -28,40 +22,34 @@ import { BillingService } from '../../service/billing.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AutomationPlanCardComponent {
-  readonly freePlanPrice = freePlanPrice;
-  readonly customPlanPrice = customPlanPrice;
-  readonly extraUsersMax = 100;
+  readonly extraUsersMax = 999;
+  readonly freePlanPrice = `Free`;
+
   loading$: BehaviorSubject<boolean> = new BehaviorSubject(false);
-  price$?: Observable<number>;
+  tasksPrice$?: Observable<string>;
   tasksSliderControl: FormControl<number> = new FormControl(0, {
     nonNullable: true,
   });
   usersFormControl: FormControl<number> = new FormControl(0, {
     nonNullable: true,
   });
+  usersNeeded$?: Observable<string>;
   extraUsersValueChanged$: Observable<number>;
   _plan!: FlowPricingPlan;
   planId$: Observable<string> | undefined;
   tasks$!: Observable<string>;
   openCheckout$?: Observable<void>;
-  disableChangeButton$!: Observable<boolean>;
+
   @Input({ required: true }) loadPlans$!: loadPlansObs;
   @Input({ required: true })
   set plan(value: FlowPricingPlan) {
     this._plan = value;
     this.usersFormControl.setValue(this._plan.includedUsers);
-    this.price$ = this.getPrice$();
+    this.tasksPrice$ = this.getTasksPrice$();
     this.planId$ = this.getPlanId$();
     this.tasks$ = this.getTasks$();
-    this.disableChangeButton$ = combineLatest({
-      users: this.usersFormControl.valueChanges,
-      tasksSlider: this.tasksSliderControl.valueChanges,
-    }).pipe(
-      map(({ users, tasksSlider }) => {
-        return users === this._plan.includedUsers && tasksSlider > 0;
-      })
-    );
     this.tasksSliderControl.setValue(0);
+    this.usersNeeded$ = this.getUsersNeededForForm();
   }
   constructor(
     private matDialog: MatDialog,
@@ -144,14 +132,24 @@ export class AutomationPlanCardComponent {
       this.usersFormControl.setValue(newValue);
     }
   }
-  getPrice$(): Observable<number> {
+  getTasksPrice$(): Observable<string> {
     return this.tasksSliderControl.valueChanges.pipe(
       startWith(0),
       map((val) => {
         if (this._plan.tasks.length === 0) {
-          return -1;
+          return `Custom Pricing`;
         }
-        return this._plan.tasks[val].unitPrice * this._plan.tasks[val].quantity;
+
+        const tasksPrice = this._plan.tasks[val].planPrice;
+        if (tasksPrice === 0) {
+          return this.freePlanPrice;
+        }
+        return `$${tasksPrice} monthly`;
+      }),
+      tap((res) => {
+        if (res === this.freePlanPrice) {
+          this.usersFormControl.setValue(1);
+        }
       }),
       shareReplay(1)
     );
@@ -181,6 +179,11 @@ export class AutomationPlanCardComponent {
       startWith(0),
       map((sliderValue) => {
         if (this._plan.tasks.length === 0) {
+          if (this._plan.custom) {
+            return `${formatNumberWithCommas(
+              this._plan.includedTasks
+            )} tasks / month`;
+          }
           return '0';
         }
         if (sliderValue < this._plan.tasks.length) {
@@ -199,6 +202,33 @@ export class AutomationPlanCardComponent {
         )} tasks / month`;
       }),
       shareReplay(1)
+    );
+  }
+  getUsersNeededForForm() {
+    return this.usersFormControl.valueChanges.pipe(
+      startWith(this._plan.includedUsers),
+      map((val) => {
+        if (this._plan.name === 'Platform') {
+          if (val <= 10) {
+            return '1 - 10';
+          } else if (val <= 50) {
+            return '11 - 50';
+          } else if (val <= 100) {
+            return '51 - 100';
+          } else {
+            return '100+';
+          }
+        }
+        if (val <= 10) {
+          return '1 - 10';
+        } else if (val <= 100) {
+          return '11 - 100';
+        } else if (val <= 500) {
+          return '101 - 500';
+        } else {
+          return '500+';
+        }
+      })
     );
   }
 }

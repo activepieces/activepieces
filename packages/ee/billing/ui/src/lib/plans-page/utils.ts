@@ -25,6 +25,7 @@ export function formatNumberWithCommas(number: number): string {
   // Format the integer part with commas
   parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
+  console.log('formatNumberWithCommas:', number);
   // Join the integer and decimal parts (if any)
   return parts.join('.');
 }

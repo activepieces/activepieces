@@ -9,56 +9,65 @@
         </div>
     </div>
 
-    <div class="ap-px-4">
+    <div class="ap-px-4 ap-pt-3">
         <div class="ap-flex ap-flex-col ap-gap-5 ap-min-h-[280px]">
-            <div class="ap-flex-grow"></div>
-
-            <div *ngIf="_plan.custom" class="ap-typography-body-2">
-                {{this._plan.includedTasks}} Tasks
-            </div>
-            <div *ngIf="!_plan.custom" class="ap-flex ap-flex-col ap-gap-2">
-                <div class="ap-typography-body-2   ">
-                    {{( tasks$ | async )}}
+            <p class="ap-font-semibold">
+                {{tasksPrice$ | async}}
+            </p>
+            <div class="ap-typography-body-2 ap-flex ap-gap-2 ap-flex-col">
+                {{( tasks$ | async )}}
+                <div *ngIf="_plan.custom" class="ap-typography-body-2  ap-h-[2.75rem] ap-flex ap-items-center">
+                    Discounted pricing for more tasks ✨
                 </div>
-                <mat-slider [min]="0" [max]="_plan.tasks.length - 1 " step="1" value="0">
+                <mat-slider *ngIf="!_plan.custom" [min]="0" [max]="_plan.tasks.length - 1 " step="1" value="0">
                     <input matSliderThumb [formControl]="tasksSliderControl" />
                 </mat-slider>
             </div>
-            <ng-container *ngIf="!_plan.contactUs">
-                <p class="ap-font-semibold">Includes {{_plan.includedUsers}} free user{{_plan.includedUsers > 1? 's':
-                    ''}}
-                </p>
-                <div class="ap-flex ap-gap-3 ap-items-center">
-                    <mat-form-field class="ap-w-[6.5rem]" subscriptSizing="dynamic">
-                        <mat-label>Users</mat-label>
-                        <input matInput type="number" max="100" min="0" #usersInput class="ap-appearance-none"
-                            [formControl]="usersFormControl">
-                        <div matSuffix class="ap-flex ap-flex-col ap-mx-5" (click)="$event.stopPropagation()">
-                            <svg-icon [svgStyle]="{ width: '16px', height: '16px' }"
-                                src="assets/img/custom/chevron-up.svg" (click)="incrementExtraUsers()"
-                                class="ap-cursor-pointer">
-                            </svg-icon>
-                            <svg-icon [svgStyle]="{ width: '16px', height: '16px' }" src="assets/img/custom/chevron.svg"
-                                (click)="decrementExtraUsers()" class="ap-cursor-pointer" matSuffix>
-                            </svg-icon>
-                        </div>
-                    </mat-form-field>
-                    <div class=" !ap-font-semibold ap-typography-body-2  ap-mb-2 ap-select-none">
-                        {{_plan.pricePerUser}}$/user/month
+
+            <p class="ap-font-semibold">
+                Includes {{_plan.includedUsers}} free
+                user{{_plan.includedUsers > 1? 's':
+                ''}}
+            </p>
+
+
+            <div class="ap-flex ap-gap-3 ap-items-center">
+                <mat-form-field class="ap-w-[6.5rem]" subscriptSizing="dynamic">
+                    <mat-label>Users</mat-label>
+                    <input matInput type="number" [max]="extraUsersMax" min="0" #usersInput class="ap-appearance-none"
+                        [formControl]="usersFormControl">
+                    <div matSuffix class="ap-flex ap-flex-col ap-mx-5" (click)="$event.stopPropagation()">
+                        <svg-icon [svgStyle]="{ width: '16px', height: '16px' }" src="assets/img/custom/chevron-up.svg"
+                            (click)="incrementExtraUsers()" class="ap-cursor-pointer">
+                        </svg-icon>
+                        <svg-icon [svgStyle]="{ width: '16px', height: '16px' }" src="assets/img/custom/chevron.svg"
+                            (click)="decrementExtraUsers()" class="ap-cursor-pointer" matSuffix>
+                        </svg-icon>
                     </div>
+                </mat-form-field>
+                <div class=" !ap-font-semibold ap-typography-body-2  ap-mb-2 ap-select-none">
+                    <ng-container *ngIf="_plan.pricePerUser === 0; else pricePerUser">
+                        Discounted pricing ✨
+                    </ng-container>
+                    <ng-template #pricePerUser>
+                        ${{_plan.pricePerUser}}/user/month
+                    </ng-template>
+
                 </div>
 
-            </ng-container>
+            </div>
+
+
 
 
             <ap-button *ngIf="_plan.contactUs" btnColor="primary" [fullWidthOfContainer]="true"
                 [loading]="(loading$ | async) || false" class="ap-mt-2" data-tally-open="nrO9gL"
                 data-tally-layout="modal" data-tally-width="700" data-tally-auto-close="3000"
-                [attr.data-plan]="_plan.name">Talk to us</ap-button>
+                [attr.data-plan]="_plan.name" [attr.data-usersneeded]="usersNeeded$ | async">Talk to us</ap-button>
 
             <ng-container *ngIf="!_plan.contactUs">
-                <ap-button btnColor="primary" [disabled]="disableChangeButton$ | async" [fullWidthOfContainer]="true"
-                    [loading]="(loading$ | async) || false" class="ap-mt-2" (buttonClicked)="openPaymentLink()">
+                <ap-button btnColor="primary" [fullWidthOfContainer]="true" [loading]="(loading$ | async) || false"
+                    class="ap-mt-2" (buttonClicked)="openPaymentLink()">
                     Change plan</ap-button>
             </ng-container>
         </div>

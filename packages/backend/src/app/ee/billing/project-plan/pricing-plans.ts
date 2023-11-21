@@ -12,7 +12,8 @@ export const FlowPlanLimits = Type.Object({
 
 export type FlowPlanLimits = Static<typeof FlowPlanLimits>
 
+//TODO: if we remove bots from billing this should be without .FLOWS
 export const defaultPlanInformation: FlowPlanLimits = JSON.parse(
     system.get(SystemProp.BILLING_SETTINGS) ?? '{}',
-)
+).FLOWS
 
