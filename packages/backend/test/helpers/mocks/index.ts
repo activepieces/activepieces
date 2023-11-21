@@ -1,4 +1,4 @@
-import { KeyAlgorithm, SigningKey, Platform, OAuthApp, FilteredPieceBehavior } from '@activepieces/ee-shared'
+import { KeyAlgorithm, SigningKey, Platform, OAuthApp, FilteredPieceBehavior, CustomDomain, CustomDomainStatus, OtpModel, OtpType } from '@activepieces/ee-shared'
 import { UserStatus, User, apId, Project, NotificationStatus, ProjectType, PieceType, PackageType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { PieceMetadataSchema } from '../../../src/app/pieces/piece-metadata-entity'
@@ -125,5 +125,27 @@ export const createMockPieceMetadata = (pieceMetadata?: Partial<Omit<PieceMetada
         pieceType: pieceMetadata?.pieceType ?? faker.helpers.enumValue(PieceType),
         packageType: pieceMetadata?.packageType ?? faker.helpers.enumValue(PackageType),
         archiveId: pieceMetadata?.archiveId,
+    }
+}
+
+export const createMockCustomDomain = (customDomain?: Partial<CustomDomain>): CustomDomain => {
+    return {
+        id: customDomain?. id ?? apId(),
+        created: customDomain?.created ?? faker.date.recent().toISOString(),
+        updated: customDomain?.updated ?? faker.date.recent().toISOString(),
+        domain: customDomain?.domain ?? faker.internet.domainName(),
+        platformId: customDomain?.platformId ?? apId(),
+        status: customDomain?.status ?? faker.helpers.enumValue(CustomDomainStatus),
+    }
+}
+
+export const createMockOtp = (otp?: Partial<OtpModel>): OtpModel => {
+    return {
+        id: otp?. id ?? apId(),
+        created: otp?.created ?? faker.date.recent().toISOString(),
+        updated: otp?.updated ?? faker.date.recent().toISOString(),
+        type: otp?.type ?? faker.helpers.enumValue(OtpType),
+        userId: otp?.userId ?? apId(),
+        value: otp?.value ?? faker.number.int({ min: 100000, max: 999999 }).toString(),
     }
 }

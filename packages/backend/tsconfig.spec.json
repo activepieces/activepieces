@@ -11,6 +11,7 @@
     "**/*.test.ts",
     "**/*.spec.ts",
     "test/**/*.ts",
+    "node_modules/fastify-raw-body/plugin.d.ts"
   ],
   "exclude": []
 }
