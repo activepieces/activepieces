@@ -23,7 +23,7 @@ const platformPieceController: FastifyPluginCallbackTypebox = (app, _opts, done)
             platformId,
             userId: req.principal.id,
         })
-        return await pieceService.add({
+        return await pieceService.installPiece({
             packageType,
             pieceName,
             pieceVersion,
@@ -41,10 +41,11 @@ async function assertUserIsPlatformOwner({
     userId,
 }: { platformId?: string, userId: string }): Promise<void> {
     if (!isNil(platformId)) {
-        const platform = await platformService.getOneByOwner({
-            ownerId: userId,
+        const userOwner = await platformService.checkUserIsOwner({
+            platformId,
+            userId,
         })
-        if (platform?.id !== platformId) {
+        if (!userOwner) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,
                 params: {},

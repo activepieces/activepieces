@@ -16,7 +16,7 @@ const communityPiecesController: FastifyPluginAsyncTypebox = async (app) => {
         const { packageType, pieceName, pieceVersion, pieceArchive } = req.body
         const { projectId } = req.principal
 
-        const pieceMetadata = await pieceService.add({
+        const pieceMetadata = await pieceService.installPiece({
             packageType,
             pieceName,
             pieceVersion,
