@@ -79,6 +79,8 @@ import { AddFilteredPiecesToPlatform1699281870038 } from './migration/postgres/1
 import { AddSmtpAndPrivacyUrlToPlatform1699491705906 } from './migration/postgres/1699491705906-AddSmtpAndPrivacyUrlToPlatform'
 import { UpdateUserStatusRenameShadowToInvited1699818680567 } from './migration/common/1699818680567-update-user-status-rename-shadow-to-invited'
 import { AddPlatformIdToUser1699901161457 } from './migration/postgres/1699901161457-add-platform-id-to-user'
+import { AddPlatformDefaultLanguage1700406308445 } from './migration/postgres/1700406308445-AddPlatformDefaultLanguage'
+
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(SystemProp.POSTGRES_USE_SSL)
@@ -173,6 +175,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddOAuth2AppEntiity1699221414907,
                 AddFilteredPiecesToPlatform1699281870038,
                 AddSmtpAndPrivacyUrlToPlatform1699491705906,
+                AddPlatformDefaultLanguage1700406308445,
             )
             break
         case ApEdition.ENTERPRISE:
@@ -186,6 +189,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddOAuth2AppEntiity1699221414907,
                 AddFilteredPiecesToPlatform1699281870038,
                 AddSmtpAndPrivacyUrlToPlatform1699491705906,
+                AddPlatformDefaultLanguage1700406308445,
             )
             break
         case ApEdition.COMMUNITY:

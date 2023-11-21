@@ -1,6 +1,6 @@
 import { ApId } from '@activepieces/shared'
 import { Type, Static } from '@sinclair/typebox'
-import { FilteredPieceBehavior } from './platform.model'
+import { FilteredPieceBehavior, LocalesEnum } from './platform.model'
 
 export const UpdatePlatformRequestBody = Type.Object({
     name: Type.Optional(Type.String()),
@@ -19,6 +19,7 @@ export const UpdatePlatformRequestBody = Type.Object({
     privacyPolicyUrl: Type.Optional(Type.String()),
     termsOfServiceUrl: Type.Optional(Type.String()),
     cloudAuthEnabled: Type.Optional(Type.Boolean()),
+    defaultLocale: Type.Optional(Type.Enum(LocalesEnum))
 })
 
 export type UpdatePlatformRequestBody = Static<typeof UpdatePlatformRequestBody>
