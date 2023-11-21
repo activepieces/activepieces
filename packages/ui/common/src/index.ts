@@ -18,4 +18,5 @@ export * from './lib/resolvers/are-there-featured-templates.resolver';
 export * from './lib/models/piece-metadata-model';
 export * from './lib/guards/show-platform-settings.guard';
 export * from './lib/service';
+export * from './lib/utils/locales';
 import '@angular/localize/init';

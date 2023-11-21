@@ -1,29 +1,29 @@
 import { Injectable } from '@angular/core';
-import { environment } from '../environments/environment';
-const localesMap = environment.localesMap;
 import { Location } from '@angular/common';
 import { isNil } from '@activepieces/shared';
-export type LocaleKey = keyof typeof localesMap;
+import { LocalesEnum } from '@activepieces/ee-shared';
+import { localesMap } from '../utils/locales';
+
 @Injectable({ providedIn: 'root' })
 export class LocalesService {
   constructor(private location: Location) {}
   readonly currentLanguageKeyInLocalStorage = 'currentLanguage';
-  private readonly defaultLocale = 'en';
-  setCurrentLocale(locale: LocaleKey) {
+  public readonly defaultLocale = LocalesEnum.ENGLISH;
+  setCurrentLocale(locale: LocalesEnum) {
     localStorage.setItem(this.currentLanguageKeyInLocalStorage, locale);
   }
-  getCurrentLocaleFromBrowserUrlOrDefault(): LocaleKey {
+  getCurrentLocaleFromBrowserUrlOrDefault(): LocalesEnum {
     const href = window.location.href;
     const locale = href.split(window.location.origin + '/')[1]?.split('/')[0];
     return this.localeGuard(locale) ? locale : this.defaultLocale;
   }
-  private getCurrentLocaleFromLocalStorage(): LocaleKey | undefined {
+  getCurrentLocaleFromLocalStorage(): LocalesEnum | undefined {
     const locale = localStorage.getItem(this.currentLanguageKeyInLocalStorage);
     return !isNil(locale) && this.localeGuard(locale) ? locale : undefined;
   }
 
   getCurrentLanguageFromLocalStorageOrDefault(): {
-    locale: LocaleKey;
+    locale: LocalesEnum;
     languageName: string;
   } {
     const locale =
@@ -34,15 +34,15 @@ export class LocalesService {
     };
   }
 
-  private localeGuard(locale: string): locale is LocaleKey {
+  private localeGuard(locale: string): locale is LocalesEnum {
     return locale in localesMap;
   }
 
-  redirectToLocale(locale: LocaleKey) {
+  redirectToLocale(locale: LocalesEnum) {
     const currentUrl =
       this.location.path().length === 0 ? '/' : this.location.path();
 
-    if (locale === 'en') {
+    if (locale === LocalesEnum.ENGLISH) {
       window.location.href = `${currentUrl}`;
     } else {
       window.location.href = `/${locale}${currentUrl}`;

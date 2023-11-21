@@ -5,6 +5,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { Client } from '@notionhq/client';
 import { NotionFieldMapping } from './models';
+
 export const notionCommon = {
   baseUrl: 'https://api.notion.com/v1',
   database_id: Property.Dropdown<string>({
@@ -68,7 +69,7 @@ export const notionCommon = {
         options: results.map((item: any) => {
           const property: any = Object.values(item.properties)[0];
           return {
-            label: property.title[0]?.plain_text ?? 'Unknown title',
+            label: property.title[0]?.plain_text ?? 'No Title',
             value: item.id,
           };
         }),
@@ -146,4 +147,86 @@ export const notionCommon = {
       return fields;
     },
   }),
+
+  page: Property.Dropdown<string>({
+    displayName: 'Page',
+    required: true,
+    description: 'Select the page you want to use. Only your most recently edited 100 pages will appear.',
+    refreshers: [],
+    options: async ({ auth }) => {
+      if (!auth) {
+        return {
+          disabled: true,
+          placeholder: 'Please connect your Notion account first',
+          options: [],
+        };
+      };
+      const pages = await getPages(auth as OAuth2PropertyValue);
+
+      return {
+        placeholder: 'Select a page',
+        options: pages.map((page: any) => ({
+          label: page.properties.Name?.title[0]?.plain_text ?? page.properties.title?.title[0]?.text?.content ?? 'No Title',
+          value: page.id,
+        })),
+      };
+    },
+  }),
+};
+
+export async function getPages(auth: OAuth2PropertyValue, search?: {
+  editedAfter?: Date,
+  createdAfter?: Date
+}, sort?: {
+  property: string,
+  direction: 'ascending' | 'descending'
+}): Promise<any[]> {
+  const notion = new Client({
+    auth: auth.access_token,
+    notionVersion: '2022-02-22',
+  });
+
+  let filter: any = {
+    property: 'object',
+    value: 'page'
+  };
+  if (search?.editedAfter) filter = {
+    'and': [
+      {
+        property: 'object',
+        value: 'page',
+      },
+      {
+        timestamp: 'last_edited_time',
+        last_edited_time: {
+          after: search.editedAfter
+        }
+      }
+    ]
+  };
+  if (search?.createdAfter) filter = {
+    'and': [
+      {
+        property: 'object',
+        value: 'page',
+      },
+      {
+        timestamp: 'created_time',
+        created_time: {
+          after: search.createdAfter
+        }
+      }
+    ]
+  };
+
+  const sortObj: any = {
+    direction: sort?.direction ?? 'descending',
+    timestamp: sort?.property ?? 'last_edited_time'
+  };
+
+  const pages = await notion.search({
+    filter: filter,
+    sort: sortObj
+  });
+  return pages.results as any[];
 };

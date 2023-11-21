@@ -34,6 +34,7 @@ import { PlatformEntity } from '../ee/platform/platform.entity'
 import { SigningKeyEntity } from '../ee/signing-key/signing-key-entity'
 import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
 import { ProjectPlanEntity } from '../ee/billing/project-plan/project-plan.entity'
+import { OtpEntity } from '../ee/otp/otp-entity'
 
 const databaseType = system.get(SystemProp.DB_TYPE)
 
@@ -76,6 +77,7 @@ function getEntities(): EntitySchema<unknown>[] {
                 CustomDomainEntity,
                 SigningKeyEntity,
                 OAuthAppEntity,
+                OtpEntity,
             )
             break
         case ApEdition.ENTERPRISE:
@@ -85,6 +87,7 @@ function getEntities(): EntitySchema<unknown>[] {
                 CustomDomainEntity,
                 SigningKeyEntity,
                 OAuthAppEntity,
+                OtpEntity,
             )
             break
         case ApEdition.COMMUNITY:

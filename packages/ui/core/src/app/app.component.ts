@@ -26,9 +26,15 @@ import {
   FlowService,
   AppearanceService,
   environment,
+  PlatformService,
 } from '@activepieces/ui/common';
 import { compareVersions } from 'compare-versions';
-import { ApEdition, ApFlagId, FlowOperationType } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  FlowOperationType,
+  User,
+} from '@activepieces/shared';
 import {
   TelemetryService,
   EmbeddingService,
@@ -36,13 +42,13 @@ import {
   fadeInUp400ms,
   LocalesService,
 } from '@activepieces/ui/common';
-
 import { MatDialog } from '@angular/material/dialog';
 import {
   CollectionBuilderService,
   FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { LocalesEnum, Platform } from '@activepieces/ee-shared';
 
 interface UpgradeNotificationMetaDataInLocalStorage {
   latestVersion: string;
@@ -59,7 +65,7 @@ const upgradeNotificationMetadataKeyInLocalStorage =
 })
 export class AppComponent implements OnInit {
   routeLoader$: Observable<unknown>;
-  loggedInUser$: Observable<void>;
+  loggedInUser$: Observable<User | undefined>;
   showUpgradeNotification$: Observable<boolean>;
   hideUpgradeNotification = false;
   openCommandBar$: Observable<void>;
@@ -70,6 +76,7 @@ export class AppComponent implements OnInit {
   setTitle$: Observable<void>;
   isCommunityEdition$: Observable<boolean>;
   embeddedRouteListener$: Observable<boolean>;
+  redirect$?: Observable<Platform | undefined>;
   constructor(
     public dialog: MatDialog,
     private store: Store,
@@ -84,7 +91,8 @@ export class AppComponent implements OnInit {
     private flowService: FlowService,
     private snackbar: MatSnackBar,
     private embeddedService: EmbeddingService,
-    private localesService: LocalesService
+    private localesService: LocalesService,
+    private platformService: PlatformService
   ) {
     this.registerSearchIconIntoMaterialIconRegistery();
     this.listenToImportFlow();
@@ -166,7 +174,6 @@ export class AppComponent implements OnInit {
     this.loggedInUser$ = this.authenticationService.currentUserSubject.pipe(
       tap((user) => {
         const decodedToken = this.authenticationService.getDecodedToken();
-
         if (
           user == undefined ||
           Object.keys(user).length == 0 ||
@@ -183,8 +190,7 @@ export class AppComponent implements OnInit {
           })
         );
         this.telemetryService.init(user);
-      }),
-      map(() => void 0)
+      })
     );
   }
 
@@ -321,14 +327,41 @@ export class AppComponent implements OnInit {
   private rediectToCorrectLocale() {
     if (environment.production) {
       //TODO: once we start having /en routes this logic should be altered to checking (if the localeFromBrowserUrl is undefined, switch to what is in localstorage)
-      const currentLocaleFromUrl =
-        this.localesService.getCurrentLocaleFromBrowserUrlOrDefault();
-      const currentLanguageFromStorage =
-        this.localesService.getCurrentLanguageFromLocalStorageOrDefault();
-      if (currentLanguageFromStorage.locale !== currentLocaleFromUrl) {
-        this.localesService.redirectToLocale(currentLanguageFromStorage.locale);
-        return;
-      }
+      this.redirect$ = this.authenticationService.currentUserSubject.pipe(
+        switchMap((usr) => {
+          const platformId = this.authenticationService.getPlatformId();
+          if (usr && platformId && Object.keys(usr).length > 0) {
+            return this.platformService.getPlatform(platformId).pipe(
+              tap((platform) => {
+                this.redirectToUserLocale(platform.defaultLocale);
+              })
+            );
+          }
+          return of(undefined).pipe(
+            tap(() => {
+              return this.redirectToUserLocale();
+            })
+          );
+        })
+      );
+    }
+  }
+
+  /**Redirects to user locale if there's a mismatch between locale stored in localStorage and locale specified in url */
+  private redirectToUserLocale(platformDefaultLocale?: LocalesEnum) {
+    const currentLocaleFromUrl =
+      this.localesService.getCurrentLocaleFromBrowserUrlOrDefault();
+    const currentLocaleFormLocalstorageOrDefault =
+      this.localesService.getCurrentLocaleFromLocalStorage() ||
+      platformDefaultLocale ||
+      this.localesService.defaultLocale;
+    if (currentLocaleFormLocalstorageOrDefault !== currentLocaleFromUrl) {
+      this.localesService.setCurrentLocale(
+        currentLocaleFormLocalstorageOrDefault
+      );
+      this.localesService.redirectToLocale(
+        currentLocaleFormLocalstorageOrDefault
+      );
     }
   }
 }

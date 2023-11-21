@@ -6,7 +6,6 @@ import {
   map,
   Observable,
   of,
-  switchMap,
   takeUntil,
   takeWhile,
   tap,
@@ -30,6 +29,7 @@ import {
   BuilderSelectors,
   TestRunBarComponent,
 } from '@activepieces/ui/feature-builder-store';
+import { concatMap } from 'rxjs/operators';
 import { canvasActions } from '@activepieces/ui/feature-builder-store';
 
 @Component({
@@ -135,8 +135,8 @@ export class TestFlowWidgetComponent implements OnInit {
   setStatusChecker(runId: string) {
     this.instanceRunStatusChecker$ = interval(1500).pipe(
       takeUntil(this.testRunSnackbar.instance.exitButtonClicked),
-      switchMap(() => this.instanceRunService.get(runId)),
-      switchMap((instanceRun) => {
+      concatMap(() => this.instanceRunService.get(runId)),
+      concatMap((instanceRun) => {
         if (
           instanceRun.status !== ExecutionOutputStatus.RUNNING &&
           instanceRun.logsFileId !== null

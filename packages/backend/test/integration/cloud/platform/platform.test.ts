@@ -5,6 +5,7 @@ import { createMockUser, createMockPlatform } from '../../../helpers/mocks'
 import { StatusCodes } from 'http-status-codes'
 import { FastifyInstance } from 'fastify'
 import { apId } from '@activepieces/shared'
+import { FilteredPieceBehavior, LocalesEnum, UpdatePlatformRequestBody } from '@activepieces/ee-shared'
 
 let app: FastifyInstance | null = null
 
@@ -24,12 +25,28 @@ describe('Platform API', () => {
             // arrange
             const mockUser = createMockUser()
             await databaseConnection.getRepository('user').save(mockUser)
-
             const mockPlatform = createMockPlatform({ ownerId: mockUser.id })
             await databaseConnection.getRepository('platform').save(mockPlatform)
-
             const testToken = await generateMockToken({ id: mockUser.id, platform: { id: mockPlatform.id, role: 'OWNER' } })
-
+            const requestBody: UpdatePlatformRequestBody = {
+                name: 'updated name',
+                primaryColor: 'updated primary color',
+                logoIconUrl: 'updated logo icon url',
+                fullLogoUrl: 'updated full logo url',
+                favIconUrl: 'updated fav icon url',
+                filteredPieceNames: ['updated filtered piece names'],
+                filteredPieceBehavior: FilteredPieceBehavior.ALLOWED,
+                smtpHost: 'updated smtp host',
+                smtpPort: 123,
+                smtpUser: 'updated smtp user',
+                smtpPassword: 'updated smtp password',
+                smtpSenderEmail: 'updated smtp sender email',
+                smtpUseSSL: true,
+                privacyPolicyUrl: 'updated privacy policy url',
+                termsOfServiceUrl: 'updated terms of service url',
+                cloudAuthEnabled: false,
+                defaultLocale: LocalesEnum.ENGLISH,
+            }
             // act
             const response = await app?.inject({
                 method: 'POST',
@@ -37,31 +54,14 @@ describe('Platform API', () => {
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
-                body: {
-                    name: 'updated name',
-                    primaryColor: 'updated primary color',
-                    logoIconUrl: 'updated logo icon url',
-                    fullLogoUrl: 'updated full logo url',
-                    favIconUrl: 'updated fav icon url',
-                    filteredPieceNames: ['updated filtered piece names'],
-                    filteredPieceBehavior: 'ALLOWED',
-                    smtpHost: 'updated smtp host',
-                    smtpPort: 123,
-                    smtpUser: 'updated smtp user',
-                    smtpPassword: 'updated smtp password',
-                    smtpSenderEmail: 'updated smtp sender email',
-                    smtpUseSSL: true,
-                    privacyPolicyUrl: 'updated privacy policy url',
-                    termsOfServiceUrl: 'updated terms of service url',
-                    cloudAuthEnabled: false,
-                },
+                body: requestBody,
             })
 
             // assert
             const responseBody = response?.json()
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(Object.keys(responseBody)).toHaveLength(21)
+            expect(Object.keys(responseBody)).toHaveLength(22)
             expect(responseBody.id).toBe(mockPlatform.id)
             expect(responseBody.created).toBeDefined()
             expect(responseBody.updated).toBeDefined()
@@ -82,6 +82,7 @@ describe('Platform API', () => {
             expect(responseBody.privacyPolicyUrl).toBe('updated privacy policy url')
             expect(responseBody.termsOfServiceUrl).toBe('updated terms of service url')
             expect(responseBody.cloudAuthEnabled).toBe(false)
+            expect(responseBody.defaultLocale).toBe(LocalesEnum.ENGLISH)
         })
 
         it('fails if user is not owner', async () => {
