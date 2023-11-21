@@ -29,6 +29,7 @@ export const retuneAuth = PieceAuth.CustomAuth({
             required: true
         }),
     },
+    
     validate: async (auth) => {
         try {
             await httpClient.sendRequest<{
