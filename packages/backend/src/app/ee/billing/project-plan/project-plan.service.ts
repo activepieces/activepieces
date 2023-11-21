@@ -9,7 +9,6 @@ import { stripeHelper } from '../stripe/stripe-helper'
 import { ProjectPlanEntity } from './project-plan.entity'
 import Stripe from 'stripe'
 import { appsumoService } from '../../appsumo/appsumo.service'
-
 const projectPlanRepo = databaseConnection.getRepository<ProjectPlan>(ProjectPlanEntity)
 
 export const plansService = {

@@ -4,7 +4,7 @@ import { Static, Type } from "@sinclair/typebox";
 
 export type ProjectPlanId = string;
 
-export type PlanTasksPrice = number | typeof freePlanPrice | typeof customPlanPrice;
+
 
 export const UpdateProjectLimitsRequest = Type.Object({
     teamMembers: Type.Number({}),
@@ -44,8 +44,7 @@ export type FlowPricingPlan = {
     pricePerUser: number;
     tasks: {
         pricePlanId: string;
-        quantity: number;
-        unitPrice: number;
+        planPrice: number;
         unitAmount: number;
     }[];
     features: {
@@ -58,5 +57,3 @@ export type FlowPricingPlan = {
     trail: boolean;
 }
 
-export const freePlanPrice = 0
-export const customPlanPrice =  -1
