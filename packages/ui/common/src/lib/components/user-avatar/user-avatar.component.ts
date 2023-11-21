@@ -7,8 +7,9 @@ import { Observable } from 'rxjs';
 import { FlagService } from '../../service/flag.service';
 import { Store } from '@ngrx/store';
 import { ProjectSelectors } from '../../store/project/project.selector';
-import { environment } from '../../environments/environment';
-import { LocaleKey, LocalesService } from '../../service/locales.service';
+import { LocalesService } from '../../service/locales.service';
+import { LocalesEnum } from '@activepieces/ee-shared';
+import { localesMap } from '../../utils/locales';
 
 @Component({
   selector: 'ap-user-avatar',
@@ -27,10 +28,10 @@ export class UserAvatarComponent implements OnInit {
   projectEnabled$: Observable<boolean>;
   showPlatform = false;
   showCommunity$: Observable<boolean>;
-  locales = environment.localesMap;
+  locales = localesMap;
   selectedLanguage = {
-    languageName: 'English',
-    locale: 'en',
+    languageName: localesMap[LocalesEnum.ENGLISH],
+    locale: LocalesEnum.ENGLISH,
   };
 
   constructor(
@@ -114,7 +115,7 @@ export class UserAvatarComponent implements OnInit {
       'noopener'
     );
   }
-  redirectToLocale(locale: LocaleKey) {
+  redirectToLocale(locale: LocalesEnum) {
     this.localesService.setCurrentLocale(locale);
     this.localesService.redirectToLocale(locale);
   }

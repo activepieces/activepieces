@@ -433,7 +433,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
               ? prop.defaultValue.toString()
               : '';
             controls[pk] = new UntypedFormControl(
-              propValue || defaultValue,
+              propValue ?? defaultValue,
               validators
             );
           } else {
@@ -441,7 +441,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
               ? prop.defaultValue.base64
               : '';
             controls[pk] = new UntypedFormControl(
-              propValue || defaultValue,
+              propValue ?? defaultValue,
               validators
             );
           }
@@ -454,7 +454,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
             validators.push(Validators.required);
           }
           controls[pk] = new UntypedFormControl(
-            propValue || prop.defaultValue,
+            propValue ?? prop.defaultValue,
             validators
           );
           break;
@@ -465,7 +465,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
             validators.push(Validators.required);
           }
           controls[pk] = new UntypedFormControl(
-            propValue || prop.defaultValue,
+            propValue ?? prop.defaultValue,
             validators
           );
           break;
@@ -480,7 +480,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
             });
           } else {
             controls[pk] = new UntypedFormControl(
-              propValue || prop.defaultValue || '{}',
+              propValue ?? (prop.defaultValue || '{}'),
               validators
             );
           }
