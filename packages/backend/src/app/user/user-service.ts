@@ -52,6 +52,14 @@ export const userService = {
         }
     },
 
+    // TODO REMOVE after firebase migration
+    async getbyEmail({ email }: { email: string }): Promise<User | null> {
+
+        return userRepo.createQueryBuilder()
+            .andWhere('LOWER(email) = LOWER(:email)', { email })
+            .getOne()
+    },
+
     async getByPlatformAndEmail({ platformId, email }: GetByPlatformAndEmailParams): Promise<User | null> {
         const platformWhereQuery = platformId ? { platformId } : { platformId: IsNull() }
 
