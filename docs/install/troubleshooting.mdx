@@ -1,15 +1,34 @@
 ---
 title: "Troubleshooting"
 description: ""
+icon: "wrench"
 ---
 
-## Queue Board (Redis Only)
+### Runs with Internal Errors or Scheduling Issues
 
-The queue board is a tool that allows you to check runs for issues. It's accessible when you're using Redis as the queue system. In production mode, you can access it at `/api/ui`, and in development mode, it's located at `/ui.`
+The Bull Board is a tool that allows you to check runs for issues. 
+It is accessible when you are using Redis as the queue system. In production mode, you can access it at `/api/ui`, and in development mode, it is located at `/ui`.
 
-To enable it, you can set an environment variable and secure it with basic authentication. For more details, please refer to the Environment Variables.
+To enable the Bull Board UI, follow these steps:
 
-## Reset Password
+1. Define the following environment variables:
+   - `AP_QUEUE_UI_ENABLED`: Set it to `true`.
+   - `AP_QUEUE_UI_USERNAME`: Set it to your desired username.
+   - `AP_QUEUE_UI_PASSWORD`: Set it to your desired password.
+
+Make sure to change the username and password to your preferred values.
+
+You will be able to access the Bull Board UI at `/api/ui` (production) or `/ui` (development) depending on your environment.
+
+![Bull Board UI](./resources/bullboard-ui.png)
+
+There are two queues that you can monitor:
+- oneTimeJobs: This queue is used for currently pending runs.
+- repeatableJobs: This queue is used for polling triggers.
+
+In case you have flows with internal errors, please go to the oneTimeJobs queue and click on the failed run. You can see the error message in the data section and retry the flow by clicking on the retry button.
+
+### Reset Password
 
 If you forgot your password on self hosted instance, you can reset it using the following steps:
 
