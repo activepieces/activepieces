@@ -5,10 +5,11 @@ import { projectService } from '../../../project/project-service'
 import { userService } from '../../../user/user-service'
 import { acquireLock } from '../../../helper/lock'
 import { FlowPlanLimits, defaultPlanInformation } from './pricing-plans'
-import { stripeHelper } from '../stripe/stripe-helper'
+import { stripeHelper } from '../billing/stripe-helper'
 import { ProjectPlanEntity } from './project-plan.entity'
 import Stripe from 'stripe'
 import { appsumoService } from '../../appsumo/appsumo.service'
+
 const projectPlanRepo = databaseConnection.getRepository<ProjectPlan>(ProjectPlanEntity)
 
 export const plansService = {
@@ -62,7 +63,7 @@ async function createInitialPlan({ projectId }: { projectId: ProjectId }): Promi
         if (!isNil(currentPlan)) {
             return currentPlan
         }
-        const project = (await projectService.getOne(projectId))!
+        const project = await projectService.getOneOrthrow(projectId)
         const user = (await userService.getMetaInfo({ id: project.ownerId }))!
         const stripeCustomerId = await stripeHelper.getOrCreateCustomer(user, project.id)
         const defaultPlanFlow = await getDefaultFlowPlan({ email: user.email })

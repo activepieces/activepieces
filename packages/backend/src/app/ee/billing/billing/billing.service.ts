@@ -1,9 +1,9 @@
 import Stripe from 'stripe'
-import { stripeHelper } from './stripe/stripe-helper'
 import { isNil } from '@activepieces/shared'
 import { UpgradeRequest } from '@activepieces/ee-shared'
-import { plansService } from './project-plan/project-plan.service'
-import { FlowPlanLimits, defaultPlanInformation } from './project-plan/pricing-plans'
+import { plansService } from '../project-plan/project-plan.service'
+import { FlowPlanLimits, defaultPlanInformation } from '../project-plan/pricing-plans'
+import { stripeHelper } from './stripe-helper'
 
 export const billingService = {
     async update({ subscription, projectId }: { subscription: Stripe.Subscription | null, projectId: string }): Promise<void> {

@@ -6,7 +6,7 @@ import { StatusCodes } from 'http-status-codes'
 import { FastifyInstance } from 'fastify'
 import { faker } from '@faker-js/faker'
 import { apId } from '@activepieces/shared'
-import { stripeHelper } from '../../../../src/app/ee/billing/stripe/stripe-helper'
+import { stripeHelper } from '../../../../src/app/ee/billing/billing/stripe-helper'
 
 let app: FastifyInstance | null = null
 

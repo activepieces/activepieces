@@ -35,7 +35,6 @@ import { embeddings } from './chatbot/embedings'
 import { cloudAppConnectionsHooks } from './ee/app-connections/cloud-app-connection-service'
 import { appCredentialModule } from './ee/app-credentials/app-credentials.module'
 import { appSumoModule } from './ee/appsumo/appsumo.module'
-import { billingModule } from './ee/billing/billing.module'
 import { cloudChatbotHooks } from './ee/chatbot/cloud/cloud-chatbot.hook'
 import { cloudDatasourceHooks } from './ee/chatbot/cloud/cloud-datasources.hook'
 import { qdrantEmbeddings } from './ee/chatbot/cloud/qdrant-embeddings'
@@ -75,6 +74,7 @@ import { projectUsageModule } from './ee/billing/project-usage/project-usage.mod
 import { projectPlanModule } from './ee/billing/project-plan/project-plan-module'
 import { otpModule } from './ee/otp/otp-module'
 import { enterpriseLocalAuthnModule } from './ee/authentication/enterprise-local-authn/enterprise-local-authn-module'
+import { billingModule } from './ee/billing/billing/billing.module'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -232,6 +232,8 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             initilizeSentry()
             break
         case ApEdition.ENTERPRISE:
+            await app.register(projectPlanModule)
+            await app.register(projectUsageModule)
             await app.register(authenticationModule)
             await app.register(enterpriseProjectModule)
             await app.register(projectMemberModule)

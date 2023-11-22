@@ -1,18 +1,26 @@
 import Stripe from 'stripe'
 import { system } from '../../../helper/system/system'
 import { SystemProp } from '../../../helper/system/system-prop'
-import { ProjectId, UserMeta } from '@activepieces/shared'
+import { ApEdition, ProjectId, UserMeta, assertNotNullOrUndefined } from '@activepieces/shared'
 import { captureException } from '../../../helper/logger'
 import { PlanName, UpgradeRequest, platformTasksPriceId, platformUserPriceId, proUserPriceId } from '@activepieces/ee-shared'
 import { FlowPlanLimits } from '../project-plan/pricing-plans'
 import { plansService } from '../project-plan/project-plan.service'
+import { getEdition } from '../../../helper/secret-helper'
 
-export const stripeSecret = system.get(SystemProp.STRIPE_SECRET_KEY)!
 export const stripeWebhookSecret = system.get(SystemProp.STRIPE_WEBHOOK_SECRET)!
-export const stripe = new Stripe(stripeSecret, {
-    apiVersion: '2023-10-16',
-})
+export const stripe = constructStripeInstance()
 
+function constructStripeInstance(): Stripe | undefined {
+    const edition = getEdition()
+    if (edition !== ApEdition.CLOUD) {
+        return undefined
+    }
+    const stripeSecret = system.getOrThrow(SystemProp.STRIPE_SECRET_KEY)
+    return new Stripe(stripeSecret, {
+        apiVersion: '2023-10-16',
+    })
+}
 enum StripeProductType {
     PRO = 'PRO',
     PRO_USER = 'PRO_USER',
@@ -20,7 +28,12 @@ enum StripeProductType {
     PLATFORM_USER = 'PLATFORM_USER',
 }
 
-async function getOrCreateCustomer(user: UserMeta, projectId: ProjectId): Promise<string> {
+async function getOrCreateCustomer(user: UserMeta, projectId: ProjectId): Promise<string | undefined> {
+    const edition = getEdition()
+    if (edition !== ApEdition.CLOUD) {
+        return undefined
+    }
+    assertNotNullOrUndefined(stripe, 'Stripe is not configured')
     try {
         // Retrieve the customer by their email
         const existingCustomers = await stripe.customers.list({
@@ -87,6 +100,7 @@ async function upgrade({
     request,
     subscriptionId,
 }: { request: UpgradeRequest, subscriptionId: string }): Promise<{ paymentLink: null }> {
+    assertNotNullOrUndefined(stripe, 'Stripe is not configured')
     await stripe.subscriptions.update(subscriptionId, {
         items: getPlanProducts(request),
     })
@@ -100,6 +114,7 @@ async function createPortalSessionUrl({
 }: {
     projectId: ProjectId
 }): Promise<string> {
+    assertNotNullOrUndefined(stripe, 'Stripe is not configured')
     const plan = await plansService.getOrCreateDefaultPlan({ projectId })
     const session = await stripe.billingPortal.sessions.create({
         customer: plan.stripeCustomerId,
@@ -115,6 +130,7 @@ async function createPaymentLink({
     projectId: ProjectId
     request: UpgradeRequest
 }): Promise<{ paymentLink: string }> {
+    assertNotNullOrUndefined(stripe, 'Stripe is not configured')
     try {
         const plan = await plansService.getOrCreateDefaultPlan({ projectId })
         const session = await stripe.checkout.sessions.create({

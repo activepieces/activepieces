@@ -6,7 +6,7 @@ import { StatusCodes } from 'http-status-codes'
 import { FastifyInstance } from 'fastify'
 import { createMockProjectMember } from '../../../helpers/mocks/project-member-mocks'
 import { ProjectMemberStatus } from '@activepieces/ee-shared'
-import { stripeHelper } from '../../../../src/app/ee/billing/stripe/stripe-helper'
+import { stripeHelper } from '../../../../src/app/ee/billing/billing/stripe-helper'
 import { faker } from '@faker-js/faker'
 
 let app: FastifyInstance | null = null
