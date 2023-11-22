@@ -13,7 +13,6 @@ import {
   DeleteEntityDialogComponent,
   DeleteEntityDialogData,
   OAuth2AppsService,
-  PieceMetadataService,
   PlatformService,
 } from '@activepieces/ui/common';
 import { Platform } from '@activepieces/ee-shared';
@@ -30,6 +29,10 @@ import {
   PieceOAuth2CredentialsDialogData,
 } from '../../components/dialogs/edit-add-piece-oauth-2-credentials-dialog/edit-add-piece-oauth-2-credentials-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
+import {
+  InstallCommunityPieceModalComponent,
+  PieceMetadataService,
+} from 'ui-feature-pieces';
 
 @Component({
   selector: 'app-pieces-table',
@@ -53,6 +56,8 @@ export class PiecesTableComponent implements OnInit {
   dataSource!: PiecesTableDataSource;
   refresh$: Subject<true> = new Subject();
   dialogClosed$?: Observable<boolean>;
+  addPackageDialogClosed$!: Observable<Record<string, string> | null>;
+
   constructor(
     private authenticationService: AuthenticationService,
     private piecesService: PieceMetadataService,
@@ -116,6 +121,24 @@ export class PiecesTableComponent implements OnInit {
         finishedSavingPipe
       );
     }
+  }
+
+  installPiece() {
+    this.addPackageDialogClosed$ = this.matDialog
+      .open(InstallCommunityPieceModalComponent, {
+        data: {
+          platformId: this.platform$.value.id,
+        },
+      })
+      .afterClosed()
+      .pipe(
+        tap((res) => {
+          if (res) {
+            this.piecesService.clearCache();
+            this.refresh$.next(true);
+          }
+        })
+      );
   }
 
   savePlatform(platform: Platform) {

@@ -1,0 +1,68 @@
+<ap-dialog-title-template i18n>Install Piece</ap-dialog-title-template>
+
+<mat-dialog-content>
+  <ap-markdown [data]="risksMarkdown"></ap-markdown>
+  <form class="ap-flex ap-flex-col ap-gap-1 ap-mt-4" [formGroup]="addPieceForm" (submit)="addPiece()">
+    <mat-form-field class="ap-w-full ap-mb-2" appearance="outline">
+      <mat-label i18n>Piece name</mat-label>
+      <input cdkFocusInitial formControlName="pieceName" matInput type="text" placeholder="NPM package name" i18n-placeholder />
+
+      <mat-error *ngIf="addPieceForm.controls.pieceName.invalid">
+        <ng-container *ngIf="addPieceForm.controls.pieceName.hasError('required')" i18n>
+          This is required
+        </ng-container>
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field class="ap-w-full ap-mb-2" appearance="outline">
+      <mat-label>Piece version</mat-label>
+      <input formControlName="pieceVersion" matInput type="text" placeholder="NPM package version" />
+
+      <mat-error *ngIf="addPieceForm.controls.pieceVersion.invalid">
+        <ng-container *ngIf="addPieceForm.controls.pieceVersion.hasError('required')">
+          This is required
+        </ng-container>
+
+        <ng-container *ngIf="addPieceForm.controls.pieceVersion.hasError('pattern')">
+          This should be a valid semver
+        </ng-container>
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field class="ap-w-full ap-mb-2" appearance="outline">
+      <mat-label>Package type</mat-label>
+
+      <mat-select formControlName="packageType">
+        <mat-option *ngFor="let option of (packageTypeOptions$ | async)" [value]="option.value">
+          {{ option.name }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field class="ap-w-full ap-mb-2" appearance="outline" *ngIf="isPackageArchive">
+      <mat-label>Package archive</mat-label>
+      <ap-file-upload #pkgInput formControlName="pieceArchive" placeHolder="archive.tgz"
+        [extensions]="['.tar.gz', '.tgz']" />
+      <ap-icon-button [height]="25" [width]="25" iconFilename="attach.svg" matSuffix
+        (buttonClicked)="pkgInput.fileInput.nativeElement.click()"></ap-icon-button>
+    </mat-form-field>
+  </form>
+
+  <ap-warning-box *ngIf="addPieceForm.hasError('failedInstall')">
+    Failed to add piece, please make sure the provided npm package is a valid piece and try again.
+  </ap-warning-box>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <div class="ap-flex ap-gap-2.5">
+    <ap-button btnColor="basic" mat-dialog-close btnSize="default" btnColor="basic" i18n>
+      Cancel
+    </ap-button>
+    <ap-button btnSize="default" (click)="addPiece()" type="submit" btnColor="primary" [loading]="loading" i18n>
+      Install
+    </ap-button>
+  </div>
+</mat-dialog-actions>
+
+<ng-container *ngIf="addPieceRequest$ | async"></ng-container>
+<ng-container *ngIf="pieceNameControlChanged$  | async"></ng-container>

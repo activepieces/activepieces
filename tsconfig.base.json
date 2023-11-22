@@ -176,6 +176,7 @@
       "@activepieces/piece-read-file": [
         "packages/pieces/read-file/src/index.ts"
       ],
+      "@activepieces/piece-retune": ["packages/pieces/retune/src/index.ts"],
       "@activepieces/piece-rss": ["packages/pieces/rss/src/index.ts"],
       "@activepieces/piece-salesforce": [
         "packages/pieces/salesforce/src/index.ts"
@@ -291,7 +292,8 @@
       "@activepieces/ui/feature-templates": [
         "packages/ui/feature-templates/src/index.ts"
       ],
-      "@ee/*": ["packages/ee/*"]
+      "@ee/*": ["packages/ee/*"],
+      "ui-feature-pieces": ["packages/ui/feature-pieces/src/index.ts"]
     },
     "resolveJsonModule": true
   },

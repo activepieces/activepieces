@@ -2,6 +2,7 @@ import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { createQuickCalendarEvent } from './lib/actions/create-quick-event';
 import { calendarEventChanged } from './lib/triggers/calendar-event';
 import { createEvent } from "./lib/actions/create-event";
+import { getEvents } from "./lib/actions/get-events";
 
 export const googleCalendarAuth = PieceAuth.OAuth2({
     description: '',
@@ -18,6 +19,6 @@ export const googleCalendar = createPiece({
     displayName: 'Google Calendar',
     authors: ['osamahaikal', 'bibhuty-did-this', 'MoShizzle'],
     auth: googleCalendarAuth,
-    actions: [createQuickCalendarEvent, createEvent],
+    actions: [createQuickCalendarEvent, createEvent, getEvents],
     triggers: [calendarEventChanged],
 });

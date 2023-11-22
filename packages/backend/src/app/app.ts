@@ -6,7 +6,7 @@ import fastifyMultipart from '@fastify/multipart'
 import { openapiModule } from './helper/openapi/openapi.module'
 import { flowModule } from './flows/flow.module'
 import { fileModule } from './file/file.module'
-import { pieceModule } from './pieces/piece-module'
+import { pieceModule } from './pieces/base-piece-module'
 import { tokenVerifyMiddleware } from './authentication/token-verify-middleware'
 import { storeEntryModule } from './store-entry/store-entry.module'
 import { flowRunModule } from './flows/flow-run/flow-run-module'
@@ -72,6 +72,8 @@ import { flagHooks } from './flags/flags.hooks'
 import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
 import { projectUsageModule } from './ee/billing/project-usage/project-usage.module'
 import { projectPlanModule } from './ee/billing/project-plan/project-plan-module'
+import { communityPiecesModule } from './pieces/community-piece-module'
+import { platformPieceModule } from './ee/pieces/platform-piece-module'
 import { otpModule } from './ee/otp/otp-module'
 import { enterpriseLocalAuthnModule } from './ee/authentication/enterprise-local-authn/enterprise-local-authn-module'
 import { billingModule } from './ee/billing/billing/billing.module'
@@ -215,6 +217,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(oauthAppModule)
             await app.register(projectPlanModule)
             await app.register(projectUsageModule)
+            await app.register(platformPieceModule)
             await app.register(otpModule)
             await app.register(enterpriseLocalAuthnModule)
             setPlatformOAuthService({
@@ -241,6 +244,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(signingKeyModule)
             await app.register(managedAuthnModule)
             await app.register(oauthAppModule)
+            await app.register(platformPieceModule)
             await app.register(otpModule)
             await app.register(enterpriseLocalAuthnModule)
             setPlatformOAuthService({
@@ -254,6 +258,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
         case ApEdition.COMMUNITY:
             await app.register(authenticationModule)
             await app.register(projectModule)
+            await app.register(communityPiecesModule)
             break
     }
 

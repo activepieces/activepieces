@@ -8,11 +8,14 @@ import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common
 const markdownProperty = `
 To obtain your API key and token, follow these steps:
 
-1. Go to https://trello.com/app-key
-2. Copy **Personal Key** and enter it into the Trello API Key connection
-3. Click **generate a Token** in trello
-4. Copy the token and paste it into the Trello Token connection
-5. Your connection should now work!
+1. Go to https://trello.com/power-ups/admin
+2. Click **New** to create a new power-up
+3. Enter power-up information, and click **Create**
+4. From the API Key page, click **Generate a new API key**
+5. Copy **API Key** and enter it into the Trello API Key connection
+6. Click **manually generate a Token** next to the API key field
+7. Copy the token and paste it into the Trello Token connection
+8. Your connection should now work!
 `;
 export const trelloAuth = PieceAuth.BasicAuth({
   description: markdownProperty,
@@ -57,7 +60,7 @@ export const trello = createPiece({
   displayName: 'Trello',
   minimumSupportedRelease: '0.5.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/trello.png',
-  authors: ['ShayPunter','Salem-Alaa'],
+  authors: ['ShayPunter','Salem-Alaa','MoShizzle'],
   auth: trelloAuth,
   actions: [createCard, getCard],
   triggers: [cardMovedTrigger,newCardTrigger]

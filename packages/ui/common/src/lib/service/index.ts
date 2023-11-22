@@ -10,7 +10,6 @@ export * from './authentication.service';
 export * from './flow.service';
 export * from './flag.service';
 export * from './telemetry.service';
-export * from './piece-meta.service';
 export * from './instance-run.service';
 export * from './project.service';
 export * from './app-connections.service';

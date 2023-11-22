@@ -45,10 +45,21 @@ export const projectService = {
             id: projectId,
         })
     },
-    async getOneOrthrow(projectId: ProjectId): Promise<Project> {
-        return await projectRepo.findOneByOrFail({
+    async getOneOrThrow(projectId: ProjectId): Promise<Project> {
+        const project = await projectRepo.findOneBy({
             id: projectId,
         })
+
+        if (isNil(project)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.PROJECT_NOT_FOUND,
+                params: {
+                    id: projectId,
+                },
+            })
+        }
+
+        return project
     },
     async getUserProject(ownerId: UserId): Promise<Project> {
         return await projectRepo.findOneByOrFail({

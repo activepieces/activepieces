@@ -38,11 +38,7 @@ import {
 } from '@activepieces/shared';
 import { PiecePropertiesFormValue } from '@activepieces/ui/feature-builder-form-controls';
 import { PieceActionInputFormSchema } from '../../input-forms-schema';
-import {
-  fadeInUp400ms,
-  isOverflown,
-  PieceMetadataService,
-} from '@activepieces/ui/common';
+import { fadeInUp400ms, isOverflown } from '@activepieces/ui/common';
 import {
   BuilderSelectors,
   ConnectionDropdownItem,
@@ -53,6 +49,7 @@ import {
   PieceAuthProperty,
   PiecePropertyMap,
 } from '@activepieces/pieces-framework';
+import { PieceMetadataService } from 'ui-feature-pieces';
 
 declare type ActionDropdownOptionValue = {
   actionName: string;
