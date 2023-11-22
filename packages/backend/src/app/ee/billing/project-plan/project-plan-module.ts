@@ -22,7 +22,7 @@ const projectPlanController: FastifyPluginAsyncTypebox = async (app) => {
     }, async (request) => {
         const paltformId = request.principal.platform?.id
         assertNotNullOrUndefined(paltformId, 'Platform Id is required')
-        const project = await projectService.getOneOrthrow(request.params.projectId)
+        const project = await projectService.getOneOrThrow(request.params.projectId)
         if (project.platformId !== paltformId) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,

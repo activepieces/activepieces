@@ -70,7 +70,6 @@ import { pieceMetadataServiceHooks } from './pieces/piece-metadata-service/hooks
 import { enterprisePieceMetadataServiceHooks } from './ee/pieces/enterprise-piece-metadata-service-hooks'
 import { flagHooks } from './flags/flags.hooks'
 import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
-import { projectUsageModule } from './ee/billing/project-usage/project-usage.module'
 import { projectPlanModule } from './ee/billing/project-plan/project-plan-module'
 import { communityPiecesModule } from './pieces/community-piece-module'
 import { platformPieceModule } from './ee/pieces/platform-piece-module'
@@ -216,7 +215,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(managedAuthnModule)
             await app.register(oauthAppModule)
             await app.register(projectPlanModule)
-            await app.register(projectUsageModule)
             await app.register(platformPieceModule)
             await app.register(otpModule)
             await app.register(enterpriseLocalAuthnModule)
@@ -236,7 +234,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             break
         case ApEdition.ENTERPRISE:
             await app.register(projectPlanModule)
-            await app.register(projectUsageModule)
             await app.register(authenticationModule)
             await app.register(enterpriseProjectModule)
             await app.register(projectMemberModule)

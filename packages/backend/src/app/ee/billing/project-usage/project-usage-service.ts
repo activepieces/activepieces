@@ -2,7 +2,7 @@ import {
     ProjectId,
     apId,
 } from '@activepieces/shared'
-import { PlatformId, ProjectUsage } from '@activepieces/ee-shared'
+import {  ProjectUsage } from '@activepieces/ee-shared'
 import { isNil } from 'lodash'
 import { logger } from '../../../helper/logger'
 import { ProjectUsageEntity, ProjectUsageSchema } from './project-usage.entity'
@@ -12,7 +12,6 @@ import { appConnectionService } from '../../../app-connection/app-connection-ser
 import { plansService } from '../project-plan/project-plan.service'
 import { tasksLimit } from '../limits/tasks-limit'
 import { apDayjs } from '../../../helper/dayjs-helper'
-import { enterpriseProjectService } from '../../projects/enterprise-project-service'
 import { usageAlerts } from './project-usage-alerts'
 
 const projectUsageRepo = databaseConnection.getRepository(ProjectUsageEntity)
@@ -33,13 +32,8 @@ export const projectUsageService = {
             request.tasks,
         )
     },
-    // TODO implement pagination, the current blocker is not all might have project usage created.
-    async list({ filterByProjectIds, platformId }: ListParams): Promise<ProjectUsage[]> {
-        const allProjectIds = await getAllProjectIdsForTheFilters({ platformId, filterByProjectIds })
-        return Promise.all(allProjectIds.map((projectId) => {
-            return this.getUsageByProjectId(projectId)
-        }))
-    },
+
+
     async getUsageByProjectId(projectId: string): Promise<ProjectUsage> {
         let projectUsage = await projectUsageRepo.findOne({
             where: {
@@ -61,16 +55,6 @@ export const projectUsageService = {
     },
 }
 
-async function getAllProjectIdsForTheFilters({ platformId, filterByProjectIds }: { platformId: string, filterByProjectIds: string[] | null }): Promise<string[]> {
-    const platformProjectIds = await enterpriseProjectService.getProjectIdsByPlatform({ platformId })
-    return platformProjectIds.filter((id) => {
-        if (!filterByProjectIds) {
-            return true
-        }
-        return filterByProjectIds.includes(id)
-    })
-}
-
 async function enrichProjectUsage(schema: ProjectUsageSchema): Promise<ProjectUsage> {
     const projectId = schema.projectId
     return {
@@ -81,11 +65,6 @@ async function enrichProjectUsage(schema: ProjectUsageSchema): Promise<ProjectUs
         connections: await appConnectionService.countByProject({ projectId }),
         ...schema,
     }
-}
-
-type ListParams = {
-    filterByProjectIds: ProjectId[] | null
-    platformId: PlatformId
 }
 
 async function createNewUsage(projectId: string, nextReset: string): Promise<ProjectUsageSchema> {

@@ -5,6 +5,7 @@ import { Observable, map, tap } from 'rxjs';
 import { Project, ProjectId } from '@activepieces/shared';
 import {
   CreateProjectRequest,
+  UpdateProjectLimitsRequest,
   UpdateProjectRequest,
 } from '@activepieces/ee-shared';
 import { Router } from '@angular/router';
@@ -53,5 +54,11 @@ export class ProjectService {
         }),
         map(() => void 0)
       );
+  }
+  updateProjectLimits(projectId: string, request: UpdateProjectLimitsRequest) {
+    return this.http.post<void>(
+      `${environment.apiUrl}/projects/${projectId}/plan`,
+      request
+    );
   }
 }

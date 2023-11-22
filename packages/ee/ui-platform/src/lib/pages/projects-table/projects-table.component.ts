@@ -18,7 +18,14 @@ import { Store } from '@ngrx/store';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProjectsTableComponent {
-  displayedColumns = ['displayName', 'created', 'externalId', 'action'];
+  displayedColumns = [
+    'displayName',
+    'created',
+    'externalId',
+    'tasks',
+    'users',
+    'action',
+  ];
   refreshTable$: Subject<boolean> = new Subject();
   dataSource: ProjectsDataSource;
   loading = true;

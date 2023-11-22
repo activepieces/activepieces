@@ -63,7 +63,7 @@ async function createInitialPlan({ projectId }: { projectId: ProjectId }): Promi
         if (!isNil(currentPlan)) {
             return currentPlan
         }
-        const project = await projectService.getOneOrthrow(projectId)
+        const project = await projectService.getOneOrThrow(projectId)
         const user = (await userService.getMetaInfo({ id: project.ownerId }))!
         const stripeCustomerId = await stripeHelper.getOrCreateCustomer(user, project.id)
         const defaultPlanFlow = await getDefaultFlowPlan({ email: user.email })

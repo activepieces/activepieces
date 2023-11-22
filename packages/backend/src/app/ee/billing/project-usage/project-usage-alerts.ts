@@ -93,7 +93,7 @@ async function handleAlerts({
                 continue
             }
 
-            const project = await projectService.getOneOrthrow(projectUsage.projectId)
+            const project = await projectService.getOneOrThrow(projectUsage.projectId)       
             const user = (await userService.getMetaInfo({ id: project.ownerId }))!
             logger.info({
                 email: user.email,
