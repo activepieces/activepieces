@@ -102,6 +102,7 @@
             "install/configurations/troubleshooting"
           ]
         },
+        "install/setup-ssl",
         "install/architecture",
         "install/enterprise"
       ]
