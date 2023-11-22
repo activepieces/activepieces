@@ -1,5 +1,5 @@
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
-import { ActivepiecesError, ApEdition, ErrorCode, GetPieceRequestParams, GetPieceRequestQuery, GetPieceRequestWithScopeParams, ListPiecesRequestQuery, PieceOptionRequest } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ErrorCode, GetPieceRequestParams, GetPieceRequestQuery, GetPieceRequestWithScopeParams, ListPiecesRequestQuery, PieceOptionRequest, PrincipalType } from '@activepieces/shared'
 import { engineHelper } from '../helper/engine-helper'
 import { system } from '../helper/system/system'
 import { SystemProp } from '../helper/system/system-prop'
@@ -47,7 +47,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
         const decodeScope = decodeURIComponent(scope)
         const decodedName = decodeURIComponent(name)
         return await pieceMetadataService.getOrThrow({
-            projectId: req.principal.projectId,
+            projectId: req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.projectId,
             name: `${decodeScope}/${decodedName}`,
             version,
         })

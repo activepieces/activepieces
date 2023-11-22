@@ -159,10 +159,12 @@ const constructPieceFilters = async ({ name, version, projectId }: { name: strin
         filters.push(projectPieceFilter)
 
         // TODO: this might be database intensive, consider caching, passing platform id from caller cause major changes
-        const project = await projectService.getOneOrThrow(projectId)
+        // Don't use GetOneOrThrow Anonymouse Token generates random string for project id
+        const project = await projectService.getOne(projectId)
+        const platformId = project?.platformId
 
-        if (project.platformId) {
-            const platformPieceFilter = createPlatformPieceFilter(name, project.platformId)
+        if (platformId) {
+            const platformPieceFilter = createPlatformPieceFilter(name, platformId)
             filters.push(platformPieceFilter)
         }
     }
