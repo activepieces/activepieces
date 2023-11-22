@@ -23,6 +23,7 @@ import {
 } from '@activepieces/ui/common';
 import { ActivatedRoute } from '@angular/router';
 import { localesMap } from '@activepieces/ui/common';
+import { spreadIfDefined } from '@activepieces/shared';
 
 interface AppearanceForm {
   name: FormControl<string>;
@@ -112,8 +113,13 @@ export class PlatformAppearanceComponent implements OnInit {
   ngOnInit(): void {
     this.platform = this.route.snapshot.data['platform'];
     this.formGroup.patchValue({
-      ...this.platform,
+      name: this.platform.name,
+      favIconUrl: this.platform.favIconUrl,
+      logoIconUrl: this.platform.logoIconUrl,
+      fullLogoUrl: this.platform.fullLogoUrl,
+      primaryColor: this.platform.primaryColor,
       pickerCtrl: this.platform.primaryColor,
+      ...spreadIfDefined('defaultLocale', this.platform.defaultLocale),
     });
   }
   save() {

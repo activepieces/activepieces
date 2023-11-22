@@ -24,6 +24,7 @@ type DeleteParams = {
 
 type CreateParams = {
     pieceMetadata: PieceMetadata
+    platformId?: string
     projectId?: string
     packageType: PackageType
     pieceType: PieceType

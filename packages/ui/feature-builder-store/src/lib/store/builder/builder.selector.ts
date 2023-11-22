@@ -17,15 +17,16 @@ import { MentionListItem } from '../../model/mention-list-item';
 import { FlowStructureUtil } from '../../utils/flowStructureUtil';
 import { ConnectionDropdownItem } from '../../model/connections-dropdown-item';
 import { BuilderSavingStatusEnum, CanvasState } from '../../model';
+import { FlowItemDetails } from '@activepieces/ui/common';
+
+import { FlowInstanceState } from './flow-instance/flow-instance.reducer';
+import { StepRunResult } from '../../utils/stepRunResult';
 import {
   CORE_PIECES_ACTIONS_NAMES,
   CORE_PIECES_TRIGGERS,
   CORE_SCHEDULE,
-  FlowItemDetails,
   corePieceIconUrl,
-} from '@activepieces/ui/common';
-import { FlowInstanceState } from './flow-instance/flow-instance.reducer';
-import { StepRunResult } from '../../utils/stepRunResult';
+} from 'ui-feature-pieces';
 
 export const BUILDER_STATE_NAME = 'builderState';
 

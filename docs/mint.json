@@ -98,12 +98,13 @@
           "icon": "gear",
           "pages": [
             "install/configurations/environment-variables",
-            "install/configurations/error-notifications",
-            "install/configurations/troubleshooting"
+            "install/configurations/error-notifications"
           ]
         },
+        "install/setup-ssl",
         "install/architecture",
-        "install/enterprise"
+        "install/enterprise",
+        "install/troubleshooting"
       ]
     },
     {

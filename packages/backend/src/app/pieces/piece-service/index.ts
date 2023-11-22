@@ -14,7 +14,7 @@ import { logger } from '../../helper/logger'
 import { pieceServiceHooks } from './piece-service-hooks'
 
 export const pieceService = {
-    async add(params: AddPieceParams): Promise<PieceMetadataModel> {
+    async installPiece(params: AddPieceParams): Promise<PieceMetadataModel> {
         try {
             const piecePackage = await getPiecePackage(params)
             const engineResponse = await engineHelper.extractPieceMetadata(piecePackage)

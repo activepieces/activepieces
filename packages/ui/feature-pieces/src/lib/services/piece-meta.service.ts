@@ -18,9 +18,8 @@ import {
   take,
 } from 'rxjs';
 import semver from 'semver';
-import { environment } from '../environments/environment';
-import { FlowItemDetails } from '../models/flow-item-details';
-import { FlagService } from './flag.service';
+import { FlagService, environment } from '@activepieces/ui/common';
+import { FlowItemDetails } from '@activepieces/ui/common';
 import {
   DropdownState,
   PiecePropertyMap,
@@ -28,10 +27,7 @@ import {
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/shared';
-import {
-  PieceMetadataModel,
-  PieceMetadataModelSummary,
-} from '../models/piece-metadata-model';
+import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/ui/common';
 
 type TriggersMetadata = Record<string, TriggerBase>;
 

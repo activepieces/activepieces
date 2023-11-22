@@ -11,8 +11,8 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PieceIconContainerComponent implements OnInit {
-  @Input() url: string;
-  @Input() moreIconsNumber: number;
+  @Input() url!: string;
+  @Input() moreIconsNumber!: number;
   ngOnInit() {
     if (!this.moreIconsNumber && !this.url) {
       console.warn('Warning: No url or moreIconsNumber provided');

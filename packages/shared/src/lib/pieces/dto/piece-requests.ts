@@ -50,6 +50,7 @@ export const PieceOptionRequest = Type.Object({
 export type PieceOptionRequest = Static<typeof PieceOptionRequest>
 
 export const AddPieceRequestBody = Type.Object({
+    platformId: Type.Optional(Type.String()),
     packageType: Type.Enum(PackageType),
     pieceName: Type.String(),
     pieceVersion: ExactVersionType,

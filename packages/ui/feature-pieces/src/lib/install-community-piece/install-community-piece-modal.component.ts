@@ -1,17 +1,16 @@
-import { Component } from '@angular/core';
+import { Component, Inject } from '@angular/core';
 import {
   FormBuilder,
   FormControl,
   FormGroup,
   Validators,
 } from '@angular/forms';
-import { MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Observable, tap, catchError, map } from 'rxjs';
 import {
   FlagService,
   GenericSnackbarTemplateComponent,
   PieceMetadataModel,
-  PieceMetadataService,
 } from '@activepieces/ui/common';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import {
@@ -19,6 +18,7 @@ import {
   EXACT_VERSION_PATTERN,
   PackageType,
 } from '@activepieces/shared';
+import { PieceMetadataService } from '../services/piece-meta.service';
 
 type AddPackageFormControl = {
   packageType: FormControl<PackageType>;
@@ -28,7 +28,7 @@ type AddPackageFormControl = {
 };
 
 @Component({
-  selector: 'app-install-community-piece-modal',
+  selector: 'ap-install-community-piece-modal',
   templateUrl: './install-community-piece-modal.component.html',
 })
 export class InstallCommunityPieceModalComponent {
@@ -50,10 +50,12 @@ export class InstallCommunityPieceModalComponent {
   submitted = false;
 
   addPieceForm: FormGroup<AddPackageFormControl>;
-  addPieceRequest$: Observable<PieceMetadataModel | null>;
-  pieceNameControlChanged$: Observable<string>;
+  addPieceRequest$!: Observable<PieceMetadataModel | null>;
+  pieceNameControlChanged$!: Observable<string>;
 
   constructor(
+    @Inject(MAT_DIALOG_DATA)
+    public data: { platformId?: string },
     private fb: FormBuilder,
     private pieceMetadataService: PieceMetadataService,
     private dialogRef: MatDialogRef<InstallCommunityPieceModalComponent>,
@@ -112,7 +114,10 @@ export class InstallCommunityPieceModalComponent {
       const pieceInfo = this.addPieceForm.getRawValue();
 
       this.addPieceRequest$ = this.pieceMetadataService
-        .installCommunityPiece(pieceInfo)
+        .installCommunityPiece({
+          ...pieceInfo,
+          platformId: this.data.platformId
+        })
         .pipe(
           catchError((err) => {
             this.loading = false;
