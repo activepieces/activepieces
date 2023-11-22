@@ -87,18 +87,6 @@ Community templates provide inspiration and enable you to effortlessly build aut
 <br>
 <br>
 
-
-# 🤖 LLM Chatbots + Data Sources (BETA)
-
-![chatbots](https://github.com/activepieces/activepieces/assets/1812998/7902e76a-4ba4-4130-9418-dba600fb5c15)
-
-**Features:**
-- PDF datasource
-- Sharable links
-- Native integration with flow builder using chatbot pieces
-- Prompt Customization
-
-
 # License
 
 Activepieces' Community Edition is released as open source under the [MIT license](https://github.com/activepieces/activepieces/blob/main/LICENSE) and enterprise features are released under [Commerical License](https://github.com/activepieces/activepieces/blob/main/packages/ee/LICENSE)
