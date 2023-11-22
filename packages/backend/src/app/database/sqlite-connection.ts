@@ -23,6 +23,7 @@ import { AddTagsToRunSqlite1692056190942 } from './migration/sqlite/169205619094
 import { AddStatusToConnectionsSqlite1693402376520 } from './migration/sqlite/1693402376520-AddStatusToConnectionsSqlite'
 import { AddPlatformIdToUserSqlite1700147448410 } from './migration/sqlite/1700147448410-AddPlatformIdToUserSqlite'
 import { AddTerminationReasonSqlite1698323327318 } from './migration/sqlite/1698323327318-AddTerminationReason'
+import { AddPlatformIdToPieceMetadataSqlite1700524446967 } from './migration/sqlite/1700524446967-AddPlatformIdToPieceMetadataSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(SystemProp.CONFIG_PATH)
@@ -63,6 +64,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddExternalIdSqlite1698857968495,
         UpdateUserStatusRenameShadowToInvited1699818680567,
         AddPlatformIdToUserSqlite1700147448410,
+        AddPlatformIdToPieceMetadataSqlite1700524446967,
     ]
     const edition = getEdition()
     if (edition !== ApEdition.COMMUNITY) {

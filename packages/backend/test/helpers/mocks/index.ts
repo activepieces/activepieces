@@ -116,6 +116,7 @@ export const createMockPieceMetadata = (pieceMetadata?: Partial<Omit<PieceMetada
         projectId: pieceMetadata?.projectId,
         directoryName: pieceMetadata?.directoryName,
         auth: pieceMetadata?.auth,
+        platformId: pieceMetadata?.platformId,
         version: pieceMetadata?.version ?? faker.system.semver(),
         minimumSupportedRelease: pieceMetadata?.minimumSupportedRelease ?? '0.0.0',
         maximumSupportedRelease: pieceMetadata?.maximumSupportedRelease ?? '9.9.9',

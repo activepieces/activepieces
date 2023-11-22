@@ -34,8 +34,10 @@ import {
   PieceMetadataService,
   CORE_PIECES_ACTIONS_NAMES,
   CORE_PIECES_TRIGGERS,
-  FlowItemDetails,
   corePieceIconUrl,
+} from 'ui-feature-pieces';
+import {
+  FlowItemDetails,
   fadeIn400ms,
   isOverflown,
 } from '@activepieces/ui/common';

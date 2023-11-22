@@ -7,19 +7,15 @@ import {
   flowHelper,
 } from '@activepieces/shared';
 import { Observable, map, of, tap } from 'rxjs';
-import {
-  PieceMetadataService,
-  CORE_PIECES_ACTIONS_NAMES,
-  CORE_PIECES_TRIGGERS,
-  corePieceIconUrl,
-} from '../../service/piece-meta.service';
+import { CORE_PIECES_ACTIONS_NAMES, CORE_PIECES_TRIGGERS, PieceMetadataService, corePieceIconUrl } from '../services/piece-meta.service';
+
 
 @Component({
   selector: 'ap-pieces-icons-from-flow',
   templateUrl: './pieces-icons-from-flow.component.html',
 })
 export class PiecesIconsFromFlowComponent implements OnInit {
-  @Input() flowVersion: FlowVersionTemplate | FlowVersion;
+  @Input({ required: true}) flowVersion!: FlowVersionTemplate | FlowVersion;
   numberOfStepsLeft = 0;
   loadedIcons: Record<number, boolean> = {};
   urlsToLoad$: Observable<string>[] = [];

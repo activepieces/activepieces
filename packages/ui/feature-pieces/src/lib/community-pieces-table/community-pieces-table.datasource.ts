@@ -1,8 +1,8 @@
 import { DataSource } from '@angular/cdk/collections';
 import { Observable, BehaviorSubject, tap, switchMap, delay } from 'rxjs';
-import { PieceMetadataService } from '@activepieces/ui/common';
 import { PieceMetadataSummary } from '@activepieces/pieces-framework';
 import { combineLatest } from 'rxjs';
+import { PieceMetadataService } from '../services/piece-meta.service';
 
 /**
  * Data source for the LogsTable view. This class should
