@@ -32,7 +32,7 @@ In case you have flows with internal errors, please go to the oneTimeJobs queue 
 
 If you forgot your password on self hosted instance, you can reset it using the following steps:
 
-#### Postgres
+**Postgres**
 
 1. **Locate PostgreSQL Docker Container**:
    - Use a command like `docker ps` to find the PostgreSQL container.
@@ -58,7 +58,7 @@ If you forgot your password on self hosted instance, you can reset it using the 
    UPDATE public.user SET password='HASH_PASSWORD' WHERE email='YOUR_EMAIL_ADDRESS';
    ```
 
-#### SQLite3
+**SQLite3**
 
 1. **Open the SQLite3 Shell**:
    - Access the SQLite3 database by opening the SQLite3 shell. Replace "database.db" with the actual name of your SQLite3 database file if it's different.
