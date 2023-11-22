@@ -8,10 +8,11 @@ export enum FilteredPieceBehavior {
     BLOCKED = 'BLOCKED',
 }
 export enum LocalesEnum {
-    ENGLISH='en',
-    GERMAN='de',
-    ITALIAN ='it',
-    FRENCH ='fr'
+    DUTCH = 'nl',
+    ENGLISH = 'en',
+    GERMAN = 'de',
+    ITALIAN = 'it',
+    FRENCH = 'fr',
 }
 
 export const Platform = Type.Object({

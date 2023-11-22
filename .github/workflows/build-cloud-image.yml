@@ -7,7 +7,7 @@ on:
 jobs:
   Release:
     env:
-      MY_VERSION: 11
+      MY_VERSION: 12
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
