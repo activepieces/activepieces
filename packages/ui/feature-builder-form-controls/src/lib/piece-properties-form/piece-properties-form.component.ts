@@ -515,7 +515,7 @@ export class PiecePropertiesFormComponent implements ControlValueAccessor {
           break;
         }
         case PropertyType.GROUP:
-          controls[pk] = this.fb.group(this.createConfigsFormControls(prop.props, propValue as Record<string, unknown>) ?? {});
+          controls[pk] = this.fb.group(this.createConfigsFormControls(prop.props, propValue as Record<string, unknown> ?? {}));
           break;
         case PropertyType.SEPARATOR:
         case PropertyType.TITLE: {
