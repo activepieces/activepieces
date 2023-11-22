@@ -51,7 +51,7 @@ export class UserAvatarComponent implements OnInit {
     );
     this.myPiecesEnabled$ = this.flagService.isFlagEnabled(
       ApFlagId.SHOW_COMMUNITY_PIECES
-    )
+    );
     this.projectEnabled$ = this.flagService.isFlagEnabled(
       ApFlagId.PROJECT_MEMBERS_ENABLED
     );
