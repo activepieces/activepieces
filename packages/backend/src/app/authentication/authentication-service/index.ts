@@ -7,6 +7,17 @@ import { authenticationServiceHooks as hooks } from './hooks'
 export const authenticationService = {
     signUp: async (request: { email: string, password: string, firstName: string, lastName: string, trackEvents: boolean, newsLetter: boolean, status: UserStatus }): Promise<AuthenticationResponse> => {
         try {
+      
+            const userWithSameEmail = await userService.getbyEmail({ email: request.email })
+            if (userWithSameEmail) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.EXISTING_USER,
+                    params: {
+                        email: request.email,
+                    },
+                    
+                })
+            }
             const user = await userService.create({
                 ...request,
                 platformId: null,
@@ -66,7 +77,7 @@ export const authenticationService = {
 }
 
 const assertUserIsAllowedToSignIn: (user: User | null) => asserts user is User = (user) => {
-    if (isNil(user) || user.status === UserStatus.INVITED) {
+    if (isNil(user) || user.status === UserStatus.CREATED ||   user.status === UserStatus.VERIFIED) {
         throw new ActivepiecesError({
             code: ErrorCode.INVALID_CREDENTIALS,
             params: {

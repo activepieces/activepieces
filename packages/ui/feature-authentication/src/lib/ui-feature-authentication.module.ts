@@ -4,7 +4,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { SignInComponent } from './pages/sign-in/sign-in.component';
 import { AuthLayoutComponent } from './auth.component';
-import { UiCommonModule } from '@activepieces/ui/common';
+import {
+  UiCommonModule,
+  showBasedOnEditionGuard,
+} from '@activepieces/ui/common';
 import { SignUpComponent } from './pages/sign-up/sign-up.component';
 import { IsFirstSignInResolver } from './resolvers/is-first-sign-in.resolver';
 import { AngularSvgIconModule } from 'angular-svg-icon';
@@ -15,6 +18,9 @@ import {
   MAT_FORM_FIELD_DEFAULT_OPTIONS,
 } from '@angular/material/form-field';
 import { AuthenticationComponent } from './pages/authenticate/authenticate.component';
+import { EmailVerificationComponent } from './pages/email-verification/email-verification.component';
+import { AuthActionComponent } from './pages/auth-action/auth-action.component';
+import { ApEdition } from '@activepieces/shared';
 
 @NgModule({
   imports: [
@@ -28,7 +34,6 @@ import { AuthenticationComponent } from './pages/authenticate/authenticate.compo
     AngularSvgIconModule,
     RouterModule.forChild([
       {
-        title: 'Activepieces',
         path: 'authenticate',
         component: AuthenticationComponent,
       },
@@ -37,15 +42,27 @@ import { AuthenticationComponent } from './pages/authenticate/authenticate.compo
         component: AuthLayoutComponent,
         children: [
           {
-            title: 'Activepieces',
             path: 'sign-in',
             component: SignInComponent,
             resolve: { firstSignIn: IsFirstSignInResolver },
+            data: {
+              title: $localize`Sign in`,
+            },
           },
           {
-            title: 'Activepieces',
             path: 'sign-up',
             component: SignUpComponent,
+            data: {
+              title: $localize`Sign up`,
+            },
+          },
+          {
+            path: 'auth-action',
+            component: AuthActionComponent,
+            data: {
+              title: $localize`Verify email`,
+            },
+            canActivate: [showBasedOnEditionGuard([ApEdition.ENTERPRISE])],
           },
         ],
       },
@@ -62,6 +79,8 @@ import { AuthenticationComponent } from './pages/authenticate/authenticate.compo
     SignInComponent,
     SignUpComponent,
     AuthenticationComponent,
+    EmailVerificationComponent,
+    AuthActionComponent,
   ],
 })
 export class UiFeatureAuthenticationModule {}

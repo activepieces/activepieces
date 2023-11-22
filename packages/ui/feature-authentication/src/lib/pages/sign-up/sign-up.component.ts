@@ -5,7 +5,7 @@ import {
   FormGroup,
   Validators,
 } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { catchError, map, Observable, of, switchMap, tap } from 'rxjs';
 import { AuthenticationService, fadeInUp400ms } from '@activepieces/ui/common';
 import { FlagService } from '@activepieces/ui/common';
@@ -15,6 +15,7 @@ import {
   containsLowercaseCharacter,
   containsNumber,
 } from '@activepieces/ui/common';
+import { ApFlagId, UserStatus } from '@activepieces/shared';
 
 export interface UserInfo {
   firstName: FormControl<string>;
@@ -39,12 +40,22 @@ export class SignUpComponent {
   emailValueChanged$: Observable<string>;
   signUp$: Observable<void> | undefined;
   signedUpEnabled$: Observable<boolean>;
+  privacyPolicyUrl$: Observable<string>;
+  termsOfServiceUrl$: Observable<string>;
+  signUpDone = false;
   constructor(
     private formBuilder: FormBuilder,
     private router: Router,
     public flagService: FlagService,
-    public authenticationService: AuthenticationService
+    public authenticationService: AuthenticationService,
+    private route: ActivatedRoute
   ) {
+    this.privacyPolicyUrl$ = this.flagService.getStringFlag(
+      ApFlagId.PRIVACY_POLICY_URL
+    );
+    this.termsOfServiceUrl$ = this.flagService.getStringFlag(
+      ApFlagId.TERMS_OF_SERVICE_URL
+    );
     this.registrationForm = this.formBuilder.group({
       firstName: new FormControl<string>('', {
         nonNullable: true,
@@ -92,14 +103,13 @@ export class SignUpComponent {
       this.loading = true;
       const request = this.registrationForm.getRawValue();
       this.signUp$ = this.authenticationService.signUp(request).pipe(
-        catchError(() => {
-          this.emailExists = true;
-          this.emailChanged = false;
-          this.loading = false;
-          return of(null);
-        }),
         tap((response) => {
-          if (response && response.body && response.body.token) {
+          if (
+            response &&
+            response.body &&
+            response.body.token &&
+            response.body.status === UserStatus.VERIFIED
+          ) {
             this.authenticationService.saveToken(response.body.token);
             this.authenticationService.saveUser(response);
           }
@@ -109,18 +119,26 @@ export class SignUpComponent {
             return this.authenticationService
               .saveNewsLetterSubscriber(request.email)
               .pipe(
+                map(() => response),
                 catchError((err) => {
                   console.error(err);
-                  return of(void 0);
+                  return of(response);
                 })
               );
           }
           return of(response);
         }),
         tap((response) => {
-          if (response) {
-            this.router.navigate(['/flows']);
+          if (response && response.body?.status === UserStatus.VERIFIED) {
+            this.redirect();
           }
+          this.signUpDone = true;
+        }),
+        catchError((err) => {
+          this.emailExists = true;
+          this.emailChanged = false;
+          this.loading = false;
+          return of(err);
         }),
         map(() => void 0)
       );
@@ -133,5 +151,21 @@ export class SignUpComponent {
 
   isPasswordInputIsFocused(passwordInputElement: HTMLInputElement) {
     return passwordInputElement == document.activeElement;
+  }
+  goBackToSign() {
+    this.router.navigate(['/sign-in'], {
+      queryParams: {
+        redirect_url: this.route.snapshot.queryParams['redirect_url'],
+      },
+    });
+  }
+
+  redirect() {
+    const redirectUrl = this.route.snapshot.queryParamMap.get('redirect_url');
+    if (redirectUrl) {
+      this.router.navigateByUrl(decodeURIComponent(redirectUrl));
+    } else {
+      this.router.navigate(['/flows']);
+    }
   }
 }
