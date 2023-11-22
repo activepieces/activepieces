@@ -19,6 +19,7 @@ import {
 import { Observable, map, tap } from 'rxjs';
 import {
   AuthenticationService,
+  LocalesService,
   PlatformService,
 } from '@activepieces/ui/common';
 import { ActivatedRoute } from '@angular/router';
@@ -50,7 +51,8 @@ export class PlatformAppearanceComponent implements OnInit {
     private fb: FormBuilder,
     private platformService: PlatformService,
     private authenticationService: AuthenticationService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private localesService: LocalesService
   ) {
     this.formGroup = this.fb.group({
       name: this.fb.control(
@@ -113,6 +115,8 @@ export class PlatformAppearanceComponent implements OnInit {
     this.platform = this.route.snapshot.data['platform'];
     this.formGroup.patchValue({
       ...this.platform,
+      defaultLocale:
+        this.platform.defaultLocale ?? this.localesService.defaultLocale,
       pickerCtrl: this.platform.primaryColor,
     });
   }

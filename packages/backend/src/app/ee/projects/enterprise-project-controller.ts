@@ -119,7 +119,7 @@ const enterpriseProjectController: FastifyPluginCallbackTypebox = (fastify, _opt
 
             return await projectService.update({
                 platformId: request.principal.platform?.id,
-                projectId: request.principal.projectId,
+                projectId: request.params.projectId,
                 request: request.body,
             })
 
