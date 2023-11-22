@@ -176,13 +176,13 @@
         </context-group>
         <target state="final"> Tapez l'adresse e-mail de l'utilisateur que vous souhaitez inviter. </target>
       </trans-unit>
-      <trans-unit id="7389095488851921033" datatype="html" approved="yes">
-        <source>The invited email already has an account. Please contact support@activepieces.com for assistance.</source>
+      <trans-unit id="5637407793093197884" datatype="html">
+        <source>The invited email already has an account. Please contact support for assistance.</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.html</context>
           <context context-type="linenumber">13</context>
         </context-group>
-        <target state="final">L'e-mail invité a déjà un compte. Veuillez contacter support@activepieces.com pour obtenir de l'aide.</target>
+        <target state="needs-translation">The invited email already has an account. Please contact support for assistance.</target>
       </trans-unit>
       <trans-unit id="1257197684303803009" datatype="html" approved="yes">
         <source>Email is Required</source>
@@ -212,13 +212,13 @@
         </context-group>
         <target state="final"> Inviter à participer </target>
       </trans-unit>
-      <trans-unit id="7949744301909849109" datatype="html" approved="yes">
-        <source>Internal error occurred please contact support@activepieces.com</source>
+      <trans-unit id="2177891213716569763" datatype="html">
+        <source>Internal error occurred please contact support</source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ee/project-members/src/lib/invite-project-member-dialog/invite-project-member.component.ts</context>
           <context context-type="linenumber">62</context>
         </context-group>
-        <target state="final">Une erreur interne s'est produite, veuillez contacter support@activepieces.com</target>
+        <target state="needs-translation">Internal error occurred please contact support</target>
       </trans-unit>
       <trans-unit id="1483298785952962987" datatype="html" approved="yes">
         <source>ADMIN</source>
@@ -2666,13 +2666,13 @@
         </context-group>
         <target state="needs-translation"> Client Secret is required</target>
       </trans-unit>
-      <trans-unit id="2342935516799349752" datatype="html">
-        <source>I would like to use activepieces app credentials </source>
+      <trans-unit id="9030073336275002095" datatype="html">
+        <source>I would like to use predefined app credentials </source>
         <context-group purpose="location">
           <context context-type="sourcefile">packages/ui/feature-connections/src/lib/dialogs/oauth2-connection-dialog/oauth2-connection-dialog.component.html</context>
           <context context-type="linenumber">91,92</context>
         </context-group>
-        <target state="needs-translation">I would like to use activepieces app credentials </target>
+        <target state="needs-translation">I would like to use predefined app credentials </target>
       </trans-unit>
       <trans-unit id="2903873185531053389" datatype="html">
         <source> New Connection </source>
