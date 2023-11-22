@@ -10,6 +10,7 @@ import { FoldersResolver } from './resolvers/folders.resolver';
 import { DashboardContainerComponent } from './dashboard-container.component';
 import {
   ConnectionsResolver,
+  showBasedOnFlagGuard,
   showPlatformSettingsGuard,
 } from '@activepieces/ui/common';
 import {
@@ -20,6 +21,7 @@ import {
 import { PlansPageComponent } from '@activepieces/ee-billing-ui';
 import { ProjectMembersTableComponent } from '@activepieces/ee/project-members';
 import { CommunityPiecesTableComponent } from 'ui-feature-pieces';
+import { ApFlagId } from '@activepieces/shared';
 
 export const DashboardLayoutRouting: Routes = [
   {
@@ -40,6 +42,7 @@ export const DashboardLayoutRouting: Routes = [
         data: {
           title: $localize`Plans`,
         },
+        canActivate: [showBasedOnFlagGuard(ApFlagId.SHOW_BILLING)],
         path: 'plans',
         component: PlansPageComponent,
       },
@@ -47,6 +50,7 @@ export const DashboardLayoutRouting: Routes = [
         data: {
           title: $localize`Team`,
         },
+        canActivate: [showBasedOnFlagGuard(ApFlagId.PROJECT_MEMBERS_ENABLED)],
         path: 'team',
         component: ProjectMembersTableComponent,
       },
@@ -54,13 +58,14 @@ export const DashboardLayoutRouting: Routes = [
         data: {
           title: $localize`Chatbots`,
         },
+        canActivate: [showBasedOnFlagGuard(ApFlagId.CHATBOT_ENABLED)],
         path: 'chatbots',
         pathMatch: 'full',
         component: ChatbotsTableComponent,
       },
       {
         path: 'chatbots/:id/settings',
-        canActivate: [],
+        canActivate: [showBasedOnFlagGuard(ApFlagId.CHATBOT_ENABLED)],
         data: {
           title: $localize`Chatbot settings`,
         },
@@ -75,13 +80,14 @@ export const DashboardLayoutRouting: Routes = [
         data: {
           title: $localize`Chatbots`,
         },
+        canActivate: [showBasedOnFlagGuard(ApFlagId.CHATBOT_ENABLED)],
         path: 'chatbots',
         pathMatch: 'full',
         component: ChatbotsTableComponent,
       },
       {
         path: 'chatbots/:id/settings',
-        canActivate: [],
+        canActivate: [showBasedOnFlagGuard(ApFlagId.CHATBOT_ENABLED)],
         data: {
           title: $localize`Chatbot settings`,
         },
@@ -97,6 +103,7 @@ export const DashboardLayoutRouting: Routes = [
           title: $localize`My Pieces`,
         },
         path: 'settings/my-pieces',
+        canActivate: [showBasedOnFlagGuard(ApFlagId.SHOW_COMMUNITY_PIECES)],
         component: CommunityPiecesTableComponent,
       },
       {
