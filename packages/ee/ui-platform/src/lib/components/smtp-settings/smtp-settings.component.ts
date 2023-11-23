@@ -73,7 +73,6 @@ export class SmtpSettingsComponent implements OnInit {
       this.saving$ = this.platformService
         .updatePlatform(
           {
-            ...platform,
             ...this.smtpSettingsForm.value,
           },
           platform.id
