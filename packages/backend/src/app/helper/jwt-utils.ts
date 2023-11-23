@@ -47,10 +47,11 @@ export const jwtUtils = {
         })
     },
 
-    async decodeAndVerify<T>({ jwt, key, algorithm = ALGORITHM, issuer = ISSUER }: VerifyParams): Promise<T> {
+    async decodeAndVerify<T>({ jwt, key, algorithm = ALGORITHM, issuer = ISSUER, audience }: VerifyParams): Promise<T> {
         const verifyOptions: VerifyOptions = {
             algorithms: [algorithm],
             ...spreadIfDefined('issuer', issuer),
+            ...spreadIfDefined('audience', audience),
         }
 
         return new Promise((resolve, reject) => {
@@ -85,7 +86,8 @@ type VerifyParams = {
     jwt: string
     key: string
     algorithm?: JwtSignAlgorithm
-    issuer?: string | null
+    issuer?: string | string[] | null
+    audience?: string
 }
 
 type DecodeParams = {
