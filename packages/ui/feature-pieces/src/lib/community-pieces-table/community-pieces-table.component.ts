@@ -43,7 +43,11 @@ export class CommunityPiecesTableComponent {
 
   installPiece() {
     this.addPackageDialogClosed$ = this.dialogService
-      .open(InstallCommunityPieceModalComponent)
+      .open(InstallCommunityPieceModalComponent, {
+        data: {
+          platformId: undefined,
+        },
+      })
       .afterClosed()
       .pipe(
         tap((res) => {
