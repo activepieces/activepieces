@@ -67,9 +67,10 @@ const enterpriseProjectController: FastifyPluginCallbackTypebox = (fastify, _opt
             const project = allProjects.find((project) => project.id === request.params.projectId)
             if (!project) {
                 throw new ActivepiecesError({
-                    code: ErrorCode.PROJECT_NOT_FOUND,
+                    code: ErrorCode.ENTITY_NOT_FOUND,
                     params: {
-                        id: request.params.projectId,
+                        entityId: request.params.projectId,
+                        entityType: 'project',
                     },
                 })
             }
@@ -89,8 +90,6 @@ const enterpriseProjectController: FastifyPluginCallbackTypebox = (fastify, _opt
         },
     )
 
-
-    // We don't use the `projectId`, but we need it to differentiate between creating a new project and updating an existing one.
     fastify.post(
         '/:projectId',
         {
@@ -105,7 +104,8 @@ const enterpriseProjectController: FastifyPluginCallbackTypebox = (fastify, _opt
 
             return await projectService.update({
                 platformId: request.principal.platform?.id,
-                projectId: request.principal.projectId,
+                projectId: request.params.projectId,
+                userId: request.principal.id,
                 request: request.body,
             })
 

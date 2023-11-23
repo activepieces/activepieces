@@ -76,6 +76,7 @@ import { platformPieceModule } from './ee/pieces/platform-piece-module'
 import { otpModule } from './ee/otp/otp-module'
 import { enterpriseLocalAuthnModule } from './ee/authentication/enterprise-local-authn/enterprise-local-authn-module'
 import { billingModule } from './ee/billing/billing/billing.module'
+import { federatedAuthModule } from './ee/authentication/federated-authn/federated-authn-module'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -218,6 +219,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(platformPieceModule)
             await app.register(otpModule)
             await app.register(enterpriseLocalAuthnModule)
+            await app.register(federatedAuthModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
@@ -244,6 +246,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(platformPieceModule)
             await app.register(otpModule)
             await app.register(enterpriseLocalAuthnModule)
+            await app.register(federatedAuthModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
