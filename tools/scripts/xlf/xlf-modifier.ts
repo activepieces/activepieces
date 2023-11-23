@@ -38,25 +38,29 @@ export function readXLFFile(filePath:string, callback:Function) {
 
 
 
-export function removeContextsWithPrefix(result:TranslationFile ,prefix:string): TranslationFile {
-  const copy:TranslationFile = JSON.parse(JSON.stringify(result));
+export function removeContextsWithPrefix(result: TranslationFile, prefixes: string[]): TranslationFile {
+  const copy: TranslationFile = JSON.parse(JSON.stringify(result));
+  
   // Iterate through trans-unit elements
-  if( copy.xliff.file[0].body[0]['trans-unit'])
-  copy.xliff.file[0].body[0]['trans-unit'] = copy.xliff.file[0].body[0]['trans-unit']?.map((transUnit) => {
-    if(transUnit)
-    {
-    // Filter out context-group elements with matching prefix
-    transUnit['context-group'] = transUnit['context-group']?.filter((contextGroup:any) => {
-      // Filter out context elements with matching prefix
-      const contextGroupShouldBeRemoved= contextGroup.context.find((ctx:any) => ctx._.startsWith(prefix));
-      return !contextGroupShouldBeRemoved;
-    });
+  if (copy.xliff.file[0].body[0]['trans-unit']) {
+    copy.xliff.file[0].body[0]['trans-unit'] = copy.xliff.file[0].body[0]['trans-unit']?.map((transUnit) => {
+      if (transUnit) {
+        // Filter out context-group elements with matching prefixes
+        transUnit['context-group'] = transUnit['context-group']?.filter((contextGroup: any) => {
+          // Filter out context elements with matching prefixes
+          const contextGroupShouldBeRemoved = contextGroup.context.find((ctx: any) =>
+            prefixes.some(prefix => ctx._.startsWith(prefix))
+          );
+          return !contextGroupShouldBeRemoved;
+        });
 
-    // Remove trans-unit if context-group array is empty
-    return transUnit['context-group']?.length > 0 ? transUnit : undefined;
-    }
-    return undefined;
-  });
+        // Remove trans-unit if context-group array is empty
+        return transUnit['context-group']?.length > 0 ? transUnit : undefined;
+      }
+      return undefined;
+    });
+  }
+
   // Remove undefined elements from the array
   copy.xliff.file[0].body[0]['trans-unit'] = copy.xliff.file[0].body[0]['trans-unit'].filter(Boolean);
   return copy;

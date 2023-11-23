@@ -28,7 +28,7 @@ import { AddPlatformIdToPieceMetadataSqlite1700524446967 } from './migration/sql
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(SystemProp.CONFIG_PATH)
     mkdirSync(apConfigDirectoryPath, { recursive: true })
-    return path.join(apConfigDirectoryPath, 'database.sqlite')
+    return path.resolve(path.join(apConfigDirectoryPath, 'database.sqlite'))
 }
 
 const getSqliteDatabaseInMemory = (): string => {
@@ -41,7 +41,6 @@ const getSqliteDatabase = (): string => {
     if (env === ApEnvironment.TESTING) {
         return getSqliteDatabaseInMemory()
     }
-
     return getSqliteDatabaseFilePath()
 }
 

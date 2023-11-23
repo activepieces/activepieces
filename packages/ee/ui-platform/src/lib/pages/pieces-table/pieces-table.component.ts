@@ -112,12 +112,12 @@ export class PiecesTableComponent implements OnInit {
     if (this.saving$) {
       this.saving$ = this.saving$.pipe(
         switchMap(() => {
-          return this.savePlatform(this.platform$.value);
+          return this.saveFilteredPieces(this.platform$.value);
         }),
         finishedSavingPipe
       );
     } else {
-      this.saving$ = this.savePlatform(this.platform$.value).pipe(
+      this.saving$ = this.saveFilteredPieces(this.platform$.value).pipe(
         finishedSavingPipe
       );
     }
@@ -141,8 +141,13 @@ export class PiecesTableComponent implements OnInit {
       );
   }
 
-  savePlatform(platform: Platform) {
-    return this.platformService.updatePlatform(platform, platform.id);
+  saveFilteredPieces(platform: Platform) {
+    return this.platformService.updatePlatform(
+      {
+        filteredPieceNames: platform.filteredPieceNames,
+      },
+      platform.id
+    );
   }
 
   openPieceOAuth2CredentialsDialog(

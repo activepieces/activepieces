@@ -1,7 +1,7 @@
 import { ActivepiecesError, ErrorCode, UserId, apId, isNil, spreadIfDefined } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { PlatformEntity } from './platform.entity'
-import { FilteredPieceBehavior, Platform, PlatformId, UpdatePlatformRequestBody } from '@activepieces/ee-shared'
+import { FilteredPieceBehavior, LocalesEnum, Platform, PlatformId, UpdatePlatformRequestBody } from '@activepieces/ee-shared'
 import { defaultTheme } from '../../flags/theme'
 
 const repo = databaseConnection.getRepository<Platform>(PlatformEntity)
@@ -16,6 +16,7 @@ export const platformService = {
             logoIconUrl: logoIconUrl ?? defaultTheme.logos.logoIconUrl,
             fullLogoUrl: fullLogoUrl ?? defaultTheme.logos.fullLogoUrl,
             favIconUrl: favIconUrl ?? defaultTheme.logos.favIconUrl,
+            defaultLocale: LocalesEnum.ENGLISH,
             filteredPieceNames: [],
             filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
             showPoweredBy: true,

@@ -5,7 +5,7 @@ import { createMockPieceMetadata, createMockPlatform, createMockProject, createM
 import { StatusCodes } from 'http-status-codes'
 import { FastifyInstance } from 'fastify'
 import { FilteredPieceBehavior } from '@activepieces/ee-shared'
-import { PieceType, ProjectType } from '@activepieces/shared'
+import { PieceType, PrincipalType, ProjectType, apId } from '@activepieces/shared'
 
 let app: FastifyInstance | null = null
 
@@ -25,6 +25,97 @@ afterAll(async () => {
 
 describe('Piece Metadata API', () => {
 
+
+    describe('Get Piece metadata', () => {
+        it('Should return metadata when authenticated', async () => {
+            // arrange
+            const mockPieceMetadata = createMockPieceMetadata({ name: '@activepieces/a', pieceType: PieceType.OFFICIAL })
+            await databaseConnection.getRepository('piece_metadata').save(mockPieceMetadata)
+
+            const mockUser = createMockUser()
+            await databaseConnection.getRepository('user').save([mockUser])
+
+            const mockPlatform = createMockPlatform({
+                ownerId: mockUser.id,
+                filteredPieceNames: [],
+                filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
+            })
+            await databaseConnection.getRepository('platform').save([mockPlatform])
+
+            const mockProject = createMockProject({
+                platformId: mockPlatform.id,
+                type: ProjectType.PLATFORM_MANAGED,
+                ownerId: mockUser.id,
+            })
+            await databaseConnection.getRepository('project').save([mockProject])
+
+            const testToken = await generateMockToken({
+                projectId: mockProject.id,
+                type: PrincipalType.USER,
+                id: apId(),
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/v1/pieces/@activepieces/a',
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            // assert
+            const responseBody = response?.json()
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(responseBody.id).toBe(mockPieceMetadata.id)
+        })
+
+        it('Should return metadata when not authenticated', async () => {
+
+
+            // arrange
+            const mockPieceMetadata = createMockPieceMetadata({ name: '@activepieces/a', pieceType: PieceType.OFFICIAL })
+            await databaseConnection.getRepository('piece_metadata').save(mockPieceMetadata)
+
+            const testToken = await generateMockToken({
+                projectId: apId(),
+                type: PrincipalType.UNKNOWN,
+                id: apId(),
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/v1/pieces/@activepieces/a',
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            // assert
+            const responseBody = response?.json()
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            // Expectations for each attribute
+            expect(responseBody.actions).toEqual(mockPieceMetadata.actions)
+            expect(responseBody.triggers).toEqual(mockPieceMetadata.triggers)
+            expect(responseBody.archiveId).toBe(mockPieceMetadata.archiveId)
+            expect(responseBody.auth).toEqual(mockPieceMetadata.auth)
+            expect(responseBody.description).toBe(mockPieceMetadata.description)
+            expect(responseBody.directoryName).toBe(mockPieceMetadata.directoryName)
+            expect(responseBody.displayName).toBe(mockPieceMetadata.displayName)
+            expect(responseBody.id).toBe(mockPieceMetadata.id)
+            expect(responseBody.logoUrl).toBe(mockPieceMetadata.logoUrl)
+            expect(responseBody.maximumSupportedRelease).toBe(mockPieceMetadata.maximumSupportedRelease)
+            expect(responseBody.minimumSupportedRelease).toBe(mockPieceMetadata.minimumSupportedRelease)
+            expect(responseBody.packageType).toBe(mockPieceMetadata.packageType)
+            expect(responseBody.pieceType).toBe(mockPieceMetadata.pieceType)
+            expect(responseBody.platformId).toBe(mockPieceMetadata.platformId)
+            expect(responseBody.projectId).toBe(mockPieceMetadata.projectId)
+            expect(responseBody.version).toBe(mockPieceMetadata.version)
+        })
+    })
     describe('List Piece Metadata endpoint', () => {
         it('Should list platform and project pieces', async () => {
 

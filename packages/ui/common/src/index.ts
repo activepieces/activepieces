@@ -20,3 +20,4 @@ export * from './lib/guards/show-platform-settings.guard';
 export * from './lib/service';
 export * from './lib/utils/locales';
 import '@angular/localize/init';
+export * from './lib/guards/show-based-on-flag-guard';
