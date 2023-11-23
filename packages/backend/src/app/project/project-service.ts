@@ -3,6 +3,7 @@ import { databaseConnection } from '../database/database-connection'
 import { ProjectEntity } from './project-entity'
 import { ActivepiecesError, apId, ErrorCode, NotificationStatus, Project, ProjectId, UserId } from '@activepieces/shared'
 import { PlatformId, UpdateProjectRequest } from '@activepieces/ee-shared'
+import { platformService } from '../ee/platform/platform.service'
 
 const projectRepo = databaseConnection.getRepository<Project>(ProjectEntity)
 
@@ -17,18 +18,29 @@ export const projectService = {
         return projectRepo.save(newProject)
     },
 
-    async update({ projectId, request, platformId }: { projectId: ProjectId, request: UpdateProjectRequest, platformId?: PlatformId }): Promise<Project | null> {
+    async update({ projectId, request, platformId, userId }: { userId: UserId, projectId: ProjectId, request: UpdateProjectRequest, platformId?: PlatformId }): Promise<Project | null> {
         const project = await projectRepo.findOneBy({
             id: projectId,
         })
 
-        //TODO: Revisit on platform authentication
-        if (isNil(project) || project.id !== projectId && project.platformId !== platformId) {
+        if (isNil(project)) {
             throw new ActivepiecesError({
-                code: ErrorCode.PROJECT_NOT_FOUND,
+                code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
-                    id: projectId,
+                    entityType: 'project',
+                    entityId: projectId,
                 },
+            })
+        }
+        const projectOwner = await isProjectOwner({
+            userId,
+            platformId,
+            project,
+        })
+        if (!projectOwner) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: {},
             })
         }
 
@@ -52,9 +64,10 @@ export const projectService = {
 
         if (isNil(project)) {
             throw new ActivepiecesError({
-                code: ErrorCode.PROJECT_NOT_FOUND,
+                code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
-                    id: projectId,
+                    entityId: projectId,
+                    entityType: 'project',
                 },
             })
         }
@@ -80,6 +93,12 @@ export const projectService = {
             externalId,
         })
     },
+}
+
+async function isProjectOwner({ platformId, userId, project }: { userId: UserId, platformId: PlatformId | undefined, project: Project | null }): Promise<boolean> {
+    const isProjectOwner = project?.ownerId === userId
+    const isPlatformOwner = !isNil(platformId) && await platformService.checkUserIsOwner({ userId, platformId })
+    return isProjectOwner || isPlatformOwner
 }
 
 type CreateParams = {
