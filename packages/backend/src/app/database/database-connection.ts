@@ -83,11 +83,14 @@ function getEntities(): EntitySchema<unknown>[] {
         case ApEdition.ENTERPRISE:
             entities.push(
                 ProjectMemberEntity,
+                ProjectPlanEntity,
+                ProjectUsageEntity,
                 PlatformEntity,
                 CustomDomainEntity,
                 SigningKeyEntity,
                 OAuthAppEntity,
                 OtpEntity,
+                
             )
             break
         case ApEdition.COMMUNITY:

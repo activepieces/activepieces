@@ -4,15 +4,6 @@ import { Static, Type } from "@sinclair/typebox";
 
 export type ProjectPlanId = string;
 
-
-
-export const UpdateProjectLimitsRequest = Type.Object({
-    teamMembers: Type.Number({}),
-    tasks: Type.Number({}),
-})
-
-export type UpdateProjectLimitsRequest = Static<typeof UpdateProjectLimitsRequest>
-
 export const ProjectPlan = Type.Object({
     ...BaseModelSchema,
     projectId: Type.String(),

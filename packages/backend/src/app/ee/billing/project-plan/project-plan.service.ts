@@ -1,4 +1,4 @@
-import { ProjectId, apId, isNil, spreadIfDefined } from '@activepieces/shared'
+import { ApEdition, ProjectId, apId, isNil, spreadIfDefined } from '@activepieces/shared'
 import { ProjectPlan } from '@activepieces/ee-shared'
 import { databaseConnection } from '../../../database/database-connection'
 import { projectService } from '../../../project/project-service'
@@ -9,6 +9,7 @@ import { stripeHelper } from '../billing/stripe-helper'
 import { ProjectPlanEntity } from './project-plan.entity'
 import Stripe from 'stripe'
 import { appsumoService } from '../../appsumo/appsumo.service'
+import { getEdition } from '../../../helper/secret-helper'
 
 const projectPlanRepo = databaseConnection.getRepository<ProjectPlan>(ProjectPlanEntity)
 
@@ -87,9 +88,12 @@ async function createInitialPlan({ projectId }: { projectId: ProjectId }): Promi
 }
 
 async function getDefaultFlowPlan({ email }: { email: string }): Promise<FlowPlanLimits> {
-    const appsumoPlan = await appsumoService.getByEmail(email)
-    if (!isNil(appsumoPlan)) {
-        return appsumoService.getPlanInformation(appsumoPlan.plan_id)
+    const edition = getEdition()
+    if (edition === ApEdition.CLOUD) {
+        const appsumoPlan = await appsumoService.getByEmail(email)
+        if (!isNil(appsumoPlan)) {
+            return appsumoService.getPlanInformation(appsumoPlan.plan_id)
+        }
     }
     return defaultPlanInformation
 }

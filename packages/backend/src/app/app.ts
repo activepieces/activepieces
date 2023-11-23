@@ -48,7 +48,7 @@ import { adminPieceModule } from './ee/pieces/admin-piece-module'
 import { cloudPieceServiceHooks } from './ee/pieces/piece-service/cloud-piece-service-hooks'
 import { platformModule } from './ee/platform/platform.module'
 import { projectMemberModule } from './ee/project-members/project-member.module'
-import { enterpriseProjectModule } from './ee/projects/enterprise-project-controller'
+import { enterpriseProjectModule } from './ee/projects/platform-project-controller'
 import { referralModule } from './ee/referrals/referral.module'
 import { flowRunHooks } from './flows/flow-run/flow-run-hooks'
 import { getEdition } from './helper/secret-helper'
@@ -70,7 +70,6 @@ import { pieceMetadataServiceHooks } from './pieces/piece-metadata-service/hooks
 import { enterprisePieceMetadataServiceHooks } from './ee/pieces/enterprise-piece-metadata-service-hooks'
 import { flagHooks } from './flags/flags.hooks'
 import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
-import { projectPlanModule } from './ee/billing/project-plan/project-plan-module'
 import { communityPiecesModule } from './pieces/community-piece-module'
 import { platformPieceModule } from './ee/pieces/platform-piece-module'
 import { otpModule } from './ee/otp/otp-module'
@@ -215,7 +214,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(signingKeyModule)
             await app.register(managedAuthnModule)
             await app.register(oauthAppModule)
-            await app.register(projectPlanModule)
             await app.register(platformPieceModule)
             await app.register(otpModule)
             await app.register(enterpriseLocalAuthnModule)
@@ -235,7 +233,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             initilizeSentry()
             break
         case ApEdition.ENTERPRISE:
-            await app.register(projectPlanModule)
             await app.register(authenticationModule)
             await app.register(enterpriseProjectModule)
             await app.register(projectMemberModule)

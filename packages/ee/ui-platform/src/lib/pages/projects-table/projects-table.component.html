@@ -20,11 +20,11 @@
                 </ng-container>
                 <ng-container matColumnDef="tasks">
                     <th mat-header-cell *matHeaderCellDef class="!ap-text-center"> Tasks</th>
-                    <td mat-cell *matCellDef="let project" class="!ap-text-center"> / </td>
+                    <td mat-cell *matCellDef="let project" class="!ap-text-center"> {{project.usage.consumedTasks}} / {{project.plan.tasks}}</td>
                 </ng-container>
                 <ng-container matColumnDef="users">
                     <th mat-header-cell *matHeaderCellDef class="!ap-text-center">Users</th>
-                    <td mat-cell *matCellDef="let project" class="!ap-text-center"> / </td>
+                    <td mat-cell *matCellDef="let project" class="!ap-text-center"> {{project.usage.teamMembers}} / {{project.plan.teamMembers}} </td>
                 </ng-container>
                 <ng-container matColumnDef="action">
                     <th mat-header-cell *matHeaderCellDef class="!ap-text-right">

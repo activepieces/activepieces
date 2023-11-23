@@ -82,6 +82,7 @@ import { AddPlatformIdToUser1699901161457 } from './migration/postgres/169990116
 import { AddOtpEntity1700396157624 } from './migration/postgres/1700396157624-add-otp-entity'
 import { AddPlatformDefaultLanguage1700406308445 } from './migration/postgres/1700406308445-AddPlatformDefaultLanguage'
 import { AddPlatformIdToPieceMetadata1700522340280 } from './migration/postgres/1700522340280-AddPlatformIdToPieceMetadata'
+import { MakeStripeCustomerIdNullable1700751925992 } from './migration/postgres/1700751925992-MakeStripeCustomerIdNullable'
 
 
 const getSslConfig = (): boolean | TlsOptions => {
@@ -181,6 +182,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 RemoveUnusedFieldsinBilling1700132368636,
                 AddOtpEntity1700396157624,
                 AddPlatformDefaultLanguage1700406308445,
+                MakeStripeCustomerIdNullable1700751925992,
             )
             break
         case ApEdition.ENTERPRISE:
@@ -196,6 +198,14 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddSmtpAndPrivacyUrlToPlatform1699491705906,
                 AddOtpEntity1700396157624,
                 AddPlatformDefaultLanguage1700406308445,
+                MakeStripeSubscriptionNullable1685053959806,
+                AddBillingParameters1688739844617,
+                AddTasksPerDays1689336533370,
+                RemoveCalculatedMetrics1689806173642,
+                ModifyBilling1694902537045,
+                RemoveUnusedFieldsinBilling1700132368636,
+                AddDatasourcesLimit1695916063833,
+                MakeStripeCustomerIdNullable1700751925992,
             )
             break
         case ApEdition.COMMUNITY:

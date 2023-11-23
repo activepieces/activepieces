@@ -9,6 +9,7 @@ import { ProjectActions } from './project.action';
 import { ProjectSelectors } from './project.selector';
 import { AuthenticationService } from '../../service/authentication.service';
 import { ProjectService } from '../../service/project.service';
+import { PlatformProjectService } from '../../service/platform-project.service';
 
 @Injectable()
 export class ProjectEffects {
@@ -55,7 +56,7 @@ export class ProjectEffects {
           this.store.select(ProjectSelectors.selectCurrentProject)
         ),
         switchMap(([{ notifyStatus }, project]) => {
-          return this.projectService
+          return this.platformProjectService
             .update(project.id, {
               notifyStatus: notifyStatus,
               displayName: project.displayName,
@@ -78,8 +79,9 @@ export class ProjectEffects {
   constructor(
     private actions$: Actions,
     private store: Store,
-    private authenticationService: AuthenticationService,
     private projectService: ProjectService,
+    private authenticationService: AuthenticationService,
+    private platformProjectService: PlatformProjectService,
     private snackBar: MatSnackBar
   ) {}
 }

@@ -1,11 +1,11 @@
 import { ActivepiecesError, ErrorCode, ProjectType, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, FastifyPluginCallbackTypebox, Type } from '@fastify/type-provider-typebox'
-import { enterpriseProjectService } from './enterprise-project-service'
+import { platformProjectService } from './platform-project-service'
 import { projectService } from '../../project/project-service'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
-import { CreateProjectRequest, DEFAULT_PLATFORM_PLAN, UpdateProjectRequest } from '@activepieces/ee-shared'
+import { CreatePlatformProjectRequest, DEFAULT_PLATFORM_PLAN, UpdateProjectPlatformRequest } from '@activepieces/ee-shared'
 import { platformService } from '../platform/platform.service'
-import { plansService } from '../billing/project-plan//project-plan.service'
+import { plansService } from '../billing/project-plan/project-plan.service'
 
 export const enterpriseProjectModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(enterpriseProjectController, { prefix: '/v1/projects' })
@@ -17,7 +17,7 @@ const enterpriseProjectController: FastifyPluginCallbackTypebox = (fastify, _opt
         '/',
         {
             schema: {
-                body: CreateProjectRequest,
+                body: CreatePlatformProjectRequest,
             },
         },
         async (request) => {
@@ -45,7 +45,7 @@ const enterpriseProjectController: FastifyPluginCallbackTypebox = (fastify, _opt
             }),
         },
     }, async (request) => {
-        return await enterpriseProjectService.getAll({
+        return await platformProjectService.getAll({
             ownerId: request.principal.id,
             platformId: request.params.platformId,
         })
@@ -61,7 +61,7 @@ const enterpriseProjectController: FastifyPluginCallbackTypebox = (fastify, _opt
             },
         },
         async (request) => {
-            const allProjects = await enterpriseProjectService.getAll({
+            const allProjects = await platformProjectService.getAll({
                 ownerId: request.principal.id,
             })
             const project = allProjects.find((project) => project.id === request.params.projectId)
@@ -94,15 +94,14 @@ const enterpriseProjectController: FastifyPluginCallbackTypebox = (fastify, _opt
         '/:projectId',
         {
             schema: {
-                body: UpdateProjectRequest,
+                body: UpdateProjectPlatformRequest,
                 params: Type.Object({
                     projectId: Type.String(),
                 }),
             },
         },
         async (request) => {
-
-            return await projectService.update({
+            return platformProjectService.update({
                 platformId: request.principal.platform?.id,
                 projectId: request.params.projectId,
                 userId: request.principal.id,

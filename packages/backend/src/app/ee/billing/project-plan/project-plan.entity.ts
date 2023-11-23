@@ -17,6 +17,7 @@ export const ProjectPlanEntity = new EntitySchema<ProjectPlanSchema>({
         },
         stripeCustomerId: {
             type: String,
+            nullable: true,
         },
         stripeSubscriptionId: {
             type: String,
@@ -46,11 +47,6 @@ export const ProjectPlanEntity = new EntitySchema<ProjectPlanSchema>({
         {
             name: 'idx_plan_project_id',
             columns: ['projectId'],
-            unique: true,
-        },
-        {
-            name: 'idx_plan_stripe_customer_id',
-            columns: ['stripeCustomerId'],
             unique: true,
         },
     ],

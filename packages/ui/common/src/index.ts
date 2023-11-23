@@ -19,5 +19,7 @@ export * from './lib/models/piece-metadata-model';
 export * from './lib/guards/show-platform-settings.guard';
 export * from './lib/service';
 export * from './lib/utils/locales';
-import '@angular/localize/init';
+export * from './lib/service/platform-project.service';
+export * from './lib/service/project.service';
 export * from './lib/guards/show-based-on-flag-guard';
+import '@angular/localize/init';

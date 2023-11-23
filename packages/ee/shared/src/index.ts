@@ -1,3 +1,4 @@
+export * from './lib/project/project-with-usage-and-plan';
 export * from './lib/billing';
 export * from './lib/project/project-requests';
 export * from './lib/custom-domains';

@@ -19,7 +19,6 @@ import {
 import { Observable, map, tap } from 'rxjs';
 import {
   AuthenticationService,
-  LocalesService,
   PlatformService,
 } from '@activepieces/ui/common';
 import { ActivatedRoute } from '@angular/router';
@@ -52,8 +51,7 @@ export class PlatformAppearanceComponent implements OnInit {
     private fb: FormBuilder,
     private platformService: PlatformService,
     private authenticationService: AuthenticationService,
-    private route: ActivatedRoute,
-    private localesService: LocalesService
+    private route: ActivatedRoute
   ) {
     this.formGroup = this.fb.group({
       name: this.fb.control(
