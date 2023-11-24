@@ -4,15 +4,23 @@ import { authenticationService } from '../../../../authentication/authentication
 import { system } from '../../../../helper/system/system'
 import { SystemProp } from '../../../../helper/system/system-prop'
 
-const CLIENT_ID = system.getOrThrow(SystemProp.FEDERATED_AUTHN_GITHUB_CLIENT_ID)
-const CLIENT_SECRET = system.getOrThrow(SystemProp.FEDERATED_AUTHN_GITHUB_CLIENT_SECRET)
-const REDIRECT_URI = system.getOrThrow(SystemProp.FEDERATED_AUTHN_GITHUB_REDIRECT_URI)
+function getClientId(): string {
+    return system.getOrThrow(SystemProp.FEDERATED_AUTHN_GITHUB_CLIENT_ID)
+}
+  
+function getClientSecret(): string {
+    return system.getOrThrow(SystemProp.FEDERATED_AUTHN_GITHUB_CLIENT_SECRET)
+}
+  
+function getRedirectUri(): string {
+    return system.getOrThrow(SystemProp.FEDERATED_AUTHN_GITHUB_REDIRECT_URI)
+}
 
 export const gitHubAuthnProvider: AuthnProvider = {
     async getLoginUrl(): Promise<string> {
         const loginUrl = new URL('https://github.com/login/oauth/authorize')
-        loginUrl.searchParams.set('client_id', CLIENT_ID)
-        loginUrl.searchParams.set('redirect_uri', REDIRECT_URI)
+        loginUrl.searchParams.set('client_id', getClientId())
+        loginUrl.searchParams.set('redirect_uri', getRedirectUri())
         return loginUrl.href
     },
 
@@ -30,10 +38,10 @@ const getGitHubAccessToken = async (authorizationCode: string): Promise<string> 
             'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: new URLSearchParams({
-            client_id: CLIENT_ID,
-            client_secret: CLIENT_SECRET,
+            client_id: getClientId(),
+            client_secret: getClientSecret(),
             code: authorizationCode,
-            redirect_uri: REDIRECT_URI,
+            redirect_uri: getRedirectUri(),
         }),
     })
 

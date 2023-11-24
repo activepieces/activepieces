@@ -6,9 +6,18 @@ import { jwtUtils, JwtSignAlgorithm } from '../../../../helper/jwt-utils'
 import { system } from '../../../../helper/system/system'
 import { SystemProp } from '../../../../helper/system/system-prop'
 
-const CLIENT_ID = system.getOrThrow(SystemProp.FEDERATED_AUTHN_GOOGLE_CLIENT_ID)
-const CLIENT_SECRET = system.getOrThrow(SystemProp.FEDERATED_AUTHN_GOOGLE_CLIENT_SECRET)
-const REDIRECT_URI = system.getOrThrow(SystemProp.FEDERATED_AUTHN_GOOGLE_REDIRECT_URI)
+function getClientId(): string {
+    return system.getOrThrow(SystemProp.FEDERATED_AUTHN_GOOGLE_CLIENT_ID)
+}
+  
+function getClientSecret(): string {
+    return system.getOrThrow(SystemProp.FEDERATED_AUTHN_GOOGLE_CLIENT_SECRET)
+}
+  
+function getRedirectUri(): string {
+    return system.getOrThrow(SystemProp.FEDERATED_AUTHN_GOOGLE_REDIRECT_URI)
+}
+  
 const JWKS_URI = 'https://www.googleapis.com/oauth2/v3/certs'
 
 const keyLoader = jwksClient({
@@ -20,8 +29,8 @@ const keyLoader = jwksClient({
 export const googleAuthnProvider: AuthnProvider = {
     async getLoginUrl(): Promise<string> {
         const loginUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth')
-        loginUrl.searchParams.set('client_id', CLIENT_ID)
-        loginUrl.searchParams.set('redirect_uri', REDIRECT_URI)
+        loginUrl.searchParams.set('client_id', getClientId())
+        loginUrl.searchParams.set('redirect_uri', getRedirectUri())
         loginUrl.searchParams.set('scope', 'email profile')
         loginUrl.searchParams.set('response_type', 'code')
 
@@ -43,9 +52,9 @@ const exchangeCodeForIdToken = async (code: string): Promise<string> => {
         },
         body: new URLSearchParams({
             code,
-            client_id: CLIENT_ID,
-            client_secret: CLIENT_SECRET,
-            redirect_uri: REDIRECT_URI,
+            client_id: getClientId(),
+            client_secret: getClientSecret(),
+            redirect_uri: getRedirectUri(),
             grant_type: 'authorization_code',
         }),
     })
@@ -64,7 +73,7 @@ const verifyIdToken = async (idToken: string): Promise<IdTokenPayload> => {
         key: publicKey,
         issuer: ['accounts.google.com', 'https://accounts.google.com'],
         algorithm: JwtSignAlgorithm.RS256,
-        audience: CLIENT_ID,
+        audience: getClientId(),
     })
 
     return {
