@@ -17,7 +17,8 @@
     "@angular/cdk": "16.2.6",
     "ngx-autosize": "2.0.4",
     "@activepieces/ui/feature-connections": "*",
-    "@angular/localize": "16.2.6"
+    "@angular/localize": "16.2.6",
+    "ui-feature-pieces": "*"
   },
   "dependencies": {},
   "sideEffects": false

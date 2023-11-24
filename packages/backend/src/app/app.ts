@@ -6,7 +6,7 @@ import fastifyMultipart from '@fastify/multipart'
 import { openapiModule } from './helper/openapi/openapi.module'
 import { flowModule } from './flows/flow.module'
 import { fileModule } from './file/file.module'
-import { pieceModule } from './pieces/piece-module'
+import { pieceModule } from './pieces/base-piece-module'
 import { tokenVerifyMiddleware } from './authentication/token-verify-middleware'
 import { storeEntryModule } from './store-entry/store-entry.module'
 import { flowRunModule } from './flows/flow-run/flow-run-module'
@@ -35,7 +35,6 @@ import { embeddings } from './chatbot/embedings'
 import { cloudAppConnectionsHooks } from './ee/app-connections/cloud-app-connection-service'
 import { appCredentialModule } from './ee/app-credentials/app-credentials.module'
 import { appSumoModule } from './ee/appsumo/appsumo.module'
-import { billingModule } from './ee/billing/billing.module'
 import { cloudChatbotHooks } from './ee/chatbot/cloud/cloud-chatbot.hook'
 import { cloudDatasourceHooks } from './ee/chatbot/cloud/cloud-datasources.hook'
 import { qdrantEmbeddings } from './ee/chatbot/cloud/qdrant-embeddings'
@@ -49,7 +48,7 @@ import { adminPieceModule } from './ee/pieces/admin-piece-module'
 import { cloudPieceServiceHooks } from './ee/pieces/piece-service/cloud-piece-service-hooks'
 import { platformModule } from './ee/platform/platform.module'
 import { projectMemberModule } from './ee/project-members/project-member.module'
-import { enterpriseProjectModule } from './ee/projects/enterprise-project-controller'
+import { enterpriseProjectModule } from './ee/projects/platform-project-controller'
 import { referralModule } from './ee/referrals/referral.module'
 import { flowRunHooks } from './flows/flow-run/flow-run-hooks'
 import { getEdition } from './helper/secret-helper'
@@ -71,8 +70,12 @@ import { pieceMetadataServiceHooks } from './pieces/piece-metadata-service/hooks
 import { enterprisePieceMetadataServiceHooks } from './ee/pieces/enterprise-piece-metadata-service-hooks'
 import { flagHooks } from './flags/flags.hooks'
 import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
+import { communityPiecesModule } from './pieces/community-piece-module'
+import { platformPieceModule } from './ee/pieces/platform-piece-module'
 import { otpModule } from './ee/otp/otp-module'
 import { enterpriseLocalAuthnModule } from './ee/authentication/enterprise-local-authn/enterprise-local-authn-module'
+import { billingModule } from './ee/billing/billing/billing.module'
+import { federatedAuthModule } from './ee/authentication/federated-authn/federated-authn-module'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -211,8 +214,10 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(signingKeyModule)
             await app.register(managedAuthnModule)
             await app.register(oauthAppModule)
+            await app.register(platformPieceModule)
             await app.register(otpModule)
             await app.register(enterpriseLocalAuthnModule)
+            await app.register(federatedAuthModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
@@ -235,8 +240,10 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             await app.register(signingKeyModule)
             await app.register(managedAuthnModule)
             await app.register(oauthAppModule)
+            await app.register(platformPieceModule)
             await app.register(otpModule)
             await app.register(enterpriseLocalAuthnModule)
+            await app.register(federatedAuthModule)
             setPlatformOAuthService({
                 service: platformOAuth2Service,
             })
@@ -248,6 +255,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
         case ApEdition.COMMUNITY:
             await app.register(authenticationModule)
             await app.register(projectModule)
+            await app.register(communityPiecesModule)
             break
     }
 

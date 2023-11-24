@@ -22,13 +22,12 @@ import {
 import { forkJoin } from 'rxjs';
 import {
   TestStepService,
-  PieceMetadataService,
   isOverflown,
-  CORE_SCHEDULE,
   FlagService,
 } from '@activepieces/ui/common';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { BuilderAutocompleteMentionsDropdownService } from '@activepieces/ui/common';
+import { CORE_SCHEDULE, PieceMetadataService } from 'ui-feature-pieces';
 
 @Component({
   selector: 'app-flow-right-sidebar',

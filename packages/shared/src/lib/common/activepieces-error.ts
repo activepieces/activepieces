@@ -41,7 +41,6 @@ type ErrorParams =
     | PermissionDeniedErrorParams
     | PieceNotFoundErrorParams
     | PieceTriggerNotFoundErrorParams
-    | ProjectNotFoundErrorParams
     | QuotaExceededParams
     | StepNotFoundErrorParams
     | SystemInvalidErrorParams
@@ -110,13 +109,6 @@ ErrorCode.FLOW_INSTANCE_NOT_FOUND,
 
 export type FlowRunNotFoundErrorParams = BaseErrorParams<
 ErrorCode.FLOW_RUN_NOT_FOUND,
-{
-    id: FlowRunId
-}
->
-
-export type ProjectNotFoundErrorParams = BaseErrorParams<
-ErrorCode.PROJECT_NOT_FOUND,
 {
     id: FlowRunId
 }
@@ -333,7 +325,6 @@ export enum ErrorCode {
     PERMISSION_DENIED = 'PERMISSION_DENIED',
     PIECE_NOT_FOUND = 'PIECE_NOT_FOUND',
     PIECE_TRIGGER_NOT_FOUND = 'PIECE_TRIGGER_NOT_FOUND',
-    PROJECT_NOT_FOUND = 'PROJECT_NOT_FOUND',
     QUOTA_EXCEEDED = 'QUOTA_EXCEEDED',
     STEP_NOT_FOUND = 'STEP_NOT_FOUND',
     SYSTEM_PROP_INVALID = 'SYSTEM_PROP_INVALID',

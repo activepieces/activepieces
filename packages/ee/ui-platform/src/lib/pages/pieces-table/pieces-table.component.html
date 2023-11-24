@@ -29,7 +29,9 @@
 
         <ng-container matColumnDef="action">
             <th mat-header-cell *matHeaderCellDef>
-
+                <ap-button btnColor="primary" btnSize='small' (click)="installPiece()" class="ap-float-right" i18n>
+                    Add Piece
+                </ap-button>
             </th>
             <td mat-cell *matCellDef="let piece">
                 <div class="ap-float-right ap-text-center ap-flex ap-items-center ap-justify-center"
@@ -91,3 +93,4 @@
 
 <ng-container *ngIf="saving$ | async"></ng-container>
 <ng-container *ngIf="dialogClosed$ | async"></ng-container>
+<ng-container *ngIf="addPackageDialogClosed$ | async"></ng-container>

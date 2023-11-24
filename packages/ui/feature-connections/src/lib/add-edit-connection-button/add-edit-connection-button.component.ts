@@ -32,7 +32,7 @@ import {
   take,
   tap,
 } from 'rxjs';
-import { PieceMetadataService, FlagService } from '@activepieces/ui/common';
+import { FlagService } from '@activepieces/ui/common';
 import { CloudAuthConfigsService } from '../services/cloud-auth-configs.service';
 import {
   CustomAuthConnectionDialogComponent,
@@ -66,6 +66,7 @@ import {
   checkIfTriggerIsAppWebhook,
   getConnectionNameFromInterpolatedString,
 } from './utils';
+import { PieceMetadataService } from 'ui-feature-pieces';
 
 @Component({
   selector: 'app-add-edit-connection-button',

@@ -178,7 +178,7 @@ describe('OAuth App API', () => {
     })
 
     describe('List OAuth Apps endpoint', () => {
-        it('By platform', async () => {
+        it('should list OAuth Apps by platform owner', async () => {
             // arrange
             const mockUserOne = createMockUser()
             const mockUserTwo = createMockUser()
@@ -217,7 +217,51 @@ describe('OAuth App API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             expect(responseBody.data).toHaveLength(1)
             expect(responseBody.data[0].id).toBe(mockOAuthAppsOne.id)
+            expect(responseBody.data[0].clientSecret).toBeUndefined()
+        })
+
+        it('should list OAuth Apps by platform member', async () => {
+            // arrange
+            const mockUserOne = createMockUser()
+            const mockUserTwo = createMockUser()
+            await databaseConnection.getRepository('user').save([mockUserOne, mockUserTwo])
+
+            const mockPlatformOne = createMockPlatform({ ownerId: mockUserOne.id })
+            const mockPlatformTwo = createMockPlatform({ ownerId: mockUserTwo.id })
+            await databaseConnection.getRepository('platform').save([mockPlatformOne, mockPlatformTwo])
+
+            const mockOAuthAppsOne = createMockOAuthApp({
+                platformId: mockPlatformOne.id,
+            })
+
+            const mockOAuthAppsTwo = createMockOAuthApp({
+                platformId: mockPlatformTwo.id,
+            })
+
+            await databaseConnection.getRepository('oauth_app').save([mockOAuthAppsOne, mockOAuthAppsTwo])
+
+            const testToken = await generateMockToken({
+                id: mockUserTwo.id,
+                platform: { id: mockPlatformOne.id, role: 'MEMBER' },
+            })
+            // act
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/v1/oauth-apps',
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            // assert
+            const responseBody = response?.json()
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(responseBody.data).toHaveLength(1)
+            expect(responseBody.data[0].id).toBe(mockOAuthAppsOne.id)
+            expect(responseBody.data[0].clientSecret).toBeUndefined()
         })
     })
 
+    
 })

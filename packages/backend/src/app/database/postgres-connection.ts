@@ -33,7 +33,6 @@ import { AddAuthToPiecesMetadata1688922241747 } from './migration/postgres//1688
 import { AddUpdatedByInFlowVersion1689292797727 } from './migration/postgres/1689292797727-AddUpdatedByInFlowVersion'
 import { AddTasksToRun1689351564290 } from './migration/postgres/1689351564290-AddTasksToRun'
 import { commonProperties } from './database-connection'
-
 import { AddAppConnectionTypeToTopLevel1691703023866 } from './migration/postgres/1691703023866-add-app-connection-type-to-top-level'
 import { AddTagsToRun1692106375081 } from './migration/postgres/1692106375081-AddTagsToRun'
 import { AddFileToPostgres1693004806926 } from './migration/postgres/1693004806926-AddFileToPostgres'
@@ -77,10 +76,13 @@ import { AddDisplayNameToSigningKey1698698190965 } from './migration/postgres/16
 import { AddOAuth2AppEntiity1699221414907 } from './migration/postgres/1699221414907-AddOAuth2AppEntiity'
 import { AddFilteredPiecesToPlatform1699281870038 } from './migration/postgres/1699281870038-add-filtered-pieces-to-platform'
 import { AddSmtpAndPrivacyUrlToPlatform1699491705906 } from './migration/postgres/1699491705906-AddSmtpAndPrivacyUrlToPlatform'
+import { RemoveUnusedFieldsinBilling1700132368636 } from './migration/postgres/1700132368636-RemoveUnusedFieldsinBilling'
 import { UpdateUserStatusRenameShadowToInvited1699818680567 } from './migration/common/1699818680567-update-user-status-rename-shadow-to-invited'
 import { AddPlatformIdToUser1699901161457 } from './migration/postgres/1699901161457-add-platform-id-to-user'
 import { AddOtpEntity1700396157624 } from './migration/postgres/1700396157624-add-otp-entity'
 import { AddPlatformDefaultLanguage1700406308445 } from './migration/postgres/1700406308445-AddPlatformDefaultLanguage'
+import { AddPlatformIdToPieceMetadata1700522340280 } from './migration/postgres/1700522340280-AddPlatformIdToPieceMetadata'
+import { MakeStripeCustomerIdNullable1700751925992 } from './migration/postgres/1700751925992-MakeStripeCustomerIdNullable'
 
 
 const getSslConfig = (): boolean | TlsOptions => {
@@ -145,6 +147,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         ManagedAuthnInitial1698700720482,
         UpdateUserStatusRenameShadowToInvited1699818680567,
         AddPlatformIdToUser1699901161457,
+        AddPlatformIdToPieceMetadata1700522340280,
     ]
 
     const edition = getEdition()
@@ -176,8 +179,10 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddOAuth2AppEntiity1699221414907,
                 AddFilteredPiecesToPlatform1699281870038,
                 AddSmtpAndPrivacyUrlToPlatform1699491705906,
+                RemoveUnusedFieldsinBilling1700132368636,
                 AddOtpEntity1700396157624,
                 AddPlatformDefaultLanguage1700406308445,
+                MakeStripeCustomerIdNullable1700751925992,
             )
             break
         case ApEdition.ENTERPRISE:
@@ -193,6 +198,14 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddSmtpAndPrivacyUrlToPlatform1699491705906,
                 AddOtpEntity1700396157624,
                 AddPlatformDefaultLanguage1700406308445,
+                MakeStripeSubscriptionNullable1685053959806,
+                AddBillingParameters1688739844617,
+                AddTasksPerDays1689336533370,
+                RemoveCalculatedMetrics1689806173642,
+                ModifyBilling1694902537045,
+                RemoveUnusedFieldsinBilling1700132368636,
+                AddDatasourcesLimit1695916063833,
+                MakeStripeCustomerIdNullable1700751925992,
             )
             break
         case ApEdition.COMMUNITY:
