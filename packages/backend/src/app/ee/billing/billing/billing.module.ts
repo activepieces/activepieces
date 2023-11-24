@@ -77,6 +77,9 @@ async function handleWebhook({ payload, signature }: { payload: string, signatur
     assertNotNullOrUndefined(stripe, 'Stripe is not configured')
     const webhook = stripe.webhooks.constructEvent(payload, signature, stripeWebhookSecret)
     const subscription = webhook.data.object as Stripe.Subscription
+    if (isSubscriptionPlatformOrCustom(subscription)) {
+        return
+    }
     const projectPlan = await plansService.getBySubscriptionId({
         stripeSubscriptionId: subscription.id,
     })
@@ -90,4 +93,8 @@ async function handleWebhook({ payload, signature }: { payload: string, signatur
         default:
             throw new Error('Unkown type ' + webhook.type)
     }
+}
+
+function isSubscriptionPlatformOrCustom(subscription: Stripe.Subscription): boolean {
+    return Object.values(subscription.metadata).includes('PLATFORM') || Object.values(subscription.metadata).includes('CUSTOM')
 }
