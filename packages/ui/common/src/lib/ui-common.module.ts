@@ -57,6 +57,7 @@ import { FileDroppedDirective } from './directives/file-dropped.directive';
 import { NgxColorsModule } from 'ngx-colors';
 import { PageTitleComponent } from './components/page-title/page-title.component';
 import { PoweredByActivepiecesComponent } from './components/powered-by-activepieces/powered-by-activepieces.component';
+import { MatSliderModule } from '@angular/material/slider';
 const exportedImports = [
   CommonModule,
   MatTooltipModule,
@@ -80,6 +81,7 @@ const exportedImports = [
   MatIconModule,
   MatTabsModule,
   NgxColorsModule,
+  MatSliderModule,
 ];
 const exportedDeclarations = [
   UploadFileControlComponent,

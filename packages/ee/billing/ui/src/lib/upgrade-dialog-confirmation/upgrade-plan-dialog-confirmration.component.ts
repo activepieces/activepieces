@@ -1,8 +1,9 @@
 import { ChangeDetectionStrategy, Component, Inject } from '@angular/core';
 import { Observable, map, tap } from 'rxjs';
 import { isNil } from '@activepieces/shared';
-import { BillingService } from '../billing.service';
+import { BillingService } from '../service/billing.service';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { UpgradeRequest } from '@activepieces/ee-shared';
 
 @Component({
   templateUrl: './upgrade-plan-dialog-confirmation.component.html',
@@ -16,13 +17,11 @@ export class UpgradePlanConfirmationDialogComponent {
   constructor(
     private billingService: BillingService,
     @Inject(MAT_DIALOG_DATA)
-    private data: {
-      planId: string;
-    },
+    private data: UpgradeRequest,
     private dialogRef: MatDialogRef<UpgradePlanConfirmationDialogComponent>
   ) {}
   upgrade() {
-    this.upgrade$ = this.billingService.upgrade(this.data.planId).pipe(
+    this.upgrade$ = this.billingService.upgrade(this.data).pipe(
       tap((response: { paymentLink: string | null }) => {
         const paymentLink = response.paymentLink;
         if (!isNil(paymentLink)) {

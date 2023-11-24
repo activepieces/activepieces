@@ -2,8 +2,6 @@ import { ApId, isNil, ProjectType } from '@activepieces/shared'
 import { databaseConnection } from '../database/database-connection'
 import { ProjectEntity } from './project-entity'
 import { ActivepiecesError, apId, ErrorCode, NotificationStatus, Project, ProjectId, UserId } from '@activepieces/shared'
-import { PlatformId, UpdateProjectRequest } from '@activepieces/ee-shared'
-import { platformService } from '../ee/platform/platform.service'
 
 const projectRepo = databaseConnection.getRepository<Project>(ProjectEntity)
 
@@ -18,40 +16,6 @@ export const projectService = {
         return projectRepo.save(newProject)
     },
 
-    async update({ projectId, request, platformId, userId }: { userId: UserId, projectId: ProjectId, request: UpdateProjectRequest, platformId?: PlatformId }): Promise<Project | null> {
-        const project = await projectRepo.findOneBy({
-            id: projectId,
-        })
-
-        if (isNil(project)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: {
-                    entityType: 'project',
-                    entityId: projectId,
-                },
-            })
-        }
-        const projectOwner = await isProjectOwner({
-            userId,
-            platformId,
-            project,
-        })
-        if (!projectOwner) {
-            throw new ActivepiecesError({
-                code: ErrorCode.AUTHORIZATION,
-                params: {},
-            })
-        }
-
-        await projectRepo.update(projectId, {
-            ...project,
-            ...request,
-        })
-        return projectRepo.findOneBy({
-            id: projectId,
-        })
-    },
     async getOne(projectId: ProjectId): Promise<Project | null> {
         return await projectRepo.findOneBy({
             id: projectId,
@@ -95,12 +59,6 @@ export const projectService = {
     },
 }
 
-async function isProjectOwner({ platformId, userId, project }: { userId: UserId, platformId: PlatformId | undefined, project: Project | null }): Promise<boolean> {
-    const isProjectOwner = project?.ownerId === userId
-    const isPlatformOwner = !isNil(platformId) && await platformService.checkUserIsOwner({ userId, platformId })
-    return isProjectOwner || isPlatformOwner
-}
-
 type CreateParams = {
     ownerId: UserId
     displayName: string
@@ -110,7 +68,7 @@ type CreateParams = {
 }
 
 type GetByPlatformIdAndExternalIdParams = {
-    platformId: PlatformId
+    platformId: string
     externalId: string
 }
 

@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode, ProjectId } from '@activepieces/shared'
-import { plansService } from '../../plans/plan.service'
-import { appConnectionService } from '../../../../app-connection/app-connection-service/app-connection-service'
+import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
+import { plansService } from '../project-plan/project-plan.service'
 
 async function limitConnections({ projectId }: { projectId: ProjectId }): Promise<void> {
     const { connections: connectionQuota } = await plansService.getOrCreateDefaultPlan({ projectId })

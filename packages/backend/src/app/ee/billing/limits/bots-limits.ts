@@ -1,12 +1,13 @@
 import { ActivepiecesError, DataSource, ErrorCode, ProjectId } from '@activepieces/shared'
-import { plansService } from '../../plans/plan.service'
-import { databaseConnection } from '../../../../database/database-connection'
-import { ChatbotEntity } from '../../../../chatbot/chatbot.entity'
+import { ChatbotEntity } from '../../../chatbot/chatbot.entity'
+import { databaseConnection } from '../../../database/database-connection'
+
 
 const chatbotRepo = databaseConnection.getRepository(ChatbotEntity)
 
+// TODO REMOVE WITH BOTS
 async function limitBots({ projectId }: { projectId: ProjectId }): Promise<void> {
-    const { bots: botsQuota } = await plansService.getOrCreateDefaultPlan({ projectId })
+    const botsQuota = 10
     const botsCount = await chatbotRepo.countBy({ projectId })
 
     if (botsCount >= botsQuota) {
@@ -21,7 +22,8 @@ async function limitBots({ projectId }: { projectId: ProjectId }): Promise<void>
 }
 
 async function limitDatasourcesSize({ projectId }: { projectId: ProjectId }): Promise<void> {
-    const { datasourcesSize: datasourcesSize, datasources: datasourcesNumber } = await plansService.getOrCreateDefaultPlan({ projectId })
+    const datasourcesNumber = 10
+    const datasourcesSize = 4 * 1024 * 1024
     const chatbots = await chatbotRepo.findBy({
         projectId,
     })

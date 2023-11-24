@@ -1,7 +1,7 @@
 import { EntitySchema } from 'typeorm'
 import { Project } from '@activepieces/shared'
 import { ProjectPlan } from '@activepieces/ee-shared'
-import { ApIdSchema, BaseColumnSchemaPart, TIMESTAMP_COLUMN_TYPE } from '../../../database/database-common'
+import {  ApIdSchema, BaseColumnSchemaPart, TIMESTAMP_COLUMN_TYPE } from '../../../database/database-common'
 
 export type ProjectPlanSchema = {
     project: Project
@@ -17,6 +17,7 @@ export const ProjectPlanEntity = new EntitySchema<ProjectPlanSchema>({
         },
         stripeCustomerId: {
             type: String,
+            nullable: true,
         },
         stripeSubscriptionId: {
             type: String,
@@ -25,25 +26,10 @@ export const ProjectPlanEntity = new EntitySchema<ProjectPlanSchema>({
         minimumPollingInterval: {
             type: Number,
         },
-        activeFlows: {
-            type: Number,
-        },
         connections: {
             type: Number,
         },
         teamMembers: {
-            type: Number,
-        },
-        botPlanName: {
-            type: String,
-        },
-        bots: {
-            type: Number,
-        },
-        datasourcesSize: {
-            type: Number,
-        },
-        datasources: {
             type: Number,
         },
         tasks: {
@@ -61,11 +47,6 @@ export const ProjectPlanEntity = new EntitySchema<ProjectPlanSchema>({
         {
             name: 'idx_plan_project_id',
             columns: ['projectId'],
-            unique: true,
-        },
-        {
-            name: 'idx_plan_stripe_customer_id',
-            columns: ['stripeCustomerId'],
             unique: true,
         },
     ],

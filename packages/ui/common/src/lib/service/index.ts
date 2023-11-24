@@ -11,7 +11,6 @@ export * from './flow.service';
 export * from './flag.service';
 export * from './telemetry.service';
 export * from './instance-run.service';
-export * from './project.service';
 export * from './app-connections.service';
 export * from './flow-instance.service';
 export * from './folders.service';

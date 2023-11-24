@@ -13,7 +13,7 @@ import { accessTokenManager } from '../../authentication/lib/access-token-manage
 import { authenticationService } from '../../authentication/authentication-service'
 import { logger } from '../../helper/logger'
 import { referralService } from '../referrals/referral.service'
-import { enterpriseProjectService } from '../projects/enterprise-project-service'
+import { platformProjectService } from '../projects/platform-project-service'
 import { platformService } from '../platform/platform.service'
 
 const credential = system.get(SystemProp.FIREBASE_ADMIN_CREDENTIALS)
@@ -201,7 +201,7 @@ async function assertEmailIsVerified({
 }
 
 const getProjectByUser = async (userId: UserId): Promise<Project> => {
-    const userProjects = await enterpriseProjectService.getAll({
+    const userProjects = await platformProjectService.getAll({
         ownerId: userId,
     })
 

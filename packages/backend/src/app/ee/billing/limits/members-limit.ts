@@ -1,8 +1,8 @@
 import { ActivepiecesError, ApEdition, ErrorCode, ProjectId } from '@activepieces/shared'
-import { plansService } from '../../plans/plan.service'
-import { ProjectMemberEntity } from '../../../../ee/project-members/project-member.entity'
-import { databaseConnection } from '../../../../database/database-connection'
-import { getEdition } from '../../../../helper/secret-helper'
+import { getEdition } from '../../../helper/secret-helper'
+import { plansService } from '../project-plan/project-plan.service'
+import { ProjectMemberEntity } from '../../project-members/project-member.entity'
+import { databaseConnection } from '../../../database/database-connection'
 
 const projectMemberRepo =
     databaseConnection.getRepository(ProjectMemberEntity)
