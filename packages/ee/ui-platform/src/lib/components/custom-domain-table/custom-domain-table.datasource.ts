@@ -1,20 +1,20 @@
 import { DataSource } from '@angular/cdk/collections';
 import { Observable, BehaviorSubject, tap, switchMap, map } from 'rxjs';
 import { combineLatest } from 'rxjs';
-import { SigningKey } from '@activepieces/ee-shared';
-import { SigningKeysService } from '../../service/signing-keys.service';
+import { CustomDomain } from '@activepieces/ee-shared';
+import { CustomDomainService } from '../../service/custom-domain.service';
 
 /**
  * Data source for the LogsTable view. This class should
  * encapsulate all logic for fetching and manipulating the displayed data
  * (including sorting, pagination, and filtering).
  */
-export class SigningKeysDataSource extends DataSource<SigningKey> {
-  data: SigningKey[] = [];
+export class CustomDomainDataSource extends DataSource<CustomDomain> {
+  data: CustomDomain[] = [];
   isLoading$: BehaviorSubject<boolean> = new BehaviorSubject(true);
   constructor(
     private refresh$: Observable<boolean>,
-    private signingKeysService: SigningKeysService
+    private customDomainService: CustomDomainService
   ) {
     super();
   }
@@ -25,13 +25,13 @@ export class SigningKeysDataSource extends DataSource<SigningKey> {
    * @returns A stream of the items to be rendered.
    */
 
-  connect(): Observable<SigningKey[]> {
+  connect(): Observable<CustomDomain[]> {
     return combineLatest([this.refresh$]).pipe(
       tap(() => {
         this.isLoading$.next(true);
       }),
       switchMap(() => {
-        return this.signingKeysService.list().pipe(map((res) => res.data));
+        return this.customDomainService.list().pipe(map((res) => res.data));
       }),
       tap((res) => {
         this.data = res;

@@ -23,3 +23,4 @@ export * from './lib/service/platform-project.service';
 export * from './lib/service/project.service';
 export * from './lib/guards/show-based-on-flag-guard';
 import '@angular/localize/init';
+export * from './lib/pipe/comma-seperated.pipe';

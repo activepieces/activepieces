@@ -18,12 +18,14 @@ export class PlatformSettingsComponent implements AfterViewInit {
   title = $localize`Settings`;
   fragmentChanged$: Observable<string | null>;
   readonly signingKeysTabTitle = $localize`Signing Keys`;
+  readonly customDomainTabTitle = $localize`Custom Domains`;
   readonly privacyAndTermsTabTitle = $localize`Privacy & Terms`;
   readonly accountManagementEmailTabTitle = $localize`Mail Server`;
   readonly tabIndexFragmentMap: { [index: number]: string } = {
     0: 'SigningKeys',
     1: 'MailServer',
     2: 'TermsAndServices',
+    3: 'CustomDomains',
   };
   constructor(private router: Router, private route: ActivatedRoute) {
     this.fragmentChanged$ = this.route.fragment.pipe(

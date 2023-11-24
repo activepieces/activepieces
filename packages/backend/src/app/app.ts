@@ -233,6 +233,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             initilizeSentry()
             break
         case ApEdition.ENTERPRISE:
+            await app.register(customDomainModule)
             await app.register(authenticationModule)
             await app.register(enterpriseProjectModule)
             await app.register(projectMemberModule)
