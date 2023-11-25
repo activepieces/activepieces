@@ -4,7 +4,7 @@ import { setupApp } from '../../../../src/app/app'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { createMockSignInRequest, createMockSignUpRequest } from '../../../helpers/mocks/authn'
 import { createMockProject, createMockUser } from '../../../helpers/mocks'
-import { UserStatus } from '@activepieces/shared'
+import { ApFlagId, ProjectType, UserStatus } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 
 let app: FastifyInstance | null = null
@@ -51,6 +51,50 @@ describe('Authentication API', () => {
             expect(responseBody?.externalId).toBe(null)
             expect(responseBody?.projectId).toHaveLength(21)
             expect(responseBody?.token).toBeDefined()
+        })
+
+        it('Fails if USER_CREATED flag is set, and sign-up is disabled', async () => {
+            // arrange
+            const mockSignUpRequest = createMockSignUpRequest()
+            await databaseConnection.getRepository('flag').save({
+                id: ApFlagId.USER_CREATED,
+                value: true,
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/v1/authentication/sign-up',
+                body: mockSignUpRequest,
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+
+        it('Creates new project for user', async () => {
+            // arrange
+            const mockSignUpRequest = createMockSignUpRequest()
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/v1/authentication/sign-up',
+                body: mockSignUpRequest,
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const responseBody = response?.json()
+
+            const project = await databaseConnection.getRepository('project').findOneBy({
+                id: responseBody.projectId,
+            })
+
+            expect(project?.ownerId).toBe(responseBody.id)
+            expect(project?.displayName).toBe(`${responseBody.firstName}'s Project`)
+            expect(project?.type).toBe(ProjectType.STANDALONE)
+            expect(project?.platformId).toBeNull()
         })
     })
 
