@@ -28,7 +28,7 @@ export class AuthenticationComponent {
         this.authenticationService.updateUser(user);
         this.redirectToBack();
       }),
-      catchError((err) => {
+      catchError((error) => {
         this.snackbar.open(
           'An error occurred while authenticating user, please check your console',
           '',
@@ -38,7 +38,6 @@ export class AuthenticationComponent {
           }
         );
         // Handle the error here, e.g. show an error message to the user
-        console.error(err);
         return of(void 0);
       })
     );

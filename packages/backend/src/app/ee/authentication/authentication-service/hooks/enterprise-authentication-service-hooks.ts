@@ -9,8 +9,7 @@ import { ApFlagId, PrincipalType, ProjectType, isNil } from '@activepieces/share
 import { platformService } from '../../../platform/platform.service'
 import { accessTokenManager } from '../../../../authentication/lib/access-token-manager'
 import { projectService } from '../../../../project/project-service'
-import { OtpType, Platform, PlatformId } from '@activepieces/ee-shared'
-import { otpService } from '../../../otp/otp-service'
+import { Platform, PlatformId } from '@activepieces/ee-shared'
 
 const DEFAULT_PLATFORM_NAME = 'platform'
 
@@ -21,11 +20,8 @@ export const enterpriseAuthenticationServiceHooks: AuthenticationServiceHooks = 
         })
 
         const platformCreated = await flagService.getOne(ApFlagId.PLATFORM_CREATED)
+
         if (platformCreated) {
-            await  otpService.createAndSend({
-                email: user.email, platformId: user.platformId,
-                type: OtpType.EMAIL_VERIFICATION,
-            })
             return {
                 user: updatedUser,
                 project,
@@ -46,11 +42,6 @@ export const enterpriseAuthenticationServiceHooks: AuthenticationServiceHooks = 
         await flagService.save({
             id: ApFlagId.PLATFORM_CREATED,
             value: true,
-        })
-
-        await  otpService.createAndSend({
-            email: user.email, platformId: user.platformId,
-            type: OtpType.EMAIL_VERIFICATION,
         })
 
         const updatedToken = await accessTokenManager.generateToken({
