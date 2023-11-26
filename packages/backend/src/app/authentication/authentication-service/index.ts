@@ -1,5 +1,5 @@
 import { QueryFailedError } from 'typeorm'
-import { AuthenticationResponse, SignInRequest, UserStatus, ActivepiecesError, ErrorCode, isNil, User, ApFlagId } from '@activepieces/shared'
+import { AuthenticationResponse, UserStatus, ActivepiecesError, ErrorCode, isNil, User, ApFlagId } from '@activepieces/shared'
 import { userService } from '../../user/user-service'
 import { passwordHasher } from '../lib/password-hasher'
 import { authenticationServiceHooks as hooks } from './hooks'
@@ -28,9 +28,9 @@ export const authenticationService = {
         }
     },
 
-    async signIn(request: SignInRequest): Promise<AuthenticationResponse> {
+    async signIn(request: SignInParams): Promise<AuthenticationResponse> {
         const user = await userService.getByPlatformAndEmail({
-            platformId: null,
+            platformId: request.platformId,
             email: request.email,
         })
 
@@ -170,6 +170,12 @@ type SignUpParams = {
     status: UserStatus
     platformId: string | null
     referringUserId?: string
+}
+
+type SignInParams = {
+    email: string
+    password: string
+    platformId: string | null
 }
 
 type AssertPasswordsMatchParams = {

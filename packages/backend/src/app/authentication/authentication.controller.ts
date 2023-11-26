@@ -15,7 +15,12 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (app) =
     })
 
     app.post('/sign-in', SignInRequestOptions, async (request) => {
-        return authenticationService.signIn(request.body)
+        const platformId = await resolvePlatformIdForRequest(request)
+
+        return authenticationService.signIn({
+            ...request.body,
+            platformId,
+        })
     })
 }
 

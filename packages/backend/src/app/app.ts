@@ -39,7 +39,6 @@ import { cloudChatbotHooks } from './ee/chatbot/cloud/cloud-chatbot.hook'
 import { cloudDatasourceHooks } from './ee/chatbot/cloud/cloud-datasources.hook'
 import { qdrantEmbeddings } from './ee/chatbot/cloud/qdrant-embeddings'
 import { connectionKeyModule } from './ee/connection-keys/connection-key.module'
-import { firebaseAuthenticationModule } from './ee/firebase-auth/firebase-authentication.module'
 import { cloudRunHooks } from './ee/flow-run/cloud-flow-run-hooks'
 import { flowTemplateModule } from './ee/flow-template/flow-template.module'
 import { cloudWorkerHooks } from './ee/flow-worker/cloud-flow-worker-hooks'
@@ -73,6 +72,7 @@ import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
 import { communityPiecesModule } from './pieces/community-piece-module'
 import { platformPieceModule } from './ee/pieces/platform-piece-module'
 import { otpModule } from './ee/otp/otp-module'
+import { cloudAuthenticationServiceHooks } from './ee/authentication/authentication-service/hooks/cloud-authentication-service-hooks'
 import { enterpriseLocalAuthnModule } from './ee/authentication/enterprise-local-authn/enterprise-local-authn-module'
 import { billingModule } from './ee/billing/billing/billing.module'
 import { federatedAuthModule } from './ee/authentication/federated-authn/federated-authn-module'
@@ -171,6 +171,7 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     await app.register(stepFileModule)
     await app.register(chatbotModule)
     await app.register(userModule)
+    await app.register(authenticationModule)
 
     await setupBullMQBoard(app)
 
@@ -199,7 +200,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
     logger.info(`Activepieces ${edition} Edition`)
     switch (edition) {
         case ApEdition.CLOUD:
-            await app.register(firebaseAuthenticationModule)
             await app.register(billingModule)
             await app.register(appCredentialModule)
             await app.register(connectionKeyModule)
@@ -230,10 +230,10 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             pieceServiceHooks.set(cloudPieceServiceHooks)
             pieceMetadataServiceHooks.set(enterprisePieceMetadataServiceHooks)
             flagHooks.set(enterpriseFlagsHooks)
+            authenticationServiceHooks.set(cloudAuthenticationServiceHooks)
             initilizeSentry()
             break
         case ApEdition.ENTERPRISE:
-            await app.register(authenticationModule)
             await app.register(enterpriseProjectModule)
             await app.register(projectMemberModule)
             await app.register(platformModule)
@@ -253,7 +253,6 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             flagHooks.set(enterpriseFlagsHooks)
             break
         case ApEdition.COMMUNITY:
-            await app.register(authenticationModule)
             await app.register(projectModule)
             await app.register(communityPiecesModule)
             break
