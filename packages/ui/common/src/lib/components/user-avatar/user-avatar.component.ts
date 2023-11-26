@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthenticationService } from '../../service/authentication.service';
-import { ProjectService } from '../../service/project.service';
 import { ApFlagId, Project } from '@activepieces/shared';
 import { Observable } from 'rxjs';
 import { FlagService } from '../../service/flag.service';
@@ -10,6 +9,7 @@ import { ProjectSelectors } from '../../store/project/project.selector';
 import { LocalesService } from '../../service/locales.service';
 import { LocalesEnum } from '@activepieces/ee-shared';
 import { localesMap } from '../../utils/locales';
+import { PlatformProjectService } from '../../service/platform-project.service';
 
 @Component({
   selector: 'ap-user-avatar',
@@ -19,12 +19,13 @@ import { localesMap } from '../../utils/locales';
 })
 export class UserAvatarComponent implements OnInit {
   showAvatarOuterCircle = false;
-  currentUserEmail = 'Dev@ap.com';
+  currentUserEmail = '';
   projects$: Observable<Project[]>;
   selectedProject$: Observable<Project | undefined>;
   switchProject$: Observable<void>;
   overflownProjectsNames: Record<string, string> = {};
   billingEnabled$: Observable<boolean>;
+  myPiecesEnabled$: Observable<boolean>;
   projectEnabled$: Observable<boolean>;
   showPlatform = false;
   showCommunity$: Observable<boolean>;
@@ -39,15 +40,17 @@ export class UserAvatarComponent implements OnInit {
     private router: Router,
     private flagService: FlagService,
     private store: Store,
-    private projectService: ProjectService,
+    private projectService: PlatformProjectService,
     private localesService: LocalesService
   ) {
     this.showCommunity$ = this.flagService.isFlagEnabled(
       ApFlagId.SHOW_COMMUNITY
     );
-    // BEGIN EE
     this.billingEnabled$ = this.flagService.isFlagEnabled(
       ApFlagId.SHOW_BILLING
+    );
+    this.myPiecesEnabled$ = this.flagService.isFlagEnabled(
+      ApFlagId.SHOW_COMMUNITY_PIECES
     );
     this.projectEnabled$ = this.flagService.isFlagEnabled(
       ApFlagId.PROJECT_MEMBERS_ENABLED
@@ -56,7 +59,6 @@ export class UserAvatarComponent implements OnInit {
     this.selectedProject$ = this.store.select(
       ProjectSelectors.selectCurrentProject
     );
-    // END EE
     this.selectedLanguage =
       this.localesService.getCurrentLanguageFromLocalStorageOrDefault();
   }
@@ -83,17 +85,17 @@ export class UserAvatarComponent implements OnInit {
     this.authenticationService.logout();
   }
 
-  // BEGIN EE
   viewPlans() {
     this.router.navigate(['plans']);
   }
+
   switchProject(projectId: string) {
     this.switchProject$ = this.projectService.switchProject(projectId);
   }
+
   viewPlatformSettings() {
     this.router.navigate(['/platform']);
   }
-  // END EE
 
   get userFirstLetter() {
     if (

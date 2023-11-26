@@ -1,3 +1,4 @@
+import { PlatformProjectService } from '@activepieces/ui/common';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import {
   FormBuilder,
@@ -6,7 +7,6 @@ import {
   Validators,
 } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
-import { ProjectService } from '@activepieces/ui/common';
 import { Observable, catchError, tap } from 'rxjs';
 
 interface CreateProjectForm {
@@ -24,7 +24,7 @@ export class CreateProjectDialogComponent {
   constructor(
     private fb: FormBuilder,
     private dialogRef: MatDialogRef<CreateProjectDialogComponent>,
-    private projectService: ProjectService
+    private platformProjectService: PlatformProjectService
   ) {
     this.formGroup = this.fb.group({
       displayName: this.fb.control(
@@ -42,7 +42,7 @@ export class CreateProjectDialogComponent {
   createProject() {
     //Create project logic
     if (this.formGroup.valid && !this.loading) {
-      this.createProject$ = this.projectService
+      this.createProject$ = this.platformProjectService
         .create({
           displayName: this.formGroup.getRawValue().displayName,
         })

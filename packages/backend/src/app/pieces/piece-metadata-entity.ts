@@ -42,6 +42,10 @@ export const PieceMetadataEntity = new EntitySchema<PieceMetadataSchema>({
             type: String,
             nullable: true,
         },
+        platformId: {
+            type: String,
+            nullable: true,
+        },
         version: {
             type: String,
             nullable: false,

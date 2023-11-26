@@ -89,7 +89,7 @@
               : response.currentPlan.connections }}
             </div>
             <div>
-              <b>Trigger Update Time:</b> {{ response.currentPlan.minimumPollingInterval }} minute{{
+              <b>Sync Time:</b> {{ response.currentPlan.minimumPollingInterval }} minute{{
               response.currentPlan.minimumPollingInterval > 1 ? 's' : ''}}
             </div>
             <div>
@@ -116,78 +116,9 @@
       Automation Plans
     </div>
     <div class="ap-flex ap-justify-start ap-gap-[50px]  ap-flex-wrap">
-      <app-automation-plan-card *ngFor="let plan of response.plans" [plan]="plan"
+      <app-automation-plan-card *ngFor="let plan of pricingPlans" [plan]="plan"
         [loadPlans$]="loadPlans$"></app-automation-plan-card>
     </div>
-    <ng-container *ngIf="chatbotsEnabled$ | async">
-      <div class="ap-typography-headline-6 !ap-font-semibold ap-mb-5 ap-mt-12">
-        Chatbot Plans
-      </div>
-      <div class="ap-flex ap-justify-start  ap-gap-[50px]  ap-flex-wrap">
-
-        <div class="ap-py-4 ap-bg-white ap-rounded-lg ap-border-[1px] ap-border-outline ap-min-w-[350px] ">
-
-
-          <div class="ap-mb-2 ap-w-full">
-            <div class="ap-border-b ap-border-solid ap-border-outline ap-w-full">
-              <div class="ap-px-4 ap-pb-5">
-                <div class="!ap-font-semibold ap-typography-body-1  ap-mb-1">Free</div>
-                <div class="ap-text-description ap-typography-body-2">Give our bots a test!</div>
-              </div>
-            </div>
-
-          </div>
-          <div class="ap-px-4">
-
-            <div class="ap-typography-body-2">
-
-              <h2 class="ap-mb-2 ap-my-10">
-
-                <b>1 Bot</b>
-              </h2>
-              <h2 class=" ap-mb-2">
-                <b>1 Data Source </b>
-              </h2>
-              <h2 class=" ap-mb-2">
-                <b>PDF File Type</b>
-              </h2>
-            </div>
-
-          </div>
-
-        </div>
-        <div class="ap-py-4 ap-bg-white ap-rounded-lg ap-border-[1px] ap-border-outline ap-min-w-[350px] ">
-
-
-          <div class="ap-mb-2 ap-w-full">
-            <div class="ap-border-b ap-border-solid ap-border-outline ap-w-full">
-              <div class="ap-px-4 ap-pb-5">
-                <div class="!ap-font-semibold ap-typography-body-1  ap-mb-1">Custom</div>
-                <div class="ap-text-description ap-typography-body-2">Do you want to see the full capabilities <br> of
-                  our
-                  bots
-                  ?</div>
-              </div>
-            </div>
-
-          </div>
-          <div class="ap-px-4 ap-my-10">
-            <a href="mailto:sales@activepieces.com">
-              <ap-button btnColor="primary" [fullWidthOfContainer]="true">
-                Talk to us
-              </ap-button>
-            </a>
-
-            <div class="ap-typography-body-2">
-
-            </div>
-
-          </div>
-
-        </div>
-      </div>
-    </ng-container>
-
 
   </div>
 </div>

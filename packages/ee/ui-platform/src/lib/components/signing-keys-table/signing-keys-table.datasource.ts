@@ -2,7 +2,7 @@ import { DataSource } from '@angular/cdk/collections';
 import { Observable, BehaviorSubject, tap, switchMap, map } from 'rxjs';
 import { combineLatest } from 'rxjs';
 import { SigningKey } from '@activepieces/ee-shared';
-import { SigningKeysService } from '@activepieces/ee-components';
+import { SigningKeysService } from '../../service/signing-keys.service';
 
 /**
  * Data source for the LogsTable view. This class should

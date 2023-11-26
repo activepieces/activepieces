@@ -20,11 +20,12 @@ import { TriggerType } from '@activepieces/shared';
 import { FormControl } from '@angular/forms';
 import deepEqual from 'deep-equal';
 import { TestStepCoreComponent } from '../test-steps-core.component';
-import { PieceMetadataService, TestStepService } from '@activepieces/ui/common';
+import { TestStepService } from '@activepieces/ui/common';
 import {
   BuilderSelectors,
   FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
+import { PieceMetadataService } from 'ui-feature-pieces';
 
 export interface TriggerHistoricalData {
   payload: unknown;

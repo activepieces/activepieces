@@ -1,7 +1,9 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { AuthenticationService } from '@activepieces/ui/common';
-import { Location } from '@angular/common';
+import {
+  AuthenticationService,
+  RedirectService,
+} from '@activepieces/ui/common';
 @Injectable({
   providedIn: 'root',
 })
@@ -9,7 +11,7 @@ export class UserLoggedIn {
   constructor(
     private auth: AuthenticationService,
     private router: Router,
-    private location: Location
+    private redirectService: RedirectService
   ) {}
 
   canActivate(): boolean {
@@ -26,14 +28,8 @@ export class UserLoggedIn {
 
     // Redirect to the appropriate page if the user is not logged in
     if (!this.auth.isLoggedIn()) {
-      this.router.navigate([redirectTo], {
-        queryParams: {
-          redirect_url:
-            this.location.path().length === 0
-              ? undefined
-              : this.location.path(),
-        },
-      });
+      this.redirectService.setRedirectRouteToCurrentRoute();
+      this.router.navigate([redirectTo]);
       return false;
     }
 

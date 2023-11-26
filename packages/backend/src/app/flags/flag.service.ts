@@ -49,6 +49,12 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.SHOW_COMMUNITY_PIECES,
+                value: true,
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.EDITION,
                 value: getEdition(),
                 created,
