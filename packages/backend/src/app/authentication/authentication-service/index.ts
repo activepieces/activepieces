@@ -103,6 +103,18 @@ const assertSignUpIsEnabled = async (): Promise<void> => {
 
 const createUser = async (params: SignUpParams): Promise<User> => {
     try {
+        const userWithSameEmail = await userService.getbyEmail({ email: params.email })
+        if (userWithSameEmail) {
+            throw new ActivepiecesError({
+                code: ErrorCode.EXISTING_USER,
+                params: {
+                    email: params.email,
+                    platformId: params.platformId,
+                },
+
+            })
+        }
+
         const newUser: NewUser = {
             email: params.email,
             status: params.status,
@@ -132,7 +144,7 @@ const createUser = async (params: SignUpParams): Promise<User> => {
 }
 
 const assertUserIsAllowedToSignIn: (user: User | null) => asserts user is User = (user) => {
-    if (isNil(user) || user.status === UserStatus.INVITED) {
+    if (isNil(user) || user.status === UserStatus.CREATED || user.status === UserStatus.INVITED) {
         throw new ActivepiecesError({
             code: ErrorCode.INVALID_CREDENTIALS,
             params: {

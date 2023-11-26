@@ -16,11 +16,11 @@ export const CustomDomain = Type.Object({
 export type CustomDomain = Static<typeof CustomDomain>;
 
 
-export const CreateDomainRequest = Type.Object({
+export const AddDomainRequest = Type.Object({
     domain: Type.String(),
 })
 
-export type CreateDomainRequest = Static<typeof CreateDomainRequest>;
+export type AddDomainRequest = Static<typeof AddDomainRequest>;
 
 export const ListCustomDomainsRequest = Type.Object({
     limit: Type.Optional(Type.Number()),

@@ -58,6 +58,7 @@ import { NgxColorsModule } from 'ngx-colors';
 import { PageTitleComponent } from './components/page-title/page-title.component';
 import { PoweredByActivepiecesComponent } from './components/powered-by-activepieces/powered-by-activepieces.component';
 import { MatSliderModule } from '@angular/material/slider';
+import { CommaSeparatedPipe } from './pipe/comma-seperated.pipe';
 const exportedImports = [
   CommonModule,
   MatTooltipModule,
@@ -98,6 +99,7 @@ const exportedDeclarations = [
   ApButtonComponent,
   DialogTitleTemplateComponent,
   OutputLogPipe,
+  CommaSeparatedPipe,
   DefaultFalsePipe,
   DefaultTruePipe,
   CenterMatMenuDirective,
