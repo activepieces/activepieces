@@ -9,6 +9,7 @@ import { faker } from '@faker-js/faker'
 import { emailService } from '../../../../src/app/ee/helper/email/email-service'
 import { stripeHelper } from '../../../../src/app/ee/billing/billing/stripe-helper'
 import { decodeToken } from '../../../helpers/auth'
+import { OtpType } from '@activepieces/ee-shared'
 
 let app: FastifyInstance | null = null
 
@@ -55,7 +56,7 @@ describe('Authentication API', () => {
             expect(responseBody?.trackEvents).toBe(mockSignUpRequest.trackEvents)
             expect(responseBody?.newsLetter).toBe(mockSignUpRequest.newsLetter)
             expect(responseBody?.password).toBeUndefined()
-            expect(responseBody?.status).toBe('VERIFIED')
+            expect(responseBody?.status).toBe('CREATED')
             expect(responseBody?.platformId).toBe(null)
             expect(responseBody?.externalId).toBe(null)
             expect(responseBody?.projectId).toHaveLength(21)
@@ -82,6 +83,8 @@ describe('Authentication API', () => {
                 email: responseBody?.email,
                 otp: expect.stringMatching(/^\d{6}$/),
                 platformId: null,
+                type: OtpType.EMAIL_VERIFICATION,
+                userId: responseBody?.id,
             })
         })
 

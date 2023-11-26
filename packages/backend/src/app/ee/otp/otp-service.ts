@@ -12,12 +12,6 @@ const TEN_MINUTES = 10 * 60 * 1000
 const repo = databaseConnection.getRepository(OtpEntity)
 
 export const otpService = {
-
-    async getOtp(otpCode: string): Promise<OtpModel> {
-        return  repo.findOneByOrFail({
-            value: otpCode,
-        })
-    },
     async createAndSend({ platformId, email, type }: CreateParams): Promise<OtpModel> {
         const user = await getUserOrThrow({
             platformId,
@@ -36,6 +30,7 @@ export const otpService = {
 
         await emailService.sendVerifyEmail({
             platformId,
+            userId: user.id,
             email,
             otp: newOtp.value,
             type: newOtp.type,
@@ -52,9 +47,12 @@ export const otpService = {
             userId,
             type,
         })
+
         const now = dayjs()
-        const otpExpired = dayjs(otp.created).add(TEN_MINUTES).isBefore(now)
-        return !otpExpired && otp.value === value
+        const otpIsNotExpired = dayjs(otp.created).add(TEN_MINUTES).isBefore(now)
+        const otpMatches = otp.value === value
+
+        return otpIsNotExpired && otpMatches
     },
 }
 

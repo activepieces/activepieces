@@ -3,7 +3,6 @@ import { StatusCodes } from 'http-status-codes'
 import { setupApp } from '../../../../src/app/app'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { createMockOtp, createMockUser } from '../../../helpers/mocks'
-import { generateMockToken } from '../../../helpers/auth'
 import { OtpType } from '@activepieces/ee-shared'
 import { UserStatus } from '@activepieces/shared'
 
@@ -33,9 +32,8 @@ describe('Enterprise Local Authn API', () => {
             })
             await databaseConnection.getRepository('otp').save(mockOtp)
 
-            const mockToken = await generateMockToken({ id: mockUser.id })
-
             const mockVerifyEmailRequest = {
+                userId: mockUser.id,
                 otp: mockOtp.value,
             }
 
@@ -43,9 +41,6 @@ describe('Enterprise Local Authn API', () => {
             const response = await app?.inject({
                 method: 'POST',
                 url: '/v1/authn/local/verify-email',
-                headers: {
-                    authorization: `Bearer ${mockToken}`,
-                },
                 body: mockVerifyEmailRequest,
             })
 
@@ -71,10 +66,9 @@ describe('Enterprise Local Authn API', () => {
             })
             await databaseConnection.getRepository('otp').save(mockOtp)
 
-            const mockToken = await generateMockToken({ id: mockUser.id })
-
             const incorrectOtp = '654321'
             const mockVerifyEmailRequest = {
+                userId: mockUser.id,
                 otp: incorrectOtp,
             }
 
@@ -82,9 +76,6 @@ describe('Enterprise Local Authn API', () => {
             const response = await app?.inject({
                 method: 'POST',
                 url: '/v1/authn/local/verify-email',
-                headers: {
-                    authorization: `Bearer ${mockToken}`,
-                },
                 body: mockVerifyEmailRequest,
             })
 

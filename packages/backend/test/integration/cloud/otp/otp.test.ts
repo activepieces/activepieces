@@ -75,6 +75,8 @@ describe('OTP API', () => {
                 email: mockUser.email,
                 otp: expect.stringMatching(/^\d{6}$/),
                 platformId: null,
+                type: OtpType.EMAIL_VERIFICATION,
+                userId: mockUser.id,
             })
         })
 
