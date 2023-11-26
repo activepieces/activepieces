@@ -23,6 +23,7 @@ import { ApEdition } from '@activepieces/shared';
 import { VerifyEmailPostSignUpComponent } from './pages/auth-actions/verify-email-post-sign-up/verify-email-post-sign-up.component';
 import { ResetPasswordComponent } from './pages/auth-actions/reset-password/reset-password.component';
 import { ForgotPasswordComponent } from './pages/forgot-password/forgot-password.component';
+import { EeComponentsModule } from '@activepieces/ee/components';
 
 @NgModule({
   imports: [
@@ -34,6 +35,7 @@ import { ForgotPasswordComponent } from './pages/forgot-password/forgot-password
     MatMenuModule,
     MatCardModule,
     AngularSvgIconModule,
+    EeComponentsModule,
     RouterModule.forChild([
       {
         path: 'authenticate',

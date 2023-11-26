@@ -13,7 +13,9 @@ import {
 import { environment } from '../environments/environment';
 import {
   CreateOtpRequestBody,
+  FederatedAuthnLoginResponse,
   ResetPasswordRequestBody,
+  ThirdPartyAuthnProviderEnum,
   VerifyEmailRequestBody,
 } from '@activepieces/ee-shared';
 
@@ -140,6 +142,17 @@ export class AuthenticationService {
     return this.http.post<void>(
       `${environment.apiUrl}/authn/local/reset-password`,
       req
+    );
+  }
+
+  signInWithThirdPartyProvider(provider: ThirdPartyAuthnProviderEnum) {
+    return this.http.get<FederatedAuthnLoginResponse>(
+      `${environment.apiUrl}/authn/federated/login`,
+      {
+        params: {
+          providerName: provider,
+        },
+      }
     );
   }
 }

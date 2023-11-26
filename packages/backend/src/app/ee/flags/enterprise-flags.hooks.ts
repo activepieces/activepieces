@@ -4,6 +4,7 @@ import { apperanceHelper } from '../helper/apperance-helper'
 import { projectService } from '../../project/project-service'
 import { customDomainService } from '../custom-domains/custom-domain.service'
 import { platformService } from '../platform/platform.service'
+import { ThirdPartyAuthnProviderEnum } from '@activepieces/ee-shared'
 
 export const enterpriseFlagsHooks: FlagsServiceHooks = {
     async modify({ flags, hostname, projectId }) {
@@ -17,6 +18,10 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             modifiedFlags[ApFlagId.SHOW_DOCS] = false
             modifiedFlags[ApFlagId.SHOW_BILLING] = false
             modifiedFlags[ApFlagId.SHOW_AUTH_PROVIDERS] = false
+            modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP] = {
+                [ThirdPartyAuthnProviderEnum.GOOGLE]: false,
+                [ThirdPartyAuthnProviderEnum.GITHUB]: false,
+            }
             modifiedFlags[ApFlagId.SHOW_BLOG_GUIDE] = false
             modifiedFlags[ApFlagId.SHOW_COMMUNITY_PIECES] = false
             modifiedFlags[ApFlagId.SHOW_POWERED_BY_AP] = platform.showPoweredBy

@@ -7,6 +7,7 @@ import axios from 'axios'
 import { webhookService } from '../webhooks/webhook-service'
 import { getEdition } from '../helper/secret-helper'
 import { defaultTheme } from './theme'
+import { showThirdPartyProvidersMap } from '../ee/authentication/federated-authn/authn-provider/authn-provider'
 
 const flagRepo = databaseConnection.getRepository(FlagEntity)
 
@@ -66,9 +67,16 @@ export const flagService = {
                 created,
                 updated,
             },
+            //TODO:Remove flag
             {
                 id: ApFlagId.SHOW_AUTH_PROVIDERS,
                 value: getEdition() === ApEdition.CLOUD,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP,
+                value: getEdition() === ApEdition.COMMUNITY ? {} : showThirdPartyProvidersMap,
                 created,
                 updated,
             },

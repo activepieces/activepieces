@@ -29,6 +29,9 @@ export const gitHubAuthnProvider: AuthnProvider = {
         const gitHubUserInfo = await getGitHubUserInfo(githubAccessToken)
         return authenticateUser(gitHubUserInfo)
     },
+    isConfiguredByUser(): boolean {
+        return !!system.get(SystemProp.FEDERATED_AUTHN_GITHUB_REDIRECT_URI) && !!system.getOrThrow(SystemProp.FEDERATED_AUTHN_GITHUB_CLIENT_SECRET) && !!system.getOrThrow(SystemProp.FEDERATED_AUTHN_GITHUB_CLIENT_ID)
+    },
 }
 
 const getGitHubAccessToken = async (authorizationCode: string): Promise<string> => {
