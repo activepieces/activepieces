@@ -7,10 +7,10 @@ import {
 import {
   FlagService,
   FlowService,
+  RedirectService,
   TelemetryService,
   TemplatesService,
 } from '@activepieces/ui/common';
-import { Location } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { Meta } from '@angular/platform-browser';
@@ -46,7 +46,7 @@ export class ImportFlowComponent implements OnInit {
     private metaService: Meta,
     private telemetryService: TelemetryService,
     private flagService: FlagService,
-    private location: Location
+    private redirectService: RedirectService
   ) {
     this.fullLogoUrl$ = this.flagService
       .getLogos()
@@ -123,11 +123,8 @@ export class ImportFlowComponent implements OnInit {
         catchError((error) => {
           console.error(error);
           if (error.status === StatusCodes.UNAUTHORIZED) {
-            this.router.navigate(['/sign-up'], {
-              queryParams: {
-                redirect_url: `${this.location.path()}`.split('?')[0],
-              },
-            });
+            this.redirectService.setRedirectRouteToCurrentRoute();
+            this.router.navigate(['/sign-in']);
             return EMPTY;
           }
           this.router.navigate(['not-found']);

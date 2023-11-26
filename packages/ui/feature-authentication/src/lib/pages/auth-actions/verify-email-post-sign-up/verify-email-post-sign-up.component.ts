@@ -30,7 +30,6 @@ export class VerifyEmailPostSignUpComponent {
     private snackbar: MatSnackBar
   ) {
     const otp = this.activatedRoute.snapshot.queryParams['otpcode'];
-
     this.actionTitle = this.verifyingEmail;
     this.titleService.setTitle($localize`Verifying email`);
     this.verifyingEmail$ = this.authenticationService
@@ -48,16 +47,11 @@ export class VerifyEmailPostSignUpComponent {
         tap(() => {
           this.actionTitle = this.verifiedEmail;
           this.titleService.setTitle($localize`Email Verified`);
-          setTimeout(() => this.redirectToBack(), 3000);
+          setTimeout(() => this.backToSignIn(), 3000);
         })
       );
   }
-
-  backToSign() {
-    this.router.navigate(['/sign-in']);
-  }
-
-  redirectToBack() {
+  backToSignIn() {
     this.router.navigate(['/sign-in']);
   }
 }

@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
 import {
   FormBuilder,
   FormControl,
@@ -11,6 +10,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import {
   AuthenticationService,
   FlagService,
+  RedirectService,
   fadeInUp400ms,
 } from '@activepieces/ui/common';
 import { catchError, map, Observable, of, tap } from 'rxjs';
@@ -33,11 +33,10 @@ export class SignInComponent {
   authenticate$: Observable<void> | undefined;
   isCommunityEdition$: Observable<boolean>;
   constructor(
-    private router: Router,
-    private route: ActivatedRoute,
     private formBuilder: FormBuilder,
     private authenticationService: AuthenticationService,
-    private flagsService: FlagService
+    private flagsService: FlagService,
+    private redirectService: RedirectService
   ) {
     this.isCommunityEdition$ = this.flagsService
       .getEdition()
@@ -73,7 +72,7 @@ export class SignInComponent {
         tap((response) => {
           if (response) {
             this.authenticationService.saveUser(response);
-            this.redirectToBack();
+            this.redirect();
           }
         }),
         map(() => void 0)
@@ -81,12 +80,7 @@ export class SignInComponent {
     }
   }
 
-  redirectToBack() {
-    const redirectUrl = this.route.snapshot.queryParamMap.get('redirect_url');
-    if (redirectUrl) {
-      this.router.navigateByUrl(decodeURIComponent(redirectUrl));
-    } else {
-      this.router.navigate(['/flows']);
-    }
+  redirect() {
+    this.redirectService.redirect();
   }
 }

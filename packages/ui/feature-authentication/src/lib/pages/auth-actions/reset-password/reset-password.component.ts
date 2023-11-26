@@ -58,12 +58,8 @@ export class ResetPasswordComponent {
             console.error(err);
             throw err;
           }),
-          tap(() => this.redirectToBack())
+          tap(() => this.router.navigate(['/sign-in']))
         );
     }
-  }
-
-  redirectToBack() {
-    this.router.navigate(['/sign-in']);
   }
 }

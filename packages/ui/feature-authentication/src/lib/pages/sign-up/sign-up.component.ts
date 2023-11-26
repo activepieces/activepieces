@@ -5,9 +5,13 @@ import {
   FormGroup,
   Validators,
 } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { catchError, map, Observable, of, switchMap, tap } from 'rxjs';
-import { AuthenticationService, fadeInUp400ms } from '@activepieces/ui/common';
+import {
+  AuthenticationService,
+  RedirectService,
+  fadeInUp400ms,
+} from '@activepieces/ui/common';
 import { FlagService } from '@activepieces/ui/common';
 import {
   containsSpecialCharacter,
@@ -47,10 +51,10 @@ export class SignUpComponent {
   readonly OtpType = OtpType;
   constructor(
     private formBuilder: FormBuilder,
-    private router: Router,
     public flagService: FlagService,
     public authenticationService: AuthenticationService,
-    private route: ActivatedRoute
+    private redirectService: RedirectService,
+    private router: Router
   ) {
     this.privacyPolicyUrl$ = this.flagService.getStringFlag(
       ApFlagId.PRIVACY_POLICY_URL
@@ -155,19 +159,9 @@ export class SignUpComponent {
     return passwordInputElement == document.activeElement;
   }
   goBackToSign() {
-    this.router.navigate(['/sign-in'], {
-      queryParams: {
-        redirect_url: this.route.snapshot.queryParams['redirect_url'],
-      },
-    });
+    this.router.navigate(['/sign-in']);
   }
-
   redirect() {
-    const redirectUrl = this.route.snapshot.queryParamMap.get('redirect_url');
-    if (redirectUrl) {
-      this.router.navigateByUrl(decodeURIComponent(redirectUrl));
-    } else {
-      this.router.navigate(['/flows']);
-    }
+    this.redirectService.redirect();
   }
 }

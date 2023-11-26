@@ -1,7 +1,6 @@
 import { Component } from '@angular/core';
 import { FormControl, Validators } from '@angular/forms';
 import { catchError, map, Observable, tap } from 'rxjs';
-// import { ActivatedRoute } from '@angular/router';
 import {
   AuthenticationService,
   unexpectedErrorMessage,
@@ -20,7 +19,6 @@ export class ForgotPasswordComponent {
   emailFormControl: FormControl<string>;
   sendPasswordReset$!: Observable<void>;
   constructor(
-    // private activatedRoute: ActivatedRoute,
     private authService: AuthenticationService,
     private matSnackbar: MatSnackBar
   ) {
@@ -33,8 +31,6 @@ export class ForgotPasswordComponent {
   sendPasswordReset() {
     if (!this.loading && !this.emailFormControl.invalid) {
       this.loading = true;
-      //   const redirectUrl =
-      //     this.activatedRoute.snapshot.queryParams['redirect_url'];
       this.sendPasswordReset$ = this.authService
         .sendOtpEmail({
           email: this.emailFormControl.value,

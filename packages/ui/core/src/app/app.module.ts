@@ -248,8 +248,8 @@ function dynamicRoutes(edition: string) {
             {
               path: '',
               loadChildren: () =>
-                import('@activepieces/ee-auth').then(
-                  (m) => m.FirebaseAuthLayoutModule
+                import('@activepieces/ui/feature-authentication').then(
+                  (m) => m.UiFeatureAuthenticationModule
                 ),
             },
           ],
