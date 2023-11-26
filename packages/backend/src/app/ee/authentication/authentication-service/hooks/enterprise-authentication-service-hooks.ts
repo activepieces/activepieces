@@ -21,9 +21,6 @@ export const enterpriseAuthenticationServiceHooks: AuthenticationServiceHooks = 
         })
 
         const platformCreated = await flagService.getOne(ApFlagId.PLATFORM_CREATED)
-        console.log('------------------------')
-        console.log(platformCreated)
-        console.log('------------------------')
         if (platformCreated) {
             await  otpService.createAndSend({
                 email: user.email, platformId: user.platformId,

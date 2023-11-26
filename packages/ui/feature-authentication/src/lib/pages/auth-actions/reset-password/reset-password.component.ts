@@ -1,6 +1,5 @@
 import { Component } from '@angular/core';
 import { FormControl, Validators } from '@angular/forms';
-import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, catchError, tap } from 'rxjs';
 
@@ -15,21 +14,17 @@ import {
 import { OtpType } from '@activepieces/ee-shared';
 
 @Component({
-  styleUrls: ['./auth-action.component.scss'],
-  templateUrl: './auth-action.component.html',
+  styleUrls: ['./reset-password.component.scss'],
+  templateUrl: './reset-password.component.html',
   animations: [fadeInUp400ms],
 })
-export class AuthActionComponent {
+export class ResetPasswordComponent {
   readonly OtpType = OtpType;
   readonly resetPasswordTitle = $localize`Reset Password`;
-  readonly verifyingEmail = $localize`Verifying Email`;
-  readonly verifiedEmail = $localize`Verified Email`;
-  mode: OtpType;
   actionTitle = this.resetPasswordTitle;
   passwordResetActionError = '';
   resetingPassword = false;
   resetPassword$?: Observable<void>;
-  verifyingEmail$?: Observable<void>;
   newPasswordControl = new FormControl<string>('', {
     nonNullable: true,
     validators: [
@@ -45,41 +40,26 @@ export class AuthActionComponent {
   constructor(
     private router: Router,
     private activatedRoute: ActivatedRoute,
-    private titleService: Title,
     private authenticationService: AuthenticationService
-  ) {
-    this.mode = this.activatedRoute.snapshot.queryParams['mode'];
-    const otp = this.activatedRoute.snapshot.queryParams['otpcode'];
-    if (this.mode === OtpType.EMAIL_VERIFICATION) {
-      this.actionTitle = this.verifyingEmail;
-      this.titleService.setTitle($localize`Verifying email`);
-      this.verifyingEmail$ = this.authenticationService
-        .verifyEmail({
-          otp: otp,
-        })
-        .pipe(
-          catchError((err) => {
-            console.error(err);
-            this.passwordResetActionError =
-              'This password reset request has been expired';
-            throw err;
-          }),
-          tap(() => {
-            this.actionTitle = this.verifiedEmail;
-            this.titleService.setTitle($localize`Email Verified`);
-            setTimeout(() => this.redirectToBack(), 3000);
-          })
-        );
-    }
-  }
-
-  backToSign() {
-    this.router.navigate(['/sign-in']);
-  }
+  ) {}
 
   handlePasswordReset() {
     if (this.newPasswordControl.valid && !this.resetingPassword) {
       this.resetingPassword = true;
+      const otp = this.activatedRoute.snapshot.queryParams['otpcode'];
+      this.resetPassword$ = this.authenticationService
+        .resetPassword({
+          otp,
+          newPassword: this.newPasswordControl.value,
+        })
+        .pipe(
+          catchError((err) => {
+            this.passwordResetActionError = $localize`Your password reset request has expired, please request a new one`;
+            console.error(err);
+            throw err;
+          }),
+          tap(() => this.redirectToBack())
+        );
     }
   }
 

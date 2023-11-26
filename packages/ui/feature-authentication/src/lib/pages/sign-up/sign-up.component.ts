@@ -16,6 +16,7 @@ import {
   containsNumber,
 } from '@activepieces/ui/common';
 import { ApFlagId, UserStatus } from '@activepieces/shared';
+import { OtpType } from '@activepieces/ee-shared';
 
 export interface UserInfo {
   firstName: FormControl<string>;
@@ -43,6 +44,7 @@ export class SignUpComponent {
   privacyPolicyUrl$: Observable<string>;
   termsOfServiceUrl$: Observable<string>;
   signUpDone = false;
+  readonly OtpType = OtpType;
   constructor(
     private formBuilder: FormBuilder,
     private router: Router,

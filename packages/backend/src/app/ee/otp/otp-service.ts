@@ -53,8 +53,8 @@ export const otpService = {
             type,
         })
         const now = dayjs()
-        const otpNotExpired = dayjs(otp.created).add(TEN_MINUTES).isBefore(now)
-        return otpNotExpired && otp.value === value
+        const otpExpired = dayjs(otp.created).add(TEN_MINUTES).isBefore(now)
+        return !otpExpired && otp.value === value
     },
 }
 

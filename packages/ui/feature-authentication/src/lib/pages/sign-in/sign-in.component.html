@@ -24,6 +24,12 @@
   </div>
 </form>
 <div class="ap-typography-caption ap-text-body ap-text-center ap-mt-4 ap-flex ap-gap-2 ap-justify-center">
-  <span i18n>Don't have an account?</span> <a routerLink="/sign-up" i18n>Get yours now</a>
+  <span i18n>Don't have an account?</span> <a routerLink="/sign-up" i18n>Sign up now</a>
 </div>
+<div class="ap-typography-caption ap-text-body ap-text-center ap-mt-2 ap-flex ap-gap-2 ap-justify-center"
+  *ngIf="(isCommunityEdition$ | async )=== false">
+  <a routerLink="/forgot-password" i18n>Forgot password?</a>
+</div>
+
+
 <ng-container *ngIf="authenticate$ | async"></ng-container>

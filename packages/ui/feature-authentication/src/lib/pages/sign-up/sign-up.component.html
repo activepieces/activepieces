@@ -151,7 +151,8 @@
 </ng-template>
 
 <ng-template #verificationTemplate>
-  <app-email-verification [email]="registrationForm.value.email!"></app-email-verification>
+  <app-send-email-for-auth-action [email]="registrationForm.value.email!"
+    [otpType]="OtpType.EMAIL_VERIFICATION"></app-send-email-for-auth-action>
 </ng-template>
 
 <ng-container *ngIf="signUp$ | async"></ng-container>

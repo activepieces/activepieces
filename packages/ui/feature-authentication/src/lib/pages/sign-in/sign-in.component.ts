@@ -8,9 +8,14 @@ import {
 } from '@angular/forms';
 
 import { HttpErrorResponse } from '@angular/common/http';
-import { AuthenticationService, fadeInUp400ms } from '@activepieces/ui/common';
+import {
+  AuthenticationService,
+  FlagService,
+  fadeInUp400ms,
+} from '@activepieces/ui/common';
 import { catchError, map, Observable, of, tap } from 'rxjs';
 import { StatusCodes } from 'http-status-codes';
+import { ApEdition } from '@activepieces/shared';
 interface SignInForm {
   email: FormControl<string>;
   password: FormControl<string>;
@@ -26,12 +31,17 @@ export class SignInComponent {
   showInvalidEmailOrPasswordMessage = false;
   loading = false;
   authenticate$: Observable<void> | undefined;
+  isCommunityEdition$: Observable<boolean>;
   constructor(
     private router: Router,
     private route: ActivatedRoute,
     private formBuilder: FormBuilder,
-    private authenticationService: AuthenticationService
+    private authenticationService: AuthenticationService,
+    private flagsService: FlagService
   ) {
+    this.isCommunityEdition$ = this.flagsService
+      .getEdition()
+      .pipe(map((ed) => ed === ApEdition.COMMUNITY));
     this.loginForm = this.formBuilder.group({
       email: new FormControl('', {
         nonNullable: true,

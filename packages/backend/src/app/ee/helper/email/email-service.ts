@@ -64,14 +64,14 @@ export const emailService = {
 
     async sendVerifyEmail({ platformId, email, otp, type }: SendVerifyEmailParams): Promise<void> {
         const frontendUrl = system.get(SystemProp.FRONTEND_URL)
-    
+        const route = type === OtpType.PASSWORD_RESET ? 'reset-password' : 'verify-email'
         await sendEmail({
             email,
             platformId: platformId ?? undefined,
             template: {
                 templateName: type === OtpType.PASSWORD_RESET ? 'reset-password' : 'verify-email',
                 data: {
-                    link: `${frontendUrl}/auth-action?otpcode=${otp}&mode=${type}`,
+                    link: `${frontendUrl}/${route}?otpcode=${otp}`,
                 },
             },
         })

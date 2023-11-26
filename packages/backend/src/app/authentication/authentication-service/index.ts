@@ -112,7 +112,7 @@ export const authenticationService = {
 }
 
 const assertUserIsAllowedToSignIn: (user: User | null) => asserts user is User = (user) => {
-    if (isNil(user) || user.status === UserStatus.CREATED ||   user.status === UserStatus.VERIFIED) {
+    if (isNil(user) || user.status === UserStatus.CREATED || user.status === UserStatus.INVITED) {
         throw new ActivepiecesError({
             code: ErrorCode.INVALID_CREDENTIALS,
             params: {

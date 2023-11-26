@@ -18,9 +18,11 @@ import {
   MAT_FORM_FIELD_DEFAULT_OPTIONS,
 } from '@angular/material/form-field';
 import { AuthenticationComponent } from './pages/authenticate/authenticate.component';
-import { EmailVerificationComponent } from './pages/email-verification/email-verification.component';
-import { AuthActionComponent } from './pages/auth-action/auth-action.component';
+import { SendEmailForAuthActionComponent } from './components/send-email-for-auth-action/send-email-for-auth-action.component';
 import { ApEdition } from '@activepieces/shared';
+import { VerifyEmailPostSignUpComponent } from './pages/auth-actions/verify-email-post-sign-up/verify-email-post-sign-up.component';
+import { ResetPasswordComponent } from './pages/auth-actions/reset-password/reset-password.component';
+import { ForgotPasswordComponent } from './pages/forgot-password/forgot-password.component';
 
 @NgModule({
   imports: [
@@ -57,10 +59,26 @@ import { ApEdition } from '@activepieces/shared';
             },
           },
           {
-            path: 'auth-action',
-            component: AuthActionComponent,
+            path: 'verify-email',
+            component: VerifyEmailPostSignUpComponent,
             data: {
               title: $localize`Verify email`,
+            },
+            canActivate: [showBasedOnEditionGuard([ApEdition.ENTERPRISE])],
+          },
+          {
+            path: 'reset-password',
+            component: ResetPasswordComponent,
+            data: {
+              title: $localize`Reset password`,
+            },
+            canActivate: [showBasedOnEditionGuard([ApEdition.ENTERPRISE])],
+          },
+          {
+            path: 'forgot-password',
+            component: ForgotPasswordComponent,
+            data: {
+              title: $localize`Forgot password`,
             },
             canActivate: [showBasedOnEditionGuard([ApEdition.ENTERPRISE])],
           },
@@ -79,8 +97,10 @@ import { ApEdition } from '@activepieces/shared';
     SignInComponent,
     SignUpComponent,
     AuthenticationComponent,
-    EmailVerificationComponent,
-    AuthActionComponent,
+    SendEmailForAuthActionComponent,
+    VerifyEmailPostSignUpComponent,
+    ResetPasswordComponent,
+    ForgotPasswordComponent,
   ],
 })
 export class UiFeatureAuthenticationModule {}
