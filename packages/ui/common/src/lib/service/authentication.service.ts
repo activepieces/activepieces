@@ -12,6 +12,7 @@ import {
 } from '@activepieces/shared';
 import { environment } from '../environments/environment';
 import {
+  ClaimTokenRequest,
   CreateOtpRequestBody,
   FederatedAuthnLoginResponse,
   ResetPasswordRequestBody,
@@ -145,13 +146,23 @@ export class AuthenticationService {
     );
   }
 
-  signInWithThirdPartyProvider(provider: ThirdPartyAuthnProviderEnum) {
+  getThirdPartyLoginUrl(provider: ThirdPartyAuthnProviderEnum) {
     return this.http.get<FederatedAuthnLoginResponse>(
       `${environment.apiUrl}/authn/federated/login`,
       {
         params: {
           providerName: provider,
         },
+      }
+    );
+  }
+
+  claimThirdPartyRequest(request: ClaimTokenRequest) {
+    return this.http.post<AuthenticationResponse>(
+      `${environment.apiUrl}/authn/federated/claim`,
+      request,
+      {
+        observe: 'response',
       }
     );
   }

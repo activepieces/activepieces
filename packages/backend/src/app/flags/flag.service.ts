@@ -67,13 +67,6 @@ export const flagService = {
                 created,
                 updated,
             },
-            //TODO:Remove flag
-            {
-                id: ApFlagId.SHOW_AUTH_PROVIDERS,
-                value: getEdition() === ApEdition.CLOUD,
-                created,
-                updated,
-            },
             {
                 id: ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP,
                 value: getEdition() === ApEdition.COMMUNITY ? {} : showThirdPartyProvidersMap,

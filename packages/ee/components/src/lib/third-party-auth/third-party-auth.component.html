@@ -3,7 +3,7 @@
         <!-- TODO: figure out if we are going to streamline the process of adding third party authentication ui or not -->
 
         <ap-button type="button" *ngIf="show[ThirdPartyAuthnProvider.GOOGLE]"
-            (buttonClicked)="signInWithProvider(ThirdPartyAuthnProvider.GOOGLE)" btnColor="basic" btnStyle="stroked"
+            (buttonClicked)="signInWithThirdPartyProvider(ThirdPartyAuthnProvider.GOOGLE)" btnColor="basic" btnStyle="stroked"
             [fullWidthOfContainer]="true">
             <div class="ap-flex ap-gap-2 ap-items-center ap-justify-center">
                 <svg-icon [svgStyle]="{ width: '15px', height: '15px' }" src="assets/img/custom/auth/google-icon.svg">
@@ -13,7 +13,7 @@
         </ap-button>
 
         <ap-button type="button" *ngIf="show[ThirdPartyAuthnProvider.GITHUB]"
-            (buttonClicked)="signInWithProvider(ThirdPartyAuthnProvider.GITHUB)" btnColor="basic" btnStyle="stroked"
+            (buttonClicked)="signInWithThirdPartyProvider(ThirdPartyAuthnProvider.GITHUB)" btnColor="basic" btnStyle="stroked"
             [fullWidthOfContainer]="true">
             <div class="ap-flex ap-gap-2 ap-items-center ap-justify-center">
                 <svg-icon [svgStyle]="{ width: '15px', height: '15px' }" src="assets/img/custom/auth/github.svg">
@@ -27,3 +27,5 @@
         *ngIf="show[ThirdPartyAuthnProvider.GOOGLE] || show[ThirdPartyAuthnProvider.GITHUB]">OR</div>
 
 </ng-container>
+
+<ng-container *ngIf="signInWithThirdPartyProvider$ | async"></ng-container>
