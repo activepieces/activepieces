@@ -1,5 +1,5 @@
 import { DatasourceHooks } from '../../../chatbot/datasources/datasource.hooks'
-import { botsLimits } from '../../billing/usage/limits/bots-limits'
+import { botsLimits } from '../../billing/limits/bots-limits'
 
 
 export const cloudDatasourceHooks: DatasourceHooks = {

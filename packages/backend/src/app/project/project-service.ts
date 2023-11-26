@@ -2,7 +2,6 @@ import { ApId, isNil, ProjectType } from '@activepieces/shared'
 import { databaseConnection } from '../database/database-connection'
 import { ProjectEntity } from './project-entity'
 import { ActivepiecesError, apId, ErrorCode, NotificationStatus, Project, ProjectId, UserId } from '@activepieces/shared'
-import { PlatformId, UpdateProjectRequest } from '@activepieces/ee-shared'
 
 const projectRepo = databaseConnection.getRepository<Project>(ProjectEntity)
 
@@ -17,29 +16,6 @@ export const projectService = {
         return projectRepo.save(newProject)
     },
 
-    async update({ projectId, request, platformId }: { projectId: ProjectId, request: UpdateProjectRequest, platformId?: PlatformId }): Promise<Project | null> {
-        const project = await projectRepo.findOneBy({
-            id: projectId,
-        })
-
-        //TODO: Revisit on platform authentication
-        if (isNil(project) || project.id !== projectId && project.platformId !== platformId) {
-            throw new ActivepiecesError({
-                code: ErrorCode.PROJECT_NOT_FOUND,
-                params: {
-                    id: projectId,
-                },
-            })
-        }
-
-        await projectRepo.update(projectId, {
-            ...project,
-            ...request,
-        })
-        return projectRepo.findOneBy({
-            id: projectId,
-        })
-    },
     async getOne(projectId: ProjectId): Promise<Project | null> {
         return await projectRepo.findOneBy({
             id: projectId,
@@ -52,9 +28,10 @@ export const projectService = {
 
         if (isNil(project)) {
             throw new ActivepiecesError({
-                code: ErrorCode.PROJECT_NOT_FOUND,
+                code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
-                    id: projectId,
+                    entityId: projectId,
+                    entityType: 'project',
                 },
             })
         }
@@ -91,7 +68,7 @@ type CreateParams = {
 }
 
 type GetByPlatformIdAndExternalIdParams = {
-    platformId: PlatformId
+    platformId: string
     externalId: string
 }
 

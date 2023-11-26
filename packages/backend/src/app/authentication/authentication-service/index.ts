@@ -3,9 +3,10 @@ import { AuthenticationResponse, SignInRequest, UserStatus, ActivepiecesError, E
 import { userService } from '../../user/user-service'
 import { passwordHasher } from '../lib/password-hasher'
 import { authenticationServiceHooks as hooks } from './hooks'
+import { generateRandomPassword } from '../../helper/crypto'
 
 export const authenticationService = {
-    signUp: async (request: { email: string, password: string, firstName: string, lastName: string, trackEvents: boolean, newsLetter: boolean, status: UserStatus }): Promise<AuthenticationResponse> => {
+    async signUp(request: { email: string, password: string, firstName: string, lastName: string, trackEvents: boolean, newsLetter: boolean, status: UserStatus }): Promise<AuthenticationResponse> {
         try {
       
             const userWithSameEmail = await userService.getbyEmail({ email: request.email })
@@ -49,7 +50,7 @@ export const authenticationService = {
         }
     },
 
-    signIn: async (request: SignInRequest): Promise<AuthenticationResponse> => {
+    async signIn(request: SignInRequest): Promise<AuthenticationResponse> {
         const user = await userService.getByPlatformAndEmail({
             platformId: null,
             email: request.email,
@@ -73,6 +74,40 @@ export const authenticationService = {
             token,
             projectId: project.id,
         }
+    },
+
+    async federatedAuthn(params: FederatedAuthnParams): Promise<AuthenticationResponse> {
+        const existingUser = await userService.getByPlatformAndEmail({
+            platformId: params.platformId,
+            email: params.email,
+        })
+
+        if (existingUser) {
+            const { user: updatedUser, project, token } = await hooks.get().postSignIn({
+                user: existingUser,
+            })
+
+            const userWithoutPassword = removePasswordPropFromUser(updatedUser)
+
+            return {
+                ...userWithoutPassword,
+                token,
+                projectId: project.id,
+            }
+        }
+
+        const newUser = {
+            email: params.email,
+            status: params.userStatus,
+            firstName: params.firstName,
+            lastName: params.lastName,
+            trackEvents: true,
+            newsLetter: true,
+            password: await generateRandomPassword(),
+            platformId: params. platformId,
+        }
+
+        return this.signUp(newUser)
     },
 }
 
@@ -106,4 +141,12 @@ const removePasswordPropFromUser = (user: User): Omit<User, 'password'> => {
 type AssertPasswordsMatchParams = {
     requestPassword: string
     userPassword: string
+}
+
+type FederatedAuthnParams = {
+    email: string
+    userStatus: UserStatus
+    firstName: string
+    lastName: string
+    platformId: string | null
 }
