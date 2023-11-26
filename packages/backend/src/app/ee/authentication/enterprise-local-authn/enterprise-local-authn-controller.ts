@@ -5,7 +5,6 @@ import { ResetPasswordRequestBody, VerifyEmailRequestBody } from '@activepieces/
 export const enterpriseLocalAuthnController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/verify-email', VerifyEmailRequest, async (req) => {
         await enterpriseLocalAuthnService.verifyEmail({
-            userId: req.principal.id,
             otp: req.body.otp,
         })
     })
