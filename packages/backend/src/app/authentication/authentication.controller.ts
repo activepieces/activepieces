@@ -1,5 +1,5 @@
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { ApEdition, ApFlagId, SignInRequest, SignUpRequest, UserStatus } from '@activepieces/shared'
+import { ApFlagId, SignInRequest, SignUpRequest, UserStatus } from '@activepieces/shared'
 import { authenticationService } from './authentication-service'
 import { flagService } from '../flags/flag.service'
 import { system } from '../helper/system/system'
@@ -17,16 +17,16 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (app) =
         async (request: FastifyRequest<{ Body: SignUpRequest }>, reply: FastifyReply) => {
             const userCreated = await flagService.getOne(ApFlagId.USER_CREATED)
             const signUpEnabled = system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
-            const edition = system.get(SystemProp.EDITION) 
+
             if (userCreated && !signUpEnabled) {
                 return reply.code(403).send({
                     message: 'Sign up is disabled',
                 })
             }
-            
+
             return authenticationService.signUp({
                 ...request.body,
-                status: edition === ApEdition.COMMUNITY ? UserStatus.VERIFIED : UserStatus.CREATED,
+                status: UserStatus.VERIFIED,
             })
         },
     )

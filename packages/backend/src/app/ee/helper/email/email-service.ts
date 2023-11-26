@@ -10,7 +10,7 @@ import { defaultTheme } from '../../../flags/theme'
 import { projectService } from '../../../project/project-service'
 import { system } from '../../../helper/system/system'
 import { SystemProp } from '../../../helper/system/system-prop'
-import { OtpType, Platform } from '@activepieces/ee-shared'
+import { Platform } from '@activepieces/ee-shared'
 import { customDomainService } from '../../custom-domains/custom-domain.service'
 
 export const emailService = {
@@ -62,16 +62,14 @@ export const emailService = {
         })
     },
 
-    async sendVerifyEmail({ platformId, email, otp, type }: SendVerifyEmailParams): Promise<void> {
-        const frontendUrl = system.get(SystemProp.FRONTEND_URL)
-        const route = type === OtpType.PASSWORD_RESET ? 'reset-password' : 'verify-email'
+    async sendVerifyEmail({ platformId, email, otp }: SendVerifyEmailParams): Promise<void> {
         await sendEmail({
             email,
             platformId: platformId ?? undefined,
             template: {
-                templateName: type === OtpType.PASSWORD_RESET ? 'reset-password' : 'verify-email',
+                templateName: 'verify-email',
                 data: {
-                    link: `${frontendUrl}/${route}?otpcode=${otp}`,
+                    otp,
                 },
             },
         })
@@ -109,7 +107,6 @@ async function sendEmail({ platformId, email, template }: { template: EmailTempl
         'quota-90': '[URGENT] 90% of your Activepieces tasks are consumed',
         'quota-100': '[URGENT] 100% of your Activepieces tasks are consumed',
         'verify-email': 'Verify your email address',
-        'reset-password': 'Reset your password',
     }
 
     await transporter.sendMail({
@@ -156,24 +153,16 @@ type QuotaEmailTemplate = {
 type VerifyEmailTemplate = {
     templateName: 'verify-email'
     data: {
-        link: string
-    }
-}
-type ResetPasswordEmailTemplate = {
-    templateName: 'reset-password'
-    data: {
-        link: string
+        otp: string
     }
 }
 type EmailTemplate =
     | InvitationEmailTemplate
     | QuotaEmailTemplate
     | VerifyEmailTemplate
-    | ResetPasswordEmailTemplate
 
 type SendVerifyEmailParams = {
     platformId: string | null
     email: string
     otp: string
-    type: OtpType
 }
