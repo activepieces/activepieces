@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { map, Observable, shareReplay } from 'rxjs';
 import { environment } from '../environments/environment';
+import { ThirdPartyAuthnProvidersToShowMap } from '@activepieces/ee-shared';
 
 type FlagsMap = Record<string, boolean | string | object | undefined>;
 
@@ -27,6 +28,15 @@ export class FlagService {
     return this.getAllFlags().pipe(
       map((value) => {
         return value[flag] as string;
+      })
+    );
+  }
+  getThirdPartyProvidersMap() {
+    return this.getAllFlags().pipe(
+      map((res) => {
+        return res[
+          ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP
+        ] as ThirdPartyAuthnProvidersToShowMap;
       })
     );
   }

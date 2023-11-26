@@ -56,7 +56,7 @@ export class FirebaseSignUpComponent {
 			}),
 			map(() => void 0)
 		);
-		this.showAuthProviders$ = this.flagService.isFlagEnabled(ApFlagId.SHOW_AUTH_PROVIDERS)
+		this.showAuthProviders$ = of(false)
 		this.privacyPolicyUrl$ = this.flagService.getStringFlag(ApFlagId.PRIVACY_POLICY_URL)
 		this.termsOfServiceUrl$ = this.flagService.getStringFlag(ApFlagId.TERMS_OF_SERVICE_URL)
 

@@ -34,14 +34,13 @@ export class FirebaseSignInComponent {
 	saveReferreringUserId$!: Observable<void>;
 	constructor(private router: Router, private route: ActivatedRoute, private meta: Meta,
 		private snackBar: MatSnackBar,
-		private flagsService: FlagService,
 		private firebaseAuthService: FirebaseAuthService,
 		private authService: AuthenticationService) {
 		this.meta.addTag({
 			content: "Login to your account with Activepieces. Activepieces is an open source no-code business automation tool. Automate Slack, Notion, Airtable, Google Sheets and ChatGPT together.",
 			name: "description"
 		});
-		this.showAuthProvider$ = this.flagsService.isFlagEnabled(ApFlagId.SHOW_AUTH_PROVIDERS);
+		this.showAuthProvider$ = of(false)
 		this.loginForm = new FormGroup<LoginForm>({
 			email: new FormControl<string>('', { nonNullable: true, validators: [Validators.required, Validators.email] }),
 			password: new FormControl<string>('', { nonNullable: true, validators: [Validators.required] }),

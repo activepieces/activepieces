@@ -21,6 +21,8 @@ export const gitHubAuthnProvider: AuthnProvider = {
         const loginUrl = new URL('https://github.com/login/oauth/authorize')
         loginUrl.searchParams.set('client_id', getClientId())
         loginUrl.searchParams.set('redirect_uri', getRedirectUri())
+        loginUrl.searchParams.set('scope', 'user:email')
+        
         return loginUrl.href
     },
 
@@ -28,6 +30,9 @@ export const gitHubAuthnProvider: AuthnProvider = {
         const githubAccessToken = await getGitHubAccessToken(authorizationCode)
         const gitHubUserInfo = await getGitHubUserInfo(githubAccessToken)
         return authenticateUser(gitHubUserInfo)
+    },
+    isConfiguredByUser(): boolean {
+        return !!system.get(SystemProp.FEDERATED_AUTHN_GITHUB_REDIRECT_URI) && !!system.getOrThrow(SystemProp.FEDERATED_AUTHN_GITHUB_CLIENT_SECRET) && !!system.getOrThrow(SystemProp.FEDERATED_AUTHN_GITHUB_CLIENT_ID)
     },
 }
 
@@ -81,9 +86,35 @@ const getGitHubUserInfo = async (gitHubAccessToken: string): Promise<GitHubUserI
         })
     }
 
-    return response.json()
+    return {
+        ...(await response.json()),
+        email: await getGitHubUserEmail(gitHubAccessToken),
+    }
 }
 
+const getGitHubUserEmail = async (gitHubAccessToken: string): Promise<string> => {
+    const response = await fetch('https://api.github.com/user/emails', {
+        headers: {
+            Accept: 'application/vnd.github+json',
+            Authorization: `token ${gitHubAccessToken}`,
+            'X-GitHub-Api-Version': '2022-11-28',
+        },
+    })
+
+    if (!response.ok) {
+        throw new ActivepiecesError({
+            code: ErrorCode.INVALID_CREDENTIALS,
+            params: {},
+        })
+    }
+    const emails: { primary: boolean, email: string }[] = await response.json()
+
+    const email = emails.find(email => email.primary)?.email
+    if (!email) {
+        throw new Error('Can\'t find email for the github account')
+    }
+    return email
+}
 const authenticateUser = async (gitHubUserInfo: GitHubUserInfo): Promise<AuthenticationResponse> => {
     return authenticationService.federatedAuthn({
         email: gitHubUserInfo.email,
