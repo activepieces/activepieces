@@ -5,17 +5,14 @@ import { authenticationService } from '../../../../authentication/authentication
 import { jwtUtils, JwtSignAlgorithm } from '../../../../helper/jwt-utils'
 import { system } from '../../../../helper/system/system'
 import { SystemProp } from '../../../../helper/system/system-prop'
+import { flagService } from '../../../../flags/flag.service'
 
 function getClientId(): string {
     return system.getOrThrow(SystemProp.FEDERATED_AUTHN_GOOGLE_CLIENT_ID)
 }
-  
+
 function getClientSecret(): string {
     return system.getOrThrow(SystemProp.FEDERATED_AUTHN_GOOGLE_CLIENT_SECRET)
-}
-  
-function getRedirectUri(): string {
-    return system.getOrThrow(SystemProp.FEDERATED_AUTHN_GOOGLE_REDIRECT_URI)
 }
 
 const JWKS_URI = 'https://www.googleapis.com/oauth2/v3/certs'
@@ -30,7 +27,7 @@ export const googleAuthnProvider: AuthnProvider = {
     async getLoginUrl(): Promise<string> {
         const loginUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth')
         loginUrl.searchParams.set('client_id', getClientId())
-        loginUrl.searchParams.set('redirect_uri', getRedirectUri())
+        loginUrl.searchParams.set('redirect_uri', flagService.getThirdPartyRedirectUrl())
         loginUrl.searchParams.set('scope', 'email profile')
         loginUrl.searchParams.set('response_type', 'code')
 
@@ -57,7 +54,7 @@ const exchangeCodeForIdToken = async (code: string): Promise<string> => {
             code,
             client_id: getClientId(),
             client_secret: getClientSecret(),
-            redirect_uri: getRedirectUri(),
+            redirect_uri: flagService.getThirdPartyRedirectUrl(),
             grant_type: 'authorization_code',
         }),
     })
