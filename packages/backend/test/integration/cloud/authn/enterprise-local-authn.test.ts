@@ -5,6 +5,7 @@ import { databaseConnection } from '../../../../src/app/database/database-connec
 import { createMockOtp, createMockUser } from '../../../helpers/mocks'
 import { OtpType } from '@activepieces/ee-shared'
 import { UserStatus } from '@activepieces/shared'
+import dayjs from 'dayjs'
 
 let app: FastifyInstance | null = null
 
@@ -19,7 +20,7 @@ afterAll(async () => {
 })
 
 describe('Enterprise Local Authn API', () => {
-    describe('Verify Email Endpoint', () => {
+    describe.only('Verify Email Endpoint', () => {
         it('Verifies user', async () => {
             const mockUser = createMockUser({
                 status: UserStatus.CREATED,
@@ -70,6 +71,40 @@ describe('Enterprise Local Authn API', () => {
             const mockVerifyEmailRequest = {
                 userId: mockUser.id,
                 otp: incorrectOtp,
+            }
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/v1/authn/local/verify-email',
+                body: mockVerifyEmailRequest,
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            const responseBody = response?.json()
+            expect(responseBody?.code).toBe('INVALID_OTP')
+
+            const user = await databaseConnection.getRepository('user').findOneBy({ id: mockUser.id })
+            expect(user?.status).toBe(UserStatus.CREATED)
+        })
+
+        it.only('Fails if OTP has expired', async () => {
+            const mockUser = createMockUser({
+                status: UserStatus.CREATED,
+            })
+            await databaseConnection.getRepository('user').save(mockUser)
+
+            const mockOtp = createMockOtp({
+                userId: mockUser.id,
+                type: OtpType.EMAIL_VERIFICATION,
+                updated: dayjs().subtract(31, 'minutes').toISOString(),
+            })
+            await databaseConnection.getRepository('otp').save(mockOtp)
+
+            const mockVerifyEmailRequest = {
+                userId: mockUser.id,
+                otp: mockOtp.value,
             }
 
             // act
