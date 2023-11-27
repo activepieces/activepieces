@@ -59,6 +59,9 @@ import { EeComponentsModule } from '@activepieces/ee-components';
             data: {
               title: $localize`Sign up`,
             },
+            canActivate: [
+              showBasedOnEditionGuard([ApEdition.ENTERPRISE, ApEdition.CLOUD]),
+            ],
           },
           {
             path: 'verify-email',
@@ -66,7 +69,9 @@ import { EeComponentsModule } from '@activepieces/ee-components';
             data: {
               title: $localize`Verify email`,
             },
-            canActivate: [showBasedOnEditionGuard([ApEdition.ENTERPRISE])],
+            canActivate: [
+              showBasedOnEditionGuard([ApEdition.ENTERPRISE, ApEdition.CLOUD]),
+            ],
           },
           {
             path: 'reset-password',
@@ -74,7 +79,9 @@ import { EeComponentsModule } from '@activepieces/ee-components';
             data: {
               title: $localize`Reset password`,
             },
-            canActivate: [showBasedOnEditionGuard([ApEdition.ENTERPRISE])],
+            canActivate: [
+              showBasedOnEditionGuard([ApEdition.ENTERPRISE, ApEdition.CLOUD]),
+            ],
           },
           {
             path: 'forgot-password',
@@ -82,7 +89,9 @@ import { EeComponentsModule } from '@activepieces/ee-components';
             data: {
               title: $localize`Forgot password`,
             },
-            canActivate: [showBasedOnEditionGuard([ApEdition.ENTERPRISE])],
+            canActivate: [
+              showBasedOnEditionGuard([ApEdition.ENTERPRISE, ApEdition.CLOUD]),
+            ],
           },
         ],
       },
