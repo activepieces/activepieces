@@ -105,18 +105,6 @@ const assertSignUpIsEnabled = async (params: SignUpParams): Promise<void> => {
 
 const createUser = async (params: SignUpParams): Promise<User> => {
     try {
-        const userWithSameEmail = await userService.getbyEmail({ email: params.email })
-        if (userWithSameEmail && userWithSameEmail.status !== UserStatus.INVITED) {
-            throw new ActivepiecesError({
-                code: ErrorCode.EXISTING_USER,
-                params: {
-                    email: params.email,
-                    platformId: params.platformId,
-                },
-
-            })
-        }
-
         const newUser: NewUser = {
             email: params.email,
             status: params.status,
@@ -128,7 +116,7 @@ const createUser = async (params: SignUpParams): Promise<User> => {
             platformId: params.platformId,
         }
 
-        return userService.create(newUser)
+        return await userService.create(newUser)
     }
     catch (e: unknown) {
         if (e instanceof QueryFailedError) {
