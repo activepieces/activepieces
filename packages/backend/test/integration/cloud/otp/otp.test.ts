@@ -14,7 +14,7 @@ beforeAll(async () => {
 })
 
 beforeEach(() => {
-    emailService.sendVerifyEmail = jest.fn()
+    emailService.sendOtpEmail = jest.fn()
 })
 
 afterAll(async () => {
@@ -44,12 +44,13 @@ describe('OTP API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const responseBody = response?.json()
 
-            expect(Object.keys(responseBody)).toHaveLength(5)
+            expect(Object.keys(responseBody)).toHaveLength(6)
             expect(responseBody?.id).toHaveLength(21)
             expect(responseBody).toHaveProperty<string>('created')
             expect(responseBody).toHaveProperty<string>('updated')
             expect(responseBody?.type).toBe(mockCreateOtpRequest.type)
             expect(responseBody?.userId).toBe(mockUser.id)
+            expect(responseBody?.state).toBe('PENDING')
         })
 
         it('Sends OTP to user', async () => {
@@ -70,11 +71,14 @@ describe('OTP API', () => {
 
             // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(emailService.sendVerifyEmail).toBeCalledTimes(1)
-            expect(emailService.sendVerifyEmail).toHaveBeenCalledWith({
-                email: mockUser.email,
-                otp: expect.stringMatching(/^\d{6}$/),
+            expect(emailService.sendOtpEmail).toBeCalledTimes(1)
+            expect(emailService.sendOtpEmail).toHaveBeenCalledWith({
+                otp: expect.stringMatching(/^([0-9A-F]|-){36}$/i),
                 platformId: null,
+                type: OtpType.EMAIL_VERIFICATION,
+                user: expect.objectContaining({
+                    email: mockUser.email,
+                }),
             })
         })
 

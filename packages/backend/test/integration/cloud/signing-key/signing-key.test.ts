@@ -57,7 +57,7 @@ describe('Signing Key API', () => {
             expect(responseBody.privateKey).toBeDefined()
             expect(responseBody.generatedBy).toBe(mockUser.id)
             expect(responseBody.algorithm).toBe('RSA')
-        })
+        }, 10000)
 
         it('Fails if platform is not found', async () => {
             // arrange

@@ -83,6 +83,8 @@ import { AddOtpEntity1700396157624 } from './migration/postgres/1700396157624-ad
 import { AddPlatformDefaultLanguage1700406308445 } from './migration/postgres/1700406308445-AddPlatformDefaultLanguage'
 import { AddPlatformIdToPieceMetadata1700522340280 } from './migration/postgres/1700522340280-AddPlatformIdToPieceMetadata'
 import { MakeStripeCustomerIdNullable1700751925992 } from './migration/postgres/1700751925992-MakeStripeCustomerIdNullable'
+import { AddStateToOtp1701084418793 } from './migration/postgres/1701084418793-add-state-to-otp'
+import { AddPartialUniqueIndexForEmailAndPlatformIdIsNull1701096458822 } from './migration/common/1701096458822-add-partial-unique-index-for-email-and-platform-id-is-null'
 
 
 const getSslConfig = (): boolean | TlsOptions => {
@@ -148,6 +150,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         UpdateUserStatusRenameShadowToInvited1699818680567,
         AddPlatformIdToUser1699901161457,
         AddPlatformIdToPieceMetadata1700522340280,
+        AddPartialUniqueIndexForEmailAndPlatformIdIsNull1701096458822,
     ]
 
     const edition = getEdition()
@@ -183,6 +186,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddOtpEntity1700396157624,
                 AddPlatformDefaultLanguage1700406308445,
                 MakeStripeCustomerIdNullable1700751925992,
+                AddStateToOtp1701084418793,
             )
             break
         case ApEdition.ENTERPRISE:
@@ -206,6 +210,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 RemoveUnusedFieldsinBilling1700132368636,
                 AddDatasourcesLimit1695916063833,
                 MakeStripeCustomerIdNullable1700751925992,
+                AddStateToOtp1701084418793,
             )
             break
         case ApEdition.COMMUNITY:

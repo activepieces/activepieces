@@ -1,47 +1,37 @@
 import { QueryFailedError } from 'typeorm'
-import { AuthenticationResponse, SignInRequest, UserStatus, ActivepiecesError, ErrorCode, isNil, User } from '@activepieces/shared'
+import { AuthenticationResponse, UserStatus, ActivepiecesError, ErrorCode, isNil, User, ApFlagId } from '@activepieces/shared'
 import { userService } from '../../user/user-service'
 import { passwordHasher } from '../lib/password-hasher'
 import { authenticationServiceHooks as hooks } from './hooks'
 import { generateRandomPassword } from '../../helper/crypto'
+import { flagService } from '../../flags/flag.service'
+import { system } from '../../helper/system/system'
+import { SystemProp } from '../../helper/system/system-prop'
+
+const SIGN_UP_ENABLED = system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
 
 export const authenticationService = {
-    async signUp(request: { email: string, password: string, firstName: string, lastName: string, trackEvents: boolean, newsLetter: boolean, status: UserStatus }): Promise<AuthenticationResponse> {
-        try {
-            const user = await userService.create({
-                ...request,
-                platformId: null,
-            })
+    async signUp(params: SignUpParams): Promise<AuthenticationResponse> {
+        await assertSignUpIsEnabled(params)
+        const user = await createUser(params)
 
-            const { user: updatedUser, project, token } = await hooks.get().postSignUp({
-                user,
-            })
+        const authnResponse = await hooks.get().postSignUp({
+            user,
+            referringUserId: params.referringUserId,
+        })
 
-            const userWithoutPassword = removePasswordPropFromUser(updatedUser)
+        const userWithoutPassword = removePasswordPropFromUser(authnResponse.user)
 
-            return {
-                ...userWithoutPassword,
-                token,
-                projectId: project.id,
-            }
-        }
-        catch (e: unknown) {
-            if (e instanceof QueryFailedError) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.EXISTING_USER,
-                    params: {
-                        email: request.email,
-                    },
-                })
-            }
-
-            throw e
+        return {
+            ...userWithoutPassword,
+            token: authnResponse.token,
+            projectId: authnResponse.project.id,
         }
     },
 
-    async signIn(request: SignInRequest): Promise<AuthenticationResponse> {
+    async signIn(request: SignInParams): Promise<AuthenticationResponse> {
         const user = await userService.getByPlatformAndEmail({
-            platformId: null,
+            platformId: request.platformId,
             email: request.email,
         })
 
@@ -100,8 +90,69 @@ export const authenticationService = {
     },
 }
 
+const assertSignUpIsEnabled = async (params: SignUpParams): Promise<void> => {
+    const userCreated = await flagService.getOne(ApFlagId.USER_CREATED)
+
+    if (userCreated && !SIGN_UP_ENABLED) {
+        throw new ActivepiecesError({
+            code: ErrorCode.SIGN_UP_DISABLED,
+            params: {},
+        })
+    }
+
+    await enablePlatformSignUpForInvitedUsersOnly(params)
+}
+
+const createUser = async (params: SignUpParams): Promise<User> => {
+    try {
+        const newUser: NewUser = {
+            email: params.email,
+            status: params.status,
+            firstName: params.firstName,
+            lastName: params.lastName,
+            trackEvents: params.trackEvents,
+            newsLetter: params.newsLetter,
+            password: params.password,
+            platformId: params.platformId,
+        }
+
+        return await userService.create(newUser)
+    }
+    catch (e: unknown) {
+        if (e instanceof QueryFailedError) {
+            throw new ActivepiecesError({
+                code: ErrorCode.EXISTING_USER,
+                params: {
+                    email: params.email,
+                    platformId: params.platformId,
+                },
+            })
+        }
+
+        throw e
+    }
+}
+
+const enablePlatformSignUpForInvitedUsersOnly = async (params: SignUpParams): Promise<void> => {
+    if (isNil(params.platformId)) {
+        return
+    }
+
+    const invitedUser = await userService.getByPlatformAndEmail({
+        platformId: params.platformId,
+        email: params.email,
+    })
+
+    if (isNil(invitedUser) || invitedUser.status !== UserStatus.INVITED) {
+        throw new ActivepiecesError({
+            code: ErrorCode.PLATFORM_SIGN_UP_ENABLED_FOR_INVITED_USERS_ONLY,
+            params: {},
+        })
+    }
+}
+
 const assertUserIsAllowedToSignIn: (user: User | null) => asserts user is User = (user) => {
-    if (isNil(user) || user.status === UserStatus.INVITED) {
+    if (isNil(user) || user.status === UserStatus.CREATED || user.status === UserStatus.INVITED) {
         throw new ActivepiecesError({
             code: ErrorCode.INVALID_CREDENTIALS,
             params: {
@@ -125,6 +176,26 @@ const assertPasswordMatches = async ({ requestPassword, userPassword }: AssertPa
 const removePasswordPropFromUser = (user: User): Omit<User, 'password'> => {
     const { password: _, ...filteredUser } = user
     return filteredUser
+}
+
+type NewUser = Omit<User, 'id' | 'created' | 'updated'>
+
+type SignUpParams = {
+    email: string
+    password: string
+    firstName: string
+    lastName: string
+    trackEvents: boolean
+    newsLetter: boolean
+    status: UserStatus
+    platformId: string | null
+    referringUserId?: string
+}
+
+type SignInParams = {
+    email: string
+    password: string
+    platformId: string | null
 }
 
 type AssertPasswordsMatchParams = {

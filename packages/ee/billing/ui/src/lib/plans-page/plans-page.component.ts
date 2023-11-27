@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-
 import { Observable, map, shareReplay } from 'rxjs';
 import {
   BillingResponse,
@@ -16,7 +15,6 @@ import { TelemetryEventName } from '@activepieces/shared';
 import utc from 'dayjs/plugin/utc';
 import dayjs from 'dayjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
-
 import { loadPlansObs, openPortal } from './utils';
 
 dayjs.extend(utc);

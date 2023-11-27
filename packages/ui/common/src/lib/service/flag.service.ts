@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { map, Observable, shareReplay } from 'rxjs';
 import { environment } from '../environments/environment';
+import { ThirdPartyAuthnProvidersToShowMap } from '@activepieces/ee-shared';
 
 type FlagsMap = Record<string, boolean | string | object | undefined>;
 
@@ -30,6 +31,15 @@ export class FlagService {
       })
     );
   }
+  getThirdPartyProvidersMap() {
+    return this.getAllFlags().pipe(
+      map((res) => {
+        return res[
+          ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP
+        ] as ThirdPartyAuthnProvidersToShowMap;
+      })
+    );
+  }
 
   isFirstSignIn() {
     return this.getAllFlags().pipe(
@@ -43,7 +53,7 @@ export class FlagService {
     return this.getAllFlags().pipe(
       map((flags) => {
         const firstUser = flags['USER_CREATED'] as boolean;
-        if (!firstUser) {
+        if (!firstUser && flags['EDITION'] === ApEdition.COMMUNITY) {
           return true;
         }
         return flags['SIGN_UP_ENABLED'] as boolean;

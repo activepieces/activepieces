@@ -51,11 +51,14 @@ type FlowImported = {
 }
 
 type UpgradeClicked = {
-    limit?: 'team' | 'connections'
+    limitType?: 'team' | 'connections'
+    limit: number
 }
 
 type UpgradePopup = {
-    limit?: 'team' | 'connections'
+    limitType?: 'team' | 'connections'
+    limit: number
+    
 }
 
 type ReferralLinkCopied = {
@@ -71,10 +74,14 @@ type FlowShared = {
     projectId: ProjectId
 }
 
+type OpenedFromDasahboard = {
+    location: 'sidenav' | 'tasks-progress'
+}
 export enum TelemetryEventName {
     SIGNED_UP = 'signed.up',
     QUOTA_ALERT = 'quota.alert',
     UPGRADE_CLICKED = 'upgrade.clicked',
+    OPENED_PRICING_FROM_DASHBOARD = 'pricing.viewed',
     UPGRADE_POPUP = 'upgrade.popup',
     CHATBOT_CREATED = 'chatbot.created',
     FLOW_CREATED = 'flow.created',
@@ -115,3 +122,4 @@ export type TelemetryEvent =
     | BaseTelemetryEvent<TelemetryEventName.DEMO_IMPORTED, Record<string, never>>
     | BaseTelemetryEvent<TelemetryEventName.CHATBOT_CREATED, ChatbotCreated>
     | BaseTelemetryEvent<TelemetryEventName.FEATURED_TAB_VIEWED, FeaturedTabViewed>
+    | BaseTelemetryEvent<TelemetryEventName.OPENED_PRICING_FROM_DASHBOARD, OpenedFromDasahboard>

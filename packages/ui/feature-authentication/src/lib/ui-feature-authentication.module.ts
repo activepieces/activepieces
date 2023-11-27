@@ -4,7 +4,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { SignInComponent } from './pages/sign-in/sign-in.component';
 import { AuthLayoutComponent } from './auth.component';
-import { UiCommonModule } from '@activepieces/ui/common';
+import {
+  UiCommonModule,
+  showBasedOnEditionGuard,
+} from '@activepieces/ui/common';
 import { SignUpComponent } from './pages/sign-up/sign-up.component';
 import { IsFirstSignInResolver } from './resolvers/is-first-sign-in.resolver';
 import { AngularSvgIconModule } from 'angular-svg-icon';
@@ -15,6 +18,13 @@ import {
   MAT_FORM_FIELD_DEFAULT_OPTIONS,
 } from '@angular/material/form-field';
 import { AuthenticationComponent } from './pages/authenticate/authenticate.component';
+import { SendEmailForAuthActionComponent } from './components/send-email-for-auth-action/send-email-for-auth-action.component';
+import { ApEdition } from '@activepieces/shared';
+import { VerifyEmailPostSignUpComponent } from './pages/auth-actions/verify-email-post-sign-up/verify-email-post-sign-up.component';
+import { ResetPasswordComponent } from './pages/auth-actions/reset-password/reset-password.component';
+import { ForgotPasswordComponent } from './pages/forgot-password/forgot-password.component';
+import { EeComponentsModule } from '@activepieces/ee-components';
+import { RedirectToDashboardIfLoggedIn } from './guards/redirect-to-dashboard-if-logged-in.guard';
 
 @NgModule({
   imports: [
@@ -26,9 +36,9 @@ import { AuthenticationComponent } from './pages/authenticate/authenticate.compo
     MatMenuModule,
     MatCardModule,
     AngularSvgIconModule,
+    EeComponentsModule,
     RouterModule.forChild([
       {
-        title: 'Activepieces',
         path: 'authenticate',
         component: AuthenticationComponent,
       },
@@ -37,15 +47,52 @@ import { AuthenticationComponent } from './pages/authenticate/authenticate.compo
         component: AuthLayoutComponent,
         children: [
           {
-            title: 'Activepieces',
             path: 'sign-in',
             component: SignInComponent,
             resolve: { firstSignIn: IsFirstSignInResolver },
+            data: {
+              title: $localize`Sign in`,
+            },
+            canActivate: [RedirectToDashboardIfLoggedIn],
           },
           {
-            title: 'Activepieces',
             path: 'sign-up',
             component: SignUpComponent,
+            data: {
+              title: $localize`Sign up`,
+            },
+            canActivate: [RedirectToDashboardIfLoggedIn],
+          },
+          {
+            path: 'verify-email',
+            component: VerifyEmailPostSignUpComponent,
+            data: {
+              title: $localize`Verify email`,
+            },
+            canActivate: [
+              showBasedOnEditionGuard([ApEdition.ENTERPRISE, ApEdition.CLOUD]),
+            ],
+          },
+          {
+            path: 'reset-password',
+            component: ResetPasswordComponent,
+            data: {
+              title: $localize`Reset password`,
+            },
+            canActivate: [
+              showBasedOnEditionGuard([ApEdition.ENTERPRISE, ApEdition.CLOUD]),
+            ],
+          },
+          {
+            path: 'forgot-password',
+            component: ForgotPasswordComponent,
+            data: {
+              title: $localize`Forgot password`,
+            },
+            canActivate: [
+              showBasedOnEditionGuard([ApEdition.ENTERPRISE, ApEdition.CLOUD]),
+              RedirectToDashboardIfLoggedIn,
+            ],
           },
         ],
       },
@@ -62,6 +109,10 @@ import { AuthenticationComponent } from './pages/authenticate/authenticate.compo
     SignInComponent,
     SignUpComponent,
     AuthenticationComponent,
+    SendEmailForAuthActionComponent,
+    VerifyEmailPostSignUpComponent,
+    ResetPasswordComponent,
+    ForgotPasswordComponent,
   ],
 })
 export class UiFeatureAuthenticationModule {}
