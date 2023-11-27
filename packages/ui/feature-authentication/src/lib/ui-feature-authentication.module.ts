@@ -24,6 +24,7 @@ import { VerifyEmailPostSignUpComponent } from './pages/auth-actions/verify-emai
 import { ResetPasswordComponent } from './pages/auth-actions/reset-password/reset-password.component';
 import { ForgotPasswordComponent } from './pages/forgot-password/forgot-password.component';
 import { EeComponentsModule } from '@activepieces/ee-components';
+import { RedirectToDashboardIfLoggedIn } from './guards/redirect-to-dashboard-if-logged-in.guard';
 
 @NgModule({
   imports: [
@@ -52,6 +53,7 @@ import { EeComponentsModule } from '@activepieces/ee-components';
             data: {
               title: $localize`Sign in`,
             },
+            canActivate: [RedirectToDashboardIfLoggedIn],
           },
           {
             path: 'sign-up',
@@ -59,9 +61,7 @@ import { EeComponentsModule } from '@activepieces/ee-components';
             data: {
               title: $localize`Sign up`,
             },
-            canActivate: [
-              showBasedOnEditionGuard([ApEdition.ENTERPRISE, ApEdition.CLOUD]),
-            ],
+            canActivate: [RedirectToDashboardIfLoggedIn],
           },
           {
             path: 'verify-email',
@@ -91,6 +91,7 @@ import { EeComponentsModule } from '@activepieces/ee-components';
             },
             canActivate: [
               showBasedOnEditionGuard([ApEdition.ENTERPRISE, ApEdition.CLOUD]),
+              RedirectToDashboardIfLoggedIn,
             ],
           },
         ],
