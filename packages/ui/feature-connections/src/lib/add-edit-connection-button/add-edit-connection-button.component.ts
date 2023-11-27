@@ -110,7 +110,7 @@ export class AddEditConnectionButtonComponent {
     value: string;
   }> = new EventEmitter();
   updateOrAddConnectionDialogClosed$: Observable<void>;
-  checkConnectionLimit$: Observable<{ limit: number; exceeded: boolean }>;
+  checkConnectionLimitThenOpenDialog$: Observable<void>;
   managedOAuth2Check$: Observable<void>;
   updateConnectionTap = tap((connection: AppConnection | null) => {
     if (connection) {
@@ -137,22 +137,24 @@ export class AddEditConnectionButtonComponent {
   }
 
   private checkThenOpenConnection() {
-    this.getCurrentProjectAndConnectionLimit$().pipe(
-      tap((res) => {
-        if (res.limit.exceeded) {
-          const data: UpgradeDialogData = {
-            limit: res.limit.limit,
-            limitType: 'connections',
-            projectType: res.project.type,
-          };
-          this.dialogService.open(UpgradeDialogComponent, {
-            data,
-          });
-        } else {
-          this.openConnectionDialogAcordingToConnectionType();
-        }
-      })
-    );
+    this.checkConnectionLimitThenOpenDialog$ =
+      this.getCurrentProjectAndConnectionLimit$().pipe(
+        tap((res) => {
+          if (res.limit.exceeded) {
+            const data: UpgradeDialogData = {
+              limit: res.limit.limit,
+              limitType: 'connections',
+              projectType: res.project.type,
+            };
+            this.dialogService.open(UpgradeDialogComponent, {
+              data,
+            });
+          } else {
+            this.openConnectionDialogAcordingToConnectionType();
+          }
+        }),
+        map(() => void 0)
+      );
   }
 
   private openConnectionDialogAcordingToConnectionType() {
