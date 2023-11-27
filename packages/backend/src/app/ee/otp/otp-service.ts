@@ -34,7 +34,6 @@ export const otpService = {
             userId: user.id,
             email,
             otp: newOtp.value,
-            userId: user.id,
             firstName: user.firstName,
             type: newOtp.type,
         })
