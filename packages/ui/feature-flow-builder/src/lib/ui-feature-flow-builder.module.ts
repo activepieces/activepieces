@@ -7,11 +7,7 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { CodemirrorModule } from '@ctrl/ngx-codemirror';
 import { AngularSvgIconModule } from 'angular-svg-icon';
-import {
-  ProjectEffects,
-  UiCommonModule,
-  projectReducer,
-} from '@activepieces/ui/common';
+import { UiCommonModule } from '@activepieces/ui/common';
 import { UiFeatureBuilderHeaderModule } from '@activepieces/ui/feature-builder-header';
 import { UiFeatureBuilderLeftSidebarModule } from '@activepieces/ui/feature-builder-left-sidebar';
 import { UiFeatureBuilderStoreModule } from '@activepieces/ui/feature-builder-store';
@@ -21,8 +17,6 @@ import { UiFeatureBuilderRightSidebarModule } from '@activepieces/ui/feature-bui
 import { PortalModule } from '@angular/cdk/portal';
 import { UiFeatureTemplatesModule } from '@activepieces/ui/feature-templates';
 import { TimeagoModule } from 'ngx-timeago';
-import { EffectsModule } from '@ngrx/effects';
-import { StoreModule } from '@ngrx/store';
 
 @NgModule({
   imports: [
@@ -33,14 +27,10 @@ import { StoreModule } from '@ngrx/store';
     DragDropModule,
     AngularSvgIconModule.forRoot(),
     TimeagoModule.forRoot(),
-    EffectsModule.forFeature([ProjectEffects]),
-    StoreModule.forFeature('commonState', {
-      projectsState: projectReducer,
-    }),
     MatExpansionModule,
+    UiFeatureBuilderStoreModule,
     UiFeatureBuilderLeftSidebarModule,
     UiFeatureBuilderHeaderModule,
-    UiFeatureBuilderStoreModule,
     UiFeatureBuilderCanvasModule,
     UiFeatureBuilderFormControlsModule,
     UiFeatureBuilderRightSidebarModule,

@@ -37,6 +37,7 @@ import { EeComponentsModule } from '@activepieces/ee-components';
     AngularSvgIconModule,
     EeComponentsModule,
     RouterModule.forChild([
+      { path: '', pathMatch: 'full', redirectTo: '/sign-in' },
       {
         path: 'authenticate',
         component: AuthenticationComponent,

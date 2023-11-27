@@ -182,7 +182,6 @@ export class AppComponent implements OnInit {
           this.store.dispatch(CommonActions.clearState());
           return;
         }
-
         this.store.dispatch(
           CommonActions.loadProjects({
             user: user,
