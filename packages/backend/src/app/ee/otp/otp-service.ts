@@ -49,7 +49,7 @@ export const otpService = {
         })
 
         const now = dayjs()
-        const otpIsNotExpired = dayjs(otp.created).add(THIRTY_MINUTES).isBefore(now)
+        const otpIsNotExpired = now.diff(otp.updated, 'milliseconds') < THIRTY_MINUTES
         const otpMatches = otp.value === value
 
         return otpIsNotExpired && otpMatches
