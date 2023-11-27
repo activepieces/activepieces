@@ -10,7 +10,7 @@ import { defaultTheme } from '../../../flags/theme'
 import { projectService } from '../../../project/project-service'
 import { system } from '../../../helper/system/system'
 import { SystemProp } from '../../../helper/system/system-prop'
-import { Platform } from '@activepieces/ee-shared'
+import { OtpType, Platform } from '@activepieces/ee-shared'
 import { customDomainService } from '../../custom-domains/custom-domain.service'
 
 export const emailService = {
@@ -61,22 +61,51 @@ export const emailService = {
             },
         })
     },
+    async sendOtpEmail({ platformId, email, otp, userId, firstName, type }: SendOtpEmailParams): Promise<void> {
+        const edition = getEdition()
+        if (![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
+            return
+        }
+        const frontendPath = {
+            [OtpType.EMAIL_VERIFICATION]: 'verify-email',
+            [OtpType.PASSWORD_RESET]: 'reset-password',
+        }
 
-    async sendVerifyEmail({ platformId, email, otp }: SendVerifyEmailParams): Promise<void> {
+        const setupLink = await constructUrlOnFrontend({
+            edition,
+            platformId,
+            path: frontendPath[type] + `?otpcode=${otp}&userId=${userId}`,
+        })
+
+        const otpToTemplate: Record<string, EmailTemplate> = {
+            [OtpType.EMAIL_VERIFICATION]: {
+                templateName: 'verify-email',
+                data: {
+                    setupLink,
+                },
+            },
+            [OtpType.PASSWORD_RESET]: {
+                templateName: 'reset-password',
+                data: {
+                    setupLink,
+                    firstName,
+                },
+            },
+        }
+
         await sendEmail({
             email,
             platformId: platformId ?? undefined,
-            template: {
-                templateName: 'verify-email',
-                data: {
-                    otp,
-                },
-            },
+            template: otpToTemplate[type],
         })
     },
 }
 
-async function getFrontendDomain(edition: ApEdition, platformId: string | undefined): Promise<string> {
+async function constructUrlOnFrontend({ edition, platformId, path }: { edition: ApEdition, platformId: string | undefined | null, path: string }): Promise<string> {
+    const domain = await getFrontendDomain(edition, platformId)
+    return `${domain}${path}`
+}
+async function getFrontendDomain(edition: ApEdition, platformId: string | undefined | null): Promise<string> {
     let domain = system.get(SystemProp.FRONTEND_URL)
     if (edition === ApEdition.CLOUD && platformId) {
         const customDomain = await customDomainService.getOneByPlatform({
@@ -107,6 +136,7 @@ async function sendEmail({ platformId, email, template }: { template: EmailTempl
         'quota-90': '[URGENT] 90% of your Activepieces tasks are consumed',
         'quota-100': '[URGENT] 100% of your Activepieces tasks are consumed',
         'verify-email': 'Verify your email address',
+        'reset-password': 'Reset your password',
     }
 
     await transporter.sendMail({
@@ -153,16 +183,29 @@ type QuotaEmailTemplate = {
 type VerifyEmailTemplate = {
     templateName: 'verify-email'
     data: {
-        otp: string
+        setupLink: string
+    }
+}
+
+type ResetPasswordTemplate = {
+    templateName: 'reset-password'
+    data: {
+        setupLink: string
+        firstName: string
     }
 }
 type EmailTemplate =
     | InvitationEmailTemplate
     | QuotaEmailTemplate
     | VerifyEmailTemplate
+    | ResetPasswordTemplate
 
-type SendVerifyEmailParams = {
-    platformId: string | null
+
+type SendOtpEmailParams = {
+    type: OtpType
+    platformId: string | undefined | null
     email: string
     otp: string
+    firstName: string
+    userId: string
 }
