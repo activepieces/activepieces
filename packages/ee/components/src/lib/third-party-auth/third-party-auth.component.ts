@@ -35,28 +35,34 @@ export class ThirdPartyAuthComponent {
       .getThirdPartyLoginUrl(provider)
       .pipe(
         switchMap((response) => {
-          return this.oauth2Service
-            .openPopupWithLoginUrl(response.loginUrl, environment.redirectUrl)
-            .pipe(
-              switchMap((popupResponse) => {
-                return this.authenticationService
-                  .claimThirdPartyRequest({
-                    providerName: provider,
-                    code: popupResponse.code,
-                  })
-                  .pipe(
-                    tap((response) => {
-                      if (popupResponse) {
-                        this.authenticationService.saveUser(response);
-                        this.redirectService.redirect();
-                      }
-                    }),
-                    map(() => {
-                      return void 0;
+          return (
+            this.oauth2Service
+              // TODO FIX
+              .openPopupWithLoginUrl(
+                response.loginUrl,
+                'https://cloud.activepieces.com/redirect'
+              )
+              .pipe(
+                switchMap((popupResponse) => {
+                  return this.authenticationService
+                    .claimThirdPartyRequest({
+                      providerName: provider,
+                      code: popupResponse.code,
                     })
-                  );
-              })
-            );
+                    .pipe(
+                      tap((response) => {
+                        if (popupResponse) {
+                          this.authenticationService.saveUser(response);
+                          this.redirectService.redirect();
+                        }
+                      }),
+                      map(() => {
+                        return void 0;
+                      })
+                    );
+                })
+              )
+          );
         })
       );
   }
