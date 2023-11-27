@@ -3,10 +3,11 @@ import { Location } from '@angular/common';
 import { isNil } from '@activepieces/shared';
 import { LocalesEnum } from '@activepieces/ee-shared';
 import { localesMap } from '../utils/locales';
-
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../environments/environment';
 @Injectable({ providedIn: 'root' })
 export class LocalesService {
-  constructor(private location: Location) {}
+  constructor(private location: Location, private http: HttpClient) { }
   readonly currentLanguageKeyInLocalStorage = 'currentLanguage';
   public readonly defaultLocale = LocalesEnum.ENGLISH;
   setCurrentLocale(locale: LocalesEnum) {
@@ -47,5 +48,18 @@ export class LocalesService {
     } else {
       window.location.href = `/${locale}${currentUrl}`;
     }
+  }
+
+  updatePiecesLanguage(locale: LocalesEnum) {
+    this.http
+      .post<void>(`${environment.apiUrl}/language`, { language: locale })
+      .subscribe({
+        next: () => {
+          console.log(`Language successfully updated : ${locale}`);
+        },
+        error: (error: any) => {
+          console.error(`Language update error :`, error);
+        },
+      });
   }
 }
