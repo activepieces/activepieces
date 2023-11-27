@@ -48,8 +48,10 @@ export class TasksProgressComponent {
 
   openPricingPlans() {
     this.telemetryService.capture({
-      name: TelemetryEventName.UPGRADE_CLICKED,
-      payload: {},
+      name: TelemetryEventName.OPENED_PRICING_FROM_DASHBOARD,
+      payload: {
+        location: 'tasks-progress',
+      },
     });
     this.router.navigate(['/plans']);
   }
