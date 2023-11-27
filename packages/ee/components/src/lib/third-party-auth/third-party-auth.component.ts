@@ -3,7 +3,6 @@ import {
   AuthenticationService,
   FlagService,
   RedirectService,
-  environment,
 } from '@activepieces/ui/common';
 import {
   ThirdPartyAuthnProviderEnum,
