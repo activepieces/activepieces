@@ -88,18 +88,21 @@ describe('Authentication API', () => {
             })
         })
 
-        it('Uses platformId from custom domain', async () => {
+        it('Allows invited users to continue platform sign up', async () => {
             // arrange
-            const mockPlatformOwner = createMockUser()
-            await databaseConnection.getRepository('user').save(mockPlatformOwner)
+            const mockPlatformId = faker.string.nanoid(21)
 
-            const mockPlatform = createMockPlatform({ ownerId: mockPlatformOwner.id })
+            const mockPlatformOwner = createMockUser({ platformId: mockPlatformId })
+            const mockInvitedUser = createMockUser({ platformId: mockPlatformId, status: UserStatus.INVITED })
+            await databaseConnection.getRepository('user').save([mockPlatformOwner, mockInvitedUser])
+
+            const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockPlatformOwner.id })
             await databaseConnection.getRepository('platform').save(mockPlatform)
 
             const mockCustomDomain = createMockCustomDomain({ platformId: mockPlatform.id })
             await databaseConnection.getRepository('custom_domain').save(mockCustomDomain)
 
-            const mockSignUpRequest = createMockSignUpRequest()
+            const mockSignUpRequest = createMockSignUpRequest({ email: mockInvitedUser.email })
 
             // act
             const response = await app?.inject({
@@ -116,6 +119,7 @@ describe('Authentication API', () => {
             const responseBody = response?.json()
 
             expect(responseBody?.platformId).toBe(mockPlatform.id)
+            expect(responseBody?.status).toBe('VERIFIED')
         })
 
         it('Adds tasks for referrals', async () => {
@@ -197,6 +201,36 @@ describe('Authentication API', () => {
             expect(project?.displayName).toBe(`${responseBody.firstName}'s Project`)
             expect(project?.type).toBe(ProjectType.STANDALONE)
             expect(project?.platformId).toBeNull()
+        })
+
+        it('Disables platform sign ups for non invited users', async () => {
+            // arrange
+            const mockPlatformOwner = createMockUser()
+            await databaseConnection.getRepository('user').save(mockPlatformOwner)
+
+            const mockPlatform = createMockPlatform({ ownerId: mockPlatformOwner.id })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
+
+            const mockCustomDomain = createMockCustomDomain({ platformId: mockPlatform.id })
+            await databaseConnection.getRepository('custom_domain').save(mockCustomDomain)
+
+            const mockSignUpRequest = createMockSignUpRequest()
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/v1/authentication/sign-up',
+                headers: {
+                    Host: mockCustomDomain.domain,
+                },
+                body: mockSignUpRequest,
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            const responseBody = response?.json()
+
+            expect(responseBody?.code).toBe('PLATFORM_SIGN_UP_ENABLED_FOR_INVITED_USERS_ONLY')
         })
     })
 

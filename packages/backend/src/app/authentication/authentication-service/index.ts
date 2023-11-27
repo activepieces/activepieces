@@ -8,10 +8,11 @@ import { flagService } from '../../flags/flag.service'
 import { system } from '../../helper/system/system'
 import { SystemProp } from '../../helper/system/system-prop'
 
+const SIGN_UP_ENABLED = system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
+
 export const authenticationService = {
     async signUp(params: SignUpParams): Promise<AuthenticationResponse> {
-        await assertSignUpIsEnabled()
-
+        await assertSignUpIsEnabled(params)
         const user = await createUser(params)
 
         const authnResponse = await hooks.get().postSignUp({
@@ -89,22 +90,23 @@ export const authenticationService = {
     },
 }
 
-const assertSignUpIsEnabled = async (): Promise<void> => {
+const assertSignUpIsEnabled = async (params: SignUpParams): Promise<void> => {
     const userCreated = await flagService.getOne(ApFlagId.USER_CREATED)
-    const signUpEnabled = system.getBoolean(SystemProp.SIGN_UP_ENABLED) ?? false
 
-    if (userCreated && !signUpEnabled) {
+    if (userCreated && !SIGN_UP_ENABLED) {
         throw new ActivepiecesError({
             code: ErrorCode.SIGN_UP_DISABLED,
             params: {},
         })
     }
+
+    await enablePlatformSignUpForInvitedUsersOnly(params)
 }
 
 const createUser = async (params: SignUpParams): Promise<User> => {
     try {
         const userWithSameEmail = await userService.getbyEmail({ email: params.email })
-        if (userWithSameEmail) {
+        if (userWithSameEmail && userWithSameEmail.status !== UserStatus.INVITED) {
             throw new ActivepiecesError({
                 code: ErrorCode.EXISTING_USER,
                 params: {
@@ -140,6 +142,24 @@ const createUser = async (params: SignUpParams): Promise<User> => {
         }
 
         throw e
+    }
+}
+
+const enablePlatformSignUpForInvitedUsersOnly = async (params: SignUpParams): Promise<void> => {
+    if (isNil(params.platformId)) {
+        return
+    }
+
+    const invitedUser = await userService.getByPlatformAndEmail({
+        platformId: params.platformId,
+        email: params.email,
+    })
+
+    if (isNil(invitedUser) || invitedUser.status !== UserStatus.INVITED) {
+        throw new ActivepiecesError({
+            code: ErrorCode.PLATFORM_SIGN_UP_ENABLED_FOR_INVITED_USERS_ONLY,
+            params: {},
+        })
     }
 }
 
