@@ -3,7 +3,7 @@ import { StatusCodes } from 'http-status-codes'
 import { setupApp } from '../../../../src/app/app'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { createMockOtp, createMockUser } from '../../../helpers/mocks'
-import { OtpType } from '@activepieces/ee-shared'
+import { OtpState, OtpType } from '@activepieces/ee-shared'
 import { UserStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 
@@ -20,7 +20,7 @@ afterAll(async () => {
 })
 
 describe('Enterprise Local Authn API', () => {
-    describe.only('Verify Email Endpoint', () => {
+    describe('Verify Email Endpoint', () => {
         it('Verifies user', async () => {
             const mockUser = createMockUser({
                 status: UserStatus.CREATED,
@@ -30,6 +30,7 @@ describe('Enterprise Local Authn API', () => {
             const mockOtp = createMockOtp({
                 userId: mockUser.id,
                 type: OtpType.EMAIL_VERIFICATION,
+                state: OtpState.PENDING,
             })
             await databaseConnection.getRepository('otp').save(mockOtp)
 
@@ -51,6 +52,9 @@ describe('Enterprise Local Authn API', () => {
 
             const user = await databaseConnection.getRepository('user').findOneBy({ id: mockUser.id })
             expect(user?.status).toBe(UserStatus.VERIFIED)
+
+            const otp = await databaseConnection.getRepository('otp').findOneBy({ id: mockOtp.id })
+            expect(otp?.state).toBe(OtpState.CONFIRMED)
         })
 
         it('Fails if OTP is wrong', async () => {
@@ -64,6 +68,7 @@ describe('Enterprise Local Authn API', () => {
                 userId: mockUser.id,
                 type: OtpType.EMAIL_VERIFICATION,
                 value: correctOtp,
+                state: OtpState.PENDING,
             })
             await databaseConnection.getRepository('otp').save(mockOtp)
 
@@ -89,7 +94,7 @@ describe('Enterprise Local Authn API', () => {
             expect(user?.status).toBe(UserStatus.CREATED)
         })
 
-        it.only('Fails if OTP has expired', async () => {
+        it('Fails if OTP has expired', async () => {
             const mockUser = createMockUser({
                 status: UserStatus.CREATED,
             })
@@ -99,6 +104,41 @@ describe('Enterprise Local Authn API', () => {
                 userId: mockUser.id,
                 type: OtpType.EMAIL_VERIFICATION,
                 updated: dayjs().subtract(31, 'minutes').toISOString(),
+                state: OtpState.PENDING,
+            })
+            await databaseConnection.getRepository('otp').save(mockOtp)
+
+            const mockVerifyEmailRequest = {
+                userId: mockUser.id,
+                otp: mockOtp.value,
+            }
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/v1/authn/local/verify-email',
+                body: mockVerifyEmailRequest,
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            const responseBody = response?.json()
+            expect(responseBody?.code).toBe('INVALID_OTP')
+
+            const user = await databaseConnection.getRepository('user').findOneBy({ id: mockUser.id })
+            expect(user?.status).toBe(UserStatus.CREATED)
+        })
+
+        it('Fails if OTP was confirmed before', async () => {
+            const mockUser = createMockUser({
+                status: UserStatus.CREATED,
+            })
+            await databaseConnection.getRepository('user').save(mockUser)
+
+            const mockOtp = createMockOtp({
+                userId: mockUser.id,
+                type: OtpType.EMAIL_VERIFICATION,
+                state: OtpState.CONFIRMED,
             })
             await databaseConnection.getRepository('otp').save(mockOtp)
 

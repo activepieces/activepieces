@@ -1,4 +1,4 @@
-import { OtpModel, OtpType, PlatformId } from '@activepieces/ee-shared'
+import { OtpModel, OtpState, OtpType, PlatformId } from '@activepieces/ee-shared'
 import { ActivepiecesError, ErrorCode, User, UserId, apId, isNil } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { OtpEntity } from './otp-entity'
@@ -24,6 +24,7 @@ export const otpService = {
             type,
             userId: user.id,
             value: await otpGenerator.generate(),
+            state: OtpState.PENDING,
         }
 
         const upsertResult = await repo.upsert(newOtp, ['userId', 'type'])
@@ -49,10 +50,19 @@ export const otpService = {
         })
 
         const now = dayjs()
+        const otpIsPending = otp.state === OtpState.PENDING
         const otpIsNotExpired = now.diff(otp.updated, 'milliseconds') < THIRTY_MINUTES
         const otpMatches = otp.value === value
 
-        return otpIsNotExpired && otpMatches
+        const verdict = otpIsPending && otpIsNotExpired && otpMatches
+
+        if (verdict) {
+            await repo.update(otp.id, {
+                state: OtpState.CONFIRMED,
+            })
+        }
+
+        return verdict
     },
 }
 

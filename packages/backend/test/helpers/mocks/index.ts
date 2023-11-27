@@ -1,4 +1,4 @@
-import { KeyAlgorithm, SigningKey, Platform, OAuthApp, FilteredPieceBehavior, CustomDomain, CustomDomainStatus, OtpModel, OtpType } from '@activepieces/ee-shared'
+import { KeyAlgorithm, SigningKey, Platform, OAuthApp, FilteredPieceBehavior, CustomDomain, CustomDomainStatus, OtpModel, OtpType, OtpState } from '@activepieces/ee-shared'
 import { UserStatus, User, apId, Project, NotificationStatus, ProjectType, PieceType, PackageType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { PieceMetadataSchema } from '../../../src/app/pieces/piece-metadata-entity'
@@ -151,5 +151,6 @@ export const createMockOtp = (otp?: Partial<OtpModel>): OtpModel => {
         type: otp?.type ?? faker.helpers.enumValue(OtpType),
         userId: otp?.userId ?? apId(),
         value: otp?.value ?? faker.number.int({ min: 100000, max: 999999 }).toString(),
+        state: otp?.state ?? faker.helpers.enumValue(OtpState),
     }
 }

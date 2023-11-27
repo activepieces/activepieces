@@ -44,12 +44,13 @@ describe('OTP API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const responseBody = response?.json()
 
-            expect(Object.keys(responseBody)).toHaveLength(5)
+            expect(Object.keys(responseBody)).toHaveLength(6)
             expect(responseBody?.id).toHaveLength(21)
             expect(responseBody).toHaveProperty<string>('created')
             expect(responseBody).toHaveProperty<string>('updated')
             expect(responseBody?.type).toBe(mockCreateOtpRequest.type)
             expect(responseBody?.userId).toBe(mockUser.id)
+            expect(responseBody?.state).toBe('PENDING')
         })
 
         it('Sends OTP to user', async () => {
