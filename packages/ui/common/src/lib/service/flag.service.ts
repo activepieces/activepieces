@@ -125,6 +125,14 @@ export class FlagService {
     );
   }
 
+  getRedirectUrl(): Observable<string> {
+    return this.getAllFlags().pipe(
+      map((flags) => {
+        return flags[ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL] as string;
+      })
+    );
+  }
+
   getFrontendUrl(): Observable<string> {
     return this.getAllFlags().pipe(
       map((flags) => {

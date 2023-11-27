@@ -30,17 +30,12 @@ export class ThirdPartyAuthComponent {
       this.flagService.getThirdPartyProvidersMap();
   }
   signInWithThirdPartyProvider(provider: ThirdPartyAuthnProviderEnum) {
-    this.signInWithThirdPartyProvider$ = this.authenticationService
-      .getThirdPartyLoginUrl(provider)
-      .pipe(
-        switchMap((response) => {
-          return (
-            this.oauth2Service
-              // TODO FIX
-              .openPopupWithLoginUrl(
-                response.loginUrl,
-                'https://cloud.activepieces.com/redirect'
-              )
+    this.signInWithThirdPartyProvider$ = this.flagService.getRedirectUrl().pipe(
+      switchMap((redirectUrl) => {
+        return this.authenticationService.getThirdPartyLoginUrl(provider).pipe(
+          switchMap((response) => {
+            return this.oauth2Service
+              .openPopupWithLoginUrl(response.loginUrl, redirectUrl)
               .pipe(
                 switchMap((popupResponse) => {
                   return this.authenticationService
@@ -60,9 +55,10 @@ export class ThirdPartyAuthComponent {
                       })
                     );
                 })
-              )
-          );
-        })
-      );
+              );
+          })
+        );
+      })
+    );
   }
 }
