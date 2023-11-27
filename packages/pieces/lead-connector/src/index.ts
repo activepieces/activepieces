@@ -54,6 +54,7 @@ export const leadConnectorAuth = PieceAuth.SecretText({
 
 export const leadConnector = createPiece({
     displayName: "LeadConnector",
+    description: 'Lead Connector - Go High Level',
     auth: leadConnectorAuth,
     minimumSupportedRelease: '0.9.0',
     logoUrl: "https://cdn.activepieces.com/pieces/lead-connector.png",

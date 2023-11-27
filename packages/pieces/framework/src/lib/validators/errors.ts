@@ -21,5 +21,5 @@ export enum ErrorMessages {
   REQUIRE_KEYS = 'The following keys are required: {keys}',
   SIZE = 'The {property} size must be less than 0:{size}KB',
   NON_ZERO = 'The value: {userInput} must be a non-zero value',
-  PHONE_NUMBER = 'The phone number entered is not a valid phone number.'
+  PHONE_NUMBER = 'The phone number entered is not a valid phone number'
 }
