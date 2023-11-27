@@ -25,6 +25,7 @@ const ignoredRoutes = new Set([
     '/v1/chatbots/:id/metadata',
     '/v1/flow-runs/:id/resume',
     '/v1/pieces/stats',
+    '/v1/authn/local/verify-email',
     '/v1/pieces/:name',
     '/v1/pieces/:scope/:name',
     '/v1/app-events/:pieceUrl',

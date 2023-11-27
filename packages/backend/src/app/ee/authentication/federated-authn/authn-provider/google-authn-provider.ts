@@ -17,7 +17,7 @@ function getClientSecret(): string {
 function getRedirectUri(): string {
     return system.getOrThrow(SystemProp.FEDERATED_AUTHN_GOOGLE_REDIRECT_URI)
 }
-  
+
 const JWKS_URI = 'https://www.googleapis.com/oauth2/v3/certs'
 
 const keyLoader = jwksClient({
@@ -41,6 +41,9 @@ export const googleAuthnProvider: AuthnProvider = {
         const idToken = await exchangeCodeForIdToken(authorizationCode)
         const idTokenPayload = await verifyIdToken(idToken)
         return generateAuthenticationResponse(idTokenPayload)
+    },
+    isConfiguredByUser(): boolean {
+        return !!system.get(SystemProp.FEDERATED_AUTHN_GOOGLE_CLIENT_SECRET) && !!system.getOrThrow(SystemProp.FEDERATED_AUTHN_GOOGLE_CLIENT_SECRET) && !!system.getOrThrow(SystemProp.FEDERATED_AUTHN_GOOGLE_CLIENT_ID)
     },
 }
 

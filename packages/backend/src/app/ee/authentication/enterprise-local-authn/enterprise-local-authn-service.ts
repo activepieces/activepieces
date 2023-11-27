@@ -1,10 +1,10 @@
 import { UserId, ActivepiecesError, ErrorCode } from '@activepieces/shared'
-import { OtpType } from '@activepieces/ee-shared'
+import { OtpType, ResetPasswordRequestBody, VerifyEmailRequestBody } from '@activepieces/ee-shared'
 import { userService } from '../../../user/user-service'
 import { otpService } from '../../otp/otp-service'
 
 export const enterpriseLocalAuthnService = {
-    async verifyEmail({ userId, otp }: VerifyEmailParams): Promise<void> {
+    async verifyEmail({ userId, otp }: VerifyEmailRequestBody): Promise<void> {
         await confirmOtp({
             userId,
             otp,
@@ -14,7 +14,7 @@ export const enterpriseLocalAuthnService = {
         await userService.verify({ id: userId })
     },
 
-    async resetPassword({ userId, otp, newPassword }: ResetPasswordParams): Promise<void> {
+    async resetPassword({ userId, otp, newPassword }: ResetPasswordRequestBody): Promise<void> {
         await confirmOtp({
             userId,
             otp,
@@ -43,19 +43,9 @@ const confirmOtp = async ({ userId, otp, otpType }: ConfirmOtpParams): Promise<v
     }
 }
 
-type VerifyEmailParams = {
-    userId: UserId
-    otp: string
-}
 
 type ConfirmOtpParams = {
     userId: UserId
     otp: string
     otpType: OtpType
-}
-
-type ResetPasswordParams = {
-    userId: UserId
-    otp: string
-    newPassword: string
 }
