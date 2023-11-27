@@ -14,7 +14,7 @@ beforeAll(async () => {
 })
 
 beforeEach(() => {
-    emailService.sendVerifyEmail = jest.fn()
+    emailService.sendOtpEmail = jest.fn()
 })
 
 afterAll(async () => {
@@ -71,13 +71,14 @@ describe('OTP API', () => {
 
             // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(emailService.sendVerifyEmail).toBeCalledTimes(1)
-            expect(emailService.sendVerifyEmail).toHaveBeenCalledWith({
-                email: mockUser.email,
-                otp: expect.stringMatching(/^\d{6}$/),
+            expect(emailService.sendOtpEmail).toBeCalledTimes(1)
+            expect(emailService.sendOtpEmail).toHaveBeenCalledWith({
+                otp: expect.stringMatching(/^([0-9A-F]|-){36}$/i),
                 platformId: null,
                 type: OtpType.EMAIL_VERIFICATION,
-                userId: mockUser.id,
+                user: expect.objectContaining({
+                    email: mockUser.email,
+                }),
             })
         })
 
