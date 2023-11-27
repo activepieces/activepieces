@@ -41,6 +41,7 @@ type ErrorParams =
     | PermissionDeniedErrorParams
     | PieceNotFoundErrorParams
     | PieceTriggerNotFoundErrorParams
+    | PlatformSignUpEnabledForInvitedUsersOnlyParams
     | QuotaExceededParams
     | SignUpDisabledParams
     | StepNotFoundErrorParams
@@ -303,6 +304,11 @@ Record<string, never>
 
 export type InvalidOtpParams = BaseErrorParams<ErrorCode.INVALID_OTP, Record<string, never>>
 
+export type PlatformSignUpEnabledForInvitedUsersOnlyParams = BaseErrorParams<
+ErrorCode.PLATFORM_SIGN_UP_ENABLED_FOR_INVITED_USERS_ONLY,
+Record<string, never>
+>
+
 export enum ErrorCode {
     APP_CONNECTION_NOT_FOUND = 'APP_CONNECTION_NOT_FOUND',
     AUTHORIZATION = 'AUTHORIZATION',
@@ -332,6 +338,7 @@ export enum ErrorCode {
     PERMISSION_DENIED = 'PERMISSION_DENIED',
     PIECE_NOT_FOUND = 'PIECE_NOT_FOUND',
     PIECE_TRIGGER_NOT_FOUND = 'PIECE_TRIGGER_NOT_FOUND',
+    PLATFORM_SIGN_UP_ENABLED_FOR_INVITED_USERS_ONLY = 'PLATFORM_SIGN_UP_ENABLED_FOR_INVITED_USERS_ONLY',
     QUOTA_EXCEEDED = 'QUOTA_EXCEEDED',
     SIGN_UP_DISABLED = 'SIGN_UP_DISABLED',
     STEP_NOT_FOUND = 'STEP_NOT_FOUND',
