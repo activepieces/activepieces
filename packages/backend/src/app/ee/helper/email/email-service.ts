@@ -1,6 +1,6 @@
 import { accessTokenManager } from '../../../authentication/lib/access-token-manager'
 import { getEdition } from '../../../helper/secret-helper'
-import { ApEdition, Principal, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
+import { ApEdition, Principal, User, UserStatus, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import fs from 'node:fs/promises'
 import Mustache from 'mustache'
 import nodemailer from 'nodemailer'
@@ -12,6 +12,7 @@ import { system } from '../../../helper/system/system'
 import { SystemProp } from '../../../helper/system/system-prop'
 import { OtpType, Platform } from '@activepieces/ee-shared'
 import { customDomainService } from '../../custom-domains/custom-domain.service'
+import { logger } from '../../../helper/logger'
 
 const EDITION = getEdition()
 const EDITION_IS_NOT_PAID = ![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(EDITION)
@@ -69,11 +70,15 @@ export const emailService = {
             },
         })
     },
-    async sendOtpEmail({ platformId, email, otp, userId, firstName, type }: SendOtpEmailParams): Promise<void> {
+    async sendOtpEmail({ platformId, user, otp, type }: SendOtpEmailParams): Promise<void> {
         const edition = getEdition()
         if (![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
             return
         }
+        if (user.status === UserStatus.VERIFIED && type === OtpType.EMAIL_VERIFICATION) {
+            return
+        }
+        logger.info('Sending OTP email', { email: user.email, otp, userId: user.id, firstName: user.email, type })
         const frontendPath = {
             [OtpType.EMAIL_VERIFICATION]: 'verify-email',
             [OtpType.PASSWORD_RESET]: 'reset-password',
@@ -82,7 +87,7 @@ export const emailService = {
         const setupLink = await constructUrlOnFrontend({
             edition,
             platformId,
-            path: frontendPath[type] + `?otpcode=${otp}&userId=${userId}`,
+            path: frontendPath[type] + `?otpcode=${otp}&userId=${user.id}`,
         })
 
         const otpToTemplate: Record<string, EmailTemplate> = {
@@ -96,13 +101,13 @@ export const emailService = {
                 templateName: 'reset-password',
                 data: {
                     setupLink,
-                    firstName,
+                    firstName: user.firstName,
                 },
             },
         }
 
         await sendEmail({
-            email,
+            email: user.email,
             platformId: platformId ?? undefined,
             template: otpToTemplate[type],
         })
@@ -212,10 +217,8 @@ type EmailTemplate =
 type SendOtpEmailParams = {
     type: OtpType
     platformId: string | undefined | null
-    email: string
     otp: string
-    firstName: string
-    userId: string
+    user: User
 }
 
 

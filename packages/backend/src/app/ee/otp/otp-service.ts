@@ -31,10 +31,8 @@ export const otpService = {
 
         await emailService.sendOtpEmail({
             platformId,
-            userId: user.id,
-            email,
+            user,
             otp: newOtp.value,
-            firstName: user.firstName,
             type: newOtp.type,
         })
 
