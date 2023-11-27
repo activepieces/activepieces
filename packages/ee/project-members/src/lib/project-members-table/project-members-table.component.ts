@@ -18,7 +18,7 @@ import {
   ProjectMemberRole,
   ProjectMemberStatus,
 } from '@activepieces/ee-shared';
-import { BillingService } from '@activepieces/ee-billing-ui';
+import { BillingService, UpgradeDialogData } from '@activepieces/ee-billing-ui';
 import { UpgradeDialogComponent } from '@activepieces/ee-billing-ui';
 import { Store } from '@ngrx/store';
 import {
@@ -43,7 +43,7 @@ export class ProjectMembersTableComponent implements OnInit {
   displayedColumns = ['email', 'role', 'status', 'created', 'action'];
   title = $localize`Project Members`;
   constructor(
-    private dialogRef: MatDialog,
+    private matDialog: MatDialog,
     private billingService: BillingService,
     private store: Store,
     private projectMemberService: ProjectMemberService,
@@ -90,13 +90,22 @@ export class ProjectMembersTableComponent implements OnInit {
       switchMap((billing) => {
         this.inviteLoading = false;
         if (billing.exceeded) {
-          return this.dialogRef
-            .open(UpgradeDialogComponent)
-            .afterClosed()
-            .pipe(map(() => void 0));
+          return this.store.select(ProjectSelectors.selectCurrentProject).pipe(
+            switchMap((proj) => {
+              const data: UpgradeDialogData = {
+                limitType: 'team',
+                limit: billing.limit,
+                projectType: proj.type,
+              };
+              return this.matDialog
+                .open(UpgradeDialogComponent, { data })
+                .afterClosed()
+                .pipe(map(() => void 0));
+            })
+          );
         }
 
-        return this.dialogRef
+        return this.matDialog
           .open(InviteProjectMemberDialogComponent)
           .afterClosed()
           .pipe(
