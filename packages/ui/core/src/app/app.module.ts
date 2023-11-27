@@ -18,7 +18,6 @@ import { EffectsModule } from '@ngrx/effects';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { CommonModule } from '@angular/common';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
-import { MaterialLayoutModule } from './modules/common/common-layout.module';
 import { Route, Router } from '@angular/router';
 import { FlagService } from '@activepieces/ui/common';
 import { ApEdition } from '@activepieces/shared';
@@ -35,8 +34,8 @@ import {
   MonacoEditorModule,
   NgxMonacoEditorConfig,
 } from 'ngx-monaco-editor-v2';
-import { apMonacoTheme } from './modules/common/monaco-themes/ap-monaco-theme';
-import { cobalt2 } from './modules/common/monaco-themes/cobalt-2-theme';
+import { apMonacoTheme } from './monaco-themes/ap-monaco-theme';
+import { cobalt2 } from './monaco-themes/cobalt-2-theme';
 import {
   ChatComponent,
   UiFeatureChatBotModule,
@@ -101,7 +100,6 @@ export function playerFactory() {
       },
     }),
     AngularSvgIconModule.forRoot(),
-    MaterialLayoutModule,
     UiCommonModule,
     LottieModule.forRoot({ player: playerFactory }),
     LottieCacheModule.forRoot(),
@@ -190,8 +188,8 @@ function dynamicRoutes(edition: string) {
         {
           path: '',
           loadChildren: () =>
-            import('./modules/flow-builder/flow-builder.module').then(
-              (m) => m.FlowBuilderModule
+            import('@activepieces/ui/feature-flow-builder').then(
+              (m) => m.UiFeatureFlowBuilderModule
             ),
         },
       ],

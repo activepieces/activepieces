@@ -23,7 +23,7 @@ export class InstanceResolver {
   resolve(snapshot: ActivatedRouteSnapshot): Observable<InstanceResolverData> {
     const flowId = snapshot.paramMap.get('id') as string;
     return this.instanceService.get(flowId).pipe(
-      catchError((err) => {
+      catchError(() => {
         return of(undefined);
       }),
       switchMap((instance) => {

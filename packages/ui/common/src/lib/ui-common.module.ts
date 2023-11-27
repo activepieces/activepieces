@@ -6,7 +6,6 @@ import { EditableTextComponent } from './components/editable-text/editable-text.
 import {
   MatTooltipDefaultOptions,
   MatTooltipModule,
-  MAT_TOOLTIP_DEFAULT_OPTIONS,
 } from '@angular/material/tooltip';
 import { WarningBoxComponent } from './components/warning-box/warning-box.component';
 import { AngularSvgIconModule } from 'angular-svg-icon';
@@ -59,6 +58,8 @@ import { PageTitleComponent } from './components/page-title/page-title.component
 import { PoweredByActivepiecesComponent } from './components/powered-by-activepieces/powered-by-activepieces.component';
 import { MatSliderModule } from '@angular/material/slider';
 import { CommaSeparatedPipe } from './pipe/comma-seperated.pipe';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { ImgFallbackDirective } from './directives/image-fallback.directive';
 const exportedImports = [
   CommonModule,
   MatTooltipModule,
@@ -83,6 +84,7 @@ const exportedImports = [
   MatTabsModule,
   NgxColorsModule,
   MatSliderModule,
+  MatSnackBarModule,
 ];
 const exportedDeclarations = [
   UploadFileControlComponent,
@@ -117,6 +119,7 @@ const exportedDeclarations = [
   CheckOverflowDirective,
   PageTitleComponent,
   PoweredByActivepiecesComponent,
+  ImgFallbackDirective,
 ];
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 0,
@@ -155,9 +158,7 @@ export function markedOptionsFactory(): MarkedOptions {
       },
     }),
   ],
-  providers: [
-    { provide: MAT_TOOLTIP_DEFAULT_OPTIONS, useValue: materialTooltipDefaults },
-  ],
+
   declarations: [...exportedDeclarations, FileDroppedDirective],
   exports: [...exportedImports, ...exportedDeclarations, MarkdownModule],
 })

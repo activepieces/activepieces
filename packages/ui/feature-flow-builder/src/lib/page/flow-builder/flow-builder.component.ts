@@ -71,20 +71,22 @@ import {
 import { BuilderAutocompleteMentionsDropdownService } from '@activepieces/ui/common';
 
 @Component({
-  selector: 'app-collection-builder',
-  templateUrl: './collection-builder.component.html',
-  styleUrls: ['./collection-builder.component.scss'],
+  selector: 'app-flow-builder',
+  templateUrl: './flow-builder.component.html',
+  styleUrls: ['./flow-builder.component.scss'],
 })
-export class CollectionBuilderComponent implements OnInit, OnDestroy {
-  @ViewChild('canvasWrapper') canvasWrapper: ElementRef;
-  @ViewChild('rightSideDrawer', { read: ElementRef }) rightSideBar: ElementRef;
-  @ViewChild('leftSideDrawer', { read: ElementRef }) leftSideBar: ElementRef;
+export class FlowBuilderComponent implements OnInit, OnDestroy {
+  @ViewChild('canvasWrapper') canvasWrapper?: ElementRef;
+  @ViewChild('rightSideDrawer', { read: ElementRef })
+  rightSideBar?: ElementRef<HTMLElement>;
+  @ViewChild('leftSideDrawer', { read: ElementRef })
+  leftSideBar?: ElementRef<HTMLElement>;
   rightSidebarWidth = '0';
   leftSideBarWidth = '0';
   leftSidebar$: Observable<LeftSideBarType>;
   rightSidebar$: Observable<RightSideBarType>;
-  rightDrawerRect: DOMRect;
-  leftDrawerRect: DOMRect;
+  rightDrawerRect?: DOMRect;
+  leftDrawerRect?: DOMRect;
   rightSidebarDragging = false;
   leftSidebarDragging = false;
   loadInitialData$: Observable<void> = new Observable<void>();
@@ -92,8 +94,8 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
   isDragging$: Observable<boolean>;
   TriggerType = TriggerType;
   testingStepSectionIsRendered$: Observable<boolean>;
-  graphChanged$: Observable<FlowVersion>;
-  importTemplate$: Observable<void>;
+  graphChanged$?: Observable<FlowVersion>;
+  importTemplate$?: Observable<void>;
   dataInsertionPopupHidden$: Observable<boolean>;
   codeEditorOptions = {
     minimap: { enabled: false },
@@ -102,7 +104,7 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
     readOnly: false,
     automaticLayout: true,
   };
-  setTitle$: Observable<void>;
+  setTitle$?: Observable<void>;
   showPoweredByAp$: Observable<boolean>;
   constructor(
     private store: Store,
@@ -285,22 +287,25 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
     builderContainer: MatDrawerContainer
   ) {
     this.ngZone.runOutsideAngular(() => {
-      const width = this.rightDrawerRect.width + dragMoveEvent.distance.x * -1;
-      this.rightSidebarWidth = `${width}px`;
-      dragHandle.style.transform = `translate(0px, 0)`;
-      builderContainer.updateContentMargins();
+      if (this.rightDrawerRect) {
+        const width =
+          this.rightDrawerRect.width + dragMoveEvent.distance.x * -1;
+        this.rightSidebarWidth = `${width}px`;
+        dragHandle.style.transform = `translate(0px, 0)`;
+        builderContainer.updateContentMargins();
+      }
     });
   }
 
   rightDrawerHandleDragStarted() {
     this.rightSidebarDragging = true;
-    const targetSideBar: HTMLElement = this.rightSideBar.nativeElement;
-    this.rightDrawerRect = targetSideBar.getBoundingClientRect();
+    const targetSideBar = this.rightSideBar?.nativeElement;
+    this.rightDrawerRect = targetSideBar?.getBoundingClientRect();
   }
 
   leftDrawerHandleDragStarted() {
-    const targetSideBar: HTMLElement = this.leftSideBar.nativeElement;
-    this.leftDrawerRect = targetSideBar.getBoundingClientRect();
+    const targetSideBar = this.leftSideBar?.nativeElement;
+    this.leftDrawerRect = targetSideBar?.getBoundingClientRect();
   }
 
   leftDrawerHandleDrag(
@@ -310,10 +315,12 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
   ) {
     this.leftSidebarDragging = true;
     this.ngZone.runOutsideAngular(() => {
-      const width = this.leftDrawerRect.width + dragMoveEvent.distance.x;
-      this.leftSideBarWidth = `${width}px`;
-      dragHandle.style.transform = `translate(0px, 0)`;
-      builderContainer.updateContentMargins();
+      if (this.leftDrawerRect) {
+        const width = this.leftDrawerRect.width + dragMoveEvent.distance.x;
+        this.leftSideBarWidth = `${width}px`;
+        dragHandle.style.transform = `translate(0px, 0)`;
+        builderContainer.updateContentMargins();
+      }
     });
   }
 
@@ -345,7 +352,7 @@ export class CollectionBuilderComponent implements OnInit, OnDestroy {
   }
 
   @HostListener('window:beforeunload', ['$event'])
-  async onBeforeUnload(event) {
+  async onBeforeUnload(event: BeforeUnloadEvent) {
     const isSaving = await firstValueFrom(
       this.store.select(BuilderSelectors.selectIsSaving).pipe(take(1))
     );

@@ -1,20 +1,19 @@
 import { Routes } from '@angular/router';
-import { CollectionBuilderComponent } from './page/flow-builder/collection-builder.component';
-import { UserLoggedIn } from '../../guards/user-logged-in.guard';
+import { FlowBuilderComponent } from './page/flow-builder/flow-builder.component';
 import { GetInstanceRunResolver } from './resolvers/instance-run.resolver';
 import { GetFlowResolver } from './resolvers/flow.resolver';
 import { InstanceResolver as GetInstanceResolver } from './resolvers/instance.resolver';
-import { ConnectionsResolver } from '@activepieces/ui/common';
-import { BuilderSavingGuard } from '../../guards/builder-saving.guard';
+import { ConnectionsResolver, UserLoggedIn } from '@activepieces/ui/common';
 import {
   isThereAnyNewFeaturedTemplatesResolver,
   isThereAnyNewFeaturedTemplatesResolverKey,
 } from '@activepieces/ui/common';
+import { BuilderSavingGuard } from './guards/builder-saving.guard';
 
 export const FlowLayoutRouting: Routes = [
   {
     path: 'flows/:id',
-    component: CollectionBuilderComponent,
+    component: FlowBuilderComponent,
     resolve: {
       flowAndFolder: GetFlowResolver,
       instanceData: GetInstanceResolver,
@@ -28,7 +27,7 @@ export const FlowLayoutRouting: Routes = [
   },
   {
     path: 'runs/:runId',
-    component: CollectionBuilderComponent,
+    component: FlowBuilderComponent,
     resolve: {
       runInformation: GetInstanceRunResolver,
       connections: ConnectionsResolver,

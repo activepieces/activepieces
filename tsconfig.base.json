@@ -292,6 +292,7 @@
         "packages/ui/feature-templates/src/index.ts"
       ],
       "@ee/*": ["packages/ee/*"],
+      "@activepieces/ui/feature-flow-builder": ["packages/ui/feature-flow-builder/src/index.ts"],
       "ui-feature-pieces": ["packages/ui/feature-pieces/src/index.ts"]
     },
     "resolveJsonModule": true
