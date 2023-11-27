@@ -47,10 +47,12 @@ export class ResetPasswordComponent {
     if (this.newPasswordControl.valid && !this.resetingPassword) {
       this.resetingPassword = true;
       const otp = this.activatedRoute.snapshot.queryParams['otpcode'];
+      const userId = this.activatedRoute.snapshot.queryParams['userId'];
       this.resetPassword$ = this.authenticationService
         .resetPassword({
           otp,
           newPassword: this.newPasswordControl.value,
+          userId,
         })
         .pipe(
           catchError((err) => {
