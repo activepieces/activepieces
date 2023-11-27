@@ -69,25 +69,51 @@ export const emailService = {
             },
         })
     },
+    async sendOtpEmail({ platformId, email, otp, userId, firstName, type }: SendOtpEmailParams): Promise<void> {
+        const edition = getEdition()
+        if (![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
+            return
+        }
+        const frontendPath = {
+            [OtpType.EMAIL_VERIFICATION]: 'verify-email',
+            [OtpType.PASSWORD_RESET]: 'reset-password',
+        }
 
-    async sendVerifyEmail({ platformId, email, userId, otp, type }: SendVerifyEmailParams): Promise<void> {
-        const domain = await getFrontendDomain(EDITION, platformId ?? undefined)
-        const otpFlowType = type === OtpType.PASSWORD_RESET ? 'reset-password' : 'verify-email'
+        const setupLink = await constructUrlOnFrontend({
+            edition,
+            platformId,
+            path: frontendPath[type] + `?otpcode=${otp}&userId=${userId}`,
+        })
+
+        const otpToTemplate: Record<string, EmailTemplate> = {
+            [OtpType.EMAIL_VERIFICATION]: {
+                templateName: 'verify-email',
+                data: {
+                    setupLink,
+                },
+            },
+            [OtpType.PASSWORD_RESET]: {
+                templateName: 'reset-password',
+                data: {
+                    setupLink,
+                    firstName,
+                },
+            },
+        }
 
         await sendEmail({
             email,
             platformId: platformId ?? undefined,
-            template: {
-                templateName: otpFlowType,
-                data: {
-                    link: `${domain}${otpFlowType}?otpcode=${otp}&userId=${userId}`,
-                },
-            },
+            template: otpToTemplate[type],
         })
     },
 }
 
-async function getFrontendDomain(edition: ApEdition, platformId: string | undefined): Promise<string> {
+async function constructUrlOnFrontend({ edition, platformId, path }: { edition: ApEdition, platformId: string | undefined | null, path: string }): Promise<string> {
+    const domain = await getFrontendDomain(edition, platformId)
+    return `${domain}${path}`
+}
+async function getFrontendDomain(edition: ApEdition, platformId: string | undefined | null): Promise<string> {
     let domain = system.get(SystemProp.FRONTEND_URL)
     if (edition === ApEdition.CLOUD && platformId) {
         const customDomain = await customDomainService.getOneByPlatform({
@@ -165,25 +191,31 @@ type QuotaEmailTemplate = {
 type VerifyEmailTemplate = {
     templateName: 'verify-email'
     data: {
-        link: string
+        setupLink: string
     }
 }
-type ResetPasswordEmailTemplate = {
+
+type ResetPasswordTemplate = {
     templateName: 'reset-password'
     data: {
-        link: string
+        setupLink: string
+        firstName: string
     }
 }
 type EmailTemplate =
     | InvitationEmailTemplate
     | QuotaEmailTemplate
     | VerifyEmailTemplate
-    | ResetPasswordEmailTemplate
+    | ResetPasswordTemplate
 
-type SendVerifyEmailParams = {
-    platformId: string | null
-    userId: string
+
+type SendOtpEmailParams = {
+    type: OtpType
+    platformId: string | undefined | null
     email: string
     otp: string
-    type: OtpType
+    firstName: string
+    userId: string
 }
+
+

@@ -29,11 +29,12 @@ export const otpService = {
 
         const upsertResult = await repo.upsert(newOtp, ['userId', 'type'])
 
-        await emailService.sendVerifyEmail({
+        await emailService.sendOtpEmail({
             platformId,
             userId: user.id,
             email,
             otp: newOtp.value,
+            firstName: user.firstName,
             type: newOtp.type,
         })
 
