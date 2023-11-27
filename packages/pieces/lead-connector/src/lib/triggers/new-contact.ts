@@ -8,7 +8,7 @@ import {
 import { leadConnectorAuth } from '../..';
 import { getContacts } from '../common';
 
-const polling: Polling<string, {}> = {
+const polling: Polling<string, unknown> = {
     strategy: DedupeStrategy.LAST_ITEM,
     items: async ({ auth, lastItemId }) => {
         const currentValues = await getContacts(auth, {

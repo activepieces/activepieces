@@ -34,8 +34,7 @@
       ],
       "options": {
         "lintFilePatterns": [
-          "packages/pieces/lead-connector/**/*.ts",
-          "packages/pieces/lead-connector/package.json"
+          "packages/pieces/lead-connector/**/*.ts"
         ]
       }
     }
