@@ -27,8 +27,8 @@
     <ap-button btnColor="basic" mat-dialog-close btnSize="default" class="ap-btnColor-basic">
       Cancel
     </ap-button>
-    <ap-button *ngIf="data.projectType !== ProjectType.PLATFORM_MANAGED " btnSize="default" type="submit"
-      (click)="openPlans()" btnColor="primary">
+    <ap-button cdkFocusInitial *ngIf="data.projectType !== ProjectType.PLATFORM_MANAGED " btnSize="default"
+      type="submit" mat-focus (click)="openPlans()" btnColor="primary">
       Upgrade
     </ap-button>
   </div>

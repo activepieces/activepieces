@@ -8,7 +8,8 @@ import {
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { TelemetryService } from '@activepieces/ui/common';
 import { ProjectType, TelemetryEventName } from '@activepieces/shared';
-
+import { Router } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
 export type UpgradeDialogData = {
   limitType: 'connections' | 'team';
   limit: number;
@@ -32,7 +33,9 @@ export class UpgradeDialogComponent implements OnInit {
     @Optional()
     @Inject(MAT_DIALOG_DATA)
     public data: UpgradeDialogData,
-    public telemetryService: TelemetryService
+    public telemetryService: TelemetryService,
+    private router: Router,
+    private matDialog: MatDialog
   ) {}
   ngOnInit(): void {
     this.telemetryService.capture({
@@ -52,10 +55,11 @@ export class UpgradeDialogComponent implements OnInit {
         limitType: this.data.limitType,
       },
     });
-    window.open('/plans', '_blank');
+    this.router.navigate(['/plans']);
+    this.matDialog.closeAll();
   }
 
   openConnections() {
-    window.open('/connections', '_blank');
+    this.router.navigate(['/connection']);
   }
 }
