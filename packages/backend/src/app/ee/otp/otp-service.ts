@@ -7,7 +7,7 @@ import { otpGenerator } from './lib/otp-generator'
 import { emailService } from '../helper/email/email-service'
 import { userService } from '../../user/user-service'
 
-const TEN_MINUTES = 10 * 60 * 1000
+const THIRTY_MINUTES = 30 * 60 * 1000
 
 const repo = databaseConnection.getRepository(OtpEntity)
 
@@ -49,7 +49,7 @@ export const otpService = {
         })
 
         const now = dayjs()
-        const otpIsNotExpired = dayjs(otp.created).add(TEN_MINUTES).isBefore(now)
+        const otpIsNotExpired = dayjs(otp.created).add(THIRTY_MINUTES).isBefore(now)
         const otpMatches = otp.value === value
 
         return otpIsNotExpired && otpMatches
