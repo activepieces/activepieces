@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
 import {
   FormBuilder,
   FormControl,
@@ -8,9 +7,15 @@ import {
 } from '@angular/forms';
 
 import { HttpErrorResponse } from '@angular/common/http';
-import { AuthenticationService, fadeInUp400ms } from '@activepieces/ui/common';
+import {
+  AuthenticationService,
+  FlagService,
+  RedirectService,
+  fadeInUp400ms,
+} from '@activepieces/ui/common';
 import { catchError, map, Observable, of, tap } from 'rxjs';
 import { StatusCodes } from 'http-status-codes';
+import { ApEdition } from '@activepieces/shared';
 interface SignInForm {
   email: FormControl<string>;
   password: FormControl<string>;
@@ -26,12 +31,16 @@ export class SignInComponent {
   showInvalidEmailOrPasswordMessage = false;
   loading = false;
   authenticate$: Observable<void> | undefined;
+  isCommunityEdition$: Observable<boolean>;
   constructor(
-    private router: Router,
-    private route: ActivatedRoute,
     private formBuilder: FormBuilder,
-    private authenticationService: AuthenticationService
+    private authenticationService: AuthenticationService,
+    private flagsService: FlagService,
+    private redirectService: RedirectService
   ) {
+    this.isCommunityEdition$ = this.flagsService
+      .getEdition()
+      .pipe(map((ed) => ed === ApEdition.COMMUNITY));
     this.loginForm = this.formBuilder.group({
       email: new FormControl('', {
         nonNullable: true,
@@ -63,7 +72,7 @@ export class SignInComponent {
         tap((response) => {
           if (response) {
             this.authenticationService.saveUser(response);
-            this.redirectToBack();
+            this.redirect();
           }
         }),
         map(() => void 0)
@@ -71,12 +80,7 @@ export class SignInComponent {
     }
   }
 
-  redirectToBack() {
-    const redirectUrl = this.route.snapshot.queryParamMap.get('redirect_url');
-    if (redirectUrl) {
-      this.router.navigateByUrl(decodeURIComponent(redirectUrl));
-    } else {
-      this.router.navigate(['/flows']);
-    }
+  redirect() {
+    this.redirectService.redirect();
   }
 }

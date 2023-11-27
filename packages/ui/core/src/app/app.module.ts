@@ -26,9 +26,6 @@ import { UserLoggedIn } from './guards/user-logged-in.guard';
 import { ImportFlowComponent } from './modules/import-flow/import-flow.component';
 import { LottieCacheModule, LottieModule } from 'ngx-lottie';
 import player from 'lottie-web';
-
-import { AngularFireAuthModule } from '@angular/fire/compat/auth';
-import { AngularFireModule } from '@angular/fire/compat';
 import { ImportFlowUriEncodedComponent } from './modules/import-flow-uri-encoded/import-flow-uri-encoded.component';
 import { ImportFlowUriEncodedResolver } from './modules/import-flow-uri-encoded/import-flow-uri-encoded.resolver';
 import {
@@ -105,12 +102,7 @@ export function playerFactory() {
     UiCommonModule,
     LottieModule.forRoot({ player: playerFactory }),
     LottieCacheModule.forRoot(),
-    // BEING EE
-    // This can't be lazy loaded
-    AngularFireModule.initializeApp(environment.firebase),
-    AngularFireAuthModule,
     EeComponentsModule,
-    // END EE
     MonacoEditorModule.forRoot(monacoConfig),
     UiFeatureChatBotModule,
   ],
@@ -230,6 +222,13 @@ function dynamicRoutes(edition: string) {
       component: RedirectUrlComponent,
     },
     {
+      path: '',
+      loadChildren: () =>
+        import('@activepieces/ui/feature-authentication').then(
+          (m) => m.UiFeatureAuthenticationModule
+        ),
+    },
+    {
       path: '**',
       component: NotFoundComponent,
       data: {
@@ -243,18 +242,6 @@ function dynamicRoutes(edition: string) {
       editionRoutes = [
         projectMemberRoute,
         {
-          path: '',
-          children: [
-            {
-              path: '',
-              loadChildren: () =>
-                import('@activepieces/ee-auth').then(
-                  (m) => m.FirebaseAuthLayoutModule
-                ),
-            },
-          ],
-        },
-        {
           path: 'embed',
           component: EmbedRedirectComponent,
         },
@@ -264,38 +251,13 @@ function dynamicRoutes(edition: string) {
       editionRoutes = [
         projectMemberRoute,
         {
-          path: '',
-          children: [
-            {
-              path: '',
-              loadChildren: () =>
-                import('@activepieces/ui/feature-authentication').then(
-                  (m) => m.UiFeatureAuthenticationModule
-                ),
-            },
-          ],
-        },
-        {
           path: 'embed',
           component: EmbedRedirectComponent,
         },
       ];
       break;
     case ApEdition.COMMUNITY:
-      editionRoutes = [
-        {
-          path: '',
-          children: [
-            {
-              path: '',
-              loadChildren: () =>
-                import('@activepieces/ui/feature-authentication').then(
-                  (m) => m.UiFeatureAuthenticationModule
-                ),
-            },
-          ],
-        },
-      ];
+      editionRoutes = [];
       break;
   }
   return [...coreRoutes, ...editionRoutes, ...suffixRoutes];

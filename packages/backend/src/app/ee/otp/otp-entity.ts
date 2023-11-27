@@ -1,5 +1,5 @@
 import { EntitySchema } from 'typeorm'
-import { OtpModel, OtpType } from '@activepieces/ee-shared'
+import { OtpModel, OtpState, OtpType } from '@activepieces/ee-shared'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 import { User } from '@activepieces/shared'
 
@@ -22,6 +22,11 @@ export const OtpEntity = new EntitySchema<OtpSchema>({
         },
         value: {
             type: String,
+            nullable: false,
+        },
+        state: {
+            type: String,
+            enum: OtpState,
             nullable: false,
         },
     },

@@ -1,4 +1,4 @@
-import { OtpModel, OtpType, PlatformId } from '@activepieces/ee-shared'
+import { OtpModel, OtpState, OtpType, PlatformId } from '@activepieces/ee-shared'
 import { ActivepiecesError, ErrorCode, User, UserId, apId, isNil } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { OtpEntity } from './otp-entity'
@@ -7,7 +7,7 @@ import { otpGenerator } from './lib/otp-generator'
 import { emailService } from '../helper/email/email-service'
 import { userService } from '../../user/user-service'
 
-const TEN_MINUTES = 10 * 60 * 1000
+const THIRTY_MINUTES = 30 * 60 * 1000
 
 const repo = databaseConnection.getRepository(OtpEntity)
 
@@ -24,14 +24,17 @@ export const otpService = {
             type,
             userId: user.id,
             value: await otpGenerator.generate(),
+            state: OtpState.PENDING,
         }
 
         const upsertResult = await repo.upsert(newOtp, ['userId', 'type'])
 
         await emailService.sendVerifyEmail({
             platformId,
+            userId: user.id,
             email,
             otp: newOtp.value,
+            type: newOtp.type,
         })
 
         return {
@@ -47,8 +50,19 @@ export const otpService = {
         })
 
         const now = dayjs()
-        const otpNotExpired = dayjs(otp.created).add(TEN_MINUTES).isBefore(now)
-        return otpNotExpired && otp.value === value
+        const otpIsPending = otp.state === OtpState.PENDING
+        const otpIsNotExpired = now.diff(otp.updated, 'milliseconds') < THIRTY_MINUTES
+        const otpMatches = otp.value === value
+
+        const verdict = otpIsPending && otpIsNotExpired && otpMatches
+
+        if (verdict) {
+            await repo.update(otp.id, {
+                state: OtpState.CONFIRMED,
+            })
+        }
+
+        return verdict
     },
 }
 

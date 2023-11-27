@@ -1,10 +1,11 @@
-import { KeyAlgorithm, SigningKey, Platform, OAuthApp, FilteredPieceBehavior, CustomDomain, CustomDomainStatus, OtpModel, OtpType } from '@activepieces/ee-shared'
+import { KeyAlgorithm, SigningKey, Platform, OAuthApp, FilteredPieceBehavior, CustomDomain, CustomDomainStatus, OtpModel, OtpType, OtpState } from '@activepieces/ee-shared'
 import { UserStatus, User, apId, Project, NotificationStatus, ProjectType, PieceType, PackageType } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import { PieceMetadataSchema } from '../../../src/app/pieces/piece-metadata-entity'
 import bcrypt from 'bcrypt'
 import { OAuthAppWithEncryptedSecret } from '../../../src/app/ee/oauth-apps/oauth-app.entity'
 import { encryptString } from '../../../src/app/helper/encryption'
+import dayjs from 'dayjs'
 
 export const createMockUser = (user?: Partial<User>): User => {
     return {
@@ -140,12 +141,16 @@ export const createMockCustomDomain = (customDomain?: Partial<CustomDomain>): Cu
 }
 
 export const createMockOtp = (otp?: Partial<OtpModel>): OtpModel => {
+    const now = dayjs()
+    const twentyMinutesAgo = now.subtract(20, 'minutes')
+
     return {
         id: otp?. id ?? apId(),
         created: otp?.created ?? faker.date.recent().toISOString(),
-        updated: otp?.updated ?? faker.date.recent().toISOString(),
+        updated: otp?.updated ?? faker.date.between({ from: twentyMinutesAgo.toDate(), to: now.toDate() }).toISOString(),
         type: otp?.type ?? faker.helpers.enumValue(OtpType),
         userId: otp?.userId ?? apId(),
         value: otp?.value ?? faker.number.int({ min: 100000, max: 999999 }).toString(),
+        state: otp?.state ?? faker.helpers.enumValue(OtpState),
     }
 }
