@@ -24,7 +24,8 @@
     </ap-button>
   </div>
 </form>
-<div class="ap-typography-caption ap-text-body ap-text-center ap-mt-4 ap-flex ap-gap-2 ap-justify-center">
+<div *ngIf="(isCommunityEdition$ | async) === false"
+  class="ap-typography-caption ap-text-body ap-text-center ap-mt-4 ap-flex ap-gap-2 ap-justify-center">
   <span i18n>Don't have an account?</span> <a routerLink="/sign-up" i18n>Sign up now</a>
 </div>
 <div class="ap-typography-caption ap-text-body ap-text-center ap-mt-2 ap-flex ap-gap-2 ap-justify-center"

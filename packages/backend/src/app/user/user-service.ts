@@ -95,6 +95,7 @@ const continueSignUpIfInvited = async (newUser: NewUser): Promise<void> => {
     if (existingUser && existingUser.status === UserStatus.INVITED) {
         newUser.id = existingUser.id
         newUser.platformId = existingUser.platformId
+        newUser.status = UserStatus.VERIFIED
     }
 }
 

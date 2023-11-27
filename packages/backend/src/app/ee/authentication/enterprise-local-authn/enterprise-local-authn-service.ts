@@ -4,27 +4,25 @@ import { userService } from '../../../user/user-service'
 import { otpService } from '../../otp/otp-service'
 
 export const enterpriseLocalAuthnService = {
-    async verifyEmail({  otp }: VerifyEmailRequestBody): Promise<void> {
-        const otpEntity = await otpService.getOtp(otp)
+    async verifyEmail({ userId, otp }: VerifyEmailRequestBody): Promise<void> {
         await confirmOtp({
-            userId: otpEntity.userId,
+            userId,
             otp,
             otpType: OtpType.EMAIL_VERIFICATION,
         })
 
-        await userService.verify({ id: otpEntity.userId })
+        await userService.verify({ id: userId })
     },
 
-    async resetPassword({ otp, newPassword }: ResetPasswordRequestBody): Promise<void> {
-        const otpEntity = await otpService.getOtp(otp)
+    async resetPassword({ userId, otp, newPassword }: ResetPasswordRequestBody): Promise<void> {
         await confirmOtp({
-            userId: otpEntity.userId,
+            userId,
             otp,
             otpType: OtpType.PASSWORD_RESET,
         })
 
         await userService.updatePassword({
-            id: otpEntity.userId,
+            id: userId,
             newPassword,
         })
     },

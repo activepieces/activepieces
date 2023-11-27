@@ -7,6 +7,7 @@ export type AuthenticationServiceHooks = {
 
 type PostParams = {
     user: User
+    referringUserId?: string
 }
 
 type PostResult = {

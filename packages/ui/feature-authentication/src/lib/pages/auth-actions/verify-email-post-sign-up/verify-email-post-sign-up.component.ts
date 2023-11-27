@@ -30,11 +30,13 @@ export class VerifyEmailPostSignUpComponent {
     private snackbar: MatSnackBar
   ) {
     const otp = this.activatedRoute.snapshot.queryParams['otpcode'];
+    const userId = this.activatedRoute.snapshot.queryParams['userId'];
     this.actionTitle = this.verifyingEmail;
     this.titleService.setTitle($localize`Verifying email`);
     this.verifyingEmail$ = this.authenticationService
       .verifyEmail({
         otp: otp,
+        userId,
       })
       .pipe(
         catchError((err) => {

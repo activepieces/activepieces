@@ -116,6 +116,10 @@ export const pricingPlans: FlowPricingPlan[] = [
         description: "Sync Time: 5 minutes"
       },
       {
+        tooltip:'',
+        description:'50,000 tasks per month then $1.5 per 1,000 tasks'
+      },
+      {
         tooltip: "Multiple projects for your customers under your platform",
         description: "Manage projects"
       },
@@ -135,6 +139,7 @@ export const pricingPlans: FlowPricingPlan[] = [
         tooltip: "Get support from our active community support forum or from our support team via email",
         description: "Email and community support"
       },
+
     ]
   },
   {

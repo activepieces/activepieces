@@ -22,13 +22,14 @@ const seedDevUser = async (): Promise<void> => {
             trackEvents: false,
             newsLetter: false,
             status: UserStatus.VERIFIED,
+            platformId: null,
         })
     }
 
     logger.info(`[seedDevUser] email=${devEmail} pass=${devPassword}`)
 }
 
-export const seedDevData = async () => {
+export const seedDevData = async (): Promise<void> => {
 
     const env = system.get(SystemProp.ENVIRONMENT)
 

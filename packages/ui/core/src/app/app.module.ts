@@ -22,9 +22,6 @@ import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 import { ImportFlowComponent } from './modules/import-flow/import-flow.component';
 import { LottieCacheModule, LottieModule } from 'ngx-lottie';
 import player from 'lottie-web';
-
-import { AngularFireAuthModule } from '@angular/fire/compat/auth';
-import { AngularFireModule } from '@angular/fire/compat';
 import { ImportFlowUriEncodedComponent } from './modules/import-flow-uri-encoded/import-flow-uri-encoded.component';
 import {
   MonacoEditorModule,
@@ -98,12 +95,7 @@ export function playerFactory() {
     UiCommonModule,
     LottieModule.forRoot({ player: playerFactory }),
     LottieCacheModule.forRoot(),
-    // BEING EE
-    // This can't be lazy loaded
-    AngularFireModule.initializeApp(environment.firebase),
-    AngularFireAuthModule,
     EeComponentsModule,
-    // END EE
     MonacoEditorModule.forRoot(monacoConfig),
     UiFeatureChatBotModule,
   ],
@@ -112,7 +104,6 @@ export function playerFactory() {
   bootstrap: [AppComponent],
 })
 export class AppModule {}
-
 function extractHostname(url: string): string {
   // for relative urls we should return empty string
   if (url.startsWith('/')) {

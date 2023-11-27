@@ -21,6 +21,8 @@ export const errorHandler = async (
             [ErrorCode.ENTITY_NOT_FOUND]: StatusCodes.NOT_FOUND,
             [ErrorCode.EXISTING_USER]: StatusCodes.CONFLICT,
             [ErrorCode.AUTHORIZATION]: StatusCodes.FORBIDDEN,
+            [ErrorCode.SIGN_UP_DISABLED]: StatusCodes.FORBIDDEN,
+            [ErrorCode.PLATFORM_SIGN_UP_ENABLED_FOR_INVITED_USERS_ONLY]: StatusCodes.FORBIDDEN,
         }
 
         const statusCode = statusCodeMap[error.error.code] ?? StatusCodes.BAD_REQUEST
@@ -32,7 +34,7 @@ export const errorHandler = async (
     }
     else {
         logger.error('[errorHandler]: ' + JSON.stringify(error))
-        if (!error.statusCode || error.statusCode === StatusCodes.INTERNAL_SERVER_ERROR) {
+        if (!error.statusCode || error.statusCode === StatusCodes.INTERNAL_SERVER_ERROR.valueOf()) {
             captureException(error)
         }
         await reply.status(error.statusCode ?? StatusCodes.INTERNAL_SERVER_ERROR).send(error)
