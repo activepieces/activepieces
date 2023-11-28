@@ -259,9 +259,6 @@ async function executeFlow(jobData: OneTimeJobData): Promise<void> {
             throwErrorToRetry(e as Error, jobData.runId)
         }
     }
-    finally {
-        await sandboxProvisioner.release({ sandbox })
-    }
 }
 
 function throwErrorToRetry(error: Error, runId: string): void {
