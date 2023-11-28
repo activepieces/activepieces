@@ -13,6 +13,7 @@ export enum LocalesEnum {
     GERMAN = 'de',
     ITALIAN = 'it',
     FRENCH = 'fr',
+    JAPANESE = 'ja'
 }
 
 export const Platform = Type.Object({

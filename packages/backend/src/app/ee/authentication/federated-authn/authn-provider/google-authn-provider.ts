@@ -40,7 +40,7 @@ export const googleAuthnProvider: AuthnProvider = {
         return generateAuthenticationResponse(idTokenPayload)
     },
     isConfiguredByUser(): boolean {
-        return !!system.get(SystemProp.FEDERATED_AUTHN_GOOGLE_CLIENT_SECRET) && !!system.getOrThrow(SystemProp.FEDERATED_AUTHN_GOOGLE_CLIENT_SECRET) && !!system.getOrThrow(SystemProp.FEDERATED_AUTHN_GOOGLE_CLIENT_ID)
+        return !!system.get(SystemProp.FEDERATED_AUTHN_GOOGLE_CLIENT_SECRET) && !!system.get(SystemProp.FEDERATED_AUTHN_GOOGLE_CLIENT_ID)
     },
 }
 
