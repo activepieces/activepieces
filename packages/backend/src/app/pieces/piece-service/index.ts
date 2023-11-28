@@ -56,7 +56,7 @@ export const pieceService = {
 const getPiecePackage = async (params: AddPieceParams): Promise<PiecePackage> => {
     switch (params.packageType) {
         case PackageType.ARCHIVE: {
-            return await pieceServiceHooks.get().getPieceArchivePackage(params)
+            return pieceServiceHooks.get().getPieceArchivePackage(params)
         }
 
         case PackageType.REGISTRY: {

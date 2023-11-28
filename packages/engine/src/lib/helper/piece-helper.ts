@@ -277,7 +277,7 @@ export const pieceHelper = {
 
             if (property.type === PropertyType.DYNAMIC) {
                 const dynamicProperty = property as DynamicProperties<boolean>
-                return dynamicProperty.props(resolvedProps, ctx)
+                return await dynamicProperty.props(resolvedProps, ctx)
             }
 
             if (property.type === PropertyType.MULTI_SELECT_DROPDOWN) {
@@ -285,11 +285,11 @@ export const pieceHelper = {
                 unknown,
                 boolean
                 >
-                return multiSelectProperty.options(resolvedProps, ctx)
+                return await multiSelectProperty.options(resolvedProps, ctx)
             }
 
             const dropdownProperty = property as DropdownProperty<unknown, boolean>
-            return dropdownProperty.options(resolvedProps, ctx)
+            return await dropdownProperty.options(resolvedProps, ctx)
         }
         catch (e) {
             console.error(e)

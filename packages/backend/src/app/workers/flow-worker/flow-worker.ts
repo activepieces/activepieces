@@ -307,14 +307,14 @@ const getSandbox = async ({ projectId, flowVersion, runEnvironment }: GetSandbox
     const codeSteps = getCodeSteps(flowVersion)
     switch (runEnvironment) {
         case RunEnvironment.PRODUCTION:
-            return await sandboxProvisioner.provision({
+            return sandboxProvisioner.provision({
                 type: SandBoxCacheType.FLOW,
                 flowVersionId: flowVersion.id,
                 pieces,
                 codeSteps,
             })
         case RunEnvironment.TESTING:
-            return await sandboxProvisioner.provision({
+            return sandboxProvisioner.provision({
                 type: SandBoxCacheType.NONE,
                 pieces,
                 codeSteps,

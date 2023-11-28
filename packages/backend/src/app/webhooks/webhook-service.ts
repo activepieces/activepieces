@@ -118,7 +118,7 @@ export const webhookService = {
             }),
         )
 
-        return await Promise.all(createFlowRuns)
+        return Promise.all(createFlowRuns)
     },
 
     async simulationCallback({ flow, payload }: CallbackParams): Promise<void> {

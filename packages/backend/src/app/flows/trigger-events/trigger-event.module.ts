@@ -23,7 +23,7 @@ const triggerEventController: FastifyPluginAsyncTypebox = async (fastify) => {
                 id: request.query.flowId,
             })
 
-            return await triggerEventService.test({
+            return triggerEventService.test({
                 projectId: request.principal.projectId,
                 flow,
             })
@@ -38,7 +38,7 @@ const triggerEventController: FastifyPluginAsyncTypebox = async (fastify) => {
             },
         },
         async (request) => {
-            return await triggerEventService.saveEvent({
+            return triggerEventService.saveEvent({
                 projectId: request.principal.projectId,
                 flowId: request.query.flowId,
                 payload: request.body,
@@ -55,7 +55,7 @@ const triggerEventController: FastifyPluginAsyncTypebox = async (fastify) => {
         },
         async (request) => {
             const flow = await flowService.getOneOrThrow({ projectId: request.principal.projectId, id: request.query.flowId })
-            return await triggerEventService.list({
+            return triggerEventService.list({
                 projectId: request.principal.projectId,
                 flow,
                 cursor: request.query.cursor ?? null,

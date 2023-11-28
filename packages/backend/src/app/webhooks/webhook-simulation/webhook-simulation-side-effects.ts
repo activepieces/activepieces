@@ -13,7 +13,7 @@ type PreCreateParams = BaseParams
 type PreDeleteParams = BaseParams
 
 const getFlowOrThrow = async ({ projectId, flowId }: GetFlowParams): Promise<Flow> => {
-    return await flowService.getOneOrThrow({
+    return flowService.getOneOrThrow({
         id: flowId,
         projectId,
     })

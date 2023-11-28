@@ -7,7 +7,7 @@ export const webhookSimulationController: FastifyPluginCallbackTypebox = (app, _
         const { flowId } = req.body
         const { projectId } = req.principal
 
-        return await webhookSimulationService.create({
+        return webhookSimulationService.create({
             flowId,
             projectId,
         })
@@ -17,7 +17,7 @@ export const webhookSimulationController: FastifyPluginCallbackTypebox = (app, _
         const { flowId } = req.query
         const { projectId } = req.principal
 
-        return await webhookSimulationService.get({
+        return webhookSimulationService.get({
             flowId,
             projectId,
         })
@@ -27,7 +27,7 @@ export const webhookSimulationController: FastifyPluginCallbackTypebox = (app, _
         const { flowId } = req.query
         const { projectId } = req.principal
 
-        return await webhookSimulationService.delete({
+        return webhookSimulationService.delete({
             flowId,
             projectId,
         })

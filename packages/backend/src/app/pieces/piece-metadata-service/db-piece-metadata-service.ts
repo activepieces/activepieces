@@ -98,7 +98,7 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
                 })
             }
 
-            return await repo.save({
+            return repo.save({
                 id: apId(),
                 projectId,
                 packageType,
@@ -129,7 +129,7 @@ export const DbPieceMetadataService = (): PieceMetadataService => {
         },
 
         async stats(): Promise<AllPiecesStats> {
-            return await pieceStatsService.get()
+            return pieceStatsService.get()
         },
 
         async getExactPieceVersion({ name, version, projectId }): Promise<string> {

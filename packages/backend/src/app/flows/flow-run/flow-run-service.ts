@@ -38,7 +38,7 @@ const getFlowRunOrCreate = async (params: GetOrCreateParams): Promise<Partial<Fl
     const { id, projectId, flowId, flowVersionId, flowDisplayName, environment } = params
 
     if (id) {
-        return await flowRunService.getOneOrThrow({
+        return flowRunService.getOneOrThrow({
             id,
             projectId,
         })
@@ -207,7 +207,7 @@ export const flowRunService = {
     },
 
     async getOne({ projectId, id }: GetOneParams): Promise<FlowRun | null> {
-        return await flowRunRepo.findOneBy({
+        return flowRunRepo.findOneBy({
             projectId,
             id,
         })
@@ -237,7 +237,7 @@ export const flowRunService = {
             finishTime: MoreThanOrEqual(finishTime),
         }
 
-        return await flowRunRepo.findBy(query)
+        return flowRunRepo.findBy(query)
     },
 }
 

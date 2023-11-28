@@ -174,7 +174,7 @@ async function renderTemplate({
 }
 
 async function readTemplateFile(templateName: string): Promise<string> {
-    return await fs.readFile(`./packages/backend/src/assets/emails/${templateName}.html`, 'utf-8')
+    return fs.readFile(`./packages/backend/src/assets/emails/${templateName}.html`, 'utf-8')
 }
 
 type InvitationEmailTemplate = {

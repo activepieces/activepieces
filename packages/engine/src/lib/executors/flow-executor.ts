@@ -358,7 +358,7 @@ export class FlowExecutor {
             action: actionHandler.nextAction,
         })
 
-        return await this.iterateFlow({
+        return this.iterateFlow({
             actionHandler: nextActionHandler,
             ancestors,
         })
