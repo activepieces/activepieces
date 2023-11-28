@@ -27,9 +27,7 @@ export class AcceptInvitationComponent implements OnInit {
       }),
       tap(() => {
         if (!this.invalidToken) {
-          this.redirectToSignUp(
-            this.activatedRoute.snapshot.queryParams['email']
-          );
+          this.redirectToSignUp();
         }
       }),
       catchError((e) => {
@@ -40,8 +38,10 @@ export class AcceptInvitationComponent implements OnInit {
     );
   }
 
-  redirectToSignUp(email: string) {
+  redirectToSignUp() {
     // Add any necessary logic before redirecting, if needed
-    this.router.navigate(['/sign-up'], { queryParams: { email: email } });
+    setTimeout(() => {
+      this.router.navigate(['/sign-up']);
+    }, 3000);
   }
 }

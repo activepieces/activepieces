@@ -8,7 +8,9 @@
   "targets": {
     "build": {
       "executor": "@nx/angular:ng-packagr-lite",
-      "outputs": ["{workspaceRoot}/dist/{projectRoot}"],
+      "outputs": [
+        "{workspaceRoot}/dist/{projectRoot}"
+      ],
       "options": {
         "project": "packages/ui/feature-flow-builder/ng-package.json"
       },
@@ -24,12 +26,13 @@
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"],
+      "outputs": [
+        "{options.outputFile}"
+      ],
       "options": {
         "lintFilePatterns": [
           "packages/ui/feature-flow-builder/**/*.ts",
-          "packages/ui/feature-flow-builder/**/*.html",
-          "packages/ui/feature-flow-builder/package.json"
+          "packages/ui/feature-flow-builder/**/*.html"
         ]
       }
     }

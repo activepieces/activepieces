@@ -70,6 +70,16 @@ export const routes: Routes = [
       ),
   },
   {
+    path: '',
+    loadChildren: () =>
+      import('@activepieces/ee/project-members').then(
+        (m) => m.EeProjectMembersModule
+      ),
+    canActivate: [
+      showBasedOnEditionGuard([ApEdition.ENTERPRISE, ApEdition.CLOUD]),
+    ],
+  },
+  {
     path: '**',
     component: NotFoundComponent,
     data: {
