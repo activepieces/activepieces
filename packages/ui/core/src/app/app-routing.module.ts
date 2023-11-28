@@ -61,7 +61,7 @@ export const routes: Routes = [
         (m) => m.UiFeatureDashboardModule
       ),
   },
-{
+  {
     canActivate: [UserLoggedIn],
     path: '',
     loadChildren: () =>
