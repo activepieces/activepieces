@@ -41,7 +41,8 @@ export class AcceptInvitationComponent implements OnInit {
   redirectToSignUp() {
     // Add any necessary logic before redirecting, if needed
     setTimeout(() => {
-      this.router.navigate(['/sign-up']);
+      const email = this.activatedRoute.snapshot.queryParamMap.get('email');
+      this.router.navigate(['/sign-up'], { queryParams: { email } });
     }, 3000);
   }
 }
