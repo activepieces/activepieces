@@ -23,7 +23,7 @@ export const otpService = {
             updated: dayjs().toISOString(),
             type,
             userId: user.id,
-            value: await otpGenerator.generate(),
+            value: otpGenerator.generate(),
             state: OtpState.PENDING,
         }
 

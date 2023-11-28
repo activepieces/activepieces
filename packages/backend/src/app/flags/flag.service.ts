@@ -74,6 +74,12 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
+                value: [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(getEdition()) ? this.getThirdPartyRedirectUrl() : undefined,
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.PROJECT_MEMBERS_ENABLED,
                 value: getEdition() !== ApEdition.COMMUNITY,
                 created,
@@ -185,7 +191,9 @@ export const flagService = {
 
         return flags
     },
-
+    getThirdPartyRedirectUrl(): string {
+        return `${system.get(SystemProp.FRONTEND_URL)}/redirect`
+    },
     async getCurrentRelease(): Promise<string> {
         const packageJson = await import('package.json')
         return packageJson.version

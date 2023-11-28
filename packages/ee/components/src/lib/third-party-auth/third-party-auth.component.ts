@@ -3,7 +3,6 @@ import {
   AuthenticationService,
   FlagService,
   RedirectService,
-  environment,
 } from '@activepieces/ui/common';
 import {
   ThirdPartyAuthnProviderEnum,
@@ -31,33 +30,35 @@ export class ThirdPartyAuthComponent {
       this.flagService.getThirdPartyProvidersMap();
   }
   signInWithThirdPartyProvider(provider: ThirdPartyAuthnProviderEnum) {
-    this.signInWithThirdPartyProvider$ = this.authenticationService
-      .getThirdPartyLoginUrl(provider)
-      .pipe(
-        switchMap((response) => {
-          return this.oauth2Service
-            .openPopupWithLoginUrl(response.loginUrl, environment.redirectUrl)
-            .pipe(
-              switchMap((popupResponse) => {
-                return this.authenticationService
-                  .claimThirdPartyRequest({
-                    providerName: provider,
-                    code: popupResponse.code,
-                  })
-                  .pipe(
-                    tap((response) => {
-                      if (popupResponse) {
-                        this.authenticationService.saveUser(response);
-                        this.redirectService.redirect();
-                      }
-                    }),
-                    map(() => {
-                      return void 0;
+    this.signInWithThirdPartyProvider$ = this.flagService.getRedirectUrl().pipe(
+      switchMap((redirectUrl) => {
+        return this.authenticationService.getThirdPartyLoginUrl(provider).pipe(
+          switchMap((response) => {
+            return this.oauth2Service
+              .openPopupWithLoginUrl(response.loginUrl, redirectUrl)
+              .pipe(
+                switchMap((popupResponse) => {
+                  return this.authenticationService
+                    .claimThirdPartyRequest({
+                      providerName: provider,
+                      code: popupResponse.code,
                     })
-                  );
-              })
-            );
-        })
-      );
+                    .pipe(
+                      tap((response) => {
+                        if (popupResponse) {
+                          this.authenticationService.saveUser(response);
+                          this.redirectService.redirect();
+                        }
+                      }),
+                      map(() => {
+                        return void 0;
+                      })
+                    );
+                })
+              );
+          })
+        );
+      })
+    );
   }
 }
