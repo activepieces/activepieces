@@ -127,14 +127,20 @@ describe('Custom Domain API', () => {
                     authorization: `Bearer ${testToken1}`,
                 },
             })
+
             // assert
             expect(response1?.statusCode).toBe(StatusCodes.OK)
             const responseBody1 = response1?.json()
 
-            // Assert that the response body contains the expected custom domains for platform 1
             expect(responseBody1.data).toHaveLength(mockCustomDomains1.length)
-            expect(responseBody1.data[0].id).toBe(mockCustomDomains1[0].id)
-            expect(responseBody1.data[1].id).toBe(mockCustomDomains1[1].id)
+            expect(responseBody1?.data).toEqual(
+                expect.arrayContaining(
+                    [
+                        expect.objectContaining({ id: mockCustomDomains1[0].id }),
+                        expect.objectContaining({ id: mockCustomDomains1[1].id }),
+                    ],
+                ),
+            )
         })
     })
 

@@ -172,6 +172,7 @@ describe('Enterprise Local Authn API', () => {
             const mockOtp = createMockOtp({
                 userId: mockUser.id,
                 type: OtpType.PASSWORD_RESET,
+                state: OtpState.PENDING,
             })
             await databaseConnection.getRepository('otp').save(mockOtp)
 

@@ -60,6 +60,7 @@ import { MatSliderModule } from '@angular/material/slider';
 import { CommaSeparatedPipe } from './pipe/comma-seperated.pipe';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { ImgFallbackDirective } from './directives/image-fallback.directive';
+import { MAT_SNACK_BAR_DEFAULT_OPTIONS } from '@angular/material/snack-bar';
 const exportedImports = [
   CommonModule,
   MatTooltipModule,
@@ -158,7 +159,9 @@ export function markedOptionsFactory(): MarkedOptions {
       },
     }),
   ],
-
+  providers: [
+    { provide: MAT_SNACK_BAR_DEFAULT_OPTIONS, useValue: { duration: 2500 } },
+  ],
   declarations: [...exportedDeclarations, FileDroppedDirective],
   exports: [...exportedImports, ...exportedDeclarations, MarkdownModule],
 })

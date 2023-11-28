@@ -47,7 +47,7 @@ export const authenticationService = {
         })
 
         const userWithoutPassword = removePasswordPropFromUser(updatedUser)
-
+        
         return {
             ...userWithoutPassword,
             token,
@@ -105,18 +105,6 @@ const assertSignUpIsEnabled = async (params: SignUpParams): Promise<void> => {
 
 const createUser = async (params: SignUpParams): Promise<User> => {
     try {
-        const userWithSameEmail = await userService.getbyEmail({ email: params.email })
-        if (userWithSameEmail && userWithSameEmail.status !== UserStatus.INVITED) {
-            throw new ActivepiecesError({
-                code: ErrorCode.EXISTING_USER,
-                params: {
-                    email: params.email,
-                    platformId: params.platformId,
-                },
-
-            })
-        }
-
         const newUser: NewUser = {
             email: params.email,
             status: params.status,
@@ -128,7 +116,7 @@ const createUser = async (params: SignUpParams): Promise<User> => {
             platformId: params.platformId,
         }
 
-        return userService.create(newUser)
+        return await userService.create(newUser)
     }
     catch (e: unknown) {
         if (e instanceof QueryFailedError) {
@@ -164,11 +152,18 @@ const enablePlatformSignUpForInvitedUsersOnly = async (params: SignUpParams): Pr
 }
 
 const assertUserIsAllowedToSignIn: (user: User | null) => asserts user is User = (user) => {
-    if (isNil(user) || user.status === UserStatus.CREATED || user.status === UserStatus.INVITED) {
+    if (isNil(user)) {
         throw new ActivepiecesError({
             code: ErrorCode.INVALID_CREDENTIALS,
+            params: null,
+        })
+    }
+   
+    if (user.status === UserStatus.CREATED || user.status === UserStatus.INVITED) {
+        throw new ActivepiecesError({
+            code: ErrorCode.EMAIL_IS_NOT_VERIFIED,
             params: {
-                email: user?.email,
+                email: user.email,
             },
         })
     }
@@ -180,7 +175,7 @@ const assertPasswordMatches = async ({ requestPassword, userPassword }: AssertPa
     if (!passwordMatches) {
         throw new ActivepiecesError({
             code: ErrorCode.INVALID_CREDENTIALS,
-            params: {},
+            params: null,
         })
     }
 }

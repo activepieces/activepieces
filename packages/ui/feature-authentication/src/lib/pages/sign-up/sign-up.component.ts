@@ -10,7 +10,6 @@ import { catchError, map, Observable, of, switchMap, tap } from 'rxjs';
 import {
   AuthenticationService,
   RedirectService,
-  fadeInUp400ms,
 } from '@activepieces/ui/common';
 import { FlagService } from '@activepieces/ui/common';
 import {
@@ -21,6 +20,7 @@ import {
 } from '@activepieces/ui/common';
 import { ApFlagId, UserStatus } from '@activepieces/shared';
 import { OtpType } from '@activepieces/ee-shared';
+import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 
 export interface UserInfo {
   firstName: FormControl<string>;
@@ -33,11 +33,11 @@ export interface UserInfo {
 @Component({
   templateUrl: './sign-up.component.html',
   styleUrls: ['./sign-up.component.scss'],
-  animations: [fadeInUp400ms],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SignUpComponent {
   registrationForm: FormGroup<UserInfo>;
+  readonly emailIsUsedErrorName = 'emailIsUsed';
   loading = false;
   tokenError = false;
   emailExists = false;
@@ -48,6 +48,7 @@ export class SignUpComponent {
   privacyPolicyUrl$: Observable<string>;
   termsOfServiceUrl$: Observable<string>;
   signUpDone = false;
+  invitationOnlySignup = false;
   readonly OtpType = OtpType;
   constructor(
     private formBuilder: FormBuilder,
@@ -99,7 +100,11 @@ export class SignUpComponent {
     this.emailValueChanged$ =
       this.registrationForm.controls.email.valueChanges.pipe(
         tap(() => {
-          this.emailChanged = true;
+          const errors = this.registrationForm.controls.email.errors;
+          if (errors && errors[this.emailIsUsedErrorName]) {
+            delete errors[this.emailIsUsedErrorName];
+          }
+          this.registrationForm.controls.email.setErrors(errors);
         })
       );
   }
@@ -137,11 +142,19 @@ export class SignUpComponent {
         tap((response) => {
           if (response && response.body?.status === UserStatus.VERIFIED) {
             this.redirect();
+          } else {
+            this.signUpDone = true;
           }
-          this.signUpDone = true;
         }),
-        catchError((err) => {
-          this.emailExists = true;
+        catchError((err: HttpErrorResponse) => {
+          const emailExists = err.status === HttpStatusCode.Conflict;
+          if (emailExists) {
+            this.registrationForm.controls.email.setErrors({
+              ...this.registrationForm.controls.email.errors,
+              [this.emailIsUsedErrorName]: true,
+            });
+          }
+          this.invitationOnlySignup = err.status === HttpStatusCode.Forbidden;
           this.emailChanged = false;
           this.loading = false;
           return of(err);

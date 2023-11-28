@@ -24,6 +24,7 @@ import { AddStatusToConnectionsSqlite1693402376520 } from './migration/sqlite/16
 import { AddPlatformIdToUserSqlite1700147448410 } from './migration/sqlite/1700147448410-AddPlatformIdToUserSqlite'
 import { AddTerminationReasonSqlite1698323327318 } from './migration/sqlite/1698323327318-AddTerminationReason'
 import { AddPlatformIdToPieceMetadataSqlite1700524446967 } from './migration/sqlite/1700524446967-AddPlatformIdToPieceMetadataSqlite'
+import { AddPartialUniqueIndexForEmailAndPlatformIdIsNull1701096458822 } from './migration/common/1701096458822-add-partial-unique-index-for-email-and-platform-id-is-null'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(SystemProp.CONFIG_PATH)
@@ -64,6 +65,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         UpdateUserStatusRenameShadowToInvited1699818680567,
         AddPlatformIdToUserSqlite1700147448410,
         AddPlatformIdToPieceMetadataSqlite1700524446967,
+        AddPartialUniqueIndexForEmailAndPlatformIdIsNull1701096458822,
     ]
     const edition = getEdition()
     if (edition !== ApEdition.COMMUNITY) {

@@ -130,7 +130,7 @@ export class AuthenticationService {
   }
 
   sendOtpEmail(req: CreateOtpRequestBody) {
-    return this.http.post(`${environment.apiUrl}/otp`, req);
+    return this.http.post<void>(`${environment.apiUrl}/otp`, req);
   }
 
   verifyEmail(req: VerifyEmailRequestBody) {

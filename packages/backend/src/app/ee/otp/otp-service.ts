@@ -23,7 +23,7 @@ export const otpService = {
             updated: dayjs().toISOString(),
             type,
             userId: user.id,
-            value: await otpGenerator.generate(),
+            value: otpGenerator.generate(),
             state: OtpState.PENDING,
         }
 
@@ -52,9 +52,7 @@ export const otpService = {
         const otpIsPending = otp.state === OtpState.PENDING
         const otpIsNotExpired = now.diff(otp.updated, 'milliseconds') < THIRTY_MINUTES
         const otpMatches = otp.value === value
-
-        const verdict = otpIsPending && otpIsNotExpired && otpMatches
-
+        const verdict = otpIsNotExpired && otpMatches && otpIsPending
         if (verdict) {
             await repo.update(otp.id, {
                 state: OtpState.CONFIRMED,
