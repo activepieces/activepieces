@@ -1,11 +1,11 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import {
   FormBuilder,
   FormControl,
   FormGroup,
   Validators,
 } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { catchError, map, Observable, of, switchMap, tap } from 'rxjs';
 import {
   AuthenticationService,
@@ -35,7 +35,7 @@ export interface UserInfo {
   styleUrls: ['./sign-up.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SignUpComponent {
+export class SignUpComponent implements OnInit {
   registrationForm: FormGroup<UserInfo>;
   readonly emailIsUsedErrorName = 'emailIsUsed';
   loading = false;
@@ -55,7 +55,8 @@ export class SignUpComponent {
     public flagService: FlagService,
     public authenticationService: AuthenticationService,
     private redirectService: RedirectService,
-    private router: Router
+    private router: Router,
+    private activeRoute: ActivatedRoute
   ) {
     this.privacyPolicyUrl$ = this.flagService.getStringFlag(
       ApFlagId.PRIVACY_POLICY_URL
@@ -107,6 +108,12 @@ export class SignUpComponent {
           this.registrationForm.controls.email.setErrors(errors);
         })
       );
+  }
+  ngOnInit(): void {
+    const email = this.activeRoute.snapshot.queryParamMap.get('email');
+    if (email) {
+      this.registrationForm.controls.email.setValue(email);
+    }
   }
 
   signUp() {

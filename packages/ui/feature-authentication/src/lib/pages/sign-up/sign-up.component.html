@@ -3,6 +3,7 @@
     <div class="ap-typography-headline-5 ap-text-center ap-mb-4 md" i18n>
       Let's Get Started!
     </div>
+    <ap-third-party-auth [isForSignup]="true"></ap-third-party-auth>
     <form [formGroup]="registrationForm" (ngSubmit)="signUp()" class="ap-flex ap-flex-col ap-gap-2">
       <div class="ap-flex ap-gap-1 md:ap-gap-4 ap-items-center ap-flex-col md:ap-flex-row">
         <mat-form-field class="ap-w-full md:ap-w-initial" appearance="outline">
