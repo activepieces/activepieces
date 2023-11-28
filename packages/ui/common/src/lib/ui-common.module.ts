@@ -12,7 +12,10 @@ import { AngularSvgIconModule } from 'angular-svg-icon';
 import { StateIconComponent } from './components/status-icon/state-icon.component';
 import { LoadingIconComponent } from './components/loading-icon/loading-icon.component';
 import { ApPaginatorComponent } from './components/pagination/ap-paginator.component';
-import { MatFormFieldModule } from '@angular/material/form-field';
+import {
+  MAT_FORM_FIELD_DEFAULT_OPTIONS,
+  MatFormFieldModule,
+} from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -161,6 +164,10 @@ export function markedOptionsFactory(): MarkedOptions {
   ],
   providers: [
     { provide: MAT_SNACK_BAR_DEFAULT_OPTIONS, useValue: { duration: 2500 } },
+    {
+      provide: MAT_FORM_FIELD_DEFAULT_OPTIONS,
+      useValue: { appearance: 'outline' },
+    },
   ],
   declarations: [...exportedDeclarations, FileDroppedDirective],
   exports: [...exportedImports, ...exportedDeclarations, MarkdownModule],

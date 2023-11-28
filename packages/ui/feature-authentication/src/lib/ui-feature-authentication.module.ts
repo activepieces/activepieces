@@ -13,10 +13,7 @@ import { IsFirstSignInResolver } from './resolvers/is-first-sign-in.resolver';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { MatCardModule } from '@angular/material/card';
 import { MatMenuModule } from '@angular/material/menu';
-import {
-  MatFormFieldModule,
-  MAT_FORM_FIELD_DEFAULT_OPTIONS,
-} from '@angular/material/form-field';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { AuthenticationComponent } from './pages/authenticate/authenticate.component';
 import { SendEmailForAuthActionComponent } from './components/send-email-for-auth-action/send-email-for-auth-action.component';
 import { ApEdition } from '@activepieces/shared';
@@ -98,12 +95,6 @@ import { RedirectToDashboardIfLoggedIn } from './guards/redirect-to-dashboard-if
         ],
       },
     ]),
-  ],
-  providers: [
-    {
-      provide: MAT_FORM_FIELD_DEFAULT_OPTIONS,
-      useValue: { appearance: 'outline' },
-    },
   ],
   declarations: [
     AuthLayoutComponent,
