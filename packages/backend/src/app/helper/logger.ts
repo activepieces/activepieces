@@ -54,7 +54,7 @@ const initLogger = (): Logger => {
         })
     }
 
-    return pino({ level, transport: targets });
+    return pino({ level, transport: { targets }});
 }
 
 export const logger = initLogger()
