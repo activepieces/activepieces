@@ -10,7 +10,6 @@ import { catchError, map, Observable, of, switchMap, tap } from 'rxjs';
 import {
   AuthenticationService,
   RedirectService,
-  fadeInUp400ms,
 } from '@activepieces/ui/common';
 import { FlagService } from '@activepieces/ui/common';
 import {
@@ -34,7 +33,6 @@ export interface UserInfo {
 @Component({
   templateUrl: './sign-up.component.html',
   styleUrls: ['./sign-up.component.scss'],
-  animations: [fadeInUp400ms],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SignUpComponent {
