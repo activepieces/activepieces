@@ -1,4 +1,4 @@
-import { ApFlagId, PrincipalType, Project, ProjectType, TelemetryEventName, User } from '@activepieces/shared'
+import { ActivepiecesError, ApFlagId, ErrorCode, PrincipalType, Project, ProjectType, TelemetryEventName, User, isNil } from '@activepieces/shared'
 import { projectService } from '../../../project/project-service'
 import { AuthenticationServiceHooks } from './authentication-service-hooks'
 import { accessTokenManager } from '../../lib/access-token-manager'
@@ -9,13 +9,7 @@ import { logger } from '../../../helper/logger'
 export const defaultAuthenticationServiceHooks: AuthenticationServiceHooks = {
     async postSignUp({ user }) {
         await flagService.save({ id: ApFlagId.USER_CREATED, value: true })
-
-        const project = await projectService.create({
-            displayName: `${user.firstName}'s Project`,
-            ownerId: user.id,
-            platformId: undefined,
-            type: ProjectType.STANDALONE,
-        })
+        const project = await getOrCreateProject(user)
 
         const token = await accessTokenManager.generateToken({
             id: user.id,
@@ -52,6 +46,31 @@ export const defaultAuthenticationServiceHooks: AuthenticationServiceHooks = {
             token,
         }
     },
+}
+
+const getOrCreateProject = async (user: User): Promise<Project> => {
+    if (isNil(user.platformId)) {
+        return projectService.create({
+            displayName: `${user.firstName}'s Project`,
+            ownerId: user.id,
+            platformId: undefined,
+            type: ProjectType.STANDALONE,
+        })
+    }
+
+    const platformProject = await projectService.getByPlatformId(user.platformId)
+
+    if (isNil(platformProject)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: {
+                entityType: 'project',
+                message: `platformId=${user.platformId}`,
+            },
+        })
+    }
+
+    return platformProject
 }
 
 const sendTelemetry = async ({ user, project }: SendTelemetryParams): Promise<void> => {

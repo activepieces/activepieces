@@ -100,6 +100,9 @@ describe('Authentication API', () => {
             const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockPlatformOwner.id })
             await databaseConnection.getRepository('platform').save(mockPlatform)
 
+            const mockProject = createMockProject({ ownerId: mockPlatformOwner.id, platformId: mockPlatformId })
+            await databaseConnection.getRepository('project').save(mockProject)
+
             const mockCustomDomain = createMockCustomDomain({ platformId: mockPlatform.id })
             await databaseConnection.getRepository('custom_domain').save(mockCustomDomain)
 
@@ -121,6 +124,42 @@ describe('Authentication API', () => {
 
             expect(responseBody?.platformId).toBe(mockPlatform.id)
             expect(responseBody?.status).toBe('VERIFIED')
+            expect(responseBody?.projectId).toBe(mockProject.id)
+        })
+
+        it('fails to sign up invited user platform if no project exist', async () => {
+            // arrange
+            const mockPlatformId = faker.string.nanoid(21)
+
+            const mockPlatformOwner = createMockUser({ platformId: mockPlatformId })
+            const mockInvitedUser = createMockUser({ platformId: mockPlatformId, status: UserStatus.INVITED })
+            await databaseConnection.getRepository('user').save([mockPlatformOwner, mockInvitedUser])
+
+            const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockPlatformOwner.id })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
+
+            const mockCustomDomain = createMockCustomDomain({ platformId: mockPlatform.id })
+            await databaseConnection.getRepository('custom_domain').save(mockCustomDomain)
+
+            const mockSignUpRequest = createMockSignUpRequest({ email: mockInvitedUser.email })
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/v1/authentication/sign-up',
+                headers: {
+                    Host: mockCustomDomain.domain,
+                },
+                body: mockSignUpRequest,
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+            const responseBody = response?.json()
+
+            expect(responseBody?.code).toBe('ENTITY_NOT_FOUND')
+            expect(responseBody?.params?.entityType).toBe('project')
+            expect(responseBody?.params?.message).toBe(`platformId=${mockPlatformId}`)
         })
 
         it('Adds tasks for referrals', async () => {
