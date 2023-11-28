@@ -30,7 +30,7 @@ export const gitHubAuthnProvider: AuthnProvider = {
         return authenticateUser(gitHubUserInfo)
     },
     isConfiguredByUser(): boolean {
-        return !!system.getOrThrow(SystemProp.FEDERATED_AUTHN_GITHUB_CLIENT_SECRET) && !!system.getOrThrow(SystemProp.FEDERATED_AUTHN_GITHUB_CLIENT_ID)
+        return !!system.get(SystemProp.FEDERATED_AUTHN_GITHUB_CLIENT_SECRET) && !!system.get(SystemProp.FEDERATED_AUTHN_GITHUB_CLIENT_ID)
     },
 }
 

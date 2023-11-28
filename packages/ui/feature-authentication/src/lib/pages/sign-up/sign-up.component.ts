@@ -137,8 +137,9 @@ export class SignUpComponent {
         tap((response) => {
           if (response && response.body?.status === UserStatus.VERIFIED) {
             this.redirect();
+          }else{
+            this.signUpDone = true;
           }
-          this.signUpDone = true;
         }),
         catchError((err) => {
           this.emailExists = true;
