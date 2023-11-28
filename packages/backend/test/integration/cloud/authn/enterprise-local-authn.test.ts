@@ -86,7 +86,7 @@ describe('Enterprise Local Authn API', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(response?.statusCode).toBe(StatusCodes.GONE)
             const responseBody = response?.json()
             expect(responseBody?.code).toBe('INVALID_OTP')
 
@@ -121,7 +121,7 @@ describe('Enterprise Local Authn API', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(response?.statusCode).toBe(StatusCodes.GONE)
             const responseBody = response?.json()
             expect(responseBody?.code).toBe('INVALID_OTP')
 
@@ -155,7 +155,7 @@ describe('Enterprise Local Authn API', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(response?.statusCode).toBe(StatusCodes.GONE)
             const responseBody = response?.json()
             expect(responseBody?.code).toBe('INVALID_OTP')
 
@@ -224,7 +224,7 @@ describe('Enterprise Local Authn API', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(response?.statusCode).toBe(StatusCodes.GONE)
             const responseBody = response?.json()
             expect(responseBody?.code).toBe('INVALID_OTP')
 
