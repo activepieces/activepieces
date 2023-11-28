@@ -181,7 +181,7 @@ describe('Authentication API', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(response?.statusCode).toBe(StatusCodes.UNAUTHORIZED)
             const responseBody = response?.json()
             expect(responseBody?.code).toBe('INVALID_CREDENTIALS')
         })
@@ -216,9 +216,9 @@ describe('Authentication API', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
             const responseBody = response?.json()
-            expect(responseBody?.code).toBe('INVALID_CREDENTIALS')
+            expect(responseBody?.code).toBe('EMAIL_IS_NOT_VERIFIED')
         })
     })
 })

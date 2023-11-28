@@ -23,7 +23,7 @@ const platformPieceController: FastifyPluginCallbackTypebox = (app, _opts, done)
             platformId,
             userId: req.principal.id,
         })
-        return await pieceService.installPiece({
+        return pieceService.installPiece({
             packageType,
             pieceName,
             pieceVersion,

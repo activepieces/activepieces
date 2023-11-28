@@ -13,7 +13,7 @@ export const adminPieceModule: FastifyPluginAsyncTypebox = async (app) => {
 
 const adminPieceController: FastifyPluginCallbackTypebox = (app, _opts, done) => {
     app.post('/', CreatePieceRequest, async (req): Promise<PieceMetadataModel> => {
-        return await pieceMetadataService.create({
+        return pieceMetadataService.create({
             pieceMetadata: req.body as PieceMetadata,
             packageType: PackageType.REGISTRY,
             pieceType: PieceType.OFFICIAL,

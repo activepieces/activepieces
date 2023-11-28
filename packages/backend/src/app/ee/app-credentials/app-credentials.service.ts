@@ -28,7 +28,7 @@ export const appCredentialService = {
         return paginationHelper.createPage<AppCredential>(data, cursor)
     },
     async getOneOrThrow(id: AppCredentialId): Promise<AppCredential> {
-        return await appCredentialRepo.findOneByOrFail({ id })
+        return appCredentialRepo.findOneByOrFail({ id })
     },
     async upsert({ projectId, request }: { projectId: ProjectId, request: UpsertAppCredentialRequest }): Promise<AppCredential | null> {
         await appCredentialRepo.upsert({

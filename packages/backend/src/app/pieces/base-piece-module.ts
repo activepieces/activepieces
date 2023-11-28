@@ -46,7 +46,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
 
         const decodeScope = decodeURIComponent(scope)
         const decodedName = decodeURIComponent(name)
-        return await pieceMetadataService.getOrThrow({
+        return pieceMetadataService.getOrThrow({
             projectId: req.principal.type === PrincipalType.UNKNOWN ? undefined : req.principal.projectId,
             name: `${decodeScope}/${decodedName}`,
             version,
@@ -63,7 +63,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
         const { version } = req.query
 
         const decodedName = decodeURIComponent(name)
-        return await pieceMetadataService.getOrThrow({
+        return pieceMetadataService.getOrThrow({
             projectId: req.principal.projectId,
             name: decodedName,
             version,
@@ -106,7 +106,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
             })
         }
 
-        return await pieceMetadataService.stats()
+        return pieceMetadataService.stats()
     })
 
     app.delete('/:id', {
@@ -116,7 +116,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
             }),
         },
     }, async (req): Promise<void> => {
-        return await pieceMetadataService.delete({
+        return pieceMetadataService.delete({
             projectId: req.principal.projectId,
             id: req.params.id,
         })

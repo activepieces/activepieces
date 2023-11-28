@@ -23,7 +23,7 @@ export const platformService = {
             cloudAuthEnabled: true,
         }
 
-        return await repo.save(newPlatform)
+        return repo.save(newPlatform)
     },
 
     async update(params: UpdateParams): Promise<Platform> {
@@ -51,7 +51,7 @@ export const platformService = {
             ...spreadIfDefined('defaultLocale', params.defaultLocale),
         }
 
-        return await repo.save(updatedPlatform)
+        return repo.save(updatedPlatform)
     },
 
     async getOneOrThrow(id: PlatformId): Promise<Platform> {

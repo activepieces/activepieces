@@ -166,7 +166,7 @@ export const appConnectionService = {
     },
 
     async countByProject({ projectId }: CountByProjectParams): Promise<number> {
-        return await repo.countBy({ projectId })
+        return repo.countBy({ projectId })
     },
 }
 

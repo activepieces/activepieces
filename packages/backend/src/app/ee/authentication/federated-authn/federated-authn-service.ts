@@ -15,7 +15,7 @@ export const federatedAuthnService = {
 
     async claim({ providerName, code }: ClaimParams): Promise<AuthenticationResponse> {
         const provider = providers[providerName]
-        return await provider.authenticate(code)
+        return provider.authenticate(code)
     },
 }
 

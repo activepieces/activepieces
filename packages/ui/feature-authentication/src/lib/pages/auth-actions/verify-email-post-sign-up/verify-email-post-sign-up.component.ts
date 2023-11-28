@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Observable, catchError, tap } from 'rxjs';
+import { BehaviorSubject, Observable, catchError, tap } from 'rxjs';
 import {
   fadeInUp400ms,
   AuthenticationService,
@@ -10,6 +10,7 @@ import {
 } from '@activepieces/ui/common';
 import { OtpType } from '@activepieces/ee-shared';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 
 @Component({
   templateUrl: './verify-email-post-sign-up.component.html',
@@ -19,7 +20,10 @@ export class VerifyEmailPostSignUpComponent {
   readonly OtpType = OtpType;
   readonly verifyingEmail = $localize`Verifying Email`;
   readonly verifiedEmail = $localize`Verified Email`;
-  actionTitle = this.verifyingEmail;
+  readonly verificationFailed = $localize`Verification Failed`;
+  actionTitle$: BehaviorSubject<string> = new BehaviorSubject(
+    this.verifyingEmail
+  );
   errorMessage = '';
   verifyingEmail$?: Observable<void>;
   constructor(
@@ -31,7 +35,6 @@ export class VerifyEmailPostSignUpComponent {
   ) {
     const otp = this.activatedRoute.snapshot.queryParams['otpcode'];
     const userId = this.activatedRoute.snapshot.queryParams['userId'];
-    this.actionTitle = this.verifyingEmail;
     this.titleService.setTitle($localize`Verifying email`);
     this.verifyingEmail$ = this.authenticationService
       .verifyEmail({
@@ -39,15 +42,22 @@ export class VerifyEmailPostSignUpComponent {
         userId,
       })
       .pipe(
-        catchError((err) => {
-          console.error(err);
-          this.snackbar.open(unexpectedErrorMessage, '', {
-            panelClass: 'error',
-          });
+        catchError((err: HttpErrorResponse) => {
+          if (err.status === HttpStatusCode.Gone) {
+            this.actionTitle$.next(this.verificationFailed);
+            this.titleService.setTitle(this.verificationFailed);
+            setTimeout(() => this.backToSignIn(), 3000);
+          } else {
+            this.snackbar.open(unexpectedErrorMessage, '', {
+              panelClass: 'error',
+            });
+            this.backToSignIn();
+          }
+
           throw err;
         }),
         tap(() => {
-          this.actionTitle = this.verifiedEmail;
+          this.actionTitle$.next(this.verifiedEmail);
           this.titleService.setTitle($localize`Email Verified`);
           setTimeout(() => this.backToSignIn(), 3000);
         })

@@ -30,19 +30,19 @@
           <ng-container *ngIf="
               registrationForm.controls.email.getError('email') ||
                 registrationForm.controls.email.getError('invalidEmail');
-              else otherEmailErrors
             " i18n>
             Email is invalid
           </ng-container>
-          <ng-template #otherEmailErrors>
-            <ng-container *ngIf="registrationForm.controls.email.getError('required')" i18n>Email is
-              required</ng-container></ng-template>
+          <ng-container *ngIf="registrationForm.controls.email.getError(emailIsUsedErrorName)" i18n>
+            Email is used
+          </ng-container>
+          <ng-container *ngIf="registrationForm.controls.email.getError('required')" i18n>Email is
+            required</ng-container>
+
         </mat-error>
+
       </mat-form-field>
-      <p @fadeInUp class="ap-text-danger ap-typography-caption -ap-mt-5 ap-px-4" *ngIf="emailExists && !emailChanged"
-        i18n>
-        Email is used
-      </p>
+
       <mat-form-field class="ap-w-full" appearance="outline">
         <mat-label i18n>Password</mat-label>
         <input (focus)="menuTrigger.openMenu()" (blur)="menuTrigger.closeMenu()" type="password" matInput
@@ -55,7 +55,9 @@
         </mat-error>
         <div #menuTrigger="matMenuTrigger" [matMenuTriggerFor]="menu" class="hidden-trigger"></div>
       </mat-form-field>
-
+      <mat-error class="ap-text-center" *ngIf="invitationOnlySignup && !emailChanged" i18n>
+        Contact your admin to send you an invite
+      </mat-error>
       <mat-menu #menu="matMenu" [hasBackdrop]="true">
         <div class="ap-mx-2">
           <div class="ap-flex ap-gap-4 ap-items-center"
