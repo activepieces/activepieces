@@ -52,10 +52,9 @@ export const otpService = {
         const otpIsPending = otp.state === OtpState.PENDING
         const otpIsNotExpired = now.diff(otp.updated, 'milliseconds') < THIRTY_MINUTES
         const otpMatches = otp.value === value
-
-        const verdict = otpIsPending && otpIsNotExpired && otpMatches
-
-        if (verdict) {
+        const verdict = otpIsNotExpired && otpMatches
+        
+        if (verdict && otpIsPending) {
             await repo.update(otp.id, {
                 state: OtpState.CONFIRMED,
             })
