@@ -31,7 +31,7 @@ export const defaultAuthenticationServiceHooks: AuthenticationServiceHooks = {
     },
 
     async postSignIn({ user }) {
-        const project = await projectService.getUserProject(user.id)
+        const project = await getProjectOrThrow(user)
 
         const token = await accessTokenManager.generateToken({
             id: user.id,
@@ -58,14 +58,26 @@ const getOrCreateProject = async (user: User): Promise<Project> => {
         })
     }
 
-    const platformProject = await projectService.getByPlatformId(user.platformId)
+    return getPlatformProjectOrThrow(user.platformId)
+}
+
+const getProjectOrThrow = async (user: User): Promise<Project> => {
+    if (isNil(user.platformId)) {
+        return projectService.getUserProject(user.id)
+    }
+
+    return getPlatformProjectOrThrow(user.platformId)
+}
+
+const getPlatformProjectOrThrow = async (platformId: string): Promise<Project> => {
+    const platformProject = await projectService.getByPlatformId(platformId)
 
     if (isNil(platformProject)) {
         throw new ActivepiecesError({
             code: ErrorCode.ENTITY_NOT_FOUND,
             params: {
                 entityType: 'project',
-                message: `platformId=${user.platformId}`,
+                message: `platformId=${platformId}`,
             },
         })
     }

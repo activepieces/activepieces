@@ -375,6 +375,51 @@ describe('Authentication API', () => {
             expect(decodedToken?.platform?.role).toBe('OWNER')
         })
 
+        it('Fails to sign in platform users if no project exists', async () => {
+            // arrange
+            const mockEmail = faker.internet.email()
+            const mockPassword = 'password'
+            const mockPlatformId = faker.string.nanoid()
+            const mockPlatformDomain = faker.internet.domainName()
+
+            const mockUser = createMockUser({
+                email: mockEmail,
+                password: mockPassword,
+                status: UserStatus.VERIFIED,
+                platformId: mockPlatformId,
+            })
+            await databaseConnection.getRepository('user').save(mockUser)
+
+            const mockPlatform = createMockPlatform({ id: mockPlatformId, ownerId: mockUser.id })
+            await databaseConnection.getRepository('platform').save(mockPlatform)
+
+            const mockCustomDomain = createMockCustomDomain({ platformId: mockPlatformId, domain: mockPlatformDomain })
+            await databaseConnection.getRepository('custom_domain').save(mockCustomDomain)
+
+            const mockSignInRequest = createMockSignInRequest({
+                email: mockEmail,
+                password: mockPassword,
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/v1/authentication/sign-in',
+                headers: {
+                    Host: mockPlatformDomain,
+                },
+                body: mockSignInRequest,
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+            const responseBody = response?.json()
+
+            expect(responseBody?.code).toBe('ENTITY_NOT_FOUND')
+            expect(responseBody?.params?.entityType).toBe('project')
+            expect(responseBody?.params?.message).toBe(`platformId=${mockPlatformId}`)
+        })
+
         it('Fails if password doesn\'t match', async () => {
             // arrange
             const mockEmail = faker.internet.email()
