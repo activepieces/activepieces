@@ -125,9 +125,7 @@ ErrorCode.FLOW_VERSION_NOT_FOUND,
 
 export type InvalidCredentialsErrorParams = BaseErrorParams<
 ErrorCode.INVALID_CREDENTIALS,
-{
-    email?: string
-}
+null
 >
 
 export type EmailIsNotVerifiedErrorParams = BaseErrorParams<
