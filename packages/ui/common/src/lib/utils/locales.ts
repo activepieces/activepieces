@@ -7,4 +7,4 @@ export const localesMap = {
   [LocalesEnum.FRENCH]: 'Français',
   [LocalesEnum.GERMAN]: 'Deutsch',
   [LocalesEnum.JAPANESE]: '日本語',
-}
+};

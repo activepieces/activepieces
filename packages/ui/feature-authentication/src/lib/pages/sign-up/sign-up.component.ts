@@ -137,7 +137,7 @@ export class SignUpComponent {
         tap((response) => {
           if (response && response.body?.status === UserStatus.VERIFIED) {
             this.redirect();
-          }else{
+          } else {
             this.signUpDone = true;
           }
         }),
