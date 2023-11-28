@@ -29,9 +29,7 @@ const exportedDeclarations = [
     UiFeatureBuilderFormControlsModule,
     EeBillingUiModule,
   ],
-  declarations: [
-    ...exportedDeclarations,
-  ],
+  declarations: [...exportedDeclarations],
   exports: [...exportedDeclarations],
 })
 export class UiFeatureBuilderHeaderModule {}
