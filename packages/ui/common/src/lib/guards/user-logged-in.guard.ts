@@ -1,9 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import {
-  AuthenticationService,
-  RedirectService,
-} from '@activepieces/ui/common';
+import { AuthenticationService, RedirectService } from '../service';
+
 @Injectable({
   providedIn: 'root',
 })

@@ -6,14 +6,16 @@ import { EditableTextComponent } from './components/editable-text/editable-text.
 import {
   MatTooltipDefaultOptions,
   MatTooltipModule,
-  MAT_TOOLTIP_DEFAULT_OPTIONS,
 } from '@angular/material/tooltip';
 import { WarningBoxComponent } from './components/warning-box/warning-box.component';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { StateIconComponent } from './components/status-icon/state-icon.component';
 import { LoadingIconComponent } from './components/loading-icon/loading-icon.component';
 import { ApPaginatorComponent } from './components/pagination/ap-paginator.component';
-import { MatFormFieldModule } from '@angular/material/form-field';
+import {
+  MAT_FORM_FIELD_DEFAULT_OPTIONS,
+  MatFormFieldModule,
+} from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -59,6 +61,9 @@ import { PageTitleComponent } from './components/page-title/page-title.component
 import { PoweredByActivepiecesComponent } from './components/powered-by-activepieces/powered-by-activepieces.component';
 import { MatSliderModule } from '@angular/material/slider';
 import { CommaSeparatedPipe } from './pipe/comma-seperated.pipe';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { ImgFallbackDirective } from './directives/image-fallback.directive';
+import { MAT_SNACK_BAR_DEFAULT_OPTIONS } from '@angular/material/snack-bar';
 const exportedImports = [
   CommonModule,
   MatTooltipModule,
@@ -83,6 +88,7 @@ const exportedImports = [
   MatTabsModule,
   NgxColorsModule,
   MatSliderModule,
+  MatSnackBarModule,
 ];
 const exportedDeclarations = [
   UploadFileControlComponent,
@@ -117,6 +123,7 @@ const exportedDeclarations = [
   CheckOverflowDirective,
   PageTitleComponent,
   PoweredByActivepiecesComponent,
+  ImgFallbackDirective,
 ];
 export const materialTooltipDefaults: MatTooltipDefaultOptions = {
   showDelay: 0,
@@ -156,7 +163,11 @@ export function markedOptionsFactory(): MarkedOptions {
     }),
   ],
   providers: [
-    { provide: MAT_TOOLTIP_DEFAULT_OPTIONS, useValue: materialTooltipDefaults },
+    { provide: MAT_SNACK_BAR_DEFAULT_OPTIONS, useValue: { duration: 2500 } },
+    {
+      provide: MAT_FORM_FIELD_DEFAULT_OPTIONS,
+      useValue: { appearance: 'outline' },
+    },
   ],
   declarations: [...exportedDeclarations, FileDroppedDirective],
   exports: [...exportedImports, ...exportedDeclarations, MarkdownModule],
