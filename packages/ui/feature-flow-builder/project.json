@@ -1,5 +1,5 @@
 {
-  "name": "feature-flow-builder",
+  "name": "ui-feature-flow-builder",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/ui/feature-flow-builder/src",
   "prefix": "lib",
@@ -21,6 +21,20 @@
         }
       },
       "defaultConfiguration": "production"
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "packages/ui/feature-flow-builder/jest.config.ts",
+        "passWithNoTests": true
+      },
+      "configurations": {
+        "ci": {
+          "ci": true,
+          "codeCoverage": true
+        }
+      }
     },
     "lint": {
       "executor": "@nx/eslint:lint",

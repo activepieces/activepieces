@@ -61,11 +61,11 @@ export const routes: Routes = [
         (m) => m.UiFeatureDashboardModule
       ),
   },
-  {
+{
     canActivate: [UserLoggedIn],
     path: '',
     loadChildren: () =>
-      import('@activepieces/ui/feature-flow-builder').then(
+      import('ui-feature-flow-builder').then(
         (m) => m.UiFeatureFlowBuilderModule
       ),
   },

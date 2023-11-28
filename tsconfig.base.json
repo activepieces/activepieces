@@ -264,7 +264,7 @@
       "@activepieces/ui/feature-builder-form-controls": [
         "packages/ui/feature-builder-form-controls/src/index.ts"
       ],
-      "@activepieces/ui/feature-builder-header": [
+      "@activepieces/ui-feature-builder-header": [
         "packages/ui/feature-builder-header/src/index.ts"
       ],
       "@activepieces/ui/feature-builder-left-sidebar": [
@@ -292,7 +292,9 @@
         "packages/ui/feature-templates/src/index.ts"
       ],
       "@ee/*": ["packages/ee/*"],
-      "@activepieces/ui/feature-flow-builder": ["packages/ui/feature-flow-builder/src/index.ts"],
+      "ui-feature-flow-builder": [
+        "packages/ui/feature-flow-builder/src/index.ts"
+      ],
       "ui-feature-pieces": ["packages/ui/feature-pieces/src/index.ts"]
     },
     "resolveJsonModule": true

@@ -8,7 +8,7 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
 import { CodemirrorModule } from '@ctrl/ngx-codemirror';
 import { AngularSvgIconModule } from 'angular-svg-icon';
 import { UiCommonModule } from '@activepieces/ui/common';
-import { UiFeatureBuilderHeaderModule } from '@activepieces/ui/feature-builder-header';
+import { UiFeatureBuilderHeaderModule } from '@activepieces/ui-feature-builder-header';
 import { UiFeatureBuilderLeftSidebarModule } from '@activepieces/ui/feature-builder-left-sidebar';
 import { UiFeatureBuilderStoreModule } from '@activepieces/ui/feature-builder-store';
 import { UiFeatureBuilderCanvasModule } from '@activepieces/ui/feature-builder-canvas';
@@ -41,4 +41,4 @@ import { TimeagoModule } from 'ngx-timeago';
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   exports: [],
 })
-export class UiFeatureFlowBuilderModule {}
+export class UiFeatureFlowBuilderModule { }

@@ -19,8 +19,8 @@ import {
   FlowsActions,
 } from '@activepieces/ui/feature-builder-store';
 import { Flow, FlowInstance } from '@activepieces/shared';
-import { ImportFlowDialogueComponent } from './import-flow-dialogue/import-flow-dialogue.component';
 import { EmbeddingService } from '@activepieces/ui/common';
+import { ImportFlowDialogueComponent } from './import-flow-dialogue/import-flow-dialogue.component';
 
 @Component({
   selector: 'app-flow-builder-header',
