@@ -73,7 +73,7 @@ export const triggerUtils = {
                         handshakeConfig.paramName &&
             handshakeConfig.paramName.toLowerCase() in payload.headers
                     ) {
-                        return await executeHandshake({
+                        return executeHandshake({
                             flowVersion,
                             projectId,
                             payload,
@@ -86,7 +86,7 @@ export const triggerUtils = {
                         handshakeConfig.paramName &&
             handshakeConfig.paramName in payload.queryParams
                     ) {
-                        return await executeHandshake({
+                        return executeHandshake({
                             flowVersion,
                             projectId,
                             payload,
@@ -101,7 +101,7 @@ export const triggerUtils = {
             payload.body !== null &&
             handshakeConfig.paramName in payload.body
                     ) {
-                        return await executeHandshake({
+                        return executeHandshake({
                             flowVersion,
                             projectId,
                             payload,
@@ -186,7 +186,7 @@ export const triggerUtils = {
             return null
         }
 
-        return await disablePieceTrigger({
+        return disablePieceTrigger({
             projectId,
             flowVersion,
             simulate,

@@ -37,7 +37,7 @@ const appCredentialController: FastifyPluginAsyncTypebox = async (fastify) => {
                 Body: UpsertAppCredentialRequest
             }>,
         ) => {
-            return await appCredentialService.upsert({
+            return appCredentialService.upsert({
                 projectId: request.principal.projectId,
                 request: request.body,
             })

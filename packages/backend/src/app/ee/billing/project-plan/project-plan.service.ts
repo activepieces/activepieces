@@ -80,7 +80,7 @@ async function createInitialPlan({ projectId }: { projectId: ProjectId }): Promi
             stripeSubscriptionId: null,
             subscriptionStartDatetime: project.created,
         }, ['projectId'])
-        return projectPlanRepo.findOneByOrFail({ projectId })
+        return await projectPlanRepo.findOneByOrFail({ projectId })
     }
     finally {
         await projectPlanLock.release()

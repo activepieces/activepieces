@@ -33,7 +33,7 @@ export const platformProjectService = {
                 ],
             )
             .getMany()
-        return await Promise.all(projectPlans.map(enrichWithUsageAndPlan))
+        return Promise.all(projectPlans.map(enrichWithUsageAndPlan))
     },
 
     async update({ userId, projectId, request, platformId }: { userId: string, projectId: ProjectId, request: UpdateProjectPlatformRequest, platformId?: PlatformId }): Promise<ProjectWithUsageAndPlan | null> {

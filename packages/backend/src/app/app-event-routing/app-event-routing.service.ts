@@ -10,7 +10,7 @@ const appEventRoutingRepo = databaseConnection.getRepository(AppEventRoutingEnti
 
 export const appEventRoutingService = {
     async listListeners({ appName, event, identifierValue }: { appName: string, event: string, identifierValue: string }): Promise<AppEventRouting[]> {
-        return await appEventRoutingRepo.findBy({ appName, event, identifierValue })
+        return appEventRoutingRepo.findBy({ appName, event, identifierValue })
     },
     async createListeners({ appName, events, identifierValue, flowId, projectId }: {
         appName: string

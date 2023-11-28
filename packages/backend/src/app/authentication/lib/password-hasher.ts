@@ -9,7 +9,7 @@ const SCRYPT_SEPERATOR = '~'
 
 export const passwordHasher = {
     hash: async (plainTextPassword: string): Promise<string> => {
-        return await bcrypt.hash(plainTextPassword, SALT_ROUNDS)
+        return bcrypt.hash(plainTextPassword, SALT_ROUNDS)
     },
 
     compare: async (plainTextPassword: string, hashedPassword: string): Promise<boolean> => {

@@ -159,7 +159,7 @@ export const projectMemberService = {
         return member?.role ?? null
     },
     async listByUserId(userId: UserId): Promise<ProjectMemberSchema[]> {
-        return await projectMemberRepo.find({
+        return projectMemberRepo.find({
             where: {
                 userId,
             },

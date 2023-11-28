@@ -38,7 +38,7 @@ const flowVersionRepo = databaseConnection.getRepository<FlowVersion>(FlowVersio
 
 export const flowVersionService = {
     async lockPieceVersions(projectId: ProjectId, mutatedFlowVersion: FlowVersion): Promise<FlowVersion> {
-        return await flowHelper.transferFlowAsync(mutatedFlowVersion, async (step) => {
+        return flowHelper.transferFlowAsync(mutatedFlowVersion, async (step) => {
             const clonedStep = JSON.parse(JSON.stringify(step))
             switch (step.type) {
                 case ActionType.PIECE:
@@ -94,7 +94,7 @@ export const flowVersionService = {
         if (isNil(id)) {
             return null
         }
-        return await flowVersionRepo.findOneBy({
+        return flowVersionRepo.findOneBy({
             id,
         })
     },
@@ -143,7 +143,7 @@ export const flowVersionService = {
             valid: false,
             state: FlowVersionState.DRAFT,
         }
-        return await flowVersionRepo.save(flowVersion)
+        return flowVersionRepo.save(flowVersion)
     },
 }
 
