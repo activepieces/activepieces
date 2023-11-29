@@ -6,10 +6,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 async function generateTranslationFile(pieceName: string) {
-    const piecesJson: Record<string, any> = {};
+    let piecesJson: Record<string, string> = {};
     const pieceData = await processPackage(pieceName);
-    piecesJson[pieceData.name] = { description: pieceData.description, auth: pieceData.auth, actions: pieceData.actions, triggers: pieceData.triggers };
-    const jsonToWrite = JSON.stringify(piecesJson, null, 2);
+    const jsonToWrite = JSON.stringify(pieceData, null, 2);
 
     const translationsDir = `packages/pieces/${pieceName}/translations`;
 
@@ -24,57 +23,74 @@ async function generateTranslationFile(pieceName: string) {
     updateProjectJson(pieceName);
 }
 
-async function processPackage(packageName: string) {
+async function processPackage(packageName: string): Promise<Record<string, any>> {
     const packagePath = `packages/pieces/${packageName}`;
     const packageJson = await readPackageJson(packagePath);
-
     const module = await import(`../../${packagePath}/src/index.ts`);
-    const { name: pieceName } = packageJson;
-    const piece = extractPieceFromModule({ module, pieceName, pieceVersion: packageJson.version });
+    const piece = extractPieceFromModule({ module, pieceName: packageJson.name, pieceVersion: packageJson.version });
     const metadata = { ...piece.metadata(), name: piece.name, version: piece.version };
 
-    return {
-        name: packageName,
-        auth: processAuth(metadata),
-        description: metadata.description,
-        actions: processActionsOrTriggers(metadata.actions),
-        triggers: processActionsOrTriggers(metadata.triggers)
-    };
+    const result: Record<string, any> = {};
+
+    addIfNotEmpty(metadata.description, result);
+
+    mergeProps(result, processAuth(metadata));
+    mergeProps(result, processMetadataItems(metadata.actions));
+    mergeProps(result, processMetadataItems(metadata.triggers));
+
+    return result;
 }
 
-function processAuth(items: Record<string, any>) {
+function processAuth(items: Record<string, any>): Record<string, any> {
     const result: Record<string, any> = {};
-    result['displayName'] = items.auth.displayName;
-    result['description'] = items.auth.description;
-    if (items.auth.props) {
-        result['props'] = processProps(items.auth.props)
+    addIfNotEmpty(items.auth.displayName, result);
+    addIfNotEmpty(items.auth.description, result);
+    mergeProps(result, processProps(items.auth.props));
+    return result;
+}
+
+function processMetadataItems(items: Record<string, any>): Record<string, any> {
+    const result: Record<string, any> = {};
+    for (const item of Object.values(items)) {
+        addIfNotEmpty(item.displayName, result);
+        addIfNotEmpty(item.description, result);
+        mergeProps(result, processProps(item.props));
     }
     return result;
 }
 
-function processActionsOrTriggers(items: Record<string, any>) {
+function processProps(props: Record<string, any> | undefined): Record<string, any> {
     const result: Record<string, any> = {};
-    for (const [key, item] of Object.entries(items)) {
-        result[key] = {
-            displayName: item.displayName,
-            description: item.description,
-            props: processProps(item.props)
-        };
-    }
-    return result;
-}
-
-function processProps(props: Record<string, any>) {
-    const result: Record<string, any> = {};
-    for (const [key, prop] of Object.entries(props)) {
-        let propData: Record<string, any> = { displayName: prop.displayName };
-        if (prop.description) {
-            propData.description = prop.description;
+    if (props) {
+        for (const prop of Object.values(props)) {
+            addIfNotEmpty(prop.displayName, result);
+            addIfNotEmpty(prop.description, result);
+            if (prop.type === 'STATIC_DROPDOWN') {
+                mergeProps(result, processStaticDropdownProp(prop));
+            }
         }
-        result[key] = propData;
     }
     return result;
 }
+
+function processStaticDropdownProp(prop: Record<string, any>): Record<string, any> {
+    const result: Record<string, any> = {};
+    for (const option of prop.options.options) {
+        addIfNotEmpty(option.label, result);
+    }
+    return result;
+}
+
+function addIfNotEmpty(value: string, target: Record<string, any>) {
+    if (value) {
+        target[value] = value;
+    }
+}
+
+function mergeProps(target: Record<string, any>, source: Record<string, any>) {
+    Object.assign(target, source);
+}
+
 
 function addFilePathToCrowdin(pieceName: string) {
     const crowdinFilePath = 'crowdin.yml';
