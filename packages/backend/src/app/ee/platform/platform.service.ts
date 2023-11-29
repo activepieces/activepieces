@@ -23,7 +23,7 @@ export const platformService = {
             defaultLocale: LocalesEnum.ENGLISH,
             filteredPieceNames: [],
             filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
-            showPoweredBy: true,
+            showPoweredBy: false,
             cloudAuthEnabled: true,
         }
 

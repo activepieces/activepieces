@@ -68,7 +68,7 @@ describe('admin add platform endpoint', () => {
         expect(responseBody.privacyPolicyUrl).toBeNull()
         expect(responseBody.termsOfServiceUrl).toBeNull()
         expect(responseBody.cloudAuthEnabled).toBe(true)
-        expect(responseBody.showPoweredBy).toBe(true)
+        expect(responseBody.showPoweredBy).toBe(false)
         expect(responseBody.privacyPolicyUrl).toBeNull()
         expect(responseBody.termsOfServiceUrl).toBeNull()
         expect(responseBody.defaultLocale).toBe(LocalesEnum.ENGLISH)
