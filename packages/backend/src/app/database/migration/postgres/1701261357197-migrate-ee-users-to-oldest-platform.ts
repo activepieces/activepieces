@@ -6,7 +6,7 @@ export class MigrateEeUsersToOldestPlatform1701261357197 implements MigrationInt
     name = 'MigrateEeUsersToOldestPlatform1701261357197'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        const result = await databaseConnection.getRepository('platform').findOne({ order: { createdAt: 'ASC' } })
+        const result = await databaseConnection.getRepository('platform').findOne({ where: {}, order: { created: 'ASC' } })
 
         if (isNil(result)) {
             return
