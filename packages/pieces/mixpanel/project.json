@@ -34,8 +34,7 @@
       ],
       "options": {
         "lintFilePatterns": [
-          "packages/pieces/mixpanel/**/*.ts",
-          "packages/pieces/mixpanel/package.json"
+          "packages/pieces/mixpanel/**/*.ts"
         ]
       }
     }
