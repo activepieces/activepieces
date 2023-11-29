@@ -17,6 +17,8 @@ const exportedDeclarations = [
   SupportComponent,
   ToggleInstanceStateComponent,
   PublishButtonComponent,
+  DraftStatusComponent,
+  ImportFlowDialogueComponent,
 ];
 @NgModule({
   imports: [
@@ -24,17 +26,10 @@ const exportedDeclarations = [
     CommonModule,
     UiCommonModule,
     UiFeatureBuilderStoreModule,
-    UiCommonModule,
     UiFeatureBuilderFormControlsModule,
-    // BEGIN EE
     EeBillingUiModule,
-    // END EE
   ],
-  declarations: [
-    ...exportedDeclarations,
-    DraftStatusComponent,
-    ImportFlowDialogueComponent,
-  ],
+  declarations: [...exportedDeclarations],
   exports: [...exportedDeclarations],
 })
 export class UiFeatureBuilderHeaderModule {}

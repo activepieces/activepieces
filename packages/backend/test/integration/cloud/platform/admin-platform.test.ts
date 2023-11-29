@@ -5,7 +5,7 @@ import { StatusCodes } from 'http-status-codes'
 import { FastifyInstance } from 'fastify'
 import { faker } from '@faker-js/faker'
 import { Project } from '@activepieces/shared'
-import { Platform } from '@activepieces/ee-shared'
+import { LocalesEnum, Platform } from '@activepieces/ee-shared'
 
 let app: FastifyInstance | null = null
 
@@ -47,7 +47,7 @@ describe('admin add platform endpoint', () => {
         // assert
         const responseBody = response?.json()
         expect(response?.statusCode).toBe(StatusCodes.CREATED)
-        expect(Object.keys(responseBody)).toHaveLength(21)
+        expect(Object.keys(responseBody)).toHaveLength(22)
         expect(responseBody.id).toHaveLength(21)
         expect(responseBody.created).toBeDefined()
         expect(responseBody.updated).toBeDefined()
@@ -71,6 +71,7 @@ describe('admin add platform endpoint', () => {
         expect(responseBody.showPoweredBy).toBe(true)
         expect(responseBody.privacyPolicyUrl).toBeNull()
         expect(responseBody.termsOfServiceUrl).toBeNull()
+        expect(responseBody.defaultLocale).toBe(LocalesEnum.ENGLISH)
     })
 
     it('updates project to be platform-managed', async () => {

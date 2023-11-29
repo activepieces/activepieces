@@ -23,7 +23,6 @@
       "@activepieces/ee-embed-sdk": ["packages/ee/embed-sdk/src/index.ts"],
       "@activepieces/ee-shared": ["packages/ee/shared/src/index.ts"],
       "@activepieces/ee/billing/ui": ["packages/ee/billing/ui/src/index.ts"],
-      "@activepieces/ee/components": ["packages/ee/components/src/index.ts"],
       "@activepieces/ee/project-members": [
         "packages/ee/project-members/src/index.ts"
       ],
@@ -133,6 +132,9 @@
       "@activepieces/piece-kizeo-forms": [
         "packages/pieces/kizeo-forms/src/index.ts"
       ],
+      "@activepieces/piece-lead-connector": [
+        "packages/pieces/lead-connector/src/index.ts"
+      ],
       "@activepieces/piece-linear": ["packages/pieces/linear/src/index.ts"],
       "@activepieces/piece-linkedin": ["packages/pieces/linkedin/src/index.ts"],
       "@activepieces/piece-mailchimp": [
@@ -176,6 +178,7 @@
       "@activepieces/piece-read-file": [
         "packages/pieces/read-file/src/index.ts"
       ],
+      "@activepieces/piece-retune": ["packages/pieces/retune/src/index.ts"],
       "@activepieces/piece-rss": ["packages/pieces/rss/src/index.ts"],
       "@activepieces/piece-salesforce": [
         "packages/pieces/salesforce/src/index.ts"
@@ -264,7 +267,7 @@
       "@activepieces/ui/feature-builder-form-controls": [
         "packages/ui/feature-builder-form-controls/src/index.ts"
       ],
-      "@activepieces/ui/feature-builder-header": [
+      "@activepieces/ui-feature-builder-header": [
         "packages/ui/feature-builder-header/src/index.ts"
       ],
       "@activepieces/ui/feature-builder-left-sidebar": [
@@ -291,7 +294,11 @@
       "@activepieces/ui/feature-templates": [
         "packages/ui/feature-templates/src/index.ts"
       ],
-      "@ee/*": ["packages/ee/*"]
+      "@ee/*": ["packages/ee/*"],
+      "ui-feature-flow-builder": [
+        "packages/ui/feature-flow-builder/src/index.ts"
+      ],
+      "ui-feature-pieces": ["packages/ui/feature-pieces/src/index.ts"]
     },
     "resolveJsonModule": true
   },

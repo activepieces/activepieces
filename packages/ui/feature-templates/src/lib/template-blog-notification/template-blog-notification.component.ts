@@ -24,7 +24,7 @@ export class TemplateBlogNotificationComponent {
     @Inject(BLOG_URL_TOKEN) private blogUrl: string
   ) {
     this.showBlogGuide$ = this.flagsService.isFlagEnabled(
-      ApFlagId.SHOW_AUTH_PROVIDERS
+      ApFlagId.SHOW_COMMUNITY
     );
   }
   openBlog() {

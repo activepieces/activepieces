@@ -3,7 +3,7 @@ import { FlagService, TelemetryService } from '@activepieces/ui/common';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, map } from 'rxjs';
-import { BillingService } from '../billing.service';
+import { BillingService } from '../service/billing.service';
 
 @Component({
   selector: 'app-tasks-progress',
@@ -48,8 +48,10 @@ export class TasksProgressComponent {
 
   openPricingPlans() {
     this.telemetryService.capture({
-      name: TelemetryEventName.UPGRADE_CLICKED,
-      payload: {},
+      name: TelemetryEventName.OPENED_PRICING_FROM_DASHBOARD,
+      payload: {
+        location: 'tasks-progress',
+      },
     });
     this.router.navigate(['/plans']);
   }

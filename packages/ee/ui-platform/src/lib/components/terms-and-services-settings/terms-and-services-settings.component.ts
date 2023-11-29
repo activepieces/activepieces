@@ -47,7 +47,6 @@ export class TermsAndServicesSettingsComponent implements OnInit {
       this.saving$ = this.platformService
         .updatePlatform(
           {
-            ...platform,
             ...this.termsAndServicesForm.value,
           },
           platform.id

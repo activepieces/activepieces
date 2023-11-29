@@ -1,17 +1,15 @@
 import { Static, Type } from '@sinclair/typebox'
+import { EmailType, PasswordType } from '../../user/user'
+import { ApId } from '../../common/id-generator'
 
 export const SignUpRequest = Type.Object({
-    email: Type.String({
-        format: 'email',
-    }),
-    password: Type.String({
-        minLength: 8,
-        maxLength: 64,
-    }),
+    email: EmailType,
+    password: PasswordType,
     firstName: Type.String(),
     lastName: Type.String(),
     trackEvents: Type.Boolean(),
     newsLetter: Type.Boolean(),
+    referringUserId: Type.Optional(ApId),
 })
 
 export type SignUpRequest = Static<typeof SignUpRequest>

@@ -1,4 +1,4 @@
-<button mat-menu-item (click)="openDialog(dialogTemplate)">
+<button *ngIf="show$ | async" mat-menu-item (click)="openDialog(dialogTemplate)">
     <div class="ap-flex ap-gap-3 ap-items-center">
         <svg-icon src="assets/img/custom/share.svg" class="ap-w-[20px] ap-h-[20px]" [applyClass]="true"></svg-icon>
         <span>Share</span>

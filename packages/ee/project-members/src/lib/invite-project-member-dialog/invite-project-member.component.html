@@ -10,7 +10,7 @@
         <input cdkFocusInitial formControlName="email" matInput type="text" placeholder="bugs.bunny@gmail.com"/>
         <mat-error *ngIf="invitationForm.controls.email.invalid">
           <ng-container *ngIf="invitationForm.controls.email.getError('exists'); else emailRequired">
-            <span i18n>The invited email already has an account. Please contact support@activepieces.com for assistance.</span>
+            <span i18n>The invited email already has an account. Please contact support for assistance.</span>
           </ng-container>
           <ng-template #emailRequired>
             <span i18n>Email is Required</span>

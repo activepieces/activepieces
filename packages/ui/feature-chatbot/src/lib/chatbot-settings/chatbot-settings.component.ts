@@ -7,7 +7,6 @@ import {
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, Subject, debounceTime, exhaustMap, map, tap } from 'rxjs';
-import { PieceMetadataService } from '@activepieces/ui/common';
 import { AppConnectionWithoutSensitiveData } from '@activepieces/shared';
 import { ChatBotService } from '../chatbot.service';
 import deepEqual from 'deep-equal';
@@ -25,6 +24,7 @@ import {
   UpdateChatbotRequest,
   VisibilityStatus,
 } from '@activepieces/shared';
+import { PieceMetadataService } from 'ui-feature-pieces';
 
 @Component({
   selector: 'app-chatbot-settings',

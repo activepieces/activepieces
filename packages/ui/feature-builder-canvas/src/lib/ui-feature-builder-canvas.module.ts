@@ -19,8 +19,16 @@ import { DeleteFlowItemActionComponent } from './flow-item-tree/flow-item/action
 import { ReplaceTriggerActionComponent } from './flow-item-tree/flow-item/actions/replace-trigger-action/replace-trigger-action.component';
 import { ActionsContainerComponent } from './flow-item-tree/flow-item/actions/actions-container/actions-container.component';
 import { DuplicateStepActionComponent } from './flow-item-tree/flow-item/actions/duplicate-step-action/duplicate-step-action.component';
+import { UiFeaturePiecesModule } from 'ui-feature-pieces';
+
 @NgModule({
-  imports: [CommonModule, UiCommonModule, DragAndDropModule, CodemirrorModule],
+  imports: [
+    CommonModule,
+    UiCommonModule,
+    DragAndDropModule,
+    CodemirrorModule,
+    UiFeaturePiecesModule,
+  ],
   declarations: [
     FlowItemComponent,
     FlowItemContentComponent,

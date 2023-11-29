@@ -30,8 +30,8 @@ import {
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { projectService } from '../../project/project-service'
 import { emailService } from '../helper/email/email-service'
-import { projectMembersLimit } from '../../ee/billing/usage/limits/members-limit'
 import { getEdition } from '../../helper/secret-helper'
+import { projectMembersLimit } from '../billing/limits/members-limit'
 
 const projectMemberRepo = databaseConnection.getRepository(ProjectMemberEntity)
 
@@ -159,7 +159,7 @@ export const projectMemberService = {
         return member?.role ?? null
     },
     async listByUserId(userId: UserId): Promise<ProjectMemberSchema[]> {
-        return await projectMemberRepo.find({
+        return projectMemberRepo.find({
             where: {
                 userId,
             },

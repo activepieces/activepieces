@@ -36,7 +36,7 @@ const getSecret = async (): Promise<string> => {
 }
 
 const getSecretFromStore = async (): Promise<string | null> => {
-    return await localFileStore.load(SystemProp.JWT_SECRET)
+    return localFileStore.load(SystemProp.JWT_SECRET)
 }
 
 const generateAndStoreSecret = async (): Promise<string> => {

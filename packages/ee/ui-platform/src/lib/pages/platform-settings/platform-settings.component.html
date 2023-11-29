@@ -6,5 +6,8 @@
     <mat-tab [label]="accountManagementEmailTabTitle"> <app-smtp-settings></app-smtp-settings></mat-tab>
     <mat-tab [label]="privacyAndTermsTabTitle">
         <app-terms-and-services-settings></app-terms-and-services-settings></mat-tab>
+    <mat-tab [label]="customDomainTabTitle">
+        <app-custom-domain-table></app-custom-domain-table>
+    </mat-tab>
 </mat-tab-group>
 <ng-container *ngIf="fragmentChanged$ | async"></ng-container>

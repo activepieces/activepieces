@@ -1,7 +1,7 @@
 import { ActivepiecesError, ErrorCode, UserId, apId, isNil, spreadIfDefined } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { PlatformEntity } from './platform.entity'
-import { FilteredPieceBehavior, Platform, PlatformId, UpdatePlatformRequestBody } from '@activepieces/ee-shared'
+import { FilteredPieceBehavior, LocalesEnum, Platform, PlatformId, UpdatePlatformRequestBody } from '@activepieces/ee-shared'
 import { defaultTheme } from '../../flags/theme'
 
 const repo = databaseConnection.getRepository<Platform>(PlatformEntity)
@@ -16,13 +16,14 @@ export const platformService = {
             logoIconUrl: logoIconUrl ?? defaultTheme.logos.logoIconUrl,
             fullLogoUrl: fullLogoUrl ?? defaultTheme.logos.fullLogoUrl,
             favIconUrl: favIconUrl ?? defaultTheme.logos.favIconUrl,
+            defaultLocale: LocalesEnum.ENGLISH,
             filteredPieceNames: [],
             filteredPieceBehavior: FilteredPieceBehavior.BLOCKED,
             showPoweredBy: true,
             cloudAuthEnabled: true,
         }
 
-        return await repo.save(newPlatform)
+        return repo.save(newPlatform)
     },
 
     async update(params: UpdateParams): Promise<Platform> {
@@ -47,9 +48,10 @@ export const platformService = {
             ...spreadIfDefined('privacyPolicyUrl', params.privacyPolicyUrl),
             ...spreadIfDefined('termsOfServiceUrl', params.termsOfServiceUrl),
             ...spreadIfDefined('cloudAuthEnabled', params.cloudAuthEnabled),
+            ...spreadIfDefined('defaultLocale', params.defaultLocale),
         }
 
-        return await repo.save(updatedPlatform)
+        return repo.save(updatedPlatform)
     },
 
     async getOneOrThrow(id: PlatformId): Promise<Platform> {

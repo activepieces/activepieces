@@ -1,5 +1,5 @@
 import { ChatbotServiceHooks } from '../../../chatbot/chatbot.hooks'
-import { botsLimits } from '../../billing/usage/limits/bots-limits'
+import { botsLimits } from '../../billing/limits/bots-limits'
 
 
 export const cloudChatbotHooks: ChatbotServiceHooks = {

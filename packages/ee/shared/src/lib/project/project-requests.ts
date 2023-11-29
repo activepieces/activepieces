@@ -1,16 +1,19 @@
 import { Static, Type } from "@sinclair/typebox";
 import { NotificationStatus } from "@activepieces/shared";
 
-export const UpdateProjectRequest = Type.Object({
+export const UpdateProjectPlatformRequest = Type.Object({
     notifyStatus: Type.Enum(NotificationStatus),
-    displayName: Type.String()
+    displayName: Type.String(),
+    plan: Type.Optional(Type.Object({
+        teamMembers: Type.Number({}),
+        tasks: Type.Number({}),
+    }))
 })
 
-export type UpdateProjectRequest = Static<typeof UpdateProjectRequest>;
+export type UpdateProjectPlatformRequest = Static<typeof UpdateProjectPlatformRequest>;
 
-export const CreateProjectRequest = Type.Object({
+export const CreatePlatformProjectRequest = Type.Object({
     displayName: Type.String(),
 })
 
-export type CreateProjectRequest = Static<typeof CreateProjectRequest>;
-
+export type CreatePlatformProjectRequest = Static<typeof CreatePlatformProjectRequest>;

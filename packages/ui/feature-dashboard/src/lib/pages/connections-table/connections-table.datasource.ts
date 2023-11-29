@@ -19,10 +19,10 @@ import {
   DEFAULT_PAGE_SIZE,
   LIMIT_QUERY_PARAM,
   CURSOR_QUERY_PARAM,
-  PieceMetadataService,
 } from '@activepieces/ui/common';
 import { Store } from '@ngrx/store';
 import { Params } from '@angular/router';
+import { PieceMetadataService } from 'ui-feature-pieces';
 
 /**
  * Data source for the LogsTable view. This class should

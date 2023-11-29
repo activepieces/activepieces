@@ -4,7 +4,7 @@ import { setupApp } from '../../../../src/app/app'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { createMockProject, createMockUser } from '../../../helpers/mocks'
 import { generateMockToken } from '../../../helpers/auth'
-import { stripeHelper } from '../../../../src/app/ee/billing/stripe/stripe-helper'
+import { stripeHelper } from '../../../../src/app/ee/billing/billing/stripe-helper'
 import { emailService } from '../../../../src/app/ee/helper/email/email-service'
 import { UserStatus } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
@@ -50,7 +50,7 @@ describe('Project Member API', () => {
                 role: 'VIEWER',
             }
 
-            stripeHelper.createCustomer = jest.fn().mockResolvedValue(faker.string.uuid())
+            stripeHelper.getOrCreateCustomer = jest.fn().mockResolvedValue(faker.string.uuid())
             emailService.sendInvitation = jest.fn()
 
             // act
@@ -106,7 +106,7 @@ describe('Project Member API', () => {
                 role: 'VIEWER',
             }
 
-            stripeHelper.createCustomer = jest.fn().mockResolvedValue(faker.string.uuid())
+            stripeHelper.getOrCreateCustomer = jest.fn().mockResolvedValue(faker.string.uuid())
             emailService.sendInvitation = jest.fn()
 
             // act

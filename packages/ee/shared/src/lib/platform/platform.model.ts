@@ -7,6 +7,14 @@ export enum FilteredPieceBehavior {
     ALLOWED = 'ALLOWED',
     BLOCKED = 'BLOCKED',
 }
+export enum LocalesEnum {
+    DUTCH = 'nl',
+    ENGLISH = 'en',
+    GERMAN = 'de',
+    ITALIAN = 'it',
+    FRENCH = 'fr',
+    JAPANESE = 'ja'
+}
 
 export const Platform = Type.Object({
     ...BaseModelSchema,
@@ -28,6 +36,7 @@ export const Platform = Type.Object({
     termsOfServiceUrl: Type.Optional(Type.String()),
     cloudAuthEnabled: Type.Boolean(),
     showPoweredBy: Type.Boolean(),
+    defaultLocale: Type.Optional(Type.Enum(LocalesEnum))
 })
 
 export type Platform = Static<typeof Platform>

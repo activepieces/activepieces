@@ -11,6 +11,14 @@ import {
   User,
 } from '@activepieces/shared';
 import { environment } from '../environments/environment';
+import {
+  ClaimTokenRequest,
+  CreateOtpRequestBody,
+  FederatedAuthnLoginResponse,
+  ResetPasswordRequestBody,
+  ThirdPartyAuthnProviderEnum,
+  VerifyEmailRequestBody,
+} from '@activepieces/ee-shared';
 
 @Injectable({
   providedIn: 'root',
@@ -119,5 +127,43 @@ export class AuthenticationService {
   isPlatformOwner(): boolean {
     const decodedToken = this.getDecodedToken();
     return decodedToken?.platform?.role === 'OWNER';
+  }
+
+  sendOtpEmail(req: CreateOtpRequestBody) {
+    return this.http.post<void>(`${environment.apiUrl}/otp`, req);
+  }
+
+  verifyEmail(req: VerifyEmailRequestBody) {
+    return this.http.post<void>(
+      `${environment.apiUrl}/authn/local/verify-email`,
+      req
+    );
+  }
+  resetPassword(req: ResetPasswordRequestBody) {
+    return this.http.post<void>(
+      `${environment.apiUrl}/authn/local/reset-password`,
+      req
+    );
+  }
+
+  getThirdPartyLoginUrl(provider: ThirdPartyAuthnProviderEnum) {
+    return this.http.get<FederatedAuthnLoginResponse>(
+      `${environment.apiUrl}/authn/federated/login`,
+      {
+        params: {
+          providerName: provider,
+        },
+      }
+    );
+  }
+
+  claimThirdPartyRequest(request: ClaimTokenRequest) {
+    return this.http.post<AuthenticationResponse>(
+      `${environment.apiUrl}/authn/federated/claim`,
+      request,
+      {
+        observe: 'response',
+      }
+    );
   }
 }

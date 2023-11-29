@@ -2,7 +2,7 @@ import { ApId, isNil, ProjectType } from '@activepieces/shared'
 import { databaseConnection } from '../database/database-connection'
 import { ProjectEntity } from './project-entity'
 import { ActivepiecesError, apId, ErrorCode, NotificationStatus, Project, ProjectId, UserId } from '@activepieces/shared'
-import { PlatformId, UpdateProjectRequest } from '@activepieces/ee-shared'
+import { PlatformId } from '@activepieces/ee-shared'
 
 const projectRepo = databaseConnection.getRepository<Project>(ProjectEntity)
 
@@ -17,36 +17,30 @@ export const projectService = {
         return projectRepo.save(newProject)
     },
 
-    async update({ projectId, request, platformId }: { projectId: ProjectId, request: UpdateProjectRequest, platformId?: PlatformId }): Promise<Project | null> {
-        const project = await projectRepo.findOneBy({
-            id: projectId,
-        })
-
-        //TODO: Revisit on platform authentication
-        if (isNil(project) || project.id !== projectId && project.platformId !== platformId) {
-            throw new ActivepiecesError({
-                code: ErrorCode.PROJECT_NOT_FOUND,
-                params: {
-                    id: projectId,
-                },
-            })
-        }
-
-        await projectRepo.update(projectId, {
-            ...project,
-            ...request,
-        })
+    async getOne(projectId: ProjectId): Promise<Project | null> {
         return projectRepo.findOneBy({
             id: projectId,
         })
     },
-    async getOne(projectId: ProjectId): Promise<Project | null> {
-        return await projectRepo.findOneBy({
+    async getOneOrThrow(projectId: ProjectId): Promise<Project> {
+        const project = await projectRepo.findOneBy({
             id: projectId,
         })
+
+        if (isNil(project)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityId: projectId,
+                    entityType: 'project',
+                },
+            })
+        }
+
+        return project
     },
     async getUserProject(ownerId: UserId): Promise<Project> {
-        return await projectRepo.findOneByOrFail({
+        return projectRepo.findOneByOrFail({
             ownerId,
         })
     },
@@ -64,6 +58,17 @@ export const projectService = {
             externalId,
         })
     },
+
+    async getByPlatformId(platformId: PlatformId): Promise<Project | null> {
+        return projectRepo.findOne({
+            where: {
+                platformId,
+            },
+            order: {
+                created: 'DESC',
+            },
+        })
+    },
 }
 
 type CreateParams = {
@@ -75,7 +80,7 @@ type CreateParams = {
 }
 
 type GetByPlatformIdAndExternalIdParams = {
-    platformId: PlatformId
+    platformId: string
     externalId: string
 }
 

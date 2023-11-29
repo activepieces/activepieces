@@ -1,13 +1,16 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import {
   FormBuilder,
   FormControl,
   FormGroup,
   Validators,
 } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { catchError, map, Observable, of, switchMap, tap } from 'rxjs';
-import { AuthenticationService, fadeInUp400ms } from '@activepieces/ui/common';
+import {
+  AuthenticationService,
+  RedirectService,
+} from '@activepieces/ui/common';
 import { FlagService } from '@activepieces/ui/common';
 import {
   containsSpecialCharacter,
@@ -15,6 +18,9 @@ import {
   containsLowercaseCharacter,
   containsNumber,
 } from '@activepieces/ui/common';
+import { ApFlagId, UserStatus } from '@activepieces/shared';
+import { OtpType } from '@activepieces/ee-shared';
+import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 
 export interface UserInfo {
   firstName: FormControl<string>;
@@ -27,11 +33,11 @@ export interface UserInfo {
 @Component({
   templateUrl: './sign-up.component.html',
   styleUrls: ['./sign-up.component.scss'],
-  animations: [fadeInUp400ms],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SignUpComponent {
+export class SignUpComponent implements OnInit {
   registrationForm: FormGroup<UserInfo>;
+  readonly emailIsUsedErrorName = 'emailIsUsed';
   loading = false;
   tokenError = false;
   emailExists = false;
@@ -39,12 +45,25 @@ export class SignUpComponent {
   emailValueChanged$: Observable<string>;
   signUp$: Observable<void> | undefined;
   signedUpEnabled$: Observable<boolean>;
+  privacyPolicyUrl$: Observable<string>;
+  termsOfServiceUrl$: Observable<string>;
+  signUpDone = false;
+  invitationOnlySignup = false;
+  readonly OtpType = OtpType;
   constructor(
     private formBuilder: FormBuilder,
-    private router: Router,
     public flagService: FlagService,
-    public authenticationService: AuthenticationService
+    public authenticationService: AuthenticationService,
+    private redirectService: RedirectService,
+    private router: Router,
+    private activeRoute: ActivatedRoute
   ) {
+    this.privacyPolicyUrl$ = this.flagService.getStringFlag(
+      ApFlagId.PRIVACY_POLICY_URL
+    );
+    this.termsOfServiceUrl$ = this.flagService.getStringFlag(
+      ApFlagId.TERMS_OF_SERVICE_URL
+    );
     this.registrationForm = this.formBuilder.group({
       firstName: new FormControl<string>('', {
         nonNullable: true,
@@ -82,9 +101,19 @@ export class SignUpComponent {
     this.emailValueChanged$ =
       this.registrationForm.controls.email.valueChanges.pipe(
         tap(() => {
-          this.emailChanged = true;
+          const errors = this.registrationForm.controls.email.errors;
+          if (errors && errors[this.emailIsUsedErrorName]) {
+            delete errors[this.emailIsUsedErrorName];
+          }
+          this.registrationForm.controls.email.setErrors(errors);
         })
       );
+  }
+  ngOnInit(): void {
+    const email = this.activeRoute.snapshot.queryParamMap.get('email');
+    if (email) {
+      this.registrationForm.controls.email.setValue(email);
+    }
   }
 
   signUp() {
@@ -92,14 +121,13 @@ export class SignUpComponent {
       this.loading = true;
       const request = this.registrationForm.getRawValue();
       this.signUp$ = this.authenticationService.signUp(request).pipe(
-        catchError(() => {
-          this.emailExists = true;
-          this.emailChanged = false;
-          this.loading = false;
-          return of(null);
-        }),
         tap((response) => {
-          if (response && response.body && response.body.token) {
+          if (
+            response &&
+            response.body &&
+            response.body.token &&
+            response.body.status === UserStatus.VERIFIED
+          ) {
             this.authenticationService.saveToken(response.body.token);
             this.authenticationService.saveUser(response);
           }
@@ -109,18 +137,34 @@ export class SignUpComponent {
             return this.authenticationService
               .saveNewsLetterSubscriber(request.email)
               .pipe(
+                map(() => response),
                 catchError((err) => {
                   console.error(err);
-                  return of(void 0);
+                  return of(response);
                 })
               );
           }
           return of(response);
         }),
         tap((response) => {
-          if (response) {
-            this.router.navigate(['/flows']);
+          if (response && response.body?.status === UserStatus.VERIFIED) {
+            this.redirect();
+          } else {
+            this.signUpDone = true;
           }
+        }),
+        catchError((err: HttpErrorResponse) => {
+          const emailExists = err.status === HttpStatusCode.Conflict;
+          if (emailExists) {
+            this.registrationForm.controls.email.setErrors({
+              ...this.registrationForm.controls.email.errors,
+              [this.emailIsUsedErrorName]: true,
+            });
+          }
+          this.invitationOnlySignup = err.status === HttpStatusCode.Forbidden;
+          this.emailChanged = false;
+          this.loading = false;
+          return of(err);
         }),
         map(() => void 0)
       );
@@ -133,5 +177,11 @@ export class SignUpComponent {
 
   isPasswordInputIsFocused(passwordInputElement: HTMLInputElement) {
     return passwordInputElement == document.activeElement;
+  }
+  goBackToSign() {
+    this.router.navigate(['/sign-in']);
+  }
+  redirect() {
+    this.redirectService.redirect();
   }
 }

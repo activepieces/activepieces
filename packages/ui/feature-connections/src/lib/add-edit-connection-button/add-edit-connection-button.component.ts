@@ -32,7 +32,7 @@ import {
   take,
   tap,
 } from 'rxjs';
-import { PieceMetadataService, FlagService } from '@activepieces/ui/common';
+import { FlagService, ProjectSelectors } from '@activepieces/ui/common';
 import { CloudAuthConfigsService } from '../services/cloud-auth-configs.service';
 import {
   CustomAuthConnectionDialogComponent,
@@ -60,12 +60,14 @@ import { BuilderSelectors } from '@activepieces/ui/feature-builder-store';
 import {
   BillingService,
   UpgradeDialogComponent,
+  UpgradeDialogData,
 } from '@activepieces/ee-billing-ui';
 import {
   PieceOAuth2DetailsValue,
   checkIfTriggerIsAppWebhook,
   getConnectionNameFromInterpolatedString,
 } from './utils';
+import { PieceMetadataService } from 'ui-feature-pieces';
 
 @Component({
   selector: 'app-add-edit-connection-button',
@@ -108,7 +110,7 @@ export class AddEditConnectionButtonComponent {
     value: string;
   }> = new EventEmitter();
   updateOrAddConnectionDialogClosed$: Observable<void>;
-  checkConnectionLimit$: Observable<{ limit: number; exceeded: boolean }>;
+  checkConnectionLimitThenOpenDialog$: Observable<void>;
   managedOAuth2Check$: Observable<void>;
   updateConnectionTap = tap((connection: AppConnection | null) => {
     if (connection) {
@@ -135,36 +137,56 @@ export class AddEditConnectionButtonComponent {
   }
 
   private checkThenOpenConnection() {
-    this.checkConnectionLimit$ = this.billingService
-      .checkConnectionLimit()
-      .pipe(
-        tap((limitExceeded) => {
-          if (limitExceeded.exceeded) {
+    this.checkConnectionLimitThenOpenDialog$ =
+      this.getCurrentProjectAndConnectionLimit$().pipe(
+        tap((res) => {
+          if (res.limit.exceeded) {
+            const data: UpgradeDialogData = {
+              limit: res.limit.limit,
+              limitType: 'connections',
+              projectType: res.project.type,
+            };
             this.dialogService.open(UpgradeDialogComponent, {
-              data: {
-                limitType: 'connections',
-                limit: limitExceeded.limit,
-              },
+              data,
             });
+          } else {
+            this.openConnectionDialogAcordingToConnectionType();
           }
-          const authDialogMap: Record<
-            | PropertyType.OAUTH2
-            | PropertyType.SECRET_TEXT
-            | PropertyType.CUSTOM_AUTH
-            | PropertyType.BASIC_AUTH,
-            () => void
-          > = {
-            [PropertyType.OAUTH2]: this.newOAuth2AuthenticationDialogProcess,
-            [PropertyType.SECRET_TEXT]: this.openNewSecretKeyConnection,
-            [PropertyType.CUSTOM_AUTH]: this.openNewCustomAuthConnection,
-            [PropertyType.BASIC_AUTH]: this.openNewBasicAuthConnection,
-          };
-          const authDialog = authDialogMap[this.authProperty.type];
-          authDialog.call(this);
-        })
+        }),
+        map(() => void 0)
       );
   }
 
+  private openConnectionDialogAcordingToConnectionType() {
+    const authDialogMap: Record<
+      | PropertyType.OAUTH2
+      | PropertyType.SECRET_TEXT
+      | PropertyType.CUSTOM_AUTH
+      | PropertyType.BASIC_AUTH,
+      () => void
+    > = {
+      [PropertyType.OAUTH2]: this.newOAuth2AuthenticationDialogProcess,
+      [PropertyType.SECRET_TEXT]: this.openNewSecretKeyConnection,
+      [PropertyType.CUSTOM_AUTH]: this.openNewCustomAuthConnection,
+      [PropertyType.BASIC_AUTH]: this.openNewBasicAuthConnection,
+    };
+    const authDialog = authDialogMap[this.authProperty.type];
+    authDialog.call(this);
+  }
+  private getCurrentProjectAndConnectionLimit$() {
+    return this.store.select(ProjectSelectors.selectCurrentProject).pipe(
+      switchMap((project) => {
+        return this.billingService.checkConnectionLimit().pipe(
+          map((limit) => {
+            return {
+              project,
+              limit,
+            };
+          })
+        );
+      })
+    );
+  }
   private openNewCustomAuthConnection() {
     const dialogData: CustomAuthDialogData = {
       pieceAuthProperty: this.authProperty as CustomAuthProperty<
