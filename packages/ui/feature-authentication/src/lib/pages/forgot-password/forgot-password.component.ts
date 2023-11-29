@@ -1,14 +1,8 @@
 import { Component } from '@angular/core';
 import { FormControl, Validators } from '@angular/forms';
 import { catchError, map, Observable, of, tap } from 'rxjs';
-import {
-  AuthenticationService,
-  unexpectedErrorMessage,
-} from '@activepieces/ui/common';
+import { AuthenticationService } from '@activepieces/ui/common';
 import { OtpType } from '@activepieces/ee-shared';
-import { MatSnackBar } from '@angular/material/snack-bar';
-import { HttpErrorResponse } from '@angular/common/http';
-import { HttpStatusCode } from 'axios';
 import { Router } from '@angular/router';
 
 @Component({
@@ -22,24 +16,15 @@ export class ForgotPasswordComponent {
   emailFormControl: FormControl<string>;
   sendPasswordReset$!: Observable<void>;
   readonly notFoundErrorName = 'notFound';
-  emailChanged$?: Observable<string>;
   constructor(
     private authService: AuthenticationService,
-    private matSnackbar: MatSnackBar,
+
     private router: Router
   ) {
     this.emailFormControl = new FormControl('', {
       nonNullable: true,
       validators: [Validators.email, Validators.required],
     });
-    this.emailFormControl.valueChanges.pipe(
-      tap(() => {
-        const errors = this.emailFormControl.errors;
-        if (errors && errors[this.notFoundErrorName]) {
-          this.emailFormControl.setErrors(null);
-        }
-      })
-    );
   }
 
   sendPasswordReset() {
@@ -51,23 +36,14 @@ export class ForgotPasswordComponent {
           type: OtpType.PASSWORD_RESET,
         })
         .pipe(
+          catchError((err) => {
+            console.error(err);
+            this.loading = false;
+            return of(void 0);
+          }),
           tap(() => {
             this.loading = false;
             this.showVerificationNote = true;
-          }),
-          catchError((error: HttpErrorResponse) => {
-            console.error(error);
-            if (error.status === HttpStatusCode.NotFound) {
-              this.emailFormControl.setErrors({
-                [this.notFoundErrorName]: true,
-              });
-            } else {
-              this.matSnackbar.open(unexpectedErrorMessage, '', {
-                panelClass: 'error',
-              });
-            }
-            this.loading = false;
-            return of(void 0);
           }),
           map(() => void 0)
         );
