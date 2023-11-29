@@ -93,7 +93,7 @@ const appsumoController: FastifyPluginAsyncTypebox = async (fastify: FastifyInst
                     email: activation_email,
                 })
                 if (!isNil(user)) {
-                    const project = (await projectService.getUserProject(user.id))
+                    const project = (await projectService.getUserProjectOrThrow(user.id))
                     if (action === 'refund') {
                         await plansService.update({
                             projectId: project.id,
