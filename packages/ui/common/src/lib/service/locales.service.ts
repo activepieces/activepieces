@@ -3,6 +3,7 @@ import { Location } from '@angular/common';
 import { isNil } from '@activepieces/shared';
 import { LocalesEnum } from '@activepieces/ee-shared';
 import { localesMap } from '../utils/locales';
+
 @Injectable({ providedIn: 'root' })
 export class LocalesService {
   constructor(private location: Location) { }

@@ -15,6 +15,7 @@ const start = async (app: FastifyInstance): Promise<void> => {
             host: '0.0.0.0',
             port: 3000,
         })
+
         logger.info(`
              _____   _______   _____  __      __  ______   _____    _____   ______    _____   ______    _____
     /\\      / ____| |__   __| |_   _| \\ \\    / / |  ____| |  __ \\  |_   _| |  ____|  / ____| |  ____|  / ____|
@@ -80,7 +81,6 @@ const main = async (): Promise<void> => {
     await databaseConnection.initialize()
     await databaseConnection.runMigrations()
     await seedDevData()
-
     const app = await setupApp()
 
     process.on('SIGINT', () => {

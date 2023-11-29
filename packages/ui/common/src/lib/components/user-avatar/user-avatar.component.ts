@@ -118,6 +118,5 @@ export class UserAvatarComponent implements OnInit {
   redirectToLocale(locale: LocalesEnum) {
     this.localesService.setCurrentLocale(locale);
     this.localesService.redirectToLocale(locale);
-    this.localesService.updatePiecesLanguage(locale);
   }
 }
