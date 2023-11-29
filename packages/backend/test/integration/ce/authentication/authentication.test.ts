@@ -56,6 +56,7 @@ describe('Authentication API', () => {
             expect(responseBody?.projectId).toHaveLength(21)
             expect(responseBody?.token).toBeDefined()
         })
+        
 
         it('Fails if USER_CREATED flag is set, and sign-up is disabled', async () => {
             // arrange
