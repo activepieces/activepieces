@@ -41,8 +41,8 @@ describe('OTP API', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(response?.body).toBe('')
+            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
+      
         })
 
         it('Sends OTP to user', async () => {
@@ -62,7 +62,7 @@ describe('OTP API', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
             expect(emailService.sendOtpEmail).toBeCalledTimes(1)
             expect(emailService.sendOtpEmail).toHaveBeenCalledWith({
                 otp: expect.stringMatching(/^([0-9A-F]|-){36}$/i),
@@ -97,8 +97,8 @@ describe('OTP API', () => {
             })
 
             // assert
-            expect(response1?.statusCode).toBe(StatusCodes.OK)
-            expect(response2?.statusCode).toBe(StatusCodes.OK)
+            expect(response1?.statusCode).toBe(StatusCodes.NO_CONTENT)
+            expect(response2?.statusCode).toBe(StatusCodes.NO_CONTENT)
 
             const otpCount = await databaseConnection.getRepository('otp').countBy({
                 userId: mockUser.id,
