@@ -47,7 +47,7 @@ export const authenticationService = {
         })
 
         const userWithoutPassword = removePasswordPropFromUser(updatedUser)
-        
+
         return {
             ...userWithoutPassword,
             token,
@@ -83,7 +83,7 @@ export const authenticationService = {
             trackEvents: true,
             newsLetter: true,
             password: await generateRandomPassword(),
-            platformId: params. platformId,
+            platformId: params.platformId,
         }
 
         return this.signUp(newUser)
@@ -158,7 +158,7 @@ const assertUserIsAllowedToSignIn: (user: User | null) => asserts user is User =
             params: null,
         })
     }
-   
+
     if (user.status === UserStatus.CREATED || user.status === UserStatus.INVITED) {
         throw new ActivepiecesError({
             code: ErrorCode.EMAIL_IS_NOT_VERIFIED,
