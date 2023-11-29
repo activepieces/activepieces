@@ -42,6 +42,14 @@ export const platformService = {
         return savedPlatform
     },
 
+    async getOldestPlatform(): Promise<Platform | null> {
+        return repo.findOne({
+            where: {},
+            order: {
+                created: 'ASC',
+            },
+        })
+    },
     async update(params: UpdateParams): Promise<Platform> {
         const platform = await this.getOneOrThrow(params.id)
         assertPlatformOwnedByUser(platform, params.userId)

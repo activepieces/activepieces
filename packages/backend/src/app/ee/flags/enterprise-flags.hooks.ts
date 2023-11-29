@@ -1,15 +1,15 @@
 import { ApFlagId, isNil } from '@activepieces/shared'
 import { FlagsServiceHooks } from '../../flags/flags.hooks'
 import { apperanceHelper } from '../helper/apperance-helper'
-import { projectService } from '../../project/project-service'
-import { customDomainService } from '../custom-domains/custom-domain.service'
 import { platformService } from '../platform/platform.service'
 import { ThirdPartyAuthnProviderEnum } from '@activepieces/ee-shared'
+import { resolvePlatformIdForRequest } from '../platform/lib/platform-utils'
 
 export const enterpriseFlagsHooks: FlagsServiceHooks = {
-    async modify({ flags, hostname, projectId }) {
+    async modify({ flags, request }) {
         const modifiedFlags = { ...flags }
-        const platformId = await getPlatformId({ projectId, hostname })
+        const hostname = request.hostname
+        const platformId = await resolvePlatformIdForRequest(request)
         const platformEnabled = !isNil(platformId)
         if (platformEnabled) {
             const platform = await platformService.getOneOrThrow(platformId)
@@ -35,25 +35,4 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
         }
         return modifiedFlags
     },
-}
-
-const getPlatformIdFromCustomDomain = async (hostname: string): Promise<string | null> => {
-    const customDomain = await customDomainService.getOneByDomain({ domain: hostname })
-    return !isNil(customDomain) ? customDomain.platformId : null
-}
-
-const getPlatformIdFromProject = async (projectId: string): Promise<string | null> => {
-    if (isNil(projectId)) {
-        return null
-    }
-    const project = await projectService.getOne(projectId)
-    return !isNil(project) && !isNil(project.platformId) ? project.platformId : null
-}
-
-
-const getPlatformId = async ({ projectId, hostname }: { projectId: string, hostname: string }) => {
-    const platformIdFromCustomDomain = await getPlatformIdFromCustomDomain(hostname)
-    const platformIdFromProject = await getPlatformIdFromProject(projectId)
-
-    return platformIdFromCustomDomain ?? platformIdFromProject
 }
