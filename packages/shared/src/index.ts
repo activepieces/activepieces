@@ -61,4 +61,3 @@ import { TypeSystem } from '@sinclair/typebox/system'
 // Look at https://github.com/sinclairzx81/typebox/issues/350
 TypeSystem.ExactOptionalPropertyTypes = false
 export * from './lib/support-url'
-export * from './lib/utils'
