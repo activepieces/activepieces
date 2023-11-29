@@ -8,7 +8,6 @@ import { setupApp } from './app/app'
 import { FastifyInstance } from 'fastify'
 import { licenseValidator } from './app/ee/helper/license-validator'
 import { getEdition } from './app/helper/secret-helper'
-import i18next from './i18n'
 
 const start = async (app: FastifyInstance): Promise<void> => {
     try {
@@ -16,7 +15,6 @@ const start = async (app: FastifyInstance): Promise<void> => {
             host: '0.0.0.0',
             port: 3000,
         })
-
         logger.info(`
              _____   _______   _____  __      __  ______   _____    _____   ______    _____   ______    _____
     /\\      / ____| |__   __| |_   _| \\ \\    / / |  ____| |  __ \\  |_   _| |  ____|  / ____| |  ____|  / ____|
@@ -82,7 +80,6 @@ const main = async (): Promise<void> => {
     await databaseConnection.initialize()
     await databaseConnection.runMigrations()
     await seedDevData()
-    await i18next.init()
 
     const app = await setupApp()
 
