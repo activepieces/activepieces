@@ -1,5 +1,5 @@
 import { ApEdition, ProjectId, apId, isNil, spreadIfDefined } from '@activepieces/shared'
-import { ProjectPlan } from '@activepieces/ee-shared'
+import { DEFAULT_PLATFORM_PLAN, ProjectPlan } from '@activepieces/ee-shared'
 import { databaseConnection } from '../../../database/database-connection'
 import { projectService } from '../../../project/project-service'
 import { userService } from '../../../user/user-service'
@@ -94,6 +94,10 @@ async function getDefaultFlowPlan({ email }: { email: string }): Promise<FlowPla
         if (!isNil(appsumoPlan)) {
             return appsumoService.getPlanInformation(appsumoPlan.plan_id)
         }
+    }
+    if (edition === ApEdition.ENTERPRISE) {
+        // TODO refactor, first project in ee doesn't have plan created.
+        return DEFAULT_PLATFORM_PLAN
     }
     return defaultPlanInformation
 }

@@ -116,13 +116,14 @@
         </div>
       </mat-menu>
 
-      <mat-checkbox id="news_letter" class="news_letter" color="primary" formControlName="newsLetter" i18n>Receive
+      <mat-checkbox *ngIf="showNewsLetterCheckbox$| async" id="news_letter" class="news_letter" color="primary"
+        formControlName="newsLetter" i18n>Receive
         updates
         and
         newsletters from activepieces</mat-checkbox>
 
       <div class="text-center">
-        <ap-button [loading]="loading" (buttonClicked)="signUp()" btnColor="primary" [fullWidthOfContainer]="true" i18n>
+        <ap-button [loading]="loading" btnColor="primary" [fullWidthOfContainer]="true" i18n>
           Sign up
         </ap-button>
       </div>
@@ -139,7 +140,7 @@
 
     </div>
     <div class="ap-text-center ap-typography-caption ap-mt-2">
-      <a (click)="goBackToSign()" class="ap-cursor-pointer" i18n>Already have an account? </a>
+      <a (click)="goBackToSignIn()" class="ap-cursor-pointer" i18n>Already have an account? </a>
     </div>
   </ng-container>
 

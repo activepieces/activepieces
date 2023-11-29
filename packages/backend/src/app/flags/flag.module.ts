@@ -18,8 +18,7 @@ export const flagController: FastifyPluginAsyncTypebox = async (app) => {
             const flagsMap: Record<string, unknown> = flags.reduce((map, flag) => ({ ...map, [flag.id as string]: flag.value }), {})
             return flagHooks.get().modify({
                 flags: flagsMap,
-                hostname: request.hostname,
-                projectId: request.principal.projectId,
+                request,
             })
         },
     )

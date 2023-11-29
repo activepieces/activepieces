@@ -1,6 +1,6 @@
 {
   "name": "activepieces",
-  "version": "0.14.0",
+  "version": "0.14.1",
   "scripts": {
     "prepare": "husky install",
     "serve:frontend": "nx serve ui-core",
@@ -84,6 +84,7 @@
     "drip-nodejs": "3.1.1",
     "faiss-node": "0.5.1",
     "fastify": "4.12.0",
+    "fastify-favicon": "4.3.0",
     "fastify-raw-body": "4.2.0",
     "feedparser": "2.2.10",
     "firebase-admin": "11.10.1",
@@ -257,4 +258,3 @@
     "includedScripts": []
   }
 }
-

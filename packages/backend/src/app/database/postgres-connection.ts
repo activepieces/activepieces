@@ -85,6 +85,7 @@ import { AddPlatformIdToPieceMetadata1700522340280 } from './migration/postgres/
 import { MakeStripeCustomerIdNullable1700751925992 } from './migration/postgres/1700751925992-MakeStripeCustomerIdNullable'
 import { AddStateToOtp1701084418793 } from './migration/postgres/1701084418793-add-state-to-otp'
 import { AddPartialUniqueIndexForEmailAndPlatformIdIsNull1701096458822 } from './migration/common/1701096458822-add-partial-unique-index-for-email-and-platform-id-is-null'
+import { MigrateEeUsersToOldestPlatform1701261357197 } from './migration/postgres/1701261357197-migrate-ee-users-to-oldest-platform'
 
 
 const getSslConfig = (): boolean | TlsOptions => {
@@ -211,6 +212,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 AddDatasourcesLimit1695916063833,
                 MakeStripeCustomerIdNullable1700751925992,
                 AddStateToOtp1701084418793,
+                MigrateEeUsersToOldestPlatform1701261357197,
             )
             break
         case ApEdition.COMMUNITY:

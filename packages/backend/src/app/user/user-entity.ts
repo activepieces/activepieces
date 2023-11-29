@@ -48,7 +48,6 @@ export const UserEntity = new EntitySchema<UserSchema>({
         platformId: {
             type: String,
             nullable: true,
-            update: false,
         },
     },
     indices: [

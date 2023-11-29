@@ -1,3 +1,4 @@
+import { FastifyRequest } from 'fastify'
 
 let hooks: FlagsServiceHooks = {
     async modify(params) {
@@ -17,8 +18,7 @@ export const flagHooks = {
 
 type CreateParams = {
     flags: Record<string, unknown>
-    hostname: string
-    projectId: string
+    request: FastifyRequest
 }
 
 export type FlagsServiceHooks = {
