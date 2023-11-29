@@ -8,7 +8,6 @@ import { flagService } from '../../../../flags/flag.service'
 import { ApFlagId, PrincipalType, ProjectType, isNil } from '@activepieces/shared'
 import { platformService } from '../../../platform/platform.service'
 import { accessTokenManager } from '../../../../authentication/lib/access-token-manager'
-import { projectService } from '../../../../project/project-service'
 import { OtpType, Platform, PlatformId } from '@activepieces/ee-shared'
 import { otpService } from '../../../otp/otp-service'
 
@@ -35,12 +34,8 @@ export const enterpriseAuthenticationServiceHooks: AuthenticationServiceHooks = 
 
         const platform = await platformService.add({
             ownerId: user.id,
-            name: DEFAULT_PLATFORM_NAME,
-        })
-
-        await projectService.addProjectToPlatform({
             projectId: project.id,
-            platformId: platform.id,
+            name: DEFAULT_PLATFORM_NAME,
         })
 
         await flagService.save({

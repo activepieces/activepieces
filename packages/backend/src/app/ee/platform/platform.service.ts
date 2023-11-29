@@ -1,13 +1,17 @@
-import { ActivepiecesError, ErrorCode, UserId, apId, isNil, spreadIfDefined } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, ProjectId, UserId, apId, isNil, spreadIfDefined } from '@activepieces/shared'
 import { databaseConnection } from '../../database/database-connection'
 import { PlatformEntity } from './platform.entity'
 import { FilteredPieceBehavior, LocalesEnum, Platform, PlatformId, UpdatePlatformRequestBody } from '@activepieces/ee-shared'
 import { defaultTheme } from '../../flags/theme'
+import { userService } from '../../user/user-service'
+import { projectService } from '../../project/project-service'
 
 const repo = databaseConnection.getRepository<Platform>(PlatformEntity)
 
 export const platformService = {
-    async add({ ownerId, name, primaryColor, logoIconUrl, fullLogoUrl, favIconUrl }: AddParams): Promise<Platform> {
+    async add(params: AddParams): Promise<Platform> {
+        const { ownerId, projectId, name, primaryColor, logoIconUrl, fullLogoUrl, favIconUrl } = params
+
         const newPlatform: NewPlatform = {
             id: apId(),
             ownerId,
@@ -23,7 +27,19 @@ export const platformService = {
             cloudAuthEnabled: true,
         }
 
-        return repo.save(newPlatform)
+        const savedPlatform = await repo.save(newPlatform)
+
+        await addOwnerToPlatform({
+            platformId: newPlatform.id,
+            ownerId,
+        })
+
+        await addProjectToPlatform({
+            platformId: newPlatform.id,
+            projectId,
+        })
+
+        return savedPlatform
     },
 
     async update(params: UpdateParams): Promise<Platform> {
@@ -101,8 +117,23 @@ const assertPlatformOwnedByUser = (platform: Platform, userId: UserId): void => 
     }
 }
 
+const addOwnerToPlatform = ({ platformId, ownerId }: AddOwnerToPlatformParams): Promise<void> => {
+    return userService.updatePlatformId({
+        id: ownerId,
+        platformId,
+    })
+}
+
+const addProjectToPlatform = ({ platformId, projectId }: AddProjectToPlatformParams): Promise<void> => {
+    return projectService.addProjectToPlatform({
+        projectId,
+        platformId,
+    })
+}
+
 type AddParams = {
     ownerId: UserId
+    projectId: ProjectId
     name: string
     primaryColor?: string
     logoIconUrl?: string
@@ -124,4 +155,14 @@ type GetOneByOwnerParams = {
 type CheckUserIsOwnerParams = {
     platformId: PlatformId
     userId: UserId
+}
+
+type AddOwnerToPlatformParams = {
+    platformId: PlatformId
+    ownerId: UserId
+}
+
+type AddProjectToPlatformParams = {
+    platformId: PlatformId
+    projectId: ProjectId
 }

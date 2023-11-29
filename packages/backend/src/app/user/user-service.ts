@@ -84,6 +84,13 @@ export const userService = {
             password: hashedPassword,
         })
     },
+
+    async updatePlatformId({ id, platformId }: UpdatePlatformIdParams): Promise<void> {
+        await userRepo.update(id, {
+            updated: dayjs().toISOString(),
+            platformId,
+        })
+    },
 }
 
 const continueSignUpIfInvited = async (newUser: NewUser): Promise<void> => {
@@ -124,4 +131,9 @@ type IdParams = {
 type UpdatePasswordParams = {
     id: UserId
     newPassword: string
+}
+
+type UpdatePlatformIdParams = {
+    id: UserId
+    platformId: PlatformId
 }
