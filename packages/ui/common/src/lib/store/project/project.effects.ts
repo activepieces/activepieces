@@ -10,6 +10,7 @@ import { ProjectSelectors } from './project.selector';
 import { AuthenticationService } from '../../service/authentication.service';
 import { ProjectService } from '../../service/project.service';
 import { PlatformProjectService } from '../../service/platform-project.service';
+import { StatusCodes } from 'http-status-codes';
 
 @Injectable()
 export class ProjectEffects {
@@ -36,11 +37,14 @@ export class ProjectEffects {
             });
           }),
           catchError((error) => {
-            this.snackBar.open(
-              `Error loading projects: ${error.message}`,
-              'Dismiss'
-            );
-            this.authenticationService.logout();
+            const status = error?.status;
+            if (status === StatusCodes.UNAUTHORIZED) {
+              this.snackBar.open(
+                `Error loading projects: ${error.message}`,
+                'Dismiss'
+              );
+              this.authenticationService.logout();
+            }
             return of({ type: 'Load Projects Error' });
           })
         );
