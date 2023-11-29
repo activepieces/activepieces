@@ -257,6 +257,9 @@
       ],
       "@activepieces/shared": ["packages/shared/src/index.ts"],
       "@activepieces/ui-ee-platform": ["packages/ee/ui-platform/src/index.ts"],
+      "@activepieces/ui-feature-builder-header": [
+        "packages/ui/feature-builder-header/src/index.ts"
+      ],
       "@activepieces/ui/common": ["packages/ui/common/src/index.ts"],
       "@activepieces/ui/feature-authentication": [
         "packages/ui/feature-authentication/src/index.ts"
@@ -266,9 +269,6 @@
       ],
       "@activepieces/ui/feature-builder-form-controls": [
         "packages/ui/feature-builder-form-controls/src/index.ts"
-      ],
-      "@activepieces/ui-feature-builder-header": [
-        "packages/ui/feature-builder-header/src/index.ts"
       ],
       "@activepieces/ui/feature-builder-left-sidebar": [
         "packages/ui/feature-builder-left-sidebar/src/index.ts"

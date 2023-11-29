@@ -13,6 +13,7 @@ import {
   FlowOperationRequest,
   FlowOperationType,
   FlowRun,
+  FlowVersion,
   FlowVersionId,
   ListFlowsRequest,
   SeekPage,
@@ -103,6 +104,12 @@ export class FlowService {
     return this.http.post<Flow>(
       environment.apiUrl + '/flows/' + flowId,
       operation
+    );
+  }
+
+  listVersions(flowId: FlowId): Observable<SeekPage<FlowVersion>> {
+    return this.http.get<SeekPage<FlowVersion>>(
+      environment.apiUrl + '/flows/' + flowId + '/versions'
     );
   }
 

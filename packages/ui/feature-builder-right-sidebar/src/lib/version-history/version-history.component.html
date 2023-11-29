@@ -1,0 +1,17 @@
+<ng-container *ngIf="flowVersions$ | async as flowVersions">
+    <div class="ap-flex ap-flex-col ap-p-5">
+        <div  *ngFor="let version of flowVersions.data" class="ap-flex ap-items-center hover:ap-bg-gray-100 ap-transition-all ap-duration-200 ap-ease-in-out ap-relative ap-rounded-md ap-border ap-border-gray-300 ap-p-4 ap-w-full">
+            <div class="ap-flex-grow ap-flex ap-items-center ap-gap-2">
+                <div>
+                    <div class="ap-text-body">{{version.displayName}}</div>
+                    <div class="ap-text-description">{{version.created}}</div> <!-- Fixed closing tag here -->
+                </div>
+                <ap-button [loading]="loading" (buttonClicked)="rollback(version)"> Revert </ap-button>
+            </div>
+            <div class="ap-flex-grow"></div>
+    
+        </div>
+    </div>
+</ng-container>
+
+<ng-container *ngIf="rollbackVersion$ | async"></ng-container>

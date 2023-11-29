@@ -21,3 +21,13 @@ export const FlowVersion = Type.Object({
 })
 
 export type FlowVersion = Static<typeof FlowVersion>
+
+export const FlowVersionMetadata = Type.Object({
+    ...BaseModelSchema,
+    flowId: Type.String(),
+    displayName: Type.String(),
+    valid: Type.Boolean(),
+    state: Type.Enum(FlowVersionState),
+})
+
+export type FlowVersionMetadata = Static<typeof FlowVersionMetadata>

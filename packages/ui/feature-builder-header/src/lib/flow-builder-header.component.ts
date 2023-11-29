@@ -17,6 +17,8 @@ import {
   BuilderSelectors,
   CollectionBuilderService,
   FlowsActions,
+  RightSideBarType,
+  canvasActions,
 } from '@activepieces/ui/feature-builder-store';
 import { Flow, FlowInstance } from '@activepieces/shared';
 import { EmbeddingService } from '@activepieces/ui/common';
@@ -143,6 +145,15 @@ export class FlowBuilderHeaderComponent implements OnInit {
     );
   }
 
+  showVersions() {
+    this.store.dispatch(
+      canvasActions.setRightSidebar({
+        sidebarType: RightSideBarType.VERSIONS,
+        props: 'NO_PROPS',
+        deselectCurrentStep: true,
+      })
+    );
+  }
   openDashboardToFolder() {
     this.openDashboardOnFolder$ = this.store
       .select(BuilderSelectors.selectCurrentFlowFolderId)
