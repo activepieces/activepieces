@@ -113,4 +113,37 @@ describe('admin add platform endpoint', () => {
         expect(updatedMockProject?.type).toBe('PLATFORM_MANAGED')
         expect(updatedMockProject?.platformId).toBe(mockPlatform?.id)
     })
+
+    it('adds owner to newly created platform', async () => {
+        // arrange
+        const mockUser = createMockUser()
+        await databaseConnection.getRepository('user').save(mockUser)
+
+        const mockProject = createMockProject({ ownerId: mockUser.id })
+        await databaseConnection.getRepository('project').save(mockProject)
+
+        const mockPlatformName = faker.lorem.word()
+
+        // act
+        const response = await app?.inject({
+            method: 'POST',
+            url: '/v1/admin/platforms',
+            headers: {
+                'api-key': 'api-key',
+            },
+            body: {
+                userId: mockUser.id,
+                projectId: mockProject.id,
+                name: mockPlatformName,
+            },
+        })
+
+        // assert
+        expect(response?.statusCode).toBe(StatusCodes.CREATED)
+        const responseBody = response?.json()
+        const newlyCreatedPlatformId = responseBody.id
+
+        const user = await databaseConnection.getRepository('user').findOneByOrFail({ id: mockUser.id })
+        expect(user.platformId).toBe(newlyCreatedPlatformId)
+    })
 })
