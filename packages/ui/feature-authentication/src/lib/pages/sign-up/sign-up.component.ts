@@ -178,7 +178,7 @@ export class SignUpComponent implements OnInit {
   isPasswordInputIsFocused(passwordInputElement: HTMLInputElement) {
     return passwordInputElement == document.activeElement;
   }
-  goBackToSign() {
+  goBackToSignIn() {
     this.router.navigate(['/sign-in']);
   }
   redirect() {
