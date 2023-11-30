@@ -21,7 +21,7 @@ export const allowWorkersOnly: onRequestHookHandler = (request, _res, done) => {
 export const entitiesMustBeOwnedByCurrentProject: preSerializationHookHandler<Payload | null> = (request, _response, payload, done) => {
     logger.trace({ payload, principal: request.principal, route: request.routeConfig }, 'entitiesMustBeOwnedByCurrentProject')
 
-    if (payload) {
+    if (isObject(payload)) {
         const principalProjectId = request.principal.projectId
         let verdict: AuthzVerdict = 'ALLOW'
 
@@ -52,6 +52,11 @@ export const entitiesMustBeOwnedByCurrentProject: preSerializationHookHandler<Pa
 
     done()
 }
+
+function isObject<T>(obj: T): obj is Exclude<T, null | undefined> {
+    return typeof obj === 'object' && obj !== null && !Array.isArray(obj)
+}
+
 
 type SingleEntity = {
     projectId?: string
