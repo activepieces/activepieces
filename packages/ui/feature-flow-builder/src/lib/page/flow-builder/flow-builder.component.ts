@@ -20,7 +20,6 @@ import {
 import { Store } from '@ngrx/store';
 import {
   delay,
-  distinctUntilChanged,
   EMPTY,
   firstValueFrom,
   map,
@@ -122,7 +121,6 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
     public builderAutocompleteService: BuilderAutocompleteMentionsDropdownService
   ) {
     this.showPoweredByAp$ = this.flagService.getShowPoweredByAp();
-    this.listenToGraphChanges();
     this.dataInsertionPopupHidden$ =
       this.builderAutocompleteService.currentAutocompleteInputId$.pipe(
         switchMap((val) => {
@@ -255,8 +253,8 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
 
   @HostListener('mousemove', ['$event'])
   mouseMove(e: MouseEvent) {
-    this.flowRendererService.clientX = e.clientX;
-    this.flowRendererService.clientY = e.clientY;
+    this.flowRendererService.clientMouseX = e.clientX;
+    this.flowRendererService.clientMouseY = e.clientY;
   }
   ngOnDestroy(): void {
     this.snackbar.dismiss();
@@ -329,24 +327,6 @@ export class FlowBuilderComponent implements OnInit, OnDestroy {
 
   leftDrawerHandleDragEnded() {
     this.leftSidebarDragging = false;
-  }
-  listenToGraphChanges() {
-    this.graphChanged$ = this.store
-      .select(BuilderSelectors.selectShownFlowVersion)
-      .pipe(
-        distinctUntilChanged(),
-        tap((version) => {
-          if (version) {
-            this.flowRendererService.refreshCoordinatesAndSetActivePiece(
-              version.trigger
-            );
-          } else {
-            this.flowRendererService.refreshCoordinatesAndSetActivePiece(
-              undefined
-            );
-          }
-        })
-      );
   }
 
   @HostListener('window:beforeunload', ['$event'])

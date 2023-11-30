@@ -1,17 +1,13 @@
 import { Component, OnInit } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import {
+  BuilderSelectors,
   FlowItem,
-  FlowRendererService,
 } from '@activepieces/ui/feature-builder-store';
-import {
-  ActionType,
-  TriggerType,
-  Action,
-  Trigger,
-  LoopOnItemsAction,
-} from '@activepieces/shared';
 import { FlowDrawer } from '../canvas-utils/drawing/flow-drawer';
+import { Store } from '@ngrx/store';
+import { PositionedStep } from '../canvas-utils/drawing/step-card';
+import { PositionButton } from '../canvas-utils/drawing/draw-common';
 
 @Component({
   selector: 'app-flow-item-tree',
@@ -20,63 +16,24 @@ import { FlowDrawer } from '../canvas-utils/drawing/flow-drawer';
 export class FlowItemTreeComponent implements OnInit {
   activePiece$: Observable<FlowItem | undefined>;
   navbarOpen = false;
-  flowDrawer: FlowDrawer = FlowDrawer.construct(nestedBranching).offset(
-    575,
-    110
-  );
-
-  constructor(private flowService: FlowRendererService) {}
+  flowDrawer$: Observable<FlowDrawer>;
+  constructor(private store: Store) {}
 
   ngOnInit(): void {
-    this.activePiece$ = this.flowService.structureChanged;
+    const flowVersion$ = this.store.select(
+      BuilderSelectors.selectShownFlowVersion
+    );
+    this.flowDrawer$ = flowVersion$.pipe(
+      map((version) => {
+        return FlowDrawer.construct(version.trigger).offset(575, 110);
+      })
+    );
+  }
+
+  flowItemsTrackBy(_: number, item: PositionedStep) {
+    return item.content?.name;
+  }
+  buttonsTrackBy(_: number, item: PositionButton) {
+    return `${item.x}+${item.y}`;
   }
 }
-
-const codeStep: Action = {
-  type: ActionType.CODE,
-  displayName: 'code',
-  name: 'code',
-  settings: {
-    sourceCode: {
-      packageJson: 'javascript',
-      code: 'console.log("Hello world")',
-    },
-    input: {},
-    inputUiInfo: {},
-  },
-  valid: true,
-};
-
-export const loop: LoopOnItemsAction = {
-  type: ActionType.LOOP_ON_ITEMS,
-  displayName: 'loop',
-  name: 'loop',
-  firstLoopAction: codeStep,
-  settings: {
-    items: 'asd',
-  },
-  valid: true,
-};
-
-const nestedBranching: Trigger = {
-  type: TriggerType.EMPTY,
-  displayName: 'http',
-  name: 'http',
-  settings: {},
-  valid: false,
-  nextAction: {
-    type: ActionType.BRANCH,
-    displayName: 'branch',
-    name: 'branch',
-    //onSuccessAction: codeStep,
-    onSuccessAction: codeStep,
-    onFailureAction: codeStep,
-    settings: {
-      conditions: [],
-      inputUiInfo: {
-        currentSelectedData: 'data',
-      },
-    },
-    valid: true,
-  },
-};

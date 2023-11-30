@@ -1,26 +1,29 @@
-<div class="ap-flex ap-justify-center ap-mb-9 ap-w-full ap-items-center ap-z-40 ap-relative ap-mt-[50px]">
-  <div class="ap-absolute">
-    <app-test-flow-widget></app-test-flow-widget>
+<ng-container *ngIf="flowDrawer$ | async as flowDrawer">
+  <div class="ap-flex ap-justify-center ap-mb-9 ap-w-full ap-items-center ap-z-40 ap-relative ap-mt-[50px]">
+    <div class="ap-absolute">
+      <app-test-flow-widget></app-test-flow-widget>
+
+    </div>
+    <div class="ap-absolute">
+      <app-view-only-mode></app-view-only-mode>
+    </div>
+    <app-incomplete-steps-widget></app-incomplete-steps-widget>
 
   </div>
-  <div class="ap-absolute">
-    <app-view-only-mode></app-view-only-mode>
-  </div>
-  <app-incomplete-steps-widget></app-incomplete-steps-widget>
+  <svg class="ap-absolute ap-left-0 ap-top-0 ap-w-full ap-h-full">
+    <g>
+      <path [attr.d]="flowDrawer.svg.toSvg().content" stroke="black" fill="transparent" stroke-width="2" />
+    </g>
+  </svg>
 
-</div>
-<svg style="position: absolute;top: 0px; left: 0px; width:100%; height:100%;">
-  <g>
-    <path [attr.d]="flowDrawer.svg.toSvg().content" stroke="black" fill="transparent" stroke-width="2" />
-  </g>
-</svg>
-
-<ng-container *ngFor="let step of flowDrawer.steps">
-  <ng-container *ngIf="step.content">
-    <app-flow-item [flowItemData]="step"></app-flow-item>
+  <ng-container *ngFor="let step of flowDrawer.steps; trackBy: flowItemsTrackBy ">
+    <ng-container *ngIf="step.content">
+      <app-flow-item [flowItemData]="step"></app-flow-item>
+    </ng-container>
   </ng-container>
-</ng-container>
 
-<ng-container *ngFor="let button of flowDrawer.buttons">
-  <app-small-add-button [left]="button.x + 'px'" [top]="button.y + 'px'"></app-small-add-button>
+  <ng-container *ngFor="let button of flowDrawer.buttons; trackBy: buttonsTrackBy">
+    <app-small-add-button [left]="button.x + 'px'" [top]="button.y + 'px'"></app-small-add-button>
+  </ng-container>
+
 </ng-container>
