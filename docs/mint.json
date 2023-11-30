@@ -189,6 +189,7 @@
       "group": "Enterprise Edition",
       "pages": [
         "enterprise/whitelabel",
+        "enterprise/environments",
         {
           "group": "Connection Cards",
           "icon": "cards-blank",
