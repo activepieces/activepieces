@@ -56,6 +56,7 @@ describe('Authentication API', () => {
             expect(responseBody?.projectId).toHaveLength(21)
             expect(responseBody?.token).toBeDefined()
         })
+        
 
         it('Fails if USER_CREATED flag is set, and sign-up is disabled', async () => {
             // arrange
@@ -181,7 +182,7 @@ describe('Authentication API', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(response?.statusCode).toBe(StatusCodes.UNAUTHORIZED)
             const responseBody = response?.json()
             expect(responseBody?.code).toBe('INVALID_CREDENTIALS')
         })
@@ -216,9 +217,9 @@ describe('Authentication API', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
             const responseBody = response?.json()
-            expect(responseBody?.code).toBe('INVALID_CREDENTIALS')
+            expect(responseBody?.code).toBe('EMAIL_IS_NOT_VERIFIED')
         })
     })
 })

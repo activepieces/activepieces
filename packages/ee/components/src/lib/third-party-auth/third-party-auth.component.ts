@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import {
   AuthenticationService,
   FlagService,
@@ -18,6 +18,10 @@ import { Oauth2Service } from '@activepieces/ui/feature-connections';
 })
 export class ThirdPartyAuthComponent {
   readonly ThirdPartyAuthnProvider = ThirdPartyAuthnProviderEnum;
+  readonly signUpText = $localize`Sign up with`;
+  readonly signInText = $localize`Sign in with`;
+  @Input()
+  isForSignup = false;
   thirdPartyProvidersToShow$: Observable<ThirdPartyAuthnProvidersToShowMap>;
   signInWithThirdPartyProvider$: Observable<void> | undefined;
   constructor(

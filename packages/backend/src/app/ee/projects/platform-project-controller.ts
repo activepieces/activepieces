@@ -45,7 +45,7 @@ const enterpriseProjectController: FastifyPluginCallbackTypebox = (fastify, _opt
             }),
         },
     }, async (request) => {
-        return await platformProjectService.getAll({
+        return platformProjectService.getAll({
             ownerId: request.principal.id,
             platformId: request.query.platformId,
         })

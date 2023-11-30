@@ -22,7 +22,7 @@ const flowTemplateController: FastifyPluginAsyncTypebox = async (fastify) => {
             params: GetIdParams,
         },
     }, async (request) => {
-        return await flowTemplateService.getOrthrow(request.params.id)
+        return flowTemplateService.getOrthrow(request.params.id)
     })
 
     fastify.get('/', {
@@ -30,7 +30,7 @@ const flowTemplateController: FastifyPluginAsyncTypebox = async (fastify) => {
             querystring: ListFlowTemplatesRequest,
         },
     }, async (request) => {
-        return await flowTemplateService.list(request.query)
+        return flowTemplateService.list(request.query)
     })
 
     fastify.post('/', {

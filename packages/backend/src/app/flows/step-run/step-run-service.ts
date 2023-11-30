@@ -192,41 +192,36 @@ const executeBranch = async ({ step, flowVersion, projectId }: ExecuteParams<Bra
         type: SandBoxCacheType.NONE,
     })
 
-    try {
-        const { status, result, standardError, standardOutput } = await engineHelper.executeTest(sandbox, testInput)
+    const { status, result, standardError, standardOutput } = await engineHelper.executeTest(sandbox, testInput)
 
-        if (status !== EngineResponseStatus.OK || result.status !== ExecutionOutputStatus.SUCCEEDED) {
-            return {
-                success: false,
-                output: null,
-                standardError,
-                standardOutput,
-            }
-        }
-
-        const branchStepOutput = new ExecutionState(result.executionState).getStepOutput<BranchStepOutput>({
-            stepName: branchStep.name,
-            ancestors: [],
-        })
-
-        if (isNil(branchStepOutput)) {
-            return {
-                success: false,
-                output: null,
-                standardError,
-                standardOutput,
-            }
-        }
-
+    if (status !== EngineResponseStatus.OK || result.status !== ExecutionOutputStatus.SUCCEEDED) {
         return {
-            success: true,
-            output: branchStepOutput.output,
+            success: false,
+            output: null,
             standardError,
             standardOutput,
         }
     }
-    finally {
-        await sandboxProvisioner.release({ sandbox })
+
+    const branchStepOutput = new ExecutionState(result.executionState).getStepOutput<BranchStepOutput>({
+        stepName: branchStep.name,
+        ancestors: [],
+    })
+
+    if (isNil(branchStepOutput)) {
+        return {
+            success: false,
+            output: null,
+            standardError,
+            standardOutput,
+        }
+    }
+
+    return {
+        success: true,
+        output: branchStepOutput.output,
+        standardError,
+        standardOutput,
     }
 }
 

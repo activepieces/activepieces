@@ -51,7 +51,7 @@ const getGitHubAccessToken = async (authorizationCode: string): Promise<string> 
     if (!response.ok) {
         throw new ActivepiecesError({
             code: ErrorCode.INVALID_CREDENTIALS,
-            params: {},
+            params: null,
         })
     }
 
@@ -61,7 +61,7 @@ const getGitHubAccessToken = async (authorizationCode: string): Promise<string> 
     if (isNil(accessToken)) {
         throw new ActivepiecesError({
             code: ErrorCode.INVALID_CREDENTIALS,
-            params: {},
+            params: null,
         })
     }
 
@@ -80,7 +80,7 @@ const getGitHubUserInfo = async (gitHubAccessToken: string): Promise<GitHubUserI
     if (!response.ok) {
         throw new ActivepiecesError({
             code: ErrorCode.INVALID_CREDENTIALS,
-            params: {},
+            params: null,
         })
     }
 
@@ -102,7 +102,7 @@ const getGitHubUserEmail = async (gitHubAccessToken: string): Promise<string> =>
     if (!response.ok) {
         throw new ActivepiecesError({
             code: ErrorCode.INVALID_CREDENTIALS,
-            params: {},
+            params: null,
         })
     }
     const emails: { primary: boolean, email: string }[] = await response.json()

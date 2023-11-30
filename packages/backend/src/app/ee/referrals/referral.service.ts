@@ -73,7 +73,7 @@ async function addExtraTasks(userId: string) {
     if (referralsCount > 5) {
         return
     }
-    const ownerProject = await projectService.getUserProject(userId)
+    const ownerProject = await projectService.getUserProjectOrThrow(userId)
     const projectPlan = await plansService.getOrCreateDefaultPlan({
         projectId: ownerProject.id,
     })

@@ -17,7 +17,7 @@ export const projectService = {
     },
 
     async getOne(projectId: ProjectId): Promise<Project | null> {
-        return await projectRepo.findOneBy({
+        return projectRepo.findOneBy({
             id: projectId,
         })
     },
@@ -38,8 +38,13 @@ export const projectService = {
 
         return project
     },
-    async getUserProject(ownerId: UserId): Promise<Project> {
-        return await projectRepo.findOneByOrFail({
+    async getUserProject(ownerId: UserId): Promise<Project | null> {
+        return projectRepo.findOneBy({
+            ownerId,
+        })
+    },
+    async getUserProjectOrThrow(ownerId: UserId): Promise<Project> {
+        return projectRepo.findOneByOrFail({
             ownerId,
         })
     },

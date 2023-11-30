@@ -13,13 +13,13 @@ const flagRepo = databaseConnection.getRepository(FlagEntity)
 
 export const flagService = {
     save: async (flag: FlagType): Promise<Flag> => {
-        return await flagRepo.save({
+        return flagRepo.save({
             id: flag.id,
             value: flag.value,
         })
     },
     async getOne(flagId: ApFlagId): Promise<Flag | null> {
-        return await flagRepo.findOneBy({
+        return flagRepo.findOneBy({
             id: flagId,
         })
     },

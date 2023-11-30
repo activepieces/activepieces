@@ -59,7 +59,7 @@ const billingController: FastifyPluginAsyncTypebox = async (fastify) => {
             const sig = request.headers['stripe-signature'] as string
             try {
                 await handleWebhook({ payload: payloadString as string, signature: sig })
-                return reply.status(StatusCodes.OK).send()
+                return await reply.status(StatusCodes.OK).send()
             }
             catch (err) {
                 logger.error(err)

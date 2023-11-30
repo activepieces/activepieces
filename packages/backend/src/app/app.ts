@@ -76,6 +76,7 @@ import { cloudAuthenticationServiceHooks } from './ee/authentication/authenticat
 import { enterpriseLocalAuthnModule } from './ee/authentication/enterprise-local-authn/enterprise-local-authn-module'
 import { billingModule } from './ee/billing/billing/billing.module'
 import { federatedAuthModule } from './ee/authentication/federated-authn/federated-authn-module'
+import fastifyFavicon from 'fastify-favicon'
 
 export const setupApp = async (): Promise<FastifyInstance> => {
     const app = fastify({
@@ -91,6 +92,8 @@ export const setupApp = async (): Promise<FastifyInstance> => {
             },
         },
     })
+
+    await app.register(fastifyFavicon)
 
     await app.register(swagger, {
         openapi: {
