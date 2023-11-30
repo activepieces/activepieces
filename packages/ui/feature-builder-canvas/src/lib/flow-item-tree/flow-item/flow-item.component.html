@@ -1,4 +1,4 @@
-<div [ngStyle]="flowGraphContainer" [style.transform]="transformObs$|async">
+<div [ngStyle]="flowGraphContainer">
   <ng-container *ngIf="!trigger && (readOnly$ | async)===false">
     <div class="ap-relative">
       <div #flowItem class="ap-z-50 ap-cursor-pointer ap-relative" mwlDraggable apTrackHover (mouseup)="mouseUp()"
@@ -9,7 +9,7 @@
         [class.ap-opacity-0]="hideDraggableSource$ | async" [ghostElementAppendTo]="draggingContainer"
         [class.ap-cursor-default]="(anyStepIsDragged$|async)" (dragStart)="draggingStarted()">
         <div class="ap-z-50">
-          <app-flow-item-content #ItemContent  [flowItem]="_flowItemData.content!"
+          <app-flow-item-content #ItemContent [flowItem]="_flowItemData.content!"
             [readOnly]="readOnly$ | async | defaultTrue"
             [selected]="selected$ | async | defaultFalse"></app-flow-item-content>
         </div>
@@ -31,7 +31,7 @@
   </ng-container>
   <ng-container *ngIf="!trigger && (readOnly$ | async)===true">
     <div #flowItem class="ap-cursor-pointer ap-relative">
-      <div  class="ap-z-50">
+      <div class="ap-z-50">
         <app-flow-item-content #ItemContent [flowItem]="_flowItemData.content!"
           [readOnly]="readOnly$ | async | defaultTrue"
           [selected]="selected$ | async | defaultFalse"></app-flow-item-content>
@@ -46,8 +46,7 @@
   </div>
 -->
   <div *ngIf="trigger" #flowItem class="ap-relative">
-    <div [lass="ap-z-50 ap-cursor-pointer" apTrackHover
-      #itemContent="hoverTrackerDirective">
+    <div [lass="ap-z-50 ap-cursor-pointer" apTrackHover #itemContent="hoverTrackerDirective">
       <app-flow-item-content [flowItem]="_flowItemData.content!" [readOnly]="readOnly$ | async | defaultTrue"
         [selected]="selected$ | async | defaultFalse"></app-flow-item-content>
     </div>

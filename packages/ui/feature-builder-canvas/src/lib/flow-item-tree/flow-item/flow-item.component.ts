@@ -5,12 +5,9 @@ import {
   OnInit,
   Renderer2,
 } from '@angular/core';
-import { combineLatest, map, Observable, of, startWith, Subject } from 'rxjs';
+import { map, Observable, of, Subject } from 'rxjs';
 import { Store } from '@ngrx/store';
 
-import { PannerService } from '../../canvas-utils/panning/panner.service';
-import { ZoomingService } from '../../canvas-utils/zooming/zooming.service';
-import { flowHelper } from '@activepieces/shared';
 import { PositionedStep } from '../../canvas-utils/drawing/step-card';
 import {
   FLOW_ITEM_HEIGHT,
@@ -36,7 +33,6 @@ export class FlowItemComponent implements OnInit {
   delayTimer: ReturnType<typeof setTimeout>;
   delayTimerSet = false;
   touchStartLongPress = { delay: 750, delta: 10 };
-
   snappedDraggedShadowToCursor = false;
   hideDraggableSource$: Subject<boolean> = new Subject();
   @Input() set flowItemData(value: PositionedStep) {
@@ -55,7 +51,6 @@ export class FlowItemComponent implements OnInit {
   }
   selected$: Observable<boolean> = of(false);
   readOnly$: Observable<boolean> = of(false);
-  scale$: Observable<string>;
   isDragging = false;
   anyStepIsDragged$: Observable<boolean>;
 
@@ -67,8 +62,6 @@ export class FlowItemComponent implements OnInit {
   };
   constructor(
     private store: Store,
-    private pannerService: PannerService,
-    private zoomingService: ZoomingService,
     private flowRendererService: FlowRendererService,
     private renderer2: Renderer2
   ) {}
@@ -77,29 +70,7 @@ export class FlowItemComponent implements OnInit {
     this.findDraggingContainer();
     this.anyStepIsDragged$ =
       this.flowRendererService.draggingSubject.asObservable();
-    this.scale$ = this.zoomingService.zoomingScale$.asObservable().pipe(
-      startWith(1),
-      map((val) => {
-        return `scale(${val})`;
-      })
-    );
     this.readOnly$ = this.store.select(BuilderSelectors.selectReadOnly);
-    if (flowHelper.isTrigger(this._flowItemData.content?.type)) {
-      const translate$ = this.pannerService.panningOffset$.asObservable().pipe(
-        startWith({ x: 0, y: 0 }),
-        map((val) => {
-          return `translate(${val.x}px,${val.y}px)`;
-        })
-      );
-      this.transformObs$ = combineLatest({
-        scale: this.scale$,
-        translate: translate$,
-      }).pipe(
-        map((value) => {
-          return `${value.scale} ${value.translate}`;
-        })
-      );
-    }
   }
 
   private findDraggingContainer() {
@@ -116,7 +87,7 @@ export class FlowItemComponent implements OnInit {
       width: FLOW_ITEM_WIDTH + 'px',
       height: FLOW_ITEM_HEIGHT - 8 * 2 + 'px',
       left: flowItemData.x + 'px',
-      margin: '8px',
+      'margin-top': '8px',
       position: 'absolute',
     };
   }
@@ -137,8 +108,8 @@ export class FlowItemComponent implements OnInit {
       const shadowEl = document.getElementById('stepShadow');
       if (shadowEl) {
         const shadowElRect = shadowEl.getBoundingClientRect();
-        const x = this.flowRendererService.clientX - shadowElRect.left; //x position within the element.
-        const y = this.flowRendererService.clientY - shadowElRect.top; //y position within the element.
+        const x = this.flowRendererService.clientMouseX - shadowElRect.left; //x position within the element.
+        const y = this.flowRendererService.clientMouseY - shadowElRect.top; //y position within the element.
         shadowEl.style.transform = `translate(${
           x - shadowElRect.width / 2
         }px , ${y - shadowElRect.height / 2}px)`;

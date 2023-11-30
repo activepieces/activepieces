@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Observable, map } from 'rxjs';
+import { Observable, combineLatest, map, startWith } from 'rxjs';
 import {
   BuilderSelectors,
   FlowItem,
@@ -7,8 +7,20 @@ import {
 import { FlowDrawer } from '../canvas-utils/drawing/flow-drawer';
 import { Store } from '@ngrx/store';
 import { PositionedStep } from '../canvas-utils/drawing/step-card';
-import { PositionButton } from '../canvas-utils/drawing/draw-common';
+import {
+  FLOW_ITEM_WIDTH,
+  PositionButton,
+  FLOW_ITEM_HEIGHT,
+} from '../canvas-utils/drawing/draw-common';
+import { ZoomingService } from '../canvas-utils/zooming/zooming.service';
+import { PannerService } from '../canvas-utils/panning/panner.service';
 
+type UiFlowDrawer = {
+  centeringGraphTransform: string;
+  svg: string;
+  boundingBox: { width: number; height: number };
+} & Pick<FlowDrawer, 'buttons' | 'steps'>;
+const GRAPH_Y_OFFSET_FROM_TEST_FLOW_WIDGET = 45;
 @Component({
   selector: 'app-flow-item-tree',
   templateUrl: './flow-item-tree.component.html',
@@ -16,8 +28,16 @@ import { PositionButton } from '../canvas-utils/drawing/draw-common';
 export class FlowItemTreeComponent implements OnInit {
   activePiece$: Observable<FlowItem | undefined>;
   navbarOpen = false;
-  flowDrawer$: Observable<FlowDrawer>;
-  constructor(private store: Store) {}
+  flowDrawer$: Observable<UiFlowDrawer>;
+  transform$: Observable<string>;
+
+  constructor(
+    private store: Store,
+    private pannerService: PannerService,
+    private zoomingService: ZoomingService
+  ) {
+    this.transform$ = this.getTransform$();
+  }
 
   ngOnInit(): void {
     const flowVersion$ = this.store.select(
@@ -25,7 +45,16 @@ export class FlowItemTreeComponent implements OnInit {
     );
     this.flowDrawer$ = flowVersion$.pipe(
       map((version) => {
-        return FlowDrawer.construct(version.trigger).offset(575, 110);
+        const drawer = FlowDrawer.construct(version.trigger).offset(0, 40);
+        return {
+          svg: drawer.svg.toSvg().content,
+          boundingBox: drawer.boundingBox(),
+          buttons: drawer.buttons,
+          steps: drawer.steps,
+          centeringGraphTransform: `translate(${
+            drawer.boundingBox().width / 2 - FLOW_ITEM_WIDTH / 2
+          }px,-${FLOW_ITEM_HEIGHT - GRAPH_Y_OFFSET_FROM_TEST_FLOW_WIDGET}px)`,
+        };
       })
     );
   }
@@ -35,5 +64,29 @@ export class FlowItemTreeComponent implements OnInit {
   }
   buttonsTrackBy(_: number, item: PositionButton) {
     return `${item.x}+${item.y}`;
+  }
+
+  getTransform$() {
+    const scale$ = this.zoomingService.zoomingScale$.asObservable().pipe(
+      startWith(1),
+      map((val) => {
+        return `scale(${val})`;
+      })
+    );
+    const translate$ = this.pannerService.panningOffset$.asObservable().pipe(
+      startWith({ x: 0, y: 0 }),
+      map((val) => {
+        return `translate(${val.x}px,${val.y}px)`;
+      })
+    );
+    const transformObs$ = combineLatest({
+      scale: scale$,
+      translate: translate$,
+    }).pipe(
+      map((value) => {
+        return `${value.scale} ${value.translate}`;
+      })
+    );
+    return transformObs$;
   }
 }
